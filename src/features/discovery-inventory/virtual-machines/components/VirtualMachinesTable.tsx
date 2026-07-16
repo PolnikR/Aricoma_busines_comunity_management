@@ -27,9 +27,22 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, onSelect }: 
           </TableHeader>
           <TableBody className="divide-y divide-[#edf2f7]">
             {virtualMachines.map((vm) => (
-              <TableRow key={vm.id} className={selectedId === vm.id ? 'bg-[#edf7ff]' : 'bg-white transition hover:bg-[#f8fbfe]'}>
+              <TableRow
+                key={vm.id}
+                className={`cursor-pointer outline-none transition focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1596dd] ${selectedId === vm.id ? 'bg-[#edf7ff]' : 'bg-white hover:bg-[#f8fbfe]'}`}
+                tabIndex={0}
+                aria-label={`Show details for ${vm.name}`}
+                aria-selected={selectedId === vm.id}
+                onClick={() => { onSelect(vm) }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    onSelect(vm)
+                  }
+                }}
+              >
                 <TableCell className="px-4 py-3">
-                  <button type="button" className="flex max-w-xs items-center gap-3 text-left outline-none focus-visible:ring-4 focus-visible:ring-brand-500/15" aria-pressed={selectedId === vm.id} onClick={() => { onSelect(vm) }}>
+                  <div className="flex max-w-xs items-center gap-3 text-left">
                     <span className={`flex size-8 shrink-0 items-center justify-center rounded-xl ${selectedId === vm.id ? 'bg-[#0d91d7] text-white' : 'bg-[#eff4f8] text-[#71819a]'}`}>
                       {selectedId === vm.id ? <CheckIcon className="size-4" /> : <span className="text-[10px] font-semibold">VM</span>}
                     </span>
@@ -37,7 +50,7 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, onSelect }: 
                       <span className="block truncate text-sm font-medium text-gray-900 dark:text-white">{vm.name}</span>
                       <span className="mt-0.5 block truncate text-xs text-gray-500 dark:text-gray-400">{vm.hostname || '-'} / {vm.ipAddress || '-'}</span>
                     </span>
-                  </button>
+                  </div>
                 </TableCell>
                 <TableCell className="px-4 py-3">
                   <div className="flex flex-col items-start gap-1.5">

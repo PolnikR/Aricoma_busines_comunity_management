@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { routes } from '@/app/routes'
@@ -19,7 +19,19 @@ const navItems: NavItem[] = [
   {
     name: 'Platform Administration',
     icon: <SettingsIcon />,
-    path: routes.platformAdministration,
+    subItems: [
+      { name: 'Overview', path: `${routes.platformAdministration}#overview` },
+      { name: 'Configuration', path: `${routes.platformAdministration}#configuration` },
+      { name: 'Users & Roles', path: `${routes.platformAdministration}#users-roles` },
+      { name: 'Secrets', path: `${routes.platformAdministration}#secrets` },
+      { name: 'Audit', path: `${routes.platformAdministration}#audit` },
+      { name: 'Notifications', path: `${routes.platformAdministration}#notifications` },
+      { name: 'Certificates', path: `${routes.platformAdministration}#certificates` },
+      { name: 'Backup & Restore', path: `${routes.platformAdministration}#backup-restore` },
+      { name: 'Diagnostics', path: `${routes.platformAdministration}#diagnostics` },
+      { name: 'Lifecycle', path: `${routes.platformAdministration}#lifecycle` },
+      { name: 'Data Retention', path: `${routes.platformAdministration}#data-retention` },
+    ],
   },
   {
     name: 'Providers & Connectors',
@@ -38,7 +50,15 @@ const navItems: NavItem[] = [
 
 export function AppSidebar() {
   const { isMobileOpen, closeMobileSidebar } = useSidebar()
-  const [openMenu, setOpenMenu] = useState('Discovery & Inventory')
+  const location = useLocation()
+  const [openMenu, setOpenMenu] = useState(() => location.pathname === routes.platformAdministration ? 'Platform Administration' : 'Discovery & Inventory')
+
+  const isSubItemActive = (path: string) => {
+    const [pathname, hash = ''] = path.split('#')
+    if (location.pathname !== pathname) return false
+    if (!hash) return true
+    return location.hash === `#${hash}` || (!location.hash && hash === 'overview')
+  }
 
   return (
     <aside
@@ -78,14 +98,14 @@ export function AppSidebar() {
                       <span className="min-w-0 flex-1 truncate">{item.name}</span>
                       <ChevronDownIcon className={`size-4 transition-transform ${openMenu === item.name ? 'rotate-180 text-[#3566d6]' : 'text-[#8996aa]'}`} />
                     </button>
-                    <div className={`overflow-hidden transition-all duration-300 ${openMenu === item.name ? 'max-h-32' : 'max-h-0'}`}>
+                    <div className={`overflow-hidden transition-all duration-300 ${openMenu === item.name ? 'max-h-[34rem]' : 'max-h-0'}`}>
                         <ul className="ml-[18px] mt-1 space-y-0.5 border-l border-[#e0e6ef] pl-3">
                           {item.subItems.map((subItem) => (
                             <li key={subItem.path}>
                               <NavLink
                                 to={subItem.path}
                                 onClick={closeMobileSidebar}
-                                className={({ isActive }) => `block truncate rounded-lg px-2.5 py-2 text-xs font-medium transition ${isActive ? 'bg-[#eef2fa] text-[#3566d6]' : 'text-[#5e6e86] hover:bg-[#f5f7fa] hover:text-[#263750]'}`}
+                                className={() => `block truncate rounded-lg px-2.5 py-2 text-xs font-medium transition ${isSubItemActive(subItem.path) ? 'bg-[#eef2fa] text-[#3566d6]' : 'text-[#5e6e86] hover:bg-[#f5f7fa] hover:text-[#263750]'}`}
                               >
                                 {subItem.name}
                               </NavLink>

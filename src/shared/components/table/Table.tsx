@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { HTMLAttributes, ReactNode } from 'react'
 import { cn } from '@/shared/utils/cn'
 
 interface TableProps {
@@ -10,6 +10,10 @@ interface TableCellProps {
   children: ReactNode
   isHeader?: boolean
   className?: string
+}
+
+interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
+  children: ReactNode
 }
 
 export function Table({ children, className }: TableProps) {
@@ -24,8 +28,8 @@ export function TableBody({ children, className }: TableProps) {
   return <tbody className={className}>{children}</tbody>
 }
 
-export function TableRow({ children, className }: TableProps) {
-  return <tr className={className}>{children}</tr>
+export function TableRow({ children, className, ...props }: TableRowProps) {
+  return <tr className={className} {...props}>{children}</tr>
 }
 
 export function TableCell({ children, isHeader = false, className }: TableCellProps) {
