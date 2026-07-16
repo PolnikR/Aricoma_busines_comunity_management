@@ -42,50 +42,50 @@ export function AppSidebar() {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col border-r border-[#cfe6f8] bg-[#eef8ff] px-4 text-[#17233d] shadow-2xl transition-transform duration-300 ease-out lg:static lg:h-full lg:w-[244px] lg:shrink-0 lg:translate-x-0 lg:rounded-[28px] lg:border lg:border-white/70 lg:shadow-[0_24px_70px_-36px_rgba(17,91,146,0.42)] xl:w-[256px] ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      className={`fixed inset-y-0 left-0 z-50 flex w-[256px] flex-col border-r border-[#e3e9f2] bg-white px-3 text-[#17233d] shadow-2xl transition-transform duration-300 ease-out lg:static lg:h-full lg:w-[216px] lg:shrink-0 lg:translate-x-0 lg:rounded-[22px] lg:border lg:border-[#e3e9f2] lg:shadow-[0_14px_35px_-28px_rgba(37,72,112,0.4)] xl:w-[224px] ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
     >
-      <div className="flex h-[88px] shrink-0 items-center border-b border-[#d6eaf8] px-2">
-        <NavLink to={routes.virtualMachines} className="flex items-center gap-3" aria-label="ABCO home">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-[#0d91d7] text-sm font-semibold text-white shadow-[0_8px_20px_-8px_rgba(13,145,215,0.8)]">
+      <div className="flex h-[72px] shrink-0 items-center border-b border-[#edf1f6] px-2">
+        <NavLink to={routes.virtualMachines} className="flex min-w-0 items-center gap-2.5" aria-label="ABCO home">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#0d91d7] text-xs font-semibold text-white shadow-[0_7px_16px_-8px_rgba(13,145,215,0.8)]">
             A
           </span>
           <span>
-            <span className="block text-sm font-semibold text-[#17233d]">ABCO Console</span>
-            <span className="block text-[11px] text-[#7587a1]">Business continuity</span>
+            <span className="block truncate text-[13px] font-semibold text-[#17233d]">ABCO Console</span>
+            <span className="block truncate text-[10px] text-[#7c8aa0]">Business continuity</span>
           </span>
         </NavLink>
       </div>
 
-      <div className="custom-scrollbar flex flex-1 flex-col overflow-y-auto py-6">
+      <div className="custom-scrollbar flex flex-1 flex-col overflow-y-auto py-5">
         <nav className="mb-6" aria-label="Main navigation">
-          <h2 className="mb-4 px-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#178ccd]">
+          <h2 className="mb-2 px-2.5 text-[9px] font-medium uppercase tracking-[0.12em] text-[#97a3b6]">
             Menu
           </h2>
 
-          <ul className="flex flex-col gap-1.5">
+          <ul className="flex flex-col gap-0.5">
             {navItems.map((item) => (
               <li key={item.name}>
                 {item.subItems ? (
                   <>
                     <button
                       type="button"
-                      className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm font-medium transition ${openMenu === item.name ? 'border border-[#b8def6] bg-white/90 text-[#087fca] shadow-sm' : 'text-[#40516c] hover:bg-white/60'}`}
+                      className={`group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition ${openMenu === item.name ? 'bg-[#eef4ff] text-[#3566d6]' : 'text-[#44536c] hover:bg-[#f5f7fa] hover:text-[#263750]'}`}
                       onClick={() => {
                         setOpenMenu((current) => (current === item.name ? '' : item.name))
                       }}
                     >
-                      <span className={openMenu === item.name ? 'text-[#0d91d7]' : 'text-[#71849f]'}>{item.icon}</span>
-                      <span>{item.name}</span>
-                      <ChevronDownIcon className={`ml-auto size-5 transition-transform ${openMenu === item.name ? 'rotate-180 text-[#0d91d7]' : ''}`} />
+                      <span className={openMenu === item.name ? 'text-[#3566d6]' : 'text-[#7b89a0]'}>{item.icon}</span>
+                      <span className="min-w-0 flex-1 truncate">{item.name}</span>
+                      <ChevronDownIcon className={`size-4 transition-transform ${openMenu === item.name ? 'rotate-180 text-[#3566d6]' : 'text-[#8996aa]'}`} />
                     </button>
                     <div className={`overflow-hidden transition-all duration-300 ${openMenu === item.name ? 'max-h-32' : 'max-h-0'}`}>
-                        <ul className="ml-8 mt-2 space-y-1 border-l border-[#b9dff5] pl-3">
+                        <ul className="ml-[18px] mt-1 space-y-0.5 border-l border-[#e0e6ef] pl-3">
                           {item.subItems.map((subItem) => (
                             <li key={subItem.path}>
                               <NavLink
                                 to={subItem.path}
                                 onClick={closeMobileSidebar}
-                                className={({ isActive }) => `block rounded-xl px-3 py-2.5 text-sm font-medium transition ${isActive ? 'bg-white text-[#087fca] shadow-sm' : 'text-[#596b85] hover:bg-white/60 hover:text-[#087fca]'}`}
+                                className={({ isActive }) => `block truncate rounded-lg px-2.5 py-2 text-xs font-medium transition ${isActive ? 'bg-[#eef2fa] text-[#3566d6]' : 'text-[#5e6e86] hover:bg-[#f5f7fa] hover:text-[#263750]'}`}
                               >
                                 {subItem.name}
                               </NavLink>
@@ -98,12 +98,12 @@ export function AppSidebar() {
                   <NavLink
                     to={item.path}
                     onClick={closeMobileSidebar}
-                    className={({ isActive }) => `group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition ${isActive ? 'border border-[#b8def6] bg-white/90 text-[#087fca] shadow-sm' : 'text-[#40516c] hover:bg-white/60'}`}
+                    className={({ isActive }) => `group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition ${isActive ? 'bg-[#eef4ff] text-[#3566d6]' : 'text-[#44536c] hover:bg-[#f5f7fa] hover:text-[#263750]'}`}
                   >
                     {({ isActive }) => (
                       <>
-                        <span className={isActive ? 'text-[#0d91d7]' : 'text-[#71849f]'}>{item.icon}</span>
-                        <span>{item.name}</span>
+                        <span className={isActive ? 'text-[#3566d6]' : 'text-[#7b89a0]'}>{item.icon}</span>
+                        <span className="truncate">{item.name}</span>
                       </>
                     )}
                   </NavLink>
