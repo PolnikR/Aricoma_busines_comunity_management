@@ -44,6 +44,22 @@ export function ChevronDownIcon(props: IconProps) {
   )
 }
 
+export function ChevronLeftIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="m12.5 15-5-5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function ChevronRightIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="m7.5 5 5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export function MenuIcon(props: IconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
@@ -56,6 +72,57 @@ export function SearchIcon(props: IconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
       <path d="M9.167 15.833a6.667 6.667 0 1 0 0-13.333 6.667 6.667 0 0 0 0 13.333ZM14.167 14.167l3.333 3.333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function MoonIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="M16.25 11.43A6.67 6.67 0 0 1 8.57 3.75 6.67 6.67 0 1 0 16.25 11.43Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function CpuIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <rect x="5" y="5" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M8 8h4v4H8V8ZM7 2.5V5m3-2.5V5m3-2.5V5M7 15v2.5m3-2.5v2.5m3-2.5v2.5M2.5 7H5m-2.5 3H5m-2.5 3H5M15 7h2.5M15 10h2.5M15 13h2.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function MemoryIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <rect x="2.5" y="5" width="15" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6 8v4m2.667-4v4m2.666-4v4M14 8v4M5 15v2m3.333-2v2m3.334-2v2M15 15v2" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function LayersIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="m10 2.5 7.5 3.75L10 10 2.5 6.25 10 2.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="m2.5 10 7.5 3.75L17.5 10M2.5 13.75 10 17.5l7.5-3.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function FilterIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="M16.667 4.167H3.333l5.334 6.308v4.358l2.666 1.334v-5.692l5.334-6.308Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function CheckIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="m4.167 10.417 3.333 3.333 8.333-8.333" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }

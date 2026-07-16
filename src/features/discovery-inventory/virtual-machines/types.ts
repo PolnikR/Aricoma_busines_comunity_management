@@ -24,3 +24,34 @@ export interface VirtualMachineFilters {
   connectionState: string
   cluster: string
 }
+
+export type VirtualMachinePageSize = 10 | 25 | 50
+
+export interface VirtualMachinesQuery extends VirtualMachineFilters {
+  page: number
+  pageSize: VirtualMachinePageSize
+}
+
+export interface VirtualMachineMetricsData {
+  total: number
+  poweredOn: number
+  clusters: number
+  totalCpu: number
+  totalMemoryGb: number
+}
+
+export interface VirtualMachineFilterOptions {
+  clusters: string[]
+  powerStates: string[]
+  connectionStates: string[]
+}
+
+export interface VirtualMachinesPageData {
+  items: VirtualMachine[]
+  total: number
+  page: number
+  pageSize: VirtualMachinePageSize
+  pageCount: number
+  metrics: VirtualMachineMetricsData
+  filterOptions: VirtualMachineFilterOptions
+}

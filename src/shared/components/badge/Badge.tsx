@@ -11,9 +11,10 @@ interface BadgeProps {
   startIcon?: ReactNode
   endIcon?: ReactNode
   children: ReactNode
+  className?: string
 }
 
-export function Badge({ variant = 'light', color = 'primary', size = 'md', startIcon, endIcon, children }: BadgeProps) {
+export function Badge({ variant = 'light', color = 'primary', size = 'md', startIcon, endIcon, children, className = '' }: BadgeProps) {
   const baseStyles = 'inline-flex items-center justify-center gap-1 rounded-full px-2.5 py-0.5 font-medium'
   const sizeStyles = {
     sm: 'text-theme-xs',
@@ -41,7 +42,7 @@ export function Badge({ variant = 'light', color = 'primary', size = 'md', start
   }
 
   return (
-    <span className={`${baseStyles} ${sizeStyles[size]} ${variants[variant][color]}`}>
+    <span className={`${baseStyles} ${sizeStyles[size]} ${variants[variant][color]} ${className}`}>
       {startIcon ? <span className="mr-1">{startIcon}</span> : null}
       {children}
       {endIcon ? <span className="ml-1">{endIcon}</span> : null}

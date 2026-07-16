@@ -3,8 +3,8 @@ import { cn } from '@/shared/utils/cn'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode
-  size?: 'sm' | 'md'
-  variant?: 'primary' | 'outline'
+  size?: 'sm' | 'md' | 'icon'
+  variant?: 'primary' | 'outline' | 'ghost'
   startIcon?: ReactNode
   endIcon?: ReactNode
 }
@@ -21,19 +21,21 @@ export function Button({
   ...props
 }: ButtonProps) {
   const sizeClasses = {
-    sm: 'px-4 py-3 text-sm',
-    md: 'px-5 py-3.5 text-sm',
+    sm: 'h-9 px-3 text-sm',
+    md: 'h-11 px-4 text-sm',
+    icon: 'size-10 p-0',
   }
 
   const variantClasses = {
-    primary: 'bg-brand-500 text-white shadow-theme-xs hover:bg-brand-600 disabled:bg-brand-300',
-    outline: 'bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03] dark:hover:text-gray-300',
+    primary: 'bg-[#1268f3] text-white shadow-[0_10px_24px_-12px_rgba(18,104,243,0.9)] hover:bg-[#0b57da] disabled:bg-[#9cbcf2]',
+    outline: 'border border-[#cfdfef] bg-white text-[#40516c] shadow-sm hover:border-[#abd5f2] hover:bg-[#f5faff] hover:text-[#087fca]',
+    ghost: 'bg-transparent text-[#66758f] hover:bg-[#eef7ff] hover:text-[#087fca]',
   }
 
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition',
+        'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#1596dd]/15',
         sizeClasses[size],
         variantClasses[variant],
         disabled ? 'cursor-not-allowed opacity-50' : undefined,

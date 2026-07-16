@@ -18,16 +18,16 @@ interface CardDescriptionProps {
 
 export function Card({ children, className }: CardProps) {
   return (
-    <div className={cn('rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6', className)}>
+    <div className={cn('rounded-[20px] border border-[#dfeaf5] bg-white p-4 shadow-[0_14px_35px_-28px_rgba(37,72,112,0.45)] sm:p-5', className)}>
       {children}
     </div>
   )
 }
 
 export function CardTitle({ children, className }: CardTitleProps) {
-  return <h2 className={cn('mb-1 text-theme-xl font-medium text-gray-800 dark:text-white/90', className)}>{children}</h2>
+  return <h2 className={cn('mb-1 text-base font-semibold text-[#17233d]', className)}>{children}</h2>
 }
 
 export function CardDescription({ children, className }: CardDescriptionProps) {
-  return <p className={cn('text-sm text-gray-500 dark:text-gray-400', className)}>{children}</p>
+  return <p className={cn('text-sm text-[#72819a]', className)}>{children}</p>
 }

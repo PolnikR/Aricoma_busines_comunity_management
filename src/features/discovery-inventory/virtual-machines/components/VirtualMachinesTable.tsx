@@ -1,4 +1,5 @@
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
+import { CheckIcon } from '@/shared/icons/Icons'
 import type { VirtualMachine } from '../types'
 import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
 
@@ -10,47 +11,54 @@ interface VirtualMachinesTableProps {
 
 export function VirtualMachinesTable({ virtualMachines, selectedId, onSelect }: VirtualMachinesTableProps) {
   return (
-    <div className="overflow-hidden rounded-b-xl">
+    <div className="min-w-[760px]">
       <div className="max-w-full overflow-x-auto custom-scrollbar">
         <Table>
-          <TableHeader className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-white/[0.02]">
+          <TableHeader className="sticky top-0 z-10 border-b border-[#dfe9f3] bg-[#f6f9fc]">
             <TableRow>
-              <TableCell isHeader className="px-5 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">VM</TableCell>
-              <TableCell isHeader className="px-5 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Status</TableCell>
-              <TableCell isHeader className="px-5 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Compute</TableCell>
-              <TableCell isHeader className="px-5 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Placement</TableCell>
-              <TableCell isHeader className="px-5 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Storage</TableCell>
-              <TableCell isHeader className="px-5 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Snapshots</TableCell>
+              <TableCell isHeader className="whitespace-nowrap px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Virtual machine</TableCell>
+              <TableCell isHeader className="whitespace-nowrap px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Status</TableCell>
+              <TableCell isHeader className="hidden whitespace-nowrap px-4 py-3 text-left text-xs font-medium text-gray-500 2xl:table-cell dark:text-gray-400">Operating system</TableCell>
+              <TableCell isHeader className="whitespace-nowrap px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Compute</TableCell>
+              <TableCell isHeader className="whitespace-nowrap px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Placement</TableCell>
+              <TableCell isHeader className="hidden whitespace-nowrap px-4 py-3 text-left text-xs font-medium text-gray-500 3xl:table-cell dark:text-gray-400">Storage</TableCell>
+              <TableCell isHeader className="hidden whitespace-nowrap px-4 py-3 text-left text-xs font-medium text-gray-500 2xl:table-cell dark:text-gray-400">Snapshots</TableCell>
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+          <TableBody className="divide-y divide-[#edf2f7]">
             {virtualMachines.map((vm) => (
-              <TableRow key={vm.id} className={selectedId === vm.id ? 'bg-brand-50/60 dark:bg-brand-500/[0.08]' : 'bg-white hover:bg-gray-50 dark:bg-transparent dark:hover:bg-white/[0.03]'}>
-                <TableCell className="px-5 py-4">
-                  <button type="button" className="block max-w-xs text-left" onClick={() => { onSelect(vm) }}>
-                    <span className="block truncate text-sm font-medium text-gray-900 dark:text-white">{vm.name}</span>
-                    <span className="mt-1 block truncate text-xs text-gray-500 dark:text-gray-400">{vm.hostname} / {vm.ipAddress}</span>
+              <TableRow key={vm.id} className={selectedId === vm.id ? 'bg-[#edf7ff]' : 'bg-white transition hover:bg-[#f8fbfe]'}>
+                <TableCell className="px-4 py-3">
+                  <button type="button" className="flex max-w-xs items-center gap-3 text-left outline-none focus-visible:ring-4 focus-visible:ring-brand-500/15" aria-pressed={selectedId === vm.id} onClick={() => { onSelect(vm) }}>
+                    <span className={`flex size-8 shrink-0 items-center justify-center rounded-xl ${selectedId === vm.id ? 'bg-[#0d91d7] text-white' : 'bg-[#eff4f8] text-[#71819a]'}`}>
+                      {selectedId === vm.id ? <CheckIcon className="size-4" /> : <span className="text-[10px] font-semibold">VM</span>}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium text-gray-900 dark:text-white">{vm.name}</span>
+                      <span className="mt-0.5 block truncate text-xs text-gray-500 dark:text-gray-400">{vm.hostname || '-'} / {vm.ipAddress || '-'}</span>
+                    </span>
                   </button>
                 </TableCell>
-                <TableCell className="px-5 py-4">
-                  <div className="flex flex-col items-start gap-2">
+                <TableCell className="px-4 py-3">
+                  <div className="flex flex-col items-start gap-1.5">
                     <VirtualMachineStatusBadge value={vm.powerState} kind="power" />
                     <VirtualMachineStatusBadge value={vm.connectionState} kind="connection" />
                   </div>
                 </TableCell>
-                <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                <TableCell className="hidden max-w-52 px-4 py-3 text-sm text-gray-700 2xl:table-cell dark:text-gray-300"><span className="block truncate" title={vm.guestOs}>{vm.guestOs}</span></TableCell>
+                <TableCell className="whitespace-nowrap px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                   <span className="block">{vm.vcpu} vCPU</span>
                   <span className="block text-xs text-gray-500">{vm.memoryGb} GB RAM</span>
                 </TableCell>
-                <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                <TableCell className="hidden px-4 py-3 text-sm text-gray-700 3xl:table-cell dark:text-gray-300">
                   <span className="block max-w-[220px] truncate">{vm.cluster}</span>
                   <span className="block max-w-[220px] truncate text-xs text-gray-500">{vm.host}</span>
                 </TableCell>
-                <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                <TableCell className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                   <span className="block max-w-[200px] truncate">{vm.datastore}</span>
                   <span className="block text-xs text-gray-500">{vm.diskCount} disks / {vm.diskCapacityGb} GB</span>
                 </TableCell>
-                <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{vm.snapshotCount}</TableCell>
+                <TableCell className="hidden px-4 py-3 text-center text-sm text-gray-700 2xl:table-cell dark:text-gray-300">{vm.snapshotCount}</TableCell>
               </TableRow>
             ))}
           </TableBody>
