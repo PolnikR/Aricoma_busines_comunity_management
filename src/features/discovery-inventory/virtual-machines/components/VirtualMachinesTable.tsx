@@ -11,9 +11,8 @@ interface VirtualMachinesTableProps {
 
 export function VirtualMachinesTable({ virtualMachines, selectedId, onSelect }: VirtualMachinesTableProps) {
   return (
-    <div className="min-w-[760px]">
-      <div className="max-w-full overflow-x-auto custom-scrollbar">
-        <Table>
+    <div className="custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Scrollable virtual machine table">
+        <Table className="min-w-[760px]">
           <TableHeader className="sticky top-0 z-10 border-b border-[#dfe9f3] bg-[#f6f9fc]">
             <TableRow>
               <TableCell isHeader className="whitespace-nowrap px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Virtual machine</TableCell>
@@ -76,7 +75,6 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, onSelect }: 
             ))}
           </TableBody>
         </Table>
-      </div>
     </div>
   )
 }
