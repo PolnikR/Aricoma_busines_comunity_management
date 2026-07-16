@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { routes } from '@/app/routes'
-import { ChevronDownIcon, CpuIcon, GridIcon, LayersIcon, MemoryIcon, ServerIcon, SettingsIcon, PlugIcon } from '@/shared/icons/Icons'
+import { ApiIcon, ChevronDownIcon, CpuIcon, ExecutionIcon, GridIcon, LayersIcon, MemoryIcon, MonitoringIcon, ServerIcon, SettingsIcon, PlugIcon } from '@/shared/icons/Icons'
 import { useSidebar } from './useSidebar'
 
 interface NavItem {
@@ -68,17 +68,17 @@ const navItems: NavItem[] = [
   },
   {
     name: 'Execution Engine',
-    icon: <ServerIcon />,
+    icon: <ExecutionIcon />,
     path: routes.executionEngine,
   },
   {
     name: 'Monitoring & Audit',
-    icon: <SettingsIcon />,
+    icon: <MonitoringIcon />,
     path: routes.monitoringAudit,
   },
   {
     name: 'Internal Component APIs',
-    icon: <PlugIcon />,
+    icon: <ApiIcon />,
     path: routes.internalComponentApis,
   },
 ]
