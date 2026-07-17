@@ -1,55 +1,28 @@
-import { z } from 'zod'
+import { fetchDiscoveryInventory } from '../../api/discoveryInventoryApi'
+import type { DiscoveredVirtualMachine } from '../../model/discoveryTypes'
 import type { VirtualMachine, VirtualMachinesPageData, VirtualMachinesQuery } from '../types'
 
-const vmDiskSchema = z.object({
-  capacity_gb: z.number().catch(0),
-})
-
-const vmSchema = z.object({
-  name: z.string().catch('Unknown VM'),
-  moId: z.string().catch('unknown'),
-  power_state: z.string().catch('unknown'),
-  connection_state: z.string().catch('unknown'),
-  guest_os: z.string().catch('-'),
-  guest_hostname: z.string().catch('-'),
-  ip_address: z.string().catch('-'),
-  vcpu: z.number().catch(0),
-  memory_gb: z.number().catch(0),
-  host: z.string().catch('-'),
-  cluster: z.string().catch('-'),
-  datastore: z.string().catch('-'),
-  folder: z.string().catch('-'),
-  vdisks: z.array(vmDiskSchema).catch([]),
-  snapshot_count: z.number().catch(0),
-  vmware_tools_status: z.string().catch('-'),
-})
-
-const responseSchema = z.object({
-  count: z.number(),
-  vms: z.array(vmSchema),
-})
-
-function mapVirtualMachine(vm: z.infer<typeof vmSchema>): VirtualMachine {
-  const diskCapacityGb = vm.vdisks.reduce((total, disk) => total + disk.capacity_gb, 0)
+function mapVirtualMachine(vm: DiscoveredVirtualMachine): VirtualMachine {
+  const diskCapacityGb = vm.disks.reduce((total, disk) => total + disk.capacityGb, 0)
 
   return {
-    id: vm.moId,
+    id: vm.id,
     name: vm.name,
-    powerState: vm.power_state,
-    connectionState: vm.connection_state,
-    guestOs: vm.guest_os,
-    hostname: vm.guest_hostname,
-    ipAddress: vm.ip_address,
+    powerState: vm.powerState,
+    connectionState: vm.connectionState,
+    guestOs: vm.guestOs,
+    hostname: vm.hostname,
+    ipAddress: vm.ipAddress,
     vcpu: vm.vcpu,
-    memoryGb: vm.memory_gb,
+    memoryGb: vm.memoryGb,
     host: vm.host,
     cluster: vm.cluster,
-    datastore: vm.datastore,
+    datastore: vm.primaryDatastore,
     folder: vm.folder,
-    diskCount: vm.vdisks.length,
+    diskCount: vm.disks.length,
     diskCapacityGb,
-    snapshotCount: vm.snapshot_count,
-    toolsStatus: vm.vmware_tools_status,
+    snapshotCount: vm.snapshotCount,
+    toolsStatus: vm.toolsStatus,
   }
 }
 
@@ -65,16 +38,8 @@ function getSortedValues(values: string[]) {
 }
 
 export async function fetchVirtualMachines(query: VirtualMachinesQuery): Promise<VirtualMachinesPageData> {
-  const response = await fetch('/fixtures/apiResponse.json')
-
-  if (!response.ok) {
-    throw new Error(`Discovery fixture request failed with status ${String(response.status)}`)
-  }
-
-  const payload: unknown = await response.json()
-  const parsed = responseSchema.parse(payload)
-
-  const virtualMachines = parsed.vms.map(mapVirtualMachine)
+  const inventory = await fetchDiscoveryInventory()
+  const virtualMachines = inventory.virtualMachines.map(mapVirtualMachine)
   const filtered = virtualMachines.filter((vm) => (
     matchesSearch(vm, query.search)
     && (!query.powerState || vm.powerState === query.powerState)

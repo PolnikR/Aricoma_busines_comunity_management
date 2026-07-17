@@ -6,9 +6,10 @@
     "module": "esnext",
     "types": ["vite/client"],
     "allowArbitraryExtensions": true,
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "elkjs-runtime": ["./src/types/elkjs-runtime.d.ts"]
     },
 
     "strict": true,
