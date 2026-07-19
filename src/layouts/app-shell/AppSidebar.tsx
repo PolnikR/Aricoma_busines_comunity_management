@@ -2,7 +2,17 @@ import { NavLink, useLocation } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { routes } from '@/app/routes'
-import { ChevronDownIcon, PlugIcon, ServerIcon, SettingsIcon } from '@/shared/icons/Icons'
+import {
+  ApiIcon,
+  ChevronDownIcon,
+  ExecutionIcon,
+  GridIcon,
+  LayersIcon,
+  MonitoringIcon,
+  PlugIcon,
+  ServerIcon,
+  SettingsIcon,
+} from '@/shared/icons/Icons'
 import { useSidebar } from './useSidebar'
 
 interface NavItem {
@@ -54,6 +64,41 @@ const navItems: NavItem[] = [
       { name: 'Snapshots & History', path: routes.snapshotsHistory },
       { name: 'Discovery Agents', path: routes.discoveryAgents },
     ],
+  },
+  {
+    name: 'Storage Orchestration',
+    icon: <LayersIcon />,
+    path: routes.storageOrchestration,
+  },
+  {
+    name: 'VMware Orchestration',
+    icon: <GridIcon />,
+    path: routes.vmwareOrchestration,
+  },
+  {
+    name: 'IBM PowerVM Orchestration',
+    icon: <ServerIcon />,
+    path: routes.powerVmOrchestration,
+  },
+  {
+    name: 'Recovery Plans',
+    icon: <LayersIcon />,
+    path: routes.recoveryPlans,
+  },
+  {
+    name: 'Execution Engine',
+    icon: <ExecutionIcon />,
+    path: routes.executionEngine,
+  },
+  {
+    name: 'Monitoring & Audit',
+    icon: <MonitoringIcon />,
+    path: routes.monitoringAudit,
+  },
+  {
+    name: 'Internal Component APIs',
+    icon: <ApiIcon />,
+    path: routes.internalComponentApis,
   },
 ]
 

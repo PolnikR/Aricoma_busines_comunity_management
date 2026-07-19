@@ -3,7 +3,12 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/layouts/app-shell/AppShell'
 import { VirtualMachinesPage } from '@/features/discovery-inventory/virtual-machines/pages/VirtualMachinesPage'
 import { ModuleWorkQueuePage } from '@/features/module-placeholder/pages/ModuleWorkQueuePage'
-import { discoveryInventoryPlaceholderPages, platformAdministrationPages, providersConnectorsPages } from './modulePageConfigs'
+import {
+  discoveryInventoryPlaceholderPages,
+  platformAdministrationPages,
+  providersConnectorsPages,
+  remainingEpicPages,
+} from './modulePageConfigs'
 import { routes } from './routes'
 
 const InfrastructurePage = lazy(async () => {
@@ -56,6 +61,7 @@ export function AppRouter() {
           )}
         />
         {renderModulePageRoutes(discoveryInventoryPlaceholderPages)}
+        {renderModulePageRoutes(remainingEpicPages)}
         <Route path="*" element={<Navigate to={routes.virtualMachines} replace />} />
       </Route>
     </Routes>

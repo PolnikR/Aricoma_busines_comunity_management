@@ -21,4 +21,11 @@ export const routes = {
   validationCommit: '/discovery-inventory/validation-commit',
   snapshotsHistory: '/discovery-inventory/snapshots-history',
   discoveryAgents: '/discovery-inventory/discovery-agents',
+  storageOrchestration: '/storage-orchestration',
+  vmwareOrchestration: '/vmware-orchestration',
+  powerVmOrchestration: '/ibm-powervm-orchestration',
+  recoveryPlans: '/recovery-plans',
+  executionEngine: '/execution-engine',
+  monitoringAudit: '/monitoring-audit',
+  internalComponentApis: '/internal-component-apis',
 } as const
