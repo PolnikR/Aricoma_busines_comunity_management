@@ -1,0 +1,191 @@
+import { routes } from './routes'
+
+export interface ModulePageConfig {
+  path: string
+  eyebrow: string
+  title: string
+  description: string
+  excelSource: string
+  apiBoundary: string
+  workflowItems: string[]
+}
+
+export const platformAdministrationPages: ModulePageConfig[] = [
+  {
+    path: routes.platformAdministration,
+    eyebrow: 'Platform Administration',
+    title: 'Platform overview',
+    description: 'Operational entry point for platform status, governance, configuration exposure, and pending administration work.',
+    excelSource: 'Epics row 2; 10 PA Requirements',
+    apiBoundary: 'GET /api/platform/overview',
+    workflowItems: ['Health summary', 'Open actions', 'Recent changes'],
+  },
+  {
+    path: routes.platformConfiguration,
+    eyebrow: 'Platform Administration',
+    title: 'Configuration',
+    description: 'Central configuration workspace for application-wide settings, validation, versioning, maintenance mode, and time localization.',
+    excelSource: '10 PA Requirements: System configuration; Time and localization',
+    apiBoundary: 'GET /api/platform/configuration',
+    workflowItems: ['Configuration list', 'Validation results', 'Version history'],
+  },
+  {
+    path: routes.platformIdentityAccess,
+    eyebrow: 'Platform Administration',
+    title: 'Identity & access',
+    description: 'Administration workspace for emergency access, roles, sessions, and internal service identities.',
+    excelSource: '10 PA Requirements: Identity and access; Internal API security; Service identities',
+    apiBoundary: 'GET /api/platform/identity-access',
+    workflowItems: ['Users and roles', 'Session controls', 'Service identities'],
+  },
+  {
+    path: routes.platformSecrets,
+    eyebrow: 'Platform Administration',
+    title: 'Secrets',
+    description: 'Secure workspace for credential storage, masking, rotation, and future external vault integration boundaries.',
+    excelSource: '10 PA Requirements: Secrets management',
+    apiBoundary: 'GET /api/platform/secrets',
+    workflowItems: ['Credential references', 'Rotation queue', 'Masking checks'],
+  },
+  {
+    path: routes.platformCertificates,
+    eyebrow: 'Platform Administration',
+    title: 'Certificates',
+    description: 'TLS certificate management, expiry monitoring, trust visibility, and certificate validation workflow.',
+    excelSource: '10 PA Requirements: Certificates',
+    apiBoundary: 'GET /api/platform/certificates',
+    workflowItems: ['Certificate inventory', 'Expiry warnings', 'Replacement validation'],
+  },
+  {
+    path: routes.platformDiagnostics,
+    eyebrow: 'Platform Administration',
+    title: 'Diagnostics',
+    description: 'Administration diagnostics workspace for health dashboard, support bundles, log levels, and platform resource monitoring.',
+    excelSource: '10 PA Requirements: Diagnostics; Resource monitoring; Observability',
+    apiBoundary: 'GET /api/platform/diagnostics',
+    workflowItems: ['Component health', 'Diagnostic bundles', 'Log controls'],
+  },
+  {
+    path: routes.platformAuditRetention,
+    eyebrow: 'Platform Administration',
+    title: 'Audit & retention',
+    description: 'Audit evidence workspace for audit records, search, export, SIEM forwarding, retention, and protected evidence.',
+    excelSource: '10 PA Requirements: Audit; Data management',
+    apiBoundary: 'GET /api/platform/audit-retention',
+    workflowItems: ['Audit search', 'Export queue', 'Retention policy'],
+  },
+]
+
+export const providersConnectorsPages: ModulePageConfig[] = [
+  {
+    path: routes.providersConnectors,
+    eyebrow: 'Providers & Connectors',
+    title: 'Providers',
+    description: 'Provider registry workspace for provider identity, lifecycle state, metadata, ownership, tags, and supported provider types.',
+    excelSource: '21 PC Requirements: Provider Registry',
+    apiBoundary: 'GET /api/providers',
+    workflowItems: ['Provider list', 'Provider detail', 'Lifecycle actions'],
+  },
+  {
+    path: routes.providerConnectionProfiles,
+    eyebrow: 'Providers & Connectors',
+    title: 'Connection profiles',
+    description: 'Endpoint, TLS, trust, timeout, retry, and maintenance profile workspace for registered providers.',
+    excelSource: '21 PC Requirements: Connection Profile',
+    apiBoundary: 'GET /api/providers/connection-profiles',
+    workflowItems: ['Endpoint settings', 'TLS validation', 'Timeout and retry policy'],
+  },
+  {
+    path: routes.providerCredentials,
+    eyebrow: 'Providers & Connectors',
+    title: 'Credentials',
+    description: 'Credential reference workspace for provider credential type, rotation, validation, masking, and credential use audit.',
+    excelSource: '21 PC Requirements: Credentials',
+    apiBoundary: 'GET /api/providers/credentials',
+    workflowItems: ['Credential references', 'Validation status', 'Rotation history'],
+  },
+  {
+    path: routes.providerCapabilityMatrix,
+    eyebrow: 'Providers & Connectors',
+    title: 'Capability matrix',
+    description: 'Cross-provider capability view for supported, restricted, unknown, and temporarily unavailable connector capabilities.',
+    excelSource: '21 PC Requirements: Capability Framework; 26 PC Capability Matrix',
+    apiBoundary: 'GET /api/providers/capabilities',
+    workflowItems: ['Capability matrix', 'Capability evidence', 'Drift history'],
+  },
+  {
+    path: routes.providerDiscoverySettings,
+    eyebrow: 'Providers & Connectors',
+    title: 'Discovery settings',
+    description: 'Provider discovery settings for manual discovery, scheduled discovery, scope exclusions, pagination, throttling, and partial results.',
+    excelSource: '21 PC Requirements: Discovery',
+    apiBoundary: 'GET /api/providers/discovery-settings',
+    workflowItems: ['Schedules', 'Scope rules', 'Discovery limits'],
+  },
+  {
+    path: routes.providerHealthDiagnostics,
+    eyebrow: 'Providers & Connectors',
+    title: 'Health & diagnostics',
+    description: 'Connector and provider health workspace for connectivity state, diagnostics, compatibility, and recent provider operations.',
+    excelSource: '21 PC Requirements: Health & Diagnostics; Connector Lifecycle',
+    apiBoundary: 'GET /api/providers/health-diagnostics',
+    workflowItems: ['Provider health', 'Connector versions', 'Diagnostics evidence'],
+  },
+]
+
+export const discoveryInventoryPlaceholderPages: ModulePageConfig[] = [
+  {
+    path: routes.discoveryJobs,
+    eyebrow: 'Discovery & Inventory',
+    title: 'Discovery jobs',
+    description: 'Workspace for manual discovery, scheduled jobs, cancellation, retry, and progress across discovery phases.',
+    excelSource: '32 DI Requirements: Discovery Management; Direct Discovery',
+    apiBoundary: 'GET /api/discovery/jobs',
+    workflowItems: ['Job list', 'Progress phases', 'Retry and cancel actions'],
+  },
+  {
+    path: routes.inventorySearch,
+    eyebrow: 'Discovery & Inventory',
+    title: 'Inventory search',
+    description: 'Search workspace for current inventory across names, IDs, types, sites, providers, states, and native identifiers.',
+    excelSource: '32 DI Requirements: Inventory Repository; Validation & Operations',
+    apiBoundary: 'GET /api/inventory/search',
+    workflowItems: ['Search filters', 'Result table', 'Saved query context'],
+  },
+  {
+    path: routes.fileImport,
+    eyebrow: 'Discovery & Inventory',
+    title: 'File import',
+    description: 'Inventory package upload workspace for staging, schema validation, malware scan status, provenance, and import expiration.',
+    excelSource: '32 DI Requirements: File Import',
+    apiBoundary: 'GET /api/inventory/imports',
+    workflowItems: ['Upload queue', 'Validation status', 'Staging detail'],
+  },
+  {
+    path: routes.validationCommit,
+    eyebrow: 'Discovery & Inventory',
+    title: 'Validation & commit',
+    description: 'Validation workspace for change preview, blocking errors, explicit commit, atomic commit result, and rollback evidence.',
+    excelSource: '32 DI Requirements: Validation & Operations; File Import; Inventory Repository',
+    apiBoundary: 'GET /api/inventory/change-sets',
+    workflowItems: ['Validation errors', 'Change preview', 'Commit decision'],
+  },
+  {
+    path: routes.snapshotsHistory,
+    eyebrow: 'Discovery & Inventory',
+    title: 'Snapshots & history',
+    description: 'Inventory history workspace for immutable snapshots, resource versions, session comparison, diffs, and rollback snapshot selection.',
+    excelSource: '32 DI Requirements: Inventory Repository',
+    apiBoundary: 'GET /api/inventory/snapshots',
+    workflowItems: ['Snapshot list', 'Session compare', 'Resource history'],
+  },
+  {
+    path: routes.discoveryAgents,
+    eyebrow: 'Discovery & Inventory',
+    title: 'Discovery agents',
+    description: 'Agent workspace for enrollment, health, certificate expiry, compatibility, revocation, diagnostics, and last heartbeat.',
+    excelSource: '32 DI Requirements: Discovery Agent; Validation & Operations',
+    apiBoundary: 'GET /api/discovery/agents',
+    workflowItems: ['Agent dashboard', 'Certificate status', 'Agent diagnostics'],
+  },
+]

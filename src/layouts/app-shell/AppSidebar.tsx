@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { routes } from '@/app/routes'
-import { ApiIcon, ChevronDownIcon, CpuIcon, ExecutionIcon, GridIcon, LayersIcon, MemoryIcon, MonitoringIcon, ServerIcon, SettingsIcon, PlugIcon } from '@/shared/icons/Icons'
+import { ChevronDownIcon, PlugIcon, ServerIcon, SettingsIcon } from '@/shared/icons/Icons'
 import { useSidebar } from './useSidebar'
 
 interface NavItem {
@@ -20,79 +20,55 @@ const navItems: NavItem[] = [
     name: 'Platform Administration',
     icon: <SettingsIcon />,
     subItems: [
-      { name: 'Overview', path: `${routes.platformAdministration}#overview` },
-      { name: 'Configuration', path: `${routes.platformAdministration}#configuration` },
-      { name: 'Users & Roles', path: `${routes.platformAdministration}#users-roles` },
-      { name: 'Secrets', path: `${routes.platformAdministration}#secrets` },
-      { name: 'Audit', path: `${routes.platformAdministration}#audit` },
-      { name: 'Notifications', path: `${routes.platformAdministration}#notifications` },
-      { name: 'Certificates', path: `${routes.platformAdministration}#certificates` },
-      { name: 'Backup & Restore', path: `${routes.platformAdministration}#backup-restore` },
-      { name: 'Diagnostics', path: `${routes.platformAdministration}#diagnostics` },
-      { name: 'Lifecycle', path: `${routes.platformAdministration}#lifecycle` },
-      { name: 'Data Retention', path: `${routes.platformAdministration}#data-retention` },
+      { name: 'Overview', path: routes.platformAdministration },
+      { name: 'Configuration', path: routes.platformConfiguration },
+      { name: 'Identity & Access', path: routes.platformIdentityAccess },
+      { name: 'Secrets', path: routes.platformSecrets },
+      { name: 'Certificates', path: routes.platformCertificates },
+      { name: 'Diagnostics', path: routes.platformDiagnostics },
+      { name: 'Audit & Retention', path: routes.platformAuditRetention },
     ],
   },
   {
     name: 'Providers & Connectors',
     icon: <PlugIcon />,
-    path: routes.providersConnectors,
+    subItems: [
+      { name: 'Providers', path: routes.providersConnectors },
+      { name: 'Connection Profiles', path: routes.providerConnectionProfiles },
+      { name: 'Credentials', path: routes.providerCredentials },
+      { name: 'Capability Matrix', path: routes.providerCapabilityMatrix },
+      { name: 'Discovery Settings', path: routes.providerDiscoverySettings },
+      { name: 'Health & Diagnostics', path: routes.providerHealthDiagnostics },
+    ],
   },
   {
     name: 'Discovery & Inventory',
     icon: <ServerIcon />,
     subItems: [
       { name: 'Virtual Machines', path: routes.virtualMachines },
-      { name: 'Infrastructure', path: routes.infrastructure },
+      { name: 'Infrastructure Topology', path: routes.infrastructure },
+      { name: 'Discovery Jobs', path: routes.discoveryJobs },
+      { name: 'Inventory Search', path: routes.inventorySearch },
+      { name: 'File Import', path: routes.fileImport },
+      { name: 'Validation & Commit', path: routes.validationCommit },
+      { name: 'Snapshots & History', path: routes.snapshotsHistory },
+      { name: 'Discovery Agents', path: routes.discoveryAgents },
     ],
   },
-  {
-    name: 'Storage Orchestration',
-    icon: <MemoryIcon />,
-    path: routes.storageOrchestration,
-  },
-  {
-    name: 'VMware Orchestration',
-    icon: <LayersIcon />,
-    path: routes.vmwareOrchestration,
-  },
-  {
-    name: 'IBM PowerVM Orchestration',
-    icon: <CpuIcon />,
-    path: routes.powerVmOrchestration,
-  },
-  {
-    name: 'Recovery Plans',
-    icon: <GridIcon />,
-    path: routes.recoveryPlans,
-  },
-  {
-    name: 'Execution Engine',
-    icon: <ExecutionIcon />,
-    path: routes.executionEngine,
-  },
-  {
-    name: 'Monitoring & Audit',
-    icon: <MonitoringIcon />,
-    path: routes.monitoringAudit,
-  },
-  {
-    name: 'Internal Component APIs',
-    icon: <ApiIcon />,
-    path: routes.internalComponentApis,
-  },
 ]
+
+function getInitialOpenMenu(pathname: string) {
+  const activeItem = navItems.find((item) => item.subItems?.some((subItem) => pathname === subItem.path || pathname.startsWith(`${subItem.path}/`)))
+  return activeItem?.name ?? 'Discovery & Inventory'
+}
 
 export function AppSidebar() {
   const { isMobileOpen, closeMobileSidebar } = useSidebar()
   const location = useLocation()
-  const [openMenu, setOpenMenu] = useState(() => location.pathname === routes.platformAdministration ? 'Platform Administration' : 'Discovery & Inventory')
+  const [openMenu, setOpenMenu] = useState(() => getInitialOpenMenu(location.pathname))
 
   const isSubItemActive = (path: string) => {
-    const [pathname, hash = ''] = path.split('#')
-    if (location.pathname !== pathname) return false
-    if (!hash) return true
-    return location.hash === `#${hash}` || (!location.hash && hash === 'overview')
+    return location.pathname === path
   }
 
   return (
