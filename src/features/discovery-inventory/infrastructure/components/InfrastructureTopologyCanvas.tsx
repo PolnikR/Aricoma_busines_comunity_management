@@ -81,7 +81,7 @@ function InfrastructureTopologyCanvasContent({
       <Controls
         position="bottom-left"
         showInteractive={false}
-        className="!overflow-hidden !rounded-xl !border !border-[#d7e4ef] !bg-white !shadow-sm"
+        className="overflow-hidden! rounded-xl! border! border-[#d7e4ef]! bg-white! shadow-sm!"
       />
       <MiniMap
         position="bottom-right"
@@ -94,7 +94,7 @@ function InfrastructureTopologyCanvasContent({
           return '#12b76a'
         }}
         maskColor="rgba(226, 235, 244, 0.72)"
-        className="!h-24 !w-36 !cursor-grab !rounded-xl !border !border-[#d7e4ef] !bg-white !shadow-sm active:!cursor-grabbing"
+        className="h-24! w-36! cursor-grab! rounded-xl! border! border-[#d7e4ef]! bg-white! shadow-sm! active:cursor-grabbing!"
       />
     </ReactFlow>
   )
@@ -102,7 +102,10 @@ function InfrastructureTopologyCanvasContent({
 
 export function InfrastructureTopologyCanvas(props: InfrastructureTopologyCanvasProps) {
   return (
-    <div className="size-full min-h-96 min-w-0 max-w-full" aria-label="Infrastructure topology canvas">
+    <div
+      className="size-full min-h-0 min-w-0 max-w-full touch-none lg:touch-auto"
+      aria-label="Infrastructure topology canvas"
+    >
       <ReactFlowProvider>
         <InfrastructureTopologyCanvasContent {...props} />
       </ReactFlowProvider>
