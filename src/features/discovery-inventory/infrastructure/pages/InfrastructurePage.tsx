@@ -1,5 +1,6 @@
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useInfrastructureTopology } from '../api/useInfrastructureTopology'
 import { InfrastructureTopologySkeleton } from '../components/InfrastructureTopologySkeleton'
@@ -31,10 +32,13 @@ export function InfrastructurePage() {
           title="Infrastructure"
           description="Explore discovered cluster, host, virtual machine, and datastore relationships."
         />
-        <EmptyState
+        <FetchErrorAlert
           title="Infrastructure topology could not be loaded"
           description={message}
-          action={<Button onClick={() => { void refetch() }}>Retry loading</Button>}
+          retryLabel="Retry loading"
+          variant="full"
+          isRetrying={isFetching}
+          onRetry={() => { void refetch() }}
         />
       </>
     )
@@ -59,12 +63,13 @@ export function InfrastructurePage() {
       />
 
       {error ? (
-        <div className="mb-4 flex items-center justify-between gap-4 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700" role="alert">
-          <span>Latest request failed. Showing the previous successful topology.</span>
-          <button type="button" className="font-medium underline" onClick={() => { void refetch() }}>
-            Retry
-          </button>
-        </div>
+        <FetchErrorAlert
+          className="mb-4"
+          title="Latest request failed"
+          description="Showing the previous successful topology."
+          isRetrying={isFetching}
+          onRetry={() => { void refetch() }}
+        />
       ) : null}
 
       {data.nodes.length > 0 ? (

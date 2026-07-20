@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { Card } from '@/shared/components/card/Card'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useVirtualMachines } from '../api/useVirtualMachines'
 import { VirtualMachineDetailPanel } from '../components/VirtualMachineDetailPanel'
 import { VirtualMachineMetrics } from '../components/VirtualMachineMetrics'
 import { VirtualMachinesPagination } from '../components/VirtualMachinesPagination'
+import { VirtualMachinesSkeleton } from '../components/VirtualMachinesSkeleton'
 import { VirtualMachinesTable } from '../components/VirtualMachinesTable'
 import { VirtualMachinesToolbar } from '../components/VirtualMachinesToolbar'
 import { useVirtualMachineSearchParams } from '../hooks/useVirtualMachineSearchParams'
@@ -17,29 +19,6 @@ const defaultFilters: VirtualMachineFilters = {
   powerState: '',
   connectionState: '',
   cluster: '',
-}
-
-function VirtualMachinesLoadingState() {
-  return (
-    <div className="space-y-5" aria-busy="true" aria-label="Loading virtual machines">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {['metric-1', 'metric-2', 'metric-3', 'metric-4'].map((item) => <div key={item} className="h-24 animate-pulse rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]" />)}
-      </div>
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="h-[560px] animate-pulse rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]" />
-        <div className="h-[480px] animate-pulse rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]" />
-      </div>
-    </div>
-  )
-}
-
-interface ErrorStateProps {
-  message: string
-  onRetry: () => void
-}
-
-function VirtualMachinesErrorState({ message, onRetry }: ErrorStateProps) {
-  return <EmptyState title="Virtual machines could not be loaded" description={message} action={<Button onClick={onRetry}>Retry loading</Button>} />
 }
 
 export function VirtualMachinesPage() {
@@ -61,10 +40,10 @@ export function VirtualMachinesPage() {
 
   if (isPending) {
     return (
-      <>
+      <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader eyebrow="Discovery & Inventory" title="Virtual machines" description="VMware inventory, health and placement overview." />
-        <VirtualMachinesLoadingState />
-      </>
+        <VirtualMachinesSkeleton />
+      </div>
     )
   }
 
@@ -73,7 +52,14 @@ export function VirtualMachinesPage() {
     return (
       <>
         <PageHeader eyebrow="Discovery & Inventory" title="Virtual machines" description="VMware inventory, health and placement overview." />
-        <VirtualMachinesErrorState message={message} onRetry={() => { void refetch() }} />
+        <FetchErrorAlert
+          title="Virtual machines could not be loaded"
+          description={message}
+          retryLabel="Retry loading"
+          variant="full"
+          isRetrying={isFetching}
+          onRetry={() => { void refetch() }}
+        />
       </>
     )
   }
@@ -93,10 +79,12 @@ export function VirtualMachinesPage() {
         <VirtualMachineMetrics metrics={data.metrics} />
 
         {error ? (
-          <div className="flex items-center justify-between gap-4 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700" role="alert">
-            <span>Latest request failed. Showing the previous successful page.</span>
-            <button type="button" className="font-medium underline" onClick={() => { void refetch() }}>Retry</button>
-          </div>
+          <FetchErrorAlert
+            title="Latest request failed"
+            description="Showing the previous successful page."
+            isRetrying={isFetching}
+            onRetry={() => { void refetch() }}
+          />
         ) : null}
 
         <Card className="relative flex flex-1 flex-col overflow-hidden p-0 sm:p-0 lg:min-h-0">
