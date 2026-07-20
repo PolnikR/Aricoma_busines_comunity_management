@@ -110,7 +110,7 @@ export function InfrastructureTopologyWorkspace({
   }
 
   return (
-    <Card className="relative flex min-h-[620px] w-full min-w-0 max-w-full flex-1 flex-col overflow-hidden p-0 sm:p-0 lg:min-h-0">
+    <Card className="relative flex h-dvh min-h-0 w-full min-w-0 max-w-full flex-none flex-col overflow-hidden p-0 sm:p-0 lg:h-auto lg:flex-1 lg:min-h-0">
       <InfrastructureTopologyToolbar
         filters={filters}
         options={filterOptions}
@@ -120,7 +120,7 @@ export function InfrastructureTopologyWorkspace({
         onFitView={() => { setFitViewRequest((value) => value + 1) }}
       />
 
-      <div className="relative min-h-[480px] flex-1 bg-[#f8fbfe] lg:min-h-0">
+      <div className="relative min-h-0 flex-1 overflow-hidden bg-[#f8fbfe]">
         {positionedTopology ? (
           <InfrastructureTopologyCanvas
             topology={positionedTopology}

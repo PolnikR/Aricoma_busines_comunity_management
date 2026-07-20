@@ -23,7 +23,7 @@ export const DatastoreNode = memo(function DatastoreNode({
       selected={selected}
       showTargetHandle
     >
-      <span className="text-[11px] font-medium text-[#4f6079]">
+      <span className="block pb-1 text-[11px] font-medium text-[#4f6079]">
         {data.allocatedCapacityGb.toLocaleString()} GB allocated
       </span>
     </TopologyNodeShell>
