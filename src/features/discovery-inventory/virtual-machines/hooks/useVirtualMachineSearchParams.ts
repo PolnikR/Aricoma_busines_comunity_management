@@ -14,6 +14,11 @@ function parsePageSize(value: string | null): VirtualMachinePageSize {
   return pageSizes.includes(parsed as VirtualMachinePageSize) ? parsed as VirtualMachinePageSize : 10
 }
 
+function parseTags(value: string | null): string[] {
+  if (!value) return []
+  return value.split(',').filter(Boolean)
+}
+
 export function useVirtualMachineSearchParams() {
   const [searchParams, setSearchParams] = useSearchParams()
   const query = useMemo<VirtualMachinesQuery>(() => ({
@@ -23,6 +28,7 @@ export function useVirtualMachineSearchParams() {
     powerState: searchParams.get('powerState') ?? '',
     connectionState: searchParams.get('connectionState') ?? '',
     cluster: searchParams.get('cluster') ?? '',
+    tags: parseTags(searchParams.get('tags')),
   }), [searchParams])
 
   const updateQuery = (changes: Partial<VirtualMachinesQuery>, resetPage = false) => {
@@ -30,7 +36,12 @@ export function useVirtualMachineSearchParams() {
     const values = resetPage ? { ...changes, page: 1 } : changes
 
     Object.entries(values).forEach(([key, value]) => {
-      const normalized = String(value)
+      let normalized = ''
+      if (Array.isArray(value)) {
+        normalized = value.join(',')
+      } else {
+        normalized = String(value)
+      }
       if (!normalized || (key === 'page' && normalized === '1') || (key === 'pageSize' && normalized === '10')) next.delete(key)
       else next.set(key, normalized)
     })

@@ -8,6 +8,7 @@ import type { VirtualMachineFilterOptions, VirtualMachineFilters } from '../type
 interface VirtualMachinesToolbarProps {
   filters: VirtualMachineFilters
   options: VirtualMachineFilterOptions
+  availableTags?: string[]
   onFiltersChange: (filters: VirtualMachineFilters) => void
   onReset: () => void
 }
@@ -18,10 +19,14 @@ const powerTabs = [
   { label: 'Powered off', value: 'poweredOff' },
 ]
 
-export function VirtualMachinesToolbar({ filters, options, onFiltersChange, onReset }: VirtualMachinesToolbarProps) {
+export function VirtualMachinesToolbar({ filters, options, availableTags = [], onFiltersChange, onReset }: VirtualMachinesToolbarProps) {
   const [showFilters, setShowFilters] = useState(false)
   const updateFilter = (key: keyof VirtualMachineFilters) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     onFiltersChange({ ...filters, [key]: event.target.value })
+  }
+  const updateTags = (event: ChangeEvent<HTMLSelectElement>) => {
+    const selectedValues = Array.from(event.target.selectedOptions, (option) => option.value)
+    onFiltersChange({ ...filters, tags: selectedValues })
   }
 
   return (
@@ -43,7 +48,7 @@ export function VirtualMachinesToolbar({ filters, options, onFiltersChange, onRe
       </div>
 
       {showFilters ? (
-        <div className="grid grid-cols-1 gap-3 border-t border-[#e7eff7] bg-[#f8fbfe] p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+        <div className="grid grid-cols-1 gap-3 border-t border-[#e7eff7] bg-[#f8fbfe] p-4 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
           <Field label="Connection" htmlFor="connection-filter">
             <Select id="connection-filter" value={filters.connectionState} onChange={updateFilter('connectionState')}>
               <option value="">All connections</option>
@@ -54,6 +59,11 @@ export function VirtualMachinesToolbar({ filters, options, onFiltersChange, onRe
             <Select id="cluster-filter" value={filters.cluster} onChange={updateFilter('cluster')}>
               <option value="">All clusters</option>
               {options.clusters.map((value) => <option key={value} value={value}>{value}</option>)}
+            </Select>
+          </Field>
+          <Field label="Tags" htmlFor="tags-filter">
+            <Select id="tags-filter" multiple value={filters.tags} onChange={updateTags} style={{ minHeight: '40px' }}>
+              {availableTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
             </Select>
           </Field>
           <Button size="sm" variant="ghost" onClick={onReset}>Clear filters</Button>

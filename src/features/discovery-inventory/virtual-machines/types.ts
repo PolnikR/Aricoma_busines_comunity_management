@@ -24,6 +24,7 @@ export interface VirtualMachineFilters {
   powerState: string
   connectionState: string
   cluster: string
+  tags: string[]
 }
 
 export type VirtualMachinePageSize = 10 | 25 | 50

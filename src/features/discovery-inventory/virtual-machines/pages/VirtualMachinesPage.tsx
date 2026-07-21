@@ -6,6 +6,7 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useAllVirtualMachines } from '../api/useAllVirtualMachines'
 import { applyFiltersAndPagination } from '../api/virtualMachinesApi'
+import { useTags } from '../api/useTags'
 import { VirtualMachineDetailPanel } from '../components/VirtualMachineDetailPanel'
 import { VirtualMachineMetrics } from '../components/VirtualMachineMetrics'
 import { VirtualMachinesPagination } from '../components/VirtualMachinesPagination'
@@ -20,11 +21,13 @@ const defaultFilters: VirtualMachineFilters = {
   powerState: '',
   connectionState: '',
   cluster: '',
+  tags: [],
 }
 
 export function VirtualMachinesPage() {
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
   const { data: allData, error, isPending, isFetching, refetch } = useAllVirtualMachines()
+  const { data: availableTags = [] } = useTags()
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const data = allData ? applyFiltersAndPagination(allData, query) : null
@@ -39,6 +42,7 @@ export function VirtualMachinesPage() {
     powerState: query.powerState,
     connectionState: query.connectionState,
     cluster: query.cluster,
+    tags: query.tags,
   }
 
   if (isPending) {
@@ -100,7 +104,7 @@ export function VirtualMachinesPage() {
             </div>
             <div className="grid flex-1 grid-cols-1 gap-3 bg-[#f5f8fc] p-3 lg:min-h-0 xl:grid-cols-[minmax(0,1fr)_350px] 2xl:grid-cols-[minmax(0,1fr)_390px]">
               <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#dbe7f2] bg-white shadow-sm lg:min-h-0" aria-label="Virtual machine inventory table">
-                <VirtualMachinesToolbar filters={filters} options={data.filterOptions} onFiltersChange={updateFilters} onReset={() => { updateFilters(defaultFilters) }} />
+                <VirtualMachinesToolbar filters={filters} options={data.filterOptions} availableTags={availableTags} onFiltersChange={updateFilters} onReset={() => { updateFilters(defaultFilters) }} />
                 <div className="flex-1 lg:min-h-0 lg:overflow-y-auto custom-scrollbar">
                   {data.items.length > 0 ? (
                     <VirtualMachinesTable virtualMachines={data.items} selectedId={selectedVirtualMachine?.id ?? null} onSelect={(virtualMachine) => { setSelectedId(virtualMachine.id) }} />
