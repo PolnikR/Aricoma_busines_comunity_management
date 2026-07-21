@@ -36,6 +36,15 @@ export function VirtualMachinesPage() {
     if (!isFetching && data && data.page !== query.page) updateQuery({ page: data.page })
   }, [data, isFetching, query.page, updateQuery])
 
+  useEffect(() => {
+    if (availableTags.length > 0 && query.tags.length > 0) {
+      const validTags = query.tags.filter((tag) => availableTags.includes(tag))
+      if (validTags.length !== query.tags.length) {
+        updateQuery({ tags: validTags }, true)
+      }
+    }
+  }, [availableTags, query.tags, updateQuery])
+
   const selectedVirtualMachine = data?.items.find((vm) => vm.id === selectedId) ?? data?.items[0] ?? null
   const filters: VirtualMachineFilters = {
     search: query.search,

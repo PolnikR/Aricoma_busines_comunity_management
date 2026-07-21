@@ -63,11 +63,11 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, onSelect }: 
                   <span className="block text-xs text-gray-500 dark:text-gray-400">{vm.memoryGb} GB RAM</span>
                 </TableCell>
                 <TableCell className="hidden px-5 py-5 text-sm text-gray-700 3xl:table-cell dark:text-gray-300">
-                  <span className="block max-w-55 truncate font-medium">{vm.cluster}</span>
-                  <span className="block max-w-55 truncate text-xs text-gray-500 dark:text-gray-400">{vm.host}</span>
+                  <span className="block max-w-56 truncate font-medium">{vm.cluster}</span>
+                  <span className="block max-w-56 truncate text-xs text-gray-500 dark:text-gray-400">{vm.host}</span>
                 </TableCell>
                 <TableCell className="px-5 py-5 text-sm text-gray-700 dark:text-gray-300">
-                  <span className="block max-w-50 truncate font-medium">{vm.datastore}</span>
+                  <span className="block max-w-48 truncate font-medium">{vm.datastore}</span>
                   <span className="block text-xs text-gray-500 dark:text-gray-400">{vm.diskCount} disks / {vm.diskCapacityGb} GB</span>
                 </TableCell>
                 <TableCell className="hidden px-5 py-5 text-center text-sm font-medium text-gray-700 2xl:table-cell dark:text-gray-300">{vm.snapshotCount}</TableCell>

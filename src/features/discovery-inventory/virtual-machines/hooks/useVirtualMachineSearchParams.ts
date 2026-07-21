@@ -19,6 +19,7 @@ function parseTags(value: string | null): string[] {
   return value.split(',').filter(Boolean)
 }
 
+
 export function useVirtualMachineSearchParams() {
   const [searchParams, setSearchParams] = useSearchParams()
   const query = useMemo<VirtualMachinesQuery>(() => ({
@@ -36,12 +37,7 @@ export function useVirtualMachineSearchParams() {
     const values = resetPage ? { ...changes, page: 1 } : changes
 
     Object.entries(values).forEach(([key, value]) => {
-      let normalized = ''
-      if (Array.isArray(value)) {
-        normalized = value.join(',')
-      } else {
-        normalized = String(value)
-      }
+      const normalized = Array.isArray(value) ? value.join(',') : String(value)
       if (!normalized || (key === 'page' && normalized === '1') || (key === 'pageSize' && normalized === '10')) next.delete(key)
       else next.set(key, normalized)
     })

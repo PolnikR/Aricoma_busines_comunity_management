@@ -67,9 +67,9 @@ export function VirtualMachineDetailPanel({ virtualMachine }: VirtualMachineDeta
 
       <div className="border-b border-[#dfe9f3] bg-[#f5f8fc] px-5 py-4">
         <p className="mb-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Tags</p>
-        {(virtualMachine.tags as string[]).length > 0 ? (
+        {virtualMachine.tags.length > 0 ? (
           <div className="flex flex-wrap gap-2">
-            {(virtualMachine.tags as string[]).map((tag: string) => (
+            {virtualMachine.tags.map((tag) => (
               <span
                 key={tag}
                 className="inline-flex items-center rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400"
