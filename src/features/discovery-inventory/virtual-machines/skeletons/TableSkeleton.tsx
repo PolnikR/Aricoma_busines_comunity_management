@@ -26,16 +26,16 @@ export function TableSkeleton() {
       </div>
 
       <div className="flex-1 overflow-hidden">
-        <div className="grid min-w-[760px] grid-cols-[minmax(190px,1.4fr)_120px_100px_120px] gap-5 border-b border-[#dfe9f3] bg-[#f6f9fc] px-4 py-3">
+        <div className="grid min-w-190 grid-cols-[minmax(190px,1.4fr)_120px_100px_120px] gap-5 border-b border-[#dfe9f3] bg-[#f6f9fc] px-4 py-3">
           {['w-24', 'w-12', 'w-16', 'w-16'].map((width, index) => (
             <SkeletonBlock key={index} className={`h-3 ${width}`} />
           ))}
         </div>
-        <div className="min-w-[760px] divide-y divide-[#edf2f7]">
+        <div className="min-w-190 divide-y divide-[#edf2f7]">
           {rowSkeletons.map((row, index) => (
             <div
               key={index}
-              className="grid min-h-[73px] grid-cols-[minmax(190px,1.4fr)_120px_100px_120px] items-center gap-5 px-4 py-3"
+              className="grid min-h-18.25 grid-cols-[minmax(190px,1.4fr)_120px_100px_120px] items-center gap-5 px-4 py-3"
             >
               <div className="flex items-center gap-3">
                 <SkeletonBlock className="size-8 shrink-0 rounded-xl" />

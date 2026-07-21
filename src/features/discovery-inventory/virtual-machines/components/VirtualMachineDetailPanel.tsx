@@ -17,8 +17,8 @@ function DetailRow({ label, value, secondary }: DetailRowProps) {
     <div className="flex items-start justify-between gap-4 border-b border-[#edf2f7] py-3 last:border-b-0">
       <dt className="shrink-0 text-xs text-gray-500 dark:text-gray-400">{label}</dt>
       <dd className="min-w-0 text-right text-sm font-medium text-gray-800 dark:text-white/90">
-        <span className="block break-words">{value || '-'}</span>
-        {secondary ? <span className="mt-0.5 block break-words text-xs font-normal text-gray-500 dark:text-gray-400">{secondary}</span> : null}
+        <span className="block wrap-break-word">{value || '-'}</span>
+        {secondary ? <span className="mt-0.5 block wrap-break-word text-xs font-normal text-gray-500 dark:text-gray-400">{secondary}</span> : null}
       </dd>
     </div>
   )
@@ -74,9 +74,9 @@ export function VirtualMachineDetailPanel({ virtualMachine }: VirtualMachineDeta
         <div className="flex items-start justify-between gap-4 border-b border-[#edf2f7] py-3 last:border-b-0">
           <dt className="shrink-0 text-xs text-gray-500 dark:text-gray-400">Tags</dt>
           <dd className="min-w-0 text-right text-sm font-medium text-gray-800 dark:text-white/90">
-            {virtualMachine.tags.length > 0 ? (
+            {(virtualMachine.tags as string[]).length > 0 ? (
               <div className="flex flex-wrap justify-end gap-1.5">
-                {virtualMachine.tags.map((tag) => (
+                {(virtualMachine.tags as string[]).map((tag: string) => (
                   <span
                     key={tag}
                     className="inline-flex items-center rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400"
@@ -86,7 +86,7 @@ export function VirtualMachineDetailPanel({ virtualMachine }: VirtualMachineDeta
                 ))}
               </div>
             ) : (
-              <span className="block break-words">-</span>
+              <span className="block wrap-break-word">-</span>
             )}
           </dd>
         </div>

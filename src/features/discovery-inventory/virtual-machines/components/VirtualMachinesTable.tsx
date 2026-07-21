@@ -12,7 +12,7 @@ interface VirtualMachinesTableProps {
 export function VirtualMachinesTable({ virtualMachines, selectedId, onSelect }: VirtualMachinesTableProps) {
   return (
     <div className="custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Scrollable virtual machine table">
-        <Table className="min-w-[760px]">
+        <Table className="min-w-190">
           <TableHeader className="sticky top-0 z-10 border-b border-[#dfe9f3] bg-[#f6f9fc]">
             <TableRow>
               <TableCell isHeader className="whitespace-nowrap px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Virtual machine</TableCell>
@@ -63,11 +63,11 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, onSelect }: 
                   <span className="block text-xs text-gray-500">{vm.memoryGb} GB RAM</span>
                 </TableCell>
                 <TableCell className="hidden px-4 py-3 text-sm text-gray-700 3xl:table-cell dark:text-gray-300">
-                  <span className="block max-w-[220px] truncate">{vm.cluster}</span>
-                  <span className="block max-w-[220px] truncate text-xs text-gray-500">{vm.host}</span>
+                  <span className="block max-w-55 truncate">{vm.cluster}</span>
+                  <span className="block max-w-55 truncate text-xs text-gray-500">{vm.host}</span>
                 </TableCell>
                 <TableCell className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                  <span className="block max-w-[200px] truncate">{vm.datastore}</span>
+                  <span className="block max-w-50 truncate">{vm.datastore}</span>
                   <span className="block text-xs text-gray-500">{vm.diskCount} disks / {vm.diskCapacityGb} GB</span>
                 </TableCell>
                 <TableCell className="hidden px-4 py-3 text-center text-sm text-gray-700 2xl:table-cell dark:text-gray-300">{vm.snapshotCount}</TableCell>
