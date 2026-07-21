@@ -65,31 +65,30 @@ export function VirtualMachineDetailPanel({ virtualMachine }: VirtualMachineDeta
         </div>
       </div>
 
+      <div className="border-b border-[#dfe9f3] bg-[#f5f8fc] px-5 py-4">
+        <p className="mb-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Tags</p>
+        {(virtualMachine.tags as string[]).length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {(virtualMachine.tags as string[]).map((tag: string) => (
+              <span
+                key={tag}
+                className="inline-flex items-center rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">-</p>
+        )}
+      </div>
+
       <dl className="px-5 py-2">
         <DetailRow label="Operating system" value={virtualMachine.guestOs} />
         <DetailRow label="Cluster" value={virtualMachine.cluster} secondary={virtualMachine.host} />
         <DetailRow label="Datastore" value={virtualMachine.datastore} secondary={`${String(virtualMachine.diskCount)} disks / ${String(Math.round(virtualMachine.diskCapacityGb))} GB`} />
         <DetailRow label="Folder" value={virtualMachine.folder} />
         <DetailRow label="Snapshots" value={String(virtualMachine.snapshotCount)} />
-        <div className="flex items-start justify-between gap-4 border-b border-[#edf2f7] py-3 last:border-b-0">
-          <dt className="shrink-0 text-xs text-gray-500 dark:text-gray-400">Tags</dt>
-          <dd className="min-w-0 text-right text-sm font-medium text-gray-800 dark:text-white/90">
-            {(virtualMachine.tags as string[]).length > 0 ? (
-              <div className="flex flex-wrap justify-end gap-1.5">
-                {(virtualMachine.tags as string[]).map((tag: string) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <span className="block wrap-break-word">-</span>
-            )}
-          </dd>
-        </div>
       </dl>
     </aside>
   )
