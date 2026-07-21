@@ -38,10 +38,35 @@ function getSortedValues(values: string[]) {
   return Array.from(new Set(values.filter(Boolean))).sort((first, second) => first.localeCompare(second))
 }
 
-export async function fetchVirtualMachines(query: VirtualMachinesQuery): Promise<VirtualMachinesPageData> {
+export interface AllVirtualMachinesData {
+  virtualMachines: VirtualMachine[]
+  metrics: VirtualMachinesPageData['metrics']
+  filterOptions: VirtualMachinesPageData['filterOptions']
+}
+
+export async function fetchAllVirtualMachines(): Promise<AllVirtualMachinesData> {
   const inventory = await fetchDiscoveryInventory()
   const virtualMachines = inventory.virtualMachines.map(mapVirtualMachine)
-  const filtered = virtualMachines.filter((vm) => (
+
+  return {
+    virtualMachines,
+    metrics: {
+      total: virtualMachines.length,
+      poweredOn: virtualMachines.filter((vm) => vm.powerState === 'poweredOn').length,
+      clusters: new Set(virtualMachines.map((vm) => vm.cluster).filter(Boolean)).size,
+      totalCpu: virtualMachines.reduce((total, vm) => total + vm.vcpu, 0),
+      totalMemoryGb: virtualMachines.reduce((total, vm) => total + vm.memoryGb, 0),
+    },
+    filterOptions: {
+      clusters: getSortedValues(virtualMachines.map((vm) => vm.cluster)),
+      powerStates: getSortedValues(virtualMachines.map((vm) => vm.powerState)),
+      connectionStates: getSortedValues(virtualMachines.map((vm) => vm.connectionState)),
+    },
+  }
+}
+
+export function applyFiltersAndPagination(data: AllVirtualMachinesData, query: VirtualMachinesQuery): VirtualMachinesPageData {
+  const filtered = data.virtualMachines.filter((vm) => (
     matchesSearch(vm, query.search)
     && (!query.powerState || vm.powerState === query.powerState)
     && (!query.connectionState || vm.connectionState === query.connectionState)
@@ -57,17 +82,12 @@ export async function fetchVirtualMachines(query: VirtualMachinesQuery): Promise
     page,
     pageSize: query.pageSize,
     pageCount,
-    metrics: {
-      total: virtualMachines.length,
-      poweredOn: virtualMachines.filter((vm) => vm.powerState === 'poweredOn').length,
-      clusters: new Set(virtualMachines.map((vm) => vm.cluster).filter(Boolean)).size,
-      totalCpu: virtualMachines.reduce((total, vm) => total + vm.vcpu, 0),
-      totalMemoryGb: virtualMachines.reduce((total, vm) => total + vm.memoryGb, 0),
-    },
-    filterOptions: {
-      clusters: getSortedValues(virtualMachines.map((vm) => vm.cluster)),
-      powerStates: getSortedValues(virtualMachines.map((vm) => vm.powerState)),
-      connectionStates: getSortedValues(virtualMachines.map((vm) => vm.connectionState)),
-    },
+    metrics: data.metrics,
+    filterOptions: data.filterOptions,
   }
+}
+
+export async function fetchVirtualMachines(query: VirtualMachinesQuery): Promise<VirtualMachinesPageData> {
+  const allData = await fetchAllVirtualMachines()
+  return applyFiltersAndPagination(allData, query)
 }

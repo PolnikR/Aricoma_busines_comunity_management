@@ -4,7 +4,8 @@ import { Card } from '@/shared/components/card/Card'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
-import { useVirtualMachines } from '../api/useVirtualMachines'
+import { useAllVirtualMachines } from '../api/useAllVirtualMachines'
+import { applyFiltersAndPagination } from '../api/virtualMachinesApi'
 import { VirtualMachineDetailPanel } from '../components/VirtualMachineDetailPanel'
 import { VirtualMachineMetrics } from '../components/VirtualMachineMetrics'
 import { VirtualMachinesPagination } from '../components/VirtualMachinesPagination'
@@ -23,8 +24,10 @@ const defaultFilters: VirtualMachineFilters = {
 
 export function VirtualMachinesPage() {
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
-  const { data, error, isPending, isFetching, refetch } = useVirtualMachines(query)
+  const { data: allData, error, isPending, isFetching, refetch } = useAllVirtualMachines()
   const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  const data = allData ? applyFiltersAndPagination(allData, query) : null
 
   useEffect(() => {
     if (!isFetching && data && data.page !== query.page) updateQuery({ page: data.page })

@@ -11,4 +11,13 @@ export default defineConfig({
       'elkjs-runtime': path.resolve(__dirname, './node_modules/elkjs/lib/elk.bundled.js'),
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://10.99.99.54:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
 })

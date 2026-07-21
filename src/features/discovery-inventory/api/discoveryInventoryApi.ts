@@ -5,7 +5,7 @@ import type {
   DiscoveryInventory,
 } from '../model/discoveryTypes'
 
-const DISCOVERY_INVENTORY_URL = '/fixtures/apiResponse.json'
+const DISCOVERY_INVENTORY_URL = '/api/vms'
 
 const virtualDiskSchema = z.object({
   uuid: z.string().catch(''),
@@ -83,7 +83,9 @@ function mapVirtualMachine(
 }
 
 export async function fetchDiscoveryInventory(): Promise<DiscoveryInventory> {
-  const response = await fetch(DISCOVERY_INVENTORY_URL)
+  const response = await fetch(DISCOVERY_INVENTORY_URL, {
+    headers: { Accept: 'application/json' },
+  })
 
   if (!response.ok) {
     throw new Error(`Discovery inventory request failed with status ${String(response.status)}`)
