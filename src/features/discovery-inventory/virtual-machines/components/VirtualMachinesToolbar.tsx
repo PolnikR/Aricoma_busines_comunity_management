@@ -2,6 +2,7 @@ import type { ChangeEvent } from 'react'
 import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
+import { MultiSelectDropdown } from '@/shared/components/form/MultiSelectDropdown'
 import { FilterIcon, SearchIcon } from '@/shared/icons/Icons'
 import type { VirtualMachineFilterOptions, VirtualMachineFilters } from '../types'
 
@@ -24,9 +25,8 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
   const updateFilter = (key: keyof VirtualMachineFilters) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     onFiltersChange({ ...filters, [key]: event.target.value })
   }
-  const updateTags = (event: ChangeEvent<HTMLSelectElement>) => {
-    const selectedValues = Array.from(event.target.selectedOptions, (option) => option.value)
-    onFiltersChange({ ...filters, tags: selectedValues })
+  const updateTags = (selected: string[]) => {
+    onFiltersChange({ ...filters, tags: selected })
   }
 
   return (
@@ -62,9 +62,7 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
             </Select>
           </Field>
           <Field label="Tags" htmlFor="tags-filter">
-            <Select id="tags-filter" multiple value={filters.tags} onChange={updateTags} style={{ minHeight: '40px' }}>
-              {availableTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
-            </Select>
+            <MultiSelectDropdown id="tags-filter" options={availableTags} selected={filters.tags} onChange={updateTags} />
           </Field>
           <Button size="sm" variant="ghost" onClick={onReset}>Clear filters</Button>
         </div>
