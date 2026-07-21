@@ -21,21 +21,49 @@ const powerTabs = [
 ]
 
 export function VirtualMachinesToolbar({ filters, options, availableTags = [], onFiltersChange, onReset }: VirtualMachinesToolbarProps) {
-  const [showFilters, setShowFilters] = useState(false)
-  const updateFilter = (key: keyof VirtualMachineFilters) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    onFiltersChange({ ...filters, [key]: event.target.value })
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [tempFilters, setTempFilters] = useState(filters)
+
+  const openModal = () => {
+    setTempFilters(filters)
+    setIsModalOpen(true)
   }
-  const updateTags = (selected: string[]) => {
-    onFiltersChange({ ...filters, tags: selected, untagged: false })
+
+  const updateTempFilter = (key: keyof VirtualMachineFilters) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setTempFilters({ ...tempFilters, [key]: event.target.value })
   }
-  const toggleUntagged = () => {
-    onFiltersChange({ ...filters, untagged: !filters.untagged, tags: [] })
+
+  const updateTempTags = (selected: string[]) => {
+    setTempFilters({ ...tempFilters, tags: selected, untagged: false })
   }
+
+  const toggleTempUntagged = () => {
+    setTempFilters({ ...tempFilters, untagged: !tempFilters.untagged, tags: [] })
+  }
+
+  const handleApplyFilters = () => {
+    onFiltersChange(tempFilters)
+    setIsModalOpen(false)
+  }
+
+  const handleResetFilters = () => {
+    onReset()
+    setTempFilters(filters)
+  }
+
+  const activeFilterCount = [
+    filters.search,
+    filters.powerState,
+    filters.connectionState,
+    filters.cluster,
+    filters.tags.length > 0 ? 'tags' : '',
+    filters.untagged ? 'untagged' : '',
+  ].filter(Boolean).length
 
   return (
     <div className="shrink-0 border-b border-[#e3edf6]">
       <div className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
-        <Input id="vm-search" aria-label="Search virtual machines" className="lg:w-72" value={filters.search} onChange={updateFilter('search')} type="search" placeholder="Search name, hostname or IP" leadingIcon={<SearchIcon className="size-4" />} />
+        <Input id="vm-search" aria-label="Search virtual machines" className="lg:w-72" value={filters.search} onChange={(e) => { onFiltersChange({ ...filters, search: e.target.value }) }} type="search" placeholder="Search name, hostname or IP" leadingIcon={<SearchIcon className="size-4" />} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex h-10 overflow-x-auto rounded-xl bg-[#eef4f9] p-0.5" aria-label="Power state filter">
             {powerTabs.map((tab) => (
@@ -44,38 +72,53 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
               </button>
             ))}
           </div>
-          <Button size="sm" variant="outline" startIcon={<FilterIcon className="size-4" />} onClick={() => { setShowFilters((value) => !value) }} aria-expanded={showFilters}>
-            Filters
+          <Button size="sm" variant="outline" startIcon={<FilterIcon className="size-4" />} onClick={openModal} aria-expanded={isModalOpen}>
+            Filters {activeFilterCount > 0 && <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#0d91d7] text-xs font-semibold text-white">{activeFilterCount}</span>}
           </Button>
         </div>
       </div>
 
-      {showFilters ? (
-        <div className="border-t border-[#e7eff7] bg-[#f8fbfe] p-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end mb-3">
-            <Field label="Connection" htmlFor="connection-filter">
-              <Select id="connection-filter" value={filters.connectionState} onChange={updateFilter('connectionState')}>
-                <option value="">All connections</option>
-                {options.connectionStates.map((value) => <option key={value} value={value}>{value}</option>)}
-              </Select>
-            </Field>
-            <Field label="Cluster" htmlFor="cluster-filter">
-              <Select id="cluster-filter" value={filters.cluster} onChange={updateFilter('cluster')}>
-                <option value="">All clusters</option>
-                {options.clusters.map((value) => <option key={value} value={value}>{value}</option>)}
-              </Select>
-            </Field>
-            <Field label="Tags" htmlFor="tags-filter">
-              <MultiSelectDropdown id="tags-filter" options={availableTags} selected={filters.tags} onChange={updateTags} />
-            </Field>
-            <Button size="sm" variant="ghost" onClick={onReset}>Clear filters</Button>
+      {isModalOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/30" onClick={() => { setIsModalOpen(false) }} />
+          <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white shadow-lg" onClick={(e) => { e.stopPropagation() }}>
+            <div className="border-b border-[#e3edf6] px-6 py-4">
+              <h2 className="text-base font-semibold text-[#17233d]">Filter Virtual Machines</h2>
+            </div>
+
+            <div className="space-y-4 px-6 py-4">
+              <Field label="Connection" htmlFor="modal-connection-filter">
+                <Select id="modal-connection-filter" value={tempFilters.connectionState} onChange={updateTempFilter('connectionState')}>
+                  <option value="">All connections</option>
+                  {options.connectionStates.map((value) => <option key={value} value={value}>{value}</option>)}
+                </Select>
+              </Field>
+
+              <Field label="Cluster" htmlFor="modal-cluster-filter">
+                <Select id="modal-cluster-filter" value={tempFilters.cluster} onChange={updateTempFilter('cluster')}>
+                  <option value="">All clusters</option>
+                  {options.clusters.map((value) => <option key={value} value={value}>{value}</option>)}
+                </Select>
+              </Field>
+
+              <Field label="Tags" htmlFor="modal-tags-filter">
+                <MultiSelectDropdown id="modal-tags-filter" options={availableTags} selected={tempFilters.tags} onChange={updateTempTags} />
+              </Field>
+
+              <label className="flex items-center gap-3 cursor-pointer pt-2">
+                <input type="checkbox" checked={tempFilters.untagged} onChange={toggleTempUntagged} className="rounded border-[#cfdaea]" />
+                <span className="text-sm font-medium text-[#273750]">Show only VMs without tags</span>
+              </label>
+            </div>
+
+            <div className="flex gap-3 border-t border-[#e3edf6] px-6 py-4">
+              <Button size="sm" variant="ghost" onClick={() => { setIsModalOpen(false) }} className="flex-1">Cancel</Button>
+              <Button size="sm" variant="ghost" onClick={handleResetFilters} className="flex-1">Clear all</Button>
+              <Button size="sm" onClick={handleApplyFilters} className="flex-1 bg-[#0d91d7] text-white">Apply</Button>
+            </div>
           </div>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" checked={filters.untagged} onChange={toggleUntagged} className="rounded border-[#cfdaea]" />
-            <span className="text-[#273750] font-medium">Show only VMs without tags</span>
-          </label>
-        </div>
-      ) : null}
+        </>
+      )}
     </div>
   )
 }

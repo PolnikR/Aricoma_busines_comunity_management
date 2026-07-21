@@ -53,20 +53,24 @@ export function VirtualMachineDetailPanel({ virtualMachine }: VirtualMachineDeta
       </div>
 
       <div className="grid grid-cols-2 border-b border-[#dfe9f3] bg-white/70">
-        <div className="border-r border-[#dfe9f3] p-4">
-          <CpuIcon className="size-5 text-brand-500" />
-          <p className="mt-2 text-lg font-semibold text-gray-900 dark:text-white">{virtualMachine.vcpu}</p>
-          <p className="text-xs text-gray-500">vCPU</p>
+        <div className="flex items-center gap-2 border-r border-[#dfe9f3] p-4">
+          <CpuIcon className="size-5 shrink-0 text-brand-500" />
+          <div className="flex items-baseline gap-1">
+            <p className="text-lg font-semibold text-gray-900 dark:text-white">{virtualMachine.vcpu}</p>
+            <p className="text-xs text-gray-500">vCPU</p>
+          </div>
         </div>
-        <div className="p-4">
-          <MemoryIcon className="size-5 text-brand-500" />
-          <p className="mt-2 text-lg font-semibold text-gray-900 dark:text-white">{virtualMachine.memoryGb} GB</p>
-          <p className="text-xs text-gray-500">Memory</p>
+        <div className="flex items-center gap-2 p-4">
+          <MemoryIcon className="size-5 shrink-0 text-brand-500" />
+          <div className="flex items-baseline gap-1">
+            <p className="text-lg font-semibold text-gray-900 dark:text-white">{virtualMachine.memoryGb} GB</p>
+            <p className="text-xs text-gray-500">Memory</p>
+          </div>
         </div>
       </div>
 
-      <div className="border-b border-[#dfe9f3] bg-[#f5f8fc] px-5 py-4">
-        <p className="mb-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Tags</p>
+      <div className="border-b border-[#dfe9f3] bg-[#f5f8fc] px-5 py-2">
+        <p className="mb-1 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Tags</p>
         {virtualMachine.tags.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {virtualMachine.tags.map((tag) => (
