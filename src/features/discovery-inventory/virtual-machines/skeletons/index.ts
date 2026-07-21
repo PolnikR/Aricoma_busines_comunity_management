@@ -1,0 +1,5 @@
+export { DetailSkeleton } from './DetailSkeleton'
+export { MetricsSkeleton } from './MetricsSkeleton'
+export { SkeletonBlock } from './SkeletonBlock'
+export { TableSkeleton } from './TableSkeleton'
+export { VirtualMachinesSkeleton } from './VirtualMachinesSkeleton'
