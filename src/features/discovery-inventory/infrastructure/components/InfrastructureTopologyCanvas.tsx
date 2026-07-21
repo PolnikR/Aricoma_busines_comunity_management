@@ -48,7 +48,7 @@ function InfrastructureTopologyCanvasContent({
 
   useEffect(() => {
     const animationFrame = window.requestAnimationFrame(() => {
-      void fitView({ duration: 300, padding: 0.08, minZoom: 0.45, maxZoom: 0.9 })
+      void fitView({ duration: 300, padding: 0.02, minZoom: 0.01, maxZoom: 1.6 })
     })
 
     return () => {
@@ -74,7 +74,7 @@ function InfrastructureTopologyCanvasContent({
       minZoom={0.15}
       maxZoom={1.6}
       fitView
-      fitViewOptions={{ padding: 0.08, minZoom: 0.45, maxZoom: 0.9 }}
+      fitViewOptions={{ padding: 0.02, minZoom: 0.01, maxZoom: 1.6 }}
       proOptions={{ hideAttribution: true }}
       className="bg-[#f8fbfe]"
       aria-label="Infrastructure topology diagram"

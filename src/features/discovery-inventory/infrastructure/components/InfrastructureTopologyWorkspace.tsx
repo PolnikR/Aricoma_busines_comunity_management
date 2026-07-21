@@ -119,6 +119,34 @@ export function InfrastructureTopologyWorkspace({
       })
   }
 
+  const handleResetPositions = () => {
+    const requestId = layoutRequestId.current + 1
+    layoutRequestId.current = requestId
+    overridesRef.current = {}
+    clearOverrides()
+    void layoutInfrastructureTopology(filteredTopology)
+      .then(
+        (nextTopology) => {
+          if (layoutRequestId.current !== requestId) return
+
+          setLayoutResult({
+            source: filteredTopology,
+            topology: applyTopologyNodePositionOverrides(nextTopology, overridesRef.current),
+          })
+          setLayoutError(null)
+          setFitViewRequest((value) => value + 1)
+        },
+        (error: unknown) => {
+          if (layoutRequestId.current !== requestId) return
+
+          setLayoutError({
+            source: filteredTopology,
+            message: error instanceof Error ? error.message : 'Topology layout failed.',
+          })
+        },
+      )
+  }
+
   return (
     <Card className="relative flex h-dvh min-h-0 w-full min-w-0 max-w-full flex-none flex-col overflow-hidden p-0 sm:p-0 lg:h-auto lg:flex-1 lg:min-h-0">
       <InfrastructureTopologyToolbar
@@ -127,6 +155,7 @@ export function InfrastructureTopologyWorkspace({
         isLayouting={isLayouting}
         onFiltersChange={setFilters}
         onAutoLayout={handleAutoLayout}
+        onResetPositions={handleResetPositions}
         onFitView={() => { setFitViewRequest((value) => value + 1) }}
       />
 

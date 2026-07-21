@@ -13,6 +13,7 @@ interface InfrastructureTopologyToolbarProps {
   isLayouting: boolean
   onFiltersChange: (filters: InfrastructureTopologyFilters) => void
   onAutoLayout: () => void
+  onResetPositions: () => void
   onFitView: () => void
 }
 
@@ -28,6 +29,7 @@ export function InfrastructureTopologyToolbar({
   isLayouting,
   onFiltersChange,
   onAutoLayout,
+  onResetPositions,
   onFitView,
 }: InfrastructureTopologyToolbarProps) {
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
@@ -95,6 +97,13 @@ export function InfrastructureTopologyToolbar({
           onClick={onAutoLayout}
         >
           {isLayouting ? 'Layouting' : 'Auto layout'}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onResetPositions}
+        >
+          Reset positions
         </Button>
         <Button
           size="sm"

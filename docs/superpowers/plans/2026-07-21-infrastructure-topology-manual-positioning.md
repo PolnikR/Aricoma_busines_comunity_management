@@ -151,6 +151,31 @@ Browser testing:
 3. **Per-node reset:** Button to "reset this node to auto-layout" without clearing others
 4. **Export/import:** Save/restore position snapshots as JSON for different "view profiles"
 
+## Layout Direction Update: Top-to-Bottom Flow
+
+**Date:** 2026-07-21 (same session)
+
+Changed the ELK layout direction from `RIGHT` (left-to-right) to `DOWN` (top-to-bottom) so that VMs and other same-layer nodes spread horizontally (left-to-right) instead of stacking vertically.
+
+### Changes
+
+1. **`src/features/discovery-inventory/infrastructure/layout/layoutInfrastructureTopology.ts`**
+   - Changed `'elk.direction': 'RIGHT'` → `'elk.direction': 'DOWN'`
+
+2. **`src/features/discovery-inventory/infrastructure/layout/layoutInfrastructureTopology.test.ts`**
+   - Updated test assertions from checking x-axis ordering to y-axis ordering (layer sequence now progresses top-to-bottom, not left-to-right)
+
+### Visual Impact
+
+- **Before:** Clusters (left) → Hosts → VMs (stacked vertically) → Datastores (right)
+- **After:** Clusters (top) → Hosts → VMs (spread horizontally) → Datastores (bottom)
+
+### Compatibility
+
+- No ripple effects on canvas rendering, drag positioning, or manual overrides — all consume `{x,y}` coordinates regardless of ELK flow direction
+- Existing localStorage position overrides continue to work without modification
+- MiniMap, Controls, and fitView operate on the bounding box, unaffected by direction
+
 ## References
 
 - Commit: (feature branch: `spike/ant-design-shell` — pending integration)
