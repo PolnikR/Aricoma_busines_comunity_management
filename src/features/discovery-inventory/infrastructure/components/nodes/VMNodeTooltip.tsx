@@ -1,3 +1,6 @@
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+
 interface VMNodeTooltipProps {
   data: {
     name: string
@@ -10,6 +13,12 @@ interface VMNodeTooltipProps {
     cluster?: string
     tags?: string[]
   }
+  nodeRef: React.RefObject<HTMLElement | null>
+}
+
+interface Position {
+  top: number
+  left: number
 }
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -21,9 +30,76 @@ function Field({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function VMNodeTooltip({ data }: VMNodeTooltipProps) {
-  return (
-    <div className="absolute top-0 right-0 z-50 rounded-lg border border-slate-700 bg-slate-900 p-3 text-xs shadow-lg min-w-[260px]">
+function calculateTooltipPosition(nodeElement: HTMLElement): Position {
+  const rect = nodeElement.getBoundingClientRect()
+  const tooltipWidth = 260
+  const tooltipHeight = 220 // Approximate, may need adjustment
+
+  // Default: top-right of node
+  let top = rect.top
+  let left = rect.right + 8 // 8px gap from node
+
+  // Smart repositioning if tooltip would clip off-screen
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+
+  // If tooltip goes off right edge, position to left of node
+  if (left + tooltipWidth > viewportWidth) {
+    left = rect.left - tooltipWidth - 8
+  }
+
+  // If still off-screen (node is very far left), clamp to viewport
+  if (left < 0) {
+    left = 8
+  }
+
+  // If tooltip goes off bottom edge, position above node
+  if (top + tooltipHeight > viewportHeight) {
+    top = rect.top - tooltipHeight - 8
+  }
+
+  // If still off-screen (node is very high), clamp to viewport
+  if (top < 0) {
+    top = 8
+  }
+
+  return { top, left }
+}
+
+export function VMNodeTooltip({ data, nodeRef }: VMNodeTooltipProps) {
+  const [position, setPosition] = useState<Position>({ top: 0, left: 0 })
+  const tooltipRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!nodeRef.current) return
+
+    const updatePosition = () => {
+      const newPosition = calculateTooltipPosition(nodeRef.current!)
+      setPosition(newPosition)
+    }
+
+    // Calculate initial position
+    updatePosition()
+
+    // Recalculate on window resize or scroll
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition)
+
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition)
+    }
+  }, [nodeRef])
+
+  const tooltipContent = (
+    <div
+      ref={tooltipRef}
+      className="fixed z-50 rounded-lg border border-slate-700 bg-slate-900 p-3 text-xs shadow-lg min-w-[260px] pointer-events-auto"
+      style={{
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+      }}
+    >
       <div className="space-y-2">
         <Field label="Name" value={data.name} />
         <Field label="Status" value={data.status} />
@@ -55,6 +131,8 @@ export function VMNodeTooltip({ data }: VMNodeTooltipProps) {
       </div>
     </div>
   )
+
+  return createPortal(tooltipContent, document.body)
 }
 
 export type { VMNodeTooltipProps }

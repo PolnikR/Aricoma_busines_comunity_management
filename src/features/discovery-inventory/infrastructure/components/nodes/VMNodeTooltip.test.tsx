@@ -1,9 +1,30 @@
 import { cleanup, render, screen } from '@testing-library/react'
+import { createRef } from 'react'
 import { afterEach, describe, expect, test } from 'vitest'
 import { VMNodeTooltip, type VMNodeTooltipProps } from './VMNodeTooltip'
 
 describe('VMNodeTooltip', () => {
   afterEach(cleanup)
+
+  const createNodeRef = () => {
+    const ref = createRef<HTMLElement>()
+    // Create a mock element with getBoundingClientRect
+    const mockElement = document.createElement('div')
+    mockElement.getBoundingClientRect = () => ({
+      top: 100,
+      left: 100,
+      right: 200,
+      bottom: 150,
+      width: 100,
+      height: 50,
+      x: 100,
+      y: 100,
+      toJSON: () => ({}),
+    })
+    ;(ref as any).current = mockElement
+    return ref
+  }
+
   const defaultProps: VMNodeTooltipProps = {
     data: {
       name: 'app-server-01',
@@ -16,6 +37,7 @@ describe('VMNodeTooltip', () => {
       cluster: 'prod-cluster',
       tags: [],
     },
+    nodeRef: createNodeRef(),
   }
 
   test('renders all label-value pairs when data is complete', () => {
@@ -36,6 +58,7 @@ describe('VMNodeTooltip', () => {
         name: 'simple-vm',
         status: 'powered off',
       },
+      nodeRef: createNodeRef(),
     }
     render(<VMNodeTooltip {...props} />)
     expect(screen.getByText('IP:')).toBeInTheDocument()
@@ -51,6 +74,7 @@ describe('VMNodeTooltip', () => {
         status: 'powered on',
         tags: ['production', 'critical', 'monitored'],
       },
+      nodeRef: createNodeRef(),
     }
     render(<VMNodeTooltip {...props} />)
     expect(screen.getByText('Tags')).toBeInTheDocument()
@@ -66,6 +90,7 @@ describe('VMNodeTooltip', () => {
         status: 'powered on',
         tags: [],
       },
+      nodeRef: createNodeRef(),
     }
     render(<VMNodeTooltip {...props} />)
     // The parent div that would contain "Tags" label should not exist
@@ -78,6 +103,7 @@ describe('VMNodeTooltip', () => {
         name: 'no-tags-vm',
         status: 'powered on',
       },
+      nodeRef: createNodeRef(),
     }
     render(<VMNodeTooltip {...props} />)
     expect(screen.queryByText('Tags')).not.toBeInTheDocument()
@@ -87,6 +113,6 @@ describe('VMNodeTooltip', () => {
     const { container } = render(<VMNodeTooltip {...defaultProps} />)
     const wrapper = container.querySelector('.bg-slate-900')
     expect(wrapper).toBeInTheDocument()
-    expect(wrapper).toHaveClass('absolute', 'top-0', 'right-0', 'z-50', 'rounded-lg', 'shadow-lg')
+    expect(wrapper).toHaveClass('fixed', 'z-50', 'rounded-lg', 'shadow-lg', 'pointer-events-auto')
   })
 })

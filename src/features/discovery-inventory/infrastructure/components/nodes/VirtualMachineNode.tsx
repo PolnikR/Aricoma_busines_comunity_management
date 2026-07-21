@@ -18,6 +18,7 @@ export const VirtualMachineNode = memo(function VirtualMachineNode({
   const poweredOn = data.powerState === 'poweredOn'
   const [showTooltip, setShowTooltip] = useState(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const nodeRef = useRef<HTMLDivElement>(null)
 
   const handleMouseEnter = () => {
     timeoutRef.current = setTimeout(() => {
@@ -43,6 +44,7 @@ export const VirtualMachineNode = memo(function VirtualMachineNode({
 
   return (
     <div
+      ref={nodeRef}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className="relative"
@@ -77,6 +79,7 @@ export const VirtualMachineNode = memo(function VirtualMachineNode({
 
       {showTooltip ? (
         <VMNodeTooltip
+          nodeRef={nodeRef}
           data={{
             name: data.label,
             status: data.powerState,
