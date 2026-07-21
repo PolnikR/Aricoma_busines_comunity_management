@@ -101,6 +101,7 @@ export function InfrastructureTopologyToolbar({
         <Button
           size="sm"
           variant="outline"
+          disabled={isLayouting}
           onClick={onResetPositions}
         >
           Reset positions

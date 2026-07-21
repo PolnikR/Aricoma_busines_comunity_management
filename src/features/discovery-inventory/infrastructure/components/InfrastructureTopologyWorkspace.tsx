@@ -120,31 +120,15 @@ export function InfrastructureTopologyWorkspace({
   }
 
   const handleResetPositions = () => {
-    const requestId = layoutRequestId.current + 1
-    layoutRequestId.current = requestId
     overridesRef.current = {}
     clearOverrides()
-    void layoutInfrastructureTopology(filteredTopology)
-      .then(
-        (nextTopology) => {
-          if (layoutRequestId.current !== requestId) return
-
-          setLayoutResult({
-            source: filteredTopology,
-            topology: applyTopologyNodePositionOverrides(nextTopology, overridesRef.current),
-          })
-          setLayoutError(null)
-          setFitViewRequest((value) => value + 1)
-        },
-        (error: unknown) => {
-          if (layoutRequestId.current !== requestId) return
-
-          setLayoutError({
-            source: filteredTopology,
-            message: error instanceof Error ? error.message : 'Topology layout failed.',
-          })
-        },
-      )
+    if (layoutResult?.source === filteredTopology && layoutResult?.topology) {
+      setLayoutResult({
+        source: filteredTopology,
+        topology: applyTopologyNodePositionOverrides(layoutResult.topology, {}),
+      })
+      setFitViewRequest((value) => value + 1)
+    }
   }
 
   return (

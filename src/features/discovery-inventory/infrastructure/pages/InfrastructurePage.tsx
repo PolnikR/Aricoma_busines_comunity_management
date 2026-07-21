@@ -45,7 +45,7 @@ export function InfrastructurePage() {
   }
 
   return (
-    <div className="flex min-h-full w-full min-w-0 max-w-full flex-col overflow-x-hidden lg:h-full lg:min-h-0">
+    <div className="flex flex-1 min-h-full w-full min-w-0 max-w-full flex-col overflow-x-hidden lg:h-full lg:min-h-0">
       <PageHeader
         eyebrow="Discovery & Inventory"
         title="Infrastructure"
