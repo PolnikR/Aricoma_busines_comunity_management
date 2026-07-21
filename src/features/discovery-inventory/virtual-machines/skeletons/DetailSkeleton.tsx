@@ -23,10 +23,12 @@ export function DetailSkeleton() {
 
       <div className="grid grid-cols-2 border-b border-[#dfe9f3]">
         {[0, 1].map((item) => (
-          <div key={item} className="border-r border-[#dfe9f3] p-4 last:border-r-0">
-            <SkeletonBlock className="size-5 rounded" />
-            <SkeletonBlock className="mt-3 h-5 w-12" />
-            <SkeletonBlock className="mt-2 h-2.5 w-16" />
+          <div key={item} className="flex items-center gap-2 border-r border-[#dfe9f3] p-4 last:border-r-0">
+            <SkeletonBlock className="size-5 shrink-0 rounded" />
+            <div className="flex items-baseline gap-1">
+              <SkeletonBlock className="h-5 w-8" />
+              <SkeletonBlock className="h-2.5 w-12" />
+            </div>
           </div>
         ))}
       </div>

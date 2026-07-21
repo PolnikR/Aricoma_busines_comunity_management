@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { Card } from '@/shared/components/card/Card'
+import { applyTopologyNodePositionOverrides } from '../layout/applyNodePositionOverrides'
 import { layoutInfrastructureTopology } from '../layout/layoutInfrastructureTopology'
 import type { PositionedInfrastructureTopology } from '../layout/layoutInfrastructureTopology'
 import {
@@ -9,6 +10,7 @@ import {
 } from '../model/filterInfrastructureTopology'
 import type { InfrastructureTopologyFilters } from '../model/filterInfrastructureTopology'
 import type { InfrastructureTopology } from '../model/topologyTypes'
+import { useTopologyNodePositionOverrides } from '../hooks/useTopologyNodePositionOverrides'
 import { InfrastructureTopologyCanvas } from './InfrastructureTopologyCanvas'
 import { InfrastructureTopologyLegend } from './InfrastructureTopologyLegend'
 import { InfrastructureTopologyToolbar } from './InfrastructureTopologyToolbar'
@@ -37,6 +39,12 @@ export function InfrastructureTopologyWorkspace({
   const [isManualLayouting, setIsManualLayouting] = useState(false)
   const [fitViewRequest, setFitViewRequest] = useState(0)
   const layoutRequestId = useRef(0)
+  const { overrides, setOverride, clearOverrides } = useTopologyNodePositionOverrides()
+  const overridesRef = useRef(overrides)
+
+  useEffect(() => {
+    overridesRef.current = overrides
+  }, [overrides])
   const filterOptions = useMemo(
     () => getInfrastructureTopologyFilterOptions(topology),
     [topology],
@@ -65,7 +73,7 @@ export function InfrastructureTopologyWorkspace({
 
         setLayoutResult({
           source: filteredTopology,
-          topology: nextTopology,
+          topology: applyTopologyNodePositionOverrides(nextTopology, overridesRef.current),
         })
         setLayoutError(null)
       },
@@ -83,6 +91,8 @@ export function InfrastructureTopologyWorkspace({
   const handleAutoLayout = () => {
     const requestId = layoutRequestId.current + 1
     layoutRequestId.current = requestId
+    overridesRef.current = {}
+    clearOverrides()
     setIsManualLayouting(true)
     void layoutInfrastructureTopology(filteredTopology)
       .then(
@@ -91,7 +101,7 @@ export function InfrastructureTopologyWorkspace({
 
           setLayoutResult({
             source: filteredTopology,
-            topology: nextTopology,
+            topology: applyTopologyNodePositionOverrides(nextTopology, overridesRef.current),
           })
           setLayoutError(null)
         },
@@ -125,6 +135,7 @@ export function InfrastructureTopologyWorkspace({
           <InfrastructureTopologyCanvas
             topology={positionedTopology}
             fitViewRequest={fitViewRequest}
+            onNodePositionChange={setOverride}
           />
         ) : null}
 

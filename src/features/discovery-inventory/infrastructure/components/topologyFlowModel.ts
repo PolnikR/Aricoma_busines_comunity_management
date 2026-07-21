@@ -15,6 +15,12 @@ export interface InfrastructureFlowElements {
   edges: Edge[]
 }
 
+const draggableNodeKinds = new Set<InfrastructureTopologyNodeKind>([
+  'host',
+  'virtualMachine',
+  'datastore',
+])
+
 export function mapTopologyToFlowElements(
   topology: PositionedInfrastructureTopology,
 ): InfrastructureFlowElements {
@@ -29,7 +35,7 @@ export function mapTopologyToFlowElements(
       ariaLabel: `${node.kind}: ${node.label}`,
       connectable: false,
       deletable: false,
-      draggable: false,
+      draggable: draggableNodeKinds.has(node.kind),
       selectable: true,
     })),
     edges: topology.edges.map((edge) => ({

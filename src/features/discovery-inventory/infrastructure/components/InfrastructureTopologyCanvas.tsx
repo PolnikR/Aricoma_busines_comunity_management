@@ -9,6 +9,7 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow,
+  type OnNodeDrag,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import type { PositionedInfrastructureTopology } from '../layout/layoutInfrastructureTopology'
@@ -21,11 +22,13 @@ import { topologyNodeTypes } from './topologyNodeTypes'
 interface InfrastructureTopologyCanvasProps {
   topology: PositionedInfrastructureTopology
   fitViewRequest?: number
+  onNodePositionChange?: (nodeId: string, position: { x: number; y: number }) => void
 }
 
 function InfrastructureTopologyCanvasContent({
   topology,
   fitViewRequest = 0,
+  onNodePositionChange,
 }: InfrastructureTopologyCanvasProps) {
   const flowElements = useMemo(() => mapTopologyToFlowElements(topology), [topology])
   const [nodes, setNodes, onNodesChange] = useNodesState<InfrastructureFlowNode>(
@@ -38,6 +41,10 @@ function InfrastructureTopologyCanvasContent({
     setNodes(flowElements.nodes)
     setEdges(flowElements.edges)
   }, [flowElements, setEdges, setNodes])
+
+  const handleNodeDragStop: OnNodeDrag<InfrastructureFlowNode> = (_event, node) => {
+    onNodePositionChange?.(node.id, node.position)
+  }
 
   useEffect(() => {
     const animationFrame = window.requestAnimationFrame(() => {
@@ -56,7 +63,7 @@ function InfrastructureTopologyCanvasContent({
       nodeTypes={topologyNodeTypes}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
-      nodesDraggable={false}
+      onNodeDragStop={handleNodeDragStop}
       nodesConnectable={false}
       edgesReconnectable={false}
       panOnDrag
