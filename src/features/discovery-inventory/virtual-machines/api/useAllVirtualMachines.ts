@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchAllVirtualMachines } from './virtualMachinesApi'
+import { fetchAllVirtualMachines } from '../helpers/virtualMachinesApi'
 
 export function useAllVirtualMachines() {
   return useQuery({
