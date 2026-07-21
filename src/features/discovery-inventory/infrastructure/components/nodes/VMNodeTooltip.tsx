@@ -74,8 +74,11 @@ export function VMNodeTooltip({ data, nodeRef }: VMNodeTooltipProps) {
     if (!nodeRef.current) return
 
     const updatePosition = () => {
-      const newPosition = calculateTooltipPosition(nodeRef.current!)
-      setPosition(newPosition)
+      const node = nodeRef.current
+      if (node) {
+        const newPosition = calculateTooltipPosition(node)
+        setPosition(newPosition)
+      }
     }
 
     // Calculate initial position
@@ -96,22 +99,22 @@ export function VMNodeTooltip({ data, nodeRef }: VMNodeTooltipProps) {
       ref={tooltipRef}
       className="fixed z-50 rounded-lg border border-slate-700 bg-slate-900 p-3 text-xs shadow-lg min-w-[260px] pointer-events-auto"
       style={{
-        top: `${position.top}px`,
-        left: `${position.left}px`,
+        top: `${String(position.top)}px`,
+        left: `${String(position.left)}px`,
       }}
     >
       <div className="space-y-2">
         <Field label="Name" value={data.name} />
         <Field label="Status" value={data.status} />
-        {data.cpu !== undefined && <Field label="CPU" value={`${data.cpu} cores`} />}
+        {data.cpu !== undefined && <Field label="CPU" value={`${String(data.cpu)} cores`} />}
         {data.cpu === undefined && <Field label="CPU" value="—" />}
-        {data.memory !== undefined && <Field label="Memory" value={`${data.memory} GB`} />}
+        {data.memory !== undefined && <Field label="Memory" value={`${String(data.memory)} GB`} />}
         {data.memory === undefined && <Field label="Memory" value="—" />}
-        {data.disk !== undefined && <Field label="Disk" value={`${data.disk} GB`} />}
+        {data.disk !== undefined && <Field label="Disk" value={`${String(data.disk)} GB`} />}
         {data.disk === undefined && <Field label="Disk" value="—" />}
-        <Field label="IP" value={data.ipAddress || '—'} />
-        <Field label="Host" value={data.host || '—'} />
-        <Field label="Cluster" value={data.cluster || '—'} />
+        <Field label="IP" value={data.ipAddress ?? '—'} />
+        <Field label="Host" value={data.host ?? '—'} />
+        <Field label="Cluster" value={data.cluster ?? '—'} />
 
         {data.tags && data.tags.length > 0 && (
           <div>

@@ -5,6 +5,6 @@ export function useAllVirtualMachines() {
   return useQuery({
     queryKey: ['virtual-machines-all'],
     queryFn: fetchAllVirtualMachines,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 15 * 60 * 1000,
   })
 }
