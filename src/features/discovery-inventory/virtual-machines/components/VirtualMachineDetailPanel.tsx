@@ -41,8 +41,8 @@ export function VirtualMachineDetailPanel({ virtualMachine }: VirtualMachineDeta
         <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
             <p className="text-xs font-medium text-gray-400">Selected virtual machine</p>
-            <h2 className="mt-1 truncate text-lg font-semibold text-gray-900 dark:text-white" title={virtualMachine.name}>{virtualMachine.name}</h2>
-            <p className="mt-1 truncate text-sm text-gray-500 dark:text-gray-400" title={`${virtualMachine.hostname} / ${virtualMachine.ipAddress}`}>{virtualMachine.hostname || '-'} / {virtualMachine.ipAddress || '-'}</p>
+            <h2 className="mt-1 truncate text-base font-semibold text-gray-900 dark:text-white" title={virtualMachine.name}>{virtualMachine.name}</h2>
+            <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400" title={`${virtualMachine.hostname} / ${virtualMachine.ipAddress}`}>{virtualMachine.hostname || '-'} / {virtualMachine.ipAddress || '-'}</p>
           </div>
           <VirtualMachineStatusBadge value={virtualMachine.powerState} kind="power" />
         </div>
