@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchInfrastructureTopology } from './infrastructureTopologyApi'
+import { fetchInfrastructureTopology } from '../helpers/infrastructureTopologyApi'
 
 export const infrastructureTopologyQueryKey = [
   'discovery-inventory',
