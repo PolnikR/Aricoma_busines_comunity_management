@@ -49,6 +49,7 @@ const navItems: NavItem[] = [
       { name: 'Capability Matrix', path: routes.providerCapabilityMatrix },
       { name: 'Discovery Settings', path: routes.providerDiscoverySettings },
       { name: 'Health & Diagnostics', path: routes.providerHealthDiagnostics },
+      { name: 'Recovery Applications', path: routes.recoveryApplications },
     ],
   },
   {

@@ -13,6 +13,7 @@ export const routes = {
   providerCapabilityMatrix: '/providers-connectors/capability-matrix',
   providerDiscoverySettings: '/providers-connectors/discovery-settings',
   providerHealthDiagnostics: '/providers-connectors/health-diagnostics',
+  recoveryApplications: '/recovery-applications',
   virtualMachines: '/discovery-inventory/virtual-machines',
   infrastructure: '/discovery-inventory/infrastructure',
   discoveryJobs: '/discovery-inventory/discovery-jobs',
