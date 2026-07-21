@@ -1,0 +1,92 @@
+import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, test } from 'vitest'
+import { VMNodeTooltip, type VMNodeTooltipProps } from './VMNodeTooltip'
+
+describe('VMNodeTooltip', () => {
+  afterEach(cleanup)
+  const defaultProps: VMNodeTooltipProps = {
+    data: {
+      name: 'app-server-01',
+      status: 'powered on',
+      cpu: 4,
+      memory: 8,
+      disk: 100,
+      ipAddress: '10.0.0.10',
+      host: 'esx-01',
+      cluster: 'prod-cluster',
+      tags: [],
+    },
+  }
+
+  test('renders all label-value pairs when data is complete', () => {
+    render(<VMNodeTooltip {...defaultProps} />)
+    expect(screen.getByText('Name:')).toBeInTheDocument()
+    expect(screen.getByText('app-server-01')).toBeInTheDocument()
+    expect(screen.getByText('Status:')).toBeInTheDocument()
+    expect(screen.getByText('powered on')).toBeInTheDocument()
+    expect(screen.getByText('CPU:')).toBeInTheDocument()
+    expect(screen.getByText('4 cores')).toBeInTheDocument()
+    expect(screen.getByText('Memory:')).toBeInTheDocument()
+    expect(screen.getByText('8 GB')).toBeInTheDocument()
+  })
+
+  test('renders — for missing optional fields', () => {
+    const props: VMNodeTooltipProps = {
+      data: {
+        name: 'simple-vm',
+        status: 'powered off',
+      },
+    }
+    render(<VMNodeTooltip {...props} />)
+    expect(screen.getByText('IP:')).toBeInTheDocument()
+    // The next sibling of the IP label should be the em-dash
+    const ipLabel = screen.getByText('IP:')
+    expect(ipLabel.parentElement?.textContent).toContain('—')
+  })
+
+  test('renders tags as individual chip elements', () => {
+    const props: VMNodeTooltipProps = {
+      data: {
+        name: 'tagged-vm',
+        status: 'powered on',
+        tags: ['production', 'critical', 'monitored'],
+      },
+    }
+    render(<VMNodeTooltip {...props} />)
+    expect(screen.getByText('Tags')).toBeInTheDocument()
+    expect(screen.getByText('production')).toBeInTheDocument()
+    expect(screen.getByText('critical')).toBeInTheDocument()
+    expect(screen.getByText('monitored')).toBeInTheDocument()
+  })
+
+  test('does not render tags section when tags array is empty', () => {
+    const props: VMNodeTooltipProps = {
+      data: {
+        name: 'no-tags-vm',
+        status: 'powered on',
+        tags: [],
+      },
+    }
+    render(<VMNodeTooltip {...props} />)
+    // The parent div that would contain "Tags" label should not exist
+    expect(screen.queryByText('Tags')).not.toBeInTheDocument()
+  })
+
+  test('does not render tags section when tags is undefined', () => {
+    const props: VMNodeTooltipProps = {
+      data: {
+        name: 'no-tags-vm',
+        status: 'powered on',
+      },
+    }
+    render(<VMNodeTooltip {...props} />)
+    expect(screen.queryByText('Tags')).not.toBeInTheDocument()
+  })
+
+  test('applies correct CSS classes for styling', () => {
+    const { container } = render(<VMNodeTooltip {...defaultProps} />)
+    const wrapper = container.querySelector('.bg-slate-900')
+    expect(wrapper).toBeInTheDocument()
+    expect(wrapper).toHaveClass('absolute', 'top-0', 'right-0', 'z-50', 'rounded-lg', 'shadow-lg')
+  })
+})
