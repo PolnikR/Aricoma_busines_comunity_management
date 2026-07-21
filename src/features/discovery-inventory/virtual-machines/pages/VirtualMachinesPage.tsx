@@ -22,6 +22,7 @@ const defaultFilters: VirtualMachineFilters = {
   connectionState: '',
   cluster: '',
   tags: [],
+  untagged: false,
 }
 
 export function VirtualMachinesPage() {
@@ -52,6 +53,7 @@ export function VirtualMachinesPage() {
     connectionState: query.connectionState,
     cluster: query.cluster,
     tags: query.tags,
+    untagged: query.untagged,
   }
 
   if (isPending) {

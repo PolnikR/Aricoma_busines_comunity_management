@@ -71,7 +71,7 @@ export function applyFiltersAndPagination(data: AllVirtualMachinesData, query: V
     && (!query.powerState || vm.powerState === query.powerState)
     && (!query.connectionState || vm.connectionState === query.connectionState)
     && (!query.cluster || vm.cluster === query.cluster)
-    && (query.tags.length === 0 || query.tags.some((tag) => vm.tags.includes(tag)))
+    && (query.untagged ? vm.tags.length === 0 : (query.tags.length === 0 || query.tags.some((tag) => vm.tags.includes(tag))))
   ))
   const pageCount = Math.ceil(filtered.length / query.pageSize)
   const page = pageCount > 0 ? Math.min(Math.max(query.page, 1), pageCount) : 1

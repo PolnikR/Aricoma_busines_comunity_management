@@ -43,7 +43,7 @@ export function MultiSelectDropdown({ options, selected, onChange, id, className
         id={id}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'flex flex-wrap gap-1.5 rounded-xl border px-3 py-2 min-h-10 w-full transition cursor-pointer',
+          'flex flex-wrap gap-1.5 rounded-xl border px-3 py-2 min-h-10 max-h-24 w-full overflow-y-auto transition cursor-pointer',
           'bg-[#fcfdff] border-[#cfdaea] text-[#273750] shadow-sm',
           'hover:border-[#0d91d7]',
           isOpen && 'border-[#0d91d7] bg-white ring-4 ring-[#1596dd]/10',

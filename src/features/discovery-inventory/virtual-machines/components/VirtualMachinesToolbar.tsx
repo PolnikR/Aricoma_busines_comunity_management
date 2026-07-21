@@ -26,7 +26,10 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
     onFiltersChange({ ...filters, [key]: event.target.value })
   }
   const updateTags = (selected: string[]) => {
-    onFiltersChange({ ...filters, tags: selected })
+    onFiltersChange({ ...filters, tags: selected, untagged: false })
+  }
+  const toggleUntagged = () => {
+    onFiltersChange({ ...filters, untagged: !filters.untagged, tags: [] })
   }
 
   return (
@@ -48,23 +51,29 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
       </div>
 
       {showFilters ? (
-        <div className="grid grid-cols-1 gap-3 border-t border-[#e7eff7] bg-[#f8fbfe] p-4 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
-          <Field label="Connection" htmlFor="connection-filter">
-            <Select id="connection-filter" value={filters.connectionState} onChange={updateFilter('connectionState')}>
-              <option value="">All connections</option>
-              {options.connectionStates.map((value) => <option key={value} value={value}>{value}</option>)}
-            </Select>
-          </Field>
-          <Field label="Cluster" htmlFor="cluster-filter">
-            <Select id="cluster-filter" value={filters.cluster} onChange={updateFilter('cluster')}>
-              <option value="">All clusters</option>
-              {options.clusters.map((value) => <option key={value} value={value}>{value}</option>)}
-            </Select>
-          </Field>
-          <Field label="Tags" htmlFor="tags-filter">
-            <MultiSelectDropdown id="tags-filter" options={availableTags} selected={filters.tags} onChange={updateTags} />
-          </Field>
-          <Button size="sm" variant="ghost" onClick={onReset}>Clear filters</Button>
+        <div className="border-t border-[#e7eff7] bg-[#f8fbfe] p-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end mb-3">
+            <Field label="Connection" htmlFor="connection-filter">
+              <Select id="connection-filter" value={filters.connectionState} onChange={updateFilter('connectionState')}>
+                <option value="">All connections</option>
+                {options.connectionStates.map((value) => <option key={value} value={value}>{value}</option>)}
+              </Select>
+            </Field>
+            <Field label="Cluster" htmlFor="cluster-filter">
+              <Select id="cluster-filter" value={filters.cluster} onChange={updateFilter('cluster')}>
+                <option value="">All clusters</option>
+                {options.clusters.map((value) => <option key={value} value={value}>{value}</option>)}
+              </Select>
+            </Field>
+            <Field label="Tags" htmlFor="tags-filter">
+              <MultiSelectDropdown id="tags-filter" options={availableTags} selected={filters.tags} onChange={updateTags} />
+            </Field>
+            <Button size="sm" variant="ghost" onClick={onReset}>Clear filters</Button>
+          </div>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input type="checkbox" checked={filters.untagged} onChange={toggleUntagged} className="rounded border-[#cfdaea]" />
+            <span className="text-[#273750] font-medium">Show only VMs without tags</span>
+          </label>
         </div>
       ) : null}
     </div>

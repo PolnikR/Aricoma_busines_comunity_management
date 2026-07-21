@@ -19,6 +19,10 @@ function parseTags(value: string | null): string[] {
   return value.split(',').filter(Boolean)
 }
 
+function parseBoolean(value: string | null): boolean {
+  return value === 'true'
+}
+
 
 export function useVirtualMachineSearchParams() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -30,6 +34,7 @@ export function useVirtualMachineSearchParams() {
     connectionState: searchParams.get('connectionState') ?? '',
     cluster: searchParams.get('cluster') ?? '',
     tags: parseTags(searchParams.get('tags')),
+    untagged: parseBoolean(searchParams.get('untagged')),
   }), [searchParams])
 
   const updateQuery = (changes: Partial<VirtualMachinesQuery>, resetPage = false) => {
@@ -37,7 +42,7 @@ export function useVirtualMachineSearchParams() {
     const values = resetPage ? { ...changes, page: 1 } : changes
 
     Object.entries(values).forEach(([key, value]) => {
-      const normalized = Array.isArray(value) ? value.join(',') : String(value)
+      const normalized = Array.isArray(value) ? value.join(',') : (typeof value === 'boolean' ? (value ? 'true' : '') : String(value))
       if (!normalized || (key === 'page' && normalized === '1') || (key === 'pageSize' && normalized === '10')) next.delete(key)
       else next.set(key, normalized)
     })

@@ -41,6 +41,7 @@ function createQuery(overrides: Partial<VirtualMachinesQuery> = {}): VirtualMach
     connectionState: '',
     cluster: '',
     tags: [],
+    untagged: false,
     page: 1,
     pageSize: 10,
     ...overrides,
