@@ -27,6 +27,7 @@ const inventory: DiscoveryInventory = {
       disks: [],
       snapshotCount: 0,
       toolsStatus: 'toolsOk',
+      tags: [],
     },
   ],
 }

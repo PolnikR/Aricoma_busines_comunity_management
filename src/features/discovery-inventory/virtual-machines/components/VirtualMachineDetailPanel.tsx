@@ -71,6 +71,25 @@ export function VirtualMachineDetailPanel({ virtualMachine }: VirtualMachineDeta
         <DetailRow label="Datastore" value={virtualMachine.datastore} secondary={`${String(virtualMachine.diskCount)} disks / ${String(Math.round(virtualMachine.diskCapacityGb))} GB`} />
         <DetailRow label="Folder" value={virtualMachine.folder} />
         <DetailRow label="Snapshots" value={String(virtualMachine.snapshotCount)} />
+        <div className="flex items-start justify-between gap-4 border-b border-[#edf2f7] py-3 last:border-b-0">
+          <dt className="shrink-0 text-xs text-gray-500 dark:text-gray-400">Tags</dt>
+          <dd className="min-w-0 text-right text-sm font-medium text-gray-800 dark:text-white/90">
+            {virtualMachine.tags.length > 0 ? (
+              <div className="flex flex-wrap justify-end gap-1.5">
+                {virtualMachine.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <span className="block break-words">-</span>
+            )}
+          </dd>
+        </div>
       </dl>
     </aside>
   )

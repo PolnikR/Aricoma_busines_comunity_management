@@ -33,6 +33,7 @@ const virtualMachineSchema = z.object({
   vdisks: z.array(virtualDiskSchema).catch([]),
   snapshot_count: z.number().catch(0),
   vmware_tools_status: z.string().catch('-'),
+  tags: z.array(z.string()).catch([]),
 })
 
 const discoveryInventoryResponseSchema = z.object({
@@ -77,6 +78,7 @@ function mapVirtualMachine(
     )),
     snapshotCount: virtualMachine.snapshot_count,
     toolsStatus: virtualMachine.vmware_tools_status,
+    tags: virtualMachine.tags,
   }
 }
 

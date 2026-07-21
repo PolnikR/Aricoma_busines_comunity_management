@@ -16,6 +16,7 @@ export interface VirtualMachine {
   diskCapacityGb: number
   snapshotCount: number
   toolsStatus: string
+  tags: string[]
 }
 
 export interface VirtualMachineFilters {

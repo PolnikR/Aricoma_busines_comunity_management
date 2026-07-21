@@ -34,6 +34,7 @@ function createVirtualMachine(
     ],
     snapshotCount: 0,
     toolsStatus: 'toolsOk',
+    tags: [],
     ...overrides,
   }
 }

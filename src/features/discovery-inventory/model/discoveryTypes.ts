@@ -24,6 +24,7 @@ export interface DiscoveredVirtualMachine {
   disks: DiscoveredVirtualDisk[]
   snapshotCount: number
   toolsStatus: string
+  tags: string[]
 }
 
 export interface DiscoveryInventory {

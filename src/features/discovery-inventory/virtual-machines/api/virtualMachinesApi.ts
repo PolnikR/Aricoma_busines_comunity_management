@@ -23,6 +23,7 @@ function mapVirtualMachine(vm: DiscoveredVirtualMachine): VirtualMachine {
     diskCapacityGb,
     snapshotCount: vm.snapshotCount,
     toolsStatus: vm.toolsStatus,
+    tags: vm.tags,
   }
 }
 
