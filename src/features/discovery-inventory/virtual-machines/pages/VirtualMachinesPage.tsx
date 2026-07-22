@@ -111,10 +111,10 @@ export function VirtualMachinesPage() {
         ) : null}
 
         <Card className="relative flex flex-1 flex-col overflow-hidden p-0 sm:p-0 lg:min-h-0">
-          <div className="flex shrink-0 flex-col gap-2 border-b border-[#e3edf6] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex shrink-0 flex-col gap-2 border-b border-[#e3edf6] px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-base font-semibold text-[#17233d]">Inventory records</h2>
-              <p className="mt-0.5 text-sm text-[#71819a]">Browse and inspect discovered VMware resources.</p>
+              <h2 className="text-sm font-semibold text-[#17233d]">Inventory records</h2>
+              <p className="text-xs text-[#71819a]">Browse and inspect discovered VMware resources.</p>
             </div>
             <div className="flex items-center gap-3">
               {isFetching ? <span className="inline-flex items-center gap-2 text-xs text-[#71819a]"><span className="size-2 animate-pulse rounded-full bg-[#0d91d7]" />Updating</span> : null}
