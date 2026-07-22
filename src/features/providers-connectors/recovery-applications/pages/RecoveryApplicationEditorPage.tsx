@@ -53,7 +53,7 @@ export function RecoveryApplicationEditorPage() {
           eyebrow="Providers & Connectors"
           title="Edit Recovery Application"
           description="Modify disaster recovery application configuration"
-          actions={<Button variant="outline" onClick={() => { void navigate('/providers-connectors/recovery-applications') }}>Back</Button>}
+          actions={<Button variant="outline" onClick={() => { void navigate('/providers-connectors/providers') }}>Back</Button>}
         />
         <div className="flex-1 p-6">
           <div className="bg-red-50 text-red-700 p-4 rounded-lg">
@@ -94,7 +94,7 @@ export function RecoveryApplicationEditorPage() {
         eyebrow="Providers & Connectors"
         title="Edit Recovery Application"
         description="Modify disaster recovery application configuration"
-        actions={<Button variant="outline" onClick={() => { void navigate('/providers-connectors/recovery-applications') }}>Back</Button>}
+        actions={<Button variant="outline" onClick={() => { void navigate('/providers-connectors/providers') }}>Back</Button>}
       />
       <div className="flex flex-1 flex-col lg:min-h-0">
         <RecoveryAppBuilder

@@ -39,7 +39,7 @@ export function RecoveryApplicationBuilderPage() {
         eyebrow="Providers & Connectors"
         title="Create Recovery Application"
         description="Define a new disaster recovery application with tiered VM organization"
-        actions={<Button size="sm" variant="outline" onClick={() => void navigate('/providers-connectors/recovery-applications')}>Back</Button>}
+        actions={<Button size="sm" variant="outline" onClick={() => void navigate('/providers-connectors/providers')}>Back</Button>}
       />
       <div className="flex flex-1 flex-col lg:min-h-0">
         <RecoveryAppBuilder
