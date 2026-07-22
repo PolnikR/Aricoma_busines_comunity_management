@@ -130,7 +130,7 @@ export function AppSidebar() {
     >
       <div className="flex h-[72px] shrink-0 items-center border-b border-[#edf1f6] px-2">
         <NavLink to={routes.virtualMachines} className="flex min-w-0 items-center gap-2.5" aria-label="Aricoma home">
-          <img src="/aricoma-logo.svg" alt="Aricoma" className="size-9 shrink-0 rounded-lg" />
+          <img src="/aricoma-logo.png" alt="Aricoma" className="size-9 shrink-0 rounded-lg" />
           <span>
             <span className="block truncate text-[13px] font-semibold text-[#17233d]">Aricoma</span>
             <span className="block truncate text-[10px] text-[#7c8aa0]">Business continuity</span>
