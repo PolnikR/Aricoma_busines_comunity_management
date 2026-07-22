@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchDiscoveryInventory } from '../../api/discoveryInventoryApi'
+import { fetchDiscoveryInventory } from '@/features/api/discoveryInventoryApi'
 import type { DiscoveryInventory } from '../../model/discoveryTypes'
 import { fetchInfrastructureTopology } from './infrastructureTopologyApi'
 

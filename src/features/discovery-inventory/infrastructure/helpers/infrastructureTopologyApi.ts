@@ -1,4 +1,4 @@
-import { fetchDiscoveryInventory } from '../../api/discoveryInventoryApi'
+import { fetchDiscoveryInventory } from '@/features/api/discoveryInventoryApi'
 import { mapInventoryToTopology } from './mapInventoryToTopology'
 import type { InfrastructureTopology } from '../model/topologyTypes'
 
