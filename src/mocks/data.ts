@@ -1,6 +1,6 @@
-import type { RecoveryApplication } from '@/features/providers-connectors/recovery-applications/model/recoveryApplicationTypes'
+import type { RecoveryApplication, RecoveryApplicationData } from '@/features/providers-connectors/recovery-applications/model/recoveryApplicationTypes'
 
-let apps = new Map<string, RecoveryApplication>()
+const apps = new Map<string, RecoveryApplication>()
 
 function getCurrentTimestamp(): string {
   return new Date().toISOString()
@@ -94,7 +94,7 @@ export function getApp(id: string): RecoveryApplication | undefined {
   return apps.get(id)
 }
 
-export function createApp(data: any): RecoveryApplication {
+export function createApp(data: RecoveryApplicationData): RecoveryApplication {
   const id = Math.random().toString(36).slice(2, 9)
   const now = getCurrentTimestamp()
   const app: RecoveryApplication = {
@@ -107,9 +107,10 @@ export function createApp(data: any): RecoveryApplication {
   return app
 }
 
-export function updateApp(id: string, data: any): RecoveryApplication | undefined {
+export function updateApp(id: string, data: RecoveryApplicationData): RecoveryApplication | undefined {
   if (!apps.has(id)) return undefined
-  const existing = apps.get(id)!
+  const existing = apps.get(id)
+  if (!existing) return undefined
   const app: RecoveryApplication = {
     id,
     data,

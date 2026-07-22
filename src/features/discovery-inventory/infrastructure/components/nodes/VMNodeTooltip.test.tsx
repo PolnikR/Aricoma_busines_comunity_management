@@ -21,7 +21,7 @@ describe('VMNodeTooltip', () => {
       y: 100,
       toJSON: () => ({}),
     })
-    ;(ref as any).current = mockElement
+    Object.defineProperty(ref, 'current', { value: mockElement, writable: true })
     return ref
   }
 

@@ -11,8 +11,8 @@ interface HostNodeTooltipProps {
 }
 
 interface Position {
-  top: number
-  left: number
+  top: string
+  left: string
 }
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -57,18 +57,19 @@ function calculateTooltipPosition(nodeElement: HTMLElement): Position {
     top = 8
   }
 
-  return { top, left }
+  return { top: `${String(top)}px`, left: `${String(left)}px` }
 }
 
 export function HostNodeTooltip({ data, nodeRef }: HostNodeTooltipProps) {
-  const [position, setPosition] = useState<Position>({ top: 0, left: 0 })
+  const [position, setPosition] = useState<Position>({ top: '0px', left: '0px' })
   const tooltipRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!nodeRef.current) return
+    const node = nodeRef.current
 
     const updatePosition = () => {
-      const newPosition = calculateTooltipPosition(nodeRef.current!)
+      const newPosition = calculateTooltipPosition(node)
       setPosition(newPosition)
     }
 
@@ -90,14 +91,14 @@ export function HostNodeTooltip({ data, nodeRef }: HostNodeTooltipProps) {
       ref={tooltipRef}
       className="fixed z-50 rounded-lg border border-slate-700 bg-slate-900 p-3 text-xs shadow-lg min-w-[260px] pointer-events-auto"
       style={{
-        top: `${position.top}px`,
-        left: `${position.left}px`,
+        top: position.top,
+        left: position.left,
       }}
     >
       <div className="space-y-2">
         <Field label="Name" value={data.name} />
         <Field label="Cluster" value={data.clusters.length > 0 ? data.clusters.join(', ') : 'No cluster'} />
-        <Field label="VMs" value={`${data.vmCount}`} />
+        <Field label="VMs" value={String(data.vmCount)} />
       </div>
     </div>
   )

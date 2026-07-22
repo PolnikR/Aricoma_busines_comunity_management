@@ -23,7 +23,7 @@ export function MultiSelectDropdown({ options, selected, onChange, id, className
     }
 
     document.addEventListener('click', handleClickOutside)
-    return () => document.removeEventListener('click', handleClickOutside)
+    return () => { document.removeEventListener('click', handleClickOutside); }
   }, [])
 
   const toggleOption = (option: string) => {
@@ -41,7 +41,7 @@ export function MultiSelectDropdown({ options, selected, onChange, id, className
     <div ref={containerRef} className={cn('relative min-w-0 max-w-full', className)}>
       <div
         id={id}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => { setIsOpen(!isOpen); }}
         className={cn(
           'flex flex-wrap gap-1.5 rounded-xl border px-3 py-2 min-h-10 max-h-24 w-full overflow-y-auto transition cursor-pointer',
           'bg-[#fcfdff] border-[#cfdaea] text-[#273750] shadow-sm',
@@ -81,7 +81,7 @@ export function MultiSelectDropdown({ options, selected, onChange, id, className
             return (
               <div
                 key={option}
-                onClick={() => toggleOption(option)}
+                onClick={() => { toggleOption(option); }}
                 className={cn(
                   'flex items-center gap-3 px-3 py-2.5 cursor-pointer transition text-sm',
                   'hover:bg-[#f9fbfd]',

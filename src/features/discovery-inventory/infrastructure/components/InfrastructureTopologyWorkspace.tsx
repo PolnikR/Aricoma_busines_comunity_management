@@ -122,7 +122,7 @@ export function InfrastructureTopologyWorkspace({
   const handleResetPositions = () => {
     overridesRef.current = {}
     clearOverrides()
-    if (layoutResult?.source === filteredTopology && layoutResult?.topology) {
+    if (layoutResult?.source === filteredTopology) {
       setLayoutResult({
         source: filteredTopology,
         topology: applyTopologyNodePositionOverrides(layoutResult.topology, {}),

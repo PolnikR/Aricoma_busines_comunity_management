@@ -22,4 +22,4 @@ async function startApp() {
   )
 }
 
-startApp()
+void startApp()

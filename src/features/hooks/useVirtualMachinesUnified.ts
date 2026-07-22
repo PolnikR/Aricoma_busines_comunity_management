@@ -28,7 +28,7 @@ export function useVirtualMachinesUnified(): UseVirtualMachinesUnifiedResult {
 
   const isLoading = vmQuery.isLoading || topologyQuery.isLoading
   const isFetching = vmQuery.isFetching || topologyQuery.isFetching
-  const error = vmQuery.error || topologyQuery.error
+  const error = vmQuery.error ?? topologyQuery.error
 
   const refetch = () => {
     void vmQuery.refetch()
@@ -40,7 +40,7 @@ export function useVirtualMachinesUnified(): UseVirtualMachinesUnifiedResult {
     topology: topologyQuery.data,
     isLoading,
     isFetching,
-    error: error as Error | null,
+    error: error,
     refetch,
   }
 }

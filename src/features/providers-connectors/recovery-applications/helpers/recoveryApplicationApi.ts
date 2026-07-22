@@ -7,7 +7,7 @@ export async function fetchRecoveryApplications(): Promise<RecoveryApplication[]
   if (!response.ok) {
     throw new Error(`Failed to fetch recovery applications: ${response.statusText}`)
   }
-  return response.json()
+  return response.json() as Promise<RecoveryApplication[]>
 }
 
 export async function fetchRecoveryApplication(id: string): Promise<RecoveryApplication> {
@@ -15,7 +15,7 @@ export async function fetchRecoveryApplication(id: string): Promise<RecoveryAppl
   if (!response.ok) {
     throw new Error(`Failed to fetch recovery application: ${response.statusText}`)
   }
-  return response.json()
+  return response.json() as Promise<RecoveryApplication>
 }
 
 export async function createRecoveryApplication(data: RecoveryApplicationData): Promise<RecoveryApplication> {
@@ -27,7 +27,7 @@ export async function createRecoveryApplication(data: RecoveryApplicationData): 
   if (!response.ok) {
     throw new Error(`Failed to create recovery application: ${response.statusText}`)
   }
-  return response.json()
+  return response.json() as Promise<RecoveryApplication>
 }
 
 export async function updateRecoveryApplication(id: string, data: RecoveryApplicationData): Promise<RecoveryApplication> {
@@ -39,7 +39,7 @@ export async function updateRecoveryApplication(id: string, data: RecoveryApplic
   if (!response.ok) {
     throw new Error(`Failed to update recovery application: ${response.statusText}`)
   }
-  return response.json()
+  return response.json() as Promise<RecoveryApplication>
 }
 
 export async function deleteRecoveryApplication(id: string): Promise<void> {

@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw'
+import type { RecoveryApplicationData } from '@/features/providers-connectors/recovery-applications/model/recoveryApplicationTypes'
 import { getApps, getApp, createApp, updateApp, deleteApp } from './data'
 
 export const handlers = [
@@ -19,13 +20,13 @@ export const handlers = [
   }),
 
   http.post('/api/recovery-applications', async ({ request }) => {
-    const data = (await request.json()) as any
+    const data = (await request.json()) as RecoveryApplicationData
     const app = createApp(data)
     return HttpResponse.json(app, { status: 201 })
   }),
 
   http.put('/api/recovery-applications/:id', async ({ params, request }) => {
-    const data = (await request.json()) as any
+    const data = (await request.json()) as RecoveryApplicationData
     const app = updateApp(params['id'] as string, data)
     if (!app) {
       return HttpResponse.json(

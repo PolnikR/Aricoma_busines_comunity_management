@@ -67,7 +67,7 @@ export function RecoveryApplicationsTable({ applications }: RecoveryApplications
                   </TableCell>
                   <TableCell className="px-5 py-4 text-sm">
                     <button
-                      onClick={() => setSelectedJson(app.data)}
+                      onClick={() => { setSelectedJson(app.data); }}
                       className="text-[#3566d6] hover:text-[#2a52b0] font-medium"
                     >
                       View JSON
@@ -92,7 +92,7 @@ export function RecoveryApplicationsTable({ applications }: RecoveryApplications
       {selectedJson && (
         <JsonViewer
           json={selectedJson}
-          onClose={() => setSelectedJson(null)}
+          onClose={() => { setSelectedJson(null); }}
         />
       )}
     </>

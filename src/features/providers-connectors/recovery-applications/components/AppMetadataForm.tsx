@@ -39,7 +39,7 @@ export function AppMetadataForm({ onMetadataChange, initialValues }: AppMetadata
         <input
           type="text"
           value={name}
-          onChange={e => handleChange('name', e.target.value)}
+          onChange={e => { handleChange('name', e.target.value); }}
           placeholder="e.g., SampleAppRecovery2"
           className="px-3 py-2 border border-[#cfdaea] rounded-md text-sm focus:outline-none focus:border-blue-light-500"
         />
@@ -52,7 +52,7 @@ export function AppMetadataForm({ onMetadataChange, initialValues }: AppMetadata
         <input
           type="text"
           value={description}
-          onChange={e => handleChange('description', e.target.value)}
+          onChange={e => { handleChange('description', e.target.value); }}
           placeholder="e.g., Recovery of FinanceTBApp2"
           className="px-3 py-2 border border-[#cfdaea] rounded-md text-sm focus:outline-none focus:border-blue-light-500"
         />
@@ -64,7 +64,7 @@ export function AppMetadataForm({ onMetadataChange, initialValues }: AppMetadata
         </label>
         <select
           value={environment}
-          onChange={e => handleChange('environment', e.target.value)}
+          onChange={e => { handleChange('environment', e.target.value); }}
           className="px-3 py-2 border border-[#cfdaea] rounded-md text-sm focus:outline-none focus:border-blue-light-500"
         >
           <option value="dev">dev</option>
