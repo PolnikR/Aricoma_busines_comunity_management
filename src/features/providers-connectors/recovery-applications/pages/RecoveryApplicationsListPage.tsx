@@ -1,25 +1,38 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/button/Button'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
-import { useRecoveryApplications } from '../api/useRecoveryApplications'
+import { DeleteConfirmationDialog } from '../components/DeleteConfirmationDialog'
+import { useRecoveryApplications, useDeleteRecoveryApplication } from '../api/useRecoveryApplications'
 
 export function RecoveryApplicationsListPage() {
   const navigate = useNavigate()
   const { data: applications, isLoading, error, refetch } = useRecoveryApplications()
+  const deleteApplicationMutation = useDeleteRecoveryApplication()
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   const handleEdit = (id: string) => {
     void navigate(`/providers-connectors/recovery-applications/${id}/edit`)
   }
 
   const handleDelete = (id: string): void => {
-    const confirmed = window.confirm('Are you sure you want to delete this recovery application?')
-    if (confirmed) {
-      // Delete functionality will be implemented in Task 3 (id will be used)
-      void id
+    const app = applications?.find(a => a.id === id)
+    if (app) {
+      setDeleteTarget({ id, name: app.data.application.name })
     }
+  }
+
+  const handleDeleteConfirm = async (): Promise<void> => {
+    if (!deleteTarget) return
+    await deleteApplicationMutation.mutateAsync(deleteTarget.id)
+    setDeleteTarget(null)
+  }
+
+  const handleDeleteCancel = (): void => {
+    setDeleteTarget(null)
   }
 
   if (isLoading) {
@@ -99,6 +112,14 @@ export function RecoveryApplicationsListPage() {
           </div>
         )}
       </div>
+
+      <DeleteConfirmationDialog
+        itemName={deleteTarget?.name ?? ''}
+        isOpen={deleteTarget !== null}
+        isLoading={deleteApplicationMutation.isPending}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
     </div>
   )
 }
