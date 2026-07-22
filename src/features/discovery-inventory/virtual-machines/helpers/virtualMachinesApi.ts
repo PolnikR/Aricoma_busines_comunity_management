@@ -1,4 +1,4 @@
-import { fetchDiscoveryInventory } from '../../api/discoveryInventoryApi'
+import { fetchDiscoveryInventory } from '@/features/api/discoveryInventoryApi'
 import type { DiscoveredVirtualMachine } from '../../model/discoveryTypes'
 import type { VirtualMachine, VirtualMachinesPageData, VirtualMachinesQuery } from '../types'
 
@@ -86,9 +86,4 @@ export function applyFiltersAndPagination(data: AllVirtualMachinesData, query: V
     metrics: data.metrics,
     filterOptions: data.filterOptions,
   }
-}
-
-export async function fetchVirtualMachines(query: VirtualMachinesQuery): Promise<VirtualMachinesPageData> {
-  const allData = await fetchAllVirtualMachines()
-  return applyFiltersAndPagination(allData, query)
 }
