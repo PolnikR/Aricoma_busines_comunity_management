@@ -5,6 +5,7 @@ import {
   createRecoveryApplication,
   updateRecoveryApplication,
   deleteRecoveryApplication,
+  submitRecoveryApplicationDag,
 } from '../helpers/recoveryApplicationApi'
 import type { RecoveryApplicationData } from '../model/recoveryApplicationTypes'
 
@@ -33,6 +34,22 @@ export function useCreateRecoveryApplication() {
 
   return useMutation({
     mutationFn: createRecoveryApplication,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: recoveryApplicationsQueryKey })
+    },
+  })
+}
+
+// Submits the application to the Airflow DAG and, on success, stores it
+// locally so it appears in the applications list.
+export function useSubmitRecoveryApplication() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (data: RecoveryApplicationData) => {
+      await submitRecoveryApplicationDag(data.application.name, data)
+      return createRecoveryApplication(data)
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: recoveryApplicationsQueryKey })
     },

@@ -18,6 +18,21 @@ export async function fetchRecoveryApplication(id: string): Promise<RecoveryAppl
   return response.json() as Promise<RecoveryApplication>
 }
 
+// Submits the application JSON to the Airflow recovery-orchestration DAG.
+// In dev the /api prefix is proxied to the backend (see vite.config.ts),
+// so this becomes POST http://<backend>/submit_dag?filename=<name>.
+export async function submitRecoveryApplicationDag(name: string, data: RecoveryApplicationData): Promise<unknown> {
+  const response = await fetch(`/api/submit_dag?filename=${encodeURIComponent(name)}`, {
+    method: 'POST',
+    headers: { accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to submit recovery application: ${String(response.status)} ${response.statusText}`)
+  }
+  return response.json()
+}
+
 export async function createRecoveryApplication(data: RecoveryApplicationData): Promise<RecoveryApplication> {
   const response = await fetch(RECOVERY_APPS_ENDPOINT, {
     method: 'POST',

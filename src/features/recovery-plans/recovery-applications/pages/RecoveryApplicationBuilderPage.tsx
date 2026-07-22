@@ -2,12 +2,12 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/button/Button'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
-import { useCreateRecoveryApplication } from '../api/useRecoveryApplications'
+import { useSubmitRecoveryApplication } from '../api/useRecoveryApplications'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 export function RecoveryApplicationBuilderPage() {
   const navigate = useNavigate()
-  const createMutation = useCreateRecoveryApplication()
+  const submitMutation = useSubmitRecoveryApplication()
 
   const handleSave = async (appState: RecoveryApplicationFormState) => {
     const applicationData = {
@@ -25,11 +25,11 @@ export function RecoveryApplicationBuilderPage() {
     }
 
     try {
-      await createMutation.mutateAsync(applicationData)
+      await submitMutation.mutateAsync(applicationData)
       void navigate('/recovery-plans/recovery-applications')
     } catch (error) {
-      console.error('Failed to save recovery application:', error)
-      alert('Failed to save application. Please try again.')
+      console.error('Failed to submit recovery application:', error)
+      alert('Failed to submit application to recovery orchestration. Please try again.')
     }
   }
 
@@ -44,7 +44,7 @@ export function RecoveryApplicationBuilderPage() {
       <div className="flex flex-1 flex-col lg:min-h-0">
         <RecoveryAppBuilder
           onSave={(appState) => void handleSave(appState)}
-          isSaving={createMutation.isPending}
+          isSaving={submitMutation.isPending}
         />
       </div>
     </div>
