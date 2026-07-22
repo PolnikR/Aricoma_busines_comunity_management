@@ -83,7 +83,10 @@ const navItems: NavItem[] = [
   {
     name: 'Recovery Plans',
     icon: <LayersIcon />,
-    path: routes.recoveryPlans,
+    subItems: [
+      { name: 'Recovery Applications', path: routes.recoveryApplications },
+      { name: 'Recovery Runs', path: routes.recoveryRuns },
+    ],
   },
   {
     name: 'Execution Engine',
@@ -102,15 +105,20 @@ const navItems: NavItem[] = [
   },
 ]
 
-function getInitialOpenMenu(pathname: string) {
+function findRouteMenu(pathname: string): string | undefined {
   const activeItem = navItems.find((item) => item.subItems?.some((subItem) => pathname === subItem.path || pathname.startsWith(`${subItem.path}/`)))
-  return activeItem?.name ?? 'Discovery & Inventory'
+  return activeItem?.name
 }
 
 export function AppSidebar() {
   const { isMobileOpen, closeMobileSidebar } = useSidebar()
   const location = useLocation()
-  const [openMenu, setOpenMenu] = useState(() => getInitialOpenMenu(location.pathname))
+  const [openMenu, setOpenMenu] = useState<string>(() => findRouteMenu(location.pathname) ?? 'Discovery & Inventory')
+
+  // The menu that owns the current route is always expanded; users can also
+  // toggle other menus open via openMenu.
+  const routeMenu = findRouteMenu(location.pathname)
+  const isMenuOpen = (name: string) => openMenu === name || routeMenu === name
 
   const isSubItemActive = (path: string) => {
     return location.pathname === path
@@ -145,16 +153,16 @@ export function AppSidebar() {
                   <>
                     <button
                       type="button"
-                      className={`group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition ${openMenu === item.name ? 'bg-[#eef4ff] text-[#3566d6]' : 'text-[#44536c] hover:bg-[#f5f7fa] hover:text-[#263750]'}`}
+                      className={`group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition ${isMenuOpen(item.name) ? 'bg-[#eef4ff] text-[#3566d6]' : 'text-[#44536c] hover:bg-[#f5f7fa] hover:text-[#263750]'}`}
                       onClick={() => {
                         setOpenMenu((current) => (current === item.name ? '' : item.name))
                       }}
                     >
-                      <span className={openMenu === item.name ? 'text-[#3566d6]' : 'text-[#7b89a0]'}>{item.icon}</span>
+                      <span className={isMenuOpen(item.name) ? 'text-[#3566d6]' : 'text-[#7b89a0]'}>{item.icon}</span>
                       <span className="min-w-0 flex-1 truncate">{item.name}</span>
-                      <ChevronDownIcon className={`size-4 transition-transform ${openMenu === item.name ? 'rotate-180 text-[#3566d6]' : 'text-[#8996aa]'}`} />
+                      <ChevronDownIcon className={`size-4 transition-transform ${isMenuOpen(item.name) ? 'rotate-180 text-[#3566d6]' : 'text-[#8996aa]'}`} />
                     </button>
-                    <div className={`overflow-hidden transition-all duration-300 ${openMenu === item.name ? 'max-h-[34rem]' : 'max-h-0'}`}>
+                    <div className={`overflow-hidden transition-all duration-300 ${isMenuOpen(item.name) ? 'max-h-[34rem]' : 'max-h-0'}`}>
                         <ul className="ml-[18px] mt-1 space-y-0.5 border-l border-[#e0e6ef] pl-3">
                           {item.subItems.map((subItem) => (
                             <li key={subItem.path}>

@@ -26,7 +26,7 @@ export function RecoveryApplicationBuilderPage() {
 
     try {
       await createMutation.mutateAsync(applicationData)
-      void navigate('/providers-connectors/providers')
+      void navigate('/recovery-plans/recovery-applications')
     } catch (error) {
       console.error('Failed to save recovery application:', error)
       alert('Failed to save application. Please try again.')
@@ -36,10 +36,10 @@ export function RecoveryApplicationBuilderPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow="Providers & Connectors"
+        eyebrow="Recovery Plans"
         title="Create Recovery Application"
         description="Define a new disaster recovery application with tiered VM organization"
-        actions={<Button size="sm" variant="outline" onClick={() => void navigate('/providers-connectors/providers')}>Back</Button>}
+        actions={<Button size="sm" variant="outline" onClick={() => void navigate('/recovery-plans/recovery-applications')}>Back</Button>}
       />
       <div className="flex flex-1 flex-col lg:min-h-0">
         <RecoveryAppBuilder

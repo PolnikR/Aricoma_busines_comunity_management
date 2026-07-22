@@ -7,6 +7,7 @@ import type { RecoveryTier, RecoveryApplicationFormState } from '../model/recove
 interface RecoveryAppBuilderProps {
   onSave?: (appState: RecoveryApplicationFormState) => void
   isSaving?: boolean
+  initialData?: RecoveryApplicationFormState
 }
 
 const DEFAULT_TIERS: Record<string, RecoveryTier> = {
@@ -36,13 +37,15 @@ const DEFAULT_TIERS: Record<string, RecoveryTier> = {
   },
 }
 
-export function RecoveryAppBuilder({ onSave, isSaving }: RecoveryAppBuilderProps) {
-  const [formState, setFormState] = useState<RecoveryApplicationFormState>({
-    name: '',
-    description: '',
-    environment: 'dev',
-    tiers: new Map(Object.entries(DEFAULT_TIERS)),
-  })
+export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAppBuilderProps) {
+  const [formState, setFormState] = useState<RecoveryApplicationFormState>(
+    initialData ?? {
+      name: '',
+      description: '',
+      environment: 'dev',
+      tiers: new Map(Object.entries(DEFAULT_TIERS)),
+    }
+  )
 
   const handleMetadataChange = useCallback((metadata: Partial<RecoveryApplicationFormState>) => {
     setFormState(prev => ({ ...prev, ...metadata }))

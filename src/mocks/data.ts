@@ -1,4 +1,4 @@
-import type { RecoveryApplication, RecoveryApplicationData } from '@/features/providers-connectors/recovery-applications/model/recoveryApplicationTypes'
+import type { RecoveryApplication, RecoveryApplicationData } from '@/features/recovery-plans/recovery-applications/model/recoveryApplicationTypes'
 
 const apps = new Map<string, RecoveryApplication>()
 
