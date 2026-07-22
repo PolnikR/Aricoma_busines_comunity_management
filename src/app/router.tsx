@@ -18,17 +18,17 @@ const InfrastructurePage = lazy(async () => {
 })
 
 const RecoveryApplicationsListPage = lazy(async () => {
-  const page = await import('@/features/providers-connectors/recovery-applications/pages/RecoveryApplicationsListPage')
+  const page = await import('@/features/recovery-plans/recovery-applications/pages/RecoveryApplicationsListPage')
   return { default: page.RecoveryApplicationsListPage }
 })
 
 const RecoveryApplicationBuilderPage = lazy(async () => {
-  const page = await import('@/features/providers-connectors/recovery-applications/pages/RecoveryApplicationBuilderPage')
+  const page = await import('@/features/recovery-plans/recovery-applications/pages/RecoveryApplicationBuilderPage')
   return { default: page.RecoveryApplicationBuilderPage }
 })
 
 const RecoveryApplicationEditorPage = lazy(async () => {
-  const page = await import('@/features/providers-connectors/recovery-applications/pages/RecoveryApplicationEditorPage')
+  const page = await import('@/features/recovery-plans/recovery-applications/pages/RecoveryApplicationEditorPage')
   return { default: page.RecoveryApplicationEditorPage }
 })
 
@@ -100,30 +100,46 @@ export function AppRouter() {
             </Suspense>
           )}
         />
-        <Route path="providers-connectors/recovery-applications">
+        <Route path="recovery-plans">
+          <Route index element={<Navigate to={routes.recoveryApplications} replace />} />
+          <Route path="recovery-applications">
+            <Route
+              index
+              element={
+                <Suspense fallback={<RouteLoadingState />}>
+                  <RecoveryApplicationsListPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="create"
+              element={
+                <Suspense fallback={<RouteLoadingState />}>
+                  <RecoveryApplicationBuilderPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path=":id/edit"
+              element={
+                <Suspense fallback={<RouteLoadingState />}>
+                  <RecoveryApplicationEditorPage />
+                </Suspense>
+              }
+            />
+          </Route>
           <Route
-            index
-            element={
-              <Suspense fallback={<RouteLoadingState />}>
-                <RecoveryApplicationsListPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="create"
-            element={
-              <Suspense fallback={<RouteLoadingState />}>
-                <RecoveryApplicationBuilderPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path=":id/edit"
-            element={
-              <Suspense fallback={<RouteLoadingState />}>
-                <RecoveryApplicationEditorPage />
-              </Suspense>
-            }
+            path="recovery-runs"
+            element={(
+              <ModuleWorkQueuePage
+                eyebrow="Recovery Plans"
+                title="Recovery Runs"
+                description="Execution history and status of recovery runs."
+                excelSource="EP-07 Recovery Plans"
+                apiBoundary="Pending backend API contract for recovery runs"
+                workflowItems={['Run history', 'Active runs', 'Run results']}
+              />
+            )}
           />
         </Route>
         <Route path="discovery-inventory" element={<Navigate to={routes.virtualMachines} replace />} />
@@ -137,7 +153,7 @@ export function AppRouter() {
           )}
         />
         {renderModulePageRoutes(discoveryInventoryPlaceholderPages)}
-        {renderModulePageRoutes(remainingEpicPages)}
+        {renderModulePageRoutes(remainingEpicPages.filter((page) => page.path !== routes.recoveryPlans))}
         <Route path="*" element={<Navigate to={routes.virtualMachines} replace />} />
       </Route>
     </Routes>

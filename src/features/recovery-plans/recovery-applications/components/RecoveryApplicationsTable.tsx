@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
 import { Button } from '@/shared/components/button/Button'
 import type { RecoveryApplication } from '../model/recoveryApplicationTypes'
@@ -41,20 +40,23 @@ function getApplicationStatus(app: RecoveryApplication): 'Active' | 'Draft' {
   return tiers.length > 0 ? 'Active' : 'Draft'
 }
 
-function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
-
 function getStatusColor(status: 'Active' | 'Draft'): string {
   return status === 'Active'
     ? 'bg-[#d1fae5] text-[#047857]'
     : 'bg-[#fef3c7] text-[#92400e]'
 }
 
+// Short provider label derived from the application platform.
+function getProviderLabel(platform: string): string {
+  if (platform.startsWith('VMware')) return 'VMware'
+  if (platform.startsWith('IBM')) return 'IBM PowerVM'
+  return platform || '—'
+}
+
 export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: RecoveryApplicationsTableProps) {
-  const navigate = useNavigate()
   const [selectedJson, setSelectedJson] = useState<object | null>(null)
+
+  const headerClass = 'whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400'
 
   return (
     <>
@@ -62,13 +64,12 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
         <Table className="min-w-190">
           <TableHeader className="sticky top-0 z-10 border-b border-[#dfe9f3] bg-[#f6f9fc]">
             <TableRow>
-              <TableCell isHeader className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Application Name</TableCell>
-              <TableCell isHeader className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Description</TableCell>
-              <TableCell isHeader className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Environment</TableCell>
-              <TableCell isHeader className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Tiers</TableCell>
-              <TableCell isHeader className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Status</TableCell>
-              <TableCell isHeader className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Last Updated</TableCell>
-              <TableCell isHeader className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Actions</TableCell>
+              <TableCell isHeader className={headerClass}>Application Name</TableCell>
+              <TableCell isHeader className={headerClass}>Environment</TableCell>
+              <TableCell isHeader className={headerClass}>Provider</TableCell>
+              <TableCell isHeader className={headerClass}>Tiers</TableCell>
+              <TableCell isHeader className={headerClass}>Status</TableCell>
+              <TableCell isHeader className={headerClass}>Actions</TableCell>
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-[#edf2f7]">
@@ -77,20 +78,17 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
                 const status = getApplicationStatus(app)
                 const tierCount = Object.keys(app.data.application.tiers).length
                 return (
-                  <TableRow
-                    key={app.id}
-                    className="bg-white hover:bg-[#f9fbfd] transition-colors"
-                  >
+                  <TableRow key={app.id} className="bg-white hover:bg-[#f9fbfd] transition-colors">
                     <TableCell className="px-5 py-4 text-sm font-semibold text-gray-900 dark:text-white">
                       {app.data.application.name}
-                    </TableCell>
-                    <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate">
-                      {app.data.application.description}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {app.data.application.environment}
                       </span>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
+                      {getProviderLabel(app.data.application.platform)}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
                       {tierCount}
@@ -100,16 +98,13 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
                         {status}
                       </span>
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
-                      {formatDate(app.updatedAt)}
-                    </TableCell>
                     <TableCell className="px-5 py-4 text-sm">
                       <div className="flex gap-2">
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => { void navigate(`/providers-connectors/recovery-applications/${app.id}`) }}
-                          title="View application details"
+                          onClick={() => { setSelectedJson(app.data) }}
+                          title="View application JSON"
                         >
                           View
                         </Button>
@@ -120,15 +115,6 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
                           title="Edit application configuration"
                         >
                           Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled
-                          title="Recovery testing coming soon"
-                          className="opacity-50 cursor-not-allowed"
-                        >
-                          Test
                         </Button>
                         <Button
                           size="sm"
@@ -146,7 +132,7 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
               })
             ) : (
               <TableRow>
-                <TableCell className="px-5 py-8 text-center text-gray-600 dark:text-gray-400 col-span-7">
+                <TableCell className="px-5 py-8 text-center text-gray-600 dark:text-gray-400 col-span-6">
                   No applications found
                 </TableCell>
               </TableRow>

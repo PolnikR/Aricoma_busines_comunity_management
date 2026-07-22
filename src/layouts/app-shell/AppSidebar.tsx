@@ -83,7 +83,10 @@ const navItems: NavItem[] = [
   {
     name: 'Recovery Plans',
     icon: <LayersIcon />,
-    path: routes.recoveryPlans,
+    subItems: [
+      { name: 'Recovery Applications', path: routes.recoveryApplications },
+      { name: 'Recovery Runs', path: routes.recoveryRuns },
+    ],
   },
   {
     name: 'Execution Engine',

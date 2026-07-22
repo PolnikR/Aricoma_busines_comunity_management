@@ -15,7 +15,7 @@ export function RecoveryApplicationEditorPage() {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader
-          eyebrow="Providers & Connectors"
+          eyebrow="Recovery Plans"
           title="Edit Recovery Application"
           description="Modify disaster recovery application configuration"
         />
@@ -32,7 +32,7 @@ export function RecoveryApplicationEditorPage() {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader
-          eyebrow="Providers & Connectors"
+          eyebrow="Recovery Plans"
           title="Edit Recovery Application"
           description="Modify disaster recovery application configuration"
           actions={<Button variant="outline" disabled>Back</Button>}
@@ -50,10 +50,10 @@ export function RecoveryApplicationEditorPage() {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader
-          eyebrow="Providers & Connectors"
+          eyebrow="Recovery Plans"
           title="Edit Recovery Application"
           description="Modify disaster recovery application configuration"
-          actions={<Button variant="outline" onClick={() => { void navigate('/providers-connectors/providers') }}>Back</Button>}
+          actions={<Button variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications') }}>Back</Button>}
         />
         <div className="flex-1 p-6">
           <div className="bg-red-50 text-red-700 p-4 rounded-lg">
@@ -81,7 +81,7 @@ export function RecoveryApplicationEditorPage() {
 
     try {
       await updateMutation.mutateAsync(applicationData)
-      void navigate('/providers-connectors/recovery-applications')
+      void navigate('/recovery-plans/recovery-applications')
     } catch (err) {
       console.error('Failed to update recovery application:', err)
       alert('Failed to update application. Please try again.')

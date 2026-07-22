@@ -15,7 +15,7 @@ export function RecoveryApplicationsListPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   const handleEdit = (id: string) => {
-    void navigate(`/providers-connectors/recovery-applications/${id}/edit`)
+    void navigate(`/recovery-plans/recovery-applications/${id}/edit`)
   }
 
   const handleDelete = (id: string): void => {
@@ -39,11 +39,11 @@ export function RecoveryApplicationsListPage() {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader
-          eyebrow="Providers & Connectors"
+          eyebrow="Recovery Plans"
           title="Recovery Applications"
           description="Manage disaster recovery application definitions and test recovery workflows."
           actions={
-            <Button onClick={() => { void navigate('/providers-connectors/recovery-applications/create') }}>
+            <Button onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
               Create Application
             </Button>
           }
@@ -61,7 +61,7 @@ export function RecoveryApplicationsListPage() {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader
-          eyebrow="Providers & Connectors"
+          eyebrow="Recovery Plans"
           title="Recovery Applications"
           description="Manage disaster recovery application definitions and test recovery workflows."
         />
@@ -85,7 +85,7 @@ export function RecoveryApplicationsListPage() {
         title="Recovery Applications"
         description="Manage disaster recovery application definitions and test recovery workflows."
         actions={
-          <Button onClick={() => { void navigate('/providers-connectors/recovery-applications/create') }}>
+          <Button onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
             Create Application
           </Button>
         }
@@ -97,7 +97,7 @@ export function RecoveryApplicationsListPage() {
             title="No recovery applications defined yet"
             description="Create your first recovery application to start managing disaster recovery workflows."
             action={
-              <Button onClick={() => { void navigate('/providers-connectors/recovery-applications/create') }}>
+              <Button onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
                 Create Your First Application
               </Button>
             }

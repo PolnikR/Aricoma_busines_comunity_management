@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import type { RecoveryApplicationData } from '@/features/providers-connectors/recovery-applications/model/recoveryApplicationTypes'
+import type { RecoveryApplicationData } from '@/features/recovery-plans/recovery-applications/model/recoveryApplicationTypes'
 import { getApps, getApp, createApp, updateApp, deleteApp } from './data'
 
 export const handlers = [
