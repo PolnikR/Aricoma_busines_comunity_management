@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { Button } from '@/shared/components/button/Button'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
 import { useCreateRecoveryApplication } from '../api/useRecoveryApplications'
@@ -38,6 +39,7 @@ export function RecoveryApplicationBuilderPage() {
         eyebrow="Providers & Connectors"
         title="Create Recovery Application"
         description="Define a new disaster recovery application with tiered VM organization"
+        actions={<Button size="sm" variant="outline" onClick={() => navigate('/providers-connectors/providers')}>Back</Button>}
       />
       <div className="flex flex-1 flex-col lg:min-h-0">
         <RecoveryAppBuilder
