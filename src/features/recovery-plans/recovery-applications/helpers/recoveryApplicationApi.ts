@@ -28,13 +28,22 @@ export async function fetchRecoveryApplication(id: string): Promise<RecoveryAppl
 // In dev the /api prefix is proxied to the backend (see vite.config.ts),
 // so this becomes POST http://<backend>/submit_dag?filename=<name>.
 export async function submitRecoveryApplicationDag(name: string, data: RecoveryApplicationData): Promise<SubmitDagResponse> {
-  const response = await fetch(`/api/submit_dag?filename=${encodeURIComponent(name)}`, {
-    method: 'POST',
-    headers: { accept: 'application/json', 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  })
+  const url = `/api/submit_dag?filename=${encodeURIComponent(name)}`
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+  } catch (cause) {
+    // Network-level failure (proxy unreachable, CORS, backend down, DNS).
+    const reason = cause instanceof Error ? cause.message : String(cause)
+    throw new Error(`Network error calling ${url}: ${reason}`, { cause })
+  }
   if (!response.ok) {
-    throw new Error(`Failed to submit recovery application: ${String(response.status)} ${response.statusText}`)
+    const body = await response.text().catch(() => '')
+    throw new Error(`submit_dag failed: ${String(response.status)} ${response.statusText}${body ? ` — ${body}` : ''}`)
   }
   return response.json() as Promise<SubmitDagResponse>
 }

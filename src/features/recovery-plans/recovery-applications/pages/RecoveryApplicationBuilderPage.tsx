@@ -29,7 +29,8 @@ export function RecoveryApplicationBuilderPage() {
       void navigate('/recovery-plans/recovery-applications')
     } catch (error) {
       console.error('Failed to submit recovery application:', error)
-      alert('Failed to submit application to recovery orchestration. Please try again.')
+      const message = error instanceof Error ? error.message : String(error)
+      alert(`Failed to submit application to recovery orchestration.\n\n${message}`)
     }
   }
 
