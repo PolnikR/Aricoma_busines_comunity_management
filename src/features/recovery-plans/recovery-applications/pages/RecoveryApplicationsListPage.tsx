@@ -81,7 +81,7 @@ export function RecoveryApplicationsListPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow="Providers & Connectors"
+        eyebrow="Recovery Plans"
         title="Recovery Applications"
         description="Manage disaster recovery application definitions and test recovery workflows."
         actions={
