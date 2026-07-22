@@ -85,7 +85,7 @@ export function RecoveryApplicationsListPage() {
         title="Recovery Applications"
         description="Manage disaster recovery application definitions and test recovery workflows."
         actions={
-          <Button onClick={() => { void navigate('/providers-connectors/providers-connectors/recovery-applications/create') }}>
+          <Button onClick={() => { void navigate('/providers-connectors/recovery-applications/create') }}>
             Create Application
           </Button>
         }
@@ -97,7 +97,7 @@ export function RecoveryApplicationsListPage() {
             title="No recovery applications defined yet"
             description="Create your first recovery application to start managing disaster recovery workflows."
             action={
-              <Button onClick={() => { void navigate('/providers-connectors/providers-connectors/recovery-applications/create') }}>
+              <Button onClick={() => { void navigate('/providers-connectors/recovery-applications/create') }}>
                 Create Your First Application
               </Button>
             }
