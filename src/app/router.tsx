@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/layouts/app-shell/AppShell'
 import { VirtualMachinesPage } from '@/features/discovery-inventory/virtual-machines/pages/VirtualMachinesPage'
+import { ProvidersPage } from '@/features/providers-connectors/pages/ProvidersPage'
 import { ModuleWorkQueuePage } from '@/features/module-placeholder/pages/ModuleWorkQueuePage'
 import {
   discoveryInventoryPlaceholderPages,
@@ -51,6 +52,27 @@ function renderModulePageRoutes(pages: typeof platformAdministrationPages) {
   ))
 }
 
+function renderProvidersConnectorsRoutes(pages: typeof providersConnectorsPages) {
+  return pages.map((page) => {
+    if (page.path === routes.providersConnectors) {
+      return (
+        <Route
+          key={page.path}
+          path={toRoutePath(page.path)}
+          element={<ProvidersPage />}
+        />
+      )
+    }
+    return (
+      <Route
+        key={page.path}
+        path={toRoutePath(page.path)}
+        element={<ModuleWorkQueuePage {...page} />}
+      />
+    )
+  })
+}
+
 export function AppRouter() {
   return (
     <Routes>
@@ -59,7 +81,7 @@ export function AppRouter() {
         <Route path="platform-administration" element={<Navigate to={routes.platformAdministration} replace />} />
         {renderModulePageRoutes(platformAdministrationPages)}
         <Route path="providers-connectors" element={<Navigate to={routes.providersConnectors} replace />} />
-        {renderModulePageRoutes(providersConnectorsPages)}
+        {renderProvidersConnectorsRoutes(providersConnectorsPages)}
         <Route path="recovery-applications">
           <Route
             index
