@@ -39,7 +39,7 @@ export function AppHeader() {
           </button>
 
           <div className="min-w-0 sm:hidden">
-            <p className="text-sm font-semibold text-[#17233d]">ABCO</p>
+            <p className="text-sm font-semibold text-[#17233d]">Aricoma</p>
             <p className="text-xs text-[#7a89a2]">Business continuity</p>
           </div>
 
