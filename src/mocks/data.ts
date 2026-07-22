@@ -1,4 +1,4 @@
-import type { RecoveryApplication, RecoveryApplicationData } from '@/features/recovery-plans/recovery-applications/model/recoveryApplicationTypes'
+import type { RecoveryApplication, RecoveryApplicationData, ApplicationSubmission } from '@/features/recovery-plans/recovery-applications/model/recoveryApplicationTypes'
 
 const apps = new Map<string, RecoveryApplication>()
 
@@ -94,12 +94,13 @@ export function getApp(id: string): RecoveryApplication | undefined {
   return apps.get(id)
 }
 
-export function createApp(data: RecoveryApplicationData): RecoveryApplication {
+export function createApp(data: RecoveryApplicationData, submission?: ApplicationSubmission): RecoveryApplication {
   const id = Math.random().toString(36).slice(2, 9)
   const now = getCurrentTimestamp()
   const app: RecoveryApplication = {
     id,
     data,
+    ...(submission ? { submission } : {}),
     createdAt: now,
     updatedAt: now,
   }

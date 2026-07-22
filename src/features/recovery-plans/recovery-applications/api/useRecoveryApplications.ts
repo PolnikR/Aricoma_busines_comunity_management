@@ -33,7 +33,7 @@ export function useCreateRecoveryApplication() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: createRecoveryApplication,
+    mutationFn: (data: RecoveryApplicationData) => createRecoveryApplication(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: recoveryApplicationsQueryKey })
     },
@@ -47,8 +47,8 @@ export function useSubmitRecoveryApplication() {
 
   return useMutation({
     mutationFn: async (data: RecoveryApplicationData) => {
-      await submitRecoveryApplicationDag(data.application.name, data)
-      return createRecoveryApplication(data)
+      const response = await submitRecoveryApplicationDag(data.application.name, data)
+      return createRecoveryApplication(data, { status: response.status, remotePath: response.remote_path })
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: recoveryApplicationsQueryKey })

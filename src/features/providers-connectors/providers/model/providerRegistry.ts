@@ -35,27 +35,7 @@ export const PROVIDERS: Provider[] = [
       { name: 'vcenter_default', endpoint: 'vcenter-prod.company.local', role: 'Source', status: 'Connected' },
       { name: 'vcenter_default_destination', endpoint: 'vcenter-dr.company.local', role: 'Target', status: 'Connected' },
     ],
-  },
-  {
-    id: 'ibm-powervm',
-    name: 'IBM PowerVM',
-    type: 'Virtualization',
-    capabilities: ['Discovery', 'Recovery'],
-    status: 'Active',
-    version: '1.0',
-    connections: [
-      { name: 'powervm_hmc_default', endpoint: 'hmc-prod.company.local', role: 'Source', status: 'Connected' },
-    ],
-  },
-  {
-    id: 'microsoft-azure',
-    name: 'Microsoft Azure',
-    type: 'Cloud',
-    capabilities: ['Discovery'],
-    status: 'Disabled',
-    version: '—',
-    connections: [],
-  },
+  }
 ]
 
 export function getProviderById(id: string): Provider | undefined {

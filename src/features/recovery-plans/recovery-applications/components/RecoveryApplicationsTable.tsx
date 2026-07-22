@@ -69,6 +69,7 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
               <TableCell isHeader className={headerClass}>Provider</TableCell>
               <TableCell isHeader className={headerClass}>Tiers</TableCell>
               <TableCell isHeader className={headerClass}>Status</TableCell>
+              <TableCell isHeader className={headerClass}>Submission</TableCell>
               <TableCell isHeader className={headerClass}>Actions</TableCell>
             </TableRow>
           </TableHeader>
@@ -97,6 +98,19 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
                         {status}
                       </span>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm">
+                      {app.submission ? (
+                        <span
+                          title={app.submission.remotePath}
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${app.submission.status === 'ok' ? 'bg-[#d1fae5] text-[#047857]' : 'bg-[#fee2e2] text-[#b91c1c]'}`}
+                        >
+                          <span className={`size-1.5 rounded-full ${app.submission.status === 'ok' ? 'bg-[#047857]' : 'bg-[#b91c1c]'}`} />
+                          {app.submission.status}
+                        </span>
+                      ) : (
+                        <span className="text-[#9aa7bd]">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm">
                       <div className="flex gap-2">
@@ -132,7 +146,7 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
               })
             ) : (
               <TableRow>
-                <TableCell className="px-5 py-8 text-center text-gray-600 dark:text-gray-400 col-span-6">
+                <TableCell className="px-5 py-8 text-center text-gray-600 dark:text-gray-400 col-span-7">
                   No applications found
                 </TableCell>
               </TableRow>

@@ -21,9 +21,15 @@ export interface RecoveryApplicationData {
   }
 }
 
+export interface ApplicationSubmission {
+  status: string
+  remotePath: string
+}
+
 export interface RecoveryApplication {
   id: string
   data: RecoveryApplicationData
+  submission?: ApplicationSubmission
   createdAt: string
   updatedAt: string
 }
