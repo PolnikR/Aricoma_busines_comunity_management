@@ -25,7 +25,7 @@ export function RecoveryApplicationBuilderPage() {
 
     try {
       await createMutation.mutateAsync(applicationData)
-      navigate('/recovery-applications')
+      navigate('/providers-connectors/providers')
     } catch (error) {
       console.error('Failed to save recovery application:', error)
       alert('Failed to save application. Please try again.')
