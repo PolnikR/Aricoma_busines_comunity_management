@@ -7,73 +7,7 @@ function getCurrentTimestamp(): string {
 }
 
 function initializeSeededData() {
-  const now = getCurrentTimestamp()
-  const seededApps: RecoveryApplication[] = [
-    {
-      id: '1',
-      data: {
-        application: {
-          name: 'Production ERP System',
-          description: 'Critical SAP ERP for finance operations',
-          environment: 'prod',
-          platform: 'VMware vCenter ESXi',
-          source_connection: 'vcenter_default',
-          target_connection: 'vcenter_default_destination',
-          tiers: {
-            database: {
-              name: 'Database',
-              order: 1,
-              description: 'Database server group',
-              vms: [{ name: 'erp-db-prod-01' }, { name: 'erp-db-prod-02' }],
-            },
-            application: {
-              name: 'Application',
-              order: 3,
-              description: 'Application server group',
-              vms: [{ name: 'erp-app-prod-01' }, { name: 'erp-app-prod-02' }],
-            },
-            web: {
-              name: 'Web',
-              order: 4,
-              description: 'Web server group',
-              vms: [{ name: 'erp-web-prod-01' }],
-            },
-          },
-        },
-      },
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: '2',
-      data: {
-        application: {
-          name: 'Customer Portal',
-          description: 'Public-facing customer management portal',
-          environment: 'prod',
-          platform: 'VMware vCenter ESXi',
-          source_connection: 'vcenter_default',
-          target_connection: 'vcenter_default_destination',
-          tiers: {
-            application: {
-              name: 'Application',
-              order: 3,
-              description: 'Application server group',
-              vms: [{ name: 'portal-app-01' }, { name: 'portal-app-02' }],
-            },
-            web: {
-              name: 'Web',
-              order: 4,
-              description: 'Web server group',
-              vms: [{ name: 'portal-web-01' }, { name: 'portal-web-02' }],
-            },
-          },
-        },
-      },
-      createdAt: now,
-      updatedAt: now,
-    },
-  ]
+  const seededApps: RecoveryApplication[] = []
 
   seededApps.forEach(app => {
     apps.set(app.id, app)

@@ -1,4 +1,5 @@
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
+import { Badge } from '@/shared/components/badge/Badge'
 import type { ProviderConnection } from '../model/providerRegistry'
 
 interface ProviderConnectionsTableProps {
@@ -34,13 +35,15 @@ export function ProviderConnectionsTable({ connections }: ProviderConnectionsTab
               <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
                 {connection.endpoint}
               </TableCell>
-              <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
-                {connection.role}
+              <TableCell className="px-5 py-4 text-sm">
+                <Badge color={connection.role === 'Source' ? 'info' : 'primary'} size="sm">
+                  {connection.role}
+                </Badge>
               </TableCell>
               <TableCell className="px-5 py-4 text-sm">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#d1fae5] text-[#047857]">
+                <Badge color={connection.status === 'Connected' ? 'success' : 'warning'} size="sm">
                   {connection.status}
-                </span>
+                </Badge>
               </TableCell>
             </TableRow>
           ))}
