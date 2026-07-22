@@ -16,7 +16,7 @@ export function ProvidersTablePage() {
           title="Providers"
           description="Provider registry workspace"
           actions={
-            <Link to="/recovery-applications/create">
+            <Link to="/providers-connectors/recovery-applications/create">
               <Button>Create Application</Button>
             </Link>
           }
@@ -34,7 +34,7 @@ export function ProvidersTablePage() {
           title="Providers"
           description="Provider registry workspace"
           actions={
-            <Link to="/recovery-applications/create">
+            <Link to="/providers-connectors/recovery-applications/create">
               <Button>Create Application</Button>
             </Link>
           }
@@ -55,7 +55,7 @@ export function ProvidersTablePage() {
         title="Providers"
         description="Provider registry workspace"
         actions={
-          <Link to="/recovery-applications/create">
+          <Link to="/providers-connectors/recovery-applications/create">
             <Button>Create Application</Button>
           </Link>
         }

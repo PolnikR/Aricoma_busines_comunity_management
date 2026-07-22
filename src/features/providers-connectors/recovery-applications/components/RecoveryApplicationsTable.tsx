@@ -108,7 +108,7 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => { void navigate(`/recovery-applications/${app.id}`) }}
+                          onClick={() => { void navigate(`/providers-connectors/recovery-applications/${app.id}`) }}
                           title="View application details"
                         >
                           View

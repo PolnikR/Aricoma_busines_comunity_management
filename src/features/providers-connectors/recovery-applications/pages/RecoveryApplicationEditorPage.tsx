@@ -53,7 +53,7 @@ export function RecoveryApplicationEditorPage() {
           eyebrow="Providers & Connectors"
           title="Edit Recovery Application"
           description="Modify disaster recovery application configuration"
-          actions={<Button variant="outline" onClick={() => { void navigate('/recovery-applications') }}>Back</Button>}
+          actions={<Button variant="outline" onClick={() => { void navigate('/providers-connectors/recovery-applications') }}>Back</Button>}
         />
         <div className="flex-1 p-6">
           <div className="bg-red-50 text-red-700 p-4 rounded-lg">
@@ -81,7 +81,7 @@ export function RecoveryApplicationEditorPage() {
 
     try {
       await updateMutation.mutateAsync(applicationData)
-      void navigate('/recovery-applications')
+      void navigate('/providers-connectors/recovery-applications')
     } catch (err) {
       console.error('Failed to update recovery application:', err)
       alert('Failed to update application. Please try again.')
@@ -94,7 +94,7 @@ export function RecoveryApplicationEditorPage() {
         eyebrow="Providers & Connectors"
         title="Edit Recovery Application"
         description="Modify disaster recovery application configuration"
-        actions={<Button variant="outline" onClick={() => { void navigate('/recovery-applications') }}>Back</Button>}
+        actions={<Button variant="outline" onClick={() => { void navigate('/providers-connectors/recovery-applications') }}>Back</Button>}
       />
       <div className="flex flex-1 flex-col lg:min-h-0">
         <RecoveryAppBuilder

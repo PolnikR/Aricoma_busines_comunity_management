@@ -87,7 +87,7 @@ export function AppRouter() {
         {renderModulePageRoutes(platformAdministrationPages)}
         <Route path="providers-connectors" element={<Navigate to={routes.providersConnectors} replace />} />
         {renderProvidersConnectorsRoutes(providersConnectorsPages)}
-        <Route path="recovery-applications">
+        <Route path="providers-connectors/recovery-applications">
           <Route
             index
             element={
