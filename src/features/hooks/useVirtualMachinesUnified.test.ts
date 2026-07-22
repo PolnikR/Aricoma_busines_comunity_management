@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useVirtualMachinesUnified } from './useVirtualMachinesUnified'
-import * as vmApi from '../virtual-machines/api/useAllVirtualMachines'
-import * as topologyApi from '../infrastructure/api/useInfrastructureTopology'
+import * as vmApi from '@/features/discovery-inventory/virtual-machines/api/useAllVirtualMachines'
+import * as topologyApi from '@/features/discovery-inventory/infrastructure/api/useInfrastructureTopology'
 
 describe('useVirtualMachinesUnified', () => {
   beforeEach(() => {

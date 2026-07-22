@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useVirtualMachinesUnified } from '@/features/discovery-inventory/hooks/useVirtualMachinesUnified'
+import { useVirtualMachinesUnified } from '@/features/hooks/useVirtualMachinesUnified'
 
 interface VMSidebarProps {
   onVMSelect?: (vmName: string) => void

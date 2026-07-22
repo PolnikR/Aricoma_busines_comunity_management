@@ -1,7 +1,7 @@
-import { useAllVirtualMachines } from '../virtual-machines/api/useAllVirtualMachines'
-import { useInfrastructureTopology } from '../infrastructure/api/useInfrastructureTopology'
-import type { AllVirtualMachinesData } from '../virtual-machines/helpers/virtualMachinesApi'
-import type { InfrastructureTopology } from '../infrastructure/model/topologyTypes'
+import { useAllVirtualMachines } from '@/features/discovery-inventory/virtual-machines/api/useAllVirtualMachines'
+import { useInfrastructureTopology } from '@/features/discovery-inventory/infrastructure/api/useInfrastructureTopology'
+import type { AllVirtualMachinesData } from '@/features/discovery-inventory/virtual-machines/helpers/virtualMachinesApi'
+import type { InfrastructureTopology } from '@/features/discovery-inventory/infrastructure/model/topologyTypes'
 
 export const virtualMachinesUnifiedQueryKey = ['virtual-machines-unified'] as const
 
