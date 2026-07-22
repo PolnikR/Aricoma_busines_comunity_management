@@ -2,7 +2,7 @@ import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
-import { useVirtualMachinesUnified } from '../../hooks/useVirtualMachinesUnified'
+import { useVirtualMachinesUnified } from '@/features/hooks/useVirtualMachinesUnified'
 import { InfrastructureTopologySkeleton } from '../components/InfrastructureTopologySkeleton'
 import { InfrastructureTopologyWorkspace } from '../components/InfrastructureTopologyWorkspace'
 
