@@ -16,21 +16,23 @@ describe('useVirtualMachinesUnified', () => {
     vi.spyOn(vmApi, 'useAllVirtualMachines').mockReturnValue({
       data: mockVMs,
       isLoading: false,
+      isFetching: false,
       error: null,
       isError: false,
-      isFetching: false,
       status: 'success',
       fetchStatus: 'idle',
+      refetch: vi.fn(),
     } as any)
 
     vi.spyOn(topologyApi, 'useInfrastructureTopology').mockReturnValue({
       data: mockTopology,
       isLoading: false,
+      isFetching: false,
       error: null,
       isError: false,
-      isFetching: false,
       status: 'success',
       fetchStatus: 'idle',
+      refetch: vi.fn(),
     } as any)
 
     const { result } = renderHook(() => useVirtualMachinesUnified())
@@ -38,6 +40,7 @@ describe('useVirtualMachinesUnified', () => {
     expect(result.current.vmList).toEqual(mockVMs)
     expect(result.current.topology).toEqual(mockTopology)
     expect(result.current.isLoading).toBe(false)
+    expect(result.current.isFetching).toBe(false)
     expect(result.current.error).toBeNull()
   })
 

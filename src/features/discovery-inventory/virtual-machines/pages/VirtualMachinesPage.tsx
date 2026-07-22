@@ -4,7 +4,7 @@ import { Card } from '@/shared/components/card/Card'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
-import { useAllVirtualMachines } from '../api/useAllVirtualMachines'
+import { useVirtualMachinesUnified } from '../../hooks/useVirtualMachinesUnified'
 import { applyFiltersAndPagination } from '../helpers/virtualMachinesApi'
 import { useTags } from '../api/useTags'
 import { VirtualMachineDetailPanel } from '../components/VirtualMachineDetailPanel'
@@ -27,7 +27,7 @@ const defaultFilters: VirtualMachineFilters = {
 
 export function VirtualMachinesPage() {
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
-  const { data: allData, error, isPending, isFetching, refetch } = useAllVirtualMachines()
+  const { vmList: allData, error, isLoading: isPending, isFetching, refetch } = useVirtualMachinesUnified()
   const { data: availableTags = [] } = useTags()
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
@@ -76,7 +76,7 @@ export function VirtualMachinesPage() {
           retryLabel="Retry loading"
           variant="full"
           isRetrying={isFetching}
-          onRetry={() => { void refetch() }}
+          onRetry={refetch}
         />
       </>
     )
@@ -90,7 +90,7 @@ export function VirtualMachinesPage() {
         eyebrow="Discovery & Inventory"
         title="Virtual machines"
         description="VMware inventory, health and placement overview."
-        actions={<Button size="sm" variant="outline" onClick={() => { void refetch() }}>Refresh inventory</Button>}
+        actions={<Button size="sm" variant="outline" onClick={refetch}>Refresh inventory</Button>}
       />
 
       <div className="flex flex-1 flex-col gap-4 lg:min-h-0">
@@ -101,7 +101,7 @@ export function VirtualMachinesPage() {
             title="Latest request failed"
             description="Showing the previous successful page."
             isRetrying={isFetching}
-            onRetry={() => { void refetch() }}
+            onRetry={refetch}
           />
         ) : null}
 

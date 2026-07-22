@@ -9,7 +9,9 @@ interface UseVirtualMachinesUnifiedResult {
   vmList: AllVirtualMachinesData | undefined
   topology: InfrastructureTopology | undefined
   isLoading: boolean
+  isFetching: boolean
   error: Error | null
+  refetch: () => void
 }
 
 /**
@@ -25,12 +27,20 @@ export function useVirtualMachinesUnified(): UseVirtualMachinesUnifiedResult {
   const topologyQuery = useInfrastructureTopology()
 
   const isLoading = vmQuery.isLoading || topologyQuery.isLoading
+  const isFetching = vmQuery.isFetching || topologyQuery.isFetching
   const error = vmQuery.error || topologyQuery.error
+
+  const refetch = () => {
+    void vmQuery.refetch()
+    void topologyQuery.refetch()
+  }
 
   return {
     vmList: vmQuery.data,
     topology: topologyQuery.data,
     isLoading,
+    isFetching,
     error: error as Error | null,
+    refetch,
   }
 }

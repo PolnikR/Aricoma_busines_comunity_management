@@ -1,0 +1,72 @@
+Implementation Plan: Production VM Caching Strategy
+Overview
+Consolidate VM data fetching across the app into a single unified hook with production-ready caching. Currently, Virtual Machines, Infrastructure, and Recovery Applications each fetch or depend on separate VM data sources with inconsistent stale times. This creates performance issues (unnecessary refetches) and potential data divergence. We'll create a unified useVirtualMachines() hook that all features depend on, with consistent 15-minute stale time, proper error handling, and documented invalidation strategy.
+
+Architecture Decisions
+Single source of truth: Create useVirtualMachines() hook that combines VM list + topology into one cached query
+Consistent stale time: 15 minutes across all VM data (VMs page uses this already)
+Query deduplication: React Query automatically dedupes multiple consumers of the same queryKey
+Gradual migration: Keep old hooks as thin wrappers during transition, then remove
+Backward compatible: No component changes until new hook is proven working
+Task List
+Phase 1: Foundation
+ Task 1: Create unified VM hook with combined data
+
+Create src/features/discovery-inventory/hooks/useVirtualMachinesUnified.ts
+Combines useAllVirtualMachines() + useInfrastructureTopology()
+Single query key: ['virtual-machines-unified']
+Stale time: 15 minutes
+Returns: { vmList, topology, isLoading, error }
+Scope: Small (1 file)
+ Task 2: Add unified hook to Virtual Machines page
+
+Update VirtualMachinesPage to use new unified hook
+Keep behavior identical (testing purposes)
+Verify page still works
+Scope: Small (1 file modified)
+Checkpoint: Foundation
+✅ Build succeeds with new hook
+✅ No TS errors
+✅ Virtual Machines page displays correctly
+Phase 2: Integration
+ Task 3: Update Infrastructure page to use unified hook
+
+Replace useInfrastructureTopology() with new unified hook
+Extract topology from combined data
+Verify Infrastructure visualization works
+Scope: Small (1 file)
+ Task 4: Update Recovery Applications VMSidebar to use unified hook
+
+Replace useInfrastructureTopology() with new unified hook
+Extract VM list from combined data
+Verify sidebar VM list displays and drag-drop works
+Scope: Small (1 file)
+Checkpoint: Integration
+✅ All three features (VMs, Infrastructure, Recovery Apps) use unified hook
+✅ No performance regression
+✅ All builds clean
+Phase 3: Cleanup
+ Task 5: Mark old hooks as deprecated
+
+Add JSDoc deprecation warnings to useAllVirtualMachines() and useInfrastructureTopology()
+Document they should use useVirtualMachinesUnified() instead
+Scope: Small (2 files)
+ Task 6: Document caching strategy
+
+Create docs/superpowers/CACHING_STRATEGY.md
+Document: query key, stale time, invalidation policy, when to use unified vs. component-level caching
+Scope: Small (1 new file)
+Checkpoint: Complete
+✅ All features working
+✅ Unified hook in use
+✅ Documentation complete
+✅ Ready to merge to spike/ant-design-shell
+Risks and Mitigations
+Risk	Impact	Mitigation
+Breaking existing component integrations	High	Keep old hooks working during transition; test each feature separately
+Query deduplication fails silently	Medium	Monitor React Query DevTools; add logging to unified hook
+Stale time too aggressive (15 min)	Low	Configurable in hook; can adjust if needed
+Data divergence between combined sources	Low	Single queryKey means they invalidate together
+Open Questions
+Should old hooks be completely removed, or kept for backward compatibility? (Decision: keep as deprecated wrappers for now, remove in next cleanup sprint)
+Need monitoring for cache hit rate? (Decision: add to future observability work, not this sprint)

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useInfrastructureTopology } from '@/features/discovery-inventory/infrastructure/api/useInfrastructureTopology'
+import { useVirtualMachinesUnified } from '@/features/discovery-inventory/hooks/useVirtualMachinesUnified'
 
 interface VMSidebarProps {
   onVMSelect?: (vmName: string) => void
@@ -7,7 +7,7 @@ interface VMSidebarProps {
 
 export function VMSidebar({ onVMSelect }: VMSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const { data: topology, isLoading } = useInfrastructureTopology()
+  const { topology, isLoading } = useVirtualMachinesUnified()
 
   const availableVMs = useMemo(() => {
     if (!topology) return []
