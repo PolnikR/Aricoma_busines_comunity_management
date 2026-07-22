@@ -15,7 +15,7 @@ export function RecoveryApplicationsListPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   const handleEdit = (id: string) => {
-    void navigate(`/providers-connectors/recovery-applications/${id}/edit`)
+    void navigate(`/recovery-applications/${id}/edit`)
   }
 
   const handleDelete = (id: string): void => {
@@ -43,7 +43,7 @@ export function RecoveryApplicationsListPage() {
           title="Recovery Applications"
           description="Manage disaster recovery application definitions and test recovery workflows."
           actions={
-            <Button onClick={() => { void navigate('/providers-connectors/recovery-applications/create') }}>
+            <Button onClick={() => { void navigate('/recovery-applications/create') }}>
               Create Application
             </Button>
           }
