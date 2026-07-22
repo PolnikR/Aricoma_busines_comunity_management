@@ -28,8 +28,8 @@ export function VMSidebar({ onVMSelect }: VMSidebarProps) {
   }
 
   return (
-    <div className="w-80 bg-white border border-[#e3edf6] rounded-lg flex flex-col overflow-hidden shadow-sm">
-      <div className="p-3 border-b border-[#edf2f7] bg-[#fbfdff]">
+    <div className="flex flex-col overflow-hidden bg-[#fbfdff]">
+      <div className="p-3 border-b border-[#edf2f7] shrink-0">
         <h3 className="text-xs font-semibold uppercase text-[#7b8ca4] tracking-wider mb-2">
           Available VMs
         </h3>
@@ -44,7 +44,7 @@ export function VMSidebar({ onVMSelect }: VMSidebarProps) {
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
         {filteredVMs.length === 0 ? (
           <div className="text-xs text-[#91a4bc] text-center py-4">
             {searchQuery ? 'No VMs match your search' : 'No VMs available'}

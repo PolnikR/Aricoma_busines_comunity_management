@@ -33,16 +33,18 @@ export function RecoveryApplicationBuilderPage() {
   }
 
   return (
-    <>
+    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
         eyebrow="Providers & Connectors"
         title="Create Recovery Application"
         description="Define a new disaster recovery application with tiered VM organization"
       />
-      <RecoveryAppBuilder
-        onSave={handleSave}
-        isSaving={createMutation.isPending}
-      />
-    </>
+      <div className="flex flex-1 flex-col lg:min-h-0">
+        <RecoveryAppBuilder
+          onSave={handleSave}
+          isSaving={createMutation.isPending}
+        />
+      </div>
+    </div>
   )
 }

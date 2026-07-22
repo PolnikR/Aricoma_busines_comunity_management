@@ -16,7 +16,7 @@ export function TierCanvas({ tiers, onVMAdded, onVMRemoved }: TierCanvasProps) {
   }, [tiers])
 
   return (
-    <div className="flex-1 grid grid-cols-4 gap-4 overflow-x-auto overflow-y-hidden pr-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {sortedTiers.map(({ id, tier }) => (
         <TierCard
           key={id}

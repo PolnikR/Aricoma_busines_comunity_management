@@ -79,11 +79,12 @@ export function RecoveryAppBuilder({ onSave, isSaving }: RecoveryAppBuilderProps
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#f8fbfe]">
-      <div className="bg-white border-b border-[#e3edf6] p-6 shadow-sm">
-        <h1 className="text-lg font-semibold text-[#18253d] mb-4">Create Recovery Application</h1>
-        <div className="flex gap-4 items-end">
-          <div className="flex-1">
+    <div className="flex flex-col gap-4 lg:min-h-0 flex-1 p-4">
+      {/* Metadata Form Card */}
+      <div className="bg-white border border-[#e3edf6] rounded-lg p-4 shadow-sm">
+        <h2 className="text-base font-semibold text-[#17233d] mb-4">Application Details</h2>
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+          <div className="flex-1 w-full">
             <AppMetadataForm
               onMetadataChange={handleMetadataChange}
               initialValues={{
@@ -96,21 +97,30 @@ export function RecoveryAppBuilder({ onSave, isSaving }: RecoveryAppBuilderProps
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="px-4 py-2 bg-[#0d91d7] text-white font-semibold rounded-md hover:bg-[#0a7ab5] disabled:bg-gray-400 transition-colors"
+            className="px-4 py-2 bg-[#0d91d7] text-white font-semibold rounded-md hover:bg-[#0a7ab5] disabled:bg-gray-400 transition-colors whitespace-nowrap"
           >
             {isSaving ? 'Saving...' : 'Save Application'}
           </button>
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden gap-4 p-4">
-        <VMSidebar />
+      {/* Builder Card */}
+      <div className="flex-1 bg-white border border-[#e3edf6] rounded-lg overflow-hidden shadow-sm lg:min-h-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-0 h-full lg:min-h-0">
+          {/* VM Sidebar */}
+          <div className="border-b lg:border-b-0 lg:border-r border-[#e3edf6] overflow-y-auto custom-scrollbar">
+            <VMSidebar />
+          </div>
 
-        <TierCanvas
-          tiers={Object.fromEntries(formState.tiers)}
-          onVMAdded={handleVMAdded}
-          onVMRemoved={handleVMRemoved}
-        />
+          {/* Tier Canvas */}
+          <div className="overflow-y-auto custom-scrollbar p-4">
+            <TierCanvas
+              tiers={Object.fromEntries(formState.tiers)}
+              onVMAdded={handleVMAdded}
+              onVMRemoved={handleVMRemoved}
+            />
+          </div>
+        </div>
       </div>
     </div>
   )
