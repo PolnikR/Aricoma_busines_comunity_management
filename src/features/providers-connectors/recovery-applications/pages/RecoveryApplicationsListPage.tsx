@@ -1,80 +1,104 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/button/Button'
 import { PageHeader } from '@/shared/components/page/PageHeader'
+import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
+import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
 import { useRecoveryApplications } from '../api/useRecoveryApplications'
 
 export function RecoveryApplicationsListPage() {
-  const { data: applications, isLoading, error } = useRecoveryApplications()
+  const navigate = useNavigate()
+  const { data: applications, isLoading, error, refetch } = useRecoveryApplications()
+
+  const handleEdit = (id: string) => {
+    void navigate(`/providers-connectors/recovery-applications/${id}/edit`)
+  }
+
+  const handleDelete = (id: string): void => {
+    const confirmed = window.confirm('Are you sure you want to delete this recovery application?')
+    if (confirmed) {
+      // Delete functionality will be implemented in Task 3 (id will be used)
+      void id
+    }
+  }
 
   if (isLoading) {
     return (
-      <>
+      <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader
           eyebrow="Providers & Connectors"
           title="Recovery Applications"
-          description="Manage disaster recovery application definitions"
+          description="Manage disaster recovery application definitions and test recovery workflows."
+          actions={
+            <Button onClick={() => { void navigate('/providers-connectors/recovery-applications/create') }}>
+              Create Application
+            </Button>
+          }
         />
-        <div className="p-6">Loading recovery applications...</div>
-      </>
+        <div className="flex-1 p-6">
+          <div className="text-center py-12">
+            <p className="text-gray-500">Loading recovery applications...</p>
+          </div>
+        </div>
+      </div>
     )
   }
 
   if (error) {
     return (
-      <>
+      <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader
           eyebrow="Providers & Connectors"
           title="Recovery Applications"
-          description="Manage disaster recovery application definitions"
+          description="Manage disaster recovery application definitions and test recovery workflows."
         />
-        <div className="p-6">
-          <div className="bg-red-50 text-red-700 p-4 rounded-lg">
-            Failed to load recovery applications
-          </div>
+        <div className="flex-1 p-6">
+          <FetchErrorAlert
+            title="Recovery applications could not be loaded"
+            description={error instanceof Error ? error.message : 'Unknown error'}
+            retryLabel="Retry loading"
+            variant="full"
+            onRetry={() => { void refetch() }}
+          />
         </div>
-      </>
+      </div>
     )
   }
 
   return (
-    <>
+    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
         eyebrow="Providers & Connectors"
         title="Recovery Applications"
-        description="Manage disaster recovery application definitions"
+        description="Manage disaster recovery application definitions and test recovery workflows."
         actions={
-          <Link to="/recovery-applications/create">
-            <Button>Create Application</Button>
-          </Link>
+          <Button onClick={() => { void navigate('/providers-connectors/recovery-applications/create') }}>
+            Create Application
+          </Button>
         }
       />
 
-      <div className="p-6">
+      <div className="flex-1 p-6 lg:min-h-0 overflow-auto">
         {!applications || applications.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">No recovery applications defined yet</p>
-            <Link to="/recovery-applications/create">
-              <Button>Create Your First Application</Button>
-            </Link>
-          </div>
+          <EmptyState
+            title="No recovery applications defined yet"
+            description="Create your first recovery application to start managing disaster recovery workflows."
+            action={
+              <Button onClick={() => { void navigate('/providers-connectors/recovery-applications/create') }}>
+                Create Your First Application
+              </Button>
+            }
+          />
         ) : (
-          <div className="grid gap-4">
-            {applications.map(app => (
-              <div key={app.id} className="bg-white p-4 border rounded-lg">
-                <h3 className="font-semibold text-lg">{app.data.application.name}</h3>
-                <p className="text-gray-600 text-sm">{app.data.application.description}</p>
-                <div className="mt-2 flex gap-2">
-                  <Link to={`/recovery-applications/${app.id}`}>
-                    <Button variant="outline" size="sm">
-                      View
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ))}
+          <div className="bg-white rounded-lg border border-[#e3edf6] overflow-hidden">
+            <RecoveryApplicationsTable
+              applications={applications}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           </div>
         )}
       </div>
-    </>
+    </div>
   )
 }

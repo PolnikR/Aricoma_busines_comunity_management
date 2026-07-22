@@ -63,7 +63,7 @@ export function ProvidersTablePage() {
 
       <div className="p-6">
         <Card className="overflow-hidden">
-          <RecoveryApplicationsTable applications={applications} />
+          <RecoveryApplicationsTable applications={applications ?? []} />
         </Card>
       </div>
     </>

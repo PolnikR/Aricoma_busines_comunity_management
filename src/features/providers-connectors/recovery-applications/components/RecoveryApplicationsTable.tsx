@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
+import { Button } from '@/shared/components/button/Button'
 import type { RecoveryApplication } from '../model/recoveryApplicationTypes'
 
 interface JsonViewerProps {
@@ -29,10 +31,29 @@ function JsonViewer({ json, onClose }: JsonViewerProps) {
 }
 
 interface RecoveryApplicationsTableProps {
-  applications: RecoveryApplication[] | undefined
+  applications: RecoveryApplication[]
+  onEdit?: (id: string) => void
+  onDelete?: (id: string) => void
 }
 
-export function RecoveryApplicationsTable({ applications }: RecoveryApplicationsTableProps) {
+function getApplicationStatus(app: RecoveryApplication): 'Active' | 'Draft' {
+  const tiers = Object.keys(app.data.application.tiers)
+  return tiers.length > 0 ? 'Active' : 'Draft'
+}
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function getStatusColor(status: 'Active' | 'Draft'): string {
+  return status === 'Active'
+    ? 'bg-[#d1fae5] text-[#047857]'
+    : 'bg-[#fef3c7] text-[#92400e]'
+}
+
+export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: RecoveryApplicationsTableProps) {
+  const navigate = useNavigate()
   const [selectedJson, setSelectedJson] = useState<object | null>(null)
 
   return (
@@ -44,45 +65,78 @@ export function RecoveryApplicationsTable({ applications }: RecoveryApplications
               <TableCell isHeader className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Application Name</TableCell>
               <TableCell isHeader className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Description</TableCell>
               <TableCell isHeader className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Environment</TableCell>
+              <TableCell isHeader className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Tiers</TableCell>
+              <TableCell isHeader className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Status</TableCell>
+              <TableCell isHeader className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Last Updated</TableCell>
               <TableCell isHeader className="whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">Actions</TableCell>
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-[#edf2f7]">
-            {applications && applications.length > 0 ? (
-              applications.map((app) => (
-                <TableRow
-                  key={app.id}
-                  className="bg-white hover:bg-[#f9fbfd] transition-colors"
-                >
-                  <TableCell className="px-5 py-4 text-sm font-semibold text-gray-900 dark:text-white">
-                    {app.data.application.name}
-                  </TableCell>
-                  <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
-                    {app.data.application.description}
-                  </TableCell>
-                  <TableCell className="px-5 py-4 text-sm">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {app.data.application.environment}
-                    </span>
-                  </TableCell>
-                  <TableCell className="px-5 py-4 text-sm">
-                    <button
-                      onClick={() => { setSelectedJson(app.data); }}
-                      className="text-[#3566d6] hover:text-[#2a52b0] font-medium"
-                    >
-                      View JSON
-                    </button>
-                  </TableCell>
-                </TableRow>
-              ))
+            {applications.length > 0 ? (
+              applications.map((app) => {
+                const status = getApplicationStatus(app)
+                const tierCount = Object.keys(app.data.application.tiers).length
+                return (
+                  <TableRow
+                    key={app.id}
+                    className="bg-white hover:bg-[#f9fbfd] transition-colors"
+                  >
+                    <TableCell className="px-5 py-4 text-sm font-semibold text-gray-900 dark:text-white">
+                      {app.data.application.name}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate">
+                      {app.data.application.description}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {app.data.application.environment}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
+                      {tierCount}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                        {status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
+                      {formatDate(app.updatedAt)}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm">
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => { void navigate(`/providers-connectors/recovery-applications/${app.id}`) }}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => { onEdit?.(app.id) }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => { onDelete?.(app.id) }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             ) : (
               <TableRow>
-                <TableCell className="px-5 py-8 text-center text-gray-600 dark:text-gray-400">
+                <TableCell className="px-5 py-8 text-center text-gray-600 dark:text-gray-400 col-span-7">
                   No applications found
                 </TableCell>
-                <TableCell className="px-5 py-8">-</TableCell>
-                <TableCell className="px-5 py-8">-</TableCell>
-                <TableCell className="px-5 py-8">-</TableCell>
               </TableRow>
             )}
           </TableBody>
