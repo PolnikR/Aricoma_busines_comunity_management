@@ -40,7 +40,7 @@ export function AppHeader() {
 
           <div className="min-w-0 sm:hidden">
             <p className="text-sm font-semibold text-[#17233d]">Aricoma</p>
-            <p className="text-xs text-[#7a89a2]">Business continuity</p>
+            <p className="text-xs text-[#7a89a2]">Business continuity management</p>
           </div>
 
           <div className="hidden sm:block">
