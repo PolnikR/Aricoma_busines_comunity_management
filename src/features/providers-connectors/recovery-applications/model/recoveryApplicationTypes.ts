@@ -1,0 +1,36 @@
+export interface RecoveryVM {
+  name: string
+}
+
+export interface RecoveryTier {
+  name: string
+  order: number
+  description: string
+  vms: RecoveryVM[]
+}
+
+export interface RecoveryApplicationData {
+  application: {
+    name: string
+    description: string
+    environment: 'dev' | 'staging' | 'prod'
+    platform: 'VMware vCenter ESXi'
+    source_connection: 'vcenter_default'
+    target_connection: 'vcenter_default_destination'
+    tiers: Record<string, RecoveryTier>
+  }
+}
+
+export interface RecoveryApplication {
+  id: string
+  data: RecoveryApplicationData
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RecoveryApplicationFormState {
+  name: string
+  description: string
+  environment: 'dev' | 'staging' | 'prod'
+  tiers: Map<string, RecoveryTier>
+}

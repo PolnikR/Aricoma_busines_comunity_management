@@ -1,0 +1,48 @@
+import { useNavigate } from 'react-router-dom'
+import { PageHeader } from '@/shared/components/page/PageHeader'
+import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
+import { useCreateRecoveryApplication } from '../api/useRecoveryApplications'
+import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+
+export function RecoveryApplicationBuilderPage() {
+  const navigate = useNavigate()
+  const createMutation = useCreateRecoveryApplication()
+
+  const handleSave = async (appState: RecoveryApplicationFormState) => {
+    const applicationData = {
+      application: {
+        name: appState.name,
+        description: appState.description,
+        environment: appState.environment,
+        platform: 'VMware vCenter ESXi' as const,
+        source_connection: 'vcenter_default' as const,
+        target_connection: 'vcenter_default_destination' as const,
+        tiers: Object.fromEntries(
+          Array.from(appState.tiers.entries()).map(([id, tier]) => [id, tier])
+        ),
+      },
+    }
+
+    try {
+      await createMutation.mutateAsync(applicationData)
+      navigate('/recovery-applications')
+    } catch (error) {
+      console.error('Failed to save recovery application:', error)
+      alert('Failed to save application. Please try again.')
+    }
+  }
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="Providers & Connectors"
+        title="Create Recovery Application"
+        description="Define a new disaster recovery application with tiered VM organization"
+      />
+      <RecoveryAppBuilder
+        onSave={handleSave}
+        isSaving={createMutation.isPending}
+      />
+    </>
+  )
+}

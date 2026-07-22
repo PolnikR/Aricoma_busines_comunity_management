@@ -16,6 +16,16 @@ const InfrastructurePage = lazy(async () => {
   return { default: page.InfrastructurePage }
 })
 
+const RecoveryApplicationsListPage = lazy(async () => {
+  const page = await import('@/features/providers-connectors/recovery-applications/pages/RecoveryApplicationsListPage')
+  return { default: page.RecoveryApplicationsListPage }
+})
+
+const RecoveryApplicationBuilderPage = lazy(async () => {
+  const page = await import('@/features/providers-connectors/recovery-applications/pages/RecoveryApplicationBuilderPage')
+  return { default: page.RecoveryApplicationBuilderPage }
+})
+
 function RouteLoadingState() {
   return (
     <div
@@ -50,6 +60,24 @@ export function AppRouter() {
         {renderModulePageRoutes(platformAdministrationPages)}
         <Route path="providers-connectors" element={<Navigate to={routes.providersConnectors} replace />} />
         {renderModulePageRoutes(providersConnectorsPages)}
+        <Route path="recovery-applications">
+          <Route
+            index
+            element={
+              <Suspense fallback={<RouteLoadingState />}>
+                <RecoveryApplicationsListPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="create"
+            element={
+              <Suspense fallback={<RouteLoadingState />}>
+                <RecoveryApplicationBuilderPage />
+              </Suspense>
+            }
+          />
+        </Route>
         <Route path="discovery-inventory" element={<Navigate to={routes.virtualMachines} replace />} />
         <Route path="discovery-inventory/virtual-machines" element={<VirtualMachinesPage />} />
         <Route

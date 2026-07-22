@@ -3,14 +3,23 @@ import { createRoot } from 'react-dom/client'
 import App from './app/App'
 import './index.css'
 
-const rootElement = document.getElementById('root')
+async function startApp() {
+  if (import.meta.env.DEV) {
+    const { worker } = await import('./mocks/browser')
+    await worker.start()
+  }
 
-if (rootElement === null) {
-  throw new Error('Application root element was not found')
+  const rootElement = document.getElementById('root')
+
+  if (rootElement === null) {
+    throw new Error('Application root element was not found')
+  }
+
+  createRoot(rootElement).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  )
 }
 
-createRoot(rootElement).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+startApp()
