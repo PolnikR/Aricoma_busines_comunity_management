@@ -32,6 +32,11 @@ const RecoveryApplicationEditorPage = lazy(async () => {
   return { default: page.RecoveryApplicationEditorPage }
 })
 
+const ProviderDetailPage = lazy(async () => {
+  const page = await import('@/features/providers-connectors/providers/pages/ProviderDetailPage')
+  return { default: page.ProviderDetailPage }
+})
+
 function RouteLoadingState() {
   return (
     <div
@@ -87,6 +92,14 @@ export function AppRouter() {
         {renderModulePageRoutes(platformAdministrationPages)}
         <Route path="providers-connectors" element={<Navigate to={routes.providersConnectors} replace />} />
         {renderProvidersConnectorsRoutes(providersConnectorsPages)}
+        <Route
+          path="providers-connectors/providers/:providerId"
+          element={(
+            <Suspense fallback={<RouteLoadingState />}>
+              <ProviderDetailPage />
+            </Suspense>
+          )}
+        />
         <Route path="providers-connectors/recovery-applications">
           <Route
             index
