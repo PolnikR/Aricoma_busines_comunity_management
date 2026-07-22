@@ -109,6 +109,7 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
                           size="sm"
                           variant="outline"
                           onClick={() => { void navigate(`/recovery-applications/${app.id}`) }}
+                          title="View application details"
                         >
                           View
                         </Button>
@@ -116,14 +117,25 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
                           size="sm"
                           variant="outline"
                           onClick={() => { onEdit?.(app.id) }}
+                          title="Edit application configuration"
                         >
                           Edit
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
+                          disabled
+                          title="Recovery testing coming soon"
+                          className="opacity-50 cursor-not-allowed"
+                        >
+                          Test
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           className="text-red-600 hover:text-red-700"
                           onClick={() => { onDelete?.(app.id) }}
+                          title="Delete application"
                         >
                           Delete
                         </Button>
