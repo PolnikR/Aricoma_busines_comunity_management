@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
 import type { VirtualMachine } from '../types'
@@ -25,9 +26,14 @@ const vm = {
 
 afterEach(cleanup)
 
+function renderWithQueryClient(element: React.ReactElement) {
+  const queryClient = new QueryClient()
+  return render(<QueryClientProvider client={queryClient}>{element}</QueryClientProvider>)
+}
+
 describe('VirtualMachineDetailPanel resize', () => {
   it('resizes the panel via the drag handle and keyboard', () => {
-    render(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
+    renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
     const panel = screen.getByRole('dialog')
     expect(panel.style.width).toBe('420px')
 
@@ -41,12 +47,25 @@ describe('VirtualMachineDetailPanel resize', () => {
   })
 
   it('resets to the default width after closing and reopening', () => {
-    const { rerender } = render(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
+    const queryClient = new QueryClient()
+    const { rerender } = render(
+      <QueryClientProvider client={queryClient}>
+        <VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />
+      </QueryClientProvider>
+    )
     fireEvent.keyDown(screen.getByRole('separator'), { key: 'ArrowLeft' })
     expect(screen.getByRole('dialog').style.width).toBe('436px')
 
-    rerender(<VirtualMachineDetailPanel virtualMachine={vm} open={false} onClose={vi.fn()} />)
-    rerender(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <VirtualMachineDetailPanel virtualMachine={vm} open={false} onClose={vi.fn()} />
+      </QueryClientProvider>
+    )
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />
+      </QueryClientProvider>
+    )
     expect(screen.getByRole('dialog').style.width).toBe('420px')
   })
 })
