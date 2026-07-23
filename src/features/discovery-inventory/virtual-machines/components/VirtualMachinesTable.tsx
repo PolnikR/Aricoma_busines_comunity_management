@@ -77,9 +77,9 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, density, onS
           </TableRow>
         </TableHeader>
         <TableBody className="divide-y divide-[#edf2f7]">
-          {virtualMachines.map((vm) => (
+          {virtualMachines.map((vm, index) => (
             <TableRow
-              key={vm.id}
+              key={`${vm.id}-${String(index)}`}
               className={`cursor-pointer outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1596dd] ${selectedId === vm.id ? 'bg-[#e8f4fd] shadow-[inset_3px_0_0_#0d91d7]' : 'bg-white hover:bg-[#f3f8fe]'}`}
               tabIndex={0}
               aria-label={`Show details for ${vm.name}`}

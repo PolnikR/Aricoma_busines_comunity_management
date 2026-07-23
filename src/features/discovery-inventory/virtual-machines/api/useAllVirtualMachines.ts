@@ -6,5 +6,7 @@ export function useAllVirtualMachines() {
     queryKey: ['virtual-machines-all'],
     queryFn: fetchAllVirtualMachines,
     staleTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   })
 }

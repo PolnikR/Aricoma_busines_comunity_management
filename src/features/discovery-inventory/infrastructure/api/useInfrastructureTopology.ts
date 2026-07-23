@@ -10,5 +10,7 @@ export function useInfrastructureTopology() {
   return useQuery({
     queryKey: infrastructureTopologyQueryKey,
     queryFn: fetchInfrastructureTopology,
+    refetchOnWindowFocus: false,
+    retry: 1,
   })
 }
