@@ -10,6 +10,7 @@ interface TableCellProps {
   children: ReactNode
   isHeader?: boolean
   className?: string
+  colSpan?: number
 }
 
 interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
@@ -32,8 +33,8 @@ export function TableRow({ children, className, ...props }: TableRowProps) {
   return <tr className={className} {...props}>{children}</tr>
 }
 
-export function TableCell({ children, isHeader = false, className }: TableCellProps) {
+export function TableCell({ children, isHeader = false, className, colSpan }: TableCellProps) {
   const CellTag = isHeader ? 'th' : 'td'
 
-  return <CellTag className={className}>{children}</CellTag>
+  return <CellTag className={className} colSpan={colSpan}>{children}</CellTag>
 }
