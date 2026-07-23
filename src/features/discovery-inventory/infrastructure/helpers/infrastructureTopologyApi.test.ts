@@ -3,7 +3,7 @@ import { fetchDiscoveryInventory } from '@/features/api/discoveryInventoryApi'
 import type { DiscoveryInventory } from '../../model/discoveryTypes'
 import { fetchInfrastructureTopology } from './infrastructureTopologyApi'
 
-vi.mock('../../api/discoveryInventoryApi', () => ({
+vi.mock('@/features/api/discoveryInventoryApi', () => ({
   fetchDiscoveryInventory: vi.fn(),
 }))
 

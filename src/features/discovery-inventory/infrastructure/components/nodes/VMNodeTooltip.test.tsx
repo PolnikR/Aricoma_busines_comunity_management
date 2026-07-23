@@ -110,8 +110,9 @@ describe('VMNodeTooltip', () => {
   })
 
   test('applies correct CSS classes for styling', () => {
-    const { container } = render(<VMNodeTooltip {...defaultProps} />)
-    const wrapper = container.querySelector('.bg-slate-900')
+    render(<VMNodeTooltip {...defaultProps} />)
+    // The tooltip renders in a portal on document.body, not inside container.
+    const wrapper = document.querySelector('.bg-slate-900')
     expect(wrapper).toBeInTheDocument()
     expect(wrapper).toHaveClass('fixed', 'z-50', 'rounded-lg', 'shadow-lg', 'pointer-events-auto')
   })

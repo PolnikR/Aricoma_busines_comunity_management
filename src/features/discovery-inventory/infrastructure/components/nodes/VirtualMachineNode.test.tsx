@@ -1,7 +1,8 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { NodeProps } from '@xyflow/react'
+import { ReactFlowProvider } from '@xyflow/react'
 import { VirtualMachineNode } from './VirtualMachineNode'
 import type { VirtualMachineTopologyNode } from '../../model/topologyTypes'
 
@@ -36,16 +37,23 @@ describe('VirtualMachineNode with Tooltip', () => {
     draggable: true,
   } as unknown as NodeProps
 
+  function renderNode() {
+    return render(
+      <ReactFlowProvider>
+        {/* @ts-expect-error - Test props are intentionally loosely typed */}
+        <VirtualMachineNode {...mockNodeProps} />
+      </ReactFlowProvider>,
+    )
+  }
+
   test('tooltip is hidden initially', () => {
-    // @ts-expect-error - Test props are intentionally loosely typed
-    render(<VirtualMachineNode {...mockNodeProps} />)
+    renderNode()
     expect(screen.queryByText('Name:')).not.toBeInTheDocument()
   })
 
   test('tooltip appears after 500ms of hovering', async () => {
     const user = userEvent.setup({ delay: null })
-    // @ts-expect-error - Test props are intentionally loosely typed
-    render(<VirtualMachineNode {...mockNodeProps} />)
+    renderNode()
 
     const nodeElement = screen.getByRole('group', { name: /Virtual machine/ })
 
@@ -64,99 +72,77 @@ describe('VirtualMachineNode with Tooltip', () => {
     )
   })
 
-  test('tooltip disappears immediately on mouse leave', async () => {
-    const user = userEvent.setup({ delay: null })
+  test('tooltip disappears immediately on mouse leave', () => {
     vi.useFakeTimers()
-
-    // @ts-expect-error - Test props are intentionally loosely typed
-    render(<VirtualMachineNode {...mockNodeProps} />)
+    renderNode()
 
     const nodeElement = screen.getByRole('group', { name: /Virtual machine/ })
 
-    // Hover over the node
-    await user.hover(nodeElement)
-
-    // Wait 600ms to show the tooltip
-    vi.advanceTimersByTime(600)
+    fireEvent.mouseEnter(nodeElement)
+    act(() => { vi.advanceTimersByTime(600) })
     expect(screen.getByText('Name:')).toBeInTheDocument()
 
-    // Leave the node
-    await user.unhover(nodeElement)
-
+    fireEvent.mouseLeave(nodeElement)
     // Tooltip should disappear immediately (no delay)
     expect(screen.queryByText('Name:')).not.toBeInTheDocument()
 
     vi.useRealTimers()
   })
 
-  test('rapid hover-unhover does not show tooltip', async () => {
-    const user = userEvent.setup({ delay: null })
+  test('rapid hover-unhover does not show tooltip', () => {
     vi.useFakeTimers()
-
-    // @ts-expect-error - Test props are intentionally loosely typed
-    render(<VirtualMachineNode {...mockNodeProps} />)
+    renderNode()
 
     const nodeElement = screen.getByRole('group', { name: /Virtual machine/ })
 
-    // Hover
-    await user.hover(nodeElement)
+    fireEvent.mouseEnter(nodeElement)
+    act(() => { vi.advanceTimersByTime(300) }) // before the 500ms timeout
+    fireEvent.mouseLeave(nodeElement)
+    act(() => { vi.advanceTimersByTime(200) }) // 500ms total
 
-    // Unhover after 300ms (before 500ms timeout)
-    vi.advanceTimersByTime(300)
-    await user.unhover(nodeElement)
-
-    // Advance time to 500ms total
-    vi.advanceTimersByTime(200)
-
-    // Tooltip should not be visible
     expect(screen.queryByText('Name:')).not.toBeInTheDocument()
 
     vi.useRealTimers()
   })
 
-  test('hovering again after unhover resets the 500ms timer', async () => {
-    const user = userEvent.setup({ delay: null })
+  test('hovering again after unhover resets the 500ms timer', () => {
     vi.useFakeTimers()
-
-    // @ts-expect-error - Test props are intentionally loosely typed
-    render(<VirtualMachineNode {...mockNodeProps} />)
+    renderNode()
 
     const nodeElement = screen.getByRole('group', { name: /Virtual machine/ })
 
     // First hover, leave before timeout
-    await user.hover(nodeElement)
-    vi.advanceTimersByTime(300)
-    await user.unhover(nodeElement)
+    fireEvent.mouseEnter(nodeElement)
+    act(() => { vi.advanceTimersByTime(300) })
+    fireEvent.mouseLeave(nodeElement)
 
-    // Second hover
-    await user.hover(nodeElement)
-
-    // Wait 400ms (not enough for new 500ms timeout)
-    vi.advanceTimersByTime(400)
+    // Second hover resets the timer
+    fireEvent.mouseEnter(nodeElement)
+    act(() => { vi.advanceTimersByTime(400) }) // not enough for a fresh 500ms
     expect(screen.queryByText('Name:')).not.toBeInTheDocument()
 
-    // Wait another 200ms (total 600ms from second hover)
-    vi.advanceTimersByTime(200)
+    act(() => { vi.advanceTimersByTime(200) }) // 600ms from the second hover
     expect(screen.getByText('Name:')).toBeInTheDocument()
 
     vi.useRealTimers()
   })
 
-  test('tooltip displays correct VM data', async () => {
-    const user = userEvent.setup({ delay: null })
+  test('tooltip displays correct VM data', () => {
     vi.useFakeTimers()
-
-    // @ts-expect-error - Test props are intentionally loosely typed
-    render(<VirtualMachineNode {...mockNodeProps} />)
+    renderNode()
 
     const nodeElement = screen.getByRole('group', { name: /Virtual machine/ })
-    await user.hover(nodeElement)
-    vi.advanceTimersByTime(600)
+    fireEvent.mouseEnter(nodeElement)
+    act(() => { vi.advanceTimersByTime(600) })
 
-    expect(screen.getByText('web-server-01')).toBeInTheDocument()
-    expect(screen.getByText('poweredOn')).toBeInTheDocument()
-    expect(screen.getByText('4 cores')).toBeInTheDocument()
-    expect(screen.getByText('8 GB')).toBeInTheDocument()
+    // The node label also shows the name, so scope assertions to the tooltip.
+    const tooltip = document.querySelector('.bg-slate-900')
+    expect(tooltip).not.toBeNull()
+    const inTooltip = within(tooltip as HTMLElement)
+    expect(inTooltip.getByText('web-server-01')).toBeInTheDocument()
+    expect(inTooltip.getByText('poweredOn')).toBeInTheDocument()
+    expect(inTooltip.getByText('4 cores')).toBeInTheDocument()
+    expect(inTooltip.getByText('8 GB')).toBeInTheDocument()
 
     vi.useRealTimers()
   })
