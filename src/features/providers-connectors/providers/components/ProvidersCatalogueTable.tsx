@@ -71,8 +71,6 @@ export function ProvidersCatalogueTable() {
     )
   }
 
-  const segments = [{ label: 'All', value: '' }, ...types.map((type) => ({ label: type, value: type }))]
-
   return (
     <div className="flex flex-col">
       <DataTableToolbar
@@ -80,7 +78,7 @@ export function ProvidersCatalogueTable() {
         onSearchChange={table.setSearch}
         searchPlaceholder="Search by provider name"
         searchLabel="Search providers by name"
-        segments={segments}
+        //segments={segments}
         segmentValue={typeFilter}
         onSegmentChange={changeType}
         density={table.density}
