@@ -7,14 +7,12 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
 import { DeleteConfirmationDialog } from '../components/DeleteConfirmationDialog'
 import { useRecoveryApplications, useDeleteRecoveryApplication } from '../api/useRecoveryApplications'
-import type { TableDensity } from '@/shared/components/data-table'
 
 export function RecoveryApplicationsListPage() {
   const navigate = useNavigate()
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
   const deleteApplicationMutation = useDeleteRecoveryApplication()
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-  const [density, setDensity] = useState<TableDensity>('compact')
 
   const handleEdit = (id: string) => {
     void navigate(`/recovery-plans/recovery-applications/${id}/edit`)
@@ -44,8 +42,6 @@ export function RecoveryApplicationsListPage() {
           eyebrow="Recovery Plans"
           title="Recovery Applications"
           description="Manage disaster recovery application definitions and test recovery workflows."
-          density={density}
-          onDensityChange={setDensity}
           actions={
             <Button variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
               Create Application
@@ -68,8 +64,6 @@ export function RecoveryApplicationsListPage() {
           eyebrow="Recovery Plans"
           title="Recovery Applications"
           description="Manage disaster recovery application definitions and test recovery workflows."
-          density={density}
-          onDensityChange={setDensity}
         />
         <div className="flex-1 p-6">
           <FetchErrorAlert
@@ -90,8 +84,6 @@ export function RecoveryApplicationsListPage() {
         eyebrow="Recovery Plans"
         title="Recovery Applications"
         description="Manage disaster recovery application definitions and test recovery workflows."
-        density={density}
-        onDensityChange={setDensity}
         isFetching={isFetching}
         onRefresh={() => { void refetch() }}
         actions={

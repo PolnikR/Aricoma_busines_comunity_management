@@ -34,8 +34,8 @@ export function VirtualMachinesPage() {
   const { data: availableTags = [] } = useTags()
   const { data: providers = [], isLoading: providersLoading } = useProviders()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [density, setDensity] = useState<TableDensity>('compact')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const density: TableDensity = 'compact'
 
   const data = allData ? applyFiltersAndPagination(allData, query) : null
 
@@ -100,8 +100,6 @@ export function VirtualMachinesPage() {
         eyebrow="Discovery & Inventory"
         title="Virtual machines"
         description="VMware inventory, health and placement overview."
-        density={density}
-        onDensityChange={setDensity}
         isFetching={isFetching}
         onRefresh={refetch}
       />
