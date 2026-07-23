@@ -2,7 +2,6 @@ import type { ChangeEvent } from 'react'
 import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
-import { MultiSelectDropdown } from '@/shared/components/form/MultiSelectDropdown'
 import { FilterIcon, SearchIcon } from '@/shared/icons/Icons'
 import type { ProviderRecord } from '@/features/api/providersApi'
 import { FilterPanelSkeleton } from '../skeletons'
@@ -37,8 +36,9 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], p
     setTempFilters({ ...tempFilters, [key]: event.target.value })
   }
 
-  const updateTempTags = (selected: string[]) => {
-    setTempFilters({ ...tempFilters, tags: selected, untagged: false })
+  const updateTempTag = (event: ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value
+    setTempFilters({ ...tempFilters, tags: value ? [value] : [], untagged: false })
   }
 
   const toggleTempUntagged = () => {
@@ -116,8 +116,11 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], p
                   </Select>
                 </Field>
 
-                <Field label="Tags" htmlFor="modal-tags-filter">
-                  <MultiSelectDropdown id="modal-tags-filter" options={availableTags} selected={tempFilters.tags} onChange={updateTempTags} />
+                <Field label="Tag" htmlFor="modal-tag-filter">
+                  <Select id="modal-tag-filter" value={tempFilters.tags[0] ?? ''} onChange={updateTempTag}>
+                    <option value="">All tags</option>
+                    {availableTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
+                  </Select>
                 </Field>
 
                 <label className="flex items-center gap-3 cursor-pointer pt-2">

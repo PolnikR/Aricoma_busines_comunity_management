@@ -55,4 +55,17 @@ describe('VirtualMachinesToolbar provider filter', () => {
 
     expect(onFiltersChange).toHaveBeenCalledWith(expect.objectContaining({ providerId: 'vmware-vcenter-01' }))
   })
+
+  it('applies a single selected tag', () => {
+    const onFiltersChange = vi.fn()
+    render(<VirtualMachinesToolbar filters={filters} options={options} providers={providers} availableTags={['WEB', 'DB']} onFiltersChange={onFiltersChange} onReset={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /Filters/i }))
+
+    const tagSelect = screen.getByLabelText('Tag')
+    expect(screen.getByRole('option', { name: 'WEB' })).toBeInTheDocument()
+    fireEvent.change(tagSelect, { target: { value: 'WEB' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+
+    expect(onFiltersChange).toHaveBeenCalledWith(expect.objectContaining({ tags: ['WEB'] }))
+  })
 })

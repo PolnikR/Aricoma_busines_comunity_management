@@ -80,6 +80,33 @@ describe('fetchDiscoveryInventory', () => {
     expect(mock).toHaveBeenCalledWith('/api/vms?provider_id=vmware-vcenter-01', { headers: { Accept: 'application/json' } })
   })
 
+  it('uses the vms_by_tag endpoint when a tag is given', async () => {
+    const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
+    vi.stubGlobal('fetch', mock)
+
+    await fetchDiscoveryInventory(undefined, 'WEB')
+
+    expect(mock).toHaveBeenCalledWith('/api/vms_by_tag?tag=WEB', { headers: { Accept: 'application/json' } })
+  })
+
+  it('includes both tag and provider_id when both are given', async () => {
+    const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
+    vi.stubGlobal('fetch', mock)
+
+    await fetchDiscoveryInventory('vmware-vcenter-01', 'WEB')
+
+    expect(mock).toHaveBeenCalledWith('/api/vms_by_tag?tag=WEB&provider_id=vmware-vcenter-01', { headers: { Accept: 'application/json' } })
+  })
+
+  it('returns an empty inventory when a tag query fails with 400 or 500', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 500 })))
+
+    const inventory = await fetchDiscoveryInventory(undefined, 'WEB')
+
+    expect(inventory.reportedCount).toBe(0)
+    expect(inventory.virtualMachines).toEqual([])
+  })
+
   it('returns an empty inventory when a provider is rejected with 400', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ detail: "provider 'ibm-flashsystem-01' is not a VMWARE provider" }), { status: 400 }),

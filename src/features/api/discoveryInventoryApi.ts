@@ -6,6 +6,7 @@ import type {
 } from '@/features/discovery-inventory/model/discoveryTypes'
 
 const DISCOVERY_INVENTORY_URL = '/api/vms'
+const DISCOVERY_INVENTORY_BY_TAG_URL = '/api/vms_by_tag'
 
 const virtualDiskSchema = z.object({
   uuid: z.string().catch(''),
@@ -82,17 +83,24 @@ function mapVirtualMachine(
   }
 }
 
-export async function fetchDiscoveryInventory(providerId?: string): Promise<DiscoveryInventory> {
-  const url = providerId
-    ? `${DISCOVERY_INVENTORY_URL}?provider_id=${encodeURIComponent(providerId)}`
-    : DISCOVERY_INVENTORY_URL
+export async function fetchDiscoveryInventory(providerId?: string, tag?: string): Promise<DiscoveryInventory> {
+  // A tag selects the by-tag endpoint; provider is an optional extra param on
+  // either endpoint.
+  const params = new URLSearchParams()
+  if (tag) params.set('tag', tag)
+  if (providerId) params.set('provider_id', providerId)
+  const base = tag ? DISCOVERY_INVENTORY_BY_TAG_URL : DISCOVERY_INVENTORY_URL
+  const search = params.toString()
+  const url = search ? `${base}?${search}` : base
+
   const response = await fetch(url, {
     headers: { Accept: 'application/json' },
   })
 
-  // A 400 for a specific provider means it is not a valid VM source (e.g. a
-  // non-VMWARE provider) — surface that as an empty inventory, not an error.
-  if (response.status === 400 || response.status === 500 && providerId) {
+  // A 400/500 while a provider or tag filter is active means the backend can't
+  // serve that combination (e.g. a non-VMWARE provider) — surface it as an
+  // empty inventory, not an error.
+  if ((response.status === 400 || response.status === 500) && (providerId || tag)) {
     return { reportedCount: 0, virtualMachines: [] }
   }
 
