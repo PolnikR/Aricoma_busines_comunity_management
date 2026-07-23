@@ -11,10 +11,13 @@ export function VMSidebar({ onVMSelect }: VMSidebarProps) {
 
   const availableVMs = useMemo(() => {
     if (!topology) return []
-    return topology.nodes
-      .filter(node => node.kind === 'virtualMachine')
-      .map(node => node.label)
-      .sort()
+    return Array.from(
+      new Set(
+        topology.nodes
+          .filter(node => node.kind === 'virtualMachine')
+          .map(node => node.label)
+      )
+    ).sort()
   }, [topology])
 
   const filteredVMs = useMemo(() => {

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
-import { Card } from '@/shared/components/card/Card'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { ProvidersCatalogueTable } from '../providers/components/ProvidersCatalogueTable'
 import { ProvidersCreateModal } from '../providers/components/ProvidersCreateModal'
@@ -23,10 +22,10 @@ export function ProvidersPage() {
         }
       />
 
-      <div className="flex flex-1 flex-col lg:min-h-0">
-        <Card className="overflow-hidden p-0 sm:p-0">
+      <div className="flex-1 flex flex-col gap-4 lg:min-h-0 overflow-hidden p-3">
+        <div className="flex-1 flex flex-col min-h-0 bg-white rounded-lg border border-[#dbe7f2] shadow-sm overflow-hidden">
           <ProvidersCatalogueTable />
-        </Card>
+        </div>
       </div>
 
       <ProvidersCreateModal open={isCreateModalOpen} onClose={() => { setIsCreateModalOpen(false) }} existingProviders={providers} />
