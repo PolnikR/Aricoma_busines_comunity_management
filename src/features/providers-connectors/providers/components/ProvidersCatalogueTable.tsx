@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
 import { Badge } from '@/shared/components/badge/Badge'
-import { Input, Select } from '@/shared/components/form/FormControls'
+import { Select } from '@/shared/components/form/FormControls'
 import { Pagination } from '@/shared/components/pagination/Pagination'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
-import { SearchIcon } from '@/shared/icons/Icons'
 import { useProviders } from '../api/useProviders'
+import { ProvidersToolbar } from './ProvidersToolbar'
 
 const PAGE_SIZES = [10, 25, 50] as const
 type PageSize = (typeof PAGE_SIZES)[number]
@@ -13,15 +13,23 @@ type PageSize = (typeof PAGE_SIZES)[number]
 export function ProvidersCatalogueTable() {
   const { data: providers, isLoading, error } = useProviders()
   const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState<PageSize>(10)
 
+  const types = useMemo(
+    () => [...new Set((providers ?? []).map((provider) => provider.type).filter(Boolean))].sort(),
+    [providers],
+  )
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
-    const list = providers ?? []
-    if (!term) return list
-    return list.filter((provider) => provider.name.toLowerCase().includes(term))
-  }, [providers, search])
+    return (providers ?? []).filter((provider) => {
+      if (typeFilter && provider.type !== typeFilter) return false
+      if (term && !provider.name.toLowerCase().includes(term)) return false
+      return true
+    })
+  }, [providers, search, typeFilter])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const currentPage = Math.min(page, pageCount)
@@ -49,20 +57,13 @@ export function ProvidersCatalogueTable() {
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-col gap-2 border-b border-[#e3edf6] bg-[#f6f9fc] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="w-full sm:max-w-xs">
-          <Input
-            type="search"
-            aria-label="Search providers by name"
-            placeholder="Search by provider name"
-            leadingIcon={<SearchIcon className="size-4" />}
-            className="h-9"
-            value={search}
-            onChange={(event) => { setSearch(event.target.value); setPage(1) }}
-          />
-        </div>
-        <span className="text-xs text-[#93a0b5]">{filtered.length} of {providers?.length ?? 0} providers</span>
-      </div>
+      <ProvidersToolbar
+        search={search}
+        typeFilter={typeFilter}
+        types={types}
+        onSearchChange={(value) => { setSearch(value); setPage(1) }}
+        onTypeChange={(value) => { setTypeFilter(value); setPage(1) }}
+      />
 
       <div className="custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Scrollable providers table">
         <Table className="min-w-215">
