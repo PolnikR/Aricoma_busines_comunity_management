@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { slugify } from '../utils/tierUtils'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
 interface TierCardProps {
@@ -88,6 +89,16 @@ export function TierCard({
     onVMRemoved?.(vmName)
   }
 
+  const handleNameChange = (value: string) => {
+    setEditForm(prev => {
+      const newForm = { ...prev, editName: value }
+      if (!prev.editId || prev.editId === slugify(prev.editName)) {
+        newForm.editId = slugify(value)
+      }
+      return newForm
+    })
+  }
+
   const handleConfirm = () => {
     let hasError = false
     let newIdError = ''
@@ -144,7 +155,7 @@ export function TierCard({
               type="text"
               value={editForm.editName}
               onChange={e => {
-                setEditForm(prev => ({ ...prev, editName: e.target.value }))
+                handleNameChange(e.target.value)
               }}
               className={`w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none ${
                 editForm.nameError ? 'border-red-500' : 'border-[#cfdaea]'

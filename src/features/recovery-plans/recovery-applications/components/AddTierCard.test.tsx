@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { AddTierCard } from './AddTierCard'
 
 describe('AddTierCard', () => {
+  afterEach(cleanup)
   it('renders a plus card by default', () => {
     render(<AddTierCard maxOrder={4} existingIds={['database', 'app', 'web', 'db_cluster']} />)
 

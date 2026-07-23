@@ -51,6 +51,8 @@ function renderWithQueryClient(element: React.ReactElement) {
 }
 
 describe('VirtualMachineDetailPanel resize', () => {
+  afterEach(cleanup)
+
   it('resizes the panel via the drag handle and keyboard', () => {
     renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
     const panel = screen.getByRole('dialog')
