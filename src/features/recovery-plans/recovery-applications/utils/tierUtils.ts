@@ -15,9 +15,9 @@ export function generateTierId(name: string, existingIds: string[]): string {
   }
 
   let counter = baseSlug === '' ? 1 : 2
-  while (existingIds.includes(`${baseSlug}_${counter}`)) {
+  while (existingIds.includes(`${baseSlug}_${String(counter)}`)) {
     counter++
   }
 
-  return `${baseSlug}_${counter}`
+  return `${baseSlug}_${String(counter)}`
 }

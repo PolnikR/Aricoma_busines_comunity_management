@@ -74,7 +74,7 @@ export function TierCanvas({
     }
 
     const newTiers = { ...tiers }
-    const newOrder = sortedTiers.map((t, i) => {
+    const newOrder = sortedTiers.map((_t, i) => {
       if (i === targetIndex) return draggedIndex < targetIndex ? i : i + 1
       if (i === draggedIndex) return targetIndex < draggedIndex ? targetIndex : targetIndex - 1
       if (draggedIndex < targetIndex && i > draggedIndex && i <= targetIndex) return i - 1
@@ -83,7 +83,11 @@ export function TierCanvas({
     })
 
     sortedTiers.forEach((t, i) => {
-      newTiers[t.id] = { ...newTiers[t.id], order: newOrder[i] + 1 }
+      const orderValue = newOrder[i] ?? i
+      const oldTier = newTiers[t.id]
+      if (oldTier) {
+        newTiers[t.id] = { ...oldTier, order: orderValue + 1 }
+      }
     })
 
     onTierReorder?.(newTiers)
@@ -92,34 +96,54 @@ export function TierCanvas({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {sortedTiers.map(({ id, tier }) => (
-        <div
-          key={id}
-          draggable
-          onDragStart={() => handleDragStart(id)}
-          onDragOver={handleDragOver}
-          onDrop={() => handleDrop(id)}
-          className={`cursor-grab active:cursor-grabbing opacity-100 transition ${
-            draggedId === id ? 'opacity-50' : ''
-          }`}
-        >
-          <TierCard
-            id={id}
-            tier={tier}
-            isEditing={editingTierId === id}
-            onEditToggle={handleEditToggle}
-            onSave={handleSave}
-            onDelete={onTierDelete}
-            onCancel={handleCancel}
-            existingIds={existingIds}
-            canDelete={Object.keys(tiers).length > 1}
-            onVMAdded={vmName => onVMAdded?.(id, vmName)}
-            onVMRemoved={vmName => onVMRemoved?.(id, vmName)}
-          />
-        </div>
-      ))}
+      {sortedTiers.map(({ id, tier }) => {
+        const tierCardProps: React.ComponentProps<typeof TierCard> = {
+          id,
+          tier,
+          isEditing: editingTierId === id,
+          onEditToggle: handleEditToggle,
+          onSave: handleSave,
+          onCancel: handleCancel,
+          existingIds,
+          canDelete: Object.keys(tiers).length > 1,
+        }
 
-      <AddTierCard maxOrder={maxOrder} existingIds={existingIds} onAdd={onTierAdd} />
+        if (onTierDelete) {
+          tierCardProps.onDelete = onTierDelete
+        }
+        if (onVMAdded) {
+          tierCardProps.onVMAdded = (vmName) => {
+            onVMAdded(id, vmName)
+          }
+        }
+        if (onVMRemoved) {
+          tierCardProps.onVMRemoved = (vmName) => {
+            onVMRemoved(id, vmName)
+          }
+        }
+
+        return (
+          <div
+            key={id}
+            draggable
+            onDragStart={() => {
+              handleDragStart(id)
+            }}
+            onDragOver={handleDragOver}
+            onDrop={() => {
+              handleDrop(id)
+            }}
+            className={`cursor-grab active:cursor-grabbing opacity-100 transition ${
+              draggedId === id ? 'opacity-50' : ''
+            }`}
+          >
+            <TierCard {...tierCardProps} />
+          </div>
+        )
+      })}
+
+      {onTierAdd && <AddTierCard maxOrder={maxOrder} existingIds={existingIds} onAdd={onTierAdd} />}
+      {!onTierAdd && <AddTierCard maxOrder={maxOrder} existingIds={existingIds} />}
     </div>
   )
 }

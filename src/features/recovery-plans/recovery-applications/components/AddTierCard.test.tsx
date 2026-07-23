@@ -33,8 +33,8 @@ describe('AddTierCard', () => {
     const nameInput = screen.getByPlaceholderText('Tier name')
     await user.type(nameInput, 'My Custom Tier')
 
-    const idInput = screen.getByPlaceholderText('tier_id') as HTMLInputElement
-    expect(idInput.value).toBe('my_custom_tier')
+    const idInput = screen.getByPlaceholderText('tier_id')
+    expect(idInput).toHaveValue('my_custom_tier')
   })
 
   it('allows manually editing the ID', async () => {

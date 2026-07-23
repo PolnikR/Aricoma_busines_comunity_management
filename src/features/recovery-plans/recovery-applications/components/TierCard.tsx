@@ -15,6 +15,14 @@ interface TierCardProps {
   onVMRemoved?: (vmName: string) => void
 }
 
+interface EditFormState {
+  editId: string
+  editName: string
+  editDescription: string
+  idError: string
+  nameError: string
+}
+
 export function TierCard({
   id,
   tier,
@@ -29,19 +37,24 @@ export function TierCard({
   onVMRemoved,
 }: TierCardProps) {
   const [isDragOver, setIsDragOver] = useState(false)
-  const [editId, setEditId] = useState(id)
-  const [editName, setEditName] = useState(tier.name)
-  const [editDescription, setEditDescription] = useState(tier.description)
-  const [idError, setIdError] = useState('')
-  const [nameError, setNameError] = useState('')
+  const [editForm, setEditForm] = useState<EditFormState>({
+    editId: id,
+    editName: tier.name,
+    editDescription: tier.description,
+    idError: '',
+    nameError: '',
+  })
 
   useEffect(() => {
     if (isEditing) {
-      setEditId(id)
-      setEditName(tier.name)
-      setEditDescription(tier.description)
-      setIdError('')
-      setNameError('')
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setEditForm({
+        editId: id,
+        editName: tier.name,
+        editDescription: tier.description,
+        idError: '',
+        nameError: '',
+      })
     }
   }, [isEditing, id, tier])
 
@@ -63,29 +76,45 @@ export function TierCard({
     }
   }
 
+  const handleEditToggleClick = (tierId: string) => {
+    onEditToggle?.(tierId)
+  }
+
+  const handleDeleteClick = (tierId: string) => {
+    onDelete?.(tierId)
+  }
+
+  const handleVMRemoveClick = (vmName: string) => {
+    onVMRemoved?.(vmName)
+  }
+
   const handleConfirm = () => {
     let hasError = false
+    let newIdError = ''
+    let newNameError = ''
 
-    if (!editName.trim()) {
-      setNameError('Name is required')
+    if (!editForm.editName.trim()) {
+      newNameError = 'Name is required'
       hasError = true
-    } else {
-      setNameError('')
     }
 
-    if (!editId.trim()) {
-      setIdError('ID is required')
+    if (!editForm.editId.trim()) {
+      newIdError = 'ID is required'
       hasError = true
-    } else if (editId !== id && existingIds.includes(editId)) {
-      setIdError('ID already in use')
+    } else if (editForm.editId !== id && existingIds.includes(editForm.editId)) {
+      newIdError = 'ID already in use'
       hasError = true
-    } else {
-      setIdError('')
     }
 
-    if (!hasError) {
-      const newId = editId.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_')
-      onSave?.(id, newId, { name: editName.trim(), description: editDescription.trim() })
+    if (hasError) {
+      setEditForm(prev => ({
+        ...prev,
+        idError: newIdError,
+        nameError: newNameError,
+      }))
+    } else {
+      const newId = editForm.editId.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_')
+      onSave?.(id, newId, { name: editForm.editName.trim(), description: editForm.editDescription.trim() })
     }
   }
 
@@ -97,35 +126,41 @@ export function TierCard({
             <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">ID</label>
             <input
               type="text"
-              value={editId}
-              onChange={e => setEditId(e.target.value)}
+              value={editForm.editId}
+              onChange={e => {
+                setEditForm(prev => ({ ...prev, editId: e.target.value }))
+              }}
               className={`w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none ${
-                idError ? 'border-red-500' : 'border-[#cfdaea]'
+                editForm.idError ? 'border-red-500' : 'border-[#cfdaea]'
               }`}
               placeholder="tier_id"
             />
-            {idError && <p className="text-xs text-red-600 mt-1">{idError}</p>}
+            {editForm.idError && <p className="text-xs text-red-600 mt-1">{editForm.idError}</p>}
           </div>
 
           <div>
             <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">Name</label>
             <input
               type="text"
-              value={editName}
-              onChange={e => setEditName(e.target.value)}
+              value={editForm.editName}
+              onChange={e => {
+                setEditForm(prev => ({ ...prev, editName: e.target.value }))
+              }}
               className={`w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none ${
-                nameError ? 'border-red-500' : 'border-[#cfdaea]'
+                editForm.nameError ? 'border-red-500' : 'border-[#cfdaea]'
               }`}
               placeholder="Tier name"
             />
-            {nameError && <p className="text-xs text-red-600 mt-1">{nameError}</p>}
+            {editForm.nameError && <p className="text-xs text-red-600 mt-1">{editForm.nameError}</p>}
           </div>
 
           <div>
             <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">Description</label>
             <textarea
-              value={editDescription}
-              onChange={e => setEditDescription(e.target.value)}
+              value={editForm.editDescription}
+              onChange={e => {
+                setEditForm(prev => ({ ...prev, editDescription: e.target.value }))
+              }}
               className="w-full px-2 py-1.5 text-sm border border-[#cfdaea] rounded-md focus:outline-none resize-none"
               rows={3}
               placeholder="Optional description"
@@ -146,7 +181,9 @@ export function TierCard({
               Cancel
             </button>
             <button
-              onClick={() => onDelete?.(id)}
+              onClick={() => {
+                handleDeleteClick(id)
+              }}
               disabled={!canDelete}
               className="px-3 py-1.5 bg-red-50 text-red-600 text-sm font-semibold rounded-md hover:bg-red-100 transition border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
               title={!canDelete ? 'Cannot delete the last tier' : 'Delete this tier'}
@@ -162,7 +199,9 @@ export function TierCard({
   return (
     <div className="bg-white border-2 border-dashed border-[#d9e6f1] rounded-lg flex flex-col overflow-hidden min-w-70 shadow-sm">
       <button
-        onClick={() => onEditToggle?.(id)}
+        onClick={() => {
+          handleEditToggleClick(id)
+        }}
         className="px-4 py-3 border-b border-[#edf2f7] bg-[#fbfdff] text-left hover:bg-[#f0f5fa] transition"
       >
         <div className="text-xs text-[#7b8ca4] font-semibold uppercase tracking-wider mb-1">
@@ -192,7 +231,9 @@ export function TierCard({
             >
               <span>{vm.name}</span>
               <button
-                onClick={() => onVMRemoved?.(vm.name)}
+                onClick={() => {
+                  handleVMRemoveClick(vm.name)
+                }}
                 className="text-[#91a4bc] hover:text-[#d4353d] opacity-0 group-hover:opacity-100 transition-opacity"
                 title="Remove VM"
               >
@@ -205,13 +246,17 @@ export function TierCard({
 
       <div className="px-4 py-3 border-t border-[#edf2f7] bg-[#fbfdff] flex gap-2">
         <button
-          onClick={() => onEditToggle?.(id)}
+          onClick={() => {
+            handleEditToggleClick(id)
+          }}
           className="flex-1 px-3 py-1.5 bg-[#f0f5fa] text-[#18253d] text-sm font-semibold rounded-md hover:bg-[#e3edf6] transition border border-[#d9e6f1]"
         >
           Edit
         </button>
         <button
-          onClick={() => onDelete?.(id)}
+          onClick={() => {
+            handleDeleteClick(id)
+          }}
           disabled={!canDelete}
           className="px-3 py-1.5 bg-red-50 text-red-600 text-sm font-semibold rounded-md hover:bg-red-100 transition border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
           title={!canDelete ? 'Cannot delete the last tier' : 'Delete this tier'}

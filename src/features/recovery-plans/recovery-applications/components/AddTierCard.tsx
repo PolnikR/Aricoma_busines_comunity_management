@@ -58,7 +58,9 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
             <input
               type="text"
               value={id}
-              onChange={e => setId(e.target.value)}
+              onChange={e => {
+                setId(e.target.value)
+              }}
               className={`w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none ${
                 !isValidId && id ? 'border-red-500' : 'border-[#cfdaea]'
               }`}
@@ -74,7 +76,9 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
             <input
               type="text"
               value={name}
-              onChange={e => handleNameChange(e.target.value)}
+              onChange={e => {
+                handleNameChange(e.target.value)
+              }}
               className="w-full px-2 py-1.5 text-sm border border-[#cfdaea] rounded-md focus:outline-none"
               placeholder="Tier name"
             />
@@ -84,7 +88,9 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
             <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">Description</label>
             <textarea
               value={description}
-              onChange={e => setDescription(e.target.value)}
+              onChange={e => {
+                setDescription(e.target.value)
+              }}
               className="w-full px-2 py-1.5 text-sm border border-[#cfdaea] rounded-md focus:outline-none resize-none"
               rows={3}
               placeholder="Optional description"
@@ -113,7 +119,9 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
 
   return (
     <button
-      onClick={() => setIsOpen(true)}
+      onClick={() => {
+        setIsOpen(true)
+      }}
       className="bg-white border-2 border-dashed border-[#cfdaea] rounded-lg p-4 shadow-sm hover:border-[#b9d5e8] hover:bg-[#fbfdff] transition flex items-center justify-center h-full"
     >
       <span className="text-3xl text-[#7b8ca4]">+</span>
