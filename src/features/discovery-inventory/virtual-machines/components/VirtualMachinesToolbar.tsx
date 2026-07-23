@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import { FilterIcon, SearchIcon } from '@/shared/icons/Icons'
+import { RowDensityToggle } from '@/shared/components/table/RowDensityToggle'
+import type { TableDensity } from '@/shared/components/table/RowDensityToggle'
 import type { ProviderRecord } from '@/features/api/providersApi'
 import { FilterPanelSkeleton } from '../skeletons'
 import type { VirtualMachineFilterOptions, VirtualMachineFilters } from '../types'
@@ -15,6 +17,8 @@ interface VirtualMachinesToolbarProps {
   providersLoading?: boolean
   onFiltersChange: (filters: VirtualMachineFilters) => void
   onReset: () => void
+  density?: TableDensity
+  onDensityChange?: (density: TableDensity) => void
 }
 
 const powerTabs = [
@@ -23,7 +27,7 @@ const powerTabs = [
   { label: 'Powered off', value: 'poweredOff' },
 ]
 
-export function VirtualMachinesToolbar({ filters, options, availableTags = [], providers = [], providersLoading = false, onFiltersChange, onReset }: VirtualMachinesToolbarProps) {
+export function VirtualMachinesToolbar({ filters, options, availableTags = [], providers = [], providersLoading = false, onFiltersChange, onReset, density, onDensityChange }: VirtualMachinesToolbarProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [tempFilters, setTempFilters] = useState(filters)
 
@@ -80,6 +84,9 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], p
           <Button size="sm" variant="outline" startIcon={<FilterIcon className="size-4" />} onClick={openModal} aria-expanded={isModalOpen}>
             Filters {activeFilterCount > 0 && <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#0d91d7] text-xs font-semibold text-white">{activeFilterCount}</span>}
           </Button>
+          {density && onDensityChange ? (
+            <RowDensityToggle density={density} onDensityChange={onDensityChange} />
+          ) : null}
         </div>
       </div>
 
