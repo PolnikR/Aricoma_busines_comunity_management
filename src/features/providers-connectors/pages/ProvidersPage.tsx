@@ -5,7 +5,7 @@ import { ProvidersCatalogueTable } from '../providers/components/ProvidersCatalo
 
 export function ProvidersPage() {
   return (
-    <>
+    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
         eyebrow="Providers & Connectors"
         title="Providers"
@@ -17,11 +17,11 @@ export function ProvidersPage() {
         }
       />
 
-      <div className="p-6">
+      <div className="flex flex-1 flex-col lg:min-h-0">
         <Card className="overflow-hidden p-0 sm:p-0">
           <ProvidersCatalogueTable />
         </Card>
       </div>
-    </>
+    </div>
   )
 }
