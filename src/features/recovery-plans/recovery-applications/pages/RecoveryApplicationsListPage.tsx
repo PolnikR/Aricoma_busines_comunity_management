@@ -43,7 +43,7 @@ export function RecoveryApplicationsListPage() {
           title="Recovery Applications"
           description="Manage disaster recovery application definitions and test recovery workflows."
           actions={
-            <Button onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
+            <Button variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
               Create Application
             </Button>
           }
@@ -85,7 +85,7 @@ export function RecoveryApplicationsListPage() {
         title="Recovery Applications"
         description="Manage disaster recovery application definitions and test recovery workflows."
         actions={
-          <Button onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
+          <Button variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
             Create Application
           </Button>
         }
@@ -103,13 +103,15 @@ export function RecoveryApplicationsListPage() {
             }
           />
         ) : (
-          <div className="flex-1 flex flex-col min-h-0 bg-white rounded-lg border border-[#dbe7f2] shadow-sm overflow-hidden">
-            <RecoveryApplicationsTable
-              applications={applications}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          </div>
+          <>
+            <div className="flex-1 flex flex-col min-h-0 bg-white rounded-lg border border-[#dbe7f2] shadow-sm overflow-hidden">
+              <RecoveryApplicationsTable
+                applications={applications}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            </div>
+          </>
         )}
       </div>
 

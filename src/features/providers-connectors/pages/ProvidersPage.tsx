@@ -11,16 +11,18 @@ export function ProvidersPage() {
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
-      <PageHeader
-        eyebrow="Providers & Connectors"
-        title="Providers"
-        description="Registered providers discovered from the backend."
-        actions={
+      <div className="relative">
+        <PageHeader
+          eyebrow="Providers & Connectors"
+          title="Providers"
+          description="Registered providers discovered from the backend."
+        />
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 pr-3">
           <Button variant="outline" onClick={() => { setIsCreateModalOpen(true) }}>
             Add Provider
           </Button>
-        }
-      />
+        </div>
+      </div>
 
       <div className="flex-1 flex flex-col gap-4 lg:min-h-0 overflow-hidden p-3">
         <div className="flex-1 flex flex-col min-h-0 bg-white rounded-lg border border-[#dbe7f2] shadow-sm overflow-hidden">
