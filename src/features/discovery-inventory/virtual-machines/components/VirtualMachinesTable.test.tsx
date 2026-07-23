@@ -17,6 +17,9 @@ const vm: VirtualMachine = {
   cluster: 'prod-cluster',
   datastore: 'ds-nvme-01',
   folder: '/prod/apps',
+  vmPath: '[ds-nvme-01] app-server-01/app-server-01.vmx',
+  providerId: 'vmware-vcenter-01',
+  providerType: 'VMWARE',
   diskCount: 2,
   diskCapacityGb: 120,
   vdisks: [
@@ -45,9 +48,9 @@ const vm: VirtualMachine = {
 afterEach(cleanup)
 
 describe('VirtualMachinesTable', () => {
-  it('renders the eight column headers including Tags', () => {
+  it('renders the nine column headers including Tags and Provider', () => {
     render(<VirtualMachinesTable virtualMachines={[vm]} selectedId={null} density="comfortable" onSelect={vi.fn()} />)
-    for (const header of ['Virtual machine', 'Operating system', 'Placement', 'Tags', 'Compute', 'Connection', 'Power', 'Snapshots']) {
+    for (const header of ['Virtual machine', 'Operating system', 'Placement', 'Provider', 'Tags', 'Compute', 'Connection', 'Power', 'Snapshots']) {
       expect(screen.getByRole('columnheader', { name: header })).toBeInTheDocument()
     }
   })

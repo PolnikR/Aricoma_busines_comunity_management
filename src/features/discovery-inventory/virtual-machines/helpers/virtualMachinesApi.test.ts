@@ -19,6 +19,9 @@ function createVirtualMachine(index: number) {
     cluster: 'cluster-01',
     datastore: 'datastore-01',
     folder: 'Applications',
+    vm_path: `[datastore-01] application-${String(index)}/application-${String(index)}.vmx`,
+    provider_id: 'vmware-vcenter-01',
+    provider_type: 'VMWARE',
     vdisks: [
       {
         uuid: `disk-${String(index)}`,

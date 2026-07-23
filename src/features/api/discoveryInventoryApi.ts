@@ -31,6 +31,9 @@ const virtualMachineSchema = z.object({
   cluster: z.string().catch('-'),
   datastore: z.string().catch('-'),
   folder: z.string().catch('-'),
+  vm_path: z.string().catch('-'),
+  provider_id: z.string().catch('-'),
+  provider_type: z.string().catch('-'),
   vdisks: z.array(virtualDiskSchema).catch([]),
   snapshot_count: z.number().catch(0),
   vmware_tools_status: z.string().catch('-'),
@@ -74,6 +77,9 @@ function mapVirtualMachine(
     cluster: virtualMachine.cluster,
     primaryDatastore: virtualMachine.datastore,
     folder: virtualMachine.folder,
+    vmPath: virtualMachine.vm_path,
+    providerId: virtualMachine.provider_id,
+    providerType: virtualMachine.provider_type,
     disks: virtualMachine.vdisks.map((disk, index) => (
       mapVirtualDisk(disk, virtualMachine.moId, index)
     )),

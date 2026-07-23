@@ -14,6 +14,9 @@ export interface VirtualMachine {
   cluster: string
   datastore: string
   folder: string
+  vmPath: string
+  providerId: string
+  providerType: string
   diskCount: number
   diskCapacityGb: number
   vdisks: DiscoveredVirtualDisk[]

@@ -19,6 +19,9 @@ const vm = {
   datastore: 'ds-01',
   diskCount: 2,
   diskCapacityGb: 120,
+  vmPath: '[ds-01] app-server-01/app-server-01.vmx',
+  providerId: 'vmware-vcenter-01',
+  providerType: 'VMWARE',
   vdisks: [
     {
       id: 'disk-1',

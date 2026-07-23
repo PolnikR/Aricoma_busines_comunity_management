@@ -62,6 +62,7 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, density, onS
             <TableCell isHeader className={headerCell}>Virtual machine</TableCell>
             <TableCell isHeader className={headerCell}>Operating system</TableCell>
             <TableCell isHeader className={headerCell}>Placement</TableCell>
+            <TableCell isHeader className={headerCell}>Provider</TableCell>
             <TableCell isHeader className={headerCell}>Tags</TableCell>
             <TableCell isHeader className={headerCell}>Compute</TableCell>
             <TableCell isHeader className={headerCell}>Connection</TableCell>
@@ -105,6 +106,11 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, density, onS
                     </>
                   ) : null}
                 </div>
+              </TableCell>
+              <TableCell className={cell}>
+                <span className="block truncate" title={vm.providerType === '-' && vm.providerId === '-' ? '-' : `${vm.providerType}-${vm.providerId}`}>
+                  {vm.providerType === '-' && vm.providerId === '-' ? '-' : `${vm.providerType}-${vm.providerId}`}
+                </span>
               </TableCell>
               <TableCell className={cell}>
                 {vm.tags.length > 0 ? (

@@ -18,6 +18,9 @@ const validPayload = {
       cluster: 'cluster-01',
       datastore: 'datastore-01',
       folder: 'Applications',
+      vm_path: '[datastore-01] application-01/application-01.vmx',
+      provider_id: 'vmware-vcenter-01',
+      provider_type: 'VMWARE',
       vdisks: [
         {
           uuid: 'disk-101',
