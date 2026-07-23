@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import type { ReactNode } from 'react'
+import { useResizablePanel } from '@/shared/hooks/useResizablePanel'
 
 interface DetailDrawerProps {
   open: boolean
@@ -14,20 +15,13 @@ interface DetailDrawerProps {
   ariaLabel?: string
 }
 
-const DEFAULT_WIDTH = 420
-const MIN_WIDTH = 360
-const MAX_WIDTH = 720
-const KEYBOARD_STEP = 16
-
-const clampWidth = (value: number) => Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, value))
-
 // Right-hand slide-over for showing details of a selected row, lifted from the
 // Virtual Machines detail panel. Feature supplies the header info and body, and
 // optionally a pinned footer. When `resizable` is set the panel can be dragged
 // wider/narrower for the current view only — it resets to the default width
 // whenever it closes.
 export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerExtra, children, footer, resizable = false, ariaLabel = 'Detail' }: DetailDrawerProps) {
-  const [width, setWidth] = useState(DEFAULT_WIDTH)
+  const { width, handleProps } = useResizablePanel({ open })
 
   useEffect(() => {
     if (!open) return
@@ -35,38 +29,6 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
     window.addEventListener('keydown', onKey)
     return () => { window.removeEventListener('keydown', onKey) }
   }, [open, onClose])
-
-  // Resize is in-view only: forget any dragged width once the panel closes.
-  useEffect(() => {
-    if (open) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setWidth(DEFAULT_WIDTH)
-  }, [open])
-
-  const handleResizeMouseDown = (event: React.MouseEvent) => {
-    event.preventDefault()
-    const startX = event.clientX
-    const startWidth = width
-    const onMove = (moveEvent: MouseEvent) => {
-      setWidth(clampWidth(startWidth + (startX - moveEvent.clientX)))
-    }
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-    }
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-  }
-
-  const handleResizeKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'ArrowLeft') {
-      event.preventDefault()
-      setWidth((current) => clampWidth(current + KEYBOARD_STEP))
-    } else if (event.key === 'ArrowRight') {
-      event.preventDefault()
-      setWidth((current) => clampWidth(current - KEYBOARD_STEP))
-    }
-  }
 
   return (
     <>
@@ -84,15 +46,7 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
       >
         {resizable ? (
           <div
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Resize panel"
-            aria-valuenow={width}
-            aria-valuemin={MIN_WIDTH}
-            aria-valuemax={MAX_WIDTH}
-            tabIndex={0}
-            onMouseDown={handleResizeMouseDown}
-            onKeyDown={handleResizeKeyDown}
+            {...handleProps}
             className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize bg-transparent transition hover:bg-[#0d91d7]/30 focus:bg-[#0d91d7]/40 focus:outline-none"
           />
         ) : null}

@@ -3,6 +3,7 @@ import type { RecoveryApplicationData, ApplicationSubmission } from '@/features/
 import { getApps, getApp, createApp, updateApp, deleteApp } from './data'
 
 export const handlers = [
+
   http.get('/api/recovery-applications', () => {
     const apps = getApps()
     return HttpResponse.json(apps)

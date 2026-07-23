@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { VirtualMachine } from '../types'
 import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
+import { useResizablePanel } from '@/shared/hooks/useResizablePanel'
 import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
 
 interface VirtualMachineDetailPanelProps {
@@ -28,6 +29,8 @@ function DetailRow({ label, value, secondary }: DetailRowProps) {
 }
 
 export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: VirtualMachineDetailPanelProps) {
+  const { width, handleProps } = useResizablePanel({ open })
+
   useEffect(() => {
     if (!open) return
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
@@ -43,11 +46,16 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
         aria-hidden="true"
       />
       <aside
-        className={`fixed inset-y-0 right-0 z-50 flex w-[min(420px,92vw)] flex-col border-l border-[#d7deea] bg-white shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)] transition-transform duration-200 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed inset-y-0 right-0 z-50 flex flex-col border-l border-[#d7deea] bg-white shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)] transition-transform duration-200 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        style={{ width: `${String(width)}px`, maxWidth: '92vw' }}
         role="dialog"
         aria-modal="true"
         aria-label="Virtual machine detail"
       >
+        <div
+          {...handleProps}
+          className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize bg-transparent transition hover:bg-[#0d91d7]/30 focus:bg-[#0d91d7]/40 focus:outline-none"
+        />
         {virtualMachine ? (
           <>
             <div className="flex items-start justify-between gap-4 border-b border-[#dfe9f3] p-5">
