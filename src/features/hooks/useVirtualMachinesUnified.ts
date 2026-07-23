@@ -22,8 +22,8 @@ interface UseVirtualMachinesUnifiedResult {
  *
  * @returns {UseVirtualMachinesUnifiedResult} Combined VM data with list and topology
  */
-export function useVirtualMachinesUnified(): UseVirtualMachinesUnifiedResult {
-  const vmQuery = useAllVirtualMachines()
+export function useVirtualMachinesUnified(providerId?: string): UseVirtualMachinesUnifiedResult {
+  const vmQuery = useAllVirtualMachines(providerId)
   const topologyQuery = useInfrastructureTopology()
 
   const isLoading = vmQuery.isLoading || topologyQuery.isLoading

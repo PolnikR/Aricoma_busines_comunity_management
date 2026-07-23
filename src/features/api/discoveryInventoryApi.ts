@@ -82,10 +82,19 @@ function mapVirtualMachine(
   }
 }
 
-export async function fetchDiscoveryInventory(): Promise<DiscoveryInventory> {
-  const response = await fetch(DISCOVERY_INVENTORY_URL, {
+export async function fetchDiscoveryInventory(providerId?: string): Promise<DiscoveryInventory> {
+  const url = providerId
+    ? `${DISCOVERY_INVENTORY_URL}?provider_id=${encodeURIComponent(providerId)}`
+    : DISCOVERY_INVENTORY_URL
+  const response = await fetch(url, {
     headers: { Accept: 'application/json' },
   })
+
+  // A 400 for a specific provider means it is not a valid VM source (e.g. a
+  // non-VMWARE provider) — surface that as an empty inventory, not an error.
+  if (response.status === 400 || response.status === 500 && providerId) {
+    return { reportedCount: 0, virtualMachines: [] }
+  }
 
   if (!response.ok) {
     throw new Error(`Discovery inventory request failed with status ${String(response.status)}`)

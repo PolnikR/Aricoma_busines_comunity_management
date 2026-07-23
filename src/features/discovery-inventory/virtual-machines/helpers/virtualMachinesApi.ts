@@ -44,8 +44,8 @@ export interface AllVirtualMachinesData {
   filterOptions: VirtualMachinesPageData['filterOptions']
 }
 
-export async function fetchAllVirtualMachines(): Promise<AllVirtualMachinesData> {
-  const inventory = await fetchDiscoveryInventory()
+export async function fetchAllVirtualMachines(providerId?: string): Promise<AllVirtualMachinesData> {
+  const inventory = await fetchDiscoveryInventory(providerId)
   const virtualMachines = inventory.virtualMachines.map(mapVirtualMachine)
 
   return {

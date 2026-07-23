@@ -62,6 +62,43 @@ describe('fetchDiscoveryInventory', () => {
     })
   })
 
+  it('requests without a provider filter by default', async () => {
+    const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
+    vi.stubGlobal('fetch', mock)
+
+    await fetchDiscoveryInventory()
+
+    expect(mock).toHaveBeenCalledWith('/api/vms', { headers: { Accept: 'application/json' } })
+  })
+
+  it('appends the provider_id query parameter when a provider is given', async () => {
+    const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
+    vi.stubGlobal('fetch', mock)
+
+    await fetchDiscoveryInventory('vmware-vcenter-01')
+
+    expect(mock).toHaveBeenCalledWith('/api/vms?provider_id=vmware-vcenter-01', { headers: { Accept: 'application/json' } })
+  })
+
+  it('returns an empty inventory when a provider is rejected with 400', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ detail: "provider 'ibm-flashsystem-01' is not a VMWARE provider" }), { status: 400 }),
+    ))
+
+    const inventory = await fetchDiscoveryInventory('ibm-flashsystem-01')
+
+    expect(inventory.reportedCount).toBe(0)
+    expect(inventory.virtualMachines).toEqual([])
+  })
+
+  it('still throws on a 400 when no provider filter is set', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 400 })))
+
+    await expect(fetchDiscoveryInventory()).rejects.toThrow(
+      'Discovery inventory request failed with status 400',
+    )
+  })
+
   it('rejects a response that does not match the discovery contract', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ count: 1, vms: 'invalid' }), { status: 200 }),

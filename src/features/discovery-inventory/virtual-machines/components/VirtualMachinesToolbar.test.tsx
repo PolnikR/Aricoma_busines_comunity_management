@@ -28,12 +28,11 @@ const providers: ProviderRecord[] = [
 afterEach(cleanup)
 
 describe('VirtualMachinesToolbar provider filter', () => {
-  it('shows the provider dropdown with an option per provider', () => {
+  it('lists all providers in the dropdown', () => {
     render(<VirtualMachinesToolbar filters={filters} options={options} providers={providers} onFiltersChange={vi.fn()} onReset={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: /Filters/i }))
 
-    const select = screen.getByLabelText('Provider')
-    expect(select).toBeInTheDocument()
+    expect(screen.getByLabelText('Provider')).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'All providers' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Production vCenter' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Backup FlashSystem' })).toBeInTheDocument()
