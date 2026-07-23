@@ -1,18 +1,20 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/button/Button'
-import { PageHeader } from '@/shared/components/page/PageHeader'
+import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
 import { DeleteConfirmationDialog } from '../components/DeleteConfirmationDialog'
 import { useRecoveryApplications, useDeleteRecoveryApplication } from '../api/useRecoveryApplications'
+import type { TableDensity } from '@/shared/components/data-table'
 
 export function RecoveryApplicationsListPage() {
   const navigate = useNavigate()
-  const { data: applications, isLoading, error, refetch } = useRecoveryApplications()
+  const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
   const deleteApplicationMutation = useDeleteRecoveryApplication()
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [density, setDensity] = useState<TableDensity>('compact')
 
   const handleEdit = (id: string) => {
     void navigate(`/recovery-plans/recovery-applications/${id}/edit`)
@@ -38,10 +40,12 @@ export function RecoveryApplicationsListPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
-        <PageHeader
+        <TableToolbar
           eyebrow="Recovery Plans"
           title="Recovery Applications"
           description="Manage disaster recovery application definitions and test recovery workflows."
+          density={density}
+          onDensityChange={setDensity}
           actions={
             <Button variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
               Create Application
@@ -60,10 +64,12 @@ export function RecoveryApplicationsListPage() {
   if (error) {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
-        <PageHeader
+        <TableToolbar
           eyebrow="Recovery Plans"
           title="Recovery Applications"
           description="Manage disaster recovery application definitions and test recovery workflows."
+          density={density}
+          onDensityChange={setDensity}
         />
         <div className="flex-1 p-6">
           <FetchErrorAlert
@@ -80,10 +86,14 @@ export function RecoveryApplicationsListPage() {
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
-      <PageHeader
+      <TableToolbar
         eyebrow="Recovery Plans"
         title="Recovery Applications"
         description="Manage disaster recovery application definitions and test recovery workflows."
+        density={density}
+        onDensityChange={setDensity}
+        isFetching={isFetching}
+        onRefresh={() => { void refetch() }}
         actions={
           <Button variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
             Create Application

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { Button } from '@/shared/components/button/Button'
 import { RowDensityToggle } from './RowDensityToggle'
@@ -11,6 +12,7 @@ interface TableToolbarProps {
   onDensityChange: (density: TableDensity) => void
   isFetching?: boolean
   onRefresh?: () => void
+  actions?: ReactNode
 }
 
 export function TableToolbar({
@@ -21,6 +23,7 @@ export function TableToolbar({
   onDensityChange,
   isFetching,
   onRefresh,
+  actions,
 }: TableToolbarProps) {
   return (
     <PageHeader
@@ -29,6 +32,7 @@ export function TableToolbar({
       description={description}
       actions={
         <div className="flex items-center gap-3">
+          {actions}
           {onRefresh ? (
             <Button size="sm" variant="outline" onClick={onRefresh}>
               Refresh
