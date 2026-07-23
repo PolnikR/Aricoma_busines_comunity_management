@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { Button } from '@/shared/components/button/Button'
-import { RowDensityToggle } from './RowDensityToggle'
-import type { TableDensity } from './RowDensityToggle'
 
 interface TableToolbarProps {
   eyebrow: string
@@ -11,8 +9,6 @@ interface TableToolbarProps {
   isFetching?: boolean
   onRefresh?: () => void
   actions?: ReactNode
-  density?: TableDensity
-  onDensityChange?: (density: TableDensity) => void
 }
 
 export function TableToolbar({
@@ -22,8 +18,6 @@ export function TableToolbar({
   isFetching = false,
   onRefresh,
   actions,
-  density,
-  onDensityChange,
 }: TableToolbarProps) {
   return (
     <PageHeader
@@ -43,13 +37,6 @@ export function TableToolbar({
             <Button size="sm" variant="outline" onClick={onRefresh}>
               Refresh
             </Button>
-          ) : null}
-          {density && onDensityChange ? (
-            <RowDensityToggle
-              density={density}
-              onDensityChange={onDensityChange}
-              isFetching={isFetching}
-            />
           ) : null}
         </div>
       }

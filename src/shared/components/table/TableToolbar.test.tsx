@@ -61,32 +61,4 @@ describe('TableToolbar', () => {
 
     expect(screen.getByRole('button', { name: /custom action/i })).toBeInTheDocument()
   })
-
-  it('renders density toggle when density props are provided', () => {
-    const onDensityChange = vi.fn()
-    render(
-      <TableToolbar
-        eyebrow="Test"
-        title="Title"
-        description="Description"
-        density="comfortable"
-        onDensityChange={onDensityChange}
-      />
-    )
-
-    const comfortableBtn = screen.getByRole('button', { name: 'comfortable' })
-    expect(comfortableBtn).toHaveAttribute('aria-pressed', 'true')
-  })
-
-  it('does not render density toggle when density props are absent', () => {
-    render(
-      <TableToolbar
-        eyebrow="Test"
-        title="Title"
-        description="Description"
-      />
-    )
-
-    expect(screen.queryByRole('group', { name: 'Row density' })).not.toBeInTheDocument()
-  })
 })
