@@ -1,4 +1,5 @@
 export { DetailSkeleton } from './DetailSkeleton'
+export { FilterPanelSkeleton } from './FilterPanelSkeleton'
 export { MetricsSkeleton } from './MetricsSkeleton'
 export { SkeletonBlock } from './SkeletonBlock'
 export { TableSkeleton } from './TableSkeleton'

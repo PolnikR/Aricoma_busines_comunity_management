@@ -33,6 +33,7 @@ export function useVirtualMachineSearchParams() {
     powerState: searchParams.get('powerState') ?? '',
     connectionState: searchParams.get('connectionState') ?? '',
     cluster: searchParams.get('cluster') ?? '',
+    providerId: searchParams.get('providerId') ?? '',
     tags: parseTags(searchParams.get('tags')),
     untagged: parseBoolean(searchParams.get('untagged')),
   }), [searchParams])

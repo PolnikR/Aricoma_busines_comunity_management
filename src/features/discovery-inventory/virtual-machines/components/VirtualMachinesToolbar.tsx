@@ -4,12 +4,16 @@ import { Button } from '@/shared/components/button/Button'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import { MultiSelectDropdown } from '@/shared/components/form/MultiSelectDropdown'
 import { FilterIcon, SearchIcon } from '@/shared/icons/Icons'
+import type { ProviderRecord } from '@/features/api/providersApi'
+import { FilterPanelSkeleton } from '../skeletons'
 import type { VirtualMachineFilterOptions, VirtualMachineFilters } from '../types'
 
 interface VirtualMachinesToolbarProps {
   filters: VirtualMachineFilters
   options: VirtualMachineFilterOptions
   availableTags?: string[]
+  providers?: ProviderRecord[]
+  providersLoading?: boolean
   onFiltersChange: (filters: VirtualMachineFilters) => void
   onReset: () => void
 }
@@ -20,7 +24,7 @@ const powerTabs = [
   { label: 'Powered off', value: 'poweredOff' },
 ]
 
-export function VirtualMachinesToolbar({ filters, options, availableTags = [], onFiltersChange, onReset }: VirtualMachinesToolbarProps) {
+export function VirtualMachinesToolbar({ filters, options, availableTags = [], providers = [], providersLoading = false, onFiltersChange, onReset }: VirtualMachinesToolbarProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [tempFilters, setTempFilters] = useState(filters)
 
@@ -56,6 +60,7 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
     filters.powerState,
     filters.connectionState,
     filters.cluster,
+    filters.providerId,
     filters.tags.length > 0 ? 'tags' : '',
     filters.untagged ? 'untagged' : '',
   ].filter(Boolean).length
@@ -86,30 +91,41 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
               <h2 className="text-base font-semibold text-[#17233d]">Filter Virtual Machines</h2>
             </div>
 
-            <div className="space-y-4 px-6 py-4">
-              <Field label="Connection" htmlFor="modal-connection-filter">
-                <Select id="modal-connection-filter" value={tempFilters.connectionState} onChange={updateTempFilter('connectionState')}>
-                  <option value="">All connections</option>
-                  {options.connectionStates.map((value) => <option key={value} value={value}>{value}</option>)}
-                </Select>
-              </Field>
+            {providersLoading ? (
+              <FilterPanelSkeleton />
+            ) : (
+              <div className="space-y-4 px-6 py-4">
+                <Field label="Connection" htmlFor="modal-connection-filter">
+                  <Select id="modal-connection-filter" value={tempFilters.connectionState} onChange={updateTempFilter('connectionState')}>
+                    <option value="">All connections</option>
+                    {options.connectionStates.map((value) => <option key={value} value={value}>{value}</option>)}
+                  </Select>
+                </Field>
 
-              <Field label="Cluster" htmlFor="modal-cluster-filter">
-                <Select id="modal-cluster-filter" value={tempFilters.cluster} onChange={updateTempFilter('cluster')}>
-                  <option value="">All clusters</option>
-                  {options.clusters.map((value) => <option key={value} value={value}>{value}</option>)}
-                </Select>
-              </Field>
+                <Field label="Cluster" htmlFor="modal-cluster-filter">
+                  <Select id="modal-cluster-filter" value={tempFilters.cluster} onChange={updateTempFilter('cluster')}>
+                    <option value="">All clusters</option>
+                    {options.clusters.map((value) => <option key={value} value={value}>{value}</option>)}
+                  </Select>
+                </Field>
 
-              <Field label="Tags" htmlFor="modal-tags-filter">
-                <MultiSelectDropdown id="modal-tags-filter" options={availableTags} selected={tempFilters.tags} onChange={updateTempTags} />
-              </Field>
+                <Field label="Provider" htmlFor="modal-provider-filter">
+                  <Select id="modal-provider-filter" value={tempFilters.providerId} onChange={updateTempFilter('providerId')}>
+                    <option value="">All providers</option>
+                    {providers.map((provider) => <option key={provider.id} value={provider.id}>{provider.name}</option>)}
+                  </Select>
+                </Field>
 
-              <label className="flex items-center gap-3 cursor-pointer pt-2">
-                <input type="checkbox" checked={tempFilters.untagged} onChange={toggleTempUntagged} className="rounded border-[#cfdaea]" />
-                <span className="text-sm font-medium text-[#273750]">Show only VMs without tags</span>
-              </label>
-            </div>
+                <Field label="Tags" htmlFor="modal-tags-filter">
+                  <MultiSelectDropdown id="modal-tags-filter" options={availableTags} selected={tempFilters.tags} onChange={updateTempTags} />
+                </Field>
+
+                <label className="flex items-center gap-3 cursor-pointer pt-2">
+                  <input type="checkbox" checked={tempFilters.untagged} onChange={toggleTempUntagged} className="rounded border-[#cfdaea]" />
+                  <span className="text-sm font-medium text-[#273750]">Show only VMs without tags</span>
+                </label>
+              </div>
+            )}
 
             <div className="flex gap-3 border-t border-[#e3edf6] px-6 py-4">
               <Button size="sm" variant="ghost" onClick={() => { setIsModalOpen(false) }} className="flex-1">Cancel</Button>

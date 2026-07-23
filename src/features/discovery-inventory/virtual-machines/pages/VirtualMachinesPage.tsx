@@ -5,6 +5,7 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useVirtualMachinesUnified } from '@/features/hooks/useVirtualMachinesUnified'
+import { useProviders } from '@/features/providers-connectors/providers/api/useProviders'
 import { applyFiltersAndPagination } from '../helpers/virtualMachinesApi'
 import { useTags } from '../api/useTags'
 import { VirtualMachineDetailPanel } from '../components/VirtualMachineDetailPanel'
@@ -21,6 +22,7 @@ const defaultFilters: VirtualMachineFilters = {
   powerState: '',
   connectionState: '',
   cluster: '',
+  providerId: '',
   tags: [],
   untagged: false,
 }
@@ -29,6 +31,7 @@ export function VirtualMachinesPage() {
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
   const { vmList: allData, error, isLoading: isPending, isFetching, refetch } = useVirtualMachinesUnified()
   const { data: availableTags = [] } = useTags()
+  const { data: providers = [], isLoading: providersLoading } = useProviders()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [density, setDensity] = useState<TableDensity>('compact')
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -57,6 +60,7 @@ export function VirtualMachinesPage() {
     powerState: query.powerState,
     connectionState: query.connectionState,
     cluster: query.cluster,
+    providerId: query.providerId,
     tags: query.tags,
     untagged: query.untagged,
   }
@@ -135,7 +139,7 @@ export function VirtualMachinesPage() {
           </div>
           <div className="flex flex-1 flex-col overflow-hidden bg-[#f5f8fc] p-3 lg:min-h-0">
             <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#dbe7f2] bg-white shadow-sm lg:min-h-0" aria-label="Virtual machine inventory table">
-              <VirtualMachinesToolbar filters={filters} options={data.filterOptions} availableTags={availableTags} onFiltersChange={updateFilters} onReset={() => { updateFilters(defaultFilters) }} />
+              <VirtualMachinesToolbar filters={filters} options={data.filterOptions} availableTags={availableTags} providers={providers} providersLoading={providersLoading} onFiltersChange={updateFilters} onReset={() => { updateFilters(defaultFilters) }} />
               <div className="flex-1 lg:min-h-0 lg:overflow-y-auto custom-scrollbar">
                 {data.items.length > 0 ? (
                   <VirtualMachinesTable virtualMachines={data.items} selectedId={selectedId} density={density} onSelect={(virtualMachine) => { handleSelect(virtualMachine.id) }} />

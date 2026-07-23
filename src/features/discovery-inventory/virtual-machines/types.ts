@@ -24,6 +24,7 @@ export interface VirtualMachineFilters {
   powerState: string
   connectionState: string
   cluster: string
+  providerId: string
   tags: string[]
   untagged: boolean
 }

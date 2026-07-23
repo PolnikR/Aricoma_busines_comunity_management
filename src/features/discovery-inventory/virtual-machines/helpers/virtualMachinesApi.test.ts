@@ -40,6 +40,7 @@ function createQuery(overrides: Partial<VirtualMachinesQuery> = {}): VirtualMach
     powerState: '',
     connectionState: '',
     cluster: '',
+    providerId: '',
     tags: [],
     untagged: false,
     page: 1,
