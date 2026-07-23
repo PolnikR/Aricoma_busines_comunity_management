@@ -26,11 +26,11 @@ function stubFetch(payload: unknown, status = 200) {
   return mock
 }
 
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
-
 describe('fetchProviders', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('returns the validated provider list', async () => {
     const mock = stubFetch(listPayload)
 
@@ -53,6 +53,10 @@ describe('fetchProviders', () => {
 })
 
 describe('submitProvider', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('posts a single provider object', async () => {
     const newProvider: ProviderRecord = { id: 'new-01', name: 'New', description: 'x', type: 'VMWARE', ipAddress: '10.0.0.1' }
     const mock = stubFetch({})
@@ -73,6 +77,10 @@ describe('submitProvider', () => {
 })
 
 describe('deleteProvider', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('calls delete with the provider_id and returns the remaining list', async () => {
     const mock = stubFetch({ providers: [providerB] })
 

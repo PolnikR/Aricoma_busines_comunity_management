@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fetchTags } from './tagsApi'
 
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
-
 describe('fetchTags', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('returns array of tag names from API', async () => {
     const mockResponse = {
       count: 4,

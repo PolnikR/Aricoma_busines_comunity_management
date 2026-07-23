@@ -38,11 +38,11 @@ function stubFetch(payload: unknown, status = 200) {
   return mock
 }
 
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
-
 describe('fetchVdisksByVm', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('requests with vm_name only when no provider is given and maps volumes', async () => {
     const mock = stubFetch(validPayload)
 

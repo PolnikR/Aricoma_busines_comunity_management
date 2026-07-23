@@ -37,11 +37,11 @@ const validPayload = {
   ],
 }
 
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
-
 describe('fetchDiscoveryInventory', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('maps a validated response to the canonical discovery model', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
       new Response(JSON.stringify(validPayload), { status: 200 }),
