@@ -9,7 +9,7 @@ export function ProvidersPage() {
       <PageHeader
         eyebrow="Providers & Connectors"
         title="Providers"
-        description="Supported provider technologies, their connections, capabilities and status."
+        description="Registered providers discovered from the backend."
         actions={
           <Button variant="outline" disabled title="Adding providers is not available in Release 1">
             Add Provider
@@ -18,7 +18,7 @@ export function ProvidersPage() {
       />
 
       <div className="p-6">
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden p-0 sm:p-0">
           <ProvidersCatalogueTable />
         </Card>
       </div>

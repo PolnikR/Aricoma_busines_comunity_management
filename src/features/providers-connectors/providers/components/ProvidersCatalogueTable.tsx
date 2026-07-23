@@ -1,66 +1,125 @@
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
-import { Button } from '@/shared/components/button/Button'
-import { PROVIDERS } from '../model/providerRegistry'
-import type { ProviderStatus } from '../model/providerRegistry'
+import { Badge } from '@/shared/components/badge/Badge'
+import { Input, Select } from '@/shared/components/form/FormControls'
+import { Pagination } from '@/shared/components/pagination/Pagination'
+import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { SearchIcon } from '@/shared/icons/Icons'
+import { useProviders } from '../api/useProviders'
 
-function statusBadgeClass(status: ProviderStatus): string {
-  return status === 'Active'
-    ? 'bg-[#d1fae5] text-[#047857]'
-    : 'bg-[#eef1f5] text-[#71819a]'
-}
+const PAGE_SIZES = [10, 25, 50] as const
+type PageSize = (typeof PAGE_SIZES)[number]
 
 export function ProvidersCatalogueTable() {
-  const navigate = useNavigate()
+  const { data: providers, isLoading, error } = useProviders()
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState<PageSize>(10)
 
-  const openProvider = (id: string) => {
-    void navigate(`/providers-connectors/providers/${id}`)
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    const list = providers ?? []
+    if (!term) return list
+    return list.filter((provider) => provider.name.toLowerCase().includes(term))
+  }, [providers, search])
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const currentPage = Math.min(page, pageCount)
+  const startIndex = (currentPage - 1) * pageSize
+  const pageItems = filtered.slice(startIndex, startIndex + pageSize)
+  const rangeStart = filtered.length === 0 ? 0 : startIndex + 1
+  const rangeEnd = Math.min(startIndex + pageSize, filtered.length)
+
+  const headerCell = 'whitespace-nowrap px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]'
+  const cell = 'px-4 py-2.5 text-[13px] text-[#3b4763] align-middle'
+
+  if (isLoading) {
+    return <div className="p-6 text-sm text-[#71819a]">Loading providers…</div>
   }
 
-  const headerClass = 'whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400'
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700">
+          Failed to load providers. {error instanceof Error ? error.message : ''}
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Scrollable providers table">
-      <Table className="min-w-190">
-        <TableHeader className="sticky top-0 z-10 border-b border-[#dfe9f3] bg-[#f6f9fc]">
-          <TableRow>
-            <TableCell isHeader className={headerClass}>Provider</TableCell>
-            <TableCell isHeader className={headerClass}>Type</TableCell>
-            <TableCell isHeader className={headerClass}>Connections</TableCell>
-            <TableCell isHeader className={headerClass}>Capabilities</TableCell>
-            <TableCell isHeader className={headerClass}>Status</TableCell>
-            <TableCell isHeader className={headerClass}>Actions</TableCell>
-          </TableRow>
-        </TableHeader>
-        <TableBody className="divide-y divide-[#edf2f7]">
-          {PROVIDERS.map((provider) => (
-            <TableRow key={provider.id} className="bg-white hover:bg-[#f9fbfd] transition-colors">
-              <TableCell className="px-5 py-4 text-sm font-semibold text-gray-900 dark:text-white">
-                {provider.name}
-              </TableCell>
-              <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
-                {provider.type}
-              </TableCell>
-              <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
-                {provider.connections.length}
-              </TableCell>
-              <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
-                {provider.capabilities.join(', ')}
-              </TableCell>
-              <TableCell className="px-5 py-4 text-sm">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadgeClass(provider.status)}`}>
-                  {provider.status}
-                </span>
-              </TableCell>
-              <TableCell className="px-5 py-4 text-sm">
-                <Button size="sm" variant="outline" onClick={() => { openProvider(provider.id) }}>
-                  {provider.status === 'Active' ? 'View / Configure' : 'Enable'}
-                </Button>
-              </TableCell>
+    <div className="flex flex-col">
+      <div className="flex flex-col gap-2 border-b border-[#e3edf6] bg-[#f6f9fc] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="w-full sm:max-w-xs">
+          <Input
+            type="search"
+            aria-label="Search providers by name"
+            placeholder="Search by provider name"
+            leadingIcon={<SearchIcon className="size-4" />}
+            className="h-9"
+            value={search}
+            onChange={(event) => { setSearch(event.target.value); setPage(1) }}
+          />
+        </div>
+        <span className="text-xs text-[#93a0b5]">{filtered.length} of {providers?.length ?? 0} providers</span>
+      </div>
+
+      <div className="custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Scrollable providers table">
+        <Table className="min-w-215">
+          <TableHeader className="border-b border-[#dfe9f3] bg-[#f6f9fc]">
+            <TableRow>
+              <TableCell isHeader className={headerCell}>Provider</TableCell>
+              <TableCell isHeader className={headerCell}>Description</TableCell>
+              <TableCell isHeader className={headerCell}>Type</TableCell>
+              <TableCell isHeader className={headerCell}>IP address</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody className="divide-y divide-[#edf2f7]">
+            {pageItems.length > 0 ? (
+              pageItems.map((provider) => (
+                <TableRow key={provider.id} className="bg-white hover:bg-[#f3f8fe] transition-colors">
+                  <TableCell className={cell}>
+                    <span className="block font-semibold text-[#17233d]">{provider.name}</span>
+                    <span className="mt-0.5 block font-mono text-[11px] text-[#93a0b5]">{provider.id}</span>
+                  </TableCell>
+                  <TableCell className={cell}>
+                    <span className="block max-w-md truncate" title={provider.description}>{provider.description || '-'}</span>
+                  </TableCell>
+                  <TableCell className={cell}>
+                    <Badge color="info" size="sm">{provider.type || 'UNKNOWN'}</Badge>
+                  </TableCell>
+                  <TableCell className={cell}>
+                    <span className="font-mono text-[12px] text-[#3b4763]">{provider.ipAddress || '-'}</span>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell className="px-4 py-8 text-center text-sm text-[#71819a]">
+                  {providers && providers.length > 0 ? (
+                    'No providers match your search.'
+                  ) : (
+                    <EmptyState title="No providers found" description="No providers were returned by the backend." />
+                  )}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex flex-col gap-3 border-t border-[#e3edf6] bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-3 text-sm text-[#71819a]">
+          <span>Showing <strong className="font-medium text-[#17233d]">{rangeStart}-{rangeEnd}</strong> of <strong className="font-medium text-[#17233d]">{filtered.length}</strong></span>
+          <label className="flex items-center gap-2">
+            <span className="text-xs">Rows</span>
+            <Select aria-label="Rows per page" className="h-9 w-20" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value) as PageSize); setPage(1) }}>
+              {PAGE_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
+            </Select>
+          </label>
+        </div>
+        <Pagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
+      </div>
     </div>
   )
 }
