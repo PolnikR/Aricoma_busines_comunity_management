@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { VirtualMachinesQuery } from '../types'
 import { applyFiltersAndPagination, fetchAllVirtualMachines } from './virtualMachinesApi'
 
@@ -51,10 +51,6 @@ function createQuery(overrides: Partial<VirtualMachinesQuery> = {}): VirtualMach
     ...overrides,
   }
 }
-
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
 
 describe('fetchAllVirtualMachines', () => {
   it('returns all virtual machines with metrics and filter options', async () => {
