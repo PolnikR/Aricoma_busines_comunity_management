@@ -11,6 +11,7 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { useProviders } from '../api/useProviders'
+import { providerTypeLabel } from '@/features/api/providersApi'
 import type { ProviderRecord } from '@/features/api/providersApi'
 
 const columns: ColumnDef<ProviderRecord>[] = [
@@ -32,7 +33,7 @@ const columns: ColumnDef<ProviderRecord>[] = [
   {
     id: 'type',
     header: 'Type',
-    cell: (provider) => <Badge color="info" size="sm">{provider.type || 'UNKNOWN'}</Badge>,
+    cell: (provider) => <Badge color="info" size="sm">{provider.type ? providerTypeLabel(provider.type) : 'UNKNOWN'}</Badge>,
   },
   {
     id: 'ipAddress',
@@ -91,7 +92,7 @@ export function ProvidersCatalogueTable() {
           <Field label="Type" htmlFor="provider-type-filter">
             <Select id="provider-type-filter" value={pendingType} onChange={(event) => { setPendingType(event.target.value) }}>
               <option value="">All types</option>
-              {types.map((type) => <option key={type} value={type}>{type}</option>)}
+              {types.map((type) => <option key={type} value={type}>{providerTypeLabel(type)}</option>)}
             </Select>
           </Field>
         }
@@ -123,13 +124,13 @@ export function ProvidersCatalogueTable() {
         eyebrow="Selected provider"
         title={selected?.name ?? ''}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerExtra={selected ? <Badge color="info" size="sm">{selected.type || 'UNKNOWN'}</Badge> : null}
+        headerExtra={selected ? <Badge color="info" size="sm">{selected.type ? providerTypeLabel(selected.type) : 'UNKNOWN'}</Badge> : null}
         ariaLabel="Provider detail"
       >
         {selected ? (
           <dl className="px-5 py-2">
             <DetailRow label="Provider ID" value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label="Type" value={selected.type || '-'} />
+            <DetailRow label="Type" value={selected.type ? providerTypeLabel(selected.type) : '-'} />
             <DetailRow label="IP address" value={<span className="font-mono">{selected.ipAddress || '-'}</span>} />
             <DetailRow label="Description" value={selected.description || '-'} />
           </dl>
