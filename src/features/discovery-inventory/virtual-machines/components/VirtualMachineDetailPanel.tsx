@@ -4,6 +4,7 @@ import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
 import { useResizablePanel } from '@/shared/hooks/useResizablePanel'
 import { useVdisksByVm } from '../api/useVdisksByVm'
 import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
 
 interface VirtualMachineDetailPanelProps {
   virtualMachine: VirtualMachine | null
@@ -48,6 +49,10 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
   const { width, handleProps } = useResizablePanel({ open })
   const [selectedTab, setSelectedTab] = useState<'overview' | 'disks' | 'snapshots'>('overview')
   const { data: vdisks, isLoading: vdisksLoading } = useVdisksByVm(virtualMachine?.name ?? '', undefined)
+
+  const headerCell = 'whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]'
+  const cell = 'px-3 py-2.5 text-[13px] text-[#3b4763] align-top'
+  const num = `${cell} text-right tabular-nums`
 
   useEffect(() => {
     if (!open) return
@@ -172,34 +177,34 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
               )}
 
               {selectedTab === 'disks' && (
-                <div className="custom-scrollbar overflow-x-auto">
+                <div className="custom-scrollbar overflow-x-auto" key={`disks-${virtualMachine.id}`}>
                   {vdisksLoading ? (
                     <p className="p-4 text-[13px] text-[#93a0b5]">Loading disks...</p>
                   ) : vdisks ? (
-                    <table className="w-full min-w-80">
-                      <thead className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
-                        <tr>
-                          <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Volume Name</th>
-                          <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Capacity</th>
-                          <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Type</th>
-                          <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Copies</th>
-                          <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Pool</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#edf2f7]">
+                    <Table className="min-w-80">
+                      <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
+                        <TableRow>
+                          <TableCell isHeader className={headerCell}>Volume Name</TableCell>
+                          <TableCell isHeader className={headerCell}>Capacity</TableCell>
+                          <TableCell isHeader className={headerCell}>Type</TableCell>
+                          <TableCell isHeader className={headerCell}>Copies</TableCell>
+                          <TableCell isHeader className={headerCell}>Pool</TableCell>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody className="divide-y divide-[#edf2f7]">
                         {vdisks.volumes.map((vol) => (
-                          <tr key={vol.naaId} className="bg-white hover:bg-[#f3f8fe]">
-                            <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top">
+                          <TableRow key={vol.naaId} className="bg-white hover:bg-[#f3f8fe]">
+                            <TableCell className={cell}>
                               <span className="block max-w-45 truncate" title={vol.name}>{vol.name}</span>
-                            </td>
-                            <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top">{vol.capacity}</td>
-                            <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top">{vol.type}</td>
-                            <td className="px-3 py-2.5 text-[13px] text-[#3b4763] text-right align-top tabular-nums">{vol.copyCount}</td>
-                            <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top">{vol.pool}</td>
-                          </tr>
+                            </TableCell>
+                            <TableCell className={cell}>{vol.capacity}</TableCell>
+                            <TableCell className={cell}>{vol.type}</TableCell>
+                            <TableCell className={num}>{vol.copyCount}</TableCell>
+                            <TableCell className={cell}>{vol.pool}</TableCell>
+                          </TableRow>
                         ))}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   ) : (
                     <p className="p-4 text-[13px] text-[#93a0b5]">No disk data available</p>
                   )}
@@ -207,48 +212,59 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
               )}
 
               {selectedTab === 'snapshots' && (
-                <div className="flex flex-col">
+                <div className="flex flex-col" key={`snapshots-${virtualMachine.id}`}>
                   {vdisksLoading ? (
                     <p className="p-4 text-[13px] text-[#93a0b5]">Loading snapshots...</p>
                   ) : vdisks ? (
                     <>
-                      <div className="border-b border-[#edf2f7] px-4 py-3">
-                        <div className="flex gap-2">
-                          <span className="inline-flex items-center rounded-full bg-[#e8f4fd] px-3 py-1 text-xs font-medium text-[#0d91d7]">
-                            {String(vdisks.volumes.reduce((sum: number, v) => sum + v.snapshots.sourceMappings.length, 0))} source mappings
-                          </span>
-                          <span className="inline-flex items-center rounded-full bg-[#e8f4fd] px-3 py-1 text-xs font-medium text-[#0d91d7]">
-                            {String(vdisks.volumes.reduce((sum: number, v) => sum + v.snapshots.targetMappings.length, 0))} target mappings
-                          </span>
-                        </div>
-                      </div>
+                      {(() => {
+                        const { sourceCount, targetCount } = vdisks.volumes.reduce(
+                          (acc, v) => ({
+                            sourceCount: acc.sourceCount + v.snapshots.sourceMappings.length,
+                            targetCount: acc.targetCount + v.snapshots.targetMappings.length,
+                          }),
+                          { sourceCount: 0, targetCount: 0 }
+                        )
+                        return (
+                          <div className="border-b border-[#edf2f7] px-4 py-3">
+                            <div className="flex gap-2">
+                              <span className="inline-flex items-center rounded-full bg-[#e8f4fd] px-3 py-1 text-xs font-medium text-[#0d91d7]">
+                                {sourceCount} source mappings
+                              </span>
+                              <span className="inline-flex items-center rounded-full bg-[#e8f4fd] px-3 py-1 text-xs font-medium text-[#0d91d7]">
+                                {targetCount} target mappings
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })()}
                       <div className="custom-scrollbar overflow-x-auto">
-                        <table className="w-full min-w-100">
-                          <thead className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
-                            <tr>
-                              <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Source</th>
-                              <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Target</th>
-                              <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Status</th>
-                              <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Progress</th>
-                              <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Created</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-[#edf2f7]">
+                        <Table className="min-w-100">
+                          <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
+                            <TableRow>
+                              <TableCell isHeader className={headerCell}>Source</TableCell>
+                              <TableCell isHeader className={headerCell}>Target</TableCell>
+                              <TableCell isHeader className={headerCell}>Status</TableCell>
+                              <TableCell isHeader className={headerCell}>Progress</TableCell>
+                              <TableCell isHeader className={headerCell}>Created</TableCell>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody className="divide-y divide-[#edf2f7]">
                             {vdisks.volumes.flatMap((vol) => vol.snapshots.sourceMappings.map((mapping) => (
-                              <tr key={mapping.id} className="bg-white hover:bg-[#f3f8fe]">
-                                <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top">
+                              <TableRow key={mapping.id} className="bg-white hover:bg-[#f3f8fe]">
+                                <TableCell className={cell}>
                                   <span className="block max-w-45 truncate" title={mapping.sourceVdiskName}>{mapping.sourceVdiskName}</span>
-                                </td>
-                                <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top">
+                                </TableCell>
+                                <TableCell className={cell}>
                                   <span className="block max-w-45 truncate" title={mapping.targetVdiskName}>{mapping.targetVdiskName}</span>
-                                </td>
-                                <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top">{mapping.status}</td>
-                                <td className="px-3 py-2.5 text-[13px] text-[#3b4763] text-right align-top tabular-nums">{String(Number(mapping.cleanProgress))}%</td>
-                                <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top whitespace-nowrap">{formatStartTime(mapping.startTime)}</td>
-                              </tr>
+                                </TableCell>
+                                <TableCell className={cell}>{mapping.status}</TableCell>
+                                <TableCell className={num}>{mapping.cleanProgress}%</TableCell>
+                                <TableCell className={cell}>{formatStartTime(mapping.startTime)}</TableCell>
+                              </TableRow>
                             )))}
-                          </tbody>
-                        </table>
+                          </TableBody>
+                        </Table>
                       </div>
                     </>
                   ) : (
