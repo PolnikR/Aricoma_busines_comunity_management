@@ -20,6 +20,7 @@ function renderWithQueryClient(component: React.ReactElement) {
 function fillValidForm() {
   fireEvent.change(screen.getByLabelText('ID'), { target: { value: 'flashcopy-01' } })
   fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'New Provider' } })
+  fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Test description' } })
   fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'VMWARE' } })
   fireEvent.change(screen.getByLabelText('IP address'), { target: { value: '10.0.0.1' } })
 }
@@ -67,6 +68,7 @@ describe('ProvidersCreateModal', () => {
     await waitFor(() => {
       expect(screen.getByText('ID is required')).toBeInTheDocument()
       expect(screen.getByText('Provider name is required')).toBeInTheDocument()
+      expect(screen.getByText('Description is required')).toBeInTheDocument()
       expect(screen.getByText('Type is required')).toBeInTheDocument()
       expect(screen.getByText('IP address is required')).toBeInTheDocument()
     })

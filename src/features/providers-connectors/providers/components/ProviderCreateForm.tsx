@@ -69,7 +69,9 @@ export function ProviderCreateForm({ data, errors, isSubmitting, idDisabled = fa
           onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('description', event.target.value) }}
           onKeyDown={handleKeyDown}
           disabled={isSubmitting}
+          aria-invalid={Boolean(errors.description)}
         />
+        {errors.description ? <p className="mt-1 text-xs text-red-600">{errors.description}</p> : null}
       </Field>
 
       <Field label="Type" htmlFor="create-type">

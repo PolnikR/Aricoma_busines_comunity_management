@@ -50,6 +50,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     const newErrors: Partial<Record<keyof ProviderCreateFormData, string>> = {}
     if (!formData.id.trim()) newErrors.id = 'ID is required'
     if (!formData.name.trim()) newErrors.name = 'Provider name is required'
+    if (!formData.description.trim()) newErrors.description = 'Description is required'
     if (!formData.type) newErrors.type = 'Type is required'
     if (!formData.ipAddress.trim()) newErrors.ipAddress = 'IP address is required'
     setErrors(newErrors)
