@@ -10,7 +10,10 @@ import {
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
+import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useProviders } from '../api/useProviders'
+import { useDeleteProvider } from '../api/useDeleteProvider'
+import { ProvidersCreateModal } from './ProvidersCreateModal'
 import { providerTypeLabel } from '@/features/api/providersApi'
 import type { ProviderRecord } from '@/features/api/providersApi'
 
@@ -44,11 +47,15 @@ const columns: ColumnDef<ProviderRecord>[] = [
 
 export function ProvidersCatalogueTable() {
   const { data: providers, isLoading, error } = useProviders()
+  const deleteProvider = useDeleteProvider()
   const [typeFilter, setTypeFilter] = useState('')
   const [pendingType, setPendingType] = useState('')
-  const [selected, setSelected] = useState<ProviderRecord | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [editing, setEditing] = useState<ProviderRecord | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ProviderRecord | null>(null)
 
   const rows = useMemo(() => providers ?? [], [providers])
+  const selected = rows.find((provider) => provider.id === selectedId) ?? null
   const types = useMemo(
     () => [...new Set(rows.map((provider) => provider.type).filter(Boolean))].sort(),
     [rows],
@@ -105,8 +112,8 @@ export function ProvidersCatalogueTable() {
         density={table.density}
         minWidthClassName="min-w-215"
         ariaLabel="Providers table"
-        onRowClick={(provider) => { setSelected(provider) }}
-        selectedRowKey={selected?.id ?? null}
+        onRowClick={(provider) => { setSelectedId(provider.id) }}
+        selectedRowKey={selectedId}
         emptyContent={rows.length > 0 ? 'No providers match your search.' : 'No providers were returned by the backend.'}
       />
 
@@ -120,12 +127,31 @@ export function ProvidersCatalogueTable() {
 
       <DetailDrawer
         open={selected !== null}
-        onClose={() => { setSelected(null) }}
+        onClose={() => { setSelectedId(null) }}
+        resizable
         eyebrow="Selected provider"
         title={selected?.name ?? ''}
         subtitle={<span className="font-mono">{selected?.id}</span>}
         headerExtra={selected ? <Badge color="info" size="sm">{selected.type ? providerTypeLabel(selected.type) : 'UNKNOWN'}</Badge> : null}
         ariaLabel="Provider detail"
+        footer={selected ? (
+          <>
+            <button
+              type="button"
+              onClick={() => { setDeleteTarget(selected) }}
+              className="flex-1 rounded-lg border border-[#f0c3c3] px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEditing(selected); setSelectedId(null) }}
+              className="flex-1 rounded-lg bg-[#0d91d7] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0a7bc4]"
+            >
+              Edit
+            </button>
+          </>
+        ) : null}
       >
         {selected ? (
           <dl className="px-5 py-2">
@@ -136,6 +162,32 @@ export function ProvidersCatalogueTable() {
           </dl>
         ) : null}
       </DetailDrawer>
+
+      {editing ? (
+        <ProvidersCreateModal
+          open
+          onClose={() => { setEditing(null) }}
+          existingProviders={rows}
+          provider={editing}
+        />
+      ) : null}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete provider"
+        message={<>Are you sure you want to delete <span className="font-medium">{deleteTarget?.name}</span>? This action cannot be undone.</>}
+        confirmLabel="Delete"
+        loadingLabel="Deleting…"
+        tone="danger"
+        isLoading={deleteProvider.isPending}
+        onCancel={() => { setDeleteTarget(null) }}
+        onConfirm={() => {
+          if (!deleteTarget) return
+          deleteProvider.mutate(deleteTarget.id, {
+            onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
+          })
+        }}
+      />
     </div>
   )
 }

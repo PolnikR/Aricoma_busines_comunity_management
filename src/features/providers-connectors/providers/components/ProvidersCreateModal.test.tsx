@@ -113,10 +113,8 @@ describe('ProvidersCreateModal', () => {
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
 
     const init = mockFetch.mock.calls[0]?.[1] as RequestInit
-    const body = JSON.parse(init.body as string) as { providers: ProviderRecord[] }
-    expect(body.providers).toEqual([
-      expect.objectContaining({ id: 'flashcopy-01', name: 'New Provider', type: 'VMWARE', ipAddress: '10.0.0.1' }),
-    ])
+    const body = JSON.parse(init.body as string) as ProviderRecord
+    expect(body).toMatchObject({ id: 'flashcopy-01', name: 'New Provider', type: 'VMWARE', ipAddress: '10.0.0.1' })
     vi.unstubAllGlobals()
   })
 
@@ -153,7 +151,7 @@ describe('ProvidersCreateModal', () => {
     renderWithQueryClient(
       <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[mockProviderA]} provider={mockProviderA} />,
     )
-    expect(screen.getByText('Edit provider')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Edit provider' })).toBeInTheDocument()
     const idInput = screen.getByLabelText('ID')
     const nameInput = screen.getByLabelText('Provider name')
     expect((idInput as HTMLInputElement).value).toBe('vmware-vcenter-01')
@@ -161,9 +159,9 @@ describe('ProvidersCreateModal', () => {
     expect((nameInput as HTMLInputElement).value).toBe('Production vCenter')
   })
 
-  it('upserts by id in edit mode (replaces, does not append)', async () => {
+  it('posts a single edited provider object in edit mode', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(
-      new Response(JSON.stringify({ providers: [] }), { status: 200 }),
+      new Response(JSON.stringify({}), { status: 200 }),
     )
     vi.stubGlobal('fetch', mockFetch)
     const onClose = vi.fn()
@@ -172,16 +170,13 @@ describe('ProvidersCreateModal', () => {
     )
 
     fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'Renamed vCenter' } })
-    fireEvent.click(screen.getByRole('button', { name: /Create Provider/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
 
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
 
     const init = mockFetch.mock.calls[0]?.[1] as RequestInit
-    const body = JSON.parse(init.body as string) as { providers: ProviderRecord[] }
-    expect(body.providers).toHaveLength(1)
-    expect(body.providers[0]).toEqual(
-      expect.objectContaining({ id: 'vmware-vcenter-01', name: 'Renamed vCenter' }),
-    )
+    const body = JSON.parse(init.body as string) as ProviderRecord
+    expect(body).toMatchObject({ id: 'vmware-vcenter-01', name: 'Renamed vCenter' })
     vi.unstubAllGlobals()
   })
 })

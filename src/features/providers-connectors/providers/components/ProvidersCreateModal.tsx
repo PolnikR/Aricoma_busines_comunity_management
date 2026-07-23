@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { submitProviders } from '@/features/api/providersApi'
 import { Modal } from '@/shared/components/modal/Modal'
-import { providersQueryKey } from '../api/useProviders'
+import { useUpsertProvider } from '../api/useUpsertProvider'
 import { ProviderCreateForm } from './ProviderCreateForm'
 import type { ProviderRecord } from '@/features/api/providersApi'
 import type { ProviderCreateFormData } from './ProviderCreateForm'
@@ -20,11 +18,10 @@ const EMPTY_FORM: ProviderCreateFormData = { id: '', name: '', description: '', 
 
 // Modal for creating or editing a provider.
 export function ProvidersCreateModal({ open, onClose, existingProviders, provider }: ProvidersCreateModalProps) {
-  const queryClient = useQueryClient()
+  const upsert = useUpsertProvider()
   const isEdit = Boolean(provider)
   const [formData, setFormData] = useState<ProviderCreateFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof ProviderCreateFormData, string>>>({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
   // Prefill (edit) or clear (create) the form each time the modal opens.
@@ -62,7 +59,6 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
   const handleSubmit = () => {
     if (!validate()) return
 
-    setIsSubmitting(true)
     setErrorMessage('')
 
     const record: ProviderRecord = {
@@ -73,21 +69,16 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
       ipAddress: formData.ipAddress,
     }
 
-    // Upsert: replace any provider sharing this id, otherwise append.
-    const others = existingProviders.filter((entry) => entry.id !== record.id)
-
-    submitProviders([...others, record])
-      .then((updatedList) => {
-        queryClient.setQueryData(providersQueryKey, updatedList)
-        onClose()
-      })
-      .catch((err: unknown) => {
-        const detail = err instanceof Error ? err.message : ''
-        setErrorMessage(detail ? `Failed to create provider: ${detail}` : 'Failed to create provider')
-      })
-      .finally(() => {
-        setIsSubmitting(false)
-      })
+    upsert.mutate(
+      { provider: record, existingProviders },
+      {
+        onSuccess: () => { onClose() },
+        onError: (err: unknown) => {
+          const detail = err instanceof Error ? err.message : ''
+          setErrorMessage(detail ? `Failed to create provider: ${detail}` : 'Failed to create provider')
+        },
+      },
+    )
   }
 
   return (
@@ -100,7 +91,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
           <button
             type="button"
             onClick={onClose}
-            disabled={isSubmitting}
+            disabled={upsert.isPending}
             className="flex-1 rounded-lg border border-[#d7deea] px-4 py-2 text-sm font-semibold text-[#17233d] transition hover:bg-[#f1f5fa] disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancel
@@ -108,10 +99,12 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={upsert.isPending}
             className="flex-1 rounded-lg bg-[#0d91d7] px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 hover:enabled:bg-[#0a7bc4]"
           >
-            {isSubmitting ? 'Creating…' : 'Create Provider'}
+            {upsert.isPending
+              ? (isEdit ? 'Saving…' : 'Creating…')
+              : (isEdit ? 'Edit provider' : 'Create provider')}
           </button>
         </>
       }
@@ -125,7 +118,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
       <ProviderCreateForm
         data={formData}
         errors={errors}
-        isSubmitting={isSubmitting}
+        isSubmitting={upsert.isPending}
         idDisabled={isEdit}
         onChange={handleChange}
         onSubmit={handleSubmit}

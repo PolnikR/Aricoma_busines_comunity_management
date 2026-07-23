@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { deleteProvider, fetchProviders, submitProviders } from '@/features/api/providersApi'
+import { deleteProvider, fetchProviders, submitProvider } from '@/features/api/providersApi'
 import type { ProviderRecord } from '@/features/api/providersApi'
 
 const providerA: ProviderRecord = {
@@ -52,25 +52,23 @@ describe('fetchProviders', () => {
   })
 })
 
-describe('submitProviders', () => {
-  it('posts the providers set and returns the updated list', async () => {
+describe('submitProvider', () => {
+  it('posts a single provider object', async () => {
     const newProvider: ProviderRecord = { id: 'new-01', name: 'New', description: 'x', type: 'VMWARE', ipAddress: '10.0.0.1' }
-    const mock = stubFetch({ providers: [providerA, providerB, newProvider] })
+    const mock = stubFetch({})
 
-    const result = await submitProviders([providerA, providerB, newProvider])
+    await submitProvider(newProvider)
 
     expect(mock).toHaveBeenCalledWith('/api/submit_provider', {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ providers: [providerA, providerB, newProvider] }),
+      body: JSON.stringify(newProvider),
     })
-    expect(result).toHaveLength(3)
-    expect(result[2]).toMatchObject({ id: 'new-01' })
   })
 
   it('throws on an HTTP failure', async () => {
     stubFetch(null, 500)
-    await expect(submitProviders([providerA])).rejects.toThrow('Submit provider request failed with status 500')
+    await expect(submitProvider(providerA)).rejects.toThrow('Submit provider request failed with status 500')
   })
 })
 

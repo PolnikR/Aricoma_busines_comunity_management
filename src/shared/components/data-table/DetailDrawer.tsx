@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
 interface DetailDrawerProps {
@@ -9,18 +9,64 @@ interface DetailDrawerProps {
   subtitle?: ReactNode
   headerExtra?: ReactNode
   children?: ReactNode
+  footer?: ReactNode
+  resizable?: boolean
   ariaLabel?: string
 }
 
+const DEFAULT_WIDTH = 420
+const MIN_WIDTH = 360
+const MAX_WIDTH = 720
+const KEYBOARD_STEP = 16
+
+const clampWidth = (value: number) => Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, value))
+
 // Right-hand slide-over for showing details of a selected row, lifted from the
-// Virtual Machines detail panel. Feature supplies the header info and body.
-export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerExtra, children, ariaLabel = 'Detail' }: DetailDrawerProps) {
+// Virtual Machines detail panel. Feature supplies the header info and body, and
+// optionally a pinned footer. When `resizable` is set the panel can be dragged
+// wider/narrower for the current view only — it resets to the default width
+// whenever it closes.
+export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerExtra, children, footer, resizable = false, ariaLabel = 'Detail' }: DetailDrawerProps) {
+  const [width, setWidth] = useState(DEFAULT_WIDTH)
+
   useEffect(() => {
     if (!open) return
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
     return () => { window.removeEventListener('keydown', onKey) }
   }, [open, onClose])
+
+  // Resize is in-view only: forget any dragged width once the panel closes.
+  useEffect(() => {
+    if (open) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setWidth(DEFAULT_WIDTH)
+  }, [open])
+
+  const handleResizeMouseDown = (event: React.MouseEvent) => {
+    event.preventDefault()
+    const startX = event.clientX
+    const startWidth = width
+    const onMove = (moveEvent: MouseEvent) => {
+      setWidth(clampWidth(startWidth + (startX - moveEvent.clientX)))
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  const handleResizeKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault()
+      setWidth((current) => clampWidth(current + KEYBOARD_STEP))
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault()
+      setWidth((current) => clampWidth(current - KEYBOARD_STEP))
+    }
+  }
 
   return (
     <>
@@ -30,11 +76,26 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
         aria-hidden="true"
       />
       <aside
-        className={`fixed inset-y-0 right-0 z-50 flex w-[min(420px,92vw)] flex-col border-l border-[#d7deea] bg-white shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)] transition-transform duration-200 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed inset-y-0 right-0 z-50 flex flex-col border-l border-[#d7deea] bg-white shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)] transition-transform duration-200 ease-out ${resizable ? '' : 'w-[min(420px,92vw)]'} ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        style={resizable ? { width: `${String(width)}px`, maxWidth: '92vw' } : undefined}
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
       >
+        {resizable ? (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize panel"
+            aria-valuenow={width}
+            aria-valuemin={MIN_WIDTH}
+            aria-valuemax={MAX_WIDTH}
+            tabIndex={0}
+            onMouseDown={handleResizeMouseDown}
+            onKeyDown={handleResizeKeyDown}
+            className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize bg-transparent transition hover:bg-[#0d91d7]/30 focus:bg-[#0d91d7]/40 focus:outline-none"
+          />
+        ) : null}
         <div className="flex items-start justify-between gap-4 border-b border-[#dfe9f3] p-5">
           <div className="min-w-0">
             {eyebrow ? <p className="text-xs font-medium text-gray-400">{eyebrow}</p> : null}
@@ -52,6 +113,7 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
           </button>
         </div>
         <div className="custom-scrollbar flex-1 overflow-y-auto">{children}</div>
+        {footer ? <div className="flex gap-3 border-t border-[#dfe9f3] p-4">{footer}</div> : null}
       </aside>
     </>
   )

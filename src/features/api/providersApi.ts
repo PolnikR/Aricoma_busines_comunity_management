@@ -53,21 +53,18 @@ export async function fetchProviders(): Promise<ProviderRecord[]> {
   return providersResponseSchema.parse(payload).providers
 }
 
-// POST /api/submit_provider with the full { providers: [...] } set;
-// returns the updated set.
-export async function submitProviders(providers: ProviderRecord[]): Promise<ProviderRecord[]> {
+// POST /api/submit_provider with a single provider object. The backend upserts
+// by id (create when new, update when the id already exists).
+export async function submitProvider(provider: ProviderRecord): Promise<void> {
   const response = await fetch(SUBMIT_PROVIDER_URL, {
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ providers }),
+    body: JSON.stringify(provider),
   })
 
   if (!response.ok) {
     throw new Error(`Submit provider request failed with status ${String(response.status)}`)
   }
-
-  const payload: unknown = await response.json()
-  return providersResponseSchema.parse(payload).providers
 }
 
 // DELETE /api/delete_provider?provider_id=<id> -> remaining { providers: [...] }
