@@ -4,6 +4,7 @@ import { Card } from '@/shared/components/card/Card'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
+import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useVirtualMachinesUnified } from '@/features/hooks/useVirtualMachinesUnified'
 import { useProviders } from '@/features/providers-connectors/providers/api/useProviders'
 import { applyFiltersAndPagination } from '../helpers/virtualMachinesApi'
@@ -95,11 +96,14 @@ export function VirtualMachinesPage() {
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
-      <PageHeader
+      <TableToolbar
         eyebrow="Discovery & Inventory"
         title="Virtual machines"
         description="VMware inventory, health and placement overview."
-        actions={<Button size="sm" variant="outline" onClick={refetch}>Refresh inventory</Button>}
+        density={density}
+        onDensityChange={setDensity}
+        isFetching={isFetching}
+        onRefresh={refetch}
       />
 
       <div className="flex flex-1 flex-col gap-4 lg:min-h-0">
@@ -119,22 +123,6 @@ export function VirtualMachinesPage() {
             <div>
               <h2 className="text-sm font-semibold text-[#17233d]">Inventory records</h2>
               <p className="text-xs text-[#71819a]">Browse and inspect discovered VMware resources.</p>
-            </div>
-            <div className="flex items-center gap-3">
-              {isFetching ? <span className="inline-flex items-center gap-2 text-xs text-[#71819a]"><span className="size-2 animate-pulse rounded-full bg-[#0d91d7]" />Updating</span> : null}
-              <div className="inline-flex rounded-lg border border-[#d7deea] bg-[#f1f5fa] p-0.5" role="group" aria-label="Row density">
-                {(['comfortable', 'compact'] as const).map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => { setDensity(mode) }}
-                    aria-pressed={density === mode}
-                    className={`rounded-md px-3 py-1 text-xs font-semibold capitalize transition ${density === mode ? 'bg-white text-[#118ccc] shadow-sm' : 'text-[#71819a] hover:text-[#17233d]'}`}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
           <div className="flex flex-1 flex-col overflow-hidden bg-[#f5f8fc] p-3 lg:min-h-0">
