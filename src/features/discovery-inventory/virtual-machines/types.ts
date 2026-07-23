@@ -1,3 +1,5 @@
+import type { DiscoveredVirtualDisk } from '../model/discoveryTypes'
+
 export interface VirtualMachine {
   id: string
   name: string
@@ -14,6 +16,7 @@ export interface VirtualMachine {
   folder: string
   diskCount: number
   diskCapacityGb: number
+  vdisks: DiscoveredVirtualDisk[]
   snapshotCount: number
   toolsStatus: string
   tags: string[]

@@ -21,6 +21,7 @@ function mapVirtualMachine(vm: DiscoveredVirtualMachine): VirtualMachine {
     folder: vm.folder,
     diskCount: vm.disks.length,
     diskCapacityGb,
+    vdisks: vm.disks,
     snapshotCount: vm.snapshotCount,
     toolsStatus: vm.toolsStatus,
     tags: vm.tags,

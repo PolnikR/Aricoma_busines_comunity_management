@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { VirtualMachine } from '../types'
 import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
 import { useResizablePanel } from '@/shared/hooks/useResizablePanel'
+import { formatStartTime } from '@/shared/utils/dateFormat'
 import { useVdisksByVm } from '../api/useVdisksByVm'
 import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
@@ -28,21 +29,6 @@ function DetailRow({ label, value, secondary }: DetailRowProps) {
       </dd>
     </div>
   )
-}
-
-function formatStartTime(isoTime: string): string {
-  if (!isoTime) return '-'
-  const match = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/.exec(isoTime)
-  const yy = match?.[1]
-  const mm = match?.[2]
-  const dd = match?.[3]
-  const hh = match?.[4]
-  const min = match?.[5]
-  if (!yy || !mm || !dd || !hh || !min) return isoTime
-  const year = `20${yy}`
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  const monthName = monthNames[Number(mm) - 1] ?? 'Jan'
-  return `${monthName} ${String(Number(dd))}, ${year} ${hh}:${min}`
 }
 
 export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: VirtualMachineDetailPanelProps) {
@@ -170,7 +156,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                   <dl className="px-5 py-2">
                     <DetailRow label="Operating system" value={virtualMachine.guestOs} />
                     <DetailRow label="Cluster" value={virtualMachine.cluster} secondary={virtualMachine.host} />
-                    <DetailRow label="Datastore" value={virtualMachine.datastore} secondary={`${String(virtualMachine.diskCount)} disks / ${String(Math.round(virtualMachine.diskCapacityGb))} GB`} />
+                    <DetailRow label="Datastore" value={virtualMachine.datastore} secondary={`${String(virtualMachine.vdisks.length)} disks / ${String(Math.round(virtualMachine.vdisks.reduce((sum, disk) => sum + disk.capacityGb, 0)))} GB`} />
                     <DetailRow label="Folder" value={virtualMachine.folder} />
                   </dl>
                 </>
@@ -178,35 +164,35 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
 
               {selectedTab === 'disks' && (
                 <div className="custom-scrollbar overflow-x-auto" key={`disks-${virtualMachine.id}`}>
-                  {vdisksLoading ? (
-                    <p className="p-4 text-[13px] text-[#93a0b5]">Loading disks...</p>
-                  ) : vdisks ? (
+                  {virtualMachine.vdisks.length > 0 ? (
                     <Table className="min-w-80">
                       <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
                         <TableRow>
-                          <TableCell isHeader className={headerCell}>Volume Name</TableCell>
+                          <TableCell isHeader className={headerCell}>Label</TableCell>
                           <TableCell isHeader className={headerCell}>Capacity</TableCell>
-                          <TableCell isHeader className={headerCell}>Type</TableCell>
-                          <TableCell isHeader className={headerCell}>Copies</TableCell>
-                          <TableCell isHeader className={headerCell}>Pool</TableCell>
+                          <TableCell isHeader className={headerCell}>Datastore</TableCell>
+                          <TableCell isHeader className={headerCell}>File</TableCell>
+                          <TableCell isHeader className={headerCell}>Thin Provisioned</TableCell>
                         </TableRow>
                       </TableHeader>
                       <TableBody className="divide-y divide-[#edf2f7]">
-                        {vdisks.volumes.map((vol) => (
-                          <TableRow key={vol.naaId} className="bg-white hover:bg-[#f3f8fe]">
+                        {virtualMachine.vdisks.map((disk) => (
+                          <TableRow key={disk.id} className="bg-white hover:bg-[#f3f8fe]">
                             <TableCell className={cell}>
-                              <span className="block max-w-45 truncate" title={vol.name}>{vol.name}</span>
+                              <span className="block max-w-45 truncate" title={disk.label}>{disk.label}</span>
                             </TableCell>
-                            <TableCell className={cell}>{vol.capacity}</TableCell>
-                            <TableCell className={cell}>{vol.type}</TableCell>
-                            <TableCell className={num}>{vol.copyCount}</TableCell>
-                            <TableCell className={cell}>{vol.pool}</TableCell>
+                            <TableCell className={num}>{disk.capacityGb} GB</TableCell>
+                            <TableCell className={cell}>{disk.datastore}</TableCell>
+                            <TableCell className={`${cell} flex-1`}>
+                              <span className="block truncate" title={disk.filePath}>{disk.filePath}</span>
+                            </TableCell>
+                            <TableCell className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top whitespace-nowrap">{disk.thinProvisioned ? 'Yes' : 'No'}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   ) : (
-                    <p className="p-4 text-[13px] text-[#93a0b5]">No disk data available</p>
+                    <p className="p-4 text-[13px] text-[#93a0b5]">No disks available</p>
                   )}
                 </div>
               )}
