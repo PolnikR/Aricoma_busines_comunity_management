@@ -172,73 +172,79 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
               )}
 
               {selectedTab === 'disks' && (
-                <div className="p-4">
+                <div className="custom-scrollbar overflow-x-auto">
                   {vdisksLoading ? (
-                    <p className="text-sm text-gray-500">Loading disks...</p>
+                    <p className="p-4 text-[13px] text-[#93a0b5]">Loading disks...</p>
                   ) : vdisks ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-[#dfe9f3]">
-                            <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-gray-500">Volume Name</th>
-                            <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-gray-500">Capacity</th>
-                            <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-gray-500">Type</th>
-                            <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-gray-500">Copies</th>
-                            <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-gray-500">Pool</th>
+                    <table className="w-full min-w-80">
+                      <thead className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
+                        <tr>
+                          <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Volume Name</th>
+                          <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Capacity</th>
+                          <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Type</th>
+                          <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Copies</th>
+                          <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Pool</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#edf2f7]">
+                        {vdisks.volumes.map((vol) => (
+                          <tr key={vol.naaId} className="bg-white hover:bg-[#f3f8fe]">
+                            <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top">
+                              <span className="block max-w-45 truncate" title={vol.name}>{vol.name}</span>
+                            </td>
+                            <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top">{vol.capacity}</td>
+                            <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top">{vol.type}</td>
+                            <td className="px-3 py-2.5 text-[13px] text-[#3b4763] text-right align-top tabular-nums">{vol.copyCount}</td>
+                            <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top">{vol.pool}</td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {vdisks.volumes.map((vol) => (
-                            <tr key={vol.naaId} className="border-b border-[#edf2f7] hover:bg-[#f9fbfd]">
-                              <td className="px-3 py-2 max-w-xs truncate text-gray-700">{vol.name}</td>
-                              <td className="px-3 py-2 text-gray-700">{vol.capacity}</td>
-                              <td className="px-3 py-2 text-gray-700">{vol.type}</td>
-                              <td className="px-3 py-2 text-gray-700">{vol.copyCount}</td>
-                              <td className="px-3 py-2 text-gray-700">{vol.pool}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                        ))}
+                      </tbody>
+                    </table>
                   ) : (
-                    <p className="text-sm text-gray-500">No disk data available</p>
+                    <p className="p-4 text-[13px] text-[#93a0b5]">No disk data available</p>
                   )}
                 </div>
               )}
 
               {selectedTab === 'snapshots' && (
-                <div className="p-4">
+                <div className="flex flex-col">
                   {vdisksLoading ? (
-                    <p className="text-sm text-gray-500">Loading snapshots...</p>
+                    <p className="p-4 text-[13px] text-[#93a0b5]">Loading snapshots...</p>
                   ) : vdisks ? (
                     <>
-                      <div className="mb-4 flex gap-2">
-                        <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
-                          {String(vdisks.volumes.reduce((sum: number, v) => sum + v.snapshots.sourceMappings.length, 0))} source mappings
-                        </span>
-                        <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
-                          {String(vdisks.volumes.reduce((sum: number, v) => sum + v.snapshots.targetMappings.length, 0))} target mappings
-                        </span>
+                      <div className="border-b border-[#edf2f7] px-4 py-3">
+                        <div className="flex gap-2">
+                          <span className="inline-flex items-center rounded-full bg-[#e8f4fd] px-3 py-1 text-xs font-medium text-[#0d91d7]">
+                            {String(vdisks.volumes.reduce((sum: number, v) => sum + v.snapshots.sourceMappings.length, 0))} source mappings
+                          </span>
+                          <span className="inline-flex items-center rounded-full bg-[#e8f4fd] px-3 py-1 text-xs font-medium text-[#0d91d7]">
+                            {String(vdisks.volumes.reduce((sum: number, v) => sum + v.snapshots.targetMappings.length, 0))} target mappings
+                          </span>
+                        </div>
                       </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b border-[#dfe9f3]">
-                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-gray-500">Source</th>
-                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-gray-500">Target</th>
-                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-gray-500">Status</th>
-                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-gray-500">Progress</th>
-                              <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-gray-500">Created</th>
+                      <div className="custom-scrollbar overflow-x-auto">
+                        <table className="w-full min-w-100">
+                          <thead className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
+                            <tr>
+                              <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Source</th>
+                              <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Target</th>
+                              <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Status</th>
+                              <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Progress</th>
+                              <th className="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]">Created</th>
                             </tr>
                           </thead>
-                          <tbody>
+                          <tbody className="divide-y divide-[#edf2f7]">
                             {vdisks.volumes.flatMap((vol) => vol.snapshots.sourceMappings.map((mapping) => (
-                              <tr key={mapping.id} className="border-b border-[#edf2f7] hover:bg-[#f9fbfd]">
-                                <td className="px-3 py-2 max-w-xs truncate text-gray-700">{mapping.sourceVdiskName}</td>
-                                <td className="px-3 py-2 max-w-xs truncate text-gray-700">{mapping.targetVdiskName}</td>
-                                <td className="px-3 py-2 text-gray-700">{mapping.status}</td>
-                                <td className="px-3 py-2 text-gray-700">{String(Number(mapping.cleanProgress))}%</td>
-                                <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{formatStartTime(mapping.startTime)}</td>
+                              <tr key={mapping.id} className="bg-white hover:bg-[#f3f8fe]">
+                                <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top">
+                                  <span className="block max-w-45 truncate" title={mapping.sourceVdiskName}>{mapping.sourceVdiskName}</span>
+                                </td>
+                                <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top">
+                                  <span className="block max-w-45 truncate" title={mapping.targetVdiskName}>{mapping.targetVdiskName}</span>
+                                </td>
+                                <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top">{mapping.status}</td>
+                                <td className="px-3 py-2.5 text-[13px] text-[#3b4763] text-right align-top tabular-nums">{String(Number(mapping.cleanProgress))}%</td>
+                                <td className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top whitespace-nowrap">{formatStartTime(mapping.startTime)}</td>
                               </tr>
                             )))}
                           </tbody>
@@ -246,7 +252,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                       </div>
                     </>
                   ) : (
-                    <p className="text-sm text-gray-500">No snapshot data available</p>
+                    <p className="p-4 text-[13px] text-[#93a0b5]">No snapshot data available</p>
                   )}
                 </div>
               )}

@@ -99,6 +99,15 @@ export function ProviderCreateForm({ data, errors, isSubmitting, idDisabled = fa
         />
         {errors.ipAddress ? <p className="mt-1 text-xs text-red-600">{errors.ipAddress}</p> : null}
       </Field>
+
+      <Field label="Credentials" htmlFor="create-credentials">
+        <Select
+          id="create-credentials"
+          disabled={true}
+        >
+          <option value="">Select credentials</option>
+        </Select>
+      </Field>
     </div>
   )
 }
