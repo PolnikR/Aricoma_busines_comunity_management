@@ -7,7 +7,60 @@ function getCurrentTimestamp(): string {
 }
 
 function initializeSeededData() {
-  const seededApps: RecoveryApplication[] = []
+  const seededApps: RecoveryApplication[] = [
+    {
+      id: 'app-001',
+      data: {
+        application: {
+          name: 'Production ERP System',
+          description: 'Critical ERP application for order processing',
+          environment: 'prod',
+          platform: 'VMware vCenter ESXi',
+          source_connection: 'vcenter_default',
+          target_connection: 'vcenter_default_destination',
+          tiers: {
+            'tier-1': {
+              name: 'Database Tier',
+              order: 1,
+              description: 'Primary database servers',
+              vms: [{ name: 'vm-001' }],
+            },
+            'tier-2': {
+              name: 'Application Tier',
+              order: 2,
+              description: 'Application servers',
+              vms: [{ name: 'vm-002' }, { name: 'vm-003' }],
+            },
+          },
+        },
+      },
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'app-002',
+      data: {
+        application: {
+          name: 'Data Analytics Platform',
+          description: 'Business intelligence and reporting',
+          environment: 'staging',
+          platform: 'VMware vCenter ESXi',
+          source_connection: 'vcenter_default',
+          target_connection: 'vcenter_default_destination',
+          tiers: {
+            'tier-1': {
+              name: 'Analytics Cluster',
+              order: 1,
+              description: 'Analytics processing servers',
+              vms: [{ name: 'vm-004' }, { name: 'vm-005' }],
+            },
+          },
+        },
+      },
+      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ]
 
   seededApps.forEach(app => {
     apps.set(app.id, app)

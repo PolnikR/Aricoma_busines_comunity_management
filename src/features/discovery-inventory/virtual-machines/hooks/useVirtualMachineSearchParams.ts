@@ -29,11 +29,11 @@ export function useVirtualMachineSearchParams() {
   const query = useMemo<VirtualMachinesQuery>(() => ({
     page: parsePositiveInteger(searchParams.get('page'), 1),
     pageSize: parsePageSize(searchParams.get('pageSize')),
-    search: searchParams.get('search') ?? '',
-    powerState: searchParams.get('powerState') ?? '',
-    connectionState: searchParams.get('connectionState') ?? '',
-    cluster: searchParams.get('cluster') ?? '',
-    providerId: searchParams.get('providerId') ?? '',
+    search: searchParams.get('search') || '',
+    powerState: searchParams.get('powerState') || '',
+    connectionState: searchParams.get('connectionState') || '',
+    cluster: searchParams.get('cluster') || '',
+    providerId: searchParams.get('providerId') || null,
     tags: parseTags(searchParams.get('tags')),
     untagged: parseBoolean(searchParams.get('untagged')),
   }), [searchParams])

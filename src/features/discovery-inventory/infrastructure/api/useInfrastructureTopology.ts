@@ -10,6 +10,7 @@ export function useInfrastructureTopology() {
   return useQuery({
     queryKey: infrastructureTopologyQueryKey,
     queryFn: fetchInfrastructureTopology,
+    staleTime: 15 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1,
   })

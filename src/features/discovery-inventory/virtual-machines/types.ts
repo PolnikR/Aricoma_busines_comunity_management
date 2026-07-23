@@ -30,7 +30,7 @@ export interface VirtualMachineFilters {
   powerState: string
   connectionState: string
   cluster: string
-  providerId: string
+  providerId: string | null
   tags: string[]
   untagged: boolean
 }
