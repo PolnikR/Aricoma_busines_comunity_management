@@ -4,7 +4,7 @@ import { DetailDrawer } from './DetailDrawer'
 
 afterEach(cleanup)
 
-describe('DetailDrawer', () => {
+  describe('DetailDrawer', () => {
   it('renders the title and body content', () => {
     render(<DetailDrawer open title="My Item" onClose={vi.fn()}><p>Body content</p></DetailDrawer>)
     expect(screen.getByText('My Item')).toBeInTheDocument()

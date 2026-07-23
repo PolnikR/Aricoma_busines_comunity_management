@@ -27,7 +27,7 @@ const providers: ProviderRecord[] = [
 
 afterEach(cleanup)
 
-describe('VirtualMachinesToolbar provider filter', () => {
+  describe('VirtualMachinesToolbar provider filter', () => {
   it('lists all providers in the dropdown', () => {
     render(<VirtualMachinesToolbar filters={filters} options={options} providers={providers} onFiltersChange={vi.fn()} onReset={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: /Filters/i }))

@@ -45,8 +45,6 @@ const vm = {
   tags: ['prod'],
 } as unknown as VirtualMachine
 
-afterEach(cleanup)
-
 function renderWithQueryClient(element: React.ReactElement) {
   const queryClient = new QueryClient()
   return render(<QueryClientProvider client={queryClient}>{element}</QueryClientProvider>)

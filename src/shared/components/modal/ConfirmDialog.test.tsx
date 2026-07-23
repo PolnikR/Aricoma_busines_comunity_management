@@ -4,7 +4,7 @@ import { ConfirmDialog } from './ConfirmDialog'
 
 afterEach(cleanup)
 
-describe('ConfirmDialog', () => {
+  describe('ConfirmDialog', () => {
   it('renders title, message and labels when open', () => {
     render(
       <ConfirmDialog

@@ -45,9 +45,9 @@ const vm: VirtualMachine = {
   tags: ['prod', 'linux'],
 }
 
-afterEach(cleanup)
-
 describe('VirtualMachinesTable', () => {
+  afterEach(cleanup)
+
   it('renders the nine column headers including Tags and Provider', () => {
     render(<VirtualMachinesTable virtualMachines={[vm]} selectedId={null} density="comfortable" onSelect={vi.fn()} />)
     for (const header of ['Virtual machine', 'Operating system', 'Placement', 'Provider', 'Tags', 'Compute', 'Connection', 'Power', 'Snapshots']) {

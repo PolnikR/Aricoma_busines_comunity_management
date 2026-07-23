@@ -4,7 +4,7 @@ import { Modal } from './Modal'
 
 afterEach(cleanup)
 
-describe('Modal', () => {
+  describe('Modal', () => {
   it('renders title, children and footer when open', () => {
     render(
       <Modal open title="My Modal" onClose={vi.fn()} footer={<button type="button">Cancel</button>}>
