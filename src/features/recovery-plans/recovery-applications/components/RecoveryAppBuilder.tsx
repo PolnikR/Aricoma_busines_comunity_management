@@ -73,6 +73,51 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
     })
   }, [])
 
+  const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: { name: string; description: string }) => {
+    setFormState(prev => {
+      const newTiers = new Map(prev.tiers)
+      const oldTier = newTiers.get(tierId)
+
+      if (!oldTier) return prev
+
+      // If ID changed, delete old and create new
+      if (newTierId !== tierId) {
+        newTiers.delete(tierId)
+      }
+
+      newTiers.set(newTierId, {
+        ...oldTier,
+        name: updates.name,
+        description: updates.description,
+      })
+
+      return { ...prev, tiers: newTiers }
+    })
+  }, [])
+
+  const handleTierAdd = useCallback((tierId: string, tier: RecoveryTier) => {
+    setFormState(prev => {
+      const newTiers = new Map(prev.tiers)
+      newTiers.set(tierId, tier)
+      return { ...prev, tiers: newTiers }
+    })
+  }, [])
+
+  const handleTierDelete = useCallback((tierId: string) => {
+    setFormState(prev => {
+      const newTiers = new Map(prev.tiers)
+      newTiers.delete(tierId)
+      return { ...prev, tiers: newTiers }
+    })
+  }, [])
+
+  const handleTierReorder = useCallback((reorderedTiers: Record<string, RecoveryTier>) => {
+    setFormState(prev => ({
+      ...prev,
+      tiers: new Map(Object.entries(reorderedTiers)),
+    }))
+  }, [])
+
   const handleSave = () => {
     if (!formState.name.trim()) {
       alert('Please enter an application name')
@@ -121,6 +166,10 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
               tiers={Object.fromEntries(formState.tiers)}
               onVMAdded={handleVMAdded}
               onVMRemoved={handleVMRemoved}
+              onTierEdit={handleTierEdit}
+              onTierAdd={handleTierAdd}
+              onTierDelete={handleTierDelete}
+              onTierReorder={handleTierReorder}
             />
           </div>
         </div>
