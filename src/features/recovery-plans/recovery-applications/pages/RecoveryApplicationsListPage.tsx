@@ -91,7 +91,7 @@ export function RecoveryApplicationsListPage() {
         }
       />
 
-      <div className="flex-1 p-6 lg:min-h-0 overflow-auto">
+      <div className="flex-1 flex flex-col gap-4 lg:min-h-0 overflow-hidden p-3">
         {!applications || applications.length === 0 ? (
           <EmptyState
             title="No recovery applications defined yet"
@@ -103,7 +103,7 @@ export function RecoveryApplicationsListPage() {
             }
           />
         ) : (
-          <div className="bg-white rounded-lg border border-[#e3edf6] overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0 bg-white rounded-lg border border-[#dbe7f2] shadow-sm overflow-hidden">
             <RecoveryApplicationsTable
               applications={applications}
               onEdit={handleEdit}
