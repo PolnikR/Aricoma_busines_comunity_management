@@ -5,6 +5,8 @@ import {
   DataTable,
   DataTableToolbar,
   DataTablePagination,
+  DetailDrawer,
+  DetailRow,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
@@ -43,6 +45,7 @@ export function ProvidersCatalogueTable() {
   const { data: providers, isLoading, error } = useProviders()
   const [typeFilter, setTypeFilter] = useState('')
   const [pendingType, setPendingType] = useState('')
+  const [selected, setSelected] = useState<ProviderRecord | null>(null)
 
   const rows = useMemo(() => providers ?? [], [providers])
   const types = useMemo(
@@ -78,9 +81,6 @@ export function ProvidersCatalogueTable() {
         onSearchChange={table.setSearch}
         searchPlaceholder="Search by provider name"
         searchLabel="Search providers by name"
-        //segments={segments}
-        segmentValue={typeFilter}
-        onSegmentChange={changeType}
         density={table.density}
         onDensityChange={table.setDensity}
         filterTitle="Filter providers"
@@ -104,6 +104,8 @@ export function ProvidersCatalogueTable() {
         density={table.density}
         minWidthClassName="min-w-215"
         ariaLabel="Providers table"
+        onRowClick={(provider) => { setSelected(provider) }}
+        selectedRowKey={selected?.id ?? null}
         emptyContent={rows.length > 0 ? 'No providers match your search.' : 'No providers were returned by the backend.'}
       />
 
@@ -114,6 +116,25 @@ export function ProvidersCatalogueTable() {
         onPageChange={table.setPage}
         onPageSizeChange={table.setPageSize}
       />
+
+      <DetailDrawer
+        open={selected !== null}
+        onClose={() => { setSelected(null) }}
+        eyebrow="Selected provider"
+        title={selected?.name ?? ''}
+        subtitle={<span className="font-mono">{selected?.id}</span>}
+        headerExtra={selected ? <Badge color="info" size="sm">{selected.type || 'UNKNOWN'}</Badge> : null}
+        ariaLabel="Provider detail"
+      >
+        {selected ? (
+          <dl className="px-5 py-2">
+            <DetailRow label="Provider ID" value={<span className="font-mono">{selected.id}</span>} />
+            <DetailRow label="Type" value={selected.type || '-'} />
+            <DetailRow label="IP address" value={<span className="font-mono">{selected.ipAddress || '-'}</span>} />
+            <DetailRow label="Description" value={selected.description || '-'} />
+          </dl>
+        ) : null}
+      </DetailDrawer>
     </div>
   )
 }
