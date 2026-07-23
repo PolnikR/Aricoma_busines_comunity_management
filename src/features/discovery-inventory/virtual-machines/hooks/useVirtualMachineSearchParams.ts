@@ -26,17 +26,21 @@ function parseBoolean(value: string | null): boolean {
 
 export function useVirtualMachineSearchParams() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const query = useMemo<VirtualMachinesQuery>(() => ({
-    page: parsePositiveInteger(searchParams.get('page'), 1),
-    pageSize: parsePageSize(searchParams.get('pageSize')),
-    search: searchParams.get('search') || '',
-    powerState: searchParams.get('powerState') || '',
-    connectionState: searchParams.get('connectionState') || '',
-    cluster: searchParams.get('cluster') || '',
-    providerId: searchParams.get('providerId') || null,
-    tags: parseTags(searchParams.get('tags')),
-    untagged: parseBoolean(searchParams.get('untagged')),
-  }), [searchParams])
+  const query = useMemo<VirtualMachinesQuery>(() => {
+    const providerIdValue = searchParams.get('providerId')
+    return {
+      page: parsePositiveInteger(searchParams.get('page'), 1),
+      pageSize: parsePageSize(searchParams.get('pageSize')),
+      search: searchParams.get('search') ?? '',
+      powerState: searchParams.get('powerState') ?? '',
+      connectionState: searchParams.get('connectionState') ?? '',
+      cluster: searchParams.get('cluster') ?? '',
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+      providerId: providerIdValue ? providerIdValue : null,
+      tags: parseTags(searchParams.get('tags')),
+      untagged: parseBoolean(searchParams.get('untagged')),
+    }
+  }, [searchParams])
 
   const updateQuery = (changes: Partial<VirtualMachinesQuery>, resetPage = false) => {
     const next = new URLSearchParams(searchParams)
