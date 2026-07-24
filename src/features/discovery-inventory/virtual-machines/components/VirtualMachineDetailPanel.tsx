@@ -175,7 +175,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
               )}
 
               {selectedTab === 'disks' && (
-                <div key={`disks-${virtualMachine.id}`} className="custom-scrollbar overflow-x-auto">
+                <div key={`disks-${virtualMachine.id}`} className="custom-scrollbar overflow-x-auto cursor-grab active:cursor-grabbing">
                   {virtualMachine.vdisks.length > 0 ? (
                     <Table className="min-w-full">
                       <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
@@ -196,7 +196,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                             <TableCell className={num}>{disk.capacityGb} GB</TableCell>
                             <TableCell className={cell}>{disk.datastore}</TableCell>
                             <TableCell className={`${cell} max-w-64`}>
-                              <span className="block truncate" title={disk.filePath}>
+                              <span className="block truncate cursor-help" title={disk.filePath}>
                                 {truncateFilePath(disk.filePath)}
                               </span>
                             </TableCell>
@@ -238,7 +238,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                           </div>
                         )
                       })()}
-                      <div className="custom-scrollbar overflow-x-auto">
+                      <div className="custom-scrollbar overflow-x-auto cursor-grab active:cursor-grabbing">
                         <Table className="min-w-full">
                           <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
                             <TableRow>
