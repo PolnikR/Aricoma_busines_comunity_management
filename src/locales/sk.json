@@ -255,7 +255,7 @@
   "details.thinProvNo": "Nie",
   "details.noDiskAvailable": "Nie sú k dispozícii žiadne disky",
   "details.loadingSnapshots": "Načítavam snímky...",
-  "details.sourceMappings": "mapování zdrojov",
+  "details.sourceMappings": "mapovanie zdrojov",
   "details.targetMappings": "mapovanie cieľov",
   "details.snapshotSource": "Zdroj",
   "details.snapshotTarget": "Cieľ",

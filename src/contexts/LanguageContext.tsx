@@ -49,7 +49,17 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const [translations, setTranslations] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    void loadTranslations(language).then(setTranslations)
+    let cancelled = false
+
+    void loadTranslations(language).then((translations) => {
+      if (!cancelled) {
+        setTranslations(translations)
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
   }, [language])
 
   const setLanguage = (lang: Language) => {
