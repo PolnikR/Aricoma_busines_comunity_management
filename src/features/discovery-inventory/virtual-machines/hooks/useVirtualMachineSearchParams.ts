@@ -35,8 +35,7 @@ export function useVirtualMachineSearchParams() {
       powerState: searchParams.get('powerState') ?? '',
       connectionState: searchParams.get('connectionState') ?? '',
       cluster: searchParams.get('cluster') ?? '',
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-      providerId: providerIdValue ? providerIdValue : null,
+      providerId: providerIdValue && providerIdValue !== 'null' ? providerIdValue : null,
       tags: parseTags(searchParams.get('tags')),
       untagged: parseBoolean(searchParams.get('untagged')),
     }
