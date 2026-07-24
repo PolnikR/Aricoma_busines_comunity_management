@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './app/App'
+import { LanguageProvider } from '@/contexts/LanguageContext'
 import './index.css'
 
 async function startApp() {
@@ -20,7 +21,9 @@ async function startApp() {
 
   createRoot(rootElement).render(
     <StrictMode>
-      <App />
+      <LanguageProvider>
+        <App />
+      </LanguageProvider>
     </StrictMode>,
   )
 }
