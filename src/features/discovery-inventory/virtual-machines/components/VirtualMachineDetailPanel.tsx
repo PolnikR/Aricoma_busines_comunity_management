@@ -175,7 +175,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
               )}
 
               {selectedTab === 'disks' && (
-                <div key={`disks-${virtualMachine.id}`} className="overflow-x-auto">
+                <div key={`disks-${virtualMachine.id}`} className="custom-scrollbar overflow-x-auto">
                   {virtualMachine.vdisks.length > 0 ? (
                     <Table className="min-w-full">
                       <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
@@ -241,7 +241,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                           </div>
                         )
                       })()}
-                      <div className="overflow-x-auto">
+                      <div className="custom-scrollbar overflow-x-auto">
                         <Table className="min-w-full">
                           <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
                             <TableRow>
