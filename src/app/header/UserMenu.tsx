@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { useLanguageContext } from '@/contexts/LanguageContext'
 
 interface UserMenuProps {
   userName?: string
@@ -13,12 +14,9 @@ export function UserMenu({
   userInitials = 'AB',
 }: UserMenuProps) {
   const { t, language } = useTranslation()
+  const { setLanguage } = useLanguageContext()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-
-  // Language switching will be wired in Task 6
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  const handleLanguageSelect = () => {}
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -61,21 +59,30 @@ export function UserMenu({
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={handleLanguageSelect}
+                onClick={() => {
+                  setLanguage('en')
+                  setIsOpen(false)
+                }}
                 className={`rounded px-2 py-1 text-xs ${language === 'en' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'}`}
               >
                 {t('language.en')}
               </button>
               <button
                 type="button"
-                onClick={handleLanguageSelect}
+                onClick={() => {
+                  setLanguage('sk')
+                  setIsOpen(false)
+                }}
                 className={`rounded px-2 py-1 text-xs ${language === 'sk' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'}`}
               >
                 {t('language.sk')}
               </button>
               <button
                 type="button"
-                onClick={handleLanguageSelect}
+                onClick={() => {
+                  setLanguage('cs')
+                  setIsOpen(false)
+                }}
                 className={`rounded px-2 py-1 text-xs ${language === 'cs' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'}`}
               >
                 {t('language.cs')}

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { MenuIcon, SearchIcon } from '@/shared/icons/Icons'
+import { UserMenu } from '@/app/header/UserMenu'
 import { useSidebar } from './useSidebar'
 
 export function AppHeader() {
@@ -65,11 +66,7 @@ export function AppHeader() {
 
         <div className="flex shrink-0 items-center gap-2">
           <div className="ml-1 flex items-center gap-2.5">
-            <span className="flex size-9 items-center justify-center rounded-full bg-[#17233d] text-xs font-semibold text-white" aria-hidden="true">AB</span>
-            <div className="hidden text-left lg:block">
-              <p className="text-sm font-medium text-[#33425d]">ABCO operator</p>
-              <p className="text-xs text-[#8492a8]">Administrator</p>
-            </div>
+            <UserMenu />
           </div>
         </div>
       </div>
