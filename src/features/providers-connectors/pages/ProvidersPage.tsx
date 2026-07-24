@@ -18,7 +18,7 @@ export function ProvidersPage() {
         isFetching={isFetching}
         onRefresh={() => { void refetch() }}
         actions={
-          <Button variant="outline" onClick={() => { setIsCreateModalOpen(true) }}>
+          <Button size="sm" variant="outline" onClick={() => { setIsCreateModalOpen(true) }}>
             Add Provider
           </Button>
         }

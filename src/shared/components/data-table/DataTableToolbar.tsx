@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { Input } from '@/shared/components/form/FormControls'
 import { FilterIcon, SearchIcon } from '@/shared/icons/Icons'
+import { RowDensityToggle } from '../table/RowDensityToggle'
 import type { TableDensity } from './DataTable'
 
 export interface Segment {
@@ -26,8 +27,6 @@ interface DataTableToolbarProps {
   density?: TableDensity
   onDensityChange?: (density: TableDensity) => void
 }
-
-const DENSITIES: TableDensity[] = ['comfortable', 'compact']
 
 export function DataTableToolbar({
   searchValue,
@@ -82,19 +81,7 @@ export function DataTableToolbar({
           ) : null}
 
           {density && onDensityChange ? (
-            <div className="inline-flex rounded-lg border border-[#d7deea] bg-[#f1f5fa] p-0.5" role="group" aria-label="Row density">
-              {DENSITIES.map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => { onDensityChange(mode) }}
-                  aria-pressed={density === mode}
-                  className={`rounded-md px-3 py-1 text-xs font-semibold capitalize transition ${density === mode ? 'bg-white text-[#118ccc] shadow-sm' : 'text-[#71819a] hover:text-[#17233d]'}`}
-                >
-                  {mode}
-                </button>
-              ))}
-            </div>
+            <RowDensityToggle density={density} onDensityChange={onDensityChange} />
           ) : null}
 
           {filterPanel ? (

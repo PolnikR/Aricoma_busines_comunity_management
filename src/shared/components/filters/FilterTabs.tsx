@@ -24,7 +24,7 @@ export function FilterTabs({ tabs, value, onChange, ariaLabel = 'Filter tabs' }:
               ? 'bg-white text-[#087fca] shadow-sm'
               : 'text-[#71819a] hover:text-[#33425d]'
           }`}
-          onClick={() => onChange(tab.value)}
+          onClick={() => { onChange(tab.value) }}
         >
           {tab.label}
         </button>

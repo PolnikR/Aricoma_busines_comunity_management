@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/button/Button'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
-import { RowDensityToggle, type TableDensity } from '@/shared/components/table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
@@ -44,7 +43,7 @@ export function RecoveryApplicationsListPage() {
           title="Recovery Applications"
           description="Manage disaster recovery application definitions and test recovery workflows."
           actions={
-            <Button variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
+            <Button size="sm" variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
               Create Application
             </Button>
           }
@@ -88,7 +87,7 @@ export function RecoveryApplicationsListPage() {
         isFetching={isFetching}
         onRefresh={() => { void refetch() }}
         actions={
-          <Button variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
+          <Button size="sm" variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
             Create Application
           </Button>
         }
