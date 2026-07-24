@@ -101,6 +101,9 @@
   "pages.infrastructure.empty.description": "Odpověď zjišťování neobsahuje záznamy infrastruktury.",
   "pages.infrastructure.empty.refreshButton": "Obnovit inventář",
   "pages.infrastructure.empty.refreshing": "Obnovuji",
+  "pages.infrastructure.empty.noMatching": "Žádná infrastruktura se shoduje",
+  "pages.infrastructure.empty.adjustFilters": "Upravte hledání nebo filtry topologie.",
+  "pages.infrastructure.title": "Topologie infrastruktury",
 
   "pages.providers.title": "Poskytovatelé",
   "pages.providers.description": "Zaregistrovaní poskytovatelé zjištění z backendu.",

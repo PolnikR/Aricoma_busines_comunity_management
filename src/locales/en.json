@@ -90,7 +90,7 @@
   "pages.virtualMachines.detail.yes": "Yes",
   "pages.virtualMachines.detail.no": "No",
 
-  "pages.infrastructure.title": "Infrastructure",
+  "pages.infrastructure.title": "Infrastructure Topology",
   "pages.infrastructure.description": "Explore discovered cluster, host, virtual machine, and datastore relationships.",
   "pages.infrastructure.eyebrow": "Discovery & Inventory",
   "pages.infrastructure.error.title": "Infrastructure topology could not be loaded",
@@ -101,6 +101,8 @@
   "pages.infrastructure.empty.description": "The discovery response does not contain infrastructure records.",
   "pages.infrastructure.empty.refreshButton": "Refresh inventory",
   "pages.infrastructure.empty.refreshing": "Refreshing",
+  "pages.infrastructure.empty.noMatching": "No matching infrastructure",
+  "pages.infrastructure.empty.adjustFilters": "Adjust search or topology filters.",
 
   "pages.providers.title": "Providers",
   "pages.providers.description": "Registered providers discovered from the backend.",

@@ -101,6 +101,9 @@
   "pages.infrastructure.empty.description": "Odpoveď objavovania neobsahuje záznamy infraštruktúry.",
   "pages.infrastructure.empty.refreshButton": "Obnoviť inventár",
   "pages.infrastructure.empty.refreshing": "Obnovujem",
+  "pages.infrastructure.empty.noMatching": "Žiadna zodpovedajúca infraštruktúra",
+  "pages.infrastructure.empty.adjustFilters": "Upravte vyhľadávanie alebo filtre topológie.",
+  "pages.infrastructure.title": "Topológia infraštruktúry",
 
   "pages.providers.title": "Poskytovatelia",
   "pages.providers.description": "Registrovaní poskytovatelia objavení z backendov.",
