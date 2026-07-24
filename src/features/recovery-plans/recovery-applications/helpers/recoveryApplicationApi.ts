@@ -9,11 +9,23 @@ export interface SubmitDagResponse {
 }
 
 export async function fetchRecoveryApplications(): Promise<RecoveryApplication[]> {
-  const response = await fetch(RECOVERY_APPS_ENDPOINT)
-  if (!response.ok) {
-    throw new Error(`Failed to fetch recovery applications: ${response.statusText}`)
+  // Read from mock data in localStorage
+  const mockData = localStorage.getItem('mockRecoveryApplications')
+  if (mockData) {
+    return JSON.parse(mockData) as RecoveryApplication[]
   }
-  return response.json() as Promise<RecoveryApplication[]>
+
+  // Fallback: try API if no mock data
+  try {
+    const response = await fetch(RECOVERY_APPS_ENDPOINT)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch recovery applications: ${response.statusText}`)
+    }
+    return (await response.json()) as RecoveryApplication[]
+  } catch {
+    // If API fails too, return empty array
+    return []
+  }
 }
 
 export async function fetchRecoveryApplication(id: string): Promise<RecoveryApplication> {
@@ -21,7 +33,7 @@ export async function fetchRecoveryApplication(id: string): Promise<RecoveryAppl
   if (!response.ok) {
     throw new Error(`Failed to fetch recovery application: ${response.statusText}`)
   }
-  return response.json() as Promise<RecoveryApplication>
+  return (await response.json()) as RecoveryApplication
 }
 
 // Submits the application JSON to the Airflow recovery-orchestration DAG.
