@@ -43,8 +43,8 @@ function DetailRow({ label, value, secondary }: DetailRowProps) {
 }
 
 export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: VirtualMachineDetailPanelProps) {
-  const { width, handleProps } = useResizablePanel({ open })
   const [selectedTab, setSelectedTab] = useState<'overview' | 'disks' | 'snapshots'>('overview')
+  const { width, handleProps } = useResizablePanel({ open, defaultWidth: 700 })
   const { data: vdisks, isLoading: vdisksLoading } = useVdisksByVm(virtualMachine?.name ?? '', undefined)
 
   const headerCell = 'whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]'
