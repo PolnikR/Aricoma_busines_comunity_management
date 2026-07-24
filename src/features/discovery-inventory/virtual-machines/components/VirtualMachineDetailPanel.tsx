@@ -195,18 +195,10 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                             </TableCell>
                             <TableCell className={num}>{disk.capacityGb} GB</TableCell>
                             <TableCell className={cell}>{disk.datastore}</TableCell>
-                            <TableCell className={`${cell} relative group max-w-64`}>
-                              <span className="block truncate cursor-help" role="button" tabIndex={0} aria-describedby={`tooltip-${disk.id}`}>
+                            <TableCell className={`${cell} max-w-64`}>
+                              <span className="block truncate cursor-help" title={disk.filePath}>
                                 {truncateFilePath(disk.filePath)}
                               </span>
-                              <div
-                                id={`tooltip-${disk.id}`}
-                                role="tooltip"
-                                className="absolute right-0 top-full mt-1 hidden group-hover:block group-focus-within:block z-50 w-max max-w-sm bg-[#17233d] text-white text-xs p-2 rounded whitespace-normal break-words pointer-events-none shadow-lg transition-opacity duration-150"
-                                aria-hidden="false"
-                              >
-                                {disk.filePath}
-                              </div>
                             </TableCell>
                             <TableCell className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top whitespace-nowrap text-right">{disk.thinProvisioned ? 'Yes' : 'No'}</TableCell>
                           </TableRow>
