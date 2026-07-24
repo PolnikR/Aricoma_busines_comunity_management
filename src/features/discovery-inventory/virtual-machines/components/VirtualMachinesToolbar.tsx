@@ -89,14 +89,14 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], p
             ) : (
               <div className="space-y-4 px-6 py-4">
                 <Field label="Connection" htmlFor="modal-connection-filter">
-                  <Select id="modal-connection-filter" value={tempFilters.connectionState} onChange={updateTempFilter('connectionState')}>
+                  <Select id="modal-connection-filter" value={tempFilters.connectionState} onChange={updateTempFilter('connectionState')} disabled>
                     <option value="">All connections</option>
                     {options.connectionStates.map((value) => <option key={value} value={value}>{value}</option>)}
                   </Select>
                 </Field>
 
                 <Field label="Cluster" htmlFor="modal-cluster-filter">
-                  <Select id="modal-cluster-filter" value={tempFilters.cluster} onChange={updateTempFilter('cluster')}>
+                  <Select id="modal-cluster-filter" value={tempFilters.cluster} onChange={updateTempFilter('cluster')} disabled>
                     <option value="">All clusters</option>
                     {options.clusters.map((value) => <option key={value} value={value}>{value}</option>)}
                   </Select>
