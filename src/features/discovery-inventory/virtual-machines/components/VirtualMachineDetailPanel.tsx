@@ -175,9 +175,9 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
               )}
 
               {selectedTab === 'disks' && (
-                <div key={`disks-${virtualMachine.id}`}>
+                <div key={`disks-${virtualMachine.id}`} className="overflow-x-auto">
                   {virtualMachine.vdisks.length > 0 ? (
-                    <Table className="w-full">
+                    <Table className="min-w-full">
                       <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
                         <TableRow>
                           <TableCell isHeader className={headerCell}>Label</TableCell>
