@@ -133,7 +133,7 @@ export function AppSidebar() {
           <img src="/aricoma-logo.png" alt="Aricoma" className="size-9 shrink-0 rounded-lg" />
           <span>
             <span className="block truncate text-[13px] font-semibold text-[#17233d]">Aricoma</span>
-            <span className="block truncate text-[10px] text-[#7c8aa0]">Business continuity</span>
+            <span className="block truncate text-[10px] text-[#7c8aa0]">Business continuity management</span>
           </span>
         </NavLink>
       </div>
