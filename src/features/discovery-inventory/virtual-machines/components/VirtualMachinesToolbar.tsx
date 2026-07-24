@@ -4,7 +4,6 @@ import { Button } from '@/shared/components/button/Button'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import { FilterIcon, SearchIcon } from '@/shared/icons/Icons'
 import { RowDensityToggle, type TableDensity } from '@/shared/components/table'
-import { FilterTabs } from '@/shared/components/filters/FilterTabs'
 import type { ProviderRecord } from '@/features/api/providersApi'
 import { FilterPanelSkeleton } from '../skeletons'
 import type { VirtualMachineFilterOptions, VirtualMachineFilters } from '../types'
@@ -20,12 +19,6 @@ interface VirtualMachinesToolbarProps {
   density?: TableDensity
   onDensityChange?: (density: TableDensity) => void
 }
-
-const powerTabs = [
-  { label: 'All', value: '' },
-  { label: 'Powered on', value: 'poweredOn' },
-  { label: 'Powered off', value: 'poweredOff' },
-]
 
 export function VirtualMachinesToolbar({ filters, options, availableTags = [], providers = [], providersLoading = false, onFiltersChange, onReset, density, onDensityChange }: VirtualMachinesToolbarProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -77,12 +70,6 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], p
           {density && onDensityChange ? (
             <RowDensityToggle density={density} onDensityChange={onDensityChange} />
           ) : null}
-          <FilterTabs
-            tabs={powerTabs}
-            value={filters.powerState}
-            onChange={(value) => { onFiltersChange({ ...filters, powerState: value }) }}
-            ariaLabel="Power state filter"
-          />
           <Button size="sm" variant="outline" startIcon={<FilterIcon className="size-4" />} onClick={openModal} aria-expanded={isModalOpen}>
             Filters {activeFilterCount > 0 && <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#0d91d7] text-xs font-semibold text-white">{activeFilterCount}</span>}
           </Button>
