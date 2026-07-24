@@ -49,7 +49,9 @@ describe('TierCanvas', () => {
     render(<TierCanvas tiers={mockTiers} onTierEdit={onTierEdit} />)
 
     const editBtns = screen.getAllByRole('button', { name: 'Edit' })
-    await user.click(editBtns[0])
+    expect(editBtns.length).toBeGreaterThan(0)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    await user.click(editBtns[0]!)
 
     expect(screen.getByDisplayValue('database')).toBeInTheDocument()
   })
@@ -61,7 +63,9 @@ describe('TierCanvas', () => {
     render(<TierCanvas tiers={mockTiers} onTierDelete={onTierDelete} />)
 
     const deleteBtns = screen.getAllByRole('button', { name: 'Delete' })
-    await user.click(deleteBtns[0])
+    expect(deleteBtns.length).toBeGreaterThan(0)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    await user.click(deleteBtns[0]!)
 
     expect(onTierDelete).toHaveBeenCalledWith('database')
   })
@@ -85,8 +89,11 @@ describe('TierCanvas', () => {
   })
 
   it('disables Delete button on last remaining tier', () => {
+    const database = mockTiers['database']
+    expect(database).toBeDefined()
     const singleTier: Record<string, RecoveryTier> = {
-      database: mockTiers.database,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      database: database!,
     }
 
     render(<TierCanvas tiers={singleTier} />)

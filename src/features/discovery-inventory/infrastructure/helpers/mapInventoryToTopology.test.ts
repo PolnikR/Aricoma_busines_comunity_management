@@ -22,6 +22,9 @@ function createVirtualMachine(
     cluster: 'cluster-01',
     primaryDatastore: 'datastore-01',
     folder: 'Applications',
+    vmPath: '[datastore-01] application-01/application-01.vmx',
+    providerId: 'vcenter-01',
+    providerType: 'VMWARE',
     disks: [
       {
         id: 'disk-101',

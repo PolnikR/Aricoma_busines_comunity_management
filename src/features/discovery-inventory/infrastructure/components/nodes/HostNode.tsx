@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, memo } from 'react'
+import { memo } from 'react'
 import type { Node, NodeProps } from '@xyflow/react'
 import { ServerIcon } from '@/shared/icons/Icons'
 import type { HostTopologyNode } from '../../model/topologyTypes'
 import { TopologyNodeShell } from './TopologyNodeShell'
 import { HostNodeTooltip } from './HostNodeTooltip'
+import { useTooltipHover } from '../../hooks/useTooltipHover'
 
 type HostFlowNode = Node<
   HostTopologyNode & Record<string, unknown>,
@@ -18,31 +19,7 @@ export const HostNode = memo(function HostNode({
     ? data.clusterNames.join(', ')
     : 'No cluster'
 
-  const [showTooltip, setShowTooltip] = useState(false)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const nodeRef = useRef<HTMLDivElement>(null)
-
-  const handleMouseEnter = () => {
-    timeoutRef.current = setTimeout(() => {
-      setShowTooltip(true)
-    }, 500)
-  }
-
-  const handleMouseLeave = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
-    setShowTooltip(false)
-  }
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-  }, [])
+  const { showTooltip, nodeRef, handleMouseEnter, handleMouseLeave } = useTooltipHover()
 
   return (
     <div

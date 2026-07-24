@@ -15,6 +15,7 @@ function initializeSeededData() {
           name: 'Production ERP System',
           description: 'Critical ERP application for order processing',
           environment: 'prod',
+          provider_id: 'vcenter-01',
           platform: 'VMware vCenter ESXi',
           source_connection: 'vcenter_default',
           target_connection: 'vcenter_default_destination',
@@ -44,6 +45,7 @@ function initializeSeededData() {
           name: 'Data Analytics Platform',
           description: 'Business intelligence and reporting',
           environment: 'staging',
+          provider_id: 'vcenter-01',
           platform: 'VMware vCenter ESXi',
           source_connection: 'vcenter_default',
           target_connection: 'vcenter_default_destination',
@@ -111,8 +113,4 @@ export function updateApp(id: string, data: RecoveryApplicationData): RecoveryAp
 
 export function deleteApp(id: string): boolean {
   return apps.delete(id)
-}
-
-export function resetApps() {
-  apps.clear()
 }

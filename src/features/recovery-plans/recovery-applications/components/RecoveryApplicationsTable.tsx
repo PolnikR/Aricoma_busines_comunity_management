@@ -144,7 +144,7 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
   ], [])
 
   const table = useTableState(rows, {
-    searchFields: ['data.application.name'],
+    searchFields: ['id'],
   })
 
   return (

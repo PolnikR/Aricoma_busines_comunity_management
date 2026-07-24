@@ -103,7 +103,7 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], p
                 </Field>
 
                 <Field label="Provider" htmlFor="modal-provider-filter">
-                  <Select id="modal-provider-filter" value={tempFilters.providerId} onChange={updateTempFilter('providerId')}>
+                  <Select id="modal-provider-filter" value={tempFilters.providerId ?? ''} onChange={updateTempFilter('providerId')}>
                     <option value="">All providers</option>
                     {providers.map((provider) => <option key={provider.id} value={provider.id}>{provider.name}</option>)}
                   </Select>

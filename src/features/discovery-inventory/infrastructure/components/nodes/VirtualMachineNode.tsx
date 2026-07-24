@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, memo } from 'react'
+import { memo } from 'react'
 import type { Node, NodeProps } from '@xyflow/react'
 import { CpuIcon } from '@/shared/icons/Icons'
 import { cn } from '@/shared/utils/cn'
 import type { VirtualMachineTopologyNode } from '../../model/topologyTypes'
 import { TopologyNodeShell } from './TopologyNodeShell'
 import { VMNodeTooltip } from './VMNodeTooltip'
+import { useTooltipHover } from '../../hooks/useTooltipHover'
 
 type VirtualMachineFlowNode = Node<
   VirtualMachineTopologyNode & Record<string, unknown>,
@@ -16,31 +17,7 @@ export const VirtualMachineNode = memo(function VirtualMachineNode({
   selected,
 }: NodeProps<VirtualMachineFlowNode>) {
   const poweredOn = data.powerState === 'poweredOn'
-  const [showTooltip, setShowTooltip] = useState(false)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const nodeRef = useRef<HTMLDivElement>(null)
-
-  const handleMouseEnter = () => {
-    timeoutRef.current = setTimeout(() => {
-      setShowTooltip(true)
-    }, 500)
-  }
-
-  const handleMouseLeave = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
-    setShowTooltip(false)
-  }
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-  }, [])
+  const { showTooltip, nodeRef, handleMouseEnter, handleMouseLeave } = useTooltipHover()
 
   return (
     <div

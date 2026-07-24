@@ -30,7 +30,7 @@ const defaultFilters: VirtualMachineFilters = {
 
 export function VirtualMachinesPage() {
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
-  const { vmList: allData, error, isLoading: isPending, isFetching, refetch } = useVirtualMachinesUnified(query.providerId, query.tags[0])
+  const { vmList: allData, error, isLoading: isPending, isFetching, refetch } = useVirtualMachinesUnified(query.providerId ?? undefined, query.tags[0])
   const { data: availableTags = [] } = useTags()
   const { data: providers = [], isLoading: providersLoading } = useProviders()
   const [selectedId, setSelectedId] = useState<string | null>(null)

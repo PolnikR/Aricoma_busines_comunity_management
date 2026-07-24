@@ -6,6 +6,7 @@ import { formatStartTime } from '@/shared/utils/dateFormat'
 import { useVdisksByVm } from '../api/useVdisksByVm'
 import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
+import { DetailRow } from '@/shared/components/data-table'
 
 function truncateFilePath(path: string): string {
   if (path.length <= 50) return path
@@ -22,24 +23,6 @@ interface VirtualMachineDetailPanelProps {
   virtualMachine: VirtualMachine | null
   open: boolean
   onClose: () => void
-}
-
-interface DetailRowProps {
-  label: string
-  value: string
-  secondary?: string
-}
-
-function DetailRow({ label, value, secondary }: DetailRowProps) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-[#edf2f7] py-3 last:border-b-0">
-      <dt className="shrink-0 text-xs text-gray-500 dark:text-gray-400">{label}</dt>
-      <dd className="min-w-0 text-right text-sm font-medium text-gray-800 dark:text-white/90">
-        <span className="block wrap-break-word">{value || '-'}</span>
-        {secondary ? <span className="mt-0.5 block wrap-break-word text-xs font-normal text-gray-500 dark:text-gray-400">{secondary}</span> : null}
-      </dd>
-    </div>
-  )
 }
 
 export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: VirtualMachineDetailPanelProps) {
