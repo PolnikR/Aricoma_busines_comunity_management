@@ -6,6 +6,7 @@ import { Card } from '@/shared/components/card/Card'
 import { Badge } from '@/shared/components/badge/Badge'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { LayersIcon, MonitoringIcon, PlugIcon, SettingsIcon } from '@/shared/icons/Icons'
+import { useTranslation } from '@/hooks/useTranslation'
 import { ProviderConnectionsTable } from '../components/ProviderConnectionsTable'
 import { getProviderById } from '../model/providerRegistry'
 import type { Provider } from '../model/providerRegistry'
@@ -40,6 +41,7 @@ function MetricCard({ label, value, helper, icon }: MetricCardProps) {
 }
 
 export function ProviderDetailPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { providerId } = useParams<{ providerId: string }>()
   const provider = providerId ? getProviderById(providerId) : undefined
@@ -51,13 +53,13 @@ export function ProviderDetailPage() {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader
-          eyebrow="Providers & Connectors"
-          title="Provider not found"
-          description="The requested provider does not exist."
-          actions={<Button size="sm" variant="outline" onClick={goBack}>Back</Button>}
+          eyebrow={t('pages.providers.eyebrow')}
+          title={t('pages.providers.detail.notFound')}
+          description={t('pages.providers.detail.notFoundDesc')}
+          actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
         />
         <div className="p-6">
-          <div className="rounded-lg bg-red-50 p-4 text-red-700">Unknown provider.</div>
+          <div className="rounded-lg bg-red-50 p-4 text-red-700">{t('pages.providers.detail.unknown')}</div>
         </div>
       </div>
     )
@@ -69,27 +71,27 @@ export function ProviderDetailPage() {
 
   const metricItems: MetricCardProps[] = [
     {
-      label: 'Status',
+      label: t('pages.providers.detail.status'),
       value: <Badge color={statusColor(provider.status)} size="sm">{provider.status}</Badge>,
-      helper: provider.status === 'Active' ? 'Enabled & reachable' : 'Not enabled',
+      helper: provider.status === 'Active' ? t('pages.providers.detail.statusActive') : t('pages.providers.detail.statusInactive'),
       icon: <MonitoringIcon className="size-6" />,
     },
     {
-      label: 'Provider version',
+      label: t('pages.providers.detail.version'),
       value: provider.version,
-      helper: `${provider.type} connector`,
+      helper: `${provider.type} ${t('pages.providers.detail.configure').toLowerCase()}`,
       icon: <SettingsIcon className="size-6" />,
     },
     {
-      label: 'Connections',
+      label: t('pages.providers.detail.connections'),
       value: provider.connections.length.toString(),
-      helper: `${String(sourceCount)} source · ${String(targetCount)} target`,
+      helper: `${String(sourceCount)} ${t('pages.providers.detail.source')} · ${String(targetCount)} ${t('pages.providers.detail.target')}`,
       icon: <PlugIcon className="size-6" />,
     },
     {
-      label: 'Capabilities',
+      label: t('pages.providers.detail.capabilities'),
       value: provider.capabilities.length.toString(),
-      helper: provider.capabilities.join(', ') || 'None',
+      helper: provider.capabilities.join(', ') || t('pages.providers.detail.none'),
       icon: <LayersIcon className="size-6" />,
     },
   ]
@@ -97,13 +99,13 @@ export function ProviderDetailPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow="Providers & Connectors"
+        eyebrow={t('pages.providers.eyebrow')}
         title={provider.name}
-        description={`${provider.type} provider`}
+        description={`${provider.type} ${t('pages.providers.title').toLowerCase()}`}
         actions={
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={goBack}>Back</Button>
-            <Button size="sm">Configure</Button>
+            <Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>
+            <Button size="sm">{t('pages.providers.detail.configure')}</Button>
           </div>
         }
       />
