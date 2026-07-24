@@ -51,11 +51,18 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   useEffect(() => {
     let cancelled = false
 
-    void loadTranslations(language).then((translations) => {
-      if (!cancelled) {
-        setTranslations(translations)
-      }
-    })
+    void loadTranslations(language)
+      .then((translations) => {
+        if (!cancelled) {
+          setTranslations(translations)
+        }
+      })
+      .catch((error: unknown) => {
+        console.error(`Failed to load language: ${language}`, error)
+        if (!cancelled) {
+          setTranslations({})
+        }
+      })
 
     return () => {
       cancelled = true
