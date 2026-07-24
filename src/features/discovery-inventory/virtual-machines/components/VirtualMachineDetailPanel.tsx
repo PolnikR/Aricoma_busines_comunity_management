@@ -175,9 +175,9 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
               )}
 
               {selectedTab === 'disks' && (
-                <div key={`disks-${virtualMachine.id}`} className="custom-scrollbar overflow-x-auto">
+                <div key={`disks-${virtualMachine.id}`}>
                   {virtualMachine.vdisks.length > 0 ? (
-                    <Table className="min-w-full">
+                    <Table className="w-full">
                       <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
                         <TableRow>
                           <TableCell isHeader className={headerCell}>Label</TableCell>
@@ -195,13 +195,10 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                             </TableCell>
                             <TableCell className={num}>{disk.capacityGb} GB</TableCell>
                             <TableCell className={cell}>{disk.datastore}</TableCell>
-                            <TableCell className={`${cell} relative group max-w-64`}>
-                              <span className="block truncate cursor-help" title={disk.filePath}>
+                            <TableCell className={`${cell} max-w-64`}>
+                              <span className="block truncate" title={disk.filePath}>
                                 {truncateFilePath(disk.filePath)}
                               </span>
-                              <div className="absolute top-full left-0 mt-1 hidden group-hover:block z-50 w-max max-w-sm bg-[#17233d] text-white text-xs p-2 rounded wrap-break-word pointer-events-none shadow-lg after:absolute after:-top-1 after:left-2 after:w-2 after:h-2 after:bg-[#17233d] after:rotate-45">
-                                {disk.filePath}
-                              </div>
                             </TableCell>
                             <TableCell className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top whitespace-nowrap text-right">{disk.thinProvisioned ? 'Yes' : 'No'}</TableCell>
                           </TableRow>
@@ -241,8 +238,8 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                           </div>
                         )
                       })()}
-                      <div className="custom-scrollbar overflow-x-auto">
-                        <Table className="min-w-full">
+                      <div>
+                        <Table className="w-full">
                           <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
                             <TableRow>
                               <TableCell isHeader className={headerCell}>Source</TableCell>
