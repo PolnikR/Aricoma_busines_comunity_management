@@ -175,7 +175,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
               )}
 
               {selectedTab === 'disks' && (
-                <div key={`disks-${virtualMachine.id}`} className="custom-scrollbar overflow-auto">
+                <div key={`disks-${virtualMachine.id}`} className="custom-scrollbar flex-1 overflow-auto">
                   {virtualMachine.vdisks.length > 0 ? (
                     <Table className="min-w-full">
                       <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
@@ -215,7 +215,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
               )}
 
               {selectedTab === 'snapshots' && (
-                <div className="flex flex-col" key={`snapshots-${virtualMachine.id}`}>
+                <div className="flex flex-1 flex-col" key={`snapshots-${virtualMachine.id}`}>
                   {vdisksLoading ? (
                     <p className="p-4 text-[13px] text-[#93a0b5]">Loading snapshots...</p>
                   ) : vdisks ? (
@@ -241,8 +241,8 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                           </div>
                         )
                       })()}
-                      <div className="custom-scrollbar overflow-x-auto">
-                        <Table className="min-w-100">
+                      <div className="custom-scrollbar flex-1 overflow-auto">
+                        <Table className="min-w-full">
                           <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
                             <TableRow>
                               <TableCell isHeader className={headerCell}>Source</TableCell>
