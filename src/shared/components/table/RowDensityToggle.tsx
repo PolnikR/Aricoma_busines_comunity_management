@@ -15,7 +15,7 @@ export function RowDensityToggle({ density, onDensityChange, isFetching }: RowDe
           Updating
         </span>
       ) : null}
-      <div className="inline-flex rounded-lg border border-[#d7deea] bg-[#f1f5fa] p-0.5" role="group" aria-label="Row density">
+      <div className="inline-flex h-10 overflow-x-auto rounded-xl bg-[#eef4f9] p-0.5" role="group" aria-label="Row density">
         {(['comfortable', 'compact'] as const).map((mode) => (
           <button
             key={mode}
@@ -24,7 +24,7 @@ export function RowDensityToggle({ density, onDensityChange, isFetching }: RowDe
               onDensityChange(mode)
             }}
             aria-pressed={density === mode}
-            className={`rounded-md px-3 py-1 text-xs font-semibold capitalize transition ${density === mode ? 'bg-white text-[#118ccc] shadow-sm' : 'text-[#71819a] hover:text-[#17233d]'}`}
+            className={`shrink-0 rounded-[10px] px-3 text-xs font-medium capitalize transition sm:text-sm ${density === mode ? 'bg-white text-[#087fca] shadow-sm' : 'text-[#71819a] hover:text-[#33425d]'}`}
           >
             {mode}
           </button>

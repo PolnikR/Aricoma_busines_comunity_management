@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/button/Button'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import { FilterIcon, SearchIcon } from '@/shared/icons/Icons'
 import { RowDensityToggle, type TableDensity } from '@/shared/components/table'
+import { FilterTabs } from '@/shared/components/filters/FilterTabs'
 import type { ProviderRecord } from '@/features/api/providersApi'
 import { FilterPanelSkeleton } from '../skeletons'
 import type { VirtualMachineFilterOptions, VirtualMachineFilters } from '../types'
@@ -73,19 +74,18 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], p
       <div className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
         <Input id="vm-search" aria-label="Search virtual machines" className="lg:w-72" value={filters.search} onChange={(e) => { onFiltersChange({ ...filters, search: e.target.value }) }} type="search" placeholder="Search name, hostname or IP" leadingIcon={<SearchIcon className="size-4" />} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex h-10 overflow-x-auto rounded-xl bg-[#eef4f9] p-0.5" aria-label="Power state filter">
-            {powerTabs.map((tab) => (
-              <button key={tab.value || 'all'} type="button" className={`shrink-0 rounded-[10px] px-3 text-xs font-medium transition sm:text-sm ${filters.powerState === tab.value ? 'bg-white text-[#087fca] shadow-sm' : 'text-[#71819a] hover:text-[#33425d]'}`} aria-pressed={filters.powerState === tab.value} onClick={() => { onFiltersChange({ ...filters, powerState: tab.value }) }}>
-                {tab.label}
-              </button>
-            ))}
-          </div>
-          <Button size="sm" variant="outline" startIcon={<FilterIcon className="size-4" />} onClick={openModal} aria-expanded={isModalOpen}>
-            Filters {activeFilterCount > 0 && <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#0d91d7] text-xs font-semibold text-white">{activeFilterCount}</span>}
-          </Button>
           {density && onDensityChange ? (
             <RowDensityToggle density={density} onDensityChange={onDensityChange} />
           ) : null}
+          <FilterTabs
+            tabs={powerTabs}
+            value={filters.powerState}
+            onChange={(value) => { onFiltersChange({ ...filters, powerState: value }) }}
+            ariaLabel="Power state filter"
+          />
+          <Button size="sm" variant="outline" startIcon={<FilterIcon className="size-4" />} onClick={openModal} aria-expanded={isModalOpen}>
+            Filters {activeFilterCount > 0 && <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#0d91d7] text-xs font-semibold text-white">{activeFilterCount}</span>}
+          </Button>
         </div>
       </div>
 
