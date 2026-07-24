@@ -189,17 +189,17 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                       </TableHeader>
                       <TableBody className="divide-y divide-[#edf2f7]">
                         {virtualMachine.vdisks.map((disk) => (
-                          <TableRow key={disk.id} className="relative bg-white hover:bg-[#f3f8fe]">
+                          <TableRow key={disk.id} className="bg-white hover:bg-[#f3f8fe]">
                             <TableCell className={cell}>
                               <span className="block max-w-45 truncate" title={disk.label}>{disk.label}</span>
                             </TableCell>
                             <TableCell className={num}>{disk.capacityGb} GB</TableCell>
                             <TableCell className={cell}>{disk.datastore}</TableCell>
-                            <TableCell className={`${cell} group max-w-64`}>
-                              <span className="block truncate cursor-help group/file" title={disk.filePath}>
+                            <TableCell className={`${cell} relative group max-w-64`}>
+                              <span className="block truncate cursor-help" title={disk.filePath}>
                                 {truncateFilePath(disk.filePath)}
                               </span>
-                              <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block z-50 w-max max-w-sm bg-[#17233d] text-white text-xs p-2 rounded wrap-break-word pointer-events-none shadow-lg before:absolute before:-bottom-1 before:right-2 before:w-2 before:h-2 before:bg-[#17233d] before:rotate-45">
+                              <div className="absolute top-full left-0 mt-1 hidden group-hover:block z-50 w-max max-w-sm bg-[#17233d] text-white text-xs p-2 rounded wrap-break-word pointer-events-none shadow-lg after:absolute after:-top-1 after:left-2 after:w-2 after:h-2 after:bg-[#17233d] after:rotate-45">
                                 {disk.filePath}
                               </div>
                             </TableCell>
