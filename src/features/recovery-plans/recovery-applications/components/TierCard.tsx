@@ -269,7 +269,7 @@ export function TierCard({
             handleDeleteClick(id)
           }}
           disabled={!canDelete}
-          className="flex-1 px-3 py-1.5 bg-white text-red-600 text-sm font-semibold rounded-md hover:bg-red-50 transition border-2 border-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 px-3 py-1.5 bg-white text-[#40516c] text-sm font-semibold rounded-md border border-[#cfdfef] shadow-sm hover:border-[#abd5f2] hover:bg-[#f5faff] transition disabled:opacity-50 disabled:cursor-not-allowed"
           title={!canDelete ? 'Cannot delete the last tier' : 'Delete this tier'}
         >
           Delete
