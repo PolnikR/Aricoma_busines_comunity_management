@@ -1,6 +1,6 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { UserMenu } from './UserMenu'
 import { LanguageProvider } from '@/contexts/LanguageContext'
 
@@ -68,7 +68,7 @@ describe('UserMenu', () => {
     await user.click(button)
 
     // Click a language button
-    const slovakButton = screen.getAllByText('Slovenčina')[0]
+    const slovakButton = screen.getAllByText('Slovenčina')[0]!
     await user.click(slovakButton)
 
     // Dropdown should close
@@ -92,7 +92,7 @@ describe('UserMenu', () => {
     expect(screen.getByText('Nastavenia')).toBeInTheDocument()
 
     // Click outside
-    const outside = screen.getByTestId('outside')
+    const outside = screen.getByTestId('outside')!
     await user.click(outside)
 
     expect(screen.queryByText('Nastavenia')).not.toBeInTheDocument()

@@ -2,8 +2,10 @@ import { useEffect, useRef } from 'react'
 import { MenuIcon, SearchIcon } from '@/shared/icons/Icons'
 import { UserMenu } from '@/app/header/UserMenu'
 import { useSidebar } from './useSidebar'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export function AppHeader() {
+  const { t } = useTranslation()
   const { isMobileOpen, toggleMobileSidebar } = useSidebar()
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -40,8 +42,8 @@ export function AppHeader() {
           </button>
 
           <div className="min-w-0 sm:hidden">
-            <p className="text-sm font-semibold text-[#17233d]">Aricoma</p>
-            <p className="text-xs text-[#7a89a2]">Business continuity management</p>
+            <p className="text-sm font-semibold text-[#17233d]">{t('header.appName')}</p>
+            <p className="text-xs text-[#7a89a2]">{t('header.tagline')}</p>
           </div>
 
           <div className="hidden sm:block">
@@ -54,11 +56,11 @@ export function AppHeader() {
                 ref={inputRef}
                 id="global-search"
                 type="search"
-                placeholder="Search or type a command..."
+                placeholder={t('header.search')}
                 className="h-10 w-[min(42vw,420px)] rounded-xl border border-[#dce7f4] bg-[#fbfdff] py-2 pl-10 pr-14 text-sm text-[#263650] shadow-sm outline-none placeholder:text-[#9aa8bc] focus:border-[#63bdf2] focus:ring-4 focus:ring-[#1596dd]/10"
               />
               <kbd className="absolute right-2 top-1/2 inline-flex -translate-y-1/2 items-center rounded-md border border-[#dce7f4] bg-white px-1.5 py-1 text-[11px] text-[#7a89a2]">
-                Ctrl K
+                {t('header.searchHint')}
               </kbd>
             </div>
           </div>

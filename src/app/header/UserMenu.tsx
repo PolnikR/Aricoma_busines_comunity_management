@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useLanguageContext } from '@/contexts/LanguageContext'
+import { ChevronDownIcon } from '@/shared/icons/Icons'
 
 interface UserMenuProps {
   userName?: string
@@ -36,24 +37,25 @@ export function UserMenu({
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
-        className="flex items-center gap-3"
+        className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-gray-100"
         onClick={() => {
           setIsOpen(!isOpen)
         }}
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
-        <span className="flex size-8 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
+        <span className="flex size-8 items-center justify-center rounded-full bg-[#17233d] text-xs font-semibold text-white">
           {userInitials}
         </span>
         <div className="hidden text-left lg:block">
-          <p className="text-sm font-medium text-gray-900">{userName}</p>
-          <p className="text-xs text-gray-500">{userTitle}</p>
+          <p className="text-sm font-medium text-[#17233d]">{userName}</p>
+          <p className="text-xs text-[#8492a8]">{userTitle}</p>
         </div>
+        <ChevronDownIcon className={`hidden size-4 transition-transform lg:block ${isOpen ? 'rotate-180 text-[#0d91d7]' : 'text-[#8492a8] group-hover:text-[#0d91d7]'}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 rounded-lg border bg-white shadow-lg">
+        <div className="absolute right-0 mt-2 w-48 animate-in fade-in zoom-in-95 rounded-lg border border-[#dce7f4] bg-white shadow-lg">
           <div className="border-b px-4 py-3">
             <p className="mb-2 text-xs font-medium text-gray-500">{t('header.language')}</p>
             <div className="flex gap-2">

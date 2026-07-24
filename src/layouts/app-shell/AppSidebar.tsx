@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { routes } from '@/app/routes'
+import { useTranslation } from '@/hooks/useTranslation'
 import {
   ApiIcon,
   ChevronDownIcon,
@@ -111,6 +112,7 @@ function findRouteMenu(pathname: string): string | undefined {
 }
 
 export function AppSidebar() {
+  const { t } = useTranslation()
   const { isMobileOpen, closeMobileSidebar } = useSidebar()
   const location = useLocation()
   const [openMenu, setOpenMenu] = useState<string>(() => findRouteMenu(location.pathname) ?? 'Discovery & Inventory')
@@ -132,8 +134,8 @@ export function AppSidebar() {
         <NavLink to={routes.virtualMachines} className="flex min-w-0 items-center gap-2.5" aria-label="Aricoma home">
           <img src="/aricoma-logo.png" alt="Aricoma" className="size-9 shrink-0 rounded-lg" />
           <span>
-            <span className="block truncate text-[13px] font-semibold text-[#17233d]">Aricoma</span>
-            <span className="block truncate text-[10px] text-[#7c8aa0]">Business continuity management</span>
+            <span className="block truncate text-[13px] font-semibold text-[#17233d]">{t('header.appName')}</span>
+            <span className="block truncate text-[10px] text-[#7c8aa0]">{t('header.tagline')}</span>
           </span>
         </NavLink>
       </div>
