@@ -71,7 +71,7 @@ describe('Language Switching Integration', () => {
     // Click Slovak language option
     const slovakButtons = screen.getAllByText('Slovenčina')
     if (slovakButtons.length > 0) {
-      await user.click(slovakButtons[0])
+      await user.click(slovakButtons[0]!)
 
       // Verify localStorage was updated
       await waitFor(() => {
@@ -82,7 +82,7 @@ describe('Language Switching Integration', () => {
   })
 
   it('applies translations to all rendered translation keys', async () => {
-    const { rerender } = render(
+    render(
       <TestApp>
         <UserMenu />
       </TestApp>
@@ -164,7 +164,7 @@ describe('Language Switching Integration', () => {
     expect(screen.getByText('Nastavenia')).toBeInTheDocument()
 
     // Click outside
-    const outside = screen.getByTestId('outside')
+    const outside = screen.getByTestId('outside')!
     await user.click(outside)
 
     // Dropdown should close
