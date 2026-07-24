@@ -1,11 +1,14 @@
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/shared/components/button/Button'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
+import { recoveryApplicationsQueryKey } from '../api/useRecoveryApplications'
 import type { RecoveryApplication, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 export function RecoveryApplicationBuilderPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const handleSave = (appState: RecoveryApplicationFormState): void => {
     const applicationData = {
@@ -26,13 +29,20 @@ export function RecoveryApplicationBuilderPage() {
     const mockApplicationsStr = localStorage.getItem('mockRecoveryApplications') ?? '[]'
     const mockApplications: RecoveryApplication[] = JSON.parse(mockApplicationsStr) as RecoveryApplication[]
     const now = new Date().toISOString()
-    mockApplications.push({
+    const newApp: RecoveryApplication = {
       id: `app_${String(Date.now())}`,
       data: applicationData,
       createdAt: now,
       updatedAt: now,
-    })
+    }
+    mockApplications.push(newApp)
     localStorage.setItem('mockRecoveryApplications', JSON.stringify(mockApplications))
+
+    // Log saved JSON for verification
+    console.log('Application saved to localStorage:', JSON.stringify(newApp, null, 2))
+
+    // Invalidate React Query cache to update list immediately
+    void queryClient.invalidateQueries({ queryKey: recoveryApplicationsQueryKey })
 
     // Navigate after saving
     void setTimeout(() => {
