@@ -3,6 +3,7 @@ import type { VirtualMachine } from '../types'
 import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
 import { useResizablePanel } from '@/shared/hooks/useResizablePanel'
 import { formatStartTime } from '@/shared/utils/dateFormat'
+import { useTranslation } from '@/hooks/useTranslation'
 import { useVdisksByVm } from '../api/useVdisksByVm'
 import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
@@ -26,6 +27,7 @@ interface VirtualMachineDetailPanelProps {
 }
 
 export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: VirtualMachineDetailPanelProps) {
+  const { t } = useTranslation()
   const [selectedTab, setSelectedTab] = useState<'overview' | 'disks' | 'snapshots'>('overview')
   const { width, handleProps } = useResizablePanel({ open, defaultWidth: 420 })
   const { data: vdisks, isLoading: vdisksLoading } = useVdisksByVm(virtualMachine?.name ?? '', undefined)
@@ -63,7 +65,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
           <>
             <div className="flex items-start justify-between gap-4 border-b border-[#dfe9f3] p-5">
               <div className="min-w-0">
-                <p className="text-xs font-medium text-gray-400">Selected virtual machine</p>
+                <p className="text-xs font-medium text-gray-400">{t('pages.virtualMachines.detail.selected')}</p>
                 <h2 className="mt-1 truncate text-base font-semibold text-gray-900" title={virtualMachine.name}>{virtualMachine.name}</h2>
                 <p className="mt-1 truncate font-mono text-xs text-gray-500" title={`${virtualMachine.hostname} / ${virtualMachine.ipAddress}`}>{virtualMachine.hostname || '-'} / {virtualMachine.ipAddress || '-'}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -122,20 +124,20 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                       <CpuIcon className="size-5 shrink-0 text-brand-500" />
                       <div className="flex items-baseline gap-1">
                         <p className="text-lg font-semibold text-gray-900">{virtualMachine.vcpu}</p>
-                        <p className="text-xs text-gray-500">vCPU</p>
+                        <p className="text-xs text-gray-500">{t('pages.virtualMachines.detail.vcpu')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 p-4">
                       <MemoryIcon className="size-5 shrink-0 text-brand-500" />
                       <div className="flex items-baseline gap-1">
                         <p className="text-lg font-semibold text-gray-900">{virtualMachine.memoryGb} GB</p>
-                        <p className="text-xs text-gray-500">Memory</p>
+                        <p className="text-xs text-gray-500">{t('pages.virtualMachines.detail.memory')}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="border-b border-[#dfe9f3] bg-[#f5f8fc] px-5 py-3">
-                    <p className="mb-1 text-xs font-semibold uppercase text-gray-500">Tags</p>
+                    <p className="mb-1 text-xs font-semibold uppercase text-gray-500">{t('pages.virtualMachines.detail.tags')}</p>
                     {virtualMachine.tags.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {virtualMachine.tags.map((tag) => (
@@ -189,7 +191,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                       </TableBody>
                     </Table>
                   ) : (
-                    <p className="p-4 text-[13px] text-[#93a0b5]">No disks available</p>
+                    <p className="p-4 text-[13px] text-[#93a0b5]">{t('pages.virtualMachines.detail.noDisks')}</p>
                   )}
                 </div>
               )}
@@ -197,7 +199,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
               {selectedTab === 'snapshots' && (
                 <div className="flex flex-col" key={`snapshots-${virtualMachine.id}`}>
                   {vdisksLoading ? (
-                    <p className="p-4 text-[13px] text-[#93a0b5]">Loading snapshots...</p>
+                    <p className="p-4 text-[13px] text-[#93a0b5]">{t('pages.virtualMachines.detail.loadingSnapshots')}</p>
                   ) : vdisks ? (
                     <>
                       {(() => {
@@ -251,7 +253,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                       </div>
                     </>
                   ) : (
-                    <p className="p-4 text-[13px] text-[#93a0b5]">No snapshot data available</p>
+                    <p className="p-4 text-[13px] text-[#93a0b5]">{t('pages.virtualMachines.detail.noSnapshots')}</p>
                   )}
                 </div>
               )}

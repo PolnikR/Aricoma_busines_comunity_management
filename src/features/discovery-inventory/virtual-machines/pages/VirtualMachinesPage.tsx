@@ -5,6 +5,7 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
+import { useTranslation } from '@/hooks/useTranslation'
 import { useVirtualMachinesUnified } from '@/features/hooks/useVirtualMachinesUnified'
 import { useProviders } from '@/features/providers-connectors/providers/api/useProviders'
 import { applyFiltersAndPagination } from '../helpers/virtualMachinesApi'
@@ -29,6 +30,7 @@ const defaultFilters: VirtualMachineFilters = {
 }
 
 export function VirtualMachinesPage() {
+  const { t } = useTranslation()
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
   const { vmList: allData, error, isLoading: isPending, isFetching, refetch } = useVirtualMachinesUnified(query.providerId ?? undefined, query.tags[0])
   const { data: availableTags = [] } = useTags()
@@ -119,8 +121,8 @@ export function VirtualMachinesPage() {
         <Card className="relative flex flex-1 flex-col overflow-hidden p-0 sm:p-0 lg:min-h-0">
           <div className="flex shrink-0 flex-col gap-2 border-b border-[#e3edf6] px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-[#17233d]">Inventory records</h2>
-              <p className="text-xs text-[#71819a]">Browse and inspect discovered VMware resources.</p>
+              <h2 className="text-sm font-semibold text-[#17233d]">{t('pages.virtualMachines.inventory.title')}</h2>
+              <p className="text-xs text-[#71819a]">{t('pages.virtualMachines.inventory.description')}</p>
             </div>
           </div>
           <div className="flex flex-1 flex-col overflow-hidden bg-[#f5f8fc] p-3 lg:min-h-0">
@@ -131,7 +133,7 @@ export function VirtualMachinesPage() {
                   <VirtualMachinesTable virtualMachines={data.items} selectedId={selectedId} density={density} onSelect={(virtualMachine) => { handleSelect(virtualMachine.id) }} />
                 ) : (
                   <div className="p-4">
-                    <EmptyState title="No virtual machines found" description="No inventory records match the current search and filters." action={<Button size="sm" variant="outline" onClick={() => { updateFilters(defaultFilters) }}>Clear filters</Button>} />
+                    <EmptyState title={t('pages.virtualMachines.empty.title')} description={t('pages.virtualMachines.empty.description')} action={<Button size="sm" variant="outline" onClick={() => { updateFilters(defaultFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>} />
                   </div>
                 )}
               </div>
