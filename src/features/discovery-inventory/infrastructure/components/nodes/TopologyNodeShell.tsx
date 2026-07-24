@@ -39,7 +39,7 @@ export function TopologyNodeShell({
       {showTargetHandle ? (
         <Handle
           type="target"
-          position={Position.Left}
+          position={Position.Top}
           isConnectable={false}
           className="!size-2.5 !border-2 !border-white !bg-[#91a4bc]"
         />
@@ -69,7 +69,7 @@ export function TopologyNodeShell({
       {showSourceHandle ? (
         <Handle
           type="source"
-          position={Position.Right}
+          position={Position.Bottom}
           isConnectable={false}
           className="!size-2.5 !border-2 !border-white !bg-[#0d91d7]"
         />

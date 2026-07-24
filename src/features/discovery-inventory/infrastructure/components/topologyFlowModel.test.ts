@@ -46,7 +46,7 @@ const topology: PositionedInfrastructureTopology = {
 }
 
 describe('mapTopologyToFlowElements', () => {
-  it('preserves domain identity, position, and node dimensions', () => {
+  it('makes virtualMachine nodes draggable', () => {
     const result = mapTopologyToFlowElements(topology)
 
     expect(result.nodes[0]).toMatchObject({
@@ -57,11 +57,48 @@ describe('mapTopologyToFlowElements', () => {
       height: 132,
       connectable: false,
       deletable: false,
-      draggable: false,
+      draggable: true,
     })
     expect(result.nodes[0]?.data).toMatchObject({
       kind: 'virtualMachine',
       virtualMachineId: 'vm-101',
+    })
+  })
+
+  it('makes datastore nodes draggable', () => {
+    const result = mapTopologyToFlowElements(topology)
+
+    expect(result.nodes[1]).toMatchObject({
+      id: 'datastore:datastore-01',
+      type: 'datastore',
+      draggable: true,
+    })
+  })
+
+  it('keeps cluster nodes non-draggable', () => {
+    const clusterTopology: PositionedInfrastructureTopology = {
+      nodes: [
+        {
+          node: {
+            id: 'cluster:cluster-01',
+            kind: 'cluster',
+            label: 'cluster-01',
+            hostCount: 3,
+          },
+          position: { x: 0, y: 0 },
+          size: { width: 100, height: 100 },
+        },
+      ],
+      edges: [],
+      size: { width: 100, height: 100 },
+    }
+
+    const result = mapTopologyToFlowElements(clusterTopology)
+
+    expect(result.nodes[0]).toMatchObject({
+      id: 'cluster:cluster-01',
+      type: 'cluster',
+      draggable: false,
     })
   })
 

@@ -5,7 +5,7 @@ import { FetchErrorAlert } from './FetchErrorAlert'
 
 afterEach(cleanup)
 
-describe('FetchErrorAlert', () => {
+  describe('FetchErrorAlert', () => {
   it('renders an initial fetch failure with its technical description', () => {
     render(
       <FetchErrorAlert

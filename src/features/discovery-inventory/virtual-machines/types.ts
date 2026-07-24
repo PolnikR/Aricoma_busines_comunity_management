@@ -1,3 +1,5 @@
+import type { DiscoveredVirtualDisk } from '../model/discoveryTypes'
+
 export interface VirtualMachine {
   id: string
   name: string
@@ -12,10 +14,15 @@ export interface VirtualMachine {
   cluster: string
   datastore: string
   folder: string
+  vmPath: string
+  providerId: string
+  providerType: string
   diskCount: number
   diskCapacityGb: number
+  vdisks: DiscoveredVirtualDisk[]
   snapshotCount: number
   toolsStatus: string
+  tags: string[]
 }
 
 export interface VirtualMachineFilters {
@@ -23,6 +30,9 @@ export interface VirtualMachineFilters {
   powerState: string
   connectionState: string
   cluster: string
+  providerId: string | null
+  tags: string[]
+  untagged: boolean
 }
 
 export type VirtualMachinePageSize = 10 | 25 | 50

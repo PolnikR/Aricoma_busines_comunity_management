@@ -21,9 +21,13 @@ export interface DiscoveredVirtualMachine {
   cluster: string
   primaryDatastore: string
   folder: string
+  vmPath: string
+  providerId: string
+  providerType: string
   disks: DiscoveredVirtualDisk[]
   snapshotCount: number
   toolsStatus: string
+  tags: string[]
 }
 
 export interface DiscoveryInventory {

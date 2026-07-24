@@ -70,12 +70,12 @@ describe('layoutInfrastructureTopology', () => {
       result.nodes.map(({ node, position }) => [node.kind, position]),
     )
 
-    expect(positions.get('cluster')?.x).toBeLessThan(positions.get('host')?.x ?? 0)
-    expect(positions.get('host')?.x).toBeLessThan(
-      positions.get('virtualMachine')?.x ?? 0,
+    expect(positions.get('cluster')?.y).toBeLessThan(positions.get('host')?.y ?? 0)
+    expect(positions.get('host')?.y).toBeLessThan(
+      positions.get('virtualMachine')?.y ?? 0,
     )
-    expect(positions.get('virtualMachine')?.x).toBeLessThan(
-      positions.get('datastore')?.x ?? 0,
+    expect(positions.get('virtualMachine')?.y).toBeLessThan(
+      positions.get('datastore')?.y ?? 0,
     )
     expect(result.nodes.every(({ position }) => (
       Number.isFinite(position.x) && Number.isFinite(position.y)

@@ -2,12 +2,12 @@ import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
-import { useInfrastructureTopology } from '../api/useInfrastructureTopology'
+import { useVirtualMachinesUnified } from '@/features/hooks/useVirtualMachinesUnified'
 import { InfrastructureTopologySkeleton } from '../components/InfrastructureTopologySkeleton'
 import { InfrastructureTopologyWorkspace } from '../components/InfrastructureTopologyWorkspace'
 
 export function InfrastructurePage() {
-  const { data, error, isPending, isFetching, refetch } = useInfrastructureTopology()
+  const { topology: data, error, isLoading: isPending, isFetching, refetch } = useVirtualMachinesUnified()
 
   if (isPending) {
     return (
@@ -38,14 +38,14 @@ export function InfrastructurePage() {
           retryLabel="Retry loading"
           variant="full"
           isRetrying={isFetching}
-          onRetry={() => { void refetch() }}
+          onRetry={refetch}
         />
       </>
     )
   }
 
   return (
-    <div className="flex min-h-full w-full min-w-0 max-w-full flex-col overflow-x-hidden lg:h-full lg:min-h-0">
+    <div className="flex flex-1 min-h-full w-full min-w-0 max-w-full flex-col overflow-x-hidden lg:h-full lg:min-h-0">
       <PageHeader
         eyebrow="Discovery & Inventory"
         title="Infrastructure"
@@ -55,7 +55,7 @@ export function InfrastructurePage() {
             size="sm"
             variant="outline"
             disabled={isFetching}
-            onClick={() => { void refetch() }}
+            onClick={refetch}
           >
             {isFetching ? 'Refreshing' : 'Refresh inventory'}
           </Button>
@@ -68,7 +68,7 @@ export function InfrastructurePage() {
           title="Latest request failed"
           description="Showing the previous successful topology."
           isRetrying={isFetching}
-          onRetry={() => { void refetch() }}
+          onRetry={refetch}
         />
       ) : null}
 
