@@ -189,16 +189,19 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                       </TableHeader>
                       <TableBody className="divide-y divide-[#edf2f7]">
                         {virtualMachine.vdisks.map((disk) => (
-                          <TableRow key={disk.id} className="bg-white hover:bg-[#f3f8fe]">
+                          <TableRow key={disk.id} className="relative bg-white hover:bg-[#f3f8fe]">
                             <TableCell className={cell}>
                               <span className="block max-w-45 truncate" title={disk.label}>{disk.label}</span>
                             </TableCell>
                             <TableCell className={num}>{disk.capacityGb} GB</TableCell>
                             <TableCell className={cell}>{disk.datastore}</TableCell>
-                            <TableCell className={`${cell} max-w-64`}>
-                              <span className="block truncate cursor-help" title={disk.filePath}>
+                            <TableCell className={`${cell} group max-w-64`}>
+                              <span className="block truncate cursor-help group/file" title={disk.filePath}>
                                 {truncateFilePath(disk.filePath)}
                               </span>
+                              <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block z-50 w-max max-w-sm bg-[#17233d] text-white text-xs p-2 rounded wrap-break-word pointer-events-none shadow-lg before:absolute before:-bottom-1 before:right-2 before:w-2 before:h-2 before:bg-[#17233d] before:rotate-45">
+                                {disk.filePath}
+                              </div>
                             </TableCell>
                             <TableCell className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top whitespace-nowrap text-right">{disk.thinProvisioned ? 'Yes' : 'No'}</TableCell>
                           </TableRow>
