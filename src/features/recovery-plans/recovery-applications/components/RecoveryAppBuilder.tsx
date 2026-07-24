@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { useProviders } from '@/features/providers-connectors/providers/api/useProviders'
 import { AppMetadataForm } from './AppMetadataForm'
 import { VMSidebar } from './VMSidebar'
 import { TierCanvas } from './TierCanvas'
@@ -38,11 +39,13 @@ const DEFAULT_TIERS: Record<string, RecoveryTier> = {
 }
 
 export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAppBuilderProps) {
+  const { data: providers = [] } = useProviders()
   const [formState, setFormState] = useState<RecoveryApplicationFormState>(
     initialData ?? {
       name: '',
       description: '',
       environment: 'dev',
+      provider: '',
       tiers: new Map(Object.entries(DEFAULT_TIERS)),
     }
   )
@@ -123,6 +126,14 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
       alert('Please enter an application name')
       return
     }
+    if (!formState.description.trim()) {
+      alert('Please enter a description')
+      return
+    }
+    if (!formState.provider) {
+      alert('Please select a provider')
+      return
+    }
     onSave?.(formState)
   }
 
@@ -135,10 +146,12 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
           <div className="flex-1 w-full">
             <AppMetadataForm
               onMetadataChange={handleMetadataChange}
+              providers={providers}
               initialValues={{
                 name: formState.name,
                 description: formState.description,
                 environment: formState.environment,
+                provider: formState.provider,
               }}
             />
           </div>
