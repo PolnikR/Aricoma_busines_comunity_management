@@ -260,7 +260,7 @@ export function TierCard({
           onClick={() => {
             handleEditToggleClick(id)
           }}
-          className="flex-1 px-3 py-1.5 bg-[#f0f5fa] text-[#18253d] text-sm font-semibold rounded-md hover:bg-[#e3edf6] transition border border-[#d9e6f1]"
+          className="flex-1 px-3 py-1.5 bg-[#0d91d7] text-white text-sm font-semibold rounded-md hover:bg-[#0a7ab5] transition"
         >
           Edit
         </button>
@@ -269,7 +269,7 @@ export function TierCard({
             handleDeleteClick(id)
           }}
           disabled={!canDelete}
-          className="px-3 py-1.5 bg-red-50 text-red-600 text-sm font-semibold rounded-md hover:bg-red-100 transition border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 px-3 py-1.5 bg-white text-red-600 text-sm font-semibold rounded-md hover:bg-red-50 transition border-2 border-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
           title={!canDelete ? 'Cannot delete the last tier' : 'Delete this tier'}
         >
           Delete

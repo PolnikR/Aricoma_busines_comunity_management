@@ -122,9 +122,9 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
       onClick={() => {
         setIsOpen(true)
       }}
-      className="bg-white border-2 border-dashed border-[#cfdaea] rounded-lg p-4 shadow-sm hover:border-[#b9d5e8] hover:bg-[#fbfdff] transition flex items-center justify-center h-full"
+      className="bg-[#0d91d7] text-white text-sm font-semibold rounded-lg p-4 shadow-sm hover:bg-[#0a7ab5] transition flex items-center justify-center h-full"
     >
-      <span className="text-3xl text-[#7b8ca4]">+</span>
+      Add Tier
     </button>
   )
 }
