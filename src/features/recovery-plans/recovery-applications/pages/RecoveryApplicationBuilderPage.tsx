@@ -59,16 +59,12 @@ export function RecoveryApplicationBuilderPage() {
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
-      <div className="relative">
-        <PageHeader
-          eyebrow="Recovery Plans"
-          title="Create Recovery Application"
-          description="Define a new disaster recovery application with tiered VM organization"
-        />
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 pr-3">
-          <Button size="sm" variant="outline" onClick={handleBackClick}>{t('buttons.back')}</Button>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Recovery Plans"
+        title="Create Recovery Application"
+        description="Define a new disaster recovery application with tiered VM organization"
+        actions={<Button size="sm" variant="outline" onClick={handleBackClick}>{t('buttons.back')}</Button>}
+      />
       <div className="flex flex-1 flex-col lg:min-h-0">
         <RecoveryAppBuilder
           onSave={handleSave}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
-import { Field, Input } from '@/shared/components/form/FormControls'
+import { Field, Input, Textarea } from '@/shared/components/form/FormControls'
 import { slugify } from '../utils/tierUtils'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
@@ -168,13 +168,13 @@ export function TierCard({
           </Field>
 
           <Field label={t('recovery.tier.form.description')} htmlFor={`tier-${id}-edit-description`}>
-            <textarea
+            <Textarea
               id={`tier-${id}-edit-description`}
               value={editForm.editDescription}
               onChange={e => {
                 setEditForm(prev => ({ ...prev, editDescription: e.target.value }))
               }}
-              className="w-full px-2 py-1.5 text-sm border border-[#cfdaea] rounded-md focus:outline-none resize-none"
+              className="resize-none"
               rows={3}
               placeholder={t('recovery.tier.form.descriptionPlaceholder')}
             />

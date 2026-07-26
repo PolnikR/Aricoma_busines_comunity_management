@@ -1,5 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
+import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
@@ -10,7 +12,7 @@ export function RecoveryApplicationEditorPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-  const { data: application, isLoading, error } = useRecoveryApplication(id ?? '')
+  const { data: application, isLoading, error, isFetching, refetch } = useRecoveryApplication(id ?? '')
   const updateMutation = useUpdateRecoveryApplication(id ?? '')
 
   if (!id) {
@@ -58,9 +60,13 @@ export function RecoveryApplicationEditorPage() {
           actions={<Button variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications') }}>Back</Button>}
         />
         <div className="flex-1 p-6">
-          <div className="bg-red-50 text-red-700 p-4 rounded-lg">
-            Failed to load application. {error instanceof Error ? error.message : ''}
-          </div>
+          <FetchErrorAlert
+            title="Failed to load application"
+            description={error instanceof Error ? error.message : 'The requested application was not found.'}
+            onRetry={() => { void refetch() }}
+            isRetrying={isFetching}
+            variant="full"
+          />
         </div>
       </div>
     )
@@ -87,7 +93,6 @@ export function RecoveryApplicationEditorPage() {
       void navigate('/recovery-plans/recovery-applications')
     } catch (err) {
       console.error('Failed to update recovery application:', err)
-      alert('Failed to update application. Please try again.')
     }
   }
 
@@ -100,6 +105,14 @@ export function RecoveryApplicationEditorPage() {
         actions={<Button variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications') }}>{t('buttons.back')}</Button>}
       />
       <div className="flex flex-1 flex-col lg:min-h-0">
+        {updateMutation.error ? (
+          <Alert
+            className="mx-4 mb-4"
+            variant="error"
+            title="Failed to update application"
+            description={updateMutation.error instanceof Error ? updateMutation.error.message : 'Please try again.'}
+          />
+        ) : null}
         <RecoveryAppBuilder
           initialData={{
             name: application.data.application.name,

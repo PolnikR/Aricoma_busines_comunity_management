@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
-import { Field, Input } from '@/shared/components/form/FormControls'
+import { Field, Input, Textarea } from '@/shared/components/form/FormControls'
 import { slugify } from '../utils/tierUtils'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
@@ -86,13 +86,13 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
           </Field>
 
           <Field label="Description" htmlFor="add-tier-description">
-            <textarea
+            <Textarea
               id="add-tier-description"
               value={description}
               onChange={e => {
                 setDescription(e.target.value)
               }}
-              className="w-full px-2 py-1.5 text-sm border border-[#cfdaea] rounded-md focus:outline-none resize-none"
+              className="resize-none"
               rows={3}
               placeholder="Optional description"
             />

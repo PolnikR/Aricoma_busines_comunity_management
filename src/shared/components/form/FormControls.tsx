@@ -1,5 +1,5 @@
-import { useId } from 'react'
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react'
+import { forwardRef, useId } from 'react'
+import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 import { ChevronDownIcon } from '@/shared/icons/Icons'
 import { cn } from '@/shared/utils/cn'
 
@@ -21,6 +21,10 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'>
 interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
   children: ReactNode
   size?: ControlSize
+}
+
+interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  invalid?: boolean
 }
 
 interface CheckboxFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
@@ -79,6 +83,30 @@ export function Select({ children, size = 'md', className, ...props }: SelectPro
     </div>
   )
 }
+
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
+  {
+    invalid = false,
+    className,
+    'aria-invalid': ariaInvalid,
+    ...props
+  },
+  ref,
+) {
+  return (
+    <textarea
+      ref={ref}
+      aria-invalid={invalid ? true : ariaInvalid}
+      className={cn(
+        controlClassName,
+        'min-h-20 rounded-md px-2 py-1.5',
+        invalid ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : undefined,
+        className,
+      )}
+      {...props}
+    />
+  )
+})
 
 export function CheckboxField({
   label,

@@ -110,12 +110,12 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, density, onS
   ]
 
   return (
-    <DataTable
+    <DataTable<VirtualMachine>
       columns={columns}
       rows={virtualMachines}
-      rowKey={(vm, index) => `${vm.id}-${String(index)}`}
-      rowSelectionKey={(vm) => vm.id}
-      rowAriaLabel={(vm) => `Show details for ${vm.name}`}
+      rowKey={(vm: VirtualMachine, index: number) => `${vm.id}-${String(index)}`}
+      rowSelectionKey={(vm: VirtualMachine): string => vm.id}
+      rowAriaLabel={(vm: VirtualMachine): string => `Show details for ${vm.name}`}
       density={density}
       selectedRowKey={selectedId}
       onRowClick={onSelect}
