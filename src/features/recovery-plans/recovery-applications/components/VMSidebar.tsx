@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useVirtualMachinesUnified } from '@/features/hooks/useVirtualMachinesUnified'
+import { useDiscoveryInventory } from '@/features/discovery-inventory/api/useDiscoveryInventory'
+import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { Input } from '@/shared/components/form/FormControls'
 
 interface VMSidebarProps {
@@ -10,18 +11,13 @@ interface VMSidebarProps {
 export function VMSidebar({ onVMSelect }: VMSidebarProps) {
   const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState('')
-  const { topology, isLoading } = useVirtualMachinesUnified()
+  const { data: inventory, error, isLoading, isFetching, refetch } = useDiscoveryInventory()
 
   const availableVMs = useMemo(() => {
-    if (!topology) return []
-    return Array.from(
-      new Set(
-        topology.nodes
-          .filter(node => node.kind === 'virtualMachine')
-          .map(node => node.label)
-      )
-    ).sort()
-  }, [topology])
+    return Array.from(new Set(
+      inventory?.virtualMachines.map((virtualMachine) => virtualMachine.name) ?? [],
+    )).sort()
+  }, [inventory])
 
   const filteredVMs = useMemo(() => {
     return availableVMs.filter(vm =>
@@ -29,9 +25,8 @@ export function VMSidebar({ onVMSelect }: VMSidebarProps) {
     )
   }, [availableVMs, searchQuery])
 
-  if (isLoading) {
-    return <div className="p-4 text-sm text-gray-500">{t('recovery.sidebar.loadingVms')}</div>
-  }
+  const handleRefetch = () => { void refetch() }
+  const errorDescription = error instanceof Error ? error.message : t('messages.unknownError')
 
   return (
     <div className="flex flex-col overflow-hidden bg-[#fbfdff]">
@@ -43,6 +38,7 @@ export function VMSidebar({ onVMSelect }: VMSidebarProps) {
           type="text"
           placeholder={t('recovery.sidebar.searchPlaceholder')}
           value={searchQuery}
+          disabled={isLoading || !inventory}
           onChange={e => {
             setSearchQuery(e.target.value)
           }}
@@ -52,24 +48,47 @@ export function VMSidebar({ onVMSelect }: VMSidebarProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
-        {filteredVMs.length === 0 ? (
+        {isLoading ? (
+          <div className="p-2 text-sm text-gray-500">{t('recovery.sidebar.loadingVms')}</div>
+        ) : error && !inventory ? (
+          <FetchErrorAlert
+            title={t('pages.virtualMachines.error.title')}
+            description={errorDescription}
+            retryLabel={t('pages.virtualMachines.error.retryButton')}
+            isRetrying={isFetching}
+            onRetry={handleRefetch}
+          />
+        ) : (
+          <>
+            {error ? (
+              <FetchErrorAlert
+                className="mb-2"
+                title={t('pages.virtualMachines.error.latestFailed')}
+                description={t('pages.virtualMachines.error.showingPrevious')}
+                isRetrying={isFetching}
+                onRetry={handleRefetch}
+              />
+            ) : null}
+            {filteredVMs.length === 0 ? (
           <div className="text-xs text-[#91a4bc] text-center py-4">
             {searchQuery ? t('recovery.sidebar.noMatching') : t('recovery.sidebar.noVmsAvailable')}
           </div>
-        ) : (
-          filteredVMs.map(vm => (
-            <div
-              key={vm}
-              draggable
-              onDragStart={e => {
-                e.dataTransfer.setData('vm-name', vm)
-                onVMSelect?.(vm)
-              }}
-              className="p-2 mb-1 bg-[#f0f5fa] border border-[#d9e6f1] rounded-md text-xs text-[#18253d] cursor-grab hover:bg-[#e3edf6] hover:border-[#b9d5e8] transition-all"
-            >
-              {vm}
-            </div>
-          ))
+            ) : (
+              filteredVMs.map(vm => (
+                <div
+                  key={vm}
+                  draggable
+                  onDragStart={e => {
+                    e.dataTransfer.setData('vm-name', vm)
+                    onVMSelect?.(vm)
+                  }}
+                  className="p-2 mb-1 bg-[#f0f5fa] border border-[#d9e6f1] rounded-md text-xs text-[#18253d] cursor-grab hover:bg-[#e3edf6] hover:border-[#b9d5e8] transition-all"
+                >
+                  {vm}
+                </div>
+              ))
+            )}
+          </>
         )}
       </div>
     </div>

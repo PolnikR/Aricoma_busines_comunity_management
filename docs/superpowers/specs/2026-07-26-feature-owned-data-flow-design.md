@@ -102,6 +102,31 @@ Provider cache writes remain explicit:
 - delete stores the backend's remaining provider list;
 - query keys are defined by a provider key factory.
 
+## Recovery VM Inventory Integration
+
+Recovery application persistence remains out of scope while it uses mock data
+and `localStorage`. The VM picker is an exception because it consumes real
+discovery inventory.
+
+`VMSidebar` reads the canonical discovery query directly:
+
+```text
+VMSidebar
+  -> useDiscoveryInventory
+  -> inventory.virtualMachines
+  -> unique sorted VM names
+  -> local search filter
+```
+
+The sidebar does not derive VM names from the infrastructure topology and does
+not use the VM-page mapping because it does not need topology nodes, metrics,
+filter options, or the complete presentation model.
+
+The sidebar handles initial loading, a fetch failure with retry, an empty
+inventory, background refetch state, and successful cached data. Once migrated,
+the unused global `useVirtualMachinesUnified` compatibility adapter and its test
+are removed.
+
 ## Error Handling
 
 - API clients throw technical errors for network failures, non-success HTTP
@@ -157,8 +182,8 @@ only after their consumers have migrated.
 
 1. Add the canonical `useDiscoveryInventory` query and key factory.
 2. Derive VM and topology models from the shared inventory cache.
-3. Migrate Virtual Machines, Infrastructure, and VM consumers to the canonical
-   query.
+3. Migrate Virtual Machines, Infrastructure, and the recovery VM sidebar to the
+   canonical query.
 4. Remove duplicate inventory fetching and `useVirtualMachinesUnified`.
 5. Split VM mapping/filtering from network code.
 6. Move discovery and vdisk clients into the discovery feature.
@@ -170,7 +195,7 @@ only after their consumers have migrated.
 
 ## Non-goals
 
-- No changes to `recovery-plans`.
+- No changes to recovery application persistence, mock data, or `localStorage`.
 - No generic repository abstraction.
 - No global API folder grouping unrelated domains.
 - No movement of domain transformations into `shared`.
