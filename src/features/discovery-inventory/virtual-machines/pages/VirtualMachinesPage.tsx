@@ -71,21 +71,21 @@ export function VirtualMachinesPage() {
   if (isPending) {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
-        <PageHeader eyebrow="Discovery & Inventory" title="Virtual machines" description="VMware inventory, health and placement overview." />
+        <PageHeader eyebrow={t('pages.virtualMachines.eyebrow')} title={t('pages.virtualMachines.title')} description={t('pages.virtualMachines.description')} />
         <VirtualMachinesSkeleton />
       </div>
     )
   }
 
   if (!data) {
-    const message = error instanceof Error ? error.message : 'Unknown discovery error.'
+    const message = error instanceof Error ? error.message : t('messages.unknownError')
     return (
       <>
-        <PageHeader eyebrow="Discovery & Inventory" title="Virtual machines" description="VMware inventory, health and placement overview." />
+        <PageHeader eyebrow={t('pages.virtualMachines.eyebrow')} title={t('pages.virtualMachines.title')} description={t('pages.virtualMachines.description')} />
         <FetchErrorAlert
-          title="Virtual machines could not be loaded"
+          title={t('pages.virtualMachines.error.title')}
           description={message}
-          retryLabel="Retry loading"
+          retryLabel={t('pages.virtualMachines.error.retryButton')}
           variant="full"
           isRetrying={isFetching}
           onRetry={refetch}
@@ -99,9 +99,9 @@ export function VirtualMachinesPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow="Discovery & Inventory"
-        title="Virtual machines"
-        description="VMware inventory, health and placement overview."
+        eyebrow={t('pages.virtualMachines.eyebrow')}
+        title={t('pages.virtualMachines.title')}
+        description={t('pages.virtualMachines.description')}
         isFetching={isFetching}
         onRefresh={refetch}
       />
@@ -111,8 +111,8 @@ export function VirtualMachinesPage() {
 
         {error ? (
           <FetchErrorAlert
-            title="Latest request failed"
-            description="Showing the previous successful page."
+            title={t('pages.virtualMachines.error.latestFailed')}
+            description={t('pages.virtualMachines.error.showingPrevious')}
             isRetrying={isFetching}
             onRetry={refetch}
           />
