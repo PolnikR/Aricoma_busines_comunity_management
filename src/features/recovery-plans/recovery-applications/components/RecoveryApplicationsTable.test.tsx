@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { RecoveryApplicationsTable } from './RecoveryApplicationsTable'
 import type { RecoveryApplication } from '../model/recoveryApplicationTypes'
 
-vi.mock('@/hooks/useTranslation', () => import('@/test/mockUseTranslation'))
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 const application: RecoveryApplication = {
   id: 'finance-app',

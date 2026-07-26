@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VirtualMachinesTable } from './VirtualMachinesTable'
 import type { VirtualMachine } from '../types'
 
-vi.mock('@/hooks/useTranslation', () => import('@/test/mockUseTranslation'))
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 const vm: VirtualMachine = {
   id: 'vm-1',

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { TierCanvas } from './TierCanvas'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
-vi.mock('@/hooks/useTranslation', () => import('@/test/mockUseTranslation'))
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 const mockTiers: Record<string, RecoveryTier> = {
   database: {

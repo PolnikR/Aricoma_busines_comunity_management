@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryAppBuilder } from './RecoveryAppBuilder'
 
-vi.mock('@/hooks/useTranslation', () => import('@/test/mockUseTranslation'))
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('./VMSidebar', () => ({ VMSidebar: () => <div>VM sidebar</div> }))
 vi.mock('./TierCanvas', () => ({ TierCanvas: () => <div>Tier canvas</div> }))
 

@@ -5,7 +5,7 @@ import { useDiscoveryInventory } from '@/features/discovery-inventory/api/useDis
 import { VMSidebar } from './VMSidebar'
 import type { DiscoveryInventory } from '@/features/discovery-inventory/model/discoveryTypes'
 
-vi.mock('@/hooks/useTranslation', () => import('@/test/mockUseTranslation'))
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/features/discovery-inventory/api/useDiscoveryInventory', () => ({
   useDiscoveryInventory: vi.fn(),
 }))

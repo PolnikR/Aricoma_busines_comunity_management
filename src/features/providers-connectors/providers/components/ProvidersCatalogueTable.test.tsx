@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvidersCatalogueTable } from './ProvidersCatalogueTable'
 import type { ProviderRecord } from '../model/providerTypes'
 
-vi.mock('@/hooks/useTranslation', () => import('@/test/mockUseTranslation'))
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 const providerA: ProviderRecord = {
   id: 'vmware-vcenter-01',

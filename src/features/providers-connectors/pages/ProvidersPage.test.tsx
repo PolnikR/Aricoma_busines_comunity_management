@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useProviders } from '../providers/api/useProviders'
 import { ProvidersPage } from './ProvidersPage'
 
-vi.mock('@/hooks/useTranslation', () => import('@/test/mockUseTranslation'))
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('../providers/api/useProviders', () => ({ useProviders: vi.fn() }))
 vi.mock('../providers/components/ProvidersCatalogueTable', () => ({
   ProvidersCatalogueTable: () => <div>Provider catalogue</div>,

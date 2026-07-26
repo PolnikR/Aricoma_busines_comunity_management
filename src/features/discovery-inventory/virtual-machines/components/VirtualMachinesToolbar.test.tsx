@@ -4,7 +4,7 @@ import { VirtualMachinesToolbar } from './VirtualMachinesToolbar'
 import type { VirtualMachineFilterOptions, VirtualMachineFilters } from '../types'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
-vi.mock('@/hooks/useTranslation', () => import('@/test/mockUseTranslation'))
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 const filters: VirtualMachineFilters = {
   search: '',
