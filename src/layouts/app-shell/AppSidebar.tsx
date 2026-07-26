@@ -106,9 +106,49 @@ const navItems: NavItem[] = [
   },
 ]
 
+const navKeyMap: Record<string, string> = {
+  'Platform Administration': 'nav.administration',
+  'Overview': 'nav.administration.overview',
+  'Configuration': 'nav.administration.configuration',
+  'Identity & Access': 'nav.administration.identity',
+  'Secrets': 'nav.administration.secrets',
+  'Certificates': 'nav.administration.certificates',
+  'Diagnostics': 'nav.administration.diagnostics',
+  'Audit & Retention': 'nav.administration.audit',
+  'Providers & Connectors': 'nav.providers',
+  'Providers': 'nav.providers.providers',
+  'Connection Profiles': 'nav.providers.connections',
+  'Credentials': 'nav.providers.credentials',
+  'Capability Matrix': 'nav.providers.capability',
+  'Discovery Settings': 'nav.providers.discovery',
+  'Health & Diagnostics': 'nav.providers.health',
+  'Discovery & Inventory': 'nav.discovery',
+  'Virtual Machines': 'nav.discovery.vms',
+  'Infrastructure Topology': 'nav.discovery.infrastructure',
+  'Discovery Jobs': 'nav.discovery.jobs',
+  'Inventory Search': 'nav.discovery.search',
+  'File Import': 'nav.discovery.import',
+  'Validation & Commit': 'nav.discovery.validation',
+  'Snapshots & History': 'nav.discovery.snapshots',
+  'Discovery Agents': 'nav.discovery.agents',
+  'Storage Orchestration': 'nav.storage',
+  'VMware Orchestration': 'nav.vmware',
+  'IBM PowerVM Orchestration': 'nav.ibm',
+  'Recovery Plans': 'nav.recovery',
+  'Recovery Applications': 'nav.recovery.applications',
+  'Recovery Runs': 'nav.recovery.runs',
+  'Execution Engine': 'nav.execution',
+  'Monitoring & Audit': 'nav.monitoring',
+  'Internal Component APIs': 'nav.apis',
+}
+
 function findRouteMenu(pathname: string): string | undefined {
   const activeItem = navItems.find((item) => item.subItems?.some((subItem) => pathname === subItem.path || pathname.startsWith(`${subItem.path}/`)))
   return activeItem?.name
+}
+
+function getTranslationKey(name: string): string {
+  return navKeyMap[name] || name
 }
 
 export function AppSidebar() {
@@ -143,7 +183,7 @@ export function AppSidebar() {
       <div className="custom-scrollbar flex flex-1 flex-col overflow-y-auto py-5">
         <nav className="mb-6" aria-label="Main navigation">
           <h2 className="mb-2 px-2.5 text-[9px] font-medium uppercase tracking-[0.12em] text-[#97a3b6]">
-            Menu
+            {t('nav.menu')}
           </h2>
 
           <ul className="flex flex-col gap-0.5">
@@ -159,7 +199,7 @@ export function AppSidebar() {
                       }}
                     >
                       <span className={isMenuOpen(item.name) ? 'text-[#3566d6]' : 'text-[#7b89a0]'}>{item.icon}</span>
-                      <span className="min-w-0 flex-1 truncate">{item.name}</span>
+                      <span className="min-w-0 flex-1 truncate">{t(getTranslationKey(item.name))}</span>
                       <ChevronDownIcon className={`size-4 transition-transform ${isMenuOpen(item.name) ? 'rotate-180 text-[#3566d6]' : 'text-[#8996aa]'}`} />
                     </button>
                     <div className={`overflow-hidden transition-all duration-300 ${isMenuOpen(item.name) ? 'max-h-[34rem]' : 'max-h-0'}`}>
@@ -171,7 +211,7 @@ export function AppSidebar() {
                                 onClick={closeMobileSidebar}
                                 className={() => `block truncate rounded-lg px-2.5 py-2 text-xs font-medium transition ${isSubItemActive(subItem.path) ? 'bg-[#eef2fa] text-[#3566d6]' : 'text-[#5e6e86] hover:bg-[#f5f7fa] hover:text-[#263750]'}`}
                               >
-                                {subItem.name}
+                                {t(getTranslationKey(subItem.name))}
                               </NavLink>
                             </li>
                           ))}
@@ -187,7 +227,7 @@ export function AppSidebar() {
                     {({ isActive }) => (
                       <>
                         <span className={isActive ? 'text-[#3566d6]' : 'text-[#7b89a0]'}>{item.icon}</span>
-                        <span className="truncate">{item.name}</span>
+                        <span className="truncate">{t(getTranslationKey(item.name))}</span>
                       </>
                     )}
                   </NavLink>
