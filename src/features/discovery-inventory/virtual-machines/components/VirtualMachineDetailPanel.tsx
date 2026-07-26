@@ -93,7 +93,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                   }}
                   className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${selectedTab === 'overview' ? 'border-b-2 border-[#0d91d7] text-[#0d91d7]' : 'text-[#71819a] hover:text-[#3b4763]'}`}
                 >
-                  Overview
+                  {t('drawer.tabs.overview')}
                 </button>
                 <button
                   type="button"
@@ -102,7 +102,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                   }}
                   className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${selectedTab === 'disks' ? 'border-b-2 border-[#0d91d7] text-[#0d91d7]' : 'text-[#71819a] hover:text-[#3b4763]'}`}
                 >
-                  Disks
+                  {t('drawer.tabs.disks')}
                 </button>
                 <button
                   type="button"
@@ -111,7 +111,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                   }}
                   className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${selectedTab === 'snapshots' ? 'border-b-2 border-[#0d91d7] text-[#0d91d7]' : 'text-[#71819a] hover:text-[#3b4763]'}`}
                 >
-                  Snapshots
+                  {t('drawer.tabs.snapshots')}
                 </button>
               </div>
             </div>
@@ -185,7 +185,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                                 {truncateFilePath(disk.filePath)}
                               </span>
                             </TableCell>
-                            <TableCell className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top whitespace-nowrap text-right">{disk.thinProvisioned ? 'Yes' : 'No'}</TableCell>
+                            <TableCell className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top whitespace-nowrap text-right">{disk.thinProvisioned ? t('pages.virtualMachines.detail.yes') : t('pages.virtualMachines.detail.no')}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -214,10 +214,10 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                           <div className="border-b border-[#edf2f7] px-4 py-3">
                             <div className="flex gap-2">
                               <span className="inline-flex items-center rounded-full bg-[#e8f4fd] px-3 py-1 text-xs font-medium text-[#0d91d7]">
-                                {sourceCount} source mappings
+                                {sourceCount} {t('details.sourceMappings')}
                               </span>
                               <span className="inline-flex items-center rounded-full bg-[#e8f4fd] px-3 py-1 text-xs font-medium text-[#0d91d7]">
-                                {targetCount} target mappings
+                                {targetCount} {t('details.targetMappings')}
                               </span>
                             </div>
                           </div>
