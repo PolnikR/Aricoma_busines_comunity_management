@@ -5,6 +5,7 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
+import { DataTablePagination } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useVirtualMachinesUnified } from '@/features/hooks/useVirtualMachinesUnified'
 import { useProviders } from '@/features/providers-connectors/providers/api/useProviders'
@@ -12,7 +13,6 @@ import { applyFiltersAndPagination } from '../helpers/virtualMachinesApi'
 import { useTags } from '../api/useTags'
 import { VirtualMachineDetailPanel } from '../components/VirtualMachineDetailPanel'
 import { VirtualMachineMetrics } from '../components/VirtualMachineMetrics'
-import { VirtualMachinesPagination } from '../components/VirtualMachinesPagination'
 import { VirtualMachinesTable, type TableDensity } from '../components/VirtualMachinesTable'
 import { VirtualMachinesToolbar } from '../components/VirtualMachinesToolbar'
 import { VirtualMachinesSkeleton } from '../skeletons'
@@ -137,7 +137,13 @@ export function VirtualMachinesPage() {
                   </div>
                 )}
               </div>
-              <VirtualMachinesPagination data={{ ...data, page: query.page }} onPageChange={(page) => { updateQuery({ page }) }} onPageSizeChange={handlePageSizeChange} />
+              <DataTablePagination
+                page={query.page}
+                pageSize={data.pageSize}
+                total={data.total}
+                onPageChange={(page) => { updateQuery({ page }) }}
+                onPageSizeChange={(pageSize) => { handlePageSizeChange(pageSize as VirtualMachinePageSize) }}
+              />
             </section>
           </div>
         </Card>

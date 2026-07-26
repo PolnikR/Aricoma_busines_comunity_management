@@ -1,6 +1,6 @@
 import type { ChangeEvent } from 'react'
 import { Button } from '@/shared/components/button/Button'
-import { Input, Select } from '@/shared/components/form/FormControls'
+import { CheckboxField, Input, Select } from '@/shared/components/form/FormControls'
 import { FilterTabs } from '@/shared/components/filters/FilterTabs'
 import { GridIcon, LayersIcon, SearchIcon } from '@/shared/icons/Icons'
 import type {
@@ -67,17 +67,14 @@ export function InfrastructureTopologyToolbar({
           }}
         />
 
-        <label className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#cfdaea] bg-white px-3 text-xs font-medium text-[#52627a] shadow-sm">
-          <input
-            type="checkbox"
-            className="size-4 accent-[#1268f3]"
-            checked={filters.showDatastores}
-            onChange={(event) => {
-              onFiltersChange({ ...filters, showDatastores: event.target.checked })
-            }}
-          />
-          Datastores
-        </label>
+        <CheckboxField
+          label="Datastores"
+          variant="bordered"
+          checked={filters.showDatastores}
+          onChange={(event) => {
+            onFiltersChange({ ...filters, showDatastores: event.target.checked })
+          }}
+        />
 
         <Button
           size="sm"

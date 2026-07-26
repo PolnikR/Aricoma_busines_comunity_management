@@ -15,29 +15,38 @@ export interface ColumnDef<T> {
 interface DataTableProps<T> {
   columns: ColumnDef<T>[]
   rows: T[]
-  rowKey: (row: T) => string
+  rowKey: (row: T, index: number) => string
+  rowSelectionKey?: (row: T) => string
+  rowAriaLabel?: (row: T) => string
   density?: TableDensity
   onRowClick?: (row: T) => void
   selectedRowKey?: string | null
   minWidthClassName?: string
   emptyContent?: ReactNode
   ariaLabel?: string
+  headerCellClassName?: string
+  cellClassName?: string
 }
 
 export function DataTable<T>({
   columns,
   rows,
   rowKey,
+  rowSelectionKey,
+  rowAriaLabel,
   density = 'compact',
   onRowClick,
   selectedRowKey = null,
   minWidthClassName = 'min-w-full',
   emptyContent,
   ariaLabel = 'Data table',
+  headerCellClassName,
+  cellClassName,
 }: DataTableProps<T>) {
   const visibleColumns = columns.filter((column) => !(density === 'compact' && column.hideInCompact))
   const rowPad = density === 'compact' ? 'py-1.5' : 'py-2.5'
-  const headerCell = 'whitespace-nowrap px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]'
+  const headerCell = headerCellClassName ?? 'whitespace-nowrap px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]'
+  const bodyCell = cellClassName ?? `px-4 ${rowPad} text-[13px] text-[#3b4763] align-middle`
   const isInteractive = Boolean(onRowClick)
 
   return (
@@ -54,14 +63,16 @@ export function DataTable<T>({
         </TableHeader>
         <TableBody className="divide-y divide-[#edf2f7]">
           {rows.length > 0 ? (
-            rows.map((row) => {
-              const key = rowKey(row)
-              const isSelected = selectedRowKey === key
+            rows.map((row, index) => {
+              const key = rowKey(row, index)
+              const selectionKey = rowSelectionKey?.(row) ?? key
+              const isSelected = selectedRowKey === selectionKey
               return (
                 <TableRow
                   key={key}
                   className={`outline-none transition-colors ${isInteractive ? 'cursor-pointer focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1596dd]' : ''} ${isSelected ? 'bg-[#e8f4fd] shadow-[inset_3px_0_0_#0d91d7]' : 'bg-white hover:bg-[#f3f8fe]'}`}
                   tabIndex={isInteractive ? 0 : undefined}
+                  aria-label={rowAriaLabel?.(row)}
                   aria-selected={isInteractive ? isSelected : undefined}
                   onClick={isInteractive ? () => { onRowClick?.(row) } : undefined}
                   onKeyDown={isInteractive ? (event) => {
@@ -74,7 +85,7 @@ export function DataTable<T>({
                   {visibleColumns.map((column) => (
                     <TableCell
                       key={column.id}
-                      className={`px-4 ${rowPad} text-[13px] text-[#3b4763] align-middle ${column.align === 'right' ? 'text-right tabular-nums' : ''} ${column.cellClassName ?? ''}`}
+                      className={`${bodyCell} ${column.align === 'right' ? 'text-right tabular-nums' : ''} ${column.cellClassName ?? ''}`}
                     >
                       {column.cell(row)}
                     </TableCell>

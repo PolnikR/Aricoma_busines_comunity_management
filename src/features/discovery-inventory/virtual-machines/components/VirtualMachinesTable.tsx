@@ -1,9 +1,9 @@
-import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
-import { StateCell } from '@/shared/components/data-table'
+import { DataTable, StateCell } from '@/shared/components/data-table'
+import type { ColumnDef, TableDensity } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { VirtualMachine } from '../types'
 
-export type TableDensity = 'comfortable' | 'compact'
+export type { TableDensity }
 
 interface VirtualMachinesTableProps {
   virtualMachines: VirtualMachine[]
@@ -15,6 +15,7 @@ interface VirtualMachinesTableProps {
 function powerState(value: string): { tone: 'on' | 'off'; label: string } {
   return value === 'poweredOn' ? { tone: 'on', label: 'On' } : { tone: 'off', label: 'Off' }
 }
+
 function connectionState(value: string): { tone: 'on' | 'warn'; label: string } {
   return value === 'connected' ? { tone: 'on', label: 'Connected' } : { tone: 'warn', label: value || 'Unknown' }
 }
@@ -22,96 +23,106 @@ function connectionState(value: string): { tone: 'on' | 'warn'; label: string } 
 export function VirtualMachinesTable({ virtualMachines, selectedId, density, onSelect }: VirtualMachinesTableProps) {
   const { t } = useTranslation()
   const showDetail = density === 'comfortable'
-  const rowPad = density === 'compact' ? 'py-1.5' : 'py-2.5'
-  const cell = `px-3 ${rowPad} text-[13px] text-[#3b4763] align-top`
-  const num = `${cell} text-right tabular-nums`
-  const headerCell = 'whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]'
-  const headerNum = `${headerCell} text-right`
   const sub = 'block max-w-45 truncate text-[11px] text-[#93a0b5]'
 
-  return (
-    <div className="custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label="Scrollable virtual machine table">
-      <Table className="min-w-260">
-        <TableHeader className="sticky top-0 z-10 border-b border-[#dfe9f3] bg-[#f6f9fc]">
-          <TableRow>
-            <TableCell isHeader className={headerCell}>{t('tables.vm.name')}</TableCell>
-            <TableCell isHeader className={headerCell}>{t('tables.vm.os')}</TableCell>
-            <TableCell isHeader className={headerCell}>{t('tables.vm.placement')}</TableCell>
-            <TableCell isHeader className={headerCell}>{t('tables.vm.provider')}</TableCell>
-            <TableCell isHeader className={headerCell}>{t('tables.vm.tags')}</TableCell>
-            <TableCell isHeader className={headerCell}>{t('tables.vm.compute')}</TableCell>
-            <TableCell isHeader className={headerCell}>{t('tables.vm.connection')}</TableCell>
-            <TableCell isHeader className={headerCell}>{t('tables.vm.power')}</TableCell>
-            <TableCell isHeader className={headerNum}>{t('tables.vm.snapshots')}</TableCell>
-          </TableRow>
-        </TableHeader>
-        <TableBody className="divide-y divide-[#edf2f7]">
-          {virtualMachines.map((vm, index) => (
-            <TableRow
-              key={`${vm.id}-${String(index)}`}
-              className={`cursor-pointer outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1596dd] ${selectedId === vm.id ? 'bg-[#e8f4fd] shadow-[inset_3px_0_0_#0d91d7]' : 'bg-white hover:bg-[#f3f8fe]'}`}
-              tabIndex={0}
-              aria-label={`Show details for ${vm.name}`}
-              aria-selected={selectedId === vm.id}
-              onClick={() => { onSelect(vm) }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  onSelect(vm)
-                }
-              }}
-            >
-              <TableCell className={`px-3 ${rowPad} align-top`}>
-                <span className="block max-w-65 truncate text-[13px] font-semibold text-[#17233d]" title={vm.name}>{vm.name}</span>
-                {showDetail ? (
-                  <span className="mt-0.5 block max-w-65 truncate font-mono text-[11px] text-[#93a0b5]" title={`${vm.hostname} / ${vm.ipAddress}`}>
-                    {vm.ipAddress || vm.hostname || '-'}
-                  </span>
-                ) : null}
-              </TableCell>
-              <TableCell className={cell}><span className="block max-w-55 truncate" title={vm.guestOs}>{vm.guestOs || '-'}</span></TableCell>
-              <TableCell className={cell}>
-                <div className="flex flex-col gap-0.5">
-                  <span className="block max-w-45 truncate" title={vm.cluster}>{vm.cluster || '-'}</span>
-                  {showDetail ? (
-                    <>
-                      <span className={sub} title={vm.host}>{vm.host || '-'}</span>
-                      <span className={`${sub} font-mono`} title={vm.datastore}>{vm.datastore || '-'}</span>
-                      <span className={sub} title={vm.folder}>{vm.folder || '-'}</span>
-                    </>
-                  ) : null}
-                </div>
-              </TableCell>
-              <TableCell className={cell}>
-                <span className="block truncate" title={vm.providerType === '-' && vm.providerId === '-' ? '-' : `${vm.providerType}-${vm.providerId}`}>
-                  {vm.providerType === '-' && vm.providerId === '-' ? '-' : `${vm.providerType}-${vm.providerId}`}
-                </span>
-              </TableCell>
-              <TableCell className={cell}>
-                {vm.tags.length > 0 ? (
-                  <span className="flex flex-wrap gap-1">
-                    {vm.tags.slice(0, 3).map((tag) => (
-                      <span key={tag} className="rounded bg-[#e8f5ff] px-1.5 py-0.5 font-mono text-[10.5px] font-medium text-[#118ccc]">{tag}</span>
-                    ))}
-                    {vm.tags.length > 3 ? <span className="text-[11px] text-[#93a0b5]">+{vm.tags.length - 3}</span> : null}
-                  </span>
-                ) : (
-                  <span className="text-[#93a0b5]">-</span>
-                )}
-              </TableCell>
-              <TableCell className={cell}>
-                <div className="flex flex-col gap-0.5 tabular-nums">
-                  <span>{vm.vcpu} vCPU · {vm.memoryGb} GB</span>
-                  {showDetail ? <span className={sub}>{vm.diskCount} disks · {Math.round(vm.diskCapacityGb)} GB</span> : null}
-                </div>
-              </TableCell>
-              <TableCell className={cell}><StateCell {...connectionState(vm.connectionState)} title={vm.connectionState} /></TableCell>
-              <TableCell className={cell}><StateCell {...powerState(vm.powerState)} title={vm.powerState} /></TableCell>
-              <TableCell className={`${num} ${vm.snapshotCount === 0 ? 'text-[#93a0b5]' : ''}`}>{vm.snapshotCount}</TableCell>
-            </TableRow>
+  const columns: ColumnDef<VirtualMachine>[] = [
+    {
+      id: 'name',
+      header: t('tables.vm.name'),
+      cell: (vm) => (
+        <>
+          <span className="block max-w-65 truncate text-[13px] font-semibold text-[#17233d]" title={vm.name}>{vm.name}</span>
+          {showDetail ? (
+            <span className="mt-0.5 block max-w-65 truncate font-mono text-[11px] text-[#93a0b5]" title={`${vm.hostname} / ${vm.ipAddress}`}>
+              {vm.ipAddress || vm.hostname || '-'}
+            </span>
+          ) : null}
+        </>
+      ),
+    },
+    {
+      id: 'os',
+      header: t('tables.vm.os'),
+      cell: (vm) => <span className="block max-w-55 truncate" title={vm.guestOs}>{vm.guestOs || '-'}</span>,
+    },
+    {
+      id: 'placement',
+      header: t('tables.vm.placement'),
+      cell: (vm) => (
+        <div className="flex flex-col gap-0.5">
+          <span className="block max-w-45 truncate" title={vm.cluster}>{vm.cluster || '-'}</span>
+          {showDetail ? (
+            <>
+              <span className={sub} title={vm.host}>{vm.host || '-'}</span>
+              <span className={`${sub} font-mono`} title={vm.datastore}>{vm.datastore || '-'}</span>
+              <span className={sub} title={vm.folder}>{vm.folder || '-'}</span>
+            </>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      id: 'provider',
+      header: t('tables.vm.provider'),
+      cell: (vm) => {
+        const provider = vm.providerType === '-' && vm.providerId === '-' ? '-' : `${vm.providerType}-${vm.providerId}`
+        return <span className="block truncate" title={provider}>{provider}</span>
+      },
+    },
+    {
+      id: 'tags',
+      header: t('tables.vm.tags'),
+      cell: (vm) => vm.tags.length > 0 ? (
+        <span className="flex flex-wrap gap-1">
+          {vm.tags.slice(0, 3).map((tag) => (
+            <span key={tag} className="rounded bg-[#e8f5ff] px-1.5 py-0.5 font-mono text-[10.5px] font-medium text-[#118ccc]">{tag}</span>
           ))}
-        </TableBody>
-      </Table>
-    </div>
+          {vm.tags.length > 3 ? <span className="text-[11px] text-[#93a0b5]">+{vm.tags.length - 3}</span> : null}
+        </span>
+      ) : <span className="text-[#93a0b5]">-</span>,
+    },
+    {
+      id: 'compute',
+      header: t('tables.vm.compute'),
+      cell: (vm) => (
+        <div className="flex flex-col gap-0.5 tabular-nums">
+          <span>{vm.vcpu} vCPU · {vm.memoryGb} GB</span>
+          {showDetail ? <span className={sub}>{vm.diskCount} disks · {Math.round(vm.diskCapacityGb)} GB</span> : null}
+        </div>
+      ),
+    },
+    {
+      id: 'connection',
+      header: t('tables.vm.connection'),
+      cell: (vm) => <StateCell {...connectionState(vm.connectionState)} title={vm.connectionState} />,
+    },
+    {
+      id: 'power',
+      header: t('tables.vm.power'),
+      cell: (vm) => <StateCell {...powerState(vm.powerState)} title={vm.powerState} />,
+    },
+    {
+      id: 'snapshots',
+      header: t('tables.vm.snapshots'),
+      align: 'right',
+      cell: (vm) => <span className={vm.snapshotCount === 0 ? 'text-[#93a0b5]' : undefined}>{vm.snapshotCount}</span>,
+    },
+  ]
+
+  return (
+    <DataTable
+      columns={columns}
+      rows={virtualMachines}
+      rowKey={(vm, index) => `${vm.id}-${String(index)}`}
+      rowSelectionKey={(vm) => vm.id}
+      rowAriaLabel={(vm) => `Show details for ${vm.name}`}
+      density={density}
+      selectedRowKey={selectedId}
+      onRowClick={onSelect}
+      minWidthClassName="min-w-260"
+      ariaLabel="Scrollable virtual machine table"
+      headerCellClassName="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]"
+      cellClassName={`px-3 ${density === 'compact' ? 'py-1.5' : 'py-2.5'} text-[13px] text-[#3b4763] align-top`}
+    />
   )
 }

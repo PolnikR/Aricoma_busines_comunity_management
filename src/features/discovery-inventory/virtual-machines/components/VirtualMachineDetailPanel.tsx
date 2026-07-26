@@ -7,6 +7,7 @@ import { useVdisksByVm } from '../api/useVdisksByVm'
 import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
 import { DetailDrawer, DetailRow, DetailStat } from '@/shared/components/data-table'
+import { Tabs } from '@/shared/components/tabs/Tabs'
 
 function truncateFilePath(path: string): string {
   if (path.length <= 50) return path
@@ -58,37 +59,17 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
     >
       {virtualMachine ? (
         <>
-            <div className="border-b border-[#e3edf6]">
-              <div className="flex gap-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedTab('overview')
-                  }}
-                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${selectedTab === 'overview' ? 'border-b-2 border-[#0d91d7] text-[#0d91d7]' : 'text-[#71819a] hover:text-[#3b4763]'}`}
-                >
-                  {t('drawer.tabs.overview')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedTab('disks')
-                  }}
-                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${selectedTab === 'disks' ? 'border-b-2 border-[#0d91d7] text-[#0d91d7]' : 'text-[#71819a] hover:text-[#3b4763]'}`}
-                >
-                  {t('drawer.tabs.disks')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedTab('snapshots')
-                  }}
-                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${selectedTab === 'snapshots' ? 'border-b-2 border-[#0d91d7] text-[#0d91d7]' : 'text-[#71819a] hover:text-[#3b4763]'}`}
-                >
-                  {t('drawer.tabs.snapshots')}
-                </button>
-              </div>
-            </div>
+            <Tabs
+              items={[
+                { value: 'overview', label: t('drawer.tabs.overview') },
+                { value: 'disks', label: t('drawer.tabs.disks') },
+                { value: 'snapshots', label: t('drawer.tabs.snapshots') },
+              ]}
+              value={selectedTab}
+              onChange={setSelectedTab}
+              ariaLabel="Virtual machine detail sections"
+              className="[&>button]:flex-1"
+            />
 
             <div className="custom-scrollbar flex-1 overflow-y-auto">
               {selectedTab === 'overview' && (

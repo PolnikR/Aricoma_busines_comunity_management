@@ -5,6 +5,8 @@ import { Button } from '@/shared/components/button/Button'
 import { Card } from '@/shared/components/card/Card'
 import { Badge } from '@/shared/components/badge/Badge'
 import { PageHeader } from '@/shared/components/page/PageHeader'
+import { StatCard } from '@/shared/components/stat-card/StatCard'
+import { Tabs } from '@/shared/components/tabs/Tabs'
 import { LayersIcon, MonitoringIcon, PlugIcon, SettingsIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { ProviderConnectionsTable } from '../components/ProviderConnectionsTable'
@@ -23,21 +25,6 @@ interface MetricCardProps {
   value: ReactNode
   helper: string
   icon: ReactNode
-}
-
-function MetricCard({ label, value, helper, icon }: MetricCardProps) {
-  return (
-    <article className="flex min-h-20 items-center gap-3 rounded-[18px] border border-[#dfeaf5] bg-white p-3.5 shadow-[0_12px_28px_-24px_rgba(37,72,112,0.5)]">
-      <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#edf7ff] text-[#118ccc]">
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <strong className="block truncate text-lg font-semibold text-[#17233d]">{value}</strong>
-        <p className="text-sm font-medium text-[#52627b]">{label}</p>
-        <p className="truncate text-[11px] text-[#8a98ad]">{helper}</p>
-      </div>
-    </article>
-  )
 }
 
 export function ProviderDetailPage() {
@@ -113,24 +100,17 @@ export function ProviderDetailPage() {
       <div className="flex flex-1 flex-col gap-4 lg:min-h-0">
         <div className="grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {metricItems.map((metric) => (
-            <MetricCard key={metric.label} {...metric} />
+            <StatCard key={metric.label} {...metric} />
           ))}
         </div>
 
         <Card className="overflow-hidden p-0 sm:p-0">
-          <div className="flex gap-1 overflow-x-auto border-b border-[#e3edf6] px-3">
-            {TABS.map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => { setActiveTab(tab) }}
-                aria-current={activeTab === tab}
-                className={`whitespace-nowrap px-4 py-3.5 text-sm font-medium transition ${activeTab === tab ? 'border-b-2 border-[#0d91d7] text-[#0d91d7]' : 'border-b-2 border-transparent text-[#71819a] hover:text-[#17233d]'}`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            items={TABS.map((tab) => ({ value: tab, label: tab }))}
+            value={activeTab}
+            onChange={setActiveTab}
+            ariaLabel="Provider detail sections"
+          />
 
           <div className="p-5">
             {activeTab === 'Overview' && (

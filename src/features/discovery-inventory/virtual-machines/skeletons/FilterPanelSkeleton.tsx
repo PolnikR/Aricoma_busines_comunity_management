@@ -4,7 +4,7 @@ import { SkeletonBlock } from './SkeletonBlock'
 // are loading.
 export function FilterPanelSkeleton() {
   return (
-    <div className="space-y-4 px-6 py-4" aria-busy="true" aria-label="Loading filters">
+    <div className="space-y-4" aria-busy="true" aria-label="Loading filters">
       {Array.from({ length: 4 }).map((_, index) => (
         <div key={index} className="space-y-1.5">
           <SkeletonBlock className="h-3 w-24" />

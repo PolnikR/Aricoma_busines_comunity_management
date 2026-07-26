@@ -24,6 +24,11 @@ interface DataTableToolbarProps {
   activeFilterCount?: number
   onApplyFilters?: () => void
   onClearFilters?: () => void
+  onFilterOpen?: () => void
+  filterButtonLabel?: string
+  cancelLabel?: string
+  clearLabel?: string
+  applyLabel?: string
   density?: TableDensity
   onDensityChange?: (density: TableDensity) => void
 }
@@ -41,6 +46,11 @@ export function DataTableToolbar({
   activeFilterCount = 0,
   onApplyFilters,
   onClearFilters,
+  onFilterOpen,
+  filterButtonLabel = 'Filters',
+  cancelLabel = 'Cancel',
+  clearLabel = 'Clear all',
+  applyLabel = 'Apply',
   density,
   onDensityChange,
 }: DataTableToolbarProps) {
@@ -49,6 +59,11 @@ export function DataTableToolbar({
   const applyFilters = () => {
     onApplyFilters?.()
     setIsModalOpen(false)
+  }
+
+  const openFilters = () => {
+    onFilterOpen?.()
+    setIsModalOpen(true)
   }
 
   return (
@@ -85,8 +100,8 @@ export function DataTableToolbar({
           ) : null}
 
           {filterPanel ? (
-            <Button size="sm" variant="outline" startIcon={<FilterIcon className="size-4" />} onClick={() => { setIsModalOpen(true) }} aria-expanded={isModalOpen}>
-              Filters {activeFilterCount > 0 && <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#0d91d7] text-xs font-semibold text-white">{activeFilterCount}</span>}
+            <Button size="sm" variant="outline" startIcon={<FilterIcon className="size-4" />} onClick={openFilters} aria-expanded={isModalOpen}>
+              {filterButtonLabel} {activeFilterCount > 0 && <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#0d91d7] text-xs font-semibold text-white">{activeFilterCount}</span>}
             </Button>
           ) : null}
         </div>
@@ -101,9 +116,9 @@ export function DataTableToolbar({
             </div>
             <div className="space-y-4 px-6 py-4">{filterPanel}</div>
             <div className="flex gap-3 border-t border-[#e3edf6] px-6 py-4">
-              <Button size="sm" variant="ghost" onClick={() => { setIsModalOpen(false) }} className="flex-1">Cancel</Button>
-              <Button size="sm" variant="ghost" onClick={() => { onClearFilters?.() }} className="flex-1">Clear all</Button>
-              <Button size="sm" onClick={applyFilters} className="flex-1 bg-[#0d91d7] text-white">Apply</Button>
+              <Button size="sm" variant="ghost" onClick={() => { setIsModalOpen(false) }} className="flex-1">{cancelLabel}</Button>
+              <Button size="sm" variant="ghost" onClick={() => { onClearFilters?.() }} className="flex-1">{clearLabel}</Button>
+              <Button size="sm" onClick={applyFilters} className="flex-1">{applyLabel}</Button>
             </div>
           </div>
         </>
