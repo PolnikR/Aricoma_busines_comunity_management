@@ -1,103 +1,78 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
-import type { UseQueryResult } from '@tanstack/react-query'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { useDiscoveryInventory } from '@/features/discovery-inventory/api/useDiscoveryInventory'
 import { useVirtualMachinesUnified } from './useVirtualMachinesUnified'
-import * as vmApi from '@/features/discovery-inventory/virtual-machines/api/useAllVirtualMachines'
-import * as topologyApi from '@/features/discovery-inventory/infrastructure/api/useInfrastructureTopology'
-import type { AllVirtualMachinesData } from '@/features/discovery-inventory/virtual-machines/helpers/virtualMachinesApi'
-import type { InfrastructureTopology } from '@/features/discovery-inventory/infrastructure/model/topologyTypes'
+import type { DiscoveryInventory } from '@/features/discovery-inventory/model/discoveryTypes'
 
-describe('useVirtualMachinesUnified', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
+vi.mock('@/features/discovery-inventory/api/useDiscoveryInventory', () => ({
+  useDiscoveryInventory: vi.fn(),
+}))
 
-  it('should return combined VM data and topology', () => {
-    const mockVMs = [{ id: '1', name: 'VM1' }, { id: '2', name: 'VM2' }]
-    const mockTopology = { nodes: [], edges: [] }
+const inventory: DiscoveryInventory = {
+  reportedCount: 1,
+  virtualMachines: [{
+    id: 'vm-1',
+    name: 'application-01',
+    powerState: 'poweredOn',
+    connectionState: 'connected',
+    guestOs: 'Linux',
+    hostname: 'application-01',
+    ipAddress: '10.0.0.1',
+    vcpu: 2,
+    memoryGb: 4,
+    host: 'esx-01',
+    cluster: 'cluster-01',
+    primaryDatastore: 'datastore-01',
+    folder: 'Applications',
+    vmPath: '[datastore-01] application-01/application-01.vmx',
+    providerId: 'vcenter-01',
+    providerType: 'VMWARE',
+    disks: [],
+    snapshotCount: 0,
+    toolsStatus: 'toolsOk',
+    tags: [],
+  }],
+}
 
-    vi.spyOn(vmApi, 'useAllVirtualMachines').mockReturnValue({
-      data: mockVMs,
+beforeEach(() => {
+  vi.mocked(useDiscoveryInventory).mockReset()
+})
+
+describe('useVirtualMachinesUnified compatibility adapter', () => {
+  it('derives the VM list and topology from one inventory query', () => {
+    const refetch = vi.fn()
+    vi.mocked(useDiscoveryInventory).mockReturnValue({
+      data: inventory,
+      error: null,
       isLoading: false,
       isFetching: false,
-      error: null,
-      isError: false,
-      status: 'success',
-      fetchStatus: 'idle',
-      refetch: vi.fn(),
-    } as unknown as UseQueryResult<AllVirtualMachinesData>)
-
-    vi.spyOn(topologyApi, 'useInfrastructureTopology').mockReturnValue({
-      data: mockTopology,
-      isLoading: false,
-      isFetching: false,
-      error: null,
-      isError: false,
-      status: 'success',
-      fetchStatus: 'idle',
-      refetch: vi.fn(),
-    } as unknown as UseQueryResult<InfrastructureTopology>)
+      refetch,
+    } as unknown as ReturnType<typeof useDiscoveryInventory>)
 
     const { result } = renderHook(() => useVirtualMachinesUnified())
 
-    expect(result.current.vmList).toEqual(mockVMs)
-    expect(result.current.topology).toEqual(mockTopology)
-    expect(result.current.isLoading).toBe(false)
-    expect(result.current.isFetching).toBe(false)
-    expect(result.current.error).toBeNull()
+    expect(result.current.vmList?.virtualMachines[0]?.name).toBe('application-01')
+    expect(result.current.topology?.nodes.some((node) => node.kind === 'virtualMachine')).toBe(true)
+    result.current.refetch()
+    expect(refetch).toHaveBeenCalledOnce()
   })
 
-  it('should return loading state when either query is loading', () => {
-    vi.spyOn(vmApi, 'useAllVirtualMachines').mockReturnValue({
+  it('forwards loading and error state from the inventory query', () => {
+    const error = new Error('Inventory unavailable')
+    vi.mocked(useDiscoveryInventory).mockReturnValue({
       data: undefined,
+      error,
       isLoading: true,
-      error: null,
-      isError: false,
       isFetching: true,
-      status: 'pending',
-      fetchStatus: 'fetching',
-    } as unknown as UseQueryResult<AllVirtualMachinesData>)
-
-    vi.spyOn(topologyApi, 'useInfrastructureTopology').mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      error: null,
-      isError: false,
-      isFetching: false,
-      status: 'success',
-      fetchStatus: 'idle',
-    } as unknown as UseQueryResult<InfrastructureTopology>)
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useDiscoveryInventory>)
 
     const { result } = renderHook(() => useVirtualMachinesUnified())
 
+    expect(result.current.vmList).toBeUndefined()
+    expect(result.current.topology).toBeUndefined()
     expect(result.current.isLoading).toBe(true)
-  })
-
-  it('should return error when either query fails', () => {
-    const mockError = new Error('Failed to fetch VMs')
-
-    vi.spyOn(vmApi, 'useAllVirtualMachines').mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      error: mockError,
-      isError: true,
-      isFetching: false,
-      status: 'error',
-      fetchStatus: 'idle',
-    } as unknown as UseQueryResult<AllVirtualMachinesData>)
-
-    vi.spyOn(topologyApi, 'useInfrastructureTopology').mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      error: null,
-      isError: false,
-      isFetching: false,
-      status: 'success',
-      fetchStatus: 'idle',
-    } as unknown as UseQueryResult<InfrastructureTopology>)
-
-    const { result } = renderHook(() => useVirtualMachinesUnified())
-
-    expect(result.current.error).toEqual(mockError)
+    expect(result.current.isFetching).toBe(true)
+    expect(result.current.error).toBe(error)
   })
 })

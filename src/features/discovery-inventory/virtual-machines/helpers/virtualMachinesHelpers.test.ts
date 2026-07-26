@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
+import { fetchDiscoveryInventory } from '../../api/discoveryInventoryApi'
 import type { VirtualMachinesQuery } from '../types'
-import { applyFiltersAndPagination, fetchAllVirtualMachines } from './virtualMachinesApi'
+import { applyFiltersAndPagination } from './filterVirtualMachines'
+import { mapInventoryToVirtualMachines } from './mapInventoryToVirtualMachines'
 
 function createVirtualMachine(index: number) {
   const poweredOn = index % 2 === 0
@@ -52,7 +54,11 @@ function createQuery(overrides: Partial<VirtualMachinesQuery> = {}): VirtualMach
   }
 }
 
-describe('fetchAllVirtualMachines', () => {
+async function loadVirtualMachines() {
+  return mapInventoryToVirtualMachines(await fetchDiscoveryInventory())
+}
+
+describe('mapInventoryToVirtualMachines', () => {
   it('returns all virtual machines with metrics and filter options', async () => {
     const virtualMachines = Array.from({ length: 15 }, (_, index) => (
       createVirtualMachine(index + 1)
@@ -61,7 +67,7 @@ describe('fetchAllVirtualMachines', () => {
       new Response(JSON.stringify({ count: 15, vms: virtualMachines }), { status: 200 }),
     ))
 
-    const result = await fetchAllVirtualMachines()
+    const result = await loadVirtualMachines()
 
     expect(result.virtualMachines).toHaveLength(15)
     expect(result.metrics).toEqual({
@@ -83,7 +89,7 @@ describe('fetchAllVirtualMachines', () => {
       new Response(JSON.stringify({ count: 0, vms: [] }), { status: 200 }),
     ))
 
-    const result = await fetchAllVirtualMachines()
+    const result = await loadVirtualMachines()
 
     expect(result.virtualMachines).toHaveLength(0)
     expect(result.metrics.total).toBe(0)
@@ -101,7 +107,7 @@ describe('applyFiltersAndPagination', () => {
       new Response(JSON.stringify({ count: 11, vms: virtualMachines }), { status: 200 }),
     ))
 
-    const allData = await fetchAllVirtualMachines()
+    const allData = await loadVirtualMachines()
     const filtered = applyFiltersAndPagination(allData, createQuery({
       page: 2,
       pageSize: 10,
@@ -122,7 +128,7 @@ describe('applyFiltersAndPagination', () => {
       new Response(JSON.stringify({ count: 3, vms: virtualMachines }), { status: 200 }),
     ))
 
-    const allData = await fetchAllVirtualMachines()
+    const allData = await loadVirtualMachines()
     const filtered = applyFiltersAndPagination(allData, createQuery({
       search: 'application-02',
       page: 1,
@@ -139,7 +145,7 @@ describe('applyFiltersAndPagination', () => {
       new Response(JSON.stringify({ count: 3, vms: virtualMachines }), { status: 200 }),
     ))
 
-    const allData = await fetchAllVirtualMachines()
+    const allData = await loadVirtualMachines()
     const filtered = applyFiltersAndPagination(allData, createQuery({
       powerState: 'poweredOn',
       page: 1,
@@ -160,7 +166,7 @@ describe('applyFiltersAndPagination', () => {
       new Response(JSON.stringify({ count: 3, vms: virtualMachines }), { status: 200 }),
     ))
 
-    const allData = await fetchAllVirtualMachines()
+    const allData = await loadVirtualMachines()
     const filtered = applyFiltersAndPagination(allData, createQuery({
       cluster: 'cluster-01',
       page: 1,
@@ -179,7 +185,7 @@ describe('applyFiltersAndPagination', () => {
       new Response(JSON.stringify({ count: 5, vms: virtualMachines }), { status: 200 }),
     ))
 
-    const allData = await fetchAllVirtualMachines()
+    const allData = await loadVirtualMachines()
     const filtered = applyFiltersAndPagination(allData, createQuery({
       search: 'application-02',
       powerState: 'poweredOn',
@@ -200,7 +206,7 @@ describe('applyFiltersAndPagination', () => {
       new Response(JSON.stringify({ count: 25, vms: virtualMachines }), { status: 200 }),
     ))
 
-    const allData = await fetchAllVirtualMachines()
+    const allData = await loadVirtualMachines()
     const lastPage = applyFiltersAndPagination(allData, createQuery({
       page: 3,
       pageSize: 10,
@@ -219,7 +225,7 @@ describe('applyFiltersAndPagination', () => {
       new Response(JSON.stringify({ count: 5, vms: virtualMachines }), { status: 200 }),
     ))
 
-    const allData = await fetchAllVirtualMachines()
+    const allData = await loadVirtualMachines()
     const outOfRange = applyFiltersAndPagination(allData, createQuery({
       page: 999,
       pageSize: 10,

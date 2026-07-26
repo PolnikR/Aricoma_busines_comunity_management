@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchProviders } from '@/features/api/providersApi'
-
-export const providersQueryKey = ['providers'] as const
+import { fetchProviders } from './providersApi'
+import { providerKeys } from './providerQueryKeys'
 
 export function useProviders() {
   return useQuery({
-    queryKey: providersQueryKey,
+    queryKey: providerKeys.list(),
     queryFn: fetchProviders,
     staleTime: 1 * 60 * 1000,
     refetchOnWindowFocus: false,

@@ -1,7 +1,7 @@
 import type { ChangeEvent } from 'react'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
-import { PROVIDER_TYPES } from '@/features/api/providersApi'
+import { PROVIDER_TYPES } from '../model/providerTypes'
 
 export interface ProviderCreateFormData {
   id: string

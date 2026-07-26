@@ -1,15 +1,22 @@
+import { useMemo } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useVirtualMachinesUnified } from '@/features/hooks/useVirtualMachinesUnified'
+import { useDiscoveryInventory } from '@/features/discovery-inventory/api/useDiscoveryInventory'
+import { mapInventoryToTopology } from '../helpers/mapInventoryToTopology'
 import { InfrastructureTopologySkeleton } from '../components/InfrastructureTopologySkeleton'
 import { InfrastructureTopologyWorkspace } from '../components/InfrastructureTopologyWorkspace'
 
 export function InfrastructurePage() {
   const { t } = useTranslation()
-  const { topology: data, error, isLoading: isPending, isFetching, refetch } = useVirtualMachinesUnified()
+  const { data: inventory, error, isLoading: isPending, isFetching, refetch } = useDiscoveryInventory()
+  const data = useMemo(
+    () => inventory ? mapInventoryToTopology(inventory) : null,
+    [inventory],
+  )
+  const handleRefetch = () => { void refetch() }
 
   if (isPending) {
     return (
@@ -40,7 +47,7 @@ export function InfrastructurePage() {
           retryLabel={t('pages.infrastructure.error.retryButton')}
           variant="full"
           isRetrying={isFetching}
-          onRetry={refetch}
+          onRetry={handleRefetch}
         />
       </>
     )
@@ -57,7 +64,7 @@ export function InfrastructurePage() {
             size="sm"
             variant="outline"
             disabled={isFetching}
-            onClick={refetch}
+            onClick={handleRefetch}
           >
             {isFetching ? t('buttons.refreshing') : t('buttons.refreshInventory')}
           </Button>
@@ -70,7 +77,7 @@ export function InfrastructurePage() {
           title={t('pages.infrastructure.latestRequestFailed')}
           description={t('pages.infrastructure.showingPrevious')}
           isRetrying={isFetching}
-          onRetry={refetch}
+          onRetry={handleRefetch}
         />
       ) : null}
 

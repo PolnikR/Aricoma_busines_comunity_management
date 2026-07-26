@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { deleteProvider, fetchProviders, submitProvider } from '@/features/api/providersApi'
-import type { ProviderRecord } from '@/features/api/providersApi'
+import { deleteProvider, fetchProviders, submitProvider } from './providersApi'
+import type { ProviderRecord } from '../model/providerTypes'
 
 const providerA: ProviderRecord = {
   id: 'vmware-vcenter-01',

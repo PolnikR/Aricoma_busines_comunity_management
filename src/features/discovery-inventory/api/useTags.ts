@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchTags } from '../../api/tagsApi'
+import { discoveryInventoryKeys } from './discoveryInventoryQueryKeys'
+import { fetchTags } from './tagsApi'
 
 export function useTags() {
   return useQuery({
-    queryKey: ['virtual-machines-tags'],
+    queryKey: discoveryInventoryKeys.tags(),
     queryFn: fetchTags,
     staleTime: 5 * 60 * 1000,
   })

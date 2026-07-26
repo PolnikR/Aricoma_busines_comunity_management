@@ -16,8 +16,8 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '../api/useProviders'
 import { useDeleteProvider } from '../api/useDeleteProvider'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
-import { providerTypeLabel } from '@/features/api/providersApi'
-import type { ProviderRecord } from '@/features/api/providersApi'
+import { providerTypeLabel } from '../helpers/providerTypeLabel'
+import type { ProviderRecord } from '../model/providerTypes'
 
 function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<ProviderRecord>[] {
   return [

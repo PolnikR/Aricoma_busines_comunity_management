@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { submitProvider } from '@/features/api/providersApi'
-import { providersQueryKey } from './useProviders'
-import type { ProviderRecord } from '@/features/api/providersApi'
+import { submitProvider } from './providersApi'
+import { providerKeys } from './providerQueryKeys'
+import type { ProviderRecord } from '../model/providerTypes'
 
 interface UpsertProviderVars {
   provider: ProviderRecord
@@ -17,7 +17,7 @@ export function useUpsertProvider() {
     mutationFn: ({ provider }: UpsertProviderVars) => submitProvider(provider),
     onSuccess: (_data, { provider, existingProviders }) => {
       const others = existingProviders.filter((entry) => entry.id !== provider.id)
-      queryClient.setQueryData(providersQueryKey, [...others, provider])
+      queryClient.setQueryData(providerKeys.list(), [...others, provider])
     },
   })
 }

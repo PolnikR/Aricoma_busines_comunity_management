@@ -3,7 +3,7 @@ import type {
   DiscoveredVirtualDisk,
   DiscoveredVirtualMachine,
   DiscoveryInventory,
-} from '@/features/discovery-inventory/model/discoveryTypes'
+} from '../model/discoveryTypes'
 
 const DISCOVERY_INVENTORY_URL = '/api/vms'
 const DISCOVERY_INVENTORY_BY_TAG_URL = '/api/vms_by_tag'

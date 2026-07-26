@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvidersCatalogueTable } from './ProvidersCatalogueTable'
-import type { ProviderRecord } from '@/features/api/providersApi'
+import type { ProviderRecord } from '../model/providerTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test/mockUseTranslation'))
 

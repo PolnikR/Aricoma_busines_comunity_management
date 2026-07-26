@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchDiscoveryInventory } from '@/features/api/discoveryInventoryApi'
+import { fetchDiscoveryInventory } from './discoveryInventoryApi'
 
 const validPayload = {
   count: 1,

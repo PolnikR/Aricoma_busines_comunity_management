@@ -1,9 +1,9 @@
-import { useAllVirtualMachines } from '@/features/discovery-inventory/virtual-machines/api/useAllVirtualMachines'
-import { useInfrastructureTopology } from '@/features/discovery-inventory/infrastructure/api/useInfrastructureTopology'
-import type { AllVirtualMachinesData } from '@/features/discovery-inventory/virtual-machines/helpers/virtualMachinesApi'
+import { useMemo } from 'react'
+import { useDiscoveryInventory } from '@/features/discovery-inventory/api/useDiscoveryInventory'
+import { mapInventoryToTopology } from '@/features/discovery-inventory/infrastructure/helpers/mapInventoryToTopology'
+import { mapInventoryToVirtualMachines } from '@/features/discovery-inventory/virtual-machines/helpers/mapInventoryToVirtualMachines'
+import type { AllVirtualMachinesData } from '@/features/discovery-inventory/virtual-machines/helpers/mapInventoryToVirtualMachines'
 import type { InfrastructureTopology } from '@/features/discovery-inventory/infrastructure/model/topologyTypes'
-
-export const virtualMachinesUnifiedQueryKey = ['virtual-machines-unified'] as const
 
 interface UseVirtualMachinesUnifiedResult {
   vmList: AllVirtualMachinesData | undefined
@@ -23,24 +23,22 @@ interface UseVirtualMachinesUnifiedResult {
  * @returns {UseVirtualMachinesUnifiedResult} Combined VM data with list and topology
  */
 export function useVirtualMachinesUnified(providerId?: string, tag?: string): UseVirtualMachinesUnifiedResult {
-  const vmQuery = useAllVirtualMachines(providerId, tag)
-  const topologyQuery = useInfrastructureTopology()
-
-  const isLoading = vmQuery.isLoading || topologyQuery.isLoading
-  const isFetching = vmQuery.isFetching || topologyQuery.isFetching
-  const error = vmQuery.error ?? topologyQuery.error
-
-  const refetch = () => {
-    void vmQuery.refetch()
-    void topologyQuery.refetch()
-  }
+  const inventoryQuery = useDiscoveryInventory(providerId, tag)
+  const vmList = useMemo(
+    () => inventoryQuery.data ? mapInventoryToVirtualMachines(inventoryQuery.data) : undefined,
+    [inventoryQuery.data],
+  )
+  const topology = useMemo(
+    () => inventoryQuery.data ? mapInventoryToTopology(inventoryQuery.data) : undefined,
+    [inventoryQuery.data],
+  )
 
   return {
-    vmList: vmQuery.data,
-    topology: topologyQuery.data,
-    isLoading,
-    isFetching,
-    error: error,
-    refetch,
+    vmList,
+    topology,
+    isLoading: inventoryQuery.isLoading,
+    isFetching: inventoryQuery.isFetching,
+    error: inventoryQuery.error,
+    refetch: () => { void inventoryQuery.refetch() },
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { Card } from '@/shared/components/card/Card'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
@@ -7,10 +7,11 @@ import { PageHeader } from '@/shared/components/page/PageHeader'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { DataTablePagination } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useVirtualMachinesUnified } from '@/features/hooks/useVirtualMachinesUnified'
+import { useDiscoveryInventory } from '@/features/discovery-inventory/api/useDiscoveryInventory'
 import { useProviders } from '@/features/providers-connectors/providers/api/useProviders'
-import { applyFiltersAndPagination } from '../helpers/virtualMachinesApi'
-import { useTags } from '../api/useTags'
+import { useTags } from '../../api/useTags'
+import { applyFiltersAndPagination } from '../helpers/filterVirtualMachines'
+import { mapInventoryToVirtualMachines } from '../helpers/mapInventoryToVirtualMachines'
 import { VirtualMachineDetailPanel } from '../components/VirtualMachineDetailPanel'
 import { VirtualMachineMetrics } from '../components/VirtualMachineMetrics'
 import { VirtualMachinesTable, type TableDensity } from '../components/VirtualMachinesTable'
@@ -32,13 +33,18 @@ const defaultFilters: VirtualMachineFilters = {
 export function VirtualMachinesPage() {
   const { t } = useTranslation()
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
-  const { vmList: allData, error, isLoading: isPending, isFetching, refetch } = useVirtualMachinesUnified(query.providerId ?? undefined, query.tags[0])
+  const { data: inventory, error, isLoading: isPending, isFetching, refetch } = useDiscoveryInventory(query.providerId ?? undefined, query.tags[0])
   const { data: availableTags = [] } = useTags()
   const { data: providers = [], isLoading: providersLoading } = useProviders()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [density, setDensity] = useState<TableDensity>('compact')
+  const handleRefetch = () => { void refetch() }
 
+  const allData = useMemo(
+    () => inventory ? mapInventoryToVirtualMachines(inventory) : null,
+    [inventory],
+  )
   const data = allData ? applyFiltersAndPagination(allData, query) : null
 
   useEffect(() => {
@@ -88,7 +94,7 @@ export function VirtualMachinesPage() {
           retryLabel={t('pages.virtualMachines.error.retryButton')}
           variant="full"
           isRetrying={isFetching}
-          onRetry={refetch}
+          onRetry={handleRefetch}
         />
       </>
     )
@@ -103,7 +109,7 @@ export function VirtualMachinesPage() {
         title={t('pages.virtualMachines.title')}
         description={t('pages.virtualMachines.description')}
         isFetching={isFetching}
-        onRefresh={refetch}
+        onRefresh={handleRefetch}
       />
 
       <div className="flex flex-1 flex-col gap-4 lg:min-h-0">
@@ -114,7 +120,7 @@ export function VirtualMachinesPage() {
             title={t('pages.virtualMachines.error.latestFailed')}
             description={t('pages.virtualMachines.error.showingPrevious')}
             isRetrying={isFetching}
-            onRetry={refetch}
+            onRetry={handleRefetch}
           />
         ) : null}
 

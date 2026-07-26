@@ -1,6 +1,5 @@
-import { fetchDiscoveryInventory } from '@/features/api/discoveryInventoryApi'
-import type { DiscoveredVirtualMachine } from '../../model/discoveryTypes'
-import type { VirtualMachine, VirtualMachinesPageData, VirtualMachinesQuery } from '../types'
+import type { DiscoveredVirtualMachine, DiscoveryInventory } from '../../model/discoveryTypes'
+import type { VirtualMachine, VirtualMachinesPageData } from '../types'
 
 function mapVirtualMachine(vm: DiscoveredVirtualMachine): VirtualMachine {
   const diskCapacityGb = vm.disks.reduce((total, disk) => total + disk.capacityGb, 0)
@@ -31,13 +30,6 @@ function mapVirtualMachine(vm: DiscoveredVirtualMachine): VirtualMachine {
   }
 }
 
-function matchesSearch(vm: VirtualMachine, search: string) {
-  const value = search.trim().toLowerCase()
-  if (!value) return true
-
-  return [vm.name, vm.hostname, vm.ipAddress, vm.guestOs, vm.host].some((field) => field.toLowerCase().includes(value))
-}
-
 function getSortedValues(values: string[]) {
   return Array.from(new Set(values.filter(Boolean))).sort((first, second) => first.localeCompare(second))
 }
@@ -48,8 +40,7 @@ export interface AllVirtualMachinesData {
   filterOptions: VirtualMachinesPageData['filterOptions']
 }
 
-export async function fetchAllVirtualMachines(providerId?: string, tag?: string): Promise<AllVirtualMachinesData> {
-  const inventory = await fetchDiscoveryInventory(providerId, tag)
+export function mapInventoryToVirtualMachines(inventory: DiscoveryInventory): AllVirtualMachinesData {
   const virtualMachines = inventory.virtualMachines.map(mapVirtualMachine)
 
   return {
@@ -66,28 +57,5 @@ export async function fetchAllVirtualMachines(providerId?: string, tag?: string)
       powerStates: getSortedValues(virtualMachines.map((vm) => vm.powerState)),
       connectionStates: getSortedValues(virtualMachines.map((vm) => vm.connectionState)),
     },
-  }
-}
-
-export function applyFiltersAndPagination(data: AllVirtualMachinesData, query: VirtualMachinesQuery): VirtualMachinesPageData {
-  const filtered = data.virtualMachines.filter((vm) => (
-    matchesSearch(vm, query.search)
-    && (!query.powerState || vm.powerState === query.powerState)
-    && (!query.connectionState || vm.connectionState === query.connectionState)
-    && (!query.cluster || vm.cluster === query.cluster)
-    && (query.untagged ? vm.tags.length === 0 : (query.tags.length === 0 || query.tags.some((tag) => vm.tags.includes(tag))))
-  ))
-  const pageCount = Math.ceil(filtered.length / query.pageSize)
-  const page = pageCount > 0 ? Math.min(Math.max(query.page, 1), pageCount) : 1
-  const start = (page - 1) * query.pageSize
-
-  return {
-    items: filtered.slice(start, start + query.pageSize),
-    total: filtered.length,
-    page,
-    pageSize: query.pageSize,
-    pageCount,
-    metrics: data.metrics,
-    filterOptions: data.filterOptions,
   }
 }

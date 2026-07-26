@@ -3,8 +3,8 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useUpsertProvider } from './useUpsertProvider'
-import { providersQueryKey } from './useProviders'
-import type { ProviderRecord } from '@/features/api/providersApi'
+import { providerKeys } from './providerQueryKeys'
+import type { ProviderRecord } from '../model/providerTypes'
 
 const providerA: ProviderRecord = {
   id: 'vmware-vcenter-01',
@@ -50,7 +50,7 @@ describe('useUpsertProvider', () => {
 
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
     expect(submittedProvider(mockFetch)).toEqual(newProvider)
-    expect(queryClient.getQueryData(providersQueryKey)).toEqual([providerA, newProvider])
+    expect(queryClient.getQueryData(providerKeys.list())).toEqual([providerA, newProvider])
   })
 
   it('posts an edited provider and replaces it in the cache by id', async () => {
@@ -61,6 +61,6 @@ describe('useUpsertProvider', () => {
 
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
     expect(submittedProvider(mockFetch)).toEqual(edited)
-    expect(queryClient.getQueryData(providersQueryKey)).toEqual([edited])
+    expect(queryClient.getQueryData(providerKeys.list())).toEqual([edited])
   })
 })

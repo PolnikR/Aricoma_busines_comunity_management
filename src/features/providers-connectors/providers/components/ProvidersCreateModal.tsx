@@ -4,7 +4,7 @@ import { Modal } from '@/shared/components/modal/Modal'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useUpsertProvider } from '../api/useUpsertProvider'
 import { ProviderCreateForm } from './ProviderCreateForm'
-import type { ProviderRecord } from '@/features/api/providersApi'
+import type { ProviderRecord } from '../model/providerTypes'
 import type { ProviderCreateFormData } from './ProviderCreateForm'
 
 interface ProvidersCreateModalProps {

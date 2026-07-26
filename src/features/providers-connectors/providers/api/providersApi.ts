@@ -1,31 +1,9 @@
 import { z } from 'zod'
+import type { ProviderRecord } from '../model/providerTypes'
 
 const GET_PROVIDERS_URL = '/api/get_providers'
 const SUBMIT_PROVIDER_URL = '/api/submit_provider'
 const DELETE_PROVIDER_URL = '/api/delete_provider'
-
-// Canonical provider types from the backend.
-export const PROVIDER_TYPES = ['VMWARE', 'FLASHCOPY', 'IBM_POWER'] as const
-export type ProviderType = (typeof PROVIDER_TYPES)[number]
-
-const PROVIDER_TYPE_LABELS: Record<ProviderType, string> = {
-  VMWARE: 'VMware',
-  FLASHCOPY: 'FlashCopy',
-  IBM_POWER: 'IBM Power',
-}
-
-// Friendly label for a provider type; unknown values pass through unchanged.
-export function providerTypeLabel(type: string): string {
-  return type in PROVIDER_TYPE_LABELS ? PROVIDER_TYPE_LABELS[type as ProviderType] : type
-}
-
-export interface ProviderRecord {
-  id: string
-  name: string
-  description: string
-  type: string
-  ipAddress: string
-}
 
 const providerRecordSchema = z.object({
   id: z.string().catch(''),
