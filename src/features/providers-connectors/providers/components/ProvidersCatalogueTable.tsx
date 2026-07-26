@@ -18,36 +18,39 @@ import { ProvidersCreateModal } from './ProvidersCreateModal'
 import { providerTypeLabel } from '@/features/api/providersApi'
 import type { ProviderRecord } from '@/features/api/providersApi'
 
-const columns: ColumnDef<ProviderRecord>[] = [
-  {
-    id: 'name',
-    header: 'Provider',
-    cell: (provider) => (
-      <>
-        <span className="block font-semibold text-[#17233d]">{provider.name}</span>
-        <span className="mt-0.5 block font-mono text-[11px] text-[#93a0b5]">{provider.id}</span>
-      </>
-    ),
-  },
-  {
-    id: 'description',
-    header: 'Description',
-    cell: (provider) => <span className="block max-w-md truncate" title={provider.description}>{provider.description || '-'}</span>,
-  },
-  {
-    id: 'type',
-    header: 'Type',
-    cell: (provider) => <Badge color="info" size="sm">{provider.type ? providerTypeLabel(provider.type) : 'UNKNOWN'}</Badge>,
-  },
-  {
-    id: 'ipAddress',
-    header: 'IP address',
-    cell: (provider) => <span className="font-mono text-[12px] text-[#3b4763]">{provider.ipAddress || '-'}</span>,
-  },
-]
+function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<ProviderRecord>[] {
+  return [
+    {
+      id: 'name',
+      header: t('tables.provider.name'),
+      cell: (provider) => (
+        <>
+          <span className="block font-semibold text-[#17233d]">{provider.name}</span>
+          <span className="mt-0.5 block font-mono text-[11px] text-[#93a0b5]">{provider.id}</span>
+        </>
+      ),
+    },
+    {
+      id: 'description',
+      header: t('tables.provider.description'),
+      cell: (provider) => <span className="block max-w-md truncate" title={provider.description}>{provider.description || '-'}</span>,
+    },
+    {
+      id: 'type',
+      header: t('tables.provider.type'),
+      cell: (provider) => <Badge color="info" size="sm">{provider.type ? providerTypeLabel(provider.type) : 'UNKNOWN'}</Badge>,
+    },
+    {
+      id: 'ipAddress',
+      header: t('tables.provider.ip'),
+      cell: (provider) => <span className="font-mono text-[12px] text-[#3b4763]">{provider.ipAddress || '-'}</span>,
+    },
+  ]
+}
 
 export function ProvidersCatalogueTable() {
   const { t } = useTranslation()
+  const columns = getColumns(t)
   const { data: providers, isLoading, error } = useProviders()
   const deleteProvider = useDeleteProvider()
   const [typeFilter, setTypeFilter] = useState('')

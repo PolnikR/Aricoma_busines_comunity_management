@@ -1,4 +1,5 @@
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
+import { useTranslation } from '@/hooks/useTranslation'
 import type { VirtualMachine } from '../types'
 
 export type TableDensity = 'comfortable' | 'compact'
@@ -46,6 +47,7 @@ function StateCell({ value, resolve }: StateCellProps) {
 }
 
 export function VirtualMachinesTable({ virtualMachines, selectedId, density, onSelect }: VirtualMachinesTableProps) {
+  const { t } = useTranslation()
   const showDetail = density === 'comfortable'
   const rowPad = density === 'compact' ? 'py-1.5' : 'py-2.5'
   const cell = `px-3 ${rowPad} text-[13px] text-[#3b4763] align-top`
@@ -59,15 +61,15 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, density, onS
       <Table className="min-w-260">
         <TableHeader className="sticky top-0 z-10 border-b border-[#dfe9f3] bg-[#f6f9fc]">
           <TableRow>
-            <TableCell isHeader className={headerCell}>Virtual machine</TableCell>
-            <TableCell isHeader className={headerCell}>Operating system</TableCell>
-            <TableCell isHeader className={headerCell}>Placement</TableCell>
-            <TableCell isHeader className={headerCell}>Provider</TableCell>
-            <TableCell isHeader className={headerCell}>Tags</TableCell>
-            <TableCell isHeader className={headerCell}>Compute</TableCell>
-            <TableCell isHeader className={headerCell}>Connection</TableCell>
-            <TableCell isHeader className={headerCell}>Power</TableCell>
-            <TableCell isHeader className={headerNum}>Snapshots</TableCell>
+            <TableCell isHeader className={headerCell}>{t('tables.vm.name')}</TableCell>
+            <TableCell isHeader className={headerCell}>{t('tables.vm.os')}</TableCell>
+            <TableCell isHeader className={headerCell}>{t('tables.vm.placement')}</TableCell>
+            <TableCell isHeader className={headerCell}>{t('tables.vm.provider')}</TableCell>
+            <TableCell isHeader className={headerCell}>{t('tables.vm.tags')}</TableCell>
+            <TableCell isHeader className={headerCell}>{t('tables.vm.compute')}</TableCell>
+            <TableCell isHeader className={headerCell}>{t('tables.vm.connection')}</TableCell>
+            <TableCell isHeader className={headerCell}>{t('tables.vm.power')}</TableCell>
+            <TableCell isHeader className={headerNum}>{t('tables.vm.snapshots')}</TableCell>
           </TableRow>
         </TableHeader>
         <TableBody className="divide-y divide-[#edf2f7]">
