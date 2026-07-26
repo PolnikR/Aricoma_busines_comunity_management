@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Button } from '@/shared/components/button/Button'
 import { Field, Input } from '@/shared/components/form/FormControls'
 import { slugify } from '../utils/tierUtils'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
@@ -98,19 +99,22 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
           </Field>
 
           <div className="flex gap-2 pt-2">
-            <button
+            <Button
               onClick={handleCreate}
               disabled={!canCreate}
-              className="flex-1 px-3 py-1.5 bg-[#0d91d7] text-white text-sm font-semibold rounded-md hover:bg-[#0a7bc4] transition disabled:opacity-50 disabled:cursor-not-allowed"
+              size="sm"
+              className="flex-1"
             >
               Create
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleCancel}
-              className="flex-1 px-3 py-1.5 bg-[#f0f5fa] text-[#18253d] text-sm font-semibold rounded-md hover:bg-[#e3edf6] transition border border-[#d9e6f1]"
+              size="sm"
+              variant="secondary"
+              className="flex-1"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       </div>

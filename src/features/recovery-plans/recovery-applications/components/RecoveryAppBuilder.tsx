@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { Button } from '@/shared/components/button/Button'
 import { AppMetadataForm } from './AppMetadataForm'
 import { VMSidebar } from './VMSidebar'
 import { TierCanvas } from './TierCanvas'
@@ -149,13 +150,14 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
               }}
             />
           </div>
-          <button
+          <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="px-4 py-2 bg-[#0d91d7] text-white font-semibold rounded-md hover:bg-[#0a7ab5] disabled:bg-gray-400 transition-colors whitespace-nowrap"
+            size="sm"
+            className="whitespace-nowrap"
           >
             {isSaving ? t('messages.saving') : t('buttons.saveApplication')}
-          </button>
+          </Button>
         </div>
       </div>
 

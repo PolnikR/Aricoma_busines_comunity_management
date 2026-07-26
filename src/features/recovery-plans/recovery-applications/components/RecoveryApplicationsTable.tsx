@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
+import { Button } from '@/shared/components/button/Button'
 import { useTranslation } from '@/hooks/useTranslation'
 import {
   DataTable,
@@ -100,13 +101,13 @@ function JsonViewerModal({ isOpen, app, onClose }: JsonViewerModalProps) {
       size="lg"
       className="flex max-h-96 flex-col overflow-hidden"
       footer={
-          <button
-            type="button"
+          <Button
             onClick={onClose}
-            className="w-full px-4 py-2 bg-[#0d91d7] text-white text-sm font-semibold rounded-md hover:bg-[#0a7ab5] transition"
+            size="sm"
+            fullWidth
           >
             {t('buttons.close')}
-          </button>
+          </Button>
       }
     >
       <div className="flex-1 overflow-y-auto bg-[#f8fbfe] px-6 py-4">
@@ -133,16 +134,16 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
       id: 'json',
       header: 'JSON',
       cell: (app: RecoveryApplication) => (
-        <button
-          type="button"
-          className="px-3 py-1 bg-[#eef4f9] text-[#0d91d7] text-xs font-semibold rounded hover:bg-[#e3edf6] transition"
+        <Button
+          size="xs"
+          variant="soft"
           onClick={(e: React.MouseEvent) => {
             e.stopPropagation()
             setJsonViewId(app.id)
           }}
         >
           View
-        </button>
+        </Button>
       ),
     },
   ], [])
@@ -191,20 +192,21 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
         ariaLabel="Application detail"
         footer={selected ? (
           <>
-            <button
-              type="button"
+            <Button
               onClick={() => { onDelete?.(selected.id) }}
-              className="flex-1 rounded-lg border border-[#f0c3c3] px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+              size="sm"
+              variant="danger"
+              className="flex-1"
             >
               {t('buttons.delete')}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
               onClick={() => { onEdit?.(selected.id); setSelectedId(null) }}
-              className="flex-1 rounded-lg bg-[#0d91d7] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0a7bc4]"
+              size="sm"
+              className="flex-1"
             >
               Edit
-            </button>
+            </Button>
           </>
         ) : null}
       >

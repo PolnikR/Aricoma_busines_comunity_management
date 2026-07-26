@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { Button } from '@/shared/components/button/Button'
 import { Field, Input } from '@/shared/components/form/FormControls'
 import { slugify } from '../utils/tierUtils'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
@@ -180,18 +181,21 @@ export function TierCard({
           </Field>
 
           <div className="flex gap-2 pt-2">
-            <button
+            <Button
               onClick={handleConfirm}
-              className="flex-1 px-3 py-1.5 bg-[#0d91d7] text-white text-sm font-semibold rounded-md hover:bg-[#0a7bc4] transition"
+              size="sm"
+              className="flex-1"
             >
               {t('recovery.tier.confirm')}
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={onCancel}
-              className="flex-1 px-3 py-1.5 bg-white text-[#40516c] text-sm font-semibold rounded-md border border-[#cfdfef] shadow-sm hover:border-[#abd5f2] hover:bg-[#f5faff] transition"
+              size="sm"
+              variant="outline"
+              className="flex-1"
             >
               {t('recovery.tier.cancel')}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -247,24 +251,27 @@ export function TierCard({
       </div>
 
       <div className="px-4 py-3 border-t border-[#edf2f7] bg-[#fbfdff] flex gap-2">
-        <button
+        <Button
           onClick={() => {
             handleEditToggleClick(id)
           }}
-          className="flex-1 px-3 py-1.5 bg-[#0d91d7] text-white text-sm font-semibold rounded-md hover:bg-[#0a7ab5] transition"
+          size="sm"
+          className="flex-1"
         >
           {t('buttons.edit')}
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => {
             handleDeleteClick(id)
           }}
           disabled={!canDelete}
-          className="flex-1 px-3 py-1.5 bg-white text-[#40516c] text-sm font-semibold rounded-md border border-[#cfdfef] shadow-sm hover:border-[#abd5f2] hover:bg-[#f5faff] transition disabled:opacity-50 disabled:cursor-not-allowed"
+          size="sm"
+          variant="danger"
+          className="flex-1"
           title={!canDelete ? t('recovery.tier.validation.cannotDeleteLastTier') : t('recovery.tier.validation.deleteThisTier')}
         >
           {t('buttons.delete')}
-        </button>
+        </Button>
       </div>
     </div>
   )

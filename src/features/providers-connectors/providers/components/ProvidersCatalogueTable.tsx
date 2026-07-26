@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
+import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import {
   DataTable,
@@ -141,20 +142,21 @@ export function ProvidersCatalogueTable() {
         ariaLabel="Provider detail"
         footer={selected ? (
           <>
-            <button
-              type="button"
+            <Button
               onClick={() => { setDeleteTarget(selected) }}
-              className="flex-1 rounded-lg border border-[#f0c3c3] px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+              size="sm"
+              variant="danger"
+              className="flex-1"
             >
               {t('buttons.delete')}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
               onClick={() => { setEditing(selected); setSelectedId(null) }}
-              className="flex-1 rounded-lg bg-[#0d91d7] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0a7bc4]"
+              size="sm"
+              className="flex-1"
             >
               Edit
-            </button>
+            </Button>
           </>
         ) : null}
       >

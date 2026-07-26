@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Button } from '@/shared/components/button/Button'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useUpsertProvider } from '../api/useUpsertProvider'
@@ -91,24 +92,25 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
       title={isEdit ? 'Edit provider' : 'Create provider'}
       footer={
         <>
-          <button
-            type="button"
+          <Button
             onClick={onClose}
             disabled={upsert.isPending}
-            className="flex-1 rounded-lg border border-[#d7deea] px-4 py-2 text-sm font-semibold text-[#17233d] transition hover:bg-[#f1f5fa] disabled:cursor-not-allowed disabled:opacity-50"
+            size="sm"
+            variant="outline"
+            className="flex-1"
           >
             {t('buttons.cancel')}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             onClick={handleSubmit}
             disabled={upsert.isPending}
-            className="flex-1 rounded-lg bg-[#0d91d7] px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 hover:enabled:bg-[#0a7bc4]"
+            size="sm"
+            className="flex-1"
           >
             {upsert.isPending
               ? (isEdit ? 'Saving…' : 'Creating…')
               : (isEdit ? 'Edit provider' : 'Create provider')}
-          </button>
+          </Button>
         </>
       }
     >

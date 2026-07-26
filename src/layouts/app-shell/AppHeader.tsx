@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { Button } from '@/shared/components/button/Button'
 import { MenuIcon, SearchIcon } from '@/shared/icons/Icons'
 import { UserMenu } from '@/app/header/UserMenu'
 import { useSidebar } from './useSidebar'
@@ -32,14 +33,15 @@ export function AppHeader() {
     <header className="z-30 flex h-16 w-full shrink-0 border-b border-[#e8eef7] bg-white/95 backdrop-blur lg:h-[72px]">
       <div className="flex grow items-center justify-between px-4 sm:px-6 lg:px-7">
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-          <button
-            type="button"
-            className={`z-40 flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#dce7f4] text-[#66758f] shadow-sm transition hover:border-[#bcdcff] hover:bg-[#f2f8ff] hover:text-[#087fd1] lg:hidden ${isMobileOpen ? 'bg-[#edf7ff]' : ''}`}
+          <Button
+            size="icon"
+            variant="outline"
+            className={`z-40 shrink-0 lg:hidden ${isMobileOpen ? 'bg-[#edf7ff]' : ''}`}
             onClick={handleToggle}
             aria-label="Toggle sidebar"
           >
             <MenuIcon />
-          </button>
+          </Button>
 
           <div className="min-w-0 sm:hidden">
             <p className="text-sm font-semibold text-[#17233d]">{t('header.appName')}</p>

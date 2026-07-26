@@ -3,10 +3,11 @@ import { cn } from '@/shared/utils/cn'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode
-  size?: 'sm' | 'md' | 'icon'
-  variant?: 'primary' | 'outline' | 'ghost'
+  size?: 'xs' | 'sm' | 'md' | 'icon'
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'soft' | 'ghost'
   startIcon?: ReactNode
   endIcon?: ReactNode
+  fullWidth?: boolean
 }
 
 export function Button({
@@ -15,29 +16,35 @@ export function Button({
   variant = 'primary',
   startIcon,
   endIcon,
+  fullWidth = false,
   className,
   disabled,
   type = 'button',
   ...props
 }: ButtonProps) {
   const sizeClasses = {
-    sm: 'h-9 px-3 text-sm',
-    md: 'h-11 px-4 text-sm',
-    icon: 'size-10 p-0',
+    xs: 'h-7 rounded px-3 text-xs',
+    sm: 'h-9 rounded-lg px-3 text-sm',
+    md: 'h-11 rounded-lg px-4 text-sm',
+    icon: 'size-10 rounded-xl p-0',
   }
 
   const variantClasses = {
-    primary: 'bg-[#1268f3] text-white shadow-[0_10px_24px_-12px_rgba(18,104,243,0.9)] hover:bg-[#0b57da] disabled:bg-[#9cbcf2]',
+    primary: 'bg-[#0d91d7] text-white shadow-[0_10px_24px_-12px_rgba(13,145,215,0.9)] hover:bg-[#0a7bc4] disabled:bg-gray-400',
+    secondary: 'border border-[#d9e6f1] bg-[#f0f5fa] text-[#18253d] hover:bg-[#e3edf6]',
     outline: 'border border-[#cfdfef] bg-white text-[#40516c] shadow-sm hover:border-[#abd5f2] hover:bg-[#f5faff] hover:text-[#087fca]',
+    danger: 'border border-[#f0c3c3] bg-white text-red-600 hover:bg-red-50',
+    soft: 'bg-[#eef4f9] text-[#0d91d7] hover:bg-[#e3edf6]',
     ghost: 'bg-transparent text-[#66758f] hover:bg-[#eef7ff] hover:text-[#087fca]',
   }
 
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#1596dd]/15',
+        'inline-flex items-center justify-center gap-2 font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#1596dd]/15',
         sizeClasses[size],
         variantClasses[variant],
+        fullWidth ? 'w-full' : undefined,
         disabled ? 'cursor-not-allowed opacity-50' : undefined,
         className,
       )}
