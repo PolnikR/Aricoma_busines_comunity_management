@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface AppMetadataFormProps {
@@ -32,49 +33,40 @@ export function AppMetadataForm({ onMetadataChange, initialValues }: AppMetadata
 
   return (
     <form className="grid grid-cols-3 gap-4 items-end">
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-semibold uppercase text-[#7b8ca4] tracking-wider">
-          Application Name *
-        </label>
-        <input
+      <Field label="Application Name *" htmlFor="application-name">
+        <Input
+          id="application-name"
           type="text"
           value={name}
           onChange={e => { handleChange('name', e.target.value); }}
           placeholder="e.g., SampleAppRecovery2"
           required
-          className="px-3 py-2 border border-[#cfdaea] rounded-md text-sm focus:outline-none focus:border-blue-light-500"
         />
-      </div>
+      </Field>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-semibold uppercase text-[#7b8ca4] tracking-wider">
-          Description *
-        </label>
-        <input
+      <Field label="Description *" htmlFor="application-description">
+        <Input
+          id="application-description"
           type="text"
           value={description}
           onChange={e => { handleChange('description', e.target.value); }}
           placeholder="e.g., Recovery of FinanceTBApp2"
           required
-          className="px-3 py-2 border border-[#cfdaea] rounded-md text-sm focus:outline-none focus:border-blue-light-500"
         />
-      </div>
+      </Field>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-semibold uppercase text-[#7b8ca4] tracking-wider">
-          Environment *
-        </label>
-        <select
+      <Field label="Environment *" htmlFor="application-environment">
+        <Select
+          id="application-environment"
           value={environment}
           onChange={e => { handleChange('environment', e.target.value); }}
           required
-          className="px-3 py-2 border border-[#cfdaea] rounded-md text-sm focus:outline-none focus:border-blue-light-500"
         >
           <option value="dev">dev</option>
           <option value="staging">staging</option>
           <option value="prod">prod</option>
-        </select>
-      </div>
+        </Select>
+      </Field>
     </form>
   )
 }

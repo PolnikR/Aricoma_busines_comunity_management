@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { Field, Input } from '@/shared/components/form/FormControls'
 import { slugify } from '../utils/tierUtils'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
@@ -135,41 +136,39 @@ export function TierCard({
     return (
       <div className="bg-white border border-[#d9e6f1] rounded-lg p-4 shadow-sm">
         <div className="space-y-3">
-          <div>
-            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">{t('recovery.tier.form.id')}</label>
-            <input
+          <Field label={t('recovery.tier.form.id')} htmlFor={`tier-${id}-edit-id`}>
+            <Input
+              id={`tier-${id}-edit-id`}
               type="text"
               value={editForm.editId}
               onChange={e => {
                 setEditForm(prev => ({ ...prev, editId: e.target.value }))
               }}
-              className={`w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none ${
-                editForm.idError ? 'border-red-500' : 'border-[#cfdaea]'
-              }`}
+              size="sm"
+              invalid={Boolean(editForm.idError)}
               placeholder={t('recovery.tier.form.idPlaceholder')}
             />
             {editForm.idError && <p className="text-xs text-red-600 mt-1">{editForm.idError}</p>}
-          </div>
+          </Field>
 
-          <div>
-            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">{t('recovery.tier.form.name')}</label>
-            <input
+          <Field label={t('recovery.tier.form.name')} htmlFor={`tier-${id}-edit-name`}>
+            <Input
+              id={`tier-${id}-edit-name`}
               type="text"
               value={editForm.editName}
               onChange={e => {
                 handleNameChange(e.target.value)
               }}
-              className={`w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none ${
-                editForm.nameError ? 'border-red-500' : 'border-[#cfdaea]'
-              }`}
+              size="sm"
+              invalid={Boolean(editForm.nameError)}
               placeholder={t('recovery.tier.form.namePlaceholder')}
             />
             {editForm.nameError && <p className="text-xs text-red-600 mt-1">{editForm.nameError}</p>}
-          </div>
+          </Field>
 
-          <div>
-            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">{t('recovery.tier.form.description')}</label>
+          <Field label={t('recovery.tier.form.description')} htmlFor={`tier-${id}-edit-description`}>
             <textarea
+              id={`tier-${id}-edit-description`}
               value={editForm.editDescription}
               onChange={e => {
                 setEditForm(prev => ({ ...prev, editDescription: e.target.value }))
@@ -178,7 +177,7 @@ export function TierCard({
               rows={3}
               placeholder={t('recovery.tier.form.descriptionPlaceholder')}
             />
-          </div>
+          </Field>
 
           <div className="flex gap-2 pt-2">
             <button

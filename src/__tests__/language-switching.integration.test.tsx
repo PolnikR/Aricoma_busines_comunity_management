@@ -45,9 +45,9 @@ describe('Language Switching Integration', () => {
     await user.click(toggleButton)
 
     // Verify language options are visible
-    expect(screen.getByText('English')).toBeInTheDocument()
-    expect(screen.getByText('Slovak')).toBeInTheDocument()
-    expect(screen.getByText('Czech')).toBeInTheDocument()
+    expect(await screen.findByText('English')).toBeInTheDocument()
+    expect(await screen.findByText('Slovak')).toBeInTheDocument()
+    expect(await screen.findByText('Czech')).toBeInTheDocument()
   })
 
   it('renders all header labels with translations', () => {
@@ -73,7 +73,7 @@ describe('Language Switching Integration', () => {
     await user.click(button)
 
     // Click Slovak language option
-    const slovakButton = screen.getAllByText('Slovak').at(0)
+    const slovakButton = (await screen.findAllByText('Slovak')).at(0)
     if (!slovakButton) {
       throw new Error('Slovak language option was not rendered')
     }
@@ -149,8 +149,8 @@ describe('Language Switching Integration', () => {
     await user.click(button)
 
     // Settings and logout should be visible
-    expect(screen.getByText('Settings')).toBeInTheDocument()
-    expect(screen.getByText('Logout')).toBeInTheDocument()
+    expect(await screen.findByText('Settings')).toBeInTheDocument()
+    expect(await screen.findByText('Logout')).toBeInTheDocument()
   })
 
   it('closes dropdown when clicking outside', async () => {

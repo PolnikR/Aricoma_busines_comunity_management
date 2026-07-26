@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Field, Input } from '@/shared/components/form/FormControls'
 import { slugify } from '../utils/tierUtils'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
@@ -53,40 +54,39 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
     return (
       <div className="bg-white border border-[#d9e6f1] rounded-lg p-4 shadow-sm">
         <div className="space-y-3">
-          <div>
-            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">ID</label>
-            <input
+          <Field label="ID" htmlFor="add-tier-id">
+            <Input
+              id="add-tier-id"
               type="text"
               value={id}
               onChange={e => {
                 setId(e.target.value)
               }}
-              className={`w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none ${
-                !isValidId && id ? 'border-red-500' : 'border-[#cfdaea]'
-              }`}
+              size="sm"
+              invalid={Boolean(!isValidId && id)}
               placeholder="tier_id"
             />
             {!isValidId && id && (
               <p className="text-xs text-red-600 mt-1">ID already in use or invalid</p>
             )}
-          </div>
+          </Field>
 
-          <div>
-            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">Name *</label>
-            <input
+          <Field label="Name *" htmlFor="add-tier-name">
+            <Input
+              id="add-tier-name"
               type="text"
               value={name}
               onChange={e => {
                 handleNameChange(e.target.value)
               }}
-              className="w-full px-2 py-1.5 text-sm border border-[#cfdaea] rounded-md focus:outline-none"
+              size="sm"
               placeholder="Tier name"
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">Description</label>
+          <Field label="Description" htmlFor="add-tier-description">
             <textarea
+              id="add-tier-description"
               value={description}
               onChange={e => {
                 setDescription(e.target.value)
@@ -95,7 +95,7 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
               rows={3}
               placeholder="Optional description"
             />
-          </div>
+          </Field>
 
           <div className="flex gap-2 pt-2">
             <button

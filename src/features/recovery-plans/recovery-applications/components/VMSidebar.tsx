@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useVirtualMachinesUnified } from '@/features/hooks/useVirtualMachinesUnified'
+import { Input } from '@/shared/components/form/FormControls'
 
 interface VMSidebarProps {
   onVMSelect?: (vmName: string) => void
@@ -38,14 +39,15 @@ export function VMSidebar({ onVMSelect }: VMSidebarProps) {
         <h3 className="text-xs font-semibold uppercase text-[#7b8ca4] tracking-wider mb-2">
           {t('recovery.sidebar.availableVms')}
         </h3>
-        <input
+        <Input
           type="text"
           placeholder={t('recovery.sidebar.searchPlaceholder')}
           value={searchQuery}
           onChange={e => {
             setSearchQuery(e.target.value)
           }}
-          className="w-full px-2 py-1.5 text-xs border border-[#cfdaea] rounded-md focus:outline-none focus:border-blue-light-500"
+          size="sm"
+          className="text-xs"
         />
       </div>
 
