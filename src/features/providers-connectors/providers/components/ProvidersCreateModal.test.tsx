@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
 import type { ProviderRecord } from '@/features/api/providersApi'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test/mockUseTranslation'))
+
 const mockProviderA: ProviderRecord = {
   id: 'vmware-vcenter-01',
   name: 'Production vCenter',

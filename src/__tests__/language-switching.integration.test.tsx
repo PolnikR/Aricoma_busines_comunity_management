@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, it, expect } from 'vitest'
+import { beforeEach, describe, it, expect } from 'vitest'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { LanguageProvider } from '@/contexts/LanguageContext'
@@ -25,6 +25,10 @@ function TestApp({ children }: { children: React.ReactNode }) {
 }
 
 describe('Language Switching Integration', () => {
+  beforeEach(() => {
+    localStorage.setItem('app-language', 'en')
+  })
+
   it('changes language in header when UserMenu language button is clicked', async () => {
     const user = userEvent.setup()
     render(
@@ -41,12 +45,12 @@ describe('Language Switching Integration', () => {
     await user.click(toggleButton)
 
     // Verify language options are visible
-    expect(screen.getByText('Angličtina')).toBeInTheDocument()
-    expect(screen.getByText('Slovenčina')).toBeInTheDocument()
-    expect(screen.getByText('Čeština')).toBeInTheDocument()
+    expect(screen.getByText('English')).toBeInTheDocument()
+    expect(screen.getByText('Slovak')).toBeInTheDocument()
+    expect(screen.getByText('Czech')).toBeInTheDocument()
   })
 
-  it('renders all header labels with translations', async () => {
+  it('renders all header labels with translations', () => {
     render(
       <TestApp>
         <UserMenu userInitials="AB" userName="Test User" userTitle="Admin" />
@@ -69,19 +73,20 @@ describe('Language Switching Integration', () => {
     await user.click(button)
 
     // Click Slovak language option
-    const slovakButtons = screen.getAllByText('Slovenčina')
-    if (slovakButtons.length > 0) {
-      await user.click(slovakButtons[0]!)
-
-      // Verify localStorage was updated
-      await waitFor(() => {
-        const stored = localStorage.getItem('app-language')
-        expect(stored).toBe('sk')
-      })
+    const slovakButton = screen.getAllByText('Slovak').at(0)
+    if (!slovakButton) {
+      throw new Error('Slovak language option was not rendered')
     }
+    await user.click(slovakButton)
+
+    // Verify localStorage was updated
+    await waitFor(() => {
+      const stored = localStorage.getItem('app-language')
+      expect(stored).toBe('sk')
+    })
   })
 
-  it('applies translations to all rendered translation keys', async () => {
+  it('applies translations to all rendered translation keys', () => {
     render(
       <TestApp>
         <UserMenu />
@@ -102,7 +107,7 @@ describe('Language Switching Integration', () => {
     expect(screen.queryByText(/^buttons\./)).not.toBeInTheDocument()
   })
 
-  it('handles missing translation gracefully by falling back to key', async () => {
+  it('handles missing translation gracefully by falling back to key', () => {
     render(
       <TestApp>
         <UserMenu />
@@ -125,9 +130,11 @@ describe('Language Switching Integration', () => {
       </TestApp>
     )
 
-    // Should have initialized language (browser default or 'en')
-    const stored = localStorage.getItem('app-language')
-    expect(stored).toBeTruthy()
+    const button = screen.getByRole('button', { expanded: false })
+    await userEvent.setup().click(button)
+
+    // The jsdom browser language resolves to English when no preference is stored.
+    expect(await screen.findByText('English')).toBeInTheDocument()
   })
 
   it('renders settings and logout menu items when dropdown is open', async () => {
@@ -142,8 +149,8 @@ describe('Language Switching Integration', () => {
     await user.click(button)
 
     // Settings and logout should be visible
-    expect(screen.getByText('Nastavenia')).toBeInTheDocument()
-    expect(screen.getByText('Odhlásiť')).toBeInTheDocument()
+    expect(screen.getByText('Settings')).toBeInTheDocument()
+    expect(screen.getByText('Logout')).toBeInTheDocument()
   })
 
   it('closes dropdown when clicking outside', async () => {
@@ -161,15 +168,15 @@ describe('Language Switching Integration', () => {
     await user.click(button)
 
     // Verify dropdown is open
-    expect(screen.getByText('Nastavenia')).toBeInTheDocument()
+    expect(await screen.findByText('Settings')).toBeInTheDocument()
 
     // Click outside
-    const outside = screen.getByTestId('outside')!
+    const outside = screen.getByTestId('outside')
     await user.click(outside)
 
     // Dropdown should close
     await waitFor(() => {
-      expect(screen.queryByText('Nastavenia')).not.toBeInTheDocument()
+      expect(screen.queryByText('Settings')).not.toBeInTheDocument()
     })
   })
 })

@@ -4,6 +4,8 @@ import { VirtualMachinesToolbar } from './VirtualMachinesToolbar'
 import type { VirtualMachineFilterOptions, VirtualMachineFilters } from '../types'
 import type { ProviderRecord } from '@/features/api/providersApi'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test/mockUseTranslation'))
+
 const filters: VirtualMachineFilters = {
   search: '',
   powerState: '',

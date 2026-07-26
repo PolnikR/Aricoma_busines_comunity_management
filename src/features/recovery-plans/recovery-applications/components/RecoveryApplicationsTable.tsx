@@ -10,6 +10,7 @@ import {
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
+import { Modal } from '@/shared/components/modal/Modal'
 import type { RecoveryApplication } from '../model/recoveryApplicationTypes'
 
 interface RecoveryApplicationsTableProps {
@@ -87,29 +88,18 @@ interface JsonViewerModalProps {
   onClose: () => void
 }
 
-interface JsonViewerModalProps {
-  isOpen: boolean
-  app: RecoveryApplication | null
-  onClose: () => void
-}
-
 function JsonViewerModal({ isOpen, app, onClose }: JsonViewerModalProps) {
   const { t } = useTranslation()
   if (!isOpen || !app) return null
 
   return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 max-h-96 overflow-hidden rounded-2xl bg-white shadow-lg flex flex-col">
-        <div className="border-b border-[#e3edf6] px-6 py-4">
-          <h2 className="text-base font-semibold text-[#17233d]">{t('recovery.modal.jsonViewer.title')}</h2>
-        </div>
-        <div className="flex-1 overflow-y-auto bg-[#f8fbfe] px-6 py-4">
-          <pre className="text-xs font-mono text-[#3b4763] whitespace-pre-wrap break-word">
-            {JSON.stringify(app.data, null, 2)}
-          </pre>
-        </div>
-        <div className="border-t border-[#e3edf6] px-6 py-4">
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      title={t('recovery.modal.jsonViewer.title')}
+      size="lg"
+      className="flex max-h-96 flex-col overflow-hidden"
+      footer={
           <button
             type="button"
             onClick={onClose}
@@ -117,9 +107,14 @@ function JsonViewerModal({ isOpen, app, onClose }: JsonViewerModalProps) {
           >
             {t('buttons.close')}
           </button>
-        </div>
+      }
+    >
+      <div className="flex-1 overflow-y-auto bg-[#f8fbfe] px-6 py-4">
+        <pre className="text-xs font-mono text-[#3b4763] whitespace-pre-wrap break-word">
+          {JSON.stringify(app.data, null, 2)}
+        </pre>
       </div>
-    </>
+    </Modal>
   )
 }
 

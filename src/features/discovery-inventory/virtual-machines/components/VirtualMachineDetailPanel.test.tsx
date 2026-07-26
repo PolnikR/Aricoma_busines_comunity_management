@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
 import type { VirtualMachine } from '../types'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test/mockUseTranslation'))
+
 const vm = {
   name: 'app-server-01',
   hostname: 'app-server-01',

@@ -34,11 +34,11 @@ export function ProviderCreateForm({ data, errors, isSubmitting, idDisabled = fa
 
   return (
     <div className="space-y-4 px-6 py-4">
-      <Field label={t('pages.providers.form.idLabel')} htmlFor="create-id">
+      <Field label={t('forms.id')} htmlFor="create-id">
         <Input
           id="create-id"
           type="text"
-          placeholder="e.g., vmware-vcenter-01"
+          placeholder={t('forms.idExample')}
           value={data.id}
           onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('id', event.target.value) }}
           onKeyDown={handleKeyDown}

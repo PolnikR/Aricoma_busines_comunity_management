@@ -1,4 +1,5 @@
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
+import { StateCell } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { VirtualMachine } from '../types'
 
@@ -11,39 +12,11 @@ interface VirtualMachinesTableProps {
   onSelect: (virtualMachine: VirtualMachine) => void
 }
 
-type DotTone = 'on' | 'warn' | 'off'
-
-const dotColor: Record<DotTone, string> = {
-  on: 'bg-[#16a34a]',
-  warn: 'bg-[#d69326]',
-  off: 'bg-[#94a3b8]',
-}
-const textColor: Record<DotTone, string> = {
-  on: 'text-[#047857]',
-  warn: 'text-[#a16207]',
-  off: 'text-[#64748b]',
-}
-
-function powerState(value: string): { tone: DotTone; label: string } {
+function powerState(value: string): { tone: 'on' | 'off'; label: string } {
   return value === 'poweredOn' ? { tone: 'on', label: 'On' } : { tone: 'off', label: 'Off' }
 }
-function connectionState(value: string): { tone: DotTone; label: string } {
+function connectionState(value: string): { tone: 'on' | 'warn'; label: string } {
   return value === 'connected' ? { tone: 'on', label: 'Connected' } : { tone: 'warn', label: value || 'Unknown' }
-}
-
-interface StateCellProps {
-  value: string
-  resolve: (value: string) => { tone: DotTone; label: string }
-}
-
-function StateCell({ value, resolve }: StateCellProps) {
-  const { tone, label } = resolve(value)
-  return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${textColor[tone]}`} title={value}>
-      <span className={`size-2 shrink-0 rounded-full ${dotColor[tone]}`} />
-      {label}
-    </span>
-  )
 }
 
 export function VirtualMachinesTable({ virtualMachines, selectedId, density, onSelect }: VirtualMachinesTableProps) {
@@ -132,8 +105,8 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, density, onS
                   {showDetail ? <span className={sub}>{vm.diskCount} disks · {Math.round(vm.diskCapacityGb)} GB</span> : null}
                 </div>
               </TableCell>
-              <TableCell className={cell}><StateCell value={vm.connectionState} resolve={connectionState} /></TableCell>
-              <TableCell className={cell}><StateCell value={vm.powerState} resolve={powerState} /></TableCell>
+              <TableCell className={cell}><StateCell {...connectionState(vm.connectionState)} title={vm.connectionState} /></TableCell>
+              <TableCell className={cell}><StateCell {...powerState(vm.powerState)} title={vm.powerState} /></TableCell>
               <TableCell className={`${num} ${vm.snapshotCount === 0 ? 'text-[#93a0b5]' : ''}`}>{vm.snapshotCount}</TableCell>
             </TableRow>
           ))}

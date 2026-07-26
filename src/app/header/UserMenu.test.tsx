@@ -1,10 +1,14 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, it, expect } from 'vitest'
+import { beforeEach, describe, it, expect } from 'vitest'
 import { UserMenu } from './UserMenu'
 import { LanguageProvider } from '@/contexts/LanguageContext'
 
 describe('UserMenu', () => {
+  beforeEach(() => {
+    localStorage.setItem('app-language', 'en')
+  })
+
   it('renders user badge with initials', () => {
     render(
       <LanguageProvider>
@@ -28,15 +32,15 @@ describe('UserMenu', () => {
     const button = screen.getByRole('button', { expanded: false })
 
     // Initially dropdown should not be visible
-    expect(screen.queryByText('Nastavenia')).not.toBeInTheDocument()
+    expect(screen.queryByText('Settings')).not.toBeInTheDocument()
 
     // Click to open
     await user.click(button)
-    expect(screen.getByText('Nastavenia')).toBeInTheDocument()
+    expect(await screen.findByText('Settings')).toBeInTheDocument()
 
     // Click to close
     await user.click(button)
-    expect(screen.queryByText('Nastavenia')).not.toBeInTheDocument()
+    expect(screen.queryByText('Settings')).not.toBeInTheDocument()
   })
 
   it('displays language options', async () => {
@@ -51,9 +55,9 @@ describe('UserMenu', () => {
     await user.click(button)
 
     // Check all language options are present
-    expect(screen.getByText('Angličtina')).toBeInTheDocument()
-    expect(screen.getByText('Slovenčina')).toBeInTheDocument()
-    expect(screen.getByText('Čeština')).toBeInTheDocument()
+    expect(await screen.findByText('English')).toBeInTheDocument()
+    expect(screen.getByText('Slovak')).toBeInTheDocument()
+    expect(screen.getByText('Czech')).toBeInTheDocument()
   })
 
   it('closes dropdown after language selection', async () => {
@@ -68,11 +72,14 @@ describe('UserMenu', () => {
     await user.click(button)
 
     // Click a language button
-    const slovakButton = screen.getAllByText('Slovenčina')[0]!
+    const slovakButton = (await screen.findAllByText('Slovak')).at(0)
+    if (!slovakButton) {
+      throw new Error('Slovak language option was not rendered')
+    }
     await user.click(slovakButton)
 
     // Dropdown should close
-    expect(screen.queryByText('Nastavenia')).not.toBeInTheDocument()
+    expect(screen.queryByText('Settings')).not.toBeInTheDocument()
   })
 
   it('closes dropdown when clicking outside', async () => {
@@ -89,13 +96,13 @@ describe('UserMenu', () => {
     const button = screen.getByRole('button', { expanded: false })
     await user.click(button)
 
-    expect(screen.getByText('Nastavenia')).toBeInTheDocument()
+    expect(await screen.findByText('Settings')).toBeInTheDocument()
 
     // Click outside
-    const outside = screen.getByTestId('outside')!
+    const outside = screen.getByTestId('outside')
     await user.click(outside)
 
-    expect(screen.queryByText('Nastavenia')).not.toBeInTheDocument()
+    expect(screen.queryByText('Settings')).not.toBeInTheDocument()
   })
 
   it('renders settings and logout buttons', async () => {
@@ -109,8 +116,8 @@ describe('UserMenu', () => {
     const button = screen.getByRole('button', { expanded: false })
     await user.click(button)
 
-    expect(screen.getByText('Nastavenia')).toBeInTheDocument()
-    expect(screen.getByText('Odhlásiť')).toBeInTheDocument()
+    expect(await screen.findByText('Settings')).toBeInTheDocument()
+    expect(screen.getByText('Logout')).toBeInTheDocument()
   })
 
   it('uses default props when not provided', () => {

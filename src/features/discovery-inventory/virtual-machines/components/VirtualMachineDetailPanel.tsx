@@ -1,13 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { VirtualMachine } from '../types'
 import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
-import { useResizablePanel } from '@/shared/hooks/useResizablePanel'
 import { formatStartTime } from '@/shared/utils/dateFormat'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useVdisksByVm } from '../api/useVdisksByVm'
 import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
-import { DetailRow } from '@/shared/components/data-table'
+import { DetailDrawer, DetailRow, DetailStat } from '@/shared/components/data-table'
 
 function truncateFilePath(path: string): string {
   if (path.length <= 50) return path
@@ -29,61 +28,36 @@ interface VirtualMachineDetailPanelProps {
 export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: VirtualMachineDetailPanelProps) {
   const { t } = useTranslation()
   const [selectedTab, setSelectedTab] = useState<'overview' | 'disks' | 'snapshots'>('overview')
-  const { width, handleProps } = useResizablePanel({ open, defaultWidth: 420 })
   const { data: vdisks, isLoading: vdisksLoading } = useVdisksByVm(virtualMachine?.name ?? '', undefined)
 
   const headerCell = 'whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]'
   const cell = 'px-3 py-2.5 text-[13px] text-[#3b4763] align-top'
   const num = `${cell} text-right tabular-nums`
 
-  useEffect(() => {
-    if (!open) return
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => { window.removeEventListener('keydown', onKey) }
-  }, [open, onClose])
-
   return (
-    <>
-      <div
-        className={`fixed inset-0 z-40 bg-[#0f1932]/30 transition-opacity duration-200 ${open ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <aside
-        className={`fixed inset-y-0 right-0 z-50 flex flex-col border-l border-[#d7deea] bg-white shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)] transition-transform duration-200 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
-        style={{ width: `${String(width)}px`, maxWidth: '92vw' }}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Virtual machine detail"
-      >
-        <div
-          {...handleProps}
-          className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize bg-transparent transition hover:bg-[#0d91d7]/30 focus:bg-[#0d91d7]/40 focus:outline-none"
-        />
-        {virtualMachine ? (
-          <>
-            <div className="flex items-start justify-between gap-4 border-b border-[#dfe9f3] p-5">
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-gray-400">{t('pages.virtualMachines.detail.selected')}</p>
-                <h2 className="mt-1 truncate text-base font-semibold text-gray-900" title={virtualMachine.name}>{virtualMachine.name}</h2>
-                <p className="mt-1 truncate font-mono text-xs text-gray-500" title={`${virtualMachine.hostname} / ${virtualMachine.ipAddress}`}>{virtualMachine.hostname || '-'} / {virtualMachine.ipAddress || '-'}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <VirtualMachineStatusBadge value={virtualMachine.powerState} kind="power" />
-                  <VirtualMachineStatusBadge value={virtualMachine.connectionState} kind="connection" />
-                  <VirtualMachineStatusBadge value={virtualMachine.toolsStatus} kind="tools" />
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Close detail"
-                className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#d7deea] text-gray-500 transition hover:border-[#0d91d7] hover:text-[#118ccc]"
-              >
-                ✕
-              </button>
-            </div>
-
+    <DetailDrawer
+      open={open}
+      onClose={onClose}
+      resizable
+      eyebrow={t('pages.virtualMachines.detail.selected')}
+      title={virtualMachine?.name ?? ''}
+      subtitle={virtualMachine ? (
+        <span className="font-mono" title={`${virtualMachine.hostname} / ${virtualMachine.ipAddress}`}>
+          {virtualMachine.hostname || '-'} / {virtualMachine.ipAddress || '-'}
+        </span>
+      ) : null}
+      headerExtra={virtualMachine ? (
+        <>
+          <VirtualMachineStatusBadge value={virtualMachine.powerState} kind="power" />
+          <VirtualMachineStatusBadge value={virtualMachine.connectionState} kind="connection" />
+          <VirtualMachineStatusBadge value={virtualMachine.toolsStatus} kind="tools" />
+        </>
+      ) : null}
+      ariaLabel="Virtual machine detail"
+      bodyClassName="flex flex-col overflow-hidden"
+    >
+      {virtualMachine ? (
+        <>
             <div className="border-b border-[#e3edf6]">
               <div className="flex gap-0">
                 <button
@@ -120,20 +94,18 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
               {selectedTab === 'overview' && (
                 <>
                   <div className="grid grid-cols-2 border-b border-[#dfe9f3]">
-                    <div className="flex items-center gap-2 border-r border-[#dfe9f3] p-4">
-                      <CpuIcon className="size-5 shrink-0 text-brand-500" />
-                      <div className="flex items-baseline gap-1">
-                        <p className="text-lg font-semibold text-gray-900">{virtualMachine.vcpu}</p>
-                        <p className="text-xs text-gray-500">{t('pages.virtualMachines.detail.vcpu')}</p>
-                      </div>
+                    <div className="border-r border-[#dfe9f3]">
+                      <DetailStat
+                        icon={<CpuIcon className="size-5" />}
+                        value={virtualMachine.vcpu}
+                        label={t('pages.virtualMachines.detail.vcpu')}
+                      />
                     </div>
-                    <div className="flex items-center gap-2 p-4">
-                      <MemoryIcon className="size-5 shrink-0 text-brand-500" />
-                      <div className="flex items-baseline gap-1">
-                        <p className="text-lg font-semibold text-gray-900">{virtualMachine.memoryGb} GB</p>
-                        <p className="text-xs text-gray-500">{t('pages.virtualMachines.detail.memory')}</p>
-                      </div>
-                    </div>
+                    <DetailStat
+                      icon={<MemoryIcon className="size-5" />}
+                      value={`${String(virtualMachine.memoryGb)} GB`}
+                      label={t('pages.virtualMachines.detail.memory')}
+                    />
                   </div>
 
                   <div className="border-b border-[#dfe9f3] bg-[#f5f8fc] px-5 py-3">
@@ -258,9 +230,8 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                 </div>
               )}
             </div>
-          </>
-        ) : null}
-      </aside>
-    </>
+        </>
+      ) : null}
+    </DetailDrawer>
   )
 }

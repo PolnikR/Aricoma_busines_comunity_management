@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { useResizablePanel } from '@/shared/hooks/useResizablePanel'
+import { cn } from '@/shared/utils/cn'
 
 interface DetailDrawerProps {
   open: boolean
@@ -13,6 +14,7 @@ interface DetailDrawerProps {
   footer?: ReactNode
   resizable?: boolean
   ariaLabel?: string
+  bodyClassName?: string
 }
 
 // Right-hand slide-over for showing details of a selected row, lifted from the
@@ -20,7 +22,7 @@ interface DetailDrawerProps {
 // optionally a pinned footer. When `resizable` is set the panel can be dragged
 // wider/narrower for the current view only — it resets to the default width
 // whenever it closes.
-export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerExtra, children, footer, resizable = false, ariaLabel = 'Detail' }: DetailDrawerProps) {
+export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerExtra, children, footer, resizable = false, ariaLabel = 'Detail', bodyClassName }: DetailDrawerProps) {
   const { width, handleProps } = useResizablePanel({ open })
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
             ✕
           </button>
         </div>
-        <div className="custom-scrollbar flex-1 overflow-y-auto">{children}</div>
+        <div className={cn('custom-scrollbar flex-1', bodyClassName ?? 'overflow-y-auto')}>{children}</div>
         {footer ? <div className="flex gap-3 border-t border-[#dfe9f3] p-4">{footer}</div> : null}
       </aside>
     </>
