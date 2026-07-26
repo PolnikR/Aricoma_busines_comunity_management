@@ -415,5 +415,30 @@
   "common.error": "Chyba",
   "common.noResults": "Nenašli sa žiadne výsledky",
   "common.settings": "Nastavenia",
-  "common.logout": "Odhlásiť"
+  "common.logout": "Odhlásiť",
+
+  "recovery.sidebar.availableVms": "Dostupné VMs",
+  "recovery.sidebar.searchPlaceholder": "Hľadať VMs...",
+  "recovery.sidebar.loadingVms": "Načítavam VMs...",
+  "recovery.sidebar.noMatching": "Žiadne VMs sa nezhodujú s vašim hľadaním",
+  "recovery.sidebar.noVmsAvailable": "Žiadne VMs dostupné",
+
+  "recovery.tier.order": "Poradie",
+  "recovery.tier.dragVmsHere": "Pretiahnite VMs sem",
+  "recovery.tier.removeVm": "Odstrániť VM",
+  "recovery.tier.confirm": "Potvrdiť",
+  "recovery.tier.cancel": "Zrušiť",
+
+  "recovery.tier.form.id": "ID",
+  "recovery.tier.form.name": "Názov",
+  "recovery.tier.form.description": "Popis",
+  "recovery.tier.form.idPlaceholder": "tier_id",
+  "recovery.tier.form.namePlaceholder": "Názov vrstvy",
+  "recovery.tier.form.descriptionPlaceholder": "Voliteľný popis",
+
+  "recovery.tier.validation.nameRequired": "Názov je povinný",
+  "recovery.tier.validation.idRequired": "ID je povinné",
+  "recovery.tier.validation.idInUse": "ID sa už používa",
+  "recovery.tier.validation.cannotDeleteLastTier": "Nie je možné odstrániť poslednú vrstvu",
+  "recovery.tier.validation.deleteThisTier": "Odstrániť túto vrstvu"
 }

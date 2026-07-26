@@ -414,5 +414,30 @@
   "common.error": "Error",
   "common.noResults": "No results found",
   "common.settings": "Settings",
-  "common.logout": "Logout"
+  "common.logout": "Logout",
+
+  "recovery.sidebar.availableVms": "Available VMs",
+  "recovery.sidebar.searchPlaceholder": "Search VMs...",
+  "recovery.sidebar.loadingVms": "Loading VMs...",
+  "recovery.sidebar.noMatching": "No VMs match your search",
+  "recovery.sidebar.noVmsAvailable": "No VMs available",
+
+  "recovery.tier.order": "Order",
+  "recovery.tier.dragVmsHere": "Drag VMs here",
+  "recovery.tier.removeVm": "Remove VM",
+  "recovery.tier.confirm": "Confirm",
+  "recovery.tier.cancel": "Cancel",
+
+  "recovery.tier.form.id": "ID",
+  "recovery.tier.form.name": "Name",
+  "recovery.tier.form.description": "Description",
+  "recovery.tier.form.idPlaceholder": "tier_id",
+  "recovery.tier.form.namePlaceholder": "Tier name",
+  "recovery.tier.form.descriptionPlaceholder": "Optional description",
+
+  "recovery.tier.validation.nameRequired": "Name is required",
+  "recovery.tier.validation.idRequired": "ID is required",
+  "recovery.tier.validation.idInUse": "ID already in use",
+  "recovery.tier.validation.cannotDeleteLastTier": "Cannot delete the last tier",
+  "recovery.tier.validation.deleteThisTier": "Delete this tier"
 }

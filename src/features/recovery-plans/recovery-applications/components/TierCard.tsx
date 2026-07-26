@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { slugify } from '../utils/tierUtils'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
@@ -37,6 +38,7 @@ export function TierCard({
   onVMAdded,
   onVMRemoved,
 }: TierCardProps) {
+  const { t } = useTranslation()
   const [isDragOver, setIsDragOver] = useState(false)
   const [editForm, setEditForm] = useState<EditFormState>({
     editId: id,
@@ -105,15 +107,15 @@ export function TierCard({
     let newNameError = ''
 
     if (!editForm.editName.trim()) {
-      newNameError = 'Name is required'
+      newNameError = t('recovery.tier.validation.nameRequired')
       hasError = true
     }
 
     if (!editForm.editId.trim()) {
-      newIdError = 'ID is required'
+      newIdError = t('recovery.tier.validation.idRequired')
       hasError = true
     } else if (editForm.editId !== id && existingIds.includes(editForm.editId)) {
-      newIdError = 'ID already in use'
+      newIdError = t('recovery.tier.validation.idInUse')
       hasError = true
     }
 
@@ -134,7 +136,7 @@ export function TierCard({
       <div className="bg-white border border-[#d9e6f1] rounded-lg p-4 shadow-sm">
         <div className="space-y-3">
           <div>
-            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">ID</label>
+            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">{t('recovery.tier.form.id')}</label>
             <input
               type="text"
               value={editForm.editId}
@@ -144,13 +146,13 @@ export function TierCard({
               className={`w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none ${
                 editForm.idError ? 'border-red-500' : 'border-[#cfdaea]'
               }`}
-              placeholder="tier_id"
+              placeholder={t('recovery.tier.form.idPlaceholder')}
             />
             {editForm.idError && <p className="text-xs text-red-600 mt-1">{editForm.idError}</p>}
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">Name</label>
+            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">{t('recovery.tier.form.name')}</label>
             <input
               type="text"
               value={editForm.editName}
@@ -160,13 +162,13 @@ export function TierCard({
               className={`w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none ${
                 editForm.nameError ? 'border-red-500' : 'border-[#cfdaea]'
               }`}
-              placeholder="Tier name"
+              placeholder={t('recovery.tier.form.namePlaceholder')}
             />
             {editForm.nameError && <p className="text-xs text-red-600 mt-1">{editForm.nameError}</p>}
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">Description</label>
+            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">{t('recovery.tier.form.description')}</label>
             <textarea
               value={editForm.editDescription}
               onChange={e => {
@@ -174,7 +176,7 @@ export function TierCard({
               }}
               className="w-full px-2 py-1.5 text-sm border border-[#cfdaea] rounded-md focus:outline-none resize-none"
               rows={3}
-              placeholder="Optional description"
+              placeholder={t('recovery.tier.form.descriptionPlaceholder')}
             />
           </div>
 
@@ -183,13 +185,13 @@ export function TierCard({
               onClick={handleConfirm}
               className="flex-1 px-3 py-1.5 bg-[#0d91d7] text-white text-sm font-semibold rounded-md hover:bg-[#0a7bc4] transition"
             >
-              Confirm
+              {t('recovery.tier.confirm')}
             </button>
             <button
               onClick={onCancel}
               className="flex-1 px-3 py-1.5 bg-white text-[#40516c] text-sm font-semibold rounded-md border border-[#cfdfef] shadow-sm hover:border-[#abd5f2] hover:bg-[#f5faff] transition"
             >
-              Cancel
+              {t('recovery.tier.cancel')}
             </button>
           </div>
         </div>
@@ -206,7 +208,7 @@ export function TierCard({
         className="px-4 py-3 border-b border-[#edf2f7] bg-[#fbfdff] text-left hover:bg-[#f0f5fa] transition"
       >
         <div className="text-xs text-[#7b8ca4] font-semibold uppercase tracking-wider mb-1">
-          Order: <span className="font-bold">{tier.order}</span>
+          {t('recovery.tier.order')}: <span className="font-bold">{tier.order}</span>
         </div>
         <div className="text-sm font-semibold text-[#18253d] mb-1">{tier.name}</div>
         <div className="text-xs text-[#71819a]">{tier.description}</div>
@@ -222,7 +224,7 @@ export function TierCard({
       >
         {tier.vms.length === 0 ? (
           <div className="flex items-center justify-center h-full text-xs text-[#91a4bc]">
-            Drag VMs here
+            {t('recovery.tier.dragVmsHere')}
           </div>
         ) : (
           tier.vms.map(vm => (
@@ -236,7 +238,7 @@ export function TierCard({
                   handleVMRemoveClick(vm.name)
                 }}
                 className="text-[#91a4bc] hover:text-[#d4353d] opacity-0 group-hover:opacity-100 transition-opacity"
-                title="Remove VM"
+                title={t('recovery.tier.removeVm')}
               >
                 ✕
               </button>
@@ -252,7 +254,7 @@ export function TierCard({
           }}
           className="flex-1 px-3 py-1.5 bg-[#0d91d7] text-white text-sm font-semibold rounded-md hover:bg-[#0a7ab5] transition"
         >
-          Edit
+          {t('buttons.edit')}
         </button>
         <button
           onClick={() => {
@@ -260,9 +262,9 @@ export function TierCard({
           }}
           disabled={!canDelete}
           className="flex-1 px-3 py-1.5 bg-white text-[#40516c] text-sm font-semibold rounded-md border border-[#cfdfef] shadow-sm hover:border-[#abd5f2] hover:bg-[#f5faff] transition disabled:opacity-50 disabled:cursor-not-allowed"
-          title={!canDelete ? 'Cannot delete the last tier' : 'Delete this tier'}
+          title={!canDelete ? t('recovery.tier.validation.cannotDeleteLastTier') : t('recovery.tier.validation.deleteThisTier')}
         >
-          Delete
+          {t('buttons.delete')}
         </button>
       </div>
     </div>

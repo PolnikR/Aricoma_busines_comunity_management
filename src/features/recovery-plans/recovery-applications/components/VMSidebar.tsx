@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { useVirtualMachinesUnified } from '@/features/hooks/useVirtualMachinesUnified'
 
 interface VMSidebarProps {
@@ -6,6 +7,7 @@ interface VMSidebarProps {
 }
 
 export function VMSidebar({ onVMSelect }: VMSidebarProps) {
+  const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState('')
   const { topology, isLoading } = useVirtualMachinesUnified()
 
@@ -27,18 +29,18 @@ export function VMSidebar({ onVMSelect }: VMSidebarProps) {
   }, [availableVMs, searchQuery])
 
   if (isLoading) {
-    return <div className="p-4 text-sm text-gray-500">Loading VMs...</div>
+    return <div className="p-4 text-sm text-gray-500">{t('recovery.sidebar.loadingVms')}</div>
   }
 
   return (
     <div className="flex flex-col overflow-hidden bg-[#fbfdff]">
       <div className="p-3 border-b border-[#edf2f7] shrink-0">
         <h3 className="text-xs font-semibold uppercase text-[#7b8ca4] tracking-wider mb-2">
-          Available VMs
+          {t('recovery.sidebar.availableVms')}
         </h3>
         <input
           type="text"
-          placeholder="Search VMs..."
+          placeholder={t('recovery.sidebar.searchPlaceholder')}
           value={searchQuery}
           onChange={e => {
             setSearchQuery(e.target.value)
@@ -50,7 +52,7 @@ export function VMSidebar({ onVMSelect }: VMSidebarProps) {
       <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
         {filteredVMs.length === 0 ? (
           <div className="text-xs text-[#91a4bc] text-center py-4">
-            {searchQuery ? 'No VMs match your search' : 'No VMs available'}
+            {searchQuery ? t('recovery.sidebar.noMatching') : t('recovery.sidebar.noVmsAvailable')}
           </div>
         ) : (
           filteredVMs.map(vm => (
