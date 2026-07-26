@@ -48,11 +48,11 @@ export function ProviderCreateForm({ data, errors, isSubmitting, idDisabled = fa
         {errors.id ? <p className="mt-1 text-xs text-red-600">{errors.id}</p> : null}
       </Field>
 
-      <Field label="Provider name" htmlFor="create-name">
+      <Field label={t('forms.name')} htmlFor="create-name">
         <Input
           id="create-name"
           type="text"
-          placeholder="e.g., Production vCenter"
+          placeholder={t('forms.nameExample')}
           value={data.name}
           onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('name', event.target.value) }}
           onKeyDown={handleKeyDown}
@@ -62,11 +62,11 @@ export function ProviderCreateForm({ data, errors, isSubmitting, idDisabled = fa
         {errors.name ? <p className="mt-1 text-xs text-red-600">{errors.name}</p> : null}
       </Field>
 
-      <Field label="Description" htmlFor="create-description">
+      <Field label={t('forms.description')} htmlFor="create-description">
         <Input
           id="create-description"
           type="text"
-          placeholder="Brief description of the provider"
+          placeholder={t('forms.descriptionExample')}
           value={data.description}
           onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('description', event.target.value) }}
           onKeyDown={handleKeyDown}
@@ -76,7 +76,7 @@ export function ProviderCreateForm({ data, errors, isSubmitting, idDisabled = fa
         {errors.description ? <p className="mt-1 text-xs text-red-600">{errors.description}</p> : null}
       </Field>
 
-      <Field label="Type" htmlFor="create-type">
+      <Field label={t('forms.type')} htmlFor="create-type">
         <Select
           id="create-type"
           value={data.type}
@@ -84,17 +84,17 @@ export function ProviderCreateForm({ data, errors, isSubmitting, idDisabled = fa
           disabled={isSubmitting}
           aria-invalid={Boolean(errors.type)}
         >
-          <option value="">Select a type</option>
+          <option value="">{t('forms.typeSelect')}</option>
           {PROVIDER_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
         </Select>
         {errors.type ? <p className="mt-1 text-xs text-red-600">{errors.type}</p> : null}
       </Field>
 
-      <Field label="IP address" htmlFor="create-ipAddress">
+      <Field label={t('forms.ip')} htmlFor="create-ipAddress">
         <Input
           id="create-ipAddress"
           type="text"
-          placeholder="e.g., 10.99.99.40"
+          placeholder={t('forms.ipExample')}
           value={data.ipAddress}
           onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('ipAddress', event.target.value) }}
           onKeyDown={handleKeyDown}
@@ -104,12 +104,12 @@ export function ProviderCreateForm({ data, errors, isSubmitting, idDisabled = fa
         {errors.ipAddress ? <p className="mt-1 text-xs text-red-600">{errors.ipAddress}</p> : null}
       </Field>
 
-      <Field label="Credentials" htmlFor="create-credentials">
+      <Field label={t('forms.credentials')} htmlFor="create-credentials">
         <Select
           id="create-credentials"
           disabled={true}
         >
-          <option value="">Select credentials</option>
+          <option value="">{t('forms.credentialsSelect')}</option>
         </Select>
       </Field>
     </div>
