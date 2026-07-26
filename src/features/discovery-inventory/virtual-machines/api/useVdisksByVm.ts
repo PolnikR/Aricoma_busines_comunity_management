@@ -7,7 +7,6 @@ export function useVdisksByVm(vmName: string, providerId?: string) {
     queryKey: discoveryInventoryKeys.vdisksByVm(vmName, providerId),
     queryFn: () => fetchVdisksByVm(vmName, providerId),
     enabled: !!vmName,
-    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   })
 }

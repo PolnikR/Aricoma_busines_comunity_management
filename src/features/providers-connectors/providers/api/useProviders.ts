@@ -6,7 +6,6 @@ export function useProviders() {
   return useQuery({
     queryKey: providerKeys.list(),
     queryFn: fetchProviders,
-    staleTime: 1 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1,
   })

@@ -6,6 +6,5 @@ export function useTags() {
   return useQuery({
     queryKey: discoveryInventoryKeys.tags(),
     queryFn: fetchTags,
-    staleTime: 5 * 60 * 1000,
   })
 }

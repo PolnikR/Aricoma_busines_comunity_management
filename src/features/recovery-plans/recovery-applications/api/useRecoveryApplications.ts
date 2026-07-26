@@ -16,7 +16,6 @@ export function useRecoveryApplications() {
   return useQuery({
     queryKey: recoveryApplicationsQueryKey,
     queryFn: fetchRecoveryApplications,
-    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -24,7 +23,6 @@ export function useRecoveryApplication(id: string) {
   return useQuery({
     queryKey: recoveryApplicationQueryKey(id),
     queryFn: () => fetchRecoveryApplication(id),
-    staleTime: 5 * 60 * 1000,
     enabled: !!id,
   })
 }

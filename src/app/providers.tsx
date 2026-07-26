@@ -6,7 +6,7 @@ import { SidebarProvider } from '@/layouts/app-shell/SidebarContext'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60_000,
+      staleTime: 15 * 60 * 1000,
       retry: 1,
     },
   },
