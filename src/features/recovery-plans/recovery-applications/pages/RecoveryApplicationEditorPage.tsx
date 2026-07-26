@@ -1,11 +1,13 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/shared/components/button/Button'
 import { PageHeader } from '@/shared/components/page/PageHeader'
+import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
 import { useRecoveryApplication, useUpdateRecoveryApplication } from '../api/useRecoveryApplications'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 export function RecoveryApplicationEditorPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const { data: application, isLoading, error } = useRecoveryApplication(id ?? '')
@@ -95,7 +97,7 @@ export function RecoveryApplicationEditorPage() {
         eyebrow="Recovery Plans"
         title="Edit Recovery Application"
         description="Modify disaster recovery application configuration"
-        actions={<Button variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications') }}>Back</Button>}
+        actions={<Button variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications') }}>{t('buttons.back')}</Button>}
       />
       <div className="flex flex-1 flex-col lg:min-h-0">
         <RecoveryAppBuilder

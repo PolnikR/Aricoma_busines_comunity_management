@@ -2,20 +2,22 @@ import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
+import { useTranslation } from '@/hooks/useTranslation'
 import { useVirtualMachinesUnified } from '@/features/hooks/useVirtualMachinesUnified'
 import { InfrastructureTopologySkeleton } from '../components/InfrastructureTopologySkeleton'
 import { InfrastructureTopologyWorkspace } from '../components/InfrastructureTopologyWorkspace'
 
 export function InfrastructurePage() {
+  const { t } = useTranslation()
   const { topology: data, error, isLoading: isPending, isFetching, refetch } = useVirtualMachinesUnified()
 
   if (isPending) {
     return (
       <div className="flex min-h-full w-full min-w-0 max-w-full flex-col overflow-x-hidden lg:h-full lg:min-h-0">
         <PageHeader
-          eyebrow="Discovery & Inventory"
-          title="Infrastructure"
-          description="Explore discovered cluster, host, virtual machine, and datastore relationships."
+          eyebrow={t('pages.infrastructure.eyebrow')}
+          title={t('pages.infrastructure.title')}
+          description={t('pages.infrastructure.description')}
         />
         <InfrastructureTopologySkeleton />
       </div>
@@ -23,19 +25,19 @@ export function InfrastructurePage() {
   }
 
   if (!data) {
-    const message = error instanceof Error ? error.message : 'Unknown discovery error.'
+    const message = error instanceof Error ? error.message : t('messages.unknownError')
 
     return (
       <>
         <PageHeader
-          eyebrow="Discovery & Inventory"
-          title="Infrastructure"
-          description="Explore discovered cluster, host, virtual machine, and datastore relationships."
+          eyebrow={t('pages.infrastructure.eyebrow')}
+          title={t('pages.infrastructure.title')}
+          description={t('pages.infrastructure.description')}
         />
         <FetchErrorAlert
-          title="Infrastructure topology could not be loaded"
+          title={t('pages.infrastructure.error.title')}
           description={message}
-          retryLabel="Retry loading"
+          retryLabel={t('pages.infrastructure.error.retryButton')}
           variant="full"
           isRetrying={isFetching}
           onRetry={refetch}
@@ -47,9 +49,9 @@ export function InfrastructurePage() {
   return (
     <div className="flex flex-1 min-h-full w-full min-w-0 max-w-full flex-col overflow-x-hidden lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow="Discovery & Inventory"
-        title="Infrastructure"
-        description="Explore discovered cluster, host, virtual machine, and datastore relationships."
+        eyebrow={t('pages.infrastructure.eyebrow')}
+        title={t('pages.infrastructure.title')}
+        description={t('pages.infrastructure.description')}
         actions={(
           <Button
             size="sm"
@@ -57,7 +59,7 @@ export function InfrastructurePage() {
             disabled={isFetching}
             onClick={refetch}
           >
-            {isFetching ? 'Refreshing' : 'Refresh inventory'}
+            {isFetching ? t('buttons.refreshing') : t('buttons.refreshInventory')}
           </Button>
         )}
       />
@@ -65,8 +67,8 @@ export function InfrastructurePage() {
       {error ? (
         <FetchErrorAlert
           className="mb-4"
-          title="Latest request failed"
-          description="Showing the previous successful topology."
+          title={t('pages.infrastructure.latestRequestFailed')}
+          description={t('pages.infrastructure.showingPrevious')}
           isRetrying={isFetching}
           onRetry={refetch}
         />
@@ -76,8 +78,8 @@ export function InfrastructurePage() {
         <InfrastructureTopologyWorkspace topology={data} />
       ) : (
         <EmptyState
-          title="No infrastructure discovered"
-          description="The discovery response does not contain infrastructure records."
+          title={t('pages.infrastructure.empty.title')}
+          description={t('pages.infrastructure.empty.description')}
         />
       )}
     </div>

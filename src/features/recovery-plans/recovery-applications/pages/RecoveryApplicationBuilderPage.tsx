@@ -2,11 +2,13 @@ import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/shared/components/button/Button'
 import { PageHeader } from '@/shared/components/page/PageHeader'
+import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
 import { recoveryApplicationsQueryKey } from '../api/useRecoveryApplications'
 import type { RecoveryApplication, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 export function RecoveryApplicationBuilderPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
@@ -64,7 +66,7 @@ export function RecoveryApplicationBuilderPage() {
           description="Define a new disaster recovery application with tiered VM organization"
         />
         <div className="absolute right-0 top-1/2 -translate-y-1/2 pr-3">
-          <Button size="sm" variant="outline" onClick={handleBackClick}>Back</Button>
+          <Button size="sm" variant="outline" onClick={handleBackClick}>{t('buttons.back')}</Button>
         </div>
       </div>
       <div className="flex flex-1 flex-col lg:min-h-0">

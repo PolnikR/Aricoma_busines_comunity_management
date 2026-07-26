@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Modal } from '@/shared/components/modal/Modal'
+import { useTranslation } from '@/hooks/useTranslation'
 import { useUpsertProvider } from '../api/useUpsertProvider'
 import { ProviderCreateForm } from './ProviderCreateForm'
 import type { ProviderRecord } from '@/features/api/providersApi'
@@ -18,6 +19,7 @@ const EMPTY_FORM: ProviderCreateFormData = { id: '', name: '', description: '', 
 
 // Modal for creating or editing a provider.
 export function ProvidersCreateModal({ open, onClose, existingProviders, provider }: ProvidersCreateModalProps) {
+  const { t } = useTranslation()
   const upsert = useUpsertProvider()
   const isEdit = Boolean(provider)
   const [formData, setFormData] = useState<ProviderCreateFormData>(EMPTY_FORM)
@@ -95,7 +97,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
             disabled={upsert.isPending}
             className="flex-1 rounded-lg border border-[#d7deea] px-4 py-2 text-sm font-semibold text-[#17233d] transition hover:bg-[#f1f5fa] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Cancel
+            {t('buttons.cancel')}
           </button>
           <button
             type="button"

@@ -1,25 +1,27 @@
 import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
+import { useTranslation } from '@/hooks/useTranslation'
 import { ProvidersCatalogueTable } from '../providers/components/ProvidersCatalogueTable'
 import { ProvidersCreateModal } from '../providers/components/ProvidersCreateModal'
 import { useProviders } from '../providers/api/useProviders'
 
 export function ProvidersPage() {
+  const { t } = useTranslation()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const { data: providers = [], isFetching, refetch } = useProviders()
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow="Providers & Connectors"
-        title="Providers"
-        description="Registered providers discovered from the backend."
+        eyebrow={t('pages.providers.eyebrow')}
+        title={t('pages.providers.title')}
+        description={t('pages.providers.description')}
         isFetching={isFetching}
         onRefresh={() => { void refetch() }}
         actions={
           <Button size="sm" variant="outline" onClick={() => { setIsCreateModalOpen(true) }}>
-            Add Provider
+            {t('pages.providers.addButton')}
           </Button>
         }
       />

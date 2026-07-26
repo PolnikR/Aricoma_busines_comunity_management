@@ -143,7 +143,7 @@ export function ProvidersCatalogueTable() {
               onClick={() => { setDeleteTarget(selected) }}
               className="flex-1 rounded-lg border border-[#f0c3c3] px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
             >
-              Delete
+              {t('buttons.delete')}
             </button>
             <button
               type="button"

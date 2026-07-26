@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { AppMetadataForm } from './AppMetadataForm'
 import { VMSidebar } from './VMSidebar'
 import { TierCanvas } from './TierCanvas'
@@ -38,6 +39,7 @@ const DEFAULT_TIERS: Record<string, RecoveryTier> = {
 }
 
 export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAppBuilderProps) {
+  const { t } = useTranslation()
   const [formState, setFormState] = useState<RecoveryApplicationFormState>(
     initialData ?? {
       name: '',
@@ -135,7 +137,7 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
     <div className="flex flex-col gap-4 lg:min-h-0 flex-1 p-4">
       {/* Metadata Form Card */}
       <div className="bg-white border border-[#e3edf6] rounded-lg p-4 shadow-sm">
-        <h2 className="text-base font-semibold text-[#17233d] mb-4">Application Details</h2>
+        <h2 className="text-base font-semibold text-[#17233d] mb-4">{t('pages.recovery.applicationDetails')}</h2>
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
           <div className="flex-1 w-full">
             <AppMetadataForm

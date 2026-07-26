@@ -1,5 +1,6 @@
 import type { ChangeEvent } from 'react'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
+import { useTranslation } from '@/hooks/useTranslation'
 import { PROVIDER_TYPES } from '@/features/api/providersApi'
 
 export interface ProviderCreateFormData {
@@ -23,6 +24,7 @@ interface ProviderCreateFormProps {
 
 // Presentational form for creating or editing a provider.
 export function ProviderCreateForm({ data, errors, isSubmitting, idDisabled = false, onChange, onSubmit }: ProviderCreateFormProps) {
+  const { t } = useTranslation()
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' && !isSubmitting) {
       event.preventDefault()
@@ -32,7 +34,7 @@ export function ProviderCreateForm({ data, errors, isSubmitting, idDisabled = fa
 
   return (
     <div className="space-y-4 px-6 py-4">
-      <Field label="ID" htmlFor="create-id">
+      <Field label={t('pages.providers.form.idLabel')} htmlFor="create-id">
         <Input
           id="create-id"
           type="text"

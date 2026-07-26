@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
+import { useTranslation } from '@/hooks/useTranslation'
 import {
   DataTable,
   DataTableToolbar,
@@ -116,6 +117,7 @@ function JsonViewerModal({ isOpen, app, onClose }: JsonViewerModalProps) {
 }
 
 export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: RecoveryApplicationsTableProps) {
+  const { t } = useTranslation()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
 
@@ -192,7 +194,7 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
               onClick={() => { onDelete?.(selected.id) }}
               className="flex-1 rounded-lg border border-[#f0c3c3] px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
             >
-              Delete
+              {t('buttons.delete')}
             </button>
             <button
               type="button"
