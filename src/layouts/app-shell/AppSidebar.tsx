@@ -148,7 +148,7 @@ function findRouteMenu(pathname: string): string | undefined {
 }
 
 function getTranslationKey(name: string): string {
-  return navKeyMap[name] || name
+  return navKeyMap[name] ?? name
 }
 
 export function AppSidebar() {
