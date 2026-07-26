@@ -272,6 +272,18 @@
   "pages.infrastructure.latestRequestFailed": "Poslední požadavek selhal",
   "pages.infrastructure.showingPrevious": "Zobrazuji předchozí úspěšnou topologii",
 
+  "recovery.table.header.application": "Aplikace",
+  "recovery.table.header.environment": "Prostředí",
+  "recovery.table.header.platform": "Platforma",
+  "recovery.table.header.tiers": "Úrovně",
+  "recovery.table.header.status": "Stav",
+  "recovery.table.header.submission": "Podání",
+  "recovery.modal.jsonViewer.title": "JSON aplikace",
+  "pages.recovery.searchPlaceholder": "Hledat podle názvu aplikace",
+  "pages.recovery.searchLabel": "Hledat aplikace",
+  "pages.recovery.tableAriaLabel": "Tabulka aplikací pro obnovení",
+  "pages.recovery.empty.noApplications": "Zatím nejsou definovány žádné aplikace pro obnovení",
+
   "forms.id": "ID",
   "forms.idExample": "např. vmware-vcenter-01",
   "forms.idRequired": "ID je povinné",

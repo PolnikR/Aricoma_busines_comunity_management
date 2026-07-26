@@ -271,6 +271,18 @@
   "pages.infrastructure.latestRequestFailed": "Latest request failed",
   "pages.infrastructure.showingPrevious": "Showing the previous successful topology",
 
+  "recovery.table.header.application": "Application",
+  "recovery.table.header.environment": "Environment",
+  "recovery.table.header.platform": "Platform",
+  "recovery.table.header.tiers": "Tiers",
+  "recovery.table.header.status": "Status",
+  "recovery.table.header.submission": "Submission",
+  "recovery.modal.jsonViewer.title": "Application JSON",
+  "pages.recovery.searchPlaceholder": "Search by application name",
+  "pages.recovery.searchLabel": "Search applications",
+  "pages.recovery.tableAriaLabel": "Recovery applications table",
+  "pages.recovery.empty.noApplications": "No recovery applications defined yet",
+
   "forms.id": "ID",
   "forms.idExample": "e.g., vmware-vcenter-01",
   "forms.idRequired": "ID is required",

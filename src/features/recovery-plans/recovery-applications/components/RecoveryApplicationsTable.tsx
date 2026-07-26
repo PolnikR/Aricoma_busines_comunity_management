@@ -87,7 +87,14 @@ interface JsonViewerModalProps {
   onClose: () => void
 }
 
+interface JsonViewerModalProps {
+  isOpen: boolean
+  app: RecoveryApplication | null
+  onClose: () => void
+}
+
 function JsonViewerModal({ isOpen, app, onClose }: JsonViewerModalProps) {
+  const { t } = useTranslation()
   if (!isOpen || !app) return null
 
   return (
@@ -95,7 +102,7 @@ function JsonViewerModal({ isOpen, app, onClose }: JsonViewerModalProps) {
       <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
       <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 max-h-96 overflow-hidden rounded-2xl bg-white shadow-lg flex flex-col">
         <div className="border-b border-[#e3edf6] px-6 py-4">
-          <h2 className="text-base font-semibold text-[#17233d]">Application JSON</h2>
+          <h2 className="text-base font-semibold text-[#17233d]">{t('recovery.modal.jsonViewer.title')}</h2>
         </div>
         <div className="flex-1 overflow-y-auto bg-[#f8fbfe] px-6 py-4">
           <pre className="text-xs font-mono text-[#3b4763] whitespace-pre-wrap break-word">
@@ -108,7 +115,7 @@ function JsonViewerModal({ isOpen, app, onClose }: JsonViewerModalProps) {
             onClick={onClose}
             className="w-full px-4 py-2 bg-[#0d91d7] text-white text-sm font-semibold rounded-md hover:bg-[#0a7ab5] transition"
           >
-            Close
+            {t('buttons.close')}
           </button>
         </div>
       </div>
@@ -154,8 +161,8 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
       <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
-        searchPlaceholder="Search by application name"
-        searchLabel="Search applications"
+        searchPlaceholder={t('pages.recovery.searchPlaceholder')}
+        searchLabel={t('pages.recovery.searchLabel')}
         density={table.density}
         onDensityChange={table.setDensity}
       />
@@ -166,10 +173,10 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
         rowKey={(app) => app.id}
         density={table.density}
         minWidthClassName="min-w-250"
-        ariaLabel="Recovery applications table"
+        ariaLabel={t('pages.recovery.tableAriaLabel')}
         onRowClick={(app) => { setSelectedId(app.id) }}
         selectedRowKey={selectedId}
-        emptyContent={rows.length > 0 ? 'No applications match your search.' : 'No recovery applications defined yet.'}
+        emptyContent={rows.length > 0 ? t('messages.noResults') : t('pages.recovery.empty.noApplications')}
       />
 
       <DataTablePagination

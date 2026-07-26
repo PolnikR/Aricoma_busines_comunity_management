@@ -272,6 +272,18 @@
   "pages.infrastructure.latestRequestFailed": "Posledný požiadavok zlyhal",
   "pages.infrastructure.showingPrevious": "Zobrazujem predchádzajúcu úspešnú topológiu",
 
+  "recovery.table.header.application": "Aplikácia",
+  "recovery.table.header.environment": "Prostredie",
+  "recovery.table.header.platform": "Platforma",
+  "recovery.table.header.tiers": "Vrstvy",
+  "recovery.table.header.status": "Stav",
+  "recovery.table.header.submission": "Odoslanie",
+  "recovery.modal.jsonViewer.title": "JSON aplikácie",
+  "pages.recovery.searchPlaceholder": "Hľadať podľa názvu aplikácie",
+  "pages.recovery.searchLabel": "Hľadať aplikácie",
+  "pages.recovery.tableAriaLabel": "Tabuľka aplikácií na obnovu",
+  "pages.recovery.empty.noApplications": "Zatiaľ nie sú definované žiadne aplikácie na obnovu",
+
   "forms.id": "ID",
   "forms.idExample": "napr. vmware-vcenter-01",
   "forms.idRequired": "ID je povinné",
