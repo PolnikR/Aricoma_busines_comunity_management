@@ -1,5 +1,6 @@
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
 import { Badge } from '@/shared/components/badge/Badge'
+import { useTranslation } from '@/hooks/useTranslation'
 import type { ProviderConnection } from '../model/providerRegistry'
 
 interface ProviderConnectionsTableProps {
@@ -7,11 +8,12 @@ interface ProviderConnectionsTableProps {
 }
 
 export function ProviderConnectionsTable({ connections }: ProviderConnectionsTableProps) {
+  const { t } = useTranslation()
   const headerClass = 'whitespace-nowrap px-5 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400'
 
   if (connections.length === 0) {
     return (
-      <p className="px-1 py-4 text-sm text-[#71819a]">No connections configured for this provider.</p>
+      <p className="px-1 py-4 text-sm text-[#71819a]">{t('messages.noResults')}</p>
     )
   }
 

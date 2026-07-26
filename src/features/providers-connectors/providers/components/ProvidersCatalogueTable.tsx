@@ -11,6 +11,7 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '../api/useProviders'
 import { useDeleteProvider } from '../api/useDeleteProvider'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
@@ -46,6 +47,7 @@ const columns: ColumnDef<ProviderRecord>[] = [
 ]
 
 export function ProvidersCatalogueTable() {
+  const { t } = useTranslation()
   const { data: providers, isLoading, error } = useProviders()
   const deleteProvider = useDeleteProvider()
   const [typeFilter, setTypeFilter] = useState('')
