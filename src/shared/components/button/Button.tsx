@@ -38,10 +38,13 @@ export function Button({
     ghost: 'bg-transparent text-[#66758f] hover:bg-[#eef7ff] hover:text-[#087fca]',
   }
 
+  const fontWeight = variant === 'primary' ? 'font-semibold' : 'font-medium'
+
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-2 font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#1596dd]/15',
+        'inline-flex items-center justify-center gap-2 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#1596dd]/15',
+        fontWeight,
         sizeClasses[size],
         variantClasses[variant],
         fullWidth ? 'w-full' : undefined,
