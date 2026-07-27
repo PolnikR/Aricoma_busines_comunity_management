@@ -1,3 +1,4 @@
+import { useTranslation } from '@/hooks/useTranslation'
 import { TopologyTooltip, TopologyTooltipField } from './TopologyTooltip'
 
 interface ClusterNodeTooltipProps {
@@ -10,14 +11,15 @@ interface ClusterNodeTooltipProps {
 }
 
 export function ClusterNodeTooltip({ data, nodeRef }: ClusterNodeTooltipProps) {
-  const hostLabel = data.hostCount === 1 ? 'host' : 'hosts'
+  const { t } = useTranslation()
+  const hostLabel = data.hostCount === 1 ? t('tooltip.cluster.hostSingular') : t('tooltip.cluster.hostPlural')
 
   return (
     <TopologyTooltip nodeRef={nodeRef} estimatedHeight={120}>
       <div className="space-y-2">
-        <TopologyTooltipField label="Name" value={data.name} />
-        <TopologyTooltipField label="Description" value={data.description} />
-        <TopologyTooltipField label="Hosts" value={`${String(data.hostCount)} ${hostLabel}`} />
+        <TopologyTooltipField label={t('tooltip.cluster.name')} value={data.name} />
+        <TopologyTooltipField label={t('tooltip.cluster.description')} value={data.description} />
+        <TopologyTooltipField label={t('tooltip.cluster.hosts')} value={`${String(data.hostCount)} ${hostLabel}`} />
       </div>
     </TopologyTooltip>
   )

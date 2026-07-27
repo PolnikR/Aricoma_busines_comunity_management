@@ -1,3 +1,4 @@
+import { useTranslation } from '@/hooks/useTranslation'
 import { TopologyTooltip, TopologyTooltipField } from './TopologyTooltip'
 
 interface VMNodeTooltipProps {
@@ -16,21 +17,22 @@ interface VMNodeTooltipProps {
 }
 
 export function VMNodeTooltip({ data, nodeRef }: VMNodeTooltipProps) {
+  const { t } = useTranslation()
   return (
     <TopologyTooltip nodeRef={nodeRef} estimatedHeight={220}>
       <div className="space-y-2">
-        <TopologyTooltipField label="Name" value={data.name} />
-        <TopologyTooltipField label="Status" value={data.status} />
-        <TopologyTooltipField label="CPU" value={data.cpu !== undefined ? `${String(data.cpu)} cores` : '—'} />
-        <TopologyTooltipField label="Memory" value={data.memory !== undefined ? `${String(data.memory)} GB` : '—'} />
-        <TopologyTooltipField label="Disk" value={data.disk !== undefined ? `${String(data.disk)} GB` : '—'} />
-        <TopologyTooltipField label="IP" value={data.ipAddress ?? '—'} />
-        <TopologyTooltipField label="Host" value={data.host ?? '—'} />
-        <TopologyTooltipField label="Cluster" value={data.cluster ?? '—'} />
+        <TopologyTooltipField label={t('tooltip.vm.name')} value={data.name} />
+        <TopologyTooltipField label={t('tooltip.vm.status')} value={data.status} />
+        <TopologyTooltipField label={t('tooltip.vm.cpu')} value={data.cpu !== undefined ? `${String(data.cpu)} ${t('units.cores')}` : '—'} />
+        <TopologyTooltipField label={t('tooltip.vm.memory')} value={data.memory !== undefined ? `${String(data.memory)} ${t('units.gb')}` : '—'} />
+        <TopologyTooltipField label={t('tooltip.vm.disk')} value={data.disk !== undefined ? `${String(data.disk)} ${t('units.gb')}` : '—'} />
+        <TopologyTooltipField label={t('tooltip.vm.ip')} value={data.ipAddress ?? '—'} />
+        <TopologyTooltipField label={t('tooltip.vm.host')} value={data.host ?? '—'} />
+        <TopologyTooltipField label={t('tooltip.vm.cluster')} value={data.cluster ?? '—'} />
 
         {data.tags && data.tags.length > 0 && (
           <div>
-            <div className="text-xs font-semibold text-slate-400">Tags</div>
+            <div className="text-xs font-semibold text-slate-400">{t('tooltip.vm.tags')}</div>
             <div className="flex flex-wrap gap-1 mt-1">
               {data.tags.map(tag => (
                 <span

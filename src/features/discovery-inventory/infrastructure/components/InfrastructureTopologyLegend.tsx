@@ -31,7 +31,7 @@ export function InfrastructureTopologyLegend({
         </span>
       </div>
       <span className="shrink-0 font-medium text-[#4e5f78]">
-        {visibleNodes} {t('legend.statistics').split(' / ')[0]} / {visibleEdges} {t('legend.statistics').split(' / ')[1]}
+        {visibleNodes} {t('legend.statisticsNodes')} / {visibleEdges} {t('legend.statisticsRelations')}
       </span>
     </div>
   )

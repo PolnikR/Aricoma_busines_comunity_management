@@ -124,11 +124,11 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
 
   const handleSave = () => {
     if (!formState.name.trim()) {
-      alert('Please enter an application name')
+      alert(t('alerts.pleaseEnterName'))
       return
     }
     if (!formState.description.trim()) {
-      alert('Please enter a description')
+      alert(t('alerts.pleaseEnterDescription'))
       return
     }
     onSave?.(formState)

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
@@ -8,6 +9,7 @@ interface AppMetadataFormProps {
 }
 
 export function AppMetadataForm({ onMetadataChange, initialValues }: AppMetadataFormProps) {
+  const { t } = useTranslation()
   const [name, setName] = useState(initialValues?.name ?? '')
   const [description, setDescription] = useState(initialValues?.description ?? '')
   const [environment, setEnvironment] = useState<'dev' | 'staging' | 'prod'>(
@@ -33,38 +35,38 @@ export function AppMetadataForm({ onMetadataChange, initialValues }: AppMetadata
 
   return (
     <form className="grid grid-cols-3 gap-4 items-end">
-      <Field label="Application Name *" htmlFor="application-name">
+      <Field label={t('forms.applicationName')} htmlFor="application-name">
         <Input
           id="application-name"
           type="text"
           value={name}
           onChange={e => { handleChange('name', e.target.value); }}
-          placeholder="e.g., SampleAppRecovery2"
+          placeholder={t('forms.applicationNameExample')}
           required
         />
       </Field>
 
-      <Field label="Description *" htmlFor="application-description">
+      <Field label={t('forms.applicationDescription')} htmlFor="application-description">
         <Input
           id="application-description"
           type="text"
           value={description}
           onChange={e => { handleChange('description', e.target.value); }}
-          placeholder="e.g., Recovery of FinanceTBApp2"
+          placeholder={t('forms.applicationDescriptionExample')}
           required
         />
       </Field>
 
-      <Field label="Environment *" htmlFor="application-environment">
+      <Field label={t('forms.environment')} htmlFor="application-environment">
         <Select
           id="application-environment"
           value={environment}
           onChange={e => { handleChange('environment', e.target.value); }}
           required
         >
-          <option value="dev">dev</option>
-          <option value="staging">staging</option>
-          <option value="prod">prod</option>
+          <option value="dev">{t('forms.environmentDev')}</option>
+          <option value="staging">{t('forms.environmentStaging')}</option>
+          <option value="prod">{t('forms.environmentProd')}</option>
         </Select>
       </Field>
     </form>
