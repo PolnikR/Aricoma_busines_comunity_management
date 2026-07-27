@@ -18,7 +18,6 @@ export function RecoveryApplicationBuilderPage() {
         name: appState.name,
         description: appState.description,
         environment: appState.environment,
-        provider_id: appState.provider,
         platform: 'VMware vCenter ESXi' as const,
         source_connection: 'vcenter_default' as const,
         target_connection: 'vcenter_default_destination' as const,

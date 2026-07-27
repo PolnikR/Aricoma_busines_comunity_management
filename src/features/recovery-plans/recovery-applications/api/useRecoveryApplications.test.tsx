@@ -15,7 +15,6 @@ const data: RecoveryApplicationData = {
     name: 'Finance',
     description: 'Finance recovery',
     environment: 'prod',
-    provider_id: 'vcenter-01',
     platform: 'VMware vCenter ESXi',
     source_connection: 'vcenter_default',
     target_connection: 'vcenter_default_destination',

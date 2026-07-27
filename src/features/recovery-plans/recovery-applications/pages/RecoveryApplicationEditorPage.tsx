@@ -78,7 +78,6 @@ export function RecoveryApplicationEditorPage() {
         name: appState.name,
         description: appState.description,
         environment: appState.environment,
-        provider_id: appState.provider,
         platform: 'VMware vCenter ESXi' as const,
         source_connection: 'vcenter_default' as const,
         target_connection: 'vcenter_default_destination' as const,
@@ -118,7 +117,6 @@ export function RecoveryApplicationEditorPage() {
             name: application.data.application.name,
             description: application.data.application.description,
             environment: application.data.application.environment,
-            provider: application.data.application.provider_id,
             tiers: new Map(Object.entries(application.data.application.tiers)),
           }}
           onSave={(appState) => { void handleSave(appState) }}

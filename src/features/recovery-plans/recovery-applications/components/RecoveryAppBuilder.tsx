@@ -46,7 +46,6 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
       name: '',
       description: '',
       environment: 'dev',
-      provider: '',
       tiers: new Map(Object.entries(DEFAULT_TIERS)),
     }
   )
