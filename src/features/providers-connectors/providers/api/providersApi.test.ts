@@ -36,7 +36,9 @@ describe('fetchProviders', () => {
 
     const providers = await fetchProviders()
 
-    expect(mock).toHaveBeenCalledWith('/api/get_providers', { headers: { Accept: 'application/json' } })
+    const [url, init] = mock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/get_providers')
+    expect(new Headers(init.headers).get('X-User')).toBe('admin')
     expect(providers).toHaveLength(2)
     expect(providers[0]).toMatchObject({ id: 'vmware-vcenter-01', type: 'VMWARE', ipAddress: '10.99.99.40' })
   })
@@ -63,11 +65,13 @@ describe('submitProvider', () => {
 
     await submitProvider(newProvider)
 
-    expect(mock).toHaveBeenCalledWith('/api/submit_provider', {
-      method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify(newProvider),
-    })
+    const [url, init] = mock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/submit_provider')
+    expect(init.method).toBe('POST')
+    expect(init.body).toBe(JSON.stringify(newProvider))
+    const headers = new Headers(init.headers)
+    expect(headers.get('X-User')).toBe('admin')
+    expect(headers.get('Content-Type')).toBe('application/json')
   })
 
   it('throws on an HTTP failure', async () => {
@@ -86,10 +90,10 @@ describe('deleteProvider', () => {
 
     const result = await deleteProvider('vmware-vcenter-01')
 
-    expect(mock).toHaveBeenCalledWith('/api/delete_provider?provider_id=vmware-vcenter-01', {
-      method: 'DELETE',
-      headers: { Accept: 'application/json' },
-    })
+    const [url, init] = mock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/delete_provider?provider_id=vmware-vcenter-01')
+    expect(init.method).toBe('DELETE')
+    expect(new Headers(init.headers).get('X-User')).toBe('admin')
     expect(result).toEqual([providerB])
   })
 

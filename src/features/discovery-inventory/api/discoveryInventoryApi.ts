@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { apiFetch } from '@/shared/api/apiClient'
 import type {
   DiscoveredVirtualDisk,
   DiscoveredVirtualMachine,
@@ -99,9 +100,7 @@ export async function fetchDiscoveryInventory(providerId?: string, tag?: string)
   const search = params.toString()
   const url = search ? `${base}?${search}` : base
 
-  const response = await fetch(url, {
-    headers: { Accept: 'application/json' },
-  })
+  const response = await apiFetch(url)
 
   // A 400/500 while a provider or tag filter is active means the backend can't
   // serve that combination (e.g. a non-VMWARE provider) — surface it as an

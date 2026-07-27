@@ -71,7 +71,9 @@ describe('fetchDiscoveryInventory', () => {
 
     await fetchDiscoveryInventory()
 
-    expect(mock).toHaveBeenCalledWith('/api/vms', { headers: { Accept: 'application/json' } })
+    const [url, init] = mock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/vms')
+    expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
   it('appends the provider_id query parameter when a provider is given', async () => {
@@ -80,7 +82,9 @@ describe('fetchDiscoveryInventory', () => {
 
     await fetchDiscoveryInventory('vmware-vcenter-01')
 
-    expect(mock).toHaveBeenCalledWith('/api/vms?provider_id=vmware-vcenter-01', { headers: { Accept: 'application/json' } })
+    const [url, init] = mock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/vms?provider_id=vmware-vcenter-01')
+    expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
   it('uses the vms_by_tag endpoint when a tag is given', async () => {
@@ -89,7 +93,9 @@ describe('fetchDiscoveryInventory', () => {
 
     await fetchDiscoveryInventory(undefined, 'WEB')
 
-    expect(mock).toHaveBeenCalledWith('/api/vms_by_tag?tag=WEB', { headers: { Accept: 'application/json' } })
+    const [url, init] = mock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/vms_by_tag?tag=WEB')
+    expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
   it('includes both tag and provider_id when both are given', async () => {
@@ -98,7 +104,9 @@ describe('fetchDiscoveryInventory', () => {
 
     await fetchDiscoveryInventory('vmware-vcenter-01', 'WEB')
 
-    expect(mock).toHaveBeenCalledWith('/api/vms_by_tag?tag=WEB&provider_id=vmware-vcenter-01', { headers: { Accept: 'application/json' } })
+    const [url, init] = mock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/vms_by_tag?tag=WEB&provider_id=vmware-vcenter-01')
+    expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
   it('returns an empty inventory when a tag query fails with 400 or 500', async () => {

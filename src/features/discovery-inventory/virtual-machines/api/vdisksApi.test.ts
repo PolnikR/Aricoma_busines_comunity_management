@@ -48,7 +48,9 @@ describe('fetchVdisksByVm', () => {
 
     const result = await fetchVdisksByVm('TEST-WEB02')
 
-    expect(mock).toHaveBeenCalledWith('/api/vdisks_by_vm?vm_name=TEST-WEB02', { headers: { Accept: 'application/json' } })
+    const [url, init] = mock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/vdisks_by_vm?vm_name=TEST-WEB02')
+    expect(new Headers(init.headers).get('X-User')).toBe('admin')
     expect(result).toMatchObject({ vmName: 'TEST-WEB02', countVm: 1, countIbm: 1 })
     expect(result.volumes).toHaveLength(1)
     expect(result.volumes[0]).toEqual({
@@ -106,10 +108,9 @@ describe('fetchVdisksByVm', () => {
 
     await fetchVdisksByVm('TEST-WEB02', 'vmware-vcenter-01')
 
-    expect(mock).toHaveBeenCalledWith(
-      '/api/vdisks_by_vm?vm_name=TEST-WEB02&provider_id=vmware-vcenter-01',
-      { headers: { Accept: 'application/json' } },
-    )
+    const [url, init] = mock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/vdisks_by_vm?vm_name=TEST-WEB02&provider_id=vmware-vcenter-01')
+    expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
   it('defaults snapshot info when sanpshosts is absent', async () => {

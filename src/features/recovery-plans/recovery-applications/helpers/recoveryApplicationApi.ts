@@ -1,3 +1,4 @@
+import { apiFetch } from '@/shared/api/apiClient'
 import type { RecoveryApplication, RecoveryApplicationData, ApplicationSubmission } from '../model/recoveryApplicationTypes'
 
 const RECOVERY_APPS_ENDPOINT = '/api/recovery-applications'
@@ -17,7 +18,7 @@ export async function fetchRecoveryApplications(): Promise<RecoveryApplication[]
 
   // Fallback: try API if no mock data
   try {
-    const response = await fetch(RECOVERY_APPS_ENDPOINT)
+    const response = await apiFetch(RECOVERY_APPS_ENDPOINT)
     if (!response.ok) {
       throw new Error(`Failed to fetch recovery applications: ${response.statusText}`)
     }
@@ -29,7 +30,7 @@ export async function fetchRecoveryApplications(): Promise<RecoveryApplication[]
 }
 
 export async function fetchRecoveryApplication(id: string): Promise<RecoveryApplication> {
-  const response = await fetch(`${RECOVERY_APPS_ENDPOINT}/${id}`)
+  const response = await apiFetch(`${RECOVERY_APPS_ENDPOINT}/${id}`)
   if (!response.ok) {
     throw new Error(`Failed to fetch recovery application: ${response.statusText}`)
   }
@@ -43,9 +44,9 @@ export async function submitRecoveryApplicationDag(name: string, data: RecoveryA
   const url = `/api/submit_dag?filename=${encodeURIComponent(name)}`
   let response: Response
   try {
-    response = await fetch(url, {
+    response = await apiFetch(url, {
       method: 'POST',
-      headers: { accept: 'application/json', 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
   } catch (cause) {
@@ -61,7 +62,7 @@ export async function submitRecoveryApplicationDag(name: string, data: RecoveryA
 }
 
 export async function createRecoveryApplication(data: RecoveryApplicationData, submission?: ApplicationSubmission): Promise<RecoveryApplication> {
-  const response = await fetch(RECOVERY_APPS_ENDPOINT, {
+  const response = await apiFetch(RECOVERY_APPS_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(submission ? { ...data, submission } : data),
@@ -73,7 +74,7 @@ export async function createRecoveryApplication(data: RecoveryApplicationData, s
 }
 
 export async function updateRecoveryApplication(id: string, data: RecoveryApplicationData): Promise<RecoveryApplication> {
-  const response = await fetch(`${RECOVERY_APPS_ENDPOINT}/${id}`, {
+  const response = await apiFetch(`${RECOVERY_APPS_ENDPOINT}/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -85,7 +86,7 @@ export async function updateRecoveryApplication(id: string, data: RecoveryApplic
 }
 
 export async function deleteRecoveryApplication(id: string): Promise<void> {
-  const response = await fetch(`${RECOVERY_APPS_ENDPOINT}/${id}`, {
+  const response = await apiFetch(`${RECOVERY_APPS_ENDPOINT}/${id}`, {
     method: 'DELETE',
   })
   if (!response.ok) {

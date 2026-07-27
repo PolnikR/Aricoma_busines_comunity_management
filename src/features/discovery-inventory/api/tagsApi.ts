@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { apiFetch } from '@/shared/api/apiClient'
 
 const tagSchema = z.object({
   id: z.string(),
@@ -11,9 +12,7 @@ const tagsResponseSchema = z.object({
 })
 
 export async function fetchTags(): Promise<string[]> {
-  const response = await fetch('/api/tags', {
-    headers: { Accept: 'application/json' },
-  })
+  const response = await apiFetch('/api/tags')
 
   if (!response.ok) {
     throw new Error(`Tags request failed with status ${String(response.status)}`)

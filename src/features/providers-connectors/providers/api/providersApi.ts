@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { apiFetch } from '@/shared/api/apiClient'
 import type { ProviderRecord } from '../model/providerTypes'
 
 const GET_PROVIDERS_URL = '/api/get_providers'
@@ -19,9 +20,7 @@ const providersResponseSchema = z.object({
 
 // GET /api/get_providers -> { providers: [...] }
 export async function fetchProviders(): Promise<ProviderRecord[]> {
-  const response = await fetch(GET_PROVIDERS_URL, {
-    headers: { Accept: 'application/json' },
-  })
+  const response = await apiFetch(GET_PROVIDERS_URL)
 
   if (!response.ok) {
     throw new Error(`Get providers request failed with status ${String(response.status)}`)
@@ -34,9 +33,9 @@ export async function fetchProviders(): Promise<ProviderRecord[]> {
 // POST /api/submit_provider with a single provider object. The backend upserts
 // by id (create when new, update when the id already exists).
 export async function submitProvider(provider: ProviderRecord): Promise<void> {
-  const response = await fetch(SUBMIT_PROVIDER_URL, {
+  const response = await apiFetch(SUBMIT_PROVIDER_URL, {
     method: 'POST',
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(provider),
   })
 
@@ -47,9 +46,8 @@ export async function submitProvider(provider: ProviderRecord): Promise<void> {
 
 // DELETE /api/delete_provider?provider_id=<id> -> remaining { providers: [...] }
 export async function deleteProvider(providerId: string): Promise<ProviderRecord[]> {
-  const response = await fetch(`${DELETE_PROVIDER_URL}?provider_id=${encodeURIComponent(providerId)}`, {
+  const response = await apiFetch(`${DELETE_PROVIDER_URL}?provider_id=${encodeURIComponent(providerId)}`, {
     method: 'DELETE',
-    headers: { Accept: 'application/json' },
   })
 
   if (!response.ok) {

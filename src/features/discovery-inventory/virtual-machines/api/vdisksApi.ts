@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { apiFetch } from '@/shared/api/apiClient'
 
 const VDISKS_BY_VM_URL = '/api/vdisks_by_vm'
 
@@ -141,9 +142,7 @@ export async function fetchVdisksByVm(vmName: string, providerId?: string): Prom
   const params = new URLSearchParams({ vm_name: vmName })
   if (providerId) params.set('provider_id', providerId)
 
-  const response = await fetch(`${VDISKS_BY_VM_URL}?${params.toString()}`, {
-    headers: { Accept: 'application/json' },
-  })
+  const response = await apiFetch(`${VDISKS_BY_VM_URL}?${params.toString()}`)
 
   if (!response.ok) {
     throw new Error(`Vdisks request failed with status ${String(response.status)}`)
