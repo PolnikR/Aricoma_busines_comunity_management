@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import {
   DataTable,
+  DataTableSkeleton,
   DataTableToolbar,
   DataTablePagination,
   DetailDrawer,
@@ -75,7 +76,13 @@ export function ProvidersCatalogueTable() {
   const changeType = (value: string) => { setTypeFilter(value); setPendingType(value); table.setPage(1) }
 
   if (isLoading) {
-    return <div className="p-6 text-sm text-[#71819a]">Loading providers…</div>
+    return (
+      <DataTableSkeleton
+        columnCount={4}
+        ariaLabel="Loading providers"
+        className="flex-1 rounded-none border-0 shadow-none lg:min-h-0"
+      />
+    )
   }
 
   if (error) {

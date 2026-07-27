@@ -1,15 +1,12 @@
 import { Card } from '@/shared/components/card/Card'
-import { DetailSkeleton } from './DetailSkeleton'
+import { DataTableSkeleton } from '@/shared/components/data-table'
 import { MetricsSkeleton } from './MetricsSkeleton'
-import { TableSkeleton } from './TableSkeleton'
 
 export function VirtualMachinesSkeleton() {
   return (
     <div
       className="flex flex-1 flex-col gap-4 lg:min-h-0"
-      role="status"
       aria-busy="true"
-      aria-label="Loading virtual machines"
     >
       <MetricsSkeleton />
 
@@ -26,9 +23,12 @@ export function VirtualMachinesSkeleton() {
             </div>
           </div>
         </div>
-        <div className="grid flex-1 grid-cols-1 gap-3 bg-[#f8fbfe] p-3 lg:min-h-0 xl:grid-cols-[minmax(0,1fr)_350px] 2xl:grid-cols-[minmax(0,1fr)_390px]">
-          <TableSkeleton />
-          <DetailSkeleton />
+        <div className="flex flex-1 flex-col bg-[#f8fbfe] p-3 lg:min-h-0">
+          <DataTableSkeleton
+            columnCount={9}
+            ariaLabel="Loading virtual machines"
+            className="flex-1 lg:min-h-0"
+          />
         </div>
       </Card>
     </div>

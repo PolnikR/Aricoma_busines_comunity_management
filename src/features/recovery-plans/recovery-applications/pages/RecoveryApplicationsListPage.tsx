@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/button/Button'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
+import { DataTableSkeleton } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
 import { DeleteConfirmationDialog } from '../components/DeleteConfirmationDialog'
@@ -50,10 +51,12 @@ export function RecoveryApplicationsListPage() {
             </Button>
           }
         />
-        <div className="flex-1 p-6">
-          <div className="text-center py-12">
-            <p className="text-gray-500">{t('pages.recovery.loading')}</p>
-          </div>
+        <div className="flex flex-1 flex-col gap-4 overflow-hidden p-3 lg:min-h-0">
+          <DataTableSkeleton
+            columnCount={7}
+            ariaLabel={t('pages.recovery.loading')}
+            className="flex-1 lg:min-h-0"
+          />
         </div>
       </div>
     )

@@ -1,5 +1,6 @@
 export { DataTable } from './DataTable'
 export type { ColumnDef, TableDensity } from './DataTable'
+export { DataTableSkeleton } from './DataTableSkeleton'
 export { DataTableToolbar } from './DataTableToolbar'
 export type { Segment } from './DataTableToolbar'
 export { DataTablePagination } from './DataTablePagination'

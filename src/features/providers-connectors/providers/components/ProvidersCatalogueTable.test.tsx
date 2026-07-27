@@ -49,6 +49,15 @@ describe('ProvidersCatalogueTable', () => {
     cleanup()
   })
 
+  it('renders the shared table skeleton while providers are loading', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => undefined)))
+
+    renderTable()
+
+    expect(screen.getByRole('status', { name: 'Loading providers' })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.queryByText('Loading providers…')).not.toBeInTheDocument()
+  })
+
   it('opens the detail drawer with actions when a row is clicked', async () => {
     renderTable()
     fireEvent.click(await screen.findByText('Production vCenter'))
