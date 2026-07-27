@@ -6,7 +6,7 @@ import {
   updateRecoveryApplication,
   deleteRecoveryApplication,
   submitRecoveryApplicationDag,
-} from '../helpers/recoveryApplicationApi'
+} from './recoveryApplicationsApi'
 import type { RecoveryApplicationData } from '../model/recoveryApplicationTypes'
 
 export const recoveryApplicationsQueryKey = ['recovery-applications'] as const

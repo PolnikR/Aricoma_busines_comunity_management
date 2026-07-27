@@ -12,15 +12,15 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { Modal } from '@/shared/components/modal/Modal'
-import type { RecoveryApplication } from '../model/recoveryApplicationTypes'
+import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 
 interface RecoveryApplicationsTableProps {
-  applications: RecoveryApplication[]
+  applications: RecoveryApplicationListItem[]
   onEdit?: (id: string) => void
   onDelete?: (id: string) => void
 }
 
-function getApplicationStatus(app: RecoveryApplication): 'Active' | 'Draft' {
+function getApplicationStatus(app: RecoveryApplicationListItem): 'Active' | 'Draft' {
   const tiers = Object.keys(app.data.application.tiers)
   return tiers.length > 0 ? 'Active' : 'Draft'
 }
@@ -39,7 +39,7 @@ function getSubmissionBadgeColor(status: string): 'success' | 'error' {
   return status === 'ok' ? 'success' : 'error'
 }
 
-const baseColumns: ColumnDef<RecoveryApplication>[] = [
+const baseColumns: ColumnDef<RecoveryApplicationListItem>[] = [
   {
     id: 'name',
     header: 'Application',
@@ -85,7 +85,7 @@ const baseColumns: ColumnDef<RecoveryApplication>[] = [
 
 interface JsonViewerModalProps {
   isOpen: boolean
-  app: RecoveryApplication | null
+  app: RecoveryApplicationListItem | null
   onClose: () => void
 }
 
@@ -133,7 +133,7 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
     {
       id: 'json',
       header: 'JSON',
-      cell: (app: RecoveryApplication) => (
+      cell: (app: RecoveryApplicationListItem) => (
         <Button
           size="xs"
           variant="soft"

@@ -1,7 +1,27 @@
+import { z } from 'zod'
 import { apiFetch } from '@/shared/api/apiClient'
-import type { RecoveryApplication, RecoveryApplicationData, ApplicationSubmission } from '../model/recoveryApplicationTypes'
+import type {
+  RecoveryApplication,
+  RecoveryApplicationData,
+  RecoveryApplicationListItem,
+  ApplicationSubmission,
+} from '../model/recoveryApplicationTypes'
 
 const RECOVERY_APPS_ENDPOINT = '/api/recovery-applications'
+const GET_RECOVERY_APPS_ENDPOINT = '/api/get_recovery_apps'
+
+const recoveryApplicationListResponseSchema = z.object({
+  applications: z.array(z.object({
+    name: z.string(),
+    description: z.string(),
+    environment: z.enum(['dev', 'staging', 'prod']),
+    platform: z.string(),
+    source_connection: z.string(),
+    target_connection: z.string(),
+    tiers: z.record(z.string(), z.unknown()),
+    file: z.string(),
+  })),
+})
 
 export interface SubmitDagResponse {
   status: string
@@ -9,24 +29,19 @@ export interface SubmitDagResponse {
   remote_path: string
 }
 
-export async function fetchRecoveryApplications(): Promise<RecoveryApplication[]> {
-  // Read from mock data in localStorage
-  const mockData = localStorage.getItem('mockRecoveryApplications')
-  if (mockData) {
-    return JSON.parse(mockData) as RecoveryApplication[]
+export async function fetchRecoveryApplications(): Promise<RecoveryApplicationListItem[]> {
+  const response = await apiFetch(GET_RECOVERY_APPS_ENDPOINT)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch recovery applications: ${response.statusText}`)
   }
 
-  // Fallback: try API if no mock data
-  try {
-    const response = await apiFetch(RECOVERY_APPS_ENDPOINT)
-    if (!response.ok) {
-      throw new Error(`Failed to fetch recovery applications: ${response.statusText}`)
-    }
-    return (await response.json()) as RecoveryApplication[]
-  } catch {
-    // If API fails too, return empty array
-    return []
-  }
+  const payload: unknown = await response.json()
+  const { applications } = recoveryApplicationListResponseSchema.parse(payload)
+
+  return applications.map(({ file, ...application }) => ({
+    id: file,
+    data: { application },
+  }))
 }
 
 export async function fetchRecoveryApplication(id: string): Promise<RecoveryApplication> {

@@ -35,6 +35,22 @@ export interface RecoveryApplication {
   updatedAt: string
 }
 
+export interface RecoveryApplicationListItem {
+  id: string
+  data: {
+    application: {
+      name: string
+      description: string
+      environment: 'dev' | 'staging' | 'prod'
+      platform: string
+      source_connection: string
+      target_connection: string
+      tiers: Record<string, unknown>
+    }
+  }
+  submission?: ApplicationSubmission
+}
+
 export interface RecoveryApplicationFormState {
   name: string
   description: string

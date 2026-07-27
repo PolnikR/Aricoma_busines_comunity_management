@@ -6,7 +6,7 @@ import {
   fetchRecoveryApplications,
   submitRecoveryApplicationDag,
   updateRecoveryApplication,
-} from './recoveryApplicationApi'
+} from './recoveryApplicationsApi'
 import type { RecoveryApplication, RecoveryApplicationData } from '../model/recoveryApplicationTypes'
 
 const data: RecoveryApplicationData = {
@@ -29,29 +29,69 @@ const application: RecoveryApplication = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 }
 
+const listPayload = {
+  applications: [{
+    name: 'Finance',
+    description: 'Finance recovery',
+    environment: 'prod',
+    platform: 'VMware vCenter ESXi',
+    source_connection: 'vcenter_default',
+    target_connection: 'vcenter_default_destination',
+    tiers: {
+      database: {
+        order: 1,
+        description: 'Database server tier',
+        recovery_group: {
+          name: 'database_group',
+          description: 'Database recovery group',
+          vms: [{ name: 'db-01' }],
+        },
+      },
+    },
+    file: 'Finance.json',
+  }],
+}
+
 afterEach(() => {
-  localStorage.clear()
   vi.unstubAllGlobals()
 })
 
-describe('recoveryApplicationApi', () => {
-  it('prefers local mock applications without calling the backend', async () => {
-    localStorage.setItem('mockRecoveryApplications', JSON.stringify([application]))
-    const fetchMock = vi.fn()
+describe('recoveryApplicationsApi', () => {
+  it('loads and maps the real recovery applications response', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(listPayload), { status: 200 }),
+    )
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(fetchRecoveryApplications()).resolves.toEqual([application])
-    expect(fetchMock).not.toHaveBeenCalled()
+    await expect(fetchRecoveryApplications()).resolves.toEqual([{
+      id: 'Finance.json',
+      data: {
+        application: {
+          name: 'Finance',
+          description: 'Finance recovery',
+          environment: 'prod',
+          platform: 'VMware vCenter ESXi',
+          source_connection: 'vcenter_default',
+          target_connection: 'vcenter_default_destination',
+          tiers: listPayload.applications[0]?.tiers,
+        },
+      },
+    }])
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/get_recovery_apps')
+    expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
-  it('falls back to the backend and returns an empty list when it is unavailable', async () => {
+  it('reports backend and response contract failures', async () => {
     const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify([application]), { status: 200 }))
-      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(new Response(null, { status: 503, statusText: 'Unavailable' }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ applications: 'invalid' }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(fetchRecoveryApplications()).resolves.toEqual([application])
-    await expect(fetchRecoveryApplications()).resolves.toEqual([])
+    await expect(fetchRecoveryApplications()).rejects.toThrow(
+      'Failed to fetch recovery applications: Unavailable'
+    )
+    await expect(fetchRecoveryApplications()).rejects.toBeInstanceOf(Error)
   })
 
   it('loads a detail and reports an unsuccessful response', async () => {
