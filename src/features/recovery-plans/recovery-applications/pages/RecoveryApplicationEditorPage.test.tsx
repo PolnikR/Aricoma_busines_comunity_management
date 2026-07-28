@@ -3,12 +3,16 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryApplicationEditorPage } from './RecoveryApplicationEditorPage'
 import type {
+  RecoveryApplicationData,
   RecoveryApplicationFormState,
   RecoveryApplicationListItem,
 } from '../model/recoveryApplicationTypes'
 
 const navigate = vi.fn()
-const mutate = vi.fn()
+const mutate = vi.fn<(
+  data: RecoveryApplicationData,
+  options: { onSuccess: () => void },
+) => void>()
 const refetch = vi.fn()
 
 const application: RecoveryApplicationListItem = {
@@ -104,12 +108,13 @@ describe('RecoveryApplicationEditorPage', () => {
     expect(screen.getByText('Finance App')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Save unchanged' }))
 
-    expect(mutate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        application: expect.objectContaining({ name: 'Finance App' }),
-      }),
-      expect.objectContaining({ onSuccess: expect.any(Function) }),
-    )
+    const call = mutate.mock.calls[0]
+    expect(call).toBeDefined()
+    if (!call) throw new Error('Expected submit mutation to be called')
+
+    const [submittedData, options] = call
+    expect(submittedData.application.name).toBe('Finance App')
+    expect(options.onSuccess).toBeTypeOf('function')
   })
 
   it('submits the changed filename and leaves create-versus-update to the backend', async () => {
@@ -118,12 +123,11 @@ describe('RecoveryApplicationEditorPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Save renamed' }))
 
-    expect(mutate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        application: expect.objectContaining({ name: 'Renamed App' }),
-      }),
-      expect.any(Object),
-    )
+    const call = mutate.mock.calls[0]
+    expect(call).toBeDefined()
+    if (!call) throw new Error('Expected submit mutation to be called')
+
+    expect(call[0].application.name).toBe('Renamed App')
   })
 
   it('renders loading, load-error, and not-found states', () => {

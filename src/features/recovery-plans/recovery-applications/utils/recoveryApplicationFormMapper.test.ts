@@ -39,10 +39,10 @@ describe('recoveryApplicationFormMapper', () => {
       description: 'Finance recovery',
       environment: 'prod',
     })
-    expect(formState.tiers.get('database')).toEqual(application.data.application.tiers.database)
+    expect(formState.tiers.get('database')).toEqual(application.data.application.tiers['database'])
 
     formState.tiers.get('database')?.recovery_group?.vms.push({ name: 'db-02' })
-    expect(application.data.application.tiers.database?.recovery_group?.vms).toEqual([{ name: 'db-01' }])
+    expect(application.data.application.tiers['database']?.recovery_group?.vms).toEqual([{ name: 'db-01' }])
   })
 
   it('maps builder state to the submit_dag contract', () => {
@@ -77,7 +77,7 @@ describe('recoveryApplicationFormMapper', () => {
       order: 1,
       description: 'Database server tier',
     })
-    expect(toRecoveryApplicationData(formState).application.tiers.database).toEqual({
+    expect(toRecoveryApplicationData(formState).application.tiers['database']).toEqual({
       order: 1,
       description: 'Database server tier',
     })
