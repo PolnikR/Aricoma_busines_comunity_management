@@ -67,7 +67,9 @@ export function RecoveryGroupBuilder({
           />
         </aside>
         <div className="flex min-h-0 flex-col">
-          <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
+          <div className={`custom-scrollbar min-h-0 flex-1 p-5 sm:p-6 ${
+            step === 3 ? 'overflow-hidden' : 'overflow-y-auto'
+          }`}>
             {step === 1 ? (
               <RecoveryGroupDetailsStep
                 name={draft.name}

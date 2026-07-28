@@ -16,27 +16,27 @@ const labels = {
 }
 
 describe('ResourceSidebar', () => {
-  it('deduplicates, sorts, filters, selects, and drags resources', async () => {
+  it('deduplicates, sorts, filters, and exposes resources only as drag sources', async () => {
     const user = userEvent.setup()
-    const onSelect = vi.fn()
     const setData = vi.fn()
     render(
       <ResourceSidebar
         {...labels}
         items={['WEB-02', 'DB-01', 'WEB-02']}
         dragDataKey="vm-name"
-        onSelect={onSelect}
       />,
     )
 
-    expect(screen.getAllByRole('button').map(button => button.textContent)).toEqual(['DB-01', 'WEB-02'])
-    fireEvent.dragStart(screen.getByRole('button', { name: 'DB-01' }), {
+    expect(screen.getByRole('heading', { name: 'Available resources' }).parentElement?.parentElement)
+      .toHaveClass('h-full', 'min-h-0', 'overflow-hidden')
+    expect(screen.getAllByRole('listitem').map(item => item.textContent)).toEqual(['DB-01', 'WEB-02'])
+    fireEvent.dragStart(screen.getByText('DB-01'), {
       dataTransfer: { setData },
     })
     expect(setData).toHaveBeenCalledWith('vm-name', 'DB-01')
 
     await user.clear(screen.getByRole('searchbox', { name: 'Search resources' }))
     await user.type(screen.getByRole('searchbox', { name: 'Search resources' }), 'web')
-    expect(screen.queryByRole('button', { name: 'DB-01' })).not.toBeInTheDocument()
+    expect(screen.queryByText('DB-01')).not.toBeInTheDocument()
   })
 })

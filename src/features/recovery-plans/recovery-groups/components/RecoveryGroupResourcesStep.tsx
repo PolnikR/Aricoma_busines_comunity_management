@@ -32,8 +32,8 @@ export function RecoveryGroupResourcesStep({
   }
 
   return (
-    <div className="grid min-h-0 gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-      <div className="min-h-72 overflow-hidden rounded-lg border border-[#e3edf6]">
+    <div className="grid h-full min-h-0 gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="h-72 min-h-0 overflow-hidden rounded-lg border border-[#e3edf6] lg:h-full">
         <ResourceSidebar
           items={virtualMachines}
           title={t('recovery.sidebar.availableVms')}
@@ -50,10 +50,9 @@ export function RecoveryGroupResourcesStep({
           staleErrorDescription={t('pages.virtualMachines.error.showingPrevious')}
           retryLabel={t('pages.virtualMachines.error.retryButton')}
           onRetry={() => { void refetch() }}
-          onSelect={onAdd}
         />
       </div>
-      <div className="rounded-lg border-2 border-dashed border-[#d9e6f1] bg-white p-4">
+      <div className="flex h-72 min-h-0 flex-col rounded-lg border-2 border-dashed border-[#d9e6f1] bg-white p-4 lg:h-full">
         <h2 className="text-base font-semibold text-[#17233d]">{t('pages.recoveryGroupBuilder.resources.title')}</h2>
         <p className="mt-1 text-sm text-[#71819a]">{t('pages.recoveryGroupBuilder.resources.description')}</p>
         <ResourceSelectionCard
@@ -64,7 +63,7 @@ export function RecoveryGroupResourcesStep({
           dropDataKey="vm-name"
           onResourceDrop={onAdd}
           onResourceRemove={onRemove}
-          className="mt-4 h-56 min-h-56 rounded-lg border border-[#edf2f7]"
+          className="mt-4 h-auto min-h-0 flex-1 rounded-lg border border-[#edf2f7]"
         />
       </div>
     </div>
