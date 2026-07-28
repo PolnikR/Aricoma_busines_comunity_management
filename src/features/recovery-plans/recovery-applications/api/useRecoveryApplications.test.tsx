@@ -38,8 +38,8 @@ describe('recovery application hooks', () => {
   it('submits to the real DAG endpoint and invalidates the backend list', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       status: 'ok',
-      filename: 'Finance',
-      remote_path: '/tmp/finance.json',
+      filename: 'Finance.json',
+      local: 'C:\\projects\\abco-be\\persistency\\dag_jsons\\Finance.json',
     }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
     const { queryClient, wrapper } = setup()

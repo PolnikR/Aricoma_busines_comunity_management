@@ -12,12 +12,12 @@ interface VirtualMachinesTableProps {
   onSelect: (virtualMachine: VirtualMachine) => void
 }
 
-function powerState(value: string): { tone: 'on' | 'off'; label: string } {
-  return value === 'poweredOn' ? { tone: 'on', label: 'On' } : { tone: 'off', label: 'Off' }
+function powerState(value: string, t: ReturnType<typeof useTranslation>['t']): { tone: 'on' | 'off'; label: string } {
+  return value === 'poweredOn' ? { tone: 'on', label: t('vm.state.on') } : { tone: 'off', label: t('vm.state.off') }
 }
 
-function connectionState(value: string): { tone: 'on' | 'warn'; label: string } {
-  return value === 'connected' ? { tone: 'on', label: 'Connected' } : { tone: 'warn', label: value || 'Unknown' }
+function connectionState(value: string, t: ReturnType<typeof useTranslation>['t']): { tone: 'on' | 'warn'; label: string } {
+  return value === 'connected' ? { tone: 'on', label: t('vm.state.connected') } : { tone: 'warn', label: value || t('details.unknown') }
 }
 
 export function VirtualMachinesTable({ virtualMachines, selectedId, density, onSelect }: VirtualMachinesTableProps) {
@@ -94,12 +94,12 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, density, onS
     {
       id: 'connection',
       header: t('tables.vm.connection'),
-      cell: (vm) => <StateCell {...connectionState(vm.connectionState)} title={vm.connectionState} />,
+      cell: (vm) => <StateCell {...connectionState(vm.connectionState, t)} title={vm.connectionState} />,
     },
     {
       id: 'power',
       header: t('tables.vm.power'),
-      cell: (vm) => <StateCell {...powerState(vm.powerState)} title={vm.powerState} />,
+      cell: (vm) => <StateCell {...powerState(vm.powerState, t)} title={vm.powerState} />,
     },
     {
       id: 'snapshots',
@@ -115,12 +115,12 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, density, onS
       rows={virtualMachines}
       rowKey={(vm: VirtualMachine, index: number) => `${vm.id}-${String(index)}`}
       rowSelectionKey={(vm: VirtualMachine): string => vm.id}
-      rowAriaLabel={(vm: VirtualMachine): string => `Show details for ${vm.name}`}
+      rowAriaLabel={(vm: VirtualMachine): string => `${t('vm.showDetails')} ${vm.name}`}
       density={density}
       selectedRowKey={selectedId}
       onRowClick={onSelect}
       minWidthClassName="min-w-260"
-      ariaLabel="Scrollable virtual machine table"
+      ariaLabel={t('vm.tableLabel')}
       headerCellClassName="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]"
       cellClassName={`px-3 ${density === 'compact' ? 'py-1.5' : 'py-2.5'} text-[13px] text-[#3b4763] align-top`}
     />

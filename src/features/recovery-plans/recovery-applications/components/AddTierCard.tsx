@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Input, Textarea } from '@/shared/components/form/FormControls'
-import { slugify } from '../utils/tierUtils'
+import { isTierIdAvailable, slugify } from '../utils/tierUtils'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
 interface AddTierCardProps {
@@ -26,7 +26,8 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
     }
   }
 
-  const isValidId = Boolean(id.trim()) && !existingIds.includes(id)
+  const normalizedId = slugify(id)
+  const isValidId = isTierIdAvailable(id, existingIds)
   const canCreate = Boolean(
     isValidId
     && tierDescription.trim()
@@ -47,7 +48,7 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
       },
     }
 
-    onAdd?.(id.trim(), newTier)
+    onAdd?.(normalizedId, newTier)
     setIsOpen(false)
     setRecoveryGroupName('')
     setId('')

@@ -101,6 +101,22 @@ describe('ProvidersCreateModal', () => {
     vi.unstubAllGlobals()
   })
 
+  it('does not overwrite an existing provider from create mode', async () => {
+    const mockFetch = vi.fn()
+    vi.stubGlobal('fetch', mockFetch)
+    renderWithQueryClient(
+      <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[mockProviderA]} />,
+    )
+
+    fillValidForm()
+    fireEvent.change(screen.getByLabelText('ID'), { target: { value: mockProviderA.id } })
+    fireEvent.click(screen.getByRole('button', { name: /Create Provider/i }))
+
+    expect(await screen.findByText('A provider with this ID already exists')).toBeInTheDocument()
+    expect(mockFetch).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
+
   it('submits the entered id in the payload', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(
       new Response(JSON.stringify({ providers: [] }), { status: 200 }),

@@ -18,6 +18,7 @@ import {
   type InfrastructureFlowNode,
 } from './topologyFlowModel'
 import { topologyNodeTypes } from './topologyNodeTypes'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface InfrastructureTopologyCanvasProps {
   topology: PositionedInfrastructureTopology
@@ -30,6 +31,7 @@ function InfrastructureTopologyCanvasContent({
   fitViewRequest = 0,
   onNodePositionChange,
 }: InfrastructureTopologyCanvasProps) {
+  const { t } = useTranslation()
   const flowElements = useMemo(() => mapTopologyToFlowElements(topology), [topology])
   const [nodes, setNodes, onNodesChange] = useNodesState<InfrastructureFlowNode>(
     flowElements.nodes,
@@ -77,7 +79,7 @@ function InfrastructureTopologyCanvasContent({
       fitViewOptions={{ padding: 0.02, minZoom: 0.15, maxZoom: 1.6 }}
       proOptions={{ hideAttribution: true }}
       className="bg-[#f8fbfe]"
-      aria-label="Infrastructure topology diagram"
+      aria-label={t('topology.diagramLabel')}
     >
       <Background
         variant={BackgroundVariant.Dots}
@@ -108,10 +110,11 @@ function InfrastructureTopologyCanvasContent({
 }
 
 export function InfrastructureTopologyCanvas(props: InfrastructureTopologyCanvasProps) {
+  const { t } = useTranslation()
   return (
     <div
       className="size-full min-h-0 min-w-0 max-w-full touch-none lg:touch-auto"
-      aria-label="Infrastructure topology canvas"
+      aria-label={t('topology.canvasLabel')}
     >
       <ReactFlowProvider>
         <InfrastructureTopologyCanvasContent {...props} />

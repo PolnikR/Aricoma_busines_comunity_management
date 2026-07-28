@@ -14,6 +14,7 @@ import { useTopologyNodePositionOverrides } from '../hooks/useTopologyNodePositi
 import { InfrastructureTopologyCanvas } from './InfrastructureTopologyCanvas'
 import { InfrastructureTopologyLegend } from './InfrastructureTopologyLegend'
 import { InfrastructureTopologyToolbar } from './InfrastructureTopologyToolbar'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface InfrastructureTopologyWorkspaceProps {
   topology: InfrastructureTopology
@@ -32,6 +33,7 @@ interface LayoutError {
 export function InfrastructureTopologyWorkspace({
   topology,
 }: InfrastructureTopologyWorkspaceProps) {
+  const { t } = useTranslation()
   const [filters, setFilters] = useState(defaultInfrastructureTopologyFilters)
   const deferredSearch = useDeferredValue(filters.search)
   const [layoutResult, setLayoutResult] = useState<LayoutResult | null>(null)
@@ -82,11 +84,11 @@ export function InfrastructureTopologyWorkspace({
 
         setLayoutError({
           source: filteredTopology,
-          message: error instanceof Error ? error.message : 'Topology layout failed.',
+          message: error instanceof Error ? error.message : t('topology.layoutFailed'),
         })
       },
     )
-  }, [filteredTopology])
+  }, [filteredTopology, t])
 
   const handleAutoLayout = () => {
     const requestId = layoutRequestId.current + 1
@@ -110,7 +112,7 @@ export function InfrastructureTopologyWorkspace({
 
           setLayoutError({
             source: filteredTopology,
-            message: error instanceof Error ? error.message : 'Topology layout failed.',
+            message: error instanceof Error ? error.message : t('topology.layoutFailed'),
           })
         },
       )
@@ -158,7 +160,7 @@ export function InfrastructureTopologyWorkspace({
             role="status"
           >
             <span className="size-2 animate-pulse rounded-full bg-[#0d91d7]" />
-            Arranging topology
+            {t('topology.arranging')}
           </div>
         ) : null}
 
@@ -171,8 +173,8 @@ export function InfrastructureTopologyWorkspace({
         {!isLayouting && positionedTopology?.nodes.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
             <div>
-              <h3 className="text-sm font-semibold text-[#263750]">No matching infrastructure</h3>
-              <p className="mt-1 text-sm text-[#71819a]">Adjust search or topology filters.</p>
+              <h3 className="text-sm font-semibold text-[#263750]">{t('topology.noMatches')}</h3>
+              <p className="mt-1 text-sm text-[#71819a]">{t('topology.adjustFilters')}</p>
             </div>
           </div>
         ) : null}

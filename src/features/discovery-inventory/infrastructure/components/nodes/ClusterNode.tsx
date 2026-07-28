@@ -5,6 +5,7 @@ import type { ClusterTopologyNode } from '../../model/topologyTypes'
 import { TopologyNodeShell } from './TopologyNodeShell'
 import { ClusterNodeTooltip } from './ClusterNodeTooltip'
 import { useTooltipHover } from '../../hooks/useTooltipHover'
+import { useTranslation } from '@/hooks/useTranslation'
 
 type ClusterFlowNode = Node<
   ClusterTopologyNode & Record<string, unknown>,
@@ -16,6 +17,7 @@ export const ClusterNode = memo(function ClusterNode({
   selected,
 }: NodeProps<ClusterFlowNode>) {
   const { showTooltip, nodeRef, handleMouseEnter, handleMouseLeave } = useTooltipHover()
+  const { t } = useTranslation()
 
   return (
     <div
@@ -25,16 +27,16 @@ export const ClusterNode = memo(function ClusterNode({
       className="relative"
     >
       <TopologyNodeShell
-        kindLabel="Cluster"
+        kindLabel={t('legend.cluster')}
         title={data.label}
-        subtitle="Compute cluster"
+        subtitle={t('topology.computeCluster')}
         icon={<LayersIcon className="size-5" />}
         iconClassName="bg-brand-50 text-brand-600"
         selected={selected}
         showSourceHandle
       >
         <span className="text-[11px] font-medium text-[#4f6079]">
-          {data.hostCount} {data.hostCount === 1 ? 'host' : 'hosts'}
+          {data.hostCount} {t(data.hostCount === 1 ? 'tooltip.cluster.hostSingular' : 'tooltip.cluster.hostPlural')}
         </span>
       </TopologyNodeShell>
 
@@ -43,7 +45,7 @@ export const ClusterNode = memo(function ClusterNode({
           nodeRef={nodeRef}
           data={{
             name: data.label,
-            description: 'Compute cluster',
+            description: t('topology.computeCluster'),
             hostCount: data.hostCount,
           }}
         />

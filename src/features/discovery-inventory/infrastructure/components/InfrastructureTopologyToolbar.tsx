@@ -3,6 +3,7 @@ import { Button } from '@/shared/components/button/Button'
 import { CheckboxField, Input, Select } from '@/shared/components/form/FormControls'
 import { FilterTabs } from '@/shared/components/filters/FilterTabs'
 import { GridIcon, LayersIcon, SearchIcon } from '@/shared/icons/Icons'
+import { useTranslation } from '@/hooks/useTranslation'
 import type {
   InfrastructureTopologyFilterOptions,
   InfrastructureTopologyFilters,
@@ -18,12 +19,6 @@ interface InfrastructureTopologyToolbarProps {
   onFitView: () => void
 }
 
-const powerTabs = [
-  { label: 'All', value: '' },
-  { label: 'Powered on', value: 'poweredOn' },
-  { label: 'Powered off', value: 'poweredOff' },
-]
-
 export function InfrastructureTopologyToolbar({
   filters,
   options,
@@ -33,6 +28,12 @@ export function InfrastructureTopologyToolbar({
   onResetPositions,
   onFitView,
 }: InfrastructureTopologyToolbarProps) {
+  const { t } = useTranslation()
+  const powerTabs = [
+    { label: t('topology.filters.all'), value: '' },
+    { label: t('topology.filters.poweredOn'), value: 'poweredOn' },
+    { label: t('topology.filters.poweredOff'), value: 'poweredOff' },
+  ]
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
     onFiltersChange({ ...filters, search: event.target.value })
   }
@@ -44,15 +45,15 @@ export function InfrastructureTopologyToolbar({
     <div className="flex flex-col gap-3 border-b border-[#e3edf6] bg-white p-3.5 xl:flex-row xl:items-center xl:justify-between">
       <div className="grid min-w-0 flex-1 grid-cols-1 gap-2.5 sm:grid-cols-[minmax(220px,1fr)_220px] xl:max-w-2xl">
         <Input
-          aria-label="Search infrastructure topology"
+          aria-label={t('topology.searchLabel')}
           type="search"
           value={filters.search}
           onChange={handleSearch}
-          placeholder="Search VM, host, cluster or datastore"
+          placeholder={t('topology.searchPlaceholder')}
           leadingIcon={<SearchIcon className="size-4" />}
         />
-        <Select aria-label="Filter topology by host" value={filters.host} onChange={handleHost}>
-          <option value="">All hosts</option>
+        <Select aria-label={t('topology.hostFilterLabel')} value={filters.host} onChange={handleHost}>
+          <option value="">{t('topology.filters.allHosts')}</option>
           {options.hosts.map((host) => <option key={host} value={host}>{host}</option>)}
         </Select>
       </div>
@@ -61,14 +62,14 @@ export function InfrastructureTopologyToolbar({
         <FilterTabs
           tabs={powerTabs}
           value={filters.powerState}
-          ariaLabel="Power state filter"
+          ariaLabel={t('topology.powerFilterLabel')}
           onChange={(powerState) => {
             onFiltersChange({ ...filters, powerState })
           }}
         />
 
         <CheckboxField
-          label="Datastores"
+          label={t('topology.filters.datastores')}
           variant="bordered"
           checked={filters.showDatastores}
           onChange={(event) => {
@@ -83,7 +84,7 @@ export function InfrastructureTopologyToolbar({
           disabled={isLayouting}
           onClick={onAutoLayout}
         >
-          {isLayouting ? 'Layouting' : 'Auto layout'}
+          {isLayouting ? t('topology.layouting') : t('topology.autoLayout')}
         </Button>
         <Button
           size="sm"
@@ -91,7 +92,7 @@ export function InfrastructureTopologyToolbar({
           disabled={isLayouting}
           onClick={onResetPositions}
         >
-          Reset positions
+          {t('topology.resetPositions')}
         </Button>
         <Button
           size="sm"
@@ -99,7 +100,7 @@ export function InfrastructureTopologyToolbar({
           startIcon={<GridIcon className="size-4" />}
           onClick={onFitView}
         >
-          Fit view
+          {t('topology.fitView')}
         </Button>
       </div>
     </div>

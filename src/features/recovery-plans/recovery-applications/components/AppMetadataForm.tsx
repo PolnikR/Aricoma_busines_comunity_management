@@ -50,11 +50,15 @@ export function AppMetadataForm({
   }
 
   return (
-    <form className="grid grid-cols-1 gap-4 items-end sm:grid-cols-2 xl:grid-cols-4">
+    <form
+      autoComplete="off"
+      className="grid grid-cols-1 gap-4 items-end sm:grid-cols-2 xl:grid-cols-4"
+    >
       <Field label={t('recovery.application.form.fileName')} htmlFor="application-file-name">
         <Input
           id="application-file-name"
           type="text"
+          autoComplete="off"
           value={fileName}
           onChange={e => { handleChange('fileName', e.target.value); }}
           placeholder={t('recovery.application.form.fileNamePlaceholder')}
@@ -73,6 +77,7 @@ export function AppMetadataForm({
         <Input
           id="application-name"
           type="text"
+          autoComplete="off"
           value={name}
           onChange={e => { handleChange('name', e.target.value); }}
           placeholder={t('forms.applicationNameExample')}
@@ -84,6 +89,7 @@ export function AppMetadataForm({
         <Input
           id="application-description"
           type="text"
+          autoComplete="off"
           value={description}
           onChange={e => { handleChange('description', e.target.value); }}
           placeholder={t('forms.applicationDescriptionExample')}

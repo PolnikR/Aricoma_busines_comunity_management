@@ -18,7 +18,7 @@ export function InfrastructureTopologyLegend({
   ]
   return (
     <div className="flex flex-col gap-2 border-t border-[#e3edf6] bg-white px-4 py-2.5 text-[11px] text-[#66758f] sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2" aria-label="Topology legend">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2" aria-label={t('legend.ariaLabel')}>
         {nodeKinds.map((item) => (
           <span key={item.label} className="inline-flex items-center gap-1.5">
             <span className={`size-2 rounded-sm ${item.className}`} />

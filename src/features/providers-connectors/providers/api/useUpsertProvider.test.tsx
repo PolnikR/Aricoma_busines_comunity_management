@@ -46,7 +46,8 @@ describe('useUpsertProvider', () => {
     }
     const { mockFetch, queryClient, result } = setup([providerA, newProvider])
 
-    result.current.mutate({ provider: newProvider, existingProviders: [providerA] })
+    queryClient.setQueryData(providerKeys.list(), [providerA])
+    result.current.mutate({ provider: newProvider })
 
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
     expect(submittedProvider(mockFetch)).toEqual(newProvider)
@@ -57,10 +58,32 @@ describe('useUpsertProvider', () => {
     const edited: ProviderRecord = { ...providerA, name: 'Renamed vCenter' }
     const { mockFetch, queryClient, result } = setup([edited])
 
-    result.current.mutate({ provider: edited, existingProviders: [providerA] })
+    queryClient.setQueryData(providerKeys.list(), [providerA])
+    result.current.mutate({ provider: edited })
 
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
     expect(submittedProvider(mockFetch)).toEqual(edited)
     expect(queryClient.getQueryData(providerKeys.list())).toEqual([edited])
+  })
+
+  it('preserves providers added to the cache while the mutation is pending', async () => {
+    const newProvider: ProviderRecord = {
+      id: 'flashsystem-01', name: 'Backup Array', description: '', type: 'FLASHCOPY', ipAddress: '10.0.0.2',
+    }
+    const concurrentProvider: ProviderRecord = {
+      id: 'powervm-01', name: 'PowerVM', description: '', type: 'POWERVM', ipAddress: '10.0.0.3',
+    }
+    const { queryClient, result } = setup([newProvider])
+    queryClient.setQueryData(providerKeys.list(), [providerA])
+
+    result.current.mutate({ provider: newProvider })
+    queryClient.setQueryData(providerKeys.list(), [providerA, concurrentProvider])
+
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+    expect(queryClient.getQueryData(providerKeys.list())).toEqual([
+      providerA,
+      concurrentProvider,
+      newProvider,
+    ])
   })
 })

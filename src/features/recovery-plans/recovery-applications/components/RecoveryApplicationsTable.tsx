@@ -49,10 +49,11 @@ function getSubmissionBadgeColor(status: string): 'success' | 'error' {
   return status === 'ok' ? 'success' : 'error'
 }
 
-const baseColumns: ColumnDef<RecoveryApplicationListItem>[] = [
+function getBaseColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<RecoveryApplicationListItem>[] {
+  return [
   {
     id: 'name',
-    header: 'Application',
+    header: t('tables.recovery.application'),
     cell: (app) => (
       <>
         <span className="block font-semibold text-[#17233d]">{app.data.application.name}</span>
@@ -62,36 +63,37 @@ const baseColumns: ColumnDef<RecoveryApplicationListItem>[] = [
   },
   {
     id: 'environment',
-    header: 'Environment',
+    header: t('tables.recovery.environment'),
     cell: (app) => <Badge color="info" size="sm">{app.data.application.environment}</Badge>,
   },
   {
     id: 'platform',
-    header: 'Platform',
+    header: t('tables.recovery.platform'),
     cell: (app) => <span className="text-[13px] text-[#3b4763]">{getProviderLabel(app.data.application.platform)}</span>,
   },
   {
     id: 'tiers',
-    header: 'Tiers',
+    header: t('tables.recovery.tiers'),
     cell: (app) => <span className="text-[13px] text-[#3b4763] text-right">{Object.keys(app.data.application.tiers).length}</span>,
   },
   {
     id: 'status',
-    header: 'Status',
+    header: t('tables.recovery.status'),
     cell: (app) => {
       const status = getApplicationStatus(app)
-      return <Badge color={getStatusBadgeColor(status)} size="sm">{status}</Badge>
+      return <Badge color={getStatusBadgeColor(status)} size="sm">{t(status === 'Active' ? 'tables.recovery.active' : 'tables.recovery.draft')}</Badge>
     },
   },
   {
     id: 'submission',
-    header: 'Submission',
+    header: t('tables.recovery.submission'),
     cell: (app) => {
       if (!app.submission) return <span className="text-[#9aa7bd]">—</span>
       return <Badge color={getSubmissionBadgeColor(app.submission.status)} size="sm">{app.submission.status}</Badge>
     },
   },
-]
+  ]
+}
 
 interface JsonViewerModalProps {
   isOpen: boolean
@@ -157,10 +159,10 @@ export function RecoveryApplicationsTable({ applications, onEdit }: RecoveryAppl
   const activeFilterCount = Number(Boolean(filters.environment)) + Number(Boolean(filters.platform))
 
   const columns = useMemo(() => [
-    ...baseColumns,
+    ...getBaseColumns(t),
     {
       id: 'json',
-      header: 'JSON',
+      header: t('tables.recovery.json'),
       cell: (app: RecoveryApplicationListItem) => (
         <Button
           size="xs"
@@ -170,11 +172,11 @@ export function RecoveryApplicationsTable({ applications, onEdit }: RecoveryAppl
             setJsonViewId(app.id)
           }}
         >
-          View
+          {t('tables.recovery.viewJson')}
         </Button>
       ),
     },
-  ], [])
+  ], [t])
 
   const table = useTableState(rows, {
     searchFields: ['id'],

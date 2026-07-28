@@ -152,6 +152,29 @@ describe('TierCard', () => {
     expect(onSave).not.toHaveBeenCalled()
   })
 
+  it('rejects an ID that collides after normalization', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    render(
+      <TierCard
+        id="database"
+        tier={mockTier}
+        isEditing
+        onSave={onSave}
+        existingIds={['database', 'db_cluster']}
+        canDelete
+      />,
+    )
+
+    const idInput = screen.getByLabelText('ID *')
+    await user.clear(idInput)
+    await user.type(idInput, 'DB Cluster')
+    await user.click(screen.getByRole('button', { name: /confirm/i }))
+
+    expect(screen.getByText('ID already in use')).toBeInTheDocument()
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
   it('renders order and description without recovery group details', () => {
     render(
       <TierCard

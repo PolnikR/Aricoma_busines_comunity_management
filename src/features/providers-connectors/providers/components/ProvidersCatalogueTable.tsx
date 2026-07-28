@@ -40,7 +40,7 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Provid
     {
       id: 'type',
       header: t('tables.provider.type'),
-      cell: (provider) => <Badge color="info" size="sm">{provider.type ? providerTypeLabel(provider.type) : 'UNKNOWN'}</Badge>,
+      cell: (provider) => <Badge color="info" size="sm">{provider.type ? providerTypeLabel(provider.type) : t('details.unknown')}</Badge>,
     },
     {
       id: 'ipAddress',
@@ -79,7 +79,7 @@ export function ProvidersCatalogueTable() {
     return (
       <DataTableSkeleton
         columnCount={4}
-        ariaLabel="Loading providers"
+        ariaLabel={t('providers.loading')}
         className="flex-1 rounded-none border-0 shadow-none lg:min-h-0"
       />
     )
@@ -89,7 +89,7 @@ export function ProvidersCatalogueTable() {
     return (
       <div className="p-6">
         <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700">
-          Failed to load providers. {error instanceof Error ? error.message : ''}
+          {t('providers.loadFailed')} {error instanceof Error ? error.message : ''}
         </div>
       </div>
     )
@@ -100,18 +100,18 @@ export function ProvidersCatalogueTable() {
       <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
-        searchPlaceholder="Search by provider name"
-        searchLabel="Search providers by name"
+        searchPlaceholder={t('providers.searchPlaceholder')}
+        searchLabel={t('providers.searchLabel')}
         density={table.density}
         onDensityChange={table.setDensity}
-        filterTitle="Filter providers"
+        filterTitle={t('providers.filterTitle')}
         activeFilterCount={typeFilter ? 1 : 0}
         onApplyFilters={() => { changeType(pendingType) }}
         onClearFilters={() => { setPendingType(''); changeType('') }}
         filterPanel={
-          <Field label="Type" htmlFor="provider-type-filter">
+          <Field label={t('details.type')} htmlFor="provider-type-filter">
             <Select id="provider-type-filter" value={pendingType} onChange={(event) => { setPendingType(event.target.value) }}>
-              <option value="">All types</option>
+              <option value="">{t('providers.allTypes')}</option>
               {types.map((type) => <option key={type} value={type}>{providerTypeLabel(type)}</option>)}
             </Select>
           </Field>
@@ -124,10 +124,10 @@ export function ProvidersCatalogueTable() {
         rowKey={(provider) => provider.id}
         density={table.density}
         minWidthClassName="min-w-215"
-        ariaLabel="Providers table"
+        ariaLabel={t('providers.tableLabel')}
         onRowClick={(provider) => { setSelectedId(provider.id) }}
         selectedRowKey={selectedId}
-        emptyContent={rows.length > 0 ? 'No providers match your search.' : 'No providers were returned by the backend.'}
+        emptyContent={rows.length > 0 ? t('providers.noMatches') : t('providers.empty')}
       />
 
       <DataTablePagination

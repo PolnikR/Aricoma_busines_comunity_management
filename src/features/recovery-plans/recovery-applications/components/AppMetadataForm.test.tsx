@@ -63,4 +63,21 @@ describe('AppMetadataForm', () => {
 
     expect(await screen.findByLabelText('File name *')).toBeRequired()
   })
+
+  it('disables browser autocomplete for application metadata fields', async () => {
+    render(
+      <LanguageProvider>
+        <AppMetadataForm />
+      </LanguageProvider>
+    )
+
+    const fileName = await screen.findByLabelText('File name *')
+    const applicationName = screen.getByLabelText('Application Name *')
+    const description = screen.getByLabelText('Description *')
+
+    expect(fileName.closest('form')).toHaveAttribute('autocomplete', 'off')
+    expect(fileName).toHaveAttribute('autocomplete', 'off')
+    expect(applicationName).toHaveAttribute('autocomplete', 'off')
+    expect(description).toHaveAttribute('autocomplete', 'off')
+  })
 })

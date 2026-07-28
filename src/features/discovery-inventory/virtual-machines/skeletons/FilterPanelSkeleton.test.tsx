@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { FilterPanelSkeleton } from './FilterPanelSkeleton'
+
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 describe('FilterPanelSkeleton', () => {
   it('renders an accessible four-field placeholder', () => {

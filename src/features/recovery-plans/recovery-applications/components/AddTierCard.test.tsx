@@ -85,6 +85,21 @@ describe('AddTierCard', () => {
     expect(createBtn).toBeDisabled()
   })
 
+  it('disables Create if the normalized ID is duplicate', async () => {
+    const user = userEvent.setup()
+    render(<AddTierCard maxOrder={4} existingIds={['db_cluster']} />)
+
+    await user.click(screen.getByRole('button', { name: '+' }))
+    await user.type(screen.getByPlaceholderText('Tier description'), 'Cluster tier')
+    await user.type(screen.getByPlaceholderText('Recovery group name'), 'Cluster group')
+    await user.type(screen.getByPlaceholderText('Recovery group description'), 'Cluster recovery group')
+    const idInput = screen.getByPlaceholderText('tier_id')
+    await user.clear(idInput)
+    await user.type(idInput, 'DB Cluster')
+
+    expect(screen.getByRole('button', { name: /create/i })).toBeDisabled()
+  })
+
   it('calls onAdd with new tier data when Create clicked', async () => {
     const user = userEvent.setup()
     const onAdd = vi.fn()

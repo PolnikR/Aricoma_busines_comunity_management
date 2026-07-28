@@ -7,6 +7,16 @@ export function slugify(text: string): string {
     .replace(/_+/g, '_')
 }
 
+export function isTierIdAvailable(
+  value: string,
+  existingIds: string[],
+  currentId?: string,
+): boolean {
+  const normalizedId = slugify(value)
+  return normalizedId !== ''
+    && (normalizedId === currentId || !existingIds.includes(normalizedId))
+}
+
 export function generateTierId(name: string, existingIds: string[]): string {
   const baseSlug = slugify(name)
 

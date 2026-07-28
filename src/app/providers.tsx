@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { BrowserRouter } from 'react-router-dom'
 import { SidebarProvider } from '@/layouts/app-shell/SidebarContext'
 
 const queryClient = new QueryClient({
@@ -19,9 +18,7 @@ interface AppProvidersProps {
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <SidebarProvider>{children}</SidebarProvider>
-      </BrowserRouter>
+      <SidebarProvider>{children}</SidebarProvider>
     </QueryClientProvider>
   )
 }

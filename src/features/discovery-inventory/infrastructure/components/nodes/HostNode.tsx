@@ -5,6 +5,7 @@ import type { HostTopologyNode } from '../../model/topologyTypes'
 import { TopologyNodeShell } from './TopologyNodeShell'
 import { HostNodeTooltip } from './HostNodeTooltip'
 import { useTooltipHover } from '../../hooks/useTooltipHover'
+import { useTranslation } from '@/hooks/useTranslation'
 
 type HostFlowNode = Node<
   HostTopologyNode & Record<string, unknown>,
@@ -15,9 +16,10 @@ export const HostNode = memo(function HostNode({
   data,
   selected,
 }: NodeProps<HostFlowNode>) {
+  const { t } = useTranslation()
   const clusterLabel = data.clusterNames.length > 0
     ? data.clusterNames.join(', ')
-    : 'No cluster'
+    : t('tooltip.host.noCluster')
 
   const { showTooltip, nodeRef, handleMouseEnter, handleMouseLeave } = useTooltipHover()
 
@@ -29,7 +31,7 @@ export const HostNode = memo(function HostNode({
       className="relative"
     >
       <TopologyNodeShell
-        kindLabel="Host"
+        kindLabel={t('legend.host')}
         title={data.label}
         subtitle={clusterLabel}
         icon={<ServerIcon className="size-5" />}
@@ -39,7 +41,7 @@ export const HostNode = memo(function HostNode({
         showSourceHandle
       >
         <span className="text-[11px] font-medium text-[#4f6079]">
-          {data.virtualMachineCount} virtual machines
+          {data.virtualMachineCount} {t('topology.virtualMachines')}
         </span>
       </TopologyNodeShell>
 

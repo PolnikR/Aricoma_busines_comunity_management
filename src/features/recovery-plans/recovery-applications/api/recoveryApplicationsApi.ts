@@ -50,8 +50,14 @@ function mapRecoveryTier(tier: z.infer<typeof recoveryTierSchema>): RecoveryTier
 export interface SubmitDagResponse {
   status: string
   filename: string
-  remote_path: string
+  local: string
 }
+
+const submitDagResponseSchema = z.object({
+  status: z.string(),
+  filename: z.string(),
+  local: z.string(),
+})
 
 export async function fetchRecoveryApplications(): Promise<RecoveryApplicationListItem[]> {
   const response = await apiFetch(GET_RECOVERY_APPS_ENDPOINT)
@@ -104,5 +110,6 @@ export async function submitRecoveryApplicationDag(
     const body = await response.text().catch(() => '')
     throw new Error(`submit_recovery_dag failed: ${String(response.status)} ${response.statusText}${body ? ` — ${body}` : ''}`)
   }
-  return response.json() as Promise<SubmitDagResponse>
+  const payload: unknown = await response.json()
+  return submitDagResponseSchema.parse(payload)
 }

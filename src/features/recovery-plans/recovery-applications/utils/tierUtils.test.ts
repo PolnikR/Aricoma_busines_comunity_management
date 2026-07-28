@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { slugify, generateTierId } from './tierUtils'
+import { generateTierId, isTierIdAvailable, slugify } from './tierUtils'
 
 describe('tierUtils', () => {
   describe('slugify', () => {
@@ -37,6 +37,16 @@ describe('tierUtils', () => {
     it('returns empty slug + counter if name is empty', () => {
       const existing = ['_1']
       expect(generateTierId('', existing)).toBe('_2')
+    })
+  })
+
+  describe('isTierIdAvailable', () => {
+    it('checks collisions after normalizing the entered ID', () => {
+      expect(isTierIdAvailable('DB Cluster', ['database', 'db_cluster'])).toBe(false)
+    })
+
+    it('allows the current normalized ID while editing', () => {
+      expect(isTierIdAvailable('DB Cluster', ['database', 'db_cluster'], 'db_cluster')).toBe(true)
     })
   })
 })

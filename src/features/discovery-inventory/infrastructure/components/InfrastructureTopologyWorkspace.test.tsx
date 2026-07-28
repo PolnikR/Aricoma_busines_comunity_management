@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { InfrastructureTopologyWorkspace } from './InfrastructureTopologyWorkspace'
+
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 import { layoutInfrastructureTopology } from '../layout/layoutInfrastructureTopology'
 import type {
   InfrastructureTopology,

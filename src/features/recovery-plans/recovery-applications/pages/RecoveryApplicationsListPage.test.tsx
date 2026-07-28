@@ -52,7 +52,7 @@ describe('RecoveryApplicationsListPage', () => {
     expect(screen.getByText('No recovery applications defined yet')).toBeInTheDocument()
   })
 
-  it('navigates to create and encoded edit routes', async () => {
+  it('navigates to create and encoded edit routes without the json extension', async () => {
     const user = userEvent.setup()
     query = {
       ...query,
@@ -75,6 +75,6 @@ describe('RecoveryApplicationsListPage', () => {
     await user.click(screen.getByRole('button', { name: 'Create Application' }))
     expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications/create')
     await user.click(screen.getByRole('button', { name: 'Edit row' }))
-    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications/finance%20app.json/edit')
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications/finance%20app/edit')
   })
 })

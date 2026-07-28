@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Input, Textarea } from '@/shared/components/form/FormControls'
+import { isTierIdAvailable, slugify } from '../utils/tierUtils'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
 interface TierCardProps {
@@ -116,10 +117,12 @@ export function TierCard({
     let newRecoveryGroupNameError = ''
     let newRecoveryGroupDescriptionError = ''
 
-    if (!editForm.editId.trim()) {
+    const newId = slugify(editForm.editId)
+
+    if (!newId) {
       newIdError = t('recovery.tier.validation.idRequired')
       hasError = true
-    } else if (editForm.editId !== id && existingIds.includes(editForm.editId)) {
+    } else if (!isTierIdAvailable(editForm.editId, existingIds, id)) {
       newIdError = t('recovery.tier.validation.idInUse')
       hasError = true
     }
@@ -148,7 +151,6 @@ export function TierCard({
         recoveryGroupDescriptionError: newRecoveryGroupDescriptionError,
       }))
     } else {
-      const newId = editForm.editId.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_')
       onSave?.(id, newId, {
         tierDescription: editForm.editTierDescription.trim(),
         recoveryGroupName: editForm.editRecoveryGroupName.trim(),

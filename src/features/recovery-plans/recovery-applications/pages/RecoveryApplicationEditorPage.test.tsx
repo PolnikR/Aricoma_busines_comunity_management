@@ -53,7 +53,8 @@ vi.mock('react-router-dom', async (importOriginal) => {
   return {
     ...actual,
     useNavigate: () => navigate,
-    useParams: () => ({ id: 'finance_app.json' }),
+    useParams: () => ({ id: 'finance_app' }),
+    useBlocker: () => ({ state: 'unblocked' as const }),
   }
 })
 

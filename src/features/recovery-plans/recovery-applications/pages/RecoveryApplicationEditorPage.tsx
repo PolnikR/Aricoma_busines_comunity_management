@@ -15,6 +15,8 @@ import {
   toRecoveryApplicationFormState,
 } from '../utils/recoveryApplicationFormMapper'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard'
+import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 
 export function RecoveryApplicationEditorPage() {
   const { t } = useTranslation()
@@ -23,8 +25,10 @@ export function RecoveryApplicationEditorPage() {
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
   const submitApplication = useSubmitRecoveryApplication()
   const [isDirty, setIsDirty] = useState(false)
-  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false)
-  const application = applications?.find((item) => item.id === id)
+  const navigationGuard = useUnsavedChangesGuard(isDirty)
+  const application = applications?.find(
+    (item) => toRecoveryApplicationFileName(item.id) === id,
+  )
   const initialData = useMemo(
     () => application ? toRecoveryApplicationFormState(application) : null,
     [application],
@@ -35,18 +39,7 @@ export function RecoveryApplicationEditorPage() {
   }
 
   const goBack = () => {
-    if (isDirty) {
-      setIsDiscardDialogOpen(true)
-      return
-    }
-
-    navigateToApplications()
-  }
-
-  const handleDiscardChanges = () => {
-    setIsDiscardDialogOpen(false)
-    setIsDirty(false)
-    navigateToApplications()
+    navigationGuard.requestNavigation(navigateToApplications)
   }
 
   const handleSave = (formState: RecoveryApplicationFormState): void => {
@@ -56,7 +49,7 @@ export function RecoveryApplicationEditorPage() {
     }, {
       onSuccess: () => {
         setIsDirty(false)
-        navigateToApplications()
+        navigationGuard.runWithoutBlocking(navigateToApplications)
       },
     })
   }
@@ -64,7 +57,7 @@ export function RecoveryApplicationEditorPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-96 items-center justify-center text-sm text-[#71819a]" role="status">
-        Loading recovery application
+        {t('pages.recoveryEditor.error.loading')}
       </div>
     )
   }
@@ -73,16 +66,16 @@ export function RecoveryApplicationEditorPage() {
     return (
       <div className="flex min-h-full flex-col">
         <PageHeader
-          eyebrow="Recovery Plans"
-          title="Edit Recovery Application"
-          description="Load the recovery application from the backend."
+          eyebrow={t('pages.recoveryEditor.eyebrow')}
+          title={t('pages.recoveryEditor.title')}
+          description={t('pages.recoveryEditor.loadDescription')}
           actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
         />
         <div className="p-6">
           <FetchErrorAlert
-            title="Failed to load recovery application"
-            description={error instanceof Error ? error.message : 'The recovery application request failed.'}
-            retryLabel="Retry"
+            title={t('pages.recoveryEditor.error.failed')}
+            description={error instanceof Error ? error.message : t('pages.recoveryEditor.requestFailed')}
+            retryLabel={t('pages.providers.detail.retry')}
             isRetrying={isFetching}
             variant="full"
             onRetry={() => { void refetch() }}
@@ -96,9 +89,9 @@ export function RecoveryApplicationEditorPage() {
     return (
       <div className="flex min-h-full flex-col">
         <PageHeader
-          eyebrow="Recovery Plans"
-          title="Recovery application not found"
-          description="The requested backend file does not exist."
+          eyebrow={t('pages.recoveryEditor.eyebrow')}
+          title={t('pages.recoveryEditor.notFound')}
+          description={t('pages.recoveryEditor.notFoundDescription')}
           actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
         />
       </div>
@@ -108,9 +101,9 @@ export function RecoveryApplicationEditorPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow="Recovery Plans"
-        title={`Edit ${initialData.name}`}
-        description="Saving submits the current filename to the backend upsert endpoint."
+        eyebrow={t('pages.recoveryEditor.eyebrow')}
+        title={`${t('buttons.edit')} ${initialData.name}`}
+        description={t('pages.recoveryEditor.saveDescription')}
         actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
       />
       <div className="flex flex-1 flex-col lg:min-h-0">
@@ -118,7 +111,7 @@ export function RecoveryApplicationEditorPage() {
           <div className="mx-4 mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert">
             {submitApplication.error instanceof Error
               ? submitApplication.error.message
-              : 'Failed to submit recovery application.'}
+              : t('pages.recovery.submitFailed')}
           </div>
         ) : null}
         <RecoveryAppBuilder
@@ -130,14 +123,14 @@ export function RecoveryApplicationEditorPage() {
         />
       </div>
       <ConfirmDialog
-        open={isDiscardDialogOpen}
+        open={navigationGuard.isNavigationBlocked}
         title={t('recovery.builder.discardDialog.title')}
         message={t('recovery.builder.discardDialog.message')}
         cancelLabel={t('recovery.builder.discardDialog.cancel')}
         confirmLabel={t('recovery.builder.discardDialog.confirm')}
         tone="danger"
-        onCancel={() => { setIsDiscardDialogOpen(false) }}
-        onConfirm={handleDiscardChanges}
+        onCancel={navigationGuard.cancelNavigation}
+        onConfirm={navigationGuard.confirmNavigation}
       />
     </div>
   )

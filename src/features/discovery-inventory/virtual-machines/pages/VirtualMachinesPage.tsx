@@ -132,7 +132,7 @@ export function VirtualMachinesPage() {
             </div>
           </div>
           <div className="flex flex-1 flex-col overflow-hidden bg-[#f5f8fc] p-3 lg:min-h-0">
-            <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#dbe7f2] bg-white shadow-sm lg:min-h-0" aria-label="Virtual machine inventory table">
+            <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#dbe7f2] bg-white shadow-sm lg:min-h-0" aria-label={t('vm.inventoryLabel')}>
               <VirtualMachinesToolbar filters={filters} options={data.filterOptions} availableTags={availableTags} providers={providers} providersLoading={providersLoading} onFiltersChange={updateFilters} onReset={() => { updateFilters(defaultFilters) }} density={density} onDensityChange={setDensity} />
               <div className="flex-1 lg:min-h-0 lg:overflow-y-auto custom-scrollbar">
                 {data.items.length > 0 ? (

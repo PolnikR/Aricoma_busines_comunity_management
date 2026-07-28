@@ -7,6 +7,7 @@ import { DataTableSkeleton } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
 import { useRecoveryApplications } from '../api/useRecoveryApplications'
+import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 
 export function RecoveryApplicationsListPage() {
   const { t } = useTranslation()
@@ -14,7 +15,8 @@ export function RecoveryApplicationsListPage() {
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
 
   const handleEdit = (id: string): void => {
-    void navigate(`/recovery-plans/recovery-applications/${encodeURIComponent(id)}/edit`)
+    const routeId = toRecoveryApplicationFileName(id)
+    void navigate(`/recovery-plans/recovery-applications/${encodeURIComponent(routeId)}/edit`)
   }
 
   if (isLoading) {

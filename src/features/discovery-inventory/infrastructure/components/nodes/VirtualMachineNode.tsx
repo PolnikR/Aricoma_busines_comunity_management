@@ -6,6 +6,7 @@ import type { VirtualMachineTopologyNode } from '../../model/topologyTypes'
 import { TopologyNodeShell } from './TopologyNodeShell'
 import { VMNodeTooltip } from './VMNodeTooltip'
 import { useTooltipHover } from '../../hooks/useTooltipHover'
+import { useTranslation } from '@/hooks/useTranslation'
 
 type VirtualMachineFlowNode = Node<
   VirtualMachineTopologyNode & Record<string, unknown>,
@@ -17,6 +18,7 @@ export const VirtualMachineNode = memo(function VirtualMachineNode({
   selected,
 }: NodeProps<VirtualMachineFlowNode>) {
   const poweredOn = data.powerState === 'poweredOn'
+  const { t } = useTranslation()
   const { showTooltip, nodeRef, handleMouseEnter, handleMouseLeave } = useTooltipHover()
 
   return (
@@ -27,7 +29,7 @@ export const VirtualMachineNode = memo(function VirtualMachineNode({
       className="relative"
     >
       <TopologyNodeShell
-        kindLabel="Virtual machine"
+        kindLabel={t('legend.vm')}
         title={data.label}
         subtitle={data.hostName}
         icon={<CpuIcon className="size-5" />}
@@ -48,7 +50,7 @@ export const VirtualMachineNode = memo(function VirtualMachineNode({
               poweredOn ? 'bg-success-500' : 'bg-gray-400',
             )}
             />
-            {poweredOn ? 'Powered on' : 'Powered off'}
+            {t(poweredOn ? 'topology.filters.poweredOn' : 'topology.filters.poweredOff')}
           </span>
           <span className="truncate text-[#687991]">{data.connectionState}</span>
         </span>

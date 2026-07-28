@@ -5,7 +5,6 @@ import type { ProviderRecord } from '../model/providerTypes'
 
 interface UpsertProviderVars {
   provider: ProviderRecord
-  existingProviders: ProviderRecord[]
 }
 
 // Creates or edits a provider. The backend upserts by id from a single provider
@@ -15,9 +14,11 @@ export function useUpsertProvider() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ provider }: UpsertProviderVars) => submitProvider(provider),
-    onSuccess: (_data, { provider, existingProviders }) => {
-      const others = existingProviders.filter((entry) => entry.id !== provider.id)
-      queryClient.setQueryData(providerKeys.list(), [...others, provider])
+    onSuccess: (_data, { provider }) => {
+      queryClient.setQueryData<ProviderRecord[]>(providerKeys.list(), (current = []) => {
+        const others = current.filter((entry) => entry.id !== provider.id)
+        return [...others, provider]
+      })
     },
   })
 }

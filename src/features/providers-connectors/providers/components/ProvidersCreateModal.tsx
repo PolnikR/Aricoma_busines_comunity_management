@@ -51,11 +51,14 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof ProviderCreateFormData, string>> = {}
-    if (!formData.id.trim()) newErrors.id = 'ID is required'
-    if (!formData.name.trim()) newErrors.name = 'Provider name is required'
-    if (!formData.description.trim()) newErrors.description = 'Description is required'
-    if (!formData.type) newErrors.type = 'Type is required'
-    if (!formData.ipAddress.trim()) newErrors.ipAddress = 'IP address is required'
+    if (!formData.id.trim()) newErrors.id = t('forms.idRequired')
+    else if (!isEdit && existingProviders.some((entry) => entry.id === formData.id.trim())) {
+      newErrors.id = t('providers.validation.idExists')
+    }
+    if (!formData.name.trim()) newErrors.name = t('forms.nameRequired')
+    if (!formData.description.trim()) newErrors.description = t('forms.descriptionRequired')
+    if (!formData.type) newErrors.type = t('forms.typeRequired')
+    if (!formData.ipAddress.trim()) newErrors.ipAddress = t('forms.ipRequired')
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -74,12 +77,12 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     }
 
     upsert.mutate(
-      { provider: record, existingProviders },
+      { provider: record },
       {
         onSuccess: () => { onClose() },
         onError: (err: unknown) => {
           const detail = err instanceof Error ? err.message : ''
-          setErrorMessage(detail ? `Failed to create provider: ${detail}` : 'Failed to create provider')
+          setErrorMessage(detail ? `${t('providers.submitFailed')}: ${detail}` : t('providers.submitFailed'))
         },
       },
     )
@@ -89,7 +92,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     <Modal
       open={open}
       onClose={onClose}
-      title={isEdit ? 'Edit provider' : 'Create provider'}
+      title={t(isEdit ? 'providers.modal.editTitle' : 'providers.modal.createTitle')}
       footer={
         <>
           <Button
@@ -108,8 +111,8 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
             className="flex-1"
           >
             {upsert.isPending
-              ? (isEdit ? 'Saving…' : 'Creating…')
-              : (isEdit ? 'Edit provider' : 'Create provider')}
+              ? t(isEdit ? 'messages.saving' : 'messages.creating')
+              : t(isEdit ? 'providers.modal.editTitle' : 'providers.modal.createTitle')}
           </Button>
         </>
       }

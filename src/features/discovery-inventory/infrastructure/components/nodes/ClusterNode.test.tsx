@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from 'vitest'
 import type { ComponentProps, ReactNode } from 'react'
 import { ClusterNode } from './ClusterNode'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
 vi.mock('../../hooks/useTooltipHover', () => ({
   useTooltipHover: () => ({
     showTooltip: false,

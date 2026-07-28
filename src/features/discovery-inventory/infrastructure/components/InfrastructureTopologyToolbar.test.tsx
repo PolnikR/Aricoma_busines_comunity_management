@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { InfrastructureTopologyToolbar } from './InfrastructureTopologyToolbar'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
 const filters = { search: '', powerState: '', host: '', showDatastores: false }
 const options = { hosts: ['host-1', 'host-2'] }
 

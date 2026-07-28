@@ -5,6 +5,8 @@ import type { ReactFlow } from '@xyflow/react'
 import type { PositionedInfrastructureTopology } from '../layout/layoutInfrastructureTopology'
 import { InfrastructureTopologyCanvas } from './InfrastructureTopologyCanvas'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
 const reactFlowProps = vi.hoisted(() => ({
   current: null as ComponentProps<typeof ReactFlow> | null,
 }))
