@@ -14,6 +14,7 @@ interface DetailDrawerProps {
   footer?: ReactNode
   resizable?: boolean
   ariaLabel?: string
+  closeLabel?: string
   bodyClassName?: string
 }
 
@@ -22,7 +23,7 @@ interface DetailDrawerProps {
 // optionally a pinned footer. When `resizable` is set the panel can be dragged
 // wider/narrower for the current view only — it resets to the default width
 // whenever it closes.
-export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerExtra, children, footer, resizable = false, ariaLabel = 'Detail', bodyClassName }: DetailDrawerProps) {
+export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerExtra, children, footer, resizable = false, ariaLabel = 'Detail', closeLabel = 'Close detail', bodyClassName }: DetailDrawerProps) {
   const { width, handleProps } = useResizablePanel({ open })
 
   useEffect(() => {
@@ -62,7 +63,7 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close detail"
+            aria-label={closeLabel}
             className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#d7deea] text-gray-500 transition hover:border-[#0d91d7] hover:text-[#118ccc]"
           >
             ✕

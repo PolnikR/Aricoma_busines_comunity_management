@@ -283,32 +283,33 @@ export function RecoveryApplicationsTable({ applications, onEdit }: RecoveryAppl
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
-        eyebrow="Recovery Application"
+        eyebrow={t('drawer.selectedApplication')}
         title={selected?.data.application.name ?? ''}
-        ariaLabel="Application detail"
+        ariaLabel={t('drawer.applicationDetail')}
+        closeLabel={t('drawer.closeApplication')}
         footer={selected && onEdit ? (
           <Button
             onClick={() => { onEdit(selected.id); setSelectedId(null) }}
             size="sm"
             className="w-full"
           >
-            Edit
+            {t('buttons.edit')}
           </Button>
         ) : null}
       >
         {selected ? (
           <dl className="px-5 py-2 space-y-3">
-            <DetailRow label="Description" value={selected.data.application.description || '-'} />
-            <DetailRow label="Environment" value={selected.data.application.environment} />
-            <DetailRow label="Platform" value={getProviderLabel(selected.data.application.platform)} />
-            <DetailRow label="Tiers" value={String(Object.keys(selected.data.application.tiers).length)} />
+            <DetailRow label={t('details.description')} value={selected.data.application.description || '-'} />
+            <DetailRow label={t('details.environment')} value={selected.data.application.environment} />
+            <DetailRow label={t('details.platform')} value={getProviderLabel(selected.data.application.platform)} />
+            <DetailRow label={t('details.tiers')} value={String(Object.keys(selected.data.application.tiers).length)} />
             <DetailRow
-              label="Status"
-              value={<Badge color={getStatusBadgeColor(getApplicationStatus(selected))} size="sm">{getApplicationStatus(selected)}</Badge>}
+              label={t('details.status')}
+              value={<Badge color={getStatusBadgeColor(getApplicationStatus(selected))} size="sm">{t(getApplicationStatus(selected) === 'Active' ? 'details.statusActive' : 'details.statusDraft')}</Badge>}
             />
             {selected.submission && (
               <DetailRow
-                label="Submission"
+                label={t('details.submission')}
                 value={
                   <>
                     <Badge color={getSubmissionBadgeColor(selected.submission.status)} size="sm">{selected.submission.status}</Badge>

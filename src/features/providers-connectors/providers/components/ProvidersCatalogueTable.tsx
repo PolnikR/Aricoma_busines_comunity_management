@@ -142,11 +142,12 @@ export function ProvidersCatalogueTable() {
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
-        eyebrow="Selected provider"
+        eyebrow={t('drawer.selectedProvider')}
         title={selected?.name ?? ''}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerExtra={selected ? <Badge color="info" size="sm">{selected.type ? providerTypeLabel(selected.type) : 'UNKNOWN'}</Badge> : null}
-        ariaLabel="Provider detail"
+        headerExtra={selected ? <Badge color="info" size="sm">{selected.type ? providerTypeLabel(selected.type) : t('details.unknown')}</Badge> : null}
+        ariaLabel={t('drawer.providerDetail')}
+        closeLabel={t('drawer.closeProvider')}
         footer={selected ? (
           <>
             <Button
@@ -162,17 +163,17 @@ export function ProvidersCatalogueTable() {
               size="sm"
               className="flex-1"
             >
-              Edit
+              {t('buttons.edit')}
             </Button>
           </>
         ) : null}
       >
         {selected ? (
           <dl className="px-5 py-2">
-            <DetailRow label="Provider ID" value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label="Type" value={selected.type ? providerTypeLabel(selected.type) : '-'} />
-            <DetailRow label="IP address" value={<span className="font-mono">{selected.ipAddress || '-'}</span>} />
-            <DetailRow label="Description" value={selected.description || '-'} />
+            <DetailRow label={t('details.providerId')} value={<span className="font-mono">{selected.id}</span>} />
+            <DetailRow label={t('details.type')} value={selected.type ? providerTypeLabel(selected.type) : '-'} />
+            <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{selected.ipAddress || '-'}</span>} />
+            <DetailRow label={t('details.description')} value={selected.description || '-'} />
           </dl>
         ) : null}
       </DetailDrawer>
@@ -188,10 +189,11 @@ export function ProvidersCatalogueTable() {
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        title="Delete provider"
-        message={<>Are you sure you want to delete <span className="font-medium">{deleteTarget?.name}</span>? This action cannot be undone.</>}
-        confirmLabel="Delete"
-        loadingLabel="Deleting…"
+        title={t('dialogs.deleteProvider')}
+        message={t('dialogs.deleteProviderMessage').replace('{name}', deleteTarget?.name ?? '')}
+        confirmLabel={t('buttons.delete')}
+        cancelLabel={t('buttons.cancel')}
+        loadingLabel={t('buttons.deleting')}
         tone="danger"
         isLoading={deleteProvider.isPending}
         onCancel={() => { setDeleteTarget(null) }}

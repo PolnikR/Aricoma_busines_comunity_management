@@ -13,8 +13,8 @@ afterEach(cleanup)
 
   it('calls onClose when the close button is clicked', () => {
     const onClose = vi.fn()
-    render(<DetailDrawer open title="X" onClose={onClose}>body</DetailDrawer>)
-    fireEvent.click(screen.getByLabelText('Close detail'))
+    render(<DetailDrawer open title="X" closeLabel="Close provider" onClose={onClose}>body</DetailDrawer>)
+    fireEvent.click(screen.getByLabelText('Close provider'))
     expect(onClose).toHaveBeenCalledOnce()
   })
 

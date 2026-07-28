@@ -20,7 +20,7 @@ export function ProviderDetailPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-96 items-center justify-center text-sm text-[#71819a]" role="status">
-        Loading provider
+        {t('pages.providers.detail.loading')}
       </div>
     )
   }
@@ -36,9 +36,9 @@ export function ProviderDetailPage() {
         />
         <div className="p-6">
           <FetchErrorAlert
-            title="Failed to load provider"
-            description={error instanceof Error ? error.message : 'The provider request failed.'}
-            retryLabel="Retry"
+            title={t('pages.providers.detail.loadError')}
+            description={error instanceof Error ? error.message : t('pages.providers.detail.requestFailed')}
+            retryLabel={t('pages.providers.detail.retry')}
             variant="full"
             onRetry={() => { void refetch() }}
           />
@@ -76,31 +76,31 @@ export function ProviderDetailPage() {
         <Card>
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-base font-semibold text-[#17233d]">Provider details</h2>
-              <p className="mt-1 text-sm text-[#71819a]">Data returned by the provider API.</p>
+              <h2 className="text-base font-semibold text-[#17233d]">{t('pages.providers.detail.title')}</h2>
+              <p className="mt-1 text-sm text-[#71819a]">{t('pages.providers.detail.apiDescription')}</p>
             </div>
             <Badge color="info" size="sm">
-              {provider.type ? providerTypeLabel(provider.type) : 'UNKNOWN'}
+              {provider.type ? providerTypeLabel(provider.type) : t('details.unknown')}
             </Badge>
           </div>
 
           <dl className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
             <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">Provider ID</dt>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">{t('details.providerId')}</dt>
               <dd className="mt-1 font-mono text-sm text-[#17233d]">{provider.id}</dd>
             </div>
             <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">Type</dt>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">{t('details.type')}</dt>
               <dd className="mt-1 text-sm text-[#17233d]">
                 {provider.type ? providerTypeLabel(provider.type) : '-'}
               </dd>
             </div>
             <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">IP address</dt>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">{t('details.ipAddress')}</dt>
               <dd className="mt-1 font-mono text-sm text-[#17233d]">{provider.ipAddress || '-'}</dd>
             </div>
             <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">Description</dt>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">{t('details.description')}</dt>
               <dd className="mt-1 text-sm text-[#17233d]">{provider.description || '-'}</dd>
             </div>
           </dl>

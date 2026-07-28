@@ -54,7 +54,8 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
           <VirtualMachineStatusBadge value={virtualMachine.toolsStatus} kind="tools" />
         </>
       ) : null}
-      ariaLabel="Virtual machine detail"
+      ariaLabel={t('drawer.vmDetail')}
+      closeLabel={t('drawer.closeVm')}
       bodyClassName="flex flex-col overflow-hidden"
     >
       {virtualMachine ? (
@@ -67,7 +68,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
               ]}
               value={selectedTab}
               onChange={setSelectedTab}
-              ariaLabel="Virtual machine detail sections"
+              ariaLabel={t('drawer.vmSections')}
               className="[&>button]:flex-1"
             />
 
@@ -103,11 +104,11 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                   </div>
 
                   <dl className="px-5 py-2">
-                    <DetailRow label="Operating system" value={virtualMachine.guestOs} />
-                    <DetailRow label="Cluster" value={virtualMachine.cluster} secondary={virtualMachine.host} />
-                    <DetailRow label="Datastore" value={virtualMachine.datastore} secondary={`${String(virtualMachine.vdisks.length)} disks / ${String(Math.round(virtualMachine.vdisks.reduce((sum, disk) => sum + disk.capacityGb, 0)))} GB`} />
-                    <DetailRow label="Folder" value={virtualMachine.folder} />
-                    <DetailRow label="VM Path" value={virtualMachine.vmPath} />
+                    <DetailRow label={t('details.os')} value={virtualMachine.guestOs} />
+                    <DetailRow label={t('details.cluster')} value={virtualMachine.cluster} secondary={virtualMachine.host} />
+                    <DetailRow label={t('details.datastore')} value={virtualMachine.datastore} secondary={`${String(virtualMachine.vdisks.length)} ${t('details.disks')} / ${String(Math.round(virtualMachine.vdisks.reduce((sum, disk) => sum + disk.capacityGb, 0)))} GB`} />
+                    <DetailRow label={t('details.folder')} value={virtualMachine.folder} />
+                    <DetailRow label={t('details.vmPath')} value={virtualMachine.vmPath} />
                   </dl>
                 </>
               )}
@@ -118,11 +119,11 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                     <Table className="min-w-full">
                       <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
                         <TableRow>
-                          <TableCell isHeader className={headerCell}>Label</TableCell>
-                          <TableCell isHeader className={headerCell}>Capacity</TableCell>
-                          <TableCell isHeader className={headerCell}>Datastore</TableCell>
-                          <TableCell isHeader className={headerCell}>File</TableCell>
-                          <TableCell isHeader className={headerCell}>Thin Prov.</TableCell>
+                          <TableCell isHeader className={headerCell}>{t('details.label')}</TableCell>
+                          <TableCell isHeader className={headerCell}>{t('details.capacity')}</TableCell>
+                          <TableCell isHeader className={headerCell}>{t('details.datastore')}</TableCell>
+                          <TableCell isHeader className={headerCell}>{t('details.file')}</TableCell>
+                          <TableCell isHeader className={headerCell}>{t('details.thinProv')}</TableCell>
                         </TableRow>
                       </TableHeader>
                       <TableBody className="divide-y divide-[#edf2f7]">
@@ -180,11 +181,11 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                         <Table className="min-w-full">
                           <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
                             <TableRow>
-                              <TableCell isHeader className={headerCell}>Source</TableCell>
-                              <TableCell isHeader className={headerCell}>Target</TableCell>
-                              <TableCell isHeader className={headerCell}>Status</TableCell>
-                              <TableCell isHeader className={headerCell}>Progress</TableCell>
-                              <TableCell isHeader className={headerCell}>Created</TableCell>
+                              <TableCell isHeader className={headerCell}>{t('details.snapshotSource')}</TableCell>
+                              <TableCell isHeader className={headerCell}>{t('details.snapshotTarget')}</TableCell>
+                              <TableCell isHeader className={headerCell}>{t('details.snapshotStatus')}</TableCell>
+                              <TableCell isHeader className={headerCell}>{t('details.snapshotProgress')}</TableCell>
+                              <TableCell isHeader className={headerCell}>{t('details.snapshotCreated')}</TableCell>
                             </TableRow>
                           </TableHeader>
                           <TableBody className="divide-y divide-[#edf2f7]">
