@@ -19,7 +19,7 @@ export function useSubmitRecoveryApplication() {
 
   return useMutation({
     mutationFn: (data: RecoveryApplicationData) => (
-      submitRecoveryApplicationDag(data.application.name, data)
+      submitRecoveryApplicationDag(data.application.name, data, false)
     ),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: recoveryApplicationsQueryKey })

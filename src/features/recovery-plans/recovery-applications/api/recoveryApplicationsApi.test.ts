@@ -129,7 +129,7 @@ describe('recoveryApplicationsApi', () => {
     })
   })
 
-  it('submits an encoded DAG name and preserves the response', async () => {
+  it('submits an encoded DAG name as non-final by default and preserves the response', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       status: 'ok',
       filename: 'Finance App',
@@ -142,7 +142,23 @@ describe('recoveryApplicationsApi', () => {
       remote_path: '/tmp/finance.json',
     })
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/submit_dag?filename=Finance%20App',
+      '/api/submit_recovery_dag?filename=Finance+App&is_final=false',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify(data) }),
+    )
+  })
+
+  it('supports an explicit final DAG submission', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      status: 'ok',
+      filename: 'Finance',
+      remote_path: '/tmp/finance.json',
+    }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await submitRecoveryApplicationDag('Finance', data, true)
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/submit_recovery_dag?filename=Finance&is_final=true',
       expect.objectContaining({ method: 'POST', body: JSON.stringify(data) }),
     )
   })

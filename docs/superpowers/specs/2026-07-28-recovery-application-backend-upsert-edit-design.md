@@ -8,7 +8,7 @@ Approved for implementation planning.
 
 Recovery applications are loaded from the real backend through
 `GET /api/get_recovery_apps` and submitted through
-`POST /api/submit_dag?filename=<name>`. The backend implements upsert semantics:
+`POST /api/submit_recovery_dag?filename=<name>&is_final=false`. The backend implements upsert semantics:
 submitting an unchanged filename updates the existing file, while submitting a
 changed filename creates a new file.
 
@@ -43,7 +43,7 @@ Edit action
   -> map backend application to RecoveryApplicationFormState
   -> RecoveryAppBuilder initialData
   -> user edits application
-  -> POST /api/submit_dag?filename=<current form name>
+  -> POST /api/submit_recovery_dag?filename=<current form name>&is_final=false
   -> invalidate recovery-applications query
   -> navigate back to recovery application list
 ```
@@ -123,7 +123,7 @@ contract when the builder produces `RecoveryApplicationData`.
 ### Recovery API and hooks
 
 - `fetchRecoveryApplications` remains the only read operation;
-- `submitRecoveryApplicationDag` remains the only write operation;
+- `submitRecoveryApplicationDag` remains the only write operation and currently submits `is_final=false`;
 - `useSubmitRecoveryApplication` invalidates the backend list after success;
 - no mock create, update, detail, or delete endpoint is restored.
 
@@ -141,7 +141,7 @@ Tests will verify:
 2. backend data is mapped into `RecoveryAppBuilder.initialData`;
 3. saving without changing the name submits the unchanged filename;
 4. changing the name submits the changed filename;
-5. submission performs exactly one request to `submit_dag`;
+5. submission performs exactly one request to `submit_recovery_dag`;
 6. successful submission invalidates the list and navigates back;
 7. loading, backend error, not-found, and submit-error states render correctly;
 8. the recovery drawer exposes Edit but not mock-backed Delete.

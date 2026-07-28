@@ -53,7 +53,7 @@ describe('recovery application hooks', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/submit_dag?filename=Finance',
+      '/api/submit_recovery_dag?filename=Finance&is_final=false',
       expect.objectContaining({ method: 'POST', body: JSON.stringify(data) }),
     )
     expect(queryClient.getQueryState(recoveryApplicationsQueryKey)?.isInvalidated).toBe(true)

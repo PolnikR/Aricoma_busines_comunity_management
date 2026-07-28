@@ -45,7 +45,7 @@ describe('recoveryApplicationFormMapper', () => {
     expect(application.data.application.tiers['database']?.recovery_group?.vms).toEqual([{ name: 'db-01' }])
   })
 
-  it('maps builder state to the submit_dag contract', () => {
+  it('maps builder state to the submit_recovery_dag contract', () => {
     const data = toRecoveryApplicationData(toRecoveryApplicationFormState(application))
 
     expect(data).toEqual({

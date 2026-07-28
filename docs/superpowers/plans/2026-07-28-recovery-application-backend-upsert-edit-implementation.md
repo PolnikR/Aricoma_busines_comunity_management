@@ -4,7 +4,7 @@
 
 Restore recovery application editing without reintroducing mock persistence.
 Applications remain sourced from `GET /api/get_recovery_apps`; both creation
-and editing submit through `POST /api/submit_dag`. The backend decides whether
+and editing submit through `POST /api/submit_recovery_dag` with `is_final=false`. The backend decides whether
 the operation updates an existing file or creates a new file from the submitted
 filename.
 
@@ -112,7 +112,7 @@ containing spaces or other URL-sensitive characters.
 ## Checkpoint: Backend upsert edit flow
 
 - [ ] Recovery list loads only through `GET /api/get_recovery_apps`.
-- [ ] Create and edit submit only through `POST /api/submit_dag`.
+- [ ] Create and edit submit only through `POST /api/submit_recovery_dag` with `is_final=false`.
 - [ ] Unchanged filename is passed unchanged.
 - [ ] Changed filename is passed as entered.
 - [ ] No `/api/recovery-applications`, local storage, or MSW recovery handler is restored.
@@ -151,7 +151,7 @@ changes.
 
 - [ ] Edit route works from the recovery application drawer.
 - [ ] Existing backend application data pre-fills the builder.
-- [ ] Save delegates update-versus-create behavior entirely to `submit_dag`.
+- [ ] Save delegates update-versus-create behavior entirely to `submit_recovery_dag`.
 - [ ] Errors do not discard the user's current edit.
 - [ ] Tests, lint, typecheck, and production build pass.
 
