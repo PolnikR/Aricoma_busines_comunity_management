@@ -51,6 +51,16 @@ describe('AppMetadataForm', () => {
       </LanguageProvider>
     )
 
-    expect(await screen.findByLabelText('File name')).toBeDisabled()
+    expect(await screen.findByLabelText('File name *')).toBeDisabled()
+  })
+
+  it('marks filename as required', async () => {
+    render(
+      <LanguageProvider>
+        <AppMetadataForm />
+      </LanguageProvider>
+    )
+
+    expect(await screen.findByLabelText('File name *')).toBeRequired()
   })
 })

@@ -159,9 +159,9 @@ export function TierCard({
 
   if (isEditing) {
     return (
-      <div className="bg-white border border-[#d9e6f1] rounded-lg p-4 shadow-sm">
-        <div className="space-y-3">
-          <Field label={t('recovery.tier.form.id')} htmlFor={`tier-${id}-edit-id`}>
+      <div className="flex h-full flex-col rounded-lg border border-[#d9e6f1] bg-white p-4 shadow-sm">
+        <div className="flex h-full flex-col gap-3">
+          <Field label={`${t('recovery.tier.form.id')} *`} htmlFor={`tier-${id}-edit-id`}>
             <Input
               id={`tier-${id}-edit-id`}
               type="text"
@@ -225,7 +225,7 @@ export function TierCard({
             {editForm.recoveryGroupDescriptionError && <p className="text-xs text-red-600 mt-1">{editForm.recoveryGroupDescriptionError}</p>}
           </Field>
 
-          <div className="flex gap-2 pt-2">
+          <div className="-mx-4 -mb-4 mt-auto flex gap-2 border-t border-[#edf2f7] bg-[#fbfdff] px-4 py-3">
             <Button
               onClick={handleConfirm}
               size="sm"
@@ -248,7 +248,7 @@ export function TierCard({
   }
 
   return (
-    <div className="bg-white border-2 border-dashed border-[#d9e6f1] rounded-lg flex flex-col overflow-hidden min-w-70 shadow-sm">
+    <div className="flex h-full min-w-70 flex-col overflow-hidden rounded-lg border-2 border-dashed border-[#d9e6f1] bg-white shadow-sm">
       <button
         onClick={() => {
           handleEditToggleClick(id)

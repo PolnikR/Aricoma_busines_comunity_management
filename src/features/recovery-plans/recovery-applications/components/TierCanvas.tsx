@@ -58,7 +58,16 @@ export function TierCanvas({
     setEditingTierId(null)
   }
 
-  const handleDragStart = (id: string) => {
+  const handleDragStart = (event: React.DragEvent, id: string) => {
+    const target = event.target
+    if (
+      target instanceof HTMLElement
+      && target.closest('input, textarea, select, button')
+    ) {
+      event.preventDefault()
+      return
+    }
+
     setDraggedId(id)
   }
 
@@ -133,15 +142,15 @@ export function TierCanvas({
         return (
           <div
             key={id}
-            draggable
-            onDragStart={() => {
-              handleDragStart(id)
+            draggable={editingTierId !== id}
+            onDragStart={(event) => {
+              handleDragStart(event, id)
             }}
             onDragOver={handleDragOver}
             onDrop={() => {
               handleDrop(id)
             }}
-            className={`cursor-grab active:cursor-grabbing opacity-100 transition ${
+            className={`${editingTierId === id ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'} h-full opacity-100 transition ${
               draggedId === id ? 'opacity-50' : ''
             }`}
           >

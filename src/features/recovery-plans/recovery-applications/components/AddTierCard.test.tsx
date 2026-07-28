@@ -63,6 +63,7 @@ describe('AddTierCard', () => {
     await user.click(plusBtn)
 
     const createBtn = screen.getByRole('button', { name: /create/i })
+    expect(screen.getByLabelText('ID *')).toBeRequired()
     expect(createBtn).toBeDisabled()
   })
 

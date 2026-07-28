@@ -128,6 +128,30 @@ describe('TierCard', () => {
     expect(onSave).not.toHaveBeenCalled()
   })
 
+  it('requires ID before saving', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+
+    render(
+      <TierCard
+        id="database"
+        tier={mockTier}
+        isEditing={true}
+        onSave={onSave}
+        existingIds={['database']}
+        canDelete={true}
+      />
+    )
+
+    const idInput = screen.getByLabelText('ID *')
+    expect(idInput).toBeRequired()
+    await user.clear(idInput)
+    await user.click(screen.getByRole('button', { name: /confirm/i }))
+
+    expect(screen.getByText('ID is required')).toBeInTheDocument()
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
   it('renders order and description without recovery group details', () => {
     render(
       <TierCard

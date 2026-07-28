@@ -65,6 +65,7 @@ describe('TierCanvas', () => {
     await user.click(editBtns[0]!)
 
     expect(screen.getByDisplayValue('database')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('database').closest('[draggable]')).toHaveAttribute('draggable', 'false')
   })
 
   it('calls onTierDelete when Delete clicked', async () => {

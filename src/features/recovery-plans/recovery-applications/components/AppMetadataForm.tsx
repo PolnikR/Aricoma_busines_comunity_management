@@ -51,7 +51,7 @@ export function AppMetadataForm({
 
   return (
     <form className="grid grid-cols-1 gap-4 items-end sm:grid-cols-2 xl:grid-cols-4">
-      <Field label="File name" htmlFor="application-file-name">
+      <Field label="File name *" htmlFor="application-file-name">
         <Input
           id="application-file-name"
           type="text"

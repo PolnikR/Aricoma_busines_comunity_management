@@ -28,7 +28,7 @@ describe('RecoveryAppBuilder', () => {
     const onSave = vi.fn()
     render(<RecoveryAppBuilder onSave={onSave} />)
 
-    fireEvent.change(screen.getByLabelText('File name'), { target: { value: 'finance_recovery' } })
+    fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
     fireEvent.change(screen.getByLabelText('Environment *'), { target: { value: 'prod' } })

@@ -65,7 +65,7 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
     return (
       <div className="bg-white border border-[#d9e6f1] rounded-lg p-4 shadow-sm">
         <div className="space-y-3">
-          <Field label="ID" htmlFor="add-tier-id">
+          <Field label="ID *" htmlFor="add-tier-id">
             <Input
               id="add-tier-id"
               type="text"
