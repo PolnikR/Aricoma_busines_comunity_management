@@ -26,14 +26,6 @@ export interface ApplicationSubmission {
   remotePath: string
 }
 
-export interface RecoveryApplication {
-  id: string
-  data: RecoveryApplicationData
-  submission?: ApplicationSubmission
-  createdAt: string
-  updatedAt: string
-}
-
 export interface RecoveryApplicationListItem {
   id: string
   data: {

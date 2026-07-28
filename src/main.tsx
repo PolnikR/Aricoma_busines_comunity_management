@@ -5,14 +5,23 @@ import { LanguageProvider } from '@/contexts/LanguageContext'
 import { UserProvider } from '@/contexts/UserContext'
 import './index.css'
 
-async function startApp() {
-  // Dev-only mock backend (recovery-apps). Never runs in a production build.
-  // Unhandled requests (providers, VMs, tags) pass straight through to the
-  // real backend without warnings.
-  if (import.meta.env.DEV) {
-    const { worker } = await import('./mocks/browser')
-    await worker.start({ onUnhandledRequest: 'bypass' })
+async function unregisterInactiveMockWorker(): Promise<void> {
+  if (!('serviceWorker' in navigator)) return
+
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    await Promise.all(
+      registrations
+        .filter((registration) => registration.active?.scriptURL.endsWith('/mockServiceWorker.js'))
+        .map((registration) => registration.unregister()),
+    )
+  } catch {
+    // Service worker cleanup must never prevent the application from starting.
   }
+}
+
+async function startApp() {
+  await unregisterInactiveMockWorker()
 
   const rootElement = document.getElementById('root')
 

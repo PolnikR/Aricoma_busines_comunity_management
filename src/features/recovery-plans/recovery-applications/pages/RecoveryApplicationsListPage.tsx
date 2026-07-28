@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/button/Button'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
@@ -7,36 +6,12 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { DataTableSkeleton } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
-import { DeleteConfirmationDialog } from '../components/DeleteConfirmationDialog'
-import { useRecoveryApplications, useDeleteRecoveryApplication } from '../api/useRecoveryApplications'
+import { useRecoveryApplications } from '../api/useRecoveryApplications'
 
 export function RecoveryApplicationsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
-  const deleteApplicationMutation = useDeleteRecoveryApplication()
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-
-  const handleEdit = (id: string) => {
-    void navigate(`/recovery-plans/recovery-applications/${id}/edit`)
-  }
-
-  const handleDelete = (id: string): void => {
-    const app = applications?.find(a => a.id === id)
-    if (app) {
-      setDeleteTarget({ id, name: app.data.application.name })
-    }
-  }
-
-  const handleDeleteConfirm = async (): Promise<void> => {
-    if (!deleteTarget) return
-    await deleteApplicationMutation.mutateAsync(deleteTarget.id)
-    setDeleteTarget(null)
-  }
-
-  const handleDeleteCancel = (): void => {
-    setDeleteTarget(null)
-  }
 
   if (isLoading) {
     return (
@@ -112,23 +87,11 @@ export function RecoveryApplicationsListPage() {
         ) : (
           <>
             <div className="flex-1 flex flex-col min-h-0 bg-white rounded-lg border border-[#dbe7f2] shadow-sm overflow-hidden">
-              <RecoveryApplicationsTable
-                applications={applications}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
+              <RecoveryApplicationsTable applications={applications} />
             </div>
           </>
         )}
       </div>
-
-      <DeleteConfirmationDialog
-        itemName={deleteTarget?.name ?? ''}
-        isOpen={deleteTarget !== null}
-        isLoading={deleteApplicationMutation.isPending}
-        onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
-      />
     </div>
   )
 }

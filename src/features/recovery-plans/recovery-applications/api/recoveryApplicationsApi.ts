@@ -1,13 +1,10 @@
 import { z } from 'zod'
 import { apiFetch } from '@/shared/api/apiClient'
 import type {
-  RecoveryApplication,
   RecoveryApplicationData,
   RecoveryApplicationListItem,
-  ApplicationSubmission,
 } from '../model/recoveryApplicationTypes'
 
-const RECOVERY_APPS_ENDPOINT = '/api/recovery-applications'
 const GET_RECOVERY_APPS_ENDPOINT = '/api/get_recovery_apps'
 
 const recoveryApplicationListResponseSchema = z.object({
@@ -44,14 +41,6 @@ export async function fetchRecoveryApplications(): Promise<RecoveryApplicationLi
   }))
 }
 
-export async function fetchRecoveryApplication(id: string): Promise<RecoveryApplication> {
-  const response = await apiFetch(`${RECOVERY_APPS_ENDPOINT}/${id}`)
-  if (!response.ok) {
-    throw new Error(`Failed to fetch recovery application: ${response.statusText}`)
-  }
-  return (await response.json()) as RecoveryApplication
-}
-
 // Submits the application JSON to the Airflow recovery-orchestration DAG.
 // In dev the /api prefix is proxied to the backend (see vite.config.ts),
 // so this becomes POST http://<backend>/submit_dag?filename=<name>.
@@ -74,37 +63,4 @@ export async function submitRecoveryApplicationDag(name: string, data: RecoveryA
     throw new Error(`submit_dag failed: ${String(response.status)} ${response.statusText}${body ? ` — ${body}` : ''}`)
   }
   return response.json() as Promise<SubmitDagResponse>
-}
-
-export async function createRecoveryApplication(data: RecoveryApplicationData, submission?: ApplicationSubmission): Promise<RecoveryApplication> {
-  const response = await apiFetch(RECOVERY_APPS_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(submission ? { ...data, submission } : data),
-  })
-  if (!response.ok) {
-    throw new Error(`Failed to create recovery application: ${response.statusText}`)
-  }
-  return response.json() as Promise<RecoveryApplication>
-}
-
-export async function updateRecoveryApplication(id: string, data: RecoveryApplicationData): Promise<RecoveryApplication> {
-  const response = await apiFetch(`${RECOVERY_APPS_ENDPOINT}/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  })
-  if (!response.ok) {
-    throw new Error(`Failed to update recovery application: ${response.statusText}`)
-  }
-  return response.json() as Promise<RecoveryApplication>
-}
-
-export async function deleteRecoveryApplication(id: string): Promise<void> {
-  const response = await apiFetch(`${RECOVERY_APPS_ENDPOINT}/${id}`, {
-    method: 'DELETE',
-  })
-  if (!response.ok) {
-    throw new Error(`Failed to delete recovery application: ${response.statusText}`)
-  }
 }

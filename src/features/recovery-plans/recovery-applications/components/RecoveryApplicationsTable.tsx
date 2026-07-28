@@ -16,8 +16,6 @@ import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTy
 
 interface RecoveryApplicationsTableProps {
   applications: RecoveryApplicationListItem[]
-  onEdit?: (id: string) => void
-  onDelete?: (id: string) => void
 }
 
 function getApplicationStatus(app: RecoveryApplicationListItem): 'Active' | 'Draft' {
@@ -119,7 +117,7 @@ function JsonViewerModal({ isOpen, app, onClose }: JsonViewerModalProps) {
   )
 }
 
-export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: RecoveryApplicationsTableProps) {
+export function RecoveryApplicationsTable({ applications }: RecoveryApplicationsTableProps) {
   const { t } = useTranslation()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
@@ -190,25 +188,6 @@ export function RecoveryApplicationsTable({ applications, onEdit, onDelete }: Re
         eyebrow="Recovery Application"
         title={selected?.data.application.name ?? ''}
         ariaLabel="Application detail"
-        footer={selected ? (
-          <>
-            <Button
-              onClick={() => { onDelete?.(selected.id) }}
-              size="sm"
-              variant="danger"
-              className="flex-1"
-            >
-              {t('buttons.delete')}
-            </Button>
-            <Button
-              onClick={() => { onEdit?.(selected.id); setSelectedId(null) }}
-              size="sm"
-              className="flex-1"
-            >
-              Edit
-            </Button>
-          </>
-        ) : null}
       >
         {selected ? (
           <dl className="px-5 py-2 space-y-3">

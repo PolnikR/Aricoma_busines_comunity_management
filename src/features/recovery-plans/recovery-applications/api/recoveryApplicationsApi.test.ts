@@ -1,13 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
-  createRecoveryApplication,
-  deleteRecoveryApplication,
-  fetchRecoveryApplication,
   fetchRecoveryApplications,
   submitRecoveryApplicationDag,
-  updateRecoveryApplication,
 } from './recoveryApplicationsApi'
-import type { RecoveryApplication, RecoveryApplicationData } from '../model/recoveryApplicationTypes'
+import type { RecoveryApplicationData } from '../model/recoveryApplicationTypes'
 
 const data: RecoveryApplicationData = {
   application: {
@@ -19,13 +15,6 @@ const data: RecoveryApplicationData = {
     target_connection: 'vcenter_default_destination',
     tiers: {},
   },
-}
-
-const application: RecoveryApplication = {
-  id: 'app-1',
-  data,
-  createdAt: '2026-01-01T00:00:00.000Z',
-  updatedAt: '2026-01-01T00:00:00.000Z',
 }
 
 const listPayload = {
@@ -93,15 +82,6 @@ describe('recoveryApplicationsApi', () => {
     await expect(fetchRecoveryApplications()).rejects.toBeInstanceOf(Error)
   })
 
-  it('loads a detail and reports an unsuccessful response', async () => {
-    vi.stubGlobal('fetch', vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify(application), { status: 200 }))
-      .mockResolvedValueOnce(new Response(null, { status: 404, statusText: 'Not Found' })))
-
-    await expect(fetchRecoveryApplication('app-1')).resolves.toEqual(application)
-    await expect(fetchRecoveryApplication('missing')).rejects.toThrow('Not Found')
-  })
-
   it('submits an encoded DAG name and preserves the response', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       status: 'ok',
@@ -128,23 +108,5 @@ describe('recoveryApplicationsApi', () => {
 
     await expect(submitRecoveryApplicationDag('Finance', data)).rejects.toThrow('Network error')
     await expect(submitRecoveryApplicationDag('Finance', data)).rejects.toThrow('invalid DAG')
-  })
-
-  it('uses the expected methods for create, update, and delete', async () => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify(application), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify(application), { status: 200 }))
-      .mockResolvedValueOnce(new Response(null, { status: 204 }))
-    vi.stubGlobal('fetch', fetchMock)
-
-    await createRecoveryApplication(data, { status: 'ok', remotePath: '/tmp/app.json' })
-    await updateRecoveryApplication('app-1', data)
-    await deleteRecoveryApplication('app-1')
-
-    expect(fetchMock.mock.calls.map((call) => (call[1] as RequestInit).method)).toEqual([
-      'POST',
-      'PUT',
-      'DELETE',
-    ])
   })
 })
