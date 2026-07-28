@@ -176,7 +176,7 @@ describe('TierCard', () => {
           recovery_group: {
             name: 'Database',
             description: 'Database recovery group',
-            vms: Array.from({ length: 10 }, (_, index) => ({ name: `DB-${index + 1}` })),
+            vms: Array.from({ length: 10 }, (_, index) => ({ name: `DB-${String(index + 1)}` })),
           },
         }}
         existingIds={['database']}
