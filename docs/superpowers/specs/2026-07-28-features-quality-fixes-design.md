@@ -27,7 +27,8 @@ captured when the mutation started.
 ### Recovery DAG response
 
 The successful JSON response from `submit_recovery_dag` will be parsed with a
-Zod schema containing `status`, `filename`, and `remote_path`. Invalid 2xx
+Zod schema containing `status`, `filename`, and the backend's local persisted
+path field `local`. Invalid 2xx
 responses will be treated as errors and will not trigger success navigation.
 
 ### Unsaved changes
