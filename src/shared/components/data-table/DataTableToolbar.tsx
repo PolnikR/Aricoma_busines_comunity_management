@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { Input } from '@/shared/components/form/FormControls'
+import { Modal } from '@/shared/components/modal/Modal'
 import { FilterIcon, SearchIcon } from '@/shared/icons/Icons'
 import { RowDensityToggle } from '../table/RowDensityToggle'
 import type { TableDensity } from './DataTable'
@@ -100,29 +101,27 @@ export function DataTableToolbar({
           ) : null}
 
           {filterPanel ? (
-            <Button size="sm" variant="outline" startIcon={<FilterIcon className="size-4" />} onClick={openFilters} aria-expanded={isModalOpen}>
+            <Button size="sm" variant="outline" startIcon={<FilterIcon className="size-4" />} onClick={openFilters} aria-expanded={isModalOpen} aria-haspopup="dialog">
               {filterButtonLabel} {activeFilterCount > 0 && <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#0d91d7] text-xs font-semibold text-white">{activeFilterCount}</span>}
             </Button>
           ) : null}
         </div>
       </div>
 
-      {isModalOpen && filterPanel ? (
-        <>
-          <div className="fixed inset-0 z-40 bg-black/30" onClick={() => { setIsModalOpen(false) }} />
-          <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white shadow-lg" onClick={(event) => { event.stopPropagation() }}>
-            <div className="border-b border-[#e3edf6] px-6 py-4">
-              <h2 className="text-base font-semibold text-[#17233d]">{filterTitle}</h2>
-            </div>
-            <div className="space-y-4 px-6 py-4">{filterPanel}</div>
-            <div className="flex gap-3 border-t border-[#e3edf6] px-6 py-4">
-              <Button size="sm" variant="ghost" onClick={() => { setIsModalOpen(false) }} className="flex-1">{cancelLabel}</Button>
-              <Button size="sm" variant="ghost" onClick={() => { onClearFilters?.() }} className="flex-1">{clearLabel}</Button>
-              <Button size="sm" onClick={applyFilters} className="flex-1">{applyLabel}</Button>
-            </div>
-          </div>
-        </>
-      ) : null}
+      <Modal
+        open={isModalOpen && Boolean(filterPanel)}
+        onClose={() => { setIsModalOpen(false) }}
+        title={filterTitle}
+        footer={
+          <>
+            <Button size="sm" variant="ghost" onClick={() => { setIsModalOpen(false) }} className="flex-1">{cancelLabel}</Button>
+            <Button size="sm" variant="ghost" onClick={() => { onClearFilters?.() }} className="flex-1">{clearLabel}</Button>
+            <Button size="sm" onClick={applyFilters} className="flex-1">{applyLabel}</Button>
+          </>
+        }
+      >
+        <div className="space-y-4 px-6 py-4">{filterPanel}</div>
+      </Modal>
     </div>
   )
 }

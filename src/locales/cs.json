@@ -283,6 +283,12 @@
   "pages.recovery.searchLabel": "Hledat aplikace",
   "pages.recovery.tableAriaLabel": "Tabulka aplikací pro obnovení",
   "pages.recovery.empty.noApplications": "Zatím nejsou definovány žádné aplikace pro obnovení",
+  "pages.recovery.filters.button": "Filtry",
+  "pages.recovery.filters.title": "Filtrovat aplikace obnovy",
+  "pages.recovery.filters.environment": "Prostředí",
+  "pages.recovery.filters.allEnvironments": "Všechna prostředí",
+  "pages.recovery.filters.platform": "Platforma",
+  "pages.recovery.filters.allPlatforms": "Všechny platformy",
 
   "forms.id": "ID",
   "forms.idExample": "např. vmware-vcenter-01",

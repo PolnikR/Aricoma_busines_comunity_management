@@ -282,6 +282,12 @@
   "pages.recovery.searchLabel": "Search applications",
   "pages.recovery.tableAriaLabel": "Recovery applications table",
   "pages.recovery.empty.noApplications": "No recovery applications defined yet",
+  "pages.recovery.filters.button": "Filters",
+  "pages.recovery.filters.title": "Filter recovery applications",
+  "pages.recovery.filters.environment": "Environment",
+  "pages.recovery.filters.allEnvironments": "All environments",
+  "pages.recovery.filters.platform": "Platform",
+  "pages.recovery.filters.allPlatforms": "All platforms",
 
   "forms.id": "ID",
   "forms.idExample": "e.g., vmware-vcenter-01",

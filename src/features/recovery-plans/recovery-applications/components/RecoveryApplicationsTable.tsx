@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
+import { Field, Select } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
 import {
   DataTable,
@@ -17,6 +18,16 @@ import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTy
 interface RecoveryApplicationsTableProps {
   applications: RecoveryApplicationListItem[]
   onEdit?: (id: string) => void
+}
+
+interface RecoveryApplicationFilters {
+  environment: string
+  platform: string
+}
+
+const EMPTY_FILTERS: RecoveryApplicationFilters = {
+  environment: '',
+  platform: '',
 }
 
 function getApplicationStatus(app: RecoveryApplicationListItem): 'Active' | 'Draft' {
@@ -122,10 +133,28 @@ export function RecoveryApplicationsTable({ applications, onEdit }: RecoveryAppl
   const { t } = useTranslation()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
+  const [filters, setFilters] = useState<RecoveryApplicationFilters>(EMPTY_FILTERS)
+  const [pendingFilters, setPendingFilters] = useState<RecoveryApplicationFilters>(EMPTY_FILTERS)
 
-  const rows = useMemo(() => applications, [applications])
+  const filterOptions = useMemo(() => ({
+    environments: Array.from(new Set(
+      applications.map(app => app.data.application.environment),
+    )).sort(),
+    platforms: Array.from(new Set(
+      applications.map(app => app.data.application.platform).filter(Boolean),
+    )).sort(),
+  }), [applications])
+
+  const rows = useMemo(() => applications.filter((app) => {
+    const application = app.data.application
+    return (
+      (!filters.environment || application.environment === filters.environment)
+      && (!filters.platform || application.platform === filters.platform)
+    )
+  }), [applications, filters])
   const selected = rows.find((app) => app.id === selectedId) ?? null
   const jsonViewed = rows.find((app) => app.id === jsonViewId) ?? null
+  const activeFilterCount = Number(Boolean(filters.environment)) + Number(Boolean(filters.platform))
 
   const columns = useMemo(() => [
     ...baseColumns,
@@ -151,6 +180,21 @@ export function RecoveryApplicationsTable({ applications, onEdit }: RecoveryAppl
     searchFields: ['id'],
   })
 
+  const prepareFilters = () => {
+    setPendingFilters(filters)
+  }
+
+  const applyFilters = () => {
+    setFilters(pendingFilters)
+    table.setPage(1)
+  }
+
+  const clearFilters = () => {
+    setFilters(EMPTY_FILTERS)
+    setPendingFilters(EMPTY_FILTERS)
+    table.setPage(1)
+  }
+
   return (
     <div className="flex flex-col">
       <DataTableToolbar
@@ -160,6 +204,59 @@ export function RecoveryApplicationsTable({ applications, onEdit }: RecoveryAppl
         searchLabel={t('pages.recovery.searchLabel')}
         density={table.density}
         onDensityChange={table.setDensity}
+        filterTitle={t('pages.recovery.filters.title')}
+        filterButtonLabel={t('pages.recovery.filters.button')}
+        cancelLabel={t('buttons.cancel')}
+        clearLabel={t('buttons.clearAll')}
+        applyLabel={t('buttons.apply')}
+        activeFilterCount={activeFilterCount}
+        onFilterOpen={prepareFilters}
+        onApplyFilters={applyFilters}
+        onClearFilters={clearFilters}
+        filterPanel={
+          <>
+            <Field
+              label={t('pages.recovery.filters.environment')}
+              htmlFor="recovery-application-environment-filter"
+            >
+              <Select
+                id="recovery-application-environment-filter"
+                value={pendingFilters.environment}
+                onChange={(event) => {
+                  setPendingFilters(current => ({
+                    ...current,
+                    environment: event.target.value,
+                  }))
+                }}
+              >
+                <option value="">{t('pages.recovery.filters.allEnvironments')}</option>
+                {filterOptions.environments.map(environment => (
+                  <option key={environment} value={environment}>{environment}</option>
+                ))}
+              </Select>
+            </Field>
+            <Field
+              label={t('pages.recovery.filters.platform')}
+              htmlFor="recovery-application-platform-filter"
+            >
+              <Select
+                id="recovery-application-platform-filter"
+                value={pendingFilters.platform}
+                onChange={(event) => {
+                  setPendingFilters(current => ({
+                    ...current,
+                    platform: event.target.value,
+                  }))
+                }}
+              >
+                <option value="">{t('pages.recovery.filters.allPlatforms')}</option>
+                {filterOptions.platforms.map(platform => (
+                  <option key={platform} value={platform}>{getProviderLabel(platform)}</option>
+                ))}
+              </Select>
+            </Field>
+          </>
+        }
       />
 
       <DataTable
@@ -171,7 +268,7 @@ export function RecoveryApplicationsTable({ applications, onEdit }: RecoveryAppl
         ariaLabel={t('pages.recovery.tableAriaLabel')}
         onRowClick={(app) => { setSelectedId(app.id) }}
         selectedRowKey={selectedId}
-        emptyContent={rows.length > 0 ? t('messages.noResults') : t('pages.recovery.empty.noApplications')}
+        emptyContent={applications.length > 0 ? t('messages.noResults') : t('pages.recovery.empty.noApplications')}
       />
 
       <DataTablePagination

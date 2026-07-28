@@ -20,6 +20,7 @@ describe('DataTableToolbar', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open filters' }))
     expect(onFilterOpen).toHaveBeenCalledOnce()
+    expect(screen.getByRole('dialog', { name: 'Filters' })).toBeInTheDocument()
     expect(screen.getByText('Filter content')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Save filters' }))
