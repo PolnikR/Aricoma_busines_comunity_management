@@ -61,7 +61,15 @@ describe('recoveryApplicationsApi', () => {
           platform: 'VMware vCenter ESXi',
           source_connection: 'vcenter_default',
           target_connection: 'vcenter_default_destination',
-          tiers: listPayload.applications[0]?.tiers,
+          tiers: {
+            database: {
+              name: 'database_group',
+              order: 1,
+              description: 'Database server tier',
+              recoveryGroupDescription: 'Database recovery group',
+              vms: [{ name: 'db-01' }],
+            },
+          },
         },
       },
     }])
@@ -79,6 +87,29 @@ describe('recoveryApplicationsApi', () => {
     await expect(fetchRecoveryApplications()).rejects.toThrow(
       'Failed to fetch recovery applications: Unavailable'
     )
+    await expect(fetchRecoveryApplications()).rejects.toBeInstanceOf(Error)
+  })
+
+  it('rejects recovery tiers that do not match the backend recovery_group contract', async () => {
+    const invalidPayload = {
+      applications: [{
+        ...listPayload.applications[0],
+        tiers: {
+          database: {
+            order: 1,
+            description: 'Database server tier',
+            recovery_group: {
+              name: 'database_group',
+              description: 'Database recovery group',
+            },
+          },
+        },
+      }],
+    }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(invalidPayload), { status: 200 }),
+    ))
+
     await expect(fetchRecoveryApplications()).rejects.toBeInstanceOf(Error)
   })
 

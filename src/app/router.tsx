@@ -27,6 +27,11 @@ const RecoveryApplicationBuilderPage = lazy(async () => {
   return { default: page.RecoveryApplicationBuilderPage }
 })
 
+const RecoveryApplicationEditorPage = lazy(async () => {
+  const page = await import('@/features/recovery-plans/recovery-applications/pages/RecoveryApplicationEditorPage')
+  return { default: page.RecoveryApplicationEditorPage }
+})
+
 const ProviderDetailPage = lazy(async () => {
   const page = await import('@/features/providers-connectors/providers/pages/ProviderDetailPage')
   return { default: page.ProviderDetailPage }
@@ -111,6 +116,14 @@ export function AppRouter() {
               element={
                 <Suspense fallback={<RouteLoadingState />}>
                   <RecoveryApplicationBuilderPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path=":id/edit"
+              element={
+                <Suspense fallback={<RouteLoadingState />}>
+                  <RecoveryApplicationEditorPage />
                 </Suspense>
               }
             />

@@ -4,7 +4,8 @@ import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
 import { useSubmitRecoveryApplication } from '../api/useRecoveryApplications'
-import type { RecoveryApplicationData, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import { toRecoveryApplicationData } from '../utils/recoveryApplicationFormMapper'
+import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 export function RecoveryApplicationBuilderPage() {
   const { t } = useTranslation()
@@ -12,21 +13,7 @@ export function RecoveryApplicationBuilderPage() {
   const submitApplication = useSubmitRecoveryApplication()
 
   const handleSave = (appState: RecoveryApplicationFormState): void => {
-    const applicationData: RecoveryApplicationData = {
-      application: {
-        name: appState.name,
-        description: appState.description,
-        environment: appState.environment,
-        platform: 'VMware vCenter ESXi' as const,
-        source_connection: 'vcenter_default' as const,
-        target_connection: 'vcenter_default_destination' as const,
-        tiers: Object.fromEntries(
-          Array.from(appState.tiers.entries()).map(([id, tier]) => [id, tier])
-        ),
-      },
-    }
-
-    submitApplication.mutate(applicationData, {
+    submitApplication.mutate(toRecoveryApplicationData(appState), {
       onSuccess: () => {
         void navigate('/recovery-plans/recovery-applications')
       },

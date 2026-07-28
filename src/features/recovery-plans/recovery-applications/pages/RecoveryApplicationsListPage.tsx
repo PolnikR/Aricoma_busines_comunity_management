@@ -13,6 +13,10 @@ export function RecoveryApplicationsListPage() {
   const navigate = useNavigate()
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
 
+  const handleEdit = (id: string): void => {
+    void navigate(`/recovery-plans/recovery-applications/${encodeURIComponent(id)}/edit`)
+  }
+
   if (isLoading) {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
@@ -87,7 +91,7 @@ export function RecoveryApplicationsListPage() {
         ) : (
           <>
             <div className="flex-1 flex flex-col min-h-0 bg-white rounded-lg border border-[#dbe7f2] shadow-sm overflow-hidden">
-              <RecoveryApplicationsTable applications={applications} />
+              <RecoveryApplicationsTable applications={applications} onEdit={handleEdit} />
             </div>
           </>
         )}

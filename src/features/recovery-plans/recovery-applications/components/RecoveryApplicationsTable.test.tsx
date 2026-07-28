@@ -30,15 +30,18 @@ const application: RecoveryApplicationListItem = {
 }
 
 describe('RecoveryApplicationsTable', () => {
-  it('opens application details using backend data without mock CRUD actions', async () => {
+  it('opens backend application details and dispatches Edit without Delete', async () => {
     const user = userEvent.setup()
-    render(<RecoveryApplicationsTable applications={[application]} />)
+    const onEdit = vi.fn()
+    render(<RecoveryApplicationsTable applications={[application]} onEdit={onEdit} />)
 
     await user.click(screen.getByText('Finance Recovery'))
     const drawer = screen.getByRole('dialog', { name: 'Application detail' })
     expect(within(drawer).getByText('/tmp/finance.json')).toBeInTheDocument()
     expect(within(drawer).queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
-    expect(within(drawer).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
+
+    await user.click(within(drawer).getByRole('button', { name: 'Edit' }))
+    expect(onEdit).toHaveBeenCalledWith('finance-app')
   })
 
   it('opens and closes the JSON viewer without selecting the row', async () => {

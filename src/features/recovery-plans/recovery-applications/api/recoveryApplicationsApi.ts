@@ -7,6 +7,18 @@ import type {
 
 const GET_RECOVERY_APPS_ENDPOINT = '/api/get_recovery_apps'
 
+const recoveryTierSchema = z.object({
+  order: z.number(),
+  description: z.string(),
+  recovery_group: z.object({
+    name: z.string(),
+    description: z.string(),
+    vms: z.array(z.object({
+      name: z.string(),
+    })),
+  }),
+})
+
 const recoveryApplicationListResponseSchema = z.object({
   applications: z.array(z.object({
     name: z.string(),
@@ -15,7 +27,7 @@ const recoveryApplicationListResponseSchema = z.object({
     platform: z.string(),
     source_connection: z.string(),
     target_connection: z.string(),
-    tiers: z.record(z.string(), z.unknown()),
+    tiers: z.record(z.string(), recoveryTierSchema),
     file: z.string(),
   })),
 })
@@ -35,9 +47,25 @@ export async function fetchRecoveryApplications(): Promise<RecoveryApplicationLi
   const payload: unknown = await response.json()
   const { applications } = recoveryApplicationListResponseSchema.parse(payload)
 
-  return applications.map(({ file, ...application }) => ({
+  return applications.map(({ file, tiers, ...application }) => ({
     id: file,
-    data: { application },
+    data: {
+      application: {
+        ...application,
+        tiers: Object.fromEntries(
+          Object.entries(tiers).map(([id, tier]) => [
+            id,
+            {
+              name: tier.recovery_group.name,
+              order: tier.order,
+              description: tier.description,
+              recoveryGroupDescription: tier.recovery_group.description,
+              vms: tier.recovery_group.vms,
+            },
+          ]),
+        ),
+      },
+    },
   }))
 }
 
