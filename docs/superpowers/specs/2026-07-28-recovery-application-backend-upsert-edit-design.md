@@ -82,11 +82,10 @@ The selected backend application maps to builder state as follows:
 - `application.tiers` -> `Map<string, RecoveryTier>`.
 
 The recovery list schema must validate tiers deeply enough for the editor. The
-backend tier contract contains `order`, `description`, and a nested
-`recovery_group` with its name, description, and VM list. The API boundary maps
-this transport shape to the builder's flat `RecoveryTier` model and maps it back
-before submission. No unsafe cast from arbitrary backend data will initialize
-the builder.
+backend tier contract contains `order`, `description`, and an optional nested
+`recovery_group` with its name, description, and VM list. `RecoveryTier`
+preserves this shape directly. A tier without `recovery_group` remains valid and
+shows only its map key, order, and description.
 
 Platform and connection fields continue to use the current recovery submission
 contract when the builder produces `RecoveryApplicationData`.

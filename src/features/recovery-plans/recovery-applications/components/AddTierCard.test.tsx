@@ -100,10 +100,13 @@ describe('AddTierCard', () => {
     await user.click(createBtn)
 
     expect(onAdd).toHaveBeenCalledWith('new_tier', {
-      name: 'New Tier',
       description: 'A new tier',
       order: 5,
-      vms: [],
+      recovery_group: {
+        name: 'New Tier',
+        description: 'A new tier',
+        vms: [],
+      },
     })
   })
 

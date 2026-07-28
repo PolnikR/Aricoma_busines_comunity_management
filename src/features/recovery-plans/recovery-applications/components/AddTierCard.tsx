@@ -24,17 +24,19 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
   }
 
   const isValidId = id.trim() && !existingIds.includes(id)
-  const isValidName = name.trim()
-  const canCreate = isValidId && isValidName
+  const canCreate = isValidId
 
   const handleCreate = () => {
     if (!canCreate) return
 
     const newTier: RecoveryTier = {
-      name: name.trim(),
       description: description.trim(),
       order: maxOrder + 1,
-      vms: [],
+      ...(name.trim() ? { recovery_group: {
+        name: name.trim(),
+        description: description.trim(),
+        vms: [],
+      } } : {}),
     }
 
     onAdd?.(id.trim(), newTier)
@@ -72,7 +74,7 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
             )}
           </Field>
 
-          <Field label="Name *" htmlFor="add-tier-name">
+          <Field label="Recovery group name (optional)" htmlFor="add-tier-name">
             <Input
               id="add-tier-name"
               type="text"

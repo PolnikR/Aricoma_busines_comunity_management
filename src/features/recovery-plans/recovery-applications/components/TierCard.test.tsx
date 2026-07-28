@@ -7,10 +7,13 @@ import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 const mockTier: RecoveryTier = {
-  name: 'Database',
   order: 1,
   description: 'Database server group',
-  vms: [],
+  recovery_group: {
+    name: 'Database',
+    description: 'Database recovery group',
+    vms: [],
+  },
 }
 
 describe('TierCard', () => {
@@ -91,9 +94,24 @@ describe('TierCard', () => {
 
     expect(onSave).toHaveBeenCalledWith(
       'database',
-      'primary_db',
-      { name: 'Primary DB', description: 'Database server group' }
+      'database',
+      { recoveryGroupName: 'Primary DB', description: 'Database server group' }
     )
+  })
+
+  it('renders order and description without recovery group details', () => {
+    render(
+      <TierCard
+        id="database"
+        tier={{ order: 1, description: 'Database server group' }}
+        existingIds={['database']}
+        canDelete={true}
+      />
+    )
+
+    expect(screen.getByText('database')).toBeInTheDocument()
+    expect(screen.getByText('Database server group')).toBeInTheDocument()
+    expect(screen.queryByText(/Recovery group:/)).not.toBeInTheDocument()
   })
 
   it('calls onCancel when Cancel clicked', async () => {

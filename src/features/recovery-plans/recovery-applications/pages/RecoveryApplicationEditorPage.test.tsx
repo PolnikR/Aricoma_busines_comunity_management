@@ -23,10 +23,13 @@ const application: RecoveryApplicationListItem = {
       target_connection: 'vcenter_default_destination',
       tiers: {
         database: {
-          name: 'Database',
           order: 1,
           description: 'Database tier',
-          vms: [{ name: 'db-01' }],
+          recovery_group: {
+            name: 'database_group',
+            description: 'Database recovery group',
+            vms: [{ name: 'db-01' }],
+          },
         },
       },
     },

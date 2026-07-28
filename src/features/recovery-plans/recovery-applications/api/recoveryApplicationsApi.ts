@@ -3,6 +3,7 @@ import { apiFetch } from '@/shared/api/apiClient'
 import type {
   RecoveryApplicationData,
   RecoveryApplicationListItem,
+  RecoveryTier,
 } from '../model/recoveryApplicationTypes'
 
 const GET_RECOVERY_APPS_ENDPOINT = '/api/get_recovery_apps'
@@ -16,7 +17,7 @@ const recoveryTierSchema = z.object({
     vms: z.array(z.object({
       name: z.string(),
     })),
-  }),
+  }).optional(),
 })
 
 const recoveryApplicationListResponseSchema = z.object({
@@ -31,6 +32,20 @@ const recoveryApplicationListResponseSchema = z.object({
     file: z.string(),
   })),
 })
+
+function mapRecoveryTier(tier: z.infer<typeof recoveryTierSchema>): RecoveryTier {
+  return {
+    order: tier.order,
+    description: tier.description,
+    ...(tier.recovery_group ? {
+      recovery_group: {
+        name: tier.recovery_group.name,
+        description: tier.recovery_group.description,
+        vms: tier.recovery_group.vms,
+      },
+    } : {}),
+  }
+}
 
 export interface SubmitDagResponse {
   status: string
@@ -53,16 +68,7 @@ export async function fetchRecoveryApplications(): Promise<RecoveryApplicationLi
       application: {
         ...application,
         tiers: Object.fromEntries(
-          Object.entries(tiers).map(([id, tier]) => [
-            id,
-            {
-              name: tier.recovery_group.name,
-              order: tier.order,
-              description: tier.description,
-              recoveryGroupDescription: tier.recovery_group.description,
-              vms: tier.recovery_group.vms,
-            },
-          ]),
+          Object.entries(tiers).map(([id, tier]) => [id, mapRecoveryTier(tier)]),
         ),
       },
     },

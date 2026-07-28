@@ -2,12 +2,16 @@ export interface RecoveryVM {
   name: string
 }
 
-export interface RecoveryTier {
+export interface RecoveryGroup {
   name: string
+  description: string
+  vms: RecoveryVM[]
+}
+
+export interface RecoveryTier {
   order: number
   description: string
-  recoveryGroupDescription?: string
-  vms: RecoveryVM[]
+  recovery_group?: RecoveryGroup
 }
 
 export interface RecoveryApplicationData {
@@ -18,15 +22,7 @@ export interface RecoveryApplicationData {
     platform: 'VMware vCenter ESXi'
     source_connection: 'vcenter_default'
     target_connection: 'vcenter_default_destination'
-    tiers: Record<string, {
-      order: number
-      description: string
-      recovery_group: {
-        name: string
-        description: string
-        vms: RecoveryVM[]
-      }
-    }>
+    tiers: Record<string, RecoveryTier>
   }
 }
 

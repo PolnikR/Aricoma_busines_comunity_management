@@ -14,28 +14,40 @@ interface RecoveryAppBuilderProps {
 
 const DEFAULT_TIERS: Record<string, RecoveryTier> = {
   database: {
-    name: 'Database',
     order: 1,
     description: 'Database server group',
-    vms: [],
+    recovery_group: {
+      name: 'database_group',
+      description: 'Recovery group containing the database tier VMs',
+      vms: [],
+    },
   },
   db_cluster: {
-    name: 'DB Cluster',
     order: 2,
     description: 'DB Cluster Master Node',
-    vms: [],
+    recovery_group: {
+      name: 'db_cluster_group',
+      description: 'Recovery group containing the DB cluster VMs',
+      vms: [],
+    },
   },
   application: {
-    name: 'Application',
     order: 3,
     description: 'Application server group',
-    vms: [],
+    recovery_group: {
+      name: 'application_group',
+      description: 'Recovery group containing the application tier VMs',
+      vms: [],
+    },
   },
   web: {
-    name: 'Web',
     order: 4,
     description: 'Web server group',
-    vms: [],
+    recovery_group: {
+      name: 'web_group',
+      description: 'Recovery group containing the web tier VMs',
+      vms: [],
+    },
   },
 }
 
@@ -58,8 +70,9 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
     setFormState(prev => {
       const newTiers = new Map(prev.tiers)
       const tier = newTiers.get(tierId)
-      if (tier && !tier.vms.find(vm => vm.name === vmName)) {
-        tier.vms.push({ name: vmName })
+      const recoveryGroup = tier?.recovery_group
+      if (recoveryGroup && !recoveryGroup.vms.find(vm => vm.name === vmName)) {
+        recoveryGroup.vms.push({ name: vmName })
       }
       return { ...prev, tiers: newTiers }
     })
@@ -69,14 +82,14 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
     setFormState(prev => {
       const newTiers = new Map(prev.tiers)
       const tier = newTiers.get(tierId)
-      if (tier) {
-        tier.vms = tier.vms.filter(vm => vm.name !== vmName)
+      if (tier?.recovery_group) {
+        tier.recovery_group.vms = tier.recovery_group.vms.filter(vm => vm.name !== vmName)
       }
       return { ...prev, tiers: newTiers }
     })
   }, [])
 
-  const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: { name: string; description: string }) => {
+  const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: { recoveryGroupName: string; description: string }) => {
     setFormState(prev => {
       const newTiers = new Map(prev.tiers)
       const oldTier = newTiers.get(tierId)
@@ -88,11 +101,22 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
         newTiers.delete(tierId)
       }
 
-      newTiers.set(newTierId, {
+      const updatedTier: RecoveryTier = {
         ...oldTier,
-        name: updates.name,
         description: updates.description,
-      })
+      }
+
+      if (updates.recoveryGroupName) {
+        updatedTier.recovery_group = {
+          name: updates.recoveryGroupName,
+          description: oldTier.recovery_group?.description ?? updates.description,
+          vms: oldTier.recovery_group?.vms ?? [],
+        }
+      } else {
+        delete updatedTier.recovery_group
+      }
+
+      newTiers.set(newTierId, updatedTier)
 
       return { ...prev, tiers: newTiers }
     })

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Input, Textarea } from '@/shared/components/form/FormControls'
-import { slugify } from '../utils/tierUtils'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
 interface TierCardProps {
@@ -10,7 +9,7 @@ interface TierCardProps {
   tier: RecoveryTier
   isEditing?: boolean
   onEditToggle?: (id: string) => void
-  onSave?: (id: string, newId: string, updates: { name: string; description: string }) => void
+  onSave?: (id: string, newId: string, updates: { recoveryGroupName: string; description: string }) => void
   onDelete?: (id: string) => void
   onCancel?: () => void
   existingIds: string[]
@@ -21,10 +20,9 @@ interface TierCardProps {
 
 interface EditFormState {
   editId: string
-  editName: string
+  editRecoveryGroupName: string
   editDescription: string
   idError: string
-  nameError: string
 }
 
 export function TierCard({
@@ -44,10 +42,9 @@ export function TierCard({
   const [isDragOver, setIsDragOver] = useState(false)
   const [editForm, setEditForm] = useState<EditFormState>({
     editId: id,
-    editName: tier.name,
+    editRecoveryGroupName: tier.recovery_group?.name ?? '',
     editDescription: tier.description,
     idError: '',
-    nameError: '',
   })
 
   useEffect(() => {
@@ -55,10 +52,9 @@ export function TierCard({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditForm({
         editId: id,
-        editName: tier.name,
+        editRecoveryGroupName: tier.recovery_group?.name ?? '',
         editDescription: tier.description,
         idError: '',
-        nameError: '',
       })
     }
   }, [isEditing, id, tier])
@@ -93,25 +89,13 @@ export function TierCard({
     onVMRemoved?.(vmName)
   }
 
-  const handleNameChange = (value: string) => {
-    setEditForm(prev => {
-      const newForm = { ...prev, editName: value }
-      if (!prev.editId || prev.editId === slugify(prev.editName)) {
-        newForm.editId = slugify(value)
-      }
-      return newForm
-    })
+  const handleRecoveryGroupNameChange = (value: string) => {
+    setEditForm(prev => ({ ...prev, editRecoveryGroupName: value }))
   }
 
   const handleConfirm = () => {
     let hasError = false
     let newIdError = ''
-    let newNameError = ''
-
-    if (!editForm.editName.trim()) {
-      newNameError = t('recovery.tier.validation.nameRequired')
-      hasError = true
-    }
 
     if (!editForm.editId.trim()) {
       newIdError = t('recovery.tier.validation.idRequired')
@@ -125,11 +109,13 @@ export function TierCard({
       setEditForm(prev => ({
         ...prev,
         idError: newIdError,
-        nameError: newNameError,
       }))
     } else {
       const newId = editForm.editId.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_')
-      onSave?.(id, newId, { name: editForm.editName.trim(), description: editForm.editDescription.trim() })
+      onSave?.(id, newId, {
+        recoveryGroupName: editForm.editRecoveryGroupName.trim(),
+        description: editForm.editDescription.trim(),
+      })
     }
   }
 
@@ -152,19 +138,17 @@ export function TierCard({
             {editForm.idError && <p className="text-xs text-red-600 mt-1">{editForm.idError}</p>}
           </Field>
 
-          <Field label={t('recovery.tier.form.name')} htmlFor={`tier-${id}-edit-name`}>
+          <Field label="Recovery group name (optional)" htmlFor={`tier-${id}-edit-recovery-group-name`}>
             <Input
-              id={`tier-${id}-edit-name`}
+              id={`tier-${id}-edit-recovery-group-name`}
               type="text"
-              value={editForm.editName}
+              value={editForm.editRecoveryGroupName}
               onChange={e => {
-                handleNameChange(e.target.value)
+                handleRecoveryGroupNameChange(e.target.value)
               }}
               size="sm"
-              invalid={Boolean(editForm.nameError)}
-              placeholder={t('recovery.tier.form.namePlaceholder')}
+              placeholder="recovery_group"
             />
-            {editForm.nameError && <p className="text-xs text-red-600 mt-1">{editForm.nameError}</p>}
           </Field>
 
           <Field label={t('recovery.tier.form.description')} htmlFor={`tier-${id}-edit-description`}>
@@ -213,42 +197,50 @@ export function TierCard({
         <div className="text-xs text-[#7b8ca4] font-semibold uppercase tracking-wider mb-1">
           {t('recovery.tier.order')}: <span className="font-bold">{tier.order}</span>
         </div>
-        <div className="text-sm font-semibold text-[#18253d] mb-1">{tier.name}</div>
+        <div className="text-sm font-semibold text-[#18253d] mb-1">{id}</div>
         <div className="text-xs text-[#71819a]">{tier.description}</div>
+        {tier.recovery_group ? (
+          <div className="mt-2 text-xs text-[#52627b]">
+            Recovery group: <span className="font-semibold">{tier.recovery_group.name}</span>
+          </div>
+        ) : null}
       </button>
 
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`flex-1 p-3 min-h-75 flex flex-col gap-2 transition-all ${
-          isDragOver ? 'bg-[#e3edf6] border-t border-blue-light-500' : 'bg-[#f8fbfe]'
-        }`}
-      >
-        {tier.vms.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-xs text-[#91a4bc]">
-            {t('recovery.tier.dragVmsHere')}
-          </div>
-        ) : (
-          tier.vms.map(vm => (
-            <div
-              key={vm.name}
-              className="p-2 bg-white border border-[#d9e6f1] rounded-md text-xs text-[#18253d] flex items-center justify-between group hover:border-[#b9d5e8]"
-            >
-              <span>{vm.name}</span>
-              <button
-                onClick={() => {
-                  handleVMRemoveClick(vm.name)
-                }}
-                className="text-[#91a4bc] hover:text-[#d4353d] opacity-0 group-hover:opacity-100 transition-opacity"
-                title={t('recovery.tier.removeVm')}
-              >
-                ✕
-              </button>
+      {tier.recovery_group ? (
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`flex-1 p-3 min-h-75 flex flex-col gap-2 transition-all ${
+            isDragOver ? 'bg-[#e3edf6] border-t border-blue-light-500' : 'bg-[#f8fbfe]'
+          }`}
+        >
+          <div className="text-xs text-[#71819a]">{tier.recovery_group.description}</div>
+          {tier.recovery_group.vms.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-xs text-[#91a4bc]">
+              {t('recovery.tier.dragVmsHere')}
             </div>
-          ))
-        )}
-      </div>
+          ) : (
+            tier.recovery_group.vms.map(vm => (
+              <div
+                key={vm.name}
+                className="p-2 bg-white border border-[#d9e6f1] rounded-md text-xs text-[#18253d] flex items-center justify-between group hover:border-[#b9d5e8]"
+              >
+                <span>{vm.name}</span>
+                <button
+                  onClick={() => {
+                    handleVMRemoveClick(vm.name)
+                  }}
+                  className="text-[#91a4bc] hover:text-[#d4353d] opacity-0 group-hover:opacity-100 transition-opacity"
+                  title={t('recovery.tier.removeVm')}
+                >
+                  ✕
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      ) : null}
 
       <div className="px-4 py-3 border-t border-[#edf2f7] bg-[#fbfdff] flex gap-2">
         <Button

@@ -17,10 +17,13 @@ const application: RecoveryApplicationListItem = {
       target_connection: 'vcenter_default_destination',
       tiers: {
         database: {
-          name: 'Database',
           order: 1,
-          description: 'Database tier',
-          vms: [{ name: 'db-01' }],
+          description: 'Database server tier',
+          recovery_group: {
+            name: 'database_group',
+            description: 'Database recovery group',
+            vms: [{ name: 'db-01' }],
+          },
         },
       },
     },
@@ -38,8 +41,8 @@ describe('recoveryApplicationFormMapper', () => {
     })
     expect(formState.tiers.get('database')).toEqual(application.data.application.tiers.database)
 
-    formState.tiers.get('database')?.vms.push({ name: 'db-02' })
-    expect(application.data.application.tiers.database?.vms).toEqual([{ name: 'db-01' }])
+    formState.tiers.get('database')?.recovery_group?.vms.push({ name: 'db-02' })
+    expect(application.data.application.tiers.database?.recovery_group?.vms).toEqual([{ name: 'db-01' }])
   })
 
   it('maps builder state to the submit_dag contract', () => {
@@ -48,18 +51,35 @@ describe('recoveryApplicationFormMapper', () => {
     expect(data).toEqual({
       application: {
         ...application.data.application,
-        tiers: {
-          database: {
-            order: 1,
-            description: 'Database tier',
-            recovery_group: {
-              name: 'Database',
-              description: 'Database tier',
-              vms: [{ name: 'db-01' }],
+        tiers: application.data.application.tiers,
+      },
+    })
+  })
+
+  it('preserves a tier without recovery_group', () => {
+    const applicationWithoutGroup: RecoveryApplicationListItem = {
+      ...application,
+      data: {
+        application: {
+          ...application.data.application,
+          tiers: {
+            database: {
+              order: 1,
+              description: 'Database server tier',
             },
           },
         },
       },
+    }
+
+    const formState = toRecoveryApplicationFormState(applicationWithoutGroup)
+    expect(formState.tiers.get('database')).toEqual({
+      order: 1,
+      description: 'Database server tier',
+    })
+    expect(toRecoveryApplicationData(formState).application.tiers.database).toEqual({
+      order: 1,
+      description: 'Database server tier',
     })
   })
 })

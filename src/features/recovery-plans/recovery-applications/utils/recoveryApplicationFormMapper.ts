@@ -8,7 +8,12 @@ import type {
 function cloneTier(tier: RecoveryTier): RecoveryTier {
   return {
     ...tier,
-    vms: tier.vms.map((vm) => ({ ...vm })),
+    ...(tier.recovery_group ? {
+      recovery_group: {
+        ...tier.recovery_group,
+        vms: tier.recovery_group.vms.map((vm) => ({ ...vm })),
+      },
+    } : {}),
   }
 }
 
@@ -39,18 +44,7 @@ export function toRecoveryApplicationData(
       source_connection: 'vcenter_default',
       target_connection: 'vcenter_default_destination',
       tiers: Object.fromEntries(
-        Array.from(formState.tiers.entries()).map(([id, tier]) => [
-          id,
-          {
-            order: tier.order,
-            description: tier.description,
-            recovery_group: {
-              name: tier.name,
-              description: tier.recoveryGroupDescription ?? tier.description,
-              vms: tier.vms.map((vm) => ({ ...vm })),
-            },
-          },
-        ]),
+        Array.from(formState.tiers.entries()).map(([id, tier]) => [id, cloneTier(tier)]),
       ),
     },
   }

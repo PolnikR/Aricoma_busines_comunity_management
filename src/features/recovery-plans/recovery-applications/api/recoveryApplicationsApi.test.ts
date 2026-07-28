@@ -61,15 +61,7 @@ describe('recoveryApplicationsApi', () => {
           platform: 'VMware vCenter ESXi',
           source_connection: 'vcenter_default',
           target_connection: 'vcenter_default_destination',
-          tiers: {
-            database: {
-              name: 'database_group',
-              order: 1,
-              description: 'Database server tier',
-              recoveryGroupDescription: 'Database recovery group',
-              vms: [{ name: 'db-01' }],
-            },
-          },
+          tiers: listPayload.applications[0]?.tiers,
         },
       },
     }])
@@ -111,6 +103,30 @@ describe('recoveryApplicationsApi', () => {
     ))
 
     await expect(fetchRecoveryApplications()).rejects.toBeInstanceOf(Error)
+  })
+
+  it('loads a tier without an optional recovery_group', async () => {
+    const payloadWithoutRecoveryGroup = {
+      applications: [{
+        ...listPayload.applications[0],
+        tiers: {
+          database: {
+            order: 1,
+            description: 'Database server tier',
+          },
+        },
+      }],
+    }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(payloadWithoutRecoveryGroup), { status: 200 }),
+    ))
+
+    const applications = await fetchRecoveryApplications()
+
+    expect(applications[0]?.data.application.tiers['database']).toEqual({
+      order: 1,
+      description: 'Database server tier',
+    })
   })
 
   it('submits an encoded DAG name and preserves the response', async () => {

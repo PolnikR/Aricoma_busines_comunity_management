@@ -21,12 +21,12 @@ filename.
 ## Task 1: Validate and map editable recovery data
 
 **Description:** Strengthen the recovery application response schema for the
-backend's nested `recovery_group` tier contract and provide focused mapping
-between backend data and `RecoveryApplicationFormState`.
+backend's optional nested `recovery_group` tier contract and preserve the same
+shape in `RecoveryApplicationFormState`.
 
 **Acceptance criteria:**
 
-- [ ] Tier `order`, `description`, nested recovery-group fields, and VM names are validated by Zod.
+- [ ] Tier `order` and `description` are required; nested recovery-group fields and VM names are validated when present.
 - [ ] Valid backend data maps to a form state containing a `Map` of tiers.
 - [ ] Invalid editable tier data fails at the API boundary instead of reaching UI code.
 

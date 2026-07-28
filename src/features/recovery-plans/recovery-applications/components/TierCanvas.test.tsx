@@ -8,22 +8,31 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 
 const mockTiers: Record<string, RecoveryTier> = {
   database: {
-    name: 'Database',
     order: 1,
     description: 'Database tier',
-    vms: [{ name: 'DB-01' }],
+    recovery_group: {
+      name: 'Database',
+      description: 'Database recovery group',
+      vms: [{ name: 'DB-01' }],
+    },
   },
   app: {
-    name: 'Application',
     order: 2,
     description: 'App tier',
-    vms: [{ name: 'APP-01' }],
+    recovery_group: {
+      name: 'Application',
+      description: 'Application recovery group',
+      vms: [{ name: 'APP-01' }],
+    },
   },
   web: {
-    name: 'Web',
     order: 3,
     description: 'Web tier',
-    vms: [{ name: 'WEB-01' }],
+    recovery_group: {
+      name: 'Web',
+      description: 'Web recovery group',
+      vms: [{ name: 'WEB-01' }],
+    },
   },
 }
 
