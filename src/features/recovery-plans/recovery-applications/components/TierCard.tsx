@@ -272,33 +272,39 @@ export function TierCard({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`flex-1 p-3 min-h-75 flex flex-col gap-2 transition-all ${
+          className={`flex h-60 min-h-60 flex-col gap-2 p-3 transition-all ${
             isDragOver ? 'bg-[#e3edf6] border-t border-blue-light-500' : 'bg-[#f8fbfe]'
           }`}
         >
-          <div className="text-xs text-[#71819a]">{tier.recovery_group.description}</div>
+          <div className="shrink-0 text-xs text-[#71819a]">{tier.recovery_group.description}</div>
           {tier.recovery_group.vms.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-xs text-[#91a4bc]">
+            <div className="flex min-h-0 flex-1 items-center justify-center text-xs text-[#91a4bc]">
               {t('recovery.tier.dragVmsHere')}
             </div>
           ) : (
-            tier.recovery_group.vms.map(vm => (
-              <div
-                key={vm.name}
-                className="p-2 bg-white border border-[#d9e6f1] rounded-md text-xs text-[#18253d] flex items-center justify-between group hover:border-[#b9d5e8]"
-              >
-                <span>{vm.name}</span>
-                <button
-                  onClick={() => {
-                    handleVMRemoveClick(vm.name)
-                  }}
-                  className="text-[#91a4bc] hover:text-[#d4353d] opacity-0 group-hover:opacity-100 transition-opacity"
-                  title={t('recovery.tier.removeVm')}
+            <div
+              className="custom-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto pr-2"
+              tabIndex={0}
+              aria-label={`${tier.recovery_group.name} virtual machines`}
+            >
+              {tier.recovery_group.vms.map(vm => (
+                <div
+                  key={vm.name}
+                  className="group flex items-center justify-between rounded-md border border-[#d9e6f1] bg-white p-2 text-xs text-[#18253d] hover:border-[#b9d5e8]"
                 >
-                  ✕
-                </button>
-              </div>
-            ))
+                  <span>{vm.name}</span>
+                  <button
+                    onClick={() => {
+                      handleVMRemoveClick(vm.name)
+                    }}
+                    className="text-[#91a4bc] opacity-0 transition-opacity hover:text-[#d4353d] group-hover:opacity-100 focus:opacity-100"
+                    title={t('recovery.tier.removeVm')}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       ) : null}

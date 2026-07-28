@@ -167,6 +167,29 @@ describe('TierCard', () => {
     expect(screen.queryByText(/Recovery group:/)).not.toBeInTheDocument()
   })
 
+  it('keeps a long VM list inside a keyboard-scrollable area', () => {
+    render(
+      <TierCard
+        id="database"
+        tier={{
+          ...mockTier,
+          recovery_group: {
+            name: 'Database',
+            description: 'Database recovery group',
+            vms: Array.from({ length: 10 }, (_, index) => ({ name: `DB-${index + 1}` })),
+          },
+        }}
+        existingIds={['database']}
+        canDelete={true}
+      />
+    )
+
+    const vmList = screen.getByLabelText('Database virtual machines')
+    expect(vmList).toHaveClass('overflow-y-auto', 'custom-scrollbar', 'pr-2')
+    expect(vmList).toHaveAttribute('tabindex', '0')
+    expect(screen.getByText('DB-10')).toBeInTheDocument()
+  })
+
   it('calls onCancel when Cancel clicked', async () => {
     const user = userEvent.setup()
     const onCancel = vi.fn()
