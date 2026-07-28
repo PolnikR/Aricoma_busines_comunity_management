@@ -125,17 +125,17 @@ export function TierCard({
     }
 
     if (!editForm.editTierDescription.trim()) {
-      newTierDescriptionError = 'Tier description is required'
+      newTierDescriptionError = t('recovery.tier.validation.tierDescriptionRequired')
       hasError = true
     }
 
     if (!editForm.editRecoveryGroupName.trim()) {
-      newRecoveryGroupNameError = 'Recovery group name is required'
+      newRecoveryGroupNameError = t('recovery.tier.validation.recoveryGroupNameRequired')
       hasError = true
     }
 
     if (!editForm.editRecoveryGroupDescription.trim()) {
-      newRecoveryGroupDescriptionError = 'Recovery group description is required'
+      newRecoveryGroupDescriptionError = t('recovery.tier.validation.recoveryGroupDescriptionRequired')
       hasError = true
     }
 
@@ -177,7 +177,7 @@ export function TierCard({
             {editForm.idError && <p className="text-xs text-red-600 mt-1">{editForm.idError}</p>}
           </Field>
 
-          <Field label="Tier description *" htmlFor={`tier-${id}-edit-tier-description`}>
+          <Field label={t('recovery.tier.form.tierDescription')} htmlFor={`tier-${id}-edit-tier-description`}>
             <Textarea
               id={`tier-${id}-edit-tier-description`}
               value={editForm.editTierDescription}
@@ -187,13 +187,13 @@ export function TierCard({
               className="resize-none"
               rows={3}
               invalid={Boolean(editForm.tierDescriptionError)}
-              placeholder="Tier description"
+              placeholder={t('recovery.tier.form.tierDescriptionPlaceholder')}
               required
             />
             {editForm.tierDescriptionError && <p className="text-xs text-red-600 mt-1">{editForm.tierDescriptionError}</p>}
           </Field>
 
-          <Field label="Recovery group name *" htmlFor={`tier-${id}-edit-recovery-group-name`}>
+          <Field label={t('recovery.tier.form.recoveryGroupName')} htmlFor={`tier-${id}-edit-recovery-group-name`}>
             <Input
               id={`tier-${id}-edit-recovery-group-name`}
               type="text"
@@ -203,13 +203,13 @@ export function TierCard({
               }}
               size="sm"
               invalid={Boolean(editForm.recoveryGroupNameError)}
-              placeholder="recovery_group"
+              placeholder={t('recovery.tier.form.recoveryGroupNamePlaceholder')}
               required
             />
             {editForm.recoveryGroupNameError && <p className="text-xs text-red-600 mt-1">{editForm.recoveryGroupNameError}</p>}
           </Field>
 
-          <Field label="Recovery group description *" htmlFor={`tier-${id}-edit-recovery-group-description`}>
+          <Field label={t('recovery.tier.form.recoveryGroupDescription')} htmlFor={`tier-${id}-edit-recovery-group-description`}>
             <Textarea
               id={`tier-${id}-edit-recovery-group-description`}
               value={editForm.editRecoveryGroupDescription}
@@ -219,7 +219,7 @@ export function TierCard({
               className="resize-none"
               rows={3}
               invalid={Boolean(editForm.recoveryGroupDescriptionError)}
-              placeholder="Recovery group description"
+              placeholder={t('recovery.tier.form.recoveryGroupDescriptionPlaceholder')}
               required
             />
             {editForm.recoveryGroupDescriptionError && <p className="text-xs text-red-600 mt-1">{editForm.recoveryGroupDescriptionError}</p>}

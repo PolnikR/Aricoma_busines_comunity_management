@@ -454,6 +454,10 @@
   "recovery.builder.discardDialog.message": "If you continue, all unsaved data will be lost.",
   "recovery.builder.discardDialog.cancel": "Cancel",
   "recovery.builder.discardDialog.confirm": "Continue",
+  "recovery.application.form.fileName": "File name *",
+  "recovery.application.form.fileNamePlaceholder": "sample_application_recovery",
+  "recovery.application.validation.fileNameInvalid": "Use letters, numbers, and underscores; start with a letter.",
+  "recovery.application.validation.fileNameRequired": "Enter a valid file name using letters, numbers, and underscores.",
 
   "recovery.tier.order": "Order",
   "recovery.tier.dragVmsHere": "Drag VMs here",
@@ -467,10 +471,20 @@
   "recovery.tier.form.idPlaceholder": "tier_id",
   "recovery.tier.form.namePlaceholder": "Tier name",
   "recovery.tier.form.descriptionPlaceholder": "Optional description",
+  "recovery.tier.form.tierDescription": "Tier description *",
+  "recovery.tier.form.tierDescriptionPlaceholder": "Tier description",
+  "recovery.tier.form.recoveryGroupName": "Recovery group name *",
+  "recovery.tier.form.recoveryGroupNamePlaceholder": "Recovery group name",
+  "recovery.tier.form.recoveryGroupDescription": "Recovery group description *",
+  "recovery.tier.form.recoveryGroupDescriptionPlaceholder": "Recovery group description",
 
   "recovery.tier.validation.nameRequired": "Name is required",
   "recovery.tier.validation.idRequired": "ID is required",
   "recovery.tier.validation.idInUse": "ID already in use",
+  "recovery.tier.validation.idInvalid": "ID already in use or invalid",
+  "recovery.tier.validation.tierDescriptionRequired": "Tier description is required",
+  "recovery.tier.validation.recoveryGroupNameRequired": "Recovery group name is required",
+  "recovery.tier.validation.recoveryGroupDescriptionRequired": "Recovery group description is required",
   "recovery.tier.validation.cannotDeleteLastTier": "Cannot delete the last tier",
   "recovery.tier.validation.deleteThisTier": "Delete this tier"
 }

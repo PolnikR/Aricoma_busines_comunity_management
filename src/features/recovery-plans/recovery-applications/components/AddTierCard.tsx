@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Input, Textarea } from '@/shared/components/form/FormControls'
 import { slugify } from '../utils/tierUtils'
@@ -11,6 +12,7 @@ interface AddTierCardProps {
 }
 
 export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [recoveryGroupName, setRecoveryGroupName] = useState('')
   const [id, setId] = useState('')
@@ -65,7 +67,7 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
     return (
       <div className="bg-white border border-[#d9e6f1] rounded-lg p-4 shadow-sm">
         <div className="space-y-3">
-          <Field label="ID *" htmlFor="add-tier-id">
+          <Field label={`${t('recovery.tier.form.id')} *`} htmlFor="add-tier-id">
             <Input
               id="add-tier-id"
               type="text"
@@ -75,15 +77,15 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
               }}
               size="sm"
               invalid={Boolean(!isValidId && id)}
-              placeholder="tier_id"
+              placeholder={t('recovery.tier.form.idPlaceholder')}
               required
             />
             {!isValidId && id && (
-              <p className="text-xs text-red-600 mt-1">ID already in use or invalid</p>
+              <p className="text-xs text-red-600 mt-1">{t('recovery.tier.validation.idInvalid')}</p>
             )}
           </Field>
 
-          <Field label="Tier description *" htmlFor="add-tier-description">
+          <Field label={t('recovery.tier.form.tierDescription')} htmlFor="add-tier-description">
             <Textarea
               id="add-tier-description"
               value={tierDescription}
@@ -92,12 +94,12 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
               }}
               className="resize-none"
               rows={3}
-              placeholder="Tier description"
+              placeholder={t('recovery.tier.form.tierDescriptionPlaceholder')}
               required
             />
           </Field>
 
-          <Field label="Recovery group name *" htmlFor="add-tier-recovery-group-name">
+          <Field label={t('recovery.tier.form.recoveryGroupName')} htmlFor="add-tier-recovery-group-name">
             <Input
               id="add-tier-recovery-group-name"
               type="text"
@@ -106,12 +108,12 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
                 handleRecoveryGroupNameChange(e.target.value)
               }}
               size="sm"
-              placeholder="Recovery group name"
+              placeholder={t('recovery.tier.form.recoveryGroupNamePlaceholder')}
               required
             />
           </Field>
 
-          <Field label="Recovery group description *" htmlFor="add-tier-recovery-group-description">
+          <Field label={t('recovery.tier.form.recoveryGroupDescription')} htmlFor="add-tier-recovery-group-description">
             <Textarea
               id="add-tier-recovery-group-description"
               value={recoveryGroupDescription}
@@ -120,7 +122,7 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
               }}
               className="resize-none"
               rows={3}
-              placeholder="Recovery group description"
+              placeholder={t('recovery.tier.form.recoveryGroupDescriptionPlaceholder')}
               required
             />
           </Field>
@@ -132,7 +134,7 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
               size="sm"
               className="flex-1"
             >
-              Create
+              {t('buttons.create')}
             </Button>
             <Button
               onClick={handleCancel}
@@ -140,7 +142,7 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
               variant="secondary"
               className="flex-1"
             >
-              Cancel
+              {t('buttons.cancel')}
             </Button>
           </div>
         </div>

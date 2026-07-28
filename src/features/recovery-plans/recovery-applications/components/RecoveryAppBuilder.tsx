@@ -212,7 +212,7 @@ export function RecoveryAppBuilder({
 
   const handleSave = () => {
     if (!isValidRecoveryApplicationFileName(formState.fileName)) {
-      alert('Enter a valid file name using letters, numbers, and underscores.')
+      alert(t('recovery.application.validation.fileNameRequired'))
       return
     }
     if (!formState.name.trim()) {

@@ -51,20 +51,20 @@ export function AppMetadataForm({
 
   return (
     <form className="grid grid-cols-1 gap-4 items-end sm:grid-cols-2 xl:grid-cols-4">
-      <Field label="File name *" htmlFor="application-file-name">
+      <Field label={t('recovery.application.form.fileName')} htmlFor="application-file-name">
         <Input
           id="application-file-name"
           type="text"
           value={fileName}
           onChange={e => { handleChange('fileName', e.target.value); }}
-          placeholder="sample_application_recovery"
+          placeholder={t('recovery.application.form.fileNamePlaceholder')}
           invalid={Boolean(fileName) && !isValidRecoveryApplicationFileName(fileName)}
           disabled={disableFileName}
           required
         />
         {fileName && !isValidRecoveryApplicationFileName(fileName) ? (
           <p className="mt-1 text-xs text-red-600">
-            Use letters, numbers, and underscores; start with a letter.
+            {t('recovery.application.validation.fileNameInvalid')}
           </p>
         ) : null}
       </Field>

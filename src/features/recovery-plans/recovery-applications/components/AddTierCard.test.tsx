@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { AddTierCard } from './AddTierCard'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
 describe('AddTierCard', () => {
   afterEach(cleanup)
   it('renders a plus card by default', () => {

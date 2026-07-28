@@ -455,6 +455,10 @@
   "recovery.builder.discardDialog.message": "Pokud budete pokračovat, všechna neuložená data budou ztracena.",
   "recovery.builder.discardDialog.cancel": "Zrušit",
   "recovery.builder.discardDialog.confirm": "Pokračovat",
+  "recovery.application.form.fileName": "Název souboru *",
+  "recovery.application.form.fileNamePlaceholder": "sample_application_recovery",
+  "recovery.application.validation.fileNameInvalid": "Použijte písmena, čísla a podtržítka; název musí začínat písmenem.",
+  "recovery.application.validation.fileNameRequired": "Zadejte platný název souboru obsahující písmena, čísla a podtržítka.",
 
   "recovery.tier.order": "Pořadí",
   "recovery.tier.dragVmsHere": "Přetáhněte VMs sem",
@@ -468,10 +472,20 @@
   "recovery.tier.form.idPlaceholder": "tier_id",
   "recovery.tier.form.namePlaceholder": "Název vrstvy",
   "recovery.tier.form.descriptionPlaceholder": "Volitelný popis",
+  "recovery.tier.form.tierDescription": "Popis vrstvy *",
+  "recovery.tier.form.tierDescriptionPlaceholder": "Popis vrstvy",
+  "recovery.tier.form.recoveryGroupName": "Název skupiny obnovy *",
+  "recovery.tier.form.recoveryGroupNamePlaceholder": "Název skupiny obnovy",
+  "recovery.tier.form.recoveryGroupDescription": "Popis skupiny obnovy *",
+  "recovery.tier.form.recoveryGroupDescriptionPlaceholder": "Popis skupiny obnovy",
 
   "recovery.tier.validation.nameRequired": "Název je povinný",
   "recovery.tier.validation.idRequired": "ID je povinné",
   "recovery.tier.validation.idInUse": "ID se již používá",
+  "recovery.tier.validation.idInvalid": "ID se již používá nebo není platné",
+  "recovery.tier.validation.tierDescriptionRequired": "Popis vrstvy je povinný",
+  "recovery.tier.validation.recoveryGroupNameRequired": "Název skupiny obnovy je povinný",
+  "recovery.tier.validation.recoveryGroupDescriptionRequired": "Popis skupiny obnovy je povinný",
   "recovery.tier.validation.cannotDeleteLastTier": "Poslední vrstvu nelze odstranit",
   "recovery.tier.validation.deleteThisTier": "Odstranit tuto vrstvu"
 }
