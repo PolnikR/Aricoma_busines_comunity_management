@@ -1,14 +1,17 @@
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
+import { routes } from '@/app/routes'
 import { RecoveryGroupsTable } from '../components/RecoveryGroupsTable'
-import type { RecoveryGroupListItem } from '../model/recoveryGroupTypes'
-
-const groups: RecoveryGroupListItem[] = []
+import { useRecoveryGroups } from '../hooks/useRecoveryGroups'
 
 export function RecoveryGroupsListPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const { groups } = useRecoveryGroups()
+  const navigateToCreate = () => { void navigate(`${routes.recoveryGroups}/create`) }
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
@@ -17,7 +20,7 @@ export function RecoveryGroupsListPage() {
         title={t('pages.recoveryGroups.title')}
         description={t('pages.recoveryGroups.description')}
         actions={
-          <Button size="sm" variant="outline" disabled>
+          <Button size="sm" variant="outline" onClick={navigateToCreate}>
             {t('pages.recoveryGroups.createButton')}
           </Button>
         }
@@ -29,7 +32,7 @@ export function RecoveryGroupsListPage() {
             title={t('pages.recoveryGroups.empty.title')}
             description={t('pages.recoveryGroups.empty.description')}
             action={
-              <Button disabled>
+              <Button onClick={navigateToCreate}>
                 {t('pages.recoveryGroups.empty.createButton')}
               </Button>
             }

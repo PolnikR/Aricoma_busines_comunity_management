@@ -5,7 +5,15 @@ import { RecoveryAppBuilder } from './RecoveryAppBuilder'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('./VMSidebar', () => ({ VMSidebar: () => <div>VM sidebar</div> }))
+vi.mock('@/features/discovery-inventory/api/useDiscoveryInventory', () => ({
+  useDiscoveryInventory: () => ({
+    data: { virtualMachines: [] },
+    error: null,
+    isLoading: false,
+    isFetching: false,
+    refetch: vi.fn(),
+  }),
+}))
 vi.mock('./TierCanvas', () => ({
   TierCanvas: ({
     tiers,

@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
+import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
+import { useDiscoveryInventory } from '@/features/discovery-inventory/api/useDiscoveryInventory'
 import { AppMetadataForm } from './AppMetadataForm'
-import { VMSidebar } from './VMSidebar'
 import { TierCanvas } from './TierCanvas'
 import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import type { RecoveryTier, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
@@ -104,6 +105,8 @@ export function RecoveryAppBuilder({
   disableFileName = false,
 }: RecoveryAppBuilderProps) {
   const { t } = useTranslation()
+  const { data: inventory, error: inventoryError, isLoading: inventoryLoading, isFetching, refetch } = useDiscoveryInventory()
+  const virtualMachines = inventory?.virtualMachines.map(vm => vm.name) ?? []
   const [formState, setFormState] = useState<RecoveryApplicationFormState>(
     () => createInitialFormState(initialData),
   )
@@ -260,7 +263,23 @@ export function RecoveryAppBuilder({
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-0 h-full lg:min-h-0">
           {/* VM Sidebar */}
           <div className="border-b lg:border-b-0 lg:border-r border-[#e3edf6] overflow-y-auto custom-scrollbar">
-            <VMSidebar />
+            <ResourceSidebar
+              items={virtualMachines}
+              title={t('recovery.sidebar.availableVms')}
+              searchPlaceholder={t('recovery.sidebar.searchPlaceholder')}
+              loadingLabel={t('recovery.sidebar.loadingVms')}
+              noItemsLabel={t('recovery.sidebar.noVmsAvailable')}
+              noMatchesLabel={t('recovery.sidebar.noMatching')}
+              dragDataKey="vm-name"
+              isLoading={inventoryLoading}
+              isRetrying={isFetching}
+              error={inventoryError instanceof Error ? inventoryError : null}
+              errorTitle={t('pages.virtualMachines.error.title')}
+              staleErrorTitle={t('pages.virtualMachines.error.latestFailed')}
+              staleErrorDescription={t('pages.virtualMachines.error.showingPrevious')}
+              retryLabel={t('pages.virtualMachines.error.retryButton')}
+              onRetry={() => { void refetch() }}
+            />
           </div>
 
           {/* Tier Canvas */}

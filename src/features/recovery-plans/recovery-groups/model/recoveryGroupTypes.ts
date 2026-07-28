@@ -11,3 +11,15 @@ export interface RecoveryGroupListItem {
   resourceCount: number
   status: RecoveryGroupStatus
 }
+
+export interface RecoveryGroup extends RecoveryGroupListItem {
+  resources: string[]
+}
+
+export interface RecoveryGroupDraft {
+  name: string
+  description: string
+  workloadType: RecoveryGroupWorkloadType | null
+  resourceType: RecoveryGroupResourceType | null
+  resources: string[]
+}
