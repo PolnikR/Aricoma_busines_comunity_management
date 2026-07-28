@@ -40,6 +40,11 @@ const RecoveryGroupBuilderPage = lazy(async () => {
   return { default: page.RecoveryGroupBuilderPage }
 })
 
+const RecoveryGroupEditorPage = lazy(async () => {
+  const page = await import('@/features/recovery-plans/recovery-groups/pages/RecoveryGroupEditorPage')
+  return { default: page.RecoveryGroupEditorPage }
+})
+
 const RecoveryApplicationEditorPage = lazy(async () => {
   const page = await import('@/features/recovery-plans/recovery-applications/pages/RecoveryApplicationEditorPage')
   return { default: page.RecoveryApplicationEditorPage }
@@ -128,6 +133,14 @@ export function AppRoutes() {
               element={
                 <Suspense fallback={<RouteLoadingState />}>
                   <RecoveryGroupBuilderPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path=":id/edit"
+              element={
+                <Suspense fallback={<RouteLoadingState />}>
+                  <RecoveryGroupEditorPage />
                 </Suspense>
               }
             />

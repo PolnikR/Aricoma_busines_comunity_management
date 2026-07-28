@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   createRecoveryGroup,
+  deleteRecoveryGroup,
+  getRecoveryGroup,
   listRecoveryGroups,
   toRecoveryGroupId,
+  updateRecoveryGroup,
 } from './recoveryGroupsStorage'
 
 describe('recoveryGroupsStorage', () => {
@@ -42,5 +45,42 @@ describe('recoveryGroupsStorage', () => {
 
   it('normalizes accented names for use as ids', () => {
     expect(toRecoveryGroupId('Produkčná DB skupina')).toBe('produkcna_db_skupina')
+  })
+
+  it('updates a recovery group while preserving its id', () => {
+    const created = createRecoveryGroup({
+      name: 'Database Group',
+      description: 'Databases',
+      workloadType: 'VMware',
+      resourceType: 'VM',
+      resources: ['DB-01'],
+    })
+
+    const updated = updateRecoveryGroup(created.id, {
+      name: 'Renamed Database Group',
+      description: 'Updated databases',
+      workloadType: 'VMware',
+      resourceType: 'VM',
+      resources: ['DB-01', 'DB-02'],
+    })
+
+    expect(updated.id).toBe(created.id)
+    expect(updated.name).toBe('Renamed Database Group')
+    expect(updated.resourceCount).toBe(2)
+    expect(getRecoveryGroup(created.id)).toEqual(updated)
+  })
+
+  it('deletes a recovery group', () => {
+    const group = createRecoveryGroup({
+      name: 'Database Group',
+      description: 'Databases',
+      workloadType: 'VMware',
+      resourceType: 'VM',
+      resources: ['DB-01'],
+    })
+
+    deleteRecoveryGroup(group.id)
+
+    expect(listRecoveryGroups()).toEqual([])
   })
 })

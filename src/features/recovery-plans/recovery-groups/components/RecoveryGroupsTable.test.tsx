@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LanguageProvider } from '@/contexts/LanguageContext'
 import type { RecoveryGroupListItem } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsTable } from './RecoveryGroupsTable'
@@ -26,7 +26,7 @@ describe('RecoveryGroupsTable', () => {
     const user = userEvent.setup()
     render(
       <LanguageProvider>
-        <RecoveryGroupsTable groups={groups} />
+        <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />
       </LanguageProvider>,
     )
 
@@ -44,7 +44,7 @@ describe('RecoveryGroupsTable', () => {
     const user = userEvent.setup()
     render(
       <LanguageProvider>
-        <RecoveryGroupsTable groups={groups} />
+        <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />
       </LanguageProvider>,
     )
 
@@ -52,5 +52,28 @@ describe('RecoveryGroupsTable', () => {
     await user.type(search, 'missing')
 
     expect(screen.getByText('No recovery groups defined yet')).toBeInTheDocument()
+  })
+
+  it('edits and confirms deletion from the detail panel', async () => {
+    const user = userEvent.setup()
+    const onEdit = vi.fn()
+    const onDelete = vi.fn()
+    render(
+      <LanguageProvider>
+        <RecoveryGroupsTable groups={groups} onEdit={onEdit} onDelete={onDelete} />
+      </LanguageProvider>,
+    )
+
+    await user.click(screen.getByText('Database group'))
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    expect(onEdit).toHaveBeenCalledWith('database-group')
+
+    await user.click(screen.getByText('Database group'))
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    const confirmDialog = screen.getByRole('dialog', { name: 'Delete recovery group' })
+    expect(confirmDialog).toHaveTextContent('Database group')
+
+    await user.click(within(confirmDialog).getByRole('button', { name: 'Delete' }))
+    expect(onDelete).toHaveBeenCalledWith('database-group')
   })
 })

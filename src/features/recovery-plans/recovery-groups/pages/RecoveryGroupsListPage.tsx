@@ -10,8 +10,11 @@ import { useRecoveryGroups } from '../hooks/useRecoveryGroups'
 export function RecoveryGroupsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { groups } = useRecoveryGroups()
+  const { groups, remove } = useRecoveryGroups()
   const navigateToCreate = () => { void navigate(`${routes.recoveryGroups}/create`) }
+  const navigateToEdit = (id: string) => {
+    void navigate(`${routes.recoveryGroups}/${encodeURIComponent(id)}/edit`)
+  }
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
@@ -39,7 +42,11 @@ export function RecoveryGroupsListPage() {
           />
         ) : (
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-[#dbe7f2] bg-white shadow-sm">
-            <RecoveryGroupsTable groups={groups} />
+            <RecoveryGroupsTable
+              groups={groups}
+              onEdit={navigateToEdit}
+              onDelete={remove}
+            />
           </div>
         )}
       </div>

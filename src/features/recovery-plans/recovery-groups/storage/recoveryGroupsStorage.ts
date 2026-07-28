@@ -67,3 +67,44 @@ export function createRecoveryGroup(draft: RecoveryGroupDraft): RecoveryGroup {
   window.dispatchEvent(new Event(RECOVERY_GROUPS_CHANGED_EVENT))
   return group
 }
+
+export function getRecoveryGroup(id: string): RecoveryGroup | undefined {
+  return listRecoveryGroups().find(group => group.id === id)
+}
+
+export function updateRecoveryGroup(id: string, draft: RecoveryGroupDraft): RecoveryGroup {
+  if (!draft.workloadType || !draft.resourceType) {
+    throw new Error('Recovery group resource type is required')
+  }
+
+  const groups = listRecoveryGroups()
+  const existingIndex = groups.findIndex(group => group.id === id)
+  if (existingIndex === -1) {
+    throw new Error('Recovery group not found')
+  }
+
+  const group: RecoveryGroup = {
+    id,
+    name: draft.name.trim(),
+    description: draft.description.trim(),
+    workloadType: draft.workloadType,
+    resourceType: draft.resourceType,
+    resources: [...draft.resources],
+    resourceCount: draft.resources.length,
+    status: draft.resources.length > 0 ? 'Active' : 'Draft',
+  }
+  const updatedGroups = [...groups]
+  updatedGroups[existingIndex] = group
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedGroups))
+  window.dispatchEvent(new Event(RECOVERY_GROUPS_CHANGED_EVENT))
+  return group
+}
+
+export function deleteRecoveryGroup(id: string): void {
+  const groups = listRecoveryGroups()
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(groups.filter(group => group.id !== id)),
+  )
+  window.dispatchEvent(new Event(RECOVERY_GROUPS_CHANGED_EVENT))
+}

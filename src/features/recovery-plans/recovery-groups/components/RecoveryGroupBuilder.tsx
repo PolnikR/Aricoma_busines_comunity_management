@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
 import { useTranslation } from '@/hooks/useTranslation'
-import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
+import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { RecoveryGroupDetailsStep } from './RecoveryGroupDetailsStep'
 import { RecoveryGroupResourcesStep } from './RecoveryGroupResourcesStep'
 import { RecoveryGroupTypeStep } from './RecoveryGroupTypeStep'
@@ -11,6 +11,8 @@ interface RecoveryGroupBuilderProps {
   onCreate: (draft: RecoveryGroupDraft) => void
   onCancel: () => void
   onDirtyChange?: (isDirty: boolean) => void
+  initialData?: RecoveryGroup
+  submitLabel?: string
 }
 
 const INITIAL_DRAFT: RecoveryGroupDraft = {
@@ -25,10 +27,20 @@ export function RecoveryGroupBuilder({
   onCreate,
   onCancel,
   onDirtyChange,
+  initialData,
+  submitLabel,
 }: RecoveryGroupBuilderProps) {
   const { t } = useTranslation()
   const [step, setStep] = useState(1)
-  const [draft, setDraft] = useState<RecoveryGroupDraft>(INITIAL_DRAFT)
+  const [draft, setDraft] = useState<RecoveryGroupDraft>(() => initialData
+    ? {
+        name: initialData.name,
+        description: initialData.description,
+        workloadType: initialData.workloadType,
+        resourceType: initialData.resourceType,
+        resources: [...initialData.resources],
+      }
+    : INITIAL_DRAFT)
   const detailsValid = Boolean(draft.name.trim() && draft.description.trim())
   const typeValid = Boolean(draft.workloadType && draft.resourceType)
   const steps = [
@@ -123,7 +135,7 @@ export function RecoveryGroupBuilder({
                 </Button>
               ) : (
                 <Button disabled={!canCreate} onClick={() => { onCreate(draft) }}>
-                  {t('pages.recoveryGroupBuilder.createButton')}
+                  {submitLabel ?? t('pages.recoveryGroupBuilder.createButton')}
                 </Button>
               )}
             </div>

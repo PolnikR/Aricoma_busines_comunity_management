@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
+import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import {
   DataTable,
@@ -10,11 +11,14 @@ import {
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
+import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { RecoveryGroupListItem } from '../model/recoveryGroupTypes'
 
 interface RecoveryGroupsTableProps {
   groups: RecoveryGroupListItem[]
+  onEdit: (id: string) => void
+  onDelete: (id: string) => void
 }
 
 interface RecoveryGroupFilters {
@@ -27,11 +31,12 @@ const EMPTY_FILTERS: RecoveryGroupFilters = {
   resourceType: '',
 }
 
-export function RecoveryGroupsTable({ groups }: RecoveryGroupsTableProps) {
+export function RecoveryGroupsTable({ groups, onEdit, onDelete }: RecoveryGroupsTableProps) {
   const { t } = useTranslation()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [filters, setFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)
+  const [deleteTarget, setDeleteTarget] = useState<RecoveryGroupListItem | null>(null)
 
   const filterOptions = useMemo(() => ({
     workloadTypes: Array.from(new Set(groups.map(group => group.workloadType))).sort(),
@@ -176,6 +181,28 @@ export function RecoveryGroupsTable({ groups }: RecoveryGroupsTableProps) {
         title={selected?.name ?? ''}
         ariaLabel={t('drawer.recoveryGroupDetail')}
         closeLabel={t('drawer.closeRecoveryGroup')}
+        footer={selected ? (
+          <>
+            <Button
+              size="sm"
+              variant="danger"
+              className="flex-1"
+              onClick={() => { setDeleteTarget(selected) }}
+            >
+              {t('buttons.delete')}
+            </Button>
+            <Button
+              size="sm"
+              className="flex-1"
+              onClick={() => {
+                onEdit(selected.id)
+                setSelectedId(null)
+              }}
+            >
+              {t('buttons.edit')}
+            </Button>
+          </>
+        ) : null}
       >
         {selected ? (
           <dl className="space-y-3 px-5 py-2">
@@ -194,6 +221,22 @@ export function RecoveryGroupsTable({ groups }: RecoveryGroupsTableProps) {
           </dl>
         ) : null}
       </DetailDrawer>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title={t('dialogs.deleteRecoveryGroup')}
+        message={t('dialogs.deleteRecoveryGroupMessage').replace('{name}', deleteTarget?.name ?? '')}
+        confirmLabel={t('buttons.delete')}
+        cancelLabel={t('buttons.cancel')}
+        tone="danger"
+        onCancel={() => { setDeleteTarget(null) }}
+        onConfirm={() => {
+          if (!deleteTarget) return
+          onDelete(deleteTarget.id)
+          setDeleteTarget(null)
+          setSelectedId(null)
+        }}
+      />
     </div>
   )
 }
