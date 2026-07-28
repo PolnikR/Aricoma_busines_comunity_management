@@ -86,6 +86,7 @@ const navItems: NavItem[] = [
     icon: <LayersIcon />,
     subItems: [
       { name: 'Recovery Applications', path: routes.recoveryApplications },
+      { name: 'Recovery Groups', path: routes.recoveryGroups },
       { name: 'Recovery Runs', path: routes.recoveryRuns },
     ],
   },
@@ -136,6 +137,7 @@ const navKeyMap: Record<string, string> = {
   'IBM PowerVM Orchestration': 'nav.ibm',
   'Recovery Plans': 'nav.recovery',
   'Recovery Applications': 'nav.recovery.applications',
+  'Recovery Groups': 'nav.recovery.groups',
   'Recovery Runs': 'nav.recovery.runs',
   'Execution Engine': 'nav.execution',
   'Monitoring & Audit': 'nav.monitoring',

@@ -30,6 +30,11 @@ const RecoveryApplicationBuilderPage = lazy(async () => {
   return { default: page.RecoveryApplicationBuilderPage }
 })
 
+const RecoveryGroupsListPage = lazy(async () => {
+  const page = await import('@/features/recovery-plans/recovery-groups/pages/RecoveryGroupsListPage')
+  return { default: page.RecoveryGroupsListPage }
+})
+
 const RecoveryApplicationEditorPage = lazy(async () => {
   const page = await import('@/features/recovery-plans/recovery-applications/pages/RecoveryApplicationEditorPage')
   return { default: page.RecoveryApplicationEditorPage }
@@ -104,6 +109,14 @@ export function AppRoutes() {
         />
         <Route path="recovery-plans">
           <Route index element={<Navigate to={routes.recoveryApplications} replace />} />
+          <Route
+            path="recovery-groups"
+            element={
+              <Suspense fallback={<RouteLoadingState />}>
+                <RecoveryGroupsListPage />
+              </Suspense>
+            }
+          />
           <Route path="recovery-applications">
             <Route
               index

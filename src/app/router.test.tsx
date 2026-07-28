@@ -14,6 +14,7 @@ describe('createAppRouter', () => {
     const paths = collectPaths(router.routes)
 
     expect(paths).toContain('recovery-applications')
+    expect(paths).toContain('recovery-groups')
     expect(paths).toContain('create')
     expect(paths).toContain(':id/edit')
 
