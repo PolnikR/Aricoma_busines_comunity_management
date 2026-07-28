@@ -20,7 +20,7 @@ describe('RecoveryAppBuilder', () => {
     render(<RecoveryAppBuilder onSave={onSave} />)
 
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
-    expect(alertMock).toHaveBeenCalledWith('Please enter an application name')
+    expect(alertMock).toHaveBeenCalledWith('Enter a valid file name using letters, numbers, and underscores.')
     expect(onSave).not.toHaveBeenCalled()
   })
 
@@ -28,6 +28,7 @@ describe('RecoveryAppBuilder', () => {
     const onSave = vi.fn()
     render(<RecoveryAppBuilder onSave={onSave} />)
 
+    fireEvent.change(screen.getByLabelText('File name'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
     fireEvent.change(screen.getByLabelText('Environment *'), { target: { value: 'prod' } })
@@ -35,6 +36,7 @@ describe('RecoveryAppBuilder', () => {
 
     expect(onSave).toHaveBeenCalledOnce()
     expect(onSave.mock.calls[0]?.[0]).toMatchObject({
+      fileName: 'finance_recovery',
       name: 'Finance',
       description: 'Finance recovery',
       environment: 'prod',

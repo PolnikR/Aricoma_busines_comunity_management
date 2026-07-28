@@ -13,7 +13,10 @@ export function RecoveryApplicationBuilderPage() {
   const submitApplication = useSubmitRecoveryApplication()
 
   const handleSave = (appState: RecoveryApplicationFormState): void => {
-    submitApplication.mutate(toRecoveryApplicationData(appState), {
+    submitApplication.mutate({
+      fileName: appState.fileName,
+      data: toRecoveryApplicationData(appState),
+    }, {
       onSuccess: () => {
         void navigate('/recovery-plans/recovery-applications')
       },

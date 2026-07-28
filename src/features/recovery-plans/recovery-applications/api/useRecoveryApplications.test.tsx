@@ -46,14 +46,14 @@ describe('recovery application hooks', () => {
     queryClient.setQueryData(recoveryApplicationsQueryKey, [])
     const { result } = renderHook(() => useSubmitRecoveryApplication(), { wrapper })
 
-    result.current.mutate(data)
+    result.current.mutate({ fileName: 'finance_recovery', data })
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true)
     })
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/submit_recovery_dag?filename=Finance&is_final=false',
+      '/api/submit_recovery_dag?filename=finance_recovery&is_final=false',
       expect.objectContaining({ method: 'POST', body: JSON.stringify(data) }),
     )
     expect(queryClient.getQueryState(recoveryApplicationsQueryKey)?.isInvalidated).toBe(true)

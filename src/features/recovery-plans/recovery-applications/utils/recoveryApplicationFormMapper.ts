@@ -4,6 +4,7 @@ import type {
   RecoveryApplicationListItem,
   RecoveryTier,
 } from '../model/recoveryApplicationTypes'
+import { toRecoveryApplicationFileName } from './recoveryApplicationFileName'
 
 function cloneTier(tier: RecoveryTier): RecoveryTier {
   return {
@@ -23,6 +24,7 @@ export function toRecoveryApplicationFormState(
   const data = application.data.application
 
   return {
+    fileName: toRecoveryApplicationFileName(application.id),
     name: data.name,
     description: data.description,
     environment: data.environment,

@@ -13,8 +13,8 @@ filename.
 - Reuse `RecoveryAppBuilder` for create and edit through `initialData`.
 - Select the edited application from the existing backend list by its `file`
   identifier, mapped to `RecoveryApplicationListItem.id`.
-- Always submit the current form name. Do not compare, rename, or delete files
-  in the frontend.
+- Submit the dedicated filename field. Edit keeps it disabled and does not
+  rename or delete files in the frontend.
 - Validate editable tier data at the API boundary before it reaches the builder.
 - Restore Edit only. Do not restore the removed mock-backed Delete action.
 
@@ -58,7 +58,7 @@ mutation.
 **Acceptance criteria:**
 
 - [ ] A matching backend application opens with all editable fields prefilled.
-- [ ] Save submits exactly once using the current form name as `filename`.
+- [ ] Save submits exactly once using the dedicated `fileName`.
 - [ ] Successful submission navigates to the recovery application list.
 - [ ] Loading, fetch error, not-found, saving, and submit-error states are handled.
 

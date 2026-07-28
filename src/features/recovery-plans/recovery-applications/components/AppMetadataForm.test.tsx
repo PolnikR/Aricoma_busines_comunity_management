@@ -15,7 +15,12 @@ describe('AppMetadataForm', () => {
     render(
       <LanguageProvider>
         <AppMetadataForm
-          initialValues={{ name: 'Finance', description: 'Primary', environment: 'dev' }}
+          initialValues={{
+            fileName: 'finance_app',
+            name: 'Finance',
+            description: 'Primary',
+            environment: 'dev',
+          }}
           onMetadataChange={onMetadataChange}
         />
       </LanguageProvider>
@@ -29,5 +34,23 @@ describe('AppMetadataForm', () => {
     expect(name).toHaveValue('Billing')
     expect(onMetadataChange).toHaveBeenLastCalledWith({ environment: 'prod' })
     expect(onMetadataChange).toHaveBeenCalledWith({ name: 'Billing' })
+  })
+
+  it('disables filename in Edit mode', async () => {
+    render(
+      <LanguageProvider>
+        <AppMetadataForm
+          initialValues={{
+            fileName: 'finance_app',
+            name: 'Finance',
+            description: 'Primary',
+            environment: 'dev',
+          }}
+          disableFileName
+        />
+      </LanguageProvider>
+    )
+
+    expect(await screen.findByLabelText('File name')).toBeDisabled()
   })
 })

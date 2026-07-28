@@ -8,7 +8,7 @@ Approved for implementation planning.
 
 Recovery applications are loaded from the real backend through
 `GET /api/get_recovery_apps` and submitted through
-`POST /api/submit_recovery_dag?filename=<name>&is_final=false`. The backend implements upsert semantics:
+`POST /api/submit_recovery_dag?filename=<fileName>&is_final=false`. The backend implements upsert semantics:
 submitting an unchanged filename updates the existing file, while submitting a
 changed filename creates a new file.
 
@@ -43,17 +43,15 @@ Edit action
   -> map backend application to RecoveryApplicationFormState
   -> RecoveryAppBuilder initialData
   -> user edits application
-  -> POST /api/submit_recovery_dag?filename=<current form name>&is_final=false
+  -> POST /api/submit_recovery_dag?filename=<validated fileName>&is_final=false
   -> invalidate recovery-applications query
   -> navigate back to recovery application list
 ```
 
-The frontend will not compare the original and edited filenames and will not
-delete or rename files. It always submits the current form name. The backend is
-the sole owner of update-versus-create behavior:
-
-- unchanged filename updates the existing file;
-- changed filename creates a new file and leaves the original file unchanged.
+The frontend submits the dedicated filename field rather than
+`application.name`. Create accepts a validated filename base. Edit derives the
+base from the backend `file` value and disables the field, so editing cannot
+rename the backing file.
 
 ## UI Behavior
 

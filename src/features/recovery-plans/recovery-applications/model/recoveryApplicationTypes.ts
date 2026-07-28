@@ -48,6 +48,7 @@ export interface RecoveryApplicationListItem {
 }
 
 export interface RecoveryApplicationFormState {
+  fileName: string
   name: string
   description: string
   environment: 'dev' | 'staging' | 'prod'

@@ -35,6 +35,7 @@ describe('recoveryApplicationFormMapper', () => {
     const formState = toRecoveryApplicationFormState(application)
 
     expect(formState).toMatchObject({
+      fileName: 'Finance',
       name: 'Finance',
       description: 'Finance recovery',
       environment: 'prod',

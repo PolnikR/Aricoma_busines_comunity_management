@@ -3,20 +3,20 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryApplicationEditorPage } from './RecoveryApplicationEditorPage'
 import type {
-  RecoveryApplicationData,
   RecoveryApplicationFormState,
   RecoveryApplicationListItem,
 } from '../model/recoveryApplicationTypes'
+import type { SubmitRecoveryApplicationInput } from '../api/useRecoveryApplications'
 
 const navigate = vi.fn()
 const mutate = vi.fn<(
-  data: RecoveryApplicationData,
+  input: SubmitRecoveryApplicationInput,
   options: { onSuccess: () => void },
 ) => void>()
 const refetch = vi.fn()
 
 const application: RecoveryApplicationListItem = {
-  id: 'Finance App.json',
+  id: 'finance_app.json',
   data: {
     application: {
       name: 'Finance App',
@@ -53,7 +53,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
   return {
     ...actual,
     useNavigate: () => navigate,
-    useParams: () => ({ id: 'Finance App.json' }),
+    useParams: () => ({ id: 'finance_app.json' }),
   }
 })
 
@@ -72,12 +72,16 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
   RecoveryAppBuilder: ({
     initialData,
     onSave,
+    disableFileName,
   }: {
     initialData: RecoveryApplicationFormState
     onSave: (state: RecoveryApplicationFormState) => void
+    disableFileName?: boolean
   }) => (
     <div>
       <span>{initialData.name}</span>
+      <span>{initialData.fileName}</span>
+      <span>{disableFileName ? 'Filename disabled' : 'Filename enabled'}</span>
       <button type="button" onClick={() => { onSave(initialData) }}>Save unchanged</button>
       <button
         type="button"
@@ -112,12 +116,14 @@ describe('RecoveryApplicationEditorPage', () => {
     expect(call).toBeDefined()
     if (!call) throw new Error('Expected submit mutation to be called')
 
-    const [submittedData, options] = call
-    expect(submittedData.application.name).toBe('Finance App')
+    const [submission, options] = call
+    expect(submission.fileName).toBe('finance_app')
+    expect(submission.data.application.name).toBe('Finance App')
     expect(options.onSuccess).toBeTypeOf('function')
+    expect(screen.getByText('Filename disabled')).toBeInTheDocument()
   })
 
-  it('submits the changed filename and leaves create-versus-update to the backend', async () => {
+  it('keeps filename independent when application name changes', async () => {
     const user = userEvent.setup()
     render(<RecoveryApplicationEditorPage />)
 
@@ -127,7 +133,8 @@ describe('RecoveryApplicationEditorPage', () => {
     expect(call).toBeDefined()
     if (!call) throw new Error('Expected submit mutation to be called')
 
-    expect(call[0].application.name).toBe('Renamed App')
+    expect(call[0].fileName).toBe('finance_app')
+    expect(call[0].data.application.name).toBe('Renamed App')
   })
 
   it('renders loading, load-error, and not-found states', () => {

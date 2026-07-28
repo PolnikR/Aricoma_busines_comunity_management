@@ -32,7 +32,10 @@ export function RecoveryApplicationEditorPage() {
   }
 
   const handleSave = (formState: RecoveryApplicationFormState): void => {
-    submitApplication.mutate(toRecoveryApplicationData(formState), {
+    submitApplication.mutate({
+      fileName: formState.fileName,
+      data: toRecoveryApplicationData(formState),
+    }, {
       onSuccess: goBack,
     })
   }
@@ -101,6 +104,7 @@ export function RecoveryApplicationEditorPage() {
           initialData={initialData}
           onSave={handleSave}
           isSaving={submitApplication.isPending}
+          disableFileName
         />
       </div>
     </div>

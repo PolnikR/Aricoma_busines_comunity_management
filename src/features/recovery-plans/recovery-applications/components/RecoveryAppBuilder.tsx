@@ -4,12 +4,14 @@ import { Button } from '@/shared/components/button/Button'
 import { AppMetadataForm } from './AppMetadataForm'
 import { VMSidebar } from './VMSidebar'
 import { TierCanvas } from './TierCanvas'
+import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import type { RecoveryTier, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface RecoveryAppBuilderProps {
   onSave?: (appState: RecoveryApplicationFormState) => void
   isSaving?: boolean
   initialData?: RecoveryApplicationFormState
+  disableFileName?: boolean
 }
 
 const DEFAULT_TIERS: Record<string, RecoveryTier> = {
@@ -51,10 +53,16 @@ const DEFAULT_TIERS: Record<string, RecoveryTier> = {
   },
 }
 
-export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAppBuilderProps) {
+export function RecoveryAppBuilder({
+  onSave,
+  isSaving,
+  initialData,
+  disableFileName = false,
+}: RecoveryAppBuilderProps) {
   const { t } = useTranslation()
   const [formState, setFormState] = useState<RecoveryApplicationFormState>(
     initialData ?? {
+      fileName: '',
       name: '',
       description: '',
       environment: 'dev',
@@ -146,6 +154,10 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
   }, [])
 
   const handleSave = () => {
+    if (!isValidRecoveryApplicationFileName(formState.fileName)) {
+      alert('Enter a valid file name using letters, numbers, and underscores.')
+      return
+    }
     if (!formState.name.trim()) {
       alert(t('alerts.pleaseEnterName'))
       return
@@ -166,7 +178,9 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
           <div className="flex-1 w-full">
             <AppMetadataForm
               onMetadataChange={handleMetadataChange}
+              disableFileName={disableFileName}
               initialValues={{
+                fileName: formState.fileName,
                 name: formState.name,
                 description: formState.description,
                 environment: formState.environment,
