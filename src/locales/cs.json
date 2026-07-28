@@ -445,6 +445,10 @@
   "recovery.sidebar.loadingVms": "Načítám VMs...",
   "recovery.sidebar.noMatching": "Žádné VMs se nehodí k vašemu hledání",
   "recovery.sidebar.noVmsAvailable": "Žádné VMs nejsou dostupné",
+  "recovery.builder.discardDialog.title": "Zahodit neuložené změny?",
+  "recovery.builder.discardDialog.message": "Pokud budete pokračovat, všechna neuložená data budou ztracena.",
+  "recovery.builder.discardDialog.cancel": "Zrušit",
+  "recovery.builder.discardDialog.confirm": "Pokračovat",
 
   "recovery.tier.order": "Pořadí",
   "recovery.tier.dragVmsHere": "Přetáhněte VMs sem",

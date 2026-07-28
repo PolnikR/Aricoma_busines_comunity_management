@@ -72,10 +72,12 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
   RecoveryAppBuilder: ({
     initialData,
     onSave,
+    onDirtyChange,
     disableFileName,
   }: {
     initialData: RecoveryApplicationFormState
     onSave: (state: RecoveryApplicationFormState) => void
+    onDirtyChange?: (isDirty: boolean) => void
     disableFileName?: boolean
   }) => (
     <div>
@@ -88,6 +90,9 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
         onClick={() => { onSave({ ...initialData, name: 'Renamed App' }) }}
       >
         Save renamed
+      </button>
+      <button type="button" onClick={() => { onDirtyChange?.(true) }}>
+        Change builder
       </button>
     </div>
   ),
@@ -135,6 +140,25 @@ describe('RecoveryApplicationEditorPage', () => {
 
     expect(call[0].fileName).toBe('finance_app')
     expect(call[0].data.application.name).toBe('Renamed App')
+  })
+
+  it('warns before leaving with unsaved edit changes', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationEditorPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Change builder' }))
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+
+    expect(screen.getByRole('dialog', { name: 'Discard unsaved changes?' })).toBeInTheDocument()
+    expect(navigate).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(navigate).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')
   })
 
   it('renders loading, load-error, and not-found states', () => {

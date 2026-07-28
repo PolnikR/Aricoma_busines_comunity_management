@@ -444,6 +444,10 @@
   "recovery.sidebar.loadingVms": "Loading VMs...",
   "recovery.sidebar.noMatching": "No VMs match your search",
   "recovery.sidebar.noVmsAvailable": "No VMs available",
+  "recovery.builder.discardDialog.title": "Discard unsaved changes?",
+  "recovery.builder.discardDialog.message": "If you continue, all unsaved data will be lost.",
+  "recovery.builder.discardDialog.cancel": "Cancel",
+  "recovery.builder.discardDialog.confirm": "Continue",
 
   "recovery.tier.order": "Order",
   "recovery.tier.dragVmsHere": "Drag VMs here",

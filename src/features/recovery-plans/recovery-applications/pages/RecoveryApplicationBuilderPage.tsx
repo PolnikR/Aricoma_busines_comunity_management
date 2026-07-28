@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/button/Button'
+import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
@@ -11,6 +13,8 @@ export function RecoveryApplicationBuilderPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const submitApplication = useSubmitRecoveryApplication()
+  const [isDirty, setIsDirty] = useState(false)
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false)
 
   const handleSave = (appState: RecoveryApplicationFormState): void => {
     submitApplication.mutate({
@@ -18,13 +22,29 @@ export function RecoveryApplicationBuilderPage() {
       data: toRecoveryApplicationData(appState),
     }, {
       onSuccess: () => {
+        setIsDirty(false)
         void navigate('/recovery-plans/recovery-applications')
       },
     })
   }
 
-  const handleBackClick = (): void => {
+  const navigateToApplications = (): void => {
     void navigate('/recovery-plans/recovery-applications')
+  }
+
+  const handleBackClick = (): void => {
+    if (isDirty) {
+      setIsDiscardDialogOpen(true)
+      return
+    }
+
+    navigateToApplications()
+  }
+
+  const handleDiscardChanges = (): void => {
+    setIsDiscardDialogOpen(false)
+    setIsDirty(false)
+    navigateToApplications()
   }
 
   return (
@@ -45,9 +65,20 @@ export function RecoveryApplicationBuilderPage() {
         ) : null}
         <RecoveryAppBuilder
           onSave={handleSave}
+          onDirtyChange={setIsDirty}
           isSaving={submitApplication.isPending}
         />
       </div>
+      <ConfirmDialog
+        open={isDiscardDialogOpen}
+        title={t('recovery.builder.discardDialog.title')}
+        message={t('recovery.builder.discardDialog.message')}
+        cancelLabel={t('recovery.builder.discardDialog.cancel')}
+        confirmLabel={t('recovery.builder.discardDialog.confirm')}
+        tone="danger"
+        onCancel={() => { setIsDiscardDialogOpen(false) }}
+        onConfirm={handleDiscardChanges}
+      />
     </div>
   )
 }

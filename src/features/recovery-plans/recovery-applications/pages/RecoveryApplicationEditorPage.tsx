@@ -1,7 +1,8 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/shared/components/button/Button'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
+import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
@@ -21,14 +22,31 @@ export function RecoveryApplicationEditorPage() {
   const { id = '' } = useParams<{ id: string }>()
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
   const submitApplication = useSubmitRecoveryApplication()
+  const [isDirty, setIsDirty] = useState(false)
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false)
   const application = applications?.find((item) => item.id === id)
   const initialData = useMemo(
     () => application ? toRecoveryApplicationFormState(application) : null,
     [application],
   )
 
-  const goBack = () => {
+  const navigateToApplications = () => {
     void navigate('/recovery-plans/recovery-applications')
+  }
+
+  const goBack = () => {
+    if (isDirty) {
+      setIsDiscardDialogOpen(true)
+      return
+    }
+
+    navigateToApplications()
+  }
+
+  const handleDiscardChanges = () => {
+    setIsDiscardDialogOpen(false)
+    setIsDirty(false)
+    navigateToApplications()
   }
 
   const handleSave = (formState: RecoveryApplicationFormState): void => {
@@ -36,7 +54,10 @@ export function RecoveryApplicationEditorPage() {
       fileName: formState.fileName,
       data: toRecoveryApplicationData(formState),
     }, {
-      onSuccess: goBack,
+      onSuccess: () => {
+        setIsDirty(false)
+        navigateToApplications()
+      },
     })
   }
 
@@ -103,10 +124,21 @@ export function RecoveryApplicationEditorPage() {
         <RecoveryAppBuilder
           initialData={initialData}
           onSave={handleSave}
+          onDirtyChange={setIsDirty}
           isSaving={submitApplication.isPending}
           disableFileName
         />
       </div>
+      <ConfirmDialog
+        open={isDiscardDialogOpen}
+        title={t('recovery.builder.discardDialog.title')}
+        message={t('recovery.builder.discardDialog.message')}
+        cancelLabel={t('recovery.builder.discardDialog.cancel')}
+        confirmLabel={t('recovery.builder.discardDialog.confirm')}
+        tone="danger"
+        onCancel={() => { setIsDiscardDialogOpen(false) }}
+        onConfirm={handleDiscardChanges}
+      />
     </div>
   )
 }

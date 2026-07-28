@@ -9,6 +9,7 @@ import type { RecoveryTier, RecoveryApplicationFormState } from '../model/recove
 
 interface RecoveryAppBuilderProps {
   onSave?: (appState: RecoveryApplicationFormState) => void
+  onDirtyChange?: (isDirty: boolean) => void
   isSaving?: boolean
   initialData?: RecoveryApplicationFormState
   disableFileName?: boolean
@@ -53,26 +54,64 @@ const DEFAULT_TIERS: Record<string, RecoveryTier> = {
   },
 }
 
+function cloneTier(tier: RecoveryTier): RecoveryTier {
+  if (!tier.recovery_group) {
+    return { ...tier }
+  }
+
+  return {
+    ...tier,
+    recovery_group: {
+      ...tier.recovery_group,
+      vms: tier.recovery_group.vms.map(vm => ({ ...vm })),
+    },
+  }
+}
+
+function createInitialFormState(
+  initialData?: RecoveryApplicationFormState,
+): RecoveryApplicationFormState {
+  if (initialData) {
+    return {
+      ...initialData,
+      tiers: new Map(
+        Array.from(
+          initialData.tiers,
+          ([id, tier]): [string, RecoveryTier] => [id, cloneTier(tier)],
+        ),
+      ),
+    }
+  }
+
+  return {
+    fileName: '',
+    name: '',
+    description: '',
+    environment: 'dev',
+    tiers: new Map(
+      Object.entries(DEFAULT_TIERS).map(
+        ([id, tier]): [string, RecoveryTier] => [id, cloneTier(tier)],
+      ),
+    ),
+  }
+}
+
 export function RecoveryAppBuilder({
   onSave,
+  onDirtyChange,
   isSaving,
   initialData,
   disableFileName = false,
 }: RecoveryAppBuilderProps) {
   const { t } = useTranslation()
   const [formState, setFormState] = useState<RecoveryApplicationFormState>(
-    initialData ?? {
-      fileName: '',
-      name: '',
-      description: '',
-      environment: 'dev',
-      tiers: new Map(Object.entries(DEFAULT_TIERS)),
-    }
+    () => createInitialFormState(initialData),
   )
 
   const handleMetadataChange = useCallback((metadata: Partial<RecoveryApplicationFormState>) => {
     setFormState(prev => ({ ...prev, ...metadata }))
-  }, [])
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
 
   const handleVMAdded = useCallback((tierId: string, vmName: string) => {
     setFormState(prev => {
@@ -80,22 +119,36 @@ export function RecoveryAppBuilder({
       const tier = newTiers.get(tierId)
       const recoveryGroup = tier?.recovery_group
       if (recoveryGroup && !recoveryGroup.vms.find(vm => vm.name === vmName)) {
-        recoveryGroup.vms.push({ name: vmName })
+        newTiers.set(tierId, {
+          ...tier,
+          recovery_group: {
+            ...recoveryGroup,
+            vms: [...recoveryGroup.vms, { name: vmName }],
+          },
+        })
       }
       return { ...prev, tiers: newTiers }
     })
-  }, [])
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
 
   const handleVMRemoved = useCallback((tierId: string, vmName: string) => {
     setFormState(prev => {
       const newTiers = new Map(prev.tiers)
       const tier = newTiers.get(tierId)
       if (tier?.recovery_group) {
-        tier.recovery_group.vms = tier.recovery_group.vms.filter(vm => vm.name !== vmName)
+        newTiers.set(tierId, {
+          ...tier,
+          recovery_group: {
+            ...tier.recovery_group,
+            vms: tier.recovery_group.vms.filter(vm => vm.name !== vmName),
+          },
+        })
       }
       return { ...prev, tiers: newTiers }
     })
-  }, [])
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
 
   const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: {
     tierDescription: string
@@ -128,7 +181,8 @@ export function RecoveryAppBuilder({
 
       return { ...prev, tiers: newTiers }
     })
-  }, [])
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
 
   const handleTierAdd = useCallback((tierId: string, tier: RecoveryTier) => {
     setFormState(prev => {
@@ -136,7 +190,8 @@ export function RecoveryAppBuilder({
       newTiers.set(tierId, tier)
       return { ...prev, tiers: newTiers }
     })
-  }, [])
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
 
   const handleTierDelete = useCallback((tierId: string) => {
     setFormState(prev => {
@@ -144,14 +199,16 @@ export function RecoveryAppBuilder({
       newTiers.delete(tierId)
       return { ...prev, tiers: newTiers }
     })
-  }, [])
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
 
   const handleTierReorder = useCallback((reorderedTiers: Record<string, RecoveryTier>) => {
     setFormState(prev => ({
       ...prev,
       tiers: new Map(Object.entries(reorderedTiers)),
     }))
-  }, [])
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
 
   const handleSave = () => {
     if (!isValidRecoveryApplicationFileName(formState.fileName)) {
