@@ -62,7 +62,7 @@ describe('VirtualMachineNode with Tooltip', () => {
     const user = userEvent.setup({ delay: null })
     renderNode()
 
-    const nodeElement = screen.getByRole('group', { name: /Virtual machine/ })
+    const nodeElement = await screen.findByRole('group', { name: /Virtual machine/ })
 
     // Hover over the node
     await user.hover(nodeElement)
@@ -78,7 +78,7 @@ describe('VirtualMachineNode with Tooltip', () => {
   test('tooltip disappears immediately on mouse leave', async () => {
     renderNode()
 
-    const nodeElement = screen.getByRole('group', { name: /Virtual machine/ })
+    const nodeElement = await screen.findByRole('group', { name: /Virtual machine/ })
 
     fireEvent.mouseEnter(nodeElement)
 
@@ -99,7 +99,7 @@ describe('VirtualMachineNode with Tooltip', () => {
     const user = userEvent.setup({ delay: null })
     renderNode()
 
-    const nodeElement = screen.getByRole('group', { name: /Virtual machine/ })
+    const nodeElement = await screen.findByRole('group', { name: /Virtual machine/ })
 
     await user.hover(nodeElement)
     // Wait 300ms - before the 500ms timeout
@@ -115,7 +115,7 @@ describe('VirtualMachineNode with Tooltip', () => {
     const user = userEvent.setup({ delay: null })
     renderNode()
 
-    const nodeElement = screen.getByRole('group', { name: /Virtual machine/ })
+    const nodeElement = await screen.findByRole('group', { name: /Virtual machine/ })
 
     // First hover, leave before tooltip timeout
     await user.hover(nodeElement)
@@ -139,7 +139,7 @@ describe('VirtualMachineNode with Tooltip', () => {
     const user = userEvent.setup({ delay: null })
     renderNode()
 
-    const nodeElement = screen.getByRole('group', { name: /Virtual machine/ })
+    const nodeElement = await screen.findByRole('group', { name: /Virtual machine/ })
     await user.hover(nodeElement)
 
     // Wait for tooltip to appear with the data

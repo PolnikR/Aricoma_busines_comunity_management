@@ -1,18 +1,21 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import { LanguageProvider } from '@/contexts/LanguageContext'
 import { ModuleWorkQueuePage } from './ModuleWorkQueuePage'
 
 describe('ModuleWorkQueuePage', () => {
   it('renders traceability, API boundary, and workflow cards', () => {
     render(
-      <ModuleWorkQueuePage
-        eyebrow="Module"
-        title="Work queue"
-        description="Description"
-        excelSource="Sheet 1"
-        apiBoundary="/api/items"
-        workflowItems={['Review', 'Approve']}
-      />,
+      <LanguageProvider>
+        <ModuleWorkQueuePage
+          eyebrow="Module"
+          title="Work queue"
+          description="Description"
+          excelSource="Sheet 1"
+          apiBoundary="/api/items"
+          workflowItems={['Review', 'Approve']}
+        />
+      </LanguageProvider>,
     )
     expect(screen.getByRole('heading', { name: 'Work queue' })).toBeInTheDocument()
     expect(screen.getByText('Sheet 1')).toBeInTheDocument()
