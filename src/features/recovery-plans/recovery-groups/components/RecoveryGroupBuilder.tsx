@@ -29,10 +29,12 @@ export function RecoveryGroupBuilder({
   const { t } = useTranslation()
   const [step, setStep] = useState(1)
   const [draft, setDraft] = useState<RecoveryGroupDraft>(INITIAL_DRAFT)
+  const detailsValid = Boolean(draft.name.trim() && draft.description.trim())
+  const typeValid = Boolean(draft.workloadType && draft.resourceType)
   const steps = [
     { id: 'details', label: t('pages.recoveryGroupBuilder.steps.details') },
-    { id: 'type', label: t('pages.recoveryGroupBuilder.steps.type') },
-    { id: 'resources', label: t('pages.recoveryGroupBuilder.steps.resources') },
+    { id: 'type', label: t('pages.recoveryGroupBuilder.steps.type'), disabled: !detailsValid },
+    { id: 'resources', label: t('pages.recoveryGroupBuilder.steps.resources'), disabled: !detailsValid || !typeValid },
   ]
 
   const updateDraft = (update: Partial<RecoveryGroupDraft>) => {
@@ -41,10 +43,17 @@ export function RecoveryGroupBuilder({
   }
 
   const canContinue = step === 1
-    ? Boolean(draft.name.trim() && draft.description.trim())
+    ? detailsValid
     : step === 2
-      ? Boolean(draft.workloadType && draft.resourceType)
+      ? typeValid
       : draft.resources.length > 0
+  const canCreate = Boolean(
+    draft.name.trim()
+    && draft.description.trim()
+    && draft.workloadType
+    && draft.resourceType
+    && draft.resources.length > 0,
+  )
 
   return (
     <div className="flex min-h-0 flex-1 p-4">
@@ -54,6 +63,7 @@ export function RecoveryGroupBuilder({
             items={steps}
             currentStep={step}
             ariaLabel={t('pages.recoveryGroupBuilder.steps.ariaLabel')}
+            onStepChange={setStep}
           />
         </aside>
         <div className="flex min-h-0 flex-col">
@@ -110,7 +120,7 @@ export function RecoveryGroupBuilder({
                   {t('buttons.next')}
                 </Button>
               ) : (
-                <Button disabled={!canContinue} onClick={() => { onCreate(draft) }}>
+                <Button disabled={!canCreate} onClick={() => { onCreate(draft) }}>
                   {t('pages.recoveryGroupBuilder.createButton')}
                 </Button>
               )}

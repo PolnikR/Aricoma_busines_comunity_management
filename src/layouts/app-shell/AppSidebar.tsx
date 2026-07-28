@@ -165,7 +165,7 @@ export function AppSidebar() {
   const isMenuOpen = (name: string) => openMenu === name || routeMenu === name
 
   const isSubItemActive = (path: string) => {
-    return location.pathname === path
+    return location.pathname === path || location.pathname.startsWith(`${path}/`)
   }
 
   return (
