@@ -35,6 +35,15 @@ beforeEach(() => {
 })
 
 describe('VMSidebar', () => {
+  it('renders a list skeleton while virtual machines are loading', () => {
+    mockQuery({ data: undefined, isLoading: true })
+    render(<VMSidebar />)
+
+    const skeleton = screen.getByRole('status', { name: 'Loading VMs...' })
+    expect(skeleton).toHaveAttribute('aria-busy', 'true')
+    expect(screen.queryByText('Loading VMs...')).not.toBeInTheDocument()
+  })
+
   it('deduplicates, sorts, and filters discovered VM names', async () => {
     const user = userEvent.setup()
     render(<VMSidebar />)

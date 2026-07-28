@@ -3,6 +3,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { useDiscoveryInventory } from '@/features/discovery-inventory/api/useDiscoveryInventory'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { Input } from '@/shared/components/form/FormControls'
+import { ListSkeleton } from '@/shared/components/list-skeleton'
 
 interface VMSidebarProps {
   onVMSelect?: (vmName: string) => void
@@ -49,7 +50,10 @@ export function VMSidebar({ onVMSelect }: VMSidebarProps) {
 
       <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
         {isLoading ? (
-          <div className="p-2 text-sm text-gray-500">{t('recovery.sidebar.loadingVms')}</div>
+          <ListSkeleton
+            rowCount={8}
+            ariaLabel={t('recovery.sidebar.loadingVms')}
+          />
         ) : error && !inventory ? (
           <FetchErrorAlert
             title={t('pages.virtualMachines.error.title')}
