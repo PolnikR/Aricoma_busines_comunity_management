@@ -272,7 +272,7 @@ export function TierCard({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`flex h-60 min-h-60 flex-col gap-2 p-3 transition-all ${
+          className={`flex h-44 min-h-44 flex-col gap-2 p-3 transition-all ${
             isDragOver ? 'bg-[#e3edf6] border-t border-blue-light-500' : 'bg-[#f8fbfe]'
           }`}
         >
