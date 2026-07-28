@@ -9,7 +9,11 @@ interface TierCardProps {
   tier: RecoveryTier
   isEditing?: boolean
   onEditToggle?: (id: string) => void
-  onSave?: (id: string, newId: string, updates: { recoveryGroupName: string; description: string }) => void
+  onSave?: (id: string, newId: string, updates: {
+    tierDescription: string
+    recoveryGroupName: string
+    recoveryGroupDescription: string
+  }) => void
   onDelete?: (id: string) => void
   onCancel?: () => void
   existingIds: string[]
@@ -21,8 +25,12 @@ interface TierCardProps {
 interface EditFormState {
   editId: string
   editRecoveryGroupName: string
-  editDescription: string
+  editTierDescription: string
+  editRecoveryGroupDescription: string
   idError: string
+  tierDescriptionError: string
+  recoveryGroupNameError: string
+  recoveryGroupDescriptionError: string
 }
 
 export function TierCard({
@@ -43,8 +51,12 @@ export function TierCard({
   const [editForm, setEditForm] = useState<EditFormState>({
     editId: id,
     editRecoveryGroupName: tier.recovery_group?.name ?? '',
-    editDescription: tier.description,
+    editTierDescription: tier.description,
+    editRecoveryGroupDescription: tier.recovery_group?.description ?? '',
     idError: '',
+    tierDescriptionError: '',
+    recoveryGroupNameError: '',
+    recoveryGroupDescriptionError: '',
   })
 
   useEffect(() => {
@@ -53,8 +65,12 @@ export function TierCard({
       setEditForm({
         editId: id,
         editRecoveryGroupName: tier.recovery_group?.name ?? '',
-        editDescription: tier.description,
+        editTierDescription: tier.description,
+        editRecoveryGroupDescription: tier.recovery_group?.description ?? '',
         idError: '',
+        tierDescriptionError: '',
+        recoveryGroupNameError: '',
+        recoveryGroupDescriptionError: '',
       })
     }
   }, [isEditing, id, tier])
@@ -96,6 +112,9 @@ export function TierCard({
   const handleConfirm = () => {
     let hasError = false
     let newIdError = ''
+    let newTierDescriptionError = ''
+    let newRecoveryGroupNameError = ''
+    let newRecoveryGroupDescriptionError = ''
 
     if (!editForm.editId.trim()) {
       newIdError = t('recovery.tier.validation.idRequired')
@@ -105,16 +124,35 @@ export function TierCard({
       hasError = true
     }
 
+    if (!editForm.editTierDescription.trim()) {
+      newTierDescriptionError = 'Tier description is required'
+      hasError = true
+    }
+
+    if (!editForm.editRecoveryGroupName.trim()) {
+      newRecoveryGroupNameError = 'Recovery group name is required'
+      hasError = true
+    }
+
+    if (!editForm.editRecoveryGroupDescription.trim()) {
+      newRecoveryGroupDescriptionError = 'Recovery group description is required'
+      hasError = true
+    }
+
     if (hasError) {
       setEditForm(prev => ({
         ...prev,
         idError: newIdError,
+        tierDescriptionError: newTierDescriptionError,
+        recoveryGroupNameError: newRecoveryGroupNameError,
+        recoveryGroupDescriptionError: newRecoveryGroupDescriptionError,
       }))
     } else {
       const newId = editForm.editId.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_')
       onSave?.(id, newId, {
+        tierDescription: editForm.editTierDescription.trim(),
         recoveryGroupName: editForm.editRecoveryGroupName.trim(),
-        description: editForm.editDescription.trim(),
+        recoveryGroupDescription: editForm.editRecoveryGroupDescription.trim(),
       })
     }
   }
@@ -134,11 +172,28 @@ export function TierCard({
               size="sm"
               invalid={Boolean(editForm.idError)}
               placeholder={t('recovery.tier.form.idPlaceholder')}
+              required
             />
             {editForm.idError && <p className="text-xs text-red-600 mt-1">{editForm.idError}</p>}
           </Field>
 
-          <Field label="Recovery group name (optional)" htmlFor={`tier-${id}-edit-recovery-group-name`}>
+          <Field label="Tier description *" htmlFor={`tier-${id}-edit-tier-description`}>
+            <Textarea
+              id={`tier-${id}-edit-tier-description`}
+              value={editForm.editTierDescription}
+              onChange={e => {
+                setEditForm(prev => ({ ...prev, editTierDescription: e.target.value }))
+              }}
+              className="resize-none"
+              rows={3}
+              invalid={Boolean(editForm.tierDescriptionError)}
+              placeholder="Tier description"
+              required
+            />
+            {editForm.tierDescriptionError && <p className="text-xs text-red-600 mt-1">{editForm.tierDescriptionError}</p>}
+          </Field>
+
+          <Field label="Recovery group name *" htmlFor={`tier-${id}-edit-recovery-group-name`}>
             <Input
               id={`tier-${id}-edit-recovery-group-name`}
               type="text"
@@ -147,21 +202,27 @@ export function TierCard({
                 handleRecoveryGroupNameChange(e.target.value)
               }}
               size="sm"
+              invalid={Boolean(editForm.recoveryGroupNameError)}
               placeholder="recovery_group"
+              required
             />
+            {editForm.recoveryGroupNameError && <p className="text-xs text-red-600 mt-1">{editForm.recoveryGroupNameError}</p>}
           </Field>
 
-          <Field label={t('recovery.tier.form.description')} htmlFor={`tier-${id}-edit-description`}>
+          <Field label="Recovery group description *" htmlFor={`tier-${id}-edit-recovery-group-description`}>
             <Textarea
-              id={`tier-${id}-edit-description`}
-              value={editForm.editDescription}
+              id={`tier-${id}-edit-recovery-group-description`}
+              value={editForm.editRecoveryGroupDescription}
               onChange={e => {
-                setEditForm(prev => ({ ...prev, editDescription: e.target.value }))
+                setEditForm(prev => ({ ...prev, editRecoveryGroupDescription: e.target.value }))
               }}
               className="resize-none"
               rows={3}
-              placeholder={t('recovery.tier.form.descriptionPlaceholder')}
+              invalid={Boolean(editForm.recoveryGroupDescriptionError)}
+              placeholder="Recovery group description"
+              required
             />
+            {editForm.recoveryGroupDescriptionError && <p className="text-xs text-red-600 mt-1">{editForm.recoveryGroupDescriptionError}</p>}
           </Field>
 
           <div className="flex gap-2 pt-2">

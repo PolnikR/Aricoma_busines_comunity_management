@@ -66,8 +66,9 @@ describe('TierCard', () => {
     )
 
     expect(screen.getByDisplayValue('database')).toBeInTheDocument() // ID input
-    expect(screen.getByDisplayValue('Database')).toBeInTheDocument() // Name input
-    expect(screen.getByDisplayValue('Database server group')).toBeInTheDocument() // Description input
+    expect(screen.getByDisplayValue('Database')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Database server group')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Database recovery group')).toBeInTheDocument()
   })
 
   it('calls onSave with new values when Confirm clicked', async () => {
@@ -95,8 +96,36 @@ describe('TierCard', () => {
     expect(onSave).toHaveBeenCalledWith(
       'database',
       'database',
-      { recoveryGroupName: 'Primary DB', description: 'Database server group' }
+      {
+        tierDescription: 'Database server group',
+        recoveryGroupName: 'Primary DB',
+        recoveryGroupDescription: 'Database recovery group',
+      }
     )
+  })
+
+  it('requires tier and recovery-group fields before saving', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+
+    render(
+      <TierCard
+        id="database"
+        tier={{ order: 1, description: 'Database server group' }}
+        isEditing={true}
+        onSave={onSave}
+        existingIds={['database']}
+        canDelete={true}
+      />
+    )
+
+    await user.clear(screen.getByDisplayValue('Database server group'))
+    await user.click(screen.getByRole('button', { name: /confirm/i }))
+
+    expect(screen.getByText('Tier description is required')).toBeInTheDocument()
+    expect(screen.getByText('Recovery group name is required')).toBeInTheDocument()
+    expect(screen.getByText('Recovery group description is required')).toBeInTheDocument()
+    expect(onSave).not.toHaveBeenCalled()
   })
 
   it('renders order and description without recovery group details', () => {

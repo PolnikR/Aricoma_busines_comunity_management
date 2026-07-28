@@ -97,7 +97,11 @@ export function RecoveryAppBuilder({
     })
   }, [])
 
-  const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: { recoveryGroupName: string; description: string }) => {
+  const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: {
+    tierDescription: string
+    recoveryGroupName: string
+    recoveryGroupDescription: string
+  }) => {
     setFormState(prev => {
       const newTiers = new Map(prev.tiers)
       const oldTier = newTiers.get(tierId)
@@ -111,17 +115,13 @@ export function RecoveryAppBuilder({
 
       const updatedTier: RecoveryTier = {
         ...oldTier,
-        description: updates.description,
+        description: updates.tierDescription,
       }
 
-      if (updates.recoveryGroupName) {
-        updatedTier.recovery_group = {
-          name: updates.recoveryGroupName,
-          description: oldTier.recovery_group?.description ?? updates.description,
-          vms: oldTier.recovery_group?.vms ?? [],
-        }
-      } else {
-        delete updatedTier.recovery_group
+      updatedTier.recovery_group = {
+        name: updates.recoveryGroupName,
+        description: updates.recoveryGroupDescription,
+        vms: oldTier.recovery_group?.vms ?? [],
       }
 
       newTiers.set(newTierId, updatedTier)

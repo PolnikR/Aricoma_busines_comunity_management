@@ -90,8 +90,12 @@ describe('TierCanvas', () => {
     const plusBtn = screen.getByRole('button', { name: '+' })
     await user.click(plusBtn)
 
-    const nameInput = screen.getByPlaceholderText('Tier name')
+    const nameInput = screen.getByPlaceholderText('Recovery group name')
+    const tierDescriptionInput = screen.getByPlaceholderText('Tier description')
+    const groupDescriptionInput = screen.getByPlaceholderText('Recovery group description')
     await user.type(nameInput, 'New Tier')
+    await user.type(tierDescriptionInput, 'New tier description')
+    await user.type(groupDescriptionInput, 'New group description')
 
     const createBtn = screen.getByRole('button', { name: 'Create' })
     await user.click(createBtn)

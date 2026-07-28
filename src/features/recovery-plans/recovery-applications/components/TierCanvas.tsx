@@ -7,7 +7,11 @@ interface TierCanvasProps {
   tiers: Record<string, RecoveryTier>
   onVMAdded?: (tierId: string, vmName: string) => void
   onVMRemoved?: (tierId: string, vmName: string) => void
-  onTierEdit?: (tierId: string, newTierId: string, updates: { recoveryGroupName: string; description: string }) => void
+  onTierEdit?: (tierId: string, newTierId: string, updates: {
+    tierDescription: string
+    recoveryGroupName: string
+    recoveryGroupDescription: string
+  }) => void
   onTierAdd?: (tierId: string, tier: RecoveryTier) => void
   onTierDelete?: (tierId: string) => void
   onTierReorder?: (reorderedTiers: Record<string, RecoveryTier>) => void
@@ -41,7 +45,11 @@ export function TierCanvas({
     setEditingTierId(editingTierId === tierId ? null : tierId)
   }
 
-  const handleSave = (tierId: string, newTierId: string, updates: { recoveryGroupName: string; description: string }) => {
+  const handleSave = (tierId: string, newTierId: string, updates: {
+    tierDescription: string
+    recoveryGroupName: string
+    recoveryGroupDescription: string
+  }) => {
     onTierEdit?.(tierId, newTierId, updates)
     setEditingTierId(null)
   }
