@@ -11,12 +11,23 @@ interface ModalProps {
   ariaLabel?: string
   className?: string
   size?: 'md' | 'lg'
+  closeOnBackdrop?: boolean
 }
 
 // Generic centered dialog shell. Renders nothing until `open`, so the content
 // is absent from the DOM (not merely hidden) when closed. Backdrop click and
 // Escape both close it.
-export function Modal({ open, onClose, title, children, footer, ariaLabel, className, size = 'md' }: ModalProps) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+  ariaLabel,
+  className,
+  size = 'md',
+  closeOnBackdrop = true,
+}: ModalProps) {
   useEffect(() => {
     if (!open) return
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
@@ -28,7 +39,11 @@ export function Modal({ open, onClose, title, children, footer, ariaLabel, class
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} aria-hidden="true" />
+      <div
+        className="fixed inset-0 z-40 bg-black/30"
+        onClick={closeOnBackdrop ? onClose : undefined}
+        aria-hidden="true"
+      />
       <div
         className={cn(
           'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white shadow-lg',

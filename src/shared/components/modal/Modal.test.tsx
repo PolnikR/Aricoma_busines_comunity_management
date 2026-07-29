@@ -39,6 +39,15 @@ afterEach(cleanup)
     expect(onClose).not.toHaveBeenCalled()
   })
 
+  it('does not call onClose from the backdrop when backdrop closing is disabled', () => {
+    const onClose = vi.fn()
+    render(<Modal open title="X" onClose={onClose} closeOnBackdrop={false}>body</Modal>)
+    const backdrop = document.querySelector('[aria-hidden="true"]')
+    expect(backdrop).not.toBeNull()
+    fireEvent.click(backdrop as HTMLElement)
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
   it('calls onClose on Escape when open', () => {
     const onClose = vi.fn()
     render(<Modal open title="X" onClose={onClose}>body</Modal>)

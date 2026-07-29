@@ -723,5 +723,9 @@
   "credentials.detail.username": "Username",
   "credentials.detail.description": "Description",
   "credentials.detail.password": "Password",
-  "credentials.detail.passwordHidden": "Stored securely and never displayed"
+  "credentials.detail.passwordHidden": "Stored securely and never displayed",
+  "credentials.discard.title": "Discard unsaved credential changes?",
+  "credentials.discard.message": "Your unsaved credential changes will be permanently lost.",
+  "credentials.discard.stay": "Stay",
+  "credentials.discard.confirm": "Discard changes"
 }

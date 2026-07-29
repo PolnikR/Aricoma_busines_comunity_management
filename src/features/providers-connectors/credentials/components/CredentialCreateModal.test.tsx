@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type {
@@ -13,6 +13,13 @@ const createEncryptedCredentialPayload = vi.fn<
 >()
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>()
+  return {
+    ...actual,
+    useBlocker: () => ({ state: 'unblocked' as const }),
+  }
+})
 vi.mock('../api/useCreateCredential', () => ({
   useCreateCredential: () => ({ mutate, isPending: false }),
 }))
@@ -144,5 +151,42 @@ describe('CredentialCreateModal', () => {
     expect(screen.getByText('Password is required.')).toBeInTheDocument()
     expect(screen.getByText('Password confirmation is required.')).toBeInTheDocument()
     expect(createEncryptedCredentialPayload).not.toHaveBeenCalled()
+  })
+
+  it('ignores backdrop clicks and warns before discarding dirty form data', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    render(
+      <CredentialCreateModal
+        open
+        existingCredentials={[]}
+        onClose={onClose}
+      />,
+    )
+
+    const backdrop = document.querySelector('[aria-hidden="true"]')
+    if (!backdrop) throw new Error('Modal backdrop was not rendered')
+    await user.click(backdrop)
+    expect(onClose).not.toHaveBeenCalled()
+
+    await user.type(screen.getByLabelText('Name *'), 'Changed name')
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.getByRole('dialog', {
+      name: 'Discard unsaved credential changes?',
+    })).toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Stay' }))
+    expect(screen.queryByRole('dialog', {
+      name: 'Discard unsaved credential changes?',
+    })).not.toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.getByRole('dialog', {
+      name: 'Discard unsaved credential changes?',
+    })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Discard changes' }))
+    expect(onClose).toHaveBeenCalledOnce()
   })
 })

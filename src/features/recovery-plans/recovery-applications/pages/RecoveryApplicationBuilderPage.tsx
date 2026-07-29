@@ -7,7 +7,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
 import { useSubmitRecoveryApplication } from '../api/useRecoveryApplications'
 import { toRecoveryApplicationData } from '../utils/recoveryApplicationFormMapper'
-import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard'
+import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 export function RecoveryApplicationBuilderPage() {

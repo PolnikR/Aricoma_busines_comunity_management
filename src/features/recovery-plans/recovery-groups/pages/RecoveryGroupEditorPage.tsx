@@ -6,7 +6,7 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { routes } from '@/app/routes'
-import { useUnsavedChangesGuard } from '../../recovery-applications/hooks/useUnsavedChangesGuard'
+import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { RecoveryGroupBuilder } from '../components/RecoveryGroupBuilder'
 import { useRecoveryGroups } from '../hooks/useRecoveryGroups'
 import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'

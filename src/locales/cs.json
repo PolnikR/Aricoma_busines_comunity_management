@@ -724,5 +724,9 @@
   "credentials.detail.username": "Uživatelské jméno",
   "credentials.detail.description": "Popis",
   "credentials.detail.password": "Heslo",
-  "credentials.detail.passwordHidden": "Uloženo bezpečně a nikdy se nezobrazuje"
+  "credentials.detail.passwordHidden": "Uloženo bezpečně a nikdy se nezobrazuje",
+  "credentials.discard.title": "Zahodit neuložené změny?",
+  "credentials.discard.message": "Neuložené změny přihlašovacích údajů budou trvale ztraceny.",
+  "credentials.discard.stay": "Zůstat",
+  "credentials.discard.confirm": "Zahodit změny"
 }

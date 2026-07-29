@@ -15,7 +15,7 @@ import {
   toRecoveryApplicationFormState,
 } from '../utils/recoveryApplicationFormMapper'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
-import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard'
+import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 
 export function RecoveryApplicationEditorPage() {
