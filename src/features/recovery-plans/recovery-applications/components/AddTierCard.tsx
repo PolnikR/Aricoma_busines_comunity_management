@@ -14,25 +14,14 @@ interface AddTierCardProps {
 export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
-  const [recoveryGroupName, setRecoveryGroupName] = useState('')
   const [id, setId] = useState('')
   const [tierDescription, setTierDescription] = useState('')
-  const [recoveryGroupDescription, setRecoveryGroupDescription] = useState('')
-
-  const handleRecoveryGroupNameChange = (value: string) => {
-    setRecoveryGroupName(value)
-    if (!id || id === slugify(recoveryGroupName)) {
-      setId(slugify(value))
-    }
-  }
 
   const normalizedId = slugify(id)
   const isValidId = isTierIdAvailable(id, existingIds)
   const canCreate = Boolean(
     isValidId
     && tierDescription.trim()
-    && recoveryGroupName.trim()
-    && recoveryGroupDescription.trim()
   )
 
   const handleCreate = () => {
@@ -41,27 +30,18 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
     const newTier: RecoveryTier = {
       description: tierDescription.trim(),
       order: maxOrder + 1,
-      recovery_group: {
-        name: recoveryGroupName.trim(),
-        description: recoveryGroupDescription.trim(),
-        vms: [],
-      },
     }
 
     onAdd?.(normalizedId, newTier)
     setIsOpen(false)
-    setRecoveryGroupName('')
     setId('')
     setTierDescription('')
-    setRecoveryGroupDescription('')
   }
 
   const handleCancel = () => {
     setIsOpen(false)
-    setRecoveryGroupName('')
     setId('')
     setTierDescription('')
-    setRecoveryGroupDescription('')
   }
 
   if (isOpen) {
@@ -96,34 +76,6 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
               className="resize-none"
               rows={3}
               placeholder={t('recovery.tier.form.tierDescriptionPlaceholder')}
-              required
-            />
-          </Field>
-
-          <Field label={t('recovery.tier.form.recoveryGroupName')} htmlFor="add-tier-recovery-group-name">
-            <Input
-              id="add-tier-recovery-group-name"
-              type="text"
-              value={recoveryGroupName}
-              onChange={e => {
-                handleRecoveryGroupNameChange(e.target.value)
-              }}
-              size="sm"
-              placeholder={t('recovery.tier.form.recoveryGroupNamePlaceholder')}
-              required
-            />
-          </Field>
-
-          <Field label={t('recovery.tier.form.recoveryGroupDescription')} htmlFor="add-tier-recovery-group-description">
-            <Textarea
-              id="add-tier-recovery-group-description"
-              value={recoveryGroupDescription}
-              onChange={e => {
-                setRecoveryGroupDescription(e.target.value)
-              }}
-              className="resize-none"
-              rows={3}
-              placeholder={t('recovery.tier.form.recoveryGroupDescriptionPlaceholder')}
               required
             />
           </Field>

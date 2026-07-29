@@ -17,6 +17,7 @@ export interface RecoveryGroup extends RecoveryGroupListItem {
 }
 
 export interface RecoveryGroupDraft {
+  id: string
   name: string
   description: string
   workloadType: RecoveryGroupWorkloadType | null

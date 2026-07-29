@@ -34,9 +34,9 @@ describe('tierUtils', () => {
       expect(generateTierId('My Tier', existing)).toBe('my_tier_3')
     })
 
-    it('returns empty slug + counter if name is empty', () => {
+    it('does not generate an id from an empty name', () => {
       const existing = ['_1']
-      expect(generateTierId('', existing)).toBe('_2')
+      expect(generateTierId('', existing)).toBe('')
     })
   })
 

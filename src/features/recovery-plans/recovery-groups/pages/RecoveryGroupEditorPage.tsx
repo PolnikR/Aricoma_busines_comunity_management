@@ -58,6 +58,7 @@ export function RecoveryGroupEditorPage() {
         onCreate={handleUpdate}
         onCancel={requestBack}
         onDirtyChange={setIsDirty}
+        existingIds={groups.map(item => item.id)}
       />
       <ConfirmDialog
         open={navigationGuard.isNavigationBlocked}

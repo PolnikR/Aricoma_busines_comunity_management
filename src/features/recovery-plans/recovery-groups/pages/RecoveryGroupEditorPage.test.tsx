@@ -50,6 +50,7 @@ vi.mock('../components/RecoveryGroupBuilder', () => ({
         type="button"
         onClick={() => {
           onCreate({
+            id: initialData.id,
             name: 'Updated group',
             description: initialData.description,
             workloadType: initialData.workloadType,

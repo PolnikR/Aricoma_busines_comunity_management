@@ -22,23 +22,6 @@ describe('AddTierCard', () => {
     await user.click(plusBtn)
 
     expect(screen.getByPlaceholderText('Tier description')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Recovery group name')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Recovery group description')).toBeInTheDocument()
-  })
-
-  it('auto-slugifies ID as name is typed', async () => {
-    const user = userEvent.setup()
-
-    render(<AddTierCard maxOrder={4} existingIds={['database']} />)
-
-    const plusBtn = screen.getByRole('button', { name: '+' })
-    await user.click(plusBtn)
-
-    const nameInput = screen.getByPlaceholderText('Recovery group name')
-    await user.type(nameInput, 'My Custom Tier')
-
-    const idInput = screen.getByPlaceholderText('tier_id')
-    expect(idInput).toHaveValue('my_custom_tier')
   })
 
   it('allows manually editing the ID', async () => {
@@ -91,8 +74,6 @@ describe('AddTierCard', () => {
 
     await user.click(screen.getByRole('button', { name: '+' }))
     await user.type(screen.getByPlaceholderText('Tier description'), 'Cluster tier')
-    await user.type(screen.getByPlaceholderText('Recovery group name'), 'Cluster group')
-    await user.type(screen.getByPlaceholderText('Recovery group description'), 'Cluster recovery group')
     const idInput = screen.getByPlaceholderText('tier_id')
     await user.clear(idInput)
     await user.type(idInput, 'DB Cluster')
@@ -109,13 +90,10 @@ describe('AddTierCard', () => {
     const plusBtn = screen.getByRole('button', { name: '+' })
     await user.click(plusBtn)
 
-    const nameInput = screen.getByPlaceholderText('Recovery group name')
     const tierDescriptionInput = screen.getByPlaceholderText('Tier description')
-    const groupDescriptionInput = screen.getByPlaceholderText('Recovery group description')
 
-    await user.type(nameInput, 'New Tier')
+    await user.type(screen.getByPlaceholderText('tier_id'), 'New Tier')
     await user.type(tierDescriptionInput, 'A new tier')
-    await user.type(groupDescriptionInput, 'A new recovery group')
 
     const createBtn = screen.getByRole('button', { name: /create/i })
     await user.click(createBtn)
@@ -123,11 +101,6 @@ describe('AddTierCard', () => {
     expect(onAdd).toHaveBeenCalledWith('new_tier', {
       description: 'A new tier',
       order: 5,
-      recovery_group: {
-        name: 'New Tier',
-        description: 'A new recovery group',
-        vms: [],
-      },
     })
   })
 
@@ -140,17 +113,14 @@ describe('AddTierCard', () => {
     const plusBtn = screen.getByRole('button', { name: '+' })
     await user.click(plusBtn)
 
-    const nameInput = screen.getByPlaceholderText('Recovery group name')
     const tierDescriptionInput = screen.getByPlaceholderText('Tier description')
-    const groupDescriptionInput = screen.getByPlaceholderText('Recovery group description')
-    await user.type(nameInput, 'New Tier')
+    await user.type(screen.getByPlaceholderText('tier_id'), 'New Tier')
     await user.type(tierDescriptionInput, 'A new tier')
-    await user.type(groupDescriptionInput, 'A new recovery group')
 
     const createBtn = screen.getByRole('button', { name: /create/i })
     await user.click(createBtn)
 
-    expect(screen.queryByPlaceholderText('Recovery group name')).not.toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('Tier description')).not.toBeInTheDocument()
     expect(screen.getByText('+')).toBeInTheDocument()
   })
 })

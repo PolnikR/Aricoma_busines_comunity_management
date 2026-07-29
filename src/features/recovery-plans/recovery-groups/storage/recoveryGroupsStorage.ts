@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { toProgrammaticId } from '@/shared/utils/programmaticId'
 import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 
 const STORAGE_KEY = 'abcm.recovery-groups'
@@ -17,15 +18,7 @@ const recoveryGroupSchema = z.object({
 
 const recoveryGroupsSchema = z.array(recoveryGroupSchema)
 
-export function toRecoveryGroupId(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-}
+export const toRecoveryGroupId = toProgrammaticId
 
 export function listRecoveryGroups(): RecoveryGroup[] {
   try {
@@ -44,7 +37,7 @@ export function createRecoveryGroup(draft: RecoveryGroupDraft): RecoveryGroup {
     throw new Error('Recovery group resource type is required')
   }
 
-  const id = toRecoveryGroupId(draft.name)
+  const id = toRecoveryGroupId(draft.id)
   if (!id) throw new Error('Recovery group name is required')
 
   const groups = listRecoveryGroups()

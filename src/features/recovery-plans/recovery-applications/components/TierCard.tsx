@@ -13,26 +13,19 @@ interface TierCardProps {
   onEditToggle?: (id: string) => void
   onSave?: (id: string, newId: string, updates: {
     tierDescription: string
-    recoveryGroupName: string
-    recoveryGroupDescription: string
   }) => void
   onDelete?: (id: string) => void
   onCancel?: () => void
   existingIds: string[]
   canDelete: boolean
-  onVMAdded?: (vmName: string) => void
-  onVMRemoved?: (vmName: string) => void
+  onRecoveryGroupAdded?: (groupId: string) => void
 }
 
 interface EditFormState {
   editId: string
-  editRecoveryGroupName: string
   editTierDescription: string
-  editRecoveryGroupDescription: string
   idError: string
   tierDescriptionError: string
-  recoveryGroupNameError: string
-  recoveryGroupDescriptionError: string
 }
 
 export function TierCard({
@@ -45,19 +38,14 @@ export function TierCard({
   onCancel,
   existingIds,
   canDelete,
-  onVMAdded,
-  onVMRemoved,
+  onRecoveryGroupAdded,
 }: TierCardProps) {
   const { t } = useTranslation()
   const [editForm, setEditForm] = useState<EditFormState>({
     editId: id,
-    editRecoveryGroupName: tier.recovery_group?.name ?? '',
     editTierDescription: tier.description,
-    editRecoveryGroupDescription: tier.recovery_group?.description ?? '',
     idError: '',
     tierDescriptionError: '',
-    recoveryGroupNameError: '',
-    recoveryGroupDescriptionError: '',
   })
 
   useEffect(() => {
@@ -65,13 +53,9 @@ export function TierCard({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditForm({
         editId: id,
-        editRecoveryGroupName: tier.recovery_group?.name ?? '',
         editTierDescription: tier.description,
-        editRecoveryGroupDescription: tier.recovery_group?.description ?? '',
         idError: '',
         tierDescriptionError: '',
-        recoveryGroupNameError: '',
-        recoveryGroupDescriptionError: '',
       })
     }
   }, [isEditing, id, tier])
@@ -84,20 +68,10 @@ export function TierCard({
     onDelete?.(tierId)
   }
 
-  const handleVMRemoveClick = (vmName: string) => {
-    onVMRemoved?.(vmName)
-  }
-
-  const handleRecoveryGroupNameChange = (value: string) => {
-    setEditForm(prev => ({ ...prev, editRecoveryGroupName: value }))
-  }
-
   const handleConfirm = () => {
     let hasError = false
     let newIdError = ''
     let newTierDescriptionError = ''
-    let newRecoveryGroupNameError = ''
-    let newRecoveryGroupDescriptionError = ''
 
     const newId = slugify(editForm.editId)
 
@@ -114,29 +88,15 @@ export function TierCard({
       hasError = true
     }
 
-    if (!editForm.editRecoveryGroupName.trim()) {
-      newRecoveryGroupNameError = t('recovery.tier.validation.recoveryGroupNameRequired')
-      hasError = true
-    }
-
-    if (!editForm.editRecoveryGroupDescription.trim()) {
-      newRecoveryGroupDescriptionError = t('recovery.tier.validation.recoveryGroupDescriptionRequired')
-      hasError = true
-    }
-
     if (hasError) {
       setEditForm(prev => ({
         ...prev,
         idError: newIdError,
         tierDescriptionError: newTierDescriptionError,
-        recoveryGroupNameError: newRecoveryGroupNameError,
-        recoveryGroupDescriptionError: newRecoveryGroupDescriptionError,
       }))
     } else {
       onSave?.(id, newId, {
         tierDescription: editForm.editTierDescription.trim(),
-        recoveryGroupName: editForm.editRecoveryGroupName.trim(),
-        recoveryGroupDescription: editForm.editRecoveryGroupDescription.trim(),
       })
     }
   }
@@ -177,38 +137,6 @@ export function TierCard({
             {editForm.tierDescriptionError && <p className="text-xs text-red-600 mt-1">{editForm.tierDescriptionError}</p>}
           </Field>
 
-          <Field label={t('recovery.tier.form.recoveryGroupName')} htmlFor={`tier-${id}-edit-recovery-group-name`}>
-            <Input
-              id={`tier-${id}-edit-recovery-group-name`}
-              type="text"
-              value={editForm.editRecoveryGroupName}
-              onChange={e => {
-                handleRecoveryGroupNameChange(e.target.value)
-              }}
-              size="sm"
-              invalid={Boolean(editForm.recoveryGroupNameError)}
-              placeholder={t('recovery.tier.form.recoveryGroupNamePlaceholder')}
-              required
-            />
-            {editForm.recoveryGroupNameError && <p className="text-xs text-red-600 mt-1">{editForm.recoveryGroupNameError}</p>}
-          </Field>
-
-          <Field label={t('recovery.tier.form.recoveryGroupDescription')} htmlFor={`tier-${id}-edit-recovery-group-description`}>
-            <Textarea
-              id={`tier-${id}-edit-recovery-group-description`}
-              value={editForm.editRecoveryGroupDescription}
-              onChange={e => {
-                setEditForm(prev => ({ ...prev, editRecoveryGroupDescription: e.target.value }))
-              }}
-              className="resize-none"
-              rows={3}
-              invalid={Boolean(editForm.recoveryGroupDescriptionError)}
-              placeholder={t('recovery.tier.form.recoveryGroupDescriptionPlaceholder')}
-              required
-            />
-            {editForm.recoveryGroupDescriptionError && <p className="text-xs text-red-600 mt-1">{editForm.recoveryGroupDescriptionError}</p>}
-          </Field>
-
           <div className="-mx-4 -mb-4 mt-auto flex gap-2 border-t border-[#edf2f7] bg-[#fbfdff] px-4 py-3">
             <Button
               onClick={handleConfirm}
@@ -246,23 +174,32 @@ export function TierCard({
         <div className="text-xs text-[#71819a]">{tier.description}</div>
         {tier.recovery_group ? (
           <div className="mt-2 text-xs text-[#52627b]">
-            Recovery group: <span className="font-semibold">{tier.recovery_group.name}</span>
+            {t('recovery.tier.recoveryGroup')}: <span className="font-semibold">{tier.recovery_group.name}</span>
           </div>
         ) : null}
       </button>
 
       {tier.recovery_group ? (
         <ResourceSelectionCard
+          title={`${t('recovery.tier.recoveryGroup')}: ${tier.recovery_group.name}`}
           description={tier.recovery_group.description}
           items={tier.recovery_group.vms.map(vm => vm.name)}
-          emptyText={t('recovery.tier.dragVmsHere')}
+          emptyText={t('recovery.tier.emptyRecoveryGroup')}
           removeLabel={t('recovery.tier.removeVm')}
           ariaLabel={`${tier.recovery_group.name} virtual machines`}
-          dropDataKey="vm-name"
-          onResourceDrop={vmName => { onVMAdded?.(vmName) }}
-          onResourceRemove={handleVMRemoveClick}
+          dropDataKey="recovery-group-id"
+          onResourceDrop={groupId => { onRecoveryGroupAdded?.(groupId) }}
         />
-      ) : null}
+      ) : (
+        <ResourceSelectionCard
+          items={[]}
+          emptyText={t('recovery.tier.dragRecoveryGroupHere')}
+          removeLabel={t('recovery.tier.removeRecoveryGroup')}
+          ariaLabel={t('recovery.tier.emptyRecoveryGroupAriaLabel')}
+          dropDataKey="recovery-group-id"
+          onResourceDrop={groupId => { onRecoveryGroupAdded?.(groupId) }}
+        />
+      )}
 
       <div className="px-4 py-3 border-t border-[#edf2f7] bg-[#fbfdff] flex gap-2">
         <Button

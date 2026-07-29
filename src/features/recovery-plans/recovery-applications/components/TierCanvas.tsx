@@ -5,12 +5,9 @@ import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
 interface TierCanvasProps {
   tiers: Record<string, RecoveryTier>
-  onVMAdded?: (tierId: string, vmName: string) => void
-  onVMRemoved?: (tierId: string, vmName: string) => void
+  onRecoveryGroupAdded?: (tierId: string, groupId: string) => void
   onTierEdit?: (tierId: string, newTierId: string, updates: {
     tierDescription: string
-    recoveryGroupName: string
-    recoveryGroupDescription: string
   }) => void
   onTierAdd?: (tierId: string, tier: RecoveryTier) => void
   onTierDelete?: (tierId: string) => void
@@ -19,8 +16,7 @@ interface TierCanvasProps {
 
 export function TierCanvas({
   tiers,
-  onVMAdded,
-  onVMRemoved,
+  onRecoveryGroupAdded,
   onTierEdit,
   onTierAdd,
   onTierDelete,
@@ -47,8 +43,6 @@ export function TierCanvas({
 
   const handleSave = (tierId: string, newTierId: string, updates: {
     tierDescription: string
-    recoveryGroupName: string
-    recoveryGroupDescription: string
   }) => {
     onTierEdit?.(tierId, newTierId, updates)
     setEditingTierId(null)
@@ -128,14 +122,9 @@ export function TierCanvas({
         if (onTierDelete) {
           tierCardProps.onDelete = onTierDelete
         }
-        if (onVMAdded) {
-          tierCardProps.onVMAdded = (vmName) => {
-            onVMAdded(id, vmName)
-          }
-        }
-        if (onVMRemoved) {
-          tierCardProps.onVMRemoved = (vmName) => {
-            onVMRemoved(id, vmName)
+        if (onRecoveryGroupAdded) {
+          tierCardProps.onRecoveryGroupAdded = (groupId) => {
+            onRecoveryGroupAdded(id, groupId)
           }
         }
 

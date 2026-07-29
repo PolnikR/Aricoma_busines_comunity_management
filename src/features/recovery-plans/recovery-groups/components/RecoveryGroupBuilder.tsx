@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
+import { isProgrammaticIdAvailable } from '@/shared/utils/programmaticId'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { RecoveryGroupDetailsStep } from './RecoveryGroupDetailsStep'
@@ -13,9 +14,11 @@ interface RecoveryGroupBuilderProps {
   onDirtyChange?: (isDirty: boolean) => void
   initialData?: RecoveryGroup
   submitLabel?: string
+  existingIds?: string[]
 }
 
 const INITIAL_DRAFT: RecoveryGroupDraft = {
+  id: '',
   name: '',
   description: '',
   workloadType: null,
@@ -29,11 +32,13 @@ export function RecoveryGroupBuilder({
   onDirtyChange,
   initialData,
   submitLabel,
+  existingIds = [],
 }: RecoveryGroupBuilderProps) {
   const { t } = useTranslation()
   const [step, setStep] = useState(1)
   const [draft, setDraft] = useState<RecoveryGroupDraft>(() => initialData
     ? {
+        id: initialData.id,
         name: initialData.name,
         description: initialData.description,
         workloadType: initialData.workloadType,
@@ -41,7 +46,17 @@ export function RecoveryGroupBuilder({
         resources: [...initialData.resources],
       }
     : INITIAL_DRAFT)
-  const detailsValid = Boolean(draft.name.trim() && draft.description.trim())
+  const idAvailable = isProgrammaticIdAvailable(
+    draft.id,
+    existingIds,
+    initialData?.id,
+  )
+  const detailsValid = Boolean(
+    draft.id
+    && idAvailable
+    && draft.name.trim()
+    && draft.description.trim(),
+  )
   const typeValid = Boolean(draft.workloadType && draft.resourceType)
   const steps = [
     { id: 'details', label: t('pages.recoveryGroupBuilder.steps.details') },
@@ -61,6 +76,8 @@ export function RecoveryGroupBuilder({
       : draft.resources.length > 0
   const canCreate = Boolean(
     draft.name.trim()
+    && draft.id
+    && idAvailable
     && draft.description.trim()
     && draft.workloadType
     && draft.resourceType
@@ -84,8 +101,11 @@ export function RecoveryGroupBuilder({
           }`}>
             {step === 1 ? (
               <RecoveryGroupDetailsStep
+                id={draft.id}
                 name={draft.name}
                 description={draft.description}
+                existingIds={existingIds}
+                {...(initialData ? { currentId: initialData.id, disableId: true } : {})}
                 onChange={updateDraft}
               />
             ) : null}

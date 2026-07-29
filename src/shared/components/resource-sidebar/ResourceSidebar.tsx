@@ -5,6 +5,7 @@ import { ListSkeleton } from '@/shared/components/list-skeleton'
 
 interface ResourceSidebarProps {
   items: string[]
+  itemLabels?: Record<string, string>
   title: string
   searchPlaceholder: string
   loadingLabel: string
@@ -23,6 +24,7 @@ interface ResourceSidebarProps {
 
 export function ResourceSidebar({
   items,
+  itemLabels = {},
   title,
   searchPlaceholder,
   loadingLabel,
@@ -44,8 +46,12 @@ export function ResourceSidebar({
     [items],
   )
   const filteredItems = useMemo(
-    () => normalizedItems.filter(item => item.toLowerCase().includes(search.toLowerCase())),
-    [normalizedItems, search],
+    () => normalizedItems.filter((item) => {
+      const query = search.toLowerCase()
+      return item.toLowerCase().includes(query)
+        || itemLabels[item]?.toLowerCase().includes(query)
+    }),
+    [itemLabels, normalizedItems, search],
   )
   const handleRetry = () => { onRetry?.() }
 
@@ -103,7 +109,10 @@ export function ResourceSidebar({
                   }}
                   className="mb-1 w-full cursor-grab rounded-md border border-[#d9e6f1] bg-[#f0f5fa] p-2 text-left text-xs text-[#18253d] transition-all hover:border-[#b9d5e8] hover:bg-[#e3edf6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1596dd]"
                 >
-                  {item}
+                  <span className="block font-medium">{itemLabels[item] ?? item}</span>
+                  {itemLabels[item] && itemLabels[item] !== item ? (
+                    <span className="mt-0.5 block font-mono text-[10px] text-[#71819a]">{item}</span>
+                  ) : null}
                 </div>
                 ))}
               </div>

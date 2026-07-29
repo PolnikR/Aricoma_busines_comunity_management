@@ -15,6 +15,7 @@ describe('recoveryGroupsStorage', () => {
 
   it('creates and reads a recovery group with a stable normalized id', () => {
     const group = createRecoveryGroup({
+      id: 'database_production',
       name: 'Database Production',
       description: 'Production databases',
       workloadType: 'VMware',
@@ -30,6 +31,7 @@ describe('recoveryGroupsStorage', () => {
 
   it('rejects a duplicate normalized group id', () => {
     const draft = {
+      id: 'database_group',
       name: 'Database Group',
       description: 'Databases',
       workloadType: 'VMware' as const,
@@ -38,7 +40,7 @@ describe('recoveryGroupsStorage', () => {
     }
     createRecoveryGroup(draft)
 
-    expect(() => { createRecoveryGroup({ ...draft, name: 'database-group' }) }).toThrow(
+    expect(() => { createRecoveryGroup({ ...draft, id: 'database-group', name: 'database-group' }) }).toThrow(
       'already exists',
     )
   })
@@ -49,6 +51,7 @@ describe('recoveryGroupsStorage', () => {
 
   it('updates a recovery group while preserving its id', () => {
     const created = createRecoveryGroup({
+      id: 'database_group',
       name: 'Database Group',
       description: 'Databases',
       workloadType: 'VMware',
@@ -57,6 +60,7 @@ describe('recoveryGroupsStorage', () => {
     })
 
     const updated = updateRecoveryGroup(created.id, {
+      id: created.id,
       name: 'Renamed Database Group',
       description: 'Updated databases',
       workloadType: 'VMware',
@@ -72,6 +76,7 @@ describe('recoveryGroupsStorage', () => {
 
   it('deletes a recovery group', () => {
     const group = createRecoveryGroup({
+      id: 'database_group',
       name: 'Database Group',
       description: 'Databases',
       workloadType: 'VMware',

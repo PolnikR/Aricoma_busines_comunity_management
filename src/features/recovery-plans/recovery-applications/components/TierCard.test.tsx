@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { TierCard } from './TierCard'
@@ -66,9 +66,7 @@ describe('TierCard', () => {
     )
 
     expect(screen.getByDisplayValue('database')).toBeInTheDocument() // ID input
-    expect(screen.getByDisplayValue('Database')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Database server group')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Database recovery group')).toBeInTheDocument()
   })
 
   it('calls onSave with new values when Confirm clicked', async () => {
@@ -86,10 +84,6 @@ describe('TierCard', () => {
       />
     )
 
-    const nameInput = screen.getByDisplayValue('Database')
-    await user.clear(nameInput)
-    await user.type(nameInput, 'Primary DB')
-
     const confirmBtn = screen.getByRole('button', { name: /confirm/i })
     await user.click(confirmBtn)
 
@@ -98,13 +92,11 @@ describe('TierCard', () => {
       'database',
       {
         tierDescription: 'Database server group',
-        recoveryGroupName: 'Primary DB',
-        recoveryGroupDescription: 'Database recovery group',
       }
     )
   })
 
-  it('requires tier and recovery-group fields before saving', async () => {
+  it('requires the tier description before saving', async () => {
     const user = userEvent.setup()
     const onSave = vi.fn()
 
@@ -123,8 +115,6 @@ describe('TierCard', () => {
     await user.click(screen.getByRole('button', { name: /confirm/i }))
 
     expect(screen.getByText('Tier description is required')).toBeInTheDocument()
-    expect(screen.getByText('Recovery group name is required')).toBeInTheDocument()
-    expect(screen.getByText('Recovery group description is required')).toBeInTheDocument()
     expect(onSave).not.toHaveBeenCalled()
   })
 
@@ -188,6 +178,25 @@ describe('TierCard', () => {
     expect(screen.getByText('database')).toBeInTheDocument()
     expect(screen.getByText('Database server group')).toBeInTheDocument()
     expect(screen.queryByText(/Recovery group:/)).not.toBeInTheDocument()
+  })
+
+  it('accepts a recovery group dropped on an unassigned tier', () => {
+    const onRecoveryGroupAdded = vi.fn()
+    render(
+      <TierCard
+        id="database"
+        tier={{ order: 1, description: 'Database server group' }}
+        existingIds={['database']}
+        canDelete
+        onRecoveryGroupAdded={onRecoveryGroupAdded}
+      />,
+    )
+
+    fireEvent.drop(screen.getByLabelText('Unassigned recovery group'), {
+      dataTransfer: { getData: () => 'database_group' },
+    })
+
+    expect(onRecoveryGroupAdded).toHaveBeenCalledWith('database_group')
   })
 
   it('keeps a long VM list inside a keyboard-scrollable area', () => {

@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
-import { useDiscoveryInventory } from '@/features/discovery-inventory/api/useDiscoveryInventory'
+import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
 import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
@@ -20,38 +20,18 @@ const DEFAULT_TIERS: Record<string, RecoveryTier> = {
   database: {
     order: 1,
     description: 'Database server group',
-    recovery_group: {
-      name: 'database_group',
-      description: 'Recovery group containing the database tier VMs',
-      vms: [],
-    },
   },
   db_cluster: {
     order: 2,
     description: 'DB Cluster Master Node',
-    recovery_group: {
-      name: 'db_cluster_group',
-      description: 'Recovery group containing the DB cluster VMs',
-      vms: [],
-    },
   },
   application: {
     order: 3,
     description: 'Application server group',
-    recovery_group: {
-      name: 'application_group',
-      description: 'Recovery group containing the application tier VMs',
-      vms: [],
-    },
   },
   web: {
     order: 4,
     description: 'Web server group',
-    recovery_group: {
-      name: 'web_group',
-      description: 'Recovery group containing the web tier VMs',
-      vms: [],
-    },
   },
 }
 
@@ -105,8 +85,13 @@ export function RecoveryAppBuilder({
   disableFileName = false,
 }: RecoveryAppBuilderProps) {
   const { t } = useTranslation()
-  const { data: inventory, error: inventoryError, isLoading: inventoryLoading, isFetching, refetch } = useDiscoveryInventory()
-  const virtualMachines = inventory?.virtualMachines.map(vm => vm.name) ?? []
+  const { groups } = useRecoveryGroups()
+  const availableGroups = groups.filter(
+    group => group.workloadType === 'VMware' && group.resourceType === 'VM',
+  )
+  const groupLabels = Object.fromEntries(
+    availableGroups.map(group => [group.id, group.name]),
+  )
   const [formState, setFormState] = useState<RecoveryApplicationFormState>(
     () => createInitialFormState(initialData),
   )
@@ -116,47 +101,30 @@ export function RecoveryAppBuilder({
     onDirtyChange?.(true)
   }, [onDirtyChange])
 
-  const handleVMAdded = useCallback((tierId: string, vmName: string) => {
-    setFormState(prev => {
-      const newTiers = new Map(prev.tiers)
-      const tier = newTiers.get(tierId)
-      const recoveryGroup = tier?.recovery_group
-      if (recoveryGroup && !recoveryGroup.vms.find(vm => vm.name === vmName)) {
-        newTiers.set(tierId, {
-          ...tier,
-          recovery_group: {
-            ...recoveryGroup,
-            vms: [...recoveryGroup.vms, { name: vmName }],
-          },
-        })
-      }
-      return { ...prev, tiers: newTiers }
-    })
-    onDirtyChange?.(true)
-  }, [onDirtyChange])
+  const handleRecoveryGroupAdded = useCallback((tierId: string, groupId: string) => {
+    const selectedGroup = availableGroups.find(group => group.id === groupId)
+    if (!selectedGroup) return
 
-  const handleVMRemoved = useCallback((tierId: string, vmName: string) => {
     setFormState(prev => {
       const newTiers = new Map(prev.tiers)
       const tier = newTiers.get(tierId)
-      if (tier?.recovery_group) {
+      if (tier) {
         newTiers.set(tierId, {
           ...tier,
           recovery_group: {
-            ...tier.recovery_group,
-            vms: tier.recovery_group.vms.filter(vm => vm.name !== vmName),
+            name: selectedGroup.id,
+            description: selectedGroup.description,
+            vms: selectedGroup.resources.map(name => ({ name })),
           },
         })
       }
       return { ...prev, tiers: newTiers }
     })
     onDirtyChange?.(true)
-  }, [onDirtyChange])
+  }, [availableGroups, onDirtyChange])
 
   const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: {
     tierDescription: string
-    recoveryGroupName: string
-    recoveryGroupDescription: string
   }) => {
     setFormState(prev => {
       const newTiers = new Map(prev.tiers)
@@ -172,12 +140,6 @@ export function RecoveryAppBuilder({
       const updatedTier: RecoveryTier = {
         ...oldTier,
         description: updates.tierDescription,
-      }
-
-      updatedTier.recovery_group = {
-        name: updates.recoveryGroupName,
-        description: updates.recoveryGroupDescription,
-        vms: oldTier.recovery_group?.vms ?? [],
       }
 
       newTiers.set(newTierId, updatedTier)
@@ -226,6 +188,10 @@ export function RecoveryAppBuilder({
       alert(t('alerts.pleaseEnterDescription'))
       return
     }
+    if (Array.from(formState.tiers.values()).some(tier => !tier.recovery_group)) {
+      alert(t('recovery.application.validation.recoveryGroupRequired'))
+      return
+    }
     onSave?.(formState)
   }
 
@@ -261,24 +227,21 @@ export function RecoveryAppBuilder({
       {/* Builder Card */}
       <div className="flex-1 bg-white border border-[#e3edf6] rounded-lg overflow-hidden shadow-sm lg:min-h-0">
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-0 h-full lg:min-h-0">
-          {/* VM Sidebar */}
+          {/* Recovery Group Sidebar */}
           <div className="border-b lg:border-b-0 lg:border-r border-[#e3edf6] overflow-y-auto custom-scrollbar">
             <ResourceSidebar
-              items={virtualMachines}
-              title={t('recovery.sidebar.availableVms')}
-              searchPlaceholder={t('recovery.sidebar.searchPlaceholder')}
-              loadingLabel={t('recovery.sidebar.loadingVms')}
-              noItemsLabel={t('recovery.sidebar.noVmsAvailable')}
-              noMatchesLabel={t('recovery.sidebar.noMatching')}
-              dragDataKey="vm-name"
-              isLoading={inventoryLoading}
-              isRetrying={isFetching}
-              error={inventoryError instanceof Error ? inventoryError : null}
-              errorTitle={t('pages.virtualMachines.error.title')}
-              staleErrorTitle={t('pages.virtualMachines.error.latestFailed')}
-              staleErrorDescription={t('pages.virtualMachines.error.showingPrevious')}
-              retryLabel={t('pages.virtualMachines.error.retryButton')}
-              onRetry={() => { void refetch() }}
+              items={availableGroups.map(group => group.id)}
+              itemLabels={groupLabels}
+              title={t('recovery.sidebar.availableGroups')}
+              searchPlaceholder={t('recovery.sidebar.searchGroupsPlaceholder')}
+              loadingLabel={t('recovery.sidebar.loadingGroups')}
+              noItemsLabel={t('recovery.sidebar.noGroupsAvailable')}
+              noMatchesLabel={t('recovery.sidebar.noMatchingGroups')}
+              dragDataKey="recovery-group-id"
+              errorTitle={t('recovery.sidebar.groupsError')}
+              staleErrorTitle={t('recovery.sidebar.groupsError')}
+              staleErrorDescription={t('recovery.sidebar.groupsError')}
+              retryLabel={t('buttons.retry')}
             />
           </div>
 
@@ -286,8 +249,7 @@ export function RecoveryAppBuilder({
           <div className="overflow-y-auto custom-scrollbar p-4">
             <TierCanvas
               tiers={Object.fromEntries(formState.tiers)}
-              onVMAdded={handleVMAdded}
-              onVMRemoved={handleVMRemoved}
+              onRecoveryGroupAdded={handleRecoveryGroupAdded}
               onTierEdit={handleTierEdit}
               onTierAdd={handleTierAdd}
               onTierDelete={handleTierDelete}

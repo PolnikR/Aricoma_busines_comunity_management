@@ -13,7 +13,7 @@ import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 export function RecoveryGroupBuilderPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { create } = useRecoveryGroups()
+  const { groups, create } = useRecoveryGroups()
   const [isDirty, setIsDirty] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
@@ -44,6 +44,7 @@ export function RecoveryGroupBuilderPage() {
         onCreate={handleCreate}
         onCancel={requestBack}
         onDirtyChange={setIsDirty}
+        existingIds={groups.map(group => group.id)}
       />
       <ConfirmDialog
         open={navigationGuard.isNavigationBlocked}
