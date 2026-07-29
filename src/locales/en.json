@@ -695,6 +695,8 @@
   "credentials.table.actions": "Actions",
   "credentials.modal.title": "Create credential",
   "credentials.modal.submit": "Create credential",
+  "credentials.modal.editTitle": "Edit credential",
+  "credentials.modal.save": "Save credential",
   "credentials.fields.id": "Credential ID *",
   "credentials.fields.name": "Name *",
   "credentials.fields.description": "Description *",
@@ -713,5 +715,13 @@
   "credentials.errors.load": "Credentials could not be loaded.",
   "credentials.errors.create": "Credential could not be created securely.",
   "credentials.delete.title": "Delete credential",
-  "credentials.delete.message": "Delete credential “{name}”? Providers using it must be remapped first."
+  "credentials.delete.message": "Delete credential “{name}”? Providers using it must be remapped first.",
+  "credentials.detail.eyebrow": "Selected credential",
+  "credentials.detail.ariaLabel": "Credential details",
+  "credentials.detail.close": "Close credential details",
+  "credentials.detail.id": "Credential ID",
+  "credentials.detail.username": "Username",
+  "credentials.detail.description": "Description",
+  "credentials.detail.password": "Password",
+  "credentials.detail.passwordHidden": "Stored securely and never displayed"
 }

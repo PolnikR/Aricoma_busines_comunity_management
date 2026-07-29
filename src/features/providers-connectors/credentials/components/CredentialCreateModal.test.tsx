@@ -119,4 +119,29 @@ describe('CredentialCreateModal', () => {
       expect.objectContaining({}),
     )
   })
+
+  it('prefills metadata, locks the id and requires a new password when editing', async () => {
+    const user = userEvent.setup()
+    render(
+      <CredentialCreateModal
+        open
+        credential={{
+          id: 'vcenter-admin',
+          name: 'vCenter admin',
+          description: 'Production account',
+          username: 'administrator',
+        }}
+        existingCredentials={[]}
+        onClose={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByLabelText('Credential ID *')).toBeDisabled()
+    expect(screen.getByLabelText('Name *')).toHaveValue('vCenter admin')
+    await user.click(screen.getByRole('button', { name: 'Save credential' }))
+
+    expect(screen.getByText('Password is required.')).toBeInTheDocument()
+    expect(screen.getByText('Password confirmation is required.')).toBeInTheDocument()
+    expect(createEncryptedCredentialPayload).not.toHaveBeenCalled()
+  })
 })

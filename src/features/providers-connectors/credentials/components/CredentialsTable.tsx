@@ -5,6 +5,8 @@ import {
   DataTablePagination,
   DataTableSkeleton,
   DataTableToolbar,
+  DetailDrawer,
+  DetailRow,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
@@ -13,13 +15,17 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { useCredentials } from '../api/useCredentials'
 import { useDeleteCredential } from '../api/useDeleteCredential'
 import type { CredentialRecord } from '../model/credentialTypes'
+import { CredentialCreateModal } from './CredentialCreateModal'
 
 export function CredentialsTable() {
   const { t } = useTranslation()
   const { data, isLoading, error } = useCredentials()
   const deleteCredential = useDeleteCredential()
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [editing, setEditing] = useState<CredentialRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<CredentialRecord | null>(null)
   const rows = useMemo(() => data ?? [], [data])
+  const selected = rows.find(credential => credential.id === selectedId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'username'] })
   const columns: ColumnDef<CredentialRecord>[] = [
     {
@@ -46,28 +52,12 @@ export function CredentialsTable() {
       header: t('credentials.table.username'),
       cell: credential => <span className="font-mono text-xs text-[#3b4763]">{credential.username}</span>,
     },
-    {
-      id: 'actions',
-      header: t('credentials.table.actions'),
-      cell: credential => (
-        <Button
-          size="sm"
-          variant="danger"
-          onClick={(event) => {
-            event.stopPropagation()
-            setDeleteTarget(credential)
-          }}
-        >
-          {t('buttons.delete')}
-        </Button>
-      ),
-    },
   ]
 
   if (isLoading) {
     return (
       <DataTableSkeleton
-        columnCount={4}
+        columnCount={3}
         ariaLabel={t('credentials.loading')}
         className="flex-1 rounded-none border-0 shadow-none lg:min-h-0"
       />
@@ -106,6 +96,8 @@ export function CredentialsTable() {
         density={table.density}
         minWidthClassName="min-w-190"
         ariaLabel={t('credentials.table.ariaLabel')}
+        onRowClick={credential => { setSelectedId(credential.id) }}
+        selectedRowKey={selectedId}
         emptyContent={rows.length > 0 ? t('credentials.noMatches') : t('credentials.empty')}
       />
       <DataTablePagination
@@ -115,6 +107,55 @@ export function CredentialsTable() {
         onPageChange={table.setPage}
         onPageSizeChange={table.setPageSize}
       />
+      <DetailDrawer
+        open={selected !== null}
+        onClose={() => { setSelectedId(null) }}
+        resizable
+        eyebrow={t('credentials.detail.eyebrow')}
+        title={selected?.name ?? ''}
+        subtitle={<span className="font-mono">{selected?.id}</span>}
+        ariaLabel={t('credentials.detail.ariaLabel')}
+        closeLabel={t('credentials.detail.close')}
+        footer={selected ? (
+          <>
+            <Button
+              size="sm"
+              variant="danger"
+              className="flex-1"
+              onClick={() => { setDeleteTarget(selected) }}
+            >
+              {t('buttons.delete')}
+            </Button>
+            <Button
+              size="sm"
+              className="flex-1"
+              onClick={() => {
+                setEditing(selected)
+                setSelectedId(null)
+              }}
+            >
+              {t('buttons.edit')}
+            </Button>
+          </>
+        ) : null}
+      >
+        {selected ? (
+          <dl className="px-5 py-2">
+            <DetailRow label={t('credentials.detail.id')} value={<span className="font-mono">{selected.id}</span>} />
+            <DetailRow label={t('credentials.detail.username')} value={<span className="font-mono">{selected.username}</span>} />
+            <DetailRow label={t('credentials.detail.description')} value={selected.description} />
+            <DetailRow label={t('credentials.detail.password')} value={t('credentials.detail.passwordHidden')} />
+          </dl>
+        ) : null}
+      </DetailDrawer>
+      {editing ? (
+        <CredentialCreateModal
+          open
+          credential={editing}
+          existingCredentials={rows}
+          onClose={() => { setEditing(null) }}
+        />
+      ) : null}
       <ConfirmDialog
         open={deleteTarget !== null}
         title={t('credentials.delete.title')}
@@ -128,7 +169,10 @@ export function CredentialsTable() {
         onConfirm={() => {
           if (!deleteTarget) return
           deleteCredential.mutate(deleteTarget.id, {
-            onSuccess: () => { setDeleteTarget(null) },
+            onSuccess: () => {
+              setDeleteTarget(null)
+              setSelectedId(null)
+            },
           })
         }}
       />

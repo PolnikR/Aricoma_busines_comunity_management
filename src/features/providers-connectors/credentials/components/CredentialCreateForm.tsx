@@ -11,6 +11,7 @@ interface CredentialCreateFormProps {
   data: CredentialCreateFormData
   errors: Partial<Record<keyof CredentialCreateFormData, string>>
   isSubmitting: boolean
+  idDisabled?: boolean
   onChange: (field: keyof CredentialCreateFormData, value: string) => void
   onSubmit: () => void
 }
@@ -19,6 +20,7 @@ export function CredentialCreateForm({
   data,
   errors,
   isSubmitting,
+  idDisabled = false,
   onChange,
   onSubmit,
 }: CredentialCreateFormProps) {
@@ -38,7 +40,7 @@ export function CredentialCreateForm({
       id={`credential-${field}`}
       type={type}
       value={data[field]}
-      disabled={isSubmitting}
+      disabled={isSubmitting || (field === 'id' && idDisabled)}
       autoComplete={autoComplete}
       aria-invalid={Boolean(errors[field])}
       onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange(field, event.target.value) }}

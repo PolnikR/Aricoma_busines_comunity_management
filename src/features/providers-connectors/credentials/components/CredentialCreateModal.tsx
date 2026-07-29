@@ -12,6 +12,7 @@ interface CredentialCreateModalProps {
   open: boolean
   onClose: () => void
   existingCredentials: CredentialRecord[]
+  credential?: CredentialRecord
 }
 
 const EMPTY_FORM: CredentialCreateFormData = {
@@ -27,6 +28,7 @@ export function CredentialCreateModal({
   open,
   onClose,
   existingCredentials,
+  credential,
 }: CredentialCreateModalProps) {
   const { t } = useTranslation()
   const createCredential = useCreateCredential()
@@ -35,14 +37,24 @@ export function CredentialCreateModal({
   const [submitError, setSubmitError] = useState('')
   const [isEncrypting, setIsEncrypting] = useState(false)
   const isSubmitting = createCredential.isPending || isEncrypting
+  const isEdit = Boolean(credential)
 
   useEffect(() => {
     if (!open) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setForm(EMPTY_FORM)
+    setForm(credential
+      ? {
+          id: credential.id,
+          name: credential.name,
+          description: credential.description,
+          username: credential.username,
+          password: '',
+          confirmPassword: '',
+        }
+      : EMPTY_FORM)
     setErrors({})
     setSubmitError('')
-  }, [open])
+  }, [credential, open])
 
   const close = () => {
     setForm(EMPTY_FORM)
@@ -63,7 +75,7 @@ export function CredentialCreateModal({
   const validate = () => {
     const next: Partial<Record<keyof CredentialCreateFormData, string>> = {}
     if (!form.id.trim()) next.id = t('credentials.validation.idRequired')
-    else if (existingCredentials.some(credential => credential.id === form.id.trim())) {
+    else if (!isEdit && existingCredentials.some(item => item.id === form.id.trim())) {
       next.id = t('credentials.validation.idExists')
     }
     if (!form.name.trim()) next.name = t('credentials.validation.nameRequired')
@@ -109,7 +121,7 @@ export function CredentialCreateModal({
     <Modal
       open={open}
       onClose={requestClose}
-      title={t('credentials.modal.title')}
+      title={t(isEdit ? 'credentials.modal.editTitle' : 'credentials.modal.title')}
       size="lg"
       footer={(
         <>
@@ -117,7 +129,9 @@ export function CredentialCreateModal({
             {t('buttons.cancel')}
           </Button>
           <Button size="sm" className="flex-1" disabled={isSubmitting} onClick={() => { void submit() }}>
-            {isSubmitting ? t('messages.creating') : t('credentials.modal.submit')}
+            {isSubmitting
+              ? t('messages.saving')
+              : t(isEdit ? 'credentials.modal.save' : 'credentials.modal.submit')}
           </Button>
         </>
       )}
@@ -131,6 +145,7 @@ export function CredentialCreateModal({
         data={form}
         errors={errors}
         isSubmitting={isSubmitting}
+        idDisabled={isEdit}
         onChange={change}
         onSubmit={() => { void submit() }}
       />

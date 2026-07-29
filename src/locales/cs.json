@@ -696,6 +696,8 @@
   "credentials.table.actions": "Akce",
   "credentials.modal.title": "Vytvořit přihlašovací údaje",
   "credentials.modal.submit": "Vytvořit přihlašovací údaje",
+  "credentials.modal.editTitle": "Upravit přihlašovací údaje",
+  "credentials.modal.save": "Uložit přihlašovací údaje",
   "credentials.fields.id": "ID přihlašovacích údajů *",
   "credentials.fields.name": "Název *",
   "credentials.fields.description": "Popis *",
@@ -714,5 +716,13 @@
   "credentials.errors.load": "Přihlašovací údaje se nepodařilo načíst.",
   "credentials.errors.create": "Přihlašovací údaje se nepodařilo bezpečně vytvořit.",
   "credentials.delete.title": "Odstranit přihlašovací údaje",
-  "credentials.delete.message": "Odstranit přihlašovací údaje „{name}“? Poskytovatele je nutné nejprve odpojit."
+  "credentials.delete.message": "Odstranit přihlašovací údaje „{name}“? Poskytovatele je nutné nejprve odpojit.",
+  "credentials.detail.eyebrow": "Vybrané přihlašovací údaje",
+  "credentials.detail.ariaLabel": "Detail přihlašovacích údajů",
+  "credentials.detail.close": "Zavřít detail přihlašovacích údajů",
+  "credentials.detail.id": "ID přihlašovacích údajů",
+  "credentials.detail.username": "Uživatelské jméno",
+  "credentials.detail.description": "Popis",
+  "credentials.detail.password": "Heslo",
+  "credentials.detail.passwordHidden": "Uloženo bezpečně a nikdy se nezobrazuje"
 }
