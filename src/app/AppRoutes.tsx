@@ -7,6 +7,7 @@ import { AppShell } from '@/layouts/app-shell/AppShell'
 import { VirtualMachinesPage } from '@/features/discovery-inventory/virtual-machines/pages/VirtualMachinesPage'
 import { ProvidersPage } from '@/features/providers-connectors/providers/pages/ProvidersPage'
 import { ModuleWorkQueuePage } from '@/features/module-placeholder/pages/ModuleWorkQueuePage'
+import { RouteLoadingSkeleton } from '@/shared/components/page/RouteLoadingSkeleton'
 import {
   discoveryInventoryPlaceholderPages,
   platformAdministrationPages,
@@ -60,17 +61,6 @@ const CredentialsPage = lazy(async () => {
   return { default: page.CredentialsPage }
 })
 
-function RouteLoadingState() {
-  return (
-    <div
-      className="flex min-h-96 items-center justify-center rounded-xl border border-[#dfeaf5] bg-white text-sm text-[#71819a]"
-      role="status"
-    >
-      Loading module
-    </div>
-  )
-}
-
 function toRoutePath(path: string) {
   return path.replace(/^\//, '')
 }
@@ -102,7 +92,7 @@ function renderProvidersConnectorsRoutes(pages: typeof providersConnectorsPages)
           key={page.path}
           path={toRoutePath(page.path)}
           element={(
-            <Suspense fallback={<RouteLoadingState />}>
+            <Suspense fallback={<RouteLoadingSkeleton />}>
               <CredentialsPage />
             </Suspense>
           )}
@@ -130,7 +120,7 @@ export function AppRoutes() {
         <Route
           path="providers-connectors/providers/:providerId"
           element={(
-            <Suspense fallback={<RouteLoadingState />}>
+            <Suspense fallback={<RouteLoadingSkeleton />}>
               <ProviderDetailPage />
             </Suspense>
           )}
@@ -141,7 +131,7 @@ export function AppRoutes() {
             <Route
               index
               element={
-                <Suspense fallback={<RouteLoadingState />}>
+                <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryGroupsListPage />
                 </Suspense>
               }
@@ -149,7 +139,7 @@ export function AppRoutes() {
             <Route
               path="create"
               element={
-                <Suspense fallback={<RouteLoadingState />}>
+                <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryGroupBuilderPage />
                 </Suspense>
               }
@@ -157,7 +147,7 @@ export function AppRoutes() {
             <Route
               path=":id/edit"
               element={
-                <Suspense fallback={<RouteLoadingState />}>
+                <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryGroupEditorPage />
                 </Suspense>
               }
@@ -167,7 +157,7 @@ export function AppRoutes() {
             <Route
               index
               element={
-                <Suspense fallback={<RouteLoadingState />}>
+                <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryApplicationsListPage />
                 </Suspense>
               }
@@ -175,7 +165,7 @@ export function AppRoutes() {
             <Route
               path="create"
               element={
-                <Suspense fallback={<RouteLoadingState />}>
+                <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryApplicationBuilderPage />
                 </Suspense>
               }
@@ -183,7 +173,7 @@ export function AppRoutes() {
             <Route
               path=":id/edit"
               element={
-                <Suspense fallback={<RouteLoadingState />}>
+                <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryApplicationEditorPage />
                 </Suspense>
               }
@@ -208,7 +198,7 @@ export function AppRoutes() {
         <Route
           path="discovery-inventory/infrastructure"
           element={(
-            <Suspense fallback={<RouteLoadingState />}>
+            <Suspense fallback={<RouteLoadingSkeleton />}>
               <InfrastructurePage />
             </Suspense>
           )}
