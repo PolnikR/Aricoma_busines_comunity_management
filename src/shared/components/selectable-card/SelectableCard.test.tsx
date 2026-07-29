@@ -12,12 +12,16 @@ describe('SelectableCard', () => {
         selected
         title="VMware"
         description="Virtual machines"
+        meta="Resource type: VM"
+        icon={<span>VMware logo</span>}
         onClick={onClick}
       />,
     )
 
     const card = screen.getByRole('button', { name: /VMware/ })
     expect(card).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('Resource type: VM')).toBeInTheDocument()
+    expect(screen.getByTestId('selectable-card-logo')).toHaveTextContent('VMware logo')
     card.focus()
     await user.keyboard('{Enter}')
     expect(onClick).toHaveBeenCalledOnce()

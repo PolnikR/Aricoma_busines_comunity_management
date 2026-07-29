@@ -21,6 +21,7 @@ describe('RecoveryGroupTypeStep', () => {
 
     expect(screen.getByText('Choose a resource type for this group.')).toBeInTheDocument()
     expect(screen.getByText(/After assigning a specific resource type/)).toBeInTheDocument()
+    expect(screen.getAllByTestId('selectable-card-logo')).toHaveLength(6)
     await user.click(screen.getByRole('button', { name: /VMware virtual machines/i }))
 
     expect(onSelect).toHaveBeenCalledWith(

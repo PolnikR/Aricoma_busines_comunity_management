@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { SelectableCard } from '@/shared/components/selectable-card/SelectableCard'
 import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -23,6 +24,7 @@ interface WorkloadCardDefinition {
   titleKey: string
   descriptionKey: string
   metaKey: string
+  logo: ReactNode
   workloadType?: RecoveryGroupWorkloadType
   resourceType?: RecoveryGroupResourceType
 }
@@ -33,6 +35,7 @@ const BACKUP_WORKLOADS: WorkloadCardDefinition[] = [
     titleKey: 'pages.recoveryGroupBuilder.type.workloads.vmware.title',
     descriptionKey: 'pages.recoveryGroupBuilder.type.workloads.vmware.description',
     metaKey: 'pages.recoveryGroupBuilder.type.resourceTypes.vm',
+    logo: <span className="text-sm font-bold tracking-tight">VMware</span>,
     workloadType: 'vmware_virtual_machines',
     resourceType: 'vm',
   },
@@ -41,30 +44,45 @@ const BACKUP_WORKLOADS: WorkloadCardDefinition[] = [
     titleKey: 'pages.recoveryGroupBuilder.type.workloads.oracle.title',
     descriptionKey: 'pages.recoveryGroupBuilder.type.comingSoon',
     metaKey: 'pages.recoveryGroupBuilder.type.resourceTypes.database',
+    logo: (
+      <span className="flex h-4 w-9 items-center justify-center rounded-full border-2 border-current text-[8px] font-bold">
+        O
+      </span>
+    ),
   },
   {
     id: 'sap-hana',
     titleKey: 'pages.recoveryGroupBuilder.type.workloads.sapHana.title',
     descriptionKey: 'pages.recoveryGroupBuilder.type.comingSoon',
     metaKey: 'pages.recoveryGroupBuilder.type.resourceTypes.database',
+    logo: <span className="text-sm font-black italic tracking-tight">SAP</span>,
   },
   {
     id: 'fusion',
     titleKey: 'pages.recoveryGroupBuilder.type.workloads.fusion.title',
     descriptionKey: 'pages.recoveryGroupBuilder.type.comingSoon',
     metaKey: 'pages.recoveryGroupBuilder.type.resourceTypes.application',
+    logo: <span className="text-base font-black tracking-tight">IBM</span>,
   },
   {
     id: 'active-directory',
     titleKey: 'pages.recoveryGroupBuilder.type.workloads.activeDirectory.title',
     descriptionKey: 'pages.recoveryGroupBuilder.type.comingSoon',
     metaKey: 'pages.recoveryGroupBuilder.type.resourceTypes.domainController',
+    logo: (
+      <span className="grid size-6 grid-cols-2 gap-0.5">
+        {Array.from({ length: 4 }, (_, index) => (
+          <span key={index} className="bg-current" />
+        ))}
+      </span>
+    ),
   },
   {
     id: 'db2',
     titleKey: 'pages.recoveryGroupBuilder.type.workloads.db2.title',
     descriptionKey: 'pages.recoveryGroupBuilder.type.comingSoon',
     metaKey: 'pages.recoveryGroupBuilder.type.resourceTypes.database',
+    logo: <span className="text-base font-black tracking-tight">IBM</span>,
   },
 ]
 
@@ -74,6 +92,7 @@ const STORAGE_WORKLOADS: WorkloadCardDefinition[] = [
     titleKey: 'pages.recoveryGroupBuilder.type.workloads.flashSystem.title',
     descriptionKey: 'pages.recoveryGroupBuilder.type.workloads.flashSystem.description',
     metaKey: 'pages.recoveryGroupBuilder.type.resourceTypes.volume',
+    logo: <span className="text-base font-black tracking-tight">IBM</span>,
     workloadType: 'ibm_flashsystem',
     resourceType: 'volume',
   },
@@ -124,7 +143,7 @@ export function RecoveryGroupTypeStep({
       />
       <div
         role="tabpanel"
-        className="mt-5 grid max-w-5xl gap-4 md:grid-cols-2 xl:grid-cols-3"
+        className="mt-4 grid max-w-4xl gap-3 pb-8 md:grid-cols-2 xl:grid-cols-3"
       >
         {workloads.map(workload => {
           const isAvailable = Boolean(workload.workloadType && workload.resourceType)
@@ -135,6 +154,7 @@ export function RecoveryGroupTypeStep({
               title={t(workload.titleKey)}
               description={t(workload.descriptionKey)}
               meta={t(workload.metaKey)}
+              icon={workload.logo}
               disabled={!isAvailable}
               onClick={() => {
                 if (!workload.workloadType || !workload.resourceType) return
