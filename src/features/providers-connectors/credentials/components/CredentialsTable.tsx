@@ -12,19 +12,23 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useCredentials } from '../api/useCredentials'
 import { useDeleteCredential } from '../api/useDeleteCredential'
 import type { CredentialRecord } from '../model/credentialTypes'
 import { CredentialCreateModal } from './CredentialCreateModal'
 
-export function CredentialsTable() {
+interface CredentialsTableProps {
+  credentials: CredentialRecord[]
+  isLoading: boolean
+  error: Error | null
+}
+
+export function CredentialsTable({ credentials, isLoading, error }: CredentialsTableProps) {
   const { t } = useTranslation()
-  const { data, isLoading, error } = useCredentials()
   const deleteCredential = useDeleteCredential()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<CredentialRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<CredentialRecord | null>(null)
-  const rows = useMemo(() => data ?? [], [data])
+  const rows = useMemo(() => credentials, [credentials])
   const selected = rows.find(credential => credential.id === selectedId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'username'] })
   const columns: ColumnDef<CredentialRecord>[] = [
