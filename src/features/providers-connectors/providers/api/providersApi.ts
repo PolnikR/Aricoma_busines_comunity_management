@@ -12,13 +12,13 @@ const SUBMIT_PROVIDER_URL = '/api/submit_provider'
 const DELETE_PROVIDER_URL = '/api/delete_provider'
 
 const providerRecordSchema = z.object({
-  id: z.string().catch(''),
-  name: z.string().catch(''),
-  description: z.string().catch(''),
+  id: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string(),
   type: z.enum(PROVIDER_TYPES),
-  ipAddress: z.string().catch(''),
-  credentialId: z.string().nullable().catch(null),
-  credentialStatus: z.enum(PROVIDER_CREDENTIAL_STATUSES).catch('none'),
+  ipAddress: z.string().min(1),
+  credentialId: z.string().nullable(),
+  credentialStatus: z.enum(PROVIDER_CREDENTIAL_STATUSES),
 })
 
 const providersResponseSchema = z.object({

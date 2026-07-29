@@ -14,7 +14,6 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useProviders } from '../hooks/useProviders'
 import { useDeleteProvider } from '../hooks/useDeleteProvider'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
@@ -75,10 +74,19 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Provid
   ]
 }
 
-export function ProvidersCatalogueTable() {
+interface ProvidersCatalogueTableProps {
+  providers: ProviderRecord[]
+  isLoading: boolean
+  error: Error | null
+}
+
+export function ProvidersCatalogueTable({
+  providers,
+  isLoading,
+  error,
+}: ProvidersCatalogueTableProps) {
   const { t } = useTranslation()
   const columns = getColumns(t)
-  const { data: providers, isLoading, error } = useProviders()
   const deleteProvider = useDeleteProvider()
   const [typeFilter, setTypeFilter] = useState('')
   const [pendingType, setPendingType] = useState('')
@@ -86,7 +94,7 @@ export function ProvidersCatalogueTable() {
   const [editing, setEditing] = useState<ProviderRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ProviderRecord | null>(null)
 
-  const rows = useMemo(() => providers ?? [], [providers])
+  const rows = useMemo(() => providers, [providers])
   const selected = rows.find((provider) => provider.id === selectedId) ?? null
   const types = useMemo(
     () => [...new Set(rows.map((provider) => provider.type).filter(Boolean))].sort(),

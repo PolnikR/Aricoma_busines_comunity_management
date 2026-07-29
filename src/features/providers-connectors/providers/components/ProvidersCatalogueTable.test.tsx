@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvidersCatalogueTable } from './ProvidersCatalogueTable'
 import type { ProviderRecord } from '../model/providerTypes'
+import { useProviders } from '../hooks/useProviders'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('react-router-dom', async (importOriginal) => ({
@@ -44,7 +45,16 @@ function mockFetch() {
 
 function renderTable() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={queryClient}><ProvidersCatalogueTable /></QueryClientProvider>)
+  function ProvidersTableHarness() {
+    const { data = [], isLoading, error } = useProviders()
+    return <ProvidersCatalogueTable providers={data} isLoading={isLoading} error={error} />
+  }
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <ProvidersTableHarness />
+    </QueryClientProvider>,
+  )
 }
 
 describe('ProvidersCatalogueTable', () => {

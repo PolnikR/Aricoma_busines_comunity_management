@@ -29,9 +29,10 @@ describe('TierCard', () => {
       />
     )
 
-    expect(screen.getByText('Database')).toBeInTheDocument()
+    expect(screen.getByText('database')).toBeInTheDocument()
+    expect(screen.getByText('Database recovery group')).toBeInTheDocument()
     expect(screen.getByText('Database server group')).toBeInTheDocument()
-    expect(screen.getAllByText((_, element) => element?.textContent === 'Recovery group: Database')).toHaveLength(1)
+    expect(screen.queryByText((_, element) => element?.textContent === 'Recovery group: Database')).not.toBeInTheDocument()
   })
 
   it('toggles to edit mode when header clicked', async () => {

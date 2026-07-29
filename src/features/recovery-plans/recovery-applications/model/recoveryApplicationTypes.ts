@@ -19,9 +19,9 @@ export interface RecoveryApplicationData {
     name: string
     description: string
     environment: 'dev' | 'staging' | 'prod'
-    platform: 'VMware vCenter ESXi'
-    source_connection: 'vcenter_default'
-    target_connection: 'vcenter_default_destination'
+    platform: string
+    source_connection: string
+    target_connection: string
     tiers: Record<string, RecoveryTier>
   }
 }
@@ -57,5 +57,8 @@ export interface RecoveryApplicationFormState {
   name: string
   description: string
   environment: 'dev' | 'staging' | 'prod'
+  platform: string
+  sourceConnection: string
+  targetConnection: string
   tiers: Map<string, RecoveryTier>
 }

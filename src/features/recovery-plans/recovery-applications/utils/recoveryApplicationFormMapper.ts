@@ -28,6 +28,9 @@ export function toRecoveryApplicationFormState(
     name: data.name,
     description: data.description,
     environment: data.environment,
+    platform: data.platform,
+    sourceConnection: data.source_connection,
+    targetConnection: data.target_connection,
     tiers: new Map(
       Object.entries(data.tiers).map(([id, tier]) => [id, cloneTier(tier)]),
     ),
@@ -42,9 +45,9 @@ export function toRecoveryApplicationData(
       name: formState.name,
       description: formState.description,
       environment: formState.environment,
-      platform: 'VMware vCenter ESXi',
-      source_connection: 'vcenter_default',
-      target_connection: 'vcenter_default_destination',
+      platform: formState.platform,
+      source_connection: formState.sourceConnection,
+      target_connection: formState.targetConnection,
       tiers: Object.fromEntries(
         Array.from(formState.tiers.entries()).map(([id, tier]) => [id, cloneTier(tier)]),
       ),

@@ -41,9 +41,9 @@ describe('TierCanvas', () => {
   it('renders tiers sorted by order', () => {
     render(<TierCanvas tiers={mockTiers} />)
 
-    expect(screen.getByText('Database')).toBeInTheDocument()
-    expect(screen.getByText('Application')).toBeInTheDocument()
-    expect(screen.getByText('Web')).toBeInTheDocument()
+    expect(screen.getByText('database')).toBeInTheDocument()
+    expect(screen.getByText('app')).toBeInTheDocument()
+    expect(screen.getByText('web')).toBeInTheDocument()
   })
 
   it('displays AddTierCard', () => {

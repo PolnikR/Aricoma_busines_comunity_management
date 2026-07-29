@@ -47,6 +47,7 @@ export function useRecoveryGroups() {
   return {
     groups: query.data ?? [],
     isLoading: query.isLoading,
+    isFetching: query.isFetching,
     error: query.error,
     refresh: query.refetch,
     create: createMutation.mutateAsync,

@@ -1,12 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryAppBuilder } from './RecoveryAppBuilder'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../../recovery-groups/hooks/useRecoveryGroups', () => ({
-  useRecoveryGroups: () => ({
+const recoveryGroupsQuery = vi.hoisted(() => ({
+  current: {
     groups: [{
       id: 'database_group',
       name: 'Database Group',
@@ -18,7 +18,15 @@ vi.mock('../../recovery-groups/hooks/useRecoveryGroups', () => ({
       resourceCount: 2,
       status: 'Active',
     }],
-  }),
+    isLoading: false,
+    isFetching: false,
+    error: null as Error | null,
+    refresh: vi.fn(),
+  },
+}))
+
+vi.mock('../../recovery-groups/hooks/useRecoveryGroups', () => ({
+  useRecoveryGroups: () => recoveryGroupsQuery.current,
 }))
 vi.mock('./TierCanvas', () => ({
   TierCanvas: ({
@@ -57,6 +65,45 @@ afterEach(() => {
 })
 
 describe('RecoveryAppBuilder', () => {
+  beforeEach(() => {
+    recoveryGroupsQuery.current.groups = [{
+      id: 'database_group',
+      name: 'Database Group',
+      description: 'Database recovery group',
+      sourceCategory: 'backup_system_workload',
+      workloadType: 'vmware_virtual_machines',
+      resourceType: 'vm',
+      resources: ['DB-01', 'DB-02'],
+      resourceCount: 2,
+      status: 'Active',
+    }]
+    recoveryGroupsQuery.current.isLoading = false
+    recoveryGroupsQuery.current.isFetching = false
+    recoveryGroupsQuery.current.error = null
+    recoveryGroupsQuery.current.refresh.mockReset()
+  })
+
+  it('shows a loading skeleton while recovery groups are loading', () => {
+    recoveryGroupsQuery.current.isLoading = true
+
+    render(<RecoveryAppBuilder />)
+
+    expect(screen.getByRole('status', { name: 'Loading recovery groups...' })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.queryByText('Database Group')).not.toBeInTheDocument()
+  })
+
+  it('shows a recovery-groups error and retries loading', async () => {
+    const user = userEvent.setup()
+    recoveryGroupsQuery.current.groups = []
+    recoveryGroupsQuery.current.error = new Error('Groups unavailable')
+
+    render(<RecoveryAppBuilder />)
+
+    expect(screen.getByText('Groups unavailable')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(recoveryGroupsQuery.current.refresh).toHaveBeenCalledOnce()
+  })
+
   it('validates required metadata before saving', async () => {
     const user = userEvent.setup()
     const alertMock = vi.fn()

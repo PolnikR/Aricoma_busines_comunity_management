@@ -52,6 +52,16 @@ describe('fetchProviders', () => {
     await expect(fetchProviders()).rejects.toBeInstanceOf(Error)
   })
 
+  it.each([
+    ['missing id', { ...providerA, id: undefined }],
+    ['empty id', { ...providerA, id: '' }],
+    ['invalid type', { ...providerA, type: 'UNKNOWN' }],
+    ['invalid credential status', { ...providerA, credentialStatus: 'unknown' }],
+  ])('rejects a provider with %s', async (_label, provider) => {
+    stubFetch({ providers: [provider] })
+    await expect(fetchProviders()).rejects.toBeInstanceOf(Error)
+  })
+
   it('throws on an HTTP failure', async () => {
     stubFetch(null, 503)
     await expect(fetchProviders()).rejects.toThrow('Get providers request failed with status 503')

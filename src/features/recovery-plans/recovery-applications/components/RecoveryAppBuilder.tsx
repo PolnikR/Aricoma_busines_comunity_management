@@ -69,6 +69,9 @@ function createInitialFormState(
     name: '',
     description: '',
     environment: 'dev',
+    platform: 'VMware vCenter ESXi',
+    sourceConnection: 'vcenter_default',
+    targetConnection: 'vcenter_default_destination',
     tiers: new Map(
       Object.entries(DEFAULT_TIERS).map(
         ([id, tier]): [string, RecoveryTier] => [id, cloneTier(tier)],
@@ -85,7 +88,13 @@ export function RecoveryAppBuilder({
   disableFileName = false,
 }: RecoveryAppBuilderProps) {
   const { t } = useTranslation()
-  const { groups } = useRecoveryGroups()
+  const {
+    groups,
+    isLoading: areGroupsLoading,
+    isFetching: areGroupsFetching,
+    error: groupsError,
+    refresh: refreshGroups,
+  } = useRecoveryGroups()
   const availableGroups = groups.filter(
     group => group.sourceCategory === 'backup_system_workload',
   )
@@ -253,10 +262,14 @@ export function RecoveryAppBuilder({
               noItemsLabel={t('recovery.sidebar.noGroupsAvailable')}
               noMatchesLabel={t('recovery.sidebar.noMatchingGroups')}
               dragDataKey="recovery-group-id"
+              isLoading={areGroupsLoading}
+              isRetrying={areGroupsFetching}
+              error={groupsError}
               errorTitle={t('recovery.sidebar.groupsError')}
               staleErrorTitle={t('recovery.sidebar.groupsError')}
               staleErrorDescription={t('recovery.sidebar.groupsError')}
               retryLabel={t('buttons.retry')}
+              onRetry={() => { void refreshGroups() }}
             />
           </div>
 

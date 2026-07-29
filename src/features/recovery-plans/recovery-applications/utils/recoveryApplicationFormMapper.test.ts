@@ -13,8 +13,8 @@ const application: RecoveryApplicationListItem = {
       description: 'Finance recovery',
       environment: 'prod',
       platform: 'VMware vCenter ESXi',
-      source_connection: 'vcenter_default',
-      target_connection: 'vcenter_default_destination',
+      source_connection: 'vcenter_special',
+      target_connection: 'vcenter_dr',
       tiers: {
         database: {
           order: 1,
@@ -39,6 +39,9 @@ describe('recoveryApplicationFormMapper', () => {
       name: 'Finance',
       description: 'Finance recovery',
       environment: 'prod',
+      platform: 'VMware vCenter ESXi',
+      sourceConnection: 'vcenter_special',
+      targetConnection: 'vcenter_dr',
     })
     expect(formState.tiers.get('database')).toEqual(application.data.application.tiers['database'])
 

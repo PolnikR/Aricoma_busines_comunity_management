@@ -9,7 +9,13 @@ import { useProviders } from '../hooks/useProviders'
 export function ProvidersPage() {
   const { t } = useTranslation()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const { data: providers = [], isFetching, refetch } = useProviders()
+  const {
+    data: providers = [],
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useProviders()
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
@@ -28,7 +34,11 @@ export function ProvidersPage() {
 
       <div className="flex-1 flex flex-col gap-4 lg:min-h-0 overflow-hidden p-3">
         <div className="flex-1 flex flex-col min-h-0 bg-white rounded-lg border border-[#dbe7f2] shadow-sm overflow-hidden">
-          <ProvidersCatalogueTable />
+          <ProvidersCatalogueTable
+            providers={providers}
+            isLoading={isLoading}
+            error={error}
+          />
         </div>
       </div>
 

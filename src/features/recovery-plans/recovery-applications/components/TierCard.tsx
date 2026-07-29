@@ -174,11 +174,6 @@ export function TierCard({
         </div>
         <div className="text-sm font-semibold text-[#18253d] mb-1">{id}</div>
         <div className="text-xs text-[#71819a]">{tier.description}</div>
-        {tier.recovery_group ? (
-          <div className="mt-2 text-xs text-[#52627b]">
-            {t('recovery.tier.recoveryGroup')}: <span className="font-semibold">{tier.recovery_group.name}</span>
-          </div>
-        ) : null}
       </button>
 
       {tier.recovery_group ? (
