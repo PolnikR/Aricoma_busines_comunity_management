@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchCredentials } from './credentialsApi'
-import { credentialKeys } from './credentialQueryKeys'
+import { fetchCredentials } from '../api/credentialsApi'
+import { credentialKeys } from '../api/credentialQueryKeys'
 
 interface UseCredentialsOptions {
   enabled?: boolean

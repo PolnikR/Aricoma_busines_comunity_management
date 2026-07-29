@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useProviders } from '../api/useProviders'
+import { useProviders } from '../hooks/useProviders'
 import { ProvidersPage } from './ProvidersPage'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../api/useProviders', () => ({ useProviders: vi.fn() }))
+vi.mock('../hooks/useProviders', () => ({ useProviders: vi.fn() }))
 vi.mock('../components/ProvidersCatalogueTable', () => ({
   ProvidersCatalogueTable: () => <div>Provider catalogue</div>,
 }))

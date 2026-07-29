@@ -12,7 +12,7 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useDeleteCredential } from '../api/useDeleteCredential'
+import { useDeleteCredential } from '../hooks/useDeleteCredential'
 import type { CredentialRecord } from '../model/credentialTypes'
 import { CredentialCreateModal } from './CredentialCreateModal'
 

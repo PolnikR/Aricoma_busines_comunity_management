@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { deleteProvider } from './providersApi'
-import { providerKeys } from './providerQueryKeys'
+import { deleteProvider } from '../api/providersApi'
+import { providerKeys } from '../api/providerQueryKeys'
 
 export function useDeleteProvider() {
   const queryClient = useQueryClient()

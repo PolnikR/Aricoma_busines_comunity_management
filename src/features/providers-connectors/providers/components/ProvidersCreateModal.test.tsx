@@ -9,7 +9,7 @@ vi.mock('react-router-dom', async (importOriginal) => ({
   ...await importOriginal<typeof import('react-router-dom')>(),
   useBlocker: () => ({ state: 'unblocked' as const }),
 }))
-vi.mock('../../credentials/api/useCredentials', () => ({
+vi.mock('../../credentials/hooks/useCredentials', () => ({
   useCredentials: () => ({
     data: [{
       id: 'vcenter-admin',

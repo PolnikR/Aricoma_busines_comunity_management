@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { deleteCredential } from './credentialsApi'
-import { credentialKeys } from './credentialQueryKeys'
+import { deleteCredential } from '../api/credentialsApi'
+import { credentialKeys } from '../api/credentialQueryKeys'
 
 export function useDeleteCredential() {
   const queryClient = useQueryClient()

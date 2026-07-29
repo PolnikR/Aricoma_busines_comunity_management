@@ -26,6 +26,11 @@ export interface RecoveryApplicationData {
   }
 }
 
+export interface SubmitRecoveryApplicationInput {
+  fileName: string
+  data: RecoveryApplicationData
+}
+
 export interface ApplicationSubmission {
   status: string
   remotePath: string

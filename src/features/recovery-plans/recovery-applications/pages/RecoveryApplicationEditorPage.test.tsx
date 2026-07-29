@@ -6,7 +6,7 @@ import type {
   RecoveryApplicationFormState,
   RecoveryApplicationListItem,
 } from '../model/recoveryApplicationTypes'
-import type { SubmitRecoveryApplicationInput } from '../api/useRecoveryApplications'
+import type { SubmitRecoveryApplicationInput } from '../model/recoveryApplicationTypes'
 
 const navigate = vi.fn()
 const mutate = vi.fn<(
@@ -60,7 +60,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
-vi.mock('../api/useRecoveryApplications', () => ({
+vi.mock('../hooks/useRecoveryApplications', () => ({
   useRecoveryApplications: () => recoveryQuery,
   useSubmitRecoveryApplication: () => ({
     mutate,

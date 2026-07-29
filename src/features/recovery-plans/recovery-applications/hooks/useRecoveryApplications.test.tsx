@@ -3,9 +3,9 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
-  recoveryApplicationsQueryKey,
   useSubmitRecoveryApplication,
 } from './useRecoveryApplications'
+import { recoveryApplicationsQueryKey } from '../api/recoveryApplicationQueryKeys'
 import type { RecoveryApplicationData } from '../model/recoveryApplicationTypes'
 
 const data: RecoveryApplicationData = {

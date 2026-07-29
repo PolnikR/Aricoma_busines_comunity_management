@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { CredentialsTable } from './CredentialsTable'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../api/useDeleteCredential', () => ({
+vi.mock('../hooks/useDeleteCredential', () => ({
   useDeleteCredential: () => ({
     mutate: vi.fn(),
     isPending: false,

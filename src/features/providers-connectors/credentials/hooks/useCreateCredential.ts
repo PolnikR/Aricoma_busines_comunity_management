@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { CredentialSubmitPayload } from '../model/credentialTypes'
-import { submitCredential } from './credentialsApi'
-import { credentialKeys } from './credentialQueryKeys'
+import { submitCredential } from '../api/credentialsApi'
+import { credentialKeys } from '../api/credentialQueryKeys'
 
 export function useCreateCredential() {
   const queryClient = useQueryClient()

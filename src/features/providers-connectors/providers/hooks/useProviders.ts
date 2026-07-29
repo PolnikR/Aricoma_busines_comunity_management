@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchProviders } from './providersApi'
-import { providerKeys } from './providerQueryKeys'
+import { fetchProviders } from '../api/providersApi'
+import { providerKeys } from '../api/providerQueryKeys'
 
 export function useProviders() {
   return useQuery({

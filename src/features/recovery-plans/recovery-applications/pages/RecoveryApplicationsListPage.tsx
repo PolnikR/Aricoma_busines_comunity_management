@@ -6,7 +6,7 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { DataTableSkeleton } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
-import { useRecoveryApplications } from '../api/useRecoveryApplications'
+import { useRecoveryApplications } from '../hooks/useRecoveryApplications'
 import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 
 export function RecoveryApplicationsListPage() {

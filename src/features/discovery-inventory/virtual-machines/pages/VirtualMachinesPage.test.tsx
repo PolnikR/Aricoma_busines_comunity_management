@@ -15,11 +15,11 @@ let inventoryQuery: {
 }
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/discovery-inventory/api/useDiscoveryInventory', () => ({
+vi.mock('@/features/discovery-inventory/hooks/useDiscoveryInventory', () => ({
   useDiscoveryInventory: () => inventoryQuery,
 }))
-vi.mock('../../api/useTags', () => ({ useTags: () => ({ data: [] }) }))
-vi.mock('@/features/providers-connectors/providers/api/useProviders', () => ({
+vi.mock('../../hooks/useTags', () => ({ useTags: () => ({ data: [] }) }))
+vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
   useProviders: () => ({ data: [], isLoading: false }),
 }))
 vi.mock('../hooks/useVirtualMachineSearchParams', () => ({

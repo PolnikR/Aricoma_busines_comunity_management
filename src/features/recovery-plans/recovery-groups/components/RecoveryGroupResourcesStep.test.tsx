@@ -11,7 +11,7 @@ const useDiscoveryInventory = vi.fn(() => ({
 }))
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/discovery-inventory/api/useDiscoveryInventory', () => ({
+vi.mock('@/features/discovery-inventory/hooks/useDiscoveryInventory', () => ({
   useDiscoveryInventory: () => useDiscoveryInventory(),
 }))
 

@@ -19,7 +19,7 @@ vi.mock('react-router-dom', async (importOriginal) => ({
   useNavigate: () => navigate,
 }))
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../api/useRecoveryApplications', () => ({
+vi.mock('../hooks/useRecoveryApplications', () => ({
   useRecoveryApplications: () => query,
 }))
 vi.mock('../components/RecoveryApplicationsTable', () => ({

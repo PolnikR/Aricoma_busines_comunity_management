@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { submitProvider } from './providersApi'
-import { providerKeys } from './providerQueryKeys'
+import { submitProvider } from '../api/providersApi'
+import { providerKeys } from '../api/providerQueryKeys'
 import type { ProviderSubmitData } from '../model/providerTypes'
 
 interface UpsertProviderVars {

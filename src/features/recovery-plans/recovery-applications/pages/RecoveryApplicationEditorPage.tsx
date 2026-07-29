@@ -9,7 +9,7 @@ import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
 import {
   useRecoveryApplications,
   useSubmitRecoveryApplication,
-} from '../api/useRecoveryApplications'
+} from '../hooks/useRecoveryApplications'
 import {
   toRecoveryApplicationData,
   toRecoveryApplicationFormState,

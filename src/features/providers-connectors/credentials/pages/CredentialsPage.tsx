@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useCredentials } from '../api/useCredentials'
+import { useCredentials } from '../hooks/useCredentials'
 import { CredentialCreateModal } from '../components/CredentialCreateModal'
 import { CredentialsTable } from '../components/CredentialsTable'
 

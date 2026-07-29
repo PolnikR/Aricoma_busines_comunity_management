@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useTags } from './useTags'
-import { discoveryInventoryKeys } from './discoveryInventoryQueryKeys'
+import { discoveryInventoryKeys } from '../api/discoveryInventoryQueryKeys'
 
 afterEach(() => { vi.unstubAllGlobals() })
 

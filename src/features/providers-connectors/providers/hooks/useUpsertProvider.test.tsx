@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useUpsertProvider } from './useUpsertProvider'
-import { providerKeys } from './providerQueryKeys'
+import { providerKeys } from '../api/providerQueryKeys'
 import type { ProviderRecord, ProviderSubmitData } from '../model/providerTypes'
 
 const providerA: ProviderRecord = {

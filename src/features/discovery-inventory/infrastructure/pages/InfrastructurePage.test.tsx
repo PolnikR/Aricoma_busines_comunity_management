@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useDiscoveryInventory } from '@/features/discovery-inventory/api/useDiscoveryInventory'
+import { useDiscoveryInventory } from '@/features/discovery-inventory/hooks/useDiscoveryInventory'
 import { InfrastructurePage } from './InfrastructurePage'
 import type { DiscoveryInventory } from '../../model/discoveryTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/discovery-inventory/api/useDiscoveryInventory', () => ({
+vi.mock('@/features/discovery-inventory/hooks/useDiscoveryInventory', () => ({
   useDiscoveryInventory: vi.fn(),
 }))
 vi.mock('../components/InfrastructureTopologySkeleton', () => ({

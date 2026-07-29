@@ -4,7 +4,7 @@ import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { ProvidersCatalogueTable } from '../components/ProvidersCatalogueTable'
 import { ProvidersCreateModal } from '../components/ProvidersCreateModal'
-import { useProviders } from '../api/useProviders'
+import { useProviders } from '../hooks/useProviders'
 
 export function ProvidersPage() {
   const { t } = useTranslation()

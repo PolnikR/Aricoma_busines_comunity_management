@@ -5,7 +5,7 @@ import { Card } from '@/shared/components/card/Card'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useProviders } from '../api/useProviders'
+import { useProviders } from '../hooks/useProviders'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
 import type { ProviderCredentialStatus } from '../model/providerTypes'
 

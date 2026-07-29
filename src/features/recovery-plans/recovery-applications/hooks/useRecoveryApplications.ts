@@ -2,15 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   fetchRecoveryApplications,
   submitRecoveryApplicationDag,
-} from './recoveryApplicationsApi'
-import type { RecoveryApplicationData } from '../model/recoveryApplicationTypes'
-
-export const recoveryApplicationsQueryKey = ['recovery-applications'] as const
-
-export interface SubmitRecoveryApplicationInput {
-  fileName: string
-  data: RecoveryApplicationData
-}
+} from '../api/recoveryApplicationsApi'
+import { recoveryApplicationsQueryKey } from '../api/recoveryApplicationQueryKeys'
+import type { SubmitRecoveryApplicationInput } from '../model/recoveryApplicationTypes'
 
 export function useRecoveryApplications() {
   return useQuery({

@@ -20,7 +20,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
     useBlocker: () => ({ state: 'unblocked' as const }),
   }
 })
-vi.mock('../api/useCreateCredential', () => ({
+vi.mock('../hooks/useCreateCredential', () => ({
   useCreateCredential: () => ({ mutate, isPending: false }),
 }))
 vi.mock('../api/credentialsApi', () => ({

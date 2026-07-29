@@ -1,4 +1,4 @@
-import { useDiscoveryInventory } from '@/features/discovery-inventory/api/useDiscoveryInventory'
+import { useDiscoveryInventory } from '@/features/discovery-inventory/hooks/useDiscoveryInventory'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
 import { ResourceSelectionCard } from '@/shared/components/resource-selection/ResourceSelectionCard'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'

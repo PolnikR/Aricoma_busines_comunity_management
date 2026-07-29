@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { discoveryInventoryKeys } from './discoveryInventoryQueryKeys'
-import { fetchDiscoveryInventory } from './discoveryInventoryApi'
+import { discoveryInventoryKeys } from '../api/discoveryInventoryQueryKeys'
+import { fetchDiscoveryInventory } from '../api/discoveryInventoryApi'
 
 export function useDiscoveryInventory(providerId?: string, tag?: string) {
   return useQuery({

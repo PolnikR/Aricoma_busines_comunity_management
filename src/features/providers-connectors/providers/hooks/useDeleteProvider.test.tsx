@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useDeleteProvider } from './useDeleteProvider'
-import { providerKeys } from './providerQueryKeys'
+import { providerKeys } from '../api/providerQueryKeys'
 
 afterEach(() => { vi.unstubAllGlobals() })
 

@@ -17,7 +17,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
-vi.mock('../api/useRecoveryApplications', () => ({
+vi.mock('../hooks/useRecoveryApplications', () => ({
   useSubmitRecoveryApplication: () => ({
     mutate,
     error: null,
