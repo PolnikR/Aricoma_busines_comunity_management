@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/button/Button'
+import { DataTableSkeleton } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
-import { ListSkeleton } from '@/shared/components/list-skeleton/ListSkeleton'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { routes } from '@/app/routes'
@@ -39,7 +39,11 @@ export function RecoveryGroupsListPage() {
           </div>
         ) : null}
         {isLoading ? (
-          <ListSkeleton ariaLabel={t('pages.recoveryGroups.loading')} />
+          <DataTableSkeleton
+            columnCount={5}
+            ariaLabel={t('pages.recoveryGroups.loading')}
+            className="flex-1 lg:min-h-0"
+          />
         ) : error ? (
           <FetchErrorAlert
             title={t('pages.recoveryGroups.errors.load')}

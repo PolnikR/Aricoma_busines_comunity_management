@@ -22,6 +22,7 @@ describe('RecoveryGroupsListPage', () => {
       </QueryClientProvider>,
     )
 
+    expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true')
     expect(await screen.findByRole('heading', { name: 'Recovery Groups' })).toBeInTheDocument()
     expect(screen.getByText(/Manage reusable groups of resources/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeEnabled()
