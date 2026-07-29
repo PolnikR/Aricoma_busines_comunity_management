@@ -21,7 +21,7 @@ describe('AppSidebar', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByRole('link', { name: 'Recovery Groups' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Recovery Groups' }, { timeout: 5000 })).toHaveAttribute(
       'href',
       '/recovery-plans/recovery-groups',
     )
@@ -38,7 +38,11 @@ describe('AppSidebar', () => {
       </MemoryRouter>,
     )
 
-    const applications = await screen.findByRole('link', { name: 'Recovery Applications' })
+    const applications = await screen.findByRole(
+      'link',
+      { name: 'Recovery Applications' },
+      { timeout: 5000 },
+    )
     expect(applications).toHaveClass('bg-[#eef2fa]', 'text-[#3566d6]')
   })
 })

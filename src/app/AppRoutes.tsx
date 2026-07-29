@@ -55,6 +55,11 @@ const ProviderDetailPage = lazy(async () => {
   return { default: page.ProviderDetailPage }
 })
 
+const CredentialsPage = lazy(async () => {
+  const page = await import('@/features/providers-connectors/credentials/pages/CredentialsPage')
+  return { default: page.CredentialsPage }
+})
+
 function RouteLoadingState() {
   return (
     <div
@@ -88,6 +93,19 @@ function renderProvidersConnectorsRoutes(pages: typeof providersConnectorsPages)
           key={page.path}
           path={toRoutePath(page.path)}
           element={<ProvidersPage />}
+        />
+      )
+    }
+    if (page.path === routes.providerCredentials) {
+      return (
+        <Route
+          key={page.path}
+          path={toRoutePath(page.path)}
+          element={(
+            <Suspense fallback={<RouteLoadingState />}>
+              <CredentialsPage />
+            </Suspense>
+          )}
         />
       )
     }
