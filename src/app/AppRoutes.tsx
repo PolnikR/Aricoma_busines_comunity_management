@@ -7,6 +7,7 @@ import { AppShell } from '@/layouts/app-shell/AppShell'
 import { VirtualMachinesPage } from '@/features/discovery-inventory/virtual-machines/pages/VirtualMachinesPage'
 import { ProvidersPage } from '@/features/providers-connectors/providers/pages/ProvidersPage'
 import { ModuleWorkQueuePage } from '@/features/module-placeholder/pages/ModuleWorkQueuePage'
+import { InfrastructureTopologySkeleton } from '@/features/discovery-inventory/infrastructure/components/InfrastructureTopologySkeleton'
 import { RouteLoadingSkeleton } from '@/shared/components/page/RouteLoadingSkeleton'
 import {
   discoveryInventoryPlaceholderPages,
@@ -198,7 +199,7 @@ export function AppRoutes() {
         <Route
           path="discovery-inventory/infrastructure"
           element={(
-            <Suspense fallback={<RouteLoadingSkeleton />}>
+            <Suspense fallback={<InfrastructureTopologySkeleton />}>
               <InfrastructurePage />
             </Suspense>
           )}
