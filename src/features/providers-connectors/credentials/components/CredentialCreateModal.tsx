@@ -122,7 +122,6 @@ export function CredentialCreateModal({
       open={open}
       onClose={requestClose}
       title={t(isEdit ? 'credentials.modal.editTitle' : 'credentials.modal.title')}
-      size="lg"
       footer={(
         <>
           <Button variant="outline" size="sm" className="flex-1" disabled={isSubmitting} onClick={close}>

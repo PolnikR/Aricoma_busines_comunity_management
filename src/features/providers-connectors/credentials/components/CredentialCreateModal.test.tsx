@@ -43,6 +43,7 @@ describe('CredentialCreateModal', () => {
       />,
     )
 
+    expect(screen.getByRole('dialog', { name: 'Create credential' })).toHaveClass('max-w-md')
     await user.click(screen.getByRole('button', { name: 'Create credential' }))
 
     expect(screen.getByText('Credential ID is required.')).toBeInTheDocument()
