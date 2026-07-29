@@ -5,16 +5,35 @@ import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTy
 const STORAGE_KEY = 'abcm.recovery-groups'
 export const RECOVERY_GROUPS_CHANGED_EVENT = 'abcm:recovery-groups-changed'
 
-const recoveryGroupSchema = z.object({
+const baseRecoveryGroupSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
-  workloadType: z.enum(['VMware', 'IBM FlashSystem']),
-  resourceType: z.enum(['VM', 'Volume']),
   resourceCount: z.number().int().nonnegative(),
   status: z.enum(['Draft', 'Active']),
   resources: z.array(z.string()),
 })
+
+const recoveryGroupSchema = z.union([
+  baseRecoveryGroupSchema.extend({
+    sourceCategory: z.enum(['backup_system_workload', 'storage_system']),
+    workloadType: z.enum(['vmware_virtual_machines', 'ibm_flashsystem']),
+    resourceType: z.enum(['vm', 'volume']),
+  }),
+  baseRecoveryGroupSchema.extend({
+    workloadType: z.enum(['VMware', 'IBM FlashSystem']),
+    resourceType: z.enum(['VM', 'Volume']),
+  }).transform(group => ({
+    ...group,
+    sourceCategory: group.workloadType === 'VMware'
+      ? 'backup_system_workload' as const
+      : 'storage_system' as const,
+    workloadType: group.workloadType === 'VMware'
+      ? 'vmware_virtual_machines' as const
+      : 'ibm_flashsystem' as const,
+    resourceType: group.resourceType === 'VM' ? 'vm' as const : 'volume' as const,
+  })),
+])
 
 const recoveryGroupsSchema = z.array(recoveryGroupSchema)
 
@@ -26,14 +45,21 @@ export function listRecoveryGroups(): RecoveryGroup[] {
     if (!stored) return []
     const parsed: unknown = JSON.parse(stored)
     const result = recoveryGroupsSchema.safeParse(parsed)
-    return result.success ? result.data : []
+    if (!result.success) return []
+
+    const groups = result.data
+    const migrated = JSON.stringify(groups)
+    if (migrated !== stored) {
+      localStorage.setItem(STORAGE_KEY, migrated)
+    }
+    return groups
   } catch {
     return []
   }
 }
 
 export function createRecoveryGroup(draft: RecoveryGroupDraft): RecoveryGroup {
-  if (!draft.workloadType || !draft.resourceType) {
+  if (!draft.sourceCategory || !draft.workloadType || !draft.resourceType) {
     throw new Error('Recovery group resource type is required')
   }
 
@@ -49,6 +75,7 @@ export function createRecoveryGroup(draft: RecoveryGroupDraft): RecoveryGroup {
     id,
     name: draft.name.trim(),
     description: draft.description.trim(),
+    sourceCategory: draft.sourceCategory,
     workloadType: draft.workloadType,
     resourceType: draft.resourceType,
     resources: [...draft.resources],
@@ -66,7 +93,7 @@ export function getRecoveryGroup(id: string): RecoveryGroup | undefined {
 }
 
 export function updateRecoveryGroup(id: string, draft: RecoveryGroupDraft): RecoveryGroup {
-  if (!draft.workloadType || !draft.resourceType) {
+  if (!draft.sourceCategory || !draft.workloadType || !draft.resourceType) {
     throw new Error('Recovery group resource type is required')
   }
 
@@ -80,6 +107,7 @@ export function updateRecoveryGroup(id: string, draft: RecoveryGroupDraft): Reco
     id,
     name: draft.name.trim(),
     description: draft.description.trim(),
+    sourceCategory: draft.sourceCategory,
     workloadType: draft.workloadType,
     resourceType: draft.resourceType,
     resources: [...draft.resources],

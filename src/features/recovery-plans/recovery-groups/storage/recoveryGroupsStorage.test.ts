@@ -18,8 +18,9 @@ describe('recoveryGroupsStorage', () => {
       id: 'database_production',
       name: 'Database Production',
       description: 'Production databases',
-      workloadType: 'VMware',
-      resourceType: 'VM',
+      sourceCategory: 'backup_system_workload',
+      workloadType: 'vmware_virtual_machines',
+      resourceType: 'vm',
       resources: ['DB-01', 'DB-02'],
     })
 
@@ -34,8 +35,9 @@ describe('recoveryGroupsStorage', () => {
       id: 'database_group',
       name: 'Database Group',
       description: 'Databases',
-      workloadType: 'VMware' as const,
-      resourceType: 'VM' as const,
+      sourceCategory: 'backup_system_workload' as const,
+      workloadType: 'vmware_virtual_machines' as const,
+      resourceType: 'vm' as const,
       resources: ['DB-01'],
     }
     createRecoveryGroup(draft)
@@ -54,8 +56,9 @@ describe('recoveryGroupsStorage', () => {
       id: 'database_group',
       name: 'Database Group',
       description: 'Databases',
-      workloadType: 'VMware',
-      resourceType: 'VM',
+      sourceCategory: 'backup_system_workload',
+      workloadType: 'vmware_virtual_machines',
+      resourceType: 'vm',
       resources: ['DB-01'],
     })
 
@@ -63,8 +66,9 @@ describe('recoveryGroupsStorage', () => {
       id: created.id,
       name: 'Renamed Database Group',
       description: 'Updated databases',
-      workloadType: 'VMware',
-      resourceType: 'VM',
+      sourceCategory: 'backup_system_workload',
+      workloadType: 'vmware_virtual_machines',
+      resourceType: 'vm',
       resources: ['DB-01', 'DB-02'],
     })
 
@@ -79,13 +83,36 @@ describe('recoveryGroupsStorage', () => {
       id: 'database_group',
       name: 'Database Group',
       description: 'Databases',
-      workloadType: 'VMware',
-      resourceType: 'VM',
+      sourceCategory: 'backup_system_workload',
+      workloadType: 'vmware_virtual_machines',
+      resourceType: 'vm',
       resources: ['DB-01'],
     })
 
     deleteRecoveryGroup(group.id)
 
     expect(listRecoveryGroups()).toEqual([])
+  })
+
+  it('migrates legacy VMware groups to the canonical source and resource model', () => {
+    localStorage.setItem('abcm.recovery-groups', JSON.stringify([{
+      id: 'legacy_group',
+      name: 'Legacy group',
+      description: 'Stored by the previous UI',
+      workloadType: 'VMware',
+      resourceType: 'VM',
+      resources: ['VM-01'],
+      resourceCount: 1,
+      status: 'Active',
+    }]))
+
+    expect(listRecoveryGroups()).toEqual([
+      expect.objectContaining({
+        sourceCategory: 'backup_system_workload',
+        workloadType: 'vmware_virtual_machines',
+        resourceType: 'vm',
+      }),
+    ])
+    expect(localStorage.getItem('abcm.recovery-groups')).toContain('"sourceCategory":"backup_system_workload"')
   })
 })

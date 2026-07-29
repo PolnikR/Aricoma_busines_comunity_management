@@ -14,6 +14,11 @@ import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { RecoveryGroupListItem } from '../model/recoveryGroupTypes'
+import {
+  getResourceTypeLabelKey,
+  getSourceCategoryLabelKey,
+  getWorkloadTypeLabelKey,
+} from '../utils/recoveryGroupTypeLabels'
 
 interface RecoveryGroupsTableProps {
   groups: RecoveryGroupListItem[]
@@ -68,12 +73,14 @@ export function RecoveryGroupsTable({ groups, onEdit, onDelete }: RecoveryGroups
     {
       id: 'workloadType',
       header: t('tables.recoveryGroups.workloadType'),
-      cell: group => <Badge color="info" size="sm">{group.workloadType}</Badge>,
+      cell: group => (
+        <Badge color="info" size="sm">{t(getWorkloadTypeLabelKey(group.workloadType))}</Badge>
+      ),
     },
     {
       id: 'resourceType',
       header: t('tables.recoveryGroups.resourceType'),
-      cell: group => group.resourceType,
+      cell: group => t(getResourceTypeLabelKey(group.resourceType)),
     },
     {
       id: 'resources',
@@ -134,7 +141,11 @@ export function RecoveryGroupsTable({ groups, onEdit, onDelete }: RecoveryGroups
                 }}
               >
                 <option value="">{t('pages.recoveryGroups.filters.allWorkloadTypes')}</option>
-                {filterOptions.workloadTypes.map(type => <option key={type} value={type}>{type}</option>)}
+                {filterOptions.workloadTypes.map(type => (
+                  <option key={type} value={type}>
+                    {t(getWorkloadTypeLabelKey(type))}
+                  </option>
+                ))}
               </Select>
             </Field>
             <Field label={t('pages.recoveryGroups.filters.resourceType')} htmlFor="recovery-group-resource-filter">
@@ -146,7 +157,11 @@ export function RecoveryGroupsTable({ groups, onEdit, onDelete }: RecoveryGroups
                 }}
               >
                 <option value="">{t('pages.recoveryGroups.filters.allResourceTypes')}</option>
-                {filterOptions.resourceTypes.map(type => <option key={type} value={type}>{type}</option>)}
+                {filterOptions.resourceTypes.map(type => (
+                  <option key={type} value={type}>
+                    {t(getResourceTypeLabelKey(type))}
+                  </option>
+                ))}
               </Select>
             </Field>
           </>
@@ -207,8 +222,18 @@ export function RecoveryGroupsTable({ groups, onEdit, onDelete }: RecoveryGroups
         {selected ? (
           <dl className="space-y-3 px-5 py-2">
             <DetailRow label={t('details.description')} value={selected.description || '—'} />
-            <DetailRow label={t('tables.recoveryGroups.workloadType')} value={selected.workloadType} />
-            <DetailRow label={t('tables.recoveryGroups.resourceType')} value={selected.resourceType} />
+            <DetailRow
+              label={t('tables.recoveryGroups.sourceCategory')}
+              value={t(getSourceCategoryLabelKey(selected.sourceCategory))}
+            />
+            <DetailRow
+              label={t('tables.recoveryGroups.workloadType')}
+              value={t(getWorkloadTypeLabelKey(selected.workloadType))}
+            />
+            <DetailRow
+              label={t('tables.recoveryGroups.resourceType')}
+              value={t(getResourceTypeLabelKey(selected.resourceType))}
+            />
             <DetailRow label={t('tables.recoveryGroups.resources')} value={String(selected.resourceCount)} />
             <DetailRow
               label={t('tables.recoveryGroups.status')}

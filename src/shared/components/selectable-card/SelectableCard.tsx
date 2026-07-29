@@ -23,7 +23,7 @@ export function SelectableCard({
       type="button"
       aria-pressed={selected}
       className={cn(
-        'flex min-h-36 w-full flex-col rounded-lg border-2 p-4 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#1596dd]/15',
+        'flex min-h-36 w-full flex-col rounded-lg border-2 p-4 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#1596dd]/15 disabled:cursor-not-allowed disabled:border-[#e3eaf2] disabled:bg-[#f6f8fb] disabled:opacity-60',
         selected
           ? 'border-[#0d91d7] bg-[#eef8fe] shadow-[0_10px_24px_-18px_rgba(13,145,215,0.8)]'
           : 'border-[#d9e6f1] bg-white hover:border-[#abd5f2] hover:bg-[#f8fbfe]',

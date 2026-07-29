@@ -22,7 +22,7 @@ export function RecoveryGroupResourcesStep({
   const { data: inventory, error, isLoading, isFetching, refetch } = useDiscoveryInventory()
   const virtualMachines = inventory?.virtualMachines.map(vm => vm.name) ?? []
 
-  if (workloadType === 'IBM FlashSystem') {
+  if (workloadType === 'ibm_flashsystem') {
     return (
       <EmptyState
         title={t('pages.recoveryGroupBuilder.resources.flashEmptyTitle')}

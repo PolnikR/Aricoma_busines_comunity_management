@@ -21,6 +21,7 @@ const INITIAL_DRAFT: RecoveryGroupDraft = {
   id: '',
   name: '',
   description: '',
+  sourceCategory: null,
   workloadType: null,
   resourceType: null,
   resources: [],
@@ -41,6 +42,7 @@ export function RecoveryGroupBuilder({
         id: initialData.id,
         name: initialData.name,
         description: initialData.description,
+        sourceCategory: initialData.sourceCategory,
         workloadType: initialData.workloadType,
         resourceType: initialData.resourceType,
         resources: [...initialData.resources],
@@ -57,7 +59,7 @@ export function RecoveryGroupBuilder({
     && draft.name.trim()
     && draft.description.trim(),
   )
-  const typeValid = Boolean(draft.workloadType && draft.resourceType)
+  const typeValid = Boolean(draft.sourceCategory && draft.workloadType && draft.resourceType)
   const steps = [
     { id: 'details', label: t('pages.recoveryGroupBuilder.steps.details') },
     { id: 'type', label: t('pages.recoveryGroupBuilder.steps.type'), disabled: !detailsValid },
@@ -79,6 +81,7 @@ export function RecoveryGroupBuilder({
     && draft.id
     && idAvailable
     && draft.description.trim()
+    && draft.sourceCategory
     && draft.workloadType
     && draft.resourceType
     && draft.resources.length > 0,
@@ -111,9 +114,19 @@ export function RecoveryGroupBuilder({
             ) : null}
             {step === 2 ? (
               <RecoveryGroupTypeStep
+                sourceCategory={draft.sourceCategory}
                 selected={draft.workloadType}
-                onSelect={(workloadType, resourceType) => {
+                onCategoryChange={(sourceCategory) => {
                   updateDraft({
+                    sourceCategory,
+                    workloadType: null,
+                    resourceType: null,
+                    resources: [],
+                  })
+                }}
+                onSelect={(sourceCategory, workloadType, resourceType) => {
+                  updateDraft({
+                    sourceCategory,
                     workloadType,
                     resourceType,
                     resources: draft.workloadType === workloadType ? draft.resources : [],

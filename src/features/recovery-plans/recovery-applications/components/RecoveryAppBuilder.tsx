@@ -87,7 +87,11 @@ export function RecoveryAppBuilder({
   const { t } = useTranslation()
   const { groups } = useRecoveryGroups()
   const availableGroups = groups.filter(
-    group => group.workloadType === 'VMware' && group.resourceType === 'VM',
+    group => (
+      group.sourceCategory === 'backup_system_workload'
+      && group.workloadType === 'vmware_virtual_machines'
+      && group.resourceType === 'vm'
+    ),
   )
   const groupLabels = Object.fromEntries(
     availableGroups.map(group => [group.id, group.name]),
