@@ -82,6 +82,25 @@ describe('TierCanvas', () => {
     expect(onTierDelete).toHaveBeenCalledWith('database')
   })
 
+  it('reports the tier whose recovery group was removed', async () => {
+    const user = userEvent.setup()
+    const onRecoveryGroupRemoved = vi.fn()
+
+    render(
+      <TierCanvas
+        tiers={mockTiers}
+        onRecoveryGroupRemoved={onRecoveryGroupRemoved}
+      />,
+    )
+
+    const removeButtons = screen.getAllByRole('button', { name: 'Remove recovery group' })
+    const firstRemoveButton = removeButtons[0]
+    expect(firstRemoveButton).toBeDefined()
+    if (firstRemoveButton) await user.click(firstRemoveButton)
+
+    expect(onRecoveryGroupRemoved).toHaveBeenCalledWith('database')
+  })
+
   it('calls onTierAdd when new tier created', async () => {
     const user = userEvent.setup()
     const onTierAdd = vi.fn()

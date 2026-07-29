@@ -11,6 +11,8 @@ interface ResourceSelectionCardProps {
   dropDataKey?: string
   onResourceDrop?: (resource: string) => void
   onResourceRemove?: (resource: string) => void
+  onClear?: () => void
+  clearLabel?: string
   className?: string
 }
 
@@ -24,6 +26,8 @@ export function ResourceSelectionCard({
   dropDataKey,
   onResourceDrop,
   onResourceRemove,
+  onClear,
+  clearLabel,
   className,
 }: ResourceSelectionCardProps) {
   const [isDragOver, setIsDragOver] = useState(false)
@@ -49,7 +53,22 @@ export function ResourceSelectionCard({
         className,
       )}
     >
-      {title ? <h3 className="shrink-0 text-sm font-semibold text-[#18253d]">{title}</h3> : null}
+      {title ? (
+        <div className="flex shrink-0 items-start justify-between gap-2">
+          <h3 className="min-w-0 text-sm font-semibold text-[#18253d]">{title}</h3>
+          {onClear && clearLabel ? (
+            <button
+              type="button"
+              onClick={onClear}
+              className="flex size-6 shrink-0 items-center justify-center rounded-md text-[#7f8da2] transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1596dd]/30"
+              aria-label={clearLabel}
+              title={clearLabel}
+            >
+              <span aria-hidden="true">✕</span>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       {description ? <p className="shrink-0 text-xs text-[#71819a]">{description}</p> : null}
       {items.length === 0 ? (
         <div className="flex min-h-0 flex-1 items-center justify-center text-center text-xs text-[#91a4bc]">

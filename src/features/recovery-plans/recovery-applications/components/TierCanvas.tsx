@@ -6,6 +6,7 @@ import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 interface TierCanvasProps {
   tiers: Record<string, RecoveryTier>
   onRecoveryGroupAdded?: (tierId: string, groupId: string) => void
+  onRecoveryGroupRemoved?: (tierId: string) => void
   onTierEdit?: (tierId: string, newTierId: string, updates: {
     tierDescription: string
   }) => void
@@ -17,6 +18,7 @@ interface TierCanvasProps {
 export function TierCanvas({
   tiers,
   onRecoveryGroupAdded,
+  onRecoveryGroupRemoved,
   onTierEdit,
   onTierAdd,
   onTierDelete,
@@ -125,6 +127,11 @@ export function TierCanvas({
         if (onRecoveryGroupAdded) {
           tierCardProps.onRecoveryGroupAdded = (groupId) => {
             onRecoveryGroupAdded(id, groupId)
+          }
+        }
+        if (onRecoveryGroupRemoved) {
+          tierCardProps.onRecoveryGroupRemoved = () => {
+            onRecoveryGroupRemoved(id)
           }
         }
 

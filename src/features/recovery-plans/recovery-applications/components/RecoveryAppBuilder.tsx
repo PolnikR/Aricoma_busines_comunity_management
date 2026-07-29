@@ -127,6 +127,21 @@ export function RecoveryAppBuilder({
     onDirtyChange?.(true)
   }, [availableGroups, onDirtyChange])
 
+  const handleRecoveryGroupRemoved = useCallback((tierId: string) => {
+    setFormState(prev => {
+      const tier = prev.tiers.get(tierId)
+      if (!tier?.recovery_group) return prev
+
+      const newTiers = new Map(prev.tiers)
+      newTiers.set(tierId, {
+        order: tier.order,
+        description: tier.description,
+      })
+      return { ...prev, tiers: newTiers }
+    })
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
+
   const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: {
     tierDescription: string
   }) => {
@@ -254,6 +269,7 @@ export function RecoveryAppBuilder({
             <TierCanvas
               tiers={Object.fromEntries(formState.tiers)}
               onRecoveryGroupAdded={handleRecoveryGroupAdded}
+              onRecoveryGroupRemoved={handleRecoveryGroupRemoved}
               onTierEdit={handleTierEdit}
               onTierAdd={handleTierAdd}
               onTierDelete={handleTierDelete}

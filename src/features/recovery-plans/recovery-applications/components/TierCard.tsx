@@ -19,6 +19,7 @@ interface TierCardProps {
   existingIds: string[]
   canDelete: boolean
   onRecoveryGroupAdded?: (groupId: string) => void
+  onRecoveryGroupRemoved?: () => void
 }
 
 interface EditFormState {
@@ -39,6 +40,7 @@ export function TierCard({
   existingIds,
   canDelete,
   onRecoveryGroupAdded,
+  onRecoveryGroupRemoved,
 }: TierCardProps) {
   const { t } = useTranslation()
   const [editForm, setEditForm] = useState<EditFormState>({
@@ -189,6 +191,8 @@ export function TierCard({
           ariaLabel={`${tier.recovery_group.name} virtual machines`}
           dropDataKey="recovery-group-id"
           onResourceDrop={groupId => { onRecoveryGroupAdded?.(groupId) }}
+          clearLabel={t('recovery.tier.removeRecoveryGroup')}
+          {...(onRecoveryGroupRemoved ? { onClear: onRecoveryGroupRemoved } : {})}
         />
       ) : (
         <ResourceSelectionCard

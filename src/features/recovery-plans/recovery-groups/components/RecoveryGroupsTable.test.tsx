@@ -1,9 +1,10 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { LanguageProvider } from '@/contexts/LanguageContext'
+import { describe, expect, it, vi } from 'vitest'
 import type { RecoveryGroupListItem } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsTable } from './RecoveryGroupsTable'
+
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 const groups: RecoveryGroupListItem[] = [
   {
@@ -19,16 +20,10 @@ const groups: RecoveryGroupListItem[] = [
 ]
 
 describe('RecoveryGroupsTable', () => {
-  beforeEach(() => {
-    localStorage.setItem('app-language', 'en')
-  })
-
   it('renders group columns and opens the group detail drawer', async () => {
     const user = userEvent.setup()
     render(
-      <LanguageProvider>
-        <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />
-      </LanguageProvider>,
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
     )
 
     expect(await screen.findByText('Recovery Group')).toBeInTheDocument()
@@ -44,9 +39,7 @@ describe('RecoveryGroupsTable', () => {
   it('filters groups by search text', async () => {
     const user = userEvent.setup()
     render(
-      <LanguageProvider>
-        <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />
-      </LanguageProvider>,
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
     )
 
     const search = await screen.findByRole('searchbox', { name: 'Search recovery groups' })
@@ -60,9 +53,7 @@ describe('RecoveryGroupsTable', () => {
     const onEdit = vi.fn()
     const onDelete = vi.fn()
     render(
-      <LanguageProvider>
-        <RecoveryGroupsTable groups={groups} onEdit={onEdit} onDelete={onDelete} />
-      </LanguageProvider>,
+      <RecoveryGroupsTable groups={groups} onEdit={onEdit} onDelete={onDelete} />,
     )
 
     await user.click(screen.getByText('Database group'))

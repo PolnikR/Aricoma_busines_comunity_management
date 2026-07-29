@@ -276,4 +276,23 @@ describe('TierCard', () => {
 
     expect(onDelete).toHaveBeenCalledWith('database')
   })
+
+  it('removes only the assigned recovery group from the tier', async () => {
+    const user = userEvent.setup()
+    const onRecoveryGroupRemoved = vi.fn()
+
+    render(
+      <TierCard
+        id="database"
+        tier={mockTier}
+        onRecoveryGroupRemoved={onRecoveryGroupRemoved}
+        existingIds={['database']}
+        canDelete
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Remove recovery group' }))
+
+    expect(onRecoveryGroupRemoved).toHaveBeenCalledOnce()
+  })
 })

@@ -24,14 +24,19 @@ vi.mock('./TierCanvas', () => ({
   TierCanvas: ({
     tiers,
     onRecoveryGroupAdded,
+    onRecoveryGroupRemoved,
   }: {
     tiers: Record<string, RecoveryTier>
     onRecoveryGroupAdded?: (tierId: string, groupId: string) => void
+    onRecoveryGroupRemoved?: (tierId: string) => void
   }) => (
     <div>
       <span>Database VMs: {tiers['database']?.recovery_group?.vms.length ?? 0}</span>
       <button type="button" onClick={() => { onRecoveryGroupAdded?.('database', 'database_group') }}>
         Add test group
+      </button>
+      <button type="button" onClick={() => { onRecoveryGroupRemoved?.('database') }}>
+        Remove test group
       </button>
       <button
         type="button"
@@ -146,5 +151,20 @@ describe('RecoveryAppBuilder', () => {
       description: 'Database recovery group',
       vms: [{ name: 'DB-01' }, { name: 'DB-02' }],
     })
+  })
+
+  it('removes an assigned recovery group and reports the builder as dirty', async () => {
+    const user = userEvent.setup()
+    const onDirtyChange = vi.fn()
+    render(<RecoveryAppBuilder onDirtyChange={onDirtyChange} />)
+
+    await user.click(screen.getByRole('button', { name: 'Add test group' }))
+    expect(screen.getByText('Database VMs: 2')).toBeInTheDocument()
+
+    onDirtyChange.mockClear()
+    await user.click(screen.getByRole('button', { name: 'Remove test group' }))
+
+    expect(screen.getByText('Database VMs: 0')).toBeInTheDocument()
+    expect(onDirtyChange).toHaveBeenCalledWith(true)
   })
 })
