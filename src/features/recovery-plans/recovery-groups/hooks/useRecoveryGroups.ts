@@ -6,7 +6,7 @@ import {
   listRecoveryGroups,
   RECOVERY_GROUPS_CHANGED_EVENT,
   updateRecoveryGroup,
-} from '../storage/recoveryGroupsStorage'
+} from '../api/recoveryGroupsStorage'
 
 export function useRecoveryGroups() {
   const [groups, setGroups] = useState<RecoveryGroup[]>(listRecoveryGroups)
