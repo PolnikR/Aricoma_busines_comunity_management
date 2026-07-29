@@ -183,7 +183,6 @@ export function TierCard({
 
       {tier.recovery_group ? (
         <ResourceSelectionCard
-          title={`${t('recovery.tier.recoveryGroup')}: ${tier.recovery_group.name}`}
           description={tier.recovery_group.description}
           items={tier.recovery_group.vms.map(vm => vm.name)}
           emptyText={t('recovery.tier.emptyRecoveryGroup')}

@@ -148,13 +148,21 @@ describe('ProvidersCreateModal', () => {
     )
 
     fillValidForm()
+    fireEvent.change(screen.getByLabelText('Credentials'), { target: { value: 'vcenter-admin' } })
     fireEvent.click(screen.getByRole('button', { name: /Create Provider/i }))
 
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
 
     const init = mockFetch.mock.calls[0]?.[1] as RequestInit
     const body = JSON.parse(init.body as string) as ProviderRecord
-    expect(body).toMatchObject({ id: 'flashcopy-01', name: 'New Provider', type: 'VMWARE', ipAddress: '10.0.0.1' })
+    expect(body).toMatchObject({
+      id: 'flashcopy-01',
+      name: 'New Provider',
+      type: 'VMWARE',
+      ipAddress: '10.0.0.1',
+      credentialId: 'vcenter-admin',
+    })
+    expect(body).not.toHaveProperty('credentialStatus')
     vi.unstubAllGlobals()
   })
 
@@ -197,6 +205,7 @@ describe('ProvidersCreateModal', () => {
     expect((idInput as HTMLInputElement).value).toBe('vmware-vcenter-01')
     expect(idInput).toBeDisabled()
     expect((nameInput as HTMLInputElement).value).toBe('Production vCenter')
+    expect(screen.getByLabelText('Credentials')).toHaveValue('vcenter-admin')
   })
 
   it('posts a single edited provider object in edit mode', async () => {
@@ -218,5 +227,20 @@ describe('ProvidersCreateModal', () => {
     const body = JSON.parse(init.body as string) as ProviderRecord
     expect(body).toMatchObject({ id: 'vmware-vcenter-01', name: 'Renamed vCenter' })
     vi.unstubAllGlobals()
+  })
+
+  it('warns before closing a dirty provider form', () => {
+    const onClose = vi.fn()
+    renderWithQueryClient(
+      <ProvidersCreateModal open onClose={onClose} existingProviders={[]} />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'Unsaved provider' } })
+    fireEvent.click(screen.getByRole('button', { name: /Cancel/i }))
+
+    expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByRole('heading', { name: 'Discard unsaved provider changes?' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
+    expect(onClose).toHaveBeenCalledOnce()
   })
 })

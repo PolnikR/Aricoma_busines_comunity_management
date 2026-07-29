@@ -53,14 +53,14 @@ export function ResourceSelectionCard({
         className,
       )}
     >
-      {title ? (
+      {title || (onClear && clearLabel) ? (
         <div className="flex shrink-0 items-start justify-between gap-2">
-          <h3 className="min-w-0 text-sm font-semibold text-[#18253d]">{title}</h3>
+          {title ? <h3 className="min-w-0 text-sm font-semibold text-[#18253d]">{title}</h3> : null}
           {onClear && clearLabel ? (
             <button
               type="button"
               onClick={onClear}
-              className="flex size-6 shrink-0 items-center justify-center rounded-md text-[#7f8da2] transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1596dd]/30"
+              className="ml-auto flex size-6 shrink-0 items-center justify-center rounded-md text-[#7f8da2] transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1596dd]/30"
               aria-label={clearLabel}
               title={clearLabel}
             >
