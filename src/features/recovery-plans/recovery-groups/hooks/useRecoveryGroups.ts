@@ -1,45 +1,60 @@
-import { useCallback, useEffect, useState } from 'react'
-import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
+import { useEffect } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createRecoveryGroup,
   deleteRecoveryGroup,
-  listRecoveryGroups,
-  RECOVERY_GROUPS_CHANGED_EVENT,
+  fetchRecoveryGroups,
   updateRecoveryGroup,
-} from '../api/recoveryGroupsStorage'
+} from '../api/recoveryGroupsApi'
+import { recoveryGroupKeys } from '../api/recoveryGroupQueryKeys'
+import { RECOVERY_GROUPS_STORAGE_KEY } from '../api/recoveryGroupsLocalStorage'
+import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 
 export function useRecoveryGroups() {
-  const [groups, setGroups] = useState<RecoveryGroup[]>(listRecoveryGroups)
-
-  const refresh = useCallback(() => {
-    setGroups(listRecoveryGroups())
-  }, [])
+  const queryClient = useQueryClient()
+  const query = useQuery({
+    queryKey: recoveryGroupKeys.list(),
+    queryFn: fetchRecoveryGroups,
+    retry: false,
+    refetchOnWindowFocus: false,
+  })
 
   useEffect(() => {
-    window.addEventListener(RECOVERY_GROUPS_CHANGED_EVENT, refresh)
-    window.addEventListener('storage', refresh)
-    return () => {
-      window.removeEventListener(RECOVERY_GROUPS_CHANGED_EVENT, refresh)
-      window.removeEventListener('storage', refresh)
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === RECOVERY_GROUPS_STORAGE_KEY) {
+        void queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() })
+      }
     }
-  }, [refresh])
+    window.addEventListener('storage', handleStorage)
+    return () => { window.removeEventListener('storage', handleStorage) }
+  }, [queryClient])
 
-  const create = useCallback((draft: RecoveryGroupDraft) => {
-    const group = createRecoveryGroup(draft)
-    setGroups(current => [...current, group])
-    return group
-  }, [])
+  const createMutation = useMutation({
+    mutationFn: createRecoveryGroup,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() }),
+  })
+  const updateMutation = useMutation({
+    mutationFn: ({ id, draft }: { id: string; draft: RecoveryGroupDraft }) => (
+      updateRecoveryGroup(id, draft)
+    ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() }),
+  })
+  const deleteMutation = useMutation({
+    mutationFn: deleteRecoveryGroup,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() }),
+  })
 
-  const update = useCallback((id: string, draft: RecoveryGroupDraft) => {
-    const group = updateRecoveryGroup(id, draft)
-    setGroups(current => current.map(item => item.id === id ? group : item))
-    return group
-  }, [])
-
-  const remove = useCallback((id: string) => {
-    deleteRecoveryGroup(id)
-    setGroups(current => current.filter(group => group.id !== id))
-  }, [])
-
-  return { groups, create, update, remove, refresh }
+  return {
+    groups: query.data ?? [],
+    isLoading: query.isLoading,
+    error: query.error,
+    refresh: query.refetch,
+    create: createMutation.mutateAsync,
+    update: (id: string, draft: RecoveryGroupDraft) => updateMutation.mutateAsync({ id, draft }),
+    remove: deleteMutation.mutate,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+    mutationError: createMutation.error ?? updateMutation.error ?? deleteMutation.error,
+  }
 }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/shared/components/button/Button'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { routes } from '@/app/routes'
@@ -9,12 +10,20 @@ import { useUnsavedChangesGuard } from '../../recovery-applications/hooks/useUns
 import { RecoveryGroupBuilder } from '../components/RecoveryGroupBuilder'
 import { useRecoveryGroups } from '../hooks/useRecoveryGroups'
 import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
+import { getRecoveryGroupsErrorKey } from '../utils/recoveryGroupsErrorMessage'
 
 export function RecoveryGroupEditorPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { id = '' } = useParams()
-  const { groups, update } = useRecoveryGroups()
+  const {
+    groups,
+    update,
+    isLoading,
+    isUpdating,
+    error: loadError,
+    refresh,
+  } = useRecoveryGroups()
   const [isDirty, setIsDirty] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
@@ -23,14 +32,31 @@ export function RecoveryGroupEditorPage() {
   const navigateToGroups = () => { void navigate(routes.recoveryGroups) }
   const requestBack = () => { navigationGuard.requestNavigation(navigateToGroups) }
 
-  const handleUpdate = (draft: RecoveryGroupDraft) => {
+  const handleUpdate = async (draft: RecoveryGroupDraft) => {
     try {
-      update(id, draft)
+      await update(id, draft)
       setIsDirty(false)
       navigationGuard.runWithoutBlocking(navigateToGroups)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t('pages.recoveryGroupEditor.error.update'))
+      setError(t(getRecoveryGroupsErrorKey(cause)))
     }
+  }
+
+  if (isLoading) {
+    return <div className="p-6" role="status">{t('pages.recoveryGroups.loading')}</div>
+  }
+
+  if (loadError) {
+    return (
+      <div className="p-6">
+        <FetchErrorAlert
+          title={t('pages.recoveryGroups.errors.load')}
+          onRetry={() => { void refresh() }}
+          retryLabel={t('buttons.retry')}
+          variant="full"
+        />
+      </div>
+    )
   }
 
   if (!group) {
@@ -55,10 +81,11 @@ export function RecoveryGroupEditorPage() {
       <RecoveryGroupBuilder
         initialData={group}
         submitLabel={t('pages.recoveryGroupEditor.saveButton')}
-        onCreate={handleUpdate}
+        onCreate={draft => { void handleUpdate(draft) }}
         onCancel={requestBack}
         onDirtyChange={setIsDirty}
         existingIds={groups.map(item => item.id)}
+        isSaving={isUpdating}
       />
       <ConfirmDialog
         open={navigationGuard.isNavigationBlocked}

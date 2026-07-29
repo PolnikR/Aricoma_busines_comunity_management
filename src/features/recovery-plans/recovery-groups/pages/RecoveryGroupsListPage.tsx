@@ -1,16 +1,19 @@
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
+import { ListSkeleton } from '@/shared/components/list-skeleton/ListSkeleton'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { routes } from '@/app/routes'
 import { RecoveryGroupsTable } from '../components/RecoveryGroupsTable'
 import { useRecoveryGroups } from '../hooks/useRecoveryGroups'
+import { getRecoveryGroupsErrorKey } from '../utils/recoveryGroupsErrorMessage'
 
 export function RecoveryGroupsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { groups, remove } = useRecoveryGroups()
+  const { groups, remove, isLoading, error, refresh, mutationError } = useRecoveryGroups()
   const navigateToCreate = () => { void navigate(`${routes.recoveryGroups}/create`) }
   const navigateToEdit = (id: string) => {
     void navigate(`${routes.recoveryGroups}/${encodeURIComponent(id)}/edit`)
@@ -30,7 +33,21 @@ export function RecoveryGroupsListPage() {
       />
 
       <div className="flex flex-1 flex-col gap-4 overflow-hidden p-3 lg:min-h-0">
-        {groups.length === 0 ? (
+        {mutationError ? (
+          <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert">
+            {t(getRecoveryGroupsErrorKey(mutationError))}
+          </div>
+        ) : null}
+        {isLoading ? (
+          <ListSkeleton ariaLabel={t('pages.recoveryGroups.loading')} />
+        ) : error ? (
+          <FetchErrorAlert
+            title={t('pages.recoveryGroups.errors.load')}
+            onRetry={() => { void refresh() }}
+            retryLabel={t('buttons.retry')}
+            variant="full"
+          />
+        ) : groups.length === 0 ? (
           <EmptyState
             title={t('pages.recoveryGroups.empty.title')}
             description={t('pages.recoveryGroups.empty.description')}

@@ -11,6 +11,7 @@ import type {
 interface RecoveryGroupTypeStepProps {
   sourceCategory: RecoveryGroupSourceCategory | null
   selected: RecoveryGroupWorkloadType | null
+  readOnly?: boolean
   onCategoryChange: (sourceCategory: RecoveryGroupSourceCategory) => void
   onSelect: (
     sourceCategory: RecoveryGroupSourceCategory,
@@ -101,6 +102,7 @@ const STORAGE_WORKLOADS: WorkloadCardDefinition[] = [
 export function RecoveryGroupTypeStep({
   sourceCategory,
   selected,
+  readOnly = false,
   onCategoryChange,
   onSelect,
 }: RecoveryGroupTypeStepProps) {
@@ -137,7 +139,9 @@ export function RecoveryGroupTypeStep({
       <Tabs
         items={tabs}
         value={visibleCategory}
-        onChange={onCategoryChange}
+        onChange={value => {
+          if (!readOnly) onCategoryChange(value)
+        }}
         ariaLabel={t('pages.recoveryGroupBuilder.type.categories.ariaLabel')}
         className="mt-5 px-0"
       />
@@ -155,7 +159,7 @@ export function RecoveryGroupTypeStep({
               description={t(workload.descriptionKey)}
               meta={t(workload.metaKey)}
               icon={workload.logo}
-              disabled={!isAvailable}
+              disabled={!isAvailable || readOnly}
               onClick={() => {
                 if (!workload.workloadType || !workload.resourceType) return
                 onSelect(visibleCategory, workload.workloadType, workload.resourceType)

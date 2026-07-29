@@ -1,15 +1,15 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useProviders } from '../providers/api/useProviders'
+import { useProviders } from '../api/useProviders'
 import { ProvidersPage } from './ProvidersPage'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../providers/api/useProviders', () => ({ useProviders: vi.fn() }))
-vi.mock('../providers/components/ProvidersCatalogueTable', () => ({
+vi.mock('../api/useProviders', () => ({ useProviders: vi.fn() }))
+vi.mock('../components/ProvidersCatalogueTable', () => ({
   ProvidersCatalogueTable: () => <div>Provider catalogue</div>,
 }))
-vi.mock('../providers/components/ProvidersCreateModal', () => ({
+vi.mock('../components/ProvidersCreateModal', () => ({
   ProvidersCreateModal: ({ open, existingProviders }: { open: boolean; existingProviders: unknown[] }) => (
     open ? <div>Provider modal with {existingProviders.length} existing</div> : null
   ),

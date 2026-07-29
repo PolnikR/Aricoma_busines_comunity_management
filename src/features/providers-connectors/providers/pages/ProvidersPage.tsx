@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
-import { ProvidersCatalogueTable } from '../providers/components/ProvidersCatalogueTable'
-import { ProvidersCreateModal } from '../providers/components/ProvidersCreateModal'
-import { useProviders } from '../providers/api/useProviders'
+import { ProvidersCatalogueTable } from '../components/ProvidersCatalogueTable'
+import { ProvidersCreateModal } from '../components/ProvidersCreateModal'
+import { useProviders } from '../api/useProviders'
 
 export function ProvidersPage() {
   const { t } = useTranslation()

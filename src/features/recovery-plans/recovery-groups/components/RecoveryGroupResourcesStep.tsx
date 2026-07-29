@@ -19,8 +19,6 @@ export function RecoveryGroupResourcesStep({
   onRemove,
 }: RecoveryGroupResourcesStepProps) {
   const { t } = useTranslation()
-  const { data: inventory, error, isLoading, isFetching, refetch } = useDiscoveryInventory()
-  const virtualMachines = inventory?.virtualMachines.map(vm => vm.name) ?? []
 
   if (workloadType === 'ibm_flashsystem') {
     return (
@@ -30,6 +28,18 @@ export function RecoveryGroupResourcesStep({
       />
     )
   }
+
+  return <VmRecoveryGroupResources resources={resources} onAdd={onAdd} onRemove={onRemove} />
+}
+
+function VmRecoveryGroupResources({
+  resources,
+  onAdd,
+  onRemove,
+}: Pick<RecoveryGroupResourcesStepProps, 'resources' | 'onAdd' | 'onRemove'>) {
+  const { t } = useTranslation()
+  const { data: inventory, error, isLoading, isFetching, refetch } = useDiscoveryInventory()
+  const virtualMachines = inventory?.virtualMachines.map(vm => vm.name) ?? []
 
   return (
     <div className="grid h-full min-h-0 gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">

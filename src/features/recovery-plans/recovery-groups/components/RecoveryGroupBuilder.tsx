@@ -15,6 +15,7 @@ interface RecoveryGroupBuilderProps {
   initialData?: RecoveryGroup
   submitLabel?: string
   existingIds?: string[]
+  isSaving?: boolean
 }
 
 const INITIAL_DRAFT: RecoveryGroupDraft = {
@@ -34,6 +35,7 @@ export function RecoveryGroupBuilder({
   initialData,
   submitLabel,
   existingIds = [],
+  isSaving = false,
 }: RecoveryGroupBuilderProps) {
   const { t } = useTranslation()
   const [step, setStep] = useState(1)
@@ -116,6 +118,7 @@ export function RecoveryGroupBuilder({
               <RecoveryGroupTypeStep
                 sourceCategory={draft.sourceCategory}
                 selected={draft.workloadType}
+                readOnly={Boolean(initialData)}
                 onCategoryChange={(sourceCategory) => {
                   updateDraft({
                     sourceCategory,
@@ -167,8 +170,8 @@ export function RecoveryGroupBuilder({
                   {t('buttons.next')}
                 </Button>
               ) : (
-                <Button disabled={!canCreate} onClick={() => { onCreate(draft) }}>
-                  {submitLabel ?? t('pages.recoveryGroupBuilder.createButton')}
+                <Button disabled={!canCreate || isSaving} onClick={() => { onCreate(draft) }}>
+                  {isSaving ? t('messages.saving') : (submitLabel ?? t('pages.recoveryGroupBuilder.createButton'))}
                 </Button>
               )}
             </div>

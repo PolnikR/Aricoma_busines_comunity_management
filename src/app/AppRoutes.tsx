@@ -5,7 +5,7 @@ import {
 } from 'react-router-dom'
 import { AppShell } from '@/layouts/app-shell/AppShell'
 import { VirtualMachinesPage } from '@/features/discovery-inventory/virtual-machines/pages/VirtualMachinesPage'
-import { ProvidersPage } from '@/features/providers-connectors/pages/ProvidersPage'
+import { ProvidersPage } from '@/features/providers-connectors/providers/pages/ProvidersPage'
 import { ModuleWorkQueuePage } from '@/features/module-placeholder/pages/ModuleWorkQueuePage'
 import {
   discoveryInventoryPlaceholderPages,
