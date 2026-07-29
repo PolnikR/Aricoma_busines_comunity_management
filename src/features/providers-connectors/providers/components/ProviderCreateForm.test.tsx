@@ -11,7 +11,15 @@ const data = {
   description: 'Production provider',
   type: 'VMWARE',
   ipAddress: '10.0.0.1',
+  credentialId: 'vcenter-admin',
 }
+
+const credentials = [{
+  id: 'vcenter-admin',
+  name: 'vCenter admin',
+  description: 'Production account',
+  username: 'administrator',
+}]
 
 describe('ProviderCreateForm', () => {
   it('reports field changes and submits on Enter', async () => {
@@ -23,6 +31,10 @@ describe('ProviderCreateForm', () => {
         data={data}
         errors={{}}
         isSubmitting={false}
+        credentials={credentials}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
         onChange={onChange}
         onSubmit={onSubmit}
       />,
@@ -40,6 +52,10 @@ describe('ProviderCreateForm', () => {
         data={data}
         errors={{ id: 'ID error' }}
         isSubmitting={false}
+        credentials={credentials}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
         idDisabled
         onChange={vi.fn()}
         onSubmit={vi.fn()}

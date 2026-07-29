@@ -2,6 +2,7 @@ import type { ChangeEvent } from 'react'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PROVIDER_TYPES } from '../model/providerTypes'
+import type { CredentialRecord } from '../../credentials/model/credentialTypes'
 
 export interface ProviderCreateFormData {
   id: string
@@ -9,6 +10,7 @@ export interface ProviderCreateFormData {
   description: string
   type: string
   ipAddress: string
+  credentialId: string
 }
 
 interface ProviderCreateFormProps {
@@ -18,13 +20,31 @@ interface ProviderCreateFormProps {
   // Locks the ID field (edit mode): changing an existing id would create a new
   // provider rather than update the current one.
   idDisabled?: boolean
+  credentials: CredentialRecord[]
+  credentialsLoading: boolean
+  credentialsError: boolean
+  onRetryCredentials: () => void
   onChange: (field: keyof ProviderCreateFormData, value: string) => void
   onSubmit: () => void
 }
 
 // Presentational form for creating or editing a provider.
-export function ProviderCreateForm({ data, errors, isSubmitting, idDisabled = false, onChange, onSubmit }: ProviderCreateFormProps) {
+export function ProviderCreateForm({
+  data,
+  errors,
+  isSubmitting,
+  idDisabled = false,
+  credentials,
+  credentialsLoading,
+  credentialsError,
+  onRetryCredentials,
+  onChange,
+  onSubmit,
+}: ProviderCreateFormProps) {
   const { t } = useTranslation()
+  const selectedCredentialIsMissing = Boolean(
+    data.credentialId && !credentials.some(credential => credential.id === data.credentialId),
+  )
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' && !isSubmitting) {
       event.preventDefault()
@@ -107,10 +127,32 @@ export function ProviderCreateForm({ data, errors, isSubmitting, idDisabled = fa
       <Field label={t('forms.credentials')} htmlFor="create-credentials">
         <Select
           id="create-credentials"
-          disabled={true}
+          value={data.credentialId}
+          onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('credentialId', event.target.value) }}
+          disabled={isSubmitting || credentialsLoading || credentialsError}
         >
-          <option value="">{t('forms.credentialsSelect')}</option>
+          <option value="">
+            {credentialsLoading ? t('providers.credentials.loading') : t('forms.credentialsSelect')}
+          </option>
+          {selectedCredentialIsMissing ? (
+            <option value={data.credentialId}>
+              {t('providers.credentials.unavailable').replace('{id}', data.credentialId)}
+            </option>
+          ) : null}
+          {credentials.map(credential => (
+            <option key={credential.id} value={credential.id}>
+              {credential.name} — {credential.username}
+            </option>
+          ))}
         </Select>
+        {credentialsError ? (
+          <p className="mt-1 text-xs text-red-600" role="alert">
+            {t('providers.credentials.loadFailed')}{' '}
+            <button type="button" className="font-semibold underline" onClick={onRetryCredentials}>
+              {t('buttons.retry')}
+            </button>
+          </p>
+        ) : null}
       </Field>
     </div>
   )

@@ -5,6 +5,23 @@ import { ProvidersCreateModal } from './ProvidersCreateModal'
 import type { ProviderRecord } from '../model/providerTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+vi.mock('react-router-dom', async (importOriginal) => ({
+  ...await importOriginal<typeof import('react-router-dom')>(),
+  useBlocker: () => ({ state: 'unblocked' as const }),
+}))
+vi.mock('../../credentials/api/useCredentials', () => ({
+  useCredentials: () => ({
+    data: [{
+      id: 'vcenter-admin',
+      name: 'vCenter admin',
+      description: 'Production account',
+      username: 'administrator',
+    }],
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+}))
 
 const mockProviderA: ProviderRecord = {
   id: 'vmware-vcenter-01',
@@ -12,6 +29,8 @@ const mockProviderA: ProviderRecord = {
   description: 'Primary vCenter',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  credentialId: 'vcenter-admin',
+  credentialStatus: 'ok',
 }
 
 function renderWithQueryClient(component: React.ReactElement) {
@@ -43,6 +62,7 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByLabelText('Description')).toBeInTheDocument()
     expect(screen.getByLabelText('Type')).toBeInTheDocument()
     expect(screen.getByLabelText('IP address')).toBeInTheDocument()
+    expect(screen.getByLabelText('Credentials')).toBeInTheDocument()
   })
 
   it('renders nothing when closed', () => {

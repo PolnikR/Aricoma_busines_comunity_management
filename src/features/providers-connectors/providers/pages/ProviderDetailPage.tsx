@@ -7,6 +7,13 @@ import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '../api/useProviders'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
+import type { ProviderCredentialStatus } from '../model/providerTypes'
+
+function credentialStatusColor(status: ProviderCredentialStatus) {
+  if (status === 'ok') return 'success' as const
+  if (status === 'missing') return 'error' as const
+  return 'light' as const
+}
 
 export function ProviderDetailPage() {
   const { t } = useTranslation()
@@ -80,7 +87,7 @@ export function ProviderDetailPage() {
               <p className="mt-1 text-sm text-[#71819a]">{t('pages.providers.detail.apiDescription')}</p>
             </div>
             <Badge color="info" size="sm">
-              {provider.type ? providerTypeLabel(provider.type) : t('details.unknown')}
+              {providerTypeLabel(provider.type)}
             </Badge>
           </div>
 
@@ -92,7 +99,7 @@ export function ProviderDetailPage() {
             <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">{t('details.type')}</dt>
               <dd className="mt-1 text-sm text-[#17233d]">
-                {provider.type ? providerTypeLabel(provider.type) : '-'}
+                {providerTypeLabel(provider.type)}
               </dd>
             </div>
             <div>
@@ -102,6 +109,18 @@ export function ProviderDetailPage() {
             <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">{t('details.description')}</dt>
               <dd className="mt-1 text-sm text-[#17233d]">{provider.description || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">{t('details.credential')}</dt>
+              <dd className="mt-1 font-mono text-sm text-[#17233d]">{provider.credentialId ?? '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">{t('details.credentialStatus')}</dt>
+              <dd className="mt-1">
+                <Badge color={credentialStatusColor(provider.credentialStatus)} size="sm">
+                  {t(`providers.credentials.status.${provider.credentialStatus}`)}
+                </Badge>
+              </dd>
             </div>
           </dl>
         </Card>

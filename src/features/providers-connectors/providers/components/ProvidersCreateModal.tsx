@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
+import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
+import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useUpsertProvider } from '../api/useUpsertProvider'
+import { useCredentials } from '../../credentials/api/useCredentials'
 import { ProviderCreateForm } from './ProviderCreateForm'
-import type { ProviderRecord } from '../model/providerTypes'
+import type { ProviderRecord, ProviderSubmitData, ProviderType } from '../model/providerTypes'
 import type { ProviderCreateFormData } from './ProviderCreateForm'
 
 interface ProvidersCreateModalProps {
@@ -16,25 +19,67 @@ interface ProvidersCreateModalProps {
   provider?: ProviderRecord
 }
 
-const EMPTY_FORM: ProviderCreateFormData = { id: '', name: '', description: '', type: '', ipAddress: '' }
+const EMPTY_FORM: ProviderCreateFormData = {
+  id: '',
+  name: '',
+  description: '',
+  type: '',
+  ipAddress: '',
+  credentialId: '',
+}
+
+function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
+  return provider
+    ? {
+        id: provider.id,
+        name: provider.name,
+        description: provider.description,
+        type: provider.type,
+        ipAddress: provider.ipAddress,
+        credentialId: provider.credentialId ?? '',
+      }
+    : EMPTY_FORM
+}
 
 // Modal for creating or editing a provider.
 export function ProvidersCreateModal({ open, onClose, existingProviders, provider }: ProvidersCreateModalProps) {
   const { t } = useTranslation()
   const upsert = useUpsertProvider()
+  const credentialsQuery = useCredentials({ enabled: open })
   const isEdit = Boolean(provider)
   const [formData, setFormData] = useState<ProviderCreateFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof ProviderCreateFormData, string>>>({})
   const [errorMessage, setErrorMessage] = useState('')
+  const initialForm = createInitialForm(provider)
+  const isDirty = open && (
+    formData.id !== initialForm.id
+    || formData.name !== initialForm.name
+    || formData.description !== initialForm.description
+    || formData.type !== initialForm.type
+    || formData.ipAddress !== initialForm.ipAddress
+    || formData.credentialId !== initialForm.credentialId
+  )
+  const navigationGuard = useUnsavedChangesGuard(isDirty)
 
   // Prefill (edit) or clear (create) the form each time the modal opens.
   useEffect(() => {
     if (!open) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setFormData(provider ? { ...provider } : EMPTY_FORM)
+    setFormData(createInitialForm(provider))
     setErrors({})
     setErrorMessage('')
   }, [open, provider])
+
+  const close = () => {
+    setFormData(EMPTY_FORM)
+    setErrors({})
+    setErrorMessage('')
+    onClose()
+  }
+
+  const requestClose = () => {
+    if (!upsert.isPending) navigationGuard.requestNavigation(close)
+  }
 
   const handleChange = (field: keyof ProviderCreateFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -68,18 +113,19 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
 
     setErrorMessage('')
 
-    const record: ProviderRecord = {
+    const record: ProviderSubmitData = {
       id: formData.id.trim(),
-      name: formData.name,
-      description: formData.description,
-      type: formData.type,
-      ipAddress: formData.ipAddress,
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      type: formData.type as ProviderType,
+      ipAddress: formData.ipAddress.trim(),
+      credentialId: formData.credentialId || null,
     }
 
     upsert.mutate(
       { provider: record },
       {
-        onSuccess: () => { onClose() },
+        onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
         onError: (err: unknown) => {
           const detail = err instanceof Error ? err.message : ''
           setErrorMessage(detail ? `${t('providers.submitFailed')}: ${detail}` : t('providers.submitFailed'))
@@ -89,14 +135,16 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
   }
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={t(isEdit ? 'providers.modal.editTitle' : 'providers.modal.createTitle')}
-      footer={
-        <>
+    <>
+      <Modal
+        open={open}
+        onClose={requestClose}
+        closeOnBackdrop={false}
+        title={t(isEdit ? 'providers.modal.editTitle' : 'providers.modal.createTitle')}
+        footer={(
+          <>
           <Button
-            onClick={onClose}
+            onClick={requestClose}
             disabled={upsert.isPending}
             size="sm"
             variant="outline"
@@ -114,23 +162,38 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
               ? t(isEdit ? 'messages.saving' : 'messages.creating')
               : t(isEdit ? 'providers.modal.editTitle' : 'providers.modal.createTitle')}
           </Button>
-        </>
-      }
-    >
-      {errorMessage ? (
-        <div className="mx-6 mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-          {errorMessage}
-        </div>
-      ) : null}
+          </>
+        )}
+      >
+        {errorMessage ? (
+          <div className="mx-6 mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            {errorMessage}
+          </div>
+        ) : null}
 
-      <ProviderCreateForm
-        data={formData}
-        errors={errors}
-        isSubmitting={upsert.isPending}
-        idDisabled={isEdit}
-        onChange={handleChange}
-        onSubmit={handleSubmit}
+        <ProviderCreateForm
+          data={formData}
+          errors={errors}
+          isSubmitting={upsert.isPending}
+          idDisabled={isEdit}
+          credentials={credentialsQuery.data ?? []}
+          credentialsLoading={credentialsQuery.isLoading}
+          credentialsError={credentialsQuery.error !== null}
+          onRetryCredentials={() => { void credentialsQuery.refetch() }}
+          onChange={handleChange}
+          onSubmit={handleSubmit}
+        />
+      </Modal>
+      <ConfirmDialog
+        open={navigationGuard.isNavigationBlocked}
+        title={t('providers.discard.title')}
+        message={t('providers.discard.message')}
+        cancelLabel={t('providers.discard.stay')}
+        confirmLabel={t('providers.discard.confirm')}
+        tone="danger"
+        onCancel={navigationGuard.cancelNavigation}
+        onConfirm={navigationGuard.confirmNavigation}
       />
-    </Modal>
+    </>
   )
 }

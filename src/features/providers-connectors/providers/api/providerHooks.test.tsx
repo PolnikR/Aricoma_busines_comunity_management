@@ -13,6 +13,8 @@ const provider: ProviderRecord = {
   description: 'Primary',
   type: 'VMWARE',
   ipAddress: '10.0.0.1',
+  credentialId: 'vcenter-admin',
+  credentialStatus: 'ok',
 }
 
 function setup() {

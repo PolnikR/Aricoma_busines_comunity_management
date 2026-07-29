@@ -1,6 +1,11 @@
 import { z } from 'zod'
 import { apiFetch } from '@/shared/api/apiClient'
-import type { ProviderRecord } from '../model/providerTypes'
+import {
+  PROVIDER_CREDENTIAL_STATUSES,
+  PROVIDER_TYPES,
+  type ProviderRecord,
+  type ProviderSubmitData,
+} from '../model/providerTypes'
 
 const GET_PROVIDERS_URL = '/api/get_providers'
 const SUBMIT_PROVIDER_URL = '/api/submit_provider'
@@ -10,8 +15,10 @@ const providerRecordSchema = z.object({
   id: z.string().catch(''),
   name: z.string().catch(''),
   description: z.string().catch(''),
-  type: z.string().catch(''),
+  type: z.enum(PROVIDER_TYPES),
   ipAddress: z.string().catch(''),
+  credentialId: z.string().nullable().catch(null),
+  credentialStatus: z.enum(PROVIDER_CREDENTIAL_STATUSES).catch('none'),
 })
 
 const providersResponseSchema = z.object({
@@ -32,7 +39,7 @@ export async function fetchProviders(): Promise<ProviderRecord[]> {
 
 // POST /api/submit_provider with a single provider object. The backend upserts
 // by id (create when new, update when the id already exists).
-export async function submitProvider(provider: ProviderRecord): Promise<void> {
+export async function submitProvider(provider: ProviderSubmitData): Promise<void> {
   const response = await apiFetch(SUBMIT_PROVIDER_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

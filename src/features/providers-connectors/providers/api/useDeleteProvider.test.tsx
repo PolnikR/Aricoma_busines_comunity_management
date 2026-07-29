@@ -15,6 +15,8 @@ describe('useDeleteProvider', () => {
       description: '',
       type: 'VMWARE',
       ipAddress: '10.0.0.2',
+      credentialId: null,
+      credentialStatus: 'none',
     }]
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ providers: remaining }), { status: 200 }),

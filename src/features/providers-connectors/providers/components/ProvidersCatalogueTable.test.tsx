@@ -5,6 +5,10 @@ import { ProvidersCatalogueTable } from './ProvidersCatalogueTable'
 import type { ProviderRecord } from '../model/providerTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+vi.mock('react-router-dom', async (importOriginal) => ({
+  ...await importOriginal<typeof import('react-router-dom')>(),
+  useBlocker: () => ({ state: 'unblocked' as const }),
+}))
 
 const providerA: ProviderRecord = {
   id: 'vmware-vcenter-01',
@@ -12,6 +16,8 @@ const providerA: ProviderRecord = {
   description: 'Primary vCenter',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  credentialId: 'vcenter-admin',
+  credentialStatus: 'ok',
 }
 const providerB: ProviderRecord = {
   id: 'flashsystem-01',
@@ -19,6 +25,8 @@ const providerB: ProviderRecord = {
   description: 'DR array',
   type: 'FLASHCOPY',
   ipAddress: '10.99.99.41',
+  credentialId: null,
+  credentialStatus: 'none',
 }
 
 function mockFetch() {

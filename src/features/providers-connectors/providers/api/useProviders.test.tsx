@@ -15,6 +15,8 @@ describe('useProviders', () => {
       description: 'Primary',
       type: 'VMWARE',
       ipAddress: '10.0.0.1',
+      credentialId: 'vcenter-admin',
+      credentialStatus: 'ok',
     }
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ providers: [provider] }), { status: 200 }),

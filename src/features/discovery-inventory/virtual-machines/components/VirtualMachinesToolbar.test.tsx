@@ -23,8 +23,24 @@ const options: VirtualMachineFilterOptions = {
 }
 
 const providers: ProviderRecord[] = [
-  { id: 'vmware-vcenter-01', name: 'Production vCenter', description: '', type: 'VMWARE', ipAddress: '10.0.0.1' },
-  { id: 'flashsystem-01', name: 'Backup FlashSystem', description: '', type: 'FLASHCOPY', ipAddress: '10.0.0.2' },
+  {
+    id: 'vmware-vcenter-01',
+    name: 'Production vCenter',
+    description: '',
+    type: 'VMWARE',
+    ipAddress: '10.0.0.1',
+    credentialId: 'vcenter-admin',
+    credentialStatus: 'ok',
+  },
+  {
+    id: 'flashsystem-01',
+    name: 'Backup FlashSystem',
+    description: '',
+    type: 'FLASHCOPY',
+    ipAddress: '10.0.0.2',
+    credentialId: null,
+    credentialStatus: 'none',
+  },
 ]
 
 afterEach(cleanup)

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { deleteProvider, fetchProviders, submitProvider } from './providersApi'
-import type { ProviderRecord } from '../model/providerTypes'
+import type { ProviderRecord, ProviderSubmitData } from '../model/providerTypes'
 
 const providerA: ProviderRecord = {
   id: 'vmware-vcenter-01',
@@ -8,6 +8,8 @@ const providerA: ProviderRecord = {
   description: 'Primary VMware vCenter for production virtual infrastructure.',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  credentialId: 'vcenter-admin',
+  credentialStatus: 'ok',
 }
 
 const providerB: ProviderRecord = {
@@ -16,6 +18,8 @@ const providerB: ProviderRecord = {
   description: 'Primary IBM FlashSystem storage array.',
   type: 'FLASHCOPY',
   ipAddress: '10.99.99.246',
+  credentialId: 'ibm-admin',
+  credentialStatus: 'ok',
 }
 
 const listPayload = { providers: [providerA, providerB] }
@@ -60,7 +64,14 @@ describe('submitProvider', () => {
   })
 
   it('posts a single provider object', async () => {
-    const newProvider: ProviderRecord = { id: 'new-01', name: 'New', description: 'x', type: 'VMWARE', ipAddress: '10.0.0.1' }
+    const newProvider: ProviderSubmitData = {
+      id: 'new-01',
+      name: 'New',
+      description: 'x',
+      type: 'VMWARE',
+      ipAddress: '10.0.0.1',
+      credentialId: 'vcenter-admin',
+    }
     const mock = stubFetch({})
 
     await submitProvider(newProvider)
@@ -76,7 +87,15 @@ describe('submitProvider', () => {
 
   it('throws on an HTTP failure', async () => {
     stubFetch(null, 500)
-    await expect(submitProvider(providerA)).rejects.toThrow('Submit provider request failed with status 500')
+    const submitData: ProviderSubmitData = {
+      id: providerA.id,
+      name: providerA.name,
+      description: providerA.description,
+      type: providerA.type,
+      ipAddress: providerA.ipAddress,
+      credentialId: providerA.credentialId,
+    }
+    await expect(submitProvider(submitData)).rejects.toThrow('Submit provider request failed with status 500')
   })
 })
 

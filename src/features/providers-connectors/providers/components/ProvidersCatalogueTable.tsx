@@ -20,6 +20,19 @@ import { ProvidersCreateModal } from './ProvidersCreateModal'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
 import type { ProviderRecord } from '../model/providerTypes'
 
+function credentialStatusLabel(
+  status: ProviderRecord['credentialStatus'],
+  t: ReturnType<typeof useTranslation>['t'],
+) {
+  return t(`providers.credentials.status.${status}`)
+}
+
+function credentialStatusColor(status: ProviderRecord['credentialStatus']) {
+  if (status === 'ok') return 'success' as const
+  if (status === 'missing') return 'error' as const
+  return 'light' as const
+}
+
 function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<ProviderRecord>[] {
   return [
     {
@@ -40,12 +53,24 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Provid
     {
       id: 'type',
       header: t('tables.provider.type'),
-      cell: (provider) => <Badge color="info" size="sm">{provider.type ? providerTypeLabel(provider.type) : t('details.unknown')}</Badge>,
+      cell: (provider) => <Badge color="info" size="sm">{providerTypeLabel(provider.type)}</Badge>,
     },
     {
       id: 'ipAddress',
       header: t('tables.provider.ip'),
       cell: (provider) => <span className="font-mono text-[12px] text-[#3b4763]">{provider.ipAddress || '-'}</span>,
+    },
+    {
+      id: 'credential',
+      header: t('tables.provider.credential'),
+      cell: (provider) => (
+        <div className="flex flex-col items-start gap-1">
+          <span className="font-mono text-[12px] text-[#3b4763]">{provider.credentialId ?? '-'}</span>
+          <Badge color={credentialStatusColor(provider.credentialStatus)} size="sm">
+            {credentialStatusLabel(provider.credentialStatus, t)}
+          </Badge>
+        </div>
+      ),
     },
   ]
 }
@@ -78,7 +103,7 @@ export function ProvidersCatalogueTable() {
   if (isLoading) {
     return (
       <DataTableSkeleton
-        columnCount={4}
+        columnCount={5}
         ariaLabel={t('providers.loading')}
         className="flex-1 rounded-none border-0 shadow-none lg:min-h-0"
       />
@@ -145,7 +170,7 @@ export function ProvidersCatalogueTable() {
         eyebrow={t('drawer.selectedProvider')}
         title={selected?.name ?? ''}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerExtra={selected ? <Badge color="info" size="sm">{selected.type ? providerTypeLabel(selected.type) : t('details.unknown')}</Badge> : null}
+        headerExtra={selected ? <Badge color="info" size="sm">{providerTypeLabel(selected.type)}</Badge> : null}
         ariaLabel={t('drawer.providerDetail')}
         closeLabel={t('drawer.closeProvider')}
         footer={selected ? (
@@ -171,8 +196,20 @@ export function ProvidersCatalogueTable() {
         {selected ? (
           <dl className="px-5 py-2">
             <DetailRow label={t('details.providerId')} value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label={t('details.type')} value={selected.type ? providerTypeLabel(selected.type) : '-'} />
+            <DetailRow label={t('details.type')} value={providerTypeLabel(selected.type)} />
             <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{selected.ipAddress || '-'}</span>} />
+            <DetailRow
+              label={t('details.credential')}
+              value={<span className="font-mono">{selected.credentialId ?? '-'}</span>}
+            />
+            <DetailRow
+              label={t('details.credentialStatus')}
+              value={(
+                <Badge color={credentialStatusColor(selected.credentialStatus)} size="sm">
+                  {credentialStatusLabel(selected.credentialStatus, t)}
+                </Badge>
+              )}
+            />
             <DetailRow label={t('details.description')} value={selected.description || '-'} />
           </dl>
         ) : null}

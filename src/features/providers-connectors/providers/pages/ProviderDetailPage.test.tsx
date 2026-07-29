@@ -5,7 +5,15 @@ import { ProviderDetailPage } from './ProviderDetailPage'
 
 const navigate = vi.fn()
 let query: {
-  data: { id: string; name: string; description: string; type: string; ipAddress: string }[] | undefined
+  data: {
+    id: string
+    name: string
+    description: string
+    type: 'VMWARE'
+    ipAddress: string
+    credentialId: string | null
+    credentialStatus: 'ok' | 'missing' | 'none'
+  }[] | undefined
   isLoading: boolean
   error: Error | null
   refetch: ReturnType<typeof vi.fn>
@@ -22,7 +30,15 @@ vi.mock('../api/useProviders', () => ({ useProviders: () => query }))
 beforeEach(() => {
   vi.clearAllMocks()
   query = {
-    data: [{ id: 'provider-1', name: 'Primary', description: 'Prod', type: 'VMWARE', ipAddress: '10.0.0.1' }],
+    data: [{
+      id: 'provider-1',
+      name: 'Primary',
+      description: 'Prod',
+      type: 'VMWARE',
+      ipAddress: '10.0.0.1',
+      credentialId: 'vcenter-admin',
+      credentialStatus: 'ok',
+    }],
     isLoading: false,
     error: null,
     refetch: vi.fn(),
