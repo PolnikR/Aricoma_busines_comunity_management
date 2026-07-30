@@ -32,7 +32,7 @@
   "nav.providers.discovery": "Discovery Settings",
   "nav.providers.health": "Health & Diagnostics",
   "nav.discovery": "Discovery & Inventory",
-  "nav.discovery.vms": "Virtual Machines",
+  "nav.discovery.resources": "Resources",
   "nav.discovery.infrastructure": "Infrastructure Topology",
   "nav.discovery.jobs": "Discovery Jobs",
   "nav.discovery.search": "Inventory Search",

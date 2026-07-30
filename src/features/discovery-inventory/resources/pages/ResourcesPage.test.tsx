@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { VirtualMachinesPage } from './VirtualMachinesPage'
+import { ResourcesPage } from './ResourcesPage'
 import type { DiscoveryInventory } from '../../model/discoveryTypes'
 
 const refetch = vi.fn()
@@ -59,22 +59,22 @@ beforeEach(() => {
   }
 })
 
-describe('VirtualMachinesPage', () => {
+describe('ResourcesPage', () => {
   it('renders loading and initial error states', () => {
     inventoryQuery = { ...inventoryQuery, data: undefined, isLoading: true }
-    const view = render(<VirtualMachinesPage />)
+    const view = render(<ResourcesPage />)
     expect(screen.getByRole('status')).toHaveTextContent('VM skeleton')
     inventoryQuery = {
       ...inventoryQuery,
       isLoading: false,
       error: new Error('inventory offline'),
     }
-    view.rerender(<VirtualMachinesPage />)
+    view.rerender(<ResourcesPage />)
     expect(screen.getByRole('alert')).toHaveTextContent('inventory offline')
   })
 
   it('renders metrics, toolbar, and empty inventory state', () => {
-    render(<VirtualMachinesPage />)
+    render(<ResourcesPage />)
     expect(screen.getByText('VM metrics')).toBeInTheDocument()
     expect(screen.getByText('VM toolbar')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'VMware VMs' })).toHaveAttribute('aria-selected', 'true')

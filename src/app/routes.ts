@@ -16,7 +16,7 @@ export const routes = {
   recoveryApplications: '/recovery-plans/recovery-applications',
   recoveryGroups: '/recovery-plans/recovery-groups',
   recoveryRuns: '/recovery-plans/recovery-runs',
-  virtualMachines: '/discovery-inventory/virtual-machines',
+  resources: '/discovery-inventory/resources',
   infrastructure: '/discovery-inventory/infrastructure',
   discoveryJobs: '/discovery-inventory/discovery-jobs',
   inventorySearch: '/discovery-inventory/inventory-search',

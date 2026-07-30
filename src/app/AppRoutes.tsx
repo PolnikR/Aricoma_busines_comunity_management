@@ -4,7 +4,7 @@ import {
   Route,
 } from 'react-router-dom'
 import { AppShell } from '@/layouts/app-shell/AppShell'
-import { VirtualMachinesPage } from '@/features/discovery-inventory/virtual-machines/pages/VirtualMachinesPage'
+import { ResourcesPage } from '@/features/discovery-inventory/resources/pages/ResourcesPage'
 import { ProvidersPage } from '@/features/providers-connectors/providers/pages/ProvidersPage'
 import { ModuleWorkQueuePage } from '@/features/module-placeholder/pages/ModuleWorkQueuePage'
 import { InfrastructureTopologySkeleton } from '@/features/discovery-inventory/infrastructure/components/InfrastructureTopologySkeleton'
@@ -113,7 +113,7 @@ function renderProvidersConnectorsRoutes(pages: typeof providersConnectorsPages)
 export function AppRoutes() {
   return (
     <Route element={<AppShell />}>
-        <Route index element={<Navigate to={routes.virtualMachines} replace />} />
+        <Route index element={<Navigate to={routes.resources} replace />} />
         <Route path="platform-administration" element={<Navigate to={routes.platformAdministration} replace />} />
         {renderModulePageRoutes(platformAdministrationPages)}
         <Route path="providers-connectors" element={<Navigate to={routes.providersConnectors} replace />} />
@@ -194,8 +194,9 @@ export function AppRoutes() {
             )}
           />
         </Route>
-        <Route path="discovery-inventory" element={<Navigate to={routes.virtualMachines} replace />} />
-        <Route path="discovery-inventory/virtual-machines" element={<VirtualMachinesPage />} />
+        <Route path="discovery-inventory" element={<Navigate to={routes.resources} replace />} />
+        <Route path="discovery-inventory/resources" element={<ResourcesPage />} />
+        <Route path="discovery-inventory/virtual-machines" element={<Navigate to={routes.resources} replace />} />
         <Route
           path="discovery-inventory/infrastructure"
           element={(
@@ -206,7 +207,7 @@ export function AppRoutes() {
         />
         {renderModulePageRoutes(discoveryInventoryPlaceholderPages)}
         {renderModulePageRoutes(remainingEpicPages.filter((page) => page.path !== routes.recoveryPlans))}
-        <Route path="*" element={<Navigate to={routes.virtualMachines} replace />} />
+        <Route path="*" element={<Navigate to={routes.resources} replace />} />
     </Route>
   )
 }

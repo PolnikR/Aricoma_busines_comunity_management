@@ -27,6 +27,23 @@ describe('AppSidebar', () => {
     )
   })
 
+  it('links Resources to the consolidated inventory page', async () => {
+    render(
+      <MemoryRouter initialEntries={['/discovery-inventory/resources']}>
+        <LanguageProvider>
+          <SidebarProvider>
+            <AppSidebar />
+          </SidebarProvider>
+        </LanguageProvider>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('link', { name: 'Resources' }, { timeout: 5000 })).toHaveAttribute(
+      'href',
+      '/discovery-inventory/resources',
+    )
+  })
+
   it('highlights the owning submenu item on a nested create route', async () => {
     render(
       <MemoryRouter initialEntries={['/recovery-plans/recovery-applications/create']}>

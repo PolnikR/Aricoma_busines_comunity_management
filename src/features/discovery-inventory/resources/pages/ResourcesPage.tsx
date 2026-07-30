@@ -33,7 +33,7 @@ const defaultFilters: VirtualMachineFilters = {
 
 type ResourceTab = 'vmware' | 'flashsystem' | 'ibm-power'
 
-export function VirtualMachinesPage() {
+export function ResourcesPage() {
   const { t } = useTranslation()
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
   const { data: inventory, error, isLoading: isPending, isFetching, refetch } = useDiscoveryInventory(query.providerId ?? undefined, query.tags[0])

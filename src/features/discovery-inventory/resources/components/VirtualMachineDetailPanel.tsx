@@ -8,6 +8,7 @@ import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
 import { DetailDrawer, DetailRow, DetailStat } from '@/shared/components/data-table'
 import { Tabs } from '@/shared/components/tabs/Tabs'
+import { createVmwareDetailFields } from '../config/vmwareDetailFields'
 
 function truncateFilePath(path: string): string {
   if (path.length <= 50) return path
@@ -34,6 +35,7 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
   const headerCell = 'whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]'
   const cell = 'px-3 py-2.5 text-[13px] text-[#3b4763] align-top'
   const num = `${cell} text-right tabular-nums`
+  const overviewFields = createVmwareDetailFields(t)
 
   return (
     <DetailDrawer
@@ -104,11 +106,14 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
                   </div>
 
                   <dl className="px-5 py-2">
-                    <DetailRow label={t('details.os')} value={virtualMachine.guestOs} />
-                    <DetailRow label={t('details.cluster')} value={virtualMachine.cluster} secondary={virtualMachine.host} />
-                    <DetailRow label={t('details.datastore')} value={virtualMachine.datastore} secondary={`${String(virtualMachine.vdisks.length)} ${t('details.disks')} / ${String(Math.round(virtualMachine.vdisks.reduce((sum, disk) => sum + disk.capacityGb, 0)))} GB`} />
-                    <DetailRow label={t('details.folder')} value={virtualMachine.folder} />
-                    <DetailRow label={t('details.vmPath')} value={virtualMachine.vmPath} />
+                    {overviewFields.map((field) => (
+                      <DetailRow
+                        key={field.id}
+                        label={field.label}
+                        value={field.value(virtualMachine)}
+                        secondary={field.secondary?.(virtualMachine)}
+                      />
+                    ))}
                   </dl>
                 </>
               )}

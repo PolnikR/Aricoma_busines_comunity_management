@@ -17,6 +17,8 @@ describe('createAppRouter', () => {
     expect(paths).toContain('recovery-groups')
     expect(paths).toContain('create')
     expect(paths).toContain(':id/edit')
+    expect(paths).toContain('discovery-inventory/resources')
+    expect(paths).toContain('discovery-inventory/virtual-machines')
 
     router.dispose()
   })

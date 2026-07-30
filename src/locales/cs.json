@@ -32,7 +32,7 @@
   "nav.providers.discovery": "Nastavení zjišťování",
   "nav.providers.health": "Zdraví a diagnostika",
   "nav.discovery": "Zjišťování a inventář",
-  "nav.discovery.vms": "Virtuální stroje",
+  "nav.discovery.resources": "Zdroje",
   "nav.discovery.infrastructure": "Topologie infrastruktury",
   "nav.discovery.jobs": "Úlohy zjišťování",
   "nav.discovery.search": "Vyhledávání inventáře",

@@ -56,7 +56,7 @@ const navItems: NavItem[] = [
     name: 'Discovery & Inventory',
     icon: <ServerIcon />,
     subItems: [
-      { name: 'Virtual Machines', path: routes.virtualMachines },
+      { name: 'Resources', path: routes.resources },
       { name: 'Infrastructure Topology', path: routes.infrastructure },
       { name: 'Discovery Jobs', path: routes.discoveryJobs },
       { name: 'Inventory Search', path: routes.inventorySearch },
@@ -124,7 +124,7 @@ const navKeyMap: Record<string, string> = {
   'Discovery Settings': 'nav.providers.discovery',
   'Health & Diagnostics': 'nav.providers.health',
   'Discovery & Inventory': 'nav.discovery',
-  'Virtual Machines': 'nav.discovery.vms',
+  'Resources': 'nav.discovery.resources',
   'Infrastructure Topology': 'nav.discovery.infrastructure',
   'Discovery Jobs': 'nav.discovery.jobs',
   'Inventory Search': 'nav.discovery.search',
@@ -173,7 +173,7 @@ export function AppSidebar() {
       className={`fixed inset-y-0 left-0 z-50 flex w-[256px] flex-col border-r border-[#e3e9f2] bg-white px-3 text-[#17233d] shadow-2xl transition-transform duration-300 ease-out lg:static lg:h-full lg:w-max lg:min-w-[272px] lg:max-w-[min(352px,32vw)] lg:shrink-0 lg:translate-x-0 lg:rounded-[22px] lg:border lg:border-[#e3e9f2] lg:shadow-[0_14px_35px_-28px_rgba(37,72,112,0.4)] ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
     >
       <div className="flex h-[72px] shrink-0 items-center border-b border-[#edf1f6] px-2">
-        <NavLink to={routes.virtualMachines} className="flex min-w-0 items-center gap-2.5" aria-label="Aricoma home">
+        <NavLink to={routes.resources} className="flex min-w-0 items-center gap-2.5" aria-label="Aricoma home">
           <img src="/aricoma-logo.png" alt="Aricoma" className="size-9 shrink-0 rounded-lg" />
           <span>
             <span className="block truncate text-[13px] font-semibold text-[#17233d]">{t('header.appName')}</span>

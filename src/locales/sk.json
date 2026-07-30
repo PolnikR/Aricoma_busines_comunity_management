@@ -30,7 +30,7 @@
   "nav.providers.discovery": "Nastavenia zisťovania",
   "nav.providers.health": "Stav a diagnostika",
   "nav.discovery": "Inventár infraštruktúry",
-  "nav.discovery.vms": "Virtuálne stroje",
+  "nav.discovery.resources": "Zdroje",
   "nav.discovery.infrastructure": "Topológia infraštruktúry",
   "nav.discovery.jobs": "Úlohy zisťovania",
   "nav.discovery.search": "Vyhľadávanie v inventári",

@@ -1,31 +1,26 @@
-import { DataTable, StateCell } from '@/shared/components/data-table'
-import type { ColumnDef, TableDensity } from '@/shared/components/data-table'
-import { useTranslation } from '@/hooks/useTranslation'
+import { StateCell } from '@/shared/components/data-table'
+import type { ColumnDef } from '@/shared/components/data-table'
+import type { useTranslation } from '@/hooks/useTranslation'
 import type { VirtualMachine } from '../types'
 
-export type { TableDensity }
+type Translate = ReturnType<typeof useTranslation>['t']
 
-interface VirtualMachinesTableProps {
-  virtualMachines: VirtualMachine[]
-  selectedId: string | null
-  density: TableDensity
-  onSelect: (virtualMachine: VirtualMachine) => void
+function powerState(value: string, t: Translate): { tone: 'on' | 'off'; label: string } {
+  return value === 'poweredOn'
+    ? { tone: 'on', label: t('vm.state.on') }
+    : { tone: 'off', label: t('vm.state.off') }
 }
 
-function powerState(value: string, t: ReturnType<typeof useTranslation>['t']): { tone: 'on' | 'off'; label: string } {
-  return value === 'poweredOn' ? { tone: 'on', label: t('vm.state.on') } : { tone: 'off', label: t('vm.state.off') }
+function connectionState(value: string, t: Translate): { tone: 'on' | 'warn'; label: string } {
+  return value === 'connected'
+    ? { tone: 'on', label: t('vm.state.connected') }
+    : { tone: 'warn', label: value || t('details.unknown') }
 }
 
-function connectionState(value: string, t: ReturnType<typeof useTranslation>['t']): { tone: 'on' | 'warn'; label: string } {
-  return value === 'connected' ? { tone: 'on', label: t('vm.state.connected') } : { tone: 'warn', label: value || t('details.unknown') }
-}
-
-export function VirtualMachinesTable({ virtualMachines, selectedId, density, onSelect }: VirtualMachinesTableProps) {
-  const { t } = useTranslation()
-  const showDetail = density === 'comfortable'
+export function createVmwareColumns(t: Translate, showDetail: boolean): ColumnDef<VirtualMachine>[] {
   const sub = 'block max-w-45 truncate text-[11px] text-[#93a0b5]'
 
-  const columns: ColumnDef<VirtualMachine>[] = [
+  return [
     {
       id: 'name',
       header: t('tables.vm.name'),
@@ -65,7 +60,9 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, density, onS
       id: 'provider',
       header: t('tables.vm.provider'),
       cell: (vm) => {
-        const provider = vm.providerType === '-' && vm.providerId === '-' ? '-' : `${vm.providerType}-${vm.providerId}`
+        const provider = vm.providerType === '-' && vm.providerId === '-'
+          ? '-'
+          : `${vm.providerType}-${vm.providerId}`
         return <span className="block truncate" title={provider}>{provider}</span>
       },
     },
@@ -108,21 +105,4 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, density, onS
       cell: (vm) => <span className={vm.snapshotCount === 0 ? 'text-[#93a0b5]' : undefined}>{vm.snapshotCount}</span>,
     },
   ]
-
-  return (
-    <DataTable<VirtualMachine>
-      columns={columns}
-      rows={virtualMachines}
-      rowKey={(vm: VirtualMachine, index: number) => `${vm.id}-${String(index)}`}
-      rowSelectionKey={(vm: VirtualMachine): string => vm.id}
-      rowAriaLabel={(vm: VirtualMachine): string => `${t('vm.showDetails')} ${vm.name}`}
-      density={density}
-      selectedRowKey={selectedId}
-      onRowClick={onSelect}
-      minWidthClassName="min-w-260"
-      ariaLabel={t('vm.tableLabel')}
-      headerCellClassName="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]"
-      cellClassName={`px-3 ${density === 'compact' ? 'py-1.5' : 'py-2.5'} text-[13px] text-[#3b4763] align-top`}
-    />
-  )
 }
