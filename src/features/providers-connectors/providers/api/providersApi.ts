@@ -1,29 +1,13 @@
-import { z } from 'zod'
 import { apiFetch } from '@/shared/api/apiClient'
 import {
-  PROVIDER_CREDENTIAL_STATUSES,
-  PROVIDER_TYPES,
   type ProviderRecord,
   type ProviderSubmitData,
 } from '../model/providerTypes'
+import { providersResponseSchema } from './schemas/providersSchema'
 
 const GET_PROVIDERS_URL = '/api/get_providers'
 const SUBMIT_PROVIDER_URL = '/api/submit_provider'
 const DELETE_PROVIDER_URL = '/api/delete_provider'
-
-const providerRecordSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  description: z.string(),
-  type: z.enum(PROVIDER_TYPES),
-  ipAddress: z.string().min(1),
-  credentialId: z.string().nullable(),
-  credentialStatus: z.enum(PROVIDER_CREDENTIAL_STATUSES),
-})
-
-const providersResponseSchema = z.object({
-  providers: z.array(providerRecordSchema),
-})
 
 // GET /api/get_providers -> { providers: [...] }
 export async function fetchProviders(): Promise<ProviderRecord[]> {

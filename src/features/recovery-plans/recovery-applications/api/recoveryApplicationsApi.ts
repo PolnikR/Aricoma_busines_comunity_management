@@ -1,63 +1,16 @@
-import { z } from 'zod'
 import { apiFetch } from '@/shared/api/apiClient'
 import type {
   RecoveryApplicationData,
   RecoveryApplicationListItem,
-  RecoveryTier,
+  SubmitDagResponse,
 } from '../model/recoveryApplicationTypes'
+import {
+  recoveryApplicationListResponseSchema,
+  submitDagResponseSchema,
+} from './schemas/recoveryApplicationsSchema'
+import { mapRecoveryApplications } from '../helpers/mapRecoveryApplications'
 
 const GET_RECOVERY_APPS_ENDPOINT = '/api/get_recovery_apps'
-
-const recoveryTierSchema = z.object({
-  order: z.number(),
-  description: z.string(),
-  recovery_group: z.object({
-    name: z.string(),
-    description: z.string(),
-    vms: z.array(z.object({
-      name: z.string(),
-    })),
-  }).optional(),
-})
-
-const recoveryApplicationListResponseSchema = z.object({
-  applications: z.array(z.object({
-    name: z.string(),
-    description: z.string(),
-    environment: z.enum(['dev', 'staging', 'prod']),
-    platform: z.string(),
-    source_connection: z.string(),
-    target_connection: z.string(),
-    tiers: z.record(z.string(), recoveryTierSchema),
-    file: z.string(),
-  })),
-})
-
-function mapRecoveryTier(tier: z.infer<typeof recoveryTierSchema>): RecoveryTier {
-  return {
-    order: tier.order,
-    description: tier.description,
-    ...(tier.recovery_group ? {
-      recovery_group: {
-        name: tier.recovery_group.name,
-        description: tier.recovery_group.description,
-        vms: tier.recovery_group.vms,
-      },
-    } : {}),
-  }
-}
-
-export interface SubmitDagResponse {
-  status: string
-  filename: string
-  local: string
-}
-
-const submitDagResponseSchema = z.object({
-  status: z.string(),
-  filename: z.string(),
-  local: z.string(),
-})
 
 export async function fetchRecoveryApplications(): Promise<RecoveryApplicationListItem[]> {
   const response = await apiFetch(GET_RECOVERY_APPS_ENDPOINT)
@@ -66,19 +19,8 @@ export async function fetchRecoveryApplications(): Promise<RecoveryApplicationLi
   }
 
   const payload: unknown = await response.json()
-  const { applications } = recoveryApplicationListResponseSchema.parse(payload)
-
-  return applications.map(({ file, tiers, ...application }) => ({
-    id: file,
-    data: {
-      application: {
-        ...application,
-        tiers: Object.fromEntries(
-          Object.entries(tiers).map(([id, tier]) => [id, mapRecoveryTier(tier)]),
-        ),
-      },
-    },
-  }))
+  const parsed = recoveryApplicationListResponseSchema.parse(payload)
+  return mapRecoveryApplications(parsed)
 }
 
 // Submits the application JSON to the Airflow recovery-orchestration DAG.

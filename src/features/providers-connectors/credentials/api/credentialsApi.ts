@@ -1,4 +1,3 @@
-import { z } from 'zod'
 import { apiFetch } from '@/shared/api/apiClient'
 import type {
   CredentialFormData,
@@ -6,25 +5,18 @@ import type {
   CredentialSubmitPayload,
 } from '../model/credentialTypes'
 import { encryptCredentialPassword } from './credentialsCrypto'
+import {
+  apiErrorResponseSchema,
+  credentialsResponseSchema,
+} from './schemas/credentialsSchema'
 
 const GET_CREDENTIALS_URL = '/api/get_credentials'
 const SUBMIT_CREDENTIAL_URL = '/api/submit_credential'
 const DELETE_CREDENTIAL_URL = '/api/delete_credential'
 
-const credentialRecordSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string(),
-  username: z.string(),
-})
-
-const credentialsResponseSchema = z.object({
-  credentials: z.array(credentialRecordSchema),
-})
-
 async function responseError(response: Response, fallback: string): Promise<Error> {
   const payload: unknown = await response.json().catch(() => null)
-  const parsed = z.object({ detail: z.string() }).safeParse(payload)
+  const parsed = apiErrorResponseSchema.safeParse(payload)
   return new Error(parsed.success ? parsed.data.detail : fallback)
 }
 

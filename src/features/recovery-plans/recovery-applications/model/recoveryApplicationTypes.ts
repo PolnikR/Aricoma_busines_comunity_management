@@ -36,6 +36,12 @@ export interface ApplicationSubmission {
   remotePath: string
 }
 
+export interface SubmitDagResponse {
+  status: string
+  filename: string
+  local: string
+}
+
 export interface RecoveryApplicationListItem {
   id: string
   data: {
