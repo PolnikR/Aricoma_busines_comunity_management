@@ -170,7 +170,7 @@ export function AppSidebar() {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 flex w-[256px] flex-col border-r border-[#e3e9f2] bg-white px-3 text-[#17233d] shadow-2xl transition-transform duration-300 ease-out lg:static lg:h-full lg:w-[216px] lg:shrink-0 lg:translate-x-0 lg:rounded-[22px] lg:border lg:border-[#e3e9f2] lg:shadow-[0_14px_35px_-28px_rgba(37,72,112,0.4)] xl:w-[224px] ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      className={`fixed inset-y-0 left-0 z-50 flex w-[256px] flex-col border-r border-[#e3e9f2] bg-white px-3 text-[#17233d] shadow-2xl transition-transform duration-300 ease-out lg:static lg:h-full lg:w-max lg:min-w-[272px] lg:max-w-[min(352px,32vw)] lg:shrink-0 lg:translate-x-0 lg:rounded-[22px] lg:border lg:border-[#e3e9f2] lg:shadow-[0_14px_35px_-28px_rgba(37,72,112,0.4)] ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
     >
       <div className="flex h-[72px] shrink-0 items-center border-b border-[#edf1f6] px-2">
         <NavLink to={routes.virtualMachines} className="flex min-w-0 items-center gap-2.5" aria-label="Aricoma home">
@@ -200,9 +200,9 @@ export function AppSidebar() {
                         setOpenMenu((current) => (current === item.name ? '' : item.name))
                       }}
                     >
-                      <span className={isMenuOpen(item.name) ? 'text-[#3566d6]' : 'text-[#7b89a0]'}>{item.icon}</span>
-                      <span className="min-w-0 flex-1 truncate">{t(getTranslationKey(item.name))}</span>
-                      <ChevronDownIcon className={`size-4 transition-transform ${isMenuOpen(item.name) ? 'rotate-180 text-[#3566d6]' : 'text-[#8996aa]'}`} />
+                      <span className={`shrink-0 ${isMenuOpen(item.name) ? 'text-[#3566d6]' : 'text-[#7b89a0]'}`}>{item.icon}</span>
+                      <span className="min-w-0 flex-1 whitespace-normal leading-4 [overflow-wrap:anywhere]">{t(getTranslationKey(item.name))}</span>
+                      <ChevronDownIcon className={`size-4 shrink-0 transition-transform ${isMenuOpen(item.name) ? 'rotate-180 text-[#3566d6]' : 'text-[#8996aa]'}`} />
                     </button>
                     <div className={`overflow-hidden transition-all duration-300 ${isMenuOpen(item.name) ? 'max-h-[34rem]' : 'max-h-0'}`}>
                         <ul className="ml-[18px] mt-1 space-y-0.5 border-l border-[#e0e6ef] pl-3">
@@ -211,7 +211,7 @@ export function AppSidebar() {
                               <NavLink
                                 to={subItem.path}
                                 onClick={closeMobileSidebar}
-                                className={() => `block truncate rounded-lg px-2.5 py-2 text-xs font-medium transition ${isSubItemActive(subItem.path) ? 'bg-[#eef2fa] text-[#3566d6]' : 'text-[#5e6e86] hover:bg-[#f5f7fa] hover:text-[#263750]'}`}
+                                className={() => `block rounded-lg px-2.5 py-2 text-xs font-medium leading-4 whitespace-normal [overflow-wrap:anywhere] transition ${isSubItemActive(subItem.path) ? 'bg-[#eef2fa] text-[#3566d6]' : 'text-[#5e6e86] hover:bg-[#f5f7fa] hover:text-[#263750]'}`}
                               >
                                 {t(getTranslationKey(subItem.name))}
                               </NavLink>
@@ -228,8 +228,8 @@ export function AppSidebar() {
                   >
                     {({ isActive }) => (
                       <>
-                        <span className={isActive ? 'text-[#3566d6]' : 'text-[#7b89a0]'}>{item.icon}</span>
-                        <span className="truncate">{t(getTranslationKey(item.name))}</span>
+                        <span className={`shrink-0 ${isActive ? 'text-[#3566d6]' : 'text-[#7b89a0]'}`}>{item.icon}</span>
+                        <span className="min-w-0 flex-1 whitespace-normal leading-4 [overflow-wrap:anywhere]">{t(getTranslationKey(item.name))}</span>
                       </>
                     )}
                   </NavLink>
