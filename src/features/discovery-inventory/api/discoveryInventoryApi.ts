@@ -1,13 +1,18 @@
 import { z } from 'zod'
 import { apiFetch } from '@/shared/api/apiClient'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type {
   DiscoveredVirtualDisk,
   DiscoveredVirtualMachine,
   DiscoveryInventory,
+  FlashSystemInventory,
+  PowerInventory,
 } from '../model/discoveryTypes'
 
 const DISCOVERY_INVENTORY_URL = '/api/vms'
 const DISCOVERY_INVENTORY_BY_TAG_URL = '/api/vms_by_tag'
+const POWER_INVENTORY_URL = '/api/get_power_vm'
+const FLASHSYSTEM_INVENTORY_URL = '/api/get_volumes'
 
 const virtualDiskSchema = z.object({
   uuid: z.string().catch(''),
@@ -44,6 +49,53 @@ const virtualMachineSchema = z.object({
 const discoveryInventoryResponseSchema = z.object({
   count: z.number().int().nonnegative(),
   vms: z.array(virtualMachineSchema),
+})
+
+const powerPartitionSchema = z.object({
+  PartitionUUID: z.string().optional(),
+  PartitionName: z.string().optional(),
+  PartitionType: z.string().optional(),
+  PartitionState: z.string().optional(),
+  SystemName: z.string().optional(),
+}).loose()
+
+const powerInventoryResponseSchema = z.object({
+  count: z.number().int().nonnegative(),
+  counts_by_type: z.object({
+    LogicalPartition: z.number().int().nonnegative(),
+    VirtualIOServer: z.number().int().nonnegative(),
+  }),
+  vms: z.array(z.object({
+    lpar: powerPartitionSchema,
+    vios: powerPartitionSchema,
+  })),
+})
+
+const flashSystemRelatedResourceSchema = z.object({
+  name: z.string().catch('-'),
+}).loose()
+
+const flashSystemVolumeSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  status: z.string().catch('unknown'),
+  capacity: z.string().catch('-'),
+  type: z.string().catch('-'),
+  vdisk_UID: z.string().catch(''),
+  mdisk_grp_id: z.string().catch(''),
+  mdisk_grp_name: z.string().catch('-'),
+  host_maps: z.array(z.object({
+    host_id: z.string(),
+    scsi_id: z.string(),
+  })).catch([]),
+}).loose()
+
+const flashSystemInventoryResponseSchema = z.object({
+  count: z.number().int().nonnegative(),
+  volumes: z.array(flashSystemVolumeSchema),
+  pools: z.record(z.string(), flashSystemRelatedResourceSchema).catch({}),
+  hosts: z.record(z.string(), flashSystemRelatedResourceSchema).catch({}),
+  clusters: z.record(z.string(), flashSystemRelatedResourceSchema).catch({}),
 })
 
 function mapVirtualDisk(
@@ -90,7 +142,7 @@ function mapVirtualMachine(
   }
 }
 
-export async function fetchDiscoveryInventory(providerId?: string, tag?: string): Promise<DiscoveryInventory> {
+export async function fetchVmwareInventory(providerId?: string, tag?: string): Promise<DiscoveryInventory> {
   // A tag selects the by-tag endpoint; provider is an optional extra param on
   // either endpoint.
   const params = new URLSearchParams()
@@ -119,5 +171,68 @@ export async function fetchDiscoveryInventory(providerId?: string, tag?: string)
   return {
     reportedCount: parsed.count,
     virtualMachines: parsed.vms.map(mapVirtualMachine),
+  }
+}
+
+async function fetchProviderPayload(url: string, providerId: string, label: string): Promise<unknown> {
+  const params = new URLSearchParams({ provider_id: providerId })
+  const response = await apiFetch(`${url}?${params.toString()}`)
+
+  if (!response.ok) {
+    throw new Error(`${label} inventory request failed with status ${String(response.status)}`)
+  }
+
+  return response.json()
+}
+
+export async function fetchPowerInventory(providerId: string): Promise<PowerInventory> {
+  const payload = await fetchProviderPayload(POWER_INVENTORY_URL, providerId, 'IBM Power')
+  const parsed = powerInventoryResponseSchema.parse(payload)
+
+  return {
+    reportedCount: parsed.count,
+    countsByType: parsed.counts_by_type,
+    virtualMachines: parsed.vms,
+  }
+}
+
+export async function fetchFlashSystemInventory(providerId: string): Promise<FlashSystemInventory> {
+  const payload = await fetchProviderPayload(FLASHSYSTEM_INVENTORY_URL, providerId, 'IBM FlashSystem')
+  const parsed = flashSystemInventoryResponseSchema.parse(payload)
+
+  return {
+    reportedCount: parsed.count,
+    volumes: parsed.volumes,
+    pools: parsed.pools,
+    hosts: parsed.hosts,
+    clusters: parsed.clusters,
+  }
+}
+
+export type ProviderInventory =
+  | { source: 'vmware'; provider: ProviderRecord; inventory: DiscoveryInventory }
+  | { source: 'power'; provider: ProviderRecord; inventory: PowerInventory }
+  | { source: 'flashsystem'; provider: ProviderRecord; inventory: FlashSystemInventory }
+
+export async function fetchInventory(provider: ProviderRecord, tag?: string): Promise<ProviderInventory> {
+  switch (provider.type) {
+    case 'VMWARE':
+      return {
+        source: 'vmware',
+        provider,
+        inventory: await fetchVmwareInventory(provider.id, tag),
+      }
+    case 'IBM_POWER':
+      return {
+        source: 'power',
+        provider,
+        inventory: await fetchPowerInventory(provider.id),
+      }
+    case 'FLASHCOPY':
+      return {
+        source: 'flashsystem',
+        provider,
+        inventory: await fetchFlashSystemInventory(provider.id),
+      }
   }
 }

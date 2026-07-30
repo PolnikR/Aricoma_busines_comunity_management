@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchDiscoveryInventory } from './discoveryInventoryApi'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import {
+  fetchFlashSystemInventory,
+  fetchInventory,
+  fetchPowerInventory,
+  fetchVmwareInventory,
+} from './discoveryInventoryApi'
 
 const validPayload = {
   count: 1,
@@ -37,7 +43,7 @@ const validPayload = {
   ],
 }
 
-describe('fetchDiscoveryInventory', () => {
+describe('fetchVmwareInventory', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
   })
@@ -47,7 +53,7 @@ describe('fetchDiscoveryInventory', () => {
       new Response(JSON.stringify(validPayload), { status: 200 }),
     ))
 
-    const inventory = await fetchDiscoveryInventory()
+    const inventory = await fetchVmwareInventory()
 
     expect(inventory.reportedCount).toBe(1)
     expect(inventory.virtualMachines[0]).toMatchObject({
@@ -69,7 +75,7 @@ describe('fetchDiscoveryInventory', () => {
     const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
     vi.stubGlobal('fetch', mock)
 
-    await fetchDiscoveryInventory()
+    await fetchVmwareInventory()
 
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/vms')
@@ -80,7 +86,7 @@ describe('fetchDiscoveryInventory', () => {
     const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
     vi.stubGlobal('fetch', mock)
 
-    await fetchDiscoveryInventory('vmware-vcenter-01')
+    await fetchVmwareInventory('vmware-vcenter-01')
 
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/vms?provider_id=vmware-vcenter-01')
@@ -91,7 +97,7 @@ describe('fetchDiscoveryInventory', () => {
     const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
     vi.stubGlobal('fetch', mock)
 
-    await fetchDiscoveryInventory(undefined, 'WEB')
+    await fetchVmwareInventory(undefined, 'WEB')
 
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/vms_by_tag?tag=WEB')
@@ -102,7 +108,7 @@ describe('fetchDiscoveryInventory', () => {
     const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
     vi.stubGlobal('fetch', mock)
 
-    await fetchDiscoveryInventory('vmware-vcenter-01', 'WEB')
+    await fetchVmwareInventory('vmware-vcenter-01', 'WEB')
 
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/vms_by_tag?tag=WEB&provider_id=vmware-vcenter-01')
@@ -112,7 +118,7 @@ describe('fetchDiscoveryInventory', () => {
   it('returns an empty inventory when a tag query fails with 400 or 500', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 500 })))
 
-    const inventory = await fetchDiscoveryInventory(undefined, 'WEB')
+    const inventory = await fetchVmwareInventory(undefined, 'WEB')
 
     expect(inventory.reportedCount).toBe(0)
     expect(inventory.virtualMachines).toEqual([])
@@ -123,7 +129,7 @@ describe('fetchDiscoveryInventory', () => {
       new Response(JSON.stringify({ detail: "provider 'ibm-flashsystem-01' is not a VMWARE provider" }), { status: 400 }),
     ))
 
-    const inventory = await fetchDiscoveryInventory('ibm-flashsystem-01')
+    const inventory = await fetchVmwareInventory('ibm-flashsystem-01')
 
     expect(inventory.reportedCount).toBe(0)
     expect(inventory.virtualMachines).toEqual([])
@@ -132,7 +138,7 @@ describe('fetchDiscoveryInventory', () => {
   it('still throws on a 400 when no provider filter is set', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 400 })))
 
-    await expect(fetchDiscoveryInventory()).rejects.toThrow(
+    await expect(fetchVmwareInventory()).rejects.toThrow(
       'Discovery inventory request failed with status 400',
     )
   })
@@ -142,7 +148,7 @@ describe('fetchDiscoveryInventory', () => {
       new Response(JSON.stringify({ count: 1, vms: 'invalid' }), { status: 200 }),
     ))
 
-    await expect(fetchDiscoveryInventory()).rejects.toBeInstanceOf(Error)
+    await expect(fetchVmwareInventory()).rejects.toBeInstanceOf(Error)
   })
 
   it('reports an HTTP failure before parsing the response', async () => {
@@ -150,8 +156,153 @@ describe('fetchDiscoveryInventory', () => {
       new Response(null, { status: 503 }),
     ))
 
-    await expect(fetchDiscoveryInventory()).rejects.toThrow(
+    await expect(fetchVmwareInventory()).rejects.toThrow(
       'Discovery inventory request failed with status 503',
     )
+  })
+})
+
+describe('IBM discovery inventory endpoints', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('fetches and validates IBM Power inventory for the given provider', async () => {
+    const payload = {
+      count: 1,
+      counts_by_type: {
+        LogicalPartition: 0,
+        VirtualIOServer: 1,
+      },
+      vms: [
+        {
+          lpar: {},
+          vios: {
+            PartitionUUID: 'power-uuid-1',
+            PartitionName: 'vios1',
+            PartitionType: 'Virtual IO Server',
+            PartitionState: 'running',
+            SystemName: 'power-system-1',
+          },
+        },
+      ],
+    }
+    const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 }))
+    vi.stubGlobal('fetch', mock)
+
+    const inventory = await fetchPowerInventory('ibm-power-01')
+
+    expect(mock.mock.calls[0]?.[0]).toBe('/api/get_power_vm?provider_id=ibm-power-01')
+    expect(inventory).toMatchObject({
+      reportedCount: 1,
+      countsByType: {
+        LogicalPartition: 0,
+        VirtualIOServer: 1,
+      },
+    })
+    expect(inventory.virtualMachines[0]?.vios.PartitionName).toBe('vios1')
+  })
+
+  it('fetches and validates FlashSystem volumes for the given provider', async () => {
+    const payload = {
+      count: 1,
+      volumes: [
+        {
+          id: '0',
+          name: 'V5000_Volume1',
+          status: 'online',
+          capacity: '3.00TB',
+          type: 'striped',
+          vdisk_UID: 'volume-uid-1',
+          mdisk_grp_id: '0',
+          mdisk_grp_name: 'Pool0',
+          host_maps: [{ host_id: '0', scsi_id: '0' }],
+        },
+      ],
+      pools: { 0: { name: 'Pool0', capacity: '6.98TB' } },
+      hosts: { 0: { name: 'HOST_esx' } },
+      clusters: {},
+    }
+    const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 }))
+    vi.stubGlobal('fetch', mock)
+
+    const inventory = await fetchFlashSystemInventory('ibm-flashsystem-01')
+
+    expect(mock.mock.calls[0]?.[0]).toBe('/api/get_volumes?provider_id=ibm-flashsystem-01')
+    expect(inventory.reportedCount).toBe(1)
+    expect(inventory.volumes[0]).toMatchObject({
+      name: 'V5000_Volume1',
+      status: 'online',
+      mdisk_grp_name: 'Pool0',
+    })
+    expect(inventory.hosts['0']?.name).toBe('HOST_esx')
+  })
+
+  it('reports an IBM Power HTTP failure before parsing the response', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 503 })))
+
+    await expect(fetchPowerInventory('ibm-power-01')).rejects.toThrow(
+      'IBM Power inventory request failed with status 503',
+    )
+  })
+
+  it('rejects a FlashSystem response that does not match its contract', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ count: 1, volumes: 'invalid' }), { status: 200 }),
+    ))
+
+    await expect(fetchFlashSystemInventory('ibm-flashsystem-01')).rejects.toBeInstanceOf(Error)
+  })
+})
+
+describe('fetchInventory', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  const provider = (type: ProviderRecord['type'], id: string): ProviderRecord => ({
+    id,
+    name: id,
+    description: '',
+    type,
+    ipAddress: '10.0.0.1',
+    credentialId: 'credential-1',
+    credentialStatus: 'ok',
+  })
+
+  it('dispatches VMware providers to the VMware inventory endpoint', async () => {
+    const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
+    vi.stubGlobal('fetch', mock)
+
+    const result = await fetchInventory(provider('VMWARE', 'vmware-vcenter-01'))
+
+    expect(result.source).toBe('vmware')
+    expect(mock.mock.calls[0]?.[0]).toBe('/api/vms?provider_id=vmware-vcenter-01')
+  })
+
+  it('dispatches IBM Power providers to the Power inventory endpoint', async () => {
+    const payload = {
+      count: 0,
+      counts_by_type: { LogicalPartition: 0, VirtualIOServer: 0 },
+      vms: [],
+    }
+    const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 }))
+    vi.stubGlobal('fetch', mock)
+
+    const result = await fetchInventory(provider('IBM_POWER', 'ibm-power-01'))
+
+    expect(result.source).toBe('power')
+    expect(mock.mock.calls[0]?.[0]).toBe('/api/get_power_vm?provider_id=ibm-power-01')
+  })
+
+  it('dispatches FlashCopy providers to the FlashSystem inventory endpoint', async () => {
+    const payload = { count: 0, volumes: [], pools: {}, hosts: {}, clusters: {} }
+    const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 }))
+    vi.stubGlobal('fetch', mock)
+
+    const result = await fetchInventory(provider('FLASHCOPY', 'ibm-flashsystem-01'))
+
+    expect(result.source).toBe('flashsystem')
+    expect(mock.mock.calls[0]?.[0]).toBe('/api/get_volumes?provider_id=ibm-flashsystem-01')
   })
 })
