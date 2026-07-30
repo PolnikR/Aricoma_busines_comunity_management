@@ -54,6 +54,10 @@
 
   "pages.virtualMachines.title": "Virtuální stroje",
   "pages.virtualMachines.description": "Přehled inventáře, stavu a umístění VMware.",
+  "pages.virtualMachines.tabs.label": "Zdroj inventáře",
+  "pages.virtualMachines.tabs.vmware": "VMware VM",
+  "pages.virtualMachines.tabs.flashSystem": "FlashSystem svazky",
+  "pages.virtualMachines.tabs.ibmPower": "IBM Power VM",
   "pages.virtualMachines.eyebrow": "Zjišťování a inventář",
   "pages.virtualMachines.error.title": "Virtuální stroje se nepodařilo načíst",
   "pages.virtualMachines.error.unknown": "Neznámá chyba zjišťování.",

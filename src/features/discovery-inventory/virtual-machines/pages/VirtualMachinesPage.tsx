@@ -6,6 +6,7 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { DataTablePagination } from '@/shared/components/data-table'
+import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useDiscoveryInventory } from '@/features/discovery-inventory/hooks/useDiscoveryInventory'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
@@ -30,6 +31,8 @@ const defaultFilters: VirtualMachineFilters = {
   untagged: false,
 }
 
+type ResourceTab = 'vmware' | 'flashsystem' | 'ibm-power'
+
 export function VirtualMachinesPage() {
   const { t } = useTranslation()
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
@@ -39,6 +42,7 @@ export function VirtualMachinesPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [density, setDensity] = useState<TableDensity>('compact')
+  const [resourceTab, setResourceTab] = useState<ResourceTab>('vmware')
   const handleRefetch = () => { void refetch() }
 
   const allData = useMemo(
@@ -130,6 +134,17 @@ export function VirtualMachinesPage() {
               <h2 className="text-sm font-semibold text-[#17233d]">{t('pages.virtualMachines.inventory.title')}</h2>
               <p className="text-xs text-[#71819a]">{t('pages.virtualMachines.inventory.description')}</p>
             </div>
+            <Tabs
+              items={[
+                { value: 'vmware', label: t('pages.virtualMachines.tabs.vmware') },
+                { value: 'flashsystem', label: t('pages.virtualMachines.tabs.flashSystem') },
+                { value: 'ibm-power', label: t('pages.virtualMachines.tabs.ibmPower') },
+              ]}
+              value={resourceTab}
+              onChange={setResourceTab}
+              ariaLabel={t('pages.virtualMachines.tabs.label')}
+              className="w-full shrink-0 border-b-0 bg-white px-0 sm:w-auto"
+            />
           </div>
           <div className="flex flex-1 flex-col overflow-hidden bg-[#f5f8fc] p-3 lg:min-h-0">
             <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#dbe7f2] bg-white shadow-sm lg:min-h-0" aria-label={t('vm.inventoryLabel')}>

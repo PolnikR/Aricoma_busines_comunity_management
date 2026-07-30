@@ -54,6 +54,10 @@
 
   "pages.virtualMachines.title": "Virtual machines",
   "pages.virtualMachines.description": "VMware inventory, health and placement overview.",
+  "pages.virtualMachines.tabs.label": "Inventory source",
+  "pages.virtualMachines.tabs.vmware": "VMware VMs",
+  "pages.virtualMachines.tabs.flashSystem": "FlashSystem Volumes",
+  "pages.virtualMachines.tabs.ibmPower": "IBM Power VMs",
   "pages.virtualMachines.eyebrow": "Discovery & Inventory",
   "pages.virtualMachines.error.title": "Virtual machines could not be loaded",
   "pages.virtualMachines.error.unknown": "Unknown discovery error.",
