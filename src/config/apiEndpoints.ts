@@ -1,0 +1,25 @@
+export const API_ENDPOINTS = {
+  discovery: {
+    virtualMachines: '/api/vms',
+    virtualMachinesByTag: '/api/vms_by_tag',
+    powerVirtualMachines: '/api/get_power_vm',
+    flashSystemVolumes: '/api/get_volumes',
+    virtualDisksByVm: '/api/vdisks_by_vm',
+    tags: '/api/tags',
+  },
+  providers: {
+    list: '/api/get_providers',
+    submit: '/api/submit_provider',
+    delete: '/api/delete_provider',
+  },
+  credentials: {
+    publicKey: '/api/credentials/pubkey',
+    list: '/api/get_credentials',
+    submit: '/api/submit_credential',
+    delete: '/api/delete_credential',
+  },
+  recoveryApplications: {
+    list: '/api/get_recovery_apps',
+    submitDag: '/api/submit_recovery_dag',
+  },
+} as const

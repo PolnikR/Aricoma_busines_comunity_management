@@ -1,4 +1,4 @@
-const PUBLIC_KEY_URL = '/api/credentials/pubkey'
+import { API_ENDPOINTS } from '@/config/apiEndpoints'
 
 let cachedPublicKey: Promise<CryptoKey> | null = null
 
@@ -31,7 +31,7 @@ function pemToBuffer(pem: string): ArrayBuffer {
 }
 
 async function fetchPublicKey(): Promise<CryptoKey> {
-  const response = await fetch(PUBLIC_KEY_URL, {
+  const response = await fetch(API_ENDPOINTS.credentials.publicKey, {
     headers: { Accept: 'application/x-pem-file' },
   })
   if (!response.ok) {

@@ -1,4 +1,5 @@
 import { apiFetch } from '@/shared/api/apiClient'
+import { API_ENDPOINTS } from '@/config/apiEndpoints'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type {
   DiscoveryInventory,
@@ -12,18 +13,15 @@ import { mapVmwareInventory } from '../helpers/mapVmwareInventory'
 import { mapPowerInventory } from '../helpers/mapPowerInventory'
 import { mapFlashSystemInventory } from '../helpers/mapFlashSystemInventory'
 
-const DISCOVERY_INVENTORY_URL = '/api/vms'
-const DISCOVERY_INVENTORY_BY_TAG_URL = '/api/vms_by_tag'
-const POWER_INVENTORY_URL = '/api/get_power_vm'
-const FLASHSYSTEM_INVENTORY_URL = '/api/get_volumes'
-
 export async function fetchVmwareInventory(providerId?: string, tag?: string): Promise<DiscoveryInventory> {
   // A tag selects the by-tag endpoint; provider is an optional extra param on
   // either endpoint.
   const params = new URLSearchParams()
   if (tag) params.set('tag', tag)
   if (providerId) params.set('provider_id', providerId)
-  const base = tag ? DISCOVERY_INVENTORY_BY_TAG_URL : DISCOVERY_INVENTORY_URL
+  const base = tag
+    ? API_ENDPOINTS.discovery.virtualMachinesByTag
+    : API_ENDPOINTS.discovery.virtualMachines
   const search = params.toString()
   const url = search ? `${base}?${search}` : base
 
@@ -57,13 +55,21 @@ async function fetchProviderPayload(url: string, providerId: string, label: stri
 }
 
 export async function fetchPowerInventory(providerId: string): Promise<PowerInventory> {
-  const payload = await fetchProviderPayload(POWER_INVENTORY_URL, providerId, 'IBM Power')
+  const payload = await fetchProviderPayload(
+    API_ENDPOINTS.discovery.powerVirtualMachines,
+    providerId,
+    'IBM Power',
+  )
   const parsed = powerInventoryResponseSchema.parse(payload)
   return mapPowerInventory(parsed)
 }
 
 export async function fetchFlashSystemInventory(providerId: string): Promise<FlashSystemInventory> {
-  const payload = await fetchProviderPayload(FLASHSYSTEM_INVENTORY_URL, providerId, 'IBM FlashSystem')
+  const payload = await fetchProviderPayload(
+    API_ENDPOINTS.discovery.flashSystemVolumes,
+    providerId,
+    'IBM FlashSystem',
+  )
   const parsed = flashSystemInventoryResponseSchema.parse(payload)
   return mapFlashSystemInventory(parsed)
 }

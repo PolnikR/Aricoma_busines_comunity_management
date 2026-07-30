@@ -1,4 +1,5 @@
 import { apiFetch } from '@/shared/api/apiClient'
+import { API_ENDPOINTS } from '@/config/apiEndpoints'
 import type {
   CredentialFormData,
   CredentialRecord,
@@ -10,10 +11,6 @@ import {
   credentialsResponseSchema,
 } from './schemas/credentialsSchema'
 
-const GET_CREDENTIALS_URL = '/api/get_credentials'
-const SUBMIT_CREDENTIAL_URL = '/api/submit_credential'
-const DELETE_CREDENTIAL_URL = '/api/delete_credential'
-
 async function responseError(response: Response, fallback: string): Promise<Error> {
   const payload: unknown = await response.json().catch(() => null)
   const parsed = apiErrorResponseSchema.safeParse(payload)
@@ -21,7 +18,7 @@ async function responseError(response: Response, fallback: string): Promise<Erro
 }
 
 export async function fetchCredentials(): Promise<CredentialRecord[]> {
-  const response = await apiFetch(GET_CREDENTIALS_URL)
+  const response = await apiFetch(API_ENDPOINTS.credentials.list)
   if (!response.ok) {
     throw await responseError(
       response,
@@ -48,7 +45,7 @@ export async function createEncryptedCredentialPayload(
 export async function submitCredential(
   payload: CredentialSubmitPayload,
 ): Promise<CredentialRecord[]> {
-  const response = await apiFetch(SUBMIT_CREDENTIAL_URL, {
+  const response = await apiFetch(API_ENDPOINTS.credentials.submit, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -65,7 +62,7 @@ export async function submitCredential(
 
 export async function deleteCredential(credentialId: string): Promise<CredentialRecord[]> {
   const response = await apiFetch(
-    `${DELETE_CREDENTIAL_URL}?credential_id=${encodeURIComponent(credentialId)}`,
+    `${API_ENDPOINTS.credentials.delete}?credential_id=${encodeURIComponent(credentialId)}`,
     { method: 'DELETE' },
   )
   if (!response.ok) {

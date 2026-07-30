@@ -1,4 +1,5 @@
 import { apiFetch } from '@/shared/api/apiClient'
+import { API_ENDPOINTS } from '@/config/apiEndpoints'
 import type {
   RecoveryApplicationData,
   RecoveryApplicationListItem,
@@ -10,10 +11,8 @@ import {
 } from './schemas/recoveryApplicationsSchema'
 import { mapRecoveryApplications } from '../helpers/mapRecoveryApplications'
 
-const GET_RECOVERY_APPS_ENDPOINT = '/api/get_recovery_apps'
-
 export async function fetchRecoveryApplications(): Promise<RecoveryApplicationListItem[]> {
-  const response = await apiFetch(GET_RECOVERY_APPS_ENDPOINT)
+  const response = await apiFetch(API_ENDPOINTS.recoveryApplications.list)
   if (!response.ok) {
     throw new Error(`Failed to fetch recovery applications: ${response.statusText}`)
   }
@@ -35,7 +34,7 @@ export async function submitRecoveryApplicationDag(
     filename: fileName,
     is_final: String(isFinal),
   })
-  const url = `/api/submit_recovery_dag?${params.toString()}`
+  const url = `${API_ENDPOINTS.recoveryApplications.submitDag}?${params.toString()}`
   let response: Response
   try {
     response = await apiFetch(url, {
