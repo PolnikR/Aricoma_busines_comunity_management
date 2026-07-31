@@ -29,6 +29,8 @@ export interface ValidatedRecoveryGroupDraft {
   description: string
   providerId: string
   resources: string[]
+  relatedVolumeProviderId: string | null
+  relatedVolumes: string[]
   configuration: RecoveryGroupResourceConfiguration
 }
 
@@ -37,6 +39,11 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
   const description = draft.description.trim()
   const providerId = draft.providerId?.trim() ?? ''
   const resources = draft.resources.map(resource => resource.trim())
+  const normalizedRelatedVolumeProviderId = draft.relatedVolumeProviderId?.trim() ?? ''
+  const relatedVolumeProviderId = normalizedRelatedVolumeProviderId
+    ? normalizedRelatedVolumeProviderId
+    : null
+  const relatedVolumes = (draft.relatedVolumes ?? []).map(resource => resource.trim())
   const configuration = recoveryGroupConfigurationSchema.safeParse({
     sourceCategory: draft.sourceCategory,
     workloadType: draft.workloadType,
@@ -51,6 +58,9 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     || resources.length === 0
     || resources.some(resource => !resource)
     || new Set(resources).size !== resources.length
+    || relatedVolumes.some(resource => !resource)
+    || new Set(relatedVolumes).size !== relatedVolumes.length
+    || (relatedVolumes.length > 0 && !relatedVolumeProviderId)
     || !configuration.success
   ) {
     throw new RecoveryGroupsError('invalid_draft', 'Recovery group data is invalid')
@@ -62,6 +72,8 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     description,
     providerId,
     resources,
+    relatedVolumeProviderId,
+    relatedVolumes,
     configuration: configuration.data,
   }
 }

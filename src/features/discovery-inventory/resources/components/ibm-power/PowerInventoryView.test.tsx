@@ -29,13 +29,46 @@ const partition: PowerPartitionResource = {
   providerType: 'IBM_POWER',
   partitionKind: 'VIOS',
   partitionData: {
+    PartitionUUID: 'power-uuid-1',
     PartitionName: 'vios1',
+    PartitionID: '1',
+    PartitionType: 'Virtual IO Server',
     PartitionState: 'running',
+    LogicalSerialNumber: '21486AV1',
+    OperatingSystemVersion: 'VIOS 4.1.2.10',
+    SystemName: 'power-system',
+    CurrentProcessors: '2',
+    DesiredProcessors: '2',
+    MinimumProcessors: '1',
+    MaximumProcessors: '2',
+    CurrentMemory: '4096',
+    DesiredMemory: '4096',
+    MinimumMemory: '1024',
+    MaximumMemory: '4096',
+    HasDedicatedProcessors: 'true',
+    CurrentSharingMode: 'share idle processors',
+    LastActivatedProfile: 'default_profile',
+    Uptime: '260773',
+    ResourceMonitoringControlState: 'active',
+    ResourceMonitoringIPAddress: '10.99.99.56',
+    InterfaceName: 'en0',
+    DeviceName: 'ent0',
     State: 'Inactive',
     IPAddress: '10.99.99.56',
     SubnetMask: '255.255.255.0',
     IsBootable: true,
     MaximumVirtualIOSlots: '20',
+    HasPhysicalIO: 'true',
+    PhysicalLocation: 'U78C9.001.WZS00VV-P1-C8-T1',
+    SRIOVCapableSlot: 'false',
+    VolumeName: 'hdisk1',
+    VolumeState: 'active',
+    VolumeCapacity: '270648',
+    VolumeUniqueID: 'volume-uid-1',
+    ReservePolicy: 'NoReserve',
+    ReservePolicyAlgorithm: 'Failover',
+    IsFibreChannelBacked: 'false',
+    IsISCSIBacked: 'false',
   },
   lpar: {},
   vios: {},
@@ -52,7 +85,7 @@ const partition: PowerPartitionResource = {
 }
 
 describe('PowerInventoryView', () => {
-  it('shows the requested columns and keeps unknown capacity units raw', () => {
+  it('shows a compact operational column set', () => {
     const { t } = useTranslation()
     render(
       <PowerInventoryView
@@ -64,14 +97,21 @@ describe('PowerInventoryView', () => {
       />,
     )
 
-    expect(screen.getByRole('columnheader', { name: 'Operating system type' })).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: 'Device' })).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: 'Volume capacity' })).toBeInTheDocument()
-    expect(screen.getByText('270648')).toBeInTheDocument()
-    expect(screen.queryByText(/270648\s*(MB|GB|TB)/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Partition' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Operating system' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Managed system' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Management IP' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Compute' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Provider' })).toBeInTheDocument()
+    expect(screen.getByText('VIOS 4.1.2.10')).toBeInTheDocument()
+    expect(screen.getByText('2 CPU · 4 GB')).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Device' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Boot mode' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Volume capacity' })).not.toBeInTheDocument()
   })
 
-  it('localizes requested detail fields and boolean values', () => {
+  it('renders only the curated detail sections and combines related values', () => {
     const { t } = useTranslation()
     render(
       <PowerInventoryView
@@ -85,10 +125,19 @@ describe('PowerInventoryView', () => {
 
     fireEvent.click(screen.getByText('vios1'))
     const dialog = screen.getByRole('dialog', { name: 'IBM Power partition detail' })
-    expect(within(dialog).getAllByText('Bootable').length).toBeGreaterThan(0)
-    expect(within(dialog).getAllByText('Yes').length).toBeGreaterThan(0)
-    expect(within(dialog).getAllByText('IP address').length).toBeGreaterThan(0)
-    expect(within(dialog).queryByText('resources.power.fields.IsBootable')).not.toBeInTheDocument()
+    expect(within(dialog).getByText('Summary')).toBeInTheDocument()
+    expect(within(dialog).getByText('Processor and memory')).toBeInTheDocument()
+    expect(within(dialog).getByText('Network and monitoring')).toBeInTheDocument()
+    expect(within(dialog).getByText('Storage')).toBeInTheDocument()
+    expect(within(dialog).getByText('I/O and virtualization')).toBeInTheDocument()
+    expect(within(dialog).getByText('power-uuid-1')).toBeInTheDocument()
+    expect(within(dialog).getByText('2 / 2')).toBeInTheDocument()
+    expect(within(dialog).getByText('4096 / 4096')).toBeInTheDocument()
+    expect(within(dialog).getByText('en0 · ent0')).toBeInTheDocument()
+    expect(within(dialog).getByText('hdisk1 · active')).toBeInTheDocument()
+    expect(within(dialog).getByText('NoReserve · Failover')).toBeInTheDocument()
+    expect(within(dialog).queryByText('Operating system and lifecycle')).not.toBeInTheDocument()
+    expect(within(dialog).queryByText('Partition state')).not.toBeInTheDocument()
   })
 
   it('filters loaded data and requests provider-scoped data when applied', () => {

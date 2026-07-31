@@ -22,4 +22,9 @@ export const API_ENDPOINTS = {
     list: '/api/get_recovery_apps',
     submitDag: '/api/submit_recovery_dag',
   },
+  recoveryGroups: {
+    list: '/api/get_recovery_groups',
+    submit: '/api/submit_recovery_group',
+    delete: '/api/delete_recovery_group',
+  },
 } as const

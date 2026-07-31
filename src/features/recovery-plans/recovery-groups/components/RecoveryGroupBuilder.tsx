@@ -55,6 +55,8 @@ export function RecoveryGroupBuilder({
         resourceType: initialData.resourceType,
         providerId: initialData.providerId,
         resources: [...initialData.resources],
+        relatedVolumeProviderId: initialData.relatedVolumeProviderId ?? null,
+        relatedVolumes: [...initialData.relatedVolumes],
       }
     : INITIAL_DRAFT)
   const idAvailable = isProgrammaticIdAvailable(

@@ -51,10 +51,13 @@ export function PowerInventoryView({
     setPage(1)
   }
   const labels = {
-    partition: t('resources.power.table.partition'), os: t('resources.power.table.os'), device: t('resources.power.table.device'),
-    bootMode: t('resources.power.table.bootMode'), hypervisor: t('resources.power.table.hypervisor'),
-    volumeCapacity: t('resources.power.table.volumeCapacity'), volume: t('resources.power.table.volume'),
-    volumeState: t('resources.power.table.volumeState'), provider: t('resources.common.provider'),
+    partition: t('resources.power.table.partition'),
+    status: t('resources.power.table.status'),
+    os: t('resources.power.table.os'),
+    system: t('resources.power.table.system'),
+    managementIp: t('resources.power.table.managementIp'),
+    compute: t('resources.power.table.compute'),
+    provider: t('resources.common.provider'),
   }
 
   return (
@@ -69,7 +72,7 @@ export function PowerInventoryView({
             { id: 'partitionKind', label: t('resources.power.filters.kind'), value: filters.partitionKind, allLabel: t('resources.power.filters.allKinds'), options: options.partitionKinds.map((value) => ({ value, label: value })) },
             { id: 'partitionState', label: t('resources.power.filters.partitionState'), value: filters.partitionState, allLabel: t('resources.power.filters.allStates'), options: options.partitionStates.map((value) => ({ value, label: value })) },
             { id: 'operatingSystemType', label: labels.os, value: filters.operatingSystemType, allLabel: t('resources.power.filters.allOperatingSystems'), options: options.operatingSystemTypes.map((value) => ({ value, label: value })) },
-            { id: 'volumeState', label: labels.volumeState, value: filters.volumeState, allLabel: t('resources.power.filters.allVolumeStates'), options: options.volumeStates.map((value) => ({ value, label: value })) },
+            { id: 'volumeState', label: t('resources.power.filters.volumeState'), value: filters.volumeState, allLabel: t('resources.power.filters.allVolumeStates'), options: options.volumeStates.map((value) => ({ value, label: value })) },
           ]}
           onSearchChange={(search) => { updateFilters({ search }) }}
           onFiltersChange={(next) => { updateFilters(next) }}
@@ -94,7 +97,7 @@ export function PowerInventoryView({
             onRowClick={setSelected}
             rowAriaLabel={(row) => `${t('resources.common.showDetails')} ${row.partitionName}`}
             ariaLabel={t('resources.power.tableLabel')}
-            minWidthClassName="min-w-[1100px]"
+            minWidthClassName="min-w-[960px]"
             emptyContent={<EmptyState title={t('resources.power.empty.title')} description={t('resources.power.empty.description')} action={<Button size="sm" variant="outline" onClick={() => { setFilters(initialFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>} />}
           />
         </div>
@@ -105,20 +108,50 @@ export function PowerInventoryView({
         open={selected !== null}
         onClose={() => { setSelected(null) }}
         labels={{
-          selected: t('resources.power.detail.selected'), detail: t('resources.power.detail.ariaLabel'), close: t('resources.power.detail.close'),
-          summary: t('resources.power.detail.summary'), provider: labels.provider, partitionKind: t('resources.power.filters.kind'),
-          partitionState: t('resources.power.filters.partitionState'), interfaceState: t('resources.power.detail.interfaceState'),
-          ipAddress: t('resources.power.detail.ipAddress'), subnetMask: t('resources.power.detail.subnetMask'),
-          isBootable: t('resources.power.detail.isBootable'), maximumVirtualIoSlots: t('resources.power.detail.maximumVirtualIoSlots'),
-          yes: t('common.yes'), no: t('common.no'),
-          fieldLabels: Object.fromEntries([
-            'PartitionName', 'OperatingSystemType', 'DeviceName', 'BootMode',
-            'PowerOnWithHypervisor', 'VolumeCapacity', 'VolumeName', 'VolumeState',
-            'State', 'IPAddress', 'SubnetMask', 'IsBootable', 'MaximumVirtualIOSlots',
-          ].map((field) => [field, t(`resources.power.fields.${field}`)])),
-          identity: t('resources.power.groups.identity'), processorMemory: t('resources.power.groups.processorMemory'),
-          operatingSystem: t('resources.power.groups.operatingSystem'), network: t('resources.power.groups.network'),
-          storage: t('resources.power.groups.storage'), virtualIo: t('resources.power.groups.virtualIo'), monitoring: t('resources.power.groups.monitoring'),
+          selected: t('resources.power.detail.selected'),
+          detail: t('resources.power.detail.ariaLabel'),
+          close: t('resources.power.detail.close'),
+          yes: t('common.yes'),
+          no: t('common.no'),
+          sections: {
+            summary: t('resources.power.detail.summary'),
+            processorMemory: t('resources.power.groups.processorMemory'),
+            network: t('resources.power.groups.networkMonitoring'),
+            storage: t('resources.power.groups.storage'),
+            virtualIo: t('resources.power.groups.virtualIo'),
+          },
+          fields: {
+            partitionUuid: t('resources.power.fields.PartitionUUID'),
+            logicalSerialNumber: t('resources.power.fields.LogicalSerialNumber'),
+            lastActivatedProfile: t('resources.power.fields.LastActivatedProfile'),
+            uptime: t('resources.power.fields.Uptime'),
+            bootable: t('resources.power.fields.IsBootable'),
+            processors: t('resources.power.detail.processors'),
+            processorLimits: t('resources.power.detail.processorLimits'),
+            processorMode: t('resources.power.detail.processorMode'),
+            memory: t('resources.power.detail.memory'),
+            memoryLimits: t('resources.power.detail.memoryLimits'),
+            interface: t('resources.power.detail.interface'),
+            address: t('resources.power.detail.address'),
+            interfaceState: t('resources.power.detail.interfaceState'),
+            monitoring: t('resources.power.detail.monitoring'),
+            volume: t('resources.power.detail.volume'),
+            capacity: t('resources.power.fields.VolumeCapacity'),
+            volumeUniqueId: t('resources.power.fields.VolumeUniqueID'),
+            reservation: t('resources.power.detail.reservation'),
+            storageConnection: t('resources.power.detail.storageConnection'),
+            fibreChannelIdentity: t('resources.power.detail.fibreChannelIdentity'),
+            virtualIoSlots: t('resources.power.fields.MaximumVirtualIOSlots'),
+            physicalIo: t('resources.power.detail.physicalIo'),
+            sriov: t('resources.power.detail.sriov'),
+          },
+          values: {
+            dedicated: t('resources.power.detail.dedicated'),
+            shared: t('resources.power.detail.shared'),
+            fibreChannel: t('resources.power.detail.fibreChannel'),
+            iscsi: t('resources.power.detail.iscsi'),
+            direct: t('resources.power.detail.direct'),
+          },
         }}
       />
     </>

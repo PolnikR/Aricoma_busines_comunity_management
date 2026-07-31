@@ -36,6 +36,8 @@ export type RecoveryGroupListItem = RecoveryGroupBase & RecoveryGroupResourceCon
 
 export type RecoveryGroup = RecoveryGroupListItem & {
   resources: string[]
+  relatedVolumeProviderId: string | null
+  relatedVolumes: string[]
 }
 
 export interface RecoveryGroupDraft {
@@ -47,4 +49,6 @@ export interface RecoveryGroupDraft {
   resourceType: RecoveryGroupResourceType | null
   providerId: string | null
   resources: string[]
+  relatedVolumeProviderId?: string | null
+  relatedVolumes?: string[]
 }

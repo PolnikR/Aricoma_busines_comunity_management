@@ -15,6 +15,8 @@ const group: RecoveryGroup = {
   resourceType: 'vm',
   providerId: 'vmware-vcenter-01',
   resources: ['DB-01'],
+  relatedVolumeProviderId: null,
+  relatedVolumes: [],
   resourceCount: 1,
   status: 'Active',
 }
