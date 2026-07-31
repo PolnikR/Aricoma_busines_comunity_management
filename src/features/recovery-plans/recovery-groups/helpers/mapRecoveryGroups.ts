@@ -85,11 +85,9 @@ export function toRecoveryGroupSubmitPayload(
     name: draft.name,
     description: draft.description,
     provider_id_vm: isVmGroup ? draft.providerId : '',
-    provider_id_volume: isVmGroup
-      ? (draft.relatedVolumeProviderId ?? '')
-      : draft.providerId,
+    provider_id_volume: isVmGroup ? '' : draft.providerId,
     vms: isVmGroup ? draft.resources.map(name => ({ name })) : [],
-    volumes: (isVmGroup ? draft.relatedVolumes : draft.resources).map(name => ({ name })),
+    volumes: isVmGroup ? [] : draft.resources.map(name => ({ name })),
   }
 }
 
@@ -97,7 +95,6 @@ export function toRecoveryGroup(
   draft: ValidatedRecoveryGroupDraft,
   id: string,
 ): RecoveryGroup {
-  const isVmGroup = draft.configuration.resourceType === 'vm'
   return {
     id,
     name: draft.name,
@@ -105,8 +102,8 @@ export function toRecoveryGroup(
     providerId: draft.providerId,
     ...draft.configuration,
     resources: draft.resources,
-    relatedVolumeProviderId: isVmGroup ? draft.relatedVolumeProviderId : null,
-    relatedVolumes: isVmGroup ? draft.relatedVolumes : [],
+    relatedVolumeProviderId: null,
+    relatedVolumes: [],
     resourceCount: draft.resources.length,
     status: 'Active',
   }

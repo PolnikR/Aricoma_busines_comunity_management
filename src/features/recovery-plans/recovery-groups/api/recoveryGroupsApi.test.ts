@@ -217,7 +217,7 @@ describe('submitRecoveryGroup', () => {
     })
   })
 
-  it('preserves related volumes while upserting an existing VM group', async () => {
+  it('submits an empty volume selection while upserting an existing VM group', async () => {
     const mock = stubFetch(null)
 
     await updateRecoveryGroup('database_group', {
@@ -236,8 +236,8 @@ describe('submitRecoveryGroup', () => {
     const [, init] = mock.mock.calls[0] as [string, RequestInit]
     expect(parseRequestBody(init)).toMatchObject({
       id: 'database_group',
-      provider_id_volume: 'ibm-flashsystem-01',
-      volumes: [{ name: 'TEST-VOLUME1' }],
+      provider_id_volume: '',
+      volumes: [],
     })
   })
 
