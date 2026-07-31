@@ -8,4 +8,12 @@ describe('API_ENDPOINTS', () => {
     expect(endpoints.every(endpoint => endpoint.startsWith('/api/'))).toBe(true)
     expect(new Set(endpoints).size).toBe(endpoints.length)
   })
+
+  it('defines the platform provider API contract', () => {
+    expect(API_ENDPOINTS.platformProviders).toEqual({
+      list: '/api/get_platform_providers',
+      submit: '/api/submit_platform_provider',
+      delete: '/api/delete_platform_provider',
+    })
+  })
 })

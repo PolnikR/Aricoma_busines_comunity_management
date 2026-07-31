@@ -12,6 +12,11 @@ export const API_ENDPOINTS = {
     submit: '/api/submit_provider',
     delete: '/api/delete_provider',
   },
+  platformProviders: {
+    list: '/api/get_platform_providers',
+    submit: '/api/submit_platform_provider',
+    delete: '/api/delete_platform_provider',
+  },
   credentials: {
     publicKey: '/api/credentials/pubkey',
     list: '/api/get_credentials',
