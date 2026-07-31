@@ -39,21 +39,26 @@ describe('useResourceInventoryQueries', () => {
     })
   })
 
-  it('fetches only providers for the active source with canonical cache keys', async () => {
+  it('fetches all resources without provider_id and uses the all-provider cache key', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     )
     const { result } = renderHook(
-      () => useResourceInventoryQueries('flashsystem', [flashProvider, powerProvider]),
+      () => useResourceInventoryQueries(
+        'flashsystem',
+        [flashProvider, secondFlashProvider, powerProvider],
+      ),
       { wrapper },
     )
 
     await waitFor(() => { expect(result.current.isLoading).toBe(false) })
-    expect(fetchFlashSystemInventory).toHaveBeenCalledWith('flash-01')
+    expect(fetchFlashSystemInventory).toHaveBeenCalledTimes(1)
+    expect(fetchFlashSystemInventory).toHaveBeenCalledWith(undefined)
     expect(fetchPowerInventory).not.toHaveBeenCalled()
-    expect(client.getQueryCache().find({ queryKey: ['resource-inventory', 'FLASHCOPY', 'flash-01'] })).toBeDefined()
-    expect(client.getQueryCache().find({ queryKey: ['resource-inventory', 'IBM_POWER', 'power-01'] })).toBeUndefined()
+    expect(client.getQueryCache().find({
+      queryKey: ['resource-inventory', 'FLASHCOPY', null],
+    })).toBeDefined()
   })
 
   it('runs no inventory request until an active source and fetched providers are supplied', () => {
@@ -69,40 +74,39 @@ describe('useResourceInventoryQueries', () => {
     expect(result.current.isLoading).toBe(false)
     expect(fetchFlashSystemInventory).not.toHaveBeenCalled()
     expect(fetchPowerInventory).not.toHaveBeenCalled()
-    expect(client.getQueryCache().getAll()).toHaveLength(0)
   })
 
-  it('reuses fresh provider-scoped cache entries when switching tabs', async () => {
+  it('fetches a selected provider server-side and reuses both cache scopes', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     )
-    let source: 'flashsystem' | 'ibm-power' = 'flashsystem'
+    let providerId: string | undefined
     const { result, rerender } = renderHook(
-      () => useResourceInventoryQueries(source, [flashProvider, powerProvider]),
+      () => useResourceInventoryQueries('flashsystem', [flashProvider, powerProvider], providerId),
       { wrapper },
     )
 
     await waitFor(() => { expect(result.current.isLoading).toBe(false) })
     expect(fetchFlashSystemInventory).toHaveBeenCalledTimes(1)
+    expect(fetchFlashSystemInventory).toHaveBeenLastCalledWith(undefined)
 
-    source = 'ibm-power'
+    providerId = 'flash-01'
     rerender()
-    await waitFor(() => { expect(fetchPowerInventory).toHaveBeenCalledTimes(1) })
+    await waitFor(() => { expect(fetchFlashSystemInventory).toHaveBeenCalledTimes(2) })
+    expect(fetchFlashSystemInventory).toHaveBeenLastCalledWith('flash-01')
+    expect(client.getQueryCache().find({
+      queryKey: ['resource-inventory', 'FLASHCOPY', 'flash-01'],
+    })).toBeDefined()
 
-    source = 'flashsystem'
+    providerId = undefined
     rerender()
     await waitFor(() => { expect(result.current.isLoading).toBe(false) })
-    expect(fetchFlashSystemInventory).toHaveBeenCalledTimes(1)
+    expect(fetchFlashSystemInventory).toHaveBeenCalledTimes(2)
   })
 
-  it('keeps healthy provider results when another provider fails', async () => {
-    vi.mocked(fetchFlashSystemInventory).mockImplementation((providerId) => {
-      if (providerId === 'flash-02') return Promise.reject(new Error('provider offline'))
-      return Promise.resolve({
-        reportedCount: 0, volumes: [], resources: [], pools: {}, hosts: {}, clusters: {},
-      })
-    })
+  it('reports an aggregate request failure for all providers of the active source', async () => {
+    vi.mocked(fetchFlashSystemInventory).mockRejectedValue(new Error('inventory unavailable'))
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
@@ -112,10 +116,27 @@ describe('useResourceInventoryQueries', () => {
       { wrapper },
     )
 
+    await waitFor(() => { expect(result.current.failures).toHaveLength(2) }, { timeout: 3_000 })
+    expect(result.current.flashSystemInventories).toHaveLength(0)
+    expect(result.current.failures.map(({ provider }) => provider.id)).toEqual(['flash-01', 'flash-02'])
+  })
+
+  it('attributes a provider-scoped request failure only to the selected provider', async () => {
+    vi.mocked(fetchFlashSystemInventory).mockRejectedValue(new Error('provider unavailable'))
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+    const { result } = renderHook(
+      () => useResourceInventoryQueries(
+        'flashsystem',
+        [flashProvider, secondFlashProvider],
+        'flash-02',
+      ),
+      { wrapper },
+    )
+
     await waitFor(() => { expect(result.current.failures).toHaveLength(1) }, { timeout: 3_000 })
-    expect(result.current.flashSystemInventories).toHaveLength(1)
-    expect(result.current.failures).toMatchObject([
-      { provider: { id: 'flash-02' }, error: { message: 'provider offline' } },
-    ])
+    expect(result.current.failures[0]?.provider.id).toBe('flash-02')
   })
 })

@@ -27,14 +27,16 @@ export function mapFlashSystemInventory(
   providerId = '',
 ): FlashSystemInventory {
   const volumes = payload.volumes
+  const inventoryProviderId = normalizeIdentity(payload.provider_id) || providerId
   const identityOccurrences = new Map<string, number>()
   const resources = volumes.map((volume, index) => {
+    const resourceProviderId = normalizeIdentity(volume.provider_id) || inventoryProviderId
     const identity = [
       volume.id,
       volume.vdisk_UID,
       volume.volume_id,
     ].map(normalizeIdentity).find(Boolean) ?? stableVolumeFingerprint(volume)
-    const identityKey = `${providerId}:${identity}`
+    const identityKey = `${resourceProviderId}:${identity}`
     const occurrence = (identityOccurrences.get(identityKey) ?? 0) + 1
     identityOccurrences.set(identityKey, occurrence)
 
@@ -43,7 +45,7 @@ export function mapFlashSystemInventory(
       resourceId: occurrence === 1
         ? identityKey
         : `${identityKey}:${String(occurrence)}-${String(index)}`,
-      providerId,
+      providerId: resourceProviderId,
       providerType: 'FLASHCOPY' as const,
       pool: payload.pools[volume.mdisk_grp_id] ?? null,
       resolvedHostMaps: volume.host_maps.map((hostMap) => {

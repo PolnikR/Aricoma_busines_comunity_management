@@ -43,9 +43,11 @@ export async function fetchVmwareInventory(providerId?: string, tag?: string): P
   return mapVmwareInventory(parsed)
 }
 
-async function fetchProviderPayload(url: string, providerId: string, label: string): Promise<unknown> {
-  const params = new URLSearchParams({ provider_id: providerId })
-  const response = await apiFetch(`${url}?${params.toString()}`)
+async function fetchProviderPayload(url: string, providerId: string | undefined, label: string): Promise<unknown> {
+  const requestUrl = providerId
+    ? `${url}?${new URLSearchParams({ provider_id: providerId }).toString()}`
+    : url
+  const response = await apiFetch(requestUrl)
 
   if (!response.ok) {
     throw new Error(`${label} inventory request failed with status ${String(response.status)}`)
@@ -54,7 +56,7 @@ async function fetchProviderPayload(url: string, providerId: string, label: stri
   return response.json()
 }
 
-export async function fetchPowerInventory(providerId: string): Promise<PowerInventory> {
+export async function fetchPowerInventory(providerId?: string): Promise<PowerInventory> {
   const payload = await fetchProviderPayload(
     API_ENDPOINTS.discovery.powerVirtualMachines,
     providerId,
@@ -64,7 +66,7 @@ export async function fetchPowerInventory(providerId: string): Promise<PowerInve
   return mapPowerInventory(parsed, providerId)
 }
 
-export async function fetchFlashSystemInventory(providerId: string): Promise<FlashSystemInventory> {
+export async function fetchFlashSystemInventory(providerId?: string): Promise<FlashSystemInventory> {
   const payload = await fetchProviderPayload(
     API_ENDPOINTS.discovery.flashSystemVolumes,
     providerId,

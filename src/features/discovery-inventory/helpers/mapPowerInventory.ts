@@ -23,6 +23,7 @@ function stableFingerprint(record: Record<string, unknown>): string {
 }
 
 export function mapPowerInventory(payload: PowerInventoryPayload, providerId = ''): PowerInventory {
+  const inventoryProviderId = asDisplayValue(payload.provider_id) || providerId
   const identityOccurrences = new Map<string, number>()
   const partitions = payload.vms.flatMap((virtualMachine, index) => {
     const hasLpar = Object.keys(virtualMachine.lpar).length > 0
@@ -31,13 +32,16 @@ export function mapPowerInventory(payload: PowerInventoryPayload, providerId = '
 
     const partitionKind = hasLpar ? 'LPAR' as const : 'VIOS' as const
     const partitionData = hasLpar ? virtualMachine.lpar : virtualMachine.vios
+    const resourceProviderId = asDisplayValue(virtualMachine.provider_id)
+      || asDisplayValue(partitionData['provider_id'])
+      || inventoryProviderId
     const identity = [
       partitionData.PartitionUUID,
       partitionData['LogicalSerialNumber'],
       partitionData['PartitionID'],
       partitionData.PartitionName,
     ].map(asDisplayValue).find(Boolean) ?? stableFingerprint(partitionData)
-    const identityKey = `${providerId}:${partitionKind}:${identity}`
+    const identityKey = `${resourceProviderId}:${partitionKind}:${identity}`
     const occurrence = (identityOccurrences.get(identityKey) ?? 0) + 1
     identityOccurrences.set(identityKey, occurrence)
     const uniqueIdentity = occurrence === 1
@@ -46,7 +50,7 @@ export function mapPowerInventory(payload: PowerInventoryPayload, providerId = '
 
     return [{
       id: uniqueIdentity,
-      providerId,
+      providerId: resourceProviderId,
       providerType: 'IBM_POWER' as const,
       partitionKind,
       partitionData,

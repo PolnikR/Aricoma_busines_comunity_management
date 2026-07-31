@@ -11,15 +11,17 @@ export const powerPartitionSchema = z.object({
 }).catchall(powerScalarSchema)
 
 export const powerInventoryResponseSchema = z.object({
+  provider_id: z.string().optional(),
   count: z.number().int().nonnegative(),
   counts_by_type: z.object({
     LogicalPartition: z.number().int().nonnegative(),
     VirtualIOServer: z.number().int().nonnegative(),
   }),
   vms: z.array(z.object({
+    provider_id: z.string().optional(),
     lpar: powerPartitionSchema,
     vios: powerPartitionSchema,
-  })),
+  }).loose()),
 }).loose()
 
 export type PowerInventoryPayload = z.infer<typeof powerInventoryResponseSchema>

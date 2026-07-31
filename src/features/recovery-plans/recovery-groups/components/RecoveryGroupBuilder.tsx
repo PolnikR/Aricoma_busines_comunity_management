@@ -3,8 +3,11 @@ import { Button } from '@/shared/components/button/Button'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
 import { isProgrammaticIdAvailable } from '@/shared/utils/programmaticId'
 import { useTranslation } from '@/hooks/useTranslation'
+import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
+import { getRecoveryGroupResourceOption } from '../config/recoveryGroupResourceOptions'
 import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { RecoveryGroupDetailsStep } from './RecoveryGroupDetailsStep'
+import { RecoveryGroupProviderStep } from './RecoveryGroupProviderStep'
 import { RecoveryGroupResourcesStep } from './RecoveryGroupResourcesStep'
 import { RecoveryGroupTypeStep } from './RecoveryGroupTypeStep'
 
@@ -25,6 +28,7 @@ const INITIAL_DRAFT: RecoveryGroupDraft = {
   sourceCategory: null,
   workloadType: null,
   resourceType: null,
+  providerId: null,
   resources: [],
 }
 
@@ -38,6 +42,8 @@ export function RecoveryGroupBuilder({
   isSaving = false,
 }: RecoveryGroupBuilderProps) {
   const { t } = useTranslation()
+  const providerQuery = useProviders()
+  const providers = providerQuery.data ?? []
   const [step, setStep] = useState(1)
   const [draft, setDraft] = useState<RecoveryGroupDraft>(() => initialData
     ? {
@@ -47,6 +53,7 @@ export function RecoveryGroupBuilder({
         sourceCategory: initialData.sourceCategory,
         workloadType: initialData.workloadType,
         resourceType: initialData.resourceType,
+        providerId: initialData.providerId,
         resources: [...initialData.resources],
       }
     : INITIAL_DRAFT)
@@ -62,10 +69,29 @@ export function RecoveryGroupBuilder({
     && draft.description.trim(),
   )
   const typeValid = Boolean(draft.sourceCategory && draft.workloadType && draft.resourceType)
+  const selectedOption = getRecoveryGroupResourceOption(draft.workloadType)
+  const providerValid = Boolean(
+    draft.providerId
+    && selectedOption
+    && providers.some(provider => (
+      provider.id === draft.providerId
+      && provider.type === selectedOption.providerType
+      && provider.credentialStatus === 'ok'
+    )),
+  )
   const steps = [
     { id: 'details', label: t('pages.recoveryGroupBuilder.steps.details') },
     { id: 'type', label: t('pages.recoveryGroupBuilder.steps.type'), disabled: !detailsValid },
-    { id: 'resources', label: t('pages.recoveryGroupBuilder.steps.resources'), disabled: !detailsValid || !typeValid },
+    {
+      id: 'provider',
+      label: t('pages.recoveryGroupBuilder.steps.provider'),
+      disabled: !detailsValid || !typeValid,
+    },
+    {
+      id: 'resources',
+      label: t('pages.recoveryGroupBuilder.steps.resources'),
+      disabled: !detailsValid || !typeValid || !providerValid,
+    },
   ]
 
   const updateDraft = (update: Partial<RecoveryGroupDraft>) => {
@@ -77,7 +103,9 @@ export function RecoveryGroupBuilder({
     ? detailsValid
     : step === 2
       ? typeValid
-      : draft.resources.length > 0
+      : step === 3
+        ? providerValid
+        : draft.resources.length > 0
   const canCreate = Boolean(
     draft.name.trim()
     && draft.id
@@ -86,6 +114,7 @@ export function RecoveryGroupBuilder({
     && draft.sourceCategory
     && draft.workloadType
     && draft.resourceType
+    && providerValid
     && draft.resources.length > 0,
   )
 
@@ -102,7 +131,7 @@ export function RecoveryGroupBuilder({
         </aside>
         <div className="flex min-h-0 flex-col">
           <div className={`custom-scrollbar min-h-0 flex-1 p-5 sm:p-6 ${
-            step === 3 ? 'overflow-hidden' : 'overflow-y-auto'
+            step === 4 ? 'overflow-hidden' : 'overflow-y-auto'
           }`}>
             {step === 1 ? (
               <RecoveryGroupDetailsStep
@@ -118,12 +147,17 @@ export function RecoveryGroupBuilder({
               <RecoveryGroupTypeStep
                 sourceCategory={draft.sourceCategory}
                 selected={draft.workloadType}
+                providers={providers}
+                isLoadingProviders={providerQuery.isLoading}
+                providerError={providerQuery.error instanceof Error ? providerQuery.error : null}
+                onRetryProviders={() => { void providerQuery.refetch() }}
                 readOnly={Boolean(initialData)}
                 onCategoryChange={(sourceCategory) => {
                   updateDraft({
                     sourceCategory,
                     workloadType: null,
                     resourceType: null,
+                    providerId: null,
                     resources: [],
                   })
                 }}
@@ -132,14 +166,31 @@ export function RecoveryGroupBuilder({
                     sourceCategory,
                     workloadType,
                     resourceType,
+                    providerId: draft.workloadType === workloadType ? draft.providerId : null,
                     resources: draft.workloadType === workloadType ? draft.resources : [],
                   })
                 }}
               />
             ) : null}
             {step === 3 ? (
+              draft.workloadType ? (
+                <RecoveryGroupProviderStep
+                  workloadType={draft.workloadType}
+                  providers={providers}
+                  selectedProviderId={draft.providerId}
+                  onSelect={(providerId) => {
+                    updateDraft({
+                      providerId,
+                      resources: draft.providerId === providerId ? draft.resources : [],
+                    })
+                  }}
+                />
+              ) : null
+            ) : null}
+            {step === 4 ? (
               <RecoveryGroupResourcesStep
                 workloadType={draft.workloadType}
+                providerId={draft.providerId}
                 resources={draft.resources}
                 onAdd={resource => {
                   if (!draft.resources.includes(resource)) {
@@ -162,10 +213,10 @@ export function RecoveryGroupBuilder({
               >
                 {t('buttons.back')}
               </Button>
-              {step < 3 ? (
+              {step < 4 ? (
                 <Button
                   disabled={!canContinue}
-                  onClick={() => { setStep(current => Math.min(3, current + 1)) }}
+                  onClick={() => { setStep(current => Math.min(4, current + 1)) }}
                 >
                   {t('buttons.next')}
                 </Button>

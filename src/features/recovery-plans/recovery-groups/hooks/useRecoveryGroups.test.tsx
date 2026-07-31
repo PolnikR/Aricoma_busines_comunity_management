@@ -33,6 +33,7 @@ describe('useRecoveryGroups', () => {
         sourceCategory: 'backup_system_workload',
         workloadType: 'vmware_virtual_machines',
         resourceType: 'vm',
+        providerId: 'vmware-vcenter-01',
         resources: ['DB-01'],
       })
     })

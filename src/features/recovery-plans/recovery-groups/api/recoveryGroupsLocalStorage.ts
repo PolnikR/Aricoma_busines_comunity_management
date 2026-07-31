@@ -9,6 +9,7 @@ const storedBaseSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   description: z.string().min(1),
+  providerId: z.string().min(1).nullable().optional(),
   resources: z.array(z.string().min(1)).min(1),
 })
 
@@ -22,11 +23,13 @@ const legacyStoredGroupSchema = storedBaseSchema.extend({
 function deriveGroup(
   group: z.infer<typeof currentStoredGroupSchema>,
 ): RecoveryGroup {
+  const providerId = group.providerId ?? null
   return {
     ...group,
+    providerId,
     resources: [...new Set(group.resources)],
     resourceCount: new Set(group.resources).size,
-    status: 'Active',
+    status: providerId ? 'Active' : 'Draft',
   }
 }
 
@@ -53,6 +56,7 @@ function parseStoredGroup(value: unknown): RecoveryGroup | null {
     id: legacy.data.id,
     name: legacy.data.name,
     description: legacy.data.description,
+    providerId: legacy.data.providerId ?? null,
     resources: legacy.data.resources,
     ...configuration,
   })

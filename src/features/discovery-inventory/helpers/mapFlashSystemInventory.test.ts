@@ -3,6 +3,27 @@ import { flashSystemInventoryResponseSchema } from '../api/schemas/flashSystemIn
 import { mapFlashSystemInventory } from './mapFlashSystemInventory'
 
 describe('mapFlashSystemInventory', () => {
+  it('preserves resource provider identity from an aggregate response', () => {
+    const payload = flashSystemInventoryResponseSchema.parse({
+      count: 2,
+      volumes: [
+        { id: '0', name: 'volume-a', provider_id: 'flash-01' },
+        { id: '0', name: 'volume-b', provider_id: 'flash-02' },
+      ],
+      pools: {},
+      hosts: {},
+      clusters: {},
+    })
+
+    const inventory = mapFlashSystemInventory(payload)
+
+    expect(inventory.resources.map((resource) => resource.providerId)).toEqual([
+      'flash-01',
+      'flash-02',
+    ])
+    expect(inventory.resources[0]?.resourceId).not.toBe(inventory.resources[1]?.resourceId)
+  })
+
   it('retains all volume fields and resolves pool and host relations', () => {
     const payload = flashSystemInventoryResponseSchema.parse({
       count: 1,

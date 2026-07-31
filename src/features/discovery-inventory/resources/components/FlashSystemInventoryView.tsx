@@ -26,11 +26,19 @@ const initialFilters: FlashSystemFilters = {
 interface FlashSystemInventoryViewProps {
   resources: FlashSystemVolumeResource[]
   providers: ProviderRecord[]
+  providerId: string
+  onProviderIdChange: (providerId: string) => void
   t: Translate
 }
 
-export function FlashSystemInventoryView({ resources, providers, t }: FlashSystemInventoryViewProps) {
-  const [filters, setFilters] = useState(initialFilters)
+export function FlashSystemInventoryView({
+  resources,
+  providers,
+  providerId,
+  onProviderIdChange,
+  t,
+}: FlashSystemInventoryViewProps) {
+  const [filters, setFilters] = useState<FlashSystemFilters>({ ...initialFilters, providerId })
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
   const [density, setDensity] = useState<TableDensity>('compact')
@@ -46,6 +54,9 @@ export function FlashSystemInventoryView({ resources, providers, t }: FlashSyste
   const safePage = Math.min(page, pageCount)
   const rows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize)
   const updateFilters = (next: Partial<FlashSystemFilters>) => {
+    if (next.providerId !== undefined && next.providerId !== filters.providerId) {
+      onProviderIdChange(next.providerId)
+    }
     setFilters((current) => ({ ...current, ...next }))
     setPage(1)
   }
@@ -88,7 +99,11 @@ export function FlashSystemInventoryView({ resources, providers, t }: FlashSyste
           ]}
           onSearchChange={(search) => { updateFilters({ search }) }}
           onFiltersChange={(next) => { updateFilters(next) }}
-          onReset={() => { setFilters(initialFilters); setPage(1) }}
+          onReset={() => {
+            setFilters(initialFilters)
+            onProviderIdChange('')
+            setPage(1)
+          }}
           filterTitle={t('resources.flash.filters.title')}
           filterLabel={t('common.filters')}
           density={density}

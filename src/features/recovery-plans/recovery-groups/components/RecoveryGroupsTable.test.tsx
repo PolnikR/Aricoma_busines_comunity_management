@@ -14,6 +14,18 @@ const groups: RecoveryGroupListItem[] = [
     sourceCategory: 'backup_system_workload',
     workloadType: 'vmware_virtual_machines',
     resourceType: 'vm',
+    providerId: 'vmware-vcenter-01',
+    resourceCount: 2,
+    status: 'Active',
+  },
+  {
+    id: 'power-group',
+    name: 'Power group',
+    description: 'Production Power workloads',
+    sourceCategory: 'backup_system_workload',
+    workloadType: 'ibm_power_virtual_machines',
+    resourceType: 'vm',
+    providerId: 'ibm-power-01',
     resourceCount: 2,
     status: 'Active',
   },
@@ -46,6 +58,14 @@ describe('RecoveryGroupsTable', () => {
     await user.type(search, 'missing')
 
     expect(screen.getByText('No recovery groups defined yet')).toBeInTheDocument()
+  })
+
+  it('renders the IBM Power workload label', () => {
+    render(
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    )
+
+    expect(screen.getByText('IBM Power virtual machines')).toBeInTheDocument()
   })
 
   it('edits and confirms deletion from the detail panel', async () => {

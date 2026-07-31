@@ -11,9 +11,14 @@ export function getSourceCategoryLabelKey(category: RecoveryGroupSourceCategory)
 }
 
 export function getWorkloadTypeLabelKey(workloadType: RecoveryGroupWorkloadType): string {
-  return workloadType === 'vmware_virtual_machines'
-    ? 'pages.recoveryGroupBuilder.type.workloads.vmware.title'
-    : 'pages.recoveryGroupBuilder.type.workloads.flashSystem.title'
+  switch (workloadType) {
+    case 'vmware_virtual_machines':
+      return 'pages.recoveryGroupBuilder.type.workloads.vmware.title'
+    case 'ibm_power_virtual_machines':
+      return 'pages.recoveryGroupBuilder.type.workloads.ibmPower.title'
+    case 'ibm_flashsystem':
+      return 'pages.recoveryGroupBuilder.type.workloads.flashSystem.title'
+  }
 }
 
 export function getResourceTypeLabelKey(resourceType: RecoveryGroupResourceType): string {

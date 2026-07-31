@@ -166,6 +166,30 @@ describe('IBM discovery inventory endpoints', () => {
     vi.unstubAllGlobals()
   })
 
+  it('requests all IBM Power inventory without a provider filter by default', async () => {
+    const payload = {
+      count: 0,
+      counts_by_type: { LogicalPartition: 0, VirtualIOServer: 0 },
+      vms: [],
+    }
+    const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 }))
+    vi.stubGlobal('fetch', mock)
+
+    await fetchPowerInventory()
+
+    expect(mock.mock.calls[0]?.[0]).toBe('/api/get_power_vm')
+  })
+
+  it('requests all FlashSystem inventory without a provider filter by default', async () => {
+    const payload = { count: 0, volumes: [], pools: {}, hosts: {}, clusters: {} }
+    const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 }))
+    vi.stubGlobal('fetch', mock)
+
+    await fetchFlashSystemInventory()
+
+    expect(mock.mock.calls[0]?.[0]).toBe('/api/get_volumes')
+  })
+
   it('fetches and validates IBM Power inventory for the given provider', async () => {
     const payload = {
       count: 1,

@@ -12,6 +12,11 @@ export const recoveryGroupConfigurationSchema = z.discriminatedUnion('workloadTy
     resourceType: z.literal('vm'),
   }),
   z.object({
+    sourceCategory: z.literal('backup_system_workload'),
+    workloadType: z.literal('ibm_power_virtual_machines'),
+    resourceType: z.literal('vm'),
+  }),
+  z.object({
     sourceCategory: z.literal('storage_system'),
     workloadType: z.literal('ibm_flashsystem'),
     resourceType: z.literal('volume'),
@@ -22,6 +27,7 @@ export interface ValidatedRecoveryGroupDraft {
   id: string
   name: string
   description: string
+  providerId: string
   resources: string[]
   configuration: RecoveryGroupResourceConfiguration
 }
@@ -29,6 +35,7 @@ export interface ValidatedRecoveryGroupDraft {
 export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): ValidatedRecoveryGroupDraft {
   const name = draft.name.trim()
   const description = draft.description.trim()
+  const providerId = draft.providerId?.trim() ?? ''
   const resources = draft.resources.map(resource => resource.trim())
   const configuration = recoveryGroupConfigurationSchema.safeParse({
     sourceCategory: draft.sourceCategory,
@@ -40,6 +47,7 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     !draft.id.trim()
     || !name
     || !description
+    || !providerId
     || resources.length === 0
     || resources.some(resource => !resource)
     || new Set(resources).size !== resources.length
@@ -52,6 +60,7 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     id: draft.id,
     name,
     description,
+    providerId,
     resources,
     configuration: configuration.data,
   }

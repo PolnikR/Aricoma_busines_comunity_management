@@ -18,6 +18,7 @@ const flashSystemRelatedResourceSchema = z.object({
 }).loose()
 
 const flashSystemVolumeSchema = z.object({
+  provider_id: z.string().optional(),
   id: z.string().catch(''),
   name: z.string().min(1),
   IO_group_id: z.string().catch(''),
@@ -53,6 +54,7 @@ const flashSystemVolumeSchema = z.object({
 }).loose()
 
 export const flashSystemInventoryResponseSchema = z.object({
+  provider_id: z.string().optional(),
   count: z.number().int().nonnegative(),
   volumes: z.array(flashSystemVolumeSchema),
   pools: z.record(z.string(), flashSystemPoolSchema).catch({}),

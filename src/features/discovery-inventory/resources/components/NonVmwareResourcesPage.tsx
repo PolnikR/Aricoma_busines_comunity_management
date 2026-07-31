@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useState } from 'react'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
@@ -32,13 +33,22 @@ export function NonVmwareResourcesPage(props: NonVmwareResourcesPageProps) {
     resourceTab, providers, providersPending, providersSuccess, providersFetching,
     providersError, onRefetchProviders, tabs, t,
   } = props
+  const [providerFilters, setProviderFilters] = useState<Record<SourceTab, string>>({
+    flashsystem: '',
+    'ibm-power': '',
+  })
   const isFlashSystem = resourceTab === 'flashsystem'
+  const providerId = providerFilters[resourceTab]
   const sourceProviders = providers.filter((provider) => provider.type === (isFlashSystem ? 'FLASHCOPY' : 'IBM_POWER'))
-  const sourceQueries = useResourceInventoryQueries(providersSuccess ? resourceTab : null, providers)
+  const sourceQueries = useResourceInventoryQueries(
+    providersSuccess ? resourceTab : null,
+    providers,
+    providerId || undefined,
+  )
   const hasData = isFlashSystem
     ? sourceQueries.flashSystemResources.length > 0
     : sourceQueries.powerResources.length > 0
-  const allFailed = sourceQueries.hasProviders && sourceQueries.failures.length === sourceProviders.length && !hasData
+  const allFailed = sourceQueries.hasProviders && sourceQueries.failures.length > 0 && !hasData
   const sourceLoading = providersSuccess && sourceProviders.length > 0 && sourceQueries.isLoading
   const metrics = providersPending || sourceLoading
     ? <MetricsSkeleton />
@@ -118,8 +128,28 @@ export function NonVmwareResourcesPage(props: NonVmwareResourcesPageProps) {
     )
   } else {
     content = isFlashSystem
-      ? <FlashSystemInventoryView resources={sourceQueries.flashSystemResources} providers={sourceProviders} t={t} />
-      : <PowerInventoryView resources={sourceQueries.powerResources} providers={sourceProviders} t={t} />
+      ? (
+          <FlashSystemInventoryView
+            resources={sourceQueries.flashSystemResources}
+            providers={sourceProviders}
+            providerId={providerId}
+            onProviderIdChange={(value) => {
+              setProviderFilters((current) => ({ ...current, flashsystem: value }))
+            }}
+            t={t}
+          />
+        )
+      : (
+          <PowerInventoryView
+            resources={sourceQueries.powerResources}
+            providers={sourceProviders}
+            providerId={providerId}
+            onProviderIdChange={(value) => {
+              setProviderFilters((current) => ({ ...current, 'ibm-power': value }))
+            }}
+            t={t}
+          />
+        )
   }
 
   return (

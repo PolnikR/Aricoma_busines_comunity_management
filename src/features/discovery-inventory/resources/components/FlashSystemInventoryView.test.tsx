@@ -18,6 +18,12 @@ const provider: ProviderRecord = {
   credentialStatus: 'none',
 }
 
+const secondProvider: ProviderRecord = {
+  ...provider,
+  id: 'flash-02',
+  name: 'Flash 02',
+}
+
 describe('FlashSystemInventoryView', () => {
   it('renders relevant columns and localized detail relationships', () => {
     const inventory = mapFlashSystemInventory(flashSystemInventoryResponseSchema.parse({
@@ -49,7 +55,15 @@ describe('FlashSystemInventoryView', () => {
     }), provider.id)
     const { t } = useTranslation()
 
-    render(<FlashSystemInventoryView resources={inventory.resources} providers={[provider]} t={t} />)
+    render(
+      <FlashSystemInventoryView
+        resources={inventory.resources}
+        providers={[provider]}
+        providerId=""
+        onProviderIdChange={vi.fn()}
+        t={t}
+      />,
+    )
     expect(screen.getByRole('columnheader', { name: 'Capacity' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Pool' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Type' })).toBeInTheDocument()
@@ -87,5 +101,41 @@ describe('FlashSystemInventoryView', () => {
     expect(within(dialog).queryByText('3 TB')).not.toBeInTheDocument()
     expect(within(dialog).queryByText('Pool0')).not.toBeInTheDocument()
     expect(within(dialog).queryByText('mdisk_grp_id')).not.toBeInTheDocument()
+  })
+
+  it('filters loaded data and requests provider-scoped data when applied', () => {
+    const { t } = useTranslation()
+    const onProviderIdChange = vi.fn()
+    const inventory = mapFlashSystemInventory(flashSystemInventoryResponseSchema.parse({
+      count: 1,
+      volumes: [{
+        id: '0',
+        name: 'V5000_Volume1',
+        status: 'online',
+        capacity: '3 TB',
+        type: 'striped',
+        vdisk_UID: 'uid-1',
+      }],
+      pools: {},
+      hosts: {},
+      clusters: {},
+    }), provider.id)
+
+    render(
+      <FlashSystemInventoryView
+        resources={inventory.resources}
+        providers={[provider, secondProvider]}
+        providerId=""
+        onProviderIdChange={onProviderIdChange}
+        t={t}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
+    fireEvent.change(screen.getByLabelText('Provider'), { target: { value: 'flash-02' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+
+    expect(onProviderIdChange).toHaveBeenCalledWith('flash-02')
+    expect(screen.queryByText('V5000_Volume1')).not.toBeInTheDocument()
   })
 })

@@ -21,11 +21,19 @@ const initialFilters: PowerFilters = {
 interface PowerInventoryViewProps {
   resources: PowerPartitionResource[]
   providers: ProviderRecord[]
+  providerId: string
+  onProviderIdChange: (providerId: string) => void
   t: Translate
 }
 
-export function PowerInventoryView({ resources, providers, t }: PowerInventoryViewProps) {
-  const [filters, setFilters] = useState(initialFilters)
+export function PowerInventoryView({
+  resources,
+  providers,
+  providerId,
+  onProviderIdChange,
+  t,
+}: PowerInventoryViewProps) {
+  const [filters, setFilters] = useState<PowerFilters>({ ...initialFilters, providerId })
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
   const [density, setDensity] = useState<TableDensity>('compact')
@@ -35,7 +43,13 @@ export function PowerInventoryView({ resources, providers, t }: PowerInventoryVi
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, pageCount)
   const rows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize)
-  const updateFilters = (next: Partial<PowerFilters>) => { setFilters((current) => ({ ...current, ...next })); setPage(1) }
+  const updateFilters = (next: Partial<PowerFilters>) => {
+    if (next.providerId !== undefined && next.providerId !== filters.providerId) {
+      onProviderIdChange(next.providerId)
+    }
+    setFilters((current) => ({ ...current, ...next }))
+    setPage(1)
+  }
   const labels = {
     partition: t('resources.power.table.partition'), os: t('resources.power.table.os'), device: t('resources.power.table.device'),
     bootMode: t('resources.power.table.bootMode'), hypervisor: t('resources.power.table.hypervisor'),
@@ -59,7 +73,11 @@ export function PowerInventoryView({ resources, providers, t }: PowerInventoryVi
           ]}
           onSearchChange={(search) => { updateFilters({ search }) }}
           onFiltersChange={(next) => { updateFilters(next) }}
-          onReset={() => { setFilters(initialFilters); setPage(1) }}
+          onReset={() => {
+            setFilters(initialFilters)
+            onProviderIdChange('')
+            setPage(1)
+          }}
           filterTitle={t('resources.power.filters.title')}
           filterLabel={t('common.filters')}
           density={density}
