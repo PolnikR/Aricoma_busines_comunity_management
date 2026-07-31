@@ -7,6 +7,7 @@ import {
   fetchPowerInventory,
   fetchVmwareInventory,
 } from '@/features/discovery-inventory/api/discoveryInventoryApi'
+import { discoveryInventoryKeys } from '@/features/discovery-inventory/api/discoveryInventoryQueryKeys'
 import type {
   DiscoveredVirtualMachine,
   FlashSystemVolumeResource,
@@ -20,10 +21,9 @@ vi.mock('@/features/discovery-inventory/api/discoveryInventoryApi', () => ({
   fetchFlashSystemInventory: vi.fn(),
 }))
 
-function createWrapper() {
-  const queryClient = new QueryClient({
+function createWrapper(queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
-  })
+  })) {
 
   return function Wrapper({ children }: PropsWithChildren) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -89,6 +89,65 @@ describe('useRecoveryGroupResourceInventory', () => {
     )
 
     expect(result.current.fetchStatus).toBe('idle')
+    expect(fetchVmwareInventory).not.toHaveBeenCalled()
+    expect(fetchPowerInventory).not.toHaveBeenCalled()
+    expect(fetchFlashSystemInventory).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    [
+      'vmware_virtual_machines',
+      'vmware-1',
+      discoveryInventoryKeys.inventory('vmware-1'),
+      {
+        reportedCount: 1,
+        virtualMachines: [{ name: 'CACHED-VM' } as DiscoveredVirtualMachine],
+      },
+      ['CACHED-VM'],
+    ],
+    [
+      'ibm_power_virtual_machines',
+      'power-1',
+      discoveryInventoryKeys.resourceInventory('IBM_POWER', 'power-1'),
+      {
+        reportedCount: 1,
+        countsByType: { LogicalPartition: 1, VirtualIOServer: 0 },
+        virtualMachines: [],
+        partitions: [{ partitionName: 'CACHED-LPAR' } as PowerPartitionResource],
+      },
+      ['CACHED-LPAR'],
+    ],
+    [
+      'ibm_flashsystem',
+      'flash-1',
+      discoveryInventoryKeys.resourceInventory('FLASHCOPY', 'flash-1'),
+      {
+        reportedCount: 1,
+        volumes: [],
+        resources: [{ name: 'CACHED-VOL' } as FlashSystemVolumeResource],
+        pools: {},
+        hosts: {},
+        clusters: {},
+      },
+      ['CACHED-VOL'],
+    ],
+  ] as const)('reuses the discovery cache for %s', async (
+    workloadType,
+    providerId,
+    queryKey,
+    inventory,
+    expectedNames,
+  ) => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    queryClient.setQueryData(queryKey, inventory)
+
+    const { result } = renderHook(
+      () => useRecoveryGroupResourceInventory(workloadType, providerId),
+      { wrapper: createWrapper(queryClient) },
+    )
+
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+    expect(result.current.data?.resourceNames).toEqual(expectedNames)
     expect(fetchVmwareInventory).not.toHaveBeenCalled()
     expect(fetchPowerInventory).not.toHaveBeenCalled()
     expect(fetchFlashSystemInventory).not.toHaveBeenCalled()

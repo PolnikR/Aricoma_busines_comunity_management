@@ -58,12 +58,12 @@ export function FlashSystemVolumeDetailPanel({ volume, open, onClose, labels }: 
         <div className="space-y-5 p-5">
           {fieldGroups.map((group) => (
             <section key={group.key}>
-              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#71819a]">{labels.groups[group.key]}</h3>
+              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#17233d]">{labels.groups[group.key]}</h3>
               <dl>{group.fields.map((field) => <DetailRow key={field} label={labels.fieldLabels[field] ?? field} value={display(volume[field])} />)}</dl>
             </section>
           ))}
           <section>
-            <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#71819a]">{labels.pool}</h3>
+            <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#17233d]">{labels.pool}</h3>
             <dl>
               <DetailRow label={labels.capacity} value={display(volume.pool?.capacity)} />
               <DetailRow label={labels.usedCapacity} value={display(volume.pool?.used_capacity)} />
