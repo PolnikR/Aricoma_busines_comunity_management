@@ -1,0 +1,52 @@
+import { StateCell } from '@/shared/components/data-table'
+import type { ColumnDef } from '@/shared/components/data-table'
+import type { FlashSystemVolumeResource } from '../../model/discoveryTypes'
+
+interface FlashSystemColumnLabels {
+  name: string
+  status: string
+  capacity: string
+  pool: string
+  ioGroup: string
+  type: string
+  protocol: string
+  hosts: string
+  copies: string
+  flashCopy: string
+  provider: string
+}
+
+export function createFlashSystemColumns(labels: FlashSystemColumnLabels): ColumnDef<FlashSystemVolumeResource>[] {
+  return [
+    {
+      id: 'name',
+      header: labels.name,
+      cell: (volume) => (
+        <>
+          <span className="block max-w-60 truncate font-semibold text-[#17233d]" title={volume.name}>{volume.name}</span>
+          <span className="block max-w-60 truncate font-mono text-[11px] text-[#93a0b5]" title={volume.vdisk_UID}>{volume.vdisk_UID || '-'}</span>
+        </>
+      ),
+    },
+    {
+      id: 'status',
+      header: labels.status,
+      cell: (volume) => <StateCell tone={volume.status.toLowerCase() === 'online' ? 'on' : 'warn'} label={volume.status || '-'} />,
+    },
+    { id: 'capacity', header: labels.capacity, cell: (volume) => volume.capacity || '-', align: 'right' },
+    { id: 'pool', header: labels.pool, cell: (volume) => volume.pool?.name ?? volume.mdisk_grp_name },
+    { id: 'ioGroup', header: labels.ioGroup, cell: (volume) => volume.IO_group_name || '-' },
+    { id: 'type', header: labels.type, cell: (volume) => volume.type || '-' },
+    { id: 'protocol', header: labels.protocol, cell: (volume) => volume.protocol || '-' },
+    {
+      id: 'hosts',
+      header: labels.hosts,
+      cell: (volume) => volume.resolvedHostMaps.length > 0
+        ? volume.resolvedHostMaps.map((host) => host.hostName).join(', ')
+        : '-',
+    },
+    { id: 'copies', header: labels.copies, cell: (volume) => volume.copy_count || '0', align: 'right' },
+    { id: 'flashCopy', header: labels.flashCopy, cell: (volume) => volume.fc_map_count || '0', align: 'right' },
+    { id: 'provider', header: labels.provider, cell: (volume) => volume.providerId || '-' },
+  ]
+}

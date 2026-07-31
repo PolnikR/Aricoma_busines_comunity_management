@@ -61,7 +61,7 @@ export async function fetchPowerInventory(providerId: string): Promise<PowerInve
     'IBM Power',
   )
   const parsed = powerInventoryResponseSchema.parse(payload)
-  return mapPowerInventory(parsed)
+  return mapPowerInventory(parsed, providerId)
 }
 
 export async function fetchFlashSystemInventory(providerId: string): Promise<FlashSystemInventory> {
@@ -71,7 +71,7 @@ export async function fetchFlashSystemInventory(providerId: string): Promise<Fla
     'IBM FlashSystem',
   )
   const parsed = flashSystemInventoryResponseSchema.parse(payload)
-  return mapFlashSystemInventory(parsed)
+  return mapFlashSystemInventory(parsed, providerId)
 }
 
 export type ProviderInventory =

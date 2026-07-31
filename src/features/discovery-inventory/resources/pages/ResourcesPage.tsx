@@ -9,6 +9,7 @@ import { DataTablePagination } from '@/shared/components/data-table'
 import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useDiscoveryInventory } from '@/features/discovery-inventory/hooks/useDiscoveryInventory'
+import { useResourceInventoryQueries } from '@/features/discovery-inventory/hooks/useResourceInventoryQueries'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
 import { useTags } from '../../hooks/useTags'
 import { applyFiltersAndPagination } from '../helpers/filterVirtualMachines'
@@ -20,6 +21,9 @@ import { VirtualMachinesToolbar } from '../components/VirtualMachinesToolbar'
 import { VirtualMachinesSkeleton } from '../skeletons'
 import { useVirtualMachineSearchParams } from '../hooks/useVirtualMachineSearchParams'
 import type { VirtualMachineFilters, VirtualMachinePageSize } from '../types'
+import { FlashSystemInventoryView } from '../components/FlashSystemInventoryView'
+import { PowerInventoryView } from '../components/PowerInventoryView'
+import { useResourceTabSearchParam } from '../hooks/useResourceTabSearchParam'
 
 const defaultFilters: VirtualMachineFilters = {
   search: '',
@@ -31,18 +35,17 @@ const defaultFilters: VirtualMachineFilters = {
   untagged: false,
 }
 
-type ResourceTab = 'vmware' | 'flashsystem' | 'ibm-power'
-
 export function ResourcesPage() {
   const { t } = useTranslation()
+  const { resourceTab, setResourceTab } = useResourceTabSearchParam()
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
-  const { data: inventory, error, isLoading: isPending, isFetching, refetch } = useDiscoveryInventory(query.providerId ?? undefined, query.tags[0])
-  const { data: availableTags = [] } = useTags()
+  const { data: inventory, error, isLoading: isPending, isFetching, refetch } = useDiscoveryInventory(query.providerId ?? undefined, query.tags[0], resourceTab === 'vmware')
+  const { data: availableTags = [] } = useTags(resourceTab === 'vmware')
   const { data: providers = [], isLoading: providersLoading } = useProviders()
+  const sourceQueries = useResourceInventoryQueries(resourceTab === 'vmware' ? null : resourceTab, providers)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [density, setDensity] = useState<TableDensity>('compact')
-  const [resourceTab, setResourceTab] = useState<ResourceTab>('vmware')
   const handleRefetch = () => { void refetch() }
 
   const allData = useMemo(
@@ -76,6 +79,91 @@ export function ResourcesPage() {
     providerId: query.providerId,
     tags: query.tags,
     untagged: query.untagged,
+  }
+
+  const tabs = (
+    <Tabs
+      items={[
+        { value: 'vmware', label: t('pages.virtualMachines.tabs.vmware') },
+        { value: 'flashsystem', label: t('pages.virtualMachines.tabs.flashSystem') },
+        { value: 'ibm-power', label: t('pages.virtualMachines.tabs.ibmPower') },
+      ]}
+      value={resourceTab}
+      onChange={(tab) => { setResourceTab(tab); handleCloseDrawer() }}
+      ariaLabel={t('pages.virtualMachines.tabs.label')}
+      className="w-full shrink-0 border-b-0 bg-white px-0 sm:w-auto"
+    />
+  )
+
+  if (resourceTab !== 'vmware') {
+    const isSourceLoading = providersLoading || sourceQueries.isLoading
+    const sourceProviders = providers.filter((provider) => provider.type === (resourceTab === 'flashsystem' ? 'FLASHCOPY' : 'IBM_POWER'))
+    const hasData = resourceTab === 'flashsystem'
+      ? sourceQueries.flashSystemResources.length > 0
+      : sourceQueries.powerResources.length > 0
+    const allFailed = sourceQueries.hasProviders && sourceQueries.failures.length === sourceProviders.length && !hasData
+
+    return (
+      <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+        <TableToolbar
+          eyebrow={t('pages.virtualMachines.eyebrow')}
+          title={t(resourceTab === 'flashsystem' ? 'resources.flash.title' : 'resources.power.title')}
+          description={t(resourceTab === 'flashsystem' ? 'resources.flash.description' : 'resources.power.description')}
+          isFetching={sourceQueries.isFetching}
+          onRefresh={() => { void sourceQueries.refetch() }}
+        />
+        <div className="flex flex-1 flex-col gap-4 lg:min-h-0">
+          <Card className="flex shrink-0 flex-col p-0 sm:p-0">
+            <div className="flex flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-[#17233d]">{t('pages.virtualMachines.inventory.title')}</h2>
+                <p className="text-xs text-[#71819a]">{t(resourceTab === 'flashsystem' ? 'resources.flash.inventoryDescription' : 'resources.power.inventoryDescription')}</p>
+              </div>
+              {tabs}
+            </div>
+          </Card>
+
+          {sourceQueries.failures.length > 0 && !allFailed ? (
+            <FetchErrorAlert
+              title={t('resources.common.partialFailure')}
+              description={`${t('resources.common.failedProviders')}: ${sourceQueries.failures.map(({ provider }) => provider.name).join(', ')}`}
+              isRetrying={sourceQueries.isFetching}
+              onRetry={() => { void sourceQueries.refetch() }}
+            />
+          ) : null}
+
+          {isSourceLoading ? (
+            <VirtualMachinesSkeleton />
+          ) : !sourceQueries.hasProviders ? (
+            <Card>
+              <EmptyState title={t('resources.common.noProviderTitle')} description={t('resources.common.noProviderDescription')} />
+            </Card>
+          ) : allFailed ? (
+            <FetchErrorAlert
+              title={t('resources.common.loadFailed')}
+              description={sourceQueries.failures.map(({ error }) => error.message).join('; ')}
+              retryLabel={t('pages.virtualMachines.error.retryButton')}
+              variant="full"
+              isRetrying={sourceQueries.isFetching}
+              onRetry={() => { void sourceQueries.refetch() }}
+            />
+          ) : (
+            <div className="flex flex-1 flex-col gap-4 lg:min-h-0">
+              {resourceTab === 'flashsystem' ? (
+                <FlashSystemInventoryView
+                  resources={sourceQueries.flashSystemResources}
+                  inventories={sourceQueries.flashSystemInventories}
+                  providers={sourceProviders}
+                  t={t}
+                />
+              ) : (
+                <PowerInventoryView resources={sourceQueries.powerResources} providers={sourceProviders} t={t} />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    )
   }
 
   if (isPending) {
@@ -134,17 +222,7 @@ export function ResourcesPage() {
               <h2 className="text-sm font-semibold text-[#17233d]">{t('pages.virtualMachines.inventory.title')}</h2>
               <p className="text-xs text-[#71819a]">{t('pages.virtualMachines.inventory.description')}</p>
             </div>
-            <Tabs
-              items={[
-                { value: 'vmware', label: t('pages.virtualMachines.tabs.vmware') },
-                { value: 'flashsystem', label: t('pages.virtualMachines.tabs.flashSystem') },
-                { value: 'ibm-power', label: t('pages.virtualMachines.tabs.ibmPower') },
-              ]}
-              value={resourceTab}
-              onChange={setResourceTab}
-              ariaLabel={t('pages.virtualMachines.tabs.label')}
-              className="w-full shrink-0 border-b-0 bg-white px-0 sm:w-auto"
-            />
+            {tabs}
           </div>
           <div className="flex flex-1 flex-col overflow-hidden bg-[#f5f8fc] p-3 lg:min-h-0">
             <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#dbe7f2] bg-white shadow-sm lg:min-h-0" aria-label={t('vm.inventoryLabel')}>

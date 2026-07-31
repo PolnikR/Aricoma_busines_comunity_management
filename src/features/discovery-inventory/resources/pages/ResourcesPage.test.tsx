@@ -18,6 +18,19 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 vi.mock('@/features/discovery-inventory/hooks/useDiscoveryInventory', () => ({
   useDiscoveryInventory: () => inventoryQuery,
 }))
+vi.mock('@/features/discovery-inventory/hooks/useResourceInventoryQueries', () => ({
+  useResourceInventoryQueries: () => ({
+    flashSystemResources: [],
+    powerResources: [],
+    flashSystemInventories: [],
+    powerInventories: [],
+    failures: [],
+    isLoading: false,
+    isFetching: false,
+    hasProviders: false,
+    refetch: vi.fn(),
+  }),
+}))
 vi.mock('../../hooks/useTags', () => ({ useTags: () => ({ data: [] }) }))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
   useProviders: () => ({ data: [], isLoading: false }),
@@ -31,6 +44,9 @@ vi.mock('../hooks/useVirtualMachineSearchParams', () => ({
     updateQuery,
     updateFilters,
   }),
+}))
+vi.mock('../hooks/useResourceTabSearchParam', () => ({
+  useResourceTabSearchParam: () => ({ resourceTab: 'vmware', setResourceTab: vi.fn() }),
 }))
 vi.mock('../components/VirtualMachineMetrics', () => ({
   VirtualMachineMetrics: () => <div>VM metrics</div>,
@@ -79,7 +95,7 @@ describe('ResourcesPage', () => {
     expect(screen.getByText('VM toolbar')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'VMware VMs' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'FlashSystem Volumes' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'IBM Power VMs' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'IBM Power Partitions' })).toBeInTheDocument()
     expect(screen.getByText('No virtual machines found')).toBeInTheDocument()
   })
 })

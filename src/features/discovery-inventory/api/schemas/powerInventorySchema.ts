@@ -1,12 +1,14 @@
 import { z } from 'zod'
 
-const powerPartitionSchema = z.object({
+const powerScalarSchema = z.union([z.string(), z.number(), z.boolean(), z.null()])
+
+export const powerPartitionSchema = z.object({
   PartitionUUID: z.string().optional(),
   PartitionName: z.string().optional(),
   PartitionType: z.string().optional(),
   PartitionState: z.string().optional(),
   SystemName: z.string().optional(),
-}).loose()
+}).catchall(powerScalarSchema)
 
 export const powerInventoryResponseSchema = z.object({
   count: z.number().int().nonnegative(),
@@ -18,6 +20,6 @@ export const powerInventoryResponseSchema = z.object({
     lpar: powerPartitionSchema,
     vios: powerPartitionSchema,
   })),
-})
+}).loose()
 
 export type PowerInventoryPayload = z.infer<typeof powerInventoryResponseSchema>
