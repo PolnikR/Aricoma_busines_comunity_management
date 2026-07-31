@@ -117,10 +117,8 @@ export function FlashSystemInventoryView({ resources, providers, t }: FlashSyste
         onClose={() => { setSelected(null) }}
         labels={{
           selected: t('resources.flash.detail.selected'), detail: t('resources.flash.detail.ariaLabel'), close: t('resources.flash.detail.close'),
-          pool: t('resources.flash.detail.pool'), name: labels.name, capacity: labels.capacity, usedCapacity: t('resources.flash.detail.used'),
-          freeCapacity: t('resources.flash.detail.free'), hostMappings: t('resources.flash.detail.hostMappings'), host: t('resources.flash.filters.host'),
-          cluster: t('resources.flash.detail.cluster'), noMappings: t('resources.flash.detail.noMappings'), provider: labels.provider,
-          scsiId: t('resources.flash.detail.scsiId'),
+          pool: t('resources.flash.detail.pool'), capacity: labels.capacity, usedCapacity: t('resources.flash.detail.used'),
+          freeCapacity: t('resources.flash.detail.free'),
           groups: {
             identity: t('resources.flash.groups.identity'),
             placement: t('resources.flash.groups.placement'),
@@ -128,11 +126,11 @@ export function FlashSystemInventoryView({ resources, providers, t }: FlashSyste
             copies: t('resources.flash.groups.copies'),
           },
           fieldLabels: Object.fromEntries([
-            'id', 'volume_id', 'volume_name', 'vdisk_UID', 'capacity', 'mdisk_grp_id',
-            'mdisk_grp_name', 'parent_mdisk_grp_id', 'parent_mdisk_grp_name',
-            'IO_group_id', 'IO_group_name', 'status', 'type', 'function', 'protocol',
+            'id', 'volume_id', 'vdisk_UID', 'mdisk_grp_id',
+            'parent_mdisk_grp_id', 'parent_mdisk_grp_name',
+            'IO_group_id', 'IO_group_name', 'function', 'protocol',
             'fast_write_state', 'formatting', 'encrypt', 'FC_id', 'FC_name', 'RC_id',
-            'RC_name', 'fc_map_count', 'copy_count', 'se_copy_count',
+            'RC_name', 'se_copy_count',
             'compressed_copy_count', 'RC_change',
           ].map((field) => [field, t(`resources.flash.fields.${field}`)])),
         }}

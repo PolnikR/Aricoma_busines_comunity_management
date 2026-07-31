@@ -10,16 +10,9 @@ interface FlashSystemVolumeDetailPanelProps {
     detail: string
     close: string
     pool: string
-    name: string
     capacity: string
     usedCapacity: string
     freeCapacity: string
-    hostMappings: string
-    host: string
-    cluster: string
-    noMappings: string
-    provider: string
-    scsiId: string
     groups: Record<'identity' | 'placement' | 'state' | 'copies', string>
     fieldLabels: Record<string, string>
   }
@@ -28,19 +21,19 @@ interface FlashSystemVolumeDetailPanelProps {
 const fieldGroups = [
   {
     key: 'identity' as const,
-    fields: ['id', 'volume_id', 'volume_name', 'vdisk_UID'] as const,
+    fields: ['id', 'volume_id', 'vdisk_UID'] as const,
   },
   {
     key: 'placement' as const,
-    fields: ['capacity', 'mdisk_grp_id', 'mdisk_grp_name', 'parent_mdisk_grp_id', 'parent_mdisk_grp_name', 'IO_group_id', 'IO_group_name'] as const,
+    fields: ['mdisk_grp_id', 'parent_mdisk_grp_id', 'parent_mdisk_grp_name', 'IO_group_id', 'IO_group_name'] as const,
   },
   {
     key: 'state' as const,
-    fields: ['status', 'type', 'function', 'protocol', 'fast_write_state', 'formatting', 'encrypt'] as const,
+    fields: ['function', 'protocol', 'fast_write_state', 'formatting', 'encrypt'] as const,
   },
   {
     key: 'copies' as const,
-    fields: ['FC_id', 'FC_name', 'RC_id', 'RC_name', 'fc_map_count', 'copy_count', 'se_copy_count', 'compressed_copy_count', 'RC_change'] as const,
+    fields: ['FC_id', 'FC_name', 'RC_id', 'RC_name', 'se_copy_count', 'compressed_copy_count', 'RC_change'] as const,
   },
 ]
 
@@ -57,7 +50,6 @@ export function FlashSystemVolumeDetailPanel({ volume, open, onClose, labels }: 
       onClose={onClose}
       eyebrow={labels.selected}
       title={volume?.name ?? '-'}
-      subtitle={volume ? `${volume.providerId} · ${volume.status}` : ''}
       ariaLabel={labels.detail}
       closeLabel={labels.close}
       resizable
@@ -73,27 +65,11 @@ export function FlashSystemVolumeDetailPanel({ volume, open, onClose, labels }: 
           <section>
             <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#71819a]">{labels.pool}</h3>
             <dl>
-              <DetailRow label={labels.name} value={display(volume.pool?.name)} />
               <DetailRow label={labels.capacity} value={display(volume.pool?.capacity)} />
               <DetailRow label={labels.usedCapacity} value={display(volume.pool?.used_capacity)} />
               <DetailRow label={labels.freeCapacity} value={display(volume.pool?.free_capacity)} />
             </dl>
           </section>
-          <section>
-            <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#71819a]">{labels.hostMappings}</h3>
-            {volume.resolvedHostMaps.length > 0 ? (
-              <div className="space-y-2">
-                {volume.resolvedHostMaps.map((host) => (
-                  <dl key={`${host.host_id}:${host.scsi_id}`} className="rounded-xl border border-[#dfe9f3] px-3">
-                    <DetailRow label={labels.host} value={host.hostName} secondary={host.host_id} />
-                    <DetailRow label={labels.scsiId} value={host.scsi_id} />
-                    <DetailRow label={labels.cluster} value={host.clusterName || '-'} secondary={host.clusterId} />
-                  </dl>
-                ))}
-              </div>
-            ) : <p className="text-sm text-[#71819a]">{labels.noMappings}</p>}
-          </section>
-          <DetailRow label={labels.provider} value={volume.providerId || '-'} />
         </div>
       ) : null}
     </DetailDrawer>
