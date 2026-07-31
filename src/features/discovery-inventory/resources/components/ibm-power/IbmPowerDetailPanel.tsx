@@ -59,7 +59,7 @@ function DetailSection({ title, rows }: DetailSectionProps) {
   if (visibleRows.length === 0) return null
   return (
     <section>
-      <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#71819a]">{title}</h3>
+      <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#17233d]">{title}</h3>
       <dl>
         {visibleRows.map((row) => (
           <DetailRow key={row.label} label={row.label} value={row.value} />
