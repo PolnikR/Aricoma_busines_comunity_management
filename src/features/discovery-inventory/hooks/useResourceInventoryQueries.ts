@@ -1,7 +1,11 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { ProviderRecord, ProviderType } from '@/features/providers-connectors/providers/model/providerTypes'
-import { discoveryInventoryKeys } from '../api/discoveryInventoryQueryKeys'
+import {
+  DISCOVERY_INVENTORY_GC_TIME_MS,
+  DISCOVERY_INVENTORY_STALE_TIME_MS,
+  discoveryInventoryKeys,
+} from '../api/discoveryInventoryQueryKeys'
 import { fetchFlashSystemInventory, fetchPowerInventory } from '../api/discoveryInventoryApi'
 import type {
   FlashSystemInventory,
@@ -65,8 +69,8 @@ export function useResourceInventoryQueries(
       ? fetchFlashSystemInventory(effectiveProviderId)
       : fetchPowerInventory(effectiveProviderId),
     enabled: providerType !== null && matchingProviders.length > 0,
-    staleTime: 15 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
+    staleTime: DISCOVERY_INVENTORY_STALE_TIME_MS,
+    gcTime: DISCOVERY_INVENTORY_GC_TIME_MS,
     retry: 1,
     refetchOnWindowFocus: false,
   })
