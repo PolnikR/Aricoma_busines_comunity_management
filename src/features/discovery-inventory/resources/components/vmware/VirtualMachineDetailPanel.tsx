@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import type { VirtualMachine } from '../types'
+import type { VirtualMachine } from '../../types'
 import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
 import { formatStartTime } from '@/shared/utils/dateFormat'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useVdisksByVm } from '../hooks/useVdisksByVm'
+import { useVdisksByVm } from '../../hooks/useVdisksByVm'
 import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
 import { DetailDrawer, DetailRow, DetailStat } from '@/shared/components/data-table'
 import { Tabs } from '@/shared/components/tabs/Tabs'
-import { createVmwareDetailFields } from '../config/vmwareDetailFields'
+import { createVmwareDetailFields } from '../../config/vmwareDetailFields'
 
 function truncateFilePath(path: string): string {
   if (path.length <= 50) return path

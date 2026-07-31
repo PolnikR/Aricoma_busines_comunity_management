@@ -1,7 +1,7 @@
 import { DetailDrawer, DetailRow } from '@/shared/components/data-table'
-import type { PowerPartitionResource } from '../../model/discoveryTypes'
-import { powerFieldRegistry } from '../config/powerFieldRegistry'
-import type { PowerFieldGroup } from '../config/powerFieldRegistry'
+import type { PowerPartitionResource } from '../../../model/discoveryTypes'
+import { powerFieldRegistry } from '../../config/powerFieldRegistry'
+import type { PowerFieldGroup } from '../../config/powerFieldRegistry'
 
 interface IbmPowerDetailPanelProps {
   partition: PowerPartitionResource | null

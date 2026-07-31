@@ -5,8 +5,8 @@ import { DataTableToolbar } from '@/shared/components/data-table'
 import type { TableDensity } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import { FilterPanelSkeleton } from '../skeletons'
-import type { VirtualMachineFilterOptions, VirtualMachineFilters } from '../types'
+import { FilterPanelSkeleton } from '../../skeletons'
+import type { VirtualMachineFilterOptions, VirtualMachineFilters } from '../../types'
 
 interface VirtualMachinesToolbarProps {
   filters: VirtualMachineFilters

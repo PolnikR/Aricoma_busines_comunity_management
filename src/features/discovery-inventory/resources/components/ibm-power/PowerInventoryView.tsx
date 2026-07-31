@@ -5,12 +5,12 @@ import { DataTable, DataTablePagination } from '@/shared/components/data-table'
 import type { TableDensity } from '@/shared/components/data-table'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { useTranslation } from '@/hooks/useTranslation'
-import type { PowerPartitionResource } from '../../model/discoveryTypes'
-import { createPowerColumns } from '../config/powerColumns'
-import { filterPowerResources, getPowerFilterOptions } from '../helpers/filterSourceResources'
-import type { PowerFilters } from '../model/sourceInventoryTypes'
+import type { PowerPartitionResource } from '../../../model/discoveryTypes'
+import { createPowerColumns } from '../../config/powerColumns'
+import { filterPowerResources, getPowerFilterOptions } from '../../helpers/filterSourceResources'
+import type { PowerFilters } from '../../model/sourceInventoryTypes'
 import { IbmPowerDetailPanel } from './IbmPowerDetailPanel'
-import { SourceInventoryToolbar } from './SourceInventoryToolbar'
+import { SourceInventoryToolbar } from '../SourceInventoryToolbar'
 
 type Translate = ReturnType<typeof useTranslation>['t']
 

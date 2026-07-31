@@ -1,5 +1,5 @@
 import { DetailDrawer, DetailRow } from '@/shared/components/data-table'
-import type { FlashSystemVolumeResource } from '../../model/discoveryTypes'
+import type { FlashSystemVolumeResource } from '../../../model/discoveryTypes'
 
 interface FlashSystemVolumeDetailPanelProps {
   volume: FlashSystemVolumeResource | null

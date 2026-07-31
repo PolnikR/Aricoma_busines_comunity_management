@@ -1,8 +1,8 @@
-import type { FlashSystemVolumeResource } from '../../model/discoveryTypes'
+import type { FlashSystemVolumeResource } from '../../../model/discoveryTypes'
 import {
   getFlashSystemHostKey,
-} from '../helpers/buildFlashSystemHostSummaries'
-import type { FlashSystemHostSummary } from '../helpers/buildFlashSystemHostSummaries'
+} from '../../helpers/buildFlashSystemHostSummaries'
+import type { FlashSystemHostSummary } from '../../helpers/buildFlashSystemHostSummaries'
 import {
   FlashSystemAdditionalHostsBadge,
   FlashSystemHostBadge,

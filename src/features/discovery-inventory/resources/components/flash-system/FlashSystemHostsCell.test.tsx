@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import type { FlashSystemVolumeResource } from '../../model/discoveryTypes'
+import type { FlashSystemVolumeResource } from '../../../model/discoveryTypes'
 import type {
   FlashSystemHostSummary,
-} from '../helpers/buildFlashSystemHostSummaries'
+} from '../../helpers/buildFlashSystemHostSummaries'
 import type { FlashSystemHostTooltipLabels } from './FlashSystemHostBadge'
 import { FlashSystemHostsCell } from './FlashSystemHostsCell'
 

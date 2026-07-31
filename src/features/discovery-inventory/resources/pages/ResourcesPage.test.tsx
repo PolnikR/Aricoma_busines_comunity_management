@@ -75,16 +75,16 @@ vi.mock('../hooks/useVirtualMachineSearchParams', () => ({
 vi.mock('../hooks/useResourceTabSearchParam', () => ({
   useResourceTabSearchParam: () => ({ resourceTab, setResourceTab: vi.fn() }),
 }))
-vi.mock('../components/VirtualMachineMetrics', () => ({
+vi.mock('../components/vmware/VirtualMachineMetrics', () => ({
   VirtualMachineMetrics: () => <div>VM metrics</div>,
 }))
-vi.mock('../components/VirtualMachinesToolbar', () => ({
+vi.mock('../components/vmware/VirtualMachinesToolbar', () => ({
   VirtualMachinesToolbar: () => <div>VM toolbar</div>,
 }))
-vi.mock('../components/VirtualMachinesTable', () => ({
+vi.mock('../components/vmware/VirtualMachinesTable', () => ({
   VirtualMachinesTable: () => <div>VM table</div>,
 }))
-vi.mock('../components/VirtualMachineDetailPanel', () => ({
+vi.mock('../components/vmware/VirtualMachineDetailPanel', () => ({
   VirtualMachineDetailPanel: () => <div>VM detail</div>,
 }))
 vi.mock('../skeletons', () => ({
@@ -160,7 +160,7 @@ describe('ResourcesPage', () => {
 
     const view = render(<ResourcesPage />)
 
-    expect(resourceInventoryQuerySpy).toHaveBeenCalledWith(null, [])
+    expect(resourceInventoryQuerySpy).toHaveBeenCalledWith(null, [], undefined)
     const inventoryRegion = screen.getByRole('region', { name: 'Inventory records' })
     expect(within(inventoryRegion).getByRole('tab', { name: 'FlashSystem Volumes' })).toHaveAttribute('aria-selected', 'true')
     expect(inventoryRegion).toContainElement(screen.getByLabelText('Loading providers'))
@@ -172,7 +172,11 @@ describe('ResourcesPage', () => {
       isSuccess: true,
     }
     view.rerender(<ResourcesPage />)
-    expect(resourceInventoryQuerySpy).toHaveBeenLastCalledWith('flashsystem', [flashProvider])
+    expect(resourceInventoryQuerySpy).toHaveBeenLastCalledWith(
+      'flashsystem',
+      [flashProvider],
+      undefined,
+    )
   })
 
   it('shows provider errors without activating inventory queries', () => {
@@ -186,7 +190,7 @@ describe('ResourcesPage', () => {
 
     render(<ResourcesPage />)
 
-    expect(resourceInventoryQuerySpy).toHaveBeenCalledWith(null, [])
+    expect(resourceInventoryQuerySpy).toHaveBeenCalledWith(null, [], undefined)
     expect(screen.getByRole('alert')).toHaveTextContent('Failed to load providers.')
     expect(screen.getByRole('alert')).not.toHaveTextContent('provider service offline')
     expect(screen.queryByText('Metrics skeleton')).not.toBeInTheDocument()

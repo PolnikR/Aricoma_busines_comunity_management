@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VirtualMachinesTable } from './VirtualMachinesTable'
-import type { VirtualMachine } from '../types'
+import type { VirtualMachine } from '../../types'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 

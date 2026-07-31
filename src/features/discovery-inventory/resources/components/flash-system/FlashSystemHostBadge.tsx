@@ -9,8 +9,8 @@ import {
 import type { CSSProperties, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { ServerIcon } from '@/shared/icons/Icons'
-import type { FlashSystemHostSummary } from '../helpers/buildFlashSystemHostSummaries'
-import { formatCapacityBytes } from '../helpers/parseCapacity'
+import type { FlashSystemHostSummary } from '../../helpers/buildFlashSystemHostSummaries'
+import { formatCapacityBytes } from '../../helpers/parseCapacity'
 
 export interface FlashSystemHostTooltipLabels {
   showDetails: string
