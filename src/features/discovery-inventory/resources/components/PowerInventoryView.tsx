@@ -10,7 +10,6 @@ import { createPowerColumns } from '../config/powerColumns'
 import { filterPowerResources, getPowerFilterOptions } from '../helpers/filterSourceResources'
 import type { PowerFilters } from '../model/sourceInventoryTypes'
 import { IbmPowerDetailPanel } from './IbmPowerDetailPanel'
-import { PowerMetrics } from './SourceInventoryMetrics'
 import { SourceInventoryToolbar } from './SourceInventoryToolbar'
 
 type Translate = ReturnType<typeof useTranslation>['t']
@@ -46,11 +45,6 @@ export function PowerInventoryView({ resources, providers, t }: PowerInventoryVi
 
   return (
     <>
-      <PowerMetrics resources={resources} labels={{
-        total: t('resources.power.metrics.total'), active: t('resources.power.metrics.running'),
-        third: t('resources.power.metrics.lpar'), fourth: t('resources.power.metrics.vios'),
-        validated: t('resources.common.validated'),
-      }} />
       <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#dbe7f2] bg-white shadow-sm lg:min-h-0" aria-label={t('resources.power.tableLabel')}>
         <SourceInventoryToolbar
           search={filters.search}

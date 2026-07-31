@@ -5,12 +5,11 @@ import { DataTable, DataTablePagination } from '@/shared/components/data-table'
 import type { TableDensity } from '@/shared/components/data-table'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { useTranslation } from '@/hooks/useTranslation'
-import type { FlashSystemInventory, FlashSystemVolumeResource } from '../../model/discoveryTypes'
+import type { FlashSystemVolumeResource } from '../../model/discoveryTypes'
 import { createFlashSystemColumns } from '../config/flashSystemColumns'
 import { filterFlashSystemResources, getFlashSystemFilterOptions } from '../helpers/filterSourceResources'
 import type { FlashSystemFilters } from '../model/sourceInventoryTypes'
 import { FlashSystemVolumeDetailPanel } from './FlashSystemVolumeDetailPanel'
-import { FlashSystemMetrics } from './SourceInventoryMetrics'
 import { SourceInventoryToolbar } from './SourceInventoryToolbar'
 
 type Translate = ReturnType<typeof useTranslation>['t']
@@ -25,12 +24,11 @@ const initialFilters: FlashSystemFilters = {
 
 interface FlashSystemInventoryViewProps {
   resources: FlashSystemVolumeResource[]
-  inventories: { provider: ProviderRecord; inventory: FlashSystemInventory }[]
   providers: ProviderRecord[]
   t: Translate
 }
 
-export function FlashSystemInventoryView({ resources, inventories, providers, t }: FlashSystemInventoryViewProps) {
+export function FlashSystemInventoryView({ resources, providers, t }: FlashSystemInventoryViewProps) {
   const [filters, setFilters] = useState(initialFilters)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
@@ -61,17 +59,6 @@ export function FlashSystemInventoryView({ resources, inventories, providers, t 
 
   return (
     <>
-      <FlashSystemMetrics
-        resources={resources}
-        inventories={inventories}
-        labels={{
-          total: t('resources.flash.metrics.total'),
-          active: t('resources.flash.metrics.online'),
-          third: t('resources.flash.metrics.capacity'),
-          fourth: t('resources.flash.metrics.free'),
-          validated: t('resources.common.validated'),
-        }}
-      />
       <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#dbe7f2] bg-white shadow-sm lg:min-h-0" aria-label={t('resources.flash.tableLabel')}>
         <SourceInventoryToolbar
           search={filters.search}

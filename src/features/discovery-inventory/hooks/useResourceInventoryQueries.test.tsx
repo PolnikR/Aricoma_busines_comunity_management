@@ -22,6 +22,7 @@ const powerProvider: ProviderRecord = {
 
 describe('useResourceInventoryQueries', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     vi.mocked(fetchFlashSystemInventory).mockResolvedValue({
       reportedCount: 0, volumes: [], resources: [], pools: {}, hosts: {}, clusters: {},
     })
@@ -48,5 +49,21 @@ describe('useResourceInventoryQueries', () => {
     expect(fetchPowerInventory).not.toHaveBeenCalled()
     expect(client.getQueryCache().find({ queryKey: ['resource-inventory', 'FLASHCOPY', 'flash-01'] })).toBeDefined()
     expect(client.getQueryCache().find({ queryKey: ['resource-inventory', 'IBM_POWER', 'power-01'] })).toBeUndefined()
+  })
+
+  it('runs no inventory request until an active source and fetched providers are supplied', () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+    const { result } = renderHook(
+      () => useResourceInventoryQueries(null, []),
+      { wrapper },
+    )
+
+    expect(result.current.isLoading).toBe(false)
+    expect(fetchFlashSystemInventory).not.toHaveBeenCalled()
+    expect(fetchPowerInventory).not.toHaveBeenCalled()
+    expect(client.getQueryCache().getAll()).toHaveLength(0)
   })
 })
