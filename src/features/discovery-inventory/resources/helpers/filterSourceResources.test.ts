@@ -4,6 +4,7 @@ import {
   filterPowerResources,
   getFlashSystemFilterOptions,
 } from './filterSourceResources'
+import { buildFlashSystemHostSummaries } from './buildFlashSystemHostSummaries'
 import type { FlashSystemVolumeResource, PowerPartitionResource } from '../../model/discoveryTypes'
 
 const partition: PowerPartitionResource = {
@@ -84,5 +85,54 @@ describe('FlashSystem provider-scoped filters', () => {
       hostId: options.hosts[0]?.id ?? '',
       status: '',
     })).toEqual([resources[0]])
+  })
+})
+
+describe('buildFlashSystemHostSummaries', () => {
+  it('aggregates unique mapped volumes without crossing provider boundaries', () => {
+    const first = {
+      ...flashResource('flash-a', 'volume-a'),
+      resourceId: 'flash-a:volume-a',
+      capacityBytes: 1_000_000_000_000,
+    }
+    const second = {
+      ...flashResource('flash-a', 'volume-b'),
+      resourceId: 'flash-a:volume-b',
+      capacityBytes: 2_000_000_000_000,
+      host_maps: [{ host_id: '0', scsi_id: '2' }],
+      resolvedHostMaps: [{
+        host_id: '0',
+        scsi_id: '2',
+        hostName: 'HOST_esx',
+        clusterId: 'cluster-a',
+        clusterName: 'Cluster A',
+      }],
+    }
+    const otherProvider = {
+      ...flashResource('flash-b', 'volume-c'),
+      resourceId: 'flash-b:volume-c',
+    }
+
+    const summaries = buildFlashSystemHostSummaries([
+      first,
+      first,
+      second,
+      otherProvider,
+    ])
+
+    expect(summaries).toHaveLength(2)
+    expect(summaries.get('flash-a:0')).toMatchObject({
+      providerId: 'flash-a',
+      hostId: '0',
+      name: 'HOST_esx',
+      clusterId: 'cluster-a',
+      clusterName: 'Cluster A',
+      totalCapacityBytes: 3_000_000_000_000,
+      mappedVolumes: [
+        { resourceId: 'flash-a:volume-a', name: 'volume-a', scsiId: '0' },
+        { resourceId: 'flash-a:volume-b', name: 'volume-b', scsiId: '2' },
+      ],
+    })
+    expect(summaries.get('flash-b:0')?.mappedVolumes).toHaveLength(1)
   })
 })

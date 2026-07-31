@@ -59,8 +59,12 @@ describe('FlashSystemInventoryView', () => {
     expect(screen.getByRole('columnheader', { name: 'Provider' })).toBeInTheDocument()
     expect(screen.queryByRole('columnheader', { name: 'I/O group' })).not.toBeInTheDocument()
     expect(screen.queryByRole('columnheader', { name: 'Protocol' })).not.toBeInTheDocument()
+    const hostBadge = screen.getByRole('button', { name: 'Show details for host HOST_esx' })
+    fireEvent.click(hostBadge)
+    expect(screen.getByRole('tooltip')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByText('V5000_Volume1'))
+    fireEvent.click(screen.getByRole('row', { name: 'Show details for V5000_Volume1' }))
     const dialog = screen.getByRole('dialog', { name: 'FlashSystem volume detail' })
     expect(within(dialog).getByText('Placement and capacity')).toBeInTheDocument()
     expect(within(dialog).getByText('SCSI ID')).toBeInTheDocument()

@@ -7,6 +7,7 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 import type { useTranslation } from '@/hooks/useTranslation'
 import type { FlashSystemVolumeResource } from '../../model/discoveryTypes'
 import { createFlashSystemColumns } from '../config/flashSystemColumns'
+import { buildFlashSystemHostSummaries } from '../helpers/buildFlashSystemHostSummaries'
 import { filterFlashSystemResources, getFlashSystemFilterOptions } from '../helpers/filterSourceResources'
 import type { FlashSystemFilters } from '../model/sourceInventoryTypes'
 import { FlashSystemVolumeDetailPanel } from './FlashSystemVolumeDetailPanel'
@@ -40,6 +41,7 @@ export function FlashSystemInventoryView({ resources, providers, t }: FlashSyste
     [providers],
   )
   const filtered = useMemo(() => filterFlashSystemResources(resources, filters), [filters, resources])
+  const hostSummaries = useMemo(() => buildFlashSystemHostSummaries(resources), [resources])
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, pageCount)
   const rows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize)
@@ -57,6 +59,18 @@ export function FlashSystemInventoryView({ resources, providers, t }: FlashSyste
     copies: t('resources.flash.table.copies'),
     flashCopy: t('resources.flash.table.flashCopy'),
     provider: t('resources.common.provider'),
+  }
+  const hostLabels = {
+    showDetails: t('resources.flash.hostTooltip.showDetails'),
+    hostId: t('resources.flash.hostTooltip.hostId'),
+    cluster: t('resources.flash.hostTooltip.cluster'),
+    notAssigned: t('resources.flash.hostTooltip.notAssigned'),
+    mappedVolumes: t('resources.flash.hostTooltip.mappedVolumes'),
+    mappedCapacity: t('resources.flash.hostTooltip.mappedCapacity'),
+    unavailable: t('resources.flash.hostTooltip.unavailable'),
+    lun: t('resources.flash.hostTooltip.lun'),
+    showAdditionalHosts: t('resources.flash.hostTooltip.showAdditionalHosts'),
+    additionalHosts: t('resources.flash.hostTooltip.additionalHosts'),
   }
 
   return (
@@ -83,7 +97,7 @@ export function FlashSystemInventoryView({ resources, providers, t }: FlashSyste
         />
         <div className="custom-scrollbar flex-1 lg:min-h-0 lg:overflow-y-auto">
           <DataTable
-            columns={createFlashSystemColumns(labels)}
+            columns={createFlashSystemColumns(labels, hostSummaries, hostLabels)}
             rows={rows}
             rowKey={(row) => row.resourceId}
             density={density}

@@ -1,6 +1,9 @@
 import { StateCell } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import type { FlashSystemVolumeResource } from '../../model/discoveryTypes'
+import { FlashSystemHostsCell } from '../components/FlashSystemHostsCell'
+import type { FlashSystemHostTooltipLabels } from '../components/FlashSystemHostBadge'
+import type { FlashSystemHostSummary } from '../helpers/buildFlashSystemHostSummaries'
 
 interface FlashSystemColumnLabels {
   name: string
@@ -14,7 +17,11 @@ interface FlashSystemColumnLabels {
   provider: string
 }
 
-export function createFlashSystemColumns(labels: FlashSystemColumnLabels): ColumnDef<FlashSystemVolumeResource>[] {
+export function createFlashSystemColumns(
+  labels: FlashSystemColumnLabels,
+  hostSummaries: Map<string, FlashSystemHostSummary>,
+  hostLabels: FlashSystemHostTooltipLabels,
+): ColumnDef<FlashSystemVolumeResource>[] {
   return [
     {
       id: 'name',
@@ -37,9 +44,13 @@ export function createFlashSystemColumns(labels: FlashSystemColumnLabels): Colum
     {
       id: 'hosts',
       header: labels.hosts,
-      cell: (volume) => volume.resolvedHostMaps.length > 0
-        ? volume.resolvedHostMaps.map((host) => host.hostName).join(', ')
-        : '-',
+      cell: (volume) => (
+        <FlashSystemHostsCell
+          volume={volume}
+          summaries={hostSummaries}
+          labels={hostLabels}
+        />
+      ),
     },
     { id: 'copies', header: labels.copies, cell: (volume) => volume.copy_count || '0', align: 'right' },
     { id: 'flashCopy', header: labels.flashCopy, cell: (volume) => volume.fc_map_count || '0', align: 'right' },
