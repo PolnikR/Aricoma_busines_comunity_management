@@ -1,0 +1,209 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Button } from '@/shared/components/button/Button'
+import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
+import { TableToolbar } from '@/shared/components/table/TableToolbar'
+import { DataTablePagination } from '@/shared/components/data-table'
+import { useDiscoveryInventory } from '@/features/discovery-inventory/hooks/useDiscoveryInventory'
+import { useTags } from '../../../hooks/useTags'
+import { applyFiltersAndPagination } from '../../helpers/filterVirtualMachines'
+import { mapInventoryToVirtualMachines } from '../../helpers/mapInventoryToVirtualMachines'
+import { useVirtualMachineSearchParams } from '../../hooks/useVirtualMachineSearchParams'
+import type { VirtualMachineFilters, VirtualMachinePageSize } from '../../types'
+import { MetricsSkeleton } from '../../skeletons'
+import { ResourceInventoryShell } from '../ResourceInventoryShell'
+import { ResourceInventoryLoading, ResourceInventoryState } from '../ResourceInventoryStates'
+import type { SourceResourcesPageProps } from '../SourceResourcesPageProps'
+import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
+import { VirtualMachineMetrics } from './VirtualMachineMetrics'
+import { VirtualMachinesTable, type TableDensity } from './VirtualMachinesTable'
+import { VirtualMachinesToolbar } from './VirtualMachinesToolbar'
+
+const defaultFilters: VirtualMachineFilters = {
+  search: '',
+  powerState: '',
+  connectionState: '',
+  cluster: '',
+  providerId: '',
+  tags: [],
+  untagged: false,
+}
+
+export function VmwareResourcesPage(props: SourceResourcesPageProps) {
+  const {
+    providers, providersPending, providersSuccess, providersFetching,
+    providersError, onRefetchProviders, tabs, t,
+  } = props
+  const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
+  const vmwareProviders = providers.filter((provider) => provider.type === 'VMWARE')
+  const inventoryEnabled = providersSuccess && vmwareProviders.length > 0
+  const {
+    data: inventory,
+    error,
+    isLoading: isPending,
+    isFetching,
+    refetch,
+  } = useDiscoveryInventory(query.providerId ?? undefined, query.tags[0], inventoryEnabled)
+  const { data: availableTags = [] } = useTags(inventoryEnabled)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [density, setDensity] = useState<TableDensity>('compact')
+  const handleRefetch = () => { void refetch() }
+
+  const allData = useMemo(
+    () => inventory ? mapInventoryToVirtualMachines(inventory) : null,
+    [inventory],
+  )
+  const data = allData ? applyFiltersAndPagination(allData, query) : null
+
+  useEffect(() => {
+    if (!isFetching && data && data.page !== query.page) updateQuery({ page: data.page })
+  }, [data, isFetching, query.page, updateQuery])
+
+  useEffect(() => {
+    if (availableTags.length > 0 && query.tags.length > 0) {
+      const validTags = query.tags.filter((tag) => availableTags.includes(tag))
+      if (validTags.length !== query.tags.length) updateQuery({ tags: validTags }, true)
+    }
+  }, [availableTags, query.tags, updateQuery])
+
+  const selectedVirtualMachine = data?.items.find((vm) => vm.id === selectedId) ?? null
+  const filters: VirtualMachineFilters = {
+    search: query.search,
+    powerState: query.powerState,
+    connectionState: query.connectionState,
+    cluster: query.cluster,
+    providerId: query.providerId,
+    tags: query.tags,
+    untagged: query.untagged,
+  }
+  const vmwareLoading = providersSuccess && vmwareProviders.length > 0 && isPending
+  const metrics = providersPending || vmwareLoading
+    ? <MetricsSkeleton />
+    : data && !providersError
+      ? <VirtualMachineMetrics metrics={data.metrics} />
+      : null
+  const notice = error && data ? (
+    <FetchErrorAlert
+      title={t('pages.virtualMachines.error.latestFailed')}
+      description={t('pages.virtualMachines.error.showingPrevious')}
+      isRetrying={isFetching}
+      onRetry={handleRefetch}
+    />
+  ) : null
+
+  let content
+  if (providersPending) {
+    content = <ResourceInventoryLoading ariaLabel={t('providers.loading')} />
+  } else if (providersError) {
+    content = (
+      <ResourceInventoryState>
+        <FetchErrorAlert
+          title={t('providers.loadFailed')}
+          description={t('providers.loadFailed')}
+          retryLabel={t('pages.virtualMachines.error.retryButton')}
+          variant="full"
+          isRetrying={providersFetching}
+          onRetry={onRefetchProviders}
+        />
+      </ResourceInventoryState>
+    )
+  } else if (vmwareProviders.length === 0) {
+    content = (
+      <ResourceInventoryState>
+        <EmptyState title={t('resources.common.noProviderTitle')} description={t('resources.common.noProviderDescription')} />
+      </ResourceInventoryState>
+    )
+  } else if (vmwareLoading) {
+    content = <ResourceInventoryLoading ariaLabel={t('status.loading')} />
+  } else if (!data) {
+    content = (
+      <ResourceInventoryState>
+        <FetchErrorAlert
+          title={t('pages.virtualMachines.error.title')}
+          description={t('pages.virtualMachines.error.unknown')}
+          retryLabel={t('pages.virtualMachines.error.retryButton')}
+          variant="full"
+          isRetrying={isFetching}
+          onRetry={handleRefetch}
+        />
+      </ResourceInventoryState>
+    )
+  } else {
+    content = (
+      <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#dbe7f2] bg-white shadow-sm lg:min-h-0" aria-label={t('vm.inventoryLabel')}>
+        <VirtualMachinesToolbar
+          filters={filters}
+          options={data.filterOptions}
+          availableTags={availableTags}
+          providers={vmwareProviders}
+          providersLoading={false}
+          onFiltersChange={updateFilters}
+          onReset={() => { updateFilters(defaultFilters) }}
+          density={density}
+          onDensityChange={setDensity}
+        />
+        <div className="custom-scrollbar flex-1 lg:min-h-0 lg:overflow-y-auto">
+          {data.items.length > 0 ? (
+            <VirtualMachinesTable
+              virtualMachines={data.items}
+              selectedId={selectedId}
+              density={density}
+              onSelect={(virtualMachine) => {
+                setSelectedId(virtualMachine.id)
+                setDrawerOpen(true)
+              }}
+            />
+          ) : (
+            <div className="p-4">
+              <EmptyState
+                title={t('pages.virtualMachines.empty.title')}
+                description={t('pages.virtualMachines.empty.description')}
+                action={<Button size="sm" variant="outline" onClick={() => { updateFilters(defaultFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>}
+              />
+            </div>
+          )}
+        </div>
+        <DataTablePagination
+          page={query.page}
+          pageSize={data.pageSize}
+          total={data.total}
+          onPageChange={(page) => { updateQuery({ page }) }}
+          onPageSizeChange={(pageSize) => { updateQuery({ pageSize: pageSize as VirtualMachinePageSize }, true) }}
+        />
+      </section>
+    )
+  }
+
+  return (
+    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+      <TableToolbar
+        eyebrow={t('pages.virtualMachines.eyebrow')}
+        title={t('pages.virtualMachines.title')}
+        description={t('pages.virtualMachines.description')}
+        isFetching={providersFetching || isFetching}
+        onRefresh={() => {
+          if (!providersSuccess || vmwareProviders.length === 0) onRefetchProviders()
+          else handleRefetch()
+        }}
+      />
+      <ResourceInventoryShell
+        metrics={metrics}
+        inventoryTitle={t('pages.virtualMachines.inventory.title')}
+        inventoryDescription={t('pages.virtualMachines.inventory.description')}
+        tabs={tabs}
+        notice={notice}
+      >
+        {content}
+      </ResourceInventoryShell>
+      <VirtualMachineDetailPanel
+        virtualMachine={selectedVirtualMachine}
+        open={drawerOpen}
+        onClose={() => {
+          setDrawerOpen(false)
+          setSelectedId(null)
+        }}
+      />
+    </div>
+  )
+}
