@@ -2,13 +2,28 @@ import type { PowerInventory } from '../model/discoveryTypes'
 import type { PowerInventoryPayload } from '../api/schemas/powerInventorySchema'
 
 function asDisplayValue(value: unknown): string {
-  if (value === null || value === undefined || value === '') return ''
-  if (typeof value === 'string') return value
+  if (value === null || value === undefined) return ''
+  if (typeof value === 'string') return value.trim()
   if (typeof value === 'number' || typeof value === 'boolean') return String(value)
   return ''
 }
 
+function stableFingerprint(record: Record<string, unknown>): string {
+  const serialized = Object.entries(record)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}:${String(value)}`)
+    .join('|')
+
+  let hash = 2166136261
+  for (let index = 0; index < serialized.length; index += 1) {
+    hash ^= serialized.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return `fallback-${(hash >>> 0).toString(36)}`
+}
+
 export function mapPowerInventory(payload: PowerInventoryPayload, providerId = ''): PowerInventory {
+  const identityOccurrences = new Map<string, number>()
   const partitions = payload.vms.flatMap((virtualMachine, index) => {
     const hasLpar = Object.keys(virtualMachine.lpar).length > 0
     const hasVios = Object.keys(virtualMachine.vios).length > 0
@@ -16,16 +31,21 @@ export function mapPowerInventory(payload: PowerInventoryPayload, providerId = '
 
     const partitionKind = hasLpar ? 'LPAR' as const : 'VIOS' as const
     const partitionData = hasLpar ? virtualMachine.lpar : virtualMachine.vios
-    const identity = asDisplayValue(
-      partitionData.PartitionUUID
-      ?? partitionData['LogicalSerialNumber']
-      ?? partitionData['PartitionID']
-      ?? partitionData.PartitionName
-      ?? index,
-    )
+    const identity = [
+      partitionData.PartitionUUID,
+      partitionData['LogicalSerialNumber'],
+      partitionData['PartitionID'],
+      partitionData.PartitionName,
+    ].map(asDisplayValue).find(Boolean) ?? stableFingerprint(partitionData)
+    const identityKey = `${providerId}:${partitionKind}:${identity}`
+    const occurrence = (identityOccurrences.get(identityKey) ?? 0) + 1
+    identityOccurrences.set(identityKey, occurrence)
+    const uniqueIdentity = occurrence === 1
+      ? identityKey
+      : `${identityKey}:${String(occurrence)}-${String(index)}`
 
     return [{
-      id: `${providerId}:${partitionKind}:${identity}`,
+      id: uniqueIdentity,
       providerId,
       providerType: 'IBM_POWER' as const,
       partitionKind,

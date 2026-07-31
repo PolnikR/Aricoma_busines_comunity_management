@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { useResizablePanel } from '@/shared/hooks/useResizablePanel'
 import { cn } from '@/shared/utils/cn'
@@ -25,13 +25,53 @@ interface DetailDrawerProps {
 // whenever it closes.
 export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerExtra, children, footer, resizable = false, ariaLabel = 'Detail', closeLabel = 'Close detail', bodyClassName }: DetailDrawerProps) {
   const { width, handleProps } = useResizablePanel({ open })
+  const drawerRef = useRef<HTMLElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+  const openerRef = useRef<HTMLElement | null>(null)
+  const onCloseRef = useRef(onClose)
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
 
   useEffect(() => {
     if (!open) return
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    closeRef.current?.focus()
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onCloseRef.current()
+        return
+      }
+      if (event.key !== 'Tab') return
+
+      const focusable = [...(drawerRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ) ?? [])].filter((element) => !element.hasAttribute('hidden'))
+      if (focusable.length === 0) {
+        event.preventDefault()
+        drawerRef.current?.focus()
+        return
+      }
+      const first = focusable[0]
+      const last = focusable.at(-1)
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last?.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first?.focus()
+      }
+    }
     window.addEventListener('keydown', onKey)
-    return () => { window.removeEventListener('keydown', onKey) }
-  }, [open, onClose])
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      openerRef.current?.focus()
+      openerRef.current = null
+    }
+  }, [open])
 
   return (
     <>
@@ -41,6 +81,10 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
         aria-hidden="true"
       />
       <aside
+        ref={drawerRef}
+        tabIndex={-1}
+        inert={!open}
+        aria-hidden={!open}
         className={`fixed inset-y-0 right-0 z-50 flex flex-col border-l border-[#d7deea] bg-white shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)] transition-transform duration-200 ease-out ${resizable ? '' : 'w-[min(420px,92vw)]'} ${open ? 'translate-x-0' : 'translate-x-full'}`}
         style={resizable ? { width: `${String(width)}px`, maxWidth: '92vw' } : undefined}
         role="dialog"
@@ -61,6 +105,7 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
             {headerExtra ? <div className="mt-3 flex flex-wrap gap-2">{headerExtra}</div> : null}
           </div>
           <button
+            ref={closeRef}
             type="button"
             onClick={onClose}
             aria-label={closeLabel}

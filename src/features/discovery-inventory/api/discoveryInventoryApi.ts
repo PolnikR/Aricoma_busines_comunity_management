@@ -27,10 +27,10 @@ export async function fetchVmwareInventory(providerId?: string, tag?: string): P
 
   const response = await apiFetch(url)
 
-  // A 400/500 while a provider or tag filter is active means the backend can't
-  // serve that combination (e.g. a non-VMWARE provider) — surface it as an
-  // empty inventory, not an error.
-  if ((response.status === 400 || response.status === 500) && (providerId || tag)) {
+  // A filtered 400 currently represents an unsupported provider/tag
+  // combination. Server failures must remain errors and must never look like
+  // a successfully empty inventory.
+  if (response.status === 400 && (providerId || tag)) {
     return { reportedCount: 0, virtualMachines: [] }
   }
 

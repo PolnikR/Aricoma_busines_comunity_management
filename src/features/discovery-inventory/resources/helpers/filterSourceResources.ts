@@ -13,20 +13,40 @@ function unique(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))].sort((left, right) => left.localeCompare(right))
 }
 
+function scopedFilterValue(providerId: string, sourceId: string): string {
+  return `${encodeURIComponent(providerId)}:${encodeURIComponent(sourceId)}`
+}
+
+function matchesScopedFilter(value: string, providerId: string, sourceId: string): boolean {
+  return !value || value === scopedFilterValue(providerId, sourceId)
+}
+
 export function getFlashSystemFilterOptions(
   resources: FlashSystemVolumeResource[],
 ): FlashSystemFilterOptions {
-  const pools = new Map<string, string>()
-  const hosts = new Map<string, string>()
+  const pools = new Map<string, { name: string; providerId: string; sourceId: string }>()
+  const hosts = new Map<string, { name: string; providerId: string; sourceId: string }>()
   resources.forEach((resource) => {
     if (resource.mdisk_grp_id) {
-      pools.set(resource.mdisk_grp_id, resource.pool?.name ?? resource.mdisk_grp_name)
+      const id = scopedFilterValue(resource.providerId, resource.mdisk_grp_id)
+      pools.set(id, {
+        name: resource.pool?.name ?? resource.mdisk_grp_name,
+        providerId: resource.providerId,
+        sourceId: resource.mdisk_grp_id,
+      })
     }
-    resource.resolvedHostMaps.forEach((host) => hosts.set(host.host_id, host.hostName))
+    resource.resolvedHostMaps.forEach((host) => {
+      const id = scopedFilterValue(resource.providerId, host.host_id)
+      hosts.set(id, {
+        name: host.hostName,
+        providerId: resource.providerId,
+        sourceId: host.host_id,
+      })
+    })
   })
   return {
-    pools: [...pools].map(([id, name]) => ({ id, name })),
-    hosts: [...hosts].map(([id, name]) => ({ id, name })),
+    pools: [...pools].map(([id, option]) => ({ id, ...option })),
+    hosts: [...hosts].map(([id, option]) => ({ id, ...option })),
     statuses: unique(resources.map((resource) => resource.status)),
   }
 }
@@ -47,8 +67,10 @@ export function filterFlashSystemResources(
     ].some((value) => value.toLocaleLowerCase().includes(search))
     return matchesSearch
       && (!filters.providerId || resource.providerId === filters.providerId)
-      && (!filters.poolId || resource.mdisk_grp_id === filters.poolId)
-      && (!filters.hostId || resource.host_maps.some((host) => host.host_id === filters.hostId))
+      && matchesScopedFilter(filters.poolId, resource.providerId, resource.mdisk_grp_id)
+      && (!filters.hostId || resource.host_maps.some(
+        (host) => matchesScopedFilter(filters.hostId, resource.providerId, host.host_id),
+      ))
       && (!filters.status || resource.status === filters.status)
   })
 }

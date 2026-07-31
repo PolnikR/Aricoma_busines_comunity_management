@@ -40,8 +40,10 @@ export function NonVmwareResourcesPage(props: NonVmwareResourcesPageProps) {
     : sourceQueries.powerResources.length > 0
   const allFailed = sourceQueries.hasProviders && sourceQueries.failures.length === sourceProviders.length && !hasData
   const sourceLoading = providersSuccess && sourceProviders.length > 0 && sourceQueries.isLoading
-  const metrics = providersPending || sourceLoading || providersError
+  const metrics = providersPending || sourceLoading
     ? <MetricsSkeleton />
+    : providersError || sourceProviders.length === 0 || allFailed
+      ? null
     : isFlashSystem
       ? (
           <FlashSystemMetrics
@@ -51,6 +53,10 @@ export function NonVmwareResourcesPage(props: NonVmwareResourcesPageProps) {
               total: t('resources.flash.metrics.total'), active: t('resources.flash.metrics.online'),
               third: t('resources.flash.metrics.capacity'), fourth: t('resources.flash.metrics.free'),
               validated: t('resources.common.validated'),
+            }}
+            helperLabels={{
+              pools: t('resources.flash.metrics.pools'),
+              hosts: t('resources.flash.metrics.hosts'),
             }}
           />
         )
@@ -81,7 +87,7 @@ export function NonVmwareResourcesPage(props: NonVmwareResourcesPageProps) {
       <ResourceInventoryState>
         <FetchErrorAlert
           title={t('providers.loadFailed')}
-          description={providersError.message}
+          description={t('providers.loadFailed')}
           retryLabel={t('pages.virtualMachines.error.retryButton')}
           variant="full"
           isRetrying={providersFetching}
@@ -102,7 +108,7 @@ export function NonVmwareResourcesPage(props: NonVmwareResourcesPageProps) {
       <ResourceInventoryState>
         <FetchErrorAlert
           title={t('resources.common.loadFailed')}
-          description={sourceQueries.failures.map(({ error }) => error.message).join('; ')}
+          description={t('resources.common.loadFailed')}
           retryLabel={t('pages.virtualMachines.error.retryButton')}
           variant="full"
           isRetrying={sourceQueries.isFetching}

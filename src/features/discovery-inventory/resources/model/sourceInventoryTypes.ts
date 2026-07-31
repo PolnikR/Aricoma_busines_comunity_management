@@ -16,8 +16,8 @@ export interface PowerFilters {
 }
 
 export interface FlashSystemFilterOptions {
-  pools: { id: string; name: string }[]
-  hosts: { id: string; name: string }[]
+  pools: { id: string; name: string; providerId: string; sourceId: string }[]
+  hosts: { id: string; name: string; providerId: string; sourceId: string }[]
   statuses: string[]
 }
 

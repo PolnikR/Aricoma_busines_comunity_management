@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { useTranslation } from '@/test-utils/mockUseTranslation'
 import type { PowerPartitionResource } from '../../model/discoveryTypes'
@@ -44,5 +44,17 @@ describe('PowerInventoryView', () => {
     expect(screen.getByRole('columnheader', { name: 'Volume capacity' })).toBeInTheDocument()
     expect(screen.getByText('270648')).toBeInTheDocument()
     expect(screen.queryByText(/270648\s*(MB|GB|TB)/i)).not.toBeInTheDocument()
+  })
+
+  it('localizes requested detail fields and boolean values', () => {
+    const { t } = useTranslation()
+    render(<PowerInventoryView resources={[partition]} providers={[]} t={t} />)
+
+    fireEvent.click(screen.getByText('vios1'))
+    const dialog = screen.getByRole('dialog', { name: 'IBM Power partition detail' })
+    expect(within(dialog).getAllByText('Bootable').length).toBeGreaterThan(0)
+    expect(within(dialog).getAllByText('Yes').length).toBeGreaterThan(0)
+    expect(within(dialog).getAllByText('IP address').length).toBeGreaterThan(0)
+    expect(within(dialog).queryByText('resources.power.fields.IsBootable')).not.toBeInTheDocument()
   })
 })

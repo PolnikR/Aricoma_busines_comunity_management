@@ -46,4 +46,21 @@ describe('mapPowerInventory', () => {
     expect(inventory.partitions).toHaveLength(1)
     expect(inventory.partitions[0]?.partitionKind).toBe('LPAR')
   })
+
+  it('falls through empty identities and keeps duplicate row identifiers unique', () => {
+    const inventory = mapPowerInventory({
+      count: 2,
+      counts_by_type: { LogicalPartition: 0, VirtualIOServer: 2 },
+      vms: [
+        { lpar: {}, vios: { PartitionUUID: ' ', PartitionName: 'vios1' } },
+        { lpar: {}, vios: { PartitionUUID: '', PartitionName: 'vios1' } },
+      ],
+    }, 'power-01')
+
+    expect(inventory.partitions.map(({ id }) => id)).toEqual([
+      'power-01:VIOS:vios1',
+      'power-01:VIOS:vios1:2-1',
+    ])
+    expect(new Set(inventory.partitions.map(({ id }) => id)).size).toBe(2)
+  })
 })

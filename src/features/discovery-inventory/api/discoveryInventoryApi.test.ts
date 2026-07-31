@@ -115,13 +115,12 @@ describe('fetchVmwareInventory', () => {
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
-  it('returns an empty inventory when a tag query fails with 400 or 500', async () => {
+  it('propagates a server failure for a filtered tag query', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 500 })))
 
-    const inventory = await fetchVmwareInventory(undefined, 'WEB')
-
-    expect(inventory.reportedCount).toBe(0)
-    expect(inventory.virtualMachines).toEqual([])
+    await expect(fetchVmwareInventory(undefined, 'WEB')).rejects.toThrow(
+      'Discovery inventory request failed with status 500',
+    )
   })
 
   it('returns an empty inventory when a provider is rejected with 400', async () => {

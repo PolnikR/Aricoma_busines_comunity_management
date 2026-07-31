@@ -34,7 +34,7 @@ let resourceInventoryQuery: {
   powerResources: never[]
   flashSystemInventories: never[]
   powerInventories: never[]
-  failures: never[]
+  failures: { provider: ProviderRecord; error: Error }[]
   isLoading: boolean
   isFetching: boolean
   hasProviders: boolean
@@ -134,7 +134,9 @@ describe('ResourcesPage', () => {
       error: new Error('inventory offline'),
     }
     view.rerender(<ResourcesPage />)
-    expect(screen.getByRole('alert')).toHaveTextContent('inventory offline')
+    expect(screen.getByRole('alert')).toHaveTextContent('Unknown discovery error.')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('inventory offline')
+    expect(screen.queryByText('Metrics skeleton')).not.toBeInTheDocument()
   })
 
   it('renders metrics, toolbar, and empty inventory state', () => {
@@ -185,7 +187,41 @@ describe('ResourcesPage', () => {
     render(<ResourcesPage />)
 
     expect(resourceInventoryQuerySpy).toHaveBeenCalledWith(null, [])
-    expect(screen.getByRole('alert')).toHaveTextContent('provider service offline')
+    expect(screen.getByRole('alert')).toHaveTextContent('Failed to load providers.')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('provider service offline')
+    expect(screen.queryByText('Metrics skeleton')).not.toBeInTheDocument()
     expect(screen.queryByText('No provider configured')).not.toBeInTheDocument()
+  })
+
+  it('renders a terminal no-provider state without a loading skeleton', () => {
+    providersQuery = {
+      ...providersQuery,
+      data: [],
+      isSuccess: true,
+    }
+
+    render(<ResourcesPage />)
+
+    expect(screen.getByText('No provider configured')).toBeInTheDocument()
+    expect(screen.queryByText('Metrics skeleton')).not.toBeInTheDocument()
+  })
+
+  it('does not expose source-provider error details', () => {
+    resourceTab = 'flashsystem'
+    providersQuery = {
+      ...providersQuery,
+      data: [flashProvider],
+    }
+    resourceInventoryQuery = {
+      ...resourceInventoryQuery,
+      hasProviders: true,
+      failures: [{ provider: flashProvider, error: new Error('Zod payload internals') }],
+    }
+
+    render(<ResourcesPage />)
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Resource inventory could not be loaded')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Zod payload internals')
+    expect(screen.queryByText('Metrics skeleton')).not.toBeInTheDocument()
   })
 })

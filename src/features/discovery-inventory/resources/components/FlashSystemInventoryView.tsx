@@ -35,6 +35,10 @@ export function FlashSystemInventoryView({ resources, providers, t }: FlashSyste
   const [density, setDensity] = useState<TableDensity>('compact')
   const [selected, setSelected] = useState<FlashSystemVolumeResource | null>(null)
   const options = useMemo(() => getFlashSystemFilterOptions(resources), [resources])
+  const providerNames = useMemo(
+    () => new Map(providers.map((provider) => [provider.id, provider.name])),
+    [providers],
+  )
   const filtered = useMemo(() => filterFlashSystemResources(resources, filters), [filters, resources])
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, pageCount)
@@ -66,8 +70,8 @@ export function FlashSystemInventoryView({ resources, providers, t }: FlashSyste
           searchLabel={t('resources.flash.searchLabel')}
           controls={[
             { id: 'providerId', label: t('resources.common.provider'), value: filters.providerId, allLabel: t('resources.common.allProviders'), options: providers.map((provider) => ({ value: provider.id, label: provider.name })) },
-            { id: 'poolId', label: t('resources.flash.filters.pool'), value: filters.poolId, allLabel: t('resources.flash.filters.allPools'), options: options.pools.map((pool) => ({ value: pool.id, label: pool.name })) },
-            { id: 'hostId', label: t('resources.flash.filters.host'), value: filters.hostId, allLabel: t('resources.flash.filters.allHosts'), options: options.hosts.map((host) => ({ value: host.id, label: host.name })) },
+            { id: 'poolId', label: t('resources.flash.filters.pool'), value: filters.poolId, allLabel: t('resources.flash.filters.allPools'), options: options.pools.map((pool) => ({ value: pool.id, label: `${pool.name} · ${providerNames.get(pool.providerId) ?? pool.providerId}` })) },
+            { id: 'hostId', label: t('resources.flash.filters.host'), value: filters.hostId, allLabel: t('resources.flash.filters.allHosts'), options: options.hosts.map((host) => ({ value: host.id, label: `${host.name} · ${providerNames.get(host.providerId) ?? host.providerId}` })) },
             { id: 'status', label: t('resources.flash.filters.status'), value: filters.status, allLabel: t('resources.flash.filters.allStatuses'), options: options.statuses.map((status) => ({ value: status, label: status })) },
           ]}
           onSearchChange={(search) => { updateFilters({ search }) }}
@@ -104,6 +108,21 @@ export function FlashSystemInventoryView({ resources, providers, t }: FlashSyste
           pool: t('resources.flash.detail.pool'), name: labels.name, capacity: labels.capacity, usedCapacity: t('resources.flash.detail.used'),
           freeCapacity: t('resources.flash.detail.free'), hostMappings: t('resources.flash.detail.hostMappings'), host: t('resources.flash.filters.host'),
           cluster: t('resources.flash.detail.cluster'), noMappings: t('resources.flash.detail.noMappings'), provider: labels.provider,
+          scsiId: t('resources.flash.detail.scsiId'),
+          groups: {
+            identity: t('resources.flash.groups.identity'),
+            placement: t('resources.flash.groups.placement'),
+            state: t('resources.flash.groups.state'),
+            copies: t('resources.flash.groups.copies'),
+          },
+          fieldLabels: Object.fromEntries([
+            'id', 'volume_id', 'volume_name', 'vdisk_UID', 'capacity', 'mdisk_grp_id',
+            'mdisk_grp_name', 'parent_mdisk_grp_id', 'parent_mdisk_grp_name',
+            'IO_group_id', 'IO_group_name', 'status', 'type', 'function', 'protocol',
+            'fast_write_state', 'formatting', 'encrypt', 'FC_id', 'FC_name', 'RC_id',
+            'RC_name', 'fc_map_count', 'copy_count', 'se_copy_count',
+            'compressed_copy_count', 'RC_change',
+          ].map((field) => [field, t(`resources.flash.fields.${field}`)])),
         }}
       />
     </>

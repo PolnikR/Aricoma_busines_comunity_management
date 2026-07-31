@@ -92,6 +92,12 @@ export function PowerInventoryView({ resources, providers, t }: PowerInventoryVi
           partitionState: t('resources.power.filters.partitionState'), interfaceState: t('resources.power.detail.interfaceState'),
           ipAddress: t('resources.power.detail.ipAddress'), subnetMask: t('resources.power.detail.subnetMask'),
           isBootable: t('resources.power.detail.isBootable'), maximumVirtualIoSlots: t('resources.power.detail.maximumVirtualIoSlots'),
+          yes: t('common.yes'), no: t('common.no'),
+          fieldLabels: Object.fromEntries([
+            'PartitionName', 'OperatingSystemType', 'DeviceName', 'BootMode',
+            'PowerOnWithHypervisor', 'VolumeCapacity', 'VolumeName', 'VolumeState',
+            'State', 'IPAddress', 'SubnetMask', 'IsBootable', 'MaximumVirtualIOSlots',
+          ].map((field) => [field, t(`resources.power.fields.${field}`)])),
           identity: t('resources.power.groups.identity'), processorMemory: t('resources.power.groups.processorMemory'),
           operatingSystem: t('resources.power.groups.operatingSystem'), network: t('resources.power.groups.network'),
           storage: t('resources.power.groups.storage'), virtualIo: t('resources.power.groups.virtualIo'), monitoring: t('resources.power.groups.monitoring'),

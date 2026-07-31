@@ -32,4 +32,24 @@ describe('mapFlashSystemInventory', () => {
       fc_map_count: '2',
     })
   })
+
+  it('accepts missing IDs and creates unique stable resource identifiers', () => {
+    const payload = flashSystemInventoryResponseSchema.parse({
+      count: 2,
+      volumes: [
+        { name: 'volume-a', id: '', vdisk_UID: 'uid-a' },
+        { name: 'volume-a', id: '', vdisk_UID: 'uid-a' },
+      ],
+      pools: {},
+      hosts: {},
+      clusters: {},
+    })
+
+    const inventory = mapFlashSystemInventory(payload, 'flash-01')
+
+    expect(inventory.resources.map(({ resourceId }) => resourceId)).toEqual([
+      'flash-01:uid-a',
+      'flash-01:uid-a:2-1',
+    ])
+  })
 })

@@ -102,8 +102,6 @@ export function ResourcesPage() {
   )
 
   const providerPending = providersLoading || (!providersSuccess && providersError === null)
-  const providerErrorMessage = providersError instanceof Error ? providersError.message : t('providers.loadFailed')
-
   if (resourceTab !== 'vmware') {
     return (
       <NonVmwareResourcesPage
@@ -122,9 +120,11 @@ export function ResourcesPage() {
 
   const handlePageSizeChange = (pageSize: VirtualMachinePageSize) => { updateQuery({ pageSize }, true) }
   const vmwareLoading = providersSuccess && vmwareProviders.length > 0 && isPending
-  const vmwareMetrics = providerPending || providersError || vmwareLoading || !data
+  const vmwareMetrics = providerPending || vmwareLoading
     ? <MetricsSkeleton />
-    : <VirtualMachineMetrics metrics={data.metrics} />
+    : data && !providersError
+      ? <VirtualMachineMetrics metrics={data.metrics} />
+      : null
   const vmwareNotice = error && data ? (
     <FetchErrorAlert
       title={t('pages.virtualMachines.error.latestFailed')}
@@ -142,7 +142,7 @@ export function ResourcesPage() {
       <ResourceInventoryState>
         <FetchErrorAlert
           title={t('providers.loadFailed')}
-          description={providerErrorMessage}
+          description={t('providers.loadFailed')}
           retryLabel={t('pages.virtualMachines.error.retryButton')}
           variant="full"
           isRetrying={providersFetching}
@@ -163,7 +163,7 @@ export function ResourcesPage() {
       <ResourceInventoryState>
         <FetchErrorAlert
           title={t('pages.virtualMachines.error.title')}
-          description={error instanceof Error ? error.message : t('messages.unknownError')}
+          description={t('pages.virtualMachines.error.unknown')}
           retryLabel={t('pages.virtualMachines.error.retryButton')}
           variant="full"
           isRetrying={isFetching}

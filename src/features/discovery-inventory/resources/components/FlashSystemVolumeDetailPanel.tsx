@@ -19,24 +19,27 @@ interface FlashSystemVolumeDetailPanelProps {
     cluster: string
     noMappings: string
     provider: string
+    scsiId: string
+    groups: Record<'identity' | 'placement' | 'state' | 'copies', string>
+    fieldLabels: Record<string, string>
   }
 }
 
 const fieldGroups = [
   {
-    label: 'Identity',
+    key: 'identity' as const,
     fields: ['id', 'volume_id', 'volume_name', 'vdisk_UID'] as const,
   },
   {
-    label: 'Placement and capacity',
+    key: 'placement' as const,
     fields: ['capacity', 'mdisk_grp_id', 'mdisk_grp_name', 'parent_mdisk_grp_id', 'parent_mdisk_grp_name', 'IO_group_id', 'IO_group_name'] as const,
   },
   {
-    label: 'State and behavior',
+    key: 'state' as const,
     fields: ['status', 'type', 'function', 'protocol', 'fast_write_state', 'formatting', 'encrypt'] as const,
   },
   {
-    label: 'Copy relationships',
+    key: 'copies' as const,
     fields: ['FC_id', 'FC_name', 'RC_id', 'RC_name', 'fc_map_count', 'copy_count', 'se_copy_count', 'compressed_copy_count', 'RC_change'] as const,
   },
 ]
@@ -62,9 +65,9 @@ export function FlashSystemVolumeDetailPanel({ volume, open, onClose, labels }: 
       {volume ? (
         <div className="space-y-5 p-5">
           {fieldGroups.map((group) => (
-            <section key={group.label}>
-              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#71819a]">{group.label}</h3>
-              <dl>{group.fields.map((field) => <DetailRow key={field} label={field} value={display(volume[field])} />)}</dl>
+            <section key={group.key}>
+              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#71819a]">{labels.groups[group.key]}</h3>
+              <dl>{group.fields.map((field) => <DetailRow key={field} label={labels.fieldLabels[field] ?? field} value={display(volume[field])} />)}</dl>
             </section>
           ))}
           <section>
@@ -83,7 +86,7 @@ export function FlashSystemVolumeDetailPanel({ volume, open, onClose, labels }: 
                 {volume.resolvedHostMaps.map((host) => (
                   <dl key={`${host.host_id}:${host.scsi_id}`} className="rounded-xl border border-[#dfe9f3] px-3">
                     <DetailRow label={labels.host} value={host.hostName} secondary={host.host_id} />
-                    <DetailRow label="SCSI ID" value={host.scsi_id} />
+                    <DetailRow label={labels.scsiId} value={host.scsi_id} />
                     <DetailRow label={labels.cluster} value={host.clusterName || '-'} secondary={host.clusterId} />
                   </dl>
                 ))}

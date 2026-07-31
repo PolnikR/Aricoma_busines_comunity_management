@@ -21,9 +21,10 @@ interface FlashSystemMetricsProps {
   resources: FlashSystemVolumeResource[]
   inventories: { provider: ProviderRecord; inventory: FlashSystemInventory }[]
   labels: MetricLabels
+  helperLabels?: { pools: string; hosts: string }
 }
 
-export function FlashSystemMetrics({ resources, inventories, labels }: FlashSystemMetricsProps) {
+export function FlashSystemMetrics({ resources, inventories, labels, helperLabels }: FlashSystemMetricsProps) {
   const pools = new Map<string, { capacity: number; free: number }>()
   inventories.forEach(({ provider, inventory }) => {
     Object.entries(inventory.pools).forEach(([poolId, pool]) => {
@@ -39,8 +40,8 @@ export function FlashSystemMetrics({ resources, inventories, labels }: FlashSyst
   const items = [
     { label: labels.total, value: resources.length.toLocaleString(), helper: labels.validated, icon: <ServerIcon className="size-4" /> },
     { label: labels.active, value: resources.filter((resource) => resource.status.toLowerCase() === 'online').length.toLocaleString(), helper: labels.validated, icon: <LayersIcon className="size-4" /> },
-    { label: labels.third, value: formatCapacityBytes(totalCapacity), helper: `${String(pools.size)} pools`, icon: <MemoryIcon className="size-4" /> },
-    { label: labels.fourth, value: formatCapacityBytes(freeCapacity), helper: `${String(new Set(resources.flatMap((resource) => resource.resolvedHostMaps.map((host) => `${resource.providerId}:${host.host_id}`))).size)} hosts`, icon: <CpuIcon className="size-4" /> },
+    { label: labels.third, value: formatCapacityBytes(totalCapacity), helper: `${String(pools.size)} ${helperLabels?.pools ?? ''}`.trim(), icon: <MemoryIcon className="size-4" /> },
+    { label: labels.fourth, value: formatCapacityBytes(freeCapacity), helper: `${String(new Set(resources.flatMap((resource) => resource.resolvedHostMaps.map((host) => `${resource.providerId}:${host.host_id}`))).size)} ${helperLabels?.hosts ?? ''}`.trim(), icon: <CpuIcon className="size-4" /> },
   ]
   return <MetricGrid items={items} />
 }

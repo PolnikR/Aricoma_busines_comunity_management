@@ -18,7 +18,7 @@ const flashSystemRelatedResourceSchema = z.object({
 }).loose()
 
 const flashSystemVolumeSchema = z.object({
-  id: z.string(),
+  id: z.string().catch(''),
   name: z.string().min(1),
   IO_group_id: z.string().catch(''),
   IO_group_name: z.string().catch('-'),
