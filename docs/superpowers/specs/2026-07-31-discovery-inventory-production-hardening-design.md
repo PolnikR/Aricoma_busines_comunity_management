@@ -62,6 +62,16 @@ clearing a provider cannot accidentally include resources from another provider.
 
 Existing status filtering and free-text search remain unchanged.
 
+## FlashSystem table columns
+
+The compact inventory table shows only the operational fields needed for
+scanning and selection, in this order:
+
+`Volume | Status | Capacity | Pool | Type | Mapped hosts | Copies | FlashCopy maps | Provider`
+
+I/O group, protocol, copy identifiers, and the remaining API attributes stay in
+the volume detail drawer.
+
 ## API and error behavior
 
 HTTP 500 responses from the VMware inventory endpoint remain errors. They are

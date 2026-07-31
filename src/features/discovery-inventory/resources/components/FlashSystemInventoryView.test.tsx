@@ -51,7 +51,14 @@ describe('FlashSystemInventoryView', () => {
 
     render(<FlashSystemInventoryView resources={inventory.resources} providers={[provider]} t={t} />)
     expect(screen.getByRole('columnheader', { name: 'Capacity' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Pool' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Type' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Mapped hosts' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Copies' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'FlashCopy maps' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Provider' })).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'I/O group' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Protocol' })).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByText('V5000_Volume1'))
     const dialog = screen.getByRole('dialog', { name: 'FlashSystem volume detail' })

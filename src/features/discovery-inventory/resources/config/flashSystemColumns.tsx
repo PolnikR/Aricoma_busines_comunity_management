@@ -7,9 +7,7 @@ interface FlashSystemColumnLabels {
   status: string
   capacity: string
   pool: string
-  ioGroup: string
   type: string
-  protocol: string
   hosts: string
   copies: string
   flashCopy: string
@@ -35,9 +33,7 @@ export function createFlashSystemColumns(labels: FlashSystemColumnLabels): Colum
     },
     { id: 'capacity', header: labels.capacity, cell: (volume) => volume.capacity || '-', align: 'right' },
     { id: 'pool', header: labels.pool, cell: (volume) => volume.pool?.name ?? volume.mdisk_grp_name },
-    { id: 'ioGroup', header: labels.ioGroup, cell: (volume) => volume.IO_group_name || '-' },
     { id: 'type', header: labels.type, cell: (volume) => volume.type || '-' },
-    { id: 'protocol', header: labels.protocol, cell: (volume) => volume.protocol || '-' },
     {
       id: 'hosts',
       header: labels.hosts,

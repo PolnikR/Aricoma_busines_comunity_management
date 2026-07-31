@@ -52,9 +52,7 @@ export function FlashSystemInventoryView({ resources, providers, t }: FlashSyste
     status: t('resources.flash.table.status'),
     capacity: t('resources.flash.table.capacity'),
     pool: t('resources.flash.table.pool'),
-    ioGroup: t('resources.flash.table.ioGroup'),
     type: t('resources.flash.table.type'),
-    protocol: t('resources.flash.table.protocol'),
     hosts: t('resources.flash.table.hosts'),
     copies: t('resources.flash.table.copies'),
     flashCopy: t('resources.flash.table.flashCopy'),
@@ -93,7 +91,7 @@ export function FlashSystemInventoryView({ resources, providers, t }: FlashSyste
             onRowClick={setSelected}
             rowAriaLabel={(row) => `${t('resources.common.showDetails')} ${row.name}`}
             ariaLabel={t('resources.flash.tableLabel')}
-            minWidthClassName="min-w-[1180px]"
+            minWidthClassName="min-w-[1024px]"
             emptyContent={<EmptyState title={t('resources.flash.empty.title')} description={t('resources.flash.empty.description')} action={<Button size="sm" variant="outline" onClick={() => { setFilters(initialFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>} />}
           />
         </div>
