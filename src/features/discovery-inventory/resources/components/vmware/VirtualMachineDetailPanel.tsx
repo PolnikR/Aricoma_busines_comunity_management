@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { VirtualMachine } from '../../types'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
 import { formatStartTime } from '@/shared/utils/dateFormat'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -9,6 +10,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/com
 import { DetailDrawer, DetailRow, DetailStat } from '@/shared/components/data-table'
 import { Tabs } from '@/shared/components/tabs/Tabs'
 import { createVmwareDetailFields } from '../../config/vmwareDetailFields'
+import { Field, Select } from '@/shared/components/form/FormControls'
 
 function truncateFilePath(path: string): string {
   if (path.length <= 50) return path
@@ -23,14 +25,33 @@ function truncateFilePath(path: string): string {
 
 interface VirtualMachineDetailPanelProps {
   virtualMachine: VirtualMachine | null
+  flashSystemProviders?: ProviderRecord[]
   open: boolean
   onClose: () => void
 }
 
-export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: VirtualMachineDetailPanelProps) {
+export function VirtualMachineDetailPanel({
+  virtualMachine,
+  flashSystemProviders = [],
+  open,
+  onClose,
+}: VirtualMachineDetailPanelProps) {
   const { t } = useTranslation()
   const [selectedTab, setSelectedTab] = useState<'overview' | 'disks' | 'snapshots'>('overview')
-  const { data: vdisks, isLoading: vdisksLoading } = useVdisksByVm(virtualMachine?.name ?? '', undefined)
+  const eligibleFlashSystemProviders = flashSystemProviders.filter(
+    (provider) => provider.type === 'FLASHCOPY' && provider.credentialStatus === 'ok',
+  )
+  const [selectedFlashSystemProviderId, setSelectedFlashSystemProviderId] = useState('')
+  const flashSystemProviderId = eligibleFlashSystemProviders.some(
+    (provider) => provider.id === selectedFlashSystemProviderId,
+  )
+    ? selectedFlashSystemProviderId
+    : (eligibleFlashSystemProviders[0]?.id ?? '')
+  const { data: vdisks, isLoading: vdisksLoading } = useVdisksByVm(
+    virtualMachine?.name ?? '',
+    virtualMachine?.providerId,
+    flashSystemProviderId || undefined,
+  )
 
   const headerCell = 'whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]'
   const cell = 'px-3 py-2.5 text-[13px] text-[#3b4763] align-top'
@@ -157,6 +178,21 @@ export function VirtualMachineDetailPanel({ virtualMachine, open, onClose }: Vir
 
               {selectedTab === 'snapshots' && (
                 <div className="flex flex-col" key={`snapshots-${virtualMachine.id}`}>
+                  {eligibleFlashSystemProviders.length > 1 ? (
+                    <div className="border-b border-[#edf2f7] px-4 py-3">
+                      <Field label={t('drawer.selectedProvider')} htmlFor="vm-flashsystem-provider">
+                        <Select
+                          id="vm-flashsystem-provider"
+                          value={flashSystemProviderId}
+                          onChange={(event) => { setSelectedFlashSystemProviderId(event.target.value) }}
+                        >
+                          {eligibleFlashSystemProviders.map((provider) => (
+                            <option key={provider.id} value={provider.id}>{provider.name}</option>
+                          ))}
+                        </Select>
+                      </Field>
+                    </div>
+                  ) : null}
                   {vdisksLoading ? (
                     <p className="p-4 text-[13px] text-[#93a0b5]">{t('pages.virtualMachines.detail.loadingSnapshots')}</p>
                   ) : vdisks ? (

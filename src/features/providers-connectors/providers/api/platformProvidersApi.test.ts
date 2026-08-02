@@ -58,6 +58,7 @@ describe('fetchPlatformProviders', () => {
   it.each([
     ['missing credential status', { ...airflowProvider, credentialStatus: undefined }],
     ['invalid port', { ...airflowProvider, port: 70000 }],
+    ['infrastructure type', { ...airflowProvider, type: 'VMWARE' }],
     ['unknown type', { ...airflowProvider, type: 'UNKNOWN' }],
   ])('rejects a platform provider with %s', async (_case, provider) => {
     stubFetch({ providers: [provider] })

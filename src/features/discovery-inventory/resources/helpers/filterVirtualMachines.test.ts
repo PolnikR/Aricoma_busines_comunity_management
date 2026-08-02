@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyFiltersAndPagination } from './filterVirtualMachines'
+import { applyFiltersAndPagination, getServerSideTagFilter } from './filterVirtualMachines'
 import type { AllVirtualMachinesData } from './mapInventoryToVirtualMachines'
 import type { VirtualMachine, VirtualMachinesQuery } from '../types'
 
@@ -65,5 +65,13 @@ describe('applyFiltersAndPagination', () => {
     const result = applyFiltersAndPagination(data, query({ untagged: true, page: 99 }))
     expect(result.items.map(item => item.name)).toEqual(['WEB-01'])
     expect(result.page).toBe(1)
+  })
+})
+
+describe('getServerSideTagFilter', () => {
+  it('uses the API filter only when exactly one tag is selected', () => {
+    expect(getServerSideTagFilter([])).toBeUndefined()
+    expect(getServerSideTagFilter(['prod'])).toBe('prod')
+    expect(getServerSideTagFilter(['prod', 'database'])).toBeUndefined()
   })
 })

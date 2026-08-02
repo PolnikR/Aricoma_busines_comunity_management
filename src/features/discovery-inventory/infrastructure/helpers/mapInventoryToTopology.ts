@@ -50,9 +50,17 @@ export function mapInventoryToTopology(
 ): InfrastructureTopology {
   const nodes = new Map<string, InfrastructureTopologyNode>()
   const edges = new Map<string, InfrastructureTopologyEdge>()
-  const clusterHosts = new Map<string, Set<string>>()
-  const hostDetails = new Map<string, { clusterNames: Set<string>, virtualMachineIds: Set<string> }>()
-  const datastoreDetails = new Map<string, { virtualMachineIds: Set<string>, allocatedCapacityGb: number }>()
+  const clusterHosts = new Map<string, { label: string, hosts: Map<string, string> }>()
+  const hostDetails = new Map<string, {
+    label: string
+    clusterNames: Set<string>
+    virtualMachineIds: Set<string>
+  }>()
+  const datastoreDetails = new Map<string, {
+    label: string
+    virtualMachineIds: Set<string>
+    allocatedCapacityGb: number
+  }>()
 
   for (const virtualMachine of inventory.virtualMachines) {
     const virtualMachineNodeId = createTopologyNodeId('virtualMachine', virtualMachine.id)
@@ -72,13 +80,17 @@ export function mapInventoryToTopology(
     })
 
     if (isKnownTopologyValue(virtualMachine.host)) {
-      const hostNodeId = createTopologyNodeId('host', virtualMachine.host)
-      const details = hostDetails.get(virtualMachine.host) ?? {
+      const hostNodeId = createTopologyNodeId(
+        'host',
+        `${virtualMachine.providerId}:${virtualMachine.host}`,
+      )
+      const details = hostDetails.get(hostNodeId) ?? {
+        label: virtualMachine.host,
         clusterNames: new Set<string>(),
         virtualMachineIds: new Set<string>(),
       }
       details.virtualMachineIds.add(virtualMachine.id)
-      hostDetails.set(virtualMachine.host, details)
+      hostDetails.set(hostNodeId, details)
 
       const edgeId = createTopologyEdgeId('runs', hostNodeId, virtualMachineNodeId)
       edges.set(edgeId, {
@@ -92,9 +104,16 @@ export function mapInventoryToTopology(
       if (isKnownTopologyValue(virtualMachine.cluster)) {
         details.clusterNames.add(virtualMachine.cluster)
 
-        const hosts = clusterHosts.get(virtualMachine.cluster) ?? new Set<string>()
-        hosts.add(virtualMachine.host)
-        clusterHosts.set(virtualMachine.cluster, hosts)
+        const clusterNodeId = createTopologyNodeId(
+          'cluster',
+          `${virtualMachine.providerId}:${virtualMachine.cluster}`,
+        )
+        const cluster = clusterHosts.get(clusterNodeId) ?? {
+          label: virtualMachine.cluster,
+          hosts: new Map<string, string>(),
+        }
+        cluster.hosts.set(hostNodeId, virtualMachine.host)
+        clusterHosts.set(clusterNodeId, cluster)
       }
     }
 
@@ -117,14 +136,18 @@ export function mapInventoryToTopology(
     }
 
     for (const [datastoreName, capacityGb] of datastoreCapacities) {
-      const datastoreNodeId = createTopologyNodeId('datastore', datastoreName)
-      const details = datastoreDetails.get(datastoreName) ?? {
+      const datastoreNodeId = createTopologyNodeId(
+        'datastore',
+        `${virtualMachine.providerId}:${datastoreName}`,
+      )
+      const details = datastoreDetails.get(datastoreNodeId) ?? {
+        label: datastoreName,
         virtualMachineIds: new Set<string>(),
         allocatedCapacityGb: 0,
       }
       details.virtualMachineIds.add(virtualMachine.id)
       details.allocatedCapacityGb += capacityGb
-      datastoreDetails.set(datastoreName, details)
+      datastoreDetails.set(datastoreNodeId, details)
 
       const edgeId = createTopologyEdgeId('uses', virtualMachineNodeId, datastoreNodeId)
       edges.set(edgeId, {
@@ -137,17 +160,15 @@ export function mapInventoryToTopology(
     }
   }
 
-  for (const [clusterName, hosts] of clusterHosts) {
-    const clusterNodeId = createTopologyNodeId('cluster', clusterName)
+  for (const [clusterNodeId, cluster] of clusterHosts) {
     nodes.set(clusterNodeId, {
       id: clusterNodeId,
       kind: 'cluster',
-      label: clusterName,
-      hostCount: hosts.size,
+      label: cluster.label,
+      hostCount: cluster.hosts.size,
     })
 
-    for (const hostName of hosts) {
-      const hostNodeId = createTopologyNodeId('host', hostName)
+    for (const hostNodeId of cluster.hosts.keys()) {
       const edgeId = createTopologyEdgeId('contains', clusterNodeId, hostNodeId)
       edges.set(edgeId, {
         id: edgeId,
@@ -159,24 +180,22 @@ export function mapInventoryToTopology(
     }
   }
 
-  for (const [hostName, details] of hostDetails) {
-    const hostNodeId = createTopologyNodeId('host', hostName)
+  for (const [hostNodeId, details] of hostDetails) {
     const hostNode: HostTopologyNode = {
       id: hostNodeId,
       kind: 'host',
-      label: hostName,
+      label: details.label,
       clusterNames: Array.from(details.clusterNames).sort(),
       virtualMachineCount: details.virtualMachineIds.size,
     }
     nodes.set(hostNodeId, hostNode)
   }
 
-  for (const [datastoreName, details] of datastoreDetails) {
-    const datastoreNodeId = createTopologyNodeId('datastore', datastoreName)
+  for (const [datastoreNodeId, details] of datastoreDetails) {
     const datastoreNode: DatastoreTopologyNode = {
       id: datastoreNodeId,
       kind: 'datastore',
-      label: datastoreName,
+      label: details.label,
       virtualMachineCount: details.virtualMachineIds.size,
       allocatedCapacityGb: details.allocatedCapacityGb,
     }

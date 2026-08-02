@@ -120,4 +120,28 @@ describe('AppMetadataForm', () => {
 
     expect(onMetadataChange).toHaveBeenCalledWith({ platform: 'airflow-01' })
   })
+
+  it('offers only providers with valid credentials', async () => {
+    render(
+      <LanguageProvider>
+        <AppMetadataForm
+          platformProviders={[
+            {
+              id: 'airflow-01', name: 'Primary Airflow', description: '', type: 'AIRFLOW',
+              ipAddress: '10.0.0.1', port: 22, dagDir: '/dags', credentialId: 'cred-1',
+              credentialStatus: 'ok',
+            },
+            {
+              id: 'airflow-02', name: 'Broken Airflow', description: '', type: 'AIRFLOW',
+              ipAddress: '10.0.0.2', port: 22, dagDir: '/dags', credentialId: 'cred-2',
+              credentialStatus: 'missing',
+            },
+          ]}
+        />
+      </LanguageProvider>,
+    )
+
+    expect(await screen.findByRole('option', { name: 'Primary Airflow - AIRFLOW' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Broken Airflow - AIRFLOW' })).not.toBeInTheDocument()
+  })
 })

@@ -1,8 +1,5 @@
 export const PLATFORM_PROVIDER_TYPES = [
   'AIRFLOW',
-  'VMWARE',
-  'FLASHCOPY',
-  'IBM_POWER',
 ] as const
 
 export type PlatformProviderType = (typeof PLATFORM_PROVIDER_TYPES)[number]

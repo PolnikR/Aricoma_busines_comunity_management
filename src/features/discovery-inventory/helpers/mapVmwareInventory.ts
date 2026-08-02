@@ -15,7 +15,9 @@ function mapVirtualDisk(
   index: number,
 ): DiscoveredVirtualDisk {
   return {
-    id: disk.uuid || `${virtualMachineId}:disk:${String(index)}`,
+    id: disk.uuid
+      ? `${virtualMachineId}:disk:${disk.uuid}`
+      : `${virtualMachineId}:disk:${String(index)}`,
     label: disk.label,
     capacityGb: disk.capacity_gb,
     datastore: disk.datastore,
@@ -27,8 +29,10 @@ function mapVirtualDisk(
 function mapVirtualMachine(
   virtualMachine: VmwareVirtualMachinePayload,
 ): DiscoveredVirtualMachine {
+  const virtualMachineId = `${virtualMachine.provider_id}:${virtualMachine.moId}`
+
   return {
-    id: virtualMachine.moId,
+    id: virtualMachineId,
     name: virtualMachine.name,
     powerState: virtualMachine.power_state,
     connectionState: virtualMachine.connection_state,
@@ -45,7 +49,7 @@ function mapVirtualMachine(
     providerId: virtualMachine.provider_id,
     providerType: virtualMachine.provider_type,
     disks: virtualMachine.vdisks.map((disk, index) => (
-      mapVirtualDisk(disk, virtualMachine.moId, index)
+      mapVirtualDisk(disk, virtualMachineId, index)
     )),
     snapshotCount: virtualMachine.snapshot_count,
     toolsStatus: virtualMachine.vmware_tools_status,

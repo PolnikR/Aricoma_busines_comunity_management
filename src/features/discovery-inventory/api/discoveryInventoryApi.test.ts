@@ -57,12 +57,12 @@ describe('fetchVmwareInventory', () => {
 
     expect(inventory.reportedCount).toBe(1)
     expect(inventory.virtualMachines[0]).toMatchObject({
-      id: 'vm-101',
+      id: 'vmware-vcenter-01:vm-101',
       name: 'application-01',
       primaryDatastore: 'datastore-01',
     })
     expect(inventory.virtualMachines[0]?.disks[0]).toEqual({
-      id: 'disk-101',
+      id: 'vmware-vcenter-01:vm-101:disk:disk-101',
       label: 'Hard disk 1',
       capacityGb: 100,
       datastore: 'datastore-02',

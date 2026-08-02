@@ -10,6 +10,7 @@ import {
 import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsError } from './recoveryGroupsErrors'
 import { recoveryGroupsResponseSchema } from './schemas/recoveryGroupsSchema'
+import type { RecoveryGroupApiRecord } from './schemas/recoveryGroupsSchema'
 import { validateRecoveryGroupDraft } from './recoveryGroupsValidation'
 
 export const toRecoveryGroupId = toProgrammaticId
@@ -20,11 +21,30 @@ function requireOk(response: Response, operation: string): void {
   }
 }
 
+function hasResolvableProvider(
+  record: RecoveryGroupApiRecord,
+  providers: ProviderRecord[],
+): boolean {
+  const vmProviderId = record.provider_id_vm.trim()
+  if (vmProviderId) {
+    return providers.some(
+      (provider) => provider.id === vmProviderId
+        && (provider.type === 'VMWARE' || provider.type === 'IBM_POWER'),
+    )
+  }
+
+  const volumeProviderId = record.provider_id_volume.trim()
+  return !!volumeProviderId && providers.some(
+    (provider) => provider.id === volumeProviderId && provider.type === 'FLASHCOPY',
+  )
+}
+
 export async function fetchRecoveryGroups(providers: ProviderRecord[]): Promise<RecoveryGroup[]> {
   const response = await apiFetch(API_ENDPOINTS.recoveryGroups.list)
   requireOk(response, 'Get recovery groups')
   const payload: unknown = await response.json()
   return recoveryGroupsResponseSchema.parse(payload).recovery_groups
+    .filter(record => hasResolvableProvider(record, providers))
     .map(record => mapRecoveryGroupApiRecord(record, providers))
 }
 

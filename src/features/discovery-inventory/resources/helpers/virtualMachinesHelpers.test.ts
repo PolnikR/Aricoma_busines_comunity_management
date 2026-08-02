@@ -136,7 +136,7 @@ describe('applyFiltersAndPagination', () => {
     }))
 
     expect(filtered.total).toBe(1)
-    expect(filtered.items[0]?.id).toBe('vm-2')
+    expect(filtered.items[0]?.id).toBe('vmware-vcenter-01:vm-2')
   })
 
   it('filters by power state', async () => {
@@ -195,7 +195,7 @@ describe('applyFiltersAndPagination', () => {
     }))
 
     expect(filtered.total).toBe(1)
-    expect(filtered.items[0]?.id).toBe('vm-2')
+    expect(filtered.items[0]?.id).toBe('vmware-vcenter-01:vm-2')
   })
 
   it('handles pagination at boundaries', async () => {

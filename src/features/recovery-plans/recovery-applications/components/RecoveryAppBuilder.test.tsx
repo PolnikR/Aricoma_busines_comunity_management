@@ -104,6 +104,17 @@ describe('RecoveryAppBuilder', () => {
     recoveryGroupsQuery.current.refresh.mockReset()
     platformProvidersQuery.current.isLoading = false
     platformProvidersQuery.current.error = null
+    platformProvidersQuery.current.data = [{
+      id: 'airflow-01',
+      name: 'Primary Airflow',
+      description: 'DAG orchestration',
+      type: 'AIRFLOW',
+      ipAddress: '10.99.99.55',
+      port: 22,
+      dagDir: '/opt/airflow/dags',
+      credentialId: 'airflow-ssh',
+      credentialStatus: 'ok',
+    }]
     platformProvidersQuery.current.refetch.mockReset()
   })
 
@@ -205,6 +216,34 @@ describe('RecoveryAppBuilder', () => {
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
 
     expect(alertMock).toHaveBeenCalledWith('Assign a recovery group to every tier.')
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('rejects a platform provider whose credentials are unavailable', () => {
+    const alertMock = vi.fn()
+    const onSave = vi.fn()
+    vi.stubGlobal('alert', alertMock)
+    platformProvidersQuery.current.data = [{
+      id: 'airflow-01',
+      name: 'Primary Airflow',
+      description: 'DAG orchestration',
+      type: 'AIRFLOW',
+      ipAddress: '10.99.99.55',
+      port: 22,
+      dagDir: '/opt/airflow/dags',
+      credentialId: 'airflow-ssh',
+      credentialStatus: 'missing',
+    }]
+
+    render(<RecoveryAppBuilder onSave={onSave} />)
+    fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
+    fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
+    fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
+    fireEvent.change(screen.getByLabelText('Platform provider *'), { target: { value: 'airflow-01' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Assign all tiers' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save Application' }))
+
+    expect(alertMock).toHaveBeenCalledWith('Select a platform provider.')
     expect(onSave).not.toHaveBeenCalled()
   })
 

@@ -11,8 +11,8 @@ describe('discoveryInventoryKeys', () => {
       'discovery-inventory', 'inventory', 'provider-1', 'prod',
     ])
     expect(discoveryInventoryKeys.tags()).toEqual(['discovery-inventory', 'tags'])
-    expect(discoveryInventoryKeys.vdisksByVm('VM-01')).toEqual([
-      'discovery-inventory', 'vdisks', 'VM-01', null,
+    expect(discoveryInventoryKeys.vdisksByVm('VM-01', 'vcenter-01', 'flash-01')).toEqual([
+      'discovery-inventory', 'vdisks', 'VM-01', 'vcenter-01', 'flash-01',
     ])
   })
 })

@@ -38,8 +38,11 @@ export function AppMetadataForm({
     initialValues?.environment ?? 'dev'
   )
   const [platform, setPlatform] = useState(initialValues?.platform ?? '')
+  const eligiblePlatformProviders = platformProviders.filter(
+    provider => provider.credentialStatus === 'ok',
+  )
   const selectedPlatformIsMissing = Boolean(
-    platform && !platformProviders.some(provider => provider.id === platform),
+    platform && !eligiblePlatformProviders.some(provider => provider.id === platform),
   )
 
   const handleChange = (field: string, value: string) => {
@@ -142,7 +145,7 @@ export function AppMetadataForm({
           {selectedPlatformIsMissing ? (
             <option value={platform}>{t('providers.credentials.unavailable').replace('{id}', platform)}</option>
           ) : null}
-          {platformProviders.map(provider => (
+          {eligiblePlatformProviders.map(provider => (
             <option key={provider.id} value={provider.id}>
               {provider.name} - {provider.type}
             </option>

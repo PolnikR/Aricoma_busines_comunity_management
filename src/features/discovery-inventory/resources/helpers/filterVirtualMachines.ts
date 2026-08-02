@@ -1,6 +1,10 @@
 import type { AllVirtualMachinesData } from './mapInventoryToVirtualMachines'
 import type { VirtualMachine, VirtualMachinesPageData, VirtualMachinesQuery } from '../types'
 
+export function getServerSideTagFilter(tags: string[]): string | undefined {
+  return tags.length === 1 ? tags[0] : undefined
+}
+
 function matchesSearch(vm: VirtualMachine, search: string) {
   const value = search.trim().toLowerCase()
   if (!value) return true

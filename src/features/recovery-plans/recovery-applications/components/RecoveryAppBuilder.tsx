@@ -214,7 +214,10 @@ export function RecoveryAppBuilder({
       alert(t('alerts.pleaseEnterDescription'))
       return
     }
-    if (!formState.platform.trim()) {
+    const platformProviderIsAvailable = platformProvidersQuery.data?.some(
+      provider => provider.id === formState.platform && provider.credentialStatus === 'ok',
+    ) ?? false
+    if (!platformProviderIsAvailable) {
       alert(t('recovery.application.validation.platformProviderRequired'))
       return
     }

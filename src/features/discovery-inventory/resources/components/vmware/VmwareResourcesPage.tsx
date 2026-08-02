@@ -6,7 +6,10 @@ import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { DataTablePagination } from '@/shared/components/data-table'
 import { useDiscoveryInventory } from '@/features/discovery-inventory/hooks/useDiscoveryInventory'
 import { useTags } from '../../../hooks/useTags'
-import { applyFiltersAndPagination } from '../../helpers/filterVirtualMachines'
+import {
+  applyFiltersAndPagination,
+  getServerSideTagFilter,
+} from '../../helpers/filterVirtualMachines'
 import { mapInventoryToVirtualMachines } from '../../helpers/mapInventoryToVirtualMachines'
 import { useVirtualMachineSearchParams } from '../../hooks/useVirtualMachineSearchParams'
 import type { VirtualMachineFilters, VirtualMachinePageSize } from '../../types'
@@ -36,6 +39,9 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   } = props
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
   const vmwareProviders = providers.filter((provider) => provider.type === 'VMWARE')
+  const flashSystemProviders = providers.filter(
+    (provider) => provider.type === 'FLASHCOPY' && provider.credentialStatus === 'ok',
+  )
   const inventoryEnabled = providersSuccess && vmwareProviders.length > 0
   const {
     data: inventory,
@@ -43,7 +49,11 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     isLoading: isPending,
     isFetching,
     refetch,
-  } = useDiscoveryInventory(query.providerId ?? undefined, query.tags[0], inventoryEnabled)
+  } = useDiscoveryInventory(
+    query.providerId ?? undefined,
+    getServerSideTagFilter(query.tags),
+    inventoryEnabled,
+  )
   const { data: availableTags = [] } = useTags(inventoryEnabled)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -198,6 +208,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
       </ResourceInventoryShell>
       <VirtualMachineDetailPanel
         virtualMachine={selectedVirtualMachine}
+        flashSystemProviders={flashSystemProviders}
         open={drawerOpen}
         onClose={() => {
           setDrawerOpen(false)

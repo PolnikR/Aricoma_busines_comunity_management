@@ -75,20 +75,20 @@ describe('mapInventoryToTopology', () => {
 
     expect(topology.nodes).toHaveLength(6)
     expect(topology.edges).toHaveLength(6)
-    expect(topology.nodes.find((node) => node.id === 'cluster:cluster-01')).toMatchObject({
+    expect(topology.nodes.find((node) => node.id === 'cluster:vcenter-01%3Acluster-01')).toMatchObject({
       kind: 'cluster',
       hostCount: 1,
     })
-    expect(topology.nodes.find((node) => node.id === 'host:esx-01')).toMatchObject({
+    expect(topology.nodes.find((node) => node.id === 'host:vcenter-01%3Aesx-01')).toMatchObject({
       kind: 'host',
       virtualMachineCount: 2,
     })
-    expect(topology.nodes.find((node) => node.id === 'datastore:datastore-01')).toMatchObject({
+    expect(topology.nodes.find((node) => node.id === 'datastore:vcenter-01%3Adatastore-01')).toMatchObject({
       kind: 'datastore',
       virtualMachineCount: 2,
       allocatedCapacityGb: 20,
     })
-    expect(topology.nodes.find((node) => node.id === 'datastore:datastore-02')).toMatchObject({
+    expect(topology.nodes.find((node) => node.id === 'datastore:vcenter-01%3Adatastore-02')).toMatchObject({
       kind: 'datastore',
       virtualMachineCount: 1,
       allocatedCapacityGb: 100,
@@ -120,5 +120,17 @@ describe('mapInventoryToTopology', () => {
     ])
 
     expect(mapInventoryToTopology(inventory)).toEqual(mapInventoryToTopology(inventory))
+  })
+
+  it('keeps infrastructure with identical names separate between providers', () => {
+    const topology = mapInventoryToTopology(createInventory([
+      createVirtualMachine({ id: 'vcenter-01:vm-101', providerId: 'vcenter-01' }),
+      createVirtualMachine({ id: 'vcenter-02:vm-101', providerId: 'vcenter-02' }),
+    ]))
+
+    expect(topology.nodes.filter((node) => node.kind === 'cluster')).toHaveLength(2)
+    expect(topology.nodes.filter((node) => node.kind === 'host')).toHaveLength(2)
+    expect(topology.nodes.filter((node) => node.kind === 'datastore')).toHaveLength(4)
+    expect(topology.nodes.filter((node) => node.kind === 'virtualMachine')).toHaveLength(2)
   })
 })

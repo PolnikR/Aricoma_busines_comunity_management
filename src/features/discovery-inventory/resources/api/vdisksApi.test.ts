@@ -103,13 +103,13 @@ describe('fetchVdisksByVm', () => {
     })
   })
 
-  it('appends provider_id when given', async () => {
+  it('sends both VMware and FlashSystem provider identifiers', async () => {
     const mock = stubFetch(validPayload)
 
-    await fetchVdisksByVm('TEST-WEB02', 'vmware-vcenter-01')
+    await fetchVdisksByVm('TEST-WEB02', 'vmware-vcenter-01', 'ibm-flashsystem-01')
 
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/vdisks_by_vm?vm_name=TEST-WEB02&provider_id=vmware-vcenter-01')
+    expect(url).toBe('/api/vdisks_by_vm?vm_name=TEST-WEB02&provider_id=vmware-vcenter-01&ibm_provider_id=ibm-flashsystem-01')
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 

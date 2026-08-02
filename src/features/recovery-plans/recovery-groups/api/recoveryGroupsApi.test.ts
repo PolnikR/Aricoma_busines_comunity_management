@@ -133,14 +133,22 @@ describe('fetchRecoveryGroups', () => {
     ])
   })
 
-  it('rejects malformed responses and unknown VM provider types', async () => {
+  it('rejects malformed responses', async () => {
     stubFetch({ recovery_groups: 'invalid' })
     await expect(fetchRecoveryGroups(providers)).rejects.toBeInstanceOf(Error)
+  })
 
+  it('keeps valid groups available when another group references a missing provider', async () => {
     stubFetch({
-      recovery_groups: [{ ...databaseGroupPayload, provider_id_vm: 'missing-provider' }],
+      recovery_groups: [
+        databaseGroupPayload,
+        { ...databaseGroupPayload, id: 'orphan', provider_id_vm: 'missing-provider' },
+      ],
     })
-    await expect(fetchRecoveryGroups(providers)).rejects.toThrow('Unknown VM provider')
+
+    await expect(fetchRecoveryGroups(providers)).resolves.toEqual([
+      expect.objectContaining({ id: 'database_group' }),
+    ])
   })
 
   it('reports an HTTP failure', async () => {
@@ -217,7 +225,7 @@ describe('submitRecoveryGroup', () => {
     })
   })
 
-  it('submits an empty volume selection while upserting an existing VM group', async () => {
+  it('preserves related volumes while upserting an existing VM group', async () => {
     const mock = stubFetch(null)
 
     await updateRecoveryGroup('database_group', {
@@ -236,8 +244,8 @@ describe('submitRecoveryGroup', () => {
     const [, init] = mock.mock.calls[0] as [string, RequestInit]
     expect(parseRequestBody(init)).toMatchObject({
       id: 'database_group',
-      provider_id_volume: '',
-      volumes: [],
+      provider_id_volume: 'ibm-flashsystem-01',
+      volumes: [{ name: 'TEST-VOLUME1' }],
     })
   })
 

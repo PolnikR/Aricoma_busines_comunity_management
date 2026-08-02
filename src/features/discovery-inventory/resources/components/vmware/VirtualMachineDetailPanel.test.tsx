@@ -3,8 +3,21 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
 import type { VirtualMachine } from '../../types'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+const useVdisksByVmMock = vi.hoisted(() => vi.fn(() => ({ data: undefined, isLoading: false })))
+vi.mock('../../hooks/useVdisksByVm', () => ({ useVdisksByVm: useVdisksByVmMock }))
+
+const flashProvider: ProviderRecord = {
+  id: 'ibm-flashsystem-01',
+  name: 'Production FlashSystem',
+  description: '',
+  type: 'FLASHCOPY',
+  ipAddress: '10.0.0.20',
+  credentialId: 'flash-admin',
+  credentialStatus: 'ok',
+}
 
 const vm = {
   name: 'app-server-01',
@@ -53,7 +66,27 @@ function renderWithQueryClient(element: React.ReactElement) {
 }
 
 describe('VirtualMachineDetailPanel resize', () => {
-  afterEach(cleanup)
+  afterEach(() => {
+    cleanup()
+    useVdisksByVmMock.mockClear()
+  })
+
+  it('loads related volumes with the VM and selected FlashSystem provider', () => {
+    renderWithQueryClient(
+      <VirtualMachineDetailPanel
+        virtualMachine={vm}
+        flashSystemProviders={[flashProvider]}
+        open
+        onClose={vi.fn()}
+      />,
+    )
+
+    expect(useVdisksByVmMock).toHaveBeenCalledWith(
+      'app-server-01',
+      'vmware-vcenter-01',
+      'ibm-flashsystem-01',
+    )
+  })
 
   it('resizes the panel via the drag handle and keyboard', () => {
     renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)

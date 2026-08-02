@@ -4,11 +4,16 @@ import type { VmStorageVolumes } from '../model/vdisksTypes'
 import { vdisksResponseSchema } from './schemas/vdisksSchema'
 import { mapVdisks } from '../helpers/mapVdisks'
 
-// Returns the IBM storage volumes backing a VM. vm_name is required;
-// provider_id is optional.
-export async function fetchVdisksByVm(vmName: string, providerId?: string): Promise<VmStorageVolumes> {
+// Returns the IBM storage volumes backing a VM. Explicit provider identifiers
+// prevent the backend defaults from selecting the wrong infrastructure source.
+export async function fetchVdisksByVm(
+  vmName: string,
+  providerId?: string,
+  ibmProviderId?: string,
+): Promise<VmStorageVolumes> {
   const params = new URLSearchParams({ vm_name: vmName })
   if (providerId) params.set('provider_id', providerId)
+  if (ibmProviderId) params.set('ibm_provider_id', ibmProviderId)
 
   const response = await apiFetch(
     `${API_ENDPOINTS.discovery.virtualDisksByVm}?${params.toString()}`,

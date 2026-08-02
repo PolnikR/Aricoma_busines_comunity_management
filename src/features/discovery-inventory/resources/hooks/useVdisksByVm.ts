@@ -2,11 +2,15 @@ import { useQuery } from '@tanstack/react-query'
 import { discoveryInventoryKeys } from '../../api/discoveryInventoryQueryKeys'
 import { fetchVdisksByVm } from '../api/vdisksApi'
 
-export function useVdisksByVm(vmName: string, providerId?: string) {
+export function useVdisksByVm(
+  vmName: string,
+  providerId?: string,
+  ibmProviderId?: string,
+) {
   return useQuery({
-    queryKey: discoveryInventoryKeys.vdisksByVm(vmName, providerId),
-    queryFn: () => fetchVdisksByVm(vmName, providerId),
-    enabled: !!vmName,
+    queryKey: discoveryInventoryKeys.vdisksByVm(vmName, providerId, ibmProviderId),
+    queryFn: () => fetchVdisksByVm(vmName, providerId, ibmProviderId),
+    enabled: !!vmName && !!providerId && !!ibmProviderId,
     refetchOnWindowFocus: false,
   })
 }
