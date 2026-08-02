@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
+import { usePlatformProviders } from '@/features/providers-connectors/providers/hooks/usePlatformProviders'
 import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
@@ -69,7 +70,7 @@ function createInitialFormState(
     name: '',
     description: '',
     environment: 'dev',
-    platform: 'VMware vCenter ESXi',
+    platform: '',
     sourceConnection: 'vcenter_default',
     targetConnection: 'vcenter_default_destination',
     tiers: new Map(
@@ -88,6 +89,7 @@ export function RecoveryAppBuilder({
   disableFileName = false,
 }: RecoveryAppBuilderProps) {
   const { t } = useTranslation()
+  const platformProvidersQuery = usePlatformProviders()
   const {
     groups,
     isLoading: areGroupsLoading,
@@ -212,6 +214,10 @@ export function RecoveryAppBuilder({
       alert(t('alerts.pleaseEnterDescription'))
       return
     }
+    if (!formState.platform.trim()) {
+      alert(t('recovery.application.validation.platformProviderRequired'))
+      return
+    }
     if (Array.from(formState.tiers.values()).some(tier => !tier.recovery_group)) {
       alert(t('recovery.application.validation.recoveryGroupRequired'))
       return
@@ -234,7 +240,12 @@ export function RecoveryAppBuilder({
                 name: formState.name,
                 description: formState.description,
                 environment: formState.environment,
+                platform: formState.platform,
               }}
+              platformProviders={platformProvidersQuery.data ?? []}
+              platformProvidersLoading={platformProvidersQuery.isLoading}
+              platformProvidersError={platformProvidersQuery.error instanceof Error ? platformProvidersQuery.error : null}
+              onRetryPlatformProviders={() => { void platformProvidersQuery.refetch() }}
             />
           </div>
           <Button

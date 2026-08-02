@@ -20,7 +20,19 @@ describe('AppMetadataForm', () => {
             name: 'Finance',
             description: 'Primary',
             environment: 'dev',
+            platform: 'airflow-01',
           }}
+          platformProviders={[{
+            id: 'airflow-01',
+            name: 'Primary Airflow',
+            description: 'DAG orchestration',
+            type: 'AIRFLOW',
+            ipAddress: '10.99.99.55',
+            port: 22,
+            dagDir: '/opt/airflow/dags',
+            credentialId: 'airflow-ssh',
+            credentialStatus: 'ok',
+          }]}
           onMetadataChange={onMetadataChange}
         />
       </LanguageProvider>
@@ -45,6 +57,7 @@ describe('AppMetadataForm', () => {
             name: 'Finance',
             description: 'Primary',
             environment: 'dev',
+            platform: '',
           }}
           disableFileName
         />
@@ -79,5 +92,32 @@ describe('AppMetadataForm', () => {
     expect(fileName).toHaveAttribute('autocomplete', 'off')
     expect(applicationName).toHaveAttribute('autocomplete', 'off')
     expect(description).toHaveAttribute('autocomplete', 'off')
+  })
+
+  it('reports platform provider selection', async () => {
+    const user = userEvent.setup()
+    const onMetadataChange = vi.fn()
+    render(
+      <LanguageProvider>
+        <AppMetadataForm
+          onMetadataChange={onMetadataChange}
+          platformProviders={[{
+            id: 'airflow-01',
+            name: 'Primary Airflow',
+            description: 'DAG orchestration',
+            type: 'AIRFLOW',
+            ipAddress: '10.99.99.55',
+            port: 22,
+            dagDir: '/opt/airflow/dags',
+            credentialId: 'airflow-ssh',
+            credentialStatus: 'ok',
+          }]}
+        />
+      </LanguageProvider>
+    )
+
+    await user.selectOptions(await screen.findByLabelText('Platform provider *'), 'airflow-01')
+
+    expect(onMetadataChange).toHaveBeenCalledWith({ platform: 'airflow-01' })
   })
 })

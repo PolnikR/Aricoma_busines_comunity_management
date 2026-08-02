@@ -5,6 +5,24 @@ import { RecoveryAppBuilder } from './RecoveryAppBuilder'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+const platformProvidersQuery = vi.hoisted(() => ({
+  current: {
+    data: [{
+      id: 'airflow-01',
+      name: 'Primary Airflow',
+      description: 'DAG orchestration',
+      type: 'AIRFLOW',
+      ipAddress: '10.99.99.55',
+      port: 22,
+      dagDir: '/opt/airflow/dags',
+      credentialId: 'airflow-ssh',
+      credentialStatus: 'ok',
+    }],
+    isLoading: false,
+    error: null as Error | null,
+    refetch: vi.fn(),
+  },
+}))
 const recoveryGroupsQuery = vi.hoisted(() => ({
   current: {
     groups: [{
@@ -25,6 +43,9 @@ const recoveryGroupsQuery = vi.hoisted(() => ({
   },
 }))
 
+vi.mock('@/features/providers-connectors/providers/hooks/usePlatformProviders', () => ({
+  usePlatformProviders: () => platformProvidersQuery.current,
+}))
 vi.mock('../../recovery-groups/hooks/useRecoveryGroups', () => ({
   useRecoveryGroups: () => recoveryGroupsQuery.current,
 }))
@@ -81,6 +102,9 @@ describe('RecoveryAppBuilder', () => {
     recoveryGroupsQuery.current.isFetching = false
     recoveryGroupsQuery.current.error = null
     recoveryGroupsQuery.current.refresh.mockReset()
+    platformProvidersQuery.current.isLoading = false
+    platformProvidersQuery.current.error = null
+    platformProvidersQuery.current.refetch.mockReset()
   })
 
   it('shows a loading skeleton while recovery groups are loading', () => {
@@ -124,6 +148,7 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
     fireEvent.change(screen.getByLabelText('Environment *'), { target: { value: 'prod' } })
+    fireEvent.change(screen.getByLabelText('Platform provider *'), { target: { value: 'airflow-01' } })
     fireEvent.click(screen.getByRole('button', { name: 'Assign all tiers' }))
     fireEvent.click(screen.getByRole('button', { name: 'Save Application' }))
 
@@ -133,6 +158,7 @@ describe('RecoveryAppBuilder', () => {
       name: 'Finance',
       description: 'Finance recovery',
       environment: 'prod',
+      platform: 'airflow-01',
     })
     expect((onSave.mock.calls[0]?.[0] as { tiers: Map<string, unknown> }).tiers.size).toBe(4)
   })
@@ -175,6 +201,7 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
+    fireEvent.change(screen.getByLabelText('Platform provider *'), { target: { value: 'airflow-01' } })
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
 
     expect(alertMock).toHaveBeenCalledWith('Assign a recovery group to every tier.')
@@ -190,6 +217,7 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
+    fireEvent.change(screen.getByLabelText('Platform provider *'), { target: { value: 'airflow-01' } })
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
 
     const savedState = onSave.mock.calls[0]?.[0] as { tiers: Map<string, RecoveryTier> }

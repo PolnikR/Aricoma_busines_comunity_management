@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
+import type { PlatformProviderRecord } from '@/features/providers-connectors/providers/model/platformProviderTypes'
 import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
@@ -11,13 +12,22 @@ interface AppMetadataFormProps {
     name: string
     description: string
     environment: 'dev' | 'staging' | 'prod'
+    platform: string
   }
+  platformProviders?: PlatformProviderRecord[]
+  platformProvidersLoading?: boolean
+  platformProvidersError?: Error | null
+  onRetryPlatformProviders?: () => void
   disableFileName?: boolean
 }
 
 export function AppMetadataForm({
   onMetadataChange,
   initialValues,
+  platformProviders = [],
+  platformProvidersLoading = false,
+  platformProvidersError = null,
+  onRetryPlatformProviders,
   disableFileName = false,
 }: AppMetadataFormProps) {
   const { t } = useTranslation()
@@ -26,6 +36,10 @@ export function AppMetadataForm({
   const [description, setDescription] = useState(initialValues?.description ?? '')
   const [environment, setEnvironment] = useState<'dev' | 'staging' | 'prod'>(
     initialValues?.environment ?? 'dev'
+  )
+  const [platform, setPlatform] = useState(initialValues?.platform ?? '')
+  const selectedPlatformIsMissing = Boolean(
+    platform && !platformProviders.some(provider => provider.id === platform),
   )
 
   const handleChange = (field: string, value: string) => {
@@ -46,13 +60,17 @@ export function AppMetadataForm({
         setEnvironment(value as 'dev' | 'staging' | 'prod')
         onMetadataChange?.({ environment: value as 'dev' | 'staging' | 'prod' })
         break
+      case 'platform':
+        setPlatform(value)
+        onMetadataChange?.({ platform: value })
+        break
     }
   }
 
   return (
     <form
       autoComplete="off"
-      className="grid grid-cols-1 gap-4 items-end sm:grid-cols-2 xl:grid-cols-4"
+      className="grid grid-cols-1 gap-4 items-end sm:grid-cols-2 xl:grid-cols-5"
     >
       <Field label={t('recovery.application.form.fileName')} htmlFor="application-file-name">
         <Input
@@ -108,6 +126,38 @@ export function AppMetadataForm({
           <option value="staging">{t('forms.environmentStaging')}</option>
           <option value="prod">{t('forms.environmentProd')}</option>
         </Select>
+      </Field>
+
+      <Field label={t('forms.platformProvider')} htmlFor="application-platform-provider">
+        <Select
+          id="application-platform-provider"
+          value={platform}
+          onChange={e => { handleChange('platform', e.target.value); }}
+          disabled={platformProvidersLoading || platformProvidersError !== null}
+          required
+        >
+          <option value="">
+            {platformProvidersLoading ? t('providers.platform.loading') : t('forms.platformProviderSelect')}
+          </option>
+          {selectedPlatformIsMissing ? (
+            <option value={platform}>{t('providers.credentials.unavailable').replace('{id}', platform)}</option>
+          ) : null}
+          {platformProviders.map(provider => (
+            <option key={provider.id} value={provider.id}>
+              {provider.name} - {provider.type}
+            </option>
+          ))}
+        </Select>
+        {platformProvidersError ? (
+          <p className="mt-1 text-xs text-red-600" role="alert">
+            {t('providers.platform.loadFailed')}{' '}
+            {onRetryPlatformProviders ? (
+              <button type="button" className="font-semibold underline" onClick={onRetryPlatformProviders}>
+                {t('buttons.retry')}
+              </button>
+            ) : null}
+          </p>
+        ) : null}
       </Field>
     </form>
   )
