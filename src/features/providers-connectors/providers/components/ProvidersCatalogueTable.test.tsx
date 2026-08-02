@@ -6,8 +6,8 @@ import type { ProviderRecord } from '../model/providerTypes'
 import { useProviders } from '../hooks/useProviders'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('react-router-dom', async (importOriginal) => ({
-  ...await importOriginal<typeof import('react-router-dom')>(),
+vi.mock('react-router', async (importOriginal) => ({
+  ...await importOriginal<typeof import('react-router')>(),
   useBlocker: () => ({ state: 'unblocked' as const }),
 }))
 

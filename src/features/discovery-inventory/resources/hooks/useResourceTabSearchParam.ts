@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 
 export const RESOURCE_TABS = ['vmware', 'flashsystem', 'ibm-power'] as const
 export type ResourceTab = (typeof RESOURCE_TABS)[number]

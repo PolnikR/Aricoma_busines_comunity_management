@@ -14,8 +14,8 @@ let query: {
   refetch: typeof refetch
 }
 
-vi.mock('react-router-dom', async (importOriginal) => ({
-  ...await importOriginal<typeof import('react-router-dom')>(),
+vi.mock('react-router', async (importOriginal) => ({
+  ...await importOriginal<typeof import('react-router')>(),
   useNavigate: () => navigate,
 }))
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useBlocker } from 'react-router-dom'
+import { useBlocker } from 'react-router'
 
 export function useUnsavedChangesGuard(isDirty: boolean) {
   const allowNavigationRef = useRef(false)

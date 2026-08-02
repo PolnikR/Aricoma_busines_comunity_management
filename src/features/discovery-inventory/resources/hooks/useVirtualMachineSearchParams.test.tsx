@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { act, renderHook } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { useVirtualMachineSearchParams } from './useVirtualMachineSearchParams'
 

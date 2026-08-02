@@ -1,4 +1,4 @@
-import { createBrowserRouter, createRoutesFromElements } from 'react-router-dom'
+import { createBrowserRouter, createRoutesFromElements } from 'react-router'
 import { AppRoutes } from './AppRoutes'
 
 export function createAppRouter() {

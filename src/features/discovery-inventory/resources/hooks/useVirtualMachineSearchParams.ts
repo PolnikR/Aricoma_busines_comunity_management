@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 import type { VirtualMachineFilters, VirtualMachinePageSize, VirtualMachinesQuery } from '../types'
 
 const pageSizes: VirtualMachinePageSize[] = [10, 25, 50]

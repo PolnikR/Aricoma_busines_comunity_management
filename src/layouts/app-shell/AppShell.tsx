@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router'
 import { AppHeader } from './AppHeader'
 import { AppSidebar } from './AppSidebar'
 import { useSidebar } from './useSidebar'

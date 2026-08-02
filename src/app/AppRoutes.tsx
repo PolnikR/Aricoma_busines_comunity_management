@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import {
   Navigate,
   Route,
-} from 'react-router-dom'
+} from 'react-router'
 import { AppShell } from '@/layouts/app-shell/AppShell'
 import { ResourcesPage } from '@/features/discovery-inventory/resources/pages/ResourcesPage'
 import { ProvidersPage } from '@/features/providers-connectors/providers/pages/ProvidersPage'

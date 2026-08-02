@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { useUnsavedChangesGuard } from './useUnsavedChangesGuard'
 
-vi.mock('react-router-dom', () => ({
+vi.mock('react-router', () => ({
   useBlocker: () => ({ state: 'unblocked' as const }),
 }))
 
