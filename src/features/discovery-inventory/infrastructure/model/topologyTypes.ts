@@ -6,6 +6,8 @@ export type InfrastructureTopologyNodeKind =
   | 'powerSystem'
   | 'powerPartition'
 
+export type InfrastructureTopologyPlatform = 'vmware' | 'ibm-power'
+
 export type InfrastructureTopologyEdgeKind = 'contains' | 'runs' | 'uses'
 
 interface InfrastructureTopologyNodeBase {

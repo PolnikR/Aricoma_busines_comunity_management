@@ -4,7 +4,7 @@ import { topologyNodeTypes } from './topologyNodeTypes'
 describe('topologyNodeTypes', () => {
   it('registers every supported topology node kind', () => {
     expect(Object.keys(topologyNodeTypes).sort()).toEqual([
-      'cluster', 'datastore', 'host', 'virtualMachine',
+      'cluster', 'datastore', 'host', 'powerPartition', 'powerSystem', 'virtualMachine',
     ])
   })
 })

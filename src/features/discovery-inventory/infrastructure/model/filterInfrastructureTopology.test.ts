@@ -125,4 +125,60 @@ describe('filterInfrastructureTopology', () => {
     expect(result.nodes.some((node) => node.kind === 'datastore')).toBe(false)
     expect(result.edges.some((edge) => edge.kind === 'uses')).toBe(false)
   })
+
+  it('filters IBM Power partitions and preserves their managed-system context', () => {
+    const powerTopology: InfrastructureTopology = {
+      nodes: [
+        {
+          id: 'powerSystem:s1',
+          kind: 'powerSystem',
+          label: 'Power System A',
+          partitionCount: 2,
+          lparCount: 1,
+          viosCount: 1,
+        },
+        {
+          id: 'powerPartition:lpar1',
+          kind: 'powerPartition',
+          label: 'Payments LPAR',
+          partitionId: 'lpar1',
+          partitionKind: 'LPAR',
+          partitionState: 'running',
+          systemName: 'Power System A',
+          operatingSystemType: 'AIX',
+          deviceName: '',
+          bootMode: 'Normal',
+          volumeName: '',
+          volumeState: '',
+        },
+        {
+          id: 'powerPartition:vios1',
+          kind: 'powerPartition',
+          label: 'VIOS A',
+          partitionId: 'vios1',
+          partitionKind: 'VIOS',
+          partitionState: 'not activated',
+          systemName: 'Power System A',
+          operatingSystemType: 'VIOS',
+          deviceName: 'ent0',
+          bootMode: 'Normal',
+          volumeName: 'hdisk1',
+          volumeState: 'active',
+        },
+      ],
+      edges: [
+        { id: 'contains-lpar', kind: 'contains', source: 'powerSystem:s1', target: 'powerPartition:lpar1', capacityGb: null },
+        { id: 'contains-vios', kind: 'contains', source: 'powerSystem:s1', target: 'powerPartition:vios1', capacityGb: null },
+      ],
+    }
+
+    expect(filterInfrastructureTopology(powerTopology, {
+      ...defaultInfrastructureTopologyFilters,
+      partitionKind: 'VIOS',
+      search: 'hdisk',
+    })).toEqual({
+      nodes: [powerTopology.nodes[0], powerTopology.nodes[2]],
+      edges: [powerTopology.edges[1]],
+    })
+  })
 })

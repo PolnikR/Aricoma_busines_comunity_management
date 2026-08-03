@@ -1,6 +1,7 @@
 import type {
   InfrastructureTopology,
   InfrastructureTopologyNode,
+  PowerPartitionTopologyNode,
   VirtualMachineTopologyNode,
 } from './topologyTypes'
 
@@ -9,10 +10,15 @@ export interface InfrastructureTopologyFilters {
   powerState: string
   host: string
   showDatastores: boolean
+  system: string
+  partitionKind: string
+  partitionState: string
 }
 
 export interface InfrastructureTopologyFilterOptions {
   hosts: string[]
+  systems: string[]
+  partitionStates: string[]
 }
 
 export const defaultInfrastructureTopologyFilters: InfrastructureTopologyFilters = {
@@ -20,6 +26,15 @@ export const defaultInfrastructureTopologyFilters: InfrastructureTopologyFilters
   powerState: '',
   host: '',
   showDatastores: false,
+  system: '',
+  partitionKind: '',
+  partitionState: '',
+}
+
+function isPowerPartition(
+  node: InfrastructureTopologyNode,
+): node is PowerPartitionTopologyNode {
+  return node.kind === 'powerPartition'
 }
 
 function isVirtualMachine(
@@ -36,6 +51,16 @@ export function getInfrastructureTopologyFilterOptions(
       .filter((node) => node.kind === 'host')
       .map((node) => node.label)
       .sort((first, second) => first.localeCompare(second)),
+    systems: topology.nodes
+      .filter((node) => node.kind === 'powerSystem')
+      .map((node) => node.label)
+      .sort((first, second) => first.localeCompare(second)),
+    partitionStates: Array.from(new Set(
+      topology.nodes
+        .filter(isPowerPartition)
+        .map((node) => node.partitionState)
+        .filter(Boolean),
+    )).sort((first, second) => first.localeCompare(second)),
   }
 }
 
@@ -79,6 +104,31 @@ export function filterInfrastructureTopology(
   )
 
   const includedNodeIds = new Set(selectedVirtualMachineIds)
+  const selectedPowerPartitionIds = new Set(
+    topology.nodes
+      .filter(isPowerPartition)
+      .filter((node) => {
+        if (filters.system && node.systemName !== filters.system) return false
+        if (filters.partitionKind && node.partitionKind !== filters.partitionKind) return false
+        if (filters.partitionState && node.partitionState !== filters.partitionState) return false
+        if (!search) return true
+
+        return [
+          node.label,
+          node.systemName,
+          node.operatingSystemType,
+          node.deviceName,
+          node.bootMode,
+          node.volumeName,
+          node.volumeState,
+        ].some((value) => value.toLowerCase().includes(search))
+      })
+      .map((node) => node.id),
+  )
+
+  for (const partitionId of selectedPowerPartitionIds) {
+    includedNodeIds.add(partitionId)
+  }
 
   for (const edge of topology.edges) {
     if (edge.kind === 'runs' && selectedVirtualMachineIds.has(edge.target)) {

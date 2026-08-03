@@ -19,6 +19,7 @@ const draggableNodeKinds = new Set<InfrastructureTopologyNodeKind>([
   'host',
   'virtualMachine',
   'datastore',
+  'powerPartition',
 ])
 
 export function mapTopologyToFlowElements(

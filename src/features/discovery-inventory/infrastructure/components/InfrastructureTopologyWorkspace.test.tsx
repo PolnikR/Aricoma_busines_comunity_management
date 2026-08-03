@@ -62,7 +62,7 @@ describe('InfrastructureTopologyWorkspace', () => {
       size: { width: 260, height: 132 },
     })
 
-    render(<InfrastructureTopologyWorkspace topology={topology} />)
+    render(<InfrastructureTopologyWorkspace platform="vmware" topology={topology} />)
     expect(screen.getByRole('status')).toHaveTextContent('Arranging topology')
     await waitFor(() => { expect(screen.getByText('Topology canvas')).toBeInTheDocument() })
     expect(screen.getByText('Visible nodes: 1')).toBeInTheDocument()
@@ -70,7 +70,7 @@ describe('InfrastructureTopologyWorkspace', () => {
 
   it('shows layout failures', async () => {
     vi.mocked(layoutInfrastructureTopology).mockRejectedValue(new Error('ELK failed'))
-    render(<InfrastructureTopologyWorkspace topology={topology} />)
+    render(<InfrastructureTopologyWorkspace platform="vmware" topology={topology} />)
     await waitFor(() => { expect(screen.getByRole('alert')).toHaveTextContent('ELK failed') })
   })
 })

@@ -15,9 +15,9 @@ const overridesSchema = z.record(
   z.object({ x: z.number(), y: z.number() }),
 )
 
-function readStoredOverrides(): TopologyNodePositionOverrides {
+function readStoredOverrides(storageKey: string): TopologyNodePositionOverrides {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = localStorage.getItem(storageKey)
     if (!stored) return {}
 
     const parsed = JSON.parse(stored) as unknown
@@ -29,38 +29,42 @@ function readStoredOverrides(): TopologyNodePositionOverrides {
   }
 }
 
-function writeStoredOverrides(overrides: TopologyNodePositionOverrides): void {
+function writeStoredOverrides(
+  storageKey: string,
+  overrides: TopologyNodePositionOverrides,
+): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides))
+    localStorage.setItem(storageKey, JSON.stringify(overrides))
   } catch {
     // Silently fail (e.g., Safari private mode) — don't break the diagram
   }
 }
 
-export function useTopologyNodePositionOverrides() {
+export function useTopologyNodePositionOverrides(scope?: string) {
+  const storageKey = scope ? `${STORAGE_KEY}.${encodeURIComponent(scope)}` : STORAGE_KEY
   const [overrides, setOverrides] = useState<TopologyNodePositionOverrides>(() =>
-    readStoredOverrides(),
+    readStoredOverrides(storageKey),
   )
 
   const setOverride = useCallback(
     (nodeId: string, position: TopologyNodePosition) => {
       setOverrides((prev) => {
         const newOverrides = { ...prev, [nodeId]: position }
-        writeStoredOverrides(newOverrides)
+        writeStoredOverrides(storageKey, newOverrides)
         return newOverrides
       })
     },
-    [],
+    [storageKey],
   )
 
   const clearOverrides = useCallback(() => {
     try {
-      localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(storageKey)
     } catch {
       // Silently fail
     }
     setOverrides({})
-  }, [])
+  }, [storageKey])
 
   return {
     overrides,

@@ -9,7 +9,7 @@ import {
   getInfrastructureTopologyFilterOptions,
 } from '../model/filterInfrastructureTopology'
 import type { InfrastructureTopologyFilters } from '../model/filterInfrastructureTopology'
-import type { InfrastructureTopology } from '../model/topologyTypes'
+import type { InfrastructureTopology, InfrastructureTopologyPlatform } from '../model/topologyTypes'
 import { useTopologyNodePositionOverrides } from '../hooks/useTopologyNodePositionOverrides'
 import { InfrastructureTopologyCanvas } from './InfrastructureTopologyCanvas'
 import { InfrastructureTopologyLegend } from './InfrastructureTopologyLegend'
@@ -18,6 +18,8 @@ import { useTranslation } from '@/hooks/useTranslation'
 
 interface InfrastructureTopologyWorkspaceProps {
   topology: InfrastructureTopology
+  platform: InfrastructureTopologyPlatform
+  positionScope?: string
 }
 
 interface LayoutResult {
@@ -32,6 +34,8 @@ interface LayoutError {
 
 export function InfrastructureTopologyWorkspace({
   topology,
+  platform,
+  positionScope,
 }: InfrastructureTopologyWorkspaceProps) {
   const { t } = useTranslation()
   const [filters, setFilters] = useState(defaultInfrastructureTopologyFilters)
@@ -41,7 +45,7 @@ export function InfrastructureTopologyWorkspace({
   const [isManualLayouting, setIsManualLayouting] = useState(false)
   const [fitViewRequest, setFitViewRequest] = useState(0)
   const layoutRequestId = useRef(0)
-  const { overrides, setOverride, clearOverrides } = useTopologyNodePositionOverrides()
+  const { overrides, setOverride, clearOverrides } = useTopologyNodePositionOverrides(positionScope)
   const overridesRef = useRef(overrides)
 
   useEffect(() => {
@@ -136,6 +140,7 @@ export function InfrastructureTopologyWorkspace({
   return (
     <Card className="relative flex h-dvh min-h-0 w-full min-w-0 max-w-full flex-none flex-col overflow-hidden p-0 sm:p-0 lg:h-auto lg:flex-1 lg:min-h-0">
       <InfrastructureTopologyToolbar
+        platform={platform}
         filters={filters}
         options={filterOptions}
         isLayouting={isLayouting}
@@ -181,6 +186,7 @@ export function InfrastructureTopologyWorkspace({
       </div>
 
       <InfrastructureTopologyLegend
+        platform={platform}
         visibleNodes={filteredTopology.nodes.length}
         visibleEdges={filteredTopology.edges.length}
       />

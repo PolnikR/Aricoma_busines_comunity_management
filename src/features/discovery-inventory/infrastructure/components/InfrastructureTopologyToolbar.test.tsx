@@ -5,8 +5,13 @@ import { InfrastructureTopologyToolbar } from './InfrastructureTopologyToolbar'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
-const filters = { search: '', powerState: '', host: '', showDatastores: false }
-const options = { hosts: ['host-1', 'host-2'] }
+const filters = {
+  search: '', powerState: '', host: '', showDatastores: false,
+  system: '', partitionKind: '', partitionState: '',
+}
+const options = {
+  hosts: ['host-1', 'host-2'], systems: ['Power System A'], partitionStates: ['running'],
+}
 
 describe('InfrastructureTopologyToolbar', () => {
   it('updates filters and dispatches layout controls', async () => {
@@ -17,6 +22,7 @@ describe('InfrastructureTopologyToolbar', () => {
     const onFitView = vi.fn()
     render(
       <InfrastructureTopologyToolbar
+        platform="vmware"
         filters={filters}
         options={options}
         isLayouting={false}
@@ -44,6 +50,7 @@ describe('InfrastructureTopologyToolbar', () => {
   it('disables position actions while layouting', () => {
     render(
       <InfrastructureTopologyToolbar
+        platform="vmware"
         filters={filters}
         options={options}
         isLayouting
@@ -55,5 +62,26 @@ describe('InfrastructureTopologyToolbar', () => {
     )
     expect(screen.getByRole('button', { name: 'Layouting' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Reset positions' })).toBeDisabled()
+  })
+
+  it('shows IBM Power partition filters without VMware-only controls', () => {
+    render(
+      <InfrastructureTopologyToolbar
+        platform="ibm-power"
+        filters={filters}
+        options={options}
+        isLayouting={false}
+        onFiltersChange={vi.fn()}
+        onAutoLayout={vi.fn()}
+        onResetPositions={vi.fn()}
+        onFitView={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByLabelText('Filter topology by managed system')).toBeInTheDocument()
+    expect(screen.getByLabelText('Filter topology by partition state')).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'LPAR' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Datastores')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Filter topology by host')).not.toBeInTheDocument()
   })
 })
