@@ -122,8 +122,8 @@ export function RecoveryGroupBuilder({
 
   return (
     <div className="flex min-h-0 flex-1 p-4">
-      <div className="grid min-h-0 flex-1 overflow-hidden rounded-lg border border-[#e3edf6] bg-white shadow-sm lg:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="border-b border-[#e3edf6] bg-[#fbfdff] lg:border-b-0 lg:border-r">
+      <div className="grid min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-surface shadow-sm lg:grid-cols-[240px_minmax(0,1fr)]">
+        <aside className="border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
           <WizardSteps
             items={steps}
             currentStep={step}
@@ -205,7 +205,7 @@ export function RecoveryGroupBuilder({
               />
             ) : null}
           </div>
-          <div className="flex flex-col-reverse gap-3 border-t border-[#e3edf6] bg-[#fbfdff] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col-reverse gap-3 border-t border-border bg-surface-subtle p-4 sm:flex-row sm:items-center sm:justify-between">
             <Button variant="ghost" onClick={onCancel}>{t('buttons.cancel')}</Button>
             <div className="flex gap-3">
               <Button

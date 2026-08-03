@@ -41,7 +41,7 @@ export function ProvidersPage() {
       value={providerTab}
       onChange={setProviderTab}
       ariaLabel={t('pages.providers.tabs.label')}
-      className="w-full shrink-0 border-b-0 bg-white px-0 sm:w-auto"
+      className="w-full shrink-0 border-b-0 bg-surface px-0 sm:w-auto"
     />
   )
 
@@ -69,7 +69,7 @@ export function ProvidersPage() {
           inventoryDescription={t(isPlatformTab ? 'pages.providers.platform.description' : 'pages.providers.infrastructure.description')}
           tabs={tabs}
         >
-          <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-[#dbe7f2] bg-white shadow-sm lg:min-h-0">
+          <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm lg:min-h-0">
             {isPlatformTab ? (
               <PlatformProvidersTable
                 providers={platformProviders}

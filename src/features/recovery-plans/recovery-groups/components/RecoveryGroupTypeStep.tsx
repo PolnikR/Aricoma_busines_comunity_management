@@ -59,13 +59,13 @@ export function RecoveryGroupTypeStep({
 
   return (
     <div>
-      <h2 className="text-base font-semibold text-[#17233d]">
+      <h2 className="text-base font-semibold text-text-primary">
         {t('pages.recoveryGroupBuilder.type.title')}
       </h2>
-      <p className="mt-1 text-sm text-[#71819a]">
+      <p className="mt-1 text-sm text-text-muted">
         {t('pages.recoveryGroupBuilder.type.description')}
       </p>
-      <p className="mt-3 text-sm text-[#52627b]">
+      <p className="mt-3 text-sm text-text-secondary">
         <span className="font-semibold">
           {t('pages.recoveryGroupBuilder.type.noteLabel')}
         </span>{' '}

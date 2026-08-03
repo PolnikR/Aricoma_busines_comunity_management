@@ -39,8 +39,8 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Provid
       header: t('tables.provider.name'),
       cell: (provider) => (
         <>
-          <span className="block font-semibold text-[#17233d]">{provider.name}</span>
-          <span className="mt-0.5 block font-mono text-[11px] text-[#93a0b5]">{provider.id}</span>
+          <span className="block font-semibold text-text-primary">{provider.name}</span>
+          <span className="mt-0.5 block font-mono text-[11px] text-text-subtle">{provider.id}</span>
         </>
       ),
     },
@@ -57,14 +57,14 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Provid
     {
       id: 'ipAddress',
       header: t('tables.provider.ip'),
-      cell: (provider) => <span className="font-mono text-[12px] text-[#3b4763]">{provider.ipAddress || '-'}</span>,
+      cell: (provider) => <span className="font-mono text-[12px] text-text-secondary">{provider.ipAddress || '-'}</span>,
     },
     {
       id: 'credential',
       header: t('tables.provider.credential'),
       cell: (provider) => (
         <div className="flex flex-col items-start gap-1">
-          <span className="font-mono text-[12px] text-[#3b4763]">{provider.credentialId ?? '-'}</span>
+          <span className="font-mono text-[12px] text-text-secondary">{provider.credentialId ?? '-'}</span>
           <Badge color={credentialStatusColor(provider.credentialStatus)} size="sm">
             {credentialStatusLabel(provider.credentialStatus, t)}
           </Badge>

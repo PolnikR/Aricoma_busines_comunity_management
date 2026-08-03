@@ -26,7 +26,7 @@ export function ProviderDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-96 items-center justify-center text-sm text-[#71819a]" role="status">
+      <div className="flex min-h-96 items-center justify-center text-sm text-text-muted" role="status">
         {t('pages.providers.detail.loading')}
       </div>
     )
@@ -83,8 +83,8 @@ export function ProviderDetailPage() {
         <Card>
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-base font-semibold text-[#17233d]">{t('pages.providers.detail.title')}</h2>
-              <p className="mt-1 text-sm text-[#71819a]">{t('pages.providers.detail.apiDescription')}</p>
+              <h2 className="text-base font-semibold text-text-primary">{t('pages.providers.detail.title')}</h2>
+              <p className="mt-1 text-sm text-text-muted">{t('pages.providers.detail.apiDescription')}</p>
             </div>
             <Badge color="info" size="sm">
               {providerTypeLabel(provider.type)}
@@ -93,29 +93,29 @@ export function ProviderDetailPage() {
 
           <dl className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
             <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">{t('details.providerId')}</dt>
-              <dd className="mt-1 font-mono text-sm text-[#17233d]">{provider.id}</dd>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.providerId')}</dt>
+              <dd className="mt-1 font-mono text-sm text-text-primary">{provider.id}</dd>
             </div>
             <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">{t('details.type')}</dt>
-              <dd className="mt-1 text-sm text-[#17233d]">
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.type')}</dt>
+              <dd className="mt-1 text-sm text-text-primary">
                 {providerTypeLabel(provider.type)}
               </dd>
             </div>
             <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">{t('details.ipAddress')}</dt>
-              <dd className="mt-1 font-mono text-sm text-[#17233d]">{provider.ipAddress || '-'}</dd>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.ipAddress')}</dt>
+              <dd className="mt-1 font-mono text-sm text-text-primary">{provider.ipAddress || '-'}</dd>
             </div>
             <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">{t('details.description')}</dt>
-              <dd className="mt-1 text-sm text-[#17233d]">{provider.description || '-'}</dd>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.description')}</dt>
+              <dd className="mt-1 text-sm text-text-primary">{provider.description || '-'}</dd>
             </div>
             <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">{t('details.credential')}</dt>
-              <dd className="mt-1 font-mono text-sm text-[#17233d]">{provider.credentialId ?? '-'}</dd>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.credential')}</dt>
+              <dd className="mt-1 font-mono text-sm text-text-primary">{provider.credentialId ?? '-'}</dd>
             </div>
             <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#8a98ad]">{t('details.credentialStatus')}</dt>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.credentialStatus')}</dt>
               <dd className="mt-1">
                 <Badge color={credentialStatusColor(provider.credentialStatus)} size="sm">
                   {t(`providers.credentials.status.${provider.credentialStatus}`)}

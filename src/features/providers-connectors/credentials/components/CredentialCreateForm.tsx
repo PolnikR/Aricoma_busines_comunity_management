@@ -77,7 +77,7 @@ export function CredentialCreateForm({
       </Field>
       <Field label={t('credentials.fields.password')} htmlFor="credential-password">
         {input('password', 'password', 'new-password')}
-        <p className="mt-1 text-xs text-[#71819a]">{t('credentials.fields.passwordHelp')}</p>
+        <p className="mt-1 text-xs text-text-muted">{t('credentials.fields.passwordHelp')}</p>
         {errors.password ? <p className="mt-1 text-xs text-red-600">{errors.password}</p> : null}
       </Field>
       <Field label={t('credentials.fields.confirmPassword')} htmlFor="credential-confirmPassword">

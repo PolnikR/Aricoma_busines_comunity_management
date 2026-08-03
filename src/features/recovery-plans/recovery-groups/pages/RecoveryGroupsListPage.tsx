@@ -62,7 +62,7 @@ export function RecoveryGroupsListPage() {
             }
           />
         ) : (
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-[#dbe7f2] bg-white shadow-sm">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
             <RecoveryGroupsTable
               groups={groups}
               onEdit={navigateToEdit}

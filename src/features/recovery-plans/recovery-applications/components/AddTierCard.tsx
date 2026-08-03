@@ -46,7 +46,7 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
 
   if (isOpen) {
     return (
-      <div className="bg-white border border-[#d9e6f1] rounded-lg p-4 shadow-sm">
+      <div className="bg-surface border border-border rounded-lg p-4 shadow-sm">
         <div className="space-y-3">
           <Field label={`${t('recovery.tier.form.id')} *`} htmlFor="add-tier-id">
             <Input
@@ -108,9 +108,9 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
       onClick={() => {
         setIsOpen(true)
       }}
-      className="bg-white border-2 border-dashed border-[#cfdaea] rounded-lg p-4 shadow-sm hover:border-[#b9d5e8] hover:bg-[#fbfdff] transition flex items-center justify-center h-full"
+      className="bg-surface border-2 border-dashed border-border-strong rounded-lg p-4 shadow-sm hover:border-border-strong hover:bg-surface-subtle transition flex items-center justify-center h-full"
     >
-      <span className="text-3xl text-[#7b8ca4]">+</span>
+      <span className="text-3xl text-text-muted">+</span>
     </button>
   )
 }

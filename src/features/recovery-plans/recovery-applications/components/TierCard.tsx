@@ -115,7 +115,7 @@ export function TierCard({
 
   if (isEditing) {
     return (
-      <div className="flex h-full flex-col rounded-lg border border-[#d9e6f1] bg-white p-4 shadow-sm">
+      <div className="flex h-full flex-col rounded-lg border border-border bg-surface p-4 shadow-sm">
         <div className="flex h-full flex-col gap-3">
           <Field label={`${t('recovery.tier.form.id')} *`} htmlFor={`tier-${id}-edit-id`}>
             <Input
@@ -149,7 +149,7 @@ export function TierCard({
             {editForm.tierDescriptionError && <p className="text-xs text-red-600 mt-1">{editForm.tierDescriptionError}</p>}
           </Field>
 
-          <div className="-mx-4 -mb-4 mt-auto flex gap-2 border-t border-[#edf2f7] bg-[#fbfdff] px-4 py-3">
+          <div className="-mx-4 -mb-4 mt-auto flex gap-2 border-t border-border bg-surface-subtle px-4 py-3">
             <Button
               onClick={handleConfirm}
               size="sm"
@@ -172,18 +172,18 @@ export function TierCard({
   }
 
   return (
-    <div className="flex h-full min-w-70 flex-col overflow-hidden rounded-lg border-2 border-dashed border-[#d9e6f1] bg-white shadow-sm">
+    <div className="flex h-full min-w-70 flex-col overflow-hidden rounded-lg border-2 border-dashed border-border bg-surface shadow-sm">
       <button
         onClick={() => {
           handleEditToggleClick(id)
         }}
-        className="px-4 py-3 border-b border-[#edf2f7] bg-[#fbfdff] text-left hover:bg-[#f0f5fa] transition"
+        className="px-4 py-3 border-b border-border bg-surface-subtle text-left hover:bg-surface-muted transition"
       >
-        <div className="text-xs text-[#7b8ca4] font-semibold uppercase tracking-wider mb-1">
+        <div className="text-xs text-text-muted font-semibold uppercase tracking-wider mb-1">
           {t('recovery.tier.order')}: <span className="font-bold">{tier.order}</span>
         </div>
-        <div className="text-sm font-semibold text-[#18253d] mb-1">{id}</div>
-        <div className="text-xs text-[#71819a]">{tier.description}</div>
+        <div className="text-sm font-semibold text-text-primary mb-1">{id}</div>
+        <div className="text-xs text-text-muted">{tier.description}</div>
       </button>
 
       {tier.recovery_group ? (
@@ -215,7 +215,7 @@ export function TierCard({
         />
       )}
 
-      <div className="mt-auto flex gap-2 border-t border-[#edf2f7] bg-[#fbfdff] px-4 py-3">
+      <div className="mt-auto flex gap-2 border-t border-border bg-surface-subtle px-4 py-3">
         <Button
           onClick={() => {
             handleEditToggleClick(id)

@@ -27,7 +27,7 @@ export function RecoveryGroupResourcesStep({
 
   return (
     <div className="grid h-full min-h-0 gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-      <div className="h-72 min-h-0 overflow-hidden rounded-lg border border-[#e3edf6] lg:h-full">
+      <div className="h-72 min-h-0 overflow-hidden rounded-lg border border-border lg:h-full">
         <ResourceSidebar
           items={availableResources}
           title={t(key('available'))}
@@ -46,9 +46,9 @@ export function RecoveryGroupResourcesStep({
           onRetry={() => { void query.refetch() }}
         />
       </div>
-      <div className="flex h-72 min-h-0 flex-col rounded-lg border-2 border-dashed border-[#d9e6f1] bg-white p-4 lg:h-full">
-        <h2 className="text-base font-semibold text-[#17233d]">{t(key('selectedTitle'))}</h2>
-        <p className="mt-1 text-sm text-[#71819a]">{t(key('description'))}</p>
+      <div className="flex h-72 min-h-0 flex-col rounded-lg border-2 border-dashed border-border bg-surface p-4 lg:h-full">
+        <h2 className="text-base font-semibold text-text-primary">{t(key('selectedTitle'))}</h2>
+        <p className="mt-1 text-sm text-text-muted">{t(key('description'))}</p>
         <ResourceSelectionCard
           items={resources}
           emptyText={t(key('empty'))}
@@ -57,7 +57,7 @@ export function RecoveryGroupResourcesStep({
           dropDataKey="recovery-group-resource-name"
           onResourceDrop={onAdd}
           onResourceRemove={onRemove}
-          className="mt-4 h-auto min-h-0 flex-1 rounded-lg border border-[#edf2f7]"
+          className="mt-4 h-auto min-h-0 flex-1 rounded-lg border border-border"
         />
       </div>
     </div>

@@ -92,7 +92,7 @@ export function RecoveryApplicationsListPage() {
           />
         ) : (
           <>
-            <div className="flex-1 flex flex-col min-h-0 bg-white rounded-lg border border-[#dbe7f2] shadow-sm overflow-hidden">
+            <div className="flex-1 flex flex-col min-h-0 bg-surface rounded-lg border border-border shadow-sm overflow-hidden">
               <RecoveryApplicationsTable applications={applications} onEdit={handleEdit} />
             </div>
           </>

@@ -56,8 +56,8 @@ function getBaseColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Re
     header: t('tables.recovery.application'),
     cell: (app) => (
       <>
-        <span className="block font-semibold text-[#17233d]">{app.data.application.name}</span>
-        <span className="mt-0.5 block text-[11px] text-[#93a0b5]">{app.data.application.description}</span>
+        <span className="block font-semibold text-text-primary">{app.data.application.name}</span>
+        <span className="mt-0.5 block text-[11px] text-text-subtle">{app.data.application.description}</span>
       </>
     ),
   },
@@ -69,12 +69,12 @@ function getBaseColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Re
   {
     id: 'platform',
     header: t('tables.recovery.platform'),
-    cell: (app) => <span className="text-[13px] text-[#3b4763]">{getProviderLabel(app.data.application.platform)}</span>,
+    cell: (app) => <span className="text-[13px] text-text-secondary">{getProviderLabel(app.data.application.platform)}</span>,
   },
   {
     id: 'tiers',
     header: t('tables.recovery.tiers'),
-    cell: (app) => <span className="text-[13px] text-[#3b4763] text-right">{Object.keys(app.data.application.tiers).length}</span>,
+    cell: (app) => <span className="text-[13px] text-text-secondary text-right">{Object.keys(app.data.application.tiers).length}</span>,
   },
   {
     id: 'status',
@@ -88,7 +88,7 @@ function getBaseColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Re
     id: 'submission',
     header: t('tables.recovery.submission'),
     cell: (app) => {
-      if (!app.submission) return <span className="text-[#9aa7bd]">—</span>
+      if (!app.submission) return <span className="text-text-subtle">—</span>
       return <Badge color={getSubmissionBadgeColor(app.submission.status)} size="sm">{app.submission.status}</Badge>
     },
   },
@@ -122,8 +122,8 @@ function JsonViewerModal({ isOpen, app, onClose }: JsonViewerModalProps) {
           </Button>
       }
     >
-      <div className="flex-1 overflow-y-auto bg-[#f8fbfe] px-6 py-4">
-        <pre className="text-xs font-mono text-[#3b4763] whitespace-pre-wrap break-word">
+      <div className="flex-1 overflow-y-auto bg-surface-subtle px-6 py-4">
+        <pre className="text-xs font-mono text-text-secondary whitespace-pre-wrap break-word">
           {JSON.stringify(app.data, null, 2)}
         </pre>
       </div>
@@ -315,7 +315,7 @@ export function RecoveryApplicationsTable({ applications, onEdit }: RecoveryAppl
                 value={
                   <>
                     <Badge color={getSubmissionBadgeColor(selected.submission.status)} size="sm">{selected.submission.status}</Badge>
-                    <span className="mt-1 block font-mono text-[11px] text-[#93a0b5]">{selected.submission.remotePath}</span>
+                    <span className="mt-1 block font-mono text-[11px] text-text-subtle">{selected.submission.remotePath}</span>
                   </>
                 }
               />

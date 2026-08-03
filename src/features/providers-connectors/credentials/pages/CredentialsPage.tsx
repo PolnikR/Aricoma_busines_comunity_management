@@ -26,7 +26,7 @@ export function CredentialsPage() {
         )}
       />
       <div className="flex flex-1 flex-col gap-4 overflow-hidden p-3 lg:min-h-0">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-[#dbe7f2] bg-white shadow-sm">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
           <CredentialsTable
             credentials={data}
             isLoading={isLoading}

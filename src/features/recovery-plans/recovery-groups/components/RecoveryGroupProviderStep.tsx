@@ -29,10 +29,10 @@ export function RecoveryGroupProviderStep({
 
   return (
     <div>
-      <h2 className="text-base font-semibold text-[#17233d]">
+      <h2 className="text-base font-semibold text-text-primary">
         {t('pages.recoveryGroupBuilder.provider.title')}
       </h2>
-      <p className="mt-1 text-sm text-[#71819a]">
+      <p className="mt-1 text-sm text-text-muted">
         {t('pages.recoveryGroupBuilder.provider.description')}
       </p>
 

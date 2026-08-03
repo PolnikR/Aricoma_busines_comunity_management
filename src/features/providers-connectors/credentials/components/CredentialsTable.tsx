@@ -37,8 +37,8 @@ export function CredentialsTable({ credentials, isLoading, error }: CredentialsT
       header: t('credentials.table.name'),
       cell: credential => (
         <>
-          <span className="block font-semibold text-[#17233d]">{credential.name}</span>
-          <span className="mt-0.5 block font-mono text-[11px] text-[#93a0b5]">{credential.id}</span>
+          <span className="block font-semibold text-text-primary">{credential.name}</span>
+          <span className="mt-0.5 block font-mono text-[11px] text-text-subtle">{credential.id}</span>
         </>
       ),
     },
@@ -54,7 +54,7 @@ export function CredentialsTable({ credentials, isLoading, error }: CredentialsT
     {
       id: 'username',
       header: t('credentials.table.username'),
-      cell: credential => <span className="font-mono text-xs text-[#3b4763]">{credential.username}</span>,
+      cell: credential => <span className="font-mono text-xs text-text-secondary">{credential.username}</span>,
     },
   ]
 

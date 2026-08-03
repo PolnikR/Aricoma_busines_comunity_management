@@ -38,8 +38,8 @@ export function RecoveryGroupDetailsStep({
   return (
     <div className="grid max-w-3xl gap-5">
       <div>
-        <h2 className="text-base font-semibold text-[#17233d]">{t('pages.recoveryGroupBuilder.details.title')}</h2>
-        <p className="mt-1 text-sm text-[#71819a]">{t('pages.recoveryGroupBuilder.details.description')}</p>
+        <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryGroupBuilder.details.title')}</h2>
+        <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryGroupBuilder.details.description')}</p>
       </div>
       <Field label={t('pages.recoveryGroupBuilder.fields.id')} htmlFor="recovery-group-id">
         <Input

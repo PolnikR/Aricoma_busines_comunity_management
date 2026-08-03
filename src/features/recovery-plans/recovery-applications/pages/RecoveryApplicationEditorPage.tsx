@@ -57,7 +57,7 @@ export function RecoveryApplicationEditorPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-96 items-center justify-center text-sm text-[#71819a]" role="status">
+      <div className="flex min-h-96 items-center justify-center text-sm text-text-muted" role="status">
         {t('pages.recoveryEditor.error.loading')}
       </div>
     )

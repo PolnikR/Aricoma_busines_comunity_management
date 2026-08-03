@@ -265,8 +265,8 @@ export function RecoveryAppBuilder({
   return (
     <div className="flex flex-col gap-4 lg:min-h-0 flex-1 p-4">
       {/* Metadata Form Card */}
-      <div className="bg-white border border-[#e3edf6] rounded-lg p-4 shadow-sm">
-        <h2 className="text-base font-semibold text-[#17233d] mb-4">{t('pages.recovery.applicationDetails')}</h2>
+      <div className="bg-surface border border-border rounded-lg p-4 shadow-sm">
+        <h2 className="text-base font-semibold text-text-primary mb-4">{t('pages.recovery.applicationDetails')}</h2>
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
           <div className="flex-1 w-full">
             <AppMetadataForm
@@ -297,10 +297,10 @@ export function RecoveryAppBuilder({
       </div>
 
       {/* Builder Card */}
-      <div className="flex-1 bg-white border border-[#e3edf6] rounded-lg overflow-hidden shadow-sm lg:min-h-0">
+      <div className="flex-1 bg-surface border border-border rounded-lg overflow-hidden shadow-sm lg:min-h-0">
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-0 h-full lg:min-h-0">
           {/* Recovery Group Sidebar */}
-          <div className="border-b lg:border-b-0 lg:border-r border-[#e3edf6] overflow-y-auto custom-scrollbar">
+          <div className="border-b lg:border-b-0 lg:border-r border-border overflow-y-auto custom-scrollbar">
             <ResourceSidebar
               items={availableGroups.map(group => group.id)}
               itemLabels={groupLabels}

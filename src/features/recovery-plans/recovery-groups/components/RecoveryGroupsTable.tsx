@@ -65,8 +65,8 @@ export function RecoveryGroupsTable({ groups, onEdit, onDelete }: RecoveryGroups
       header: t('tables.recoveryGroups.group'),
       cell: group => (
         <>
-          <span className="block font-semibold text-[#17233d]">{group.name}</span>
-          <span className="mt-0.5 block text-[11px] text-[#93a0b5]">{group.description}</span>
+          <span className="block font-semibold text-text-primary">{group.name}</span>
+          <span className="mt-0.5 block text-[11px] text-text-subtle">{group.description}</span>
         </>
       ),
     },
