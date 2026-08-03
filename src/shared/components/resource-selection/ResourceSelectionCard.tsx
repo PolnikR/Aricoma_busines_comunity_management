@@ -3,6 +3,7 @@ import { cn } from '@/shared/utils/cn'
 
 interface ResourceSelectionCardProps {
   title?: string
+  titleVariant?: 'heading' | 'inline'
   description?: string
   items: string[]
   emptyText: string
@@ -21,6 +22,7 @@ interface ResourceSelectionCardProps {
 
 export function ResourceSelectionCard({
   title,
+  titleVariant = 'heading',
   description,
   items,
   emptyText,
@@ -57,14 +59,22 @@ export function ResourceSelectionCard({
       } : undefined}
       className={cn(
         'flex flex-col gap-2 bg-[#f8fbfe] p-3 transition',
-        isSelectionMode ? 'h-64 min-h-64' : 'h-44 min-h-44',
+        isSelectionMode ? 'h-52 min-h-52' : 'h-44 min-h-44',
         isDragOver ? 'bg-[#e3edf6] ring-1 ring-inset ring-[#1596dd]' : undefined,
         className,
       )}
     >
       {title || (onClear && clearLabel) ? (
         <div className="flex shrink-0 items-start justify-between gap-2">
-          {title ? <h3 className="min-w-0 text-sm font-semibold text-[#18253d]">{title}</h3> : null}
+          {title ? (
+            titleVariant === 'inline' ? (
+              <p className="min-w-0 truncate whitespace-nowrap text-xs font-normal text-[#50617a]">
+                {title}
+              </p>
+            ) : (
+              <h3 className="min-w-0 text-sm font-semibold text-[#18253d]">{title}</h3>
+            )
+          ) : null}
           {onClear && clearLabel ? (
             <button
               type="button"

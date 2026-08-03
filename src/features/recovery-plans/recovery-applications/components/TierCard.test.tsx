@@ -30,9 +30,9 @@ describe('TierCard', () => {
     )
 
     expect(screen.getByText('database')).toBeInTheDocument()
-    expect(screen.getByText('Database recovery group')).toBeInTheDocument()
+    expect(screen.getByText('Recovery group: Database')).toBeInTheDocument()
+    expect(screen.queryByText('Database recovery group')).not.toBeInTheDocument()
     expect(screen.getByText('Database server group')).toBeInTheDocument()
-    expect(screen.queryByText((_, element) => element?.textContent === 'Recovery group: Database')).not.toBeInTheDocument()
   })
 
   it('toggles to edit mode when header clicked', async () => {
@@ -182,6 +182,19 @@ describe('TierCard', () => {
     expect(screen.queryByText(/Recovery group:/)).not.toBeInTheDocument()
   })
 
+  it('anchors actions to the bottom when no recovery group is assigned', () => {
+    render(
+      <TierCard
+        id="application"
+        tier={{ order: 3, description: 'Application server group' }}
+        existingIds={['application']}
+        canDelete
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Edit' }).parentElement).toHaveClass('mt-auto')
+  })
+
   it('accepts a recovery group dropped on an unassigned tier', () => {
     const onRecoveryGroupAdded = vi.fn()
     render(
@@ -251,6 +264,12 @@ describe('TierCard', () => {
     expect(selectedVm).toBeChecked()
     expect(excludedVm).not.toBeChecked()
     expect(screen.getByText('1 of 2 VMs selected')).toBeInTheDocument()
+
+    const recoveryGroupTitle = screen.getByText('Recovery group: Database')
+    expect(recoveryGroupTitle.tagName).toBe('P')
+    expect(recoveryGroupTitle).toHaveClass('truncate', 'whitespace-nowrap', 'font-normal')
+    expect(screen.getByRole('group', { name: 'Database virtual machines' }).closest('section'))
+      .toHaveClass('h-52', 'min-h-52')
 
     await user.click(excludedVm)
     await user.click(selectedVm)

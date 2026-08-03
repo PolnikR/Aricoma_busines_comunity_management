@@ -188,7 +188,8 @@ export function TierCard({
 
       {tier.recovery_group ? (
         <ResourceSelectionCard
-          description={tier.recovery_group.description}
+          title={`${t('recovery.tier.recoveryGroup')}: ${tier.recovery_group.name}`}
+          titleVariant="inline"
           items={allVmNames}
           selectedItems={selectedVmNames}
           emptyText={t('recovery.tier.emptyRecoveryGroup')}
@@ -214,7 +215,7 @@ export function TierCard({
         />
       )}
 
-      <div className="px-4 py-3 border-t border-[#edf2f7] bg-[#fbfdff] flex gap-2">
+      <div className="mt-auto flex gap-2 border-t border-[#edf2f7] bg-[#fbfdff] px-4 py-3">
         <Button
           onClick={() => {
             handleEditToggleClick(id)
