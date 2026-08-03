@@ -45,14 +45,14 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const visibleColumns = columns.filter((column) => !(density === 'compact' && column.hideInCompact))
   const rowPad = density === 'compact' ? 'py-1.5' : 'py-2.5'
-  const headerCell = headerCellClassName ?? 'whitespace-nowrap px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]'
-  const bodyCell = cellClassName ?? `px-4 ${rowPad} text-[13px] text-[#3b4763] align-middle`
+  const headerCell = headerCellClassName ?? 'whitespace-nowrap px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle'
+  const bodyCell = cellClassName ?? `px-4 ${rowPad} text-[13px] text-text-secondary align-middle`
   const isInteractive = Boolean(onRowClick)
 
   return (
     <div className="custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label={ariaLabel}>
       <Table className={minWidthClassName}>
-        <TableHeader className="sticky top-0 z-10 border-b border-[#dfe9f3] bg-[#f6f9fc]">
+        <TableHeader className="sticky top-0 z-10 border-b border-border bg-surface-subtle">
           <TableRow>
             {visibleColumns.map((column) => (
               <TableCell key={column.id} isHeader className={`${headerCell} ${column.align === 'right' ? 'text-right' : ''}`}>
@@ -61,7 +61,7 @@ export function DataTable<T>({
             ))}
           </TableRow>
         </TableHeader>
-        <TableBody className="divide-y divide-[#edf2f7]">
+        <TableBody className="divide-y divide-border">
           {rows.length > 0 ? (
             rows.map((row, index) => {
               const key = rowKey(row, index)
@@ -70,7 +70,7 @@ export function DataTable<T>({
               return (
                 <TableRow
                   key={key}
-                  className={`outline-none transition-colors ${isInteractive ? 'cursor-pointer focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1596dd]' : ''} ${isSelected ? 'bg-[#e8f4fd] shadow-[inset_3px_0_0_#0d91d7]' : 'bg-white hover:bg-[#f3f8fe]'}`}
+                  className={`outline-none transition-colors ${isInteractive ? 'cursor-pointer focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus' : ''} ${isSelected ? 'bg-accent-soft shadow-[inset_3px_0_0_var(--color-accent)]' : 'bg-surface hover:bg-accent-soft'}`}
                   tabIndex={isInteractive ? 0 : undefined}
                   aria-label={rowAriaLabel?.(row)}
                   aria-selected={isInteractive ? isSelected : undefined}
@@ -95,7 +95,7 @@ export function DataTable<T>({
             })
           ) : (
             <TableRow>
-              <TableCell colSpan={visibleColumns.length} className="px-4 py-8 text-center text-sm text-[#71819a]">
+              <TableCell colSpan={visibleColumns.length} className="px-4 py-8 text-center text-sm text-text-muted">
                 {emptyContent ?? 'No records found'}
               </TableCell>
             </TableRow>

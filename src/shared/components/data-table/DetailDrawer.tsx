@@ -76,7 +76,7 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
   return (
     <>
       <div
-        className={`fixed inset-0 z-40 bg-[#0f1932]/30 transition-opacity duration-200 ${open ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+        className={`fixed inset-0 z-40 bg-black/45 transition-opacity duration-200 ${open ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -85,7 +85,7 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
         tabIndex={-1}
         inert={!open}
         aria-hidden={!open}
-        className={`fixed inset-y-0 right-0 z-50 flex flex-col border-l border-[#d7deea] bg-white shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)] transition-transform duration-200 ease-out ${resizable ? '' : 'w-[min(420px,92vw)]'} ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed inset-y-0 right-0 z-50 flex flex-col border-l border-border bg-surface shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)] transition-transform duration-200 ease-out ${resizable ? '' : 'w-[min(420px,92vw)]'} ${open ? 'translate-x-0' : 'translate-x-full'}`}
         style={resizable ? { width: `${String(width)}px`, maxWidth: '92vw' } : undefined}
         role="dialog"
         aria-modal="true"
@@ -94,14 +94,14 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
         {resizable ? (
           <div
             {...handleProps}
-            className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize bg-transparent transition hover:bg-[#0d91d7]/30 focus:bg-[#0d91d7]/40 focus:outline-none"
+            className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize bg-transparent transition hover:bg-accent/30 focus:bg-accent/40 focus:outline-none"
           />
         ) : null}
-        <div className="flex items-start justify-between gap-4 border-b border-[#dfe9f3] p-5">
+        <div className="flex items-start justify-between gap-4 border-b border-border p-5">
           <div className="min-w-0">
-            {eyebrow ? <p className="text-xs font-medium text-gray-400">{eyebrow}</p> : null}
-            <h2 className="mt-1 truncate text-base font-semibold text-gray-900">{title}</h2>
-            {subtitle ? <div className="mt-1 truncate text-xs text-gray-500">{subtitle}</div> : null}
+            {eyebrow ? <p className="text-xs font-medium text-text-subtle">{eyebrow}</p> : null}
+            <h2 className="mt-1 truncate text-base font-semibold text-text-primary">{title}</h2>
+            {subtitle ? <div className="mt-1 truncate text-xs text-text-muted">{subtitle}</div> : null}
             {headerExtra ? <div className="mt-3 flex flex-wrap gap-2">{headerExtra}</div> : null}
           </div>
           <button
@@ -109,13 +109,13 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
             type="button"
             onClick={onClose}
             aria-label={closeLabel}
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#d7deea] text-gray-500 transition hover:border-[#0d91d7] hover:text-[#118ccc]"
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border text-text-muted transition hover:border-accent hover:text-accent"
           >
             ✕
           </button>
         </div>
         <div className={cn('custom-scrollbar flex-1', bodyClassName ?? 'overflow-y-auto')}>{children}</div>
-        {footer ? <div className="flex gap-3 border-t border-[#dfe9f3] p-4">{footer}</div> : null}
+        {footer ? <div className="flex gap-3 border-t border-border p-4">{footer}</div> : null}
       </aside>
     </>
   )
@@ -130,11 +130,11 @@ interface DetailRowProps {
 // A label/value row for a definition list inside the drawer body.
 export function DetailRow({ label, value, secondary }: DetailRowProps) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-[#edf2f7] py-3 last:border-b-0">
-      <dt className="shrink-0 text-xs text-gray-500">{label}</dt>
-      <dd className="min-w-0 text-right text-sm font-medium text-gray-800">
+    <div className="flex items-start justify-between gap-4 border-b border-border py-3 last:border-b-0">
+      <dt className="shrink-0 text-xs text-text-muted">{label}</dt>
+      <dd className="min-w-0 text-right text-sm font-medium text-text-primary">
         <div className="wrap-break-word">{value}</div>
-        {secondary ? <div className="mt-0.5 wrap-break-word text-xs font-normal text-gray-500">{secondary}</div> : null}
+        {secondary ? <div className="mt-0.5 wrap-break-word text-xs font-normal text-text-muted">{secondary}</div> : null}
       </dd>
     </div>
   )
@@ -152,8 +152,8 @@ export function DetailStat({ label, value, icon }: DetailStatProps) {
     <div className="flex items-center gap-2 p-4">
       {icon ? <span className="shrink-0 text-brand-500">{icon}</span> : null}
       <div className="flex items-baseline gap-1">
-        <p className="text-lg font-semibold text-gray-900">{value}</p>
-        <p className="text-xs text-gray-500">{label}</p>
+        <p className="text-lg font-semibold text-text-primary">{value}</p>
+        <p className="text-xs text-text-muted">{label}</p>
       </div>
     </div>
   )

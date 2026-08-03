@@ -170,21 +170,21 @@ export function AppSidebar() {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 flex w-[256px] flex-col border-r border-[#e3e9f2] bg-white px-3 text-[#17233d] shadow-2xl transition-transform duration-300 ease-out lg:static lg:h-full lg:w-max lg:min-w-[272px] lg:max-w-[min(352px,32vw)] lg:shrink-0 lg:translate-x-0 lg:rounded-[22px] lg:border lg:border-[#e3e9f2] lg:shadow-[0_14px_35px_-28px_rgba(37,72,112,0.4)] ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      className={`fixed inset-y-0 left-0 z-50 flex w-[256px] flex-col border-r border-border bg-surface px-3 text-text-primary shadow-2xl transition-transform duration-300 ease-out lg:static lg:h-full lg:w-max lg:min-w-[272px] lg:max-w-[min(352px,32vw)] lg:shrink-0 lg:translate-x-0 lg:rounded-[22px] lg:border lg:border-border lg:shadow-[0_14px_35px_-28px_rgba(37,72,112,0.4)] ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
     >
-      <div className="flex h-[72px] shrink-0 items-center border-b border-[#edf1f6] px-2">
+      <div className="flex h-[72px] shrink-0 items-center border-b border-border px-2">
         <NavLink to={routes.resources} className="flex min-w-0 items-center gap-2.5" aria-label="Aricoma home">
           <img src="/aricoma-logo.png" alt="Aricoma" className="size-9 shrink-0 rounded-lg" />
           <span>
-            <span className="block truncate text-[13px] font-semibold text-[#17233d]">{t('header.appName')}</span>
-            <span className="block truncate text-[10px] text-[#7c8aa0]">{t('header.tagline')}</span>
+            <span className="block truncate text-[13px] font-semibold text-text-primary">{t('header.appName')}</span>
+            <span className="block truncate text-[10px] text-text-muted">{t('header.tagline')}</span>
           </span>
         </NavLink>
       </div>
 
       <div className="custom-scrollbar flex flex-1 flex-col overflow-y-auto py-5">
         <nav className="mb-6" aria-label="Main navigation">
-          <h2 className="mb-2 px-2.5 text-[9px] font-medium uppercase tracking-[0.12em] text-[#97a3b6]">
+          <h2 className="mb-2 px-2.5 text-[9px] font-medium uppercase tracking-[0.12em] text-text-subtle">
             {t('nav.menu')}
           </h2>
 
@@ -195,23 +195,23 @@ export function AppSidebar() {
                   <>
                     <button
                       type="button"
-                      className={`group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition ${isMenuOpen(item.name) ? 'bg-[#eef4ff] text-[#3566d6]' : 'text-[#44536c] hover:bg-[#f5f7fa] hover:text-[#263750]'}`}
+                      className={`group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition ${isMenuOpen(item.name) ? 'bg-accent-soft text-accent' : 'text-text-secondary hover:bg-surface-muted hover:text-text-secondary'}`}
                       onClick={() => {
                         setOpenMenu((current) => (current === item.name ? '' : item.name))
                       }}
                     >
-                      <span className={`shrink-0 ${isMenuOpen(item.name) ? 'text-[#3566d6]' : 'text-[#7b89a0]'}`}>{item.icon}</span>
+                      <span className={`shrink-0 ${isMenuOpen(item.name) ? 'text-accent' : 'text-text-muted'}`}>{item.icon}</span>
                       <span className="min-w-0 flex-1 whitespace-normal leading-4 [overflow-wrap:anywhere]">{t(getTranslationKey(item.name))}</span>
-                      <ChevronDownIcon className={`size-4 shrink-0 transition-transform ${isMenuOpen(item.name) ? 'rotate-180 text-[#3566d6]' : 'text-[#8996aa]'}`} />
+                      <ChevronDownIcon className={`size-4 shrink-0 transition-transform ${isMenuOpen(item.name) ? 'rotate-180 text-accent' : 'text-text-muted'}`} />
                     </button>
                     <div className={`overflow-hidden transition-all duration-300 ${isMenuOpen(item.name) ? 'max-h-[34rem]' : 'max-h-0'}`}>
-                        <ul className="ml-[18px] mt-1 space-y-0.5 border-l border-[#e0e6ef] pl-3">
+                        <ul className="ml-[18px] mt-1 space-y-0.5 border-l border-border pl-3">
                           {item.subItems.map((subItem) => (
                             <li key={subItem.path}>
                               <NavLink
                                 to={subItem.path}
                                 onClick={closeMobileSidebar}
-                                className={() => `block rounded-lg px-2.5 py-2 text-xs font-medium leading-4 whitespace-normal [overflow-wrap:anywhere] transition ${isSubItemActive(subItem.path) ? 'bg-[#eef2fa] text-[#3566d6]' : 'text-[#5e6e86] hover:bg-[#f5f7fa] hover:text-[#263750]'}`}
+                                className={() => `block rounded-lg px-2.5 py-2 text-xs font-medium leading-4 whitespace-normal [overflow-wrap:anywhere] transition ${isSubItemActive(subItem.path) ? 'bg-accent-soft text-accent' : 'text-text-muted hover:bg-surface-muted hover:text-text-secondary'}`}
                               >
                                 {t(getTranslationKey(subItem.name))}
                               </NavLink>
@@ -224,11 +224,11 @@ export function AppSidebar() {
                   <NavLink
                     to={item.path}
                     onClick={closeMobileSidebar}
-                    className={({ isActive }) => `group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition ${isActive ? 'bg-[#eef4ff] text-[#3566d6]' : 'text-[#44536c] hover:bg-[#f5f7fa] hover:text-[#263750]'}`}
+                    className={({ isActive }) => `group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition ${isActive ? 'bg-accent-soft text-accent' : 'text-text-secondary hover:bg-surface-muted hover:text-text-secondary'}`}
                   >
                     {({ isActive }) => (
                       <>
-                        <span className={`shrink-0 ${isActive ? 'text-[#3566d6]' : 'text-[#7b89a0]'}`}>{item.icon}</span>
+                        <span className={`shrink-0 ${isActive ? 'text-accent' : 'text-text-muted'}`}>{item.icon}</span>
                         <span className="min-w-0 flex-1 whitespace-normal leading-4 [overflow-wrap:anywhere]">{t(getTranslationKey(item.name))}</span>
                       </>
                     )}

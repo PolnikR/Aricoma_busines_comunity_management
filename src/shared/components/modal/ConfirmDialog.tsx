@@ -29,7 +29,7 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const confirmClassName = tone === 'danger'
     ? 'bg-red-600 hover:enabled:bg-red-700'
-    : 'bg-[#0d91d7] hover:enabled:bg-[#0a7bc4]'
+    : 'bg-accent hover:enabled:bg-accent-hover'
 
   return (
     <Modal
@@ -42,7 +42,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="flex-1 rounded-lg border border-[#d7deea] px-4 py-2 text-sm font-semibold text-[#17233d] transition hover:bg-[#f1f5fa] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-text-primary transition hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50"
           >
             {cancelLabel}
           </button>
@@ -57,7 +57,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      <div className="px-6 py-4 text-sm text-[#44536c]">{message}</div>
+      <div className="px-6 py-4 text-sm text-text-secondary">{message}</div>
     </Modal>
   )
 }

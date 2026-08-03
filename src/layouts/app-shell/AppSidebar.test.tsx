@@ -60,6 +60,6 @@ describe('AppSidebar', () => {
       { name: 'Recovery Applications' },
       { timeout: 5000 },
     )
-    expect(applications).toHaveClass('bg-[#eef2fa]', 'text-[#3566d6]')
+    expect(applications).toHaveClass('bg-accent-soft', 'text-accent')
   })
 })

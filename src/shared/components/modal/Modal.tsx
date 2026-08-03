@@ -46,7 +46,7 @@ export function Modal({
       />
       <div
         className={cn(
-          'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white shadow-lg',
+          'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-surface shadow-lg',
           size === 'lg' ? 'max-w-2xl' : 'max-w-md',
           className,
         )}
@@ -55,11 +55,11 @@ export function Modal({
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : ariaLabel}
       >
-        <div className="border-b border-[#e3edf6] px-6 py-4">
-          <h2 className="text-base font-semibold text-[#17233d]">{title}</h2>
+        <div className="border-b border-border px-6 py-4">
+          <h2 className="text-base font-semibold text-text-primary">{title}</h2>
         </div>
         {children}
-        {footer ? <div className="flex gap-3 border-t border-[#e3edf6] px-6 py-4">{footer}</div> : null}
+        {footer ? <div className="flex gap-3 border-t border-border px-6 py-4">{footer}</div> : null}
       </div>
     </>
   )

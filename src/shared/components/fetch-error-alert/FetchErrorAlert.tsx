@@ -24,7 +24,7 @@ export function FetchErrorAlert({
   return (
     <div
       className={cn(
-        'rounded-xl border border-error-200 bg-error-25 text-error-800 shadow-theme-xs',
+        'rounded-xl border border-error-200 bg-error-25 text-error-800 shadow-theme-xs dark:border-error-800 dark:bg-error-500/10 dark:text-error-200',
         isFull ? 'px-5 py-7 sm:px-8 sm:py-9' : 'px-4 py-3',
         className,
       )}
@@ -40,7 +40,7 @@ export function FetchErrorAlert({
         <div className="flex min-w-0 items-start gap-3">
           <span
             className={cn(
-              'flex shrink-0 items-center justify-center rounded-full bg-error-100 font-bold text-error-700',
+              'flex shrink-0 items-center justify-center rounded-full bg-error-100 font-bold text-error-700 dark:bg-error-500/15 dark:text-error-300',
               isFull ? 'size-11 text-lg' : 'mt-0.5 size-8 text-sm',
             )}
             aria-hidden="true"
@@ -51,7 +51,7 @@ export function FetchErrorAlert({
           <div className="min-w-0">
             <p className={cn('font-semibold', isFull ? 'text-base' : 'text-sm')}>{title}</p>
             {description ? (
-              <p className={cn('mt-1 break-words text-error-700', isFull ? 'text-sm leading-6' : 'text-xs leading-5')}>
+              <p className={cn('mt-1 break-words text-error-700 dark:text-error-300', isFull ? 'text-sm leading-6' : 'text-xs leading-5')}>
                 {description}
               </p>
             ) : null}
@@ -60,7 +60,7 @@ export function FetchErrorAlert({
 
         <button
           type="button"
-          className="inline-flex h-9 w-full shrink-0 items-center justify-center gap-2 rounded-lg border border-error-300 bg-white px-3 text-sm font-semibold text-error-700 shadow-theme-xs transition hover:border-error-400 hover:bg-error-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-error-200 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          className="inline-flex h-9 w-full shrink-0 items-center justify-center gap-2 rounded-lg border border-error-300 bg-surface px-3 text-sm font-semibold text-error-700 shadow-theme-xs transition hover:border-error-400 hover:bg-error-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-error-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-error-800 dark:text-error-300 dark:hover:bg-error-500/10 sm:w-auto"
           disabled={isRetrying}
           onClick={onRetry}
         >

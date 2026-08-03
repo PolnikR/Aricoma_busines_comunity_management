@@ -48,7 +48,7 @@ export function Tabs<T extends string>({
 
   return (
     <div
-      className={cn('flex gap-1 overflow-x-auto border-b border-[#e3edf6] px-3', className)}
+      className={cn('flex gap-1 overflow-x-auto border-b border-border px-3', className)}
       role="tablist"
       aria-label={ariaLabel}
     >
@@ -66,8 +66,8 @@ export function Tabs<T extends string>({
             onKeyDown={(event) => { handleKeyDown(event, index) }}
             className={`whitespace-nowrap border-b-2 px-4 py-3.5 text-sm font-medium transition ${
               isSelected
-                ? 'border-[#0d91d7] text-[#0d91d7]'
-                : 'border-transparent text-[#71819a] hover:text-[#17233d]'
+                ? 'border-accent text-accent'
+                : 'border-transparent text-text-muted hover:text-text-primary'
             }`}
           >
             {item.label}

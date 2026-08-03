@@ -56,9 +56,9 @@ export function ResourceSidebar({
   const handleRetry = () => { onRetry?.() }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[#fbfdff]">
-      <div className="shrink-0 border-b border-[#edf2f7] p-3">
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#7b8ca4]">{title}</h3>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-surface-subtle">
+      <div className="shrink-0 border-b border-border p-3">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted">{title}</h3>
         <Input
           type="search"
           aria-label={searchPlaceholder}
@@ -94,7 +94,7 @@ export function ResourceSidebar({
               />
             ) : null}
             {filteredItems.length === 0 ? (
-              <div className="py-4 text-center text-xs text-[#91a4bc]">
+              <div className="py-4 text-center text-xs text-text-subtle">
                 {search ? noMatchesLabel : noItemsLabel}
               </div>
             ) : (
@@ -107,11 +107,11 @@ export function ResourceSidebar({
                   onDragStart={event => {
                     event.dataTransfer.setData(dragDataKey, item)
                   }}
-                  className="mb-1 w-full cursor-grab rounded-md border border-[#d9e6f1] bg-[#f0f5fa] p-2 text-left text-xs text-[#18253d] transition-all hover:border-[#b9d5e8] hover:bg-[#e3edf6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1596dd]"
+                  className="mb-1 w-full cursor-grab rounded-md border border-border bg-surface-muted p-2 text-left text-xs text-text-primary transition-all hover:border-border-strong hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 >
                   <span className="block font-medium">{itemLabels[item] ?? item}</span>
                   {itemLabels[item] && itemLabels[item] !== item ? (
-                    <span className="mt-0.5 block font-mono text-[10px] text-[#71819a]">{item}</span>
+                    <span className="mt-0.5 block font-mono text-[10px] text-text-muted">{item}</span>
                   ) : null}
                 </div>
                 ))}

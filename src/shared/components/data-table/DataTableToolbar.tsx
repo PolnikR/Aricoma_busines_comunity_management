@@ -68,7 +68,7 @@ export function DataTableToolbar({
   }
 
   return (
-    <div className="shrink-0 border-b border-[#e3edf6]">
+    <div className="shrink-0 border-b border-border">
       <div className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
         <Input
           aria-label={searchLabel}
@@ -81,12 +81,12 @@ export function DataTableToolbar({
         />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {segments && onSegmentChange ? (
-            <div className="flex h-10 overflow-x-auto rounded-xl bg-[#eef4f9] p-0.5" aria-label="Quick filter">
+            <div className="flex h-10 overflow-x-auto rounded-xl bg-surface-muted p-0.5" aria-label="Quick filter">
               {segments.map((segment) => (
                 <button
                   key={segment.value || 'all'}
                   type="button"
-                  className={`shrink-0 rounded-[10px] px-3 text-xs font-medium transition sm:text-sm ${segmentValue === segment.value ? 'bg-white text-[#087fca] shadow-sm' : 'text-[#71819a] hover:text-[#33425d]'}`}
+                  className={`shrink-0 rounded-[10px] px-3 text-xs font-medium transition sm:text-sm ${segmentValue === segment.value ? 'bg-surface text-accent shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
                   aria-pressed={segmentValue === segment.value}
                   onClick={() => { onSegmentChange(segment.value) }}
                 >
@@ -102,7 +102,7 @@ export function DataTableToolbar({
 
           {filterPanel ? (
             <Button size="sm" variant="outline" startIcon={<FilterIcon className="size-4" />} onClick={openFilters} aria-expanded={isModalOpen} aria-haspopup="dialog">
-              {filterButtonLabel} {activeFilterCount > 0 && <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#0d91d7] text-xs font-semibold text-white">{activeFilterCount}</span>}
+              {filterButtonLabel} {activeFilterCount > 0 && <span className="ml-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-semibold text-white">{activeFilterCount}</span>}
             </Button>
           ) : null}
         </div>

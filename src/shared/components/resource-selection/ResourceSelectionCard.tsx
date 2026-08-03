@@ -58,9 +58,9 @@ export function ResourceSelectionCard({
         if (resource) onResourceDrop(resource)
       } : undefined}
       className={cn(
-        'flex flex-col gap-2 bg-[#f8fbfe] p-3 transition',
+        'flex flex-col gap-2 bg-surface-subtle p-3 transition',
         isSelectionMode ? 'h-52 min-h-52' : 'h-44 min-h-44',
-        isDragOver ? 'bg-[#e3edf6] ring-1 ring-inset ring-[#1596dd]' : undefined,
+        isDragOver ? 'bg-surface-muted ring-1 ring-inset ring-focus' : undefined,
         className,
       )}
     >
@@ -68,18 +68,18 @@ export function ResourceSelectionCard({
         <div className="flex shrink-0 items-start justify-between gap-2">
           {title ? (
             titleVariant === 'inline' ? (
-              <p className="min-w-0 truncate whitespace-nowrap text-xs font-normal text-[#50617a]">
+              <p className="min-w-0 truncate whitespace-nowrap text-xs font-normal text-text-secondary">
                 {title}
               </p>
             ) : (
-              <h3 className="min-w-0 text-sm font-semibold text-[#18253d]">{title}</h3>
+              <h3 className="min-w-0 text-sm font-semibold text-text-primary">{title}</h3>
             )
           ) : null}
           {onClear && clearLabel ? (
             <button
               type="button"
               onClick={onClear}
-              className="ml-auto flex size-6 shrink-0 items-center justify-center rounded-md text-[#7f8da2] transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1596dd]/30"
+              className="ml-auto flex size-6 shrink-0 items-center justify-center rounded-md text-text-muted transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/30"
               aria-label={clearLabel}
               title={clearLabel}
             >
@@ -88,9 +88,9 @@ export function ResourceSelectionCard({
           ) : null}
         </div>
       ) : null}
-      {description ? <p className="shrink-0 text-xs text-[#71819a]">{description}</p> : null}
+      {description ? <p className="shrink-0 text-xs text-text-muted">{description}</p> : null}
       {items.length === 0 ? (
-        <div className="flex min-h-0 flex-1 items-center justify-center text-center text-xs text-[#91a4bc]">
+        <div className="flex min-h-0 flex-1 items-center justify-center text-center text-xs text-text-subtle">
           {emptyText}
         </div>
       ) : (
@@ -108,10 +108,10 @@ export function ResourceSelectionCard({
                 <label
                   key={item}
                   className={cn(
-                    'flex cursor-pointer items-center gap-2 rounded-md border p-2 text-xs transition hover:border-[#b9d5e8] focus-within:border-[#63bdf2] focus-within:ring-2 focus-within:ring-[#1596dd]/15',
+                    'flex cursor-pointer items-center gap-2 rounded-md border p-2 text-xs transition hover:border-border-strong focus-within:border-accent focus-within:ring-2 focus-within:ring-focus/15',
                     isSelected
-                      ? 'border-[#d9e6f1] bg-white text-[#18253d]'
-                      : 'border-[#e1e8ef] bg-[#fbfcfd] text-[#50617a]',
+                      ? 'border-border bg-surface text-text-primary'
+                      : 'border-border bg-surface-subtle text-text-secondary',
                   )}
                 >
                   <input
@@ -120,7 +120,7 @@ export function ResourceSelectionCard({
                     onChange={event => {
                       onResourceSelectionChange(item, event.currentTarget.checked)
                     }}
-                    className="size-4 shrink-0 cursor-pointer accent-[#1596dd]"
+                    className="size-4 shrink-0 cursor-pointer accent-accent"
                   />
                   <span className="min-w-0 truncate">{item}</span>
                 </label>
@@ -130,14 +130,14 @@ export function ResourceSelectionCard({
             return (
               <div
                 key={item}
-                className="group flex items-center justify-between rounded-md border border-[#d9e6f1] bg-white p-2 text-xs text-[#18253d] hover:border-[#b9d5e8]"
+                className="group flex items-center justify-between rounded-md border border-border bg-surface p-2 text-xs text-text-primary hover:border-border-strong"
               >
                 <span className="min-w-0 truncate">{item}</span>
                 {onResourceRemove ? (
                   <button
                     type="button"
                     onClick={() => { onResourceRemove(item) }}
-                    className="ml-2 shrink-0 text-[#91a4bc] opacity-0 transition-opacity hover:text-[#d4353d] group-hover:opacity-100 focus:opacity-100"
+                    className="ml-2 shrink-0 text-text-subtle opacity-0 transition-opacity hover:text-error-600 group-hover:opacity-100 focus:opacity-100"
                     aria-label={`${removeLabel}: ${item}`}
                     title={removeLabel}
                   >
@@ -151,7 +151,7 @@ export function ResourceSelectionCard({
       )}
       {selectionSummary ? (
         <p
-          className="-mx-3 -mb-3 shrink-0 border-t border-[#edf2f7] bg-[#fbfdff] px-3 py-2 text-xs text-[#71819a]"
+          className="-mx-3 -mb-3 shrink-0 border-t border-border bg-surface-subtle px-3 py-2 text-xs text-text-muted"
           aria-live="polite"
         >
           {selectionSummary}

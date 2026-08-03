@@ -13,7 +13,7 @@ interface DataTableSkeletonProps {
 const widths = ['w-24', 'w-16', 'w-20', 'w-28', 'w-14']
 
 function SkeletonBlock({ className }: { className: string }) {
-  return <span className={cn('block animate-pulse rounded-md bg-[#e8eff6]', className)} />
+  return <span className={cn('block animate-pulse rounded-md bg-surface-muted', className)} />
 }
 
 export function DataTableSkeleton({
@@ -29,13 +29,13 @@ export function DataTableSkeleton({
 
   return (
     <section
-      className={cn('flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#dbe7f2] bg-white shadow-sm', className)}
+      className={cn('flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-sm', className)}
       role="status"
       aria-busy="true"
       aria-label={ariaLabel}
     >
       {showToolbar ? (
-        <div className="shrink-0 border-b border-[#e3edf6]" aria-hidden="true">
+        <div className="shrink-0 border-b border-border" aria-hidden="true">
           <div className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
             <SkeletonBlock className="h-10 w-full rounded-xl lg:w-72" />
             <div className="flex items-center gap-3">
@@ -51,7 +51,7 @@ export function DataTableSkeleton({
         aria-hidden="true"
       >
         <Table className="min-w-190">
-          <TableHeader className="border-b border-[#dfe9f3] bg-[#f6f9fc]">
+          <TableHeader className="border-b border-border bg-surface-subtle">
             <TableRow>
               {columns.map((_, columnIndex) => (
                 <TableCell
@@ -64,9 +64,9 @@ export function DataTableSkeleton({
               ))}
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-[#edf2f7]">
+          <TableBody className="divide-y divide-border">
             {rows.map((_, rowIndex) => (
-              <TableRow key={rowIndex} className="bg-white">
+              <TableRow key={rowIndex} className="bg-surface">
                 {columns.map((__, columnIndex) => (
                   <TableCell key={columnIndex} className="px-4 py-3 align-middle">
                     <div className="space-y-2">
@@ -85,7 +85,7 @@ export function DataTableSkeleton({
 
       {showPagination ? (
         <div
-          className="flex shrink-0 flex-col gap-4 border-t border-[#e3edf6] bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+          className="flex shrink-0 flex-col gap-4 border-t border-border bg-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
           aria-hidden="true"
         >
           <div className="flex items-center gap-3">

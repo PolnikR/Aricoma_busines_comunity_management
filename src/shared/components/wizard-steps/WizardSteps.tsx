@@ -40,18 +40,18 @@ export function WizardSteps({
               aria-current={active ? 'step' : undefined}
               disabled={disabled}
               onClick={() => { onStepChange?.(number) }}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1596dd] ${
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
                 active
-                  ? 'cursor-pointer bg-[#eef8fe] font-semibold text-[#087fca]'
+                  ? 'cursor-pointer bg-accent-soft font-semibold text-accent'
                   : disabled
-                    ? 'cursor-not-allowed text-[#a5b0c0]'
-                    : 'cursor-pointer text-[#66758f] hover:bg-[#f0f5fa] hover:text-[#087fca]'
+                    ? 'cursor-not-allowed text-text-subtle'
+                    : 'cursor-pointer text-text-muted hover:bg-surface-muted hover:text-accent'
               }`}
             >
               <span
                 aria-hidden="true"
                 className={`flex size-6 items-center justify-center rounded-full text-xs font-semibold ${
-                  complete || active ? 'bg-[#0d91d7] text-white' : 'bg-[#edf2f7] text-[#71819a]'
+                  complete || active ? 'bg-accent text-white' : 'bg-surface-muted text-text-muted'
                 }`}
               >
                 {complete ? '✓' : number}

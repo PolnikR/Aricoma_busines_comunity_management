@@ -29,8 +29,8 @@ export function DataTablePagination({
   const handlePageSize = (event: ChangeEvent<HTMLSelectElement>) => { onPageSizeChange(Number(event.target.value)) }
 
   return (
-    <div className="flex shrink-0 flex-col gap-4 border-t border-[#e3edf6] bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-wrap items-center gap-3 text-sm text-[#71819a]">
+    <div className="flex shrink-0 flex-col gap-4 border-t border-border bg-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center gap-3 text-sm text-text-muted">
         <span>{t('pagination.showing').replace('{start}', String(start)).replace('{end}', String(end)).replace('{total}', String(total))}</span>
         <label className="flex items-center gap-2">
           <span className="text-xs">{t('pagination.rows')}</span>

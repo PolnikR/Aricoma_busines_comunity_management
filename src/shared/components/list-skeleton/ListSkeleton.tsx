@@ -24,7 +24,7 @@ export function ListSkeleton({
         {rows.map((_, index) => (
           <div
             key={index}
-            className="h-8 animate-pulse rounded-md border border-[#e3edf6] bg-[#e8eff6]"
+            className="h-8 animate-pulse rounded-md border border-border bg-surface-muted"
           />
         ))}
       </div>
