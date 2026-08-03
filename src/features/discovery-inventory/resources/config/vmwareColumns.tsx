@@ -18,7 +18,7 @@ function connectionState(value: string, t: Translate): { tone: 'on' | 'warn'; la
 }
 
 export function createVmwareColumns(t: Translate, showDetail: boolean): ColumnDef<VirtualMachine>[] {
-  const sub = 'block max-w-45 truncate text-[11px] text-[#93a0b5]'
+  const sub = 'block max-w-45 truncate text-[11px] text-text-subtle'
 
   return [
     {
@@ -26,9 +26,9 @@ export function createVmwareColumns(t: Translate, showDetail: boolean): ColumnDe
       header: t('tables.vm.name'),
       cell: (vm) => (
         <>
-          <span className="block max-w-65 truncate text-[13px] font-semibold text-[#17233d]" title={vm.name}>{vm.name}</span>
+          <span className="block max-w-65 truncate text-[13px] font-semibold text-text-primary" title={vm.name}>{vm.name}</span>
           {showDetail ? (
-            <span className="mt-0.5 block max-w-65 truncate font-mono text-[11px] text-[#93a0b5]" title={`${vm.hostname} / ${vm.ipAddress}`}>
+            <span className="mt-0.5 block max-w-65 truncate font-mono text-[11px] text-text-subtle" title={`${vm.hostname} / ${vm.ipAddress}`}>
               {vm.ipAddress || vm.hostname || '-'}
             </span>
           ) : null}
@@ -72,11 +72,11 @@ export function createVmwareColumns(t: Translate, showDetail: boolean): ColumnDe
       cell: (vm) => vm.tags.length > 0 ? (
         <span className="flex flex-wrap gap-1">
           {vm.tags.slice(0, 3).map((tag) => (
-            <span key={tag} className="rounded bg-[#e8f5ff] px-1.5 py-0.5 font-mono text-[10.5px] font-medium text-[#118ccc]">{tag}</span>
+            <span key={tag} className="rounded bg-accent-soft px-1.5 py-0.5 font-mono text-[10.5px] font-medium text-accent">{tag}</span>
           ))}
-          {vm.tags.length > 3 ? <span className="text-[11px] text-[#93a0b5]">+{vm.tags.length - 3}</span> : null}
+          {vm.tags.length > 3 ? <span className="text-[11px] text-text-subtle">+{vm.tags.length - 3}</span> : null}
         </span>
-      ) : <span className="text-[#93a0b5]">-</span>,
+      ) : <span className="text-text-subtle">-</span>,
     },
     {
       id: 'compute',
@@ -102,7 +102,7 @@ export function createVmwareColumns(t: Translate, showDetail: boolean): ColumnDe
       id: 'snapshots',
       header: t('tables.vm.snapshots'),
       align: 'right',
-      cell: (vm) => <span className={vm.snapshotCount === 0 ? 'text-[#93a0b5]' : undefined}>{vm.snapshotCount}</span>,
+      cell: (vm) => <span className={vm.snapshotCount === 0 ? 'text-text-subtle' : undefined}>{vm.snapshotCount}</span>,
     },
   ]
 }

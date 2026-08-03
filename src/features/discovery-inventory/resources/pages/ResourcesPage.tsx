@@ -28,7 +28,7 @@ export function ResourcesPage() {
       value={resourceTab}
       onChange={setResourceTab}
       ariaLabel={t('pages.virtualMachines.tabs.label')}
-      className="w-full shrink-0 border-b-0 bg-white px-0 sm:w-auto"
+      className="w-full shrink-0 border-b-0 bg-surface px-0 sm:w-auto"
     />
   )
   const sourcePageProps: SourceResourcesPageProps = {

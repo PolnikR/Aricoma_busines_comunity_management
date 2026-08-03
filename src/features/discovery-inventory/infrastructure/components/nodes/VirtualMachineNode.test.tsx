@@ -147,9 +147,8 @@ describe('VirtualMachineNode with Tooltip', () => {
     expect(coresText).toBeInTheDocument()
 
     // The node label also shows the name, so scope assertions to the tooltip.
-    const tooltip = document.querySelector('.bg-slate-900')
-    expect(tooltip).not.toBeNull()
-    const inTooltip = within(tooltip as HTMLElement)
+    const tooltip = screen.getByRole('tooltip')
+    const inTooltip = within(tooltip)
     expect(inTooltip.getByText('web-server-01')).toBeInTheDocument()
     expect(inTooltip.getByText('poweredOn')).toBeInTheDocument()
     expect(inTooltip.getByText('4 cores')).toBeInTheDocument()

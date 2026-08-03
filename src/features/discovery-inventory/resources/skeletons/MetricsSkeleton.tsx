@@ -13,9 +13,9 @@ export function MetricsSkeleton() {
       {metricSkeletons.map((metric, index) => (
         <div
           key={index}
-          className="flex min-h-20 items-center gap-3 rounded-[18px] border border-[#dfeaf5] bg-white p-3.5"
+          className="flex min-h-20 items-center gap-3 rounded-[18px] border border-border bg-surface p-3.5"
         >
-          <SkeletonBlock className="size-11 shrink-0 rounded-xl bg-[#e3f1fa]" />
+          <SkeletonBlock className="size-11 shrink-0 rounded-xl bg-accent-soft" />
           <div className="min-w-0 flex-1 space-y-2">
             <SkeletonBlock className={`h-5 ${metric.valueWidth}`} />
             <SkeletonBlock className={`h-3.5 ${metric.labelWidth}`} />

@@ -26,7 +26,7 @@ export function ResourceInventoryPanel({
 }: ResourceInventoryPanelProps) {
   return (
     <section
-      className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#dbe7f2] bg-white shadow-sm lg:min-h-0"
+      className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-sm lg:min-h-0"
       aria-label={ariaLabel}
     >
       {toolbar}

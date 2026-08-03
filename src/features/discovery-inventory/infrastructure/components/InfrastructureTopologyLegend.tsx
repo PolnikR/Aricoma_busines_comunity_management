@@ -17,7 +17,7 @@ export function InfrastructureTopologyLegend({
     { label: t('legend.datastore'), className: 'bg-warning-500' },
   ]
   return (
-    <div className="flex flex-col gap-2 border-t border-[#e3edf6] bg-white px-4 py-2.5 text-[11px] text-[#66758f] sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-2 border-t border-border bg-surface px-4 py-2.5 text-[11px] text-text-muted sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2" aria-label={t('legend.ariaLabel')}>
         {nodeKinds.map((item) => (
           <span key={item.label} className="inline-flex items-center gap-1.5">
@@ -26,11 +26,11 @@ export function InfrastructureTopologyLegend({
           </span>
         ))}
         <span className="inline-flex items-center gap-1.5">
-          <span className="w-5 border-t border-dashed border-[#9aa8bc]" />
+          <span className="w-5 border-t border-dashed border-border-strong" />
           {t('legend.datastoreRelation')}
         </span>
       </div>
-      <span className="shrink-0 font-medium text-[#4e5f78]">
+      <span className="shrink-0 font-medium text-text-secondary">
         {visibleNodes} {t('legend.statisticsNodes')} / {visibleEdges} {t('legend.statisticsRelations')}
       </span>
     </div>

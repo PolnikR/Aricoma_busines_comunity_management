@@ -67,7 +67,8 @@ export function TopologyTooltip({
 
   return createPortal(
     <div
-      className="pointer-events-auto fixed z-50 min-w-[260px] rounded-lg border border-slate-700 bg-slate-900 p-3 text-xs shadow-lg"
+      role="tooltip"
+      className="pointer-events-auto fixed z-50 min-w-[260px] rounded-lg border border-inverse-control bg-inverse-surface p-3 text-xs text-inverse-text shadow-lg"
       style={{ top: position.top, left: position.left }}
     >
       {children}
@@ -79,8 +80,8 @@ export function TopologyTooltip({
 export function TopologyTooltipField({ label, value }: TopologyTooltipFieldProps) {
   return (
     <div className="text-xs">
-      <span className="text-slate-400">{label}:</span>
-      <span className="ml-2 truncate text-slate-100">{value}</span>
+      <span className="text-inverse-muted">{label}:</span>
+      <span className="ml-2 truncate text-inverse-text">{value}</span>
     </div>
   )
 }

@@ -134,15 +134,13 @@ describe('VMNodeTooltip', () => {
     expect(screen.queryByText('Tags')).not.toBeInTheDocument()
   })
 
-  test('applies correct CSS classes for styling', () => {
+  test('exposes the floating content as a tooltip', () => {
     render(
       <LanguageProvider>
         <VMNodeTooltip {...defaultProps} />
       </LanguageProvider>
     )
     // The tooltip renders in a portal on document.body, not inside container.
-    const wrapper = document.querySelector('.bg-slate-900')
-    expect(wrapper).toBeInTheDocument()
-    expect(wrapper).toHaveClass('fixed', 'z-50', 'rounded-lg', 'shadow-lg', 'pointer-events-auto')
+    expect(screen.getByRole('tooltip')).toBeInTheDocument()
   })
 })

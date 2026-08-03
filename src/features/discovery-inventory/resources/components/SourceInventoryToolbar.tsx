@@ -35,13 +35,13 @@ export function SourceInventoryToolbar(props: SourceInventoryToolbarProps) {
   }
   const panel: ReactNode = props.controls.map((control) => (
     <label key={control.id} className="block" htmlFor={`resource-filter-${control.id}`}>
-      <span className="mb-1.5 block text-xs font-medium text-[#50617a]">{control.label}</span>
+      <span className="mb-1.5 block text-xs font-medium text-text-secondary">{control.label}</span>
       <span className="relative block">
         <select
           id={`resource-filter-${control.id}`}
           value={draft[control.id] ?? control.value}
           onChange={update(control.id)}
-          className="h-10 w-full rounded-xl border border-[#cfdaea] bg-[#fcfdff] px-3 text-sm text-[#273750] shadow-sm outline-none focus:border-[#63bdf2] focus:ring-4 focus:ring-[#1596dd]/10"
+          className="h-10 w-full rounded-xl border border-border-strong bg-surface-subtle px-3 text-sm text-text-secondary shadow-sm outline-none focus:border-accent focus:ring-4 focus:ring-focus/10"
         >
           <option value="">{control.allLabel}</option>
           {control.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}

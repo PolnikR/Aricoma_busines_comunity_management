@@ -30,8 +30,8 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, density, onS
       onRowClick={onSelect}
       minWidthClassName="min-w-260"
       ariaLabel={t('vm.tableLabel')}
-      headerCellClassName="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]"
-      cellClassName={`px-3 ${density === 'compact' ? 'py-1.5' : 'py-2.5'} text-[13px] text-[#3b4763] align-top`}
+      headerCellClassName="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle"
+      cellClassName={`px-3 ${density === 'compact' ? 'py-1.5' : 'py-2.5'} text-[13px] text-text-secondary align-top`}
     />
   )
 }

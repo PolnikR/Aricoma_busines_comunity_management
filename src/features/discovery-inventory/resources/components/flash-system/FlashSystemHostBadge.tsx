@@ -131,7 +131,7 @@ function TooltipBadge({
         type="button"
         aria-label={ariaLabel}
         aria-describedby={open ? tooltipId : undefined}
-        className={`inline-flex h-6 min-w-0 max-w-36 items-center gap-1 rounded-lg border border-[#bfd4e7] bg-white px-2 text-[11px] font-semibold leading-none text-[#334863] shadow-[0_1px_1px_rgba(15,35,65,0.04)] transition hover:border-[#79bce6] hover:bg-[#f5faff] hover:text-[#087fca] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1596dd]/30 ${className}`}
+        className={`inline-flex h-6 min-w-0 max-w-36 items-center gap-1 rounded-lg border border-border-strong bg-surface px-2 text-[11px] font-semibold leading-none text-text-secondary shadow-[0_1px_1px_rgba(15,35,65,0.04)] transition hover:border-accent hover:bg-surface-subtle hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/30 ${className}`}
         onMouseEnter={show}
         onMouseLeave={scheduleClose}
         onFocus={show}
@@ -157,7 +157,7 @@ function TooltipBadge({
           id={tooltipId}
           role="tooltip"
           style={position}
-          className="fixed z-[100] rounded-xl border border-[#cbdceb] bg-white p-3 text-left text-xs font-normal leading-5 text-[#52627c] shadow-[0_14px_36px_rgba(32,56,85,0.2)]"
+          className="fixed z-[100] rounded-xl border border-border-strong bg-surface p-3 text-left text-xs font-normal leading-5 text-text-secondary shadow-[0_14px_36px_rgba(32,56,85,0.2)]"
           onMouseEnter={cancelClose}
           onMouseLeave={scheduleClose}
           onClick={(event) => { event.stopPropagation() }}
@@ -189,33 +189,33 @@ export function FlashSystemHostBadge({ summary, labels }: FlashSystemHostBadgePr
       ariaLabel={`${labels.showDetails} ${summary.name}`}
       tooltip={(
         <>
-          <div className="flex min-w-0 items-start gap-2 border-b border-[#e4edf5] pb-2">
-            <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#eaf5fc] text-[#0b8ed5]">
+          <div className="flex min-w-0 items-start gap-2 border-b border-border pb-2">
+            <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
               <ServerIcon className="size-4" />
             </span>
             <div className="min-w-0">
-              <p className="truncate font-semibold text-[#17233d]" title={summary.name}>{summary.name}</p>
-              <p className="truncate text-[11px] text-[#7b8ba3]">{labels.hostId}: {summary.hostId}</p>
+              <p className="truncate font-semibold text-text-primary" title={summary.name}>{summary.name}</p>
+              <p className="truncate text-[11px] text-text-muted">{labels.hostId}: {summary.hostId}</p>
             </div>
           </div>
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 py-2">
-            <dt className="text-[#7b8ba3]">{labels.cluster}</dt>
-            <dd className="min-w-0 truncate text-right font-medium text-[#33425d]" title={cluster}>{cluster}</dd>
-            <dt className="text-[#7b8ba3]">{labels.mappedVolumes}</dt>
-            <dd className="text-right font-medium tabular-nums text-[#33425d]">{summary.mappedVolumes.length}</dd>
-            <dt className="text-[#7b8ba3]">{labels.mappedCapacity}</dt>
-            <dd className="text-right font-medium tabular-nums text-[#33425d]">{mappedCapacity}</dd>
+            <dt className="text-text-muted">{labels.cluster}</dt>
+            <dd className="min-w-0 truncate text-right font-medium text-text-secondary" title={cluster}>{cluster}</dd>
+            <dt className="text-text-muted">{labels.mappedVolumes}</dt>
+            <dd className="text-right font-medium tabular-nums text-text-secondary">{summary.mappedVolumes.length}</dd>
+            <dt className="text-text-muted">{labels.mappedCapacity}</dt>
+            <dd className="text-right font-medium tabular-nums text-text-secondary">{mappedCapacity}</dd>
           </dl>
-          <div className="border-t border-[#e4edf5] pt-2">
-            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-[#8b9ab0]">{labels.mappedVolumes}</p>
+          <div className="border-t border-border pt-2">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted">{labels.mappedVolumes}</p>
             <ul
               data-testid="mapped-volume-list"
               className={`custom-scrollbar space-y-0.5 ${isLongVolumeList ? 'max-h-[120px] overflow-y-auto pr-1' : ''}`}
             >
               {summary.mappedVolumes.map((volume) => (
-                <li key={volume.resourceId} className="flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 hover:bg-[#f5f8fb]">
-                  <span className="truncate text-[#40516c]" title={volume.name}>{volume.name}</span>
-                  <span className="shrink-0 text-[11px] tabular-nums text-[#7b8ba3]">
+                <li key={volume.resourceId} className="flex min-w-0 items-center justify-between gap-2 rounded-md px-1 py-0.5 hover:bg-surface-subtle">
+                  <span className="truncate text-text-secondary" title={volume.name}>{volume.name}</span>
+                  <span className="shrink-0 text-[11px] tabular-nums text-text-muted">
                     {labels.lun} {volume.scsiId || labels.unavailable}
                   </span>
                 </li>
@@ -225,7 +225,7 @@ export function FlashSystemHostBadge({ summary, labels }: FlashSystemHostBadgePr
         </>
       )}
     >
-      <ServerIcon className="size-3.5 shrink-0 text-[#0b8ed5]" />
+      <ServerIcon className="size-3.5 shrink-0 text-accent" />
       <span className="truncate">{summary.name}</span>
     </TooltipBadge>
   )
@@ -243,14 +243,14 @@ export function FlashSystemAdditionalHostsBadge({
   return (
     <TooltipBadge
       ariaLabel={`${labels.showAdditionalHosts} ${String(summaries.length)}`}
-      className="shrink-0 px-1.5 text-[#087fca]"
+      className="shrink-0 px-1.5 text-accent"
       tooltip={(
         <>
-          <p className="mb-1.5 font-semibold text-[#17233d]">{labels.additionalHosts}</p>
+          <p className="mb-1.5 font-semibold text-text-primary">{labels.additionalHosts}</p>
           <ul className="custom-scrollbar max-h-[160px] space-y-1 overflow-y-auto pr-1">
             {summaries.map((summary) => (
               <li key={summary.key} className="flex min-w-0 items-center gap-1.5">
-                <ServerIcon className="size-3.5 shrink-0 text-[#0b8ed5]" />
+                <ServerIcon className="size-3.5 shrink-0 text-accent" />
                 <span className="truncate" title={summary.name}>{summary.name}</span>
               </li>
             ))}

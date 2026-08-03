@@ -35,7 +35,7 @@ export const VirtualMachineNode = memo(function VirtualMachineNode({
         icon={<CpuIcon className="size-5" />}
         iconClassName={poweredOn
           ? 'bg-success-50 text-success-700'
-          : 'bg-gray-100 text-gray-600'}
+          : 'bg-surface-muted text-text-muted'}
         selected={selected}
         showTargetHandle
         showSourceHandle
@@ -43,16 +43,16 @@ export const VirtualMachineNode = memo(function VirtualMachineNode({
         <span className="flex items-center justify-between gap-2 text-[10px]">
           <span className={cn(
             'inline-flex items-center gap-1.5 font-semibold',
-            poweredOn ? 'text-success-700' : 'text-gray-600',
+            poweredOn ? 'text-success-700 dark:text-success-400' : 'text-text-muted',
           )}>
             <span className={cn(
               'size-1.5 rounded-full',
-              poweredOn ? 'bg-success-500' : 'bg-gray-400',
+              poweredOn ? 'bg-success-500' : 'bg-text-subtle',
             )}
             />
             {t(poweredOn ? 'topology.filters.poweredOn' : 'topology.filters.poweredOff')}
           </span>
-          <span className="truncate text-[#687991]">{data.connectionState}</span>
+          <span className="truncate text-text-muted">{data.connectionState}</span>
         </span>
       </TopologyNodeShell>
 

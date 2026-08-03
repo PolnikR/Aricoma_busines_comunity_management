@@ -35,8 +35,8 @@ export function createPowerColumns(labels: PowerColumnLabels): ColumnDef<PowerPa
         const context = [partition.partitionKind, partitionId ? `ID ${partitionId}` : ''].filter(Boolean).join(' · ')
         return (
           <>
-            <span className="block max-w-60 truncate font-semibold text-[#17233d]" title={partition.partitionName}>{partition.partitionName || '-'}</span>
-            <span className="text-[11px] text-[#93a0b5]">{context}</span>
+            <span className="block max-w-60 truncate font-semibold text-text-primary" title={partition.partitionName}>{partition.partitionName || '-'}</span>
+            <span className="text-[11px] text-text-subtle">{context}</span>
           </>
         )
       },

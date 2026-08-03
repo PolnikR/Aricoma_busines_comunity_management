@@ -32,12 +32,12 @@ export function VMNodeTooltip({ data, nodeRef }: VMNodeTooltipProps) {
 
         {data.tags && data.tags.length > 0 && (
           <div>
-            <div className="text-xs font-semibold text-slate-400">{t('tooltip.vm.tags')}</div>
+            <div className="text-xs font-semibold text-inverse-muted">{t('tooltip.vm.tags')}</div>
             <div className="flex flex-wrap gap-1 mt-1">
               {data.tags.map(tag => (
                 <span
                   key={tag}
-                  className="inline-block rounded bg-slate-700 px-2 py-1 text-slate-200"
+                  className="inline-block rounded bg-inverse-control px-2 py-1 text-inverse-text"
                 >
                   {tag}
                 </span>

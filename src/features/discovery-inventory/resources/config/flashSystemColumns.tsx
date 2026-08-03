@@ -28,8 +28,8 @@ export function createFlashSystemColumns(
       header: labels.name,
       cell: (volume) => (
         <>
-          <span className="block max-w-60 truncate font-semibold text-[#17233d]" title={volume.name}>{volume.name}</span>
-          <span className="block max-w-60 truncate font-mono text-[11px] text-[#93a0b5]" title={volume.vdisk_UID}>{volume.vdisk_UID || '-'}</span>
+          <span className="block max-w-60 truncate font-semibold text-text-primary" title={volume.name}>{volume.name}</span>
+          <span className="block max-w-60 truncate font-mono text-[11px] text-text-subtle" title={volume.vdisk_UID}>{volume.vdisk_UID || '-'}</span>
         </>
       ),
     },

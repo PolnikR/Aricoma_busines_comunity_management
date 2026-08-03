@@ -145,7 +145,7 @@ export function InfrastructureTopologyWorkspace({
         onFitView={() => { setFitViewRequest((value) => value + 1) }}
       />
 
-      <div className="relative min-h-0 flex-1 overflow-hidden bg-[#f8fbfe]">
+      <div className="relative min-h-0 flex-1 overflow-hidden bg-surface-subtle">
         {positionedTopology ? (
           <InfrastructureTopologyCanvas
             topology={positionedTopology}
@@ -156,10 +156,10 @@ export function InfrastructureTopologyWorkspace({
 
         {isLayouting ? (
           <div
-            className="pointer-events-none absolute right-4 top-4 inline-flex items-center gap-2 rounded-lg border border-[#d8e5f0] bg-white/95 px-3 py-2 text-xs font-medium text-[#5b6c84] shadow-sm"
+            className="pointer-events-none absolute right-4 top-4 inline-flex items-center gap-2 rounded-lg border border-border bg-surface/95 px-3 py-2 text-xs font-medium text-text-secondary shadow-sm"
             role="status"
           >
-            <span className="size-2 animate-pulse rounded-full bg-[#0d91d7]" />
+            <span className="size-2 animate-pulse rounded-full bg-accent" />
             {t('topology.arranging')}
           </div>
         ) : null}
@@ -173,8 +173,8 @@ export function InfrastructureTopologyWorkspace({
         {!isLayouting && positionedTopology?.nodes.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
             <div>
-              <h3 className="text-sm font-semibold text-[#263750]">{t('topology.noMatches')}</h3>
-              <p className="mt-1 text-sm text-[#71819a]">{t('topology.adjustFilters')}</p>
+              <h3 className="text-sm font-semibold text-text-secondary">{t('topology.noMatches')}</h3>
+              <p className="mt-1 text-sm text-text-muted">{t('topology.adjustFilters')}</p>
             </div>
           </div>
         ) : null}

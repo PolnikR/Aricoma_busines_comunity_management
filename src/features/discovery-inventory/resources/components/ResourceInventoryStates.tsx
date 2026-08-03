@@ -18,7 +18,7 @@ export function ResourceInventoryLoading({ ariaLabel, columnCount = 9 }: Resourc
 
 export function ResourceInventoryState({ children }: { children: ReactNode }) {
   return (
-    <section className="flex min-h-72 flex-1 items-center justify-center rounded-2xl border border-[#dbe7f2] bg-white p-4 shadow-sm">
+    <section className="flex min-h-72 flex-1 items-center justify-center rounded-2xl border border-border bg-surface p-4 shadow-sm">
       <div className="w-full max-w-3xl">{children}</div>
     </section>
   )

@@ -19,6 +19,11 @@
   --app-accent-hover: #087fca;
   --app-accent-soft: #e8f6fd;
   --app-focus: #1596dd;
+  --app-inverse-surface: #17233d;
+  --app-inverse-control: #33425d;
+  --app-inverse-text: #f8fafc;
+  --app-inverse-muted: #a8b4c6;
+  --app-topology-mask: rgba(226, 235, 244, 0.72);
   --app-page-glow-primary: rgba(211, 238, 255, 0.72);
   --app-page-glow-secondary: rgba(255, 242, 211, 0.5);
 }
@@ -40,6 +45,11 @@
   --app-accent-hover: #70c8f3;
   --app-accent-soft: #123854;
   --app-focus: #5bc0f2;
+  --app-inverse-surface: #050b16;
+  --app-inverse-control: #263750;
+  --app-inverse-text: #f8fafc;
+  --app-inverse-muted: #aebbcf;
+  --app-topology-mask: rgba(5, 11, 22, 0.72);
   --app-page-glow-primary: rgba(25, 93, 132, 0.22);
   --app-page-glow-secondary: rgba(117, 83, 28, 0.12);
 }
@@ -61,6 +71,10 @@
   --color-accent-hover: var(--app-accent-hover);
   --color-accent-soft: var(--app-accent-soft);
   --color-focus: var(--app-focus);
+  --color-inverse-surface: var(--app-inverse-surface);
+  --color-inverse-control: var(--app-inverse-control);
+  --color-inverse-text: var(--app-inverse-text);
+  --color-inverse-muted: var(--app-inverse-muted);
 }
 
 @theme {

@@ -78,19 +78,19 @@ function InfrastructureTopologyCanvasContent({
       fitView
       fitViewOptions={{ padding: 0.02, minZoom: 0.15, maxZoom: 1.6 }}
       proOptions={{ hideAttribution: true }}
-      className="bg-[#f8fbfe]"
+      className="bg-surface-subtle"
       aria-label={t('topology.diagramLabel')}
     >
       <Background
         variant={BackgroundVariant.Dots}
         gap={22}
         size={1}
-        color="#cbd9e7"
+        color="var(--color-border-strong)"
       />
       <Controls
         position="bottom-left"
         showInteractive={false}
-        className="overflow-hidden! rounded-xl! border! border-[#d7e4ef]! bg-white! shadow-sm!"
+        className="overflow-hidden! rounded-xl! border! border-border! bg-surface! shadow-sm!"
       />
       <MiniMap
         position="bottom-right"
@@ -102,8 +102,8 @@ function InfrastructureTopologyCanvasContent({
           if (node.type === 'datastore') return '#f79009'
           return '#12b76a'
         }}
-        maskColor="rgba(226, 235, 244, 0.72)"
-        className="h-24! w-36! cursor-grab! rounded-xl! border! border-[#d7e4ef]! bg-white! shadow-sm! active:cursor-grabbing!"
+        maskColor="var(--app-topology-mask)"
+        className="h-24! w-36! cursor-grab! rounded-xl! border! border-border! bg-surface! shadow-sm! active:cursor-grabbing!"
       />
     </ReactFlow>
   )

@@ -53,8 +53,8 @@ export function VirtualMachineDetailPanel({
     flashSystemProviderId || undefined,
   )
 
-  const headerCell = 'whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-[#93a0b5]'
-  const cell = 'px-3 py-2.5 text-[13px] text-[#3b4763] align-top'
+  const headerCell = 'whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle'
+  const cell = 'px-3 py-2.5 text-[13px] text-text-secondary align-top'
   const num = `${cell} text-right tabular-nums`
   const overviewFields = createVmwareDetailFields(t)
 
@@ -98,8 +98,8 @@ export function VirtualMachineDetailPanel({
             <div className="custom-scrollbar flex-1 overflow-y-auto">
               {selectedTab === 'overview' && (
                 <>
-                  <div className="grid grid-cols-2 border-b border-[#dfe9f3]">
-                    <div className="border-r border-[#dfe9f3]">
+                  <div className="grid grid-cols-2 border-b border-border">
+                    <div className="border-r border-border">
                       <DetailStat
                         icon={<CpuIcon className="size-5" />}
                         value={virtualMachine.vcpu}
@@ -113,8 +113,8 @@ export function VirtualMachineDetailPanel({
                     />
                   </div>
 
-                  <div className="border-b border-[#dfe9f3] bg-[#f5f8fc] px-5 py-3">
-                    <p className="mb-1 text-xs font-semibold uppercase text-gray-500">{t('pages.virtualMachines.detail.tags')}</p>
+                  <div className="border-b border-border bg-surface-subtle px-5 py-3">
+                    <p className="mb-1 text-xs font-semibold uppercase text-text-muted">{t('pages.virtualMachines.detail.tags')}</p>
                     {virtualMachine.tags.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {virtualMachine.tags.map((tag) => (
@@ -122,7 +122,7 @@ export function VirtualMachineDetailPanel({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500">-</p>
+                      <p className="text-sm text-text-muted">-</p>
                     )}
                   </div>
 
@@ -143,7 +143,7 @@ export function VirtualMachineDetailPanel({
                 <div key={`disks-${virtualMachine.id}`} className="custom-scrollbar overflow-x-auto cursor-grab active:cursor-grabbing">
                   {virtualMachine.vdisks.length > 0 ? (
                     <Table className="min-w-full">
-                      <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
+                      <TableHeader className="sticky top-0 border-b border-border bg-surface-subtle">
                         <TableRow>
                           <TableCell isHeader className={headerCell}>{t('details.label')}</TableCell>
                           <TableCell isHeader className={headerCell}>{t('details.capacity')}</TableCell>
@@ -152,9 +152,9 @@ export function VirtualMachineDetailPanel({
                           <TableCell isHeader className={headerCell}>{t('details.thinProv')}</TableCell>
                         </TableRow>
                       </TableHeader>
-                      <TableBody className="divide-y divide-[#edf2f7]">
+                      <TableBody className="divide-y divide-border">
                         {virtualMachine.vdisks.map((disk) => (
-                          <TableRow key={disk.id} className="bg-white hover:bg-[#f3f8fe]">
+                          <TableRow key={disk.id} className="bg-surface hover:bg-accent-soft">
                             <TableCell className={cell}>
                               <span className="block max-w-45 truncate" title={disk.label}>{disk.label}</span>
                             </TableCell>
@@ -165,13 +165,13 @@ export function VirtualMachineDetailPanel({
                                 {truncateFilePath(disk.filePath)}
                               </span>
                             </TableCell>
-                            <TableCell className="px-3 py-2.5 text-[13px] text-[#3b4763] align-top whitespace-nowrap text-right">{disk.thinProvisioned ? t('pages.virtualMachines.detail.yes') : t('pages.virtualMachines.detail.no')}</TableCell>
+                            <TableCell className="px-3 py-2.5 text-[13px] text-text-secondary align-top whitespace-nowrap text-right">{disk.thinProvisioned ? t('pages.virtualMachines.detail.yes') : t('pages.virtualMachines.detail.no')}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   ) : (
-                    <p className="p-4 text-[13px] text-[#93a0b5]">{t('pages.virtualMachines.detail.noDisks')}</p>
+                    <p className="p-4 text-[13px] text-text-subtle">{t('pages.virtualMachines.detail.noDisks')}</p>
                   )}
                 </div>
               )}
@@ -179,7 +179,7 @@ export function VirtualMachineDetailPanel({
               {selectedTab === 'snapshots' && (
                 <div className="flex flex-col" key={`snapshots-${virtualMachine.id}`}>
                   {eligibleFlashSystemProviders.length > 1 ? (
-                    <div className="border-b border-[#edf2f7] px-4 py-3">
+                    <div className="border-b border-border px-4 py-3">
                       <Field label={t('drawer.selectedProvider')} htmlFor="vm-flashsystem-provider">
                         <Select
                           id="vm-flashsystem-provider"
@@ -194,7 +194,7 @@ export function VirtualMachineDetailPanel({
                     </div>
                   ) : null}
                   {vdisksLoading ? (
-                    <p className="p-4 text-[13px] text-[#93a0b5]">{t('pages.virtualMachines.detail.loadingSnapshots')}</p>
+                    <p className="p-4 text-[13px] text-text-subtle">{t('pages.virtualMachines.detail.loadingSnapshots')}</p>
                   ) : vdisks ? (
                     <>
                       {(() => {
@@ -206,12 +206,12 @@ export function VirtualMachineDetailPanel({
                           { sourceCount: 0, targetCount: 0 }
                         )
                         return (
-                          <div className="border-b border-[#edf2f7] px-4 py-3">
+                          <div className="border-b border-border px-4 py-3">
                             <div className="flex gap-2">
-                              <span className="inline-flex items-center rounded-full bg-[#e8f4fd] px-3 py-1 text-xs font-medium text-[#0d91d7]">
+                              <span className="inline-flex items-center rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
                                 {sourceCount} {t('details.sourceMappings')}
                               </span>
-                              <span className="inline-flex items-center rounded-full bg-[#e8f4fd] px-3 py-1 text-xs font-medium text-[#0d91d7]">
+                              <span className="inline-flex items-center rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
                                 {targetCount} {t('details.targetMappings')}
                               </span>
                             </div>
@@ -220,7 +220,7 @@ export function VirtualMachineDetailPanel({
                       })()}
                       <div className="custom-scrollbar overflow-x-auto cursor-grab active:cursor-grabbing">
                         <Table className="min-w-full">
-                          <TableHeader className="sticky top-0 border-b border-[#dfe9f3] bg-[#f6f9fc]">
+                          <TableHeader className="sticky top-0 border-b border-border bg-surface-subtle">
                             <TableRow>
                               <TableCell isHeader className={headerCell}>{t('details.snapshotSource')}</TableCell>
                               <TableCell isHeader className={headerCell}>{t('details.snapshotTarget')}</TableCell>
@@ -229,9 +229,9 @@ export function VirtualMachineDetailPanel({
                               <TableCell isHeader className={headerCell}>{t('details.snapshotCreated')}</TableCell>
                             </TableRow>
                           </TableHeader>
-                          <TableBody className="divide-y divide-[#edf2f7]">
+                          <TableBody className="divide-y divide-border">
                             {vdisks.volumes.flatMap((vol) => vol.snapshots.sourceMappings.map((mapping) => (
-                              <TableRow key={mapping.id} className="bg-white hover:bg-[#f3f8fe]">
+                              <TableRow key={mapping.id} className="bg-surface hover:bg-accent-soft">
                                 <TableCell className={cell}>
                                   <span className="block max-w-45 truncate" title={mapping.sourceVdiskName}>{mapping.sourceVdiskName}</span>
                                 </TableCell>
@@ -248,7 +248,7 @@ export function VirtualMachineDetailPanel({
                       </div>
                     </>
                   ) : (
-                    <p className="p-4 text-[13px] text-[#93a0b5]">{t('pages.virtualMachines.detail.noSnapshots')}</p>
+                    <p className="p-4 text-[13px] text-text-subtle">{t('pages.virtualMachines.detail.noSnapshots')}</p>
                   )}
                 </div>
               )}

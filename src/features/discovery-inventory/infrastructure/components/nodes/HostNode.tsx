@@ -40,7 +40,7 @@ export const HostNode = memo(function HostNode({
         showTargetHandle
         showSourceHandle
       >
-        <span className="text-[11px] font-medium text-[#4f6079]">
+        <span className="text-[11px] font-medium text-text-secondary">
           {data.virtualMachineCount} {t('topology.virtualMachines')}
         </span>
       </TopologyNodeShell>
