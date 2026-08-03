@@ -13,7 +13,11 @@ export interface ProviderRecord {
   type: ProviderType
   ipAddress: string
   credentialId: string | null
+  defaultFlashcopyProviderId?: string | null | undefined
   credentialStatus: ProviderCredentialStatus
 }
 
-export type ProviderSubmitData = Omit<ProviderRecord, 'credentialStatus'>
+export type ProviderSubmitData = Omit<
+  ProviderRecord,
+  'credentialStatus' | 'defaultFlashcopyProviderId'
+>

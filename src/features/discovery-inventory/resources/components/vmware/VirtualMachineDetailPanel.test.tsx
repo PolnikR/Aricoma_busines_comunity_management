@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
@@ -8,6 +9,17 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 const useVdisksByVmMock = vi.hoisted(() => vi.fn(() => ({ data: undefined, isLoading: false })))
 vi.mock('../../hooks/useVdisksByVm', () => ({ useVdisksByVm: useVdisksByVmMock }))
+
+const vmwareProvider = {
+  id: 'vmware-vcenter-01',
+  name: 'Production vCenter',
+  description: '',
+  type: 'VMWARE',
+  ipAddress: '10.0.0.10',
+  credentialId: 'vcenter-admin',
+  credentialStatus: 'ok',
+  defaultFlashcopyProviderId: 'ibm-flashsystem-01',
+} as ProviderRecord
 
 const flashProvider: ProviderRecord = {
   id: 'ibm-flashsystem-01',
@@ -75,7 +87,7 @@ describe('VirtualMachineDetailPanel resize', () => {
     renderWithQueryClient(
       <VirtualMachineDetailPanel
         virtualMachine={vm}
-        flashSystemProviders={[flashProvider]}
+        providers={[vmwareProvider, flashProvider]}
         open
         onClose={vi.fn()}
       />,
@@ -86,6 +98,27 @@ describe('VirtualMachineDetailPanel resize', () => {
       'vmware-vcenter-01',
       'ibm-flashsystem-01',
     )
+  })
+
+  it('shows an empty snapshots table when the VM provider has no linked FlashSystem', async () => {
+    const user = userEvent.setup()
+
+    renderWithQueryClient(
+      <VirtualMachineDetailPanel
+        virtualMachine={vm}
+        open
+        onClose={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('tab', { name: 'Snapshots' }))
+
+    expect(useVdisksByVmMock).toHaveBeenCalledWith(
+      'app-server-01',
+      'vmware-vcenter-01',
+      undefined,
+    )
+    expect(screen.getByRole('table')).toBeInTheDocument()
   })
 
   it('resizes the panel via the drag handle and keyboard', () => {

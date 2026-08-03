@@ -46,9 +46,6 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   } = props
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
   const vmwareProviders = providers.filter((provider) => provider.type === 'VMWARE')
-  const flashSystemProviders = providers.filter(
-    (provider) => provider.type === 'FLASHCOPY' && provider.credentialStatus === 'ok',
-  )
   const inventoryEnabled = providersSuccess && vmwareProviders.length > 0
   const {
     data: inventory,
@@ -209,7 +206,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
       </ResourceInventoryShell>
       <VirtualMachineDetailPanel
         virtualMachine={selectedVirtualMachine}
-        flashSystemProviders={flashSystemProviders}
+        providers={providers}
         open={drawerOpen}
         onClose={() => {
           setDrawerOpen(false)

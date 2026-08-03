@@ -47,6 +47,22 @@ describe('fetchProviders', () => {
     expect(providers[0]).toMatchObject({ id: 'vmware-vcenter-01', type: 'VMWARE', ipAddress: '10.99.99.40' })
   })
 
+  it('preserves an optional default FlashSystem provider reference', async () => {
+    stubFetch({
+      providers: [{
+        ...providerA,
+        defaultFlashcopyProviderId: 'ibm-flashsystem-01',
+      }],
+    })
+
+    const providers = await fetchProviders()
+
+    expect(providers[0]).toMatchObject({
+      id: 'vmware-vcenter-01',
+      defaultFlashcopyProviderId: 'ibm-flashsystem-01',
+    })
+  })
+
   it('rejects a response that does not match the providers contract', async () => {
     stubFetch({ providers: 'invalid' })
     await expect(fetchProviders()).rejects.toBeInstanceOf(Error)

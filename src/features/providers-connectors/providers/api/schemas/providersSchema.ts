@@ -11,6 +11,7 @@ const providerRecordSchema = z.object({
   type: z.enum(PROVIDER_TYPES),
   ipAddress: z.string().min(1),
   credentialId: z.string().nullable(),
+  defaultFlashcopyProviderId: z.string().min(1).nullable().optional(),
   credentialStatus: z.enum(PROVIDER_CREDENTIAL_STATUSES),
 })
 

@@ -10,7 +10,6 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/com
 import { DetailDrawer, DetailRow, DetailStat } from '@/shared/components/data-table'
 import { Tabs } from '@/shared/components/tabs/Tabs'
 import { createVmwareDetailFields } from '../../config/vmwareDetailFields'
-import { Field, Select } from '@/shared/components/form/FormControls'
 
 function truncateFilePath(path: string): string {
   if (path.length <= 50) return path
@@ -25,32 +24,40 @@ function truncateFilePath(path: string): string {
 
 interface VirtualMachineDetailPanelProps {
   virtualMachine: VirtualMachine | null
-  flashSystemProviders?: ProviderRecord[]
+  providers?: ProviderRecord[]
   open: boolean
   onClose: () => void
 }
 
 export function VirtualMachineDetailPanel({
   virtualMachine,
-  flashSystemProviders = [],
+  providers = [],
   open,
   onClose,
 }: VirtualMachineDetailPanelProps) {
   const { t } = useTranslation()
   const [selectedTab, setSelectedTab] = useState<'overview' | 'disks' | 'snapshots'>('overview')
-  const eligibleFlashSystemProviders = flashSystemProviders.filter(
-    (provider) => provider.type === 'FLASHCOPY' && provider.credentialStatus === 'ok',
+  const vmProvider = providers.find(
+    (provider) => provider.id === virtualMachine?.providerId && provider.type === 'VMWARE',
   )
-  const [selectedFlashSystemProviderId, setSelectedFlashSystemProviderId] = useState('')
-  const flashSystemProviderId = eligibleFlashSystemProviders.some(
-    (provider) => provider.id === selectedFlashSystemProviderId,
-  )
-    ? selectedFlashSystemProviderId
-    : (eligibleFlashSystemProviders[0]?.id ?? '')
+  const flashSystemProviderId = providers.find((provider) => (
+    provider.id === vmProvider?.defaultFlashcopyProviderId
+    && provider.type === 'FLASHCOPY'
+    && provider.credentialStatus === 'ok'
+  ))?.id
   const { data: vdisks, isLoading: vdisksLoading } = useVdisksByVm(
     virtualMachine?.name ?? '',
     virtualMachine?.providerId,
-    flashSystemProviderId || undefined,
+    flashSystemProviderId,
+  )
+  const snapshotVolumes = vdisks?.volumes ?? []
+  const snapshotMappings = snapshotVolumes.flatMap(volume => volume.snapshots.sourceMappings)
+  const snapshotCounts = snapshotVolumes.reduce(
+    (counts, volume) => ({
+      source: counts.source + volume.snapshots.sourceMappings.length,
+      target: counts.target + volume.snapshots.targetMappings.length,
+    }),
+    { source: 0, target: 0 },
   )
 
   const headerCell = 'whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle'
@@ -178,46 +185,20 @@ export function VirtualMachineDetailPanel({
 
               {selectedTab === 'snapshots' && (
                 <div className="flex flex-col" key={`snapshots-${virtualMachine.id}`}>
-                  {eligibleFlashSystemProviders.length > 1 ? (
-                    <div className="border-b border-border px-4 py-3">
-                      <Field label={t('drawer.selectedProvider')} htmlFor="vm-flashsystem-provider">
-                        <Select
-                          id="vm-flashsystem-provider"
-                          value={flashSystemProviderId}
-                          onChange={(event) => { setSelectedFlashSystemProviderId(event.target.value) }}
-                        >
-                          {eligibleFlashSystemProviders.map((provider) => (
-                            <option key={provider.id} value={provider.id}>{provider.name}</option>
-                          ))}
-                        </Select>
-                      </Field>
-                    </div>
-                  ) : null}
                   {vdisksLoading ? (
                     <p className="p-4 text-[13px] text-text-subtle">{t('pages.virtualMachines.detail.loadingSnapshots')}</p>
-                  ) : vdisks ? (
+                  ) : (
                     <>
-                      {(() => {
-                        const { sourceCount, targetCount } = vdisks.volumes.reduce(
-                          (acc, v) => ({
-                            sourceCount: acc.sourceCount + v.snapshots.sourceMappings.length,
-                            targetCount: acc.targetCount + v.snapshots.targetMappings.length,
-                          }),
-                          { sourceCount: 0, targetCount: 0 }
-                        )
-                        return (
-                          <div className="border-b border-border px-4 py-3">
-                            <div className="flex gap-2">
-                              <span className="inline-flex items-center rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
-                                {sourceCount} {t('details.sourceMappings')}
-                              </span>
-                              <span className="inline-flex items-center rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
-                                {targetCount} {t('details.targetMappings')}
-                              </span>
-                            </div>
-                          </div>
-                        )
-                      })()}
+                      <div className="border-b border-border px-4 py-3">
+                        <div className="flex gap-2">
+                          <span className="inline-flex items-center rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
+                            {snapshotCounts.source} {t('details.sourceMappings')}
+                          </span>
+                          <span className="inline-flex items-center rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
+                            {snapshotCounts.target} {t('details.targetMappings')}
+                          </span>
+                        </div>
+                      </div>
                       <div className="custom-scrollbar overflow-x-auto cursor-grab active:cursor-grabbing">
                         <Table className="min-w-full">
                           <TableHeader className="sticky top-0 border-b border-border bg-surface-subtle">
@@ -230,7 +211,7 @@ export function VirtualMachineDetailPanel({
                             </TableRow>
                           </TableHeader>
                           <TableBody className="divide-y divide-border">
-                            {vdisks.volumes.flatMap((vol) => vol.snapshots.sourceMappings.map((mapping) => (
+                            {snapshotMappings.length > 0 ? snapshotMappings.map((mapping) => (
                               <TableRow key={mapping.id} className="bg-surface hover:bg-accent-soft">
                                 <TableCell className={cell}>
                                   <span className="block max-w-45 truncate" title={mapping.sourceVdiskName}>{mapping.sourceVdiskName}</span>
@@ -242,13 +223,17 @@ export function VirtualMachineDetailPanel({
                                 <TableCell className={num}>{mapping.cleanProgress}%</TableCell>
                                 <TableCell className={cell}>{formatStartTime(mapping.startTime)}</TableCell>
                               </TableRow>
-                            )))}
+                            )) : (
+                              <TableRow>
+                                <TableCell colSpan={5} className="p-4 text-center text-[13px] text-text-subtle">
+                                  {t('pages.virtualMachines.detail.noSnapshots')}
+                                </TableCell>
+                              </TableRow>
+                            )}
                           </TableBody>
                         </Table>
                       </div>
                     </>
-                  ) : (
-                    <p className="p-4 text-[13px] text-text-subtle">{t('pages.virtualMachines.detail.noSnapshots')}</p>
                   )}
                 </div>
               )}
