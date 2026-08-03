@@ -20,6 +20,8 @@ interface TierCardProps {
   canDelete: boolean
   onRecoveryGroupAdded?: (groupId: string) => void
   onRecoveryGroupRemoved?: () => void
+  recoveryGroupVms?: readonly string[]
+  onRecoveryVmSelectionChange?: (vmName: string, selected: boolean) => void
 }
 
 interface EditFormState {
@@ -41,6 +43,8 @@ export function TierCard({
   canDelete,
   onRecoveryGroupAdded,
   onRecoveryGroupRemoved,
+  recoveryGroupVms = [],
+  onRecoveryVmSelectionChange,
 }: TierCardProps) {
   const { t } = useTranslation()
   const [editForm, setEditForm] = useState<EditFormState>({
@@ -102,6 +106,12 @@ export function TierCard({
       })
     }
   }
+
+  const selectedVmNames = tier.recovery_group?.vms.map(vm => vm.name) ?? []
+  const allVmNames = Array.from(new Set([...recoveryGroupVms, ...selectedVmNames]))
+  const selectionSummary = t('recovery.tier.vmSelectionSummary')
+    .replace('{selected}', String(selectedVmNames.length))
+    .replace('{total}', String(allVmNames.length))
 
   if (isEditing) {
     return (
@@ -179,12 +189,17 @@ export function TierCard({
       {tier.recovery_group ? (
         <ResourceSelectionCard
           description={tier.recovery_group.description}
-          items={tier.recovery_group.vms.map(vm => vm.name)}
+          items={allVmNames}
+          selectedItems={selectedVmNames}
           emptyText={t('recovery.tier.emptyRecoveryGroup')}
           removeLabel={t('recovery.tier.removeVm')}
           ariaLabel={`${tier.recovery_group.name} virtual machines`}
+          selectionSummary={selectionSummary}
           dropDataKey="recovery-group-id"
           onResourceDrop={groupId => { onRecoveryGroupAdded?.(groupId) }}
+          {...(onRecoveryVmSelectionChange ? {
+            onResourceSelectionChange: onRecoveryVmSelectionChange,
+          } : {})}
           clearLabel={t('recovery.tier.removeRecoveryGroup')}
           {...(onRecoveryGroupRemoved ? { onClear: onRecoveryGroupRemoved } : {})}
         />

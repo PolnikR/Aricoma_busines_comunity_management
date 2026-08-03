@@ -634,6 +634,7 @@
   "recovery.tier.emptyRecoveryGroup": "Skupina obnovy neobsahuje žiadne virtuálne stroje",
   "recovery.tier.emptyRecoveryGroupAriaLabel": "Nepriradená skupina obnovy",
   "recovery.tier.removeRecoveryGroup": "Odstrániť skupinu obnovy",
+  "recovery.tier.vmSelectionSummary": "{selected} z {total} VM vybrané",
   "recovery.tier.validation.nameRequired": "Zadajte názov úrovne.",
   "recovery.tier.validation.idRequired": "Zadajte ID úrovne.",
   "recovery.tier.validation.idInUse": "Toto ID sa už používa.",

@@ -224,6 +224,41 @@ describe('TierCard', () => {
     expect(screen.getByText('DB-10')).toBeInTheDocument()
   })
 
+  it('shows all recovery-group VMs as checkboxes and reports selection changes', async () => {
+    const user = userEvent.setup()
+    const onRecoveryVmSelectionChange = vi.fn()
+
+    render(
+      <TierCard
+        id="database"
+        tier={{
+          ...mockTier,
+          recovery_group: {
+            name: 'Database',
+            description: 'Database recovery group',
+            vms: [{ name: 'DB-01' }],
+          },
+        }}
+        recoveryGroupVms={['DB-01', 'DB-02']}
+        onRecoveryVmSelectionChange={onRecoveryVmSelectionChange}
+        existingIds={['database']}
+        canDelete
+      />,
+    )
+
+    const selectedVm = screen.getByRole('checkbox', { name: 'DB-01' })
+    const excludedVm = screen.getByRole('checkbox', { name: 'DB-02' })
+    expect(selectedVm).toBeChecked()
+    expect(excludedVm).not.toBeChecked()
+    expect(screen.getByText('1 of 2 VMs selected')).toBeInTheDocument()
+
+    await user.click(excludedVm)
+    await user.click(selectedVm)
+
+    expect(onRecoveryVmSelectionChange).toHaveBeenNthCalledWith(1, 'DB-02', true)
+    expect(onRecoveryVmSelectionChange).toHaveBeenNthCalledWith(2, 'DB-01', false)
+  })
+
   it('calls onCancel when Cancel clicked', async () => {
     const user = userEvent.setup()
     const onCancel = vi.fn()

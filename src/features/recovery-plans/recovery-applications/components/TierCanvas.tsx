@@ -5,8 +5,10 @@ import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
 interface TierCanvasProps {
   tiers: Record<string, RecoveryTier>
+  recoveryGroupVmOptions?: Readonly<Record<string, readonly string[]>>
   onRecoveryGroupAdded?: (tierId: string, groupId: string) => void
   onRecoveryGroupRemoved?: (tierId: string) => void
+  onRecoveryVmSelectionChange?: (tierId: string, vmName: string, selected: boolean) => void
   onTierEdit?: (tierId: string, newTierId: string, updates: {
     tierDescription: string
   }) => void
@@ -17,8 +19,10 @@ interface TierCanvasProps {
 
 export function TierCanvas({
   tiers,
+  recoveryGroupVmOptions,
   onRecoveryGroupAdded,
   onRecoveryGroupRemoved,
+  onRecoveryVmSelectionChange,
   onTierEdit,
   onTierAdd,
   onTierDelete,
@@ -132,6 +136,18 @@ export function TierCanvas({
         if (onRecoveryGroupRemoved) {
           tierCardProps.onRecoveryGroupRemoved = () => {
             onRecoveryGroupRemoved(id)
+          }
+        }
+        const recoveryGroupName = tier.recovery_group?.name
+        const recoveryGroupVms = recoveryGroupName
+          ? recoveryGroupVmOptions?.[recoveryGroupName]
+          : undefined
+        if (recoveryGroupVms) {
+          tierCardProps.recoveryGroupVms = recoveryGroupVms
+        }
+        if (onRecoveryVmSelectionChange) {
+          tierCardProps.onRecoveryVmSelectionChange = (vmName, selected) => {
+            onRecoveryVmSelectionChange(id, vmName, selected)
           }
         }
 

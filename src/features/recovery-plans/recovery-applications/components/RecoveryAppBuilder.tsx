@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
@@ -97,11 +97,17 @@ export function RecoveryAppBuilder({
     error: groupsError,
     refresh: refreshGroups,
   } = useRecoveryGroups()
-  const availableGroups = groups.filter(
-    group => group.sourceCategory === 'backup_system_workload',
+  const availableGroups = useMemo(
+    () => groups.filter(group => group.sourceCategory === 'backup_system_workload'),
+    [groups],
   )
-  const groupLabels = Object.fromEntries(
-    availableGroups.map(group => [group.id, group.name]),
+  const groupLabels = useMemo(
+    () => Object.fromEntries(availableGroups.map(group => [group.id, group.name])),
+    [availableGroups],
+  )
+  const recoveryGroupVmOptions = useMemo(
+    () => Object.fromEntries(availableGroups.map(group => [group.id, group.resources])),
+    [availableGroups],
   )
   const [formState, setFormState] = useState<RecoveryApplicationFormState>(
     () => createInitialFormState(initialData),
@@ -144,6 +150,34 @@ export function RecoveryAppBuilder({
         order: tier.order,
         description: tier.description,
       })
+      return { ...prev, tiers: newTiers }
+    })
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
+
+  const handleRecoveryVmSelectionChange = useCallback((
+    tierId: string,
+    vmName: string,
+    selected: boolean,
+  ) => {
+    setFormState(prev => {
+      const tier = prev.tiers.get(tierId)
+      if (!tier?.recovery_group) return prev
+
+      const alreadySelected = tier.recovery_group.vms.some(vm => vm.name === vmName)
+      if (alreadySelected === selected) return prev
+
+      const newTiers = new Map(prev.tiers)
+      newTiers.set(tierId, {
+        ...tier,
+        recovery_group: {
+          ...tier.recovery_group,
+          vms: selected
+            ? [...tier.recovery_group.vms, { name: vmName }]
+            : tier.recovery_group.vms.filter(vm => vm.name !== vmName),
+        },
+      })
+
       return { ...prev, tiers: newTiers }
     })
     onDirtyChange?.(true)
@@ -291,8 +325,10 @@ export function RecoveryAppBuilder({
           <div className="overflow-y-auto custom-scrollbar p-4">
             <TierCanvas
               tiers={Object.fromEntries(formState.tiers)}
+              recoveryGroupVmOptions={recoveryGroupVmOptions}
               onRecoveryGroupAdded={handleRecoveryGroupAdded}
               onRecoveryGroupRemoved={handleRecoveryGroupRemoved}
+              onRecoveryVmSelectionChange={handleRecoveryVmSelectionChange}
               onTierEdit={handleTierEdit}
               onTierAdd={handleTierAdd}
               onTierDelete={handleTierDelete}

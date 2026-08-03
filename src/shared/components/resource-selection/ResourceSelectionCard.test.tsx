@@ -33,4 +33,35 @@ describe('ResourceSelectionCard', () => {
     await user.click(screen.getByRole('button', { name: 'Remove: DB-01' }))
     expect(onResourceRemove).toHaveBeenCalledWith('DB-01')
   })
+
+  it('renders an accessible checkbox selection without hiding excluded resources', async () => {
+    const user = userEvent.setup()
+    const onResourceSelectionChange = vi.fn()
+
+    render(
+      <ResourceSelectionCard
+        items={['DB-01', 'DB-02']}
+        selectedItems={['DB-01']}
+        emptyText="No virtual machines"
+        removeLabel="Remove"
+        ariaLabel="Recovery group virtual machines"
+        selectionSummary="1 of 2 VMs selected"
+        onResourceSelectionChange={onResourceSelectionChange}
+      />,
+    )
+
+    const selectedVm = screen.getByRole('checkbox', { name: 'DB-01' })
+    const excludedVm = screen.getByRole('checkbox', { name: 'DB-02' })
+
+    expect(selectedVm).toBeChecked()
+    expect(excludedVm).not.toBeChecked()
+    expect(screen.getByRole('group', { name: 'Recovery group virtual machines' })).toBeInTheDocument()
+    expect(screen.getByText('1 of 2 VMs selected')).toBeInTheDocument()
+
+    await user.click(excludedVm)
+    await user.click(selectedVm)
+
+    expect(onResourceSelectionChange).toHaveBeenNthCalledWith(1, 'DB-02', true)
+    expect(onResourceSelectionChange).toHaveBeenNthCalledWith(2, 'DB-01', false)
+  })
 })

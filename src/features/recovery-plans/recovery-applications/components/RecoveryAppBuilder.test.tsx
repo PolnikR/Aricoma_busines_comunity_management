@@ -52,20 +52,28 @@ vi.mock('../../recovery-groups/hooks/useRecoveryGroups', () => ({
 vi.mock('./TierCanvas', () => ({
   TierCanvas: ({
     tiers,
+    recoveryGroupVmOptions,
     onRecoveryGroupAdded,
     onRecoveryGroupRemoved,
+    onRecoveryVmSelectionChange,
   }: {
     tiers: Record<string, RecoveryTier>
+    recoveryGroupVmOptions?: Record<string, string[]>
     onRecoveryGroupAdded?: (tierId: string, groupId: string) => void
     onRecoveryGroupRemoved?: (tierId: string) => void
+    onRecoveryVmSelectionChange?: (tierId: string, vmName: string, selected: boolean) => void
   }) => (
     <div>
       <span>Database VMs: {tiers['database']?.recovery_group?.vms.length ?? 0}</span>
+      <span>Database options: {recoveryGroupVmOptions?.['database_group']?.length ?? 0}</span>
       <button type="button" onClick={() => { onRecoveryGroupAdded?.('database', 'database_group') }}>
         Add test group
       </button>
       <button type="button" onClick={() => { onRecoveryGroupRemoved?.('database') }}>
         Remove test group
+      </button>
+      <button type="button" onClick={() => { onRecoveryVmSelectionChange?.('database', 'DB-01', false) }}>
+        Exclude DB-01
       </button>
       <button
         type="button"
@@ -265,6 +273,26 @@ describe('RecoveryAppBuilder', () => {
       description: 'Database recovery group',
       vms: [{ name: 'DB-01' }, { name: 'DB-02' }],
     })
+  })
+
+  it('changes only the application VM snapshot when a group VM is excluded', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    render(<RecoveryAppBuilder onSave={onSave} />)
+
+    expect(screen.getByText('Database options: 2')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Assign all tiers' }))
+    await user.click(screen.getByRole('button', { name: 'Exclude DB-01' }))
+
+    fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
+    fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
+    fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
+    fireEvent.change(screen.getByLabelText('Platform provider *'), { target: { value: 'airflow-01' } })
+    await user.click(screen.getByRole('button', { name: 'Save Application' }))
+
+    const savedState = onSave.mock.calls[0]?.[0] as { tiers: Map<string, RecoveryTier> }
+    expect(savedState.tiers.get('database')?.recovery_group?.vms).toEqual([{ name: 'DB-02' }])
+    expect(recoveryGroupsQuery.current.groups[0]?.resources).toEqual(['DB-01', 'DB-02'])
   })
 
   it('removes an assigned recovery group and reports the builder as dirty', async () => {

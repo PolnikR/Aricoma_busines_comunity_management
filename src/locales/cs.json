@@ -669,6 +669,7 @@
   "recovery.tier.emptyRecoveryGroup": "Skupina obnovy neobsahuje žádné virtuální stroje",
   "recovery.tier.emptyRecoveryGroupAriaLabel": "Nepřiřazená skupina obnovy",
   "recovery.tier.removeRecoveryGroup": "Odstranit skupinu obnovy",
+  "recovery.tier.vmSelectionSummary": "{selected} z {total} VM vybrány",
 
   "recovery.tier.validation.nameRequired": "Název je povinný",
   "recovery.tier.validation.idRequired": "ID je povinné",

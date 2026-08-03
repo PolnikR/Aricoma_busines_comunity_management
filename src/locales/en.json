@@ -668,6 +668,7 @@
   "recovery.tier.emptyRecoveryGroup": "This recovery group contains no virtual machines",
   "recovery.tier.emptyRecoveryGroupAriaLabel": "Unassigned recovery group",
   "recovery.tier.removeRecoveryGroup": "Remove recovery group",
+  "recovery.tier.vmSelectionSummary": "{selected} of {total} VMs selected",
 
   "recovery.tier.validation.nameRequired": "Name is required",
   "recovery.tier.validation.idRequired": "ID is required",

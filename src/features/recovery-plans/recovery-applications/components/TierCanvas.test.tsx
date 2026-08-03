@@ -101,6 +101,23 @@ describe('TierCanvas', () => {
     expect(onRecoveryGroupRemoved).toHaveBeenCalledWith('database')
   })
 
+  it('reports the tier and VM whose application selection changed', async () => {
+    const user = userEvent.setup()
+    const onRecoveryVmSelectionChange = vi.fn()
+
+    render(
+      <TierCanvas
+        tiers={mockTiers}
+        recoveryGroupVmOptions={{ Database: ['DB-01', 'DB-02'] }}
+        onRecoveryVmSelectionChange={onRecoveryVmSelectionChange}
+      />,
+    )
+
+    await user.click(screen.getByRole('checkbox', { name: 'DB-02' }))
+
+    expect(onRecoveryVmSelectionChange).toHaveBeenCalledWith('database', 'DB-02', true)
+  })
+
   it('calls onTierAdd when new tier created', async () => {
     const user = userEvent.setup()
     const onTierAdd = vi.fn()
