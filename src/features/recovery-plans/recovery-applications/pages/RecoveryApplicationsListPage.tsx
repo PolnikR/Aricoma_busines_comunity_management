@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router'
 import { Button } from '@/shared/components/button/Button'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
-import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { DataTableSkeleton } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
@@ -43,27 +42,6 @@ export function RecoveryApplicationsListPage() {
     )
   }
 
-  if (error) {
-    return (
-      <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
-        <TableToolbar
-          eyebrow={t('pages.recovery.eyebrow')}
-          title={t('pages.recovery.title')}
-          description={t('pages.recovery.description')}
-        />
-        <div className="flex-1 p-6">
-          <FetchErrorAlert
-            title={t('pages.recovery.error.title')}
-            description={error instanceof Error ? error.message : t('pages.recovery.error.unknown')}
-            retryLabel={t('pages.recovery.error.retryButton')}
-            variant="full"
-            onRetry={() => { void refetch() }}
-          />
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
@@ -80,7 +58,7 @@ export function RecoveryApplicationsListPage() {
       />
 
       <div className="flex-1 flex flex-col gap-4 lg:min-h-0 overflow-hidden p-3">
-        {!applications || applications.length === 0 ? (
+        {!error && (!applications || applications.length === 0) ? (
           <EmptyState
             title={t('pages.recovery.empty.title')}
             description={t('pages.recovery.empty.description')}
@@ -91,11 +69,15 @@ export function RecoveryApplicationsListPage() {
             }
           />
         ) : (
-          <>
-            <div className="flex-1 flex flex-col min-h-0 bg-surface rounded-lg border border-border shadow-sm overflow-hidden">
-              <RecoveryApplicationsTable applications={applications} onEdit={handleEdit} />
-            </div>
-          </>
+          <div className="flex-1 flex flex-col min-h-0 bg-surface rounded-lg border border-border shadow-sm overflow-hidden">
+            <RecoveryApplicationsTable
+              applications={applications ?? []}
+              onEdit={handleEdit}
+              error={error instanceof Error ? error : null}
+              isRetrying={isFetching}
+              onRetry={() => { void refetch() }}
+            />
+          </div>
         )}
       </div>
     </div>

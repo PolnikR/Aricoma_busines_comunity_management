@@ -46,8 +46,16 @@ function mockFetch() {
 function renderTable() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   function ProvidersTableHarness() {
-    const { data = [], isLoading, error } = useProviders()
-    return <ProvidersCatalogueTable providers={data} isLoading={isLoading} error={error} />
+    const { data = [], isLoading, isFetching, error, refetch } = useProviders()
+    return (
+      <ProvidersCatalogueTable
+        providers={data}
+        isLoading={isLoading}
+        error={error}
+        isRetrying={isFetching}
+        onRetry={() => { void refetch() }}
+      />
+    )
   }
 
   return render(
@@ -74,6 +82,26 @@ describe('ProvidersCatalogueTable', () => {
 
     expect(screen.getByRole('status', { name: 'Loading providers' })).toHaveAttribute('aria-busy', 'true')
     expect(screen.queryByText('Loading providers…')).not.toBeInTheDocument()
+  })
+
+  it('keeps search and filters available without exposing provider API errors', () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProvidersCatalogueTable
+          providers={[]}
+          isLoading={false}
+          error={new Error('provider service internals')}
+          isRetrying={false}
+          onRetry={vi.fn()}
+        />
+      </QueryClientProvider>,
+    )
+
+    const alert = screen.getByRole('alert')
+    expect(screen.getByRole('searchbox')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument()
+    expect(alert).not.toHaveTextContent('provider service internals')
   })
 
   it('opens the detail drawer with actions when a row is clicked', async () => {

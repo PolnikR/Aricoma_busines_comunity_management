@@ -18,6 +18,26 @@ vi.mock('./CredentialCreateModal', () => ({
 }))
 
 describe('CredentialsTable', () => {
+  it('keeps the table toolbar available and retries when loading credentials fails', async () => {
+    const user = userEvent.setup()
+    const onRetry = vi.fn()
+    render(
+      <CredentialsTable
+        credentials={[]}
+        isLoading={false}
+        error={new Error('credential service internals')}
+        isRetrying={false}
+        onRetry={onRetry}
+      />,
+    )
+
+    expect(screen.getByRole('searchbox')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).not.toHaveTextContent('credential service internals')
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(onRetry).toHaveBeenCalledOnce()
+  })
+
   it('opens a shared detail drawer and starts editing from its action', async () => {
     const user = userEvent.setup()
     render(
@@ -30,6 +50,8 @@ describe('CredentialsTable', () => {
         }]}
         isLoading={false}
         error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
       />,
     )
 

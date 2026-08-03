@@ -22,12 +22,6 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 vi.mock('../hooks/useRecoveryApplications', () => ({
   useRecoveryApplications: () => query,
 }))
-vi.mock('../components/RecoveryApplicationsTable', () => ({
-  RecoveryApplicationsTable: ({ onEdit }: { onEdit: (id: string) => void }) => (
-    <button type="button" onClick={() => { onEdit('finance app.json') }}>Edit row</button>
-  ),
-}))
-
 beforeEach(() => {
   vi.clearAllMocks()
   query = {
@@ -46,7 +40,8 @@ describe('RecoveryApplicationsListPage', () => {
     expect(screen.getByRole('status', { name: 'Loading recovery applications...' })).toBeInTheDocument()
     query = { ...query, isLoading: false, error: new Error('offline') }
     view.rerender(<RecoveryApplicationsListPage />)
-    expect(screen.getByRole('alert')).toHaveTextContent('offline')
+    expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument()
+    expect(screen.getByRole('alert')).not.toHaveTextContent('offline')
     query = { ...query, error: null, data: [] }
     view.rerender(<RecoveryApplicationsListPage />)
     expect(screen.getByText('No recovery applications defined yet')).toBeInTheDocument()
@@ -74,7 +69,8 @@ describe('RecoveryApplicationsListPage', () => {
     render(<RecoveryApplicationsListPage />)
     await user.click(screen.getByRole('button', { name: 'Create Application' }))
     expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications/create')
-    await user.click(screen.getByRole('button', { name: 'Edit row' }))
+    await user.click(screen.getByText('Finance'))
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
     expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications/finance%20app/edit')
   })
 })

@@ -3,6 +3,7 @@ import { Button } from '@/shared/components/button/Button'
 import {
   DataTable,
   DataTablePagination,
+  DataTableRequestState,
   DataTableSkeleton,
   DataTableToolbar,
   DetailDrawer,
@@ -20,9 +21,11 @@ interface CredentialsTableProps {
   credentials: CredentialRecord[]
   isLoading: boolean
   error: Error | null
+  isRetrying: boolean
+  onRetry: () => void
 }
 
-export function CredentialsTable({ credentials, isLoading, error }: CredentialsTableProps) {
+export function CredentialsTable({ credentials, isLoading, error, isRetrying, onRetry }: CredentialsTableProps) {
   const { t } = useTranslation()
   const deleteCredential = useDeleteCredential()
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -68,16 +71,6 @@ export function CredentialsTable({ credentials, isLoading, error }: CredentialsT
     )
   }
 
-  if (error) {
-    return (
-      <div className="p-6">
-        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert">
-          {t('credentials.errors.load')} {error instanceof Error ? error.message : ''}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {deleteCredential.error ? (
@@ -93,24 +86,35 @@ export function CredentialsTable({ credentials, isLoading, error }: CredentialsT
         density={table.density}
         onDensityChange={table.setDensity}
       />
-      <DataTable
-        columns={columns}
-        rows={table.pageItems}
-        rowKey={credential => credential.id}
-        density={table.density}
-        minWidthClassName="min-w-190"
-        ariaLabel={t('credentials.table.ariaLabel')}
-        onRowClick={credential => { setSelectedId(credential.id) }}
-        selectedRowKey={selectedId}
-        emptyContent={rows.length > 0 ? t('credentials.noMatches') : t('credentials.empty')}
-      />
-      <DataTablePagination
-        page={table.page}
-        pageSize={table.pageSize}
-        total={table.total}
-        onPageChange={table.setPage}
-        onPageSizeChange={table.setPageSize}
-      />
+      <DataTableRequestState
+        error={error ? {
+          title: t('credentials.errors.load'),
+          retryLabel: t('buttons.retry'),
+          isRetrying,
+          onRetry,
+        } : null}
+      >
+        <DataTable
+          columns={columns}
+          rows={table.pageItems}
+          rowKey={credential => credential.id}
+          density={table.density}
+          minWidthClassName="min-w-190"
+          ariaLabel={t('credentials.table.ariaLabel')}
+          onRowClick={credential => { setSelectedId(credential.id) }}
+          selectedRowKey={selectedId}
+          emptyContent={rows.length > 0 ? t('credentials.noMatches') : t('credentials.empty')}
+        />
+      </DataTableRequestState>
+      {!error ? (
+        <DataTablePagination
+          page={table.page}
+          pageSize={table.pageSize}
+          total={table.total}
+          onPageChange={table.setPage}
+          onPageSizeChange={table.setPageSize}
+        />
+      ) : null}
       <DetailDrawer
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}

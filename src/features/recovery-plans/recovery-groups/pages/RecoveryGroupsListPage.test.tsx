@@ -41,4 +41,30 @@ describe('RecoveryGroupsListPage', () => {
     expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeEnabled()
     expect(await screen.findByRole('button', { name: 'Create Your First Recovery Group' })).toBeEnabled()
   })
+
+  it('keeps table filters available when loading recovery groups fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((input: string) => {
+      if (input === '/api/get_providers') {
+        return Promise.resolve(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+      }
+      if (input === '/api/get_recovery_groups') {
+        return Promise.reject(new Error('recovery group internals'))
+      }
+      return Promise.reject(new Error(`Unexpected request: ${input}`))
+    }))
+
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter>
+          <LanguageProvider>
+            <RecoveryGroupsListPage />
+          </LanguageProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument()
+    expect(screen.getByRole('alert')).not.toHaveTextContent('recovery group internals')
+  })
 })

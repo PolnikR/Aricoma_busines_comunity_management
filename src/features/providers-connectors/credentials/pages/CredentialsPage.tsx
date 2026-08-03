@@ -31,6 +31,8 @@ export function CredentialsPage() {
             credentials={data}
             isLoading={isLoading}
             error={error}
+            isRetrying={isFetching}
+            onRetry={() => { void refetch() }}
           />
         </div>
       </div>

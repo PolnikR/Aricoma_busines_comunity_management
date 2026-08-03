@@ -1,13 +1,10 @@
 import type { ReactNode } from 'react'
-import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
+import {
+  DataTableRequestState,
+  type DataTableRequestError,
+} from '@/shared/components/data-table'
 
-export interface ResourceInventoryPanelError {
-  title: string
-  description: string
-  retryLabel: string
-  isRetrying: boolean
-  onRetry: () => void
-}
+export type ResourceInventoryPanelError = DataTableRequestError
 
 interface ResourceInventoryPanelProps {
   ariaLabel: string
@@ -31,20 +28,9 @@ export function ResourceInventoryPanel({
     >
       {toolbar}
       <div className="custom-scrollbar flex-1 lg:min-h-0 lg:overflow-y-auto">
-        {error ? (
-          <div className="flex min-h-72 items-center justify-center p-4">
-            <div className="w-full max-w-3xl">
-              <FetchErrorAlert
-                title={error.title}
-                description={error.description}
-                retryLabel={error.retryLabel}
-                variant="full"
-                isRetrying={error.isRetrying}
-                onRetry={error.onRetry}
-              />
-            </div>
-          </div>
-        ) : children}
+        <DataTableRequestState error={error ?? null}>
+          {children}
+        </DataTableRequestState>
       </div>
       {!error && pagination}
     </section>

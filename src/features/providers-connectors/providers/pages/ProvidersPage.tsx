@@ -75,12 +75,16 @@ export function ProvidersPage() {
                 providers={platformProviders}
                 isLoading={platformProvidersLoading}
                 error={platformProvidersError instanceof Error ? platformProvidersError : null}
+                isRetrying={platformProvidersFetching}
+                onRetry={() => { void refetchPlatformProviders() }}
               />
             ) : (
               <ProvidersCatalogueTable
                 providers={providers}
                 isLoading={isLoading}
                 error={error instanceof Error ? error : null}
+                isRetrying={isFetching}
+                onRetry={() => { void refetch() }}
               />
             )}
           </div>

@@ -7,6 +7,7 @@ import {
   DataTable,
   DataTableToolbar,
   DataTablePagination,
+  DataTableRequestState,
   DetailDrawer,
   DetailRow,
   useTableState,
@@ -18,6 +19,9 @@ import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTy
 interface RecoveryApplicationsTableProps {
   applications: RecoveryApplicationListItem[]
   onEdit?: (id: string) => void
+  error?: Error | null
+  isRetrying?: boolean
+  onRetry?: () => void
 }
 
 interface RecoveryApplicationFilters {
@@ -131,7 +135,13 @@ function JsonViewerModal({ isOpen, app, onClose }: JsonViewerModalProps) {
   )
 }
 
-export function RecoveryApplicationsTable({ applications, onEdit }: RecoveryApplicationsTableProps) {
+export function RecoveryApplicationsTable({
+  applications,
+  onEdit,
+  error = null,
+  isRetrying = false,
+  onRetry = () => undefined,
+}: RecoveryApplicationsTableProps) {
   const { t } = useTranslation()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
@@ -261,25 +271,37 @@ export function RecoveryApplicationsTable({ applications, onEdit }: RecoveryAppl
         }
       />
 
-      <DataTable
-        columns={columns}
-        rows={table.pageItems}
-        rowKey={(app) => app.id}
-        density={table.density}
-        minWidthClassName="min-w-250"
-        ariaLabel={t('pages.recovery.tableAriaLabel')}
-        onRowClick={(app) => { setSelectedId(app.id) }}
-        selectedRowKey={selectedId}
-        emptyContent={applications.length > 0 ? t('messages.noResults') : t('pages.recovery.empty.noApplications')}
-      />
+      <DataTableRequestState
+        error={error ? {
+          title: t('pages.recovery.error.title'),
+          description: t('pages.recovery.error.unknown'),
+          retryLabel: t('pages.recovery.error.retryButton'),
+          isRetrying,
+          onRetry,
+        } : null}
+      >
+        <DataTable
+          columns={columns}
+          rows={table.pageItems}
+          rowKey={(app) => app.id}
+          density={table.density}
+          minWidthClassName="min-w-250"
+          ariaLabel={t('pages.recovery.tableAriaLabel')}
+          onRowClick={(app) => { setSelectedId(app.id) }}
+          selectedRowKey={selectedId}
+          emptyContent={applications.length > 0 ? t('messages.noResults') : t('pages.recovery.empty.noApplications')}
+        />
+      </DataTableRequestState>
 
-      <DataTablePagination
-        page={table.page}
-        pageSize={table.pageSize}
-        total={table.total}
-        onPageChange={table.setPage}
-        onPageSizeChange={table.setPageSize}
-      />
+      {!error ? (
+        <DataTablePagination
+          page={table.page}
+          pageSize={table.pageSize}
+          total={table.total}
+          onPageChange={table.setPage}
+          onPageSizeChange={table.setPageSize}
+        />
+      ) : null}
 
       <DetailDrawer
         open={selected !== null}

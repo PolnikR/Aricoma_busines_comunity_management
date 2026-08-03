@@ -5,6 +5,7 @@ import { Field, Select } from '@/shared/components/form/FormControls'
 import {
   DataTable,
   DataTablePagination,
+  DataTableRequestState,
   DataTableToolbar,
   DetailDrawer,
   DetailRow,
@@ -24,6 +25,9 @@ interface RecoveryGroupsTableProps {
   groups: RecoveryGroupListItem[]
   onEdit: (id: string) => void
   onDelete: (id: string) => void
+  error?: Error | null
+  isRetrying?: boolean
+  onRetry?: () => void
 }
 
 interface RecoveryGroupFilters {
@@ -36,7 +40,14 @@ const EMPTY_FILTERS: RecoveryGroupFilters = {
   resourceType: '',
 }
 
-export function RecoveryGroupsTable({ groups, onEdit, onDelete }: RecoveryGroupsTableProps) {
+export function RecoveryGroupsTable({
+  groups,
+  onEdit,
+  onDelete,
+  error = null,
+  isRetrying = false,
+  onRetry = () => undefined,
+}: RecoveryGroupsTableProps) {
   const { t } = useTranslation()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [filters, setFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)
@@ -168,25 +179,36 @@ export function RecoveryGroupsTable({ groups, onEdit, onDelete }: RecoveryGroups
         }
       />
 
-      <DataTable
-        columns={columns}
-        rows={table.pageItems}
-        rowKey={group => group.id}
-        density={table.density}
-        minWidthClassName="min-w-200"
-        ariaLabel={t('pages.recoveryGroups.tableAriaLabel')}
-        onRowClick={group => { setSelectedId(group.id) }}
-        selectedRowKey={selectedId}
-        emptyContent={t('pages.recoveryGroups.empty.noGroups')}
-      />
+      <DataTableRequestState
+        error={error ? {
+          title: t('pages.recoveryGroups.errors.load'),
+          retryLabel: t('buttons.retry'),
+          isRetrying,
+          onRetry,
+        } : null}
+      >
+        <DataTable
+          columns={columns}
+          rows={table.pageItems}
+          rowKey={group => group.id}
+          density={table.density}
+          minWidthClassName="min-w-200"
+          ariaLabel={t('pages.recoveryGroups.tableAriaLabel')}
+          onRowClick={group => { setSelectedId(group.id) }}
+          selectedRowKey={selectedId}
+          emptyContent={t('pages.recoveryGroups.empty.noGroups')}
+        />
+      </DataTableRequestState>
 
-      <DataTablePagination
-        page={table.page}
-        pageSize={table.pageSize}
-        total={table.total}
-        onPageChange={table.setPage}
-        onPageSizeChange={table.setPageSize}
-      />
+      {!error ? (
+        <DataTablePagination
+          page={table.page}
+          pageSize={table.pageSize}
+          total={table.total}
+          onPageChange={table.setPage}
+          onPageSizeChange={table.setPageSize}
+        />
+      ) : null}
 
       <DetailDrawer
         open={selected !== null}

@@ -7,6 +7,7 @@ import {
   DataTableSkeleton,
   DataTableToolbar,
   DataTablePagination,
+  DataTableRequestState,
   DetailDrawer,
   DetailRow,
   useTableState,
@@ -78,12 +79,16 @@ interface ProvidersCatalogueTableProps {
   providers: ProviderRecord[]
   isLoading: boolean
   error: Error | null
+  isRetrying: boolean
+  onRetry: () => void
 }
 
 export function ProvidersCatalogueTable({
   providers,
   isLoading,
   error,
+  isRetrying,
+  onRetry,
 }: ProvidersCatalogueTableProps) {
   const { t } = useTranslation()
   const columns = getColumns(t)
@@ -118,16 +123,6 @@ export function ProvidersCatalogueTable({
     )
   }
 
-  if (error) {
-    return (
-      <div className="p-6">
-        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700">
-          {t('providers.loadFailed')} {error instanceof Error ? error.message : ''}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="flex flex-col">
       <DataTableToolbar
@@ -151,25 +146,36 @@ export function ProvidersCatalogueTable({
         }
       />
 
-      <DataTable
-        columns={columns}
-        rows={table.pageItems}
-        rowKey={(provider) => provider.id}
-        density={table.density}
-        minWidthClassName="min-w-215"
-        ariaLabel={t('providers.tableLabel')}
-        onRowClick={(provider) => { setSelectedId(provider.id) }}
-        selectedRowKey={selectedId}
-        emptyContent={rows.length > 0 ? t('providers.noMatches') : t('providers.empty')}
-      />
+      <DataTableRequestState
+        error={error ? {
+          title: t('providers.loadFailed'),
+          retryLabel: t('buttons.retry'),
+          isRetrying,
+          onRetry,
+        } : null}
+      >
+        <DataTable
+          columns={columns}
+          rows={table.pageItems}
+          rowKey={(provider) => provider.id}
+          density={table.density}
+          minWidthClassName="min-w-215"
+          ariaLabel={t('providers.tableLabel')}
+          onRowClick={(provider) => { setSelectedId(provider.id) }}
+          selectedRowKey={selectedId}
+          emptyContent={rows.length > 0 ? t('providers.noMatches') : t('providers.empty')}
+        />
+      </DataTableRequestState>
 
-      <DataTablePagination
-        page={table.page}
-        pageSize={table.pageSize}
-        total={table.total}
-        onPageChange={table.setPage}
-        onPageSizeChange={table.setPageSize}
-      />
+      {!error ? (
+        <DataTablePagination
+          page={table.page}
+          pageSize={table.pageSize}
+          total={table.total}
+          onPageChange={table.setPage}
+          onPageSizeChange={table.setPageSize}
+        />
+      ) : null}
 
       <DetailDrawer
         open={selected !== null}
