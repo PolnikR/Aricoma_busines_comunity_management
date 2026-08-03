@@ -97,6 +97,7 @@
   "pages.virtualMachines.detail.noDisks": "No disks available",
   "pages.virtualMachines.detail.snapshots": "Snapshots",
   "pages.virtualMachines.detail.loadingSnapshots": "Loading snapshots...",
+  "pages.virtualMachines.detail.snapshotsTable": "Snapshot mappings table",
   "pages.virtualMachines.detail.noSnapshots": "No snapshot data available",
   "pages.virtualMachines.detail.thinProvisioned": "Thin",
   "pages.virtualMachines.detail.yes": "Yes",

@@ -97,6 +97,7 @@
   "pages.virtualMachines.detail.noDisks": "Nejsou k dispozici žádné disky",
   "pages.virtualMachines.detail.snapshots": "Snímky",
   "pages.virtualMachines.detail.loadingSnapshots": "Načítají se snímky...",
+  "pages.virtualMachines.detail.snapshotsTable": "Tabulka mapování snímků",
   "pages.virtualMachines.detail.noSnapshots": "Nejsou k dispozici žádná data snímků",
   "pages.virtualMachines.detail.thinProvisioned": "Tenké",
   "pages.virtualMachines.detail.yes": "Ano",

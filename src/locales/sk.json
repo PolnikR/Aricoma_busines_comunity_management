@@ -93,6 +93,7 @@
   "pages.virtualMachines.detail.noDisks": "Nie sú dostupné žiadne disky",
   "pages.virtualMachines.detail.snapshots": "Snímky",
   "pages.virtualMachines.detail.loadingSnapshots": "Načítavajú sa snímky...",
+  "pages.virtualMachines.detail.snapshotsTable": "Tabuľka mapovaní snímok",
   "pages.virtualMachines.detail.noSnapshots": "Nie sú dostupné údaje o snímkach",
   "pages.virtualMachines.detail.thinProvisioned": "Dynamické pridelenie",
   "pages.virtualMachines.detail.yes": "Áno",

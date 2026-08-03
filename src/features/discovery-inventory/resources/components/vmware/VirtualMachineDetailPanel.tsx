@@ -5,9 +5,17 @@ import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
 import { formatStartTime } from '@/shared/utils/dateFormat'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useVdisksByVm } from '../../hooks/useVdisksByVm'
+import type { StorageVolumeMapping } from '../../model/vdisksTypes'
 import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
-import { DetailDrawer, DetailRow, DetailStat } from '@/shared/components/data-table'
+import {
+  DataTable,
+  DataTableSkeleton,
+  DetailDrawer,
+  DetailRow,
+  DetailStat,
+  type ColumnDef,
+} from '@/shared/components/data-table'
 import { Tabs } from '@/shared/components/tabs/Tabs'
 import { createVmwareDetailFields } from '../../config/vmwareDetailFields'
 
@@ -64,6 +72,38 @@ export function VirtualMachineDetailPanel({
   const cell = 'px-3 py-2.5 text-[13px] text-text-secondary align-top'
   const num = `${cell} text-right tabular-nums`
   const overviewFields = createVmwareDetailFields(t)
+  const snapshotColumns: ColumnDef<StorageVolumeMapping>[] = [
+    {
+      id: 'source',
+      header: t('details.snapshotSource'),
+      cell: mapping => (
+        <span className="block max-w-45 truncate" title={mapping.sourceVdiskName}>
+          {mapping.sourceVdiskName}
+        </span>
+      ),
+    },
+    {
+      id: 'target',
+      header: t('details.snapshotTarget'),
+      cell: mapping => (
+        <span className="block max-w-45 truncate" title={mapping.targetVdiskName}>
+          {mapping.targetVdiskName}
+        </span>
+      ),
+    },
+    { id: 'status', header: t('details.snapshotStatus'), cell: mapping => mapping.status },
+    {
+      id: 'progress',
+      header: t('details.snapshotProgress'),
+      cell: mapping => `${mapping.cleanProgress}%`,
+      align: 'right',
+    },
+    {
+      id: 'created',
+      header: t('details.snapshotCreated'),
+      cell: mapping => formatStartTime(mapping.startTime),
+    },
+  ]
 
   return (
     <DetailDrawer
@@ -186,7 +226,14 @@ export function VirtualMachineDetailPanel({
               {selectedTab === 'snapshots' && (
                 <div className="flex flex-col" key={`snapshots-${virtualMachine.id}`}>
                   {vdisksLoading ? (
-                    <p className="p-4 text-[13px] text-text-subtle">{t('pages.virtualMachines.detail.loadingSnapshots')}</p>
+                    <DataTableSkeleton
+                      columnCount={5}
+                      rowCount={4}
+                      ariaLabel={t('pages.virtualMachines.detail.loadingSnapshots')}
+                      showToolbar={false}
+                      showPagination={false}
+                      className="rounded-none border-0 shadow-none"
+                    />
                   ) : (
                     <>
                       <div className="border-b border-border px-4 py-3">
@@ -199,40 +246,16 @@ export function VirtualMachineDetailPanel({
                           </span>
                         </div>
                       </div>
-                      <div className="custom-scrollbar overflow-x-auto cursor-grab active:cursor-grabbing">
-                        <Table className="min-w-full">
-                          <TableHeader className="sticky top-0 border-b border-border bg-surface-subtle">
-                            <TableRow>
-                              <TableCell isHeader className={headerCell}>{t('details.snapshotSource')}</TableCell>
-                              <TableCell isHeader className={headerCell}>{t('details.snapshotTarget')}</TableCell>
-                              <TableCell isHeader className={headerCell}>{t('details.snapshotStatus')}</TableCell>
-                              <TableCell isHeader className={headerCell}>{t('details.snapshotProgress')}</TableCell>
-                              <TableCell isHeader className={headerCell}>{t('details.snapshotCreated')}</TableCell>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody className="divide-y divide-border">
-                            {snapshotMappings.length > 0 ? snapshotMappings.map((mapping) => (
-                              <TableRow key={mapping.id} className="bg-surface hover:bg-accent-soft">
-                                <TableCell className={cell}>
-                                  <span className="block max-w-45 truncate" title={mapping.sourceVdiskName}>{mapping.sourceVdiskName}</span>
-                                </TableCell>
-                                <TableCell className={cell}>
-                                  <span className="block max-w-45 truncate" title={mapping.targetVdiskName}>{mapping.targetVdiskName}</span>
-                                </TableCell>
-                                <TableCell className={cell}>{mapping.status}</TableCell>
-                                <TableCell className={num}>{mapping.cleanProgress}%</TableCell>
-                                <TableCell className={cell}>{formatStartTime(mapping.startTime)}</TableCell>
-                              </TableRow>
-                            )) : (
-                              <TableRow>
-                                <TableCell colSpan={5} className="p-4 text-center text-[13px] text-text-subtle">
-                                  {t('pages.virtualMachines.detail.noSnapshots')}
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
-                      </div>
+                      <DataTable<StorageVolumeMapping>
+                        columns={snapshotColumns}
+                        rows={snapshotMappings}
+                        rowKey={(mapping, index) => `${mapping.id}-${String(index)}`}
+                        minWidthClassName="min-w-180"
+                        emptyContent={t('pages.virtualMachines.detail.noSnapshots')}
+                        ariaLabel={t('pages.virtualMachines.detail.snapshotsTable')}
+                        headerCellClassName={headerCell}
+                        cellClassName={cell}
+                      />
                     </>
                   )}
                 </div>

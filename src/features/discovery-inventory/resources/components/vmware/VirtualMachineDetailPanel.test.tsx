@@ -4,10 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
 import type { VirtualMachine } from '../../types'
+import type { VmStorageVolumes } from '../../model/vdisksTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-const useVdisksByVmMock = vi.hoisted(() => vi.fn(() => ({ data: undefined, isLoading: false })))
+const useVdisksByVmMock = vi.hoisted(() => vi.fn<() => {
+  data: VmStorageVolumes | undefined
+  isLoading: boolean
+}>(() => ({ data: undefined, isLoading: false })))
 vi.mock('../../hooks/useVdisksByVm', () => ({ useVdisksByVm: useVdisksByVmMock }))
 
 const vmwareProvider = {
@@ -80,7 +84,8 @@ function renderWithQueryClient(element: React.ReactElement) {
 describe('VirtualMachineDetailPanel resize', () => {
   afterEach(() => {
     cleanup()
-    useVdisksByVmMock.mockClear()
+    useVdisksByVmMock.mockReset()
+    useVdisksByVmMock.mockReturnValue({ data: undefined, isLoading: false })
   })
 
   it('loads related volumes with the VM and selected FlashSystem provider', () => {
@@ -119,6 +124,84 @@ describe('VirtualMachineDetailPanel resize', () => {
       undefined,
     )
     expect(screen.getByRole('table')).toBeInTheDocument()
+  })
+
+  it('shows the shared table skeleton while snapshots are loading', async () => {
+    const user = userEvent.setup()
+    useVdisksByVmMock.mockReturnValue({ data: undefined, isLoading: true })
+
+    renderWithQueryClient(
+      <VirtualMachineDetailPanel
+        virtualMachine={vm}
+        providers={[vmwareProvider, flashProvider]}
+        open
+        onClose={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('tab', { name: 'Snapshots' }))
+
+    expect(screen.getByRole('status', { name: 'Loading snapshots...' })).toBeInTheDocument()
+  })
+
+  it('renders snapshot mappings in an accessible shared data table', async () => {
+    const user = userEvent.setup()
+    useVdisksByVmMock.mockReturnValue({
+      isLoading: false,
+      data: {
+        vmName: 'app-server-01',
+        countVm: 1,
+        countIbm: 1,
+        volumes: [{
+          naaId: 'naa.1',
+          id: 'volume-1',
+          name: 'volume-1',
+          volumeName: 'volume-1',
+          capacity: '3.00TB',
+          status: 'online',
+          pool: 'Pool0',
+          type: 'striped',
+          protocol: 'scsi',
+          vdiskUid: 'uid-1',
+          copyCount: '1',
+          fcMapCount: '1',
+          snapshots: {
+            hasSnapshots: true,
+            snapshotCount: 1,
+            isSnapshot: false,
+            sourceMappings: [{
+              id: 'mapping-1',
+              name: 'mapping-1',
+              sourceVdiskId: 'volume-1',
+              sourceVdiskName: 'source-volume',
+              targetVdiskId: 'target-1',
+              targetVdiskName: 'target-volume',
+              status: 'copied',
+              progress: '100',
+              copyRate: '0',
+              cleanProgress: '100',
+              startTime: '260724200509',
+            }],
+            targetMappings: [],
+          },
+        }],
+      },
+    })
+
+    renderWithQueryClient(
+      <VirtualMachineDetailPanel
+        virtualMachine={vm}
+        providers={[vmwareProvider, flashProvider]}
+        open
+        onClose={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('tab', { name: 'Snapshots' }))
+
+    expect(screen.getByLabelText('Snapshot mappings table')).toBeInTheDocument()
+    expect(screen.getByText('source-volume')).toBeInTheDocument()
+    expect(screen.getByText('target-volume')).toBeInTheDocument()
   })
 
   it('resizes the panel via the drag handle and keyboard', () => {
