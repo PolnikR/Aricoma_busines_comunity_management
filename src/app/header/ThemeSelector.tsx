@@ -12,7 +12,7 @@ export function ThemeSelector() {
       <legend className="mb-2 text-xs font-medium text-text-muted">
         {t('theme.label')}
       </legend>
-      <div className="grid grid-cols-3 gap-1 rounded-lg bg-surface-muted p-1" role="group">
+      <div className="grid grid-cols-3 gap-1 rounded-lg bg-surface-muted p-1">
         {THEME_OPTIONS.map((option) => {
           const selected = theme === option
 
