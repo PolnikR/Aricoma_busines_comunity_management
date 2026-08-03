@@ -16,6 +16,8 @@ const nodeKindOrder: Record<InfrastructureTopologyNodeKind, number> = {
   host: 1,
   virtualMachine: 2,
   datastore: 3,
+  powerSystem: 4,
+  powerPartition: 5,
 }
 
 function isKnownTopologyValue(value: string) {

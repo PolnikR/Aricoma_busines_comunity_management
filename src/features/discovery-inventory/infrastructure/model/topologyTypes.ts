@@ -3,6 +3,8 @@ export type InfrastructureTopologyNodeKind =
   | 'host'
   | 'virtualMachine'
   | 'datastore'
+  | 'powerSystem'
+  | 'powerPartition'
 
 export type InfrastructureTopologyEdgeKind = 'contains' | 'runs' | 'uses'
 
@@ -41,11 +43,33 @@ export interface DatastoreTopologyNode extends InfrastructureTopologyNodeBase {
   allocatedCapacityGb: number
 }
 
+export interface PowerSystemTopologyNode extends InfrastructureTopologyNodeBase {
+  kind: 'powerSystem'
+  partitionCount: number
+  lparCount: number
+  viosCount: number
+}
+
+export interface PowerPartitionTopologyNode extends InfrastructureTopologyNodeBase {
+  kind: 'powerPartition'
+  partitionId: string
+  partitionKind: 'LPAR' | 'VIOS'
+  partitionState: string
+  systemName: string
+  operatingSystemType: string
+  deviceName: string
+  bootMode: string
+  volumeName: string
+  volumeState: string
+}
+
 export type InfrastructureTopologyNode =
   | ClusterTopologyNode
   | HostTopologyNode
   | VirtualMachineTopologyNode
   | DatastoreTopologyNode
+  | PowerSystemTopologyNode
+  | PowerPartitionTopologyNode
 
 export interface InfrastructureTopologyEdge {
   id: string
