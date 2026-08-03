@@ -38,7 +38,7 @@ const RecoveryGroupsListPage = lazy(async () => {
 })
 
 const SnapshotPoliciesPage = lazy(async () => {
-  const page = await import('@/features/snapshot-policies/pages/SnapshotPoliciesPage')
+  const page = await import('@/features/recovery-plans/snapshot-policies/pages/SnapshotPoliciesPage')
   return { default: page.SnapshotPoliciesPage }
 })
 
