@@ -32,6 +32,7 @@ const navItems: NavItem[] = [
     icon: <SettingsIcon />,
     subItems: [
       { name: 'Overview', path: routes.platformAdministration },
+      { name: 'Platform Providers', path: routes.platformProviders },
       { name: 'Configuration', path: routes.platformConfiguration },
       { name: 'Identity & Access', path: routes.platformIdentityAccess },
       { name: 'Secrets', path: routes.platformSecrets },
@@ -111,6 +112,7 @@ const navItems: NavItem[] = [
 const navKeyMap: Record<string, string> = {
   'Platform Administration': 'nav.administration',
   'Overview': 'nav.administration.overview',
+  'Platform Providers': 'nav.administration.platformProviders',
   'Configuration': 'nav.administration.configuration',
   'Identity & Access': 'nav.administration.identity',
   'Secrets': 'nav.administration.secrets',

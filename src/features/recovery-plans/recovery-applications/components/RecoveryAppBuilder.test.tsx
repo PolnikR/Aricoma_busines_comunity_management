@@ -43,7 +43,7 @@ const recoveryGroupsQuery = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('@/features/providers-connectors/providers/hooks/usePlatformProviders', () => ({
+vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
   usePlatformProviders: () => platformProvidersQuery.current,
 }))
 vi.mock('../../recovery-groups/hooks/useRecoveryGroups', () => ({

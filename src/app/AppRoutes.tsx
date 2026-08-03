@@ -67,6 +67,11 @@ const CredentialsPage = lazy(async () => {
   return { default: page.CredentialsPage }
 })
 
+const PlatformProvidersPage = lazy(async () => {
+  const page = await import('@/features/platform-administration/platform-providers/pages/PlatformProvidersPage')
+  return { default: page.PlatformProvidersPage }
+})
+
 function toRoutePath(path: string) {
   return path.replace(/^\//, '')
 }
@@ -120,7 +125,15 @@ export function AppRoutes() {
     <Route element={<AppShell />}>
         <Route index element={<Navigate to={routes.resources} replace />} />
         <Route path="platform-administration" element={<Navigate to={routes.platformAdministration} replace />} />
-        {renderModulePageRoutes(platformAdministrationPages)}
+        {renderModulePageRoutes(platformAdministrationPages.filter(page => page.path !== routes.platformProviders))}
+        <Route
+          path={toRoutePath(routes.platformProviders)}
+          element={(
+            <Suspense fallback={<RouteLoadingSkeleton />}>
+              <PlatformProvidersPage />
+            </Suspense>
+          )}
+        />
         <Route path="providers-connectors" element={<Navigate to={routes.providersConnectors} replace />} />
         {renderProvidersConnectorsRoutes(providersConnectorsPages)}
         <Route

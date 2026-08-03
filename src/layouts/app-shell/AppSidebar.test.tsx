@@ -61,6 +61,22 @@ describe('AppSidebar', () => {
     )
   })
 
+  it('links Platform Providers from Platform Administration', async () => {
+    render(
+      <MemoryRouter initialEntries={['/platform-administration/platform-providers']}>
+        <LanguageProvider>
+          <SidebarProvider>
+            <AppSidebar />
+          </SidebarProvider>
+        </LanguageProvider>
+      </MemoryRouter>,
+    )
+
+    const link = await screen.findByRole('link', { name: 'Platform Providers' })
+    expect(link).toHaveAttribute('href', '/platform-administration/platform-providers')
+    expect(link).toHaveClass('bg-accent-soft', 'text-accent')
+  })
+
   it('highlights the owning submenu item on a nested create route', async () => {
     render(
       <MemoryRouter initialEntries={['/recovery-plans/recovery-applications/create']}>

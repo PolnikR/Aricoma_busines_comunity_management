@@ -19,6 +19,7 @@ describe('createAppRouter', () => {
     expect(paths).toContain(':id/edit')
     expect(paths).toContain('discovery-inventory/resources')
     expect(paths).toContain('discovery-inventory/virtual-machines')
+    expect(paths).toContain('platform-administration/platform-providers')
 
     router.dispose()
   })

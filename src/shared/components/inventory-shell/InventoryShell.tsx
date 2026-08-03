@@ -5,7 +5,7 @@ interface InventoryShellProps {
   metrics?: ReactNode
   inventoryTitle: string
   inventoryDescription: string
-  tabs: ReactNode
+  tabs?: ReactNode
   notice?: ReactNode
   children: ReactNode
 }

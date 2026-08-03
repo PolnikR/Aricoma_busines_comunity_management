@@ -1,6 +1,7 @@
 export const routes = {
   home: '/',
   platformAdministration: '/platform-administration/overview',
+  platformProviders: '/platform-administration/platform-providers',
   platformConfiguration: '/platform-administration/configuration',
   platformIdentityAccess: '/platform-administration/identity-access',
   platformSecrets: '/platform-administration/secrets',

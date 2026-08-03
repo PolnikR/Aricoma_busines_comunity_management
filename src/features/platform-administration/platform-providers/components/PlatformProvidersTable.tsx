@@ -100,7 +100,7 @@ export function PlatformProvidersTable({
     return (
       <DataTableSkeleton
         columnCount={6}
-        ariaLabel={t('providers.platform.loading')}
+        ariaLabel={t('platformProviders.loading')}
         className="flex-1 rounded-none border-0 shadow-none lg:min-h-0"
       />
     )
@@ -111,15 +111,15 @@ export function PlatformProvidersTable({
       <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
-        searchPlaceholder={t('providers.platform.searchPlaceholder')}
-        searchLabel={t('providers.platform.searchLabel')}
+        searchPlaceholder={t('platformProviders.searchPlaceholder')}
+        searchLabel={t('platformProviders.searchLabel')}
         density={table.density}
         onDensityChange={table.setDensity}
       />
 
       <DataTableRequestState
         error={error ? {
-          title: t('providers.platform.loadFailed'),
+          title: t('platformProviders.loadFailed'),
           retryLabel: t('buttons.retry'),
           isRetrying,
           onRetry,
@@ -131,10 +131,10 @@ export function PlatformProvidersTable({
           rowKey={(provider) => provider.id}
           density={table.density}
           minWidthClassName="min-w-245"
-          ariaLabel={t('providers.platform.tableLabel')}
+          ariaLabel={t('platformProviders.tableLabel')}
           onRowClick={(provider) => { setSelectedId(provider.id) }}
           selectedRowKey={selectedId}
-          emptyContent={rows.length > 0 ? t('providers.platform.noMatches') : t('providers.platform.empty')}
+          emptyContent={rows.length > 0 ? t('platformProviders.noMatches') : t('platformProviders.empty')}
         />
       </DataTableRequestState>
 
@@ -197,7 +197,7 @@ export function PlatformProvidersTable({
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        title={t('providers.platform.dialogs.delete')}
+        title={t('platformProviders.dialogs.delete')}
         message={t('dialogs.deleteProviderMessage').replace('{name}', deleteTarget?.name ?? '')}
         confirmLabel={t('buttons.delete')}
         cancelLabel={t('buttons.cancel')}

@@ -4,7 +4,7 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useCredentials } from '../../credentials/hooks/useCredentials'
+import { useCredentials } from '@/features/providers-connectors/credentials/hooks/useCredentials'
 import { useUpsertPlatformProvider } from '../hooks/useUpsertPlatformProvider'
 import type {
   PlatformProviderRecord,
@@ -114,7 +114,7 @@ export function PlatformProvidersModal({
     const port = Number(formData.port)
     if (!formData.id.trim()) nextErrors.id = t('forms.idRequired')
     else if (!isEdit && existingProviders.some(entry => entry.id === formData.id.trim())) {
-      nextErrors.id = t('providers.platform.validation.idExists')
+      nextErrors.id = t('platformProviders.validation.idExists')
     }
     if (!formData.name.trim()) nextErrors.name = t('forms.nameRequired')
     if (!formData.description.trim()) nextErrors.description = t('forms.descriptionRequired')
@@ -147,7 +147,7 @@ export function PlatformProvidersModal({
         onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
         onError: (error: unknown) => {
           const detail = error instanceof Error ? error.message : ''
-          setErrorMessage(detail ? `${t('providers.platform.submitFailed')}: ${detail}` : t('providers.platform.submitFailed'))
+          setErrorMessage(detail ? `${t('platformProviders.submitFailed')}: ${detail}` : t('platformProviders.submitFailed'))
         },
       },
     )
@@ -159,7 +159,7 @@ export function PlatformProvidersModal({
         open={open}
         onClose={requestClose}
         closeOnBackdrop={false}
-        title={t(isEdit ? 'providers.platform.modal.editTitle' : 'providers.platform.modal.createTitle')}
+        title={t(isEdit ? 'platformProviders.modal.editTitle' : 'platformProviders.modal.createTitle')}
         footer={(
           <>
             <Button onClick={requestClose} disabled={upsert.isPending} size="sm" variant="outline" className="flex-1">
@@ -168,7 +168,7 @@ export function PlatformProvidersModal({
             <Button onClick={handleSubmit} disabled={upsert.isPending} size="sm" className="flex-1">
               {upsert.isPending
                 ? t(isEdit ? 'messages.saving' : 'messages.creating')
-                : t(isEdit ? 'providers.platform.modal.editTitle' : 'providers.platform.modal.createTitle')}
+                : t(isEdit ? 'platformProviders.modal.editTitle' : 'platformProviders.modal.createTitle')}
             </Button>
           </>
         )}

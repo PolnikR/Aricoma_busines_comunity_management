@@ -2,7 +2,7 @@ import type { ChangeEvent } from 'react'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PLATFORM_PROVIDER_TYPES } from '../model/platformProviderTypes'
-import type { CredentialRecord } from '../../credentials/model/credentialTypes'
+import type { CredentialRecord } from '@/features/providers-connectors/credentials/model/credentialTypes'
 
 export interface PlatformProviderFormData {
   id: string

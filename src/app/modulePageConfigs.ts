@@ -21,6 +21,15 @@ export const platformAdministrationPages: ModulePageConfig[] = [
     workflowItems: ['Health summary', 'Open actions', 'Recent changes'],
   },
   {
+    path: routes.platformProviders,
+    eyebrow: 'Platform Administration',
+    title: 'Platform providers',
+    description: 'Administration of orchestration and platform-level provider connections.',
+    excelSource: 'Platform provider registry',
+    apiBoundary: 'GET /api/get_platform_providers',
+    workflowItems: ['Platform provider list', 'Platform provider detail', 'Lifecycle actions'],
+  },
+  {
     path: routes.platformConfiguration,
     eyebrow: 'Platform Administration',
     title: 'Configuration',

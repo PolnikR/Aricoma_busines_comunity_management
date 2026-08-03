@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
-import type { PlatformProviderRecord } from '@/features/providers-connectors/providers/model/platformProviderTypes'
+import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
 import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
