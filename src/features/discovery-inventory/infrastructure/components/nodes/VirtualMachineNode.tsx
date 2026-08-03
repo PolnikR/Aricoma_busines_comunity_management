@@ -34,7 +34,7 @@ export const VirtualMachineNode = memo(function VirtualMachineNode({
         subtitle={data.hostName}
         icon={<CpuIcon className="size-5" />}
         iconClassName={poweredOn
-          ? 'bg-success-50 text-success-700'
+          ? 'bg-success-50 text-success-700 dark:bg-success-500/15 dark:text-success-400'
           : 'bg-surface-muted text-text-muted'}
         selected={selected}
         showTargetHandle

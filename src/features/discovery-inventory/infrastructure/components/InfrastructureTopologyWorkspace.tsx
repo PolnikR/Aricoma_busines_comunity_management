@@ -165,7 +165,7 @@ export function InfrastructureTopologyWorkspace({
         ) : null}
 
         {visibleLayoutError ? (
-          <div className="absolute inset-x-4 top-4 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700" role="alert">
+          <div className="absolute inset-x-4 top-4 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-800 dark:bg-error-500/10 dark:text-error-300" role="alert">
             {visibleLayoutError}
           </div>
         ) : null}

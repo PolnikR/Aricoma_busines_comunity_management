@@ -35,7 +35,7 @@ export const HostNode = memo(function HostNode({
         title={data.label}
         subtitle={clusterLabel}
         icon={<ServerIcon className="size-5" />}
-        iconClassName="bg-blue-light-50 text-blue-light-700"
+        iconClassName="bg-blue-light-50 text-blue-light-700 dark:bg-blue-light-500/15 dark:text-blue-light-400"
         selected={selected}
         showTargetHandle
         showSourceHandle
