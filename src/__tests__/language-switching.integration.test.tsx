@@ -1,9 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, it, expect } from 'vitest'
+import { beforeEach, describe, it, expect, vi } from 'vitest'
 import { BrowserRouter } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { LanguageProvider } from '@/contexts/LanguageContext'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import { UserMenu } from '@/app/header/UserMenu'
 
 const queryClient = new QueryClient({
@@ -17,7 +18,7 @@ function TestApp({ children }: { children: React.ReactNode }) {
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <LanguageProvider>
-          {children}
+          <ThemeProvider>{children}</ThemeProvider>
         </LanguageProvider>
       </QueryClientProvider>
     </BrowserRouter>
@@ -27,6 +28,19 @@ function TestApp({ children }: { children: React.ReactNode }) {
 describe('Language Switching Integration', () => {
   beforeEach(() => {
     localStorage.setItem('app-language', 'en')
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({
+        matches: false,
+        media: '(prefers-color-scheme: dark)',
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    )
   })
 
   it('changes language in header when UserMenu language button is clicked', async () => {
