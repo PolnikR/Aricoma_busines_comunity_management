@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { createRef } from 'react'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { LanguageProvider } from '@/contexts/LanguageContext'
+import { LanguageProvider } from '@/contexts/LanguageProvider'
 import { VMNodeTooltip, type VMNodeTooltipProps } from './VMNodeTooltip'
 
 describe('VMNodeTooltip', () => {

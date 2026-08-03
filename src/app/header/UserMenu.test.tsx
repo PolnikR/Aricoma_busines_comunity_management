@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, it, expect, vi } from 'vitest'
 import { UserMenu } from './UserMenu'
-import { LanguageProvider } from '@/contexts/LanguageContext'
-import { ThemeProvider } from '@/contexts/ThemeContext'
+import { LanguageProvider } from '@/contexts/LanguageProvider'
+import { ThemeProvider } from '@/contexts/ThemeProvider'
 
 function TestProviders({ children }: { children: React.ReactNode }) {
   return (

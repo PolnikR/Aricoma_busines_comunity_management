@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { LanguageProvider } from '@/contexts/LanguageContext'
+import { LanguageProvider } from '@/contexts/LanguageProvider'
 import { RecoveryGroupsListPage } from './RecoveryGroupsListPage'
 
 describe('RecoveryGroupsListPage', () => {

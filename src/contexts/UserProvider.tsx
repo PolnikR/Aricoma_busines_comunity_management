@@ -1,18 +1,7 @@
 import type { ReactNode } from 'react'
-import { createContext, useContext, useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { setCurrentUser } from '@/shared/api/currentUser'
-
-export interface User {
-  username: string
-  role: string
-}
-
-interface UserContextType {
-  user: User
-  setUser: (user: User) => void
-}
-
-const UserContext = createContext<UserContextType | undefined>(undefined)
+import { UserContext, type User } from './UserContext'
 
 // No auth yet: a single hardcoded admin user. When auth lands, seed this from
 // the authenticated session instead — nothing else in the app changes.
@@ -35,15 +24,4 @@ export function UserProvider({ children }: UserProviderProps) {
       {children}
     </UserContext.Provider>
   )
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useUserContext() {
-  const context = useContext(UserContext)
-
-  if (context === undefined) {
-    throw new Error('useUserContext must be used within UserProvider')
-  }
-
-  return context
 }

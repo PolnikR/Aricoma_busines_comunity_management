@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { LanguageProvider } from '@/contexts/LanguageContext'
-import { ThemeProvider } from '@/contexts/ThemeContext'
+import { LanguageProvider } from '@/contexts/LanguageProvider'
+import { ThemeProvider } from '@/contexts/ThemeProvider'
 import { ThemeSelector } from './ThemeSelector'
 
 function renderThemeSelector() {

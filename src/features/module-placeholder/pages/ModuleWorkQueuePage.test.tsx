@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { LanguageProvider } from '@/contexts/LanguageContext'
+import { LanguageProvider } from '@/contexts/LanguageProvider'
 import { ModuleWorkQueuePage } from './ModuleWorkQueuePage'
 
 describe('ModuleWorkQueuePage', () => {

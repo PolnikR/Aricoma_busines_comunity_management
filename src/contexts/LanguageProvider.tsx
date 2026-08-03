@@ -1,15 +1,6 @@
 import type { ReactNode } from 'react'
-import { createContext, useContext, useState, useEffect } from 'react'
-
-export type Language = 'en' | 'sk' | 'cs'
-
-interface LanguageContextType {
-  language: Language
-  setLanguage: (lang: Language) => void
-  translations: Record<string, string>
-}
-
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
+import { useEffect, useState } from 'react'
+import { LanguageContext, type Language } from './LanguageContext'
 
 const SUPPORTED_LANGUAGES: Language[] = ['en', 'sk', 'cs']
 const STORAGE_KEY = 'app-language'
@@ -25,7 +16,9 @@ function getBrowserLanguage(): Language {
 }
 
 async function loadTranslations(language: Language): Promise<Record<string, string>> {
-  const module = (await import(`../locales/${language}.json`)) as { default: Record<string, string> }
+  const module = (await import(`../locales/${language}.json`)) as {
+    default: Record<string, string>
+  }
 
   return module.default
 }
@@ -52,9 +45,9 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     let cancelled = false
 
     void loadTranslations(language)
-      .then((translations) => {
+      .then((nextTranslations) => {
         if (!cancelled) {
-          setTranslations(translations)
+          setTranslations(nextTranslations)
         }
       })
       .catch((error: unknown) => {
@@ -69,9 +62,9 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     }
   }, [language])
 
-  const setLanguage = (lang: Language) => {
-    setLanguageState(lang)
-    localStorage.setItem(STORAGE_KEY, lang)
+  const setLanguage = (nextLanguage: Language) => {
+    setLanguageState(nextLanguage)
+    localStorage.setItem(STORAGE_KEY, nextLanguage)
   }
 
   return (
@@ -79,15 +72,4 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       {children}
     </LanguageContext.Provider>
   )
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useLanguageContext() {
-  const context = useContext(LanguageContext)
-
-  if (context === undefined) {
-    throw new Error('useLanguageContext must be used within LanguageProvider')
-  }
-
-  return context
 }

@@ -1,14 +1,10 @@
 import type { ReactNode } from 'react'
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-
-export type ThemePreference = 'light' | 'dark' | 'system'
-export type ResolvedTheme = Exclude<ThemePreference, 'system'>
-
-interface ThemeContextValue {
-  theme: ThemePreference
-  resolvedTheme: ResolvedTheme
-  setTheme: (theme: ThemePreference) => void
-}
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  ThemeContext,
+  type ResolvedTheme,
+  type ThemePreference,
+} from './ThemeContext'
 
 interface ThemeProviderProps {
   children: ReactNode
@@ -16,7 +12,6 @@ interface ThemeProviderProps {
 
 const THEME_STORAGE_KEY = 'app-theme'
 const DARK_MODE_QUERY = '(prefers-color-scheme: dark)'
-const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
 function isThemePreference(value: string | null): value is Exclude<ThemePreference, 'system'> {
   return value === 'light' || value === 'dark'
@@ -84,15 +79,4 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   )
 
   return <ThemeContext value={value}>{children}</ThemeContext>
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useTheme() {
-  const context = useContext(ThemeContext)
-
-  if (context === undefined) {
-    throw new Error('useTheme must be used within ThemeProvider')
-  }
-
-  return context
 }

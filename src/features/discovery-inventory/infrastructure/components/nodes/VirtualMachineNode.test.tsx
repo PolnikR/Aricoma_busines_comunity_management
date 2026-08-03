@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import type { NodeProps } from '@xyflow/react'
 import { ReactFlowProvider } from '@xyflow/react'
-import { LanguageProvider } from '@/contexts/LanguageContext'
+import { LanguageProvider } from '@/contexts/LanguageProvider'
 import { VirtualMachineNode } from './VirtualMachineNode'
 import type { VirtualMachineTopologyNode } from '../../model/topologyTypes'
 

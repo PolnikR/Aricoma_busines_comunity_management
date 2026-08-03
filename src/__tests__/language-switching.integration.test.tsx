@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, it, expect, vi } from 'vitest'
 import { BrowserRouter } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { LanguageProvider } from '@/contexts/LanguageContext'
-import { ThemeProvider } from '@/contexts/ThemeContext'
+import { LanguageProvider } from '@/contexts/LanguageProvider'
+import { ThemeProvider } from '@/contexts/ThemeProvider'
 import { UserMenu } from '@/app/header/UserMenu'
 
 const queryClient = new QueryClient({

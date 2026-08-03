@@ -1,9 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './app/App'
-import { LanguageProvider } from '@/contexts/LanguageContext'
-import { ThemeProvider } from '@/contexts/ThemeContext'
-import { UserProvider } from '@/contexts/UserContext'
+import { LanguageProvider } from '@/contexts/LanguageProvider'
+import { ThemeProvider } from '@/contexts/ThemeProvider'
+import { UserProvider } from '@/contexts/UserProvider'
 import './index.css'
 
 function startApp() {
