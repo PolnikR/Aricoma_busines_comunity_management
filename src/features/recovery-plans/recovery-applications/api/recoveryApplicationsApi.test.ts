@@ -137,12 +137,16 @@ describe('recoveryApplicationsApi', () => {
     }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(submitRecoveryApplicationDag('Finance App', data)).resolves.toMatchObject({
+    await expect(submitRecoveryApplicationDag(
+      'Finance App',
+      'airflow primary/01',
+      data,
+    )).resolves.toMatchObject({
       status: 'ok',
       local: 'C:\\projects\\abco-be\\persistency\\dag_jsons\\Finance App.json',
     })
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/submit_recovery_dag?filename=Finance+App&is_final=false',
+      '/api/submit_recovery_dag?filename=Finance+App&provider_id=airflow+primary%2F01&is_final=false',
       expect.objectContaining({ method: 'POST', body: JSON.stringify(data) }),
     )
   })
@@ -155,12 +159,26 @@ describe('recoveryApplicationsApi', () => {
     }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    await submitRecoveryApplicationDag('Finance', data, true)
+    await submitRecoveryApplicationDag('Finance', 'airflow-01', data, true)
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/submit_recovery_dag?filename=Finance&is_final=true',
+      '/api/submit_recovery_dag?filename=Finance&provider_id=airflow-01&is_final=true',
       expect.objectContaining({ method: 'POST', body: JSON.stringify(data) }),
     )
+  })
+
+  it('rejects an empty platform provider before issuing the DAG request', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      status: 'ok',
+      filename: 'Finance.json',
+      local: 'C:\\projects\\abco-be\\persistency\\dag_jsons\\Finance.json',
+    }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(submitRecoveryApplicationDag('Finance', '   ', data)).rejects.toThrow(
+      'Platform provider ID is required',
+    )
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('rejects an invalid successful DAG response', async () => {
@@ -168,7 +186,11 @@ describe('recoveryApplicationsApi', () => {
       new Response(JSON.stringify({ status: 'ok' }), { status: 200 }),
     ))
 
-    await expect(submitRecoveryApplicationDag('Finance', data)).rejects.toBeInstanceOf(Error)
+    await expect(submitRecoveryApplicationDag(
+      'Finance',
+      'airflow-01',
+      data,
+    )).rejects.toBeInstanceOf(Error)
   })
 
   it('reports DAG network and HTTP failures with context', async () => {
@@ -177,7 +199,15 @@ describe('recoveryApplicationsApi', () => {
       .mockResolvedValueOnce(new Response('invalid DAG', { status: 500, statusText: 'Server Error' }))
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(submitRecoveryApplicationDag('Finance', data)).rejects.toThrow('Network error')
-    await expect(submitRecoveryApplicationDag('Finance', data)).rejects.toThrow('invalid DAG')
+    await expect(submitRecoveryApplicationDag(
+      'Finance',
+      'airflow-01',
+      data,
+    )).rejects.toThrow('Network error')
+    await expect(submitRecoveryApplicationDag(
+      'Finance',
+      'airflow-01',
+      data,
+    )).rejects.toThrow('invalid DAG')
   })
 })

@@ -22,7 +22,7 @@ const application: RecoveryApplicationListItem = {
       name: 'Finance App',
       description: 'Finance recovery',
       environment: 'prod',
-      platform: 'VMware vCenter ESXi',
+      platform: 'airflow-01',
       source_connection: 'vcenter_default',
       target_connection: 'vcenter_default_destination',
       tiers: {
@@ -124,6 +124,7 @@ describe('RecoveryApplicationEditorPage', () => {
 
     const [submission, options] = call
     expect(submission.fileName).toBe('finance_app')
+    expect(submission.providerId).toBe('airflow-01')
     expect(submission.data.application.name).toBe('Finance App')
     expect(options.onSuccess).toBeTypeOf('function')
     expect(screen.getByText('Filename disabled')).toBeInTheDocument()

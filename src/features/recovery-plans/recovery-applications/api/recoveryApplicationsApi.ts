@@ -27,11 +27,18 @@ export async function fetchRecoveryApplications(): Promise<RecoveryApplicationLi
 // so this becomes POST http://<backend>/submit_recovery_dag.
 export async function submitRecoveryApplicationDag(
   fileName: string,
+  providerId: string,
   data: RecoveryApplicationData,
   isFinal = false,
 ): Promise<SubmitDagResponse> {
+  const normalizedProviderId = providerId.trim()
+  if (!normalizedProviderId) {
+    throw new Error('Platform provider ID is required')
+  }
+
   const params = new URLSearchParams({
     filename: fileName,
+    provider_id: normalizedProviderId,
     is_final: String(isFinal),
   })
   const url = `${API_ENDPOINTS.recoveryApplications.submitDag}?${params.toString()}`

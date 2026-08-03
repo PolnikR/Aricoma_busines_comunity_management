@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryApplicationBuilderPage } from './RecoveryApplicationBuilderPage'
+import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 const navigate = vi.fn()
 const mutate = vi.fn()
@@ -27,13 +28,34 @@ vi.mock('../hooks/useRecoveryApplications', () => ({
 
 vi.mock('../components/RecoveryAppBuilder', () => ({
   RecoveryAppBuilder: ({
+    onSave,
     onDirtyChange,
   }: {
+    onSave?: (state: RecoveryApplicationFormState) => void
     onDirtyChange?: (isDirty: boolean) => void
   }) => (
-    <button type="button" onClick={() => { onDirtyChange?.(true) }}>
-      Change builder
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          onSave?.({
+            fileName: 'finance_recovery',
+            name: 'Finance',
+            description: 'Finance recovery',
+            environment: 'prod',
+            platform: 'airflow-01',
+            sourceConnection: 'vcenter_default',
+            targetConnection: 'vcenter_default_destination',
+            tiers: new Map(),
+          })
+        }}
+      >
+        Save fixture
+      </button>
+      <button type="button" onClick={() => { onDirtyChange?.(true) }}>
+        Change builder
+      </button>
+    </>
   ),
 }))
 
@@ -42,6 +64,18 @@ beforeEach(() => {
 })
 
 describe('RecoveryApplicationBuilderPage', () => {
+  it('submits the selected platform provider ID', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationBuilderPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Save fixture' }))
+
+    expect(mutate).toHaveBeenCalledWith(
+      expect.objectContaining({ providerId: 'airflow-01' }),
+      expect.any(Object),
+    )
+  })
+
   it('navigates back immediately when the builder is unchanged', async () => {
     const user = userEvent.setup()
     render(<RecoveryApplicationBuilderPage />)

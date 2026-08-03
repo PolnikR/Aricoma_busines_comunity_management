@@ -28,6 +28,7 @@ export interface RecoveryApplicationData {
 
 export interface SubmitRecoveryApplicationInput {
   fileName: string
+  providerId: string
   data: RecoveryApplicationData
 }
 
