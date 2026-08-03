@@ -18,6 +18,7 @@ import {
   type InfrastructureFlowNode,
 } from './topologyFlowModel'
 import { topologyNodeTypes } from './topologyNodeTypes'
+import { useTheme } from '@/contexts/ThemeContext'
 import { useTranslation } from '@/hooks/useTranslation'
 
 interface InfrastructureTopologyCanvasProps {
@@ -32,6 +33,7 @@ function InfrastructureTopologyCanvasContent({
   onNodePositionChange,
 }: InfrastructureTopologyCanvasProps) {
   const { t } = useTranslation()
+  const { resolvedTheme } = useTheme()
   const flowElements = useMemo(() => mapTopologyToFlowElements(topology), [topology])
   const [nodes, setNodes, onNodesChange] = useNodesState<InfrastructureFlowNode>(
     flowElements.nodes,
@@ -78,6 +80,7 @@ function InfrastructureTopologyCanvasContent({
       fitView
       fitViewOptions={{ padding: 0.02, minZoom: 0.15, maxZoom: 1.6 }}
       proOptions={{ hideAttribution: true }}
+      colorMode={resolvedTheme}
       className="bg-surface-subtle"
       aria-label={t('topology.diagramLabel')}
     >
