@@ -136,6 +136,7 @@ describe('ResourcesPage', () => {
     view.rerender(<ResourcesPage />)
     expect(screen.getByRole('alert')).toHaveTextContent('Unknown discovery error.')
     expect(screen.getByRole('alert')).not.toHaveTextContent('inventory offline')
+    expect(screen.getByText('VM toolbar')).toBeInTheDocument()
     expect(screen.queryByText('Metrics skeleton')).not.toBeInTheDocument()
   })
 
@@ -226,6 +227,7 @@ describe('ResourcesPage', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Resource inventory could not be loaded')
     expect(screen.getByRole('alert')).not.toHaveTextContent('Zod payload internals')
+    expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument()
     expect(screen.queryByText('Metrics skeleton')).not.toBeInTheDocument()
   })
 })

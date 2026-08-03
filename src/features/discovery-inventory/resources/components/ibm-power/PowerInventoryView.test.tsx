@@ -161,4 +161,33 @@ describe('PowerInventoryView', () => {
     expect(onProviderIdChange).toHaveBeenCalledWith('power-02')
     expect(screen.queryByText('vios1')).not.toBeInTheDocument()
   })
+
+  it('keeps provider filters available when the inventory request fails', () => {
+    const { t } = useTranslation()
+    const onRetry = vi.fn()
+
+    render(
+      <PowerInventoryView
+        resources={[]}
+        providers={[provider, secondProvider]}
+        providerId=""
+        onProviderIdChange={vi.fn()}
+        error={{
+          title: 'Resource inventory could not be loaded',
+          description: 'Resource inventory could not be loaded',
+          retryLabel: 'Retry loading',
+          isRetrying: false,
+          onRetry,
+        }}
+        t={t}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('Resource inventory could not be loaded')
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry loading' }))
+    expect(onRetry).toHaveBeenCalledOnce()
+  })
 })

@@ -12,8 +12,9 @@ import {
 } from '../../helpers/filterVirtualMachines'
 import { mapInventoryToVirtualMachines } from '../../helpers/mapInventoryToVirtualMachines'
 import { useVirtualMachineSearchParams } from '../../hooks/useVirtualMachineSearchParams'
-import type { VirtualMachineFilters, VirtualMachinePageSize } from '../../types'
+import type { VirtualMachineFilterOptions, VirtualMachineFilters, VirtualMachinePageSize } from '../../types'
 import { MetricsSkeleton } from '../../skeletons'
+import { ResourceInventoryPanel } from '../ResourceInventoryPanel'
 import { ResourceInventoryShell } from '../ResourceInventoryShell'
 import { ResourceInventoryLoading, ResourceInventoryState } from '../ResourceInventoryStates'
 import type { SourceResourcesPageProps } from '../SourceResourcesPageProps'
@@ -30,6 +31,12 @@ const defaultFilters: VirtualMachineFilters = {
   providerId: '',
   tags: [],
   untagged: false,
+}
+
+const emptyFilterOptions: VirtualMachineFilterOptions = {
+  clusters: [],
+  powerStates: [],
+  connectionStates: [],
 }
 
 export function VmwareResourcesPage(props: SourceResourcesPageProps) {
@@ -126,25 +133,13 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     )
   } else if (vmwareLoading) {
     content = <ResourceInventoryLoading ariaLabel={t('status.loading')} />
-  } else if (!data) {
-    content = (
-      <ResourceInventoryState>
-        <FetchErrorAlert
-          title={t('pages.virtualMachines.error.title')}
-          description={t('pages.virtualMachines.error.unknown')}
-          retryLabel={t('pages.virtualMachines.error.retryButton')}
-          variant="full"
-          isRetrying={isFetching}
-          onRetry={handleRefetch}
-        />
-      </ResourceInventoryState>
-    )
   } else {
     content = (
-      <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#dbe7f2] bg-white shadow-sm lg:min-h-0" aria-label={t('vm.inventoryLabel')}>
-        <VirtualMachinesToolbar
+      <ResourceInventoryPanel
+        ariaLabel={t('vm.inventoryLabel')}
+        toolbar={<VirtualMachinesToolbar
           filters={filters}
-          options={data.filterOptions}
+          options={data?.filterOptions ?? emptyFilterOptions}
           availableTags={availableTags}
           providers={vmwareProviders}
           providersLoading={false}
@@ -152,36 +147,42 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
           onReset={() => { updateFilters(defaultFilters) }}
           density={density}
           onDensityChange={setDensity}
-        />
-        <div className="custom-scrollbar flex-1 lg:min-h-0 lg:overflow-y-auto">
-          {data.items.length > 0 ? (
-            <VirtualMachinesTable
-              virtualMachines={data.items}
-              selectedId={selectedId}
-              density={density}
-              onSelect={(virtualMachine) => {
-                setSelectedId(virtualMachine.id)
-                setDrawerOpen(true)
-              }}
-            />
-          ) : (
-            <div className="p-4">
-              <EmptyState
-                title={t('pages.virtualMachines.empty.title')}
-                description={t('pages.virtualMachines.empty.description')}
-                action={<Button size="sm" variant="outline" onClick={() => { updateFilters(defaultFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>}
-              />
-            </div>
-          )}
-        </div>
-        <DataTablePagination
+        />}
+        error={!data ? {
+          title: t('pages.virtualMachines.error.title'),
+          description: t('pages.virtualMachines.error.unknown'),
+          retryLabel: t('pages.virtualMachines.error.retryButton'),
+          isRetrying: isFetching,
+          onRetry: handleRefetch,
+        } : null}
+        pagination={data ? <DataTablePagination
           page={query.page}
           pageSize={data.pageSize}
           total={data.total}
           onPageChange={(page) => { updateQuery({ page }) }}
           onPageSizeChange={(pageSize) => { updateQuery({ pageSize: pageSize as VirtualMachinePageSize }, true) }}
-        />
-      </section>
+        /> : null}
+      >
+        {data?.items.length ? (
+          <VirtualMachinesTable
+            virtualMachines={data.items}
+            selectedId={selectedId}
+            density={density}
+            onSelect={(virtualMachine) => {
+              setSelectedId(virtualMachine.id)
+              setDrawerOpen(true)
+            }}
+          />
+        ) : (
+          <div className="p-4">
+            <EmptyState
+              title={t('pages.virtualMachines.empty.title')}
+              description={t('pages.virtualMachines.empty.description')}
+              action={<Button size="sm" variant="outline" onClick={() => { updateFilters(defaultFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>}
+            />
+          </div>
+        )}
+      </ResourceInventoryPanel>
     )
   }
 

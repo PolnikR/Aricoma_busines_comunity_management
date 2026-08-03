@@ -74,19 +74,6 @@ export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
     )
   } else if (sourceLoading) {
     content = <ResourceInventoryLoading ariaLabel={t('status.loading')} />
-  } else if (requestFailed) {
-    content = (
-      <ResourceInventoryState>
-        <FetchErrorAlert
-          title={t('resources.common.loadFailed')}
-          description={t('resources.common.loadFailed')}
-          retryLabel={t('pages.virtualMachines.error.retryButton')}
-          variant="full"
-          isRetrying={sourceQuery.isFetching}
-          onRetry={() => { void sourceQuery.refetch() }}
-        />
-      </ResourceInventoryState>
-    )
   } else {
     content = (
       <PowerInventoryView
@@ -94,6 +81,13 @@ export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
         providers={sourceProviders}
         providerId={providerId}
         onProviderIdChange={setProviderId}
+        error={requestFailed ? {
+          title: t('resources.common.loadFailed'),
+          description: t('resources.common.loadFailed'),
+          retryLabel: t('pages.virtualMachines.error.retryButton'),
+          isRetrying: sourceQuery.isFetching,
+          onRetry: () => { void sourceQuery.refetch() },
+        } : null}
         t={t}
       />
     )

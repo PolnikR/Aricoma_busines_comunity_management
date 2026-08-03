@@ -10,6 +10,7 @@ import { createPowerColumns } from '../../config/powerColumns'
 import { filterPowerResources, getPowerFilterOptions } from '../../helpers/filterSourceResources'
 import type { PowerFilters } from '../../model/sourceInventoryTypes'
 import { IbmPowerDetailPanel } from './IbmPowerDetailPanel'
+import { ResourceInventoryPanel, type ResourceInventoryPanelError } from '../ResourceInventoryPanel'
 import { SourceInventoryToolbar } from '../SourceInventoryToolbar'
 
 type Translate = ReturnType<typeof useTranslation>['t']
@@ -23,6 +24,7 @@ interface PowerInventoryViewProps {
   providers: ProviderRecord[]
   providerId: string
   onProviderIdChange: (providerId: string) => void
+  error?: ResourceInventoryPanelError | null
   t: Translate
 }
 
@@ -31,6 +33,7 @@ export function PowerInventoryView({
   providers,
   providerId,
   onProviderIdChange,
+  error,
   t,
 }: PowerInventoryViewProps) {
   const [filters, setFilters] = useState<PowerFilters>({ ...initialFilters, providerId })
@@ -62,8 +65,10 @@ export function PowerInventoryView({
 
   return (
     <>
-      <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#dbe7f2] bg-white shadow-sm lg:min-h-0" aria-label={t('resources.power.tableLabel')}>
-        <SourceInventoryToolbar
+      <ResourceInventoryPanel
+        ariaLabel={t('resources.power.tableLabel')}
+        error={error ?? null}
+        toolbar={<SourceInventoryToolbar
           search={filters.search}
           searchPlaceholder={t('resources.power.searchPlaceholder')}
           searchLabel={t('resources.power.searchLabel')}
@@ -86,23 +91,22 @@ export function PowerInventoryView({
           density={density}
           onDensityChange={setDensity}
           labels={{ cancel: t('buttons.cancel'), clear: t('buttons.clearAll'), apply: t('buttons.apply') }}
+        />}
+        pagination={<DataTablePagination page={safePage} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1) }} />}
+      >
+        <DataTable
+          columns={createPowerColumns(labels)}
+          rows={rows}
+          rowKey={(row) => row.id}
+          density={density}
+          selectedRowKey={selected?.id ?? null}
+          onRowClick={setSelected}
+          rowAriaLabel={(row) => `${t('resources.common.showDetails')} ${row.partitionName}`}
+          ariaLabel={t('resources.power.tableLabel')}
+          minWidthClassName="min-w-[960px]"
+          emptyContent={<EmptyState title={t('resources.power.empty.title')} description={t('resources.power.empty.description')} action={<Button size="sm" variant="outline" onClick={() => { setFilters(initialFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>} />}
         />
-        <div className="custom-scrollbar flex-1 lg:min-h-0 lg:overflow-y-auto">
-          <DataTable
-            columns={createPowerColumns(labels)}
-            rows={rows}
-            rowKey={(row) => row.id}
-            density={density}
-            selectedRowKey={selected?.id ?? null}
-            onRowClick={setSelected}
-            rowAriaLabel={(row) => `${t('resources.common.showDetails')} ${row.partitionName}`}
-            ariaLabel={t('resources.power.tableLabel')}
-            minWidthClassName="min-w-[960px]"
-            emptyContent={<EmptyState title={t('resources.power.empty.title')} description={t('resources.power.empty.description')} action={<Button size="sm" variant="outline" onClick={() => { setFilters(initialFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>} />}
-          />
-        </div>
-        <DataTablePagination page={safePage} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1) }} />
-      </section>
+      </ResourceInventoryPanel>
       <IbmPowerDetailPanel
         partition={selected}
         open={selected !== null}
