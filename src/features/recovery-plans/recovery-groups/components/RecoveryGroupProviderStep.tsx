@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { SelectableCard } from '@/shared/components/selectable-card/SelectableCard'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -10,6 +11,9 @@ interface RecoveryGroupProviderStepProps {
   providers: ProviderRecord[]
   selectedProviderId: string | null
   onSelect: (providerId: string) => void
+  title?: string
+  description?: string
+  headerAction?: ReactNode
 }
 
 export function RecoveryGroupProviderStep({
@@ -17,6 +21,9 @@ export function RecoveryGroupProviderStep({
   providers,
   selectedProviderId,
   onSelect,
+  title,
+  description,
+  headerAction,
 }: RecoveryGroupProviderStepProps) {
   const { t } = useTranslation()
   const option = getRecoveryGroupResourceOption(workloadType)
@@ -29,12 +36,17 @@ export function RecoveryGroupProviderStep({
 
   return (
     <div>
-      <h2 className="text-base font-semibold text-text-primary">
-        {t('pages.recoveryGroupBuilder.provider.title')}
-      </h2>
-      <p className="mt-1 text-sm text-text-muted">
-        {t('pages.recoveryGroupBuilder.provider.description')}
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-text-primary">
+            {title ?? t('pages.recoveryGroupBuilder.provider.title')}
+          </h2>
+          <p className="mt-1 text-sm text-text-muted">
+            {description ?? t('pages.recoveryGroupBuilder.provider.description')}
+          </p>
+        </div>
+        {headerAction}
+      </div>
 
       {matchingProviders.length === 0 ? (
         <div className="mt-5 max-w-4xl">

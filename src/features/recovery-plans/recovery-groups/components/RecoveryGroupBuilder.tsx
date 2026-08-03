@@ -30,6 +30,8 @@ const INITIAL_DRAFT: RecoveryGroupDraft = {
   resourceType: null,
   providerId: null,
   resources: [],
+  relatedVolumeProviderId: null,
+  relatedVolumes: [],
 }
 
 export function RecoveryGroupBuilder({
@@ -81,6 +83,8 @@ export function RecoveryGroupBuilder({
       && provider.credentialStatus === 'ok'
     )),
   )
+  const hasRelatedStorageStep = draft.resourceType === 'vm'
+  const lastStep = hasRelatedStorageStep ? 5 : 4
   const steps = [
     { id: 'details', label: t('pages.recoveryGroupBuilder.steps.details') },
     { id: 'type', label: t('pages.recoveryGroupBuilder.steps.type'), disabled: !detailsValid },
@@ -94,6 +98,11 @@ export function RecoveryGroupBuilder({
       label: t('pages.recoveryGroupBuilder.steps.resources'),
       disabled: !detailsValid || !typeValid || !providerValid,
     },
+    ...(hasRelatedStorageStep ? [{
+      id: 'related-storage',
+      label: t('pages.recoveryGroupBuilder.steps.relatedStorage'),
+      disabled: !detailsValid || !typeValid || !providerValid || draft.resources.length === 0,
+    }] : []),
   ]
 
   const updateDraft = (update: Partial<RecoveryGroupDraft>) => {
@@ -161,6 +170,8 @@ export function RecoveryGroupBuilder({
                     resourceType: null,
                     providerId: null,
                     resources: [],
+                    relatedVolumeProviderId: null,
+                    relatedVolumes: [],
                   })
                 }}
                 onSelect={(sourceCategory, workloadType, resourceType) => {
@@ -170,6 +181,12 @@ export function RecoveryGroupBuilder({
                     resourceType,
                     providerId: draft.workloadType === workloadType ? draft.providerId : null,
                     resources: draft.workloadType === workloadType ? draft.resources : [],
+                    relatedVolumeProviderId: draft.workloadType === workloadType
+                      ? (draft.relatedVolumeProviderId ?? null)
+                      : null,
+                    relatedVolumes: draft.workloadType === workloadType
+                      ? (draft.relatedVolumes ?? [])
+                      : [],
                   })
                 }}
               />
@@ -204,6 +221,59 @@ export function RecoveryGroupBuilder({
                 }}
               />
             ) : null}
+            {step === 5 && hasRelatedStorageStep ? (
+              <div className="flex min-h-full flex-col gap-6">
+                <RecoveryGroupProviderStep
+                  workloadType="ibm_flashsystem"
+                  providers={providers}
+                  selectedProviderId={draft.relatedVolumeProviderId ?? null}
+                  title={t('pages.recoveryGroupBuilder.relatedStorage.title')}
+                  description={t('pages.recoveryGroupBuilder.relatedStorage.description')}
+                  headerAction={draft.relatedVolumeProviderId ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        updateDraft({
+                          relatedVolumeProviderId: null,
+                          relatedVolumes: [],
+                        })
+                      }}
+                    >
+                      {t('pages.recoveryGroupBuilder.relatedStorage.clear')}
+                    </Button>
+                  ) : null}
+                  onSelect={(providerId) => {
+                    updateDraft({
+                      relatedVolumeProviderId: providerId,
+                      relatedVolumes: draft.relatedVolumeProviderId === providerId
+                        ? (draft.relatedVolumes ?? [])
+                        : [],
+                    })
+                  }}
+                />
+                {draft.relatedVolumeProviderId ? (
+                  <div className="min-h-[28rem] flex-1">
+                    <RecoveryGroupResourcesStep
+                      workloadType="ibm_flashsystem"
+                      providerId={draft.relatedVolumeProviderId}
+                      resources={draft.relatedVolumes ?? []}
+                      onAdd={resource => {
+                        const relatedVolumes = draft.relatedVolumes ?? []
+                        if (!relatedVolumes.includes(resource)) {
+                          updateDraft({ relatedVolumes: [...relatedVolumes, resource] })
+                        }
+                      }}
+                      onRemove={resource => {
+                        updateDraft({
+                          relatedVolumes: (draft.relatedVolumes ?? []).filter(item => item !== resource),
+                        })
+                      }}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           <div className="flex flex-col-reverse gap-3 border-t border-border bg-surface-subtle p-4 sm:flex-row sm:items-center sm:justify-between">
             <Button variant="ghost" onClick={onCancel}>{t('buttons.cancel')}</Button>
@@ -215,10 +285,10 @@ export function RecoveryGroupBuilder({
               >
                 {t('buttons.back')}
               </Button>
-              {step < 4 ? (
+              {step < lastStep ? (
                 <Button
                   disabled={!canContinue}
-                  onClick={() => { setStep(current => Math.min(4, current + 1)) }}
+                  onClick={() => { setStep(current => Math.min(lastStep, current + 1)) }}
                 >
                   {t('buttons.next')}
                 </Button>

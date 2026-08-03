@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
@@ -41,6 +41,15 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
     refetch: vi.fn(),
   }),
 }))
+vi.mock('../hooks/useRecoveryGroupResourceInventory', () => ({
+  useRecoveryGroupResourceInventory: () => ({
+    data: { resourceNames: ['VOL-01'] },
+    error: null,
+    isLoading: false,
+    isFetching: false,
+    refetch: vi.fn(),
+  }),
+}))
 
 const existingGroup: RecoveryGroup = {
   id: 'database_group',
@@ -51,6 +60,21 @@ const existingGroup: RecoveryGroup = {
   resourceType: 'vm',
   providerId: 'vmware-vcenter-01',
   resources: ['DB-01'],
+  relatedVolumeProviderId: null,
+  relatedVolumes: [],
+  resourceCount: 1,
+  status: 'Active',
+}
+
+const existingStorageGroup: RecoveryGroup = {
+  id: 'storage_group',
+  name: 'Storage group',
+  description: 'Production storage',
+  sourceCategory: 'storage_system',
+  workloadType: 'ibm_flashsystem',
+  resourceType: 'volume',
+  providerId: 'ibm-flashsystem-01',
+  resources: ['VOL-01'],
   relatedVolumeProviderId: null,
   relatedVolumes: [],
   resourceCount: 1,
@@ -71,6 +95,97 @@ describe('RecoveryGroupBuilder', () => {
     expect(screen.getByRole('button', { name: 'Resource type' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Provider' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Resources' })).toBeInTheDocument()
+  })
+
+  it('allows a virtual-machine group to be created without optional related storage', async () => {
+    const user = userEvent.setup()
+    const onCreate = vi.fn()
+
+    render(
+      <RecoveryGroupBuilder
+        initialData={existingGroup}
+        onCreate={onCreate}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Related storage' }))
+    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
+      relatedVolumeProviderId: null,
+      relatedVolumes: [],
+    }))
+  })
+
+  it('adds manually selected FlashSystem volumes to a virtual-machine group', async () => {
+    const user = userEvent.setup()
+    const onCreate = vi.fn()
+
+    render(
+      <RecoveryGroupBuilder
+        initialData={existingGroup}
+        onCreate={onCreate}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Related storage' }))
+    await user.click(screen.getByRole('button', { name: /IBM FlashSystem Source/i }))
+
+    fireEvent.drop(screen.getByLabelText('Selected recovery group volumes'), {
+      dataTransfer: { getData: () => 'VOL-01' },
+    })
+    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
+      relatedVolumeProviderId: 'ibm-flashsystem-01',
+      relatedVolumes: ['VOL-01'],
+    }))
+  })
+
+  it('keeps a FlashSystem volume group on the four-step flow', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <RecoveryGroupBuilder
+        initialData={existingStorageGroup}
+        onCreate={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByRole('button', { name: 'Related storage' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+
+    expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeEnabled()
+  })
+
+  it('can clear the optional FlashSystem mapping before saving', async () => {
+    const user = userEvent.setup()
+    const onCreate = vi.fn()
+
+    render(
+      <RecoveryGroupBuilder
+        initialData={{
+          ...existingGroup,
+          relatedVolumeProviderId: 'ibm-flashsystem-01',
+          relatedVolumes: ['VOL-01'],
+        }}
+        onCreate={onCreate}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Related storage' }))
+    await user.click(screen.getByRole('button', { name: 'Clear related storage' }))
+    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
+      relatedVolumeProviderId: null,
+      relatedVolumes: [],
+    }))
   })
 
   it('reports unsaved changes when group details change', async () => {
