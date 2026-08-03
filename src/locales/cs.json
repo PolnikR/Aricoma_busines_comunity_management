@@ -3,6 +3,11 @@
   "language.sk": "Slovenština",
   "language.cs": "Čeština",
 
+  "theme.label": "Vzhled",
+  "theme.light": "Světlý",
+  "theme.dark": "Tmavý",
+  "theme.system": "Systémový",
+
   "header.language": "Jazyk",
   "header.userMenu.settings": "Nastavení",
   "header.userMenu.logout": "Odhlásit se",

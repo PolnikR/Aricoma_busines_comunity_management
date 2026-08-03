@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useLanguageContext } from '@/contexts/LanguageContext'
 import { ChevronDownIcon, SettingsIcon, SignOutIcon } from '@/shared/icons/Icons'
+import { ThemeSelector } from './ThemeSelector'
 
 interface UserMenuProps {
   userName?: string
@@ -43,33 +44,33 @@ export function UserMenu({
       {/* Trigger Button */}
       <button
         type="button"
-        className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-200"
+        className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-surface-hover"
         onClick={() => {
           setIsOpen(!isOpen)
         }}
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
-        <span className="flex size-8 items-center justify-center shrink-0 rounded-full bg-gradient-to-br from-[#0d91d7] to-[#17233d] text-xs font-semibold text-white">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-text-primary text-xs font-semibold text-white">
           {userInitials}
         </span>
         <div className="hidden text-left lg:block">
-          <p className="text-sm font-medium text-[#17233d] dark:text-gray-200">{userName}</p>
-          <p className="text-xs text-[#8492a8] dark:text-gray-400">{userTitle}</p>
+          <p className="text-sm font-medium text-text-primary">{userName}</p>
+          <p className="text-xs text-text-muted">{userTitle}</p>
         </div>
-        <ChevronDownIcon className={`hidden size-4 shrink-0 transition-transform lg:block ${isOpen ? 'rotate-180 text-[#0d91d7]' : 'text-[#8492a8] group-hover:text-[#0d91d7]'}`} />
+        <ChevronDownIcon className={`hidden size-4 shrink-0 transition-transform lg:block ${isOpen ? 'rotate-180 text-accent' : 'text-text-muted group-hover:text-accent'}`} />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 origin-top-right rounded-lg border border-gray-200 bg-white shadow-lg animate-in fade-in zoom-in-95 dark:border-gray-700 dark:bg-gray-800 z-50">
+        <div className="absolute right-0 z-50 mt-2 w-64 origin-top-right animate-in rounded-lg border border-border bg-surface shadow-lg fade-in zoom-in-95">
           {/* Main Actions */}
           <div className="px-2 py-2">
             <button
               type="button"
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-hover"
             >
-              <span className="text-gray-400 dark:text-gray-500">
+              <span className="text-text-muted">
                 <SettingsIcon />
               </span>
               {t('header.userMenu.settings')}
@@ -77,8 +78,8 @@ export function UserMenu({
           </div>
 
           {/* Language Selection */}
-          <div className="border-t border-gray-200 px-4 py-3 dark:border-gray-700">
-            <p className="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">{t('header.language')}</p>
+          <div className="border-t border-border px-4 py-3">
+            <p className="mb-2 text-xs font-medium text-text-muted">{t('header.language')}</p>
             <div className="flex gap-2 flex-wrap">
               <button
                 type="button"
@@ -87,8 +88,8 @@ export function UserMenu({
                 }}
                 className={`flex-1 min-w-24 rounded px-2 py-1.5 text-xs font-medium transition-colors ${
                   language === 'en'
-                    ? 'bg-[#0d91d7] text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                    ? 'bg-accent text-white'
+                    : 'bg-surface-muted text-text-secondary hover:bg-surface-hover'
                 }`}
               >
                 {t('language.en')}
@@ -100,8 +101,8 @@ export function UserMenu({
                 }}
                 className={`flex-1 min-w-24 rounded px-2 py-1.5 text-xs font-medium transition-colors ${
                   language === 'sk'
-                    ? 'bg-[#0d91d7] text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                    ? 'bg-accent text-white'
+                    : 'bg-surface-muted text-text-secondary hover:bg-surface-hover'
                 }`}
               >
                 {t('language.sk')}
@@ -113,8 +114,8 @@ export function UserMenu({
                 }}
                 className={`flex-1 min-w-24 rounded px-2 py-1.5 text-xs font-medium transition-colors ${
                   language === 'cs'
-                    ? 'bg-[#0d91d7] text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                    ? 'bg-accent text-white'
+                    : 'bg-surface-muted text-text-secondary hover:bg-surface-hover'
                 }`}
               >
                 {t('language.cs')}
@@ -122,8 +123,12 @@ export function UserMenu({
             </div>
           </div>
 
+          <div className="border-t border-border px-4 py-3">
+            <ThemeSelector />
+          </div>
+
           {/* Sign Out */}
-          <div className="border-t border-gray-200 px-2 py-2 dark:border-gray-700">
+          <div className="border-t border-border px-2 py-2">
             <button
               type="button"
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-500 dark:hover:bg-red-500/10"

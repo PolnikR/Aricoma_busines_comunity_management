@@ -1,19 +1,41 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, it, expect } from 'vitest'
+import { beforeEach, describe, it, expect, vi } from 'vitest'
 import { UserMenu } from './UserMenu'
 import { LanguageProvider } from '@/contexts/LanguageContext'
+import { ThemeProvider } from '@/contexts/ThemeContext'
+
+function TestProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <LanguageProvider>
+      <ThemeProvider>{children}</ThemeProvider>
+    </LanguageProvider>
+  )
+}
 
 describe('UserMenu', () => {
   beforeEach(() => {
     localStorage.setItem('app-language', 'en')
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({
+        matches: false,
+        media: '(prefers-color-scheme: dark)',
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    )
   })
 
   it('renders user badge with initials', () => {
     render(
-      <LanguageProvider>
+      <TestProviders>
         <UserMenu userInitials="AB" userName="Test User" userTitle="Admin" />
-      </LanguageProvider>
+      </TestProviders>
     )
 
     expect(screen.getByText('AB')).toBeInTheDocument()
@@ -24,9 +46,9 @@ describe('UserMenu', () => {
   it('toggles dropdown menu on button click', async () => {
     const user = userEvent.setup()
     render(
-      <LanguageProvider>
+      <TestProviders>
         <UserMenu />
-      </LanguageProvider>
+      </TestProviders>
     )
 
     const button = screen.getByRole('button', { expanded: false })
@@ -46,9 +68,9 @@ describe('UserMenu', () => {
   it('displays language options', async () => {
     const user = userEvent.setup()
     render(
-      <LanguageProvider>
+      <TestProviders>
         <UserMenu />
-      </LanguageProvider>
+      </TestProviders>
     )
 
     const button = screen.getByRole('button', { expanded: false })
@@ -60,12 +82,25 @@ describe('UserMenu', () => {
     expect(screen.getByText('Czech')).toBeInTheDocument()
   })
 
+  it('displays the appearance selector', async () => {
+    const user = userEvent.setup()
+    render(
+      <TestProviders>
+        <UserMenu />
+      </TestProviders>,
+    )
+
+    await user.click(screen.getByRole('button', { expanded: false }))
+
+    expect(await screen.findByRole('group', { name: 'Appearance' })).toBeInTheDocument()
+  })
+
   it('closes dropdown after language selection', async () => {
     const user = userEvent.setup()
     render(
-      <LanguageProvider>
+      <TestProviders>
         <UserMenu />
-      </LanguageProvider>
+      </TestProviders>
     )
 
     const button = screen.getByRole('button', { expanded: false })
@@ -86,9 +121,9 @@ describe('UserMenu', () => {
     const user = userEvent.setup()
     render(
       <div>
-        <LanguageProvider>
+        <TestProviders>
           <UserMenu />
-        </LanguageProvider>
+        </TestProviders>
         <div data-testid="outside">Outside element</div>
       </div>
     )
@@ -108,9 +143,9 @@ describe('UserMenu', () => {
   it('renders settings and logout buttons', async () => {
     const user = userEvent.setup()
     render(
-      <LanguageProvider>
+      <TestProviders>
         <UserMenu />
-      </LanguageProvider>
+      </TestProviders>
     )
 
     const button = screen.getByRole('button', { expanded: false })
@@ -122,9 +157,9 @@ describe('UserMenu', () => {
 
   it('uses default props when not provided', () => {
     render(
-      <LanguageProvider>
+      <TestProviders>
         <UserMenu />
-      </LanguageProvider>
+      </TestProviders>
     )
 
     expect(screen.getByText('AB')).toBeInTheDocument()

@@ -3,6 +3,11 @@
   "language.sk": "Slovak",
   "language.cs": "Czech",
 
+  "theme.label": "Appearance",
+  "theme.light": "Light",
+  "theme.dark": "Dark",
+  "theme.system": "System",
+
   "header.language": "Language",
   "header.userMenu.settings": "Settings",
   "header.userMenu.logout": "Logout",
