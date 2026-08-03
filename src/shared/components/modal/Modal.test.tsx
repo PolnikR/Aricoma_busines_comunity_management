@@ -17,6 +17,12 @@ afterEach(cleanup)
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
   })
 
+  it('separates the dialog surface from the backdrop with the semantic border', () => {
+    render(<Modal open title="My Modal" onClose={vi.fn()}>Body content</Modal>)
+
+    expect(screen.getByRole('dialog')).toHaveClass('border', 'border-border')
+  })
+
   it('renders nothing when closed', () => {
     render(<Modal open={false} title="My Modal" onClose={vi.fn()}><p>Body content</p></Modal>)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()

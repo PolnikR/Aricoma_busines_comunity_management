@@ -46,7 +46,7 @@ export function Modal({
       />
       <div
         className={cn(
-          'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-surface shadow-lg',
+          'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-surface shadow-lg',
           size === 'lg' ? 'max-w-2xl' : 'max-w-md',
           className,
         )}
