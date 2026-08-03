@@ -105,7 +105,7 @@ function InfrastructureTopologyCanvasContent({
           if (node.type === 'datastore') return '#f79009'
           if (node.type === 'powerSystem') return '#465fff'
           if (node.type === 'powerPartition') {
-            return node.data.partitionKind === 'VIOS' ? '#f79009' : '#0ba5ec'
+            return node.data['partitionKind'] === 'VIOS' ? '#f79009' : '#0ba5ec'
           }
           return '#12b76a'
         }}
