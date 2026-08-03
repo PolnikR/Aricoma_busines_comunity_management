@@ -1,0 +1,198 @@
+import { useMemo, useState } from 'react'
+import { Badge } from '@/shared/components/badge/Badge'
+import { Button } from '@/shared/components/button/Button'
+import {
+  DataTable,
+  DataTablePagination,
+  DataTableRequestState,
+  DataTableSkeleton,
+  DataTableToolbar,
+  DetailDrawer,
+  DetailRow,
+  useTableState,
+} from '@/shared/components/data-table'
+import type { ColumnDef } from '@/shared/components/data-table'
+import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { useTranslation } from '@/hooks/useTranslation'
+import { useDeleteSnapshotPolicy } from '../hooks/useDeleteSnapshotPolicy'
+import type { SnapshotPolicy } from '../model/snapshotPolicyTypes'
+import { SnapshotPolicyModal } from './SnapshotPolicyModal'
+
+function levelColor(level: string) {
+  if (level === 'critical') return 'error' as const
+  if (level === 'high') return 'warning' as const
+  if (level === 'medium') return 'info' as const
+  return 'light' as const
+}
+
+function formatInterval(value: number, unit: string, t: ReturnType<typeof useTranslation>['t']) {
+  return `${String(value)} ${t(`snapshotPolicies.unit.${unit}`)}`
+}
+
+function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<SnapshotPolicy>[] {
+  return [
+    {
+      id: 'name',
+      header: t('tables.snapshotPolicy.name'),
+      cell: policy => (
+        <>
+          <span className="block font-semibold text-text-primary">{policy.name}</span>
+          <span className="mt-0.5 block font-mono text-[11px] text-text-subtle">{policy.id}</span>
+        </>
+      ),
+    },
+    {
+      id: 'description',
+      header: t('tables.snapshotPolicy.description'),
+      cell: policy => <span className="block max-w-md truncate" title={policy.description}>{policy.description || '-'}</span>,
+    },
+    {
+      id: 'level',
+      header: t('tables.snapshotPolicy.level'),
+      cell: policy => <Badge color={levelColor(policy.level)} size="sm">{policy.level}</Badge>,
+    },
+    {
+      id: 'frequency',
+      header: t('tables.snapshotPolicy.frequency'),
+      cell: policy => t('snapshotPolicies.every').replace('{interval}', formatInterval(policy.frequencyValue, policy.frequencyUnit, t)),
+    },
+    {
+      id: 'retention',
+      header: t('tables.snapshotPolicy.retention'),
+      cell: policy => formatInterval(policy.retentionValue, policy.retentionUnit, t),
+    },
+    {
+      id: 'maxSnapshots',
+      header: t('tables.snapshotPolicy.maxSnapshots'),
+      align: 'right',
+      cell: policy => policy.maxSnapshots ?? t('snapshotPolicies.noLimit'),
+    },
+    {
+      id: 'status',
+      header: t('tables.snapshotPolicy.status'),
+      cell: policy => (
+        <Badge color={policy.enabled ? 'success' : 'light'} size="sm">
+          {t(policy.enabled ? 'snapshotPolicies.enabled' : 'snapshotPolicies.disabled')}
+        </Badge>
+      ),
+    },
+  ]
+}
+
+interface SnapshotPoliciesTableProps {
+  policies: SnapshotPolicy[]
+  isLoading: boolean
+  error: Error | null
+  isRetrying: boolean
+  onRetry: () => void
+}
+
+export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, onRetry }: SnapshotPoliciesTableProps) {
+  const { t } = useTranslation()
+  const deletePolicy = useDeleteSnapshotPolicy()
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [editing, setEditing] = useState<SnapshotPolicy | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<SnapshotPolicy | null>(null)
+  const rows = useMemo(() => policies, [policies])
+  const selected = rows.find(policy => policy.id === selectedId) ?? null
+  const table = useTableState(rows, { searchFields: ['name', 'id', 'description', 'level'] })
+
+  if (isLoading) {
+    return <DataTableSkeleton columnCount={7} ariaLabel={t('snapshotPolicies.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
+  }
+
+  return (
+    <div className="flex flex-col">
+      <DataTableToolbar
+        searchValue={table.search}
+        onSearchChange={table.setSearch}
+        searchPlaceholder={t('snapshotPolicies.searchPlaceholder')}
+        searchLabel={t('snapshotPolicies.searchLabel')}
+        density={table.density}
+        onDensityChange={table.setDensity}
+      />
+
+      <DataTableRequestState
+        error={error ? {
+          title: t('snapshotPolicies.loadFailed'),
+          retryLabel: t('buttons.retry'),
+          isRetrying,
+          onRetry,
+        } : null}
+      >
+        <DataTable
+          columns={getColumns(t)}
+          rows={table.pageItems}
+          rowKey={policy => policy.id}
+          density={table.density}
+          minWidthClassName="min-w-260"
+          ariaLabel={t('snapshotPolicies.tableLabel')}
+          rowAriaLabel={policy => policy.name}
+          onRowClick={policy => { setSelectedId(policy.id) }}
+          selectedRowKey={selectedId}
+          emptyContent={rows.length > 0 ? t('snapshotPolicies.noMatches') : t('snapshotPolicies.empty')}
+        />
+      </DataTableRequestState>
+
+      {!error ? (
+        <DataTablePagination
+          page={table.page}
+          pageSize={table.pageSize}
+          total={table.total}
+          onPageChange={table.setPage}
+          onPageSizeChange={table.setPageSize}
+        />
+      ) : null}
+
+      <DetailDrawer
+        open={selected !== null}
+        onClose={() => { setSelectedId(null) }}
+        resizable
+        eyebrow={t('snapshotPolicies.drawer.eyebrow')}
+        title={selected?.name ?? ''}
+        subtitle={<span className="font-mono">{selected?.id}</span>}
+        headerExtra={selected ? <Badge color={levelColor(selected.level)} size="sm">{selected.level}</Badge> : null}
+        ariaLabel={t('snapshotPolicies.drawer.label')}
+        closeLabel={t('snapshotPolicies.drawer.close')}
+        footer={selected ? (
+          <>
+            <Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger" className="flex-1">{t('buttons.delete')}</Button>
+            <Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm" className="flex-1">{t('buttons.edit')}</Button>
+          </>
+        ) : null}
+      >
+        {selected ? (
+          <dl className="px-5 py-2">
+            <DetailRow label={t('details.policyId')} value={<span className="font-mono">{selected.id}</span>} />
+            <DetailRow label={t('details.description')} value={selected.description || '-'} />
+            <DetailRow label={t('details.level')} value={selected.level} />
+            <DetailRow label={t('details.frequency')} value={t('snapshotPolicies.every').replace('{interval}', formatInterval(selected.frequencyValue, selected.frequencyUnit, t))} />
+            <DetailRow label={t('details.retention')} value={formatInterval(selected.retentionValue, selected.retentionUnit, t)} />
+            <DetailRow label={t('details.maxSnapshots')} value={selected.maxSnapshots ?? t('snapshotPolicies.noLimit')} />
+            <DetailRow label={t('details.status')} value={t(selected.enabled ? 'snapshotPolicies.enabled' : 'snapshotPolicies.disabled')} />
+          </dl>
+        ) : null}
+      </DetailDrawer>
+
+      {editing ? <SnapshotPolicyModal open onClose={() => { setEditing(null) }} existingPolicies={rows} policy={editing} /> : null}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title={t('snapshotPolicies.delete.title')}
+        message={t('snapshotPolicies.delete.message').replace('{name}', deleteTarget?.name ?? '')}
+        confirmLabel={t('buttons.delete')}
+        cancelLabel={t('buttons.cancel')}
+        loadingLabel={t('buttons.deleting')}
+        tone="danger"
+        isLoading={deletePolicy.isPending}
+        onCancel={() => { setDeleteTarget(null) }}
+        onConfirm={() => {
+          if (!deleteTarget) return
+          deletePolicy.mutate(deleteTarget.id, {
+            onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
+          })
+        }}
+      />
+    </div>
+  )
+}

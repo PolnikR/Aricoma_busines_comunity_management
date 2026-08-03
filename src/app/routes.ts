@@ -15,6 +15,7 @@ export const routes = {
   providerHealthDiagnostics: '/providers-connectors/health-diagnostics',
   recoveryApplications: '/recovery-plans/recovery-applications',
   recoveryGroups: '/recovery-plans/recovery-groups',
+  snapshotPolicies: '/recovery-plans/snapshot-policies',
   recoveryRuns: '/recovery-plans/recovery-runs',
   resources: '/discovery-inventory/resources',
   infrastructure: '/discovery-inventory/infrastructure',

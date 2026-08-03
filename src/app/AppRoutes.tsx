@@ -37,6 +37,11 @@ const RecoveryGroupsListPage = lazy(async () => {
   return { default: page.RecoveryGroupsListPage }
 })
 
+const SnapshotPoliciesPage = lazy(async () => {
+  const page = await import('@/features/snapshot-policies/pages/SnapshotPoliciesPage')
+  return { default: page.SnapshotPoliciesPage }
+})
+
 const RecoveryGroupBuilderPage = lazy(async () => {
   const page = await import('@/features/recovery-plans/recovery-groups/pages/RecoveryGroupBuilderPage')
   return { default: page.RecoveryGroupBuilderPage }
@@ -191,6 +196,14 @@ export function AppRoutes() {
                 apiBoundary="Pending backend API contract for recovery runs"
                 workflowItems={['Run history', 'Active runs', 'Run results']}
               />
+            )}
+          />
+          <Route
+            path="snapshot-policies"
+            element={(
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <SnapshotPoliciesPage />
+              </Suspense>
             )}
           />
         </Route>
