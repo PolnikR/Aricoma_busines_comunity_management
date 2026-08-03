@@ -16,4 +16,12 @@ describe('API_ENDPOINTS', () => {
       delete: '/api/delete_platform_provider',
     })
   })
+
+  it('defines the snapshot policy API contract', () => {
+    expect(API_ENDPOINTS.snapshotPolicies).toEqual({
+      list: '/api/get_policies',
+      submit: '/api/submit_policy',
+      delete: '/api/delete_policy',
+    })
+  })
 })

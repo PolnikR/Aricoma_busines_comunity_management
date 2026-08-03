@@ -17,6 +17,11 @@ export const API_ENDPOINTS = {
     submit: '/api/submit_platform_provider',
     delete: '/api/delete_platform_provider',
   },
+  snapshotPolicies: {
+    list: '/api/get_policies',
+    submit: '/api/submit_policy',
+    delete: '/api/delete_policy',
+  },
   credentials: {
     publicKey: '/api/credentials/pubkey',
     list: '/api/get_credentials',
