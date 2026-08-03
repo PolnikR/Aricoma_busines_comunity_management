@@ -129,6 +129,14 @@ describe('InfrastructurePage', () => {
     expect(refetch).toHaveBeenCalledOnce()
   })
 
+  it('keeps cached provider data usable when its refresh fails', async () => {
+    providerQueryOverrides = { error: new Error('provider refresh failed') }
+    renderPage()
+
+    expect(await screen.findByText(/Topology vmware:/)).toBeInTheDocument()
+    expect(screen.getByText('Using the previously loaded provider list.')).toBeInTheDocument()
+  })
+
   it('canonicalizes an incompatible provider and maps IBM Power topology', async () => {
     renderPage('/discovery-inventory/infrastructure?platform=ibm-power&providerId=vcenter-01')
 

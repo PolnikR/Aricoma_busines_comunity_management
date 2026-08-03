@@ -117,7 +117,7 @@ export function InfrastructurePage() {
 
       {isLoading ? <InfrastructureTopologySkeleton /> : null}
 
-      {!isLoading && providersQuery.error ? (
+      {!isLoading && providersQuery.error && !providersQuery.data ? (
         <FetchErrorAlert
           title={t('pages.infrastructure.providersError.title')}
           description={providersQuery.error instanceof Error
@@ -130,7 +130,17 @@ export function InfrastructurePage() {
         />
       ) : null}
 
-      {!isLoading && !providersQuery.error && !selectedProvider ? (
+      {!isLoading && providersQuery.error && providersQuery.data ? (
+        <FetchErrorAlert
+          className="mb-4"
+          title={t('pages.infrastructure.providersError.title')}
+          description={t('pages.infrastructure.providersError.showingPrevious')}
+          isRetrying={providersQuery.isFetching}
+          onRetry={handleProvidersRefetch}
+        />
+      ) : null}
+
+      {!isLoading && providersQuery.data && !selectedProvider ? (
         <EmptyState
           title={t('pages.infrastructure.noProviders.title')}
           description={t('pages.infrastructure.noProviders.description')}

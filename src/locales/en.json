@@ -743,6 +743,7 @@
   "topology.source.ibmPower": "IBM Power",
   "topology.source.noProviders": "No compatible providers",
   "pages.infrastructure.providersError.title": "Could not load providers",
+  "pages.infrastructure.providersError.showingPrevious": "Using the previously loaded provider list.",
   "pages.infrastructure.noProviders.title": "No provider for this platform",
   "pages.infrastructure.noProviders.description": "Configure a compatible provider before loading its infrastructure topology.",
   "topology.power.searchPlaceholder": "Search partition, managed system, OS, device or volume",

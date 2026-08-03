@@ -744,6 +744,7 @@
   "topology.source.ibmPower": "IBM Power",
   "topology.source.noProviders": "Žádní kompatibilní poskytovatelé",
   "pages.infrastructure.providersError.title": "Poskytovatele se nepodařilo načíst",
+  "pages.infrastructure.providersError.showingPrevious": "Používá se dříve načtený seznam poskytovatelů.",
   "pages.infrastructure.noProviders.title": "Pro tuto platformu není poskytovatel",
   "pages.infrastructure.noProviders.description": "Před načtením topologie infrastruktury nakonfigurujte kompatibilního poskytovatele.",
   "topology.power.searchPlaceholder": "Hledat oddíl, spravovaný systém, OS, zařízení nebo svazek",
