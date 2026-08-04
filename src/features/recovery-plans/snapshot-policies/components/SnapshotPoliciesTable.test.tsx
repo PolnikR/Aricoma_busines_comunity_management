@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { SnapshotPolicy } from '../model/snapshotPolicyTypes'
@@ -20,6 +20,19 @@ const policy: SnapshotPolicy = {
   retentionUnit: 'hours',
   maxSnapshots: 12,
   enabled: true,
+}
+
+const archivePolicy: SnapshotPolicy = {
+  id: 'archive-24h',
+  name: 'Archive — daily',
+  description: 'Once a day, retained 90 days.',
+  level: 'low',
+  frequencyValue: 24,
+  frequencyUnit: 'hours',
+  retentionValue: 90,
+  retentionUnit: 'days',
+  maxSnapshots: null,
+  enabled: false,
 }
 
 describe('SnapshotPoliciesTable', () => {
@@ -59,5 +72,93 @@ describe('SnapshotPoliciesTable', () => {
     expect(screen.getByRole('searchbox')).toBeInTheDocument()
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByRole('alert')).not.toHaveTextContent('private backend details')
+  })
+
+  it('shows a Filters button that opens a level and status filter panel', async () => {
+    const user = userEvent.setup()
+    render(
+      <SnapshotPoliciesTable
+        policies={[policy, archivePolicy]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Filters' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Filter snapshot policies' })
+    expect(within(dialog).getByLabelText('Level')).toBeInTheDocument()
+    expect(within(dialog).getByLabelText('Status')).toBeInTheDocument()
+  })
+
+  it('filters policies by level', async () => {
+    const user = userEvent.setup()
+    render(
+      <SnapshotPoliciesTable
+        policies={[policy, archivePolicy]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Filters' }))
+    const dialog = screen.getByRole('dialog', { name: 'Filter snapshot policies' })
+    await user.selectOptions(within(dialog).getByLabelText('Level'), 'low')
+    await user.click(within(dialog).getByRole('button', { name: 'Apply' }))
+
+    expect(screen.getByText('Archive — daily')).toBeInTheDocument()
+    expect(screen.queryByText('Critical — 15 min')).not.toBeInTheDocument()
+  })
+
+  it('filters policies by status', async () => {
+    const user = userEvent.setup()
+    render(
+      <SnapshotPoliciesTable
+        policies={[policy, archivePolicy]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Filters' }))
+    const dialog = screen.getByRole('dialog', { name: 'Filter snapshot policies' })
+    await user.selectOptions(within(dialog).getByLabelText('Status'), 'disabled')
+    await user.click(within(dialog).getByRole('button', { name: 'Apply' }))
+
+    expect(screen.getByText('Archive — daily')).toBeInTheDocument()
+    expect(screen.queryByText('Critical — 15 min')).not.toBeInTheDocument()
+  })
+
+  it('clears applied filters and shows the active filter count', async () => {
+    const user = userEvent.setup()
+    render(
+      <SnapshotPoliciesTable
+        policies={[policy, archivePolicy]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Filters' }))
+    let dialog = screen.getByRole('dialog', { name: 'Filter snapshot policies' })
+    await user.selectOptions(within(dialog).getByLabelText('Level'), 'low')
+    await user.click(within(dialog).getByRole('button', { name: 'Apply' }))
+
+    expect(screen.getByRole('button', { name: 'Filters 1' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Filters 1' }))
+    dialog = screen.getByRole('dialog', { name: 'Filter snapshot policies' })
+    await user.click(within(dialog).getByRole('button', { name: 'Clear all' }))
+
+    expect(screen.getByText('Critical — 15 min')).toBeInTheDocument()
+    expect(screen.getByText('Archive — daily')).toBeInTheDocument()
   })
 })

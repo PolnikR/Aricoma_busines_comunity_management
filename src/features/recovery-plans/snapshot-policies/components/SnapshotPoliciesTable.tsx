@@ -12,11 +12,19 @@ import {
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
+import { Field, Select } from '@/shared/components/form/FormControls'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useDeleteSnapshotPolicy } from '../hooks/useDeleteSnapshotPolicy'
 import type { SnapshotPolicy } from '../model/snapshotPolicyTypes'
 import { SnapshotPolicyModal } from './SnapshotPolicyModal'
+
+interface SnapshotPolicyFilters {
+  level: string
+  status: string
+}
+
+const EMPTY_FILTERS: SnapshotPolicyFilters = { level: '', status: '' }
 
 function levelColor(level: string) {
   if (level === 'critical') return 'error' as const
@@ -93,9 +101,28 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<SnapshotPolicy | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<SnapshotPolicy | null>(null)
-  const rows = useMemo(() => policies, [policies])
+  const [filters, setFilters] = useState<SnapshotPolicyFilters>(EMPTY_FILTERS)
+  const [pendingFilters, setPendingFilters] = useState<SnapshotPolicyFilters>(EMPTY_FILTERS)
+  const filterOptions = useMemo(() => ({
+    levels: Array.from(new Set(policies.map(policy => policy.level))).sort(),
+  }), [policies])
+  const rows = useMemo(() => policies.filter(policy => (
+    (!filters.level || policy.level === filters.level)
+    && (!filters.status || (filters.status === 'enabled' ? policy.enabled : !policy.enabled))
+  )), [filters, policies])
   const selected = rows.find(policy => policy.id === selectedId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'id', 'description', 'level'] })
+  const activeFilterCount = Number(Boolean(filters.level)) + Number(Boolean(filters.status))
+
+  const prepareFilters = () => {
+    setPendingFilters(filters)
+  }
+
+  const clearFilters = () => {
+    setFilters(EMPTY_FILTERS)
+    setPendingFilters(EMPTY_FILTERS)
+    table.setPage(1)
+  }
 
   if (isLoading) {
     return <DataTableSkeleton columnCount={7} ariaLabel={t('snapshotPolicies.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
@@ -110,6 +137,49 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
         searchLabel={t('snapshotPolicies.searchLabel')}
         density={table.density}
         onDensityChange={table.setDensity}
+        filterTitle={t('snapshotPolicies.filters.title')}
+        filterButtonLabel={t('snapshotPolicies.filters.button')}
+        cancelLabel={t('buttons.cancel')}
+        clearLabel={t('buttons.clearAll')}
+        applyLabel={t('buttons.apply')}
+        activeFilterCount={activeFilterCount}
+        onFilterOpen={prepareFilters}
+        onApplyFilters={() => {
+          setFilters(pendingFilters)
+          table.setPage(1)
+        }}
+        onClearFilters={clearFilters}
+        filterPanel={
+          <>
+            <Field label={t('snapshotPolicies.filters.level')} htmlFor="snapshot-policy-level-filter">
+              <Select
+                id="snapshot-policy-level-filter"
+                value={pendingFilters.level}
+                onChange={event => {
+                  setPendingFilters(current => ({ ...current, level: event.target.value }))
+                }}
+              >
+                <option value="">{t('snapshotPolicies.filters.allLevels')}</option>
+                {filterOptions.levels.map(level => (
+                  <option key={level} value={level}>{level}</option>
+                ))}
+              </Select>
+            </Field>
+            <Field label={t('snapshotPolicies.filters.status')} htmlFor="snapshot-policy-status-filter">
+              <Select
+                id="snapshot-policy-status-filter"
+                value={pendingFilters.status}
+                onChange={event => {
+                  setPendingFilters(current => ({ ...current, status: event.target.value }))
+                }}
+              >
+                <option value="">{t('snapshotPolicies.filters.allStatuses')}</option>
+                <option value="enabled">{t('snapshotPolicies.enabled')}</option>
+                <option value="disabled">{t('snapshotPolicies.disabled')}</option>
+              </Select>
+            </Field>
+          </>
+        }
       />
 
       <DataTableRequestState
