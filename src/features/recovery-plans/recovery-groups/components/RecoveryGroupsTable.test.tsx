@@ -128,6 +128,7 @@ describe('RecoveryGroupsTable', () => {
     )
 
     const [viewJsonButton] = screen.getAllByRole('button', { name: 'View' })
+    if (!viewJsonButton) throw new Error('Expected a View button to be rendered')
     await user.click(viewJsonButton)
 
     const dialog = await screen.findByRole('dialog', { name: 'Recovery Group JSON' })
