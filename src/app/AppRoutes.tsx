@@ -129,7 +129,7 @@ export function AppRoutes() {
   return (
     <Route element={<AppShell />}>
         <Route index element={<Navigate to={routes.resources} replace />} />
-        <Route path="platform-administration" element={<Navigate to={routes.platformAdministration} replace />} />
+        <Route path="platform-administration" element={<Navigate to={routes.platformProviders} replace />} />
         {renderModulePageRoutes(platformAdministrationPages.filter(page => page.path !== routes.platformProviders))}
         <Route
           path={toRoutePath(routes.platformProviders)}
