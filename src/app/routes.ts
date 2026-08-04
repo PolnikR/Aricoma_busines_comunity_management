@@ -17,6 +17,7 @@ export const routes = {
   recoveryApplications: '/recovery-plans/recovery-applications',
   recoveryGroups: '/recovery-plans/recovery-groups',
   snapshotPolicies: '/recovery-plans/snapshot-policies',
+  policySets: '/recovery-plans/policy-sets',
   recoveryRuns: '/recovery-plans/recovery-runs',
   resources: '/discovery-inventory/resources',
   infrastructure: '/discovery-inventory/infrastructure',
