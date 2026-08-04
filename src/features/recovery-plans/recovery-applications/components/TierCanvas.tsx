@@ -112,7 +112,7 @@ export function TierCanvas({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(17.5rem,1fr))] gap-4">
       {sortedTiers.map(({ id, tier }) => {
         const tierCardProps: React.ComponentProps<typeof TierCard> = {
           id,
