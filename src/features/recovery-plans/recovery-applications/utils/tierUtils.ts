@@ -1,23 +1,5 @@
-export function slugify(text: string): string {
-  return text
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '_')
-    .replace(/[^a-z0-9_]/g, '_')
-    .replace(/_+/g, '_')
-}
-
-export function generateTierId(name: string, existingIds: string[]): string {
-  const baseSlug = slugify(name)
-
-  if (!existingIds.includes(baseSlug) && baseSlug !== '') {
-    return baseSlug
-  }
-
-  let counter = baseSlug === '' ? 1 : 2
-  while (existingIds.includes(`${baseSlug}_${String(counter)}`)) {
-    counter++
-  }
-
-  return `${baseSlug}_${String(counter)}`
-}
+export {
+  generateProgrammaticId as generateTierId,
+  isProgrammaticIdAvailable as isTierIdAvailable,
+  toProgrammaticId as slugify,
+} from '@/shared/utils/programmaticId'

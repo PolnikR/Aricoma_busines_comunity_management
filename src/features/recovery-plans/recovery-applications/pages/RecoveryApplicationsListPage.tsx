@@ -1,77 +1,41 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { Button } from '@/shared/components/button/Button'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
-import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
+import { DataTableSkeleton } from '@/shared/components/data-table'
+import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
-import { DeleteConfirmationDialog } from '../components/DeleteConfirmationDialog'
-import { useRecoveryApplications, useDeleteRecoveryApplication } from '../api/useRecoveryApplications'
+import { useRecoveryApplications } from '../hooks/useRecoveryApplications'
+import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 
 export function RecoveryApplicationsListPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
-  const deleteApplicationMutation = useDeleteRecoveryApplication()
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
-  const handleEdit = (id: string) => {
-    void navigate(`/recovery-plans/recovery-applications/${id}/edit`)
-  }
-
-  const handleDelete = (id: string): void => {
-    const app = applications?.find(a => a.id === id)
-    if (app) {
-      setDeleteTarget({ id, name: app.data.application.name })
-    }
-  }
-
-  const handleDeleteConfirm = async (): Promise<void> => {
-    if (!deleteTarget) return
-    await deleteApplicationMutation.mutateAsync(deleteTarget.id)
-    setDeleteTarget(null)
-  }
-
-  const handleDeleteCancel = (): void => {
-    setDeleteTarget(null)
+  const handleEdit = (id: string): void => {
+    const routeId = toRecoveryApplicationFileName(id)
+    void navigate(`/recovery-plans/recovery-applications/${encodeURIComponent(routeId)}/edit`)
   }
 
   if (isLoading) {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <TableToolbar
-          eyebrow="Recovery Plans"
-          title="Recovery Applications"
-          description="Manage disaster recovery application definitions and test recovery workflows."
+          eyebrow={t('pages.recovery.eyebrow')}
+          title={t('pages.recovery.title')}
+          description={t('pages.recovery.description')}
           actions={
             <Button size="sm" variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
-              Create Application
+              {t('pages.recovery.createButton')}
             </Button>
           }
         />
-        <div className="flex-1 p-6">
-          <div className="text-center py-12">
-            <p className="text-gray-500">Loading recovery applications...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
-        <TableToolbar
-          eyebrow="Recovery Plans"
-          title="Recovery Applications"
-          description="Manage disaster recovery application definitions and test recovery workflows."
-        />
-        <div className="flex-1 p-6">
-          <FetchErrorAlert
-            title="Recovery applications could not be loaded"
-            description={error instanceof Error ? error.message : 'Unknown error'}
-            retryLabel="Retry loading"
-            variant="full"
-            onRetry={() => { void refetch() }}
+        <div className="flex flex-1 flex-col gap-4 overflow-hidden p-3 lg:min-h-0">
+          <DataTableSkeleton
+            columnCount={7}
+            ariaLabel={t('pages.recovery.loading')}
+            className="flex-1 lg:min-h-0"
           />
         </div>
       </div>
@@ -81,49 +45,41 @@ export function RecoveryApplicationsListPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow="Recovery Plans"
-        title="Recovery Applications"
-        description="Manage disaster recovery application definitions and test recovery workflows."
+        eyebrow={t('pages.recovery.eyebrow')}
+        title={t('pages.recovery.title')}
+        description={t('pages.recovery.description')}
         isFetching={isFetching}
         onRefresh={() => { void refetch() }}
         actions={
           <Button size="sm" variant="outline" onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
-            Create Application
+            {t('pages.recovery.createButton')}
           </Button>
         }
       />
 
       <div className="flex-1 flex flex-col gap-4 lg:min-h-0 overflow-hidden p-3">
-        {!applications || applications.length === 0 ? (
+        {!error && (!applications || applications.length === 0) ? (
           <EmptyState
-            title="No recovery applications defined yet"
-            description="Create your first recovery application to start managing disaster recovery workflows."
+            title={t('pages.recovery.empty.title')}
+            description={t('pages.recovery.empty.description')}
             action={
               <Button onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
-                Create Your First Application
+                {t('pages.recovery.empty.createButton')}
               </Button>
             }
           />
         ) : (
-          <>
-            <div className="flex-1 flex flex-col min-h-0 bg-white rounded-lg border border-[#dbe7f2] shadow-sm overflow-hidden">
-              <RecoveryApplicationsTable
-                applications={applications}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            </div>
-          </>
+          <div className="flex-1 flex flex-col min-h-0 bg-surface rounded-lg border border-border shadow-sm overflow-hidden">
+            <RecoveryApplicationsTable
+              applications={applications ?? []}
+              onEdit={handleEdit}
+              error={error instanceof Error ? error : null}
+              isRetrying={isFetching}
+              onRetry={() => { void refetch() }}
+            />
+          </div>
         )}
       </div>
-
-      <DeleteConfirmationDialog
-        itemName={deleteTarget?.name ?? ''}
-        isOpen={deleteTarget !== null}
-        isLoading={deleteApplicationMutation.isPending}
-        onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
-      />
     </div>
   )
 }

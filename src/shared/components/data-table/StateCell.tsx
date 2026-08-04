@@ -1,15 +1,15 @@
 export type StateTone = 'on' | 'warn' | 'off'
 
 const dotColor: Record<StateTone, string> = {
-  on: 'bg-[#16a34a]',
-  warn: 'bg-[#d69326]',
-  off: 'bg-[#94a3b8]',
+  on: 'bg-success-600',
+  warn: 'bg-warning-500',
+  off: 'bg-text-subtle',
 }
 
 const textColor: Record<StateTone, string> = {
-  on: 'text-[#047857]',
-  warn: 'text-[#a16207]',
-  off: 'text-[#64748b]',
+  on: 'text-success-700 dark:text-success-400',
+  warn: 'text-warning-700 dark:text-warning-400',
+  off: 'text-text-muted',
 }
 
 interface StateCellProps {

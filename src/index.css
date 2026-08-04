@@ -1,6 +1,81 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --app-page: #f7f9fc;
+  --app-surface: #ffffff;
+  --app-surface-subtle: #fbfdff;
+  --app-surface-muted: #f1f6fb;
+  --app-surface-hover: #e8f2fa;
+  --app-text-primary: #17233d;
+  --app-text-secondary: #3b4763;
+  --app-text-muted: #71819a;
+  --app-text-subtle: #93a0b5;
+  --app-border: #dbe7f2;
+  --app-border-strong: #c8d7e7;
+  --app-control: #ffffff;
+  --app-accent: #0d91d7;
+  --app-accent-hover: #087fca;
+  --app-accent-soft: #e8f6fd;
+  --app-focus: #1596dd;
+  --app-inverse-surface: #17233d;
+  --app-inverse-control: #33425d;
+  --app-inverse-text: #f8fafc;
+  --app-inverse-muted: #a8b4c6;
+  --app-topology-mask: rgba(226, 235, 244, 0.72);
+  --app-page-glow-primary: rgba(211, 238, 255, 0.72);
+  --app-page-glow-secondary: rgba(255, 242, 211, 0.5);
+}
+
+.dark {
+  --app-page: #09111f;
+  --app-surface: #111c2f;
+  --app-surface-subtle: #152238;
+  --app-surface-muted: #1a2941;
+  --app-surface-hover: #22344f;
+  --app-text-primary: #edf4ff;
+  --app-text-secondary: #c5d1e2;
+  --app-text-muted: #98a8bf;
+  --app-text-subtle: #75869f;
+  --app-border: #293b56;
+  --app-border-strong: #3a506f;
+  --app-control: #152238;
+  --app-accent: #43b2ec;
+  --app-accent-hover: #70c8f3;
+  --app-accent-soft: #123854;
+  --app-focus: #5bc0f2;
+  --app-inverse-surface: #050b16;
+  --app-inverse-control: #263750;
+  --app-inverse-text: #f8fafc;
+  --app-inverse-muted: #aebbcf;
+  --app-topology-mask: rgba(5, 11, 22, 0.72);
+  --app-page-glow-primary: rgba(25, 93, 132, 0.22);
+  --app-page-glow-secondary: rgba(117, 83, 28, 0.12);
+}
+
+@theme inline {
+  --color-page: var(--app-page);
+  --color-surface: var(--app-surface);
+  --color-surface-subtle: var(--app-surface-subtle);
+  --color-surface-muted: var(--app-surface-muted);
+  --color-surface-hover: var(--app-surface-hover);
+  --color-text-primary: var(--app-text-primary);
+  --color-text-secondary: var(--app-text-secondary);
+  --color-text-muted: var(--app-text-muted);
+  --color-text-subtle: var(--app-text-subtle);
+  --color-border: var(--app-border);
+  --color-border-strong: var(--app-border-strong);
+  --color-control: var(--app-control);
+  --color-accent: var(--app-accent);
+  --color-accent-hover: var(--app-accent-hover);
+  --color-accent-soft: var(--app-accent-soft);
+  --color-focus: var(--app-focus);
+  --color-inverse-surface: var(--app-inverse-surface);
+  --color-inverse-control: var(--app-inverse-control);
+  --color-inverse-text: var(--app-inverse-text);
+  --color-inverse-muted: var(--app-inverse-muted);
+}
 
 @theme {
   --font-*: initial;
@@ -185,10 +260,10 @@
   }
 
   body {
-    @apply relative z-1 min-w-80 bg-[#f7f9fc] font-normal font-outfit text-[#17233d] antialiased;
+    @apply relative z-1 min-w-80 bg-page font-normal font-outfit text-text-primary antialiased;
     background-image:
-      radial-gradient(circle at 12% 8%, rgba(211, 238, 255, 0.72), transparent 30rem),
-      radial-gradient(circle at 88% 82%, rgba(255, 242, 211, 0.5), transparent 28rem);
+      radial-gradient(circle at 12% 8%, var(--app-page-glow-primary), transparent 30rem),
+      radial-gradient(circle at 88% 82%, var(--app-page-glow-secondary), transparent 28rem);
     background-attachment: fixed;
   }
 

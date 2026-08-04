@@ -58,6 +58,19 @@ describe('useTopologyNodePositionOverrides', () => {
     })
   })
 
+  it('isolates saved positions by topology source scope', () => {
+    const vmware = renderHook(() => useTopologyNodePositionOverrides('vmware:vcenter-01'))
+
+    act(() => {
+      vmware.result.current.setOverride('partition:shared', { x: 10, y: 20 })
+    })
+
+    const power = renderHook(() => useTopologyNodePositionOverrides('ibm-power:power-01'))
+
+    expect(power.result.current.overrides).toEqual({})
+    expect(localStorage.getItem(`${STORAGE_KEY}.vmware%3Avcenter-01`)).not.toBeNull()
+  })
+
   it('clearOverrides removes all overrides and clears localStorage', () => {
     const stored = { 'host:esx-01': { x: 100, y: 200 } }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))

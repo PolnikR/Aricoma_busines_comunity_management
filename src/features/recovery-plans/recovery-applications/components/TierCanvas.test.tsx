@@ -4,24 +4,35 @@ import userEvent from '@testing-library/user-event'
 import { TierCanvas } from './TierCanvas'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
 const mockTiers: Record<string, RecoveryTier> = {
   database: {
-    name: 'Database',
     order: 1,
     description: 'Database tier',
-    vms: [{ name: 'DB-01' }],
+    recovery_group: {
+      name: 'Database',
+      description: 'Database recovery group',
+      vms: [{ name: 'DB-01' }],
+    },
   },
   app: {
-    name: 'Application',
     order: 2,
     description: 'App tier',
-    vms: [{ name: 'APP-01' }],
+    recovery_group: {
+      name: 'Application',
+      description: 'Application recovery group',
+      vms: [{ name: 'APP-01' }],
+    },
   },
   web: {
-    name: 'Web',
     order: 3,
     description: 'Web tier',
-    vms: [{ name: 'WEB-01' }],
+    recovery_group: {
+      name: 'Web',
+      description: 'Web recovery group',
+      vms: [{ name: 'WEB-01' }],
+    },
   },
 }
 
@@ -30,9 +41,9 @@ describe('TierCanvas', () => {
   it('renders tiers sorted by order', () => {
     render(<TierCanvas tiers={mockTiers} />)
 
-    expect(screen.getByText('Database')).toBeInTheDocument()
-    expect(screen.getByText('Application')).toBeInTheDocument()
-    expect(screen.getByText('Web')).toBeInTheDocument()
+    expect(screen.getByText('database')).toBeInTheDocument()
+    expect(screen.getByText('app')).toBeInTheDocument()
+    expect(screen.getByText('web')).toBeInTheDocument()
   })
 
   it('displays AddTierCard', () => {
@@ -54,6 +65,7 @@ describe('TierCanvas', () => {
     await user.click(editBtns[0]!)
 
     expect(screen.getByDisplayValue('database')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('database').closest('[draggable]')).toHaveAttribute('draggable', 'false')
   })
 
   it('calls onTierDelete when Delete clicked', async () => {
@@ -70,6 +82,42 @@ describe('TierCanvas', () => {
     expect(onTierDelete).toHaveBeenCalledWith('database')
   })
 
+  it('reports the tier whose recovery group was removed', async () => {
+    const user = userEvent.setup()
+    const onRecoveryGroupRemoved = vi.fn()
+
+    render(
+      <TierCanvas
+        tiers={mockTiers}
+        onRecoveryGroupRemoved={onRecoveryGroupRemoved}
+      />,
+    )
+
+    const removeButtons = screen.getAllByRole('button', { name: 'Remove recovery group' })
+    const firstRemoveButton = removeButtons[0]
+    expect(firstRemoveButton).toBeDefined()
+    if (firstRemoveButton) await user.click(firstRemoveButton)
+
+    expect(onRecoveryGroupRemoved).toHaveBeenCalledWith('database')
+  })
+
+  it('reports the tier and VM whose application selection changed', async () => {
+    const user = userEvent.setup()
+    const onRecoveryVmSelectionChange = vi.fn()
+
+    render(
+      <TierCanvas
+        tiers={mockTiers}
+        recoveryGroupVmOptions={{ Database: ['DB-01', 'DB-02'] }}
+        onRecoveryVmSelectionChange={onRecoveryVmSelectionChange}
+      />,
+    )
+
+    await user.click(screen.getByRole('checkbox', { name: 'DB-02' }))
+
+    expect(onRecoveryVmSelectionChange).toHaveBeenCalledWith('database', 'DB-02', true)
+  })
+
   it('calls onTierAdd when new tier created', async () => {
     const user = userEvent.setup()
     const onTierAdd = vi.fn()
@@ -79,8 +127,9 @@ describe('TierCanvas', () => {
     const plusBtn = screen.getByRole('button', { name: '+' })
     await user.click(plusBtn)
 
-    const nameInput = screen.getByPlaceholderText('Tier name')
-    await user.type(nameInput, 'New Tier')
+    const tierDescriptionInput = screen.getByPlaceholderText('Tier description')
+    await user.type(screen.getByPlaceholderText('tier_id'), 'New Tier')
+    await user.type(tierDescriptionInput, 'New tier description')
 
     const createBtn = screen.getByRole('button', { name: 'Create' })
     await user.click(createBtn)

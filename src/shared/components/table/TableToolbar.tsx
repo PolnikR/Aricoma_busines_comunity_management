@@ -27,8 +27,8 @@ export function TableToolbar({
       actions={
         <div className="flex items-center gap-3">
           {isFetching ? (
-            <span className="inline-flex items-center gap-2 text-xs text-[#71819a]">
-              <span className="size-2 animate-pulse rounded-full bg-[#0d91d7]" />
+            <span className="inline-flex items-center gap-2 text-xs text-text-muted">
+              <span className="size-2 animate-pulse rounded-full bg-accent" />
               Updating
             </span>
           ) : null}

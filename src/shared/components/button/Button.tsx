@@ -3,10 +3,11 @@ import { cn } from '@/shared/utils/cn'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode
-  size?: 'sm' | 'md' | 'icon'
-  variant?: 'primary' | 'outline' | 'ghost'
+  size?: 'xs' | 'sm' | 'md' | 'icon'
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'soft' | 'ghost'
   startIcon?: ReactNode
   endIcon?: ReactNode
+  fullWidth?: boolean
 }
 
 export function Button({
@@ -15,29 +16,38 @@ export function Button({
   variant = 'primary',
   startIcon,
   endIcon,
+  fullWidth = false,
   className,
   disabled,
   type = 'button',
   ...props
 }: ButtonProps) {
   const sizeClasses = {
-    sm: 'h-9 px-3 text-sm',
-    md: 'h-11 px-4 text-sm',
-    icon: 'size-10 p-0',
+    xs: 'h-7 rounded px-3 text-xs',
+    sm: 'h-9 rounded-lg px-3 text-sm',
+    md: 'h-11 rounded-lg px-4 text-sm',
+    icon: 'size-10 rounded-xl p-0',
   }
 
   const variantClasses = {
-    primary: 'bg-[#1268f3] text-white shadow-[0_10px_24px_-12px_rgba(18,104,243,0.9)] hover:bg-[#0b57da] disabled:bg-[#9cbcf2]',
-    outline: 'border border-[#cfdfef] bg-white text-[#40516c] shadow-sm hover:border-[#abd5f2] hover:bg-[#f5faff] hover:text-[#087fca]',
-    ghost: 'bg-transparent text-[#66758f] hover:bg-[#eef7ff] hover:text-[#087fca]',
+    primary: 'bg-accent text-white shadow-[0_10px_24px_-12px_rgba(13,145,215,0.9)] hover:bg-accent-hover disabled:bg-text-subtle',
+    secondary: 'border border-border bg-surface-muted text-text-primary hover:bg-surface-muted',
+    outline: 'border border-border-strong bg-surface text-text-secondary shadow-sm hover:border-accent hover:bg-surface-subtle hover:text-accent',
+    danger: 'border border-error-200 bg-surface text-error-600 hover:bg-error-50 dark:border-error-800 dark:text-error-400 dark:hover:bg-error-500/10',
+    soft: 'bg-surface-muted text-accent hover:bg-surface-muted',
+    ghost: 'bg-transparent text-text-muted hover:bg-accent-soft hover:text-accent',
   }
+
+  const fontWeight = variant === 'primary' ? 'font-semibold' : 'font-medium'
 
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#1596dd]/15',
+        'inline-flex items-center justify-center gap-2 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15',
+        fontWeight,
         sizeClasses[size],
         variantClasses[variant],
+        fullWidth ? 'w-full' : undefined,
         disabled ? 'cursor-not-allowed opacity-50' : undefined,
         className,
       )}

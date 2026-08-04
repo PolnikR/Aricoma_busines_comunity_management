@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { slugify } from '../utils/tierUtils'
+import { useTranslation } from '@/hooks/useTranslation'
+import { Button } from '@/shared/components/button/Button'
+import { Field, Input, Textarea } from '@/shared/components/form/FormControls'
+import { isTierIdAvailable, slugify } from '../utils/tierUtils'
 import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
 interface AddTierCardProps {
@@ -9,108 +12,91 @@ interface AddTierCardProps {
 }
 
 export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
-  const [name, setName] = useState('')
   const [id, setId] = useState('')
-  const [description, setDescription] = useState('')
+  const [tierDescription, setTierDescription] = useState('')
 
-  const handleNameChange = (value: string) => {
-    setName(value)
-    if (!id || id === slugify(name)) {
-      setId(slugify(value))
-    }
-  }
-
-  const isValidId = id.trim() && !existingIds.includes(id)
-  const isValidName = name.trim()
-  const canCreate = isValidId && isValidName
+  const normalizedId = slugify(id)
+  const isValidId = isTierIdAvailable(id, existingIds)
+  const canCreate = Boolean(
+    isValidId
+    && tierDescription.trim()
+  )
 
   const handleCreate = () => {
     if (!canCreate) return
 
     const newTier: RecoveryTier = {
-      name: name.trim(),
-      description: description.trim(),
+      description: tierDescription.trim(),
       order: maxOrder + 1,
-      vms: [],
     }
 
-    onAdd?.(id.trim(), newTier)
+    onAdd?.(normalizedId, newTier)
     setIsOpen(false)
-    setName('')
     setId('')
-    setDescription('')
+    setTierDescription('')
   }
 
   const handleCancel = () => {
     setIsOpen(false)
-    setName('')
     setId('')
-    setDescription('')
+    setTierDescription('')
   }
 
   if (isOpen) {
     return (
-      <div className="bg-white border border-[#d9e6f1] rounded-lg p-4 shadow-sm">
+      <div className="bg-surface border border-border rounded-lg p-4 shadow-sm">
         <div className="space-y-3">
-          <div>
-            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">ID</label>
-            <input
+          <Field label={`${t('recovery.tier.form.id')} *`} htmlFor="add-tier-id">
+            <Input
+              id="add-tier-id"
               type="text"
               value={id}
               onChange={e => {
                 setId(e.target.value)
               }}
-              className={`w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none ${
-                !isValidId && id ? 'border-red-500' : 'border-[#cfdaea]'
-              }`}
-              placeholder="tier_id"
+              size="sm"
+              invalid={Boolean(!isValidId && id)}
+              placeholder={t('recovery.tier.form.idPlaceholder')}
+              required
             />
             {!isValidId && id && (
-              <p className="text-xs text-red-600 mt-1">ID already in use or invalid</p>
+              <p className="text-xs text-red-600 mt-1">{t('recovery.tier.validation.idInvalid')}</p>
             )}
-          </div>
+          </Field>
 
-          <div>
-            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">Name *</label>
-            <input
-              type="text"
-              value={name}
+          <Field label={t('recovery.tier.form.tierDescription')} htmlFor="add-tier-description">
+            <Textarea
+              id="add-tier-description"
+              value={tierDescription}
               onChange={e => {
-                handleNameChange(e.target.value)
+                setTierDescription(e.target.value)
               }}
-              className="w-full px-2 py-1.5 text-sm border border-[#cfdaea] rounded-md focus:outline-none"
-              placeholder="Tier name"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-[#7b8ca4] block mb-1">Description</label>
-            <textarea
-              value={description}
-              onChange={e => {
-                setDescription(e.target.value)
-              }}
-              className="w-full px-2 py-1.5 text-sm border border-[#cfdaea] rounded-md focus:outline-none resize-none"
+              className="resize-none"
               rows={3}
-              placeholder="Optional description"
+              placeholder={t('recovery.tier.form.tierDescriptionPlaceholder')}
+              required
             />
-          </div>
+          </Field>
 
           <div className="flex gap-2 pt-2">
-            <button
+            <Button
               onClick={handleCreate}
               disabled={!canCreate}
-              className="flex-1 px-3 py-1.5 bg-[#0d91d7] text-white text-sm font-semibold rounded-md hover:bg-[#0a7bc4] transition disabled:opacity-50 disabled:cursor-not-allowed"
+              size="sm"
+              className="flex-1"
             >
-              Create
-            </button>
-            <button
+              {t('buttons.create')}
+            </Button>
+            <Button
               onClick={handleCancel}
-              className="flex-1 px-3 py-1.5 bg-[#f0f5fa] text-[#18253d] text-sm font-semibold rounded-md hover:bg-[#e3edf6] transition border border-[#d9e6f1]"
+              size="sm"
+              variant="secondary"
+              className="flex-1"
             >
-              Cancel
-            </button>
+              {t('buttons.cancel')}
+            </Button>
           </div>
         </div>
       </div>
@@ -122,9 +108,9 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
       onClick={() => {
         setIsOpen(true)
       }}
-      className="bg-white border-2 border-dashed border-[#cfdaea] rounded-lg p-4 shadow-sm hover:border-[#b9d5e8] hover:bg-[#fbfdff] transition flex items-center justify-center h-full"
+      className="bg-surface border-2 border-dashed border-border-strong rounded-lg p-4 shadow-sm hover:border-border-strong hover:bg-surface-subtle transition flex items-center justify-center h-full"
     >
-      <span className="text-3xl text-[#7b8ca4]">+</span>
+      <span className="text-3xl text-text-muted">+</span>
     </button>
   )
 }

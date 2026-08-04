@@ -1,0 +1,140 @@
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+import type { RecoveryGroup } from '../model/recoveryGroupTypes'
+import { RecoveryGroupsTable } from './RecoveryGroupsTable'
+
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
+  usePolicySets: () => ({
+    data: [
+      {
+        id: 'tier2-apps',
+        name: 'Tier 2 applications',
+        description: 'Policy set using the medium-tier, 6-hour cadence.',
+        policyIds: ['medium-6h'],
+      },
+    ],
+  }),
+}))
+
+const groups: RecoveryGroup[] = [
+  {
+    id: 'database-group',
+    name: 'Database group',
+    description: 'Primary database virtual machines',
+    sourceCategory: 'backup_system_workload',
+    workloadType: 'vmware_virtual_machines',
+    resourceType: 'vm',
+    providerId: 'vmware-vcenter-01',
+    policySetId: 'tier2-apps',
+    resources: ['DB-01', 'DB-02'],
+    relatedVolumeProviderId: 'ibm-flashsystem-01',
+    relatedVolumes: ['VOL-01'],
+    resourceCount: 2,
+    status: 'Active',
+  },
+  {
+    id: 'power-group',
+    name: 'Power group',
+    description: 'Production Power workloads',
+    sourceCategory: 'backup_system_workload',
+    workloadType: 'ibm_power_virtual_machines',
+    resourceType: 'vm',
+    providerId: 'ibm-power-01',
+    policySetId: 'tier2-apps',
+    resources: ['LPAR-01', 'LPAR-02'],
+    relatedVolumeProviderId: null,
+    relatedVolumes: [],
+    resourceCount: 2,
+    status: 'Active',
+  },
+]
+
+describe('RecoveryGroupsTable', () => {
+  it('renders group columns and opens the group detail drawer', async () => {
+    const user = userEvent.setup()
+    render(
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    )
+
+    expect(await screen.findByText('Recovery Group')).toBeInTheDocument()
+    expect(screen.getByText('Workload Type')).toBeInTheDocument()
+    expect(screen.getByText('Resource Type')).toBeInTheDocument()
+
+    await user.click(screen.getByText('Database group'))
+
+    expect(await screen.findByRole('dialog', { name: 'Recovery group detail' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Database group' })).toBeInTheDocument()
+  })
+
+  it('filters groups by search text', async () => {
+    const user = userEvent.setup()
+    render(
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    )
+
+    const search = await screen.findByRole('searchbox', { name: 'Search recovery groups' })
+    await user.type(search, 'missing')
+
+    expect(screen.getByText('No recovery groups defined yet')).toBeInTheDocument()
+  })
+
+  it('renders the IBM Power workload label', () => {
+    render(
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    )
+
+    expect(screen.getByText('IBM Power virtual machines')).toBeInTheDocument()
+  })
+
+  it('edits and confirms deletion from the detail panel', async () => {
+    const user = userEvent.setup()
+    const onEdit = vi.fn()
+    const onDelete = vi.fn()
+    render(
+      <RecoveryGroupsTable groups={groups} onEdit={onEdit} onDelete={onDelete} />,
+    )
+
+    await user.click(screen.getByText('Database group'))
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    expect(onEdit).toHaveBeenCalledWith('database-group')
+
+    await user.click(screen.getByText('Database group'))
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    const confirmDialog = screen.getByRole('dialog', { name: 'Delete recovery group' })
+    expect(confirmDialog).toHaveTextContent('Database group')
+
+    await user.click(within(confirmDialog).getByRole('button', { name: 'Delete' }))
+    expect(onDelete).toHaveBeenCalledWith('database-group')
+  })
+
+  it('shows the resolved policy set name in the detail drawer', async () => {
+    const user = userEvent.setup()
+    render(
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    )
+
+    await user.click(screen.getByText('Database group'))
+
+    expect(await screen.findByRole('dialog', { name: 'Recovery group detail' })).toBeInTheDocument()
+    expect(screen.getByText('Tier 2 applications')).toBeInTheDocument()
+  })
+
+  it('opens a JSON viewer showing the recovery group submit payload', async () => {
+    const user = userEvent.setup()
+    render(
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    )
+
+    const [viewJsonButton] = screen.getAllByRole('button', { name: 'View' })
+    if (!viewJsonButton) throw new Error('Expected a View button to be rendered')
+    await user.click(viewJsonButton)
+
+    const dialog = await screen.findByRole('dialog', { name: 'Recovery Group JSON' })
+    expect(within(dialog).getByText(/"id": "database-group"/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/"provider_id_vm": "vmware-vcenter-01"/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/"provider_id_volume": "ibm-flashsystem-01"/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/"policy_set_id": "tier2-apps"/)).toBeInTheDocument()
+  })
+})

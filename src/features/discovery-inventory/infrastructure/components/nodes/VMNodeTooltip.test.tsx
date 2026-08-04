@@ -1,9 +1,14 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { createRef } from 'react'
-import { afterEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { LanguageProvider } from '@/contexts/LanguageProvider'
 import { VMNodeTooltip, type VMNodeTooltipProps } from './VMNodeTooltip'
 
 describe('VMNodeTooltip', () => {
+  beforeEach(() => {
+    localStorage.setItem('app-language', 'en')
+  })
+
   afterEach(cleanup)
 
   const createNodeRef = () => {
@@ -40,9 +45,13 @@ describe('VMNodeTooltip', () => {
     nodeRef: createNodeRef(),
   }
 
-  test('renders all label-value pairs when data is complete', () => {
-    render(<VMNodeTooltip {...defaultProps} />)
-    expect(screen.getByText('Name:')).toBeInTheDocument()
+  test('renders all label-value pairs when data is complete', async () => {
+    render(
+      <LanguageProvider>
+        <VMNodeTooltip {...defaultProps} />
+      </LanguageProvider>
+    )
+    expect(await screen.findByText('Name:')).toBeInTheDocument()
     expect(screen.getByText('app-server-01')).toBeInTheDocument()
     expect(screen.getByText('Status:')).toBeInTheDocument()
     expect(screen.getByText('powered on')).toBeInTheDocument()
@@ -52,7 +61,7 @@ describe('VMNodeTooltip', () => {
     expect(screen.getByText('8 GB')).toBeInTheDocument()
   })
 
-  test('renders — for missing optional fields', () => {
+  test('renders — for missing optional fields', async () => {
     const props: VMNodeTooltipProps = {
       data: {
         name: 'simple-vm',
@@ -60,14 +69,18 @@ describe('VMNodeTooltip', () => {
       },
       nodeRef: createNodeRef(),
     }
-    render(<VMNodeTooltip {...props} />)
-    expect(screen.getByText('IP:')).toBeInTheDocument()
+    render(
+      <LanguageProvider>
+        <VMNodeTooltip {...props} />
+      </LanguageProvider>
+    )
+    expect(await screen.findByText('IP:')).toBeInTheDocument()
     // The next sibling of the IP label should be the em-dash
     const ipLabel = screen.getByText('IP:')
     expect(ipLabel.parentElement?.textContent).toContain('—')
   })
 
-  test('renders tags as individual chip elements', () => {
+  test('renders tags as individual chip elements', async () => {
     const props: VMNodeTooltipProps = {
       data: {
         name: 'tagged-vm',
@@ -76,8 +89,12 @@ describe('VMNodeTooltip', () => {
       },
       nodeRef: createNodeRef(),
     }
-    render(<VMNodeTooltip {...props} />)
-    expect(screen.getByText('Tags')).toBeInTheDocument()
+    render(
+      <LanguageProvider>
+        <VMNodeTooltip {...props} />
+      </LanguageProvider>
+    )
+    expect(await screen.findByText('Tags')).toBeInTheDocument()
     expect(screen.getByText('production')).toBeInTheDocument()
     expect(screen.getByText('critical')).toBeInTheDocument()
     expect(screen.getByText('monitored')).toBeInTheDocument()
@@ -92,7 +109,11 @@ describe('VMNodeTooltip', () => {
       },
       nodeRef: createNodeRef(),
     }
-    render(<VMNodeTooltip {...props} />)
+    render(
+      <LanguageProvider>
+        <VMNodeTooltip {...props} />
+      </LanguageProvider>
+    )
     // The parent div that would contain "Tags" label should not exist
     expect(screen.queryByText('Tags')).not.toBeInTheDocument()
   })
@@ -105,15 +126,21 @@ describe('VMNodeTooltip', () => {
       },
       nodeRef: createNodeRef(),
     }
-    render(<VMNodeTooltip {...props} />)
+    render(
+      <LanguageProvider>
+        <VMNodeTooltip {...props} />
+      </LanguageProvider>
+    )
     expect(screen.queryByText('Tags')).not.toBeInTheDocument()
   })
 
-  test('applies correct CSS classes for styling', () => {
-    render(<VMNodeTooltip {...defaultProps} />)
+  test('exposes the floating content as a tooltip', () => {
+    render(
+      <LanguageProvider>
+        <VMNodeTooltip {...defaultProps} />
+      </LanguageProvider>
+    )
     // The tooltip renders in a portal on document.body, not inside container.
-    const wrapper = document.querySelector('.bg-slate-900')
-    expect(wrapper).toBeInTheDocument()
-    expect(wrapper).toHaveClass('fixed', 'z-50', 'rounded-lg', 'shadow-lg', 'pointer-events-auto')
+    expect(screen.getByRole('tooltip')).toBeInTheDocument()
   })
 })

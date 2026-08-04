@@ -5,6 +5,11 @@ import type { ReactFlow } from '@xyflow/react'
 import type { PositionedInfrastructureTopology } from '../layout/layoutInfrastructureTopology'
 import { InfrastructureTopologyCanvas } from './InfrastructureTopologyCanvas'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+vi.mock('@/contexts/ThemeContext', () => ({
+  useTheme: () => ({ resolvedTheme: 'dark' }),
+}))
+
 const reactFlowProps = vi.hoisted(() => ({
   current: null as ComponentProps<typeof ReactFlow> | null,
 }))
@@ -44,5 +49,11 @@ describe('InfrastructureTopologyCanvas', () => {
       preventScrolling: true,
       zoomOnPinch: true,
     })
+  })
+
+  it('passes the resolved application theme to React Flow', () => {
+    render(<InfrastructureTopologyCanvas topology={topology} />)
+
+    expect(reactFlowProps.current).toMatchObject({ colorMode: 'dark' })
   })
 })

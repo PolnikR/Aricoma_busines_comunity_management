@@ -32,6 +32,8 @@ const nodeSizes: Record<InfrastructureTopologyNodeKind, TopologyNodeSize> = {
   host: { width: 240, height: 112 },
   virtualMachine: { width: 260, height: 132 },
   datastore: { width: 220, height: 104 },
+  powerSystem: { width: 240, height: 112 },
+  powerPartition: { width: 260, height: 132 },
 }
 
 async function getElkInstance() {

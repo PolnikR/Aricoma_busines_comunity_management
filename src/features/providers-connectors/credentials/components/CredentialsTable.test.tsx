@@ -1,0 +1,65 @@
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+import { CredentialsTable } from './CredentialsTable'
+
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+vi.mock('../hooks/useDeleteCredential', () => ({
+  useDeleteCredential: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+    error: null,
+  }),
+}))
+vi.mock('./CredentialCreateModal', () => ({
+  CredentialCreateModal: ({ credential }: { credential?: { id: string } }) => (
+    <div>{credential ? `Editing ${credential.id}` : null}</div>
+  ),
+}))
+
+describe('CredentialsTable', () => {
+  it('keeps the table toolbar available and retries when loading credentials fails', async () => {
+    const user = userEvent.setup()
+    const onRetry = vi.fn()
+    render(
+      <CredentialsTable
+        credentials={[]}
+        isLoading={false}
+        error={new Error('credential service internals')}
+        isRetrying={false}
+        onRetry={onRetry}
+      />,
+    )
+
+    expect(screen.getByRole('searchbox')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).not.toHaveTextContent('credential service internals')
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(onRetry).toHaveBeenCalledOnce()
+  })
+
+  it('opens a shared detail drawer and starts editing from its action', async () => {
+    const user = userEvent.setup()
+    render(
+      <CredentialsTable
+        credentials={[{
+          id: 'vcenter-admin',
+          name: 'vCenter admin',
+          description: 'Production account',
+          username: 'administrator',
+        }]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByText('vCenter admin'))
+
+    expect(screen.getByRole('dialog', { name: 'Credential details' })).toBeInTheDocument()
+    expect(screen.getByText('Stored securely and never displayed')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    expect(screen.getByText('Editing vcenter-admin')).toBeInTheDocument()
+  })
+})

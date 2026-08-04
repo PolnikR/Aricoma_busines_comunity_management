@@ -13,8 +13,8 @@ afterEach(cleanup)
 
   it('calls onClose when the close button is clicked', () => {
     const onClose = vi.fn()
-    render(<DetailDrawer open title="X" onClose={onClose}>body</DetailDrawer>)
-    fireEvent.click(screen.getByLabelText('Close detail'))
+    render(<DetailDrawer open title="X" closeLabel="Close provider" onClose={onClose}>body</DetailDrawer>)
+    fireEvent.click(screen.getByLabelText('Close provider'))
     expect(onClose).toHaveBeenCalledOnce()
   })
 
@@ -23,6 +23,40 @@ afterEach(cleanup)
     render(<DetailDrawer open title="X" onClose={onClose}>body</DetailDrawer>)
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it('moves focus inside, traps keyboard focus and restores the opener', () => {
+    const opener = document.createElement('button')
+    document.body.append(opener)
+    opener.focus()
+    const { rerender } = render(
+      <DetailDrawer open={false} title="X" closeLabel="Close detail" onClose={vi.fn()}>
+        <button type="button">Action</button>
+      </DetailDrawer>,
+    )
+
+    rerender(
+      <DetailDrawer open title="X" closeLabel="Close detail" onClose={vi.fn()}>
+        <button type="button">Action</button>
+      </DetailDrawer>,
+    )
+    const close = screen.getByRole('button', { name: 'Close detail' })
+    const action = screen.getByRole('button', { name: 'Action' })
+    expect(close).toHaveFocus()
+
+    action.focus()
+    fireEvent.keyDown(window, { key: 'Tab' })
+    expect(close).toHaveFocus()
+    fireEvent.keyDown(window, { key: 'Tab', shiftKey: true })
+    expect(action).toHaveFocus()
+
+    rerender(
+      <DetailDrawer open={false} title="X" closeLabel="Close detail" onClose={vi.fn()}>
+        <button type="button">Action</button>
+      </DetailDrawer>,
+    )
+    expect(opener).toHaveFocus()
+    opener.remove()
   })
 
   it('does not react to Escape when closed', () => {

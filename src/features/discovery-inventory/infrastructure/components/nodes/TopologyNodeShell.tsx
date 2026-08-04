@@ -28,10 +28,10 @@ export function TopologyNodeShell({
   return (
     <div
       className={cn(
-        'relative flex size-full flex-col overflow-hidden rounded-xl border bg-white shadow-[0_10px_28px_-18px_rgba(31,70,112,0.5)] transition',
+        'relative flex size-full flex-col overflow-hidden rounded-xl border bg-surface shadow-[0_10px_28px_-18px_rgba(31,70,112,0.5)] transition',
         selected
           ? 'border-brand-400 ring-4 ring-brand-100'
-          : 'border-[#d9e6f1] hover:border-[#b9d5e8]',
+          : 'border-border hover:border-border-strong',
       )}
       role="group"
       aria-label={`${kindLabel}: ${title}`}
@@ -41,7 +41,7 @@ export function TopologyNodeShell({
           type="target"
           position={Position.Top}
           isConnectable={false}
-          className="!size-2.5 !border-2 !border-white !bg-[#91a4bc]"
+          className="!size-2.5 !border-2 !border-inverse-text !bg-text-subtle"
         />
       ) : null}
 
@@ -50,19 +50,19 @@ export function TopologyNodeShell({
           {icon}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7b8ca4]">
+          <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-text-muted">
             {kindLabel}
           </span>
-          <span className="mt-0.5 block truncate text-sm font-semibold text-[#18253d]" title={title}>
+          <span className="mt-0.5 block truncate text-sm font-semibold text-text-primary" title={title}>
             {title}
           </span>
-          <span className="mt-0.5 block truncate text-[11px] text-[#71819a]" title={subtitle}>
+          <span className="mt-0.5 block truncate text-[11px] text-text-muted" title={subtitle}>
             {subtitle}
           </span>
         </span>
       </div>
 
-      <div className="mt-auto border-t border-[#edf2f7] bg-[#fbfdff] px-3.5 py-2">
+      <div className="mt-auto border-t border-border bg-surface-subtle px-3.5 py-2">
         {children}
       </div>
 
@@ -71,7 +71,7 @@ export function TopologyNodeShell({
           type="source"
           position={Position.Bottom}
           isConnectable={false}
-          className="!size-2.5 !border-2 !border-white !bg-[#0d91d7]"
+          className="!size-2.5 !border-2 !border-inverse-text !bg-accent"
         />
       ) : null}
     </div>

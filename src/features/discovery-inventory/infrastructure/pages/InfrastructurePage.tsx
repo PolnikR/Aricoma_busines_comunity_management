@@ -1,85 +1,192 @@
+import { useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router'
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
-import { useVirtualMachinesUnified } from '@/features/hooks/useVirtualMachinesUnified'
+import { useTranslation } from '@/hooks/useTranslation'
+import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
+import type { PowerInventory } from '../../model/discoveryTypes'
+import { mapInventoryToTopology } from '../helpers/mapInventoryToTopology'
+import { mapPowerInventoryToTopology } from '../helpers/mapPowerInventoryToTopology'
+import { useInfrastructureInventory } from '../hooks/useInfrastructureInventory'
+import {
+  getInfrastructureProviders,
+  parseInfrastructurePlatform,
+  resolveInfrastructureProvider,
+} from '../model/infrastructureSourceSelection'
+import type { InfrastructureTopologyPlatform } from '../model/topologyTypes'
+import { InfrastructureSourceSelector } from '../components/InfrastructureSourceSelector'
 import { InfrastructureTopologySkeleton } from '../components/InfrastructureTopologySkeleton'
 import { InfrastructureTopologyWorkspace } from '../components/InfrastructureTopologyWorkspace'
 
+function isPowerInventory(inventory: unknown): inventory is PowerInventory {
+  return Boolean(inventory && typeof inventory === 'object' && 'partitions' in inventory)
+}
+
 export function InfrastructurePage() {
-  const { topology: data, error, isLoading: isPending, isFetching, refetch } = useVirtualMachinesUnified()
+  const { t } = useTranslation()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const platform = parseInfrastructurePlatform(searchParams.get('platform'))
+  const providersQuery = useProviders()
+  const providers = useMemo(() => providersQuery.data ?? [], [providersQuery.data])
+  const compatibleProviders = useMemo(
+    () => getInfrastructureProviders(providers, platform),
+    [platform, providers],
+  )
+  const selectedProvider = useMemo(
+    () => resolveInfrastructureProvider(
+      providers,
+      platform,
+      searchParams.get('providerId'),
+    ),
+    [platform, providers, searchParams],
+  )
+  const inventoryQuery = useInfrastructureInventory(selectedProvider)
+  const topology = useMemo(() => {
+    if (!inventoryQuery.data || !selectedProvider) return null
 
-  if (isPending) {
-    return (
-      <div className="flex min-h-full w-full min-w-0 max-w-full flex-col overflow-x-hidden lg:h-full lg:min-h-0">
-        <PageHeader
-          eyebrow="Discovery & Inventory"
-          title="Infrastructure"
-          description="Explore discovered cluster, host, virtual machine, and datastore relationships."
-        />
-        <InfrastructureTopologySkeleton />
-      </div>
-    )
+    if (selectedProvider.type === 'IBM_POWER') {
+      return isPowerInventory(inventoryQuery.data)
+        ? mapPowerInventoryToTopology(inventoryQuery.data)
+        : null
+    }
+
+    return isPowerInventory(inventoryQuery.data)
+      ? null
+      : mapInventoryToTopology(inventoryQuery.data)
+  }, [inventoryQuery.data, selectedProvider])
+
+  useEffect(() => {
+    if (!providersQuery.data) return
+
+    const canonicalParams = new URLSearchParams(searchParams)
+    canonicalParams.set('platform', platform)
+    if (selectedProvider) canonicalParams.set('providerId', selectedProvider.id)
+    else canonicalParams.delete('providerId')
+
+    if (canonicalParams.toString() !== searchParams.toString()) {
+      setSearchParams(canonicalParams, { replace: true })
+    }
+  }, [platform, providersQuery.data, searchParams, selectedProvider, setSearchParams])
+
+  const handlePlatformChange = (nextPlatform: InfrastructureTopologyPlatform) => {
+    const nextParams = new URLSearchParams(searchParams)
+    const nextProvider = resolveInfrastructureProvider(providers, nextPlatform)
+    nextParams.set('platform', nextPlatform)
+    if (nextProvider) nextParams.set('providerId', nextProvider.id)
+    else nextParams.delete('providerId')
+    setSearchParams(nextParams)
   }
-
-  if (!data) {
-    const message = error instanceof Error ? error.message : 'Unknown discovery error.'
-
-    return (
-      <>
-        <PageHeader
-          eyebrow="Discovery & Inventory"
-          title="Infrastructure"
-          description="Explore discovered cluster, host, virtual machine, and datastore relationships."
-        />
-        <FetchErrorAlert
-          title="Infrastructure topology could not be loaded"
-          description={message}
-          retryLabel="Retry loading"
-          variant="full"
-          isRetrying={isFetching}
-          onRetry={refetch}
-        />
-      </>
-    )
+  const handleProviderChange = (providerId: string) => {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.set('providerId', providerId)
+    setSearchParams(nextParams)
   }
+  const handleInventoryRefetch = () => { void inventoryQuery.refetch() }
+  const handleProvidersRefetch = () => { void providersQuery.refetch() }
+  const isLoading = providersQuery.isLoading
+    || Boolean(selectedProvider && inventoryQuery.isLoading)
 
   return (
     <div className="flex flex-1 min-h-full w-full min-w-0 max-w-full flex-col overflow-x-hidden lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow="Discovery & Inventory"
-        title="Infrastructure"
-        description="Explore discovered cluster, host, virtual machine, and datastore relationships."
-        actions={(
+        eyebrow={t('pages.infrastructure.eyebrow')}
+        title={t('pages.infrastructure.title')}
+        description={t('pages.infrastructure.description')}
+        actions={selectedProvider ? (
           <Button
             size="sm"
             variant="outline"
-            disabled={isFetching}
-            onClick={refetch}
+            disabled={inventoryQuery.isFetching}
+            onClick={handleInventoryRefetch}
           >
-            {isFetching ? 'Refreshing' : 'Refresh inventory'}
+            {inventoryQuery.isFetching ? t('buttons.refreshing') : t('buttons.refreshInventory')}
           </Button>
-        )}
+        ) : undefined}
       />
 
-      {error ? (
+      <InfrastructureSourceSelector
+        platform={platform}
+        providers={compatibleProviders}
+        providerId={selectedProvider?.id ?? ''}
+        disabled={providersQuery.isLoading}
+        onPlatformChange={handlePlatformChange}
+        onProviderChange={handleProviderChange}
+      />
+
+      {isLoading ? <InfrastructureTopologySkeleton /> : null}
+
+      {!isLoading && providersQuery.error && !providersQuery.data ? (
         <FetchErrorAlert
-          className="mb-4"
-          title="Latest request failed"
-          description="Showing the previous successful topology."
-          isRetrying={isFetching}
-          onRetry={refetch}
+          title={t('pages.infrastructure.providersError.title')}
+          description={providersQuery.error instanceof Error
+            ? providersQuery.error.message
+            : t('messages.unknownError')}
+          retryLabel={t('pages.infrastructure.error.retryButton')}
+          variant="full"
+          isRetrying={providersQuery.isFetching}
+          onRetry={handleProvidersRefetch}
         />
       ) : null}
 
-      {data.nodes.length > 0 ? (
-        <InfrastructureTopologyWorkspace topology={data} />
-      ) : (
-        <EmptyState
-          title="No infrastructure discovered"
-          description="The discovery response does not contain infrastructure records."
+      {!isLoading && providersQuery.error && providersQuery.data ? (
+        <FetchErrorAlert
+          className="mb-4"
+          title={t('pages.infrastructure.providersError.title')}
+          description={t('pages.infrastructure.providersError.showingPrevious')}
+          isRetrying={providersQuery.isFetching}
+          onRetry={handleProvidersRefetch}
         />
-      )}
+      ) : null}
+
+      {!isLoading && providersQuery.data && !selectedProvider ? (
+        <EmptyState
+          title={t('pages.infrastructure.noProviders.title')}
+          description={t('pages.infrastructure.noProviders.description')}
+        />
+      ) : null}
+
+      {!isLoading && selectedProvider && !topology ? (
+        <FetchErrorAlert
+          title={t('pages.infrastructure.error.title')}
+          description={inventoryQuery.error instanceof Error
+            ? inventoryQuery.error.message
+            : t('messages.unknownError')}
+          retryLabel={t('pages.infrastructure.error.retryButton')}
+          variant="full"
+          isRetrying={inventoryQuery.isFetching}
+          onRetry={handleInventoryRefetch}
+        />
+      ) : null}
+
+      {!isLoading && topology ? (
+        <>
+          {inventoryQuery.error ? (
+            <FetchErrorAlert
+              className="mb-4"
+              title={t('pages.infrastructure.latestRequestFailed')}
+              description={t('pages.infrastructure.showingPrevious')}
+              isRetrying={inventoryQuery.isFetching}
+              onRetry={handleInventoryRefetch}
+            />
+          ) : null}
+
+          {topology.nodes.length > 0 ? (
+            <InfrastructureTopologyWorkspace
+              key={`${platform}:${selectedProvider?.id ?? ''}`}
+              platform={platform}
+              positionScope={`${platform}:${selectedProvider?.id ?? ''}`}
+              topology={topology}
+            />
+          ) : (
+            <EmptyState
+              title={t('pages.infrastructure.empty.title')}
+              description={t('pages.infrastructure.empty.description')}
+            />
+          )}
+        </>
+      ) : null}
     </div>
   )
 }

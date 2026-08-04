@@ -17,6 +17,12 @@ afterEach(cleanup)
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
   })
 
+  it('separates the dialog surface from the backdrop with the semantic border', () => {
+    render(<Modal open title="My Modal" onClose={vi.fn()}>Body content</Modal>)
+
+    expect(screen.getByRole('dialog')).toHaveClass('border', 'border-border')
+  })
+
   it('renders nothing when closed', () => {
     render(<Modal open={false} title="My Modal" onClose={vi.fn()}><p>Body content</p></Modal>)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -36,6 +42,15 @@ afterEach(cleanup)
     const onClose = vi.fn()
     render(<Modal open title="X" onClose={onClose}><p>body</p></Modal>)
     fireEvent.click(screen.getByText('body'))
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('does not call onClose from the backdrop when backdrop closing is disabled', () => {
+    const onClose = vi.fn()
+    render(<Modal open title="X" onClose={onClose} closeOnBackdrop={false}>body</Modal>)
+    const backdrop = document.querySelector('[aria-hidden="true"]')
+    expect(backdrop).not.toBeNull()
+    fireEvent.click(backdrop as HTMLElement)
     expect(onClose).not.toHaveBeenCalled()
   })
 

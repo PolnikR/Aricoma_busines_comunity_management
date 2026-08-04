@@ -70,7 +70,7 @@ Current relationships are derived from discovery data:
 Data flow:
 
 ```text
-fixture now / real API later
+backend API
   -> Discovery Inventory API (HTTP + Zod)
   -> canonical discovery model
   -> infrastructure topology mapper
@@ -80,23 +80,12 @@ fixture now / real API later
   -> topology workspace
 ```
 
-The UI never imports the JSON fixture. Replacing the fixture with a real
-endpoint should be localized to the shared Discovery Inventory API boundary and
-its schema/mapper.
+The UI reads discovery data through the shared API boundary and validates the
+backend response before mapping it to the canonical discovery model.
 
 The Virtual Machines table keeps its page and page-size contract. Topology uses
 the complete selected inventory because a single table page cannot form a
 consistent graph.
-
-### Current fixture
-
-The current fixture contains:
-
-- 1 cluster
-- 3 hosts
-- 151 virtual machines
-- 6 datastores
-- 161 nodes and 318 relationships with the datastore layer enabled
 
 Datastore relationships are hidden by default to keep the initial graph
 readable. Search, host and power-state filters preserve the cluster/host context

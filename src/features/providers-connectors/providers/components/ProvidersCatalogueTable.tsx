@@ -1,52 +1,97 @@
 import { useMemo, useState } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
+import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import {
   DataTable,
+  DataTableSkeleton,
   DataTableToolbar,
   DataTablePagination,
+  DataTableRequestState,
   DetailDrawer,
   DetailRow,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
-import { useProviders } from '../api/useProviders'
-import { useDeleteProvider } from '../api/useDeleteProvider'
+import { useTranslation } from '@/hooks/useTranslation'
+import { useDeleteProvider } from '../hooks/useDeleteProvider'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
-import { providerTypeLabel } from '@/features/api/providersApi'
-import type { ProviderRecord } from '@/features/api/providersApi'
+import { providerTypeLabel } from '../helpers/providerTypeLabel'
+import type { ProviderRecord } from '../model/providerTypes'
 
-const columns: ColumnDef<ProviderRecord>[] = [
-  {
-    id: 'name',
-    header: 'Provider',
-    cell: (provider) => (
-      <>
-        <span className="block font-semibold text-[#17233d]">{provider.name}</span>
-        <span className="mt-0.5 block font-mono text-[11px] text-[#93a0b5]">{provider.id}</span>
-      </>
-    ),
-  },
-  {
-    id: 'description',
-    header: 'Description',
-    cell: (provider) => <span className="block max-w-md truncate" title={provider.description}>{provider.description || '-'}</span>,
-  },
-  {
-    id: 'type',
-    header: 'Type',
-    cell: (provider) => <Badge color="info" size="sm">{provider.type ? providerTypeLabel(provider.type) : 'UNKNOWN'}</Badge>,
-  },
-  {
-    id: 'ipAddress',
-    header: 'IP address',
-    cell: (provider) => <span className="font-mono text-[12px] text-[#3b4763]">{provider.ipAddress || '-'}</span>,
-  },
-]
+function credentialStatusLabel(
+  status: ProviderRecord['credentialStatus'],
+  t: ReturnType<typeof useTranslation>['t'],
+) {
+  return t(`providers.credentials.status.${status}`)
+}
 
-export function ProvidersCatalogueTable() {
-  const { data: providers, isLoading, error } = useProviders()
+function credentialStatusColor(status: ProviderRecord['credentialStatus']) {
+  if (status === 'ok') return 'success' as const
+  if (status === 'missing') return 'error' as const
+  return 'light' as const
+}
+
+function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<ProviderRecord>[] {
+  return [
+    {
+      id: 'name',
+      header: t('tables.provider.name'),
+      cell: (provider) => (
+        <>
+          <span className="block font-semibold text-text-primary">{provider.name}</span>
+          <span className="mt-0.5 block font-mono text-[11px] text-text-subtle">{provider.id}</span>
+        </>
+      ),
+    },
+    {
+      id: 'description',
+      header: t('tables.provider.description'),
+      cell: (provider) => <span className="block max-w-md truncate" title={provider.description}>{provider.description || '-'}</span>,
+    },
+    {
+      id: 'type',
+      header: t('tables.provider.type'),
+      cell: (provider) => <Badge color="info" size="sm">{providerTypeLabel(provider.type)}</Badge>,
+    },
+    {
+      id: 'ipAddress',
+      header: t('tables.provider.ip'),
+      cell: (provider) => <span className="font-mono text-[12px] text-text-secondary">{provider.ipAddress || '-'}</span>,
+    },
+    {
+      id: 'credential',
+      header: t('tables.provider.credential'),
+      cell: (provider) => (
+        <div className="flex flex-col items-start gap-1">
+          <span className="font-mono text-[12px] text-text-secondary">{provider.credentialId ?? '-'}</span>
+          <Badge color={credentialStatusColor(provider.credentialStatus)} size="sm">
+            {credentialStatusLabel(provider.credentialStatus, t)}
+          </Badge>
+        </div>
+      ),
+    },
+  ]
+}
+
+interface ProvidersCatalogueTableProps {
+  providers: ProviderRecord[]
+  isLoading: boolean
+  error: Error | null
+  isRetrying: boolean
+  onRetry: () => void
+}
+
+export function ProvidersCatalogueTable({
+  providers,
+  isLoading,
+  error,
+  isRetrying,
+  onRetry,
+}: ProvidersCatalogueTableProps) {
+  const { t } = useTranslation()
+  const columns = getColumns(t)
   const deleteProvider = useDeleteProvider()
   const [typeFilter, setTypeFilter] = useState('')
   const [pendingType, setPendingType] = useState('')
@@ -54,7 +99,7 @@ export function ProvidersCatalogueTable() {
   const [editing, setEditing] = useState<ProviderRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ProviderRecord | null>(null)
 
-  const rows = useMemo(() => providers ?? [], [providers])
+  const rows = useMemo(() => providers, [providers])
   const selected = rows.find((provider) => provider.id === selectedId) ?? null
   const types = useMemo(
     () => [...new Set(rows.map((provider) => provider.type).filter(Boolean))].sort(),
@@ -69,16 +114,12 @@ export function ProvidersCatalogueTable() {
   const changeType = (value: string) => { setTypeFilter(value); setPendingType(value); table.setPage(1) }
 
   if (isLoading) {
-    return <div className="p-6 text-sm text-[#71819a]">Loading providers…</div>
-  }
-
-  if (error) {
     return (
-      <div className="p-6">
-        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700">
-          Failed to load providers. {error instanceof Error ? error.message : ''}
-        </div>
-      </div>
+      <DataTableSkeleton
+        columnCount={5}
+        ariaLabel={t('providers.loading')}
+        className="flex-1 rounded-none border-0 shadow-none lg:min-h-0"
+      />
     )
   }
 
@@ -87,78 +128,103 @@ export function ProvidersCatalogueTable() {
       <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
-        searchPlaceholder="Search by provider name"
-        searchLabel="Search providers by name"
+        searchPlaceholder={t('providers.searchPlaceholder')}
+        searchLabel={t('providers.searchLabel')}
         density={table.density}
         onDensityChange={table.setDensity}
-        filterTitle="Filter providers"
+        filterTitle={t('providers.filterTitle')}
         activeFilterCount={typeFilter ? 1 : 0}
         onApplyFilters={() => { changeType(pendingType) }}
         onClearFilters={() => { setPendingType(''); changeType('') }}
         filterPanel={
-          <Field label="Type" htmlFor="provider-type-filter">
+          <Field label={t('details.type')} htmlFor="provider-type-filter">
             <Select id="provider-type-filter" value={pendingType} onChange={(event) => { setPendingType(event.target.value) }}>
-              <option value="">All types</option>
+              <option value="">{t('providers.allTypes')}</option>
               {types.map((type) => <option key={type} value={type}>{providerTypeLabel(type)}</option>)}
             </Select>
           </Field>
         }
       />
 
-      <DataTable
-        columns={columns}
-        rows={table.pageItems}
-        rowKey={(provider) => provider.id}
-        density={table.density}
-        minWidthClassName="min-w-215"
-        ariaLabel="Providers table"
-        onRowClick={(provider) => { setSelectedId(provider.id) }}
-        selectedRowKey={selectedId}
-        emptyContent={rows.length > 0 ? 'No providers match your search.' : 'No providers were returned by the backend.'}
-      />
+      <DataTableRequestState
+        error={error ? {
+          title: t('providers.loadFailed'),
+          retryLabel: t('buttons.retry'),
+          isRetrying,
+          onRetry,
+        } : null}
+      >
+        <DataTable
+          columns={columns}
+          rows={table.pageItems}
+          rowKey={(provider) => provider.id}
+          density={table.density}
+          minWidthClassName="min-w-215"
+          ariaLabel={t('providers.tableLabel')}
+          onRowClick={(provider) => { setSelectedId(provider.id) }}
+          selectedRowKey={selectedId}
+          emptyContent={rows.length > 0 ? t('providers.noMatches') : t('providers.empty')}
+        />
+      </DataTableRequestState>
 
-      <DataTablePagination
-        page={table.page}
-        pageSize={table.pageSize}
-        total={table.total}
-        onPageChange={table.setPage}
-        onPageSizeChange={table.setPageSize}
-      />
+      {!error ? (
+        <DataTablePagination
+          page={table.page}
+          pageSize={table.pageSize}
+          total={table.total}
+          onPageChange={table.setPage}
+          onPageSizeChange={table.setPageSize}
+        />
+      ) : null}
 
       <DetailDrawer
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
-        eyebrow="Selected provider"
+        eyebrow={t('drawer.selectedProvider')}
         title={selected?.name ?? ''}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerExtra={selected ? <Badge color="info" size="sm">{selected.type ? providerTypeLabel(selected.type) : 'UNKNOWN'}</Badge> : null}
-        ariaLabel="Provider detail"
+        headerExtra={selected ? <Badge color="info" size="sm">{providerTypeLabel(selected.type)}</Badge> : null}
+        ariaLabel={t('drawer.providerDetail')}
+        closeLabel={t('drawer.closeProvider')}
         footer={selected ? (
           <>
-            <button
-              type="button"
+            <Button
               onClick={() => { setDeleteTarget(selected) }}
-              className="flex-1 rounded-lg border border-[#f0c3c3] px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+              size="sm"
+              variant="danger"
+              className="flex-1"
             >
-              Delete
-            </button>
-            <button
-              type="button"
+              {t('buttons.delete')}
+            </Button>
+            <Button
               onClick={() => { setEditing(selected); setSelectedId(null) }}
-              className="flex-1 rounded-lg bg-[#0d91d7] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0a7bc4]"
+              size="sm"
+              className="flex-1"
             >
-              Edit
-            </button>
+              {t('buttons.edit')}
+            </Button>
           </>
         ) : null}
       >
         {selected ? (
           <dl className="px-5 py-2">
-            <DetailRow label="Provider ID" value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label="Type" value={selected.type ? providerTypeLabel(selected.type) : '-'} />
-            <DetailRow label="IP address" value={<span className="font-mono">{selected.ipAddress || '-'}</span>} />
-            <DetailRow label="Description" value={selected.description || '-'} />
+            <DetailRow label={t('details.providerId')} value={<span className="font-mono">{selected.id}</span>} />
+            <DetailRow label={t('details.type')} value={providerTypeLabel(selected.type)} />
+            <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{selected.ipAddress || '-'}</span>} />
+            <DetailRow
+              label={t('details.credential')}
+              value={<span className="font-mono">{selected.credentialId ?? '-'}</span>}
+            />
+            <DetailRow
+              label={t('details.credentialStatus')}
+              value={(
+                <Badge color={credentialStatusColor(selected.credentialStatus)} size="sm">
+                  {credentialStatusLabel(selected.credentialStatus, t)}
+                </Badge>
+              )}
+            />
+            <DetailRow label={t('details.description')} value={selected.description || '-'} />
           </dl>
         ) : null}
       </DetailDrawer>
@@ -174,10 +240,11 @@ export function ProvidersCatalogueTable() {
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        title="Delete provider"
-        message={<>Are you sure you want to delete <span className="font-medium">{deleteTarget?.name}</span>? This action cannot be undone.</>}
-        confirmLabel="Delete"
-        loadingLabel="Deleting…"
+        title={t('dialogs.deleteProvider')}
+        message={t('dialogs.deleteProviderMessage').replace('{name}', deleteTarget?.name ?? '')}
+        confirmLabel={t('buttons.delete')}
+        cancelLabel={t('buttons.cancel')}
+        loadingLabel={t('buttons.deleting')}
         tone="danger"
         isLoading={deleteProvider.isPending}
         onCancel={() => { setDeleteTarget(null) }}

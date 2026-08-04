@@ -1,17 +1,12 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './app/App'
+import { LanguageProvider } from '@/contexts/LanguageProvider'
+import { ThemeProvider } from '@/contexts/ThemeProvider'
+import { UserProvider } from '@/contexts/UserProvider'
 import './index.css'
 
-async function startApp() {
-  // Dev-only mock backend (recovery-apps). Never runs in a production build.
-  // Unhandled requests (providers, VMs, tags) pass straight through to the
-  // real backend without warnings.
-  if (import.meta.env.DEV) {
-    const { worker } = await import('./mocks/browser')
-    await worker.start({ onUnhandledRequest: 'bypass' })
-  }
-
+function startApp() {
   const rootElement = document.getElementById('root')
 
   if (rootElement === null) {
@@ -20,9 +15,15 @@ async function startApp() {
 
   createRoot(rootElement).render(
     <StrictMode>
-      <App />
+      <ThemeProvider>
+        <LanguageProvider>
+          <UserProvider>
+            <App />
+          </UserProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </StrictMode>,
   )
 }
 
-void startApp()
+startApp()

@@ -2,7 +2,14 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvidersCatalogueTable } from './ProvidersCatalogueTable'
-import type { ProviderRecord } from '@/features/api/providersApi'
+import type { ProviderRecord } from '../model/providerTypes'
+import { useProviders } from '../hooks/useProviders'
+
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+vi.mock('react-router', async (importOriginal) => ({
+  ...await importOriginal<typeof import('react-router')>(),
+  useBlocker: () => ({ state: 'unblocked' as const }),
+}))
 
 const providerA: ProviderRecord = {
   id: 'vmware-vcenter-01',
@@ -10,6 +17,8 @@ const providerA: ProviderRecord = {
   description: 'Primary vCenter',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  credentialId: 'vcenter-admin',
+  credentialStatus: 'ok',
 }
 const providerB: ProviderRecord = {
   id: 'flashsystem-01',
@@ -17,6 +26,8 @@ const providerB: ProviderRecord = {
   description: 'DR array',
   type: 'FLASHCOPY',
   ipAddress: '10.99.99.41',
+  credentialId: null,
+  credentialStatus: 'none',
 }
 
 function mockFetch() {
@@ -34,7 +45,24 @@ function mockFetch() {
 
 function renderTable() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={queryClient}><ProvidersCatalogueTable /></QueryClientProvider>)
+  function ProvidersTableHarness() {
+    const { data = [], isLoading, isFetching, error, refetch } = useProviders()
+    return (
+      <ProvidersCatalogueTable
+        providers={data}
+        isLoading={isLoading}
+        error={error}
+        isRetrying={isFetching}
+        onRetry={() => { void refetch() }}
+      />
+    )
+  }
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <ProvidersTableHarness />
+    </QueryClientProvider>,
+  )
 }
 
 describe('ProvidersCatalogueTable', () => {
@@ -45,6 +73,35 @@ describe('ProvidersCatalogueTable', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     cleanup()
+  })
+
+  it('renders the shared table skeleton while providers are loading', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => undefined)))
+
+    renderTable()
+
+    expect(screen.getByRole('status', { name: 'Loading providers' })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.queryByText('Loading providers…')).not.toBeInTheDocument()
+  })
+
+  it('keeps search and filters available without exposing provider API errors', () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProvidersCatalogueTable
+          providers={[]}
+          isLoading={false}
+          error={new Error('provider service internals')}
+          isRetrying={false}
+          onRetry={vi.fn()}
+        />
+      </QueryClientProvider>,
+    )
+
+    const alert = screen.getByRole('alert')
+    expect(screen.getByRole('searchbox')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument()
+    expect(alert).not.toHaveTextContent('provider service internals')
   })
 
   it('opens the detail drawer with actions when a row is clicked', async () => {

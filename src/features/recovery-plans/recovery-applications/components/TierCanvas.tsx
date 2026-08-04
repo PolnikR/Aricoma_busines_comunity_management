@@ -5,9 +5,13 @@ import type { RecoveryTier } from '../model/recoveryApplicationTypes'
 
 interface TierCanvasProps {
   tiers: Record<string, RecoveryTier>
-  onVMAdded?: (tierId: string, vmName: string) => void
-  onVMRemoved?: (tierId: string, vmName: string) => void
-  onTierEdit?: (tierId: string, newTierId: string, updates: { name: string; description: string }) => void
+  recoveryGroupVmOptions?: Readonly<Record<string, readonly string[]>>
+  onRecoveryGroupAdded?: (tierId: string, groupId: string) => void
+  onRecoveryGroupRemoved?: (tierId: string) => void
+  onRecoveryVmSelectionChange?: (tierId: string, vmName: string, selected: boolean) => void
+  onTierEdit?: (tierId: string, newTierId: string, updates: {
+    tierDescription: string
+  }) => void
   onTierAdd?: (tierId: string, tier: RecoveryTier) => void
   onTierDelete?: (tierId: string) => void
   onTierReorder?: (reorderedTiers: Record<string, RecoveryTier>) => void
@@ -15,8 +19,10 @@ interface TierCanvasProps {
 
 export function TierCanvas({
   tiers,
-  onVMAdded,
-  onVMRemoved,
+  recoveryGroupVmOptions,
+  onRecoveryGroupAdded,
+  onRecoveryGroupRemoved,
+  onRecoveryVmSelectionChange,
   onTierEdit,
   onTierAdd,
   onTierDelete,
@@ -41,7 +47,9 @@ export function TierCanvas({
     setEditingTierId(editingTierId === tierId ? null : tierId)
   }
 
-  const handleSave = (tierId: string, newTierId: string, updates: { name: string; description: string }) => {
+  const handleSave = (tierId: string, newTierId: string, updates: {
+    tierDescription: string
+  }) => {
     onTierEdit?.(tierId, newTierId, updates)
     setEditingTierId(null)
   }
@@ -50,7 +58,16 @@ export function TierCanvas({
     setEditingTierId(null)
   }
 
-  const handleDragStart = (id: string) => {
+  const handleDragStart = (event: React.DragEvent, id: string) => {
+    const target = event.target
+    if (
+      target instanceof HTMLElement
+      && target.closest('input, textarea, select, button')
+    ) {
+      event.preventDefault()
+      return
+    }
+
     setDraggedId(id)
   }
 
@@ -95,7 +112,7 @@ export function TierCanvas({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(17.5rem,1fr))] gap-4">
       {sortedTiers.map(({ id, tier }) => {
         const tierCardProps: React.ComponentProps<typeof TierCard> = {
           id,
@@ -111,29 +128,41 @@ export function TierCanvas({
         if (onTierDelete) {
           tierCardProps.onDelete = onTierDelete
         }
-        if (onVMAdded) {
-          tierCardProps.onVMAdded = (vmName) => {
-            onVMAdded(id, vmName)
+        if (onRecoveryGroupAdded) {
+          tierCardProps.onRecoveryGroupAdded = (groupId) => {
+            onRecoveryGroupAdded(id, groupId)
           }
         }
-        if (onVMRemoved) {
-          tierCardProps.onVMRemoved = (vmName) => {
-            onVMRemoved(id, vmName)
+        if (onRecoveryGroupRemoved) {
+          tierCardProps.onRecoveryGroupRemoved = () => {
+            onRecoveryGroupRemoved(id)
+          }
+        }
+        const recoveryGroupName = tier.recovery_group?.name
+        const recoveryGroupVms = recoveryGroupName
+          ? recoveryGroupVmOptions?.[recoveryGroupName]
+          : undefined
+        if (recoveryGroupVms) {
+          tierCardProps.recoveryGroupVms = recoveryGroupVms
+        }
+        if (onRecoveryVmSelectionChange) {
+          tierCardProps.onRecoveryVmSelectionChange = (vmName, selected) => {
+            onRecoveryVmSelectionChange(id, vmName, selected)
           }
         }
 
         return (
           <div
             key={id}
-            draggable
-            onDragStart={() => {
-              handleDragStart(id)
+            draggable={editingTierId !== id}
+            onDragStart={(event) => {
+              handleDragStart(event, id)
             }}
             onDragOver={handleDragOver}
             onDrop={() => {
               handleDrop(id)
             }}
-            className={`cursor-grab active:cursor-grabbing opacity-100 transition ${
+            className={`${editingTierId === id ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'} h-full opacity-100 transition ${
               draggedId === id ? 'opacity-50' : ''
             }`}
           >

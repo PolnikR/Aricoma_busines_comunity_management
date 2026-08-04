@@ -2,7 +2,26 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
-import type { ProviderRecord } from '@/features/api/providersApi'
+import type { ProviderRecord } from '../model/providerTypes'
+
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+vi.mock('react-router', async (importOriginal) => ({
+  ...await importOriginal<typeof import('react-router')>(),
+  useBlocker: () => ({ state: 'unblocked' as const }),
+}))
+vi.mock('../../credentials/hooks/useCredentials', () => ({
+  useCredentials: () => ({
+    data: [{
+      id: 'vcenter-admin',
+      name: 'vCenter admin',
+      description: 'Production account',
+      username: 'administrator',
+    }],
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+}))
 
 const mockProviderA: ProviderRecord = {
   id: 'vmware-vcenter-01',
@@ -10,6 +29,8 @@ const mockProviderA: ProviderRecord = {
   description: 'Primary vCenter',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  credentialId: 'vcenter-admin',
+  credentialStatus: 'ok',
 }
 
 function renderWithQueryClient(component: React.ReactElement) {
@@ -41,6 +62,7 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByLabelText('Description')).toBeInTheDocument()
     expect(screen.getByLabelText('Type')).toBeInTheDocument()
     expect(screen.getByLabelText('IP address')).toBeInTheDocument()
+    expect(screen.getByLabelText('Credentials')).toBeInTheDocument()
   })
 
   it('renders nothing when closed', () => {
@@ -99,6 +121,22 @@ describe('ProvidersCreateModal', () => {
     vi.unstubAllGlobals()
   })
 
+  it('does not overwrite an existing provider from create mode', async () => {
+    const mockFetch = vi.fn()
+    vi.stubGlobal('fetch', mockFetch)
+    renderWithQueryClient(
+      <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[mockProviderA]} />,
+    )
+
+    fillValidForm()
+    fireEvent.change(screen.getByLabelText('ID'), { target: { value: mockProviderA.id } })
+    fireEvent.click(screen.getByRole('button', { name: /Create Provider/i }))
+
+    expect(await screen.findByText('A provider with this ID already exists')).toBeInTheDocument()
+    expect(mockFetch).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
+
   it('submits the entered id in the payload', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(
       new Response(JSON.stringify({ providers: [] }), { status: 200 }),
@@ -110,13 +148,21 @@ describe('ProvidersCreateModal', () => {
     )
 
     fillValidForm()
+    fireEvent.change(screen.getByLabelText('Credentials'), { target: { value: 'vcenter-admin' } })
     fireEvent.click(screen.getByRole('button', { name: /Create Provider/i }))
 
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
 
     const init = mockFetch.mock.calls[0]?.[1] as RequestInit
     const body = JSON.parse(init.body as string) as ProviderRecord
-    expect(body).toMatchObject({ id: 'flashcopy-01', name: 'New Provider', type: 'VMWARE', ipAddress: '10.0.0.1' })
+    expect(body).toMatchObject({
+      id: 'flashcopy-01',
+      name: 'New Provider',
+      type: 'VMWARE',
+      ipAddress: '10.0.0.1',
+      credentialId: 'vcenter-admin',
+    })
+    expect(body).not.toHaveProperty('credentialStatus')
     vi.unstubAllGlobals()
   })
 
@@ -159,6 +205,7 @@ describe('ProvidersCreateModal', () => {
     expect((idInput as HTMLInputElement).value).toBe('vmware-vcenter-01')
     expect(idInput).toBeDisabled()
     expect((nameInput as HTMLInputElement).value).toBe('Production vCenter')
+    expect(screen.getByLabelText('Credentials')).toHaveValue('vcenter-admin')
   })
 
   it('posts a single edited provider object in edit mode', async () => {
@@ -180,5 +227,20 @@ describe('ProvidersCreateModal', () => {
     const body = JSON.parse(init.body as string) as ProviderRecord
     expect(body).toMatchObject({ id: 'vmware-vcenter-01', name: 'Renamed vCenter' })
     vi.unstubAllGlobals()
+  })
+
+  it('warns before closing a dirty provider form', () => {
+    const onClose = vi.fn()
+    renderWithQueryClient(
+      <ProvidersCreateModal open onClose={onClose} existingProviders={[]} />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'Unsaved provider' } })
+    fireEvent.click(screen.getByRole('button', { name: /Cancel/i }))
+
+    expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByRole('heading', { name: 'Discard unsaved provider changes?' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
+    expect(onClose).toHaveBeenCalledOnce()
   })
 })

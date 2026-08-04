@@ -1,80 +1,191 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
+import { Button } from '@/shared/components/button/Button'
+import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
+import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
+import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups'
 import { AppMetadataForm } from './AppMetadataForm'
-import { VMSidebar } from './VMSidebar'
 import { TierCanvas } from './TierCanvas'
+import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import type { RecoveryTier, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface RecoveryAppBuilderProps {
   onSave?: (appState: RecoveryApplicationFormState) => void
+  onDirtyChange?: (isDirty: boolean) => void
   isSaving?: boolean
   initialData?: RecoveryApplicationFormState
+  disableFileName?: boolean
 }
 
 const DEFAULT_TIERS: Record<string, RecoveryTier> = {
   database: {
-    name: 'Database',
     order: 1,
     description: 'Database server group',
-    vms: [],
   },
   db_cluster: {
-    name: 'DB Cluster',
     order: 2,
     description: 'DB Cluster Master Node',
-    vms: [],
   },
   application: {
-    name: 'Application',
     order: 3,
     description: 'Application server group',
-    vms: [],
   },
   web: {
-    name: 'Web',
     order: 4,
     description: 'Web server group',
-    vms: [],
   },
 }
 
-export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAppBuilderProps) {
-  const [formState, setFormState] = useState<RecoveryApplicationFormState>(
-    initialData ?? {
-      name: '',
-      description: '',
-      environment: 'dev',
-      provider: '',
-      tiers: new Map(Object.entries(DEFAULT_TIERS)),
+function cloneTier(tier: RecoveryTier): RecoveryTier {
+  if (!tier.recovery_group) {
+    return { ...tier }
+  }
+
+  return {
+    ...tier,
+    recovery_group: {
+      ...tier.recovery_group,
+      vms: tier.recovery_group.vms.map(vm => ({ ...vm })),
+    },
+  }
+}
+
+function createInitialFormState(
+  initialData?: RecoveryApplicationFormState,
+): RecoveryApplicationFormState {
+  if (initialData) {
+    return {
+      ...initialData,
+      tiers: new Map(
+        Array.from(
+          initialData.tiers,
+          ([id, tier]): [string, RecoveryTier] => [id, cloneTier(tier)],
+        ),
+      ),
     }
+  }
+
+  return {
+    fileName: '',
+    name: '',
+    description: '',
+    environment: 'dev',
+    platform: '',
+    sourceConnection: 'vcenter_default',
+    targetConnection: 'vcenter_default_destination',
+    tiers: new Map(
+      Object.entries(DEFAULT_TIERS).map(
+        ([id, tier]): [string, RecoveryTier] => [id, cloneTier(tier)],
+      ),
+    ),
+  }
+}
+
+export function RecoveryAppBuilder({
+  onSave,
+  onDirtyChange,
+  isSaving,
+  initialData,
+  disableFileName = false,
+}: RecoveryAppBuilderProps) {
+  const { t } = useTranslation()
+  const platformProvidersQuery = usePlatformProviders()
+  const {
+    groups,
+    isLoading: areGroupsLoading,
+    isFetching: areGroupsFetching,
+    error: groupsError,
+    refresh: refreshGroups,
+  } = useRecoveryGroups()
+  const availableGroups = useMemo(
+    () => groups.filter(group => group.sourceCategory === 'backup_system_workload'),
+    [groups],
+  )
+  const groupLabels = useMemo(
+    () => Object.fromEntries(availableGroups.map(group => [group.id, group.name])),
+    [availableGroups],
+  )
+  const recoveryGroupVmOptions = useMemo(
+    () => Object.fromEntries(availableGroups.map(group => [group.id, group.resources])),
+    [availableGroups],
+  )
+  const [formState, setFormState] = useState<RecoveryApplicationFormState>(
+    () => createInitialFormState(initialData),
   )
 
   const handleMetadataChange = useCallback((metadata: Partial<RecoveryApplicationFormState>) => {
     setFormState(prev => ({ ...prev, ...metadata }))
-  }, [])
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
 
-  const handleVMAdded = useCallback((tierId: string, vmName: string) => {
-    setFormState(prev => {
-      const newTiers = new Map(prev.tiers)
-      const tier = newTiers.get(tierId)
-      if (tier && !tier.vms.find(vm => vm.name === vmName)) {
-        tier.vms.push({ name: vmName })
-      }
-      return { ...prev, tiers: newTiers }
-    })
-  }, [])
+  const handleRecoveryGroupAdded = useCallback((tierId: string, groupId: string) => {
+    const selectedGroup = availableGroups.find(group => group.id === groupId)
+    if (!selectedGroup) return
 
-  const handleVMRemoved = useCallback((tierId: string, vmName: string) => {
     setFormState(prev => {
       const newTiers = new Map(prev.tiers)
       const tier = newTiers.get(tierId)
       if (tier) {
-        tier.vms = tier.vms.filter(vm => vm.name !== vmName)
+        newTiers.set(tierId, {
+          ...tier,
+          recovery_group: {
+            name: selectedGroup.id,
+            description: selectedGroup.description,
+            vms: selectedGroup.resources.map(name => ({ name })),
+          },
+        })
       }
       return { ...prev, tiers: newTiers }
     })
-  }, [])
+    onDirtyChange?.(true)
+  }, [availableGroups, onDirtyChange])
 
-  const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: { name: string; description: string }) => {
+  const handleRecoveryGroupRemoved = useCallback((tierId: string) => {
+    setFormState(prev => {
+      const tier = prev.tiers.get(tierId)
+      if (!tier?.recovery_group) return prev
+
+      const newTiers = new Map(prev.tiers)
+      newTiers.set(tierId, {
+        order: tier.order,
+        description: tier.description,
+      })
+      return { ...prev, tiers: newTiers }
+    })
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
+
+  const handleRecoveryVmSelectionChange = useCallback((
+    tierId: string,
+    vmName: string,
+    selected: boolean,
+  ) => {
+    setFormState(prev => {
+      const tier = prev.tiers.get(tierId)
+      if (!tier?.recovery_group) return prev
+
+      const alreadySelected = tier.recovery_group.vms.some(vm => vm.name === vmName)
+      if (alreadySelected === selected) return prev
+
+      const newTiers = new Map(prev.tiers)
+      newTiers.set(tierId, {
+        ...tier,
+        recovery_group: {
+          ...tier.recovery_group,
+          vms: selected
+            ? [...tier.recovery_group.vms, { name: vmName }]
+            : tier.recovery_group.vms.filter(vm => vm.name !== vmName),
+        },
+      })
+
+      return { ...prev, tiers: newTiers }
+    })
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
+
+  const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: {
+    tierDescription: string
+  }) => {
     setFormState(prev => {
       const newTiers = new Map(prev.tiers)
       const oldTier = newTiers.get(tierId)
@@ -86,15 +197,17 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
         newTiers.delete(tierId)
       }
 
-      newTiers.set(newTierId, {
+      const updatedTier: RecoveryTier = {
         ...oldTier,
-        name: updates.name,
-        description: updates.description,
-      })
+        description: updates.tierDescription,
+      }
+
+      newTiers.set(newTierId, updatedTier)
 
       return { ...prev, tiers: newTiers }
     })
-  }, [])
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
 
   const handleTierAdd = useCallback((tierId: string, tier: RecoveryTier) => {
     setFormState(prev => {
@@ -102,7 +215,8 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
       newTiers.set(tierId, tier)
       return { ...prev, tiers: newTiers }
     })
-  }, [])
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
 
   const handleTierDelete = useCallback((tierId: string) => {
     setFormState(prev => {
@@ -110,22 +224,39 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
       newTiers.delete(tierId)
       return { ...prev, tiers: newTiers }
     })
-  }, [])
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
 
   const handleTierReorder = useCallback((reorderedTiers: Record<string, RecoveryTier>) => {
     setFormState(prev => ({
       ...prev,
       tiers: new Map(Object.entries(reorderedTiers)),
     }))
-  }, [])
+    onDirtyChange?.(true)
+  }, [onDirtyChange])
 
   const handleSave = () => {
+    if (!isValidRecoveryApplicationFileName(formState.fileName)) {
+      alert(t('recovery.application.validation.fileNameRequired'))
+      return
+    }
     if (!formState.name.trim()) {
-      alert('Please enter an application name')
+      alert(t('alerts.pleaseEnterName'))
       return
     }
     if (!formState.description.trim()) {
-      alert('Please enter a description')
+      alert(t('alerts.pleaseEnterDescription'))
+      return
+    }
+    const platformProviderIsAvailable = platformProvidersQuery.data?.some(
+      provider => provider.id === formState.platform && provider.credentialStatus === 'ok',
+    ) ?? false
+    if (!platformProviderIsAvailable) {
+      alert(t('recovery.application.validation.platformProviderRequired'))
+      return
+    }
+    if (Array.from(formState.tiers.values()).some(tier => !tier.recovery_group)) {
+      alert(t('recovery.application.validation.recoveryGroupRequired'))
       return
     }
     onSave?.(formState)
@@ -134,43 +265,70 @@ export function RecoveryAppBuilder({ onSave, isSaving, initialData }: RecoveryAp
   return (
     <div className="flex flex-col gap-4 lg:min-h-0 flex-1 p-4">
       {/* Metadata Form Card */}
-      <div className="bg-white border border-[#e3edf6] rounded-lg p-4 shadow-sm">
-        <h2 className="text-base font-semibold text-[#17233d] mb-4">Application Details</h2>
+      <div className="bg-surface border border-border rounded-lg p-4 shadow-sm">
+        <h2 className="text-base font-semibold text-text-primary mb-4">{t('pages.recovery.applicationDetails')}</h2>
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
           <div className="flex-1 w-full">
             <AppMetadataForm
               onMetadataChange={handleMetadataChange}
+              disableFileName={disableFileName}
               initialValues={{
+                fileName: formState.fileName,
                 name: formState.name,
                 description: formState.description,
                 environment: formState.environment,
+                platform: formState.platform,
               }}
+              platformProviders={platformProvidersQuery.data ?? []}
+              platformProvidersLoading={platformProvidersQuery.isLoading}
+              platformProvidersError={platformProvidersQuery.error instanceof Error ? platformProvidersQuery.error : null}
+              onRetryPlatformProviders={() => { void platformProvidersQuery.refetch() }}
             />
           </div>
-          <button
+          <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="px-4 py-2 bg-[#0d91d7] text-white font-semibold rounded-md hover:bg-[#0a7ab5] disabled:bg-gray-400 transition-colors whitespace-nowrap"
+            size="sm"
+            className="whitespace-nowrap"
           >
-            {isSaving ? 'Saving...' : 'Save Application'}
-          </button>
+            {isSaving ? t('messages.saving') : t('buttons.saveApplication')}
+          </Button>
         </div>
       </div>
 
       {/* Builder Card */}
-      <div className="flex-1 bg-white border border-[#e3edf6] rounded-lg overflow-hidden shadow-sm lg:min-h-0">
+      <div className="flex-1 bg-surface border border-border rounded-lg overflow-hidden shadow-sm lg:min-h-0">
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-0 h-full lg:min-h-0">
-          {/* VM Sidebar */}
-          <div className="border-b lg:border-b-0 lg:border-r border-[#e3edf6] overflow-y-auto custom-scrollbar">
-            <VMSidebar />
+          {/* Recovery Group Sidebar */}
+          <div className="border-b lg:border-b-0 lg:border-r border-border overflow-y-auto custom-scrollbar">
+            <ResourceSidebar
+              items={availableGroups.map(group => group.id)}
+              itemLabels={groupLabels}
+              title={t('recovery.sidebar.availableGroups')}
+              searchPlaceholder={t('recovery.sidebar.searchGroupsPlaceholder')}
+              loadingLabel={t('recovery.sidebar.loadingGroups')}
+              noItemsLabel={t('recovery.sidebar.noGroupsAvailable')}
+              noMatchesLabel={t('recovery.sidebar.noMatchingGroups')}
+              dragDataKey="recovery-group-id"
+              isLoading={areGroupsLoading}
+              isRetrying={areGroupsFetching}
+              error={groupsError}
+              errorTitle={t('recovery.sidebar.groupsError')}
+              staleErrorTitle={t('recovery.sidebar.groupsError')}
+              staleErrorDescription={t('recovery.sidebar.groupsError')}
+              retryLabel={t('buttons.retry')}
+              onRetry={() => { void refreshGroups() }}
+            />
           </div>
 
           {/* Tier Canvas */}
           <div className="overflow-y-auto custom-scrollbar p-4">
             <TierCanvas
               tiers={Object.fromEntries(formState.tiers)}
-              onVMAdded={handleVMAdded}
-              onVMRemoved={handleVMRemoved}
+              recoveryGroupVmOptions={recoveryGroupVmOptions}
+              onRecoveryGroupAdded={handleRecoveryGroupAdded}
+              onRecoveryGroupRemoved={handleRecoveryGroupRemoved}
+              onRecoveryVmSelectionChange={handleRecoveryVmSelectionChange}
               onTierEdit={handleTierEdit}
               onTierAdd={handleTierAdd}
               onTierDelete={handleTierDelete}
