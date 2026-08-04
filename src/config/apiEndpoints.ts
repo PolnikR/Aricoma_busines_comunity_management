@@ -22,6 +22,11 @@ export const API_ENDPOINTS = {
     submit: '/api/submit_policy',
     delete: '/api/delete_policy',
   },
+  policySets: {
+    list: '/api/get_policy_sets',
+    submit: '/api/submit_policy_set',
+    delete: '/api/delete_policy_set',
+  },
   credentials: {
     publicKey: '/api/credentials/pubkey',
     list: '/api/get_credentials',
