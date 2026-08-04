@@ -114,7 +114,7 @@ them.
 
 ---
 
-## Task 4: Fast-forward spike/ant-design-shell to test
+## Task 4: Merge test into spike/ant-design-shell (fast-forward)
 
 **Description:** `spike/ant-design-shell` is currently an ancestor of
 `test` (0 commits diverge from spike toward test in the other direction),

@@ -57,7 +57,7 @@ go-ahead — push `master` and `spike/ant-design-shell` to `origin`.
 
 ### Phase 2: Branch Integration (git operations only)
 
-- [ ] Task 4: Fast-forward `spike/ant-design-shell` to `test`
+- [ ] Task 4: Merge `test` into `spike/ant-design-shell` (fast-forward)
 - [ ] Task 5: Merge `spike/ant-design-shell` into `master`
 - [ ] Task 6: Run the full test suite on the merged `master`
 
