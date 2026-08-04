@@ -50,6 +50,21 @@ vi.mock('../hooks/useRecoveryGroupResourceInventory', () => ({
     refetch: vi.fn(),
   }),
 }))
+vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
+  usePolicySets: () => ({
+    data: [
+      {
+        id: 'tier2-apps',
+        name: 'Tier 2 applications',
+        description: 'Policy set using the medium-tier, 6-hour cadence.',
+        policyIds: ['medium-6h'],
+      },
+    ],
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+}))
 
 const existingGroup: RecoveryGroup = {
   id: 'database_group',
@@ -59,6 +74,7 @@ const existingGroup: RecoveryGroup = {
   workloadType: 'vmware_virtual_machines',
   resourceType: 'vm',
   providerId: 'vmware-vcenter-01',
+  policySetId: 'tier2-apps',
   resources: ['DB-01'],
   relatedVolumeProviderId: null,
   relatedVolumes: [],
@@ -74,6 +90,7 @@ const existingStorageGroup: RecoveryGroup = {
   workloadType: 'ibm_flashsystem',
   resourceType: 'volume',
   providerId: 'ibm-flashsystem-01',
+  policySetId: 'tier2-apps',
   resources: ['VOL-01'],
   relatedVolumeProviderId: null,
   relatedVolumes: [],
@@ -95,6 +112,7 @@ describe('RecoveryGroupBuilder', () => {
     expect(screen.getByRole('button', { name: 'Resource type' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Provider' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Resources' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Policy Set' })).toBeInTheDocument()
   })
 
   it('allows a virtual-machine group to be created without optional related storage', async () => {
@@ -110,11 +128,14 @@ describe('RecoveryGroupBuilder', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Related storage' }))
+    await user.click(screen.getByRole('button', { name: 'Policy Set' }))
+    await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
     await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
 
     expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
       relatedVolumeProviderId: null,
       relatedVolumes: [],
+      policySetId: 'tier2-apps',
     }))
   })
 
@@ -136,15 +157,18 @@ describe('RecoveryGroupBuilder', () => {
     fireEvent.drop(screen.getByLabelText('Selected recovery group volumes'), {
       dataTransfer: { getData: () => 'VOL-01' },
     })
+    await user.click(screen.getByRole('button', { name: 'Policy Set' }))
+    await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
     await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
 
     expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
       relatedVolumeProviderId: 'ibm-flashsystem-01',
       relatedVolumes: ['VOL-01'],
+      policySetId: 'tier2-apps',
     }))
   })
 
-  it('keeps a FlashSystem volume group on the four-step flow', async () => {
+  it('keeps a FlashSystem volume group on the five-step flow', async () => {
     const user = userEvent.setup()
 
     render(
@@ -158,6 +182,8 @@ describe('RecoveryGroupBuilder', () => {
     expect(screen.queryByRole('button', { name: 'Related storage' })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Resources' }))
+    await user.click(screen.getByRole('button', { name: 'Policy Set' }))
+    await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
 
     expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeEnabled()
   })
@@ -180,11 +206,14 @@ describe('RecoveryGroupBuilder', () => {
 
     await user.click(screen.getByRole('button', { name: 'Related storage' }))
     await user.click(screen.getByRole('button', { name: 'Clear related storage' }))
+    await user.click(screen.getByRole('button', { name: 'Policy Set' }))
+    await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
     await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
 
     expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
       relatedVolumeProviderId: null,
       relatedVolumes: [],
+      policySetId: 'tier2-apps',
     }))
   })
 

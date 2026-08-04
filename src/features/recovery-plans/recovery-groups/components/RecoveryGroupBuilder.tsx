@@ -4,9 +4,11 @@ import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
 import { isProgrammaticIdAvailable } from '@/shared/utils/programmaticId'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
+import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
 import { getRecoveryGroupResourceOption } from '../config/recoveryGroupResourceOptions'
 import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { RecoveryGroupDetailsStep } from './RecoveryGroupDetailsStep'
+import { RecoveryGroupPolicySetStep } from './RecoveryGroupPolicySetStep'
 import { RecoveryGroupProviderStep } from './RecoveryGroupProviderStep'
 import { RecoveryGroupResourcesStep } from './RecoveryGroupResourcesStep'
 import { RecoveryGroupTypeStep } from './RecoveryGroupTypeStep'
@@ -29,6 +31,7 @@ const INITIAL_DRAFT: RecoveryGroupDraft = {
   workloadType: null,
   resourceType: null,
   providerId: null,
+  policySetId: null,
   resources: [],
   relatedVolumeProviderId: null,
   relatedVolumes: [],
@@ -56,6 +59,7 @@ export function RecoveryGroupBuilder({
         workloadType: initialData.workloadType,
         resourceType: initialData.resourceType,
         providerId: initialData.providerId,
+        policySetId: initialData.policySetId,
         resources: [...initialData.resources],
         relatedVolumeProviderId: initialData.relatedVolumeProviderId ?? null,
         relatedVolumes: [...initialData.relatedVolumes],
@@ -83,8 +87,11 @@ export function RecoveryGroupBuilder({
       && provider.credentialStatus === 'ok'
     )),
   )
+  const policySetQuery = usePolicySets()
+  const policySets = policySetQuery.data ?? []
+  const policySetValid = Boolean(draft.policySetId)
   const hasRelatedStorageStep = draft.resourceType === 'vm'
-  const lastStep = hasRelatedStorageStep ? 5 : 4
+  const lastStep = hasRelatedStorageStep ? 6 : 5
   const steps = [
     { id: 'details', label: t('pages.recoveryGroupBuilder.steps.details') },
     { id: 'type', label: t('pages.recoveryGroupBuilder.steps.type'), disabled: !detailsValid },
@@ -103,6 +110,11 @@ export function RecoveryGroupBuilder({
       label: t('pages.recoveryGroupBuilder.steps.relatedStorage'),
       disabled: !detailsValid || !typeValid || !providerValid || draft.resources.length === 0,
     }] : []),
+    {
+      id: 'policy-set',
+      label: t('pages.recoveryGroupBuilder.steps.policySet'),
+      disabled: !detailsValid || !typeValid || !providerValid || draft.resources.length === 0,
+    },
   ]
 
   const updateDraft = (update: Partial<RecoveryGroupDraft>) => {
@@ -126,7 +138,8 @@ export function RecoveryGroupBuilder({
     && draft.workloadType
     && draft.resourceType
     && providerValid
-    && draft.resources.length > 0,
+    && draft.resources.length > 0
+    && policySetValid,
   )
 
   return (
@@ -273,6 +286,14 @@ export function RecoveryGroupBuilder({
                   </div>
                 ) : null}
               </div>
+            ) : null}
+            {step === lastStep ? (
+              <RecoveryGroupPolicySetStep
+                policySets={policySets}
+                isLoading={policySetQuery.isLoading}
+                selectedPolicySetId={draft.policySetId}
+                onSelect={(policySetId) => { updateDraft({ policySetId }) }}
+              />
             ) : null}
           </div>
           <div className="flex flex-col-reverse gap-3 border-t border-border bg-surface-subtle p-4 sm:flex-row sm:items-center sm:justify-between">
