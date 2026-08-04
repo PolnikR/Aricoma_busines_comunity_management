@@ -14,6 +14,7 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
+import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
 import type { RecoveryGroupListItem } from '../model/recoveryGroupTypes'
 import {
   getResourceTypeLabelKey,
@@ -49,6 +50,7 @@ export function RecoveryGroupsTable({
   onRetry = () => undefined,
 }: RecoveryGroupsTableProps) {
   const { t } = useTranslation()
+  const { data: policySets = [] } = usePolicySets()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [filters, setFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)
@@ -69,6 +71,9 @@ export function RecoveryGroupsTable({
   })
   const selected = rows.find(group => group.id === selectedId) ?? null
   const activeFilterCount = Number(Boolean(filters.workloadType)) + Number(Boolean(filters.resourceType))
+  const policySetName = (policySetId: string) => (
+    policySets.find(policySet => policySet.id === policySetId)?.name ?? policySetId
+  )
 
   const columns = useMemo<ColumnDef<RecoveryGroupListItem>[]>(() => [
     {
@@ -255,6 +260,10 @@ export function RecoveryGroupsTable({
             <DetailRow
               label={t('tables.recoveryGroups.resourceType')}
               value={t(getResourceTypeLabelKey(selected.resourceType))}
+            />
+            <DetailRow
+              label={t('tables.recoveryGroups.policySet')}
+              value={policySetName(selected.policySetId)}
             />
             <DetailRow label={t('tables.recoveryGroups.resources')} value={String(selected.resourceCount)} />
             <DetailRow

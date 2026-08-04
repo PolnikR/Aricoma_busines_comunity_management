@@ -43,6 +43,7 @@ const group: RecoveryGroup = {
   workloadType: 'vmware_virtual_machines',
   resourceType: 'vm',
   providerId: provider.id,
+  policySetId: 'tier2-apps',
   resources: ['DB-01'],
   relatedVolumeProviderId: null,
   relatedVolumes: [],
@@ -114,6 +115,7 @@ describe('useRecoveryGroups', () => {
         workloadType: group.workloadType,
         resourceType: group.resourceType,
         providerId: group.providerId,
+        policySetId: group.policySetId,
         resources: group.resources,
       })
     })

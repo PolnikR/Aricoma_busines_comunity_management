@@ -5,6 +5,18 @@ import type { RecoveryGroupListItem } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsTable } from './RecoveryGroupsTable'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
+  usePolicySets: () => ({
+    data: [
+      {
+        id: 'tier2-apps',
+        name: 'Tier 2 applications',
+        description: 'Policy set using the medium-tier, 6-hour cadence.',
+        policyIds: ['medium-6h'],
+      },
+    ],
+  }),
+}))
 
 const groups: RecoveryGroupListItem[] = [
   {
@@ -15,6 +27,7 @@ const groups: RecoveryGroupListItem[] = [
     workloadType: 'vmware_virtual_machines',
     resourceType: 'vm',
     providerId: 'vmware-vcenter-01',
+    policySetId: 'tier2-apps',
     resourceCount: 2,
     status: 'Active',
   },
@@ -26,6 +39,7 @@ const groups: RecoveryGroupListItem[] = [
     workloadType: 'ibm_power_virtual_machines',
     resourceType: 'vm',
     providerId: 'ibm-power-01',
+    policySetId: 'tier2-apps',
     resourceCount: 2,
     status: 'Active',
   },
@@ -87,5 +101,17 @@ describe('RecoveryGroupsTable', () => {
 
     await user.click(within(confirmDialog).getByRole('button', { name: 'Delete' }))
     expect(onDelete).toHaveBeenCalledWith('database-group')
+  })
+
+  it('shows the resolved policy set name in the detail drawer', async () => {
+    const user = userEvent.setup()
+    render(
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    )
+
+    await user.click(screen.getByText('Database group'))
+
+    expect(await screen.findByRole('dialog', { name: 'Recovery group detail' })).toBeInTheDocument()
+    expect(screen.getByText('Tier 2 applications')).toBeInTheDocument()
   })
 })

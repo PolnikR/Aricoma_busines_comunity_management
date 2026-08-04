@@ -14,6 +14,7 @@ const group: RecoveryGroup = {
   workloadType: 'vmware_virtual_machines',
   resourceType: 'vm',
   providerId: 'vmware-vcenter-01',
+  policySetId: 'tier2-apps',
   resources: ['DB-01'],
   relatedVolumeProviderId: null,
   relatedVolumes: [],
@@ -61,6 +62,7 @@ vi.mock('../components/RecoveryGroupBuilder', () => ({
             workloadType: initialData.workloadType,
             resourceType: initialData.resourceType,
             providerId: initialData.providerId,
+            policySetId: initialData.policySetId,
             resources: initialData.resources,
           })
         }}
