@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import type { RecoveryGroupListItem } from '../model/recoveryGroupTypes'
+import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsTable } from './RecoveryGroupsTable'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -18,7 +18,7 @@ vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
   }),
 }))
 
-const groups: RecoveryGroupListItem[] = [
+const groups: RecoveryGroup[] = [
   {
     id: 'database-group',
     name: 'Database group',
@@ -28,6 +28,9 @@ const groups: RecoveryGroupListItem[] = [
     resourceType: 'vm',
     providerId: 'vmware-vcenter-01',
     policySetId: 'tier2-apps',
+    resources: ['DB-01', 'DB-02'],
+    relatedVolumeProviderId: 'ibm-flashsystem-01',
+    relatedVolumes: ['VOL-01'],
     resourceCount: 2,
     status: 'Active',
   },
@@ -40,6 +43,9 @@ const groups: RecoveryGroupListItem[] = [
     resourceType: 'vm',
     providerId: 'ibm-power-01',
     policySetId: 'tier2-apps',
+    resources: ['LPAR-01', 'LPAR-02'],
+    relatedVolumeProviderId: null,
+    relatedVolumes: [],
     resourceCount: 2,
     status: 'Active',
   },
@@ -113,5 +119,21 @@ describe('RecoveryGroupsTable', () => {
 
     expect(await screen.findByRole('dialog', { name: 'Recovery group detail' })).toBeInTheDocument()
     expect(screen.getByText('Tier 2 applications')).toBeInTheDocument()
+  })
+
+  it('opens a JSON viewer showing the recovery group submit payload', async () => {
+    const user = userEvent.setup()
+    render(
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    )
+
+    const [viewJsonButton] = screen.getAllByRole('button', { name: 'View' })
+    await user.click(viewJsonButton)
+
+    const dialog = await screen.findByRole('dialog', { name: 'Recovery Group JSON' })
+    expect(within(dialog).getByText(/"id": "database-group"/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/"provider_id_vm": "vmware-vcenter-01"/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/"provider_id_volume": "ibm-flashsystem-01"/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/"policy_set_id": "tier2-apps"/)).toBeInTheDocument()
   })
 })

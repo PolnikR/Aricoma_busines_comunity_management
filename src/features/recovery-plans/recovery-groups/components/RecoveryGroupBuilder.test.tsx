@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupBuilder } from './RecoveryGroupBuilder'
+import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
@@ -15,6 +16,7 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
         type: 'VMWARE',
         ipAddress: '10.99.99.40',
         credentialId: 'vcenter-admin',
+        defaultFlashcopyProviderId: 'ibm-flashsystem-01',
         credentialStatus: 'ok',
       },
       {
@@ -49,6 +51,13 @@ vi.mock('../hooks/useRecoveryGroupResourceInventory', () => ({
     isFetching: false,
     refetch: vi.fn(),
   }),
+}))
+vi.mock('../hooks/useRecoveryGroupRelatedVolumes', () => ({
+  useRecoveryGroupRelatedVolumes: vi.fn(() => ({
+    flashcopyProviderId: null,
+    discoveredVolumeNames: [],
+    isLoading: false,
+  })),
 }))
 vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
   usePolicySets: () => ({
@@ -116,6 +125,11 @@ describe('RecoveryGroupBuilder', () => {
   })
 
   it('allows a virtual-machine group to be created without optional related storage', async () => {
+    vi.mocked(useRecoveryGroupRelatedVolumes).mockReturnValue({
+      flashcopyProviderId: null,
+      discoveredVolumeNames: [],
+      isLoading: false,
+    })
     const user = userEvent.setup()
     const onCreate = vi.fn()
 
@@ -139,7 +153,12 @@ describe('RecoveryGroupBuilder', () => {
     }))
   })
 
-  it('adds manually selected FlashSystem volumes to a virtual-machine group', async () => {
+  it('auto-populates related storage discovered for the selected virtual machines', async () => {
+    vi.mocked(useRecoveryGroupRelatedVolumes).mockReturnValue({
+      flashcopyProviderId: 'ibm-flashsystem-01',
+      discoveredVolumeNames: ['VOL-01'],
+      isLoading: false,
+    })
     const user = userEvent.setup()
     const onCreate = vi.fn()
 
@@ -152,7 +171,38 @@ describe('RecoveryGroupBuilder', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Related storage' }))
-    await user.click(screen.getByRole('button', { name: /IBM FlashSystem Source/i }))
+
+    expect((await screen.findAllByText('VOL-01')).length).toBeGreaterThan(0)
+
+    await user.click(screen.getByRole('button', { name: 'Policy Set' }))
+    await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
+    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
+      relatedVolumeProviderId: 'ibm-flashsystem-01',
+      relatedVolumes: ['VOL-01'],
+      policySetId: 'tier2-apps',
+    }))
+  })
+
+  it('lets the user add FlashSystem volumes beyond what was auto-discovered', async () => {
+    vi.mocked(useRecoveryGroupRelatedVolumes).mockReturnValue({
+      flashcopyProviderId: 'ibm-flashsystem-01',
+      discoveredVolumeNames: [],
+      isLoading: false,
+    })
+    const user = userEvent.setup()
+    const onCreate = vi.fn()
+
+    render(
+      <RecoveryGroupBuilder
+        initialData={existingGroup}
+        onCreate={onCreate}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Related storage' }))
 
     fireEvent.drop(screen.getByLabelText('Selected recovery group volumes'), {
       dataTransfer: { getData: () => 'VOL-01' },
@@ -189,6 +239,11 @@ describe('RecoveryGroupBuilder', () => {
   })
 
   it('can clear the optional FlashSystem mapping before saving', async () => {
+    vi.mocked(useRecoveryGroupRelatedVolumes).mockReturnValue({
+      flashcopyProviderId: null,
+      discoveredVolumeNames: [],
+      isLoading: false,
+    })
     const user = userEvent.setup()
     const onCreate = vi.fn()
 

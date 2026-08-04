@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
+import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
 import { isProgrammaticIdAvailable } from '@/shared/utils/programmaticId'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
 import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
 import { getRecoveryGroupResourceOption } from '../config/recoveryGroupResourceOptions'
+import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
 import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { RecoveryGroupDetailsStep } from './RecoveryGroupDetailsStep'
 import { RecoveryGroupPolicySetStep } from './RecoveryGroupPolicySetStep'
@@ -65,6 +67,10 @@ export function RecoveryGroupBuilder({
         relatedVolumes: [...initialData.relatedVolumes],
       }
     : INITIAL_DRAFT)
+  const updateDraft = (update: Partial<RecoveryGroupDraft>) => {
+    setDraft(current => ({ ...current, ...update }))
+    onDirtyChange?.(true)
+  }
   const idAvailable = isProgrammaticIdAvailable(
     draft.id,
     existingIds,
@@ -92,6 +98,32 @@ export function RecoveryGroupBuilder({
   const policySetValid = Boolean(draft.policySetId)
   const hasRelatedStorageStep = draft.resourceType === 'vm'
   const lastStep = hasRelatedStorageStep ? 6 : 5
+  const relatedStorageStepIndex = 5
+  const relatedVolumesDiscovery = useRecoveryGroupRelatedVolumes(
+    draft.providerId,
+    draft.resources,
+    providers,
+    hasRelatedStorageStep && step === relatedStorageStepIndex,
+  )
+
+  const discoveryKey = hasRelatedStorageStep
+    && step === relatedStorageStepIndex
+    && relatedVolumesDiscovery.flashcopyProviderId
+    ? `${relatedVolumesDiscovery.flashcopyProviderId}|${relatedVolumesDiscovery.discoveredVolumeNames.join(',')}`
+    : null
+  const [appliedDiscoveryKey, setAppliedDiscoveryKey] = useState<string | null>(null)
+
+  if (discoveryKey && discoveryKey !== appliedDiscoveryKey) {
+    setAppliedDiscoveryKey(discoveryKey)
+    const currentVolumes = draft.relatedVolumes ?? []
+    const newlyDiscovered = relatedVolumesDiscovery.discoveredVolumeNames.filter(
+      name => !currentVolumes.includes(name),
+    )
+    updateDraft({
+      relatedVolumeProviderId: relatedVolumesDiscovery.flashcopyProviderId,
+      relatedVolumes: newlyDiscovered.length > 0 ? [...currentVolumes, ...newlyDiscovered] : currentVolumes,
+    })
+  }
   const steps = [
     { id: 'details', label: t('pages.recoveryGroupBuilder.steps.details') },
     { id: 'type', label: t('pages.recoveryGroupBuilder.steps.type'), disabled: !detailsValid },
@@ -116,11 +148,6 @@ export function RecoveryGroupBuilder({
       disabled: !detailsValid || !typeValid || !providerValid || draft.resources.length === 0,
     },
   ]
-
-  const updateDraft = (update: Partial<RecoveryGroupDraft>) => {
-    setDraft(current => ({ ...current, ...update }))
-    onDirtyChange?.(true)
-  }
 
   const canContinue = step === 1
     ? detailsValid
@@ -234,42 +261,34 @@ export function RecoveryGroupBuilder({
                 }}
               />
             ) : null}
-            {step === 5 && hasRelatedStorageStep ? (
+            {step === relatedStorageStepIndex && hasRelatedStorageStep ? (
               <div className="flex min-h-full flex-col gap-6">
-                <RecoveryGroupProviderStep
-                  workloadType="ibm_flashsystem"
-                  providers={providers}
-                  selectedProviderId={draft.relatedVolumeProviderId ?? null}
-                  title={t('pages.recoveryGroupBuilder.relatedStorage.title')}
-                  description={t('pages.recoveryGroupBuilder.relatedStorage.description')}
-                  headerAction={draft.relatedVolumeProviderId ? (
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-base font-semibold text-text-primary">
+                      {t('pages.recoveryGroupBuilder.relatedStorage.title')}
+                    </h2>
+                    <p className="mt-1 text-sm text-text-muted">
+                      {t('pages.recoveryGroupBuilder.relatedStorage.description')}
+                    </p>
+                  </div>
+                  {(draft.relatedVolumes ?? []).length > 0 ? (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        updateDraft({
-                          relatedVolumeProviderId: null,
-                          relatedVolumes: [],
-                        })
+                        updateDraft({ relatedVolumeProviderId: null, relatedVolumes: [] })
                       }}
                     >
                       {t('pages.recoveryGroupBuilder.relatedStorage.clear')}
                     </Button>
                   ) : null}
-                  onSelect={(providerId) => {
-                    updateDraft({
-                      relatedVolumeProviderId: providerId,
-                      relatedVolumes: draft.relatedVolumeProviderId === providerId
-                        ? (draft.relatedVolumes ?? [])
-                        : [],
-                    })
-                  }}
-                />
-                {draft.relatedVolumeProviderId ? (
+                </div>
+                {relatedVolumesDiscovery.flashcopyProviderId ? (
                   <div className="min-h-[28rem] flex-1">
                     <RecoveryGroupResourcesStep
                       workloadType="ibm_flashsystem"
-                      providerId={draft.relatedVolumeProviderId}
+                      providerId={relatedVolumesDiscovery.flashcopyProviderId}
                       resources={draft.relatedVolumes ?? []}
                       onAdd={resource => {
                         const relatedVolumes = draft.relatedVolumes ?? []
@@ -284,7 +303,12 @@ export function RecoveryGroupBuilder({
                       }}
                     />
                   </div>
-                ) : null}
+                ) : (
+                  <EmptyState
+                    title={t('pages.recoveryGroupBuilder.relatedStorage.noProvider.title')}
+                    description={t('pages.recoveryGroupBuilder.relatedStorage.noProvider.description')}
+                  />
+                )}
               </div>
             ) : null}
             {step === lastStep ? (

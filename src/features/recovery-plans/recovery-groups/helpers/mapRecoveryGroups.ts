@@ -98,6 +98,24 @@ export function toRecoveryGroupSubmitPayload(
   }
 }
 
+export function toRecoveryGroupJson(group: RecoveryGroup): RecoveryGroupSubmitPayload {
+  const isVmGroup = group.resourceType === 'vm'
+  return {
+    id: group.id,
+    name: group.name,
+    description: group.description,
+    provider_id_vm: isVmGroup ? (group.providerId ?? '') : '',
+    provider_id_volume: isVmGroup
+      ? (group.relatedVolumeProviderId ?? '')
+      : (group.providerId ?? ''),
+    policy_set_id: group.policySetId,
+    vms: isVmGroup ? group.resources.map(name => ({ name })) : [],
+    volumes: isVmGroup
+      ? group.relatedVolumes.map(name => ({ name }))
+      : group.resources.map(name => ({ name })),
+  }
+}
+
 export function toRecoveryGroup(
   draft: ValidatedRecoveryGroupDraft,
   id: string,

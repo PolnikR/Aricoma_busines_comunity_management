@@ -13,9 +13,11 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { Modal } from '@/shared/components/modal/Modal'
 import { useTranslation } from '@/hooks/useTranslation'
 import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
-import type { RecoveryGroupListItem } from '../model/recoveryGroupTypes'
+import { toRecoveryGroupJson } from '../helpers/mapRecoveryGroups'
+import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import {
   getResourceTypeLabelKey,
   getSourceCategoryLabelKey,
@@ -23,7 +25,7 @@ import {
 } from '../utils/recoveryGroupTypeLabels'
 
 interface RecoveryGroupsTableProps {
-  groups: RecoveryGroupListItem[]
+  groups: RecoveryGroup[]
   onEdit: (id: string) => void
   onDelete: (id: string) => void
   error?: Error | null
@@ -41,6 +43,34 @@ const EMPTY_FILTERS: RecoveryGroupFilters = {
   resourceType: '',
 }
 
+interface JsonViewerModalProps {
+  isOpen: boolean
+  group: RecoveryGroup | null
+  onClose: () => void
+}
+
+function JsonViewerModal({ isOpen, group, onClose }: JsonViewerModalProps) {
+  const { t } = useTranslation()
+  if (!isOpen || !group) return null
+
+  return (
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      title={t('recoveryGroups.modal.jsonViewer.title')}
+      size="lg"
+      className="flex max-h-96 flex-col overflow-hidden"
+      footer={<Button onClick={onClose} size="sm" fullWidth>{t('buttons.close')}</Button>}
+    >
+      <div className="flex-1 overflow-y-auto bg-surface-subtle px-6 py-4">
+        <pre className="text-xs font-mono text-text-secondary whitespace-pre-wrap break-word">
+          {JSON.stringify(toRecoveryGroupJson(group), null, 2)}
+        </pre>
+      </div>
+    </Modal>
+  )
+}
+
 export function RecoveryGroupsTable({
   groups,
   onEdit,
@@ -52,9 +82,10 @@ export function RecoveryGroupsTable({
   const { t } = useTranslation()
   const { data: policySets = [] } = usePolicySets()
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const [filters, setFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)
-  const [deleteTarget, setDeleteTarget] = useState<RecoveryGroupListItem | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<RecoveryGroup | null>(null)
 
   const filterOptions = useMemo(() => ({
     workloadTypes: Array.from(new Set(groups.map(group => group.workloadType))).sort(),
@@ -70,12 +101,13 @@ export function RecoveryGroupsTable({
     searchFields: ['id', 'name', 'description'],
   })
   const selected = rows.find(group => group.id === selectedId) ?? null
+  const jsonViewed = rows.find(group => group.id === jsonViewId) ?? null
   const activeFilterCount = Number(Boolean(filters.workloadType)) + Number(Boolean(filters.resourceType))
   const policySetName = (policySetId: string) => (
     policySets.find(policySet => policySet.id === policySetId)?.name ?? policySetId
   )
 
-  const columns = useMemo<ColumnDef<RecoveryGroupListItem>[]>(() => [
+  const columns = useMemo<ColumnDef<RecoveryGroup>[]>(() => [
     {
       id: 'name',
       header: t('tables.recoveryGroups.group'),
@@ -111,6 +143,22 @@ export function RecoveryGroupsTable({
         <Badge color={group.status === 'Active' ? 'success' : 'warning'} size="sm">
           {t(group.status === 'Active' ? 'tables.recoveryGroups.active' : 'tables.recoveryGroups.draft')}
         </Badge>
+      ),
+    },
+    {
+      id: 'json',
+      header: t('tables.recoveryGroups.json'),
+      cell: group => (
+        <Button
+          size="xs"
+          variant="soft"
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation()
+            setJsonViewId(group.id)
+          }}
+        >
+          {t('tables.recoveryGroups.viewJson')}
+        </Button>
       ),
     },
   ], [t])
@@ -292,6 +340,12 @@ export function RecoveryGroupsTable({
           setDeleteTarget(null)
           setSelectedId(null)
         }}
+      />
+
+      <JsonViewerModal
+        isOpen={jsonViewId !== null}
+        group={jsonViewed}
+        onClose={() => { setJsonViewId(null) }}
       />
     </div>
   )
