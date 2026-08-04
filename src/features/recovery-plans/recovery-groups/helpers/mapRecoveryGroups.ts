@@ -46,6 +46,7 @@ export function mapRecoveryGroupApiRecord(
       name: record.name,
       description: record.description,
       providerId: vmProviderId,
+      policySetId: record.policy_set_id,
       ...vmConfiguration(provider),
       resources: vmResources,
       relatedVolumeProviderId: volumeProviderId || null,
@@ -64,6 +65,7 @@ export function mapRecoveryGroupApiRecord(
     name: record.name,
     description: record.description,
     providerId: volumeProviderId,
+    policySetId: record.policy_set_id,
     sourceCategory: 'storage_system',
     workloadType: 'ibm_flashsystem',
     resourceType: 'volume',
@@ -88,6 +90,7 @@ export function toRecoveryGroupSubmitPayload(
     provider_id_volume: isVmGroup
       ? (draft.relatedVolumeProviderId ?? '')
       : draft.providerId,
+    policy_set_id: draft.policySetId,
     vms: isVmGroup ? draft.resources.map(name => ({ name })) : [],
     volumes: isVmGroup
       ? draft.relatedVolumes.map(name => ({ name }))
@@ -106,6 +109,7 @@ export function toRecoveryGroup(
     name: draft.name,
     description: draft.description,
     providerId: draft.providerId,
+    policySetId: draft.policySetId,
     ...draft.configuration,
     resources: draft.resources,
     relatedVolumeProviderId: isVmGroup ? draft.relatedVolumeProviderId : null,

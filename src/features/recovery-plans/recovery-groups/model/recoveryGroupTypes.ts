@@ -28,6 +28,7 @@ interface RecoveryGroupBase {
   name: string
   description: string
   providerId: string | null
+  policySetId: string
   resourceCount: number
   status: RecoveryGroupStatus
 }
@@ -48,6 +49,7 @@ export interface RecoveryGroupDraft {
   workloadType: RecoveryGroupWorkloadType | null
   resourceType: RecoveryGroupResourceType | null
   providerId: string | null
+  policySetId: string | null
   resources: string[]
   relatedVolumeProviderId?: string | null
   relatedVolumes?: string[]

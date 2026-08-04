@@ -28,6 +28,7 @@ export interface ValidatedRecoveryGroupDraft {
   name: string
   description: string
   providerId: string
+  policySetId: string
   resources: string[]
   relatedVolumeProviderId: string | null
   relatedVolumes: string[]
@@ -38,6 +39,7 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
   const name = draft.name.trim()
   const description = draft.description.trim()
   const providerId = draft.providerId?.trim() ?? ''
+  const policySetId = draft.policySetId?.trim() ?? ''
   const resources = draft.resources.map(resource => resource.trim())
   const normalizedRelatedVolumeProviderId = draft.relatedVolumeProviderId?.trim() ?? ''
   const relatedVolumeProviderId = normalizedRelatedVolumeProviderId
@@ -55,6 +57,7 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     || !name
     || !description
     || !providerId
+    || !policySetId
     || resources.length === 0
     || resources.some(resource => !resource)
     || new Set(resources).size !== resources.length
@@ -71,6 +74,7 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     name,
     description,
     providerId,
+    policySetId,
     resources,
     relatedVolumeProviderId,
     relatedVolumes,
