@@ -1,41 +1,83 @@
-# Implementation Plan: Recovery Application VM Selection
+# Implementation Plan: Rename "Audit & Retention" to "Audit"
 
 ## Overview
+Rename the "Audit & Retention" menu item and page configuration to "Audit" across the application. This is a straightforward text refactoring affecting navigation labels, locale keys, and page metadata.
 
-Add an accessible checkbox selection mode to recovery-application tier cards. All recovery-group VMs start selected, users can exclude and restore individual VMs, and only the application-local VM snapshot changes.
-
-## Architecture Decisions
-
-- Keep the recovery-group query data immutable and use it only as the complete option source.
-- Keep selected VM names in the existing `RecoveryTier.recovery_group.vms` payload model.
-- Extend the shared resource card with an optional selection mode while preserving existing remove-item behavior.
+## Scope
+- 2 primary files: AppSidebar.tsx, modulePageConfigs.ts
+- 3 locale files: en.json, sk.json, cs.json
+- No functional changes; purely cosmetic rename
+- All existing routes and references remain intact
 
 ## Task List
 
-### Phase 1: Regression contract
-- [x] Add failing shared-card, tier-card, canvas, and builder tests.
+### Task 1: Rename in AppSidebar.tsx
+**Description:** Update the "Audit & Retention" menu item label and its corresponding locale key mapping in the navigation sidebar.
 
-### Checkpoint: RED
-- [x] Focused tests fail because checkbox selection is not implemented.
+**Acceptance criteria:**
+- [ ] Menu item text changed from "Audit & Retention" to "Audit"
+- [ ] navKeyMap entry key changed from "Audit & Retention" to "Audit"
+- [ ] Route reference (routes.platformAuditRetention) unchanged
+- [ ] TypeScript compiles without errors
+- [ ] Lint passes
 
-### Phase 2: Vertical implementation
-- [x] Propagate recovery-group VM options and toggle events through builder, canvas, and tier card.
-- [x] Render native checkboxes, selected count, excluded styling, and a bounded scroll area.
-- [x] Add English, Slovak, and Czech selection-summary translations.
+**Files likely touched:**
+- `src/layouts/app-shell/AppSidebar.tsx` (2 locations: navItems array, navKeyMap)
 
-### Checkpoint: Complete
-- [x] Focused tests pass.
-- [x] Lint and TypeScript checks pass.
-- [x] Source recovery-group data remains unchanged after an application VM toggle.
+**Estimated scope:** XS (1 file, 2 edits)
+
+---
+
+### Task 2: Rename in modulePageConfigs.ts
+**Description:** Update the "Audit & Retention" page configuration title and description to reflect "Audit" branding while keeping all other metadata intact.
+
+**Acceptance criteria:**
+- [ ] Page config title changed from "Audit & retention" to "Audit"
+- [ ] eyebrow and description text updated appropriately
+- [ ] Route reference (routes.platformAuditRetention) unchanged
+- [ ] TypeScript compiles without errors
+
+**Files likely touched:**
+- `src/app/modulePageConfigs.ts` (1 location: platformAdministrationPages array)
+
+**Estimated scope:** XS (1 file, 1 edit)
+
+---
+
+### Task 3: Update locale keys
+**Description:** Add/update locale key mappings for the new "Audit" label across all supported languages (English, Slovak, Czech).
+
+**Acceptance criteria:**
+- [ ] Locale key `nav.administration.audit` exists in en.json, sk.json, cs.json
+- [ ] Translation values are appropriate for each language
+- [ ] Build succeeds with locale loading
+
+**Files likely touched:**
+- `src/locales/en.json`
+- `src/locales/sk.json`
+- `src/locales/cs.json`
+
+**Estimated scope:** XS (3 files, minimal edits)
+
+---
+
+### Checkpoint: Rename Complete
+- [ ] All files updated
+- [ ] TypeScript compiles: `npm run typecheck`
+- [ ] Lint passes: `npm run lint`
+- [ ] Tests pass: `npm run test`
+- [ ] Sidebar displays "Audit" instead of "Audit & Retention"
+
+---
 
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
-|---|---|---|
-| Shared card regression | Medium | Make selection behavior opt-in and keep existing tests |
-| Stale group membership | Medium | Render the union of current group options and saved selections |
-| Accidental recovery-group mutation | High | Immutable builder update plus regression assertion |
+|------|--------|------------|
+| Locale key mismatch (navKeyMap points to key that doesn't exist) | Medium — missing translation, blank UI | Update navKeyMap key to match actual locale file keys |
+| Inconsistent naming across languages | Low — UX confusion if names don't match in intent | Use consistent terminology in all locale files |
+| Missed references in other files | Low — stale documentation or comments | Grep for "Audit & Retention" after changes to verify |
 
 ## Open Questions
 
-None. The visual design and checkbox behavior were approved.
+None — scope and changes are straightforward.

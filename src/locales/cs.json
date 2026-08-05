@@ -29,7 +29,7 @@
   "nav.administration.secrets": "Tajemství",
   "nav.administration.certificates": "Certifikáty",
   "nav.administration.diagnostics": "Diagnostika",
-  "nav.administration.audit": "Audit a uchování",
+  "nav.administration.audit": "Audit",
   "nav.providers": "Poskytovatelé a konektory",
   "nav.providers.providers": "Poskytovatelé",
   "nav.providers.connections": "Profily připojení",

@@ -41,7 +41,7 @@ export const platformAdministrationPages: ModulePageConfig[] = [
   {
     path: routes.platformAuditRetention,
     eyebrow: 'Platform Administration',
-    title: 'Audit & retention',
+    title: 'Audit',
     description: 'Audit evidence workspace for audit records, search, export, SIEM forwarding, retention, and protected evidence.',
     excelSource: '10 PA Requirements: Audit; Data management',
     apiBoundary: 'GET /api/platform/audit-retention',

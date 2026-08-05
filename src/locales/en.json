@@ -29,7 +29,7 @@
   "nav.administration.secrets": "Secrets",
   "nav.administration.certificates": "Certificates",
   "nav.administration.diagnostics": "Diagnostics",
-  "nav.administration.audit": "Audit & Retention",
+  "nav.administration.audit": "Audit",
   "nav.providers": "Providers & Connectors",
   "nav.providers.providers": "Providers",
   "nav.providers.connections": "Connection Profiles",

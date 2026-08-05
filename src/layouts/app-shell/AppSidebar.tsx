@@ -30,7 +30,7 @@ const navItems: NavItem[] = [
       { name: 'Platform Providers', path: routes.platformProviders },
       { name: 'Configuration', path: routes.platformConfiguration },
       { name: 'Identity & Access', path: routes.platformIdentityAccess },
-      { name: 'Audit & Retention', path: routes.platformAuditRetention },
+      { name: 'Audit', path: routes.platformAuditRetention },
     ],
   },
   {
@@ -74,7 +74,7 @@ const navKeyMap: Record<string, string> = {
   'Platform Providers': 'nav.administration.platformProviders',
   'Configuration': 'nav.administration.configuration',
   'Identity & Access': 'nav.administration.identity',
-  'Audit & Retention': 'nav.administration.audit',
+  'Audit': 'nav.administration.audit',
   'Providers & Connectors': 'nav.providers',
   'Providers': 'nav.providers.providers',
   'Credentials': 'nav.providers.credentials',
