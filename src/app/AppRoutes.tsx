@@ -77,6 +77,11 @@ const PlatformProvidersPage = lazy(async () => {
   return { default: page.PlatformProvidersPage }
 })
 
+const ConfigurationPage = lazy(async () => {
+  const page = await import('@/features/platform-administration/configuration/pages/ConfigurationPage')
+  return { default: page.ConfigurationPage }
+})
+
 function toRoutePath(path: string) {
   return path.replace(/^\//, '')
 }
@@ -130,12 +135,22 @@ export function AppRoutes() {
     <Route element={<AppShell />}>
         <Route index element={<Navigate to={routes.resources} replace />} />
         <Route path="platform-administration" element={<Navigate to={routes.platformProviders} replace />} />
-        {renderModulePageRoutes(platformAdministrationPages.filter(page => page.path !== routes.platformProviders))}
+        {renderModulePageRoutes(platformAdministrationPages.filter(
+          page => page.path !== routes.platformProviders && page.path !== routes.platformConfiguration,
+        ))}
         <Route
           path={toRoutePath(routes.platformProviders)}
           element={(
             <Suspense fallback={<RouteLoadingSkeleton />}>
               <PlatformProvidersPage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path={toRoutePath(routes.platformConfiguration)}
+          element={(
+            <Suspense fallback={<RouteLoadingSkeleton />}>
+              <ConfigurationPage />
             </Suspense>
           )}
         />
