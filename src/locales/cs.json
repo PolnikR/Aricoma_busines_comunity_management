@@ -14,7 +14,7 @@
   "header.search": "Hledat nebo zadej příkaz...",
   "header.searchHint": "Ctrl K",
   "header.appName": "Aricoma",
-  "header.tagline": "Správa kontinuity provozu",
+  "header.tagline": "Správa Kontinuity Provozu",
   "header.sidebarTagline": "Kontinuita provozu",
   "header.userRole": "Operátor ABCO",
   "header.userRoleType": "Správce",
@@ -104,7 +104,6 @@
   "pages.virtualMachines.detail.yes": "Ano",
   "pages.virtualMachines.detail.no": "Ne",
 
-  "pages.infrastructure.title": "Infrastruktura",
   "pages.infrastructure.description": "Prozkoumejte vztahy mezi zjištěnými clustery, hostiteli, virtuálními stroji a úložišti.",
   "pages.infrastructure.eyebrow": "Zjišťování a inventář",
   "pages.infrastructure.error.title": "Topologii infrastruktury se nepodařilo načíst",
