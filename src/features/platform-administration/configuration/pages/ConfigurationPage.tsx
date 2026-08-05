@@ -62,7 +62,7 @@ export function ConfigurationPage() {
         description="Runtime directories and session behaviour for each connected platform provider."
       />
 
-      <div className="grid flex-1 grid-cols-1 gap-3 overflow-hidden p-3 lg:min-h-0 lg:grid-cols-[260px_1fr]">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3 lg:flex-row">
         <PlatformProviderConfigList
           providers={providers}
           selectedProviderId={selectedProviderId}

@@ -12,12 +12,12 @@ export function PlatformProviderConfigList({ providers, selectedProviderId, onSe
   return (
     <nav
       aria-label="Configured providers"
-      className="flex flex-col overflow-hidden rounded-[20px] border border-border bg-surface shadow-[0_14px_35px_-28px_rgba(37,72,112,0.45)]"
+      className="flex min-h-0 flex-col overflow-hidden rounded-[20px] border border-border bg-surface shadow-[0_14px_35px_-28px_rgba(37,72,112,0.45)] lg:h-full lg:w-65 lg:shrink-0"
     >
-      <div className="border-b border-border px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+      <div className="shrink-0 border-b border-border px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
         Providers
       </div>
-      <div role="list" className="custom-scrollbar overflow-y-auto">
+      <div role="list" className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
         {providers.map((provider) => {
           const isActive = provider.id === selectedProviderId
 

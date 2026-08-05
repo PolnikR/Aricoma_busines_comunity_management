@@ -30,25 +30,22 @@ export function PlatformProviderConfigPanel({
   onCancel,
 }: PlatformProviderConfigPanelProps) {
   return (
-    <div className="flex flex-1 flex-col overflow-hidden rounded-[20px] border border-border bg-surface shadow-[0_14px_35px_-28px_rgba(37,72,112,0.45)]">
-      <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
-        <div>
-          <h2 className="text-base font-semibold text-text-primary">{provider.name}</h2>
-          <p className="mt-1 text-sm text-text-muted">Agent runtime paths and session behaviour for this integration</p>
-        </div>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[20px] border border-border bg-surface shadow-[0_14px_35px_-28px_rgba(37,72,112,0.45)] lg:h-full">
+      <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border px-5 py-3 sm:px-6">
+        <h2 className="text-base font-semibold text-text-primary">{provider.name}</h2>
         <Badge variant="light" size="sm" color={provider.connectionStatus === 'connected' ? 'success' : 'light'}>
           {provider.connectionStatus === 'connected' ? 'Connected' : 'Not configured'}
         </Badge>
       </div>
 
-      <div className="custom-scrollbar flex-1 overflow-y-auto">
-        <section className="border-b border-border px-5 py-5 sm:px-6">
-          <h3 className="text-sm font-semibold text-text-primary">Runtime directories</h3>
-          <p className="mt-1 max-w-prose text-sm text-text-muted">
-            Where the agent reads and writes on the host it runs on. Paths must already exist and be writable by the service account.
-          </p>
+      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
+        <section className="border-b border-border px-5 py-3.5 sm:px-6">
+          <div className="flex items-baseline justify-between gap-3">
+            <h3 className="text-sm font-semibold text-text-primary">Runtime directories</h3>
+            <p className="truncate text-xs text-text-muted">Paths must exist and be writable by the service account.</p>
+          </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <Field label="Work directory" htmlFor="work-directory">
                 <div className="flex gap-2">
@@ -64,7 +61,7 @@ export function PlatformProviderConfigPanel({
                   </Button>
                 </div>
               </Field>
-              <p className="mt-1.5 flex items-center justify-between gap-3 text-xs text-text-subtle">
+              <p className="mt-1 flex items-center justify-between gap-3 text-xs text-text-subtle">
                 <span>Staging area for in-flight recovery jobs and job manifests.</span>
                 <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 font-mono text-text-secondary">{provider.workDirectoryDefault}</span>
               </p>
@@ -85,7 +82,7 @@ export function PlatformProviderConfigPanel({
                   </Button>
                 </div>
               </Field>
-              <p className="mt-1.5 flex items-center justify-between gap-3 text-xs text-text-subtle">
+              <p className="mt-1 flex items-center justify-between gap-3 text-xs text-text-subtle">
                 <span>Cleared automatically after each job.</span>
                 <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 font-mono text-text-secondary">{provider.tempDirectoryDefault}</span>
               </p>
@@ -106,7 +103,7 @@ export function PlatformProviderConfigPanel({
                   </Button>
                 </div>
               </Field>
-              <p className="mt-1.5 flex items-center justify-between gap-3 text-xs text-text-subtle">
+              <p className="mt-1 flex items-center justify-between gap-3 text-xs text-text-subtle">
                 <span>Rotated daily, retained per the platform log policy.</span>
                 <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 font-mono text-text-secondary">{provider.logDirectoryDefault}</span>
               </p>
@@ -114,13 +111,13 @@ export function PlatformProviderConfigPanel({
           </div>
         </section>
 
-        <section className="px-5 py-5 sm:px-6">
-          <h3 className="text-sm font-semibold text-text-primary">Session</h3>
-          <p className="mt-1 max-w-prose text-sm text-text-muted">
-            How long an authenticated session stays valid before the platform must re-authenticate.
-          </p>
+        <section className="px-5 py-3.5 sm:px-6">
+          <div className="flex items-baseline justify-between gap-3">
+            <h3 className="text-sm font-semibold text-text-primary">Session</h3>
+            <p className="truncate text-xs text-text-muted">Time before the platform must re-authenticate.</p>
+          </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <Field label="Session timeout (minutes)" htmlFor="session-timeout">
                 <div className="flex gap-2">
@@ -147,9 +144,9 @@ export function PlatformProviderConfigPanel({
                 max={provider.sessionTimeoutMaxDefault}
                 value={provider.sessionTimeoutMinutes}
                 onChange={event => { onSessionTimeoutChange(Number(event.target.value)) }}
-                className="mt-2 w-full accent-accent"
+                className="mt-1.5 w-full accent-accent"
               />
-              <p className="mt-1.5 flex items-center justify-between gap-3 text-xs text-text-subtle">
+              <p className="mt-1 flex items-center justify-between gap-3 text-xs text-text-subtle">
                 <span>Allowed range: {provider.sessionTimeoutMinDefault}–{provider.sessionTimeoutMaxDefault} minutes.</span>
                 <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 font-mono text-text-secondary">{provider.sessionTimeoutDefault} min</span>
               </p>
@@ -159,7 +156,7 @@ export function PlatformProviderConfigPanel({
               <div>
                 <p className="text-sm font-medium text-text-primary">Auto-renew on activity</p>
                 <p className="mt-1 text-xs text-text-muted">
-                  Extend the session automatically while jobs are actively running, instead of expiring mid-recovery.
+                  Extend the session automatically while jobs are running, instead of expiring mid-recovery.
                 </p>
               </div>
               <Toggle
@@ -172,7 +169,7 @@ export function PlatformProviderConfigPanel({
         </section>
       </div>
 
-      <div className="flex items-center justify-between gap-4 border-t border-border bg-surface-subtle px-5 py-4 sm:px-6">
+      <div className="flex shrink-0 items-center justify-between gap-4 border-t border-border bg-surface-subtle px-5 py-3 sm:px-6">
         <p className="text-xs text-text-muted">
           {isDirty ? 'Changes apply the next time the agent reconnects.' : 'No unsaved changes.'}
         </p>
