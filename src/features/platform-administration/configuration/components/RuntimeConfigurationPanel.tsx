@@ -1,43 +1,32 @@
-import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Input } from '@/shared/components/form/FormControls'
-import { Toggle } from '@/shared/components/toggle/Toggle'
-import type { PlatformProviderConfig } from '../mocks/platformProviderConfigMocks'
+import type { RuntimeConfiguration } from '../mocks/platformProviderConfigMocks'
 
-interface PlatformProviderConfigPanelProps {
-  provider: PlatformProviderConfig
+interface RuntimeConfigurationPanelProps {
+  configuration: RuntimeConfiguration
   isDirty: boolean
   onWorkDirectoryChange: (value: string) => void
   onTempDirectoryChange: (value: string) => void
   onLogDirectoryChange: (value: string) => void
   onSessionTimeoutChange: (value: number) => void
-  onAutoRenewChange: (value: boolean) => void
   onResetField: (field: 'workDirectory' | 'tempDirectory' | 'logDirectory' | 'sessionTimeoutMinutes') => void
   onSave: () => void
   onCancel: () => void
 }
 
-export function PlatformProviderConfigPanel({
-  provider,
+export function RuntimeConfigurationPanel({
+  configuration,
   isDirty,
   onWorkDirectoryChange,
   onTempDirectoryChange,
   onLogDirectoryChange,
   onSessionTimeoutChange,
-  onAutoRenewChange,
   onResetField,
   onSave,
   onCancel,
-}: PlatformProviderConfigPanelProps) {
+}: RuntimeConfigurationPanelProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[20px] border border-border bg-surface shadow-[0_14px_35px_-28px_rgba(37,72,112,0.45)] lg:h-full">
-      <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border px-5 py-3 sm:px-6">
-        <h2 className="text-base font-semibold text-text-primary">{provider.name}</h2>
-        <Badge variant="light" size="sm" color={provider.connectionStatus === 'connected' ? 'success' : 'light'}>
-          {provider.connectionStatus === 'connected' ? 'Connected' : 'Not configured'}
-        </Badge>
-      </div>
-
       <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
         <section className="border-b border-border px-5 py-3.5 sm:px-6">
           <div className="flex items-baseline justify-between gap-3">
@@ -53,7 +42,7 @@ export function PlatformProviderConfigPanel({
                     id="work-directory"
                     size="sm"
                     spellCheck={false}
-                    value={provider.workDirectory}
+                    value={configuration.workDirectory}
                     onChange={event => { onWorkDirectoryChange(event.target.value) }}
                   />
                   <Button size="sm" variant="outline" onClick={() => { onResetField('workDirectory') }}>
@@ -63,7 +52,7 @@ export function PlatformProviderConfigPanel({
               </Field>
               <p className="mt-1 flex items-center justify-between gap-3 text-xs text-text-subtle">
                 <span>Staging area for in-flight recovery jobs and job manifests.</span>
-                <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 font-mono text-text-secondary">{provider.workDirectoryDefault}</span>
+                <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 font-mono text-text-secondary">{configuration.workDirectoryDefault}</span>
               </p>
             </div>
 
@@ -74,7 +63,7 @@ export function PlatformProviderConfigPanel({
                     id="temp-directory"
                     size="sm"
                     spellCheck={false}
-                    value={provider.tempDirectory}
+                    value={configuration.tempDirectory}
                     onChange={event => { onTempDirectoryChange(event.target.value) }}
                   />
                   <Button size="sm" variant="outline" onClick={() => { onResetField('tempDirectory') }}>
@@ -84,7 +73,7 @@ export function PlatformProviderConfigPanel({
               </Field>
               <p className="mt-1 flex items-center justify-between gap-3 text-xs text-text-subtle">
                 <span>Cleared automatically after each job.</span>
-                <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 font-mono text-text-secondary">{provider.tempDirectoryDefault}</span>
+                <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 font-mono text-text-secondary">{configuration.tempDirectoryDefault}</span>
               </p>
             </div>
 
@@ -95,7 +84,7 @@ export function PlatformProviderConfigPanel({
                     id="log-directory"
                     size="sm"
                     spellCheck={false}
-                    value={provider.logDirectory}
+                    value={configuration.logDirectory}
                     onChange={event => { onLogDirectoryChange(event.target.value) }}
                   />
                   <Button size="sm" variant="outline" onClick={() => { onResetField('logDirectory') }}>
@@ -105,7 +94,7 @@ export function PlatformProviderConfigPanel({
               </Field>
               <p className="mt-1 flex items-center justify-between gap-3 text-xs text-text-subtle">
                 <span>Rotated daily, retained per the platform log policy.</span>
-                <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 font-mono text-text-secondary">{provider.logDirectoryDefault}</span>
+                <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 font-mono text-text-secondary">{configuration.logDirectoryDefault}</span>
               </p>
             </div>
           </div>
@@ -125,9 +114,9 @@ export function PlatformProviderConfigPanel({
                     id="session-timeout"
                     type="number"
                     size="sm"
-                    min={provider.sessionTimeoutMinDefault}
-                    max={provider.sessionTimeoutMaxDefault}
-                    value={provider.sessionTimeoutMinutes}
+                    min={configuration.sessionTimeoutMinDefault}
+                    max={configuration.sessionTimeoutMaxDefault}
+                    value={configuration.sessionTimeoutMinutes}
                     onChange={event => { onSessionTimeoutChange(Number(event.target.value)) }}
                     className="text-right tabular-nums"
                   />
@@ -140,30 +129,16 @@ export function PlatformProviderConfigPanel({
                 type="range"
                 aria-hidden="true"
                 tabIndex={-1}
-                min={provider.sessionTimeoutMinDefault}
-                max={provider.sessionTimeoutMaxDefault}
-                value={provider.sessionTimeoutMinutes}
+                min={configuration.sessionTimeoutMinDefault}
+                max={configuration.sessionTimeoutMaxDefault}
+                value={configuration.sessionTimeoutMinutes}
                 onChange={event => { onSessionTimeoutChange(Number(event.target.value)) }}
                 className="mt-1.5 w-full accent-accent"
               />
               <p className="mt-1 flex items-center justify-between gap-3 text-xs text-text-subtle">
-                <span>Allowed range: {provider.sessionTimeoutMinDefault}–{provider.sessionTimeoutMaxDefault} minutes.</span>
-                <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 font-mono text-text-secondary">{provider.sessionTimeoutDefault} min</span>
+                <span>Allowed range: {configuration.sessionTimeoutMinDefault}–{configuration.sessionTimeoutMaxDefault} minutes.</span>
+                <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 font-mono text-text-secondary">{configuration.sessionTimeoutDefault} min</span>
               </p>
-            </div>
-
-            <div className="flex items-start justify-between gap-4 rounded-xl border border-border bg-surface-subtle px-4 py-3">
-              <div>
-                <p className="text-sm font-medium text-text-primary">Auto-renew on activity</p>
-                <p className="mt-1 text-xs text-text-muted">
-                  Extend the session automatically while jobs are running, instead of expiring mid-recovery.
-                </p>
-              </div>
-              <Toggle
-                checked={provider.autoRenewOnActivity}
-                onChange={onAutoRenewChange}
-                label="Auto-renew on activity"
-              />
             </div>
           </div>
         </section>
