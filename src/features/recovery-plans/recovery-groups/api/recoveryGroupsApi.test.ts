@@ -84,6 +84,7 @@ describe('fetchRecoveryGroups', () => {
       relatedVolumes: ['TEST-VOLUME1', 'TEST-VOLUME2'],
       resourceCount: 2,
       status: 'Active',
+      vmMetadataByName: { 'TEST-DB01': {}, 'TEST-DB02': {} },
     }])
 
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
@@ -196,7 +197,7 @@ describe('submitRecoveryGroup', () => {
       provider_id_vm: providerId,
       provider_id_volume: '',
       policy_set_id: 'tier2-apps',
-      vms: [{ name: 'VM-01' }],
+      vms: [{ name: 'VM-01', order: 1 }],
       volumes: [],
     })
   })

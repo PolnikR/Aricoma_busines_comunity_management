@@ -1,8 +1,9 @@
+import { useEffect } from 'react'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
 import { ResourceSelectionCard } from '@/shared/components/resource-selection/ResourceSelectionCard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useRecoveryGroupResourceInventory } from '../hooks/useRecoveryGroupResourceInventory'
-import type { RecoveryGroupWorkloadType } from '../model/recoveryGroupTypes'
+import type { RecoveryGroupVmMetadata, RecoveryGroupWorkloadType } from '../model/recoveryGroupTypes'
 
 interface RecoveryGroupResourcesStepProps {
   workloadType: RecoveryGroupWorkloadType | null
@@ -10,6 +11,7 @@ interface RecoveryGroupResourcesStepProps {
   resources: string[]
   onAdd: (resource: string) => void
   onRemove: (resource: string) => void
+  onMetadataAvailable?: (metadata: Record<string, RecoveryGroupVmMetadata>) => void
 }
 
 export function RecoveryGroupResourcesStep({
@@ -18,10 +20,18 @@ export function RecoveryGroupResourcesStep({
   resources,
   onAdd,
   onRemove,
+  onMetadataAvailable,
 }: RecoveryGroupResourcesStepProps) {
   const { t } = useTranslation()
   const query = useRecoveryGroupResourceInventory(workloadType, providerId)
   const availableResources = query.data?.resourceNames ?? []
+  const vmMetadataByName = query.data?.vmMetadataByName
+
+  useEffect(() => {
+    if (vmMetadataByName) {
+      onMetadataAvailable?.(vmMetadataByName)
+    }
+  }, [vmMetadataByName, onMetadataAvailable])
   const resourceKind = workloadType === 'ibm_flashsystem' ? 'volumes' : 'virtualMachines'
   const key = (suffix: string) => `pages.recoveryGroupBuilder.resources.${resourceKind}.${suffix}`
 

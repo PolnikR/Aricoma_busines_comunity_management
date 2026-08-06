@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
@@ -8,7 +8,7 @@ import { useProviders } from '@/features/providers-connectors/providers/hooks/us
 import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
 import { getRecoveryGroupResourceOption } from '../config/recoveryGroupResourceOptions'
 import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
-import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
+import type { RecoveryGroup, RecoveryGroupDraft, RecoveryGroupVmMetadata } from '../model/recoveryGroupTypes'
 import { RecoveryGroupDetailsStep } from './RecoveryGroupDetailsStep'
 import { RecoveryGroupPolicySetStep } from './RecoveryGroupPolicySetStep'
 import { RecoveryGroupProviderStep } from './RecoveryGroupProviderStep'
@@ -65,12 +65,19 @@ export function RecoveryGroupBuilder({
         resources: [...initialData.resources],
         relatedVolumeProviderId: initialData.relatedVolumeProviderId ?? null,
         relatedVolumes: [...initialData.relatedVolumes],
+        vmMetadataByName: initialData.vmMetadataByName,
       }
     : INITIAL_DRAFT)
   const updateDraft = (update: Partial<RecoveryGroupDraft>) => {
     setDraft(current => ({ ...current, ...update }))
     onDirtyChange?.(true)
   }
+  const handleMetadataAvailable = useCallback((metadata: Record<string, RecoveryGroupVmMetadata>) => {
+    setDraft(current => ({
+      ...current,
+      vmMetadataByName: { ...current.vmMetadataByName, ...metadata },
+    }))
+  }, [])
   const idAvailable = isProgrammaticIdAvailable(
     draft.id,
     existingIds,
@@ -210,6 +217,7 @@ export function RecoveryGroupBuilder({
                     resourceType: null,
                     providerId: null,
                     resources: [],
+                    vmMetadataByName: {},
                     relatedVolumeProviderId: null,
                     relatedVolumes: [],
                   })
@@ -221,6 +229,9 @@ export function RecoveryGroupBuilder({
                     resourceType,
                     providerId: draft.workloadType === workloadType ? draft.providerId : null,
                     resources: draft.workloadType === workloadType ? draft.resources : [],
+                    vmMetadataByName: draft.workloadType === workloadType
+                      ? draft.vmMetadataByName
+                      : {},
                     relatedVolumeProviderId: draft.workloadType === workloadType
                       ? (draft.relatedVolumeProviderId ?? null)
                       : null,
@@ -241,6 +252,7 @@ export function RecoveryGroupBuilder({
                     updateDraft({
                       providerId,
                       resources: draft.providerId === providerId ? draft.resources : [],
+                      vmMetadataByName: draft.providerId === providerId ? draft.vmMetadataByName : {},
                     })
                   }}
                 />
@@ -259,6 +271,7 @@ export function RecoveryGroupBuilder({
                 onRemove={resource => {
                   updateDraft({ resources: draft.resources.filter(item => item !== resource) })
                 }}
+                onMetadataAvailable={handleMetadataAvailable}
               />
             ) : null}
             {step === relatedStorageStepIndex && hasRelatedStorageStep ? (

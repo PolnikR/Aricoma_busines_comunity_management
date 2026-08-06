@@ -2,12 +2,32 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 import type {
   RecoveryGroup,
   RecoveryGroupResourceConfiguration,
+  RecoveryGroupVmMetadata,
 } from '../model/recoveryGroupTypes'
 import type {
   RecoveryGroupApiRecord,
   RecoveryGroupSubmitPayload,
 } from '../api/schemas/recoveryGroupsSchema'
 import type { ValidatedRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
+
+function toVmMetadataByName(
+  vms: RecoveryGroupApiRecord['vms'],
+): Record<string, RecoveryGroupVmMetadata> {
+  return Object.fromEntries(
+    vms.map(({ name, ...metadata }) => [name, metadata] as const),
+  )
+}
+
+function toVmsPayload(
+  resources: string[],
+  vmMetadataByName: Record<string, RecoveryGroupVmMetadata> | undefined,
+): RecoveryGroupSubmitPayload['vms'] {
+  return resources.map((name, index) => ({
+    name,
+    order: index + 1,
+    ...vmMetadataByName?.[name],
+  }))
+}
 
 function vmConfiguration(provider: ProviderRecord): RecoveryGroupResourceConfiguration {
   if (provider.type === 'VMWARE') {
@@ -53,6 +73,7 @@ export function mapRecoveryGroupApiRecord(
       relatedVolumes: volumeResources,
       resourceCount: vmResources.length,
       status: vmResources.length > 0 ? 'Active' : 'Draft',
+      vmMetadataByName: toVmMetadataByName(record.vms),
     }
   }
 
@@ -91,7 +112,7 @@ export function toRecoveryGroupSubmitPayload(
       ? (draft.relatedVolumeProviderId ?? '')
       : draft.providerId,
     policy_set_id: draft.policySetId,
-    vms: isVmGroup ? draft.resources.map(name => ({ name })) : [],
+    vms: isVmGroup ? toVmsPayload(draft.resources, draft.vmMetadataByName) : [],
     volumes: isVmGroup
       ? draft.relatedVolumes.map(name => ({ name }))
       : draft.resources.map(name => ({ name })),
@@ -109,7 +130,7 @@ export function toRecoveryGroupJson(group: RecoveryGroup): RecoveryGroupSubmitPa
       ? (group.relatedVolumeProviderId ?? '')
       : (group.providerId ?? ''),
     policy_set_id: group.policySetId,
-    vms: isVmGroup ? group.resources.map(name => ({ name })) : [],
+    vms: isVmGroup ? toVmsPayload(group.resources, group.vmMetadataByName) : [],
     volumes: isVmGroup
       ? group.relatedVolumes.map(name => ({ name }))
       : group.resources.map(name => ({ name })),
@@ -134,5 +155,6 @@ export function toRecoveryGroup(
     relatedVolumes: isVmGroup ? draft.relatedVolumes : [],
     resourceCount: draft.resources.length,
     status: 'Active',
+    vmMetadataByName: isVmGroup ? draft.vmMetadataByName : undefined,
   }
 }

@@ -2,6 +2,7 @@ import { z } from 'zod'
 import type {
   RecoveryGroupDraft,
   RecoveryGroupResourceConfiguration,
+  RecoveryGroupVmMetadata,
 } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsError } from './recoveryGroupsErrors'
 
@@ -33,6 +34,7 @@ export interface ValidatedRecoveryGroupDraft {
   relatedVolumeProviderId: string | null
   relatedVolumes: string[]
   configuration: RecoveryGroupResourceConfiguration
+  vmMetadataByName?: Record<string, RecoveryGroupVmMetadata> | undefined
 }
 
 export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): ValidatedRecoveryGroupDraft {
@@ -79,5 +81,6 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     relatedVolumeProviderId,
     relatedVolumes,
     configuration: configuration.data,
+    vmMetadataByName: draft.vmMetadataByName,
   }
 }

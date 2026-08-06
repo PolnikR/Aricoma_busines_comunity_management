@@ -1,7 +1,19 @@
 import { z } from 'zod'
+import type { RecoveryGroupVmMetadata } from '../../model/recoveryGroupTypes'
 
 export const recoveryGroupResourceSchema = z.object({
   name: z.string().trim().min(1),
+})
+
+export const recoveryGroupVmResourceSchema = z.object({
+  name: z.string().trim().min(1),
+  order: z.number().optional(),
+  hostname: z.string().optional(),
+  ip_address: z.string().optional(),
+  os: z.string().optional(),
+  cpu: z.number().optional(),
+  memory_gb: z.number().optional(),
+  storage_gb: z.number().optional(),
 })
 
 export const recoveryGroupApiSchema = z.object({
@@ -11,7 +23,7 @@ export const recoveryGroupApiSchema = z.object({
   provider_id_vm: z.string(),
   provider_id_volume: z.string(),
   policy_set_id: z.string().trim().min(1),
-  vms: z.array(recoveryGroupResourceSchema),
+  vms: z.array(recoveryGroupVmResourceSchema),
   volumes: z.array(recoveryGroupResourceSchema),
 })
 
@@ -29,6 +41,6 @@ export interface RecoveryGroupSubmitPayload {
   provider_id_vm: string
   provider_id_volume: string
   policy_set_id: string
-  vms: { name: string }[]
+  vms: ({ name: string } & RecoveryGroupVmMetadata)[]
   volumes: { name: string }[]
 }

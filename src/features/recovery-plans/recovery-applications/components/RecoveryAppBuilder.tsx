@@ -131,7 +131,11 @@ export function RecoveryAppBuilder({
           recovery_group: {
             name: selectedGroup.id,
             description: selectedGroup.description,
-            vms: selectedGroup.resources.map(name => ({ name })),
+            vms: selectedGroup.resources.map((name, index) => ({
+              name,
+              order: index + 1,
+              ...selectedGroup.vmMetadataByName?.[name],
+            })),
           },
         })
       }
@@ -167,21 +171,24 @@ export function RecoveryAppBuilder({
       const alreadySelected = tier.recovery_group.vms.some(vm => vm.name === vmName)
       if (alreadySelected === selected) return prev
 
+      const selectedGroup = availableGroups.find(group => group.id === tier.recovery_group?.name)
+      const nextVms = selected
+        ? [...tier.recovery_group.vms, { name: vmName, ...selectedGroup?.vmMetadataByName?.[vmName] }]
+        : tier.recovery_group.vms.filter(vm => vm.name !== vmName)
+
       const newTiers = new Map(prev.tiers)
       newTiers.set(tierId, {
         ...tier,
         recovery_group: {
           ...tier.recovery_group,
-          vms: selected
-            ? [...tier.recovery_group.vms, { name: vmName }]
-            : tier.recovery_group.vms.filter(vm => vm.name !== vmName),
+          vms: nextVms.map((vm, index) => ({ ...vm, order: index + 1 })),
         },
       })
 
       return { ...prev, tiers: newTiers }
     })
     onDirtyChange?.(true)
-  }, [onDirtyChange])
+  }, [availableGroups, onDirtyChange])
 
   const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: {
     tierDescription: string

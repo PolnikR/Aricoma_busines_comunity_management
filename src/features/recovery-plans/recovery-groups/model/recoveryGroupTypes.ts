@@ -23,6 +23,16 @@ export type RecoveryGroupResourceConfiguration =
       resourceType: 'volume'
     }
 
+export interface RecoveryGroupVmMetadata {
+  order?: number | undefined
+  hostname?: string | undefined
+  ip_address?: string | undefined
+  os?: string | undefined
+  cpu?: number | undefined
+  memory_gb?: number | undefined
+  storage_gb?: number | undefined
+}
+
 interface RecoveryGroupBase {
   id: string
   name: string
@@ -39,6 +49,7 @@ export type RecoveryGroup = RecoveryGroupListItem & {
   resources: string[]
   relatedVolumeProviderId: string | null
   relatedVolumes: string[]
+  vmMetadataByName?: Record<string, RecoveryGroupVmMetadata> | undefined
 }
 
 export interface RecoveryGroupDraft {
@@ -53,4 +64,5 @@ export interface RecoveryGroupDraft {
   resources: string[]
   relatedVolumeProviderId?: string | null
   relatedVolumes?: string[]
+  vmMetadataByName?: Record<string, RecoveryGroupVmMetadata> | undefined
 }

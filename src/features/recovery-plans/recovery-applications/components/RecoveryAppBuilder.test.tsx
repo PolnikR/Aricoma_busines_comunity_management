@@ -271,7 +271,7 @@ describe('RecoveryAppBuilder', () => {
     expect(savedState.tiers.get('database')?.recovery_group).toEqual({
       name: 'database_group',
       description: 'Database recovery group',
-      vms: [{ name: 'DB-01' }, { name: 'DB-02' }],
+      vms: [{ name: 'DB-01', order: 1 }, { name: 'DB-02', order: 2 }],
     })
   })
 
@@ -291,7 +291,7 @@ describe('RecoveryAppBuilder', () => {
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
 
     const savedState = onSave.mock.calls[0]?.[0] as { tiers: Map<string, RecoveryTier> }
-    expect(savedState.tiers.get('database')?.recovery_group?.vms).toEqual([{ name: 'DB-02' }])
+    expect(savedState.tiers.get('database')?.recovery_group?.vms).toEqual([{ name: 'DB-02', order: 1 }])
     expect(recoveryGroupsQuery.current.groups[0]?.resources).toEqual(['DB-01', 'DB-02'])
   })
 
