@@ -5,7 +5,7 @@ import { cn } from '@/shared/utils/cn'
 interface ModalProps {
   open: boolean
   onClose: () => void
-  title: ReactNode
+  title?: ReactNode
   children?: ReactNode
   footer?: ReactNode
   ariaLabel?: string
@@ -55,9 +55,11 @@ export function Modal({
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : ariaLabel}
       >
-        <div className="border-b border-border px-6 py-4">
-          <h2 className="text-base font-semibold text-text-primary">{title}</h2>
-        </div>
+        {title ? (
+          <div className="border-b border-border px-6 py-4">
+            <h2 className="text-base font-semibold text-text-primary">{title}</h2>
+          </div>
+        ) : null}
         {children}
         {footer ? <div className="flex gap-3 border-t border-border px-6 py-4">{footer}</div> : null}
       </div>

@@ -396,7 +396,16 @@ export function RecoveryGroupBuilder({
                   {t('buttons.next')}
                 </Button>
               ) : (
-                <Button disabled={!canCreate || isSaving} onClick={() => { onCreate(draft) }}>
+                <Button
+                  disabled={!canCreate || isSaving}
+                  startIcon={isSaving ? (
+                    <span
+                      aria-hidden="true"
+                      className="size-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                    />
+                  ) : undefined}
+                  onClick={() => { onCreate(draft) }}
+                >
                   {isSaving ? t('messages.saving') : (submitLabel ?? t('pages.recoveryGroupBuilder.createButton'))}
                 </Button>
               )}

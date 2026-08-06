@@ -285,6 +285,56 @@ describe('submitRecoveryGroup', () => {
     expect(url).toBe('/api/submit_recovery_group?provider_id=airflow-01&push_to_orchestrator=true')
   })
 
+  it('surfaces the airflow_run_id returned in the submit response', async () => {
+    stubFetch({
+      recovery_groups: [{
+        ...databaseGroupPayload,
+        airflow_run_id: '260806091844_d023a7ef',
+        push_to_orchestrator: true,
+      }],
+    })
+
+    const result = await createRecoveryGroup({
+      id: 'vm_group',
+      name: 'VM group',
+      description: 'Virtual machines',
+      sourceCategory: 'backup_system_workload',
+      workloadType: 'vmware_virtual_machines',
+      resourceType: 'vm',
+      providerId: 'vmware-vcenter-01',
+      policySetId: 'tier2-apps',
+      resources: ['VM-01'],
+      relatedVolumeProviderId: null,
+      relatedVolumes: [],
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: true,
+    })
+
+    expect(result.airflowRunId).toBe('260806091844_d023a7ef')
+  })
+
+  it('resolves a null airflowRunId when the submit response has none', async () => {
+    stubFetch(null)
+
+    const result = await createRecoveryGroup({
+      id: 'vm_group',
+      name: 'VM group',
+      description: 'Virtual machines',
+      sourceCategory: 'backup_system_workload',
+      workloadType: 'vmware_virtual_machines',
+      resourceType: 'vm',
+      providerId: 'vmware-vcenter-01',
+      policySetId: 'tier2-apps',
+      resources: ['VM-01'],
+      relatedVolumeProviderId: null,
+      relatedVolumes: [],
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: false,
+    })
+
+    expect(result.airflowRunId).toBeNull()
+  })
+
   it('rejects a draft with no orchestration provider before calling the backend', async () => {
     const mock = stubFetch(null)
 

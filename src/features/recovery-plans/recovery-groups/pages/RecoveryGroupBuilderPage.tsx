@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/shared/components/button/Button'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { SuccessModal } from '@/shared/components/modal/SuccessModal'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { ListSkeleton } from '@/shared/components/list-skeleton/ListSkeleton'
 import { PageHeader } from '@/shared/components/page/PageHeader'
@@ -19,6 +20,8 @@ export function RecoveryGroupBuilderPage() {
   const { groups, create, isCreating, isLoading, error: loadError, refresh } = useRecoveryGroups()
   const [isDirty, setIsDirty] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [createdAirflowRunId, setCreatedAirflowRunId] = useState<string | null>(null)
+  const [showSuccess, setShowSuccess] = useState(false)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
 
   const navigateToGroups = () => { void navigate(routes.recoveryGroups) }
@@ -26,12 +29,22 @@ export function RecoveryGroupBuilderPage() {
 
   const handleCreate = async (draft: RecoveryGroupDraft) => {
     try {
-      await create(draft)
+      const created = await create(draft)
       setIsDirty(false)
-      navigationGuard.runWithoutBlocking(navigateToGroups)
+      if (draft.pushToOrchestrator) {
+        setCreatedAirflowRunId(created.airflowRunId ?? null)
+        setShowSuccess(true)
+      } else {
+        navigationGuard.runWithoutBlocking(navigateToGroups)
+      }
     } catch (cause) {
       setError(t(getRecoveryGroupsErrorKey(cause)))
     }
+  }
+
+  const handleSuccessModalClose = () => {
+    setShowSuccess(false)
+    navigationGuard.runWithoutBlocking(navigateToGroups)
   }
 
   return (
@@ -72,6 +85,14 @@ export function RecoveryGroupBuilderPage() {
         tone="danger"
         onCancel={navigationGuard.cancelNavigation}
         onConfirm={navigationGuard.confirmNavigation}
+      />
+      <SuccessModal
+        open={showSuccess}
+        onClose={handleSuccessModalClose}
+        ariaLabel={t('recoveryGroups.successModal.ariaLabel')}
+        message={createdAirflowRunId
+          ? t('recoveryGroups.successModal.messageWithRunId').replace('{airflowRunId}', createdAirflowRunId)
+          : t('recoveryGroups.successModal.messageWithoutRunId')}
       />
     </div>
   )

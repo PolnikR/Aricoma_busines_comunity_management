@@ -66,7 +66,14 @@ async function submitRecoveryGroup(
     body: JSON.stringify(toRecoveryGroupSubmitPayload(validated, id)),
   })
   requireOk(response, 'Submit recovery group')
-  return toRecoveryGroup(validated, id)
+  const airflowRunId = await extractAirflowRunId(response)
+  return { ...toRecoveryGroup(validated, id), airflowRunId }
+}
+
+async function extractAirflowRunId(response: Response): Promise<string | null> {
+  const payload: unknown = await response.json().catch(() => null)
+  const parsed = payload ? recoveryGroupsResponseSchema.safeParse(payload) : null
+  return parsed?.success ? (parsed.data.recovery_groups[0]?.airflow_run_id ?? null) : null
 }
 
 export async function createRecoveryGroup(draft: RecoveryGroupDraft): Promise<RecoveryGroup> {
