@@ -172,9 +172,9 @@ never been seen, rather than inventing typed rows that may not match.
 | File | Change |
 |---|---|
 | `api/schemas/recoveryGroupsSchema.ts` | Add `platform_provider_id` (optional) to `recoveryGroupApiSchema`; add `rollbackResponseSchema` + report schemas |
-| `model/recoveryGroupTypes.ts` | Add `orchestrationProviderId: string \| null` to `RecoveryGroup`; add `RollbackReport` type |
+| `model/recoveryGroupTypes.ts` | Add `orchestrationProviderId?: string \| null` to `RecoveryGroup` — optional, matching its sibling read-model fields `airflowRunId?` and `pushToOrchestrator?`, so existing `RecoveryGroup` fixtures need no churn |
 | `helpers/mapRecoveryGroups.ts` | Map `platform_provider_id` → `orchestrationProviderId`, absent → `null` |
-| `api/recoveryGroupsApi.ts` | Change return type from `Promise<void>` to the parsed report; use the `API_ENDPOINTS` constant (see cleanup below) |
+| `api/recoveryGroupsApi.ts` | Change return type from `Promise<void>` to the parsed report |
 | `hooks/useRecoveryGroups.ts` | `rollback` resolves with the report instead of `void` |
 | `components/RecoveryGroupRollbackResultModal.tsx` | **New.** Success/warning result modal |
 | `components/RecoveryGroupsTable.tsx` | Inline Roll back button on the Orchestration row; danger `ConfirmDialog`; result modal; close drawer on success |
@@ -212,14 +212,22 @@ FlashCopy objects. It must also say the group itself survives — otherwise "rol
 - **Partial failure:** a 200 whose `ibm.errors` is non-empty renders the warning state, not a clean
   success. This is the regression that matters most — it is the case the current code gets wrong.
 
-## Known cleanup
+## Resolved: endpoint constant
 
-`recoveryGroupsApi.ts:108` hardcodes `/api/rollback_from_orchestrator` instead of using
-`API_ENDPOINTS.recoveryGroups.rollback`, leaving that constant dead. This came from working around
-an `Invalid type "any" of template literal expression` error that the neighbouring `submit` and
-`delete` calls do not hit — most likely a stale language-server view of the just-edited
-`apiEndpoints.ts` rather than a real type error. Implementation should restore the constant and
-confirm `npm run build` passes, rather than assuming the original error was genuine.
+`rollbackRecoveryGroupOrchestration` briefly hardcoded `/api/rollback_from_orchestrator`, leaving
+`API_ENDPOINTS.recoveryGroups.rollback` dead. Now fixed — it uses the constant, matching the
+`submit` and `delete` calls beside it.
+
+The original `Invalid type "any" of template literal expression` error was spurious: the editor's
+language server held a view of `apiEndpoints.ts` predating the added `rollback` key, so the property
+read as a nonexistent-property error type. Two things confirm this rather than assume it — the
+adjacent `${API_ENDPOINTS.recoveryGroups.delete}` on the same object never errored, and both
+`tsc --noEmit` and `eslint --max-warnings 0` pass clean on the template-literal form.
+
+Worth remembering while implementing the rest of this design: **the editor diagnostics in this repo
+can lag edits to `apiEndpoints.ts` and the schema files.** Trust `npm run build` over the inline
+squiggle, and do not code around an editor error without first reproducing it in the real
+toolchain — that is exactly how the hardcoded URL got committed.
 
 ## Out of scope
 
