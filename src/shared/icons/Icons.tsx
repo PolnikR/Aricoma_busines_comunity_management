@@ -153,6 +153,15 @@ export function CheckIcon(props: IconProps) {
   )
 }
 
+export function ExternalLinkIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="M8.333 5H5a1.667 1.667 0 0 0-1.667 1.667v8.333A1.667 1.667 0 0 0 5 16.667h8.333A1.667 1.667 0 0 0 15 15v-3.333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11.667 3.333H16.667V8.333M16.667 3.333 9.167 10.833" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export function SignOutIcon(props: IconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" {...props}>

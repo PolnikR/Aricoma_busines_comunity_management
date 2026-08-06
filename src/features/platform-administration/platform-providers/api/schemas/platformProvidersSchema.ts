@@ -17,6 +17,7 @@ export const platformProviderSubmitSchema = z.object({
 
 const platformProviderRecordSchema = platformProviderSubmitSchema.extend({
   credentialStatus: z.enum(PLATFORM_PROVIDER_CREDENTIAL_STATUSES),
+  url: z.string().optional(),
 })
 
 export const platformProvidersResponseSchema = z.object({
@@ -26,5 +27,6 @@ export const platformProvidersResponseSchema = z.object({
 export const platformProviderWriteResponseSchema = z.object({
   providers: z.array(platformProviderSubmitSchema.extend({
     credentialStatus: z.enum(PLATFORM_PROVIDER_CREDENTIAL_STATUSES).optional(),
+    url: z.string().optional(),
   })),
 })

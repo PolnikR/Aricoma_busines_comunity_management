@@ -22,6 +22,7 @@ export interface PlatformProviderSubmitData {
 
 export interface PlatformProviderRecord extends PlatformProviderSubmitData {
   credentialStatus: PlatformProviderCredentialStatus
+  url?: string | undefined
 }
 
 export interface PlatformProviderWriteRecord extends PlatformProviderSubmitData {

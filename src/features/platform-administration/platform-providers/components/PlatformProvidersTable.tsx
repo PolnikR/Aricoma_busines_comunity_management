@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
+import { ExternalLinkIcon } from '@/shared/icons/Icons'
 import {
   DataTable,
   DataTablePagination,
@@ -176,6 +177,22 @@ export function PlatformProvidersTable({
             <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{selected.ipAddress}</span>} />
             <DetailRow label={t('details.port')} value={<span className="font-mono">{selected.port}</span>} />
             <DetailRow label={t('details.dagDir')} value={<span className="font-mono">{selected.dagDir}</span>} />
+            {selected.url ? (
+              <DetailRow
+                label={t('details.url')}
+                value={(
+                  <a
+                    href={selected.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
+                  >
+                    {selected.url}
+                    <ExternalLinkIcon className="size-3.5 shrink-0" />
+                  </a>
+                )}
+              />
+            ) : null}
             <DetailRow label={t('details.credential')} value={<span className="font-mono">{selected.credentialId}</span>} />
             <DetailRow
               label={t('details.credentialStatus')}
