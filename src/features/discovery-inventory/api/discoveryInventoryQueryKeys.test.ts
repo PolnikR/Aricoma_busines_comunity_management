@@ -14,5 +14,11 @@ describe('discoveryInventoryKeys', () => {
     expect(discoveryInventoryKeys.vdisksByVm('VM-01', 'vcenter-01', 'flash-01')).toEqual([
       'discovery-inventory', 'vdisks', 'VM-01', 'vcenter-01', 'flash-01',
     ])
+    expect(discoveryInventoryKeys.volumeTree()).toEqual([
+      'discovery-inventory', 'volume-tree', null, null,
+    ])
+    expect(discoveryInventoryKeys.volumeTree('flash-01', 'flat')).toEqual([
+      'discovery-inventory', 'volume-tree', 'flash-01', 'flat',
+    ])
   })
 })

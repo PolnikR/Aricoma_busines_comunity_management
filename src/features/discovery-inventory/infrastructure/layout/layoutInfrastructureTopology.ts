@@ -34,6 +34,10 @@ const nodeSizes: Record<InfrastructureTopologyNodeKind, TopologyNodeSize> = {
   datastore: { width: 220, height: 104 },
   powerSystem: { width: 240, height: 112 },
   powerPartition: { width: 260, height: 132 },
+  pool: { width: 220, height: 96 },
+  volume: { width: 240, height: 112 },
+  fcmap: { width: 220, height: 104 },
+  consistencyGroup: { width: 240, height: 104 },
 }
 
 async function getElkInstance() {

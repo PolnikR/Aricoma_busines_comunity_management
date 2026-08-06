@@ -94,7 +94,7 @@ export function RecoveryGroupsTable({
   const [pendingFilters, setPendingFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)
   const [deleteTarget, setDeleteTarget] = useState<RecoveryGroup | null>(null)
   const [rollbackTarget, setRollbackTarget] = useState<RecoveryGroup | null>(null)
-  const [rollbackResult, setRollbackResult] = useState<{ groupName: string; report: any } | null>(null)
+  const [rollbackResult, setRollbackResult] = useState<{ groupName: string; report: RollbackReport } | null>(null)
 
   const filterOptions = useMemo(() => ({
     workloadTypes: Array.from(new Set(groups.map(group => group.workloadType))).sort(),
@@ -396,16 +396,21 @@ export function RecoveryGroupsTable({
         cancelLabel={t('buttons.cancel')}
         tone="danger"
         onCancel={() => { setRollbackTarget(null) }}
-        onConfirm={async () => {
+        onConfirm={() => {
           if (!rollbackTarget?.orchestrationProviderId) return
-          try {
-            const report = await onRollback(rollbackTarget.id, rollbackTarget.orchestrationProviderId)
-            setRollbackResult({ groupName: rollbackTarget.name, report })
-            setSelectedId(null)
-            setRollbackTarget(null)
-          } catch {
-            setRollbackTarget(null)
-          }
+          const groupId = rollbackTarget.id
+          const providerId = rollbackTarget.orchestrationProviderId
+          const groupName = rollbackTarget.name
+          void (async () => {
+            try {
+              const report = await onRollback(groupId, providerId)
+              setRollbackResult({ groupName, report })
+              setSelectedId(null)
+              setRollbackTarget(null)
+            } catch {
+              setRollbackTarget(null)
+            }
+          })()
         }}
       />
 

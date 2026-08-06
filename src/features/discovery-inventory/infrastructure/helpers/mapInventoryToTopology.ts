@@ -18,6 +18,10 @@ const nodeKindOrder: Record<InfrastructureTopologyNodeKind, number> = {
   datastore: 3,
   powerSystem: 4,
   powerPartition: 5,
+  pool: 6,
+  volume: 7,
+  fcmap: 8,
+  consistencyGroup: 9,
 }
 
 function isKnownTopologyValue(value: string) {
@@ -31,7 +35,7 @@ export function createTopologyNodeId(
   return `${kind}:${encodeURIComponent(sourceId.trim())}`
 }
 
-function createTopologyEdgeId(
+export function createTopologyEdgeId(
   kind: InfrastructureTopologyEdgeKind,
   source: string,
   target: string,
@@ -39,7 +43,7 @@ function createTopologyEdgeId(
   return `edge:${kind}:${source}:${target}`
 }
 
-function compareNodes(first: InfrastructureTopologyNode, second: InfrastructureTopologyNode) {
+export function compareNodes(first: InfrastructureTopologyNode, second: InfrastructureTopologyNode) {
   const kindDifference = nodeKindOrder[first.kind] - nodeKindOrder[second.kind]
   if (kindDifference !== 0) return kindDifference
 

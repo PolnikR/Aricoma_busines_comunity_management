@@ -7,6 +7,7 @@ import type { InfrastructureTopologyPlatform } from './topologyTypes'
 const providerTypeByPlatform: Record<InfrastructureTopologyPlatform, ProviderType> = {
   vmware: 'VMWARE',
   'ibm-power': 'IBM_POWER',
+  flashsystem: 'FLASHCOPY',
 }
 
 export function parseInfrastructurePlatform(

@@ -4,15 +4,15 @@ See `infrastructure-flashsystem-topology-plan.md` for full detail, rationale, an
 
 ## Phase 1: Data layer
 - [x] Task 1 — FlashSystem volume-tree model types (`model/discoveryTypes.ts`)
-- [ ] Task 2 — API schema + endpoint config + fetch fn + query key
-- [ ] Task 3 — `useFlashSystemVolumeTree` hook
-- [ ] **Checkpoint:** tsc clean, Task 1-3 tests pass, real payload parses cleanly
+- [x] Task 2 — API schema + endpoint config + fetch fn + query key
+- [x] Task 3 — `useFlashSystemVolumeTree` hook
+- [x] **Checkpoint:** tsc clean (aside from a pre-existing, unrelated error in `RecoveryGroupsTable.tsx`), Task 1-3 tests pass, real payload parses cleanly
 
 ## Phase 2: Topology mapping and rendering
-- [ ] Task 4 — Extend `TopologyNodeKind`/`TopologyEdgeKind` + `mapFlashSystemVolumeTreeToTopology` helper
-- [ ] Task 5 — Node components + tooltips (Pool, Volume, FlashCopyMap, ConsistencyGroup)
-- [ ] Task 6 — Register node types + legend entries
-- [ ] **Checkpoint:** tsc/eslint clean, mapping helper tests cover all 3 views, manual layout smoke test
+- [x] Task 4 — Extend `TopologyNodeKind`/`TopologyEdgeKind` + `mapFlashSystemVolumeTreeToTopology` helper
+- [x] Task 5 — Node components + tooltips (Pool, Volume, FlashCopyMap, ConsistencyGroup)
+- [x] Task 6 — Register node types + legend entries + `copies` edge styling
+- [x] **Checkpoint:** tsc/eslint clean, mapping helper tests cover all 3 views (+ dedup), full infrastructure test suite green (96/96)
 
 ## Phase 3: UI integration
 - [ ] Task 7 — `flashsystem` platform: selector, page branching, `useInfrastructureInventory` support

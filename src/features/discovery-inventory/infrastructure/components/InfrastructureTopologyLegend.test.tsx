@@ -19,4 +19,15 @@ describe('InfrastructureTopologyLegend', () => {
     expect(screen.getByText('VIOS')).toBeInTheDocument()
     expect(screen.queryByText('Datastore')).not.toBeInTheDocument()
   })
+
+  it('renders FlashSystem node kinds and the copies relation', () => {
+    render(<InfrastructureTopologyLegend platform="flashsystem" visibleNodes={4} visibleEdges={3} />)
+
+    expect(screen.getByText('Pool')).toBeInTheDocument()
+    expect(screen.getByText('Volume')).toBeInTheDocument()
+    expect(screen.getByText('FlashCopy mapping')).toBeInTheDocument()
+    expect(screen.getByText('Consistency group')).toBeInTheDocument()
+    expect(screen.getByText('FlashCopy relation')).toBeInTheDocument()
+    expect(screen.queryByText('Datastore')).not.toBeInTheDocument()
+  })
 })
