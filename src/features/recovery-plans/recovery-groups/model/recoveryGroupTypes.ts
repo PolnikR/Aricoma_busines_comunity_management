@@ -54,6 +54,8 @@ export type RecoveryGroup = RecoveryGroupListItem & {
   // this is a run identifier, not the orchestration provider's id.
   airflowRunId?: string | null | undefined
   pushToOrchestrator?: boolean | undefined
+  // Platform provider (AIRFLOW) this group is/was orchestrated to. Read-only.
+  orchestrationProviderId?: string | null | undefined
 }
 
 export interface RecoveryGroupDraft {

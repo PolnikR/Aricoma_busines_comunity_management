@@ -161,4 +161,74 @@ describe('mapRecoveryGroupApiRecord', () => {
     expect(group.airflowRunId).toBeNull()
     expect(group.pushToOrchestrator).toBe(false)
   })
+
+  it('maps platform_provider_id to orchestrationProviderId for VM groups', () => {
+    const record = {
+      id: 'database_group',
+      name: 'Database group',
+      description: 'Database tier',
+      provider_id_vm: 'vmware-vcenter-01',
+      provider_id_volume: '',
+      policy_set_id: 'tier2-apps',
+      vms: [{ name: 'TEST-DB01' }],
+      volumes: [],
+      platform_provider_id: 'airflow-01',
+    }
+
+    const group = mapRecoveryGroupApiRecord(record, [vmwareProvider])
+
+    expect(group.orchestrationProviderId).toBe('airflow-01')
+  })
+
+  it('maps absent platform_provider_id to null orchestrationProviderId for VM groups', () => {
+    const record = {
+      id: 'database_group',
+      name: 'Database group',
+      description: 'Database tier',
+      provider_id_vm: 'vmware-vcenter-01',
+      provider_id_volume: '',
+      policy_set_id: 'tier2-apps',
+      vms: [{ name: 'TEST-DB01' }],
+      volumes: [],
+    }
+
+    const group = mapRecoveryGroupApiRecord(record, [vmwareProvider])
+
+    expect(group.orchestrationProviderId).toBeNull()
+  })
+
+  it('maps platform_provider_id to orchestrationProviderId for volume-only groups', () => {
+    const record = {
+      id: 'storage_group',
+      name: 'Storage group',
+      description: 'Storage volumes',
+      provider_id_vm: '',
+      provider_id_volume: 'ibm-flashsystem-01',
+      policy_set_id: 'tier2-apps',
+      vms: [],
+      volumes: [{ name: 'V5000_VOLUME01' }],
+      platform_provider_id: 'airflow-01',
+    }
+
+    const group = mapRecoveryGroupApiRecord(record, [flashSystemProvider])
+
+    expect(group.orchestrationProviderId).toBe('airflow-01')
+  })
+
+  it('maps absent platform_provider_id to null orchestrationProviderId for volume groups', () => {
+    const record = {
+      id: 'storage_group',
+      name: 'Storage group',
+      description: 'Storage volumes',
+      provider_id_vm: '',
+      provider_id_volume: 'ibm-flashsystem-01',
+      policy_set_id: 'tier2-apps',
+      vms: [],
+      volumes: [{ name: 'V5000_VOLUME01' }],
+    }
+
+    const group = mapRecoveryGroupApiRecord(record, [flashSystemProvider])
+
+    expect(group.orchestrationProviderId).toBeNull()
+  })
 })

@@ -76,6 +76,7 @@ export function mapRecoveryGroupApiRecord(
       vmMetadataByName: toVmMetadataByName(record.vms),
       airflowRunId: record.airflow_run_id,
       pushToOrchestrator: record.push_to_orchestrator,
+      orchestrationProviderId: record.platform_provider_id ?? null,
     }
   }
 
@@ -99,6 +100,7 @@ export function mapRecoveryGroupApiRecord(
     status: volumeResources.length > 0 ? 'Active' : 'Draft',
     airflowRunId: record.airflow_run_id,
     pushToOrchestrator: record.push_to_orchestrator,
+    orchestrationProviderId: record.platform_provider_id ?? null,
   }
 }
 
@@ -162,5 +164,6 @@ export function toRecoveryGroup(
     vmMetadataByName: isVmGroup ? draft.vmMetadataByName : undefined,
     pushToOrchestrator: draft.pushToOrchestrator,
     airflowRunId: null,
+    orchestrationProviderId: draft.orchestrationProviderId,
   }
 }
