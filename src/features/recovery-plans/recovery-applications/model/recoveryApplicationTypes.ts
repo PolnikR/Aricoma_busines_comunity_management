@@ -1,17 +1,26 @@
 export interface RecoveryVM {
   name: string
+  order?: number | undefined
+  hostname?: string | undefined
+  ip_address?: string | undefined
+  os?: string | undefined
+  cpu?: number | undefined
+  memory_gb?: number | undefined
+  storage_gb?: number | undefined
 }
 
 export interface RecoveryGroup {
   name: string
   description: string
   vms: RecoveryVM[]
+  volumes?: { name: string }[] | undefined
 }
 
 export interface RecoveryTier {
   order: number
   description: string
-  recovery_group?: RecoveryGroup
+  vms?: RecoveryVM[] | undefined
+  recovery_group?: RecoveryGroup | undefined
 }
 
 export interface RecoveryApplicationData {
@@ -48,12 +57,14 @@ export interface RecoveryApplicationListItem {
   data: {
     application: {
       name: string
-      description: string
-      environment: 'dev' | 'staging' | 'prod'
+      description?: string | undefined
+      environment: string
       platform: string
-      source_connection: string
-      target_connection: string
+      source_connection?: string | undefined
+      target_connection?: string | undefined
       tiers: Record<string, RecoveryTier>
+      airflow_run_id?: string | null | undefined
+      push_to_orchestrator?: boolean | undefined
     }
   }
   submission?: ApplicationSubmission

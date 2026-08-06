@@ -11,11 +11,13 @@ function mapRecoveryTier(tier: RecoveryTierPayload): RecoveryTier {
   return {
     order: tier.order,
     description: tier.description,
+    ...(tier.vms ? { vms: tier.vms } : {}),
     ...(tier.recovery_group ? {
       recovery_group: {
         name: tier.recovery_group.name,
         description: tier.recovery_group.description,
         vms: tier.recovery_group.vms,
+        ...(tier.recovery_group.volumes ? { volumes: tier.recovery_group.volumes } : {}),
       },
     } : {}),
   }

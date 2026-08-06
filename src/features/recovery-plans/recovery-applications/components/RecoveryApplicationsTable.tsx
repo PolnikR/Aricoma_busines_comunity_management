@@ -323,7 +323,7 @@ export function RecoveryApplicationsTable({
       >
         {selected ? (
           <dl className="px-5 py-2 space-y-3">
-            <DetailRow label={t('details.description')} value={selected.data.application.description || '-'} />
+            <DetailRow label={t('details.description')} value={selected.data.application.description ?? '-'} />
             <DetailRow label={t('details.environment')} value={selected.data.application.environment} />
             <DetailRow label={t('details.platform')} value={getProviderLabel(selected.data.application.platform)} />
             <DetailRow label={t('details.tiers')} value={String(Object.keys(selected.data.application.tiers).length)} />

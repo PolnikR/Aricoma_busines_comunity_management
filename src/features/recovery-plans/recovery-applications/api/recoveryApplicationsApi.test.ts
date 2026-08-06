@@ -129,6 +129,109 @@ describe('recoveryApplicationsApi', () => {
     })
   })
 
+  it('loads a real-world application with no description/connections, a non-enum environment, direct tier vms, and rich VM fields', async () => {
+    const sampleAppPayload = {
+      applications: [{
+        name: 'SampleApp',
+        environment: 'production',
+        platform: 'VMware vCenter ESXi',
+        tiers: {
+          database: {
+            order: 1,
+            description: 'Database server group',
+            vms: [
+              {
+                order: 1,
+                name: 'db-vm-01',
+                hostname: 'db01.sampleapp.local',
+                ip_address: '192.168.10.11',
+                os: 'Ubuntu 22.04',
+                cpu: 4,
+                memory_gb: 16,
+                storage_gb: 200,
+              },
+            ],
+          },
+        },
+        file: 'application1.json',
+        airflow_run_id: null,
+        push_to_orchestrator: false,
+      }],
+    }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(sampleAppPayload), { status: 200 }),
+    ))
+
+    const applications = await fetchRecoveryApplications()
+
+    expect(applications).toEqual([{
+      id: 'application1.json',
+      data: {
+        application: {
+          name: 'SampleApp',
+          environment: 'production',
+          platform: 'VMware vCenter ESXi',
+          tiers: {
+            database: {
+              order: 1,
+              description: 'Database server group',
+              vms: [
+                {
+                  order: 1,
+                  name: 'db-vm-01',
+                  hostname: 'db01.sampleapp.local',
+                  ip_address: '192.168.10.11',
+                  os: 'Ubuntu 22.04',
+                  cpu: 4,
+                  memory_gb: 16,
+                  storage_gb: 200,
+                },
+              ],
+            },
+          },
+          airflow_run_id: null,
+          push_to_orchestrator: false,
+        },
+      },
+    }])
+  })
+
+  it('loads a tier wrapped in a recovery_group with volumes', async () => {
+    const payloadWithVolumes = {
+      applications: [{
+        ...listPayload.applications[0],
+        tiers: {
+          database: {
+            order: 1,
+            description: 'Database server tier',
+            recovery_group: {
+              name: 'database_group',
+              description: 'Recovery group containing the database tier VMs',
+              vms: [{ name: 'TEST-DB01' }, { name: 'TEST-DB02' }],
+              volumes: [{ name: 'TEST-VOLUME1' }, { name: 'TEST-VOLUME2' }],
+            },
+          },
+        },
+      }],
+    }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(payloadWithVolumes), { status: 200 }),
+    ))
+
+    const applications = await fetchRecoveryApplications()
+
+    expect(applications[0]?.data.application.tiers['database']).toEqual({
+      order: 1,
+      description: 'Database server tier',
+      recovery_group: {
+        name: 'database_group',
+        description: 'Recovery group containing the database tier VMs',
+        vms: [{ name: 'TEST-DB01' }, { name: 'TEST-DB02' }],
+        volumes: [{ name: 'TEST-VOLUME1' }, { name: 'TEST-VOLUME2' }],
+      },
+    })
+  })
+
   it('submits an encoded DAG name as non-final by default and preserves the response', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       status: 'ok',
