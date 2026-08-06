@@ -2,26 +2,34 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/shared/components/button/Button'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
-import { SuccessModal } from '@/shared/components/modal/SuccessModal'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { ListSkeleton } from '@/shared/components/list-skeleton/ListSkeleton'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { routes } from '@/app/routes'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
+import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
 import { RecoveryGroupBuilder } from '../components/RecoveryGroupBuilder'
+import { RecoveryGroupOrchestratorSuccessModal } from '../components/RecoveryGroupOrchestratorSuccessModal'
 import { useRecoveryGroups } from '../hooks/useRecoveryGroups'
 import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { getRecoveryGroupsErrorKey } from '../utils/recoveryGroupsErrorMessage'
+
+interface OrchestratorRunInfo {
+  groupName: string
+  runId: string | null
+  providerName: string | null
+  providerUrl: string | null
+}
 
 export function RecoveryGroupBuilderPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { groups, create, isCreating, isLoading, error: loadError, refresh } = useRecoveryGroups()
+  const { data: platformProviders = [] } = usePlatformProviders()
   const [isDirty, setIsDirty] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [createdAirflowRunId, setCreatedAirflowRunId] = useState<string | null>(null)
-  const [showSuccess, setShowSuccess] = useState(false)
+  const [orchestratorRun, setOrchestratorRun] = useState<OrchestratorRunInfo | null>(null)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
 
   const navigateToGroups = () => { void navigate(routes.recoveryGroups) }
@@ -32,8 +40,13 @@ export function RecoveryGroupBuilderPage() {
       const created = await create(draft)
       setIsDirty(false)
       if (draft.pushToOrchestrator) {
-        setCreatedAirflowRunId(created.airflowRunId ?? null)
-        setShowSuccess(true)
+        const provider = platformProviders.find(candidate => candidate.id === draft.orchestrationProviderId)
+        setOrchestratorRun({
+          groupName: draft.name,
+          runId: created.airflowRunId ?? null,
+          providerName: provider?.name ?? null,
+          providerUrl: provider?.url ?? null,
+        })
       } else {
         navigationGuard.runWithoutBlocking(navigateToGroups)
       }
@@ -43,7 +56,7 @@ export function RecoveryGroupBuilderPage() {
   }
 
   const handleSuccessModalClose = () => {
-    setShowSuccess(false)
+    setOrchestratorRun(null)
     navigationGuard.runWithoutBlocking(navigateToGroups)
   }
 
@@ -86,13 +99,13 @@ export function RecoveryGroupBuilderPage() {
         onCancel={navigationGuard.cancelNavigation}
         onConfirm={navigationGuard.confirmNavigation}
       />
-      <SuccessModal
-        open={showSuccess}
+      <RecoveryGroupOrchestratorSuccessModal
+        open={orchestratorRun !== null}
         onClose={handleSuccessModalClose}
-        ariaLabel={t('recoveryGroups.successModal.ariaLabel')}
-        message={createdAirflowRunId
-          ? t('recoveryGroups.successModal.messageWithRunId').replace('{airflowRunId}', createdAirflowRunId)
-          : t('recoveryGroups.successModal.messageWithoutRunId')}
+        groupName={orchestratorRun?.groupName ?? ''}
+        runId={orchestratorRun?.runId ?? null}
+        providerName={orchestratorRun?.providerName ?? null}
+        providerUrl={orchestratorRun?.providerUrl ?? null}
       />
     </div>
   )

@@ -4,6 +4,7 @@ import {
   createRecoveryGroup,
   deleteRecoveryGroup,
   fetchRecoveryGroups,
+  rollbackRecoveryGroupOrchestration,
   updateRecoveryGroup,
 } from '../api/recoveryGroupsApi'
 import { recoveryGroupKeys } from '../api/recoveryGroupQueryKeys'
@@ -39,6 +40,12 @@ export function useRecoveryGroups() {
     mutationFn: deleteRecoveryGroup,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() }),
   })
+  const rollbackMutation = useMutation({
+    mutationFn: ({ groupId, providerId }: { groupId: string; providerId: string }) => (
+      rollbackRecoveryGroupOrchestration(groupId, providerId)
+    ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() }),
+  })
 
   return {
     groups: query.data ?? [],
@@ -49,9 +56,11 @@ export function useRecoveryGroups() {
     create: createMutation.mutateAsync,
     update: (id: string, draft: RecoveryGroupDraft) => updateMutation.mutateAsync({ id, draft }),
     remove: deleteMutation.mutate,
+    rollback: (groupId: string, providerId: string) => rollbackMutation.mutateAsync({ groupId, providerId }),
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
-    mutationError: createMutation.error ?? updateMutation.error ?? deleteMutation.error,
+    isRollingBack: rollbackMutation.isPending,
+    mutationError: createMutation.error ?? updateMutation.error ?? deleteMutation.error ?? rollbackMutation.error,
   }
 }

@@ -38,6 +38,30 @@ vi.mock('../hooks/useRecoveryGroups', () => ({
   useRecoveryGroups: () => ({ groups: [group], update }),
 }))
 
+vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
+  usePlatformProviders: () => ({
+    data: [
+      { id: 'airflow-01', name: 'Primary Airflow', url: 'http://10.99.99.55:8080/' },
+    ],
+  }),
+}))
+
+function buildUpdateDraft(pushToOrchestrator: boolean): RecoveryGroupDraft {
+  return {
+    id: group.id,
+    name: 'Updated group',
+    description: group.description,
+    sourceCategory: group.sourceCategory,
+    workloadType: group.workloadType,
+    resourceType: group.resourceType,
+    providerId: group.providerId,
+    policySetId: group.policySetId,
+    resources: group.resources,
+    orchestrationProviderId: 'airflow-01',
+    pushToOrchestrator,
+  }
+}
+
 vi.mock('../components/RecoveryGroupBuilder', () => ({
   RecoveryGroupBuilder: ({
     initialData,
@@ -51,25 +75,11 @@ vi.mock('../components/RecoveryGroupBuilder', () => ({
     <div>
       <span>{initialData.name}</span>
       <span>{submitLabel}</span>
-      <button
-        type="button"
-        onClick={() => {
-          onCreate({
-            id: initialData.id,
-            name: 'Updated group',
-            description: initialData.description,
-            sourceCategory: initialData.sourceCategory,
-            workloadType: initialData.workloadType,
-            resourceType: initialData.resourceType,
-            providerId: initialData.providerId,
-            policySetId: initialData.policySetId,
-            resources: initialData.resources,
-            orchestrationProviderId: 'airflow-01',
-            pushToOrchestrator: false,
-          })
-        }}
-      >
+      <button type="button" onClick={() => { onCreate(buildUpdateDraft(false)) }}>
         Submit edit
+      </button>
+      <button type="button" onClick={() => { onCreate(buildUpdateDraft(true)) }}>
+        Submit edit with orchestration
       </button>
     </div>
   ),
@@ -82,6 +92,7 @@ describe('RecoveryGroupEditorPage', () => {
 
   it('prefills the builder and updates the existing recovery group', async () => {
     const user = userEvent.setup()
+    update.mockResolvedValue({ airflowRunId: null })
     render(<RecoveryGroupEditorPage />)
 
     expect(screen.getByText('Database group')).toBeInTheDocument()
@@ -93,5 +104,17 @@ describe('RecoveryGroupEditorPage', () => {
       expect.objectContaining({ name: 'Updated group' }),
     )
     expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-groups')
+  })
+
+  it('shows the orchestrator success modal instead of navigating when pushed to the orchestrator', async () => {
+    const user = userEvent.setup()
+    update.mockResolvedValue({ airflowRunId: '260806091844_d023a7ef' })
+    render(<RecoveryGroupEditorPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Submit edit with orchestration' }))
+
+    expect(await screen.findByText('260806091844_d023a7ef')).toBeInTheDocument()
+    expect(screen.getByText('Primary Airflow')).toBeInTheDocument()
+    expect(navigate).not.toHaveBeenCalled()
   })
 })

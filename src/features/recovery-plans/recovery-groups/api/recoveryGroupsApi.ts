@@ -96,3 +96,17 @@ export async function deleteRecoveryGroup(id: string): Promise<void> {
   const payload: unknown = await response.json()
   recoveryGroupsResponseSchema.parse(payload)
 }
+
+export async function rollbackRecoveryGroupOrchestration(
+  groupId: string,
+  providerId: string,
+): Promise<void> {
+  const params = new URLSearchParams({
+    recovery_group_id: groupId,
+    provider_id: providerId,
+  })
+  const response = await apiFetch(`/api/rollback_from_orchestrator?${params.toString()}`, {
+    method: 'POST',
+  })
+  requireOk(response, 'Rollback recovery group orchestration')
+}

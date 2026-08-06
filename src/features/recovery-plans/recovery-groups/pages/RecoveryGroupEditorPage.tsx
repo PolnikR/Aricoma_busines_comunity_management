@@ -7,10 +7,19 @@ import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { routes } from '@/app/routes'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
+import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
 import { RecoveryGroupBuilder } from '../components/RecoveryGroupBuilder'
+import { RecoveryGroupOrchestratorSuccessModal } from '../components/RecoveryGroupOrchestratorSuccessModal'
 import { useRecoveryGroups } from '../hooks/useRecoveryGroups'
 import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { getRecoveryGroupsErrorKey } from '../utils/recoveryGroupsErrorMessage'
+
+interface OrchestratorRunInfo {
+  groupName: string
+  runId: string | null
+  providerName: string | null
+  providerUrl: string | null
+}
 
 export function RecoveryGroupEditorPage() {
   const { t } = useTranslation()
@@ -24,8 +33,10 @@ export function RecoveryGroupEditorPage() {
     error: loadError,
     refresh,
   } = useRecoveryGroups()
+  const { data: platformProviders = [] } = usePlatformProviders()
   const [isDirty, setIsDirty] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [orchestratorRun, setOrchestratorRun] = useState<OrchestratorRunInfo | null>(null)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
   const group = groups.find(item => item.id === id)
 
@@ -34,12 +45,27 @@ export function RecoveryGroupEditorPage() {
 
   const handleUpdate = async (draft: RecoveryGroupDraft) => {
     try {
-      await update(id, draft)
+      const updated = await update(id, draft)
       setIsDirty(false)
-      navigationGuard.runWithoutBlocking(navigateToGroups)
+      if (draft.pushToOrchestrator) {
+        const provider = platformProviders.find(candidate => candidate.id === draft.orchestrationProviderId)
+        setOrchestratorRun({
+          groupName: draft.name,
+          runId: updated.airflowRunId ?? null,
+          providerName: provider?.name ?? null,
+          providerUrl: provider?.url ?? null,
+        })
+      } else {
+        navigationGuard.runWithoutBlocking(navigateToGroups)
+      }
     } catch (cause) {
       setError(t(getRecoveryGroupsErrorKey(cause)))
     }
+  }
+
+  const handleSuccessModalClose = () => {
+    setOrchestratorRun(null)
+    navigationGuard.runWithoutBlocking(navigateToGroups)
   }
 
   if (isLoading) {
@@ -96,6 +122,14 @@ export function RecoveryGroupEditorPage() {
         tone="danger"
         onCancel={navigationGuard.cancelNavigation}
         onConfirm={navigationGuard.confirmNavigation}
+      />
+      <RecoveryGroupOrchestratorSuccessModal
+        open={orchestratorRun !== null}
+        onClose={handleSuccessModalClose}
+        groupName={orchestratorRun?.groupName ?? ''}
+        runId={orchestratorRun?.runId ?? null}
+        providerName={orchestratorRun?.providerName ?? null}
+        providerUrl={orchestratorRun?.providerUrl ?? null}
       />
     </div>
   )
