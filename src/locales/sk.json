@@ -214,6 +214,7 @@
   "tables.recoveryGroups.resources": "Zdroje",
   "tables.recoveryGroups.status": "Stav",
   "tables.recoveryGroups.orchestration": "Orchestrácia",
+  "tables.recoveryGroups.airflowRunId": "ID behu Airflow",
   "tables.recoveryGroups.active": "Aktívna",
   "tables.recoveryGroups.draft": "Koncept",
   "tables.recoveryGroups.policySet": "Sada politík",

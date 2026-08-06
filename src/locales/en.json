@@ -228,6 +228,7 @@
   "tables.recoveryGroups.resources": "Resources",
   "tables.recoveryGroups.status": "Status",
   "tables.recoveryGroups.orchestration": "Orchestration",
+  "tables.recoveryGroups.airflowRunId": "Airflow run ID",
   "tables.recoveryGroups.active": "Active",
   "tables.recoveryGroups.draft": "Draft",
   "tables.recoveryGroups.policySet": "Policy Set",

@@ -332,6 +332,10 @@ export function RecoveryGroupsTable({
               }
             />
             <DetailRow
+              label={t('tables.recoveryGroups.airflowRunId')}
+              value={selected.airflowRunId ? <span className="font-mono">{selected.airflowRunId}</span> : '—'}
+            />
+            <DetailRow
               label={t('tables.recoveryGroups.status')}
               value={
                 <Badge color={selected.status === 'Active' ? 'success' : 'warning'} size="sm">
