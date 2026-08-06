@@ -27,14 +27,44 @@ export const recoveryGroupApiSchema = z.object({
   volumes: z.array(recoveryGroupResourceSchema),
   airflow_run_id: z.string().nullable().optional(),
   push_to_orchestrator: z.boolean().optional(),
+  platform_provider_id: z.string().optional(),
 })
 
 export const recoveryGroupsResponseSchema = z.object({
   recovery_groups: z.array(recoveryGroupApiSchema),
 })
 
+const rollbackAirflowSchema = z.looseObject({
+  status: z.string(),
+  dag_id: z.string().optional(),
+  paused: z.string().optional(),
+  failed_runs: z.array(z.unknown()).optional(),
+  dag_file: z.string().optional(),
+  dag_record: z.string().optional(),
+})
+
+const rollbackIbmSchema = z.looseObject({
+  status: z.string(),
+  consistency_groups: z.array(z.unknown()).optional(),
+  fcmaps: z.array(z.unknown()).optional(),
+  volumes: z.array(z.unknown()).optional(),
+  errors: z.array(z.unknown()).optional(),
+})
+
+export const rollbackReportSchema = z.looseObject({
+  status: z.string(),
+  airflow: rollbackAirflowSchema.optional(),
+  ibm: rollbackIbmSchema.optional(),
+})
+
+export const rollbackResponseSchema = z.object({
+  recovery_groups: z.array(recoveryGroupApiSchema),
+  rollback: rollbackReportSchema,
+})
+
 export type RecoveryGroupApiRecord = z.infer<typeof recoveryGroupApiSchema>
 export type RecoveryGroupsResponse = z.infer<typeof recoveryGroupsResponseSchema>
+export type RollbackReport = z.infer<typeof rollbackReportSchema>
 
 export interface RecoveryGroupSubmitPayload {
   id: string

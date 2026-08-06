@@ -9,8 +9,8 @@ import {
 } from '../helpers/mapRecoveryGroups'
 import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsError } from './recoveryGroupsErrors'
-import { recoveryGroupsResponseSchema } from './schemas/recoveryGroupsSchema'
-import type { RecoveryGroupApiRecord } from './schemas/recoveryGroupsSchema'
+import { recoveryGroupsResponseSchema, rollbackResponseSchema } from './schemas/recoveryGroupsSchema'
+import type { RecoveryGroupApiRecord, RollbackReport } from './schemas/recoveryGroupsSchema'
 import { validateRecoveryGroupDraft } from './recoveryGroupsValidation'
 
 export const toRecoveryGroupId = toProgrammaticId
@@ -100,7 +100,7 @@ export async function deleteRecoveryGroup(id: string): Promise<void> {
 export async function rollbackRecoveryGroupOrchestration(
   groupId: string,
   providerId: string,
-): Promise<void> {
+): Promise<RollbackReport> {
   const query = new URLSearchParams({
     recovery_group_id: groupId,
     provider_id: providerId,
@@ -109,4 +109,6 @@ export async function rollbackRecoveryGroupOrchestration(
     method: 'POST',
   })
   requireOk(response, 'Rollback recovery group orchestration')
+  const payload: unknown = await response.json()
+  return rollbackResponseSchema.parse(payload).rollback
 }
