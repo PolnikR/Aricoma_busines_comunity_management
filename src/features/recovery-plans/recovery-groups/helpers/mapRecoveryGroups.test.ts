@@ -18,6 +18,16 @@ const vmwareProvider: ProviderRecord = {
   credentialStatus: 'ok',
 }
 
+const flashSystemProvider: ProviderRecord = {
+  id: 'ibm-flashsystem-01',
+  name: 'IBM FlashSystem',
+  description: 'Storage inventory',
+  type: 'FLASHCOPY',
+  ipAddress: '10.99.99.246',
+  credentialId: 'ibm-admin',
+  credentialStatus: 'ok',
+}
+
 const validatedVmDraft: ValidatedRecoveryGroupDraft = {
   id: 'database_group',
   name: 'Database group',
@@ -101,5 +111,45 @@ describe('mapRecoveryGroupApiRecord', () => {
       'db-vm-01': { order: 1, hostname: 'db01.sampleapp.local', ip_address: '192.168.10.11', os: 'Ubuntu 22.04', cpu: 4, memory_gb: 16, storage_gb: 200 },
       'db-vm-02': {},
     })
+  })
+
+  it('carries airflow_run_id and push_to_orchestrator through for a VM group', () => {
+    const record = {
+      id: 'database_group2',
+      name: 'database_group2',
+      description: 'Recovery group containing the database tier VMs',
+      provider_id_vm: 'vmware-vcenter-01',
+      provider_id_volume: '',
+      policy_set_id: 'tier2-apps',
+      vms: [{ name: 'TEST-DB01' }],
+      volumes: [],
+      airflow_run_id: '260805131217-6514c730',
+      push_to_orchestrator: true,
+    }
+
+    const group = mapRecoveryGroupApiRecord(record, [vmwareProvider])
+
+    expect(group.airflowRunId).toBe('260805131217-6514c730')
+    expect(group.pushToOrchestrator).toBe(true)
+  })
+
+  it('carries airflow_run_id and push_to_orchestrator through for a volume-only group', () => {
+    const record = {
+      id: 'storage_group',
+      name: 'Storage group',
+      description: 'Storage volumes',
+      provider_id_vm: '',
+      provider_id_volume: 'ibm-flashsystem-01',
+      policy_set_id: 'tier2-apps',
+      vms: [],
+      volumes: [{ name: 'V5000_VOLUME01' }],
+      airflow_run_id: null,
+      push_to_orchestrator: false,
+    }
+
+    const group = mapRecoveryGroupApiRecord(record, [flashSystemProvider])
+
+    expect(group.airflowRunId).toBeNull()
+    expect(group.pushToOrchestrator).toBe(false)
   })
 })

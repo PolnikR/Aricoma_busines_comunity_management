@@ -25,6 +25,8 @@ export const recoveryGroupApiSchema = z.object({
   policy_set_id: z.string().trim().min(1),
   vms: z.array(recoveryGroupVmResourceSchema),
   volumes: z.array(recoveryGroupResourceSchema),
+  airflow_run_id: z.string().nullable().optional(),
+  push_to_orchestrator: z.boolean().optional(),
 })
 
 export const recoveryGroupsResponseSchema = z.object({

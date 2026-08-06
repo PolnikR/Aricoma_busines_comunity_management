@@ -50,6 +50,10 @@ export type RecoveryGroup = RecoveryGroupListItem & {
   relatedVolumeProviderId: string | null
   relatedVolumes: string[]
   vmMetadataByName?: Record<string, RecoveryGroupVmMetadata> | undefined
+  // Server-assigned DAG run id from the last orchestrator push. Read-only:
+  // this is a run identifier, not the orchestration provider's id.
+  airflowRunId?: string | null | undefined
+  pushToOrchestrator?: boolean | undefined
 }
 
 export interface RecoveryGroupDraft {

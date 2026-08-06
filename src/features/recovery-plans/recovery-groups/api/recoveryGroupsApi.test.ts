@@ -154,6 +154,32 @@ describe('fetchRecoveryGroups', () => {
     ])
   })
 
+  it('preserves airflow_run_id and push_to_orchestrator through schema parsing', async () => {
+    stubFetch({
+      recovery_groups: [{
+        ...databaseGroupPayload,
+        airflow_run_id: '260805131217-6514c730',
+        push_to_orchestrator: true,
+      }],
+    })
+
+    const groups = await fetchRecoveryGroups(providers)
+
+    expect(groups[0]?.airflowRunId).toBe('260805131217-6514c730')
+    expect(groups[0]?.pushToOrchestrator).toBe(true)
+  })
+
+  it('tolerates a null airflow_run_id and an absent push_to_orchestrator', async () => {
+    stubFetch({
+      recovery_groups: [{ ...databaseGroupPayload, airflow_run_id: null }],
+    })
+
+    const groups = await fetchRecoveryGroups(providers)
+
+    expect(groups[0]?.airflowRunId).toBeNull()
+    expect(groups[0]?.pushToOrchestrator).toBeUndefined()
+  })
+
   it('reports an HTTP failure', async () => {
     stubFetch(null, 503)
     await expect(fetchRecoveryGroups(providers)).rejects.toThrow(

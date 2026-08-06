@@ -74,6 +74,8 @@ export function mapRecoveryGroupApiRecord(
       resourceCount: vmResources.length,
       status: vmResources.length > 0 ? 'Active' : 'Draft',
       vmMetadataByName: toVmMetadataByName(record.vms),
+      airflowRunId: record.airflow_run_id,
+      pushToOrchestrator: record.push_to_orchestrator,
     }
   }
 
@@ -95,6 +97,8 @@ export function mapRecoveryGroupApiRecord(
     relatedVolumes: [],
     resourceCount: volumeResources.length,
     status: volumeResources.length > 0 ? 'Active' : 'Draft',
+    airflowRunId: record.airflow_run_id,
+    pushToOrchestrator: record.push_to_orchestrator,
   }
 }
 
