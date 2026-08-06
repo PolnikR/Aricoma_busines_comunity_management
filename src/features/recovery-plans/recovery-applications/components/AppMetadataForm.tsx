@@ -140,7 +140,7 @@ export function AppMetadataForm({
           required
         >
           <option value="">
-            {platformProvidersLoading ? t('providers.platform.loading') : t('forms.platformProviderSelect')}
+            {platformProvidersLoading ? t('platformProviders.loading') : t('forms.platformProviderSelect')}
           </option>
           {selectedPlatformIsMissing ? (
             <option value={platform}>{t('providers.credentials.unavailable').replace('{id}', platform)}</option>
@@ -153,7 +153,7 @@ export function AppMetadataForm({
         </Select>
         {platformProvidersError ? (
           <p className="mt-1 text-xs text-red-600" role="alert">
-            {t('providers.platform.loadFailed')}{' '}
+            {t('platformProviders.loadFailed')}{' '}
             {onRetryPlatformProviders ? (
               <button type="button" className="font-semibold underline" onClick={onRetryPlatformProviders}>
                 {t('buttons.retry')}
