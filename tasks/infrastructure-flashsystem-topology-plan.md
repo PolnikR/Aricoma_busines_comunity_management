@@ -19,7 +19,7 @@ The endpoint returns pool-rooted trees, one per requested view: `flat` (pool →
 
 ### Phase 1: Data layer (model → schema → API → hook)
 
-- [ ] Task 1: Add FlashSystem volume-tree model types
+- [x] Task 1: Add FlashSystem volume-tree model types
 - [ ] Task 2: Add API schema, endpoint config, fetch function, and query key
 - [ ] Task 3: Add a data-fetching hook for the volume tree
 
@@ -53,17 +53,18 @@ The endpoint returns pool-rooted trees, one per requested view: `flat` (pool →
 
 ## Task Details
 
-### Task 1: Add FlashSystem volume-tree model types
+### Task 1: Add FlashSystem volume-tree model types — ✅ DONE
 **Description:** Add discriminated-union types for the recursive tree node (`FlashSystemTreeNodeKind`, per-kind detail interfaces, `FlashSystemTreeNode`), the view union (`FlashSystemVolumeTreeView`), and the top-level response shape (`counts`, `views`, `provider_id`, `provider_type`) to `discoveryTypes.ts`.
 **Acceptance criteria:**
-- [ ] `FlashSystemTreeNode` recursively types `children: FlashSystemTreeNode[]`
-- [ ] Pool/volume/fcmap/consistency_group detail shapes match the real payload fields captured in this conversation (including volume's optional `role`)
+- [x] `FlashSystemTreeNode` recursively types `children: FlashSystemTreeNode[]`
+- [x] Pool/volume/fcmap/consistency_group detail shapes match the real payload fields captured in this conversation (including volume's optional `role`)
 **Verification:**
-- [ ] `npx tsc -b` clean
-- [ ] Manual check: paste the real captured payload into a `satisfies FlashSystemVolumeTreeResponse` check (throwaway) to confirm it type-checks
+- [x] `npx tsc -b` clean
+- [x] Manual check: real captured payload (all 3 views) validated against `satisfies FlashSystemVolumeTreeResponse` as a throwaway file inside `src/`, confirmed clean, then deleted
 **Dependencies:** None
-**Files likely touched:** `src/features/discovery-inventory/model/discoveryTypes.ts`
+**Files touched:** `src/features/discovery-inventory/model/discoveryTypes.ts`
 **Estimated scope:** Small
+**Note for Task 2 (schema):** `role` is optional on volume detail and is only ever set on the *nested* volume inside an fcmap subtree — the outer/first volume in both `snapshot` and `consistency_group` views has no `role` tag (not even an implicit `'source'`), so the schema/mapping helper must not assume "no role → not a source."
 
 ### Task 2: API schema, endpoint config, fetch function, query key
 **Description:** Add a zod schema for the volume-tree response (mirroring Task 1's types), a new endpoint entry, a `fetchFlashSystemVolumeTree(providerId, view)` function following the existing `fetchFlashSystemInventory` pattern (extra `view` query param), and a query key `discoveryInventoryKeys.volumeTree(providerId, view)`.
@@ -119,14 +120,16 @@ The endpoint returns pool-rooted trees, one per requested view: `flat` (pool →
 **Files likely touched:** `src/features/discovery-inventory/infrastructure/components/nodes/PoolNode.tsx`, `FlashVolumeNode.tsx`, `FlashCopyMapNode.tsx`, `ConsistencyGroupNode.tsx` (+ tooltips, + tests)
 **Estimated scope:** Medium
 
-### Task 6: Register node types + legend
-**Description:** Add the four new node types to `topologyNodeTypes.ts` and corresponding entries to `InfrastructureTopologyLegend.tsx`.
+### Task 6: Register node types + legend + `copies` edge styling
+**Description:** Add the four new node types to `topologyNodeTypes.ts` and corresponding entries to `InfrastructureTopologyLegend.tsx`. Also give the `copies` edge kind a distinct style in `topologyFlowModel.ts`, following the existing precedent there (`edge.kind === 'uses'` already renders dashed `stroke: '#9aa8bc', strokeDasharray: '5 4'`) — add a `copies` branch with its own dashed/colored style so FlashCopy source→target relationships read differently from structural `contains` edges, and add a matching legend entry.
 **Acceptance criteria:**
-- [ ] Legend lists all four new kinds with matching visual treatment to the nodes
+- [ ] Legend lists all four new node kinds with matching visual treatment to the nodes
+- [ ] `copies` edges render dashed/colored, distinct from `contains`, with a legend entry explaining the distinction
 **Verification:**
 - [ ] Existing legend test updated/passes
+- [ ] `topologyFlowModel` test covers the new `copies` edge style branch
 **Dependencies:** Task 5
-**Files likely touched:** `topologyNodeTypes.ts`, `InfrastructureTopologyLegend.tsx` (+ tests)
+**Files likely touched:** `topologyNodeTypes.ts`, `InfrastructureTopologyLegend.tsx`, `topologyFlowModel.ts` (+ tests)
 **Estimated scope:** Small
 
 ### Task 7: Platform selector + `useInfrastructureInventory` support
@@ -167,12 +170,11 @@ The endpoint returns pool-rooted trees, one per requested view: `flat` (pool →
 | Risk | Impact | Mitigation |
 |------|--------|------------|
 | Volume dedup logic in the mapping helper (a volume can appear as both a `flat` pool child and, in other views, as an fcmap source/target) gets the id wrong and produces duplicate/orphaned nodes | Medium — broken graph, confusing to users | Build the id from the FlashSystem volume's real `id`/`name` (not its tree `key`, which is path-based and non-unique across views), and write dedup-focused unit tests first (Task 4) before building UI on top |
-| Backend endpoint semantics for `view=all` vs `view=flat/snapshot/consistency_group` aren't fully pinned down (does `all` return all three, or is it itself one tree merging all relationships?) | Medium — could invalidate the "fetch per-view" decision | Confirm with a real request using `view=all` before finalizing Task 2; if `all` differs from "all three views bundled," adjust the fetch/hook contract accordingly |
 | `is_snapshot_target`/`has_snapshots`/`role` fields are inconsistently present across kinds/views based on the sample payload | Low — type errors or missing UI states | Model these as optional in the discriminated union (Task 1) and design node components to degrade gracefully when absent (Task 5) |
-| Large FlashSystem estates (the sample already has 46 volumes / 42 fcmaps for one provider) could make the `consistency_group` view's graph dense/slow to lay out | Medium — poor UX on bigger environments | Reuse existing filter infrastructure (Task 8's toolbar) to let users narrow by pool/status before rendering everything at once; not blocking for v1 but flag if layout time becomes an issue in manual testing |
+| Large FlashSystem estates (the sample already has 46 volumes / 42 fcmaps for one provider) could make the `consistency_group` view's graph dense/slow to lay out | Medium — poor UX on bigger environments | Not a v1 blocker (see resolved open question below); revisit with toolbar filtering (Task 8) as a fast-follow if manual testing on a larger real estate shows layout/readability problems |
 
 ## Open Questions
 
-- Does `view=all` in the query param return a merged tree, or does the backend always return the `views` object with all three regardless of the `view` param (as the captured sample suggests, since `views.flat`, `views.snapshot`, and `views.consistency_group` are all present in the same response)? This affects whether the frontend fetches once and switches views client-side (cheaper, one request) or fetches per view. **Recommend confirming before Task 2.**
-- Should FlashCopy `copies` edges be visually distinct (e.g. dashed/colored) enough to need a design pass, or is reusing the existing edge style acceptable for v1?
-- Is there a maximum FlashSystem estate size this needs to handle well, to decide if Task 8's toolbar filtering is a v1 requirement or a fast-follow?
+- ~~Does `view=all` return a merged tree, or all three views bundled?~~ **RESOLVED**, confirmed with 4 real captured responses: `view` is a genuine server-side filter. Requesting a single view (`flat`, `snapshot`, or `consistency_group`) returns `views` with only that one key populated; only `view=all` returns all three keys bundled in one response. The "fetch per-view, one request per `(providerId, view)`" design in Tasks 2/3 stands as originally planned — no change needed.
+- ~~Should FlashCopy `copies` edges be visually distinct?~~ **RESOLVED: yes.** Task 5/6 should give `copies` edges a distinct style (dashed line, per the Architecture Decisions section) so they read differently from structural `contains` edges in both the graph and the legend.
+- ~~Is a max-estate-size concern for v1, or a fast-follow?~~ **RESOLVED: fast-follow.** Ship v1 rendering the full graph as returned; only add toolbar-based filtering (pool/status narrowing) later if a real larger estate turns out to have layout/readability problems in practice. Not speculatively built now.

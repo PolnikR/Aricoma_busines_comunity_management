@@ -19,4 +19,7 @@ export const discoveryInventoryKeys = {
       ibmProviderId ?? null,
     ] as const
   ),
+  volumeTree: (providerId?: string, view?: string) => (
+    [...discoveryInventoryKeys.all, 'volume-tree', providerId ?? null, view ?? null] as const
+  ),
 }

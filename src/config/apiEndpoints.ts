@@ -4,6 +4,7 @@ export const API_ENDPOINTS = {
     virtualMachinesByTag: '/api/vms_by_tag',
     powerVirtualMachines: '/api/get_power_vm',
     flashSystemVolumes: '/api/get_volumes',
+    flashSystemVolumeTree: '/api/get_volume_tree',
     virtualDisksByVm: '/api/vdisks_by_vm',
     tags: '/api/tags',
   },

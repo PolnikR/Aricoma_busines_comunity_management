@@ -3,7 +3,7 @@
 See `infrastructure-flashsystem-topology-plan.md` for full detail, rationale, and acceptance criteria per task.
 
 ## Phase 1: Data layer
-- [ ] Task 1 — FlashSystem volume-tree model types (`model/discoveryTypes.ts`)
+- [x] Task 1 — FlashSystem volume-tree model types (`model/discoveryTypes.ts`)
 - [ ] Task 2 — API schema + endpoint config + fetch fn + query key
 - [ ] Task 3 — `useFlashSystemVolumeTree` hook
 - [ ] **Checkpoint:** tsc clean, Task 1-3 tests pass, real payload parses cleanly
@@ -21,5 +21,5 @@ See `infrastructure-flashsystem-topology-plan.md` for full detail, rationale, an
 - [ ] **Checkpoint:** full test suite green, manual dev-server run across all 3 platforms + all 3 FlashSystem views
 
 ## Before starting implementation
-- [ ] Resolve open question: does `view=all` return a merged tree or the same `views` bundle? (affects Task 2's fetch contract)
+- [x] Resolve open question: `view` is a real server-side filter (confirmed with 4 real captured responses) — fetch-per-view design stands
 - [ ] User has reviewed and approved `infrastructure-flashsystem-topology-plan.md`

@@ -4,11 +4,15 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 import type {
   DiscoveryInventory,
   FlashSystemInventory,
+  FlashSystemTreeNode,
+  FlashSystemVolumeTreeCounts,
+  FlashSystemVolumeTreeView,
   PowerInventory,
 } from '../model/discoveryTypes'
 import { vmwareInventoryResponseSchema } from './schemas/vmwareInventorySchema'
 import { powerInventoryResponseSchema } from './schemas/powerInventorySchema'
 import { flashSystemInventoryResponseSchema } from './schemas/flashSystemInventorySchema'
+import { flashSystemVolumeTreeResponseSchema } from './schemas/flashSystemVolumeTreeSchema'
 import { mapVmwareInventory } from '../helpers/mapVmwareInventory'
 import { mapPowerInventory } from '../helpers/mapPowerInventory'
 import { mapFlashSystemInventory } from '../helpers/mapFlashSystemInventory'
@@ -74,6 +78,30 @@ export async function fetchFlashSystemInventory(providerId?: string): Promise<Fl
   )
   const parsed = flashSystemInventoryResponseSchema.parse(payload)
   return mapFlashSystemInventory(parsed, providerId)
+}
+
+export interface FlashSystemVolumeTree {
+  counts: FlashSystemVolumeTreeCounts
+  nodes: FlashSystemTreeNode[]
+}
+
+export async function fetchFlashSystemVolumeTree(
+  providerId: string,
+  view: FlashSystemVolumeTreeView,
+): Promise<FlashSystemVolumeTree> {
+  const params = new URLSearchParams({ provider_id: providerId, view })
+  const response = await apiFetch(`${API_ENDPOINTS.discovery.flashSystemVolumeTree}?${params.toString()}`)
+
+  if (!response.ok) {
+    throw new Error(`FlashSystem volume tree request failed with status ${String(response.status)}`)
+  }
+
+  const payload: unknown = await response.json()
+  const parsed = flashSystemVolumeTreeResponseSchema.parse(payload)
+  return {
+    counts: parsed.counts,
+    nodes: parsed.views[view] ?? [],
+  }
 }
 
 export type ProviderInventory =

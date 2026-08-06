@@ -1,0 +1,173 @@
+import { z } from 'zod'
+import type { FlashSystemTreeNode } from '../../model/discoveryTypes'
+
+const poolDetailSchema = z.object({
+  id: z.string().catch(''),
+  name: z.string().catch('-'),
+  status: z.string().catch('unknown'),
+  mdisk_count: z.string().catch('0'),
+  vdisk_count: z.string().catch('0'),
+  capacity: z.string().catch('-'),
+  extent_size: z.string().catch('-'),
+  free_capacity: z.string().catch('-'),
+  virtual_capacity: z.string().catch('-'),
+  used_capacity: z.string().catch('-'),
+  real_capacity: z.string().catch('-'),
+  overallocation: z.string().catch('-'),
+  warning: z.string().catch('-'),
+  easy_tier: z.string().catch('-'),
+  easy_tier_status: z.string().catch('-'),
+  compression_active: z.string().catch('-'),
+  compression_virtual_capacity: z.string().catch('-'),
+  compression_compressed_capacity: z.string().catch('-'),
+  compression_uncompressed_capacity: z.string().catch('-'),
+  parent_mdisk_grp_id: z.string().catch(''),
+  parent_mdisk_grp_name: z.string().catch(''),
+  child_mdisk_grp_count: z.string().catch('0'),
+  child_mdisk_grp_capacity: z.string().catch('-'),
+  type: z.string().catch('-'),
+  encrypt: z.string().catch('-'),
+  owner_type: z.string().catch('-'),
+  site_id: z.string().catch(''),
+  site_name: z.string().catch(''),
+  data_reduction: z.string().catch('-'),
+  used_capacity_before_reduction: z.string().catch('-'),
+  used_capacity_after_reduction: z.string().catch('-'),
+  overhead_capacity: z.string().catch('-'),
+  deduplication_capacity_saving: z.string().catch('-'),
+  reclaimable_capacity: z.string().catch('-'),
+  easy_tier_fcm_over_allocation_max: z.string().catch('-'),
+  volume_count: z.number().catch(0),
+}).loose()
+
+const volumeHostMapSchema = z.object({
+  host_id: z.string().catch(''),
+  host_name: z.string().catch('-'),
+  cluster_name: z.string().catch(''),
+  scsi_id: z.string().catch(''),
+}).loose()
+
+const volumeDetailSchema = z.object({
+  id: z.string().catch(''),
+  name: z.string().catch('-'),
+  IO_group_id: z.string().catch(''),
+  IO_group_name: z.string().catch('-'),
+  status: z.string().catch('unknown'),
+  mdisk_grp_id: z.string().catch(''),
+  mdisk_grp_name: z.string().catch('-'),
+  capacity: z.string().catch('-'),
+  type: z.string().catch('-'),
+  FC_id: z.string().catch(''),
+  FC_name: z.string().catch(''),
+  RC_id: z.string().catch(''),
+  RC_name: z.string().catch(''),
+  vdisk_UID: z.string().catch(''),
+  fc_map_count: z.string().catch('0'),
+  copy_count: z.string().catch('0'),
+  fast_write_state: z.string().catch('-'),
+  se_copy_count: z.string().catch('0'),
+  RC_change: z.string().catch(''),
+  compressed_copy_count: z.string().catch('0'),
+  parent_mdisk_grp_id: z.string().catch(''),
+  parent_mdisk_grp_name: z.string().catch(''),
+  formatting: z.string().catch('-'),
+  encrypt: z.string().catch('-'),
+  volume_id: z.string().catch(''),
+  volume_name: z.string().catch(''),
+  function: z.string().catch('-'),
+  protocol: z.string().catch('-'),
+  host_maps: z.array(volumeHostMapSchema).catch([]),
+  is_snapshot_target: z.boolean().catch(false),
+  has_snapshots: z.boolean().catch(false),
+  snapshot_count: z.number().catch(0),
+  resolved: z.boolean().catch(false),
+  role: z.enum(['source', 'target']).optional(),
+}).loose()
+
+const fcmapDetailSchema = z.object({
+  id: z.string().catch(''),
+  name: z.string().catch('-'),
+  source_vdisk_id: z.string().catch(''),
+  source_vdisk_name: z.string().catch(''),
+  target_vdisk_id: z.string().catch(''),
+  target_vdisk_name: z.string().catch(''),
+  group_id: z.string().catch(''),
+  group_name: z.string().catch(''),
+  status: z.string().catch('unknown'),
+  progress: z.string().catch('0'),
+  copy_rate: z.string().catch('0'),
+  clean_progress: z.string().catch('0'),
+  incremental: z.string().catch('-'),
+  partner_FC_id: z.string().catch(''),
+  partner_FC_name: z.string().catch(''),
+  restoring: z.string().catch('-'),
+  start_time: z.string().catch(''),
+  rc_controlled: z.string().catch('-'),
+  start_time_iso: z.string().catch(''),
+}).loose()
+
+const consistencyGroupDetailSchema = z.object({
+  id: z.string().catch(''),
+  name: z.string().catch('-'),
+  status: z.string().catch('unknown'),
+  start_time: z.string().catch(''),
+  fc_mapping_count: z.number().catch(0),
+  pool_ids: z.array(z.string()).catch([]),
+  spans_pools: z.boolean().catch(false),
+  is_synthetic: z.boolean().catch(false),
+}).loose()
+
+const flashSystemTreeNodeSchema: z.ZodType<FlashSystemTreeNode> = z.lazy(() => (
+  z.discriminatedUnion('kind', [
+    z.object({
+      kind: z.literal('pool'),
+      id: z.string(),
+      name: z.string(),
+      key: z.string(),
+      detail: poolDetailSchema,
+      children: z.array(flashSystemTreeNodeSchema),
+    }),
+    z.object({
+      kind: z.literal('volume'),
+      id: z.string(),
+      name: z.string(),
+      key: z.string(),
+      detail: volumeDetailSchema,
+      children: z.array(flashSystemTreeNodeSchema),
+    }),
+    z.object({
+      kind: z.literal('fcmap'),
+      id: z.string(),
+      name: z.string(),
+      key: z.string(),
+      detail: fcmapDetailSchema,
+      children: z.array(flashSystemTreeNodeSchema),
+    }),
+    z.object({
+      kind: z.literal('consistency_group'),
+      id: z.string(),
+      name: z.string(),
+      key: z.string(),
+      detail: consistencyGroupDetailSchema,
+      children: z.array(flashSystemTreeNodeSchema),
+    }),
+  ])
+))
+
+export const flashSystemVolumeTreeResponseSchema = z.object({
+  counts: z.object({
+    pools: z.number().catch(0),
+    volumes: z.number().catch(0),
+    fcmaps: z.number().catch(0),
+    consistency_groups: z.number().catch(0),
+  }),
+  views: z.object({
+    flat: z.array(flashSystemTreeNodeSchema).optional(),
+    snapshot: z.array(flashSystemTreeNodeSchema).optional(),
+    consistency_group: z.array(flashSystemTreeNodeSchema).optional(),
+  }),
+  provider_id: z.string().catch(''),
+  provider_type: z.literal('FLASHCOPY'),
+})
+
+export type FlashSystemVolumeTreePayload = z.infer<typeof flashSystemVolumeTreeResponseSchema>
