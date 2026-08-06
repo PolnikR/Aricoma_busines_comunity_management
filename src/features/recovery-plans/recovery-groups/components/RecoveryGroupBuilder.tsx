@@ -40,7 +40,7 @@ const INITIAL_DRAFT: RecoveryGroupDraft = {
   relatedVolumeProviderId: null,
   relatedVolumes: [],
   orchestrationProviderId: null,
-  pushToOrchestrator: null,
+  pushToOrchestrator: false,
 }
 
 export function RecoveryGroupBuilder({
@@ -71,7 +71,7 @@ export function RecoveryGroupBuilder({
         relatedVolumes: [...initialData.relatedVolumes],
         vmMetadataByName: initialData.vmMetadataByName,
         orchestrationProviderId: null,
-        pushToOrchestrator: initialData.pushToOrchestrator ?? null,
+        pushToOrchestrator: initialData.pushToOrchestrator ?? false,
       }
     : INITIAL_DRAFT)
   const updateDraft = (update: Partial<RecoveryGroupDraft>) => {
@@ -114,8 +114,7 @@ export function RecoveryGroupBuilder({
     provider => provider.credentialStatus === 'ok',
   )
   const orchestrationValid = Boolean(
-    draft.pushToOrchestrator !== null
-    && draft.orchestrationProviderId
+    draft.orchestrationProviderId
     && eligiblePlatformProviders.some(provider => provider.id === draft.orchestrationProviderId),
   )
   const hasRelatedStorageStep = draft.resourceType === 'vm'

@@ -71,7 +71,6 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     || (relatedVolumes.length > 0 && !relatedVolumeProviderId)
     || !configuration.success
     || !orchestrationProviderId
-    || draft.pushToOrchestrator === null
   ) {
     throw new RecoveryGroupsError('invalid_draft', 'Recovery group data is invalid')
   }

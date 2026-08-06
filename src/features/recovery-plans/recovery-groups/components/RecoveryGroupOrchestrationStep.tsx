@@ -10,7 +10,7 @@ interface RecoveryGroupOrchestrationStepProps {
   isLoading: boolean
   error: Error | null
   onRetry: () => void
-  pushToOrchestrator: boolean | null
+  pushToOrchestrator: boolean
   selectedProviderId: string | null
   onPushToOrchestratorChange: (value: boolean) => void
   onProviderSelect: (providerId: string) => void
@@ -28,11 +28,9 @@ export function RecoveryGroupOrchestrationStep({
 }: RecoveryGroupOrchestrationStepProps) {
   const { t } = useTranslation()
 
-  const deployAnswerKey = pushToOrchestrator === null
-    ? 'pages.recoveryGroupBuilder.orchestration.deployUnanswered'
-    : pushToOrchestrator
-      ? 'pages.recoveryGroupBuilder.orchestration.deployOn'
-      : 'pages.recoveryGroupBuilder.orchestration.deployOff'
+  const deployAnswerKey = pushToOrchestrator
+    ? 'pages.recoveryGroupBuilder.orchestration.deployOn'
+    : 'pages.recoveryGroupBuilder.orchestration.deployOff'
 
   return (
     <div>
@@ -45,7 +43,7 @@ export function RecoveryGroupOrchestrationStep({
 
       <div className="mt-5 flex max-w-4xl items-start gap-3 rounded-lg border border-border bg-surface p-4">
         <Toggle
-          checked={pushToOrchestrator === true}
+          checked={pushToOrchestrator}
           onChange={onPushToOrchestratorChange}
           label={t('pages.recoveryGroupBuilder.orchestration.deployLabel')}
         />

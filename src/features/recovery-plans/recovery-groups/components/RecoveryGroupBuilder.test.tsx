@@ -249,6 +249,26 @@ describe('RecoveryGroupBuilder', () => {
     }))
   })
 
+  it('enables Create once a provider is selected, without touching the orchestration toggle', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <RecoveryGroupBuilder
+        initialData={existingStorageGroup}
+        onCreate={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+    await user.click(screen.getByRole('button', { name: 'Policy Set' }))
+    await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+
+    expect(screen.getByRole('switch', { name: 'Deploy to orchestrator' })).toHaveAttribute('aria-checked', 'false')
+    expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeEnabled()
+  })
+
   it('keeps a FlashSystem volume group on the six-step flow', async () => {
     const user = userEvent.setup()
 
@@ -269,25 +289,6 @@ describe('RecoveryGroupBuilder', () => {
     await user.click(screen.getByRole('switch', { name: 'Deploy to orchestrator' }))
 
     expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeEnabled()
-  })
-
-  it('keeps Create disabled until the orchestration toggle is answered', async () => {
-    const user = userEvent.setup()
-
-    render(
-      <RecoveryGroupBuilder
-        initialData={existingStorageGroup}
-        onCreate={vi.fn()}
-        onCancel={vi.fn()}
-      />,
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Policy Set' }))
-    await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
-    await user.click(screen.getByRole('button', { name: 'Next' }))
-
-    expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeDisabled()
-    expect(screen.getByText('Not selected')).toBeInTheDocument()
   })
 
   it('can clear the optional FlashSystem mapping before saving', async () => {

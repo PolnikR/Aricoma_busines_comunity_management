@@ -70,5 +70,5 @@ export interface RecoveryGroupDraft {
   relatedVolumes?: string[]
   vmMetadataByName?: Record<string, RecoveryGroupVmMetadata> | undefined
   orchestrationProviderId: string | null
-  pushToOrchestrator: boolean | null
+  pushToOrchestrator: boolean
 }

@@ -306,27 +306,6 @@ describe('submitRecoveryGroup', () => {
     expect(mock).not.toHaveBeenCalled()
   })
 
-  it('rejects a draft with an unanswered orchestration toggle before calling the backend', async () => {
-    const mock = stubFetch(null)
-
-    await expect(createRecoveryGroup({
-      id: 'vm_group',
-      name: 'VM group',
-      description: 'Virtual machines',
-      sourceCategory: 'backup_system_workload',
-      workloadType: 'vmware_virtual_machines',
-      resourceType: 'vm',
-      providerId: 'vmware-vcenter-01',
-      policySetId: 'tier2-apps',
-      resources: ['VM-01'],
-      relatedVolumeProviderId: null,
-      relatedVolumes: [],
-      orchestrationProviderId: 'airflow-01',
-      pushToOrchestrator: null,
-    })).rejects.toMatchObject({ code: 'invalid_draft' })
-    expect(mock).not.toHaveBeenCalled()
-  })
-
   it('preserves related volumes while upserting an existing VM group', async () => {
     const mock = stubFetch(null)
 

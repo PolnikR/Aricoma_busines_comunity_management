@@ -29,7 +29,7 @@ function renderStep(overrides: Partial<Parameters<typeof RecoveryGroupOrchestrat
       isLoading={false}
       error={null}
       onRetry={onRetry}
-      pushToOrchestrator={null}
+      pushToOrchestrator={false}
       selectedProviderId={null}
       onPushToOrchestratorChange={onPushToOrchestratorChange}
       onProviderSelect={onProviderSelect}
@@ -41,12 +41,12 @@ function renderStep(overrides: Partial<Parameters<typeof RecoveryGroupOrchestrat
 }
 
 describe('RecoveryGroupOrchestrationStep', () => {
-  it('renders the toggle as unanswered by default', () => {
+  it('renders the toggle as off by default', () => {
     renderStep()
 
     const toggle = screen.getByRole('switch', { name: 'Deploy to orchestrator' })
     expect(toggle).toHaveAttribute('aria-checked', 'false')
-    expect(screen.getByText('Not selected')).toBeInTheDocument()
+    expect(screen.getByText('No')).toBeInTheDocument()
   })
 
   it('shows "Yes" when pushToOrchestrator is true and "No" when false', () => {
@@ -81,7 +81,7 @@ describe('RecoveryGroupOrchestrationStep', () => {
     expect(screen.getByText('No')).toBeInTheDocument()
   })
 
-  it('calls onPushToOrchestratorChange(true) when the unanswered toggle is clicked', async () => {
+  it('calls onPushToOrchestratorChange(true) when the toggle is clicked from its default off state', async () => {
     const user = userEvent.setup()
     const { onPushToOrchestratorChange } = renderStep()
 
