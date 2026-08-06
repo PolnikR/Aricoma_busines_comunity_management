@@ -37,6 +37,8 @@ const INITIAL_DRAFT: RecoveryGroupDraft = {
   resources: [],
   relatedVolumeProviderId: null,
   relatedVolumes: [],
+  orchestrationProviderId: null,
+  pushToOrchestrator: null,
 }
 
 export function RecoveryGroupBuilder({
@@ -66,6 +68,8 @@ export function RecoveryGroupBuilder({
         relatedVolumeProviderId: initialData.relatedVolumeProviderId ?? null,
         relatedVolumes: [...initialData.relatedVolumes],
         vmMetadataByName: initialData.vmMetadataByName,
+        orchestrationProviderId: null,
+        pushToOrchestrator: initialData.pushToOrchestrator ?? null,
       }
     : INITIAL_DRAFT)
   const updateDraft = (update: Partial<RecoveryGroupDraft>) => {

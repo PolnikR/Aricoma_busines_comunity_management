@@ -117,6 +117,8 @@ describe('useRecoveryGroups', () => {
         providerId: group.providerId,
         policySetId: group.policySetId,
         resources: group.resources,
+        orchestrationProviderId: 'airflow-01',
+        pushToOrchestrator: false,
       })
     })
 

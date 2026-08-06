@@ -45,6 +45,8 @@ const validatedVmDraft: ValidatedRecoveryGroupDraft = {
   vmMetadataByName: {
     'db-vm-01': { hostname: 'db01.sampleapp.local', ip_address: '192.168.10.11', os: 'Ubuntu 22.04', cpu: 4, memory_gb: 16, storage_gb: 200 },
   },
+  orchestrationProviderId: 'airflow-01',
+  pushToOrchestrator: false,
 }
 
 describe('toRecoveryGroupSubmitPayload', () => {
@@ -86,6 +88,13 @@ describe('toRecoveryGroupJson', () => {
       { name: 'db-vm-01', order: 1, hostname: 'db01.sampleapp.local', ip_address: '192.168.10.11', os: 'Ubuntu 22.04', cpu: 4, memory_gb: 16, storage_gb: 200 },
       { name: 'db-vm-02', order: 2 },
     ])
+  })
+
+  it('carries pushToOrchestrator through, with airflowRunId unknown at create time', () => {
+    const group = toRecoveryGroup(validatedVmDraft, 'database_group')
+
+    expect(group.pushToOrchestrator).toBe(false)
+    expect(group.airflowRunId).toBeNull()
   })
 })
 

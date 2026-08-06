@@ -211,10 +211,12 @@ describe('submitRecoveryGroup', () => {
       resources: ['VM-01'],
       relatedVolumeProviderId: null,
       relatedVolumes: [],
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: false,
     })
 
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/submit_recovery_group')
+    expect(url).toBe('/api/submit_recovery_group?provider_id=airflow-01&push_to_orchestrator=false')
     expect(init.method).toBe('POST')
     expect(parseRequestBody(init)).toEqual({
       id: 'vm_group',
@@ -243,6 +245,8 @@ describe('submitRecoveryGroup', () => {
       resources: ['VOL-01'],
       relatedVolumeProviderId: null,
       relatedVolumes: [],
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: false,
     })
 
     const [, init] = mock.mock.calls[0] as [string, RequestInit]
@@ -256,6 +260,71 @@ describe('submitRecoveryGroup', () => {
       vms: [],
       volumes: [{ name: 'VOL-01' }],
     })
+  })
+
+  it('includes push_to_orchestrator=true in the query string when the toggle is on', async () => {
+    const mock = stubFetch(null)
+
+    await createRecoveryGroup({
+      id: 'vm_group',
+      name: 'VM group',
+      description: 'Virtual machines',
+      sourceCategory: 'backup_system_workload',
+      workloadType: 'vmware_virtual_machines',
+      resourceType: 'vm',
+      providerId: 'vmware-vcenter-01',
+      policySetId: 'tier2-apps',
+      resources: ['VM-01'],
+      relatedVolumeProviderId: null,
+      relatedVolumes: [],
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: true,
+    })
+
+    const [url] = mock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/submit_recovery_group?provider_id=airflow-01&push_to_orchestrator=true')
+  })
+
+  it('rejects a draft with no orchestration provider before calling the backend', async () => {
+    const mock = stubFetch(null)
+
+    await expect(createRecoveryGroup({
+      id: 'vm_group',
+      name: 'VM group',
+      description: 'Virtual machines',
+      sourceCategory: 'backup_system_workload',
+      workloadType: 'vmware_virtual_machines',
+      resourceType: 'vm',
+      providerId: 'vmware-vcenter-01',
+      policySetId: 'tier2-apps',
+      resources: ['VM-01'],
+      relatedVolumeProviderId: null,
+      relatedVolumes: [],
+      orchestrationProviderId: null,
+      pushToOrchestrator: false,
+    })).rejects.toMatchObject({ code: 'invalid_draft' })
+    expect(mock).not.toHaveBeenCalled()
+  })
+
+  it('rejects a draft with an unanswered orchestration toggle before calling the backend', async () => {
+    const mock = stubFetch(null)
+
+    await expect(createRecoveryGroup({
+      id: 'vm_group',
+      name: 'VM group',
+      description: 'Virtual machines',
+      sourceCategory: 'backup_system_workload',
+      workloadType: 'vmware_virtual_machines',
+      resourceType: 'vm',
+      providerId: 'vmware-vcenter-01',
+      policySetId: 'tier2-apps',
+      resources: ['VM-01'],
+      relatedVolumeProviderId: null,
+      relatedVolumes: [],
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: null,
+    })).rejects.toMatchObject({ code: 'invalid_draft' })
+    expect(mock).not.toHaveBeenCalled()
   })
 
   it('preserves related volumes while upserting an existing VM group', async () => {
@@ -273,6 +342,8 @@ describe('submitRecoveryGroup', () => {
       resources: ['TEST-DB01'],
       relatedVolumeProviderId: 'ibm-flashsystem-01',
       relatedVolumes: ['TEST-VOLUME1'],
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: false,
     })
 
     const [, init] = mock.mock.calls[0] as [string, RequestInit]
@@ -298,6 +369,8 @@ describe('submitRecoveryGroup', () => {
       resources: [],
       relatedVolumeProviderId: null,
       relatedVolumes: [],
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: false,
     })).rejects.toMatchObject({ code: 'invalid_draft' })
     expect(mock).not.toHaveBeenCalled()
   })
@@ -316,6 +389,8 @@ describe('submitRecoveryGroup', () => {
       resources: ['DB-01'],
       relatedVolumeProviderId: null,
       relatedVolumes: [],
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: false,
     })).rejects.toThrow('Submit recovery group request failed with status 500')
   })
 })

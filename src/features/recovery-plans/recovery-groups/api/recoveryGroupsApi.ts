@@ -56,7 +56,11 @@ async function submitRecoveryGroup(
   const id = toRecoveryGroupId(requestedId ?? validated.id)
   if (!id) throw new RecoveryGroupsError('invalid_draft', 'Recovery group ID is required')
 
-  const response = await apiFetch(API_ENDPOINTS.recoveryGroups.submit, {
+  const params = new URLSearchParams({
+    provider_id: validated.orchestrationProviderId,
+    push_to_orchestrator: String(validated.pushToOrchestrator),
+  })
+  const response = await apiFetch(`${API_ENDPOINTS.recoveryGroups.submit}?${params.toString()}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(toRecoveryGroupSubmitPayload(validated, id)),

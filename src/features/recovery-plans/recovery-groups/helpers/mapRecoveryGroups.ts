@@ -160,5 +160,7 @@ export function toRecoveryGroup(
     resourceCount: draft.resources.length,
     status: 'Active',
     vmMetadataByName: isVmGroup ? draft.vmMetadataByName : undefined,
+    pushToOrchestrator: draft.pushToOrchestrator,
+    airflowRunId: null,
   }
 }

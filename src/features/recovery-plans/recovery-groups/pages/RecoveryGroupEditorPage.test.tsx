@@ -64,6 +64,8 @@ vi.mock('../components/RecoveryGroupBuilder', () => ({
             providerId: initialData.providerId,
             policySetId: initialData.policySetId,
             resources: initialData.resources,
+            orchestrationProviderId: 'airflow-01',
+            pushToOrchestrator: false,
           })
         }}
       >
