@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { cn } from '@/shared/utils/cn'
 
 export interface WizardStepItem {
   id: string
@@ -29,30 +30,43 @@ export function WizardSteps({
         const complete = number < currentStep
         const active = number === currentStep
         const disabled = item.disabled ?? false
+        const isLast = index === items.length - 1
 
         return (
-          <li
-            key={item.id}
-            className="min-w-max"
-          >
+          <li key={item.id} className="relative min-w-max">
+            {!isLast ? (
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'absolute left-5 top-8 -bottom-1 hidden w-px lg:block',
+                  complete ? 'bg-success-500' : 'bg-border-strong',
+                )}
+              />
+            ) : null}
             <button
               type="button"
               aria-current={active ? 'step' : undefined}
               disabled={disabled}
               onClick={() => { onStepChange?.(number) }}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+              className={cn(
+                'relative flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
                 active
                   ? 'cursor-pointer bg-accent-soft font-semibold text-accent'
                   : disabled
                     ? 'cursor-not-allowed text-text-subtle'
-                    : 'cursor-pointer text-text-muted hover:bg-surface-muted hover:text-accent'
-              }`}
+                    : 'cursor-pointer text-text-muted hover:bg-surface-muted hover:text-accent',
+              )}
             >
               <span
                 aria-hidden="true"
-                className={`flex size-6 items-center justify-center rounded-full text-xs font-semibold ${
-                  complete || active ? 'bg-accent text-white' : 'bg-surface-muted text-text-muted'
-                }`}
+                className={cn(
+                  'relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ring-4 ring-surface',
+                  complete
+                    ? 'bg-success-500 text-white'
+                    : active
+                      ? 'bg-accent text-white'
+                      : 'bg-surface-muted text-text-muted',
+                )}
               >
                 {complete ? '✓' : number}
               </span>
