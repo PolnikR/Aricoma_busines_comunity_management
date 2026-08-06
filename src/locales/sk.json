@@ -213,6 +213,7 @@
   "tables.recoveryGroups.resourceType": "Typ zdroja",
   "tables.recoveryGroups.resources": "Zdroje",
   "tables.recoveryGroups.status": "Stav",
+  "tables.recoveryGroups.orchestration": "Orchestrácia",
   "tables.recoveryGroups.active": "Aktívna",
   "tables.recoveryGroups.draft": "Koncept",
   "tables.recoveryGroups.policySet": "Sada politík",

@@ -227,6 +227,7 @@
   "tables.recoveryGroups.resourceType": "Typ zdroje",
   "tables.recoveryGroups.resources": "Zdroje",
   "tables.recoveryGroups.status": "Stav",
+  "tables.recoveryGroups.orchestration": "Orchestrace",
   "tables.recoveryGroups.active": "Aktivní",
   "tables.recoveryGroups.draft": "Návrh",
   "tables.recoveryGroups.policySet": "Sada zásad",

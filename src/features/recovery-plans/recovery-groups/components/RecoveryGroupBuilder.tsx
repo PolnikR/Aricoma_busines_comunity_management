@@ -212,7 +212,7 @@ export function RecoveryGroupBuilder({
   return (
     <div className="flex min-h-0 flex-1 p-4">
       <div className="grid min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-surface shadow-sm lg:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
+        <aside className="custom-scrollbar min-h-0 overflow-y-auto border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
           <WizardSteps
             items={steps}
             currentStep={step}
@@ -222,7 +222,7 @@ export function RecoveryGroupBuilder({
         </aside>
         <div className="flex min-h-0 flex-col">
           <div className={`custom-scrollbar min-h-0 flex-1 p-5 sm:p-6 ${
-            step === resourcesStepIndex ? 'overflow-hidden' : 'overflow-y-auto'
+            step === resourcesStepIndex || step === relatedStorageStepIndex ? 'overflow-hidden' : 'overflow-y-auto'
           }`}>
             {step === 1 ? (
               <RecoveryGroupDetailsStep
@@ -308,7 +308,7 @@ export function RecoveryGroupBuilder({
               />
             ) : null}
             {step === relatedStorageStepIndex && hasRelatedStorageStep ? (
-              <div className="flex min-h-full flex-col gap-6">
+              <div className="flex h-full min-h-0 flex-col gap-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h2 className="text-base font-semibold text-text-primary">
@@ -331,7 +331,7 @@ export function RecoveryGroupBuilder({
                   ) : null}
                 </div>
                 {relatedVolumesDiscovery.flashcopyProviderId ? (
-                  <div className="min-h-[28rem] flex-1">
+                  <div className="min-h-0 flex-1">
                     <RecoveryGroupResourcesStep
                       workloadType="ibm_flashsystem"
                       providerId={relatedVolumesDiscovery.flashcopyProviderId}

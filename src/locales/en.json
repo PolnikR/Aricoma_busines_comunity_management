@@ -227,6 +227,7 @@
   "tables.recoveryGroups.resourceType": "Resource Type",
   "tables.recoveryGroups.resources": "Resources",
   "tables.recoveryGroups.status": "Status",
+  "tables.recoveryGroups.orchestration": "Orchestration",
   "tables.recoveryGroups.active": "Active",
   "tables.recoveryGroups.draft": "Draft",
   "tables.recoveryGroups.policySet": "Policy Set",

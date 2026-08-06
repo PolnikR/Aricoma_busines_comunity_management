@@ -146,6 +146,15 @@ export function RecoveryGroupsTable({
       ),
     },
     {
+      id: 'orchestration',
+      header: t('tables.recoveryGroups.orchestration'),
+      cell: group => (
+        <Badge color={group.pushToOrchestrator ? 'success' : 'light'} size="sm">
+          {t(group.pushToOrchestrator ? 'common.yes' : 'common.no')}
+        </Badge>
+      ),
+    },
+    {
       id: 'json',
       header: t('tables.recoveryGroups.json'),
       cell: group => (
@@ -314,6 +323,14 @@ export function RecoveryGroupsTable({
               value={policySetName(selected.policySetId)}
             />
             <DetailRow label={t('tables.recoveryGroups.resources')} value={String(selected.resourceCount)} />
+            <DetailRow
+              label={t('tables.recoveryGroups.orchestration')}
+              value={
+                <Badge color={selected.pushToOrchestrator ? 'success' : 'light'} size="sm">
+                  {t(selected.pushToOrchestrator ? 'common.yes' : 'common.no')}
+                </Badge>
+              }
+            />
             <DetailRow
               label={t('tables.recoveryGroups.status')}
               value={
