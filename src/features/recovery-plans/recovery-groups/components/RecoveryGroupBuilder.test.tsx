@@ -74,6 +74,30 @@ vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
     refetch: vi.fn(),
   }),
 }))
+vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
+  usePlatformProviders: () => ({
+    data: [{
+      id: 'airflow-01',
+      name: 'Primary Airflow',
+      description: 'Primary orchestrator',
+      type: 'AIRFLOW',
+      ipAddress: '10.99.99.60',
+      port: 8080,
+      dagDir: '/opt/airflow/dags',
+      credentialId: 'airflow-admin',
+      credentialStatus: 'ok',
+    }],
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+}))
+
+async function completeOrchestrationAndCreate(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Next' }))
+  await user.click(screen.getByRole('switch', { name: 'Deploy to orchestrator' }))
+  await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+}
 
 const existingGroup: RecoveryGroup = {
   id: 'database_group',
@@ -122,6 +146,7 @@ describe('RecoveryGroupBuilder', () => {
     expect(screen.getByRole('button', { name: 'Provider' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Resources' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Policy Set' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Orchestration' })).toBeInTheDocument()
   })
 
   it('allows a virtual-machine group to be created without optional related storage', async () => {
@@ -144,12 +169,14 @@ describe('RecoveryGroupBuilder', () => {
     await user.click(screen.getByRole('button', { name: 'Related storage' }))
     await user.click(screen.getByRole('button', { name: 'Policy Set' }))
     await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
-    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    await completeOrchestrationAndCreate(user)
 
     expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
       relatedVolumeProviderId: null,
       relatedVolumes: [],
       policySetId: 'tier2-apps',
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: true,
     }))
   })
 
@@ -176,12 +203,14 @@ describe('RecoveryGroupBuilder', () => {
 
     await user.click(screen.getByRole('button', { name: 'Policy Set' }))
     await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
-    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    await completeOrchestrationAndCreate(user)
 
     expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
       relatedVolumeProviderId: 'ibm-flashsystem-01',
       relatedVolumes: ['VOL-01'],
       policySetId: 'tier2-apps',
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: true,
     }))
   })
 
@@ -209,16 +238,18 @@ describe('RecoveryGroupBuilder', () => {
     })
     await user.click(screen.getByRole('button', { name: 'Policy Set' }))
     await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
-    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    await completeOrchestrationAndCreate(user)
 
     expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
       relatedVolumeProviderId: 'ibm-flashsystem-01',
       relatedVolumes: ['VOL-01'],
       policySetId: 'tier2-apps',
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: true,
     }))
   })
 
-  it('keeps a FlashSystem volume group on the five-step flow', async () => {
+  it('keeps a FlashSystem volume group on the six-step flow', async () => {
     const user = userEvent.setup()
 
     render(
@@ -234,8 +265,29 @@ describe('RecoveryGroupBuilder', () => {
     await user.click(screen.getByRole('button', { name: 'Resources' }))
     await user.click(screen.getByRole('button', { name: 'Policy Set' }))
     await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(screen.getByRole('switch', { name: 'Deploy to orchestrator' }))
 
     expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeEnabled()
+  })
+
+  it('keeps Create disabled until the orchestration toggle is answered', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <RecoveryGroupBuilder
+        initialData={existingStorageGroup}
+        onCreate={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Policy Set' }))
+    await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+
+    expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeDisabled()
+    expect(screen.getByText('Not selected')).toBeInTheDocument()
   })
 
   it('can clear the optional FlashSystem mapping before saving', async () => {
@@ -263,12 +315,14 @@ describe('RecoveryGroupBuilder', () => {
     await user.click(screen.getByRole('button', { name: 'Clear related storage' }))
     await user.click(screen.getByRole('button', { name: 'Policy Set' }))
     await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
-    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    await completeOrchestrationAndCreate(user)
 
     expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
       relatedVolumeProviderId: null,
       relatedVolumes: [],
       policySetId: 'tier2-apps',
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: true,
     }))
   })
 
