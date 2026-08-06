@@ -101,11 +101,11 @@ export async function rollbackRecoveryGroupOrchestration(
   groupId: string,
   providerId: string,
 ): Promise<void> {
-  const params = new URLSearchParams({
+  const query = new URLSearchParams({
     recovery_group_id: groupId,
     provider_id: providerId,
   })
-  const response = await apiFetch(`/api/rollback_from_orchestrator?${params.toString()}`, {
+  const response = await apiFetch(`${API_ENDPOINTS.recoveryGroups.rollback}?${query.toString()}`, {
     method: 'POST',
   })
   requireOk(response, 'Rollback recovery group orchestration')
