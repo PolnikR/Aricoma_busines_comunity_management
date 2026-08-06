@@ -232,7 +232,7 @@ describe('recoveryApplicationsApi', () => {
     })
   })
 
-  it('submits an encoded DAG name as non-final by default and preserves the response', async () => {
+  it('submits an encoded DAG name without pushing to the orchestrator by default and preserves the response', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       status: 'ok',
       filename: 'Finance App.json',
@@ -249,12 +249,12 @@ describe('recoveryApplicationsApi', () => {
       local: 'C:\\projects\\abco-be\\persistency\\dag_jsons\\Finance App.json',
     })
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/submit_recovery_dag?filename=Finance+App&provider_id=airflow+primary%2F01&is_final=false',
+      '/api/submit_recovery_dag?filename=Finance+App&provider_id=airflow+primary%2F01&push_to_orchestrator=false',
       expect.objectContaining({ method: 'POST', body: JSON.stringify(data) }),
     )
   })
 
-  it('supports an explicit final DAG submission', async () => {
+  it('supports pushing an explicit DAG submission to the orchestrator', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       status: 'ok',
       filename: 'Finance.json',
@@ -265,7 +265,7 @@ describe('recoveryApplicationsApi', () => {
     await submitRecoveryApplicationDag('Finance', 'airflow-01', data, true)
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/submit_recovery_dag?filename=Finance&provider_id=airflow-01&is_final=true',
+      '/api/submit_recovery_dag?filename=Finance&provider_id=airflow-01&push_to_orchestrator=true',
       expect.objectContaining({ method: 'POST', body: JSON.stringify(data) }),
     )
   })

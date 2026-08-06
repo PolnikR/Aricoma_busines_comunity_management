@@ -29,7 +29,7 @@ export async function submitRecoveryApplicationDag(
   fileName: string,
   providerId: string,
   data: RecoveryApplicationData,
-  isFinal = false,
+  pushToOrchestrator = false,
 ): Promise<SubmitDagResponse> {
   const normalizedProviderId = providerId.trim()
   if (!normalizedProviderId) {
@@ -39,7 +39,7 @@ export async function submitRecoveryApplicationDag(
   const params = new URLSearchParams({
     filename: fileName,
     provider_id: normalizedProviderId,
-    is_final: String(isFinal),
+    push_to_orchestrator: String(pushToOrchestrator),
   })
   const url = `${API_ENDPOINTS.recoveryApplications.submitDag}?${params.toString()}`
   let response: Response

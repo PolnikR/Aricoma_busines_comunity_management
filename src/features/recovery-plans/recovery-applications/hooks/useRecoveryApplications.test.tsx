@@ -57,7 +57,7 @@ describe('recovery application hooks', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/submit_recovery_dag?filename=finance_recovery&provider_id=airflow-01&is_final=false',
+      '/api/submit_recovery_dag?filename=finance_recovery&provider_id=airflow-01&push_to_orchestrator=false',
       expect.objectContaining({ method: 'POST', body: JSON.stringify(data) }),
     )
     expect(queryClient.getQueryState(recoveryApplicationsQueryKey)?.isInvalidated).toBe(true)
