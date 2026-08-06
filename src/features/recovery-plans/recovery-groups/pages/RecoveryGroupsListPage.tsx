@@ -12,7 +12,7 @@ import { getRecoveryGroupsErrorKey } from '../utils/recoveryGroupsErrorMessage'
 export function RecoveryGroupsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { groups, remove, isLoading, isFetching, error, refresh, mutationError } = useRecoveryGroups()
+  const { groups, remove, rollback, isLoading, isFetching, error, refresh, mutationError, isRollingBack } = useRecoveryGroups()
   const navigateToCreate = () => { void navigate(`${routes.recoveryGroups}/create`) }
   const navigateToEdit = (id: string) => {
     void navigate(`${routes.recoveryGroups}/${encodeURIComponent(id)}/edit`)
@@ -59,9 +59,11 @@ export function RecoveryGroupsListPage() {
               groups={groups}
               onEdit={navigateToEdit}
               onDelete={remove}
+              onRollback={rollback}
               error={error instanceof Error ? error : null}
               isRetrying={isFetching}
               onRetry={() => { void refresh() }}
+              isRollingBack={isRollingBack}
             />
           </div>
         )}

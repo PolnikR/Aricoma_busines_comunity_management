@@ -18,19 +18,24 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
 import { toRecoveryGroupJson } from '../helpers/mapRecoveryGroups'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
+import { RecoveryGroupRollbackResultModal } from './RecoveryGroupRollbackResultModal'
 import {
   getResourceTypeLabelKey,
   getSourceCategoryLabelKey,
   getWorkloadTypeLabelKey,
 } from '../utils/recoveryGroupTypeLabels'
 
+import type { RollbackReport } from '../api/schemas/recoveryGroupsSchema'
+
 interface RecoveryGroupsTableProps {
   groups: RecoveryGroup[]
   onEdit: (id: string) => void
   onDelete: (id: string) => void
+  onRollback: (groupId: string, providerId: string) => Promise<RollbackReport>
   error?: Error | null
   isRetrying?: boolean
   onRetry?: () => void
+  isRollingBack?: boolean
 }
 
 interface RecoveryGroupFilters {
@@ -75,9 +80,11 @@ export function RecoveryGroupsTable({
   groups,
   onEdit,
   onDelete,
+  onRollback,
   error = null,
   isRetrying = false,
   onRetry = () => undefined,
+  isRollingBack = false,
 }: RecoveryGroupsTableProps) {
   const { t } = useTranslation()
   const { data: policySets = [] } = usePolicySets()
@@ -86,6 +93,8 @@ export function RecoveryGroupsTable({
   const [filters, setFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)
   const [deleteTarget, setDeleteTarget] = useState<RecoveryGroup | null>(null)
+  const [rollbackTarget, setRollbackTarget] = useState<RecoveryGroup | null>(null)
+  const [rollbackResult, setRollbackResult] = useState<{ groupName: string; report: any } | null>(null)
 
   const filterOptions = useMemo(() => ({
     workloadTypes: Array.from(new Set(groups.map(group => group.workloadType))).sort(),
@@ -326,9 +335,25 @@ export function RecoveryGroupsTable({
             <DetailRow
               label={t('tables.recoveryGroups.orchestration')}
               value={
-                <Badge color={selected.pushToOrchestrator ? 'success' : 'light'} size="sm">
-                  {t(selected.pushToOrchestrator ? 'common.yes' : 'common.no')}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge color={selected.pushToOrchestrator ? 'success' : 'light'} size="sm">
+                    {t(selected.pushToOrchestrator ? 'common.yes' : 'common.no')}
+                  </Badge>
+                  {selected.pushToOrchestrator && (
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      disabled={!selected.orchestrationProviderId}
+                      title={!selected.orchestrationProviderId ? t('recoveryGroups.rollback.disabledTitle') : undefined}
+                      onClick={() => { setRollbackTarget(selected) }}
+                      startIcon={isRollingBack ? (
+                        <span aria-hidden="true" className="size-3 animate-spin rounded-full border-2 border-current/40 border-t-current" />
+                      ) : undefined}
+                    >
+                      {t('recoveryGroups.rollback.button')}
+                    </Button>
+                  )}
+                </div>
               }
             />
             <DetailRow
@@ -361,6 +386,34 @@ export function RecoveryGroupsTable({
           setDeleteTarget(null)
           setSelectedId(null)
         }}
+      />
+
+      <ConfirmDialog
+        open={rollbackTarget !== null}
+        title={t('recoveryGroups.rollback.confirmTitle')}
+        message={t('recoveryGroups.rollback.confirmMessage').replace('{groupName}', rollbackTarget?.name ?? '')}
+        confirmLabel={t('recoveryGroups.rollback.confirmLabel')}
+        cancelLabel={t('buttons.cancel')}
+        tone="danger"
+        onCancel={() => { setRollbackTarget(null) }}
+        onConfirm={async () => {
+          if (!rollbackTarget?.orchestrationProviderId) return
+          try {
+            const report = await onRollback(rollbackTarget.id, rollbackTarget.orchestrationProviderId)
+            setRollbackResult({ groupName: rollbackTarget.name, report })
+            setSelectedId(null)
+            setRollbackTarget(null)
+          } catch {
+            setRollbackTarget(null)
+          }
+        }}
+      />
+
+      <RecoveryGroupRollbackResultModal
+        open={rollbackResult !== null}
+        onClose={() => { setRollbackResult(null) }}
+        groupName={rollbackResult?.groupName ?? ''}
+        report={rollbackResult?.report ?? null}
       />
 
       <JsonViewerModal

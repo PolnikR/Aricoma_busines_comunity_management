@@ -55,7 +55,7 @@ describe('RecoveryGroupsTable', () => {
   it('renders group columns and opens the group detail drawer', async () => {
     const user = userEvent.setup()
     render(
-      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} isRollingBack={false} />,
     )
 
     expect(await screen.findByText('Recovery Group')).toBeInTheDocument()
@@ -71,7 +71,7 @@ describe('RecoveryGroupsTable', () => {
   it('filters groups by search text', async () => {
     const user = userEvent.setup()
     render(
-      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} isRollingBack={false} />,
     )
 
     const search = await screen.findByRole('searchbox', { name: 'Search recovery groups' })
@@ -82,7 +82,7 @@ describe('RecoveryGroupsTable', () => {
 
   it('renders the IBM Power workload label', () => {
     render(
-      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} isRollingBack={false} />,
     )
 
     expect(screen.getByText('IBM Power virtual machines')).toBeInTheDocument()
@@ -93,7 +93,7 @@ describe('RecoveryGroupsTable', () => {
     const onEdit = vi.fn()
     const onDelete = vi.fn()
     render(
-      <RecoveryGroupsTable groups={groups} onEdit={onEdit} onDelete={onDelete} />,
+      <RecoveryGroupsTable groups={groups} onEdit={onEdit} onDelete={onDelete} onRollback={vi.fn()} />,
     )
 
     await user.click(screen.getByText('Database group'))
@@ -112,7 +112,7 @@ describe('RecoveryGroupsTable', () => {
   it('shows the resolved policy set name in the detail drawer', async () => {
     const user = userEvent.setup()
     render(
-      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} isRollingBack={false} />,
     )
 
     await user.click(screen.getByText('Database group'))
@@ -124,7 +124,7 @@ describe('RecoveryGroupsTable', () => {
   it('opens a JSON viewer showing the recovery group submit payload', async () => {
     const user = userEvent.setup()
     render(
-      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} />,
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} isRollingBack={false} />,
     )
 
     const [viewJsonButton] = screen.getAllByRole('button', { name: 'View' })

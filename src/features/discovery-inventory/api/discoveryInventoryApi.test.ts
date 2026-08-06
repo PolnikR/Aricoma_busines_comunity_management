@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import {
   fetchFlashSystemInventory,
+  fetchFlashSystemVolumeTree,
   fetchInventory,
   fetchPowerInventory,
   fetchVmwareInventory,
@@ -275,6 +276,96 @@ describe('IBM discovery inventory endpoints', () => {
     ))
 
     await expect(fetchFlashSystemInventory('ibm-flashsystem-01')).rejects.toBeInstanceOf(Error)
+  })
+})
+
+describe('fetchFlashSystemVolumeTree', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  const flatViewPayload = {
+    counts: { pools: 2, volumes: 46, fcmaps: 42, consistency_groups: 21 },
+    views: {
+      flat: [
+        {
+          kind: 'pool',
+          id: '0',
+          name: 'Pool0',
+          key: 'pool:0',
+          detail: { id: '0', name: 'Pool0', status: 'online', volume_count: 46 },
+          children: [
+            {
+              kind: 'volume',
+              id: '0',
+              name: 'V5000_VOLUME01',
+              key: 'pool:0/volume:0',
+              detail: {
+                id: '0',
+                name: 'V5000_VOLUME01',
+                status: 'online',
+                capacity: '1.00TB',
+                host_maps: [],
+                is_snapshot_target: false,
+                has_snapshots: true,
+                snapshot_count: 21,
+                resolved: true,
+              },
+              children: [],
+            },
+          ],
+        },
+      ],
+    },
+    provider_id: 'ibm-flashsystem-01',
+    provider_type: 'FLASHCOPY',
+  }
+
+  it('requests the volume tree with provider_id and view query params', async () => {
+    const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(flatViewPayload), { status: 200 }))
+    vi.stubGlobal('fetch', mock)
+
+    await fetchFlashSystemVolumeTree('ibm-flashsystem-01', 'flat')
+
+    expect(mock.mock.calls[0]?.[0]).toBe('/api/get_volume_tree?provider_id=ibm-flashsystem-01&view=flat')
+  })
+
+  it('parses the requested view into counts and a flat node array', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(flatViewPayload), { status: 200 }),
+    ))
+
+    const tree = await fetchFlashSystemVolumeTree('ibm-flashsystem-01', 'flat')
+
+    expect(tree.counts).toEqual({ pools: 2, volumes: 46, fcmaps: 42, consistency_groups: 21 })
+    expect(tree.nodes).toHaveLength(1)
+    expect(tree.nodes[0]).toMatchObject({ kind: 'pool', id: '0', name: 'Pool0' })
+  })
+
+  it('returns an empty node array when the requested view is absent from the response', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(flatViewPayload), { status: 200 }),
+    ))
+
+    const tree = await fetchFlashSystemVolumeTree('ibm-flashsystem-01', 'snapshot')
+
+    expect(tree.nodes).toEqual([])
+  })
+
+  it('throws on a non-ok response', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 503 })))
+
+    await expect(fetchFlashSystemVolumeTree('ibm-flashsystem-01', 'flat')).rejects.toThrow(
+      'FlashSystem volume tree request failed with status 503',
+    )
+  })
+
+  it('rejects a response that does not match its contract', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ counts: {}, views: {}, provider_type: 'NOT_FLASHCOPY' }), { status: 200 }),
+    ))
+
+    await expect(fetchFlashSystemVolumeTree('ibm-flashsystem-01', 'flat')).rejects.toBeInstanceOf(Error)
   })
 })
 
