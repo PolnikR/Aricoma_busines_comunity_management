@@ -1,6 +1,10 @@
 import type {
+  ConsistencyGroupTopologyNode,
+  FlashCopyMapTopologyNode,
+  FlashVolumeTopologyNode,
   InfrastructureTopology,
   InfrastructureTopologyNode,
+  PoolTopologyNode,
   PowerPartitionTopologyNode,
   VirtualMachineTopologyNode,
 } from './topologyTypes'
@@ -41,6 +45,31 @@ function isVirtualMachine(
   node: InfrastructureTopologyNode,
 ): node is VirtualMachineTopologyNode {
   return node.kind === 'virtualMachine'
+}
+
+type FlashSystemTopologyNode =
+  | PoolTopologyNode
+  | FlashVolumeTopologyNode
+  | FlashCopyMapTopologyNode
+  | ConsistencyGroupTopologyNode
+
+function isFlashSystemNode(
+  node: InfrastructureTopologyNode,
+): node is FlashSystemTopologyNode {
+  return node.kind === 'pool' || node.kind === 'volume' || node.kind === 'fcmap' || node.kind === 'consistencyGroup'
+}
+
+function getFlashSystemSearchableValues(node: FlashSystemTopologyNode): string[] {
+  switch (node.kind) {
+    case 'pool':
+      return [node.label, node.status, node.capacity]
+    case 'volume':
+      return [node.label, node.status, node.capacity, node.mdiskGroupName]
+    case 'fcmap':
+      return [node.label, node.status, node.sourceVolumeName, node.targetVolumeName]
+    case 'consistencyGroup':
+      return [node.label, node.status]
+  }
 }
 
 export function getInfrastructureTopologyFilterOptions(
@@ -103,7 +132,17 @@ export function filterInfrastructureTopology(
       .map((node) => node.id),
   )
 
-  const includedNodeIds = new Set(selectedVirtualMachineIds)
+  const selectedFlashSystemIds = new Set(
+    topology.nodes
+      .filter(isFlashSystemNode)
+      .filter((node) => {
+        if (!search) return true
+        return getFlashSystemSearchableValues(node).some((value) => value.toLowerCase().includes(search))
+      })
+      .map((node) => node.id),
+  )
+
+  const includedNodeIds = new Set([...selectedVirtualMachineIds, ...selectedFlashSystemIds])
   const selectedPowerPartitionIds = new Set(
     topology.nodes
       .filter(isPowerPartition)

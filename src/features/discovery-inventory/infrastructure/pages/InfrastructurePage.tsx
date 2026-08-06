@@ -6,10 +6,12 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
-import type { PowerInventory } from '../../model/discoveryTypes'
+import type { FlashSystemVolumeTreeView, PowerInventory } from '../../model/discoveryTypes'
 import { mapInventoryToTopology } from '../helpers/mapInventoryToTopology'
 import { mapPowerInventoryToTopology } from '../helpers/mapPowerInventoryToTopology'
+import { mapFlashSystemVolumeTreeToTopology } from '../helpers/mapFlashSystemVolumeTreeToTopology'
 import { useInfrastructureInventory } from '../hooks/useInfrastructureInventory'
+import { useFlashSystemVolumeTree } from '../hooks/useFlashSystemVolumeTree'
 import {
   getInfrastructureProviders,
   parseInfrastructurePlatform,
@@ -22,6 +24,10 @@ import { InfrastructureTopologyWorkspace } from '../components/InfrastructureTop
 
 function isPowerInventory(inventory: unknown): inventory is PowerInventory {
   return Boolean(inventory && typeof inventory === 'object' && 'partitions' in inventory)
+}
+
+function parseFlashSystemView(value: string | null): FlashSystemVolumeTreeView {
+  return value === 'snapshot' || value === 'consistency_group' ? value : 'flat'
 }
 
 export function InfrastructurePage() {
@@ -42,9 +48,24 @@ export function InfrastructurePage() {
     ),
     [platform, providers, searchParams],
   )
-  const inventoryQuery = useInfrastructureInventory(selectedProvider)
+  const flashSystemView = parseFlashSystemView(searchParams.get('view'))
+  const inventoryQuery = useInfrastructureInventory(
+    platform === 'flashsystem' ? null : selectedProvider,
+  )
+  const flashSystemTreeQuery = useFlashSystemVolumeTree(
+    platform === 'flashsystem' ? selectedProvider?.id : undefined,
+    platform === 'flashsystem' ? flashSystemView : undefined,
+  )
   const topology = useMemo(() => {
-    if (!inventoryQuery.data || !selectedProvider) return null
+    if (!selectedProvider) return null
+
+    if (platform === 'flashsystem') {
+      return flashSystemTreeQuery.data
+        ? mapFlashSystemVolumeTreeToTopology(flashSystemTreeQuery.data.nodes)
+        : null
+    }
+
+    if (!inventoryQuery.data) return null
 
     if (selectedProvider.type === 'IBM_POWER') {
       return isPowerInventory(inventoryQuery.data)
@@ -55,7 +76,14 @@ export function InfrastructurePage() {
     return isPowerInventory(inventoryQuery.data)
       ? null
       : mapInventoryToTopology(inventoryQuery.data)
-  }, [inventoryQuery.data, selectedProvider])
+  }, [flashSystemTreeQuery.data, inventoryQuery.data, platform, selectedProvider])
+  const activeQuery = platform === 'flashsystem' ? flashSystemTreeQuery : inventoryQuery
+
+  const handleFlashSystemViewChange = (nextView: FlashSystemVolumeTreeView) => {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.set('view', nextView)
+    setSearchParams(nextParams)
+  }
 
   useEffect(() => {
     if (!providersQuery.data) return
@@ -83,10 +111,10 @@ export function InfrastructurePage() {
     nextParams.set('providerId', providerId)
     setSearchParams(nextParams)
   }
-  const handleInventoryRefetch = () => { void inventoryQuery.refetch() }
+  const handleInventoryRefetch = () => { void activeQuery.refetch() }
   const handleProvidersRefetch = () => { void providersQuery.refetch() }
   const isLoading = providersQuery.isLoading
-    || Boolean(selectedProvider && inventoryQuery.isLoading)
+    || Boolean(selectedProvider && activeQuery.isLoading)
 
   return (
     <div className="flex flex-1 min-h-full w-full min-w-0 max-w-full flex-col overflow-x-hidden lg:h-full lg:min-h-0">
@@ -98,10 +126,10 @@ export function InfrastructurePage() {
           <Button
             size="sm"
             variant="outline"
-            disabled={inventoryQuery.isFetching}
+            disabled={activeQuery.isFetching}
             onClick={handleInventoryRefetch}
           >
-            {inventoryQuery.isFetching ? t('buttons.refreshing') : t('buttons.refreshInventory')}
+            {activeQuery.isFetching ? t('buttons.refreshing') : t('buttons.refreshInventory')}
           </Button>
         ) : undefined}
       />
@@ -150,24 +178,24 @@ export function InfrastructurePage() {
       {!isLoading && selectedProvider && !topology ? (
         <FetchErrorAlert
           title={t('pages.infrastructure.error.title')}
-          description={inventoryQuery.error instanceof Error
-            ? inventoryQuery.error.message
+          description={activeQuery.error instanceof Error
+            ? activeQuery.error.message
             : t('messages.unknownError')}
           retryLabel={t('pages.infrastructure.error.retryButton')}
           variant="full"
-          isRetrying={inventoryQuery.isFetching}
+          isRetrying={activeQuery.isFetching}
           onRetry={handleInventoryRefetch}
         />
       ) : null}
 
       {!isLoading && topology ? (
         <>
-          {inventoryQuery.error ? (
+          {activeQuery.error ? (
             <FetchErrorAlert
               className="mb-4"
               title={t('pages.infrastructure.latestRequestFailed')}
               description={t('pages.infrastructure.showingPrevious')}
-              isRetrying={inventoryQuery.isFetching}
+              isRetrying={activeQuery.isFetching}
               onRetry={handleInventoryRefetch}
             />
           ) : null}
@@ -178,6 +206,8 @@ export function InfrastructurePage() {
               platform={platform}
               positionScope={`${platform}:${selectedProvider?.id ?? ''}`}
               topology={topology}
+              flashSystemView={platform === 'flashsystem' ? flashSystemView : undefined}
+              onFlashSystemViewChange={handleFlashSystemViewChange}
             />
           ) : (
             <EmptyState

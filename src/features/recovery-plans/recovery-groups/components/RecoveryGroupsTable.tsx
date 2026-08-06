@@ -35,7 +35,6 @@ interface RecoveryGroupsTableProps {
   error?: Error | null
   isRetrying?: boolean
   onRetry?: () => void
-  isRollingBack?: boolean
 }
 
 interface RecoveryGroupFilters {
@@ -84,7 +83,6 @@ export function RecoveryGroupsTable({
   error = null,
   isRetrying = false,
   onRetry = () => undefined,
-  isRollingBack = false,
 }: RecoveryGroupsTableProps) {
   const { t } = useTranslation()
   const { data: policySets = [] } = usePolicySets()
@@ -95,6 +93,7 @@ export function RecoveryGroupsTable({
   const [deleteTarget, setDeleteTarget] = useState<RecoveryGroup | null>(null)
   const [rollbackTarget, setRollbackTarget] = useState<RecoveryGroup | null>(null)
   const [rollbackResult, setRollbackResult] = useState<{ groupName: string; report: RollbackReport } | null>(null)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
   const filterOptions = useMemo(() => ({
     workloadTypes: Array.from(new Set(groups.map(group => group.workloadType))).sort(),
@@ -179,7 +178,66 @@ export function RecoveryGroupsTable({
         </Button>
       ),
     },
-  ], [t])
+    {
+      id: 'actions',
+      header: '',
+      cell: group => (
+        <div className="relative">
+          <Button
+            size="xs"
+            variant="ghost"
+            onClick={(event: React.MouseEvent) => {
+              event.stopPropagation()
+              setOpenMenuId(openMenuId === group.id ? null : group.id)
+            }}
+          >
+            ⋯
+          </Button>
+          {openMenuId === group.id && (
+            <div className="absolute right-0 top-full mt-1 min-w-40 bg-surface border border-border rounded-lg shadow-lg z-10">
+              <button
+                className="w-full text-left px-4 py-2 text-sm hover:bg-surface-subtle transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit(group.id)
+                  setOpenMenuId(null)
+                  setSelectedId(null)
+                }}
+              >
+                {t('buttons.edit')}
+              </button>
+              <button
+                className="w-full text-left px-4 py-2 text-sm hover:bg-surface-subtle transition-colors border-t border-border"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setDeleteTarget(group)
+                  setOpenMenuId(null)
+                }}
+              >
+                {t('buttons.delete')}
+              </button>
+              {group.pushToOrchestrator && (
+                <button
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-surface-subtle transition-colors border-t border-border text-danger disabled:opacity-50"
+                  disabled={!group.orchestrationProviderId}
+                  title={!group.orchestrationProviderId ? t('recoveryGroups.rollback.disabledTitle') : undefined}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (group.orchestrationProviderId) {
+                      setRollbackTarget(group)
+                      setOpenMenuId(null)
+                    }
+                  }}
+                >
+                  {t('recoveryGroups.rollback.button')}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      ),
+    },
+  ], [t, openMenuId, onEdit])
 
   const prepareFilters = () => {
     setPendingFilters(filters)
@@ -335,25 +393,9 @@ export function RecoveryGroupsTable({
             <DetailRow
               label={t('tables.recoveryGroups.orchestration')}
               value={
-                <div className="flex items-center gap-2">
-                  <Badge color={selected.pushToOrchestrator ? 'success' : 'light'} size="sm">
-                    {t(selected.pushToOrchestrator ? 'common.yes' : 'common.no')}
-                  </Badge>
-                  {selected.pushToOrchestrator && (
-                    <Button
-                      size="xs"
-                      variant="ghost"
-                      disabled={!selected.orchestrationProviderId}
-                      title={!selected.orchestrationProviderId ? t('recoveryGroups.rollback.disabledTitle') : undefined}
-                      onClick={() => { setRollbackTarget(selected) }}
-                      startIcon={isRollingBack ? (
-                        <span aria-hidden="true" className="size-3 animate-spin rounded-full border-2 border-current/40 border-t-current" />
-                      ) : undefined}
-                    >
-                      {t('recoveryGroups.rollback.button')}
-                    </Button>
-                  )}
-                </div>
+                <Badge color={selected.pushToOrchestrator ? 'success' : 'light'} size="sm">
+                  {t(selected.pushToOrchestrator ? 'common.yes' : 'common.no')}
+                </Badge>
               }
             />
             <DetailRow

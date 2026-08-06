@@ -13,7 +13,9 @@ const providerTypeByPlatform: Record<InfrastructureTopologyPlatform, ProviderTyp
 export function parseInfrastructurePlatform(
   value: string | null,
 ): InfrastructureTopologyPlatform {
-  return value === 'ibm-power' ? 'ibm-power' : 'vmware'
+  if (value === 'ibm-power') return 'ibm-power'
+  if (value === 'flashsystem') return 'flashsystem'
+  return 'vmware'
 }
 
 export function getProviderTypeForPlatform(

@@ -15,10 +15,12 @@ See `infrastructure-flashsystem-topology-plan.md` for full detail, rationale, an
 - [x] **Checkpoint:** tsc/eslint clean, mapping helper tests cover all 3 views (+ dedup), full infrastructure test suite green (96/96)
 
 ## Phase 3: UI integration
-- [ ] Task 7 — `flashsystem` platform: selector, page branching, `useInfrastructureInventory` support
-- [ ] Task 8 — FlashSystem toolbar branch (view switch)
-- [ ] Task 9 — Wire into `InfrastructurePage.tsx`
-- [ ] **Checkpoint:** full test suite green, manual dev-server run across all 3 platforms + all 3 FlashSystem views
+- [x] Task 7 — `flashsystem` platform: selector, page branching (see note below on `useInfrastructureInventory`)
+- [x] Task 8 — FlashSystem toolbar branch (view switch)
+- [x] Task 9 — Wire into `InfrastructurePage.tsx`
+- [x] **Checkpoint:** full discovery-inventory test suite green (70 files / 217 tests), tsc/eslint clean; manual dev-server run NOT performed (no live backend in this session)
+
+**Note on Task 7:** rather than extending `useInfrastructureInventory` to fetch FlashSystem data, `InfrastructurePage.tsx` calls the purpose-built `useFlashSystemVolumeTree(providerId, view)` hook (from Task 3) directly when `platform === 'flashsystem'`, and passes `null` to `useInfrastructureInventory` in that case. This fits the "fetch per-view" architecture decision already made for Tasks 2/3 — the generic hook has no concept of `view`, so bolting FlashSystem onto it would have meant a second, inconsistent fetch path. `useInfrastructureInventory` itself is unchanged.
 
 ## Before starting implementation
 - [x] Resolve open question: `view` is a real server-side filter (confirmed with 4 real captured responses) — fetch-per-view design stands

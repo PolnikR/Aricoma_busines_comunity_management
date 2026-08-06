@@ -55,7 +55,7 @@ describe('RecoveryGroupsTable', () => {
   it('renders group columns and opens the group detail drawer', async () => {
     const user = userEvent.setup()
     render(
-      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} isRollingBack={false} />,
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
     )
 
     expect(await screen.findByText('Recovery Group')).toBeInTheDocument()
@@ -71,7 +71,7 @@ describe('RecoveryGroupsTable', () => {
   it('filters groups by search text', async () => {
     const user = userEvent.setup()
     render(
-      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} isRollingBack={false} />,
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
     )
 
     const search = await screen.findByRole('searchbox', { name: 'Search recovery groups' })
@@ -82,7 +82,7 @@ describe('RecoveryGroupsTable', () => {
 
   it('renders the IBM Power workload label', () => {
     render(
-      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} isRollingBack={false} />,
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
     )
 
     expect(screen.getByText('IBM Power virtual machines')).toBeInTheDocument()
@@ -112,7 +112,7 @@ describe('RecoveryGroupsTable', () => {
   it('shows the resolved policy set name in the detail drawer', async () => {
     const user = userEvent.setup()
     render(
-      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} isRollingBack={false} />,
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
     )
 
     await user.click(screen.getByText('Database group'))
@@ -124,7 +124,7 @@ describe('RecoveryGroupsTable', () => {
   it('opens a JSON viewer showing the recovery group submit payload', async () => {
     const user = userEvent.setup()
     render(
-      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} isRollingBack={false} />,
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
     )
 
     const [viewJsonButton] = screen.getAllByRole('button', { name: 'View' })
@@ -137,4 +137,5 @@ describe('RecoveryGroupsTable', () => {
     expect(within(dialog).getByText(/"provider_id_volume": "ibm-flashsystem-01"/)).toBeInTheDocument()
     expect(within(dialog).getByText(/"policy_set_id": "tier2-apps"/)).toBeInTheDocument()
   })
+
 })

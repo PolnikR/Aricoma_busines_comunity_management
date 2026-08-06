@@ -10,6 +10,7 @@ import {
 } from '../model/filterInfrastructureTopology'
 import type { InfrastructureTopologyFilters } from '../model/filterInfrastructureTopology'
 import type { InfrastructureTopology, InfrastructureTopologyPlatform } from '../model/topologyTypes'
+import type { FlashSystemVolumeTreeView } from '../../model/discoveryTypes'
 import { useTopologyNodePositionOverrides } from '../hooks/useTopologyNodePositionOverrides'
 import { InfrastructureTopologyCanvas } from './InfrastructureTopologyCanvas'
 import { InfrastructureTopologyLegend } from './InfrastructureTopologyLegend'
@@ -20,6 +21,8 @@ interface InfrastructureTopologyWorkspaceProps {
   topology: InfrastructureTopology
   platform: InfrastructureTopologyPlatform
   positionScope?: string
+  flashSystemView?: FlashSystemVolumeTreeView | undefined
+  onFlashSystemViewChange?: (view: FlashSystemVolumeTreeView) => void
 }
 
 interface LayoutResult {
@@ -36,6 +39,8 @@ export function InfrastructureTopologyWorkspace({
   topology,
   platform,
   positionScope,
+  flashSystemView,
+  onFlashSystemViewChange,
 }: InfrastructureTopologyWorkspaceProps) {
   const { t } = useTranslation()
   const [filters, setFilters] = useState(defaultInfrastructureTopologyFilters)
@@ -144,7 +149,9 @@ export function InfrastructureTopologyWorkspace({
         filters={filters}
         options={filterOptions}
         isLayouting={isLayouting}
+        flashSystemView={flashSystemView}
         onFiltersChange={setFilters}
+        onFlashSystemViewChange={onFlashSystemViewChange}
         onAutoLayout={handleAutoLayout}
         onResetPositions={handleResetPositions}
         onFitView={() => { setFitViewRequest((value) => value + 1) }}
