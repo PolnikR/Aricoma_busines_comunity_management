@@ -1,5 +1,5 @@
 import type { ChangeEvent, KeyboardEvent } from 'react'
-import { CheckboxField, Field, Input, Textarea } from '@/shared/components/form/FormControls'
+import { Field, Input, RadioField, Textarea } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { SnapshotPolicy } from '@/features/recovery-plans/snapshot-policies/model/snapshotPolicyTypes'
 
@@ -36,10 +36,8 @@ export function PolicySetForm({
       onSubmit()
     }
   }
-  const togglePolicy = (policyId: string, checked: boolean) => {
-    onChange('policyIds', checked
-      ? [...data.policyIds, policyId]
-      : data.policyIds.filter(id => id !== policyId))
+  const selectPolicy = (policyId: string) => {
+    onChange('policyIds', [policyId])
   }
 
   return (
@@ -67,14 +65,15 @@ export function PolicySetForm({
         ) : (
           <div className="space-y-2">
             {availablePolicies.map(policy => (
-              <CheckboxField
+              <RadioField
                 key={policy.id}
                 id={`policy-set-policy-${policy.id}`}
+                name="policy-set-policy"
                 label={`${policy.name} (${policy.id})`}
                 checked={data.policyIds.includes(policy.id)}
                 disabled={isSubmitting}
                 variant="bordered"
-                onChange={(event: ChangeEvent<HTMLInputElement>) => { togglePolicy(policy.id, event.target.checked) }}
+                onChange={() => { selectPolicy(policy.id) }}
               />
             ))}
           </div>

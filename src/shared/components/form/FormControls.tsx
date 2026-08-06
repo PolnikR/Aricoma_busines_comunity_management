@@ -32,6 +32,11 @@ interface CheckboxFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>,
   variant?: 'plain' | 'bordered'
 }
 
+interface RadioFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+  label: ReactNode
+  variant?: 'plain' | 'bordered'
+}
+
 const controlClassName = 'w-full min-w-0 max-w-full border border-border-strong bg-surface-subtle text-sm text-text-secondary shadow-sm outline-none transition placeholder:text-text-subtle focus:border-accent focus:bg-surface focus:ring-4 focus:ring-focus/10 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted'
 const controlSizeClassNames: Record<ControlSize, string> = {
   sm: 'h-8 rounded-md px-2',
@@ -135,6 +140,39 @@ export function CheckboxField({
         type="checkbox"
         disabled={disabled}
         className="size-4 rounded border-border-strong accent-accent focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
+      />
+      <span>{label}</span>
+    </label>
+  )
+}
+
+export function RadioField({
+  label,
+  variant = 'plain',
+  id,
+  className,
+  disabled,
+  ...props
+}: RadioFieldProps) {
+  const generatedId = useId()
+  const radioId = id ?? generatedId
+
+  return (
+    <label
+      className={cn(
+        'inline-flex cursor-pointer items-center gap-3 text-sm font-medium text-text-secondary',
+        variant === 'bordered' ? 'h-10 rounded-xl border border-border-strong bg-surface px-3 text-xs text-text-secondary shadow-sm' : undefined,
+        disabled ? 'cursor-not-allowed opacity-60' : undefined,
+        className,
+      )}
+      htmlFor={radioId}
+    >
+      <input
+        {...props}
+        id={radioId}
+        type="radio"
+        disabled={disabled}
+        className="size-4 rounded-full border-border-strong accent-accent focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
       />
       <span>{label}</span>
     </label>

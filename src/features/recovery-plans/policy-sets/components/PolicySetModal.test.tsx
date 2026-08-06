@@ -39,14 +39,14 @@ afterEach(() => {
 })
 
 describe('PolicySetModal', () => {
-  it('renders the id, name, description and available policy checkboxes', () => {
+  it('renders the id, name, description and available policy options', () => {
     renderModal()
 
     expect(screen.getByLabelText('Policy set ID')).toBeInTheDocument()
     expect(screen.getByLabelText('Policy set name')).toBeInTheDocument()
     expect(screen.getByLabelText('Description')).toBeInTheDocument()
-    expect(screen.getByRole('checkbox', { name: 'Medium — 6h (medium-6h)' })).toBeInTheDocument()
-    expect(screen.getByRole('checkbox', { name: 'Low — 24h (low-24h)' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Medium — 6h (medium-6h)' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Low — 24h (low-24h)' })).toBeInTheDocument()
   })
 
   it('submits normalized values and updates the shared query cache', async () => {
@@ -65,7 +65,7 @@ describe('PolicySetModal', () => {
     fireEvent.change(screen.getByLabelText('Policy set ID'), { target: { value: 'tier3-web' } })
     fireEvent.change(screen.getByLabelText('Policy set name'), { target: { value: 'Tier 3 web' } })
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Low priority web tier.' } })
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Low — 24h (low-24h)' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Low — 24h (low-24h)' }))
     fireEvent.click(screen.getByRole('button', { name: 'Create policy set' }))
 
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
@@ -84,8 +84,8 @@ describe('PolicySetModal', () => {
     expect(screen.getByRole('heading', { name: 'Edit policy set' })).toBeInTheDocument()
     expect(screen.getByLabelText('Policy set ID')).toBeDisabled()
     expect(screen.getByLabelText('Policy set name')).toHaveValue('Tier 2 applications')
-    expect(screen.getByRole('checkbox', { name: 'Medium — 6h (medium-6h)' })).toBeChecked()
-    expect(screen.getByRole('checkbox', { name: 'Low — 24h (low-24h)' })).not.toBeChecked()
+    expect(screen.getByRole('radio', { name: 'Medium — 6h (medium-6h)' })).toBeChecked()
+    expect(screen.getByRole('radio', { name: 'Low — 24h (low-24h)' })).not.toBeChecked()
   })
 
   it('requires at least one policy before submitting', () => {
