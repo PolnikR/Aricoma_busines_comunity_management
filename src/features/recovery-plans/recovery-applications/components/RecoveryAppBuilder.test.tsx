@@ -23,6 +23,22 @@ const platformProvidersQuery = vi.hoisted(() => ({
     refetch: vi.fn(),
   },
 }))
+const providersQuery = vi.hoisted(() => ({
+  current: {
+    data: [{
+      id: 'vmware-01',
+      name: 'Production vCenter',
+      description: 'VMware provider',
+      type: 'VMWARE',
+      ipAddress: '10.0.0.10',
+      credentialId: 'vmware-cred',
+      credentialStatus: 'ok',
+    }],
+    isLoading: false,
+    error: null as Error | null,
+    refetch: vi.fn(),
+  },
+}))
 const recoveryGroupsQuery = vi.hoisted(() => ({
   current: {
     groups: [{
@@ -45,6 +61,9 @@ const recoveryGroupsQuery = vi.hoisted(() => ({
 
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
   usePlatformProviders: () => platformProvidersQuery.current,
+}))
+vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
+  useProviders: () => providersQuery.current,
 }))
 vi.mock('../../recovery-groups/hooks/useRecoveryGroups', () => ({
   useRecoveryGroups: () => recoveryGroupsQuery.current,
@@ -124,6 +143,18 @@ describe('RecoveryAppBuilder', () => {
       credentialStatus: 'ok',
     }]
     platformProvidersQuery.current.refetch.mockReset()
+    providersQuery.current.isLoading = false
+    providersQuery.current.error = null
+    providersQuery.current.data = [{
+      id: 'vmware-01',
+      name: 'Production vCenter',
+      description: 'VMware provider',
+      type: 'VMWARE',
+      ipAddress: '10.0.0.10',
+      credentialId: 'vmware-cred',
+      credentialStatus: 'ok',
+    }]
+    providersQuery.current.refetch.mockReset()
   })
 
   it('shows a loading skeleton while recovery groups are loading', () => {
@@ -167,7 +198,8 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
     fireEvent.change(screen.getByLabelText('Environment *'), { target: { value: 'prod' } })
-    fireEvent.change(screen.getByLabelText('Platform provider *'), { target: { value: 'airflow-01' } })
+    fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
+    fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
     fireEvent.click(screen.getByRole('button', { name: 'Assign all tiers' }))
     fireEvent.click(screen.getByRole('button', { name: 'Save Application' }))
 
@@ -177,7 +209,8 @@ describe('RecoveryAppBuilder', () => {
       name: 'Finance',
       description: 'Finance recovery',
       environment: 'prod',
-      platform: 'airflow-01',
+      platform: 'vmware-01',
+      orchestrationProviderId: 'airflow-01',
     })
     expect((onSave.mock.calls[0]?.[0] as { tiers: Map<string, unknown> }).tiers.size).toBe(4)
   })
@@ -220,7 +253,8 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
-    fireEvent.change(screen.getByLabelText('Platform provider *'), { target: { value: 'airflow-01' } })
+    fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
+    fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
 
     expect(alertMock).toHaveBeenCalledWith('Assign a recovery group to every tier.')
@@ -247,7 +281,8 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
-    fireEvent.change(screen.getByLabelText('Platform provider *'), { target: { value: 'airflow-01' } })
+    fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
+    fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
     fireEvent.click(screen.getByRole('button', { name: 'Assign all tiers' }))
     fireEvent.click(screen.getByRole('button', { name: 'Save Application' }))
 
@@ -264,7 +299,8 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
-    fireEvent.change(screen.getByLabelText('Platform provider *'), { target: { value: 'airflow-01' } })
+    fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
+    fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
 
     const savedState = onSave.mock.calls[0]?.[0] as { tiers: Map<string, RecoveryTier> }
@@ -287,7 +323,8 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
-    fireEvent.change(screen.getByLabelText('Platform provider *'), { target: { value: 'airflow-01' } })
+    fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
+    fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
 
     const savedState = onSave.mock.calls[0]?.[0] as { tiers: Map<string, RecoveryTier> }

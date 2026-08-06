@@ -21,6 +21,7 @@ describe('AppMetadataForm', () => {
             description: 'Primary',
             environment: 'dev',
             platform: 'airflow-01',
+            orchestrationProviderId: '',
           }}
           platformProviders={[{
             id: 'airflow-01',
@@ -58,6 +59,7 @@ describe('AppMetadataForm', () => {
             description: 'Primary',
             environment: 'dev',
             platform: '',
+            orchestrationProviderId: '',
           }}
           disableFileName
         />
@@ -116,9 +118,9 @@ describe('AppMetadataForm', () => {
       </LanguageProvider>
     )
 
-    await user.selectOptions(await screen.findByLabelText('Platform provider *'), 'airflow-01')
+    await user.selectOptions(await screen.findByLabelText('Airflow platform provider *'), 'airflow-01')
 
-    expect(onMetadataChange).toHaveBeenCalledWith({ platform: 'airflow-01' })
+    expect(onMetadataChange).toHaveBeenCalledWith({ orchestrationProviderId: 'airflow-01' })
   })
 
   it('offers only providers with valid credentials', async () => {

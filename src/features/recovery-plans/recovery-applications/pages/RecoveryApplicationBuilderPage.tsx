@@ -20,7 +20,7 @@ export function RecoveryApplicationBuilderPage() {
   const handleSave = (appState: RecoveryApplicationFormState): void => {
     submitApplication.mutate({
       fileName: appState.fileName,
-      providerId: appState.platform,
+      providerId: appState.orchestrationProviderId,
       data: toRecoveryApplicationData(appState),
     }, {
       onSuccess: () => {

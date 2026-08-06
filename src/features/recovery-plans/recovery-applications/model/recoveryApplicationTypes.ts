@@ -76,6 +76,7 @@ export interface RecoveryApplicationFormState {
   description: string
   environment: 'dev' | 'staging' | 'prod'
   platform: string
+  orchestrationProviderId: string
   sourceConnection: string
   targetConnection: string
   tiers: Map<string, RecoveryTier>

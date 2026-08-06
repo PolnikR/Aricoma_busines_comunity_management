@@ -3,6 +3,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
 import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
+import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
 import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
@@ -71,6 +72,7 @@ function createInitialFormState(
     description: '',
     environment: 'dev',
     platform: '',
+    orchestrationProviderId: '',
     sourceConnection: 'vcenter_default',
     targetConnection: 'vcenter_default_destination',
     tiers: new Map(
@@ -90,6 +92,7 @@ export function RecoveryAppBuilder({
 }: RecoveryAppBuilderProps) {
   const { t } = useTranslation()
   const platformProvidersQuery = usePlatformProviders()
+  const providersQuery = useProviders()
   const {
     groups,
     isLoading: areGroupsLoading,
@@ -255,8 +258,17 @@ export function RecoveryAppBuilder({
       alert(t('alerts.pleaseEnterDescription'))
       return
     }
+    const platformIsAvailable = providersQuery.data?.some(
+      provider => (provider.type === 'VMWARE' || provider.type === 'IBM_POWER')
+        && provider.id === formState.platform
+        && provider.credentialStatus === 'ok',
+    ) ?? false
+    if (!platformIsAvailable) {
+      alert(t('recovery.application.validation.platformRequired'))
+      return
+    }
     const platformProviderIsAvailable = platformProvidersQuery.data?.some(
-      provider => provider.id === formState.platform && provider.credentialStatus === 'ok',
+      provider => provider.id === formState.orchestrationProviderId && provider.credentialStatus === 'ok',
     ) ?? false
     if (!platformProviderIsAvailable) {
       alert(t('recovery.application.validation.platformProviderRequired'))
@@ -285,7 +297,12 @@ export function RecoveryAppBuilder({
                 description: formState.description,
                 environment: formState.environment,
                 platform: formState.platform,
+                orchestrationProviderId: formState.orchestrationProviderId,
               }}
+              providers={providersQuery.data ?? []}
+              providersLoading={providersQuery.isLoading}
+              providersError={providersQuery.error instanceof Error ? providersQuery.error : null}
+              onRetryProviders={() => { void providersQuery.refetch() }}
               platformProviders={platformProvidersQuery.data ?? []}
               platformProvidersLoading={platformProvidersQuery.isLoading}
               platformProvidersError={platformProvidersQuery.error instanceof Error ? platformProvidersQuery.error : null}

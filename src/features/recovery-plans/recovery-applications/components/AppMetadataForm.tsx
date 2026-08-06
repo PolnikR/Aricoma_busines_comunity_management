@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
@@ -13,7 +14,12 @@ interface AppMetadataFormProps {
     description: string
     environment: 'dev' | 'staging' | 'prod'
     platform: string
+    orchestrationProviderId: string
   }
+  providers?: ProviderRecord[]
+  providersLoading?: boolean
+  providersError?: Error | null
+  onRetryProviders?: () => void
   platformProviders?: PlatformProviderRecord[]
   platformProvidersLoading?: boolean
   platformProvidersError?: Error | null
@@ -24,6 +30,10 @@ interface AppMetadataFormProps {
 export function AppMetadataForm({
   onMetadataChange,
   initialValues,
+  providers = [],
+  providersLoading = false,
+  providersError = null,
+  onRetryProviders,
   platformProviders = [],
   platformProvidersLoading = false,
   platformProvidersError = null,
@@ -38,11 +48,22 @@ export function AppMetadataForm({
     initialValues?.environment ?? 'dev'
   )
   const [platform, setPlatform] = useState(initialValues?.platform ?? '')
+  const [orchestrationProviderId, setOrchestrationProviderId] = useState(
+    initialValues?.orchestrationProviderId ?? '',
+  )
+  const eligibleProviders = providers.filter(
+    provider => (provider.type === 'VMWARE' || provider.type === 'IBM_POWER')
+      && provider.credentialStatus === 'ok',
+  )
+  const selectedPlatformIsMissing = Boolean(
+    platform && !eligibleProviders.some(provider => provider.id === platform),
+  )
   const eligiblePlatformProviders = platformProviders.filter(
     provider => provider.credentialStatus === 'ok',
   )
-  const selectedPlatformIsMissing = Boolean(
-    platform && !eligiblePlatformProviders.some(provider => provider.id === platform),
+  const selectedOrchestrationProviderIsMissing = Boolean(
+    orchestrationProviderId
+    && !eligiblePlatformProviders.some(provider => provider.id === orchestrationProviderId),
   )
 
   const handleChange = (field: string, value: string) => {
@@ -66,6 +87,10 @@ export function AppMetadataForm({
       case 'platform':
         setPlatform(value)
         onMetadataChange?.({ platform: value })
+        break
+      case 'orchestrationProviderId':
+        setOrchestrationProviderId(value)
+        onMetadataChange?.({ orchestrationProviderId: value })
         break
     }
   }
@@ -131,19 +156,53 @@ export function AppMetadataForm({
         </Select>
       </Field>
 
+      <Field label={t('forms.platform')} htmlFor="application-platform">
+        <Select
+          id="application-platform"
+          value={platform}
+          onChange={e => { handleChange('platform', e.target.value); }}
+          disabled={providersLoading || providersError !== null}
+          required
+        >
+          <option value="">
+            {providersLoading ? t('platformProviders.loading') : t('forms.platformSelect')}
+          </option>
+          {selectedPlatformIsMissing ? (
+            <option value={platform}>{t('providers.credentials.unavailable').replace('{id}', platform)}</option>
+          ) : null}
+          {eligibleProviders.map(provider => (
+            <option key={provider.id} value={provider.id}>
+              {provider.name} - {provider.type}
+            </option>
+          ))}
+        </Select>
+        {providersError ? (
+          <p className="mt-1 text-xs text-red-600" role="alert">
+            {t('platformProviders.loadFailed')}{' '}
+            {onRetryProviders ? (
+              <button type="button" className="font-semibold underline" onClick={onRetryProviders}>
+                {t('buttons.retry')}
+              </button>
+            ) : null}
+          </p>
+        ) : null}
+      </Field>
+
       <Field label={t('forms.platformProvider')} htmlFor="application-platform-provider">
         <Select
           id="application-platform-provider"
-          value={platform}
-          onChange={e => { handleChange('platform', e.target.value); }}
+          value={orchestrationProviderId}
+          onChange={e => { handleChange('orchestrationProviderId', e.target.value); }}
           disabled={platformProvidersLoading || platformProvidersError !== null}
           required
         >
           <option value="">
             {platformProvidersLoading ? t('platformProviders.loading') : t('forms.platformProviderSelect')}
           </option>
-          {selectedPlatformIsMissing ? (
-            <option value={platform}>{t('providers.credentials.unavailable').replace('{id}', platform)}</option>
+          {selectedOrchestrationProviderIsMissing ? (
+            <option value={orchestrationProviderId}>
+              {t('providers.credentials.unavailable').replace('{id}', orchestrationProviderId)}
+            </option>
           ) : null}
           {eligiblePlatformProviders.map(provider => (
             <option key={provider.id} value={provider.id}>
