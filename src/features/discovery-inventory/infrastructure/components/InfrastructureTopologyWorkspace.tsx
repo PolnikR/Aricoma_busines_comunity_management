@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Card } from '@/shared/components/card/Card'
 import { applyTopologyNodePositionOverrides } from '../layout/applyNodePositionOverrides'
 import { layoutInfrastructureTopology } from '../layout/layoutInfrastructureTopology'
@@ -44,26 +44,51 @@ export function InfrastructureTopologyWorkspace({
 }: InfrastructureTopologyWorkspaceProps) {
   const { t } = useTranslation()
   const [filters, setFilters] = useState(defaultInfrastructureTopologyFilters)
-  const deferredSearch = useDeferredValue(filters.search)
+  const [debouncedSearch, setDebouncedSearch] = useState(filters.search)
   const [layoutResult, setLayoutResult] = useState<LayoutResult | null>(null)
   const [layoutError, setLayoutError] = useState<LayoutError | null>(null)
   const [isManualLayouting, setIsManualLayouting] = useState(false)
   const [fitViewRequest, setFitViewRequest] = useState(0)
   const layoutRequestId = useRef(0)
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { overrides, setOverride, clearOverrides } = useTopologyNodePositionOverrides(positionScope)
   const overridesRef = useRef(overrides)
 
   useEffect(() => {
     overridesRef.current = overrides
   }, [overrides])
+
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearch(filters.search)
+    }, 250)
+
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    }
+  }, [filters.search])
   const filterOptions = useMemo(
     () => getInfrastructureTopologyFilterOptions(topology),
     [topology],
   )
   const effectiveFilters = useMemo<InfrastructureTopologyFilters>(() => ({
-    ...filters,
-    search: deferredSearch,
-  }), [deferredSearch, filters])
+    search: debouncedSearch,
+    powerState: filters.powerState,
+    host: filters.host,
+    showDatastores: filters.showDatastores,
+    system: filters.system,
+    partitionKind: filters.partitionKind,
+    partitionState: filters.partitionState,
+  }), [
+    debouncedSearch,
+    filters.powerState,
+    filters.host,
+    filters.showDatastores,
+    filters.system,
+    filters.partitionKind,
+    filters.partitionState,
+  ])
   const filteredTopology = useMemo(
     () => filterInfrastructureTopology(topology, effectiveFilters),
     [effectiveFilters, topology],

@@ -1,4 +1,4 @@
-import type ELKInstance from 'elkjs-runtime'
+import type ELKInstance from 'elkjs'
 import type {
   InfrastructureTopology,
   InfrastructureTopologyNode,
@@ -43,8 +43,9 @@ const nodeSizes: Record<InfrastructureTopologyNodeKind, TopologyNodeSize> = {
 async function getElkInstance() {
   if (elkInstance) return elkInstance
 
-  const { default: ELK } = await import('elkjs-runtime')
-  elkInstance = new ELK()
+  const { default: ELK } = await import('elkjs')
+  const workerUrl = new URL('elkjs/lib/elk-worker.js', import.meta.url).href
+  elkInstance = new ELK({ workerUrl })
   return elkInstance
 }
 

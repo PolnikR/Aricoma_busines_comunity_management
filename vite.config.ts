@@ -8,7 +8,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      'elkjs-runtime': path.resolve(__dirname, './node_modules/elkjs/lib/elk.bundled.js'),
     },
   },
   server: {

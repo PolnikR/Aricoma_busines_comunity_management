@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ComponentProps, ReactNode } from 'react'
-import { LanguageProvider } from '@/contexts/LanguageContext'
+import { LanguageProvider } from '@/contexts/LanguageProvider'
 import { DatastoreNode } from './DatastoreNode'
 
 vi.mock('./TopologyNodeShell', () => ({

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from 'react'
+import { useEffect, useMemo } from 'react'
 import {
   Background,
   BackgroundVariant,
@@ -29,6 +29,13 @@ interface InfrastructureTopologyCanvasProps {
   onNodePositionChange?: (nodeId: string, position: { x: number; y: number }) => void
 }
 
+const miniMapNodeColor = (node: Node) => {
+  return getNodeColor({
+    type: node.type,
+    data: node.data,
+  })
+}
+
 function InfrastructureTopologyCanvasContent({
   topology,
   fitViewRequest = 0,
@@ -42,12 +49,6 @@ function InfrastructureTopologyCanvasContent({
   )
   const [edges, setEdges, onEdgesChange] = useEdgesState(flowElements.edges)
   const { fitView } = useReactFlow()
-  const miniMapNodeColor = useCallback((node: Node) => {
-    return getNodeColor({
-      type: node.type,
-      data: node.data,
-    })
-  }, [])
 
   useEffect(() => {
     setNodes(flowElements.nodes)
