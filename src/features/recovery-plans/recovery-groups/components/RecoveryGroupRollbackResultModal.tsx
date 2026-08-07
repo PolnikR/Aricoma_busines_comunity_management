@@ -2,8 +2,9 @@ import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { DetailRow } from '@/shared/components/data-table'
 import { Modal } from '@/shared/components/modal/Modal'
-import { CheckIcon } from '@/shared/icons/Icons'
+import { CheckIcon, ExternalLinkIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
+import { EXTERNAL_SERVICES } from '@/config/externalServices'
 import type { RollbackReport } from '../api/schemas/recoveryGroupsSchema'
 import { isRollbackClean } from '../utils/rollbackReport'
 
@@ -58,7 +59,17 @@ export function RecoveryGroupRollbackResultModal({
         {report.airflow?.dag_id ? (
           <DetailRow
             label={t('recoveryGroups.rollback.resultDagId')}
-            value={<span className="font-mono text-xs">{report.airflow.dag_id}</span>}
+            value={
+              <a
+                href={EXTERNAL_SERVICES.airflow.dagsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-mono text-xs text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
+              >
+                {report.airflow.dag_id}
+                <ExternalLinkIcon className="size-3 shrink-0" />
+              </a>
+            }
           />
         ) : null}
 

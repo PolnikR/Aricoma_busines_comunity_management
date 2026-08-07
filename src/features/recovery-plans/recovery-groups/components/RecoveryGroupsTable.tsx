@@ -14,7 +14,9 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
+import { ExternalLinkIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
+import { EXTERNAL_SERVICES } from '@/config/externalServices'
 import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
 import { toRecoveryGroupJson } from '../helpers/mapRecoveryGroups'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
@@ -407,7 +409,21 @@ export function RecoveryGroupsTable({
             />
             <DetailRow
               label={t('tables.recoveryGroups.airflowRunId')}
-              value={selected.airflowRunId ? <span className="font-mono">{selected.airflowRunId}</span> : '—'}
+              value={
+                selected.airflowRunId ? (
+                  <a
+                    href={EXTERNAL_SERVICES.airflow.dagsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
+                  >
+                    {selected.airflowRunId}
+                    <ExternalLinkIcon className="size-3.5 shrink-0" />
+                  </a>
+                ) : (
+                  '—'
+                )
+              }
             />
             <DetailRow
               label={t('tables.recoveryGroups.status')}
