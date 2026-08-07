@@ -312,7 +312,7 @@ export function RecoveryGroupsTable({
         />
       ) : null}
 
-      {openMenuId && currentMenuGroup && (
+      {openMenuId && currentMenuGroup && !currentMenuGroup.pushToOrchestrator && (
         <RecoveryGroupContextMenu
           triggerRef={triggerRefForMenu}
           open={true}
@@ -327,12 +327,35 @@ export function RecoveryGroupsTable({
           delete={() => {
             setDeleteTarget(currentMenuGroup)
           }}
-          rollback={currentMenuGroup.pushToOrchestrator ? {
-            label: t('recoveryGroups.rollback.button'),
-            onRollback: () => { setRollbackTarget(currentMenuGroup) },
-            disabled: !currentMenuGroup.orchestrationProviderId || isRollingBack,
-            disabledTitle: !currentMenuGroup.orchestrationProviderId ? t('recoveryGroups.rollback.disabledTitle') : undefined,
-          } : undefined}
+        />
+      )}
+      {openMenuId && currentMenuGroup && currentMenuGroup.pushToOrchestrator && (
+        <RecoveryGroupContextMenu
+          triggerRef={triggerRefForMenu}
+          open={true}
+          onClose={() => { setOpenMenuId(null) }}
+          ariaLabel={`${t('tables.recoveryGroups.actions')} for ${currentMenuGroup.name}`}
+          editLabel={t('buttons.edit')}
+          deleteLabel={t('buttons.delete')}
+          edit={() => {
+            onEdit(openMenuId)
+            setSelectedId(null)
+          }}
+          delete={() => {
+            setDeleteTarget(currentMenuGroup)
+          }}
+          rollback={currentMenuGroup.orchestrationProviderId
+            ? {
+              label: t('recoveryGroups.rollback.button'),
+              onRollback: () => { setRollbackTarget(currentMenuGroup) },
+              disabled: isRollingBack,
+            }
+            : {
+              label: t('recoveryGroups.rollback.button'),
+              onRollback: () => { setRollbackTarget(currentMenuGroup) },
+              disabled: true,
+              disabledTitle: t('recoveryGroups.rollback.disabledTitle'),
+            }}
         />
       )}
 

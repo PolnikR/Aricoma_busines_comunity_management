@@ -54,7 +54,7 @@ function getSubmissionBadgeColor(status: string): 'success' | 'error' {
   return status === 'ok' ? 'success' : 'error'
 }
 
-function getBaseColumns(t: ReturnType<typeof useTranslation>['t'], providers?: Provider[]): ColumnDef<RecoveryApplicationListItem>[] {
+function getBaseColumns(t: ReturnType<typeof useTranslation>['t'], providers?: { id: string; name: string }[]): ColumnDef<RecoveryApplicationListItem>[] {
   return [
   {
     id: 'name',

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useCallback } from 'react'
 import {
   Background,
   BackgroundVariant,
@@ -10,6 +10,7 @@ import {
   useNodesState,
   useReactFlow,
   type OnNodeDrag,
+  type Node,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import type { PositionedInfrastructureTopology } from '../layout/layoutInfrastructureTopology'
@@ -41,6 +42,12 @@ function InfrastructureTopologyCanvasContent({
   )
   const [edges, setEdges, onEdgesChange] = useEdgesState(flowElements.edges)
   const { fitView } = useReactFlow()
+  const miniMapNodeColor = useCallback((node: Node) => {
+    return getNodeColor({
+      type: node.type,
+      data: node.data,
+    })
+  }, [])
 
   useEffect(() => {
     setNodes(flowElements.nodes)
@@ -100,7 +107,7 @@ function InfrastructureTopologyCanvasContent({
         position="bottom-right"
         pannable
         zoomable
-        nodeColor={getNodeColor}
+        nodeColor={miniMapNodeColor}
         maskColor="var(--app-topology-mask)"
         className="h-24! w-36! cursor-grab! rounded-xl! border! border-border! bg-surface! shadow-sm! active:cursor-grabbing!"
       />
