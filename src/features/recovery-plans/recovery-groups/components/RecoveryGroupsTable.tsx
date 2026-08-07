@@ -338,7 +338,7 @@ export function RecoveryGroupsTable({
             setDeleteTarget(currentMenuGroup)
           }}
           rollback={{
-            label: isRollingBack ? t('recoveryGroups.rollback.rolling') : t('recoveryGroups.rollback.button'),
+            label: t('recoveryGroups.rollback.button'),
             onRollback: () => { setRollbackTarget(currentMenuGroup) },
             disabled: !currentMenuGroup.pushToOrchestrator || isRollingBack,
             ...(!currentMenuGroup.pushToOrchestrator && {
@@ -458,7 +458,9 @@ export function RecoveryGroupsTable({
         title={t('recoveryGroups.rollback.confirmTitle')}
         message={t('recoveryGroups.rollback.confirmMessage').replace('{groupName}', rollbackTarget?.name ?? '')}
         confirmLabel={t('recoveryGroups.rollback.confirmLabel')}
+        loadingLabel={t('recoveryGroups.rollback.rolling')}
         cancelLabel={t('buttons.cancel')}
+        isLoading={isRollingBack}
         tone="danger"
         onCancel={() => { setRollbackTarget(null) }}
         onConfirm={() => {
