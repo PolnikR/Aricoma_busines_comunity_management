@@ -329,7 +329,7 @@ export function RecoveryGroupsTable({
           }}
         />
       )}
-      {openMenuId && currentMenuGroup && currentMenuGroup.pushToOrchestrator && (
+      {openMenuId && currentMenuGroup && (
         <RecoveryGroupContextMenu
           triggerRef={triggerRefForMenu}
           open={true}
@@ -344,18 +344,16 @@ export function RecoveryGroupsTable({
           delete={() => {
             setDeleteTarget(currentMenuGroup)
           }}
-          rollback={currentMenuGroup.orchestrationProviderId
-            ? {
-              label: t('recoveryGroups.rollback.button'),
-              onRollback: () => { setRollbackTarget(currentMenuGroup) },
-              disabled: isRollingBack,
-            }
-            : {
-              label: t('recoveryGroups.rollback.button'),
-              onRollback: () => { setRollbackTarget(currentMenuGroup) },
-              disabled: true,
-              disabledTitle: t('recoveryGroups.rollback.disabledTitle'),
-            }}
+          rollback={{
+            label: t('recoveryGroups.rollback.button'),
+            onRollback: () => { setRollbackTarget(currentMenuGroup) },
+            disabled: !currentMenuGroup.pushToOrchestrator || !currentMenuGroup.orchestrationProviderId || isRollingBack,
+            ...((!currentMenuGroup.pushToOrchestrator || !currentMenuGroup.orchestrationProviderId) && {
+              disabledTitle: !currentMenuGroup.pushToOrchestrator
+                ? t('recoveryGroups.rollback.notConfiguredTitle')
+                : t('recoveryGroups.rollback.disabledTitle'),
+            }),
+          }}
         />
       )}
 
