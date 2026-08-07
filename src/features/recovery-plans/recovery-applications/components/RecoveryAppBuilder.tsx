@@ -7,9 +7,8 @@ import { useProviders } from '@/features/providers-connectors/providers/hooks/us
 import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
-import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import { cloneTier } from '../utils/recoveryApplicationFormMapper'
-import { isEligibleSourceProvider, isEligiblePlatformProvider } from '../utils/eligibleProviders'
+import { validateRecoveryApplication } from '../utils/validateRecoveryApplication'
 import type { RecoveryTier, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface RecoveryAppBuilderProps {
@@ -243,34 +242,17 @@ export function RecoveryAppBuilder({
   )
 
   const handleSave = () => {
-    if (!isValidRecoveryApplicationFileName(formState.fileName)) {
-      alert(t('recovery.application.validation.fileNameRequired'))
+    const validationError = validateRecoveryApplication(
+      formState,
+      providersQuery.data ?? [],
+      platformProvidersQuery.data ?? [],
+    )
+
+    if (validationError) {
+      alert(t(validationError.messageKey))
       return
     }
-    if (!formState.name.trim()) {
-      alert(t('alerts.pleaseEnterName'))
-      return
-    }
-    if (!formState.description.trim()) {
-      alert(t('alerts.pleaseEnterDescription'))
-      return
-    }
-    const platformIsAvailable = (providersQuery.data ?? [])
-      .some(provider => isEligibleSourceProvider(provider) && provider.id === formState.platform)
-    if (!platformIsAvailable) {
-      alert(t('recovery.application.validation.platformRequired'))
-      return
-    }
-    const platformProviderIsAvailable = (platformProvidersQuery.data ?? [])
-      .some(provider => isEligiblePlatformProvider(provider) && provider.id === formState.orchestrationProviderId)
-    if (!platformProviderIsAvailable) {
-      alert(t('recovery.application.validation.platformProviderRequired'))
-      return
-    }
-    if (Array.from(formState.tiers.values()).some(tier => !tier.recovery_group)) {
-      alert(t('recovery.application.validation.recoveryGroupRequired'))
-      return
-    }
+
     onSave?.(formState)
   }
 
