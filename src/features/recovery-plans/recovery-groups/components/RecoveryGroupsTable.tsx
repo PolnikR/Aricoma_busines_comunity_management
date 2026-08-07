@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
@@ -19,6 +19,7 @@ import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePo
 import { toRecoveryGroupJson } from '../helpers/mapRecoveryGroups'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupRollbackResultModal } from './RecoveryGroupRollbackResultModal'
+import { RecoveryGroupContextMenu } from './RecoveryGroupContextMenu'
 import {
   getResourceTypeLabelKey,
   getSourceCategoryLabelKey,
@@ -94,6 +95,7 @@ export function RecoveryGroupsTable({
   const [rollbackTarget, setRollbackTarget] = useState<RecoveryGroup | null>(null)
   const [rollbackResult, setRollbackResult] = useState<{ groupName: string; report: RollbackReport } | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [isRollingBack, setIsRollingBack] = useState(false)
 
   const filterOptions = useMemo(() => ({
     workloadTypes: Array.from(new Set(groups.map(group => group.workloadType))).sort(),
@@ -182,72 +184,43 @@ export function RecoveryGroupsTable({
       id: 'actions',
       header: '',
       cell: group => (
-        <div className="relative">
-          <Button
-            size="xs"
-            variant="ghost"
-            onClick={(event: React.MouseEvent) => {
-              event.stopPropagation()
-              setOpenMenuId(openMenuId === group.id ? null : group.id)
-            }}
-          >
-            ⋯
-          </Button>
-          {openMenuId === group.id && (
-            <div className="absolute right-0 top-full mt-1 min-w-40 bg-surface border border-border rounded-lg shadow-lg z-10">
-              <button
-                className="w-full text-left px-4 py-2 text-sm hover:bg-surface-subtle transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEdit(group.id)
-                  setOpenMenuId(null)
-                  setSelectedId(null)
-                }}
-              >
-                {t('buttons.edit')}
-              </button>
-              <button
-                className="w-full text-left px-4 py-2 text-sm hover:bg-surface-subtle transition-colors border-t border-border"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setDeleteTarget(group)
-                  setOpenMenuId(null)
-                }}
-              >
-                {t('buttons.delete')}
-              </button>
-              {group.pushToOrchestrator && (
-                <button
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-surface-subtle transition-colors border-t border-border text-danger disabled:opacity-50"
-                  disabled={!group.orchestrationProviderId}
-                  title={!group.orchestrationProviderId ? t('recoveryGroups.rollback.disabledTitle') : undefined}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (group.orchestrationProviderId) {
-                      setRollbackTarget(group)
-                      setOpenMenuId(null)
-                    }
-                  }}
-                >
-                  {t('recoveryGroups.rollback.button')}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+        <Button
+          data-recovery-group-menu-trigger={group.id}
+          size="xs"
+          variant="ghost"
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation()
+            setOpenMenuId(openMenuId === group.id ? null : group.id)
+          }}
+        >
+          ⋯
+        </Button>
       ),
     },
-  ], [t, openMenuId, onEdit])
+  ], [t, openMenuId])
 
   const prepareFilters = () => {
     setPendingFilters(filters)
   }
+
+  const triggerRefForMenu = useRef<HTMLButtonElement | null>(null)
 
   const clearFilters = () => {
     setFilters(EMPTY_FILTERS)
     setPendingFilters(EMPTY_FILTERS)
     table.setPage(1)
   }
+
+  const currentMenuGroup = useMemo(
+    () => rows.find(g => g.id === openMenuId) ?? null,
+    [rows, openMenuId],
+  )
+
+  useEffect(() => {
+    if (!openMenuId) return
+    const button = document.querySelector(`[data-recovery-group-menu-trigger="${openMenuId}"]`)
+    triggerRefForMenu.current = button instanceof HTMLButtonElement ? button : null
+  }, [openMenuId])
 
   return (
     <div className="flex flex-col">
@@ -338,6 +311,30 @@ export function RecoveryGroupsTable({
           onPageSizeChange={table.setPageSize}
         />
       ) : null}
+
+      {openMenuId && currentMenuGroup && (
+        <RecoveryGroupContextMenu
+          triggerRef={triggerRefForMenu}
+          open={true}
+          onClose={() => { setOpenMenuId(null) }}
+          ariaLabel={`${t('tables.recoveryGroups.actions')} for ${currentMenuGroup.name}`}
+          editLabel={t('buttons.edit')}
+          deleteLabel={t('buttons.delete')}
+          edit={() => {
+            onEdit(openMenuId)
+            setSelectedId(null)
+          }}
+          delete={() => {
+            setDeleteTarget(currentMenuGroup)
+          }}
+          rollback={currentMenuGroup.pushToOrchestrator ? {
+            label: t('recoveryGroups.rollback.button'),
+            onRollback: () => { setRollbackTarget(currentMenuGroup) },
+            disabled: !currentMenuGroup.orchestrationProviderId || isRollingBack,
+            disabledTitle: !currentMenuGroup.orchestrationProviderId ? t('recoveryGroups.rollback.disabledTitle') : undefined,
+          } : undefined}
+        />
+      )}
 
       <DetailDrawer
         open={selected !== null}
@@ -443,6 +440,7 @@ export function RecoveryGroupsTable({
           const groupId = rollbackTarget.id
           const providerId = rollbackTarget.orchestrationProviderId
           const groupName = rollbackTarget.name
+          setIsRollingBack(true)
           void (async () => {
             try {
               const report = await onRollback(groupId, providerId)
@@ -451,6 +449,8 @@ export function RecoveryGroupsTable({
               setRollbackTarget(null)
             } catch {
               setRollbackTarget(null)
+            } finally {
+              setIsRollingBack(false)
             }
           })()
         }}
