@@ -133,7 +133,11 @@ export function RecoveryGroupContextMenu({
       {rollback && (
         <button
           role="menuitem"
-          className="w-full text-left px-4 py-2 text-sm hover:bg-surface-subtle transition-colors border-t border-border text-red-600 disabled:opacity-50 disabled:cursor-not-allowed last:rounded-b-lg"
+          className={`w-full text-left px-4 py-2 text-sm transition-colors border-t border-border last:rounded-b-lg ${
+            rollback.disabled
+              ? 'text-red-400 opacity-50 cursor-not-allowed'
+              : 'text-red-600 hover:bg-surface-subtle'
+          }`}
           disabled={rollback.disabled}
           title={rollback.disabledTitle}
           onClick={(e) => {
