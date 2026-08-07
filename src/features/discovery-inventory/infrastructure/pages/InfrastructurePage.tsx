@@ -6,10 +6,8 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
-import type { FlashSystemVolumeTreeView, PowerInventory } from '../../model/discoveryTypes'
-import { mapInventoryToTopology } from '../helpers/mapInventoryToTopology'
-import { mapPowerInventoryToTopology } from '../helpers/mapPowerInventoryToTopology'
-import { mapFlashSystemVolumeTreeToTopology } from '../helpers/mapFlashSystemVolumeTreeToTopology'
+import type { FlashSystemVolumeTreeView } from '../../model/discoveryTypes'
+import { resolveInfrastructureTopology } from '../helpers/resolveInfrastructureTopology'
 import { useInfrastructureInventory } from '../hooks/useInfrastructureInventory'
 import { useFlashSystemVolumeTree } from '../hooks/useFlashSystemVolumeTree'
 import {
@@ -21,10 +19,6 @@ import type { InfrastructureTopologyPlatform } from '../model/topologyTypes'
 import { InfrastructureSourceSelector } from '../components/InfrastructureSourceSelector'
 import { InfrastructureTopologySkeleton } from '../components/InfrastructureTopologySkeleton'
 import { InfrastructureTopologyWorkspace } from '../components/InfrastructureTopologyWorkspace'
-
-function isPowerInventory(inventory: unknown): inventory is PowerInventory {
-  return Boolean(inventory && typeof inventory === 'object' && 'partitions' in inventory)
-}
 
 function parseFlashSystemView(value: string | null): FlashSystemVolumeTreeView {
   return value === 'snapshot' || value === 'consistency_group' ? value : 'flat'
@@ -59,23 +53,12 @@ export function InfrastructurePage() {
   const topology = useMemo(() => {
     if (!selectedProvider) return null
 
-    if (platform === 'flashsystem') {
-      return flashSystemTreeQuery.data
-        ? mapFlashSystemVolumeTreeToTopology(flashSystemTreeQuery.data.nodes)
-        : null
-    }
-
-    if (!inventoryQuery.data) return null
-
-    if (selectedProvider.type === 'IBM_POWER') {
-      return isPowerInventory(inventoryQuery.data)
-        ? mapPowerInventoryToTopology(inventoryQuery.data)
-        : null
-    }
-
-    return isPowerInventory(inventoryQuery.data)
-      ? null
-      : mapInventoryToTopology(inventoryQuery.data)
+    return resolveInfrastructureTopology(
+      platform,
+      inventoryQuery.data,
+      flashSystemTreeQuery.data,
+      selectedProvider.type,
+    )
   }, [flashSystemTreeQuery.data, inventoryQuery.data, platform, selectedProvider])
   const activeQuery = platform === 'flashsystem' ? flashSystemTreeQuery : inventoryQuery
 
