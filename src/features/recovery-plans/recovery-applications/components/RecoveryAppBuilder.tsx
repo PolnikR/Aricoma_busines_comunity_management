@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, memo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
@@ -233,6 +233,15 @@ export function RecoveryAppBuilder({
     onDirtyChange?.(true)
   }, [onDirtyChange])
 
+  const sidebarItems = useMemo(
+    () => availableGroups.map(group => group.id),
+    [availableGroups],
+  )
+  const tierCanvasTiers = useMemo(
+    () => Object.fromEntries(formState.tiers),
+    [formState.tiers],
+  )
+
   const handleSave = () => {
     if (!isValidRecoveryApplicationFileName(formState.fileName)) {
       alert(t('recovery.application.validation.fileNameRequired'))
@@ -310,7 +319,7 @@ export function RecoveryAppBuilder({
           {/* Recovery Group Sidebar */}
           <div className="border-b lg:border-b-0 lg:border-r border-border overflow-y-auto custom-scrollbar">
             <ResourceSidebar
-              items={availableGroups.map(group => group.id)}
+              items={sidebarItems}
               itemLabels={groupLabels}
               title={t('recovery.sidebar.availableGroups')}
               searchPlaceholder={t('recovery.sidebar.searchGroupsPlaceholder')}
@@ -332,7 +341,7 @@ export function RecoveryAppBuilder({
           {/* Tier Canvas */}
           <div className="overflow-y-auto custom-scrollbar p-4">
             <TierCanvas
-              tiers={Object.fromEntries(formState.tiers)}
+              tiers={tierCanvasTiers}
               recoveryGroupVmOptions={recoveryGroupVmOptions}
               onRecoveryGroupAdded={handleRecoveryGroupAdded}
               onRecoveryGroupRemoved={handleRecoveryGroupRemoved}
