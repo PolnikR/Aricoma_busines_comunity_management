@@ -12,15 +12,18 @@ function toFormEnvironment(environment: string): 'dev' | 'staging' | 'prod' {
   return KNOWN_ENVIRONMENTS.has(environment) ? environment as 'dev' | 'staging' | 'prod' : 'dev'
 }
 
-function cloneTier(tier: RecoveryTier): RecoveryTier {
+export function cloneTier(tier: RecoveryTier): RecoveryTier {
+  if (!tier.recovery_group) {
+    return { ...tier }
+  }
+
   return {
     ...tier,
-    ...(tier.recovery_group ? {
-      recovery_group: {
-        ...tier.recovery_group,
-        vms: tier.recovery_group.vms.map((vm) => ({ ...vm })),
-      },
-    } : {}),
+    recovery_group: {
+      ...tier.recovery_group,
+      vms: tier.recovery_group.vms.map((vm) => ({ ...vm })),
+      volumes: tier.recovery_group.volumes?.map((vol) => ({ ...vol })),
+    },
   }
 }
 

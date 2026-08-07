@@ -6,12 +6,14 @@ import { DataTableSkeleton } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
 import { useRecoveryApplications } from '../hooks/useRecoveryApplications'
+import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
 import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 
 export function RecoveryApplicationsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
+  const { data: providers = [] } = useProviders()
 
   const handleEdit = (id: string): void => {
     const routeId = toRecoveryApplicationFileName(id)
@@ -72,6 +74,7 @@ export function RecoveryApplicationsListPage() {
           <div className="flex-1 flex flex-col min-h-0 bg-surface rounded-lg border border-border shadow-sm overflow-hidden">
             <RecoveryApplicationsTable
               applications={applications ?? []}
+              providers={providers}
               onEdit={handleEdit}
               error={error instanceof Error ? error : null}
               isRetrying={isFetching}

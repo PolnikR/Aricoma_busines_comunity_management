@@ -15,9 +15,11 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { Modal } from '@/shared/components/modal/Modal'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
+import type { Provider } from '@/features/providers-connectors/providers/model/providerTypes'
 
 interface RecoveryApplicationsTableProps {
   applications: RecoveryApplicationListItem[]
+  providers?: Provider[]
   onEdit?: (id: string) => void
   error?: Error | null
   isRetrying?: boolean
@@ -43,17 +45,17 @@ function getStatusBadgeColor(status: 'Active' | 'Draft'): 'success' | 'warning' 
   return status === 'Active' ? 'success' : 'warning'
 }
 
-function getProviderLabel(platform: string): string {
-  if (platform.startsWith('VMware')) return 'VMware'
-  if (platform.startsWith('IBM')) return 'IBM PowerVM'
-  return platform || '—'
+function getProviderLabel(providerId: string, providers?: Provider[]): string {
+  if (!providerId) return '—'
+  const provider = providers?.find(p => p.id === providerId)
+  return provider?.name || providerId
 }
 
 function getSubmissionBadgeColor(status: string): 'success' | 'error' {
   return status === 'ok' ? 'success' : 'error'
 }
 
-function getBaseColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<RecoveryApplicationListItem>[] {
+function getBaseColumns(t: ReturnType<typeof useTranslation>['t'], providers?: Provider[]): ColumnDef<RecoveryApplicationListItem>[] {
   return [
   {
     id: 'name',
@@ -73,7 +75,7 @@ function getBaseColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Re
   {
     id: 'platform',
     header: t('tables.recovery.platform'),
-    cell: (app) => <span className="text-[13px] text-text-secondary">{getProviderLabel(app.data.application.platform)}</span>,
+    cell: (app) => <span className="text-[13px] text-text-secondary">{getProviderLabel(app.data.application.platform, providers)}</span>,
   },
   {
     id: 'tiers',
@@ -137,6 +139,7 @@ function JsonViewerModal({ isOpen, app, onClose }: JsonViewerModalProps) {
 
 export function RecoveryApplicationsTable({
   applications,
+  providers,
   onEdit,
   error = null,
   isRetrying = false,
@@ -169,7 +172,7 @@ export function RecoveryApplicationsTable({
   const activeFilterCount = Number(Boolean(filters.environment)) + Number(Boolean(filters.platform))
 
   const columns = useMemo(() => [
-    ...getBaseColumns(t),
+    ...getBaseColumns(t, providers),
     {
       id: 'json',
       header: t('tables.recovery.json'),
@@ -186,7 +189,7 @@ export function RecoveryApplicationsTable({
         </Button>
       ),
     },
-  ], [t])
+  ], [t, providers])
 
   const table = useTableState(rows, {
     searchFields: ['id'],

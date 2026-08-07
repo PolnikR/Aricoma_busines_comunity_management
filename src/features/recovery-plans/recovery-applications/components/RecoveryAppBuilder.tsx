@@ -8,6 +8,7 @@ import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
 import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
+import { cloneTier } from '../utils/recoveryApplicationFormMapper'
 import type { RecoveryTier, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface RecoveryAppBuilderProps {
@@ -35,20 +36,6 @@ const DEFAULT_TIERS: Record<string, RecoveryTier> = {
     order: 4,
     description: 'Web server group',
   },
-}
-
-function cloneTier(tier: RecoveryTier): RecoveryTier {
-  if (!tier.recovery_group) {
-    return { ...tier }
-  }
-
-  return {
-    ...tier,
-    recovery_group: {
-      ...tier.recovery_group,
-      vms: tier.recovery_group.vms.map(vm => ({ ...vm })),
-    },
-  }
 }
 
 function createInitialFormState(
