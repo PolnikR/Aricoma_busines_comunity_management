@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { EXTERNAL_SERVICES } from '@/config/externalServices'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { PlatformProvidersTable } from './PlatformProvidersTable'
 
@@ -45,7 +46,7 @@ describe('PlatformProvidersTable', () => {
     const user = userEvent.setup()
     render(
       <PlatformProvidersTable
-        providers={[{ ...baseProvider, url: 'http://10.99.99.55:8080/dags' }]}
+        providers={[{ ...baseProvider, url: EXTERNAL_SERVICES.airflow.dagsUrl }]}
         isLoading={false}
         error={null}
         isRetrying={false}
@@ -55,8 +56,8 @@ describe('PlatformProvidersTable', () => {
 
     await user.click(screen.getByText('Primary Airflow'))
 
-    const link = screen.getByRole('link', { name: /http:\/\/10\.99\.99\.55:8080\/dags/ })
-    expect(link).toHaveAttribute('href', 'http://10.99.99.55:8080/dags')
+    const link = screen.getByRole('link', { name: new RegExp(EXTERNAL_SERVICES.airflow.dagsUrl) })
+    expect(link).toHaveAttribute('href', EXTERNAL_SERVICES.airflow.dagsUrl)
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
   })

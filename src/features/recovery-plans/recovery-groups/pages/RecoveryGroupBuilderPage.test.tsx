@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { EXTERNAL_SERVICES } from '@/config/externalServices'
 import { RecoveryGroupBuilderPage } from './RecoveryGroupBuilderPage'
 import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 
@@ -32,7 +33,7 @@ vi.mock('../hooks/useRecoveryGroups', () => ({
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
   usePlatformProviders: () => ({
     data: [
-      { id: 'airflow-01', name: 'Primary Airflow', url: 'http://10.99.99.55:8080/dags' },
+      { id: 'airflow-01', name: 'Primary Airflow', url: EXTERNAL_SERVICES.airflow.dagsUrl },
     ],
   }),
 }))
