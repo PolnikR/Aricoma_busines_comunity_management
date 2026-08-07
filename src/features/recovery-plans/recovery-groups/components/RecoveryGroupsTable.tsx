@@ -323,7 +323,7 @@ export function RecoveryGroupsTable({
           rollback={{
             label: t('recoveryGroups.rollback.button'),
             onRollback: () => { setRollbackTarget(currentMenuGroup) },
-            disabled: !currentMenuGroup.pushToOrchestrator || isRollingBack,
+            disabled: !currentMenuGroup.pushToOrchestrator || !currentMenuGroup.orchestrationProviderId || isRollingBack,
             ...(!currentMenuGroup.pushToOrchestrator && {
               disabledTitle: t('recoveryGroups.rollback.notConfiguredTitle'),
             }),

@@ -51,7 +51,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center gap-2 ${confirmClassName}`}
+            className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${confirmClassName}`}
           >
             {isLoading && <Spinner />}
             {isLoading ? loadingLabel : confirmLabel}
