@@ -1,52 +1,58 @@
-# Implementation Plan: Remove Status Column from Recovery Groups Table
+# Implementation Plan: Add Loading State to Rollback Button
 
 ## Overview
 
-Delete the STATUS column from the recovery groups table. The status badge (Active/Draft) is derived from resource count and is not needed in the UI.
+Improve UX by showing loading state on the rollback button while waiting for API response. When user clicks the rollback button in the context menu, change the button text to "Rolling back" and disable it until the API responds. Then show the result modal.
 
 ## Architecture Decisions
 
-- **Remove status column only:** Delete the STATUS column definition (lines 150-157) from RecoveryGroupsTable.tsx
-- **Keep other columns intact:** ORCHESTRATION column and all other functionality remains unchanged
-- **No logic changes:** This is purely a UI/display change
+- **No new components:** Use existing context menu button state
+- **Button feedback:** Text changes to "Rolling back" and button becomes disabled during API call
+- **State tracking:** Use existing `isRollingBack` state variable
+- **Simple feedback:** Just the button change - no additional modals
 
 ## Task List
 
-### Phase 1: Remove Status Column
+### Phase 1: Update Rollback Flow
 
-**Task 1: Delete STATUS column from table**
+**Task 1: Update rollback button to show loading state**
 
-Remove the status column definition from the columns array in RecoveryGroupsTable.tsx (lines 150-157).
+Modify the rollback button in RecoveryGroupContextMenu to:
+1. Show "Rolling back" text while `disabled=true` and `isRollingBack=true`
+2. Keep the button disabled during API call
+3. Return to normal state when API responds
 
 **Acceptance criteria:**
-- [ ] STATUS column removed from table definition
-- [ ] Table renders correctly with remaining columns
-- [ ] No console errors or missing references
+- [ ] Rollback button text changes to "Rolling back" when clicked
+- [ ] Button is disabled during API call
+- [ ] Button re-enables after API response
+- [ ] Result modal appears after loading completes
 
 **Verification:**
-- [ ] Tests pass: `npm test`
-- [ ] Build succeeds: `npm run build`
-- [ ] Manual check: STATUS column no longer visible in table
+- [ ] Manual: Click rollback → button shows "Rolling back" → button disabled → result modal appears
+- [ ] No button visible state flashing
 
 **Dependencies:** None
 
 **Files likely touched:**
+- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupContextMenu.tsx`
 - `src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.tsx`
 
-**Estimated scope:** XS (remove 8 lines)
+**Estimated scope:** XS (update button rendering logic)
 
 ### Checkpoint: Complete
 - [ ] All tests pass
 - [ ] Build succeeds without errors
-- [ ] STATUS column removed from table
+- [ ] Button shows loading state during API call
 - [ ] Ready to merge
 
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 |------|--------|-----------|
-| Column references elsewhere | Very Low | Status column is only in UI definition, not used in filters or logic |
+| Button text truncation | Low | Text "Rolling back" fits in button |
+| User confusion | Low | Text clearly indicates action is in progress |
 
 ## Open Questions
 
-None.
+None — requirements are clear.

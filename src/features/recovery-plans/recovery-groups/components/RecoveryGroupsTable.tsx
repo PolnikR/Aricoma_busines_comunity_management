@@ -338,7 +338,7 @@ export function RecoveryGroupsTable({
             setDeleteTarget(currentMenuGroup)
           }}
           rollback={{
-            label: t('recoveryGroups.rollback.button'),
+            label: isRollingBack ? t('recoveryGroups.rollback.rolling') : t('recoveryGroups.rollback.button'),
             onRollback: () => { setRollbackTarget(currentMenuGroup) },
             disabled: !currentMenuGroup.pushToOrchestrator || isRollingBack,
             ...(!currentMenuGroup.pushToOrchestrator && {
