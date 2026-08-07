@@ -4,6 +4,7 @@ import { DetailRow } from '@/shared/components/data-table'
 import { Modal } from '@/shared/components/modal/Modal'
 import { CheckIcon, ExternalLinkIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
+import { EXTERNAL_SERVICES } from '@/config/externalServices'
 
 interface RecoveryGroupOrchestratorSuccessModalProps {
   open: boolean
@@ -34,15 +35,13 @@ export function RecoveryGroupOrchestratorSuccessModal({
           <Button variant="outline" className="flex-1" onClick={onClose}>
             {t('buttons.close')}
           </Button>
-          {providerUrl ? (
-            <Button
-              className="flex-1"
-              endIcon={<ExternalLinkIcon className="size-4" />}
-              onClick={() => { window.open(providerUrl, '_blank', 'noopener,noreferrer') }}
-            >
-              {t('recoveryGroups.orchestratorSuccessModal.viewInAirflow')}
-            </Button>
-          ) : null}
+          <Button
+            className="flex-1"
+            endIcon={<ExternalLinkIcon className="size-4" />}
+            onClick={() => { window.open(EXTERNAL_SERVICES.airflow.dagsUrl, '_blank', 'noopener,noreferrer') }}
+          >
+            {t('recoveryGroups.orchestratorSuccessModal.viewInAirflow')}
+          </Button>
         </>
       )}
     >
