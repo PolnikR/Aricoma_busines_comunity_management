@@ -347,11 +347,9 @@ export function RecoveryGroupsTable({
           rollback={{
             label: t('recoveryGroups.rollback.button'),
             onRollback: () => { setRollbackTarget(currentMenuGroup) },
-            disabled: !currentMenuGroup.pushToOrchestrator || !currentMenuGroup.orchestrationProviderId || isRollingBack,
-            ...((!currentMenuGroup.pushToOrchestrator || !currentMenuGroup.orchestrationProviderId) && {
-              disabledTitle: !currentMenuGroup.pushToOrchestrator
-                ? t('recoveryGroups.rollback.notConfiguredTitle')
-                : t('recoveryGroups.rollback.disabledTitle'),
+            disabled: !currentMenuGroup.pushToOrchestrator || isRollingBack,
+            ...(!currentMenuGroup.pushToOrchestrator && {
+              disabledTitle: t('recoveryGroups.rollback.notConfiguredTitle'),
             }),
           }}
         />
