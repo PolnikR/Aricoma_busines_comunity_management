@@ -36,19 +36,19 @@ export function useRecoveryGroupRelatedVolumes(
   const queryEnabled = enabled && Boolean(vmProviderId) && Boolean(flashcopyProviderId)
 
   const results = useQueries({
-    queries: vmNames.map(vmName => ({
+    queries: queryEnabled ? vmNames.map(vmName => ({
       queryKey: discoveryInventoryKeys.vdisksByVm(
         vmName,
         vmProviderId ?? undefined,
         flashcopyProviderId ?? undefined,
       ),
       queryFn: () => fetchVdisksByVm(vmName, vmProviderId ?? undefined, flashcopyProviderId ?? undefined),
-      enabled: queryEnabled,
+      enabled: true,
       staleTime: DISCOVERY_INVENTORY_STALE_TIME_MS,
       gcTime: DISCOVERY_INVENTORY_GC_TIME_MS,
       refetchOnWindowFocus: false,
       retry: 1,
-    })),
+    })) : [],
   })
 
   const discoveredVolumeNames = Array.from(new Set(

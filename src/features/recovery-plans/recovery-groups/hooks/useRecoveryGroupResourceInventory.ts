@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   fetchFlashSystemInventory,
@@ -111,18 +112,20 @@ export function useRecoveryGroupResourceInventory(
     ? getInventoryQueryDefinition(workloadType, providerId)
     : null
 
+  const selectFn = useCallback((inventory: ResourceInventory) => ({
+    resourceNames: Array.from(new Set(
+      getResourceNames(inventory).map(name => name.trim()).filter(Boolean),
+    )),
+    vmMetadataByName: workloadType ? getVmMetadataByName(workloadType, inventory) : {},
+  }), [workloadType])
+
   return useQuery<ResourceInventory, Error, RecoveryGroupResourceInventory>({
     queryKey: definition?.queryKey ?? [...discoveryInventoryKeys.all, 'inactive'],
     queryFn: () => {
       if (!definition) throw new Error('A workload type and provider are required')
       return definition.queryFn()
     },
-    select: inventory => ({
-      resourceNames: Array.from(new Set(
-        getResourceNames(inventory).map(name => name.trim()).filter(Boolean),
-      )),
-      vmMetadataByName: workloadType ? getVmMetadataByName(workloadType, inventory) : {},
-    }),
+    select: selectFn,
     enabled: enabled && definition !== null,
     staleTime: DISCOVERY_INVENTORY_STALE_TIME_MS,
     gcTime: DISCOVERY_INVENTORY_GC_TIME_MS,
