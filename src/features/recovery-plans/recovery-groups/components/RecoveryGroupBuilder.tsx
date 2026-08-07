@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
+import { Spinner } from '@/shared/components/spinner/Spinner'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
 import { isProgrammaticIdAvailable } from '@/shared/utils/programmaticId'
@@ -400,12 +401,7 @@ export function RecoveryGroupBuilder({
               ) : (
                 <Button
                   disabled={!canCreate || isSaving}
-                  startIcon={isSaving ? (
-                    <span
-                      aria-hidden="true"
-                      className="size-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"
-                    />
-                  ) : undefined}
+                  startIcon={isSaving ? <Spinner /> : undefined}
                   onClick={() => { onCreate(draft) }}
                 >
                   {isSaving ? t('messages.saving') : (submitLabel ?? t('pages.recoveryGroupBuilder.createButton'))}

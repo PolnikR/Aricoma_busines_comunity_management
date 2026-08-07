@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
+import { Spinner } from '@/shared/components/spinner/Spinner'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
@@ -134,7 +135,7 @@ export function SnapshotPolicyModal({ open, onClose, existingPolicies, policy }:
         footer={(
           <>
             <Button onClick={requestClose} disabled={submitPolicy.isPending} size="sm" variant="outline" className="flex-1">{t('buttons.cancel')}</Button>
-            <Button onClick={handleSubmit} disabled={submitPolicy.isPending} size="sm" className="flex-1">
+            <Button onClick={handleSubmit} disabled={submitPolicy.isPending} startIcon={submitPolicy.isPending ? <Spinner /> : undefined} size="sm" className="flex-1">
               {submitPolicy.isPending ? t('messages.saving') : t(isEdit ? 'snapshotPolicies.modal.editTitle' : 'snapshotPolicies.modal.createTitle')}
             </Button>
           </>

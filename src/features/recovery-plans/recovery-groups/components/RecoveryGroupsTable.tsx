@@ -305,23 +305,6 @@ export function RecoveryGroupsTable({
         />
       ) : null}
 
-      {openMenuId && currentMenuGroup && !currentMenuGroup.pushToOrchestrator && (
-        <RecoveryGroupContextMenu
-          triggerRef={triggerRefForMenu}
-          open={true}
-          onClose={() => { setOpenMenuId(null) }}
-          ariaLabel={`${t('tables.recoveryGroups.actions')} for ${currentMenuGroup.name}`}
-          editLabel={t('buttons.edit')}
-          deleteLabel={t('buttons.delete')}
-          edit={() => {
-            onEdit(openMenuId)
-            setSelectedId(null)
-          }}
-          delete={() => {
-            setDeleteTarget(currentMenuGroup)
-          }}
-        />
-      )}
       {openMenuId && currentMenuGroup && (
         <RecoveryGroupContextMenu
           triggerRef={triggerRefForMenu}

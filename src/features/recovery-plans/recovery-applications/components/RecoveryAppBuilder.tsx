@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
+import { Spinner } from '@/shared/components/spinner/Spinner'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
 import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
@@ -287,6 +288,7 @@ export function RecoveryAppBuilder({
           <Button
             onClick={handleSave}
             disabled={isSaving}
+            startIcon={isSaving ? <Spinner /> : undefined}
             size="sm"
             className="whitespace-nowrap"
           >

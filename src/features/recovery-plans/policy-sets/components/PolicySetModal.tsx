@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
+import { Spinner } from '@/shared/components/spinner/Spinner'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
@@ -115,7 +116,7 @@ export function PolicySetModal({ open, onClose, existingPolicySets, policySet }:
         footer={(
           <>
             <Button onClick={requestClose} disabled={submitPolicySet.isPending} size="sm" variant="outline" className="flex-1">{t('buttons.cancel')}</Button>
-            <Button onClick={handleSubmit} disabled={submitPolicySet.isPending} size="sm" className="flex-1">
+            <Button onClick={handleSubmit} disabled={submitPolicySet.isPending} startIcon={submitPolicySet.isPending ? <Spinner /> : undefined} size="sm" className="flex-1">
               {submitPolicySet.isPending ? t('messages.saving') : t(isEdit ? 'policySets.modal.editTitle' : 'policySets.modal.createTitle')}
             </Button>
           </>
