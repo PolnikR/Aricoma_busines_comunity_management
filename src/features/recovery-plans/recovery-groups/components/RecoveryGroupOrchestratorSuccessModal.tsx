@@ -12,7 +12,6 @@ interface RecoveryGroupOrchestratorSuccessModalProps {
   groupName: string
   runId?: string | null
   providerName?: string | null
-  providerUrl?: string | null
 }
 
 export function RecoveryGroupOrchestratorSuccessModal({
@@ -21,7 +20,6 @@ export function RecoveryGroupOrchestratorSuccessModal({
   groupName,
   runId,
   providerName,
-  providerUrl,
 }: RecoveryGroupOrchestratorSuccessModalProps) {
   const { t } = useTranslation()
 
