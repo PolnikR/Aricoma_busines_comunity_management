@@ -1,13 +1,10 @@
 import type { DiscoveryInventory, PowerInventory } from '../../model/discoveryTypes'
 import type { FlashSystemVolumeTree } from '../../api/discoveryInventoryApi'
 import type { InfrastructureTopology, InfrastructureTopologyPlatform } from '../model/topologyTypes'
+import { isPowerInventory } from '../../helpers/inventoryTypeGuards'
 import { mapInventoryToTopology } from './mapInventoryToTopology'
 import { mapPowerInventoryToTopology } from './mapPowerInventoryToTopology'
 import { mapFlashSystemVolumeTreeToTopology } from './mapFlashSystemVolumeTreeToTopology'
-
-function isPowerInventory(inventory: unknown): inventory is PowerInventory {
-  return Boolean(inventory && typeof inventory === 'object' && 'partitions' in inventory)
-}
 
 export function resolveInfrastructureTopology(
   platform: InfrastructureTopologyPlatform,

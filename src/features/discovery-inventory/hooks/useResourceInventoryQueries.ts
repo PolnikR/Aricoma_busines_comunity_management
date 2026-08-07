@@ -13,6 +13,7 @@ import type {
   PowerInventory,
   PowerPartitionResource,
 } from '../model/discoveryTypes'
+import { isPowerInventory, isFlashSystemInventory } from '../helpers/inventoryTypeGuards'
 
 export type NonVmwareResourceTab = 'flashsystem' | 'ibm-power'
 
@@ -36,18 +37,6 @@ interface ResourceInventoryQueriesResult {
   isFetching: boolean
   hasProviders: boolean
   refetch: () => Promise<void>
-}
-
-function isFlashSystemInventory(
-  inventory: FlashSystemInventory | PowerInventory,
-): inventory is FlashSystemInventory {
-  return 'resources' in inventory
-}
-
-function isPowerInventory(
-  inventory: FlashSystemInventory | PowerInventory,
-): inventory is PowerInventory {
-  return 'partitions' in inventory
 }
 
 export function useResourceInventoryQueries(
