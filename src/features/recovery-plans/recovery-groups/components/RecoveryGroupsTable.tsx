@@ -147,15 +147,6 @@ export function RecoveryGroupsTable({
       cell: group => String(group.resourceCount),
     },
     {
-      id: 'status',
-      header: t('tables.recoveryGroups.status'),
-      cell: group => (
-        <Badge color={group.status === 'Active' ? 'success' : 'warning'} size="sm">
-          {t(group.status === 'Active' ? 'tables.recoveryGroups.active' : 'tables.recoveryGroups.draft')}
-        </Badge>
-      ),
-    },
-    {
       id: 'orchestration',
       header: t('tables.recoveryGroups.orchestration'),
       cell: group => (
