@@ -32,7 +32,7 @@ export function mapTopologyToFlowElements(
     nodes: topology.nodes.map(({ node, position, size }) => ({
       id: node.id,
       type: node.kind,
-      data: node,
+      data: node as InfrastructureTopologyNode & Record<string, unknown>,
       position,
       width: size.width,
       height: size.height,

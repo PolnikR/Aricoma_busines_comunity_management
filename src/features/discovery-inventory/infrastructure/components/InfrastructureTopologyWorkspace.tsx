@@ -80,9 +80,6 @@ export function InfrastructureTopologyWorkspace({
 
   const { layoutResult, layoutError, isLayouting, handleAutoLayout, clearOverrides: clearLayoutOverrides } = useTopologyLayout(
     filteredTopology,
-    { onError: (message) => {
-      // Error is handled by the hook
-    } },
   )
 
   const positionedTopology = layoutResult?.topology ?? null

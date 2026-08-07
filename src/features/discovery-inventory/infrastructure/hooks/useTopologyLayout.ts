@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { PositionedInfrastructureTopology } from '../layout/layoutInfrastructureTopology'
 import { layoutInfrastructureTopology } from '../layout/layoutInfrastructureTopology'
 import { applyTopologyNodePositionOverrides } from '../layout/applyNodePositionOverrides'
-import type { InfrastructureTopology } from '../model/filterInfrastructureTopology'
+import type { InfrastructureTopology } from '../model/topologyTypes'
 
 interface LayoutResult {
   source: InfrastructureTopology
@@ -14,11 +14,7 @@ interface LayoutError {
   message: string
 }
 
-interface UseTopologyLayoutOptions {
-  onError?: (message: string) => void
-}
-
-export function useTopologyLayout(topology: InfrastructureTopology, options?: UseTopologyLayoutOptions) {
+export function useTopologyLayout(topology: InfrastructureTopology) {
   const [layoutResult, setLayoutResult] = useState<LayoutResult | null>(null)
   const [layoutError, setLayoutError] = useState<LayoutError | null>(null)
   const [isManualLayouting, setIsManualLayouting] = useState(false)
@@ -46,7 +42,6 @@ export function useTopologyLayout(topology: InfrastructureTopology, options?: Us
         source,
         message,
       })
-      options?.onError?.(message)
     }
   }
 

@@ -1,4 +1,3 @@
-import type ELKInstance from 'elkjs'
 import type {
   InfrastructureTopology,
   InfrastructureTopologyNode,
@@ -25,7 +24,7 @@ export interface PositionedInfrastructureTopology {
   size: TopologyNodeSize
 }
 
-let elkInstance: ELKInstance | null = null
+let elkInstance: unknown = null
 
 const nodeSizes: Record<InfrastructureTopologyNodeKind, TopologyNodeSize> = {
   cluster: { width: 220, height: 96 },
@@ -60,7 +59,7 @@ export async function layoutInfrastructureTopology(
     }
   }
 
-  const elk = await getElkInstance()
+  const elk = await getElkInstance() as { layout: (config: unknown) => Promise<{ children?: Array<{ id: string; x?: number; y?: number }>; width?: number; height?: number }> }
   const layout = await elk.layout({
     id: 'infrastructure-topology',
     layoutOptions: {
@@ -81,14 +80,14 @@ export async function layoutInfrastructureTopology(
     })),
   })
 
-  const positions = new Map(
-    layout.children?.map((node) => [
+  const positions = new Map<string, { x: number; y: number }>(
+    layout.children?.map((node: { id: string; x?: number; y?: number }) => [
       node.id,
       {
         x: node.x ?? 0,
         y: node.y ?? 0,
       },
-    ]),
+    ]) ?? [],
   )
 
   return {
