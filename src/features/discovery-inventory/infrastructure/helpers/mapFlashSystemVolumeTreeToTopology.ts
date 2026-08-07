@@ -8,7 +8,7 @@ import type {
   InfrastructureTopologyNode,
   PoolTopologyNode,
 } from '../model/topologyTypes'
-import { compareNodes, createTopologyEdgeId, createTopologyNodeId } from './mapInventoryToTopology'
+import { compareNodes, compareEdges, createTopologyEdgeId, createTopologyNodeId } from './mapInventoryToTopology'
 
 function toVolumeNode(node: Extract<FlashSystemTreeNode, { kind: 'volume' }>): FlashVolumeTopologyNode {
   return {
@@ -143,6 +143,6 @@ export function mapFlashSystemVolumeTreeToTopology(tree: FlashSystemTreeNode[]):
 
   return {
     nodes: Array.from(nodes.values()).sort(compareNodes),
-    edges: Array.from(edges.values()).sort((first, second) => first.id.localeCompare(second.id)),
+    edges: Array.from(edges.values()).sort(compareEdges),
   }
 }

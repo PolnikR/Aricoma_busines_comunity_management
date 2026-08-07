@@ -43,12 +43,30 @@ export function createTopologyEdgeId(
   return `edge:${kind}:${source}:${target}`
 }
 
+const edgeKindOrder: Record<InfrastructureTopologyEdgeKind, number> = {
+  contains: 0,
+  runs: 1,
+  uses: 2,
+  copies: 3,
+}
+
 export function compareNodes(first: InfrastructureTopologyNode, second: InfrastructureTopologyNode) {
   const kindDifference = nodeKindOrder[first.kind] - nodeKindOrder[second.kind]
   if (kindDifference !== 0) return kindDifference
 
   const labelDifference = first.label.localeCompare(second.label)
   return labelDifference !== 0 ? labelDifference : first.id.localeCompare(second.id)
+}
+
+export function compareEdges(first: InfrastructureTopologyEdge, second: InfrastructureTopologyEdge) {
+  const kindDifference = edgeKindOrder[first.kind] - edgeKindOrder[second.kind]
+  if (kindDifference !== 0) return kindDifference
+
+  const sourceDifference = first.source.localeCompare(second.source)
+  if (sourceDifference !== 0) return sourceDifference
+
+  const targetDifference = first.target.localeCompare(second.target)
+  return targetDifference !== 0 ? targetDifference : first.id.localeCompare(second.id)
 }
 
 export function mapInventoryToTopology(
@@ -210,6 +228,6 @@ export function mapInventoryToTopology(
 
   return {
     nodes: Array.from(nodes.values()).sort(compareNodes),
-    edges: Array.from(edges.values()).sort((first, second) => first.id.localeCompare(second.id)),
+    edges: Array.from(edges.values()).sort(compareEdges),
   }
 }
