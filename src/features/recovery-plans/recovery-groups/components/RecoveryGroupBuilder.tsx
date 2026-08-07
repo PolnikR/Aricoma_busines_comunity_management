@@ -11,6 +11,7 @@ import { getRecoveryGroupResourceOption } from '../config/recoveryGroupResourceO
 import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
 import type { RecoveryGroup, RecoveryGroupDraft, RecoveryGroupVmMetadata } from '../model/recoveryGroupTypes'
 import { calculateRecoveryGroupStepIndices } from '../utils/calculateRecoveryGroupStepIndices'
+import { isCredentialOk, filterByPlatformProviderCredentialStatus } from '@/features/providers-connectors/providers/utils/credentialStatusChecks'
 import { RecoveryGroupDetailsStep } from './RecoveryGroupDetailsStep'
 import { RecoveryGroupOrchestrationStep } from './RecoveryGroupOrchestrationStep'
 import { RecoveryGroupPolicySetStep } from './RecoveryGroupPolicySetStep'
@@ -104,16 +105,14 @@ export function RecoveryGroupBuilder({
     && providers.some(provider => (
       provider.id === draft.providerId
       && provider.type === selectedOption.providerType
-      && provider.credentialStatus === 'ok'
+      && isCredentialOk(provider)
     )),
   )
   const policySetQuery = usePolicySets()
   const policySets = policySetQuery.data ?? []
   const policySetValid = Boolean(draft.policySetId)
   const platformProvidersQuery = usePlatformProviders()
-  const eligiblePlatformProviders = (platformProvidersQuery.data ?? []).filter(
-    provider => provider.credentialStatus === 'ok',
-  )
+  const eligiblePlatformProviders = filterByPlatformProviderCredentialStatus(platformProvidersQuery.data ?? [])
   const orchestrationValid = Boolean(
     draft.orchestrationProviderId
     && eligiblePlatformProviders.some(provider => provider.id === draft.orchestrationProviderId),
