@@ -20,6 +20,7 @@ import {
 import { topologyNodeTypes } from './topologyNodeTypes'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useTranslation } from '@/hooks/useTranslation'
+import { getNodeColor } from '../helpers/topologyNodeAppearance'
 
 interface InfrastructureTopologyCanvasProps {
   topology: PositionedInfrastructureTopology
@@ -99,16 +100,7 @@ function InfrastructureTopologyCanvasContent({
         position="bottom-right"
         pannable
         zoomable
-        nodeColor={(node) => {
-          if (node.type === 'cluster') return '#465fff'
-          if (node.type === 'host') return '#0ba5ec'
-          if (node.type === 'datastore') return '#f79009'
-          if (node.type === 'powerSystem') return '#465fff'
-          if (node.type === 'powerPartition') {
-            return node.data['partitionKind'] === 'VIOS' ? '#f79009' : '#0ba5ec'
-          }
-          return '#12b76a'
-        }}
+        nodeColor={getNodeColor}
         maskColor="var(--app-topology-mask)"
         className="h-24! w-36! cursor-grab! rounded-xl! border! border-border! bg-surface! shadow-sm! active:cursor-grabbing!"
       />

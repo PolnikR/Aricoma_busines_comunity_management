@@ -6,7 +6,7 @@ import type {
   PowerPartitionTopologyNode,
   PowerSystemTopologyNode,
 } from '../model/topologyTypes'
-import { createTopologyNodeId } from './mapInventoryToTopology'
+import { compareNodes, createTopologyNodeId } from './mapInventoryToTopology'
 
 const missingTopologyValues = new Set(['', '-', 'unknown'])
 
@@ -87,11 +87,7 @@ export function mapPowerInventoryToTopology(
   }
 
   return {
-    nodes: Array.from(nodes.values()).sort((first, second) => (
-      first.kind.localeCompare(second.kind)
-      || first.label.localeCompare(second.label)
-      || first.id.localeCompare(second.id)
-    )),
+    nodes: Array.from(nodes.values()).sort(compareNodes),
     edges: Array.from(edges.values()).sort((first, second) => first.id.localeCompare(second.id)),
   }
 }
