@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ComponentProps, ReactNode } from 'react'
 import { LanguageProvider } from '@/contexts/LanguageProvider'
@@ -11,7 +11,7 @@ vi.mock('./TopologyNodeShell', () => ({
 }))
 
 describe('DatastoreNode', () => {
-  it('renders connected VMs and allocated capacity', () => {
+  it('renders connected VMs and allocated capacity', async () => {
     const props = {
       data: {
         id: 'd1', kind: 'datastore', label: 'datastore-1',
@@ -24,7 +24,9 @@ describe('DatastoreNode', () => {
         <DatastoreNode {...props} />
       </LanguageProvider>,
     )
-    expect(screen.getByText('3 connected VMs')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('3 connected VMs')).toBeInTheDocument()
+    })
     expect(screen.getByText(/1.?024 GB allocated/)).toBeInTheDocument()
   })
 })
