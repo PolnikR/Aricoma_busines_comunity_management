@@ -22,6 +22,14 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 vi.mock('../hooks/useRecoveryApplications', () => ({
   useRecoveryApplications: () => query,
 }))
+vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
+  useProviders: () => ({
+    data: [],
+    isLoading: false,
+    error: null,
+    isFetching: false,
+  }),
+}))
 beforeEach(() => {
   vi.clearAllMocks()
   query = {

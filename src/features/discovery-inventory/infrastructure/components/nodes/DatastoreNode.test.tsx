@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ComponentProps, ReactNode } from 'react'
+import { LanguageProvider } from '@/contexts/LanguageContext'
 import { DatastoreNode } from './DatastoreNode'
 
 vi.mock('./TopologyNodeShell', () => ({
@@ -18,7 +19,11 @@ describe('DatastoreNode', () => {
       },
       selected: false,
     } as unknown as ComponentProps<typeof DatastoreNode>
-    render(<DatastoreNode {...props} />)
+    render(
+      <LanguageProvider>
+        <DatastoreNode {...props} />
+      </LanguageProvider>,
+    )
     expect(screen.getByText('3 connected VMs')).toBeInTheDocument()
     expect(screen.getByText(/1.?024 GB allocated/)).toBeInTheDocument()
   })
