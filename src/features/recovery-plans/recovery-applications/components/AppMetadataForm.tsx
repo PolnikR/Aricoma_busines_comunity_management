@@ -4,6 +4,7 @@ import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
+import { getEligibleSourceProviders, getEligiblePlatformProviders } from '../utils/eligibleProviders'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface AppMetadataFormProps {
@@ -51,16 +52,11 @@ export function AppMetadataForm({
   const [orchestrationProviderId, setOrchestrationProviderId] = useState(
     initialValues?.orchestrationProviderId ?? '',
   )
-  const eligibleProviders = providers.filter(
-    provider => (provider.type === 'VMWARE' || provider.type === 'IBM_POWER')
-      && provider.credentialStatus === 'ok',
-  )
+  const eligibleProviders = getEligibleSourceProviders(providers)
   const selectedPlatformIsMissing = Boolean(
     platform && !eligibleProviders.some(provider => provider.id === platform),
   )
-  const eligiblePlatformProviders = platformProviders.filter(
-    provider => provider.credentialStatus === 'ok',
-  )
+  const eligiblePlatformProviders = getEligiblePlatformProviders(platformProviders)
   const selectedOrchestrationProviderIsMissing = Boolean(
     orchestrationProviderId
     && !eligiblePlatformProviders.some(provider => provider.id === orchestrationProviderId),

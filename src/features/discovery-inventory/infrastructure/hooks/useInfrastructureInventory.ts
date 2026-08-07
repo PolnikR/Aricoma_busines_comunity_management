@@ -15,7 +15,7 @@ export function useInfrastructureInventory(provider: ProviderRecord | null) {
   const queryKey = provider?.type === 'IBM_POWER'
     ? discoveryInventoryKeys.resourceInventory('IBM_POWER', provider.id)
     : provider?.type === 'VMWARE'
-      ? discoveryInventoryKeys.inventory(provider.id)
+      ? discoveryInventoryKeys.resourceInventory('VMWARE', provider.id)
       : ['infrastructure-topology', 'inactive'] as const
 
   return useQuery<InfrastructureInventory>({

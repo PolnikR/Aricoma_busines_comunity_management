@@ -175,9 +175,15 @@ export function filterInfrastructureTopology(
     }
   }
 
-  for (const edge of topology.edges) {
-    if (edge.kind === 'contains' && includedNodeIds.has(edge.target)) {
-      includedNodeIds.add(edge.source)
+  // Propagate contains edges to fixed point (handles deep chains like pool→volume→fcmap→target)
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const edge of topology.edges) {
+      if (edge.kind === 'contains' && includedNodeIds.has(edge.target) && !includedNodeIds.has(edge.source)) {
+        includedNodeIds.add(edge.source)
+        changed = true
+      }
     }
   }
 

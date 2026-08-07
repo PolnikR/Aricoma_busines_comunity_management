@@ -9,6 +9,7 @@ import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
 import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import { cloneTier } from '../utils/recoveryApplicationFormMapper'
+import { isEligibleSourceProvider, isEligiblePlatformProvider } from '../utils/eligibleProviders'
 import type { RecoveryTier, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface RecoveryAppBuilderProps {
@@ -245,18 +246,14 @@ export function RecoveryAppBuilder({
       alert(t('alerts.pleaseEnterDescription'))
       return
     }
-    const platformIsAvailable = providersQuery.data?.some(
-      provider => (provider.type === 'VMWARE' || provider.type === 'IBM_POWER')
-        && provider.id === formState.platform
-        && provider.credentialStatus === 'ok',
-    ) ?? false
+    const platformIsAvailable = (providersQuery.data ?? [])
+      .some(provider => isEligibleSourceProvider(provider) && provider.id === formState.platform)
     if (!platformIsAvailable) {
       alert(t('recovery.application.validation.platformRequired'))
       return
     }
-    const platformProviderIsAvailable = platformProvidersQuery.data?.some(
-      provider => provider.id === formState.orchestrationProviderId && provider.credentialStatus === 'ok',
-    ) ?? false
+    const platformProviderIsAvailable = (platformProvidersQuery.data ?? [])
+      .some(provider => isEligiblePlatformProvider(provider) && provider.id === formState.orchestrationProviderId)
     if (!platformProviderIsAvailable) {
       alert(t('recovery.application.validation.platformProviderRequired'))
       return
