@@ -59,7 +59,7 @@ export async function layoutInfrastructureTopology(
     }
   }
 
-  const elk = await getElkInstance() as { layout: (config: unknown) => Promise<{ children?: Array<{ id: string; x?: number; y?: number }>; width?: number; height?: number }> }
+  const elk = await getElkInstance() as { layout: (config: unknown) => Promise<{ children?: { id: string; x?: number; y?: number }[]; width?: number; height?: number }> }
   const layout = await elk.layout({
     id: 'infrastructure-topology',
     layoutOptions: {
