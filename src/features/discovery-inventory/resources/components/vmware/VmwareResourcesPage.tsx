@@ -13,6 +13,7 @@ import {
 import { mapInventoryToVirtualMachines } from '../../helpers/mapInventoryToVirtualMachines'
 import { useVirtualMachineSearchParams } from '../../hooks/useVirtualMachineSearchParams'
 import type { VirtualMachineFilterOptions, VirtualMachineFilters, VirtualMachinePageSize } from '../../types'
+import { filterByType } from '@/features/providers-connectors/providers/utils/providerFilters'
 import { MetricsSkeleton } from '../../skeletons'
 import { ResourceInventoryPanel } from '../ResourceInventoryPanel'
 import { ResourceInventoryShell } from '../ResourceInventoryShell'
@@ -45,7 +46,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     providersError, onRefetchProviders, tabs, t,
   } = props
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
-  const vmwareProviders = providers.filter((provider) => provider.type === 'VMWARE')
+  const vmwareProviders = filterByType(providers, 'VMWARE')
   const inventoryEnabled = providersSuccess && vmwareProviders.length > 0
   const {
     data: inventory,
