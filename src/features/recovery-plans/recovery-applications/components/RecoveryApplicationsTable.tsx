@@ -18,7 +18,7 @@ import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTy
 
 interface RecoveryApplicationsTableProps {
   applications: RecoveryApplicationListItem[]
-  providers?: Array<{ id: string; name: string }>
+  providers?: { id: string; name: string }[]
   onEdit?: (id: string) => void
   error?: Error | null
   isRetrying?: boolean
@@ -44,7 +44,7 @@ function getStatusBadgeColor(status: 'Active' | 'Draft'): 'success' | 'warning' 
   return status === 'Active' ? 'success' : 'warning'
 }
 
-function getProviderLabel(providerId: string, providers?: Array<{ id: string; name: string }>): string {
+function getProviderLabel(providerId: string, providers?: { id: string; name: string }[]): string {
   if (!providerId) return '—'
   const provider = providers?.find(p => p.id === providerId)
   return provider?.name ?? providerId
