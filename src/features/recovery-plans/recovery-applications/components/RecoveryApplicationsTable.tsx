@@ -15,11 +15,10 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { Modal } from '@/shared/components/modal/Modal'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
-import type { Provider } from '@/features/providers-connectors/providers/model/providerTypes'
 
 interface RecoveryApplicationsTableProps {
   applications: RecoveryApplicationListItem[]
-  providers?: Provider[]
+  providers?: Array<{ id: string; name: string }>
   onEdit?: (id: string) => void
   error?: Error | null
   isRetrying?: boolean
@@ -45,10 +44,10 @@ function getStatusBadgeColor(status: 'Active' | 'Draft'): 'success' | 'warning' 
   return status === 'Active' ? 'success' : 'warning'
 }
 
-function getProviderLabel(providerId: string, providers?: Provider[]): string {
+function getProviderLabel(providerId: string, providers?: Array<{ id: string; name: string }>): string {
   if (!providerId) return '—'
   const provider = providers?.find(p => p.id === providerId)
-  return provider?.name || providerId
+  return provider?.name ?? providerId
 }
 
 function getSubmissionBadgeColor(status: string): 'success' | 'error' {
