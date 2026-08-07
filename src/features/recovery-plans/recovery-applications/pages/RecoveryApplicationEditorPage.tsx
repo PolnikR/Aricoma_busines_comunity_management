@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Button } from '@/shared/components/button/Button'
+import { Alert } from '@/shared/components/alert/Alert'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { PageHeader } from '@/shared/components/page/PageHeader'
@@ -109,11 +110,13 @@ export function RecoveryApplicationEditorPage() {
       />
       <div className="flex flex-1 flex-col lg:min-h-0">
         {submitApplication.error ? (
-          <div className="mx-4 mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert">
-            {submitApplication.error instanceof Error
+          <Alert
+            variant="error"
+            className="mx-4 mt-4"
+            title={submitApplication.error instanceof Error
               ? submitApplication.error.message
               : t('pages.recovery.submitFailed')}
-          </div>
+          />
         ) : null}
         <RecoveryAppBuilder
           initialData={initialData}

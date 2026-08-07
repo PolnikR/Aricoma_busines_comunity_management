@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/shared/components/button/Button'
+import { Alert } from '@/shared/components/alert/Alert'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { ListSkeleton } from '@/shared/components/list-skeleton/ListSkeleton'
@@ -68,7 +69,7 @@ export function RecoveryGroupBuilderPage() {
         description={t('pages.recoveryGroupBuilder.description')}
         actions={<Button size="sm" variant="outline" onClick={requestBack}>{t('buttons.back')}</Button>}
       />
-      {error ? <div className="mx-4 mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert">{error}</div> : null}
+      {error ? <Alert variant="error" className="mx-4 mt-4" title={error} /> : null}
       {isLoading ? (
         <div className="p-4"><ListSkeleton ariaLabel={t('pages.recoveryGroups.loading')} /></div>
       ) : loadError ? (

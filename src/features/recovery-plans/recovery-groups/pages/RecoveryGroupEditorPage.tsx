@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Button } from '@/shared/components/button/Button'
+import { Alert } from '@/shared/components/alert/Alert'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
@@ -88,9 +89,7 @@ export function RecoveryGroupEditorPage() {
   if (!group) {
     return (
       <div className="p-6">
-        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert">
-          {t('pages.recoveryGroupEditor.error.notFound')}
-        </div>
+        <Alert variant="error" title={t('pages.recoveryGroupEditor.error.notFound')} />
       </div>
     )
   }
@@ -103,7 +102,7 @@ export function RecoveryGroupEditorPage() {
         description={t('pages.recoveryGroupEditor.description')}
         actions={<Button size="sm" variant="outline" onClick={requestBack}>{t('buttons.back')}</Button>}
       />
-      {error ? <div className="mx-4 mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert">{error}</div> : null}
+      {error ? <Alert variant="error" className="mx-4 mt-4" title={error} /> : null}
       <RecoveryGroupBuilder
         initialData={group}
         submitLabel={t('pages.recoveryGroupEditor.saveButton')}

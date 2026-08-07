@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router'
 import { Button } from '@/shared/components/button/Button'
+import { Alert } from '@/shared/components/alert/Alert'
 import { DataTableSkeleton } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
@@ -33,9 +34,7 @@ export function RecoveryGroupsListPage() {
 
       <div className="flex flex-1 flex-col gap-4 overflow-hidden p-3 lg:min-h-0">
         {mutationError ? (
-          <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert">
-            {t(getRecoveryGroupsErrorKey(mutationError))}
-          </div>
+          <Alert variant="error" title={t(getRecoveryGroupsErrorKey(mutationError))} />
         ) : null}
         {isLoading ? (
           <DataTableSkeleton
