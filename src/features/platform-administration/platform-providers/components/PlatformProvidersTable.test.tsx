@@ -45,7 +45,7 @@ describe('PlatformProvidersTable', () => {
     const user = userEvent.setup()
     render(
       <PlatformProvidersTable
-        providers={[{ ...baseProvider, url: 'http://10.99.99.55:8080/' }]}
+        providers={[{ ...baseProvider, url: 'http://10.99.99.55:8080/dags' }]}
         isLoading={false}
         error={null}
         isRetrying={false}
@@ -55,8 +55,8 @@ describe('PlatformProvidersTable', () => {
 
     await user.click(screen.getByText('Primary Airflow'))
 
-    const link = screen.getByRole('link', { name: /http:\/\/10\.99\.99\.55:8080\// })
-    expect(link).toHaveAttribute('href', 'http://10.99.99.55:8080/')
+    const link = screen.getByRole('link', { name: /http:\/\/10\.99\.99\.55:8080\/dags/ })
+    expect(link).toHaveAttribute('href', 'http://10.99.99.55:8080/dags')
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
   })

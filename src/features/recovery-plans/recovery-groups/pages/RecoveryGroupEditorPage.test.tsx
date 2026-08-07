@@ -41,7 +41,7 @@ vi.mock('../hooks/useRecoveryGroups', () => ({
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
   usePlatformProviders: () => ({
     data: [
-      { id: 'airflow-01', name: 'Primary Airflow', url: 'http://10.99.99.55:8080/' },
+      { id: 'airflow-01', name: 'Primary Airflow', url: 'http://10.99.99.55:8080/dags' },
     ],
   }),
 }))
