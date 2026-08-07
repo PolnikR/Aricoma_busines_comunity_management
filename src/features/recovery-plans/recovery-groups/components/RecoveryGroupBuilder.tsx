@@ -10,6 +10,7 @@ import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePo
 import { getRecoveryGroupResourceOption } from '../config/recoveryGroupResourceOptions'
 import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
 import type { RecoveryGroup, RecoveryGroupDraft, RecoveryGroupVmMetadata } from '../model/recoveryGroupTypes'
+import { calculateRecoveryGroupStepIndices } from '../utils/calculateRecoveryGroupStepIndices'
 import { RecoveryGroupDetailsStep } from './RecoveryGroupDetailsStep'
 import { RecoveryGroupOrchestrationStep } from './RecoveryGroupOrchestrationStep'
 import { RecoveryGroupPolicySetStep } from './RecoveryGroupPolicySetStep'
@@ -118,11 +119,13 @@ export function RecoveryGroupBuilder({
     && eligiblePlatformProviders.some(provider => provider.id === draft.orchestrationProviderId),
   )
   const hasRelatedStorageStep = draft.resourceType === 'vm'
-  const resourcesStepIndex = 4
-  const relatedStorageStepIndex = 5
-  const policySetStepIndex = hasRelatedStorageStep ? 6 : 5
-  const orchestrationStepIndex = hasRelatedStorageStep ? 7 : 6
-  const lastStep = orchestrationStepIndex
+  const {
+    resourcesStepIndex,
+    relatedStorageStepIndex,
+    policySetStepIndex,
+    orchestrationStepIndex,
+    lastStep,
+  } = calculateRecoveryGroupStepIndices(hasRelatedStorageStep)
   const relatedVolumesDiscovery = useRecoveryGroupRelatedVolumes(
     draft.providerId,
     draft.resources,
