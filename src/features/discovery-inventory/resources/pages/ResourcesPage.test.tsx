@@ -74,6 +74,13 @@ vi.mock('../hooks/useVirtualMachineSearchParams', () => ({
     updateFilters,
   }),
 }))
+vi.mock('../hooks/useFlashSystemSearchParams', () => ({
+  useFlashSystemSearchParams: () => ({
+    query: { page: 1, pageSize: 25, search: '', poolId: '', hostId: '', status: '' },
+    updateQuery: vi.fn(),
+    updateFilters: vi.fn(),
+  }),
+}))
 vi.mock('../hooks/useResourceTabSearchParam', () => ({
   useResourceTabSearchParam: () => ({ resourceTab, providerId: selectedProviderId, setResourceSource }),
 }))
