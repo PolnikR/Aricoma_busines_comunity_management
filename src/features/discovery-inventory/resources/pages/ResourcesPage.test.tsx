@@ -1,14 +1,17 @@
 import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ResourcesPage } from './ResourcesPage'
 import type { DiscoveryInventory } from '../../model/discoveryTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import type { VirtualMachinesQuery } from '../types'
 
 const refetch = vi.fn()
 const updateQuery = vi.fn()
 const updateFilters = vi.fn()
 const refetchProviders = vi.fn()
 const resourceInventoryQuerySpy = vi.fn()
+const discoveryInventoryQuerySpy = vi.fn()
 const refetchResourceInventory = vi.fn()
 let resourceTab: 'vmware' | 'flashsystem' | 'ibm-power' = 'vmware'
 const vmwareProvider: ProviderRecord = {
@@ -47,10 +50,14 @@ let inventoryQuery: {
   isFetching: boolean
   refetch: typeof refetch
 }
+let virtualMachineQuery: VirtualMachinesQuery
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/features/discovery-inventory/hooks/useDiscoveryInventory', () => ({
-  useDiscoveryInventory: () => inventoryQuery,
+  useDiscoveryInventory: (...args: unknown[]) => {
+    discoveryInventoryQuerySpy(...args)
+    return inventoryQuery
+  },
 }))
 vi.mock('@/features/discovery-inventory/hooks/useResourceInventoryQueries', () => ({
   useResourceInventoryQueries: (...args: unknown[]) => {
@@ -64,10 +71,7 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
 }))
 vi.mock('../hooks/useVirtualMachineSearchParams', () => ({
   useVirtualMachineSearchParams: () => ({
-    query: {
-      page: 1, pageSize: 10, search: '', powerState: '', connectionState: '',
-      cluster: '', providerId: null, tags: [], untagged: false,
-    },
+    query: virtualMachineQuery,
     updateQuery,
     updateFilters,
   }),
@@ -120,6 +124,17 @@ beforeEach(() => {
     isFetching: false,
     refetch,
   }
+  virtualMachineQuery = {
+    page: 1,
+    pageSize: 10,
+    search: '',
+    powerState: '',
+    connectionState: '',
+    cluster: '',
+    providerId: null,
+    tags: [],
+    untagged: false,
+  }
 })
 
 describe('ResourcesPage', () => {
@@ -148,6 +163,30 @@ describe('ResourcesPage', () => {
     expect(screen.getByRole('tab', { name: 'FlashSystem Volumes' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'IBM Power Partitions' })).toBeInTheDocument()
     expect(screen.getByText('No virtual machines found')).toBeInTheDocument()
+  })
+
+  it('renders ten VMware providers as source tabs and selects inventory by provider', async () => {
+    const user = userEvent.setup()
+    providersQuery = {
+      ...providersQuery,
+      data: Array.from({ length: 10 }, (_, index) => ({
+        ...vmwareProvider,
+        id: `vmware-${String(index + 1).padStart(2, '0')}`,
+        name: `VMware provider ${String(index + 1)}`,
+      })),
+    }
+
+    render(<ResourcesPage />)
+
+    const providerTabList = screen.getByRole('tablist', { name: 'VMware provider sources' })
+    const providerTabs = within(providerTabList).getAllByRole('tab')
+    expect(providerTabs).toHaveLength(10)
+    expect(providerTabs[0]).toHaveAttribute('aria-selected', 'true')
+    expect(discoveryInventoryQuerySpy).toHaveBeenCalledWith('vmware-01', undefined, true)
+
+    await user.click(within(providerTabList).getByRole('tab', { name: 'VMware provider 10' }))
+
+    expect(updateQuery).toHaveBeenLastCalledWith({ providerId: 'vmware-10' }, true)
   })
 
   it('waits for providers before activating a source inventory query', () => {
