@@ -4,19 +4,23 @@ import { CheckboxField, Field, Select } from '@/shared/components/form/FormContr
 import { DataTableToolbar } from '@/shared/components/data-table'
 import type { TableDensity } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import { FilterPanelSkeleton } from '../../skeletons'
 import type { VirtualMachineFilterOptions, VirtualMachineFilters } from '../../types'
 
 interface VirtualMachinesToolbarProps {
   filters: VirtualMachineFilters
   options: VirtualMachineFilterOptions
   availableTags?: string[]
+  providers?: ProviderRecord[]
+  providersLoading?: boolean
   onFiltersChange: (filters: VirtualMachineFilters) => void
   onReset: () => void
   density?: TableDensity
   onDensityChange?: (density: TableDensity) => void
 }
 
-export function VirtualMachinesToolbar({ filters, options, availableTags = [], onFiltersChange, onReset, density, onDensityChange }: VirtualMachinesToolbarProps) {
+export function VirtualMachinesToolbar({ filters, options, availableTags = [], providers = [], providersLoading = false, onFiltersChange, onReset, density, onDensityChange }: VirtualMachinesToolbarProps) {
   const { t } = useTranslation()
   const [tempFilters, setTempFilters] = useState(filters)
 
@@ -51,6 +55,7 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
     filters.powerState,
     filters.connectionState,
     filters.cluster,
+    filters.providerId,
     filters.tags.length > 0 ? 'tags' : '',
     filters.untagged ? 'untagged' : '',
   ].filter(Boolean).length
@@ -72,7 +77,9 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
       onClearFilters={handleResetFilters}
       {...(density ? { density } : {})}
       {...(onDensityChange ? { onDensityChange } : {})}
-      filterPanel={(
+      filterPanel={providersLoading ? (
+        <FilterPanelSkeleton />
+      ) : (
         <>
           <Field label={t('pages.virtualMachines.filters.connection')} htmlFor="modal-connection-filter">
             <Select id="modal-connection-filter" value={tempFilters.connectionState} onChange={updateTempFilter('connectionState')} disabled>
@@ -85,6 +92,13 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
             <Select id="modal-cluster-filter" value={tempFilters.cluster} onChange={updateTempFilter('cluster')} disabled>
               <option value="">{t('pages.virtualMachines.filters.clusterAll')}</option>
               {options.clusters.map((value) => <option key={value} value={value}>{value}</option>)}
+            </Select>
+          </Field>
+
+          <Field label={t('pages.virtualMachines.filters.provider')} htmlFor="modal-provider-filter">
+            <Select id="modal-provider-filter" value={tempFilters.providerId ?? ''} onChange={updateTempFilter('providerId')}>
+              <option value="">{t('pages.virtualMachines.filters.providerAll')}</option>
+              {providers.map((provider) => <option key={provider.id} value={provider.id}>{provider.name}</option>)}
             </Select>
           </Field>
 

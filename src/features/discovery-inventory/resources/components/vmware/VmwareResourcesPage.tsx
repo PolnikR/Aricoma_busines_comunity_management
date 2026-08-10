@@ -4,7 +4,6 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { DataTablePagination } from '@/shared/components/data-table'
-import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useDiscoveryInventory } from '@/features/discovery-inventory/hooks/useDiscoveryInventory'
 import { useTags } from '../../../hooks/useTags'
 import {
@@ -47,11 +46,8 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     providersError, onRefetchProviders, tabs, t,
   } = props
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
-  const vmwareProviders = useMemo(() => filterByType(providers, 'VMWARE'), [providers])
-  const selectedProviderId = vmwareProviders.some(provider => provider.id === query.providerId)
-    ? query.providerId ?? ''
-    : vmwareProviders[0]?.id ?? ''
-  const inventoryEnabled = providersSuccess && selectedProviderId !== ''
+  const vmwareProviders = filterByType(providers, 'VMWARE')
+  const inventoryEnabled = providersSuccess && vmwareProviders.length > 0
   const {
     data: inventory,
     error,
@@ -59,7 +55,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     isFetching,
     refetch,
   } = useDiscoveryInventory(
-    selectedProviderId || undefined,
+    query.providerId ?? undefined,
     getServerSideTagFilter(query.tags),
     inventoryEnabled,
   )
@@ -86,24 +82,13 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     }
   }, [availableTags, query.tags, updateQuery])
 
-  useEffect(() => {
-    if (!inventoryEnabled || query.providerId === selectedProviderId) return
-    updateQuery({ providerId: selectedProviderId }, true)
-  }, [inventoryEnabled, query.providerId, selectedProviderId, updateQuery])
-
-  const handleProviderChange = (providerId: string) => {
-    setSelectedId(null)
-    setDrawerOpen(false)
-    updateQuery({ providerId }, true)
-  }
-
   const selectedVirtualMachine = data?.items.find((vm) => vm.id === selectedId) ?? null
   const filters: VirtualMachineFilters = {
     search: query.search,
     powerState: query.powerState,
     connectionState: query.connectionState,
     cluster: query.cluster,
-    providerId: selectedProviderId || null,
+    providerId: query.providerId,
     tags: query.tags,
     untagged: query.untagged,
   }
@@ -150,30 +135,17 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     content = (
       <ResourceInventoryPanel
         ariaLabel={t('vm.inventoryLabel')}
-        toolbar={(
-          <>
-            <Tabs
-              items={vmwareProviders.map(provider => ({ value: provider.id, label: provider.name }))}
-              value={selectedProviderId}
-              onChange={handleProviderChange}
-              ariaLabel={t('pages.virtualMachines.providerTabs.label')}
-              className="border-b-0 px-1 sm:px-2"
-              scrollControls={{
-                previousLabel: t('pages.virtualMachines.providerTabs.previous'),
-                nextLabel: t('pages.virtualMachines.providerTabs.next'),
-              }}
-            />
-            <VirtualMachinesToolbar
-              filters={filters}
-              options={data?.filterOptions ?? emptyFilterOptions}
-              availableTags={availableTags}
-              onFiltersChange={updateFilters}
-              onReset={() => { updateFilters({ ...defaultFilters, providerId: selectedProviderId }) }}
-              density={density}
-              onDensityChange={setDensity}
-            />
-          </>
-        )}
+        toolbar={<VirtualMachinesToolbar
+          filters={filters}
+          options={data?.filterOptions ?? emptyFilterOptions}
+          availableTags={availableTags}
+          providers={vmwareProviders}
+          providersLoading={false}
+          onFiltersChange={updateFilters}
+          onReset={() => { updateFilters(defaultFilters) }}
+          density={density}
+          onDensityChange={setDensity}
+        />}
         error={!data ? {
           title: t('pages.virtualMachines.error.title'),
           description: t('pages.virtualMachines.error.unknown'),
