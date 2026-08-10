@@ -72,6 +72,11 @@ const CredentialsPage = lazy(async () => {
   return { default: page.CredentialsPage }
 })
 
+const DiscoverySettingsPage = lazy(async () => {
+  const page = await import('@/features/providers-connectors/discovery-settings/pages/DiscoverySettingsPage')
+  return { default: page.DiscoverySettingsPage }
+})
+
 const PlatformProvidersPage = lazy(async () => {
   const page = await import('@/features/platform-administration/platform-providers/pages/PlatformProvidersPage')
   return { default: page.PlatformProvidersPage }
@@ -115,6 +120,19 @@ function renderProvidersConnectorsRoutes(pages: typeof providersConnectorsPages)
           element={(
             <Suspense fallback={<RouteLoadingSkeleton />}>
               <CredentialsPage />
+            </Suspense>
+          )}
+        />
+      )
+    }
+    if (page.path === routes.providerDiscoverySettings) {
+      return (
+        <Route
+          key={page.path}
+          path={toRoutePath(page.path)}
+          element={(
+            <Suspense fallback={<RouteLoadingSkeleton />}>
+              <DiscoverySettingsPage />
             </Suspense>
           )}
         />
