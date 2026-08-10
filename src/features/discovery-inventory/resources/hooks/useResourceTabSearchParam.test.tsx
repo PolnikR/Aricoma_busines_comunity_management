@@ -17,7 +17,7 @@ describe('useResourceTabSearchParam', () => {
 
   it('updates resource and provider together while preserving unrelated search params', () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <MemoryRouter initialEntries={['/?resource=flashsystem&providerId=flash-01&search=db&page=4']}>{children}</MemoryRouter>
+      <MemoryRouter initialEntries={['/?resource=flashsystem&providerId=flash-01&search=db&page=4&pageSize=25&poolId=pool-1&status=online']}>{children}</MemoryRouter>
     )
     const { result } = renderHook(() => ({ ...useResourceTabSearchParam(), location: useLocation() }), { wrapper })
 
@@ -28,6 +28,9 @@ describe('useResourceTabSearchParam', () => {
     expect(searchParams.get('providerId')).toBe('power-01')
     expect(searchParams.get('search')).toBe('db')
     expect(searchParams.get('page')).toBe('1')
+    expect(searchParams.get('pageSize')).toBe('25')
+    expect(searchParams.has('poolId')).toBe(false)
+    expect(searchParams.has('status')).toBe(false)
   })
 
   it('clears resource and provider params for the default fallback tab', () => {

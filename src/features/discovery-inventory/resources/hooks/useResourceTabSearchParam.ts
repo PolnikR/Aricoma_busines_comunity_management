@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router'
+import { RESOURCE_INVENTORY_PAGE_SIZES } from './useResourceInventorySearchParams'
 
 export const RESOURCE_TABS = ['vmware', 'flashsystem', 'ibm-power'] as const
 export type ResourceTab = (typeof RESOURCE_TABS)[number]
@@ -6,6 +7,12 @@ export type ResourceTab = (typeof RESOURCE_TABS)[number]
 export interface ResourceSourceSelection {
   resourceTab: ResourceTab
   providerId: string | null
+}
+
+const RESOURCE_FILTER_PARAMS: Record<ResourceTab, readonly string[]> = {
+  vmware: ['powerState', 'connectionState', 'cluster', 'tags', 'untagged'],
+  flashsystem: ['poolId', 'hostId', 'status'],
+  'ibm-power': ['partitionKind', 'partitionState', 'operatingSystemType', 'volumeState'],
 }
 
 function isResourceTab(value: string | null): value is ResourceTab {
@@ -21,11 +28,18 @@ export function useResourceTabSearchParam() {
 
   const setResourceSource = ({ resourceTab: tab, providerId: nextProviderId }: ResourceSourceSelection) => {
     const next = new URLSearchParams(searchParams)
+    const resourceFilterKeys = new Set(Object.values(RESOURCE_FILTER_PARAMS).flat())
+    resourceFilterKeys.forEach((key) => { next.delete(key) })
     if (tab === 'vmware') next.delete('resource')
     else next.set('resource', tab)
     if (nextProviderId) next.set('providerId', nextProviderId)
     else next.delete('providerId')
+    const requestedPageSize = Number(next.get('pageSize'))
+    const pageSize = RESOURCE_INVENTORY_PAGE_SIZES.includes(requestedPageSize as (typeof RESOURCE_INVENTORY_PAGE_SIZES)[number])
+      ? requestedPageSize
+      : RESOURCE_INVENTORY_PAGE_SIZES[0]
     next.set('page', '1')
+    next.set('pageSize', String(pageSize))
     setSearchParams(next, { replace: true })
   }
 
