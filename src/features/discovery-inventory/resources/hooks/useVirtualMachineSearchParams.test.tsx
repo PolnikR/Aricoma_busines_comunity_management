@@ -18,7 +18,6 @@ describe('useVirtualMachineSearchParams', () => {
       pageSize: 10,
       tags: ['prod', 'db'],
       untagged: true,
-      providerId: null,
     })
   })
 
@@ -34,7 +33,6 @@ describe('useVirtualMachineSearchParams', () => {
         powerState: '',
         connectionState: '',
         cluster: '',
-        providerId: null,
         tags: [],
         untagged: false,
       })
@@ -62,7 +60,6 @@ describe('useVirtualMachineSearchParams', () => {
         powerState: '',
         connectionState: '',
         cluster: '',
-        providerId: null,
         tags: [],
         untagged: false,
       })

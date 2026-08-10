@@ -16,12 +16,10 @@ function parseBoolean(value: string | null): boolean {
 export function useVirtualMachineSearchParams() {
   const { query, updateQuery } = useResourceInventorySearchParams<VirtualMachineUrlFilters>({
     parseFilters: (searchParams) => {
-    const providerIdValue = searchParams.get('providerId')
     return {
       powerState: searchParams.get('powerState') ?? '',
       connectionState: searchParams.get('connectionState') ?? '',
       cluster: searchParams.get('cluster') ?? '',
-      providerId: providerIdValue && providerIdValue !== 'null' ? providerIdValue : null,
       tags: parseTags(searchParams.get('tags')),
       untagged: parseBoolean(searchParams.get('untagged')),
     }

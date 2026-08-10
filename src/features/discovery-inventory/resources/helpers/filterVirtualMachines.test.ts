@@ -48,7 +48,6 @@ function query(overrides: Partial<VirtualMachinesQuery> = {}): VirtualMachinesQu
     powerState: '',
     connectionState: '',
     cluster: '',
-    providerId: null,
     tags: [],
     untagged: false,
     ...overrides,

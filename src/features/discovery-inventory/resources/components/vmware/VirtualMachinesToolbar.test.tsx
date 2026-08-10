@@ -10,7 +10,6 @@ const filters: VirtualMachineFilters = {
   powerState: '',
   connectionState: '',
   cluster: '',
-  providerId: 'vmware-vcenter-01',
   tags: [],
   untagged: false,
 }
@@ -34,7 +33,7 @@ describe('VirtualMachinesToolbar source filters', () => {
 
   it('applies a single selected tag', () => {
     const onFiltersChange = vi.fn()
-    render(<VirtualMachinesToolbar filters={{ ...filters, providerId: 'vmware-vcenter-01' }} options={options} availableTags={['WEB', 'DB']} onFiltersChange={onFiltersChange} onReset={vi.fn()} />)
+    render(<VirtualMachinesToolbar filters={filters} options={options} availableTags={['WEB', 'DB']} onFiltersChange={onFiltersChange} onReset={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: /Filters/i }))
 
     const tagSelect = screen.getByLabelText('Tag')
@@ -42,6 +41,7 @@ describe('VirtualMachinesToolbar source filters', () => {
     fireEvent.change(tagSelect, { target: { value: 'WEB' } })
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
 
-    expect(onFiltersChange).toHaveBeenCalledWith(expect.objectContaining({ tags: ['WEB'], providerId: 'vmware-vcenter-01' }))
+    expect(onFiltersChange).toHaveBeenCalledWith(expect.objectContaining({ tags: ['WEB'] }))
+    expect(onFiltersChange.mock.calls[0]?.[0]).not.toHaveProperty('providerId')
   })
 })

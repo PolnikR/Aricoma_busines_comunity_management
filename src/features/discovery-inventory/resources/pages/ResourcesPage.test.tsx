@@ -68,7 +68,7 @@ vi.mock('../hooks/useVirtualMachineSearchParams', () => ({
   useVirtualMachineSearchParams: () => ({
     query: {
       page: 1, pageSize: 10, search: '', powerState: '', connectionState: '',
-      cluster: '', providerId: null, tags: [], untagged: false,
+      cluster: '', tags: [], untagged: false,
     },
     updateQuery,
     updateFilters,
