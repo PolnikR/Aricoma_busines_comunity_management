@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
@@ -13,9 +12,8 @@ import { PowerInventoryView } from './PowerInventoryView'
 export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
   const {
     providers, providersPending, providersSuccess, providersFetching,
-    providersError, onRefetchProviders, tabs, t,
+    providersError, onRefetchProviders, providerId, tabs, t,
   } = props
-  const [providerId, setProviderId] = useState('')
   const sourceProviders = providers.filter((provider) => provider.type === 'IBM_POWER')
   const sourceQuery = useResourceInventoryQueries(
     providersSuccess ? 'ibm-power' : null,
@@ -78,9 +76,7 @@ export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
     content = (
       <PowerInventoryView
         resources={sourceQuery.powerResources}
-        providers={sourceProviders}
-        providerId={providerId}
-        onProviderIdChange={setProviderId}
+        providerId={providerId ?? sourceProviders[0]?.id ?? ''}
         error={requestFailed ? {
           title: t('resources.common.loadFailed'),
           description: t('resources.common.loadFailed'),

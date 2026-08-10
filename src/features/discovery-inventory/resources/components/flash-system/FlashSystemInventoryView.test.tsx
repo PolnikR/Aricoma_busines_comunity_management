@@ -59,8 +59,7 @@ describe('FlashSystemInventoryView', () => {
       <FlashSystemInventoryView
         resources={inventory.resources}
         providers={[provider]}
-        providerId=""
-        onProviderIdChange={vi.fn()}
+        providerId={provider.id}
         t={t}
       />,
     )
@@ -103,9 +102,8 @@ describe('FlashSystemInventoryView', () => {
     expect(within(dialog).queryByText('mdisk_grp_id')).not.toBeInTheDocument()
   })
 
-  it('filters loaded data and requests provider-scoped data when applied', () => {
+  it('does not render a duplicate provider filter for the selected source tab', () => {
     const { t } = useTranslation()
-    const onProviderIdChange = vi.fn()
     const inventory = mapFlashSystemInventory(flashSystemInventoryResponseSchema.parse({
       count: 1,
       volumes: [{
@@ -125,17 +123,13 @@ describe('FlashSystemInventoryView', () => {
       <FlashSystemInventoryView
         resources={inventory.resources}
         providers={[provider, secondProvider]}
-        providerId=""
-        onProviderIdChange={onProviderIdChange}
+        providerId={provider.id}
         t={t}
-      />,
+    />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
-    fireEvent.change(screen.getByLabelText('Provider'), { target: { value: 'flash-02' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
-
-    expect(onProviderIdChange).toHaveBeenCalledWith('flash-02')
-    expect(screen.queryByText('V5000_Volume1')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Filters/ }))
+    expect(screen.queryByLabelText('Provider')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Pool')).toBeInTheDocument()
   })
 })

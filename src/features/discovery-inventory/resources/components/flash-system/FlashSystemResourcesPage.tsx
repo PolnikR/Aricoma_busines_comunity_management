@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
@@ -13,9 +12,8 @@ import { FlashSystemInventoryView } from './FlashSystemInventoryView'
 export function FlashSystemResourcesPage(props: SourceResourcesPageProps) {
   const {
     providers, providersPending, providersSuccess, providersFetching,
-    providersError, onRefetchProviders, tabs, t,
+    providersError, onRefetchProviders, providerId, tabs, t,
   } = props
-  const [providerId, setProviderId] = useState('')
   const sourceProviders = providers.filter((provider) => provider.type === 'FLASHCOPY')
   const sourceQuery = useResourceInventoryQueries(
     providersSuccess ? 'flashsystem' : null,
@@ -84,8 +82,7 @@ export function FlashSystemResourcesPage(props: SourceResourcesPageProps) {
       <FlashSystemInventoryView
         resources={sourceQuery.flashSystemResources}
         providers={sourceProviders}
-        providerId={providerId}
-        onProviderIdChange={setProviderId}
+        providerId={providerId ?? sourceProviders[0]?.id ?? ''}
         error={requestFailed ? {
           title: t('resources.common.loadFailed'),
           description: t('resources.common.loadFailed'),

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { DataTable, DataTablePagination } from '@/shared/components/data-table'
@@ -28,7 +28,6 @@ interface FlashSystemInventoryViewProps {
   resources: FlashSystemVolumeResource[]
   providers: ProviderRecord[]
   providerId: string
-  onProviderIdChange: (providerId: string) => void
   error?: ResourceInventoryPanelError | null
   t: Translate
 }
@@ -37,7 +36,6 @@ export function FlashSystemInventoryView({
   resources,
   providers,
   providerId,
-  onProviderIdChange,
   error,
   t,
 }: FlashSystemInventoryViewProps) {
@@ -46,6 +44,7 @@ export function FlashSystemInventoryView({
   const [pageSize, setPageSize] = useState(25)
   const [density, setDensity] = useState<TableDensity>('compact')
   const [selected, setSelected] = useState<FlashSystemVolumeResource | null>(null)
+  const resetFilters = useMemo(() => ({ ...initialFilters, providerId }), [providerId])
   const options = useMemo(() => getFlashSystemFilterOptions(resources), [resources])
   const providerNames = useMemo(
     () => new Map(providers.map((provider) => [provider.id, provider.name])),
@@ -56,10 +55,13 @@ export function FlashSystemInventoryView({
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, pageCount)
   const rows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize)
+  useEffect(() => {
+    setFilters(resetFilters)
+    setPage(1)
+    setSelected(null)
+  }, [resetFilters])
+
   const updateFilters = (next: Partial<FlashSystemFilters>) => {
-    if (next.providerId !== undefined && next.providerId !== filters.providerId) {
-      onProviderIdChange(next.providerId)
-    }
     setFilters((current) => ({ ...current, ...next }))
     setPage(1)
   }
@@ -97,7 +99,6 @@ export function FlashSystemInventoryView({
           searchPlaceholder={t('resources.flash.searchPlaceholder')}
           searchLabel={t('resources.flash.searchLabel')}
           controls={[
-            { id: 'providerId', label: t('resources.common.provider'), value: filters.providerId, allLabel: t('resources.common.allProviders'), options: providers.map((provider) => ({ value: provider.id, label: provider.name })) },
             { id: 'poolId', label: t('resources.flash.filters.pool'), value: filters.poolId, allLabel: t('resources.flash.filters.allPools'), options: options.pools.map((pool) => ({ value: pool.id, label: `${pool.name} · ${providerNames.get(pool.providerId) ?? pool.providerId}` })) },
             { id: 'hostId', label: t('resources.flash.filters.host'), value: filters.hostId, allLabel: t('resources.flash.filters.allHosts'), options: options.hosts.map((host) => ({ value: host.id, label: `${host.name} · ${providerNames.get(host.providerId) ?? host.providerId}` })) },
             { id: 'status', label: t('resources.flash.filters.status'), value: filters.status, allLabel: t('resources.flash.filters.allStatuses'), options: options.statuses.map((status) => ({ value: status, label: status })) },
@@ -105,8 +106,8 @@ export function FlashSystemInventoryView({
           onSearchChange={(search) => { updateFilters({ search }) }}
           onFiltersChange={(next) => { updateFilters(next) }}
           onReset={() => {
-            setFilters(initialFilters)
-            onProviderIdChange('')
+            setFilters(resetFilters)
+            setSelected(null)
             setPage(1)
           }}
           filterTitle={t('resources.flash.filters.title')}
@@ -127,7 +128,7 @@ export function FlashSystemInventoryView({
           rowAriaLabel={(row) => `${t('resources.common.showDetails')} ${row.name}`}
           ariaLabel={t('resources.flash.tableLabel')}
           minWidthClassName="min-w-[1024px]"
-          emptyContent={<EmptyState title={t('resources.flash.empty.title')} description={t('resources.flash.empty.description')} action={<Button size="sm" variant="outline" onClick={() => { setFilters(initialFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>} />}
+          emptyContent={<EmptyState title={t('resources.flash.empty.title')} description={t('resources.flash.empty.description')} action={<Button size="sm" variant="outline" onClick={() => { setFilters(resetFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>} />}
         />
       </ResourceInventoryPanel>
       <FlashSystemVolumeDetailPanel

@@ -202,7 +202,7 @@ describe('ResourcesPage', () => {
     expect(resourceInventoryQuerySpy).toHaveBeenLastCalledWith(
       'flashsystem',
       [flashProvider],
-      undefined,
+      'flash-01',
     )
   })
 

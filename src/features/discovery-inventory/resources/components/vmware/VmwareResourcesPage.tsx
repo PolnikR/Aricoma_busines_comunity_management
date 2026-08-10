@@ -43,10 +43,11 @@ const emptyFilterOptions: VirtualMachineFilterOptions = {
 export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   const {
     providers, providersPending, providersSuccess, providersFetching,
-    providersError, onRefetchProviders, tabs, t,
+    providersError, onRefetchProviders, providerId, tabs, t,
   } = props
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
   const vmwareProviders = filterByType(providers, 'VMWARE')
+  const selectedProviderId = providerId ?? vmwareProviders[0]?.id ?? null
   const inventoryEnabled = providersSuccess && vmwareProviders.length > 0
   const {
     data: inventory,
@@ -55,7 +56,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     isFetching,
     refetch,
   } = useDiscoveryInventory(
-    query.providerId ?? undefined,
+    selectedProviderId ?? undefined,
     getServerSideTagFilter(query.tags),
     inventoryEnabled,
   )
@@ -69,7 +70,8 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     () => inventory ? mapInventoryToVirtualMachines(inventory) : null,
     [inventory],
   )
-  const data = allData ? applyFiltersAndPagination(allData, query) : null
+  const effectiveQuery = { ...query, providerId: selectedProviderId }
+  const data = allData ? applyFiltersAndPagination(allData, effectiveQuery) : null
 
   useEffect(() => {
     if (!isFetching && data && data.page !== query.page) updateQuery({ page: data.page })
@@ -88,7 +90,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     powerState: query.powerState,
     connectionState: query.connectionState,
     cluster: query.cluster,
-    providerId: query.providerId,
+    providerId: selectedProviderId,
     tags: query.tags,
     untagged: query.untagged,
   }
@@ -139,10 +141,8 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
           filters={filters}
           options={data?.filterOptions ?? emptyFilterOptions}
           availableTags={availableTags}
-          providers={vmwareProviders}
-          providersLoading={false}
           onFiltersChange={updateFilters}
-          onReset={() => { updateFilters(defaultFilters) }}
+          onReset={() => { updateFilters({ ...defaultFilters, providerId: selectedProviderId }) }}
           density={density}
           onDensityChange={setDensity}
         />}
@@ -176,7 +176,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
             <EmptyState
               title={t('pages.virtualMachines.empty.title')}
               description={t('pages.virtualMachines.empty.description')}
-              action={<Button size="sm" variant="outline" onClick={() => { updateFilters(defaultFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>}
+              action={<Button size="sm" variant="outline" onClick={() => { updateFilters({ ...defaultFilters, providerId: selectedProviderId }) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>}
             />
           </div>
         )}

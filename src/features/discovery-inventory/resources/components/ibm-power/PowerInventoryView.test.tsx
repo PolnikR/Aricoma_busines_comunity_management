@@ -17,12 +17,6 @@ const provider: ProviderRecord = {
   credentialStatus: 'none',
 }
 
-const secondProvider: ProviderRecord = {
-  ...provider,
-  id: 'power-02',
-  name: 'Power 02',
-}
-
 const partition: PowerPartitionResource = {
   id: 'power-01:VIOS:1',
   providerId: 'power-01',
@@ -90,9 +84,7 @@ describe('PowerInventoryView', () => {
     render(
       <PowerInventoryView
         resources={[partition]}
-        providers={[]}
         providerId=""
-        onProviderIdChange={vi.fn()}
         t={t}
       />,
     )
@@ -116,9 +108,7 @@ describe('PowerInventoryView', () => {
     render(
       <PowerInventoryView
         resources={[partition]}
-        providers={[]}
         providerId=""
-        onProviderIdChange={vi.fn()}
         t={t}
       />,
     )
@@ -140,26 +130,20 @@ describe('PowerInventoryView', () => {
     expect(within(dialog).queryByText('Partition state')).not.toBeInTheDocument()
   })
 
-  it('filters loaded data and requests provider-scoped data when applied', () => {
+  it('does not render a duplicate provider filter for the selected source tab', () => {
     const { t } = useTranslation()
-    const onProviderIdChange = vi.fn()
 
     render(
       <PowerInventoryView
         resources={[partition]}
-        providers={[provider, secondProvider]}
-        providerId=""
-        onProviderIdChange={onProviderIdChange}
+        providerId={provider.id}
         t={t}
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
-    fireEvent.change(screen.getByLabelText('Provider'), { target: { value: 'power-02' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
-
-    expect(onProviderIdChange).toHaveBeenCalledWith('power-02')
-    expect(screen.queryByText('vios1')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Filters/ }))
+    expect(screen.queryByLabelText('Provider')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Partition kind')).toBeInTheDocument()
   })
 
   it('keeps provider filters available when the inventory request fails', () => {
@@ -169,9 +153,7 @@ describe('PowerInventoryView', () => {
     render(
       <PowerInventoryView
         resources={[]}
-        providers={[provider, secondProvider]}
         providerId=""
-        onProviderIdChange={vi.fn()}
         error={{
           title: 'Resource inventory could not be loaded',
           description: 'Resource inventory could not be loaded',

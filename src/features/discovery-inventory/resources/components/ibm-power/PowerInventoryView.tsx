@@ -1,9 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { DataTable, DataTablePagination } from '@/shared/components/data-table'
 import type { TableDensity } from '@/shared/components/data-table'
-import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { useTranslation } from '@/hooks/useTranslation'
 import type { PowerPartitionResource } from '../../../model/discoveryTypes'
 import { createPowerColumns } from '../../config/powerColumns'
@@ -21,18 +20,14 @@ const initialFilters: PowerFilters = {
 
 interface PowerInventoryViewProps {
   resources: PowerPartitionResource[]
-  providers: ProviderRecord[]
   providerId: string
-  onProviderIdChange: (providerId: string) => void
   error?: ResourceInventoryPanelError | null
   t: Translate
 }
 
 export function PowerInventoryView({
   resources,
-  providers,
   providerId,
-  onProviderIdChange,
   error,
   t,
 }: PowerInventoryViewProps) {
@@ -41,15 +36,19 @@ export function PowerInventoryView({
   const [pageSize, setPageSize] = useState(25)
   const [density, setDensity] = useState<TableDensity>('compact')
   const [selected, setSelected] = useState<PowerPartitionResource | null>(null)
+  const resetFilters = useMemo(() => ({ ...initialFilters, providerId }), [providerId])
   const options = useMemo(() => getPowerFilterOptions(resources), [resources])
   const filtered = useMemo(() => filterPowerResources(resources, filters), [filters, resources])
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, pageCount)
   const rows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize)
+  useEffect(() => {
+    setFilters(resetFilters)
+    setPage(1)
+    setSelected(null)
+  }, [resetFilters])
+
   const updateFilters = (next: Partial<PowerFilters>) => {
-    if (next.providerId !== undefined && next.providerId !== filters.providerId) {
-      onProviderIdChange(next.providerId)
-    }
     setFilters((current) => ({ ...current, ...next }))
     setPage(1)
   }
@@ -73,7 +72,6 @@ export function PowerInventoryView({
           searchPlaceholder={t('resources.power.searchPlaceholder')}
           searchLabel={t('resources.power.searchLabel')}
           controls={[
-            { id: 'providerId', label: labels.provider, value: filters.providerId, allLabel: t('resources.common.allProviders'), options: providers.map((provider) => ({ value: provider.id, label: provider.name })) },
             { id: 'partitionKind', label: t('resources.power.filters.kind'), value: filters.partitionKind, allLabel: t('resources.power.filters.allKinds'), options: options.partitionKinds.map((value) => ({ value, label: value })) },
             { id: 'partitionState', label: t('resources.power.filters.partitionState'), value: filters.partitionState, allLabel: t('resources.power.filters.allStates'), options: options.partitionStates.map((value) => ({ value, label: value })) },
             { id: 'operatingSystemType', label: labels.os, value: filters.operatingSystemType, allLabel: t('resources.power.filters.allOperatingSystems'), options: options.operatingSystemTypes.map((value) => ({ value, label: value })) },
@@ -82,8 +80,8 @@ export function PowerInventoryView({
           onSearchChange={(search) => { updateFilters({ search }) }}
           onFiltersChange={(next) => { updateFilters(next) }}
           onReset={() => {
-            setFilters(initialFilters)
-            onProviderIdChange('')
+            setFilters(resetFilters)
+            setSelected(null)
             setPage(1)
           }}
           filterTitle={t('resources.power.filters.title')}
@@ -104,7 +102,7 @@ export function PowerInventoryView({
           rowAriaLabel={(row) => `${t('resources.common.showDetails')} ${row.partitionName}`}
           ariaLabel={t('resources.power.tableLabel')}
           minWidthClassName="min-w-[960px]"
-          emptyContent={<EmptyState title={t('resources.power.empty.title')} description={t('resources.power.empty.description')} action={<Button size="sm" variant="outline" onClick={() => { setFilters(initialFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>} />}
+          emptyContent={<EmptyState title={t('resources.power.empty.title')} description={t('resources.power.empty.description')} action={<Button size="sm" variant="outline" onClick={() => { setFilters(resetFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>} />}
         />
       </ResourceInventoryPanel>
       <IbmPowerDetailPanel
