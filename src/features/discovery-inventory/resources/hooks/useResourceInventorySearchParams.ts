@@ -18,6 +18,10 @@ export type ResourceInventoryParamValue =
   | null
   | undefined
 
+export interface ResourceInventorySearchParamsOptions<TFilters extends object> {
+  parseFilters: (searchParams: URLSearchParams) => TFilters
+}
+
 function parsePositiveInteger(value: string | null, fallback: number) {
   const parsed = Number(value)
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
@@ -37,20 +41,28 @@ function normalizeValue(value: ResourceInventoryParamValue) {
   return String(value)
 }
 
-export function useResourceInventorySearchParams() {
+export function useResourceInventorySearchParams<TFilters extends object = Record<string, never>>(
+  options?: ResourceInventorySearchParamsOptions<TFilters>,
+) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const query = useMemo<ResourceInventoryQuery>(() => ({
+  const query = useMemo<ResourceInventoryQuery & TFilters>(() => ({
     page: parsePositiveInteger(searchParams.get('page'), 1),
     pageSize: parsePageSize(searchParams.get('pageSize')),
     search: searchParams.get('search') ?? '',
-  }), [searchParams])
+    ...(options?.parseFilters ? options.parseFilters(searchParams) : {} as TFilters),
+  }), [options, searchParams])
 
   const updateQuery = (
-    changes: Record<string, ResourceInventoryParamValue>,
+    changes: object,
     resetPage = false,
   ) => {
     const next = new URLSearchParams(searchParams)
-    const values = resetPage ? { ...changes, page: 1 } : changes
+    const changeValues = changes as Record<string, ResourceInventoryParamValue>
+    const values: Record<string, ResourceInventoryParamValue> = {
+      ...changeValues,
+      page: resetPage ? 1 : changeValues['page'] ?? query.page,
+      pageSize: changeValues['pageSize'] ?? query.pageSize,
+    }
 
     Object.entries(values).forEach(([key, value]) => {
       let normalized = normalizeValue(value)
