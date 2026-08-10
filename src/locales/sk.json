@@ -59,6 +59,8 @@
   "pages.virtualMachines.title": "Virtuálne stroje",
   "pages.virtualMachines.description": "Prehľad virtuálnych strojov VMware, ich stavu a umiestnenia.",
   "pages.virtualMachines.tabs.label": "Zdroj inventára",
+  "pages.virtualMachines.tabs.previous": "Predchádzajúce zdroje",
+  "pages.virtualMachines.tabs.next": "Nasledujúce zdroje",
   "pages.virtualMachines.tabs.vmware": "VMware VM",
   "pages.virtualMachines.tabs.flashSystem": "FlashSystem zväzky",
   "pages.virtualMachines.tabs.ibmPower": "IBM Power partície",

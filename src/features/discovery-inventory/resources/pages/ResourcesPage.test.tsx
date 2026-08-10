@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ResourcesPage } from './ResourcesPage'
 import type { DiscoveryInventory } from '../../model/discoveryTypes'
@@ -8,9 +8,11 @@ const refetch = vi.fn()
 const updateQuery = vi.fn()
 const updateFilters = vi.fn()
 const refetchProviders = vi.fn()
+const setResourceSource = vi.fn()
 const resourceInventoryQuerySpy = vi.fn()
 const refetchResourceInventory = vi.fn()
 let resourceTab: 'vmware' | 'flashsystem' | 'ibm-power' = 'vmware'
+let selectedProviderId: string | null = null
 const vmwareProvider: ProviderRecord = {
   id: 'vmware-01', name: 'VMware 01', description: '', type: 'VMWARE',
   ipAddress: '10.0.0.1', credentialId: null, credentialStatus: 'none',
@@ -73,7 +75,7 @@ vi.mock('../hooks/useVirtualMachineSearchParams', () => ({
   }),
 }))
 vi.mock('../hooks/useResourceTabSearchParam', () => ({
-  useResourceTabSearchParam: () => ({ resourceTab, setResourceTab: vi.fn() }),
+  useResourceTabSearchParam: () => ({ resourceTab, providerId: selectedProviderId, setResourceSource }),
 }))
 vi.mock('../components/vmware/VirtualMachineMetrics', () => ({
   VirtualMachineMetrics: () => <div>VM metrics</div>,
@@ -94,6 +96,7 @@ vi.mock('../skeletons', () => ({
 beforeEach(() => {
   vi.clearAllMocks()
   resourceTab = 'vmware'
+  selectedProviderId = null
   providersQuery = {
     data: [vmwareProvider],
     error: null,
@@ -148,6 +151,29 @@ describe('ResourcesPage', () => {
     expect(screen.getByRole('tab', { name: 'FlashSystem Volumes' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'IBM Power Partitions' })).toBeInTheDocument()
     expect(screen.getByText('No virtual machines found')).toBeInTheDocument()
+  })
+
+  it('renders multiple provider sources in the single top resource tab list', () => {
+    providersQuery = {
+      ...providersQuery,
+      data: Array.from({ length: 10 }, (_, index) => ({
+        ...vmwareProvider,
+        id: `vmware-${String(index + 1).padStart(2, '0')}`,
+        name: `vCenter ${String(index + 1).padStart(2, '0')}`,
+      })),
+    }
+
+    render(<ResourcesPage />)
+
+    const sourceTabList = screen.getByRole('tablist', { name: 'Inventory source' })
+    const vmwareTabs = within(sourceTabList)
+      .getAllByRole('tab')
+      .filter(tab => tab.textContent?.startsWith('VMware VMs'))
+    expect(vmwareTabs).toHaveLength(10)
+    expect(screen.getAllByRole('tablist')).toHaveLength(1)
+
+    fireEvent.click(screen.getByRole('tab', { name: 'VMware VMs · vCenter 10' }))
+    expect(setResourceSource).toHaveBeenLastCalledWith({ resourceTab: 'vmware', providerId: 'vmware-10' })
   })
 
   it('waits for providers before activating a source inventory query', () => {

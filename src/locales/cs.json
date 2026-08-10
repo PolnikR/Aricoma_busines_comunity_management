@@ -63,6 +63,8 @@
   "pages.virtualMachines.title": "Virtuální stroje",
   "pages.virtualMachines.description": "Přehled inventáře, stavu a umístění VMware.",
   "pages.virtualMachines.tabs.label": "Zdroj inventáře",
+  "pages.virtualMachines.tabs.previous": "Předchozí zdroje",
+  "pages.virtualMachines.tabs.next": "Následující zdroje",
   "pages.virtualMachines.tabs.vmware": "VMware VM",
   "pages.virtualMachines.tabs.flashSystem": "FlashSystem svazky",
   "pages.virtualMachines.tabs.ibmPower": "IBM Power oddíly",

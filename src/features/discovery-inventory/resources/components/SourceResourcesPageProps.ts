@@ -9,6 +9,7 @@ export interface SourceResourcesPageProps {
   providersFetching: boolean
   providersError: Error | null
   onRefetchProviders: () => void
+  providerId: string | null
   tabs: ReactNode
   t: ReturnType<typeof useTranslation>['t']
 }
