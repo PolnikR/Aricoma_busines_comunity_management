@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { DataTable, DataTablePagination } from '@/shared/components/data-table'
@@ -42,12 +42,6 @@ export function PowerInventoryView({
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, pageCount)
   const rows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize)
-  useEffect(() => {
-    setFilters(resetFilters)
-    setPage(1)
-    setSelected(null)
-  }, [resetFilters])
-
   const updateFilters = (next: Partial<PowerFilters>) => {
     setFilters((current) => ({ ...current, ...next }))
     setPage(1)

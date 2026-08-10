@@ -18,7 +18,7 @@ export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
   const sourceQuery = useResourceInventoryQueries(
     providersSuccess ? 'ibm-power' : null,
     providers,
-    providerId || undefined,
+    providerId ?? undefined,
   )
   const hasData = sourceQuery.powerResources.length > 0
   const requestFailed = sourceQuery.hasProviders && sourceQuery.failures.length > 0 && !hasData
@@ -76,7 +76,7 @@ export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
     content = (
       <PowerInventoryView
         resources={sourceQuery.powerResources}
-        providerId={providerId ?? sourceProviders[0]?.id ?? ''}
+    providerId={providerId ?? sourceProviders[0]?.id ?? ''}
         error={requestFailed ? {
           title: t('resources.common.loadFailed'),
           description: t('resources.common.loadFailed'),

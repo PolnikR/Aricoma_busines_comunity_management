@@ -68,7 +68,10 @@ export function Tabs<T extends string>({
 
     const selectedIndex = items.findIndex(item => item.value === value)
     const selectedTab = tabRefs.current[selectedIndex]
-    selectedTab?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+    const scrollableTab = selectedTab as Omit<HTMLButtonElement, 'scrollIntoView'> & {
+      scrollIntoView?: (options?: ScrollIntoViewOptions) => void
+    } | null
+    scrollableTab?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
     updateScrollState()
   }, [items, scrollControls, updateScrollState, value])
 

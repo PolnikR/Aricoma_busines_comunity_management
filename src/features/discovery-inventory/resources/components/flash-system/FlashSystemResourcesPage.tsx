@@ -18,7 +18,7 @@ export function FlashSystemResourcesPage(props: SourceResourcesPageProps) {
   const sourceQuery = useResourceInventoryQueries(
     providersSuccess ? 'flashsystem' : null,
     providers,
-    providerId || undefined,
+    providerId ?? undefined,
   )
   const hasData = sourceQuery.flashSystemResources.length > 0
   const requestFailed = sourceQuery.hasProviders && sourceQuery.failures.length > 0 && !hasData
@@ -82,7 +82,7 @@ export function FlashSystemResourcesPage(props: SourceResourcesPageProps) {
       <FlashSystemInventoryView
         resources={sourceQuery.flashSystemResources}
         providers={sourceProviders}
-        providerId={providerId ?? sourceProviders[0]?.id ?? ''}
+    providerId={providerId ?? sourceProviders[0]?.id ?? ''}
         error={requestFailed ? {
           title: t('resources.common.loadFailed'),
           description: t('resources.common.loadFailed'),

@@ -9,8 +9,8 @@ const items = [
 
 describe('Tabs', () => {
   const overflowItems = Array.from({ length: 10 }, (_, index) => ({
-    value: `tab-${index}`,
-    label: `Tab ${index + 1}`,
+    value: `tab-${String(index)}`,
+    label: `Tab ${String(index + 1)}`,
   }))
 
   beforeEach(() => {

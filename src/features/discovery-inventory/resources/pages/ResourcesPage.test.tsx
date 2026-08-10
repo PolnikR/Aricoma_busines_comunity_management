@@ -168,7 +168,7 @@ describe('ResourcesPage', () => {
     const sourceTabList = screen.getByRole('tablist', { name: 'Inventory source' })
     const vmwareTabs = within(sourceTabList)
       .getAllByRole('tab')
-      .filter(tab => tab.textContent?.startsWith('VMware VMs'))
+      .filter(tab => tab.textContent.startsWith('VMware VMs'))
     expect(vmwareTabs).toHaveLength(10)
     expect(screen.getAllByRole('tablist')).toHaveLength(1)
 
