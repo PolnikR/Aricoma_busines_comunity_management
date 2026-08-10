@@ -81,6 +81,57 @@ describe('ProvidersCreateModal', () => {
     expect((nameInput as HTMLInputElement).value).toBe('New vCenter')
   })
 
+  it('derives a normalized ID from the provider name while creating', () => {
+    renderWithQueryClient(
+      <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[]} />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'Production vCenter' } })
+
+    expect(screen.getByLabelText('ID')).toHaveValue('production_vcenter')
+  })
+
+  it('preserves a manually customized ID when the provider name changes', () => {
+    renderWithQueryClient(
+      <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[]} />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'Production vCenter' } })
+    fireEvent.change(screen.getByLabelText('ID'), { target: { value: 'custom_provider' } })
+    fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'Disaster Recovery' } })
+
+    expect(screen.getByLabelText('ID')).toHaveValue('custom_provider')
+  })
+
+  it('normalizes a manually entered ID when the field loses focus', () => {
+    renderWithQueryClient(
+      <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[]} />,
+    )
+
+    const idInput = screen.getByLabelText('ID')
+    fireEvent.change(idInput, { target: { value: 'Flash Copy Primary' } })
+    fireEvent.blur(idInput)
+
+    expect(idInput).toHaveValue('flash_copy_primary')
+  })
+
+  it('rejects an ID that collides after normalization', async () => {
+    renderWithQueryClient(
+      <ProvidersCreateModal
+        open
+        onClose={vi.fn()}
+        existingProviders={[{ ...mockProviderA, id: 'new_provider' }]}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('ID'), { target: { value: 'New Provider' } })
+    fireEvent.click(screen.getByRole('button', { name: /Create Provider/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('A provider with this ID already exists')).toBeInTheDocument()
+    })
+  })
+
   it('shows validation errors for required fields', async () => {
     renderWithQueryClient(
       <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[]} />,
@@ -156,7 +207,7 @@ describe('ProvidersCreateModal', () => {
     const init = mockFetch.mock.calls[0]?.[1] as RequestInit
     const body = JSON.parse(init.body as string) as ProviderRecord
     expect(body).toMatchObject({
-      id: 'flashcopy-01',
+      id: 'flashcopy_01',
       name: 'New Provider',
       type: 'VMWARE',
       ipAddress: '10.0.0.1',

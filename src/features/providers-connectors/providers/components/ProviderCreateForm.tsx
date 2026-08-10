@@ -25,6 +25,7 @@ interface ProviderCreateFormProps {
   credentialsError: boolean
   onRetryCredentials: () => void
   onChange: (field: keyof ProviderCreateFormData, value: string) => void
+  onIdBlur?: () => void
   onSubmit: () => void
 }
 
@@ -39,6 +40,7 @@ export function ProviderCreateForm({
   credentialsError,
   onRetryCredentials,
   onChange,
+  onIdBlur,
   onSubmit,
 }: ProviderCreateFormProps) {
   const { t } = useTranslation()
@@ -61,6 +63,7 @@ export function ProviderCreateForm({
           placeholder={t('forms.idExample')}
           value={data.id}
           onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('id', event.target.value) }}
+          onBlur={onIdBlur}
           onKeyDown={handleKeyDown}
           disabled={isSubmitting || idDisabled}
           aria-invalid={Boolean(errors.id)}

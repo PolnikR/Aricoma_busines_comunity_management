@@ -4,6 +4,7 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
+import { isProgrammaticIdAvailable, toProgrammaticId } from '@/shared/utils/programmaticId'
 import { useUpsertProvider } from '../hooks/useUpsertProvider'
 import { useCredentials } from '../../credentials/hooks/useCredentials'
 import { ProviderCreateForm } from './ProviderCreateForm'
@@ -82,7 +83,20 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
   }
 
   const handleChange = (field: keyof ProviderCreateFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    setFormData((prev) => {
+      if (field === 'name' && !isEdit) {
+        const previousDerivedId = toProgrammaticId(prev.name)
+        if (!prev.id || prev.id === previousDerivedId) {
+          return {
+            ...prev,
+            name: value,
+            id: toProgrammaticId(value),
+          }
+        }
+      }
+
+      return { ...prev, [field]: value }
+    })
     if (field in errors && errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev }
@@ -94,10 +108,20 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     setErrorMessage('')
   }
 
+  const handleIdBlur = () => {
+    if (isEdit) return
+    setFormData((prev) => ({ ...prev, id: toProgrammaticId(prev.id) }))
+  }
+
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof ProviderCreateFormData, string>> = {}
-    if (!formData.id.trim()) newErrors.id = t('forms.idRequired')
-    else if (!isEdit && existingProviders.some((entry) => entry.id === formData.id.trim())) {
+    const normalizedId = toProgrammaticId(formData.id)
+    if (!normalizedId) newErrors.id = t('forms.idRequired')
+    else if (!isProgrammaticIdAvailable(
+      normalizedId,
+      existingProviders.map(entry => toProgrammaticId(entry.id)),
+      isEdit ? toProgrammaticId(provider?.id ?? '') : undefined,
+    )) {
       newErrors.id = t('providers.validation.idExists')
     }
     if (!formData.name.trim()) newErrors.name = t('forms.nameRequired')
@@ -114,7 +138,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     setErrorMessage('')
 
     const record: ProviderSubmitData = {
-      id: formData.id.trim(),
+      id: isEdit ? formData.id.trim() : toProgrammaticId(formData.id),
       name: formData.name.trim(),
       description: formData.description.trim(),
       type: formData.type as ProviderType,
@@ -181,6 +205,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
           credentialsError={credentialsQuery.error !== null}
           onRetryCredentials={() => { void credentialsQuery.refetch() }}
           onChange={handleChange}
+          onIdBlur={handleIdBlur}
           onSubmit={handleSubmit}
         />
       </Modal>
