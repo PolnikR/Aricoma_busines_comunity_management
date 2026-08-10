@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { useTranslation } from '@/test-utils/mockUseTranslation'
@@ -55,14 +56,11 @@ describe('FlashSystemInventoryView', () => {
     }), provider.id)
     const { t } = useTranslation()
 
-    render(
-      <FlashSystemInventoryView
-        resources={inventory.resources}
-        providers={[provider]}
-        providerId={provider.id}
-        t={t}
-      />,
-    )
+    render(<MemoryRouter><FlashSystemInventoryView
+      resources={inventory.resources}
+      providers={[provider]}
+      t={t}
+    /></MemoryRouter>)
     expect(screen.getByRole('columnheader', { name: 'Capacity' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Pool' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Type' })).toBeInTheDocument()
@@ -119,14 +117,11 @@ describe('FlashSystemInventoryView', () => {
       clusters: {},
     }), provider.id)
 
-    render(
-      <FlashSystemInventoryView
-        resources={inventory.resources}
-        providers={[provider, secondProvider]}
-        providerId={provider.id}
-        t={t}
-    />,
-    )
+    render(<MemoryRouter><FlashSystemInventoryView
+      resources={inventory.resources}
+      providers={[provider, secondProvider]}
+      t={t}
+    /></MemoryRouter>)
 
     fireEvent.click(screen.getByRole('button', { name: /Filters/ }))
     expect(screen.queryByLabelText('Provider')).not.toBeInTheDocument()

@@ -1,6 +1,5 @@
 export interface FlashSystemFilters {
   search: string
-  providerId: string
   poolId: string
   hostId: string
   status: string

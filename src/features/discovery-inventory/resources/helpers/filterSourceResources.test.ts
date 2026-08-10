@@ -80,7 +80,6 @@ describe('FlashSystem provider-scoped filters', () => {
     expect(options.hosts).toHaveLength(2)
     expect(filterFlashSystemResources(resources, {
       search: '',
-      providerId: '',
       poolId: options.pools[0]?.id ?? '',
       hostId: options.hosts[0]?.id ?? '',
       status: '',

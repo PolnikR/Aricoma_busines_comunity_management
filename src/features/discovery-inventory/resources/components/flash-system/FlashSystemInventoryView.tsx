@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { DataTable, DataTablePagination } from '@/shared/components/data-table'
@@ -10,6 +10,7 @@ import { createFlashSystemColumns } from '../../config/flashSystemColumns'
 import { buildFlashSystemHostSummaries } from '../../helpers/buildFlashSystemHostSummaries'
 import { filterFlashSystemResources, getFlashSystemFilterOptions } from '../../helpers/filterSourceResources'
 import type { FlashSystemFilters } from '../../model/sourceInventoryTypes'
+import { useFlashSystemSearchParams } from '../../hooks/useFlashSystemSearchParams'
 import { FlashSystemVolumeDetailPanel } from './FlashSystemVolumeDetailPanel'
 import { ResourceInventoryPanel, type ResourceInventoryPanelError } from '../ResourceInventoryPanel'
 import { SourceInventoryToolbar } from '../SourceInventoryToolbar'
@@ -18,7 +19,6 @@ type Translate = ReturnType<typeof useTranslation>['t']
 
 const initialFilters: FlashSystemFilters = {
   search: '',
-  providerId: '',
   poolId: '',
   hostId: '',
   status: '',
@@ -27,7 +27,6 @@ const initialFilters: FlashSystemFilters = {
 interface FlashSystemInventoryViewProps {
   resources: FlashSystemVolumeResource[]
   providers: ProviderRecord[]
-  providerId: string
   error?: ResourceInventoryPanelError | null
   t: Translate
 }
@@ -35,16 +34,19 @@ interface FlashSystemInventoryViewProps {
 export function FlashSystemInventoryView({
   resources,
   providers,
-  providerId,
   error,
   t,
 }: FlashSystemInventoryViewProps) {
-  const [filters, setFilters] = useState<FlashSystemFilters>({ ...initialFilters, providerId })
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(25)
+  const { query, updateQuery, updateFilters } = useFlashSystemSearchParams()
   const [density, setDensity] = useState<TableDensity>('compact')
   const [selected, setSelected] = useState<FlashSystemVolumeResource | null>(null)
-  const resetFilters = useMemo(() => ({ ...initialFilters, providerId }), [providerId])
+  const filters = useMemo<FlashSystemFilters>(() => ({
+    search: query.search,
+    poolId: query.poolId,
+    hostId: query.hostId,
+    status: query.status,
+  }), [query.hostId, query.poolId, query.search, query.status])
+  const resetFilters = initialFilters
   const options = useMemo(() => getFlashSystemFilterOptions(resources), [resources])
   const providerNames = useMemo(
     () => new Map(providers.map((provider) => [provider.id, provider.name])),
@@ -52,13 +54,13 @@ export function FlashSystemInventoryView({
   )
   const filtered = useMemo(() => filterFlashSystemResources(resources, filters), [filters, resources])
   const hostSummaries = useMemo(() => buildFlashSystemHostSummaries(resources), [resources])
-  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
-  const safePage = Math.min(page, pageCount)
-  const rows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize)
-  const updateFilters = (next: Partial<FlashSystemFilters>) => {
-    setFilters((current) => ({ ...current, ...next }))
-    setPage(1)
-  }
+  const pageCount = Math.max(1, Math.ceil(filtered.length / query.pageSize))
+  const safePage = Math.min(query.page, pageCount)
+  const rows = filtered.slice((safePage - 1) * query.pageSize, safePage * query.pageSize)
+
+  useEffect(() => {
+    if (safePage !== query.page) updateQuery({ page: safePage })
+  }, [query.page, safePage, updateQuery])
   const labels = {
     name: t('resources.flash.table.name'),
     status: t('resources.flash.table.status'),
@@ -100,9 +102,8 @@ export function FlashSystemInventoryView({
           onSearchChange={(search) => { updateFilters({ search }) }}
           onFiltersChange={(next) => { updateFilters(next) }}
           onReset={() => {
-            setFilters(resetFilters)
+            updateFilters(resetFilters)
             setSelected(null)
-            setPage(1)
           }}
           filterTitle={t('resources.flash.filters.title')}
           filterLabel={t('common.filters')}
@@ -110,7 +111,7 @@ export function FlashSystemInventoryView({
           onDensityChange={setDensity}
           labels={{ cancel: t('buttons.cancel'), clear: t('buttons.clearAll'), apply: t('buttons.apply') }}
         />}
-        pagination={<DataTablePagination page={safePage} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1) }} />}
+        pagination={<DataTablePagination page={safePage} pageSize={query.pageSize} total={filtered.length} onPageChange={(page) => { updateQuery({ page }) }} onPageSizeChange={(pageSize) => { updateQuery({ pageSize }, true) }} />}
       >
         <DataTable
           columns={createFlashSystemColumns(labels, hostSummaries, hostLabels)}
@@ -122,7 +123,7 @@ export function FlashSystemInventoryView({
           rowAriaLabel={(row) => `${t('resources.common.showDetails')} ${row.name}`}
           ariaLabel={t('resources.flash.tableLabel')}
           minWidthClassName="min-w-[1024px]"
-          emptyContent={<EmptyState title={t('resources.flash.empty.title')} description={t('resources.flash.empty.description')} action={<Button size="sm" variant="outline" onClick={() => { setFilters(resetFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>} />}
+          emptyContent={<EmptyState title={t('resources.flash.empty.title')} description={t('resources.flash.empty.description')} action={<Button size="sm" variant="outline" onClick={() => { updateFilters(resetFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>} />}
         />
       </ResourceInventoryPanel>
       <FlashSystemVolumeDetailPanel

@@ -66,7 +66,6 @@ export function filterFlashSystemResources(
       ...resource.resolvedHostMaps.map((host) => host.hostName),
     ].some((value) => value.toLocaleLowerCase().includes(search))
     return matchesSearch
-      && (!filters.providerId || resource.providerId === filters.providerId)
       && matchesScopedFilter(filters.poolId, resource.providerId, resource.mdisk_grp_id)
       && (!filters.hostId || resource.host_maps.some(
         (host) => matchesScopedFilter(filters.hostId, resource.providerId, host.host_id),
