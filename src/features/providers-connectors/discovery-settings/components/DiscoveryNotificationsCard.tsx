@@ -4,6 +4,7 @@ import { Toggle } from '@/shared/components/toggle/Toggle'
 import { Button } from '@/shared/components/button/Button'
 import { MonitoringIcon } from '@/shared/icons/Icons'
 import { cn } from '@/shared/utils/cn'
+import { useTranslation } from '@/hooks/useTranslation'
 import type {
   DiscoveryNotificationRecipient,
   DiscoverySettings,
@@ -22,22 +23,23 @@ export function DiscoveryNotificationsCard({
   onChange,
   onTestNotification,
 }: DiscoveryNotificationsCardProps) {
+  const { t } = useTranslation()
   const selectedRecipient = recipients.find(recipient => recipient.id === settings.recipientId) ?? recipients[0]
 
   return (
     <SettingsSectionCard
       icon={<MonitoringIcon className="size-5" />}
-      title="Failure notifications"
-      description="Notify a user by email when discovery does not complete."
+      title={t('pages.discoverySettings.notifications.title')}
+      description={t('pages.discoverySettings.notifications.description')}
     >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-text-primary lg:text-xs">Email notifications</p>
-          <p className="mt-1 text-xs leading-5 text-text-muted lg:mt-0.5 lg:leading-4">Send an email after an unsuccessful discovery run.</p>
+          <p className="text-sm font-semibold text-text-primary lg:text-xs">{t('pages.discoverySettings.notifications.enabledLabel')}</p>
+          <p className="mt-1 text-xs leading-5 text-text-muted lg:mt-0.5 lg:leading-4">{t('pages.discoverySettings.notifications.enabledDescription')}</p>
         </div>
         <Toggle
           checked={settings.notificationsEnabled}
-          label="Failure notifications"
+          label={t('pages.discoverySettings.notifications.title')}
           onChange={notificationsEnabled => { onChange({ notificationsEnabled }) }}
         />
       </div>
@@ -45,7 +47,7 @@ export function DiscoveryNotificationsCard({
       <div className="my-5 h-px bg-border lg:my-3" />
 
       <div className={cn(!settings.notificationsEnabled && 'opacity-60')}>
-        <Field label="Notification recipient" htmlFor="notification-recipient">
+        <Field label={t('pages.discoverySettings.notifications.recipientLabel')} htmlFor="notification-recipient">
           <Select
             id="notification-recipient"
             value={settings.recipientId}
@@ -57,7 +59,7 @@ export function DiscoveryNotificationsCard({
             ))}
           </Select>
         </Field>
-        <p className="mt-2 text-xs leading-5 text-text-muted lg:mt-1.5 lg:leading-4">One email is sent for each failed discovery run.</p>
+        <p className="mt-2 text-xs leading-5 text-text-muted lg:mt-1.5 lg:leading-4">{t('pages.discoverySettings.notifications.recipientHelper')}</p>
 
         {selectedRecipient ? (
           <div className="mt-4 flex items-center gap-2.5 rounded-lg border border-border bg-surface-subtle px-3 py-2.5 lg:mt-3 lg:gap-2 lg:px-2 lg:py-2" aria-live="polite">
@@ -75,7 +77,7 @@ export function DiscoveryNotificationsCard({
               disabled={!settings.notificationsEnabled}
               onClick={onTestNotification}
             >
-              <span className="hidden xl:inline">Send </span>test
+              {t('pages.discoverySettings.notifications.sendTest')}
             </Button>
           </div>
         ) : null}

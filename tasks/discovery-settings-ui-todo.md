@@ -23,3 +23,8 @@
 - [x] Build passes.
 - [x] Browser verification passes at desktop and responsive sizes.
 - [x] Project contains no backend/API integration for this template.
+
+## Follow-up polish
+
+- [x] Remove the temporary “UI template” badge from the page header.
+- [x] Move Discovery Settings copy into the EN/SK/CZ translation catalogs.

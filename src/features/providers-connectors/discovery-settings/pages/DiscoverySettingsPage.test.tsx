@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 import { DiscoverySettingsPage } from './DiscoverySettingsPage'
 
 describe('DiscoverySettingsPage', () => {
@@ -11,6 +12,7 @@ describe('DiscoverySettingsPage', () => {
     expect(screen.getByRole('region', { name: 'Discovery schedule' })).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Discovery history' })).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Failure notifications' })).toBeInTheDocument()
+    expect(screen.queryByText('UI template')).not.toBeInTheDocument()
   })
 
   it('disables schedule controls when scheduled discovery is turned off', async () => {
