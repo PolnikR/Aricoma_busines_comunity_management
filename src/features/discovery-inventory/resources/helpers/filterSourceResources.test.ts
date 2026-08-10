@@ -19,11 +19,11 @@ const partition: PowerPartitionResource = {
 describe('filterPowerResources', () => {
   it('searches operational fields and applies structured filters', () => {
     expect(filterPowerResources([partition], {
-      search: '10.99.99.56', providerId: 'provider', partitionKind: 'VIOS',
+      search: '10.99.99.56', partitionKind: 'VIOS',
       partitionState: 'running', operatingSystemType: 'VIOS', volumeState: 'active',
     })).toEqual([partition])
     expect(filterPowerResources([partition], {
-      search: '', providerId: '', partitionKind: 'LPAR', partitionState: '',
+      search: '', partitionKind: 'LPAR', partitionState: '',
       operatingSystemType: '', volumeState: '',
     })).toEqual([])
   })

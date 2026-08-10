@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { DataTable, DataTablePagination } from '@/shared/components/data-table'
@@ -8,6 +8,7 @@ import type { PowerPartitionResource } from '../../../model/discoveryTypes'
 import { createPowerColumns } from '../../config/powerColumns'
 import { filterPowerResources, getPowerFilterOptions } from '../../helpers/filterSourceResources'
 import type { PowerFilters } from '../../model/sourceInventoryTypes'
+import { usePowerSearchParams } from '../../hooks/usePowerSearchParams'
 import { IbmPowerDetailPanel } from './IbmPowerDetailPanel'
 import { ResourceInventoryPanel, type ResourceInventoryPanelError } from '../ResourceInventoryPanel'
 import { SourceInventoryToolbar } from '../SourceInventoryToolbar'
@@ -15,37 +16,40 @@ import { SourceInventoryToolbar } from '../SourceInventoryToolbar'
 type Translate = ReturnType<typeof useTranslation>['t']
 
 const initialFilters: PowerFilters = {
-  search: '', providerId: '', partitionKind: '', partitionState: '', operatingSystemType: '', volumeState: '',
+  search: '', partitionKind: '', partitionState: '', operatingSystemType: '', volumeState: '',
 }
 
 interface PowerInventoryViewProps {
   resources: PowerPartitionResource[]
-  providerId: string
   error?: ResourceInventoryPanelError | null
   t: Translate
 }
 
 export function PowerInventoryView({
   resources,
-  providerId,
   error,
   t,
 }: PowerInventoryViewProps) {
-  const [filters, setFilters] = useState<PowerFilters>({ ...initialFilters, providerId })
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(25)
+  const { query, updateQuery, updateFilters } = usePowerSearchParams()
   const [density, setDensity] = useState<TableDensity>('compact')
   const [selected, setSelected] = useState<PowerPartitionResource | null>(null)
-  const resetFilters = useMemo(() => ({ ...initialFilters, providerId }), [providerId])
+  const filters = useMemo<PowerFilters>(() => ({
+    search: query.search,
+    partitionKind: query.partitionKind,
+    partitionState: query.partitionState,
+    operatingSystemType: query.operatingSystemType,
+    volumeState: query.volumeState,
+  }), [query.operatingSystemType, query.partitionKind, query.partitionState, query.search, query.volumeState])
+  const resetFilters = initialFilters
   const options = useMemo(() => getPowerFilterOptions(resources), [resources])
   const filtered = useMemo(() => filterPowerResources(resources, filters), [filters, resources])
-  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
-  const safePage = Math.min(page, pageCount)
-  const rows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize)
-  const updateFilters = (next: Partial<PowerFilters>) => {
-    setFilters((current) => ({ ...current, ...next }))
-    setPage(1)
-  }
+  const pageCount = Math.max(1, Math.ceil(filtered.length / query.pageSize))
+  const safePage = Math.min(query.page, pageCount)
+  const rows = filtered.slice((safePage - 1) * query.pageSize, safePage * query.pageSize)
+
+  useEffect(() => {
+    if (safePage !== query.page) updateQuery({ page: safePage })
+  }, [query.page, safePage, updateQuery])
   const labels = {
     partition: t('resources.power.table.partition'),
     status: t('resources.power.table.status'),
@@ -74,9 +78,8 @@ export function PowerInventoryView({
           onSearchChange={(search) => { updateFilters({ search }) }}
           onFiltersChange={(next) => { updateFilters(next) }}
           onReset={() => {
-            setFilters(resetFilters)
+            updateFilters(resetFilters)
             setSelected(null)
-            setPage(1)
           }}
           filterTitle={t('resources.power.filters.title')}
           filterLabel={t('common.filters')}
@@ -84,7 +87,7 @@ export function PowerInventoryView({
           onDensityChange={setDensity}
           labels={{ cancel: t('buttons.cancel'), clear: t('buttons.clearAll'), apply: t('buttons.apply') }}
         />}
-        pagination={<DataTablePagination page={safePage} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1) }} />}
+        pagination={<DataTablePagination page={safePage} pageSize={query.pageSize} total={filtered.length} onPageChange={(page) => { updateQuery({ page }) }} onPageSizeChange={(pageSize) => { updateQuery({ pageSize }, true) }} />}
       >
         <DataTable
           columns={createPowerColumns(labels)}
@@ -96,7 +99,7 @@ export function PowerInventoryView({
           rowAriaLabel={(row) => `${t('resources.common.showDetails')} ${row.partitionName}`}
           ariaLabel={t('resources.power.tableLabel')}
           minWidthClassName="min-w-[960px]"
-          emptyContent={<EmptyState title={t('resources.power.empty.title')} description={t('resources.power.empty.description')} action={<Button size="sm" variant="outline" onClick={() => { setFilters(resetFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>} />}
+          emptyContent={<EmptyState title={t('resources.power.empty.title')} description={t('resources.power.empty.description')} action={<Button size="sm" variant="outline" onClick={() => { updateFilters(resetFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>} />}
         />
       </ResourceInventoryPanel>
       <IbmPowerDetailPanel

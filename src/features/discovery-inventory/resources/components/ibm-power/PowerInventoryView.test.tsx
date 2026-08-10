@@ -1,20 +1,15 @@
+import type { ReactNode } from 'react'
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { useTranslation } from '@/test-utils/mockUseTranslation'
-import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { PowerPartitionResource } from '../../../model/discoveryTypes'
 import { PowerInventoryView } from './PowerInventoryView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
-const provider: ProviderRecord = {
-  id: 'power-01',
-  name: 'Power 01',
-  description: '',
-  type: 'IBM_POWER',
-  ipAddress: '10.0.0.2',
-  credentialId: null,
-  credentialStatus: 'none',
+function renderInRouter(ui: ReactNode) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>)
 }
 
 const partition: PowerPartitionResource = {
@@ -81,10 +76,9 @@ const partition: PowerPartitionResource = {
 describe('PowerInventoryView', () => {
   it('shows a compact operational column set', () => {
     const { t } = useTranslation()
-    render(
+    renderInRouter(
       <PowerInventoryView
         resources={[partition]}
-        providerId=""
         t={t}
       />,
     )
@@ -105,10 +99,9 @@ describe('PowerInventoryView', () => {
 
   it('renders only the curated detail sections and combines related values', () => {
     const { t } = useTranslation()
-    render(
+    renderInRouter(
       <PowerInventoryView
         resources={[partition]}
-        providerId=""
         t={t}
       />,
     )
@@ -133,10 +126,9 @@ describe('PowerInventoryView', () => {
   it('does not render a duplicate provider filter for the selected source tab', () => {
     const { t } = useTranslation()
 
-    render(
+    renderInRouter(
       <PowerInventoryView
         resources={[partition]}
-        providerId={provider.id}
         t={t}
       />,
     )
@@ -150,10 +142,9 @@ describe('PowerInventoryView', () => {
     const { t } = useTranslation()
     const onRetry = vi.fn()
 
-    render(
+    renderInRouter(
       <PowerInventoryView
         resources={[]}
-        providerId=""
         error={{
           title: 'Resource inventory could not be loaded',
           description: 'Resource inventory could not be loaded',

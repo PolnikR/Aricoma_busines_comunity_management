@@ -76,7 +76,6 @@ export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
     content = (
       <PowerInventoryView
         resources={sourceQuery.powerResources}
-    providerId={providerId ?? sourceProviders[0]?.id ?? ''}
         error={requestFailed ? {
           title: t('resources.common.loadFailed'),
           description: t('resources.common.loadFailed'),

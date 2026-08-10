@@ -7,7 +7,6 @@ export interface FlashSystemFilters {
 
 export interface PowerFilters {
   search: string
-  providerId: string
   partitionKind: string
   partitionState: string
   operatingSystemType: string

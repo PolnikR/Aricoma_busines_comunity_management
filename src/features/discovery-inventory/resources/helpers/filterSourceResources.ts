@@ -101,7 +101,6 @@ export function filterPowerResources(
       resource.volumeName,
     ].some((value) => value.toLocaleLowerCase().includes(search))
     return matchesSearch
-      && (!filters.providerId || resource.providerId === filters.providerId)
       && (!filters.partitionKind || resource.partitionKind === filters.partitionKind)
       && (!filters.partitionState || resource.partitionState === filters.partitionState)
       && (!filters.operatingSystemType || resource.operatingSystemType === filters.operatingSystemType)
