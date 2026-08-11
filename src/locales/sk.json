@@ -1486,5 +1486,17 @@
   "pages.recoveryActions.history.mode.manual": "Ručný",
   "pages.recoveryActions.history.drawer.eyebrow": "Test obnovy",
   "pages.recoveryActions.history.drawer.ariaLabel": "Detail testu obnovy",
-  "pages.recoveryActions.history.drawer.summary": "Súhrn"
+  "pages.recoveryActions.history.drawer.summary": "Súhrn",
+  "pages.recoveryActions.tabStatus.ready": "Pripravené",
+  "pages.recoveryActions.tabStatus.issue": "{{count}} problém",
+  "pages.recoveryActions.tabStatus.issues": "{{count}} problémy",
+  "pages.recoveryActions.tabStatus.weekly": "Týždenne",
+  "pages.recoveryActions.tabStatus.monthly": "Mesačne",
+  "pages.recoveryActions.tabStatus.disabled": "Vypnuté",
+  "pages.recoveryActions.tabStatus.runs": "{{count}} behov",
+  "pages.recoveryActions.tabDetail.latestCheck": "Posledná kontrola · {{date}}",
+  "pages.recoveryActions.tabDetail.availableGroups": "Dostupné skupiny: {{count}}",
+  "pages.recoveryActions.tabDetail.schedule": "{{day}} · {{time}}",
+  "pages.recoveryActions.tabDetail.scheduleDisabled": "Plánovanie vypnuté",
+  "pages.recoveryActions.tabDetail.evidenceWindow": "Dôkazy za {{days}} dní"
 }

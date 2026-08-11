@@ -1,179 +1,143 @@
-# Implementation Plan: Recovery Actions UI — Variant A
+# Implementation Plan: Recovery Actions Tabs Redesign — Variant A
 
 ## Overview
 
-Add a new top-level **Recovery Actions** workspace beside **Recovery Plans**.
-The workspace is UI-only and uses deterministic mock data; it does not add API
-endpoints, React Query hooks, persistence, or backend mutations.
+Redesign the existing Recovery Actions `WorkspaceTabs` using the approved
+**Variant A: Operational status tabs**. The four-column navigation layout and
+all current route, click, and keyboard behavior remain unchanged. The redesign
+changes the composition of each tab from a standalone mini-card into a compact
+operational navigation item containing:
 
-The selected design is Variant A: a bordered **Recovery workspace** card with a
-horizontal row of four rich action tabs:
+1. a line icon and primary label,
+2. a concise status badge based on existing recovery mock data,
+3. one useful contextual detail instead of a generic feature description.
+
+This remains a UI-only change. It must not add API calls, persistence, polling,
+or backend contracts.
+
+## Approved Visual Contract
 
 ```text
-Recovery workspace
-Operational controls and test evidence
-
-Validate | Execute | Schedule | History
+┌─────────────────────────────────────────────────────────────────────┐
+│ ✓ Validate       ▷ Execute       ◷ Schedule       ≋ History         │
+│   1 issue          Ready            Weekly           4 runs          │
+│   Last check       3 groups          Sun · 22:00      30-day window   │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-Each action tab has an icon, label, short description, and optional status.
-Unlike inventory tabs, the selected item uses a filled action-card treatment
-instead of an underline attached to a table.
+- The tab list has one shared surface; tabs are not individually outlined
+  cards.
+- Adjacent tabs use subtle vertical separators.
+- Icons are unboxed line icons aligned with the primary label.
+- The active tab uses a three-pixel top accent marker and a very subtle
+  surface tint. It must not use a bottom underline that visually merges with
+  the content divider.
+- Status badges communicate actual UI state and use semantic tones; color is
+  accompanied by text.
+- The contextual line contains a value derived from the current feature mocks,
+  not generic copy such as “Check recovery readiness”.
+- Desktop keeps four equal columns. Tablet uses two columns and mobile uses one
+  column without horizontal page scrolling.
+- Existing ARIA roles, roving `tabIndex`, disabled handling, and
+  Arrow/Home/End navigation remain intact.
 
 ## Scope
 
 ### In scope
 
-- A new top-level App Sidebar item named **Recovery Actions**, positioned beside
-  **Recovery Plans**.
-- Canonical URL-backed sections:
-  - `/recovery-actions/validate`
-  - `/recovery-actions/execute`
-  - `/recovery-actions/schedule`
-  - `/recovery-actions/history`
-- A reusable shared `WorkspaceTabs` component implementing Variant A.
-- UI-only Validate, Execute, Schedule, and History pages.
-- Deterministic typed mock data and local component state.
-- English, Slovak, and Czech translations.
-- Responsive and keyboard-accessible behavior.
-- A compatibility redirect from the old Recovery Runs placeholder route to
-  Recovery Actions History.
+- Restyle the shared `WorkspaceTabs` composition and selected state.
+- Reuse the existing `meta: ReactNode` slot for the semantic status badge.
+- Reuse `description` as the operational detail line; no breaking public API
+  rename is required.
+- Add a small Recovery Actions presentation mapper that derives tab status and
+  detail values from existing deterministic mock records.
+- Wire the presentation into `RecoveryActionsPageShell`.
+- Add English, Slovak, and Czech labels for the new state and detail text.
+- Update focused component, presentation-model, and shell tests.
+- Verify responsive layout, light/dark themes, keyboard use, and production
+  build.
 
 ### Out of scope
 
-- Backend endpoints, API schemas, React Query hooks, mutations, polling, or
-  persistence.
-- Starting a real recovery or recovery test.
-- Resolving real point-in-time VM configurations or snapshots.
-- Sending email notifications.
-- Provider-specific execution adapters.
-- Changes to Recovery Groups, Recovery Applications, Recovery Policies, or
-  Policy Sets contracts.
+- Changes to Validate, Execute, Schedule, or History page content.
+- Route or App Sidebar changes.
+- New backend endpoints, queries, mutations, polling, or persistence.
+- Making the Execute tab reflect unsaved local selections from its page form.
+- Adding a generic status model to unrelated table tabs.
+- Redesigning the Recovery workspace header or surrounding page card.
 
 ## Architecture Decisions
 
-### Navigation hierarchy
+### Shared component boundary
 
-- `Recovery Actions` is a top-level sibling of `Recovery Plans`, not one of
-  its children.
-- `Recovery Actions` navigates directly to
-  `/recovery-actions/validate`.
-- Validate, Execute, Schedule, and History are route-backed tabs inside one
-  workspace shell.
-- The existing `/recovery-plans/recovery-runs` placeholder becomes a legacy
-  redirect to `/recovery-actions/history`; its sidebar child is removed to
-  avoid two competing history destinations.
+`WorkspaceTabs<T>` remains controlled, generic, and unaware of recovery data.
+It accepts the existing `WorkspaceTabItem<T>` fields and only owns layout,
+interaction, focus, and shared styling. The `meta` node is positioned by the
+shared component but styled by its consumer, allowing Recovery Actions to use
+the existing shared `Badge` without embedding recovery status concepts in the
+tab component.
 
-### Shared tab component
+### Recovery-specific presentation
 
-- Add `src/shared/components/tabs/WorkspaceTabs.tsx` rather than adding a
-  visual variant to the existing table-oriented `Tabs` component.
-- `WorkspaceTabs<T>` is controlled and generic. Each item exposes:
-  `value`, `label`, `description`, optional `icon`, optional `meta`,
-  and optional `disabled`.
-- The component owns only interaction, accessibility, responsive layout, and
-  shared styling. It does not know about Recovery Actions or React Router.
-- It uses `role="tablist"`, `role="tab"`, `aria-selected`, roving
-  `tabIndex`, and Left/Right/Home/End keyboard navigation.
-- Desktop uses four equal action cards. Narrow screens use a two-column layout,
-  then a horizontally scrollable fallback only when content cannot fit.
-- Existing `Tabs` stays unchanged for inventory and policy tables.
+Add a feature-local presentation mapper, for example:
 
-### Feature boundaries
+`src/features/recovery-actions/model/recoveryActionTabPresentation.ts`
 
-```text
-src/features/recovery-actions/
-├── components/
-│   ├── RecoveryActionsPageShell.tsx
-│   └── RecoveryPointSummary.tsx
-├── execute/
-│   ├── components/
-│   └── pages/
-├── history/
-│   ├── components/
-│   └── pages/
-├── mocks/
-│   └── recoveryActionsMocks.ts
-├── model/
-│   ├── recoveryActionNavigation.ts
-│   └── recoveryActionTypes.ts
-├── schedule/
-│   ├── components/
-│   └── pages/
-└── validate/
-    ├── components/
-    └── pages/
-```
+It returns provider-neutral view data for the four tabs. Initial UI-only values
+come from the existing mocks:
 
-- Cross-section models and mock records live at the feature root.
-- Components reused by Validate and Execute stay in
-  `recovery-actions/components`.
-- Components used by only one section remain within that section.
-- Reuse existing shared `PageHeader`, `Card`, `FilterTabs`,
-  `SettingsSectionCard`, `Toggle`, form controls, `Badge`, `DataTable`,
-  and confirmation/modal components.
-- Do not move a component to global `shared` unless it is genuinely
-  domain-independent. The only new global shared component required by this
-  scope is `WorkspaceTabs`.
+| Tab | Status | Context detail | Source |
+| --- | --- | --- | --- |
+| Validate | Number of non-passing checks | Latest automated run timestamp | `latestValidationChecks`, `latestAutomatedRun` |
+| Execute | Ready | Number of available application groups | `recoveryApplicationGroups`, `latestRecoveryPoint` |
+| Schedule | Weekly/Monthly or Disabled | Configured day and time | `initialRecoverySchedule` |
+| History | Number of runs | Configured 30-day evidence window | `recoveryHistory` |
 
-### UI-only state
+The mapper returns semantic tone identifiers such as `warning`, `success`, and
+`info`; the page shell converts them to existing `Badge` variants and localized
+labels. This keeps data derivation testable and makes a future backend swap
+localized to the feature boundary.
 
-- Mock application groups, recovery points, validation checks, schedules,
-  recipients, and history rows are stored in one typed mock module.
-- Forms use local React state and reset on refresh.
-- No `localStorage` is added.
-- Execute may show a confirmation and deterministic mock queued/running state,
-  but the UI must not call a network client or claim that a real recovery ran.
-- Schedule changes remain in memory and clearly behave as a frontend prototype.
+### Responsive and accessible behavior
 
-### Recovery semantics
-
-- **Validate** performs a read-only readiness/preflight check. It does not
-  restore resources.
-- **Execute** previews the resolved VM configuration and snapshot timestamps
-  before allowing a mock recovery test confirmation.
-- **Schedule** configures recurring recovery tests and one selected failure
-  notification recipient, following the existing Discovery Settings pattern.
-- **History** lists manual and automated recovery tests for a selected period.
+The current semantic structure remains `tablist` → `tab` → `tabpanel`.
+Visual changes must not alter the accessible name or keyboard selection flow.
+On narrow layouts, separators change direction so stacked items remain legible.
+Focus rings use existing `focus` tokens and remain visible independently of the
+active marker.
 
 ## Dependency Graph
 
 ```text
-WorkspaceTabs
+Task 1: shared visual contract and tests
     │
-    ├── Recovery action navigation model
+    ├── Task 2: recovery tab presentation mapper and translations
     │       │
-    │       └── RecoveryActionsPageShell
+    │       └── Task 3: shell integration
     │               │
-    │               ├── Validate UI
-    │               ├── Execute UI
-    │               ├── Schedule UI
-    │               └── History UI
-    │
-    └── App routes + sidebar + translations
+    │               └── Task 4: responsive and regression verification
 ```
 
-## Tasks
+## Task 1: Redesign the shared WorkspaceTabs composition
 
-### Task 1: Build the shared WorkspaceTabs component
-
-**Description:** Add the reusable action-card tab component represented by
-Variant A without changing the existing `Tabs` API or styling.
+**Description:** Update tests first, then replace the individual card treatment
+with the approved shared operational strip while preserving the component API
+and all interaction behavior.
 
 **Acceptance criteria:**
 
-- [ ] Generic items support label, description, icon, meta, and disabled state.
-- [ ] Mouse and Left/Right/Home/End keyboard navigation call the controlled
-  `onChange` callback and move focus correctly.
-- [ ] Selected, disabled, focus, hover, and responsive states use existing
-  semantic Tailwind tokens.
-- [ ] The component contains no Recovery Actions imports, labels, or routing.
+- [ ] Each tab renders line icon, label, optional `meta`, and contextual detail
+  in the approved hierarchy.
+- [ ] Tabs share one surface with separators; active state uses a top accent
+  marker and no bottom underline or individual card border.
+- [ ] Click, disabled, focus, Arrow, Home, and End behavior remains unchanged.
 
 **Verification:**
 
-- [ ] `npx vitest run src/shared/components/tabs/WorkspaceTabs.test.tsx`
-- [ ] Keyboard and ARIA assertions cover selection and focus movement.
-- [ ] Manual check at 320 px, 768 px, 1024 px, and 1440 px.
+- [ ] Run `npm test -- src/shared/components/tabs/WorkspaceTabs.test.tsx`.
+- [ ] Inspect the rendered classes for active, inactive, disabled, and focus
+  states.
+- [ ] Confirm accessible `tablist` and `tab` roles remain present.
 
 **Dependencies:** None
 
@@ -182,305 +146,128 @@ Variant A without changing the existing `Tabs` API or styling.
 - `src/shared/components/tabs/WorkspaceTabs.tsx`
 - `src/shared/components/tabs/WorkspaceTabs.test.tsx`
 
-**Estimated scope:** Small
+**Estimated scope:** Small — 2 files
 
-### Task 2: Define Recovery Actions navigation, models, and mock data
+## Task 2: Define Recovery Actions operational tab presentation
 
-**Description:** Create provider-neutral UI contracts for application groups,
-recovery points, validation results, schedules, recipients, and history runs.
-Define the canonical tab order and path mapping.
+**Description:** Add a pure feature-local mapper that converts the existing
+mock recovery data into status, tone, and contextual detail for every tab, then
+add localized strings for the presentation.
 
 **Acceptance criteria:**
 
-- [ ] The canonical tab order is Validate, Execute, Schedule, History.
-- [ ] Every mock record has a stable ID and explicit ISO timestamp.
-- [ ] Manual and automated history records are represented by one shared type.
-- [ ] No API client, query key, or persistence utility is introduced.
+- [ ] Validate, Execute, Schedule, and History each receive deterministic
+  status and detail data from the current mocks.
+- [ ] Warning/success/info tones are derived by pure tested logic with no React
+  or router dependency.
+- [ ] All newly visible labels resolve in English, Slovak, and Czech.
 
 **Verification:**
 
-- [ ] Navigation mapping tests cover every canonical path and the default tab.
-- [ ] Model tests confirm deterministic recovery-point selection examples.
-- [ ] `npm run typecheck`.
+- [ ] Run the new presentation-mapper unit test.
+- [ ] Parse all three locale JSON files successfully.
+- [ ] Confirm the mapper adds no fetch, storage, timer, or mutation dependency.
 
 **Dependencies:** Task 1
 
 **Files likely touched:**
 
-- `src/features/recovery-actions/model/recoveryActionNavigation.ts`
-- `src/features/recovery-actions/model/recoveryActionNavigation.test.ts`
-- `src/features/recovery-actions/model/recoveryActionTypes.ts`
-- `src/features/recovery-actions/mocks/recoveryActionsMocks.ts`
+- `src/features/recovery-actions/model/recoveryActionTabPresentation.ts`
+- `src/features/recovery-actions/model/recoveryActionTabPresentation.test.ts`
+- `src/locales/en.json`
+- `src/locales/sk.json`
+- `src/locales/cs.json`
 
-**Estimated scope:** Medium
+**Estimated scope:** Medium — 5 files
 
-### Task 3: Build the Recovery Actions shell and Validate slice
+## Checkpoint: Shared contract and presentation data
 
-**Description:** Create the common page header and Recovery workspace card,
-wire `WorkspaceTabs` to route changes, and deliver the complete Validate UI
-with its two modes.
+- [ ] WorkspaceTabs focused tests pass.
+- [ ] Presentation mapper tests pass for all four actions.
+- [ ] TypeScript typecheck passes.
+- [ ] No Recovery Actions route or page behavior has changed.
+
+## Task 3: Integrate operational metadata into the Recovery Actions shell
+
+**Description:** Use the presentation mapper in `RecoveryActionsPageShell`,
+render semantic status badges through the existing shared `Badge`, and replace
+the current generic descriptions with the mapped contextual details.
 
 **Acceptance criteria:**
 
-- [ ] The shell renders the workspace title, description, provider status, and
-  four Variant A action tabs.
-- [ ] Latest automated mode reports timestamp, recovery point, resource counts,
-  duration, overall state, and detailed issues.
-- [ ] Manual mode accepts application group and validation date/time and shows
-  deterministic VM configuration, dependency, snapshot, and provider checks.
-- [ ] Validation remains read-only and performs no network request.
+- [ ] All four route-backed tabs display the approved status and detail values.
+- [ ] Switching tabs still navigates to the same canonical URLs and preserves
+  the correct selected tab.
+- [ ] The shell contains no duplicated presentation calculations or hardcoded
+  English UI strings.
 
 **Verification:**
 
-- [ ] Focused shell and Validate component/page tests pass.
-- [ ] Switching Validate modes is keyboard accessible.
-- [ ] Manual date changes update the displayed mock recovery point.
+- [ ] Run a focused `RecoveryActionsPageShell` rendering/navigation test.
+- [ ] Run the existing recovery navigation tests.
+- [ ] Manually switch through Validate, Execute, Schedule, and History.
 
-**Dependencies:** Tasks 1–2
+**Dependencies:** Tasks 1 and 2
 
 **Files likely touched:**
 
 - `src/features/recovery-actions/components/RecoveryActionsPageShell.tsx`
 - `src/features/recovery-actions/components/RecoveryActionsPageShell.test.tsx`
-- `src/features/recovery-actions/components/RecoveryPointSummary.tsx`
-- `src/features/recovery-actions/validate/components/RecoveryValidationPanel.tsx`
-- `src/features/recovery-actions/validate/pages/RecoveryValidationPage.tsx`
 
-**Estimated scope:** Medium
+**Estimated scope:** Small — 2 files
 
-### Checkpoint 1: Shared navigation and Validate
+## Task 4: Responsive, theme, and regression verification
 
-- [ ] `WorkspaceTabs` is independent of Recovery Actions.
-- [ ] Existing inventory and recovery-policy `Tabs` tests remain unchanged and
-  pass.
-- [ ] Validate works with mock data at all supported responsive breakpoints.
-- [ ] Lint and typecheck pass.
-
-### Task 4: Build the Execute recovery-test slice
-
-**Description:** Add a UI-only manual recovery-test flow that resolves and
-displays the exact mock configuration and snapshot timestamps before
-confirmation.
+**Description:** Verify that the approved composition remains readable and
+interactive across supported widths and themes, then run the repository quality
+gates without modifying unrelated Recovery Plans work.
 
 **Acceptance criteria:**
 
-- [ ] Users select application group, requested recovery time, and test target.
-- [ ] A preview displays the resolved VM configuration time, snapshot time,
-  resources, gaps, and target environment before execution is enabled.
-- [ ] Confirmation explicitly says this is an isolated recovery test.
-- [ ] Confirming changes only local mock state and performs no network request.
+- [ ] Four columns render at 1440 px, two columns at 768/1024 px as defined by
+  the final Tailwind breakpoints, and one column at 320 px without page scroll.
+- [ ] Light and dark themes preserve label, status, separator, focus, and active
+  marker contrast.
+- [ ] No console, accessibility, route, or build regression is introduced.
 
 **Verification:**
 
-- [ ] Focused Execute page/component tests pass.
-- [ ] Execute remains disabled until all required fields and preview data exist.
-- [ ] Confirmation dialog is keyboard accessible and restores focus on close.
+- [ ] Run focused WorkspaceTabs, presentation, shell, and router tests.
+- [ ] Run `npm run typecheck` and focused ESLint for changed files.
+- [ ] Run `npm run build` or document unrelated pre-existing failures exactly.
+- [ ] Manually test keyboard navigation and widths 320, 768, 1024, and 1440 px.
 
-**Dependencies:** Tasks 2–3
+**Dependencies:** Task 3
 
 **Files likely touched:**
 
-- `src/features/recovery-actions/execute/components/RecoveryRequestForm.tsx`
-- `src/features/recovery-actions/execute/components/RecoveryPointPreview.tsx`
-- `src/features/recovery-actions/execute/pages/RecoveryExecutePage.tsx`
-- `src/features/recovery-actions/execute/pages/RecoveryExecutePage.test.tsx`
+- No production files expected; test adjustments only if verification reveals a
+  regression.
 
-**Estimated scope:** Medium
+**Estimated scope:** Small — verification only
 
-### Task 5: Build the Schedule slice with failure notifications
+## Checkpoint: Complete
 
-**Description:** Add UI-only recurring recovery-test settings using established
-Discovery Settings patterns.
-
-**Acceptance criteria:**
-
-- [ ] Schedule enablement, application group, recurrence, day/time, timezone,
-  and test environment are editable in local state.
-- [ ] The next scheduled test timestamp updates from the selected mock cadence.
-- [ ] Failure notifications are configured in a dedicated card within Schedule.
-- [ ] One mock user recipient can be selected and previewed with name and email.
-
-**Verification:**
-
-- [ ] Focused Schedule tests cover enabled/disabled state and next-run preview.
-- [ ] Notification controls disable when notifications are off.
-- [ ] Labels, switches, and recipient controls are keyboard accessible.
-
-**Dependencies:** Tasks 2–3
-
-**Files likely touched:**
-
-- `src/features/recovery-actions/schedule/components/RecoveryTestScheduleCard.tsx`
-- `src/features/recovery-actions/schedule/components/RecoveryFailureNotificationsCard.tsx`
-- `src/features/recovery-actions/schedule/pages/RecoverySchedulePage.tsx`
-- `src/features/recovery-actions/schedule/pages/RecoverySchedulePage.test.tsx`
-
-**Estimated scope:** Medium
-
-### Task 6: Build the History slice
-
-**Description:** Add a responsive history view for manual and automated
-recovery tests over a selected period.
-
-**Acceptance criteria:**
-
-- [ ] Filters cover date range, trigger type, status, and application group.
-- [ ] The table shows start time, trigger, application group, recovery point,
-  duration, status, failed checks, and notification state.
-- [ ] Selecting a row opens an accessible detail drawer with its mock report.
-- [ ] Empty filtered results render a meaningful empty state.
-
-**Verification:**
-
-- [ ] Focused History tests cover filters, empty state, and row details.
-- [ ] Existing shared DataTable pagination and keyboard behavior are preserved.
-- [ ] The table remains usable at supported breakpoints.
-
-**Dependencies:** Tasks 2–3
-
-**Files likely touched:**
-
-- `src/features/recovery-actions/history/components/RecoveryHistoryFilters.tsx`
-- `src/features/recovery-actions/history/components/RecoveryHistoryTable.tsx`
-- `src/features/recovery-actions/history/pages/RecoveryHistoryPage.tsx`
-- `src/features/recovery-actions/history/pages/RecoveryHistoryPage.test.tsx`
-
-**Estimated scope:** Medium
-
-### Checkpoint 2: Four UI slices
-
-- [ ] Validate, Execute, Schedule, and History render inside the same shell.
-- [ ] Switching sections preserves canonical URL state.
-- [ ] All actions remain local UI demonstrations with no network requests.
-- [ ] Focused feature tests, lint, and typecheck pass.
-
-### Task 7: Add canonical routes and legacy Recovery Runs redirect
-
-**Description:** Register the new top-level nested routes and preserve the old
-Recovery Runs URL as a redirect to History.
-
-**Acceptance criteria:**
-
-- [ ] `/recovery-actions` redirects to `/recovery-actions/validate`.
-- [ ] All four section routes lazy-load their pages.
-- [ ] Unknown Recovery Actions children redirect to Validate.
-- [ ] `/recovery-plans/recovery-runs` redirects to
-  `/recovery-actions/history`.
-
-**Verification:**
-
-- [ ] Router tests cover canonical routes, index redirect, fallback, and legacy
-  redirect.
-- [ ] Direct browser navigation and refresh work on every canonical URL.
-
-**Dependencies:** Tasks 3–6
-
-**Files likely touched:**
-
-- `src/app/routes.ts`
-- `src/app/AppRoutes.tsx`
-- `src/app/router.test.tsx`
-
-**Estimated scope:** Medium
-
-### Task 8: Integrate App Sidebar and translations
-
-**Description:** Add Recovery Actions beside Recovery Plans, remove the
-duplicate Recovery Runs child, and translate all new UI content.
-
-**Acceptance criteria:**
-
-- [ ] Recovery Actions is a top-level sibling of Recovery Plans.
-- [ ] It is active for all `/recovery-actions/*` routes.
-- [ ] Recovery Runs is absent from the Recovery Plans submenu.
-- [ ] English, Slovak, and Czech contain complete navigation, tab, form, status,
-  empty-state, confirmation, and accessibility labels.
-
-**Verification:**
-
-- [ ] App Sidebar tests cover position, active state, and removed duplicate.
-- [ ] Language-switching tests show translated Recovery Actions content.
-- [ ] No hard-coded user-facing text remains in the feature.
-
-**Dependencies:** Task 7
-
-**Files likely touched:**
-
-- `src/layouts/app-shell/AppSidebar.tsx`
-- `src/layouts/app-shell/AppSidebar.test.tsx`
-- `src/locales/en.json`
-- `src/locales/sk.json`
-- `src/locales/cs.json`
-
-**Estimated scope:** Medium
-
-### Checkpoint 3: Integrated navigation
-
-- [ ] Recovery Actions and Recovery Plans are visually equal top-level items.
-- [ ] Variant A tabs are visually distinct from table/inventory tabs.
-- [ ] Legacy Recovery Runs links land on History.
-- [ ] Route, sidebar, and translation tests pass.
-
-### Task 9: Accessibility, responsive, and regression verification
-
-**Description:** Complete the quality pass without expanding backend scope.
-
-**Acceptance criteria:**
-
-- [ ] All interactive elements are reachable and usable by keyboard.
-- [ ] Focus indicators, selected states, warnings, and failures do not rely on
-  color alone.
-- [ ] The workspace fits at 1024 px and 1440 px without page-level horizontal
-  scrolling; 320 px and 768 px use the documented responsive tab layout.
-- [ ] Existing Recovery Plans, Discovery Settings, and shared Tabs behavior
-  remain unchanged.
-
-**Verification:**
-
-- [ ] `npm run lint`
-- [ ] `npm run typecheck`
-- [ ] Focused Vitest suites for WorkspaceTabs, Recovery Actions, routing,
-  sidebar, and translations.
-- [ ] `npm test`
-- [ ] `npm run build`
-- [ ] Manual browser check in light and dark themes at 320, 768, 1024, and
-  1440 px.
-- [ ] Browser console contains no errors or accessibility warnings.
-
-**Dependencies:** Tasks 1–8
-
-**Files likely touched:** Tests only if verification finds a missing regression.
-
-**Estimated scope:** Small
+- [ ] Approved Variant A composition matches the browser template.
+- [ ] Status values are useful, deterministic, and visibly identified as mock
+  UI data through their source, without adding a “UI template” badge.
+- [ ] Keyboard, focus, responsive, and theme checks pass.
+- [ ] Focused tests, typecheck, lint, and production build pass or unrelated
+  failures are documented.
+- [ ] Git diff contains only the approved tab-redesign scope.
+- [ ] Ready for user visual review before commit.
 
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
-|---|---|---|
-| New navigation looks like inventory tabs | High | Keep `WorkspaceTabs` separate from `Tabs`; use filled action cards with icons, descriptions, and meta status. |
-| Recovery Actions and Recovery Runs duplicate each other | High | Remove the Recovery Runs sidebar child and redirect its legacy URL to History. |
-| Mock actions are mistaken for backend operations | High | Keep all state local, add no API client, and make confirmation language explicitly describe a recovery test preview. |
-| Shared component becomes Recovery-specific | Medium | Use generic item descriptors and keep route mapping/status semantics inside the feature. |
-| Four cards overflow narrow layouts | Medium | Use responsive two-column layout and a last-resort horizontal scroll behavior with visible focus. |
-| Recovery point timestamps are ambiguous | Medium | Store ISO timestamps and display timezone next to every resolved point-in-time value. |
-| Existing dirty Recovery Policies work is overwritten | High | Restrict implementation and staging to Recovery Actions, shared WorkspaceTabs, app integration, translations, tests, and these plan files. |
-| Full test suite is slow | Medium | Run focused suites at every checkpoint, then one complete suite before completion. |
-
-## Definition of Done
-
-- Recovery Actions is a separate top-level navigation area.
-- Variant A horizontal action-card tabs are implemented once as a reusable
-  shared component.
-- Validate, Execute, Schedule, and History are complete UI-only sections backed
-  by deterministic mock data.
-- The old Recovery Runs placeholder redirects to History.
-- All user-facing text is translated into EN, SK, and CS.
-- Accessibility, responsive checks, focused tests, lint, typecheck, full tests,
-  and production build pass.
-- No backend contract or unrelated Recovery Plans implementation is changed.
+| --- | --- | --- |
+| Status text appears live although data is mocked | Medium | Derive it only from current deterministic mocks and add no timestamps/timers implying live refresh. |
+| Long translations crowd four-column tabs | Medium | Keep status labels concise, use truncation only for the detail line, and verify SK/CS at 1024 px. |
+| Shared component becomes recovery-specific | High | Keep status tone and data mapping feature-local; `WorkspaceTabs` accepts only generic React nodes. |
+| Active marker competes with focus ring | Medium | Use separate top marker and tokenized outer focus ring, then verify keyboard focus manually. |
+| Existing dirty Recovery Plans files enter the change | High | Stage and inspect only explicit WorkspaceTabs, Recovery Actions, locale, and plan files. |
 
 ## Open Questions
 
-None required for the UI-only implementation. Backend contracts, provider
-adapter behavior, recovery-point resolution rules, and real notification
-delivery remain deferred.
+None. Variant A and its operational status composition are approved for
+planning. Implementation begins only after explicit user approval of this plan.

@@ -1522,5 +1522,17 @@
   "pages.recoveryActions.history.mode.manual": "Manual",
   "pages.recoveryActions.history.drawer.eyebrow": "Recovery test",
   "pages.recoveryActions.history.drawer.ariaLabel": "Recovery test details",
-  "pages.recoveryActions.history.drawer.summary": "Summary"
+  "pages.recoveryActions.history.drawer.summary": "Summary",
+  "pages.recoveryActions.tabStatus.ready": "Ready",
+  "pages.recoveryActions.tabStatus.issue": "{{count}} issue",
+  "pages.recoveryActions.tabStatus.issues": "{{count}} issues",
+  "pages.recoveryActions.tabStatus.weekly": "Weekly",
+  "pages.recoveryActions.tabStatus.monthly": "Monthly",
+  "pages.recoveryActions.tabStatus.disabled": "Disabled",
+  "pages.recoveryActions.tabStatus.runs": "{{count}} runs",
+  "pages.recoveryActions.tabDetail.latestCheck": "Last check · {{date}}",
+  "pages.recoveryActions.tabDetail.availableGroups": "{{count}} groups available",
+  "pages.recoveryActions.tabDetail.schedule": "{{day}} · {{time}}",
+  "pages.recoveryActions.tabDetail.scheduleDisabled": "Schedule disabled",
+  "pages.recoveryActions.tabDetail.evidenceWindow": "{{days}}-day evidence window"
 }

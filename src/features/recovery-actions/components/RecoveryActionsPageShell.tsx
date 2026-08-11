@@ -1,13 +1,22 @@
 import { useNavigate } from 'react-router'
 import type { ReactNode } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { Card } from '@/shared/components/card/Card'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { ExecutionIcon, GridIcon, MonitoringIcon, SettingsIcon } from '@/shared/icons/Icons'
 import { WorkspaceTabs } from '@/shared/components/tabs/WorkspaceTabs'
 import { getRecoveryActionPath, recoveryActionTabs } from '../model/recoveryActionNavigation'
+import { buildRecoveryActionTabPresentation } from '../model/recoveryActionTabPresentation'
 import type { RecoveryActionTab } from '../model/recoveryActionTypes'
+import {
+  initialRecoverySchedule,
+  latestAutomatedRun,
+  latestValidationChecks,
+  recoveryApplicationGroups,
+  recoveryHistory,
+} from '../mocks/recoveryActionsMocks'
 
 interface RecoveryActionsPageShellProps {
   activeTab: RecoveryActionTab
@@ -22,13 +31,22 @@ const tabIcons: Record<RecoveryActionTab, ReactNode> = {
 }
 
 export function RecoveryActionsPageShell({ activeTab, children }: RecoveryActionsPageShellProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const navigate = useNavigate()
+  const presentation = buildRecoveryActionTabPresentation({
+    latestAutomatedRun,
+    latestValidationChecks,
+    applicationGroupCount: recoveryApplicationGroups.length,
+    schedule: initialRecoverySchedule,
+    historyCount: recoveryHistory.length,
+    evidenceWindowDays: 30,
+  })
   const tabItems = recoveryActionTabs.map((tab) => ({
     value: tab.value,
     label: t(tab.labelKey),
-    description: t(`pages.recoveryActions.tabs.${tab.value}Description`),
+    description: t(presentation[tab.value].detail.key, normalizeDetailParams(presentation[tab.value].detail.params, language)),
     icon: tabIcons[tab.value],
+    meta: <Badge size="sm" color={getBadgeColor(presentation[tab.value].status.tone)}>{t(presentation[tab.value].status.labelKey, presentation[tab.value].status.params)}</Badge>,
   }))
 
   return (
@@ -59,4 +77,19 @@ export function RecoveryActionsPageShell({ activeTab, children }: RecoveryAction
       </div>
     </div>
   )
+}
+
+function getBadgeColor(tone: 'success' | 'warning' | 'info' | 'neutral'): 'success' | 'warning' | 'info' | 'light' {
+  if (tone === 'neutral') return 'light'
+  return tone
+}
+
+function normalizeDetailParams(params: Record<string, string | number>, language: string) {
+  if (typeof params['date'] !== 'string') return params
+
+  const locale = language === 'sk' ? 'sk-SK' : language === 'cs' ? 'cs-CZ' : 'en-GB'
+  return {
+    ...params,
+    date: new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(params['date'])),
+  }
 }

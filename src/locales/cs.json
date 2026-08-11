@@ -1522,5 +1522,17 @@
   "pages.recoveryActions.history.mode.manual": "Ruční",
   "pages.recoveryActions.history.drawer.eyebrow": "Test obnovy",
   "pages.recoveryActions.history.drawer.ariaLabel": "Detail testu obnovy",
-  "pages.recoveryActions.history.drawer.summary": "Souhrn"
+  "pages.recoveryActions.history.drawer.summary": "Souhrn",
+  "pages.recoveryActions.tabStatus.ready": "Připraveno",
+  "pages.recoveryActions.tabStatus.issue": "{{count}} problém",
+  "pages.recoveryActions.tabStatus.issues": "{{count}} problémy",
+  "pages.recoveryActions.tabStatus.weekly": "Týdně",
+  "pages.recoveryActions.tabStatus.monthly": "Měsíčně",
+  "pages.recoveryActions.tabStatus.disabled": "Vypnuto",
+  "pages.recoveryActions.tabStatus.runs": "{{count}} běhů",
+  "pages.recoveryActions.tabDetail.latestCheck": "Poslední kontrola · {{date}}",
+  "pages.recoveryActions.tabDetail.availableGroups": "Dostupné skupiny: {{count}}",
+  "pages.recoveryActions.tabDetail.schedule": "{{day}} · {{time}}",
+  "pages.recoveryActions.tabDetail.scheduleDisabled": "Plánování vypnuto",
+  "pages.recoveryActions.tabDetail.evidenceWindow": "Důkazy za {{days}} dní"
 }

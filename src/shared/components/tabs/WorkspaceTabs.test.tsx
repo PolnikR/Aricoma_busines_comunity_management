@@ -11,9 +11,24 @@ const items = [
 describe('WorkspaceTabs', () => {
   it('renders action cards with the selected state and changes on click', () => {
     const onChange = vi.fn()
-    render(<WorkspaceTabs items={items} value="validate" onChange={onChange} ariaLabel="Recovery actions" />)
+    render(
+      <WorkspaceTabs
+        items={[{ ...items[0], meta: '1 issue' }, ...items.slice(1)]}
+        value="validate"
+        onChange={onChange}
+        ariaLabel="Recovery actions"
+      />,
+    )
 
     expect(screen.getByRole('tab', { name: /Validate.*Check recovery readiness/ })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: /Validate.*1 issue/ })).toHaveClass(
+      'before:absolute',
+      'before:inset-x-0',
+      'before:top-0',
+      'before:h-0.5',
+      'before:bg-accent',
+    )
+    expect(screen.getByRole('tablist', { name: 'Recovery actions' })).toHaveClass('sm:divide-x')
     fireEvent.click(screen.getByRole('tab', { name: /Execute.*Start a recovery test/ }))
     expect(onChange).toHaveBeenCalledWith('execute')
   })
