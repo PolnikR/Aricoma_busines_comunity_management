@@ -67,7 +67,7 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByLabelText('Credentials')).toBeInTheDocument()
   })
 
-  it('preserves an edited provider port and sends it as a number', async () => {
+  it('preserves an edited provider port without sending it to the backend', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(
       new Response(JSON.stringify({ providers: [] }), { status: 200 }),
     )
@@ -88,7 +88,7 @@ describe('ProvidersCreateModal', () => {
 
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
     const init = mockFetch.mock.calls[0]?.[1] as RequestInit
-    expect(JSON.parse(init.body as string)).toMatchObject({ port: 8443 })
+    expect(JSON.parse(init.body as string)).not.toHaveProperty('port')
     vi.unstubAllGlobals()
   })
 
@@ -238,10 +238,10 @@ describe('ProvidersCreateModal', () => {
       name: 'New Provider',
       type: 'VMWARE',
       ipAddress: '10.0.0.1',
-      port: 22,
       credentialId: 'vcenter-admin',
     })
     expect(body).not.toHaveProperty('credentialStatus')
+    expect(body).not.toHaveProperty('port')
     vi.unstubAllGlobals()
   })
 

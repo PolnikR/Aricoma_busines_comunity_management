@@ -38,7 +38,7 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         description: provider.description,
         type: provider.type,
         ipAddress: provider.ipAddress,
-        port: String(provider.port),
+        port: String(provider.port ?? 22),
         credentialId: provider.credentialId ?? '',
       }
     : EMPTY_FORM
@@ -150,7 +150,6 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
       description: formData.description.trim(),
       type: formData.type as ProviderType,
       ipAddress: formData.ipAddress.trim(),
-      port: Number(formData.port),
       credentialId: formData.credentialId || null,
     }
 

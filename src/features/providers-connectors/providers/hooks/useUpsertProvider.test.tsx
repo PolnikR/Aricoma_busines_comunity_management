@@ -50,7 +50,6 @@ describe('useUpsertProvider', () => {
       description: '',
       type: 'FLASHCOPY',
       ipAddress: '10.0.0.2',
-      port: 22,
       credentialId: 'ibm-admin',
     }
     const { mockFetch, queryClient, result } = setup([
@@ -73,7 +72,6 @@ describe('useUpsertProvider', () => {
       description: providerA.description,
       type: providerA.type,
       ipAddress: providerA.ipAddress,
-      port: providerA.port,
       credentialId: providerA.credentialId,
     }
     const edited: ProviderSubmitData = { ...providerSubmitData, name: 'Renamed vCenter' }
@@ -95,7 +93,6 @@ describe('useUpsertProvider', () => {
       description: '',
       type: 'FLASHCOPY',
       ipAddress: '10.0.0.2',
-      port: 22,
       credentialId: 'ibm-admin',
     }
     const concurrentProvider: ProviderRecord = {

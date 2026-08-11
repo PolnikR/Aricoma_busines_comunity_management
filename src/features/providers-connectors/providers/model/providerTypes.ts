@@ -12,13 +12,18 @@ export interface ProviderRecord {
   description: string
   type: ProviderType
   ipAddress: string
-  port: number
+  /** Optional until the providers backend exposes port in its contract. */
+  port?: number | undefined
   credentialId: string | null
   defaultFlashcopyProviderId?: string | null | undefined
   credentialStatus: ProviderCredentialStatus
 }
 
-export type ProviderSubmitData = Omit<
-  ProviderRecord,
-  'credentialStatus' | 'defaultFlashcopyProviderId'
->
+export interface ProviderSubmitData {
+  id: string
+  name: string
+  description: string
+  type: ProviderType
+  ipAddress: string
+  credentialId: string | null
+}

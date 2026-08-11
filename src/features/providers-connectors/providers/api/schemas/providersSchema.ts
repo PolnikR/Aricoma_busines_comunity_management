@@ -10,11 +10,11 @@ export const providerSubmitSchema = z.object({
   description: z.string(),
   type: z.enum(PROVIDER_TYPES),
   ipAddress: z.string().min(1),
-  port: z.number().int().min(1).max(65_535),
   credentialId: z.string().nullable(),
 })
 
 const providerRecordSchema = providerSubmitSchema.extend({
+  port: z.number().int().min(1).max(65_535).optional(),
   defaultFlashcopyProviderId: z.string().min(1).nullable().optional(),
   credentialStatus: z.enum(PROVIDER_CREDENTIAL_STATUSES),
 })
