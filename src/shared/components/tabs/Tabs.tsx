@@ -13,6 +13,7 @@ interface TabsProps<T extends string> {
   value: T
   onChange: (value: T) => void
   ariaLabel: string
+  indicator?: 'edge' | 'inset'
   className?: string
   scrollControls?: {
     previousLabel: string
@@ -25,6 +26,7 @@ export function Tabs<T extends string>({
   value,
   onChange,
   ariaLabel,
+  indicator = 'edge',
   className,
   scrollControls,
 }: TabsProps<T>) {
@@ -124,7 +126,9 @@ export function Tabs<T extends string>({
             title={typeof item.label === 'string' ? item.label : undefined}
             className={`max-w-64 shrink-0 overflow-hidden whitespace-nowrap border-b-2 px-4 py-3.5 text-ellipsis text-sm font-medium transition ${
               isSelected
-                ? 'border-accent text-accent'
+                ? indicator === 'inset'
+                  ? 'relative border-transparent text-accent after:absolute after:inset-x-4 after:bottom-1.5 after:h-0.5 after:rounded-full after:bg-accent after:content-[\'\']'
+                  : 'border-accent text-accent'
                 : 'border-transparent text-text-muted hover:text-text-primary'
             }`}
           >

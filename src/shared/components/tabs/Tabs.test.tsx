@@ -39,6 +39,31 @@ describe('Tabs', () => {
     expect(screen.getByRole('tab', { name: 'Details' })).toHaveFocus()
   })
 
+  it('uses an inset selected indicator when explicitly configured', () => {
+    const onChange = vi.fn()
+    render(
+      <Tabs
+        items={items}
+        value="overview"
+        onChange={onChange}
+        ariaLabel="Sections"
+        indicator="inset"
+      />,
+    )
+
+    const selectedTab = screen.getByRole('tab', { name: 'Overview' })
+    expect(selectedTab).toHaveClass(
+      'relative',
+      'border-transparent',
+      'after:absolute',
+      'after:bottom-1.5',
+      'after:inset-x-4',
+      'after:h-0.5',
+      'after:rounded-full',
+      'after:bg-accent',
+    )
+  })
+
   it('shows scroll controls for an overflowing tab list and moves between boundaries', () => {
     const onChange = vi.fn()
     render(
