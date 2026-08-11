@@ -14,9 +14,12 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { PlugIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useDeleteProvider } from '../hooks/useDeleteProvider'
+import { useTestProviderConnection } from '../hooks/useTestProviderConnection'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
+import { ProviderConnectionTestDialog } from './ProviderConnectionTestDialog'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
 import type { ProviderRecord } from '../model/providerTypes'
 
@@ -93,11 +96,13 @@ export function ProvidersCatalogueTable({
   const { t } = useTranslation()
   const columns = getColumns(t)
   const deleteProvider = useDeleteProvider()
+  const testConnection = useTestProviderConnection()
   const [typeFilter, setTypeFilter] = useState('')
   const [pendingType, setPendingType] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<ProviderRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ProviderRecord | null>(null)
+  const [isConnectionTestOpen, setIsConnectionTestOpen] = useState(false)
 
   const rows = useMemo(() => providers, [providers])
   const selected = rows.find((provider) => provider.id === selectedId) ?? null
@@ -112,6 +117,18 @@ export function ProvidersCatalogueTable({
   })
 
   const changeType = (value: string) => { setTypeFilter(value); setPendingType(value); table.setPage(1) }
+
+  const openConnectionTest = () => {
+    if (selected?.credentialStatus !== 'ok') return
+    testConnection.reset()
+    setIsConnectionTestOpen(true)
+    testConnection.mutate(selected)
+  }
+
+  const closeConnectionTest = () => {
+    setIsConnectionTestOpen(false)
+    testConnection.reset()
+  }
 
   if (isLoading) {
     return (
@@ -178,13 +195,33 @@ export function ProvidersCatalogueTable({
       ) : null}
 
       <DetailDrawer
-        open={selected !== null}
+        open={selected !== null && !isConnectionTestOpen}
         onClose={() => { setSelectedId(null) }}
         resizable
         eyebrow={t('drawer.selectedProvider')}
         title={selected?.name ?? ''}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerExtra={selected ? <Badge color="info" size="sm">{providerTypeLabel(selected.type)}</Badge> : null}
+        headerExtra={selected ? (
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <Badge color="info" size="sm">{providerTypeLabel(selected.type)}</Badge>
+            <div className="flex min-w-0 flex-col items-end gap-1">
+              <Button
+                size="xs"
+                variant="outline"
+                startIcon={<PlugIcon className="size-3.5" />}
+                onClick={openConnectionTest}
+                disabled={selected.credentialStatus !== 'ok'}
+                aria-describedby={selected.credentialStatus !== 'ok' ? 'provider-test-credential-hint' : undefined}
+                title={selected.credentialStatus !== 'ok' ? t('providers.connectionTest.credentialRequired') : undefined}
+              >
+                {t('providers.connectionTest.button')}
+              </Button>
+              {selected.credentialStatus !== 'ok' ? (
+                <span id="provider-test-credential-hint" className="sr-only">{t('providers.connectionTest.credentialRequired')}</span>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
         ariaLabel={t('drawer.providerDetail')}
         closeLabel={t('drawer.closeProvider')}
         footer={selected ? (
@@ -228,6 +265,19 @@ export function ProvidersCatalogueTable({
           </dl>
         ) : null}
       </DetailDrawer>
+
+      <ProviderConnectionTestDialog
+        open={isConnectionTestOpen && selected !== null}
+        providerName={selected?.name ?? ''}
+        providerId={selected?.id ?? ''}
+        isPending={testConnection.isPending}
+        result={testConnection.data ?? null}
+        error={testConnection.error instanceof Error ? testConnection.error : null}
+        onClose={closeConnectionTest}
+        onRetry={() => {
+          if (selected) testConnection.mutate(selected)
+        }}
+      />
 
       {editing ? (
         <ProvidersCreateModal

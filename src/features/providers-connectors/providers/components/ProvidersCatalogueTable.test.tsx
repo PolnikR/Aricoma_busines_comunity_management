@@ -109,6 +109,24 @@ describe('ProvidersCatalogueTable', () => {
     fireEvent.click(await screen.findByText('Production vCenter'))
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Test connection' })).toBeInTheDocument()
+  })
+
+  it('opens the connection test for the selected provider and shows the mock success', async () => {
+    renderTable()
+    fireEvent.click(await screen.findByText('Production vCenter'))
+    fireEvent.click(screen.getByRole('button', { name: 'Test connection' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Test provider connection' })
+    expect(dialog).toHaveTextContent('Mock result for development')
+    expect(dialog).toHaveTextContent('10.99.99.40')
+    expect(screen.queryByRole('dialog', { name: 'Provider detail' })).not.toBeInTheDocument()
+  })
+
+  it('disables connection test when the selected provider has no credential', async () => {
+    renderTable()
+    fireEvent.click(await screen.findByText('Backup FlashSystem'))
+    expect(screen.getByRole('button', { name: 'Test connection' })).toBeDisabled()
   })
 
   it('Edit closes the drawer and opens the prefilled modal with a locked id', async () => {
