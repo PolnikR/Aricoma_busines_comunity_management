@@ -1,85 +1,60 @@
-# Checklist: Variant A v hornom resource tab bare
+# Checklist: Variant A — odsadená aktívna linka provider tabu
 
 ## Scope guard
 
-- [ ] Vykresľovať všetky source taby iba v hornom riadku označenom na screenshote.
-- [ ] Nepridávať druhý tab bar do inventory panelu.
-- [ ] Pri viacerých provideroch vytvoriť viac top-level tabov pre VMware, FlashSystem aj IBM Power.
-- [ ] Provider z tabu považovať za navigation context, nie filter.
+- [ ] Upraviť iba indikátor aktívneho horného provider tabu.
+- [ ] Zachovať jeden spoločný tablist pre VMware, FlashSystem a IBM Power.
+- [ ] Zachovať viac tabov pri viacerých provideroch.
+- [ ] Zachovať overflow šípky, scroll, auto-reveal a klávesovú navigáciu.
+- [ ] Nemeniť URL state, provider-scoped query, filtre, tabuľky ani backend kontrakty.
 
-## Fáza 1: Shared variant A
+## Fáza 1: Shared inset variant
 
-- [ ] Úloha 1 — failing unit testy v `Tabs.test.tsx`.
-  - [ ] 10 tabov + overflow zobrazí previous/next.
-  - [ ] Overiť scroll, disabled hranice a active-tab reveal.
-  - [ ] Bez overflow/opt-in sa šípky nezobrazia.
-- [ ] Úloha 2 — implementovať opt-in overflow v shared `Tabs`.
-  - [ ] Zachovať click, touch, trackpad a keyboard navigáciu.
-  - [ ] Zachovať defaultné správanie ostatných použití.
+- [ ] Úloha 1 — pridať failing test opt-in inset indikátora.
+  - [ ] Inset selected stav používa vnútornú linku.
+  - [ ] Defaultný selected stav ostáva pôvodný.
+  - [ ] Existujúci test 10 tabov a scroll controls zostane zelený.
+- [ ] Úloha 2 — implementovať opt-in variant v shared `Tabs`.
+  - [ ] 2 px accent linka so zaoblenými koncami.
+  - [ ] Linka je odsadená od strán aj od hlavného dividera.
+  - [ ] Bez opt-in sa ostatné použitia vizuálne nemenia.
 
 ## Checkpoint: Shared komponent
 
-- [ ] `npm test -- src/shared/components/tabs/Tabs.test.tsx`
-- [ ] `npm run typecheck`
+- [ ] `npm test -- src/shared/components/tabs/Tabs.test.tsx`.
+- [ ] `npm run typecheck`.
+- [ ] Click a `ArrowLeft`/`ArrowRight`/`Home`/`End` testy prejdú.
 
-## Fáza 2: Source model a horný tab bar
+## Fáza 2: Provider tab integration
 
-- [ ] Úloha 3 — helper + test pre source-tab descriptory.
-  - [ ] 0, 1 a 10 providerov.
-  - [ ] Stabilné poradie a identita `type + providerId`.
-  - [ ] Rozlíšené labely pri viacerých provideroch.
-- [ ] Úloha 4 — URL kontrakt `resource + providerId` + testy.
-  - [ ] Atomická zmena source tabu.
-  - [ ] Back/forward/refresh.
-  - [ ] Invalid provider fallback a reset page.
-- [ ] Úloha 5 — accessible previous/next preklady EN/SK/CS.
-  - [ ] Validný JSON a zhodné locale kľúče.
-- [ ] Úloha 6 — jediný top-level tab bar v `ResourcesPage`.
-  - [ ] Viac providerov = viac tabov v rovnakom hornom riadku.
-  - [ ] Žiadny provider tablist vo vnútri tabuľky.
-  - [ ] Použiť pripravené previous/next preklady.
+- [ ] Úloha 3 — zapnúť inset variant iba v `ResourcesPage`.
+  - [ ] Variant platí pre VMware, FlashSystem aj IBM Power taby.
+  - [ ] V DOM ostáva jediný resource tablist.
+  - [ ] Test s 10 VMware providermi stále nájde 10 tabov v jednom tabliste.
+  - [ ] Klik na posledný provider stále zapisuje správny source/provider.
 
-## Checkpoint: Horná navigácia
+## Checkpoint: Multi-provider regresia
 
-- [ ] Helper, URL hook a `ResourcesPage` focused testy prejdú.
-- [ ] Test s 10 VMware providermi nájde ich taby iba v hornom tabliste.
-- [ ] URL jednoznačne identifikuje resource typ aj provider.
+- [ ] `npm test -- src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx`.
+- [ ] Overflow wrapper a previous/next šípky ostali v existujúcom shared `Tabs`.
+- [ ] Nepribudol druhý riadok, druhý tablist ani provider filter.
 
-## Fáza 3: Provider-scoped inventory
+## Fáza 3: Verifikácia
 
-- [ ] Úloha 7 — VMware používa provider z horného tabu.
-  - [ ] Odstrániť provider dropdown z VMware filter okna.
-  - [ ] Provider nepočítať do active-filter badge.
-  - [ ] Clear filters zachová source tab; zmena source zavrie drawer.
-- [ ] Úloha 8 — FlashSystem používa provider z horného tabu.
-  - [ ] Odstrániť provider dropdown z FlashSystem filtrov.
-  - [ ] Query a metriky sú scoped na selected provider.
-  - [ ] Reset source-dependent filtrov pri zmene tabu.
-- [ ] Úloha 9 — IBM Power používa provider z horného tabu.
-  - [ ] Odstrániť provider dropdown z IBM Power filtrov.
-  - [ ] Query a metriky sú scoped na selected provider.
-  - [ ] Reset source-dependent filtrov pri zmene tabu.
+- [ ] Browser 320 px: línie sú oddelené, taby sa nezalamujú.
+- [ ] Browser 768 px: aktívny indikátor je jasný a header nemení výšku.
+- [ ] Browser 1440 px: divider a aktívna linka sa vizuálne nezlievajú.
+- [ ] Browser s 10+ providermi: šípky, scroll a auto-reveal fungujú.
+- [ ] Kliknutie a klávesnica menia aktívny tab bez console errorov.
+- [ ] URL naďalej obsahuje správny `resource` a `providerId`.
+- [ ] `npm run lint`.
+- [ ] `npm run typecheck`.
+- [ ] Focused resource test suite.
+- [ ] `npm run build`.
 
-## Checkpoint: Dáta
+## Hotovo, keď
 
-- [ ] Každý source tab posiela správny `providerId` do existujúceho API query.
-- [ ] Nie je dostupný druhý/konfliktný provider selector.
-- [ ] Focused VMware, FlashSystem a IBM Power testy prejdú.
-
-## Fáza 4: Verifikácia
-
-- [ ] Browser 320 px: taby sa nezalomia; ovládanie šípkami a dotykom funguje.
-- [ ] Browser 768 px: jeden horný tab bar, stabilný card layout.
-- [ ] Browser 1440 px: šípky iba pri reálnom overflow.
-- [ ] Browser/mocked data: 10 source tabov v jednom riadku.
-- [ ] Kliknutie na každý typ/provider zobrazí jeho API inventory.
-- [ ] `npm run lint`
-- [ ] `npm run typecheck`
-- [ ] `npm test`
-- [ ] `npm run build`
-- [ ] Finálny diff neobsahuje druhý tab bar ani zmenu backend API kontraktov.
-
-## Schválenie
-
-- [ ] Potvrdiť label pri viacerých zdrojoch: `Resource type · Provider name`.
-- [ ] Používateľ schválil plán pred implementáciou.
+- [ ] Aktívna linka je kratšia a odsadená nad celkový divider.
+- [ ] Multi-provider tab funkcionalita ostala nezmenená pre všetky tri resource typy.
+- [ ] Existuje iba jeden horný tablist.
+- [ ] Všetky uvedené testy a browser kontroly prešli.

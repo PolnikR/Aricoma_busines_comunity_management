@@ -1,81 +1,100 @@
-# Implementačný plán: Variant A v hornom resource tab bare
+# Implementačný plán: Variant A — odsadená aktívna linka provider tabu
 
 ## Prehľad
 
-Cieľom je použiť variant A — jeden horizontálny riadok tabov s posúvaním a ľavou/pravou šípkou pri pretečení — priamo v existujúcom hornom prepínači `VMware VMs`, `FlashSystem Volumes` a `IBM Power Partitions`, teda v riadku vyznačenom červeným rámikom na screenshote.
+Cieľom je upraviť iba vizuálny indikátor aktívneho provider tabu v hornom riadku
+`Inventory records`. Aktívna accent linka bude kratšia a odsadená nad celkovú
+deliacu čiaru hlavičky karty, aby sa obe línie vizuálne nezlievali.
 
-Každý konkrétny provider bude samostatným tabom v tomto jedinom hornom riadku. Ak bude napríklad nakonfigurovaných 10 VMware zdrojov, vznikne 10 rozlíšiteľných VMware tabov v hornom riadku. FlashSystem a IBM Power zdroje budú používať rovnaký model. Nevznikne žiadny druhý tab bar vo vnútri tabuľky.
+Existujúca funkcionalita provider tabov sa nemení. Viac providerov naďalej vytvorí
+viac tabov pre VMware, FlashSystem aj IBM Power a pri nedostatku priestoru zostane
+aktívne horizontálne posúvanie, šípky a automatické odkrytie vybraného tabu.
 
-## Presná definícia variantu A
+## Schválený vizuál variantu A
 
-- Všetky source taby sú v existujúcej hlavičke karty `Inventory records`.
-- Zoznam je plochý a zoradený po skupinách: VMware, FlashSystem, IBM Power; v každej skupine stabilne podľa provider name a ID.
-- Pri jednom providerovi daného typu ostane krátky existujúci label, napr. `VMware VMs`.
-- Pri viacerých provideroch rovnakého typu bude label rozlíšený providerom, napr. `VMware VMs · Production vCenter` a `VMware VMs · DR vCenter`.
-- Ak pre typ provider neexistuje, jeho základný tab zostane dostupný, aby sa zachoval existujúci empty state `No provider configured`.
-- Taby sú vždy v jednom riadku a nezalamujú sa.
-- Ak sa všetky zmestia, šípky sa nezobrazia.
-- Pri overflow sa ľavá a pravá šípka zobrazia po stranách toho istého horného riadka; nevytvorí sa druhý riadok.
-- Šípky posúvajú zoznam po častiach, na hraniciach sú disabled a aktívny tab sa automaticky odkryje.
-- Touch/trackpad posúvanie a existujúce klávesy `ArrowLeft`, `ArrowRight`, `Home`, `End` zostanú funkčné.
+- Celkový `border-bottom` hlavičky/tab baru zostane na spodnom okraji bez zmeny.
+- Aktívny tab nebude používať border priamo na spodnom okraji.
+- Aktívny indikátor bude samostatná 2 px accent linka:
+  - približne 6 px nad hlavným dividerom,
+  - odsadená približne 16 px zľava aj sprava,
+  - so zaoblenými koncami.
+- Aktívny text zostane vo farbe `text-accent`.
+- Neaktívne, hover, focus, disabled a overflow stavy ostanú vizuálne aj
+  behaviorálne kompatibilné so súčasným shared komponentom.
+- Implementácia použije existujúce Tailwind tokeny; nepridá nové raw farby ani
+  samostatný CSS súbor.
 
 ## Scope guard
 
-- Nepridávať provider taby pod hlavičku ani dovnútra `ResourceInventoryPanel`.
-- Nevytvárať druhý tablist.
-- Provider vybraný horným tabom je navigačný kontext, nie aktívny filter.
-- Provider dropdowny vo filter oknách sa po zavedení source tabov odstránia, aby neexistovali dva konfliktné spôsoby výberu toho istého zdroja.
-- Discovery API kontrakty sa nemenia; existujúce `providerId` sa iba odovzdá do existujúcich query hookov.
-- Ostatné filtre, tabuľky, metriky a detail panely ostávajú mimo rozsahu okrem nutného resetu pri zmene source tabu.
+Nasledujúce správanie sa musí zachovať bez zmeny:
+
+- jeden horný tablist pre všetky resource/provider zdroje;
+- ľubovoľný počet VMware, FlashSystem a IBM Power provider tabov;
+- nezalamovanie tabov do druhého riadka;
+- horizontálny scroll cez myš, trackpad a touch;
+- previous/next šípky iba pri skutočnom overflow;
+- disabled stav šípok na začiatku a konci;
+- automatické odkrytie aktívneho tabu;
+- klávesy `ArrowLeft`, `ArrowRight`, `Home` a `End`;
+- `resource`, `providerId`, `page`, `pageSize`, `search` a filtre v URL;
+- provider-scoped API query pre aktívny tab;
+- existujúce poradie a labely provider tabov.
+
+Mimo rozsahu sú zmeny backendu, API kontraktov, filtrov, stránkovania, metrík,
+tabuliek, detail drawerov, názvov tabov a rozloženia karty.
 
 ## Architektonické rozhodnutia
 
-- Existujúci shared `Tabs` dostane opt-in konfiguráciu, napr. `scrollControls`. Bez nej sa ostatné použitia nezmenia.
-- `ResourcesPage` vytvorí jeden plochý zoznam descriptorov `{ value, resourceType, providerId, label }` z providerov. Hodnota tabu bude stabilná kombinácia resource typu a provider ID; label nebude použitý ako identita.
-- URL ostane zdrojom pravdy. Navigácia bude zapisovať `resource` a `providerId` atomicky. Neplatné alebo chýbajúce provider ID sa po načítaní providerov nahradí prvým platným providerom daného typu cez `replace`.
-- Výber nového source tabu resetuje stránkovanie a source-dependent lokálny stav, ale zachová nesúvisiace nastavenia, pokiaľ nie sú neplatné pre nový resource typ.
-- VMware, FlashSystem a IBM Power stránky dostanú vybraný `providerId` zhora. Žiadna z nich nebude vlastniť paralelný provider selection state.
-- Clear filters zachová provider z horného tabu a provider nebude započítaný do badge aktívnych filtrov.
-- Pre overflow sa použije `scrollWidth > clientWidth`, aktualizácia pri scroll/resize/zmene položiek a voliteľný `ResizeObserver`.
-- Accessible názvy šípok budú lokalizované v EN/SK/CS. Vizuál použije existujúce Tailwind tokeny a chevron ikony.
+### Opt-in variant shared komponentu
 
-## Závislosti a poradie
+Shared `Tabs` dostane úzko pomenovanú voliteľnú konfiguráciu indikátora, napríklad
+`indicator="inset"`. Predvolený variant zostane dnešný edge underline, aby sa bez
+explicitného opt-in nezmenili ostatné použitia komponentu.
+
+`ResourcesPage` zapne inset indikátor iba pre horné provider taby. Overflow logika
+ostane v rovnakej inštancii `Tabs`; nevznikne wrapper, druhý tablist ani paralelný
+provider selector.
+
+### Vykreslenie indikátora
+
+Selected button bude pri inset variante `relative` a indikátor vytvorí pomocou
+Tailwind `after:` pseudo-elementu. Hlavný divider bude naďalej patriť existujúcemu
+obalu tab baru. Tým budú obe čiary geometricky oddelené bez maskovania borderu a
+bez zásahu do výšky hlavičky.
+
+### Spätná kompatibilita
+
+Nová konfigurácia bude voliteľná a nebude meniť existujúce props ani správanie:
 
 ```text
-Shared Tabs overflow behavior
-            |
-            v
-Source-tab descriptor + URL contract
-            |
-            v
-Single top-row integration in ResourcesPage
-            |
-            +----------------+----------------+
-            v                v                v
-     VMware source      FlashSystem       IBM Power
-       selection         selection         selection
-            \                |                /
-             +---------------+---------------+
-                             v
-              Responsive/browser verification
+Shared Tabs: default edge indicator (bez zmeny)
+                    |
+                    +-- ResourcesPage: indicator="inset"
+                    |       +-- VMware provider taby
+                    |       +-- FlashSystem provider taby
+                    |       +-- IBM Power provider taby
+                    |
+                    +-- ostatní konzumenti: pôvodný vzhľad
 ```
 
 ## Úlohy
 
-### Úloha 1: Definovať failing testy shared overflow tabov
+### Úloha 1: Testom definovať opt-in inset indikátor
 
-**Popis:** Testami najprv definovať variant A pri 10 položkách aj stav bez overflow. Geometriu scroll kontajnera v JSDOM nastaviť explicitne.
+**Popis:** Rozšíriť focused test shared `Tabs` o nový opt-in variant ešte pred
+implementáciou. Test musí odlíšiť nový odsadený indikátor od pôvodného defaultu a
+súčasne ponechať existujúce overflow testy pre desať tabov.
 
 **Akceptačné kritériá:**
 
-- [ ] Pri 10 taboch a reálnom overflow sa zobrazia lokalizovateľné previous/next tlačidlá.
-- [ ] Test overí scroll, disabled stav na hraniciach a odkrytie aktívneho tabu.
-- [ ] Bez overflow a bez opt-in konfigurácie sa ovládacie šípky nezobrazia.
+- [ ] Selected tab pri inset variante používa samostatný vnútorný indikátor.
+- [ ] Defaultné použitie bez novej konfigurácie si zachová dnešný edge underline.
+- [ ] Existujúci test s 10 tabmi naďalej overuje scroll šípky a hranice posunu.
 
 **Overenie:**
 
-- [ ] RED: `npm test -- src/shared/components/tabs/Tabs.test.tsx`.
-- [ ] Existujúce click a keyboard testy zostanú zachované.
+- [ ] RED: focused test nového variantu zlyhá pred implementáciou z očakávaného dôvodu.
+- [ ] `npm test -- src/shared/components/tabs/Tabs.test.tsx`.
 
 **Závislosti:** Žiadne.
 
@@ -83,17 +102,19 @@ Single top-row integration in ResourcesPage
 
 - `src/shared/components/tabs/Tabs.test.tsx`
 
-**Odhad rozsahu:** S (1 súbor).
+**Odhad rozsahu:** XS (1 súbor).
 
-### Úloha 2: Implementovať opt-in variant A v shared `Tabs`
+### Úloha 2: Implementovať odsadený indikátor v shared `Tabs`
 
-**Popis:** Rozšíriť shared komponent o meranie overflow, šípky a automatické odkrytie selected tabu bez behaviorálnej zmeny existujúcich použití.
+**Popis:** Pridať voliteľný inset variant a vykresliť selected indikátor pomocou
+Tailwind pseudo-elementu. Existujúci default, ARIA semantika, focus management a
+overflow logika zostanú nezmenené.
 
 **Akceptačné kritériá:**
 
-- [ ] Bez novej konfigurácie ostane správanie komponentu rovnaké.
-- [ ] Pri overflow sú šípky v tom istom riadku a tab track podporuje myš, touch aj trackpad.
-- [ ] WAI-ARIA tab semantika a klávesová navigácia zostanú funkčné.
+- [ ] Inset indikátor je 2 px vysoký, odsadený od strán a viditeľne oddelený od dividera.
+- [ ] Komponent nemení svoju výšku ani šírku a tab label sa naďalej skracuje ellipsis.
+- [ ] Bez opt-in konfigurácie sa výsledné triedy a správanie existujúcich tabov nemenia.
 
 **Overenie:**
 
@@ -106,246 +127,86 @@ Single top-row integration in ResourcesPage
 
 - `src/shared/components/tabs/Tabs.tsx`
 
-**Odhad rozsahu:** S (1 súbor).
+**Odhad rozsahu:** XS (1 súbor).
 
 ## Kontrolný bod po úlohách 1–2
 
-- [ ] Shared `Tabs` zvláda 10 tabov v jednom riadku.
-- [ ] Ostatné použitia `Tabs`, vrátane detail draweru, sú nezmenené.
-- [ ] Focused testy a typecheck prejdú.
+- [ ] Defaultný `Tabs` je spätne kompatibilný.
+- [ ] Inset indikátor je dostupný iba cez explicitný opt-in.
+- [ ] Test s 10 tabmi, scroll šípky a klávesová navigácia prejdú.
 
-### Úloha 3: Vytvoriť a otestovať model horných source tabov
+### Úloha 3: Zapnúť variant A pre horné provider taby
 
-**Popis:** Extrahovať čistý helper, ktorý z dostupných providerov vytvorí stabilne zoradené top-level tab descriptory pre VMware, FlashSystem a IBM Power.
+**Popis:** V `ResourcesPage` zapnúť inset indikátor na existujúcej jedinej
+inštancii `Tabs`. Nezasahovať do tvorby source descriptorov, URL navigácie ani
+odovzdávania `providerId` do resource stránok.
 
 **Akceptačné kritériá:**
 
-- [ ] Jeden provider typu vytvorí krátky existujúci label; viac providerov vytvorí samostatné rozlíšené taby.
-- [ ] Typ bez providera vytvorí jeden fallback tab pre existujúci no-provider stav.
-- [ ] Poradie je deterministické a `value` je založené na type + provider ID, nie na labeli.
+- [ ] Variant A sa používa pre VMware, FlashSystem aj IBM Power provider taby.
+- [ ] DOM stále obsahuje presne jeden resource tablist.
+- [ ] Desať VMware providerov stále vytvorí desať rozlíšiteľných tabov v tom istom riadku.
 
 **Overenie:**
 
-- [ ] RED/GREEN focused test helpera pre 0, 1 a 10 providerov.
-- [ ] Test pokrýva duplicitné provider names s rozdielnymi ID.
+- [ ] `npm test -- src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx`.
+- [ ] Regresný test potvrdí jediný tablist a funkčný výber posledného z 10 providerov.
 
 **Závislosti:** Úloha 2.
-
-**Pravdepodobne dotknuté súbory:**
-
-- `src/features/discovery-inventory/resources/helpers/buildResourceSourceTabs.ts`
-- `src/features/discovery-inventory/resources/helpers/buildResourceSourceTabs.test.ts`
-
-**Odhad rozsahu:** S (2 súbory).
-
-### Úloha 4: Rozšíriť URL kontrakt o konkrétny source tab
-
-**Popis:** Upraviť existujúci resource-tab search-param hook tak, aby čítal a zapisoval dvojicu `resource` + `providerId` atomicky a vedel kanonizovať neplatný provider po načítaní zoznamu.
-
-**Akceptačné kritériá:**
-
-- [ ] Refresh/back/forward obnoví rovnaký resource typ aj provider.
-- [ ] Kliknutie na iný source tab zmení oba parametre naraz a resetuje `page` na 1.
-- [ ] Neplatné provider ID pre zvolený typ bezpečne prejde na prvý platný zdroj alebo fallback no-provider tab.
-
-**Overenie:**
-
-- [ ] RED/GREEN: `npm test -- src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx`.
-- [ ] Test overí zachovanie nesúvisiaceho search parametra.
-
-**Závislosti:** Úloha 3.
-
-**Pravdepodobne dotknuté súbory:**
-
-- `src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.ts`
-- `src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx`
-
-**Odhad rozsahu:** S (2 súbory).
-
-### Úloha 5: Doplniť lokalizované popisy overflow ovládania
-
-**Popis:** Pridať accessible previous/next labely pre source tab bar do všetkých podporovaných locales ešte pred zapojením komponentu do page.
-
-**Akceptačné kritériá:**
-
-- [ ] EN/SK/CS obsahujú prirodzené popisy pre predchádzajúce a nasledujúce source taby.
-- [ ] JSON ostane validný a množiny locale kľúčov sú zhodné.
-- [ ] Nepridávajú sa nové vizuálne texty mimo accessible názvov ovládacích prvkov.
-
-**Overenie:**
-
-- [ ] JSON parse všetkých troch locales.
-- [ ] Projektová kontrola rovnosti locale kľúčov prejde.
-
-**Závislosti:** Úloha 2.
-
-**Pravdepodobne dotknuté súbory:**
-
-- `src/locales/en.json`
-- `src/locales/sk.json`
-- `src/locales/cs.json`
-
-**Odhad rozsahu:** S (3 mechanicky zhodné súbory).
-
-### Úloha 6: Zapracovať jediný horný source tab bar v `ResourcesPage`
-
-**Popis:** Vytvoriť tab items z descriptorov, zapnúť variant A a odovzdať selected provider do zvolenej resource page. Doplniť preklady previous/next.
-
-**Akceptačné kritériá:**
-
-- [ ] V DOM je iba jeden resource tablist a je v existujúcej hlavičke `Inventory records`.
-- [ ] Viac VMware/FlashSystem/IBM Power providerov pridá taby do tohto istého riadka.
-- [ ] Shared scroll controls používajú pripravené lokalizované accessible popisy.
-
-**Overenie:**
-
-- [ ] RED/GREEN: `npm test -- src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx`.
-- [ ] Test s 10 VMware providermi overí 10 rozlíšiteľných VMware source tabov v hornom tabliste a nulový počet vnútorných provider tablistov.
-
-**Závislosti:** Úlohy 3–5.
 
 **Pravdepodobne dotknuté súbory:**
 
 - `src/features/discovery-inventory/resources/pages/ResourcesPage.tsx`
 - `src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx`
-- `src/features/discovery-inventory/resources/components/SourceResourcesPageProps.ts`
 
-**Odhad rozsahu:** M (3 súbory).
+**Odhad rozsahu:** S (2 súbory).
 
-## Kontrolný bod po úlohách 3–6
+### Úloha 4: Browser a quality-gate verifikácia
 
-- [ ] Pri 10 VMware zdrojoch vzniknú top-level taby v červeno označenom riadku.
-- [ ] Nevznikne druhý riadok/provider tablist vo vnútri inventory panelu.
-- [ ] URL jednoznačne identifikuje resource typ aj provider.
-- [ ] Focused helper, hook a page testy prejdú.
-
-### Úloha 7: Napájať VMware inventory na provider z horného tabu
-
-**Popis:** Použiť selected provider z top-level tabu pre `useDiscoveryInventory`, odstrániť duplicitný provider dropdown z VMware filtrov a zachovať provider pri clear/reset filtrov.
+**Popis:** Overiť vizuálne oddelenie oboch čiar a regresie provider tabov v
+reálnom prehliadači. Kontrola musí zahŕňať stav bez overflow aj stav s viacerými
+providermi a šípkami.
 
 **Akceptačné kritériá:**
 
-- [ ] Zmena VMware source tabu odošle správny `providerId` do discovery query.
-- [ ] Provider dropdown zmizne z filter okna a provider sa nepočíta do active-filter badge.
-- [ ] Zmena zdroja zavrie detail drawer, zruší selected VM a resetne stránkovanie bez straty provider kontextu.
+- [ ] Aktívna linka sa na 320, 768 a 1440 px nedotýka hlavného dividera.
+- [ ] Pri viacerých provideroch ostáva jeden riadok, fungujú šípky a selected tab sa odkryje.
+- [ ] Tab sa dá zmeniť kliknutím aj klávesnicou a URL naďalej nesie správny `providerId`.
 
 **Overenie:**
 
-- [ ] Focused testy `VmwareResourcesPage`/`ResourcesPage` a `VirtualMachinesToolbar` prejdú.
-- [ ] Test dokazuje, že clear filters zachová selected provider.
+- [ ] `npm run lint`.
+- [ ] `npm run typecheck`.
+- [ ] Focused resource test suite.
+- [ ] `npm run build`.
+- [ ] Browser kontrola bez console errorov pri 320, 768 a 1440 px.
 
-**Závislosti:** Úloha 6.
+**Závislosti:** Úloha 3.
 
-**Pravdepodobne dotknuté súbory:**
-
-- `src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.tsx`
-- `src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.tsx`
-- `src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.test.tsx`
-- `src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx`
-
-**Odhad rozsahu:** M (4 súbory).
-
-### Úloha 8: Napájať FlashSystem inventory na provider z horného tabu
-
-**Popis:** Nahradiť lokálny `providerId` selected providerom z horného tabu a odstrániť provider dropdown z FlashSystem filtrov.
-
-**Akceptačné kritériá:**
-
-- [ ] Query načíta iba provider z aktívneho FlashSystem source tabu.
-- [ ] Provider dropdown a jeho active-filter stav sú odstránené; ostatné filtre fungujú bez zmeny.
-- [ ] Zmena FlashSystem source tabu resetuje source-dependent filtre a zobrazí dáta nového providera.
-
-**Overenie:**
-
-- [ ] Focused testy `FlashSystemResourcesPage`/`FlashSystemInventoryView` prejdú.
-- [ ] Test overí provider-scoped argument `useResourceInventoryQueries`.
-
-**Závislosti:** Úloha 6.
-
-**Pravdepodobne dotknuté súbory:**
-
-- `src/features/discovery-inventory/resources/components/flash-system/FlashSystemResourcesPage.tsx`
-- `src/features/discovery-inventory/resources/components/flash-system/FlashSystemInventoryView.tsx`
-- `src/features/discovery-inventory/resources/components/flash-system/FlashSystemInventoryView.test.tsx`
-
-**Odhad rozsahu:** M (3 súbory).
-
-### Úloha 9: Napájať IBM Power inventory na provider z horného tabu
-
-**Popis:** Nahradiť lokálny `providerId` selected providerom z horného tabu a odstrániť provider dropdown z IBM Power filtrov.
-
-**Akceptačné kritériá:**
-
-- [ ] Query načíta iba provider z aktívneho IBM Power source tabu.
-- [ ] Provider dropdown a jeho active-filter stav sú odstránené; ostatné filtre fungujú bez zmeny.
-- [ ] Zmena IBM Power source tabu resetuje source-dependent filtre a zobrazí dáta nového providera.
-
-**Overenie:**
-
-- [ ] Focused testy `IbmPowerResourcesPage`/`PowerInventoryView` prejdú.
-- [ ] Test overí provider-scoped argument `useResourceInventoryQueries`.
-
-**Závislosti:** Úloha 6.
-
-**Pravdepodobne dotknuté súbory:**
-
-- `src/features/discovery-inventory/resources/components/ibm-power/IbmPowerResourcesPage.tsx`
-- `src/features/discovery-inventory/resources/components/ibm-power/PowerInventoryView.tsx`
-- `src/features/discovery-inventory/resources/components/ibm-power/PowerInventoryView.test.tsx`
-
-**Odhad rozsahu:** M (3 súbory).
-
-## Kontrolný bod po úlohách 7–9
-
-- [ ] Každý z troch resource typov načítava provider vybraný horným tabom.
-- [ ] Žiadny filter panel neobsahuje duplicitný provider selector.
-- [ ] Clear filters nemení aktívny source tab.
-- [ ] Všetky focused resource testy prejdú.
-
-### Úloha 10: Overiť responzivitu, prístupnosť a regresie
-
-**Popis:** Overiť celý flow v reálnom prehliadači s 1 aj 10 zdrojmi a spustiť projektové quality gates.
-
-**Akceptačné kritériá:**
-
-- [ ] Na desktopoch ostane tab bar vpravo od `Inventory records`; na úzkej šírke sa taby nezalomia.
-- [ ] Pri 10 zdrojoch sú oba smery dostupné, selected tab je viditeľný a nevznikne druhý riadok.
-- [ ] Kliknutie na source tab aktualizuje URL, odošle správny provider do API query a zobrazí iba jeho inventár.
-
-**Overenie:**
-
-- [ ] `npm run lint`, `npm run typecheck`, `npm test` a `npm run build` skončia s exit code 0.
-- [ ] Browser kontrola pri 320, 768 a 1440 px bez console errorov.
-- [ ] Manuálne overiť VMware, FlashSystem a IBM Power s minimálne dvoma providermi rovnakého typu alebo deterministickým mockom.
-
-**Závislosti:** Úlohy 7–9.
-
-**Pravdepodobne dotknuté súbory:** Žiadne, iba opravy regresií v už uvedenom scope.
+**Pravdepodobne dotknuté súbory:** Žiadne; iba prípadné opravy v uvedenom scope.
 
 **Odhad rozsahu:** S.
 
 ## Záverečný kontrolný bod
 
-- [ ] Existuje iba jeden horný source tab bar v mieste označenom na screenshote.
-- [ ] Viac providerov vytvára viac tabov priamo v tomto riadku.
-- [ ] Nevznikol druhý tab bar vo vnútri tabuľky.
-- [ ] Selected provider je URL-backed navigačný kontext, nie filter.
-- [ ] Každý tab zobrazuje reálne API dáta z príslušného providera.
-- [ ] Testy, lint, typecheck a build prešli a UI bolo overené v prehliadači.
-- [ ] Používateľ schválil plán pred implementáciou.
+- [ ] Aktívny indikátor je viditeľne oddelený od celkovej línie tab baru.
+- [ ] Zobrazenie viacerých provider tabov zostalo funkčné pre všetky tri typy.
+- [ ] Overflow šípky, touch/trackpad scroll a automatické odkrytie fungujú bez regresie.
+- [ ] Existuje iba jeden horný resource/provider tablist.
+- [ ] URL a provider-scoped načítanie dát sa nezmenili.
+- [ ] Focused testy, lint, typecheck, build a browser kontrola prešli.
 
 ## Riziká a mitigácie
 
 | Riziko | Dopad | Mitigácia |
 |---|---|---|
-| Provider taby sa omylom vykreslia v druhom riadku | Vysoký | `ResourcesPage` bude jediné miesto tvorby tablistu; integračný test vyžaduje presne jeden resource tablist. |
-| Labely providerov sa opakujú | Stredný | React key a URL identita použijú provider ID; label pri kolízii môže doplniť ID/title tooltip. |
-| Invalidný provider v URL spustí nesprávny query | Vysoký | Validácia provider ID voči selected resource typu pred zapnutím query a kanonizácia cez replace. |
-| Provider dropdown a source tab sa rozídu | Vysoký | Odstrániť provider dropdowny; provider bude mať jediný zdroj pravdy v hornom tabu/URL. |
-| Scroll merania v JSDOM vracajú nuly | Stredný | Explicitne mockovať `clientWidth`, `scrollWidth`, `scrollLeft` a scroll metódy. |
-| Zmena shared `Tabs` ovplyvní detail drawer | Vysoký | Overflow bude opt-in a existujúce testy bez konfigurácie zostanú povinné. |
-| Flash/Power lokálny filter state ostane na starom providerovi | Stredný | Spraviť provider controlled z parentu a pri zmene source key resetnúť source-dependent stav. |
+| Zmena vzhľadu všetkých shared tabov | Stredný | Nový indikátor je opt-in; default ostane nezmenený. |
+| Pseudo-element prekryje alebo skráti label | Nízky | Indikátor je absolútne pozicionovaný a nemení content box. |
+| Active linka sa naďalej dotýka dividera | Stredný | Použiť spacing token pre jasný vertikálny odstup a overiť pixelovo v browseri. |
+| Úprava naruší overflow s 10+ tabmi | Vysoký | Nemení sa scroll wrapper ani meranie; zachovať a spustiť existujúce overflow testy. |
+| Vznikne druhý tablist alebo provider selector | Vysoký | Variant sa zapne na existujúcej inštancii `Tabs` v `ResourcesPage`. |
 
 ## Otvorené otázky
 
-- Pred implementáciou potvrdiť finálny formát labelu pri viacerých zdrojoch. Plán odporúča `Resource type · Provider name`, pretože zachová kontext aj jednoznačnosť.
+Žiadne. Variant A aj zachovanie súčasnej multi-provider funkcionality boli
+potvrdené používateľom.
