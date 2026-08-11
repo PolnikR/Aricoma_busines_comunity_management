@@ -142,6 +142,7 @@ export function SnapshotPolicyModal({ open, onClose, existingPolicies, policy }:
         )}
       >
         {errorMessage ? <div className="mx-6 mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">{errorMessage}</div> : null}
+        <p className="mx-6 mt-4 text-sm text-text-muted">{t('snapshotPolicies.modal.description')}</p>
         <SnapshotPolicyForm data={formData} errors={errors} isSubmitting={submitPolicy.isPending} idDisabled={isEdit} onChange={handleChange} onSubmit={handleSubmit} />
       </Modal>
       <ConfirmDialog

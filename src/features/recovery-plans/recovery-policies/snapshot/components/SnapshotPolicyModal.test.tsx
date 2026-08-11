@@ -52,6 +52,7 @@ describe('SnapshotPolicyModal', () => {
   it('renders the complete policy contract with enabled selected by default', () => {
     renderModal()
 
+    expect(screen.getByText('Configure a policy for automated snapshot creation and retention.')).toBeInTheDocument()
     expect(screen.getByLabelText('Policy ID')).toBeInTheDocument()
     expect(screen.getByLabelText('Frequency')).toBeInTheDocument()
     expect(screen.getByLabelText('Retention')).toBeInTheDocument()
