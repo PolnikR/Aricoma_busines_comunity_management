@@ -3,6 +3,7 @@ import {
   PLATFORM_PROVIDER_CREDENTIAL_STATUSES,
   PLATFORM_PROVIDER_TYPES,
 } from '../../model/platformProviderTypes'
+import { PLATFORM_PROVIDERS_CONFIG } from '../../config/platformProvidersConfig'
 
 export const platformProviderSubmitSchema = z.object({
   id: z.string().min(1),
@@ -10,7 +11,10 @@ export const platformProviderSubmitSchema = z.object({
   description: z.string(),
   type: z.enum(PLATFORM_PROVIDER_TYPES),
   ipAddress: z.string().min(1),
-  port: z.number().int().min(1).max(65_535),
+  port: z.number()
+    .int()
+    .min(PLATFORM_PROVIDERS_CONFIG.connection.minPort)
+    .max(PLATFORM_PROVIDERS_CONFIG.connection.maxPort),
   dagDir: z.string().min(1),
   credentialId: z.string().min(1),
 })

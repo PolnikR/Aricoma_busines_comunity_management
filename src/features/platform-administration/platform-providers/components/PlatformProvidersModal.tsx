@@ -6,6 +6,7 @@ import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useCredentials } from '@/features/providers-connectors/credentials/hooks/useCredentials'
 import { useUpsertPlatformProvider } from '../hooks/useUpsertPlatformProvider'
+import { PLATFORM_PROVIDERS_CONFIG } from '../config/platformProvidersConfig'
 import type {
   PlatformProviderRecord,
   PlatformProviderSubmitData,
@@ -29,7 +30,7 @@ const EMPTY_PLATFORM_PROVIDER_FORM: PlatformProviderFormData = {
   description: '',
   type: '',
   ipAddress: '',
-  port: '22',
+  port: String(PLATFORM_PROVIDERS_CONFIG.connection.defaultPort),
   dagDir: '',
   credentialId: '',
 }
@@ -120,7 +121,13 @@ export function PlatformProvidersModal({
     if (!formData.description.trim()) nextErrors.description = t('forms.descriptionRequired')
     if (!formData.type) nextErrors.type = t('forms.typeRequired')
     if (!formData.ipAddress.trim()) nextErrors.ipAddress = t('forms.ipRequired')
-    if (!Number.isInteger(port) || port < 1 || port > 65535) nextErrors.port = t('forms.portRequired')
+    if (
+      !Number.isInteger(port)
+      || port < PLATFORM_PROVIDERS_CONFIG.connection.minPort
+      || port > PLATFORM_PROVIDERS_CONFIG.connection.maxPort
+    ) {
+      nextErrors.port = t('forms.portRequired')
+    }
     if (!formData.dagDir.trim()) nextErrors.dagDir = t('forms.dagDirRequired')
     if (!formData.credentialId.trim()) nextErrors.credentialId = t('forms.credentialsRequired')
     setErrors(nextErrors)
