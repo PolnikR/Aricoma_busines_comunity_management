@@ -1,51 +1,67 @@
-# Task Checklist: Fix Context Menu Bug, Shared Spinner, Code Review
+# Task Checklist: Discovery Inventory Source Boundaries
 
-## Phase 1: Fix Broken Edit/Delete
+## Baseline
 
-- [ ] **Task 1: Remove duplicate context-menu render block**
-  - [ ] Delete the `!currentMenuGroup.pushToOrchestrator` block (dead menu without `rollback` prop) in RecoveryGroupsTable.tsx
-  - [ ] Keep the single remaining block (with `rollback` prop) as the only menu
-  - [ ] Manual check: Edit works when `pushToOrchestrator = false`
-  - [ ] Manual check: Delete works when `pushToOrchestrator = false`
-  - [ ] Manual check: rollback still disabled/enabled correctly
+- [ ] Task 1: Lock existing endpoint and query behavior with tests
+- [ ] Verify `/vms`, `/vms_by_tag`, `/tags`, `/vdisks_by_vm`
+- [ ] Verify `/get_volumes`, `/get_volume_tree`, `/get_power_vm`
+- [ ] Run focused discovery-inventory tests and typecheck
 
-## Phase 2: Shared Spinner Component
+## VMware source
 
-- [ ] **Task 2: Create shared `Spinner` component**
-  - [ ] New file `src/shared/components/spinner/Spinner.tsx`
-  - [ ] Extract exact markup/classes from RecoveryGroupBuilder's inline spinner
-  - [ ] Accept optional `className` override
+- [ ] Task 2: Move VMware inventory API, schema, mapper, model and hook
+- [ ] Rename `useDiscoveryInventory` to `useVmwareInventory`
+- [ ] Preserve query keys, cache settings and request activation
+- [ ] Task 3: Move tags to VMware source
+- [ ] Rename `useTags` to `useVmwareTags`
+- [ ] Move `/vdisks_by_vm` integration to VMware source
+- [ ] Rename hook/API around VM storage volumes
+- [ ] Verify detail-panel request timing
 
-- [ ] **Task 3: Use `Spinner` in RecoveryGroupBuilder.tsx**
-  - [ ] Replace inline spinner span with `<Spinner />`
-  - [ ] Visual check: no change in appearance
+## Checkpoint 1
 
-- [ ] **Task 4: Add spinner to ConfirmDialog (rollback)**
-  - [ ] Add `Spinner` next to `loadingLabel` text when `isLoading`
-  - [ ] Manual: Roll back confirm → spinner + "Rolling back..." shows
+- [ ] No VMware endpoint implementation remains in generic API files
+- [ ] VMware Resources tests pass
+- [ ] VMware Infrastructure tests pass
+- [ ] Lint and typecheck pass
 
-- [ ] **Task 5: Add spinner to remaining save buttons**
-  - [ ] RecoveryAppBuilder.tsx save button
-  - [ ] PolicySetModal.tsx submit button
-  - [ ] SnapshotPolicyModal.tsx submit button
+## FlashSystem source
 
-## Checkpoint: Phases 1–2
+- [ ] Task 4: Move `/get_volumes` API, schema, mapper, model and hook
+- [ ] Keep FlashSystem resource UI in `resources`
+- [ ] Task 5: Move `/get_volume_tree` API, schema, model and hook
+- [ ] Keep topology mapping and UI in `infrastructure`
+- [ ] Verify both Resources and Infrastructure flows
 
-- [ ] Run test suite: `npm test` ✓ All tests pass
-- [ ] Build succeeds: `npm run build` ✓ No errors
-- [ ] Manual: edit/delete work in every menu state
-- [ ] Manual: all 5 save/confirm flows show spinner + text while pending
+## IBM Power source
 
-## Phase 3: Code Review
+- [ ] Task 6: Move `/get_power_vm` API, schema, mapper, model and hook
+- [ ] Move VIOS exclusion test with the mapper
+- [ ] Verify Power Resources and Infrastructure flows
 
-- [ ] **Task 6: Review commits differing from `test` branch**
-  - [ ] Diff scope: `origin/test...HEAD` (14 commits, merge base `9562e06`)
-  - [ ] Apply five-axis review (correctness, readability, architecture, security, performance)
-  - [ ] Label findings by severity
-  - [ ] Report findings before making further changes
+## Checkpoint 2
 
-## Checkpoint: Complete
+- [ ] Every endpoint has exactly one source owner
+- [ ] No source imports from Resources or Infrastructure
+- [ ] Focused tests, lint and typecheck pass
 
-- [ ] All changes committed
-- [ ] Code review report delivered
-- [ ] Ready for merge
+## Integration cleanup
+
+- [ ] Task 7: Replace mixed `useResourceInventoryQueries`
+- [ ] FlashSystem page consumes FlashSystem source hook
+- [ ] IBM Power page consumes IBM Power source hook
+- [ ] Confirm no duplicate React Query requests
+- [ ] Task 8: Remove obsolete generic APIs, hooks, schemas and mappers
+- [ ] Remove or minimize `discoveryTypes.ts`
+- [ ] Confirm no imports reference removed paths
+
+## Final verification
+
+- [ ] Task 9: Audit source/view dependency direction
+- [ ] `npm run lint`
+- [ ] `npm run typecheck`
+- [ ] `npm test`
+- [ ] Production Vite build passes
+- [ ] Manually verify request URLs, parameters and timing in Network panel
+- [ ] Review final diff for accidental UI or behavior changes
+
