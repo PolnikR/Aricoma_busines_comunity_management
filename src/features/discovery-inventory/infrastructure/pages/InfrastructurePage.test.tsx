@@ -7,7 +7,7 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 import { useInfrastructureInventory } from '../hooks/useInfrastructureInventory'
 import { useFlashSystemVolumeTree } from '../hooks/useFlashSystemVolumeTree'
 import { InfrastructurePage } from './InfrastructurePage'
-import type { DiscoveryInventory, PowerInventory } from '../../model/discoveryTypes'
+import type { DiscoveryInventory, PowerInventory } from '../../resources/model/discoveryTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({

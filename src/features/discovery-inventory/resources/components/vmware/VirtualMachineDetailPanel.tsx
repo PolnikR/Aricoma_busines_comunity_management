@@ -4,8 +4,8 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
 import { formatStartTime } from '@/shared/utils/dateFormat'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useVdisksByVm } from '../../hooks/useVdisksByVm'
-import type { StorageVolumeMapping } from '../../model/vdisksTypes'
+import { useVdisksByVm } from '../../hooks/useVmStorageVolumes'
+import type { StorageVolumeMapping } from '../../model/vmStorageVolumesTypes'
 import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
 import {

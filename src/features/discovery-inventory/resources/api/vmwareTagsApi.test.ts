@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchTags } from './tagsApi'
+import { fetchTags } from './vmwareTagsApi'
 
 describe('fetchTags', () => {
   afterEach(() => {

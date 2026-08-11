@@ -1,4 +1,4 @@
-import type { PowerInventory } from '../../model/discoveryTypes'
+import type { PowerInventory } from '../../resources/model/discoveryTypes'
 import type {
   InfrastructureTopology,
   InfrastructureTopologyEdge,

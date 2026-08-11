@@ -1,8 +1,8 @@
 import { apiFetch } from '@/shared/api/apiClient'
 import { API_ENDPOINTS } from '@/config/apiEndpoints'
-import type { VmStorageVolumes } from '../model/vdisksTypes'
-import { vdisksResponseSchema } from './schemas/vdisksSchema'
-import { mapVdisks } from '../helpers/mapVdisks'
+import type { VmStorageVolumes } from '../model/vmStorageVolumesTypes'
+import { vdisksResponseSchema } from './schemas/vmStorageVolumesSchema'
+import { mapVdisks } from '../helpers/mapVmStorageVolumes'
 
 // Returns the IBM storage volumes backing a VM. Explicit provider identifiers
 // prevent the backend defaults from selecting the wrong infrastructure source.

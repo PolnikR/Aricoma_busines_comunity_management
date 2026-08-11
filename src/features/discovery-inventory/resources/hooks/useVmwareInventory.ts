@@ -3,8 +3,8 @@ import {
   DISCOVERY_INVENTORY_GC_TIME_MS,
   DISCOVERY_INVENTORY_STALE_TIME_MS,
   discoveryInventoryKeys,
-} from '../api/discoveryInventoryQueryKeys'
-import { fetchVmwareInventory } from '../api/discoveryInventoryApi'
+} from '../api/resourceInventoryQueryKeys'
+import { fetchVmwareInventory } from '../api/vmwareInventoryApi'
 
 export function useDiscoveryInventory(providerId?: string, tag?: string, enabled = true) {
   return useQuery({

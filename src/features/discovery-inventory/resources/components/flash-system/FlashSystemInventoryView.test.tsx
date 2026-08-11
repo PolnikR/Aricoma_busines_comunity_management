@@ -3,8 +3,8 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { useTranslation } from '@/test-utils/mockUseTranslation'
-import { flashSystemInventoryResponseSchema } from '../../../api/schemas/flashSystemInventorySchema'
-import { mapFlashSystemInventory } from '../../../helpers/mapFlashSystemInventory'
+import { flashSystemInventoryResponseSchema } from '../../api/schemas/flashSystemInventorySchema'
+import { mapFlashSystemInventory } from '../../helpers/mapFlashSystemInventory'
 import { FlashSystemInventoryView } from './FlashSystemInventoryView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))

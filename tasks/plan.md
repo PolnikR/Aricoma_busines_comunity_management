@@ -1,88 +1,127 @@
-# Implementation Plan: Discovery Inventory Source Boundaries
+# Implementation Plan: Feature-First Discovery & Inventory Structure
 
 ## Overview
 
-Reorganize `src/features/discovery-inventory` so backend-facing code is owned by a
-technology source (`vmware`, `flash-system`, `ibm-power`) while the `resources`
-and `infrastructure` folders remain presentation layers. This is a structural
-refactor only: endpoint URLs, request parameters, response validation, React
-Query behavior, user-visible text, routes and UI behavior must remain unchanged.
+Reorganize `src/features/discovery-inventory` to follow the same feature-first
+convention as `recovery-plans`, `providers-connectors` and
+`platform-administration`. The top-level folders will represent user-facing
+sections: `resources`, `infrastructure` and, once implemented,
+`discovery-jobs`. Technical layers (`api`, `components`, `hooks`, `helpers`,
+`model`, `pages`) will live inside the feature that owns them.
+
+This is a structural refactor. It must not change endpoint URLs, query
+parameters, response mapping, React Query behavior, routes, filters, UI text or
+request timing.
 
 ## Target Structure
 
 ```text
 src/features/discovery-inventory/
-├── sources/
-│   ├── vmware/
-│   │   ├── api/
-│   │   ├── hooks/
-│   │   ├── model/
-│   │   └── helpers/
-│   ├── flash-system/
-│   │   ├── api/
-│   │   ├── hooks/
-│   │   ├── model/
-│   │   └── helpers/
-│   └── ibm-power/
-│       ├── api/
-│       ├── hooks/
-│       ├── model/
-│       └── helpers/
-├── resources/       # tables, filters, detail panels and resource-page state
-└── infrastructure/  # topology UI, layout and topology mapping
+├── resources/
+│   ├── api/
+│   │   ├── schemas/
+│   │   ├── resourceInventoryQueryKeys.ts
+│   │   ├── vmwareInventoryApi.ts
+│   │   ├── vmwareTagsApi.ts
+│   │   ├── vmStorageVolumesApi.ts
+│   │   ├── flashSystemInventoryApi.ts
+│   │   └── powerInventoryApi.ts
+│   ├── components/
+│   │   ├── vmware/
+│   │   ├── flash-system/
+│   │   └── ibm-power/
+│   ├── config/
+│   ├── helpers/
+│   ├── hooks/
+│   ├── model/
+│   ├── pages/
+│   └── skeletons/
+│
+├── infrastructure/
+│   ├── api/
+│   │   ├── schemas/
+│   │   └── flashSystemVolumeTreeApi.ts
+│   ├── components/
+│   ├── helpers/
+│   ├── hooks/
+│   ├── layout/
+│   ├── model/
+│   └── pages/
+│
+└── discovery-jobs/      # only when the feature receives real implementation
 ```
 
-Tests stay next to the units they verify. Zod schemas belong under the relevant
-source's `api/schemas` folder. Shared UI and cross-source presentation contracts
-remain outside `sources`.
-
-## Architecture Decisions
-
-- Organize transport, validation, mapping, source models and server-state hooks
-  by technology, not by endpoint name or consuming screen.
-- Keep `API_ENDPOINTS` centralized in `src/config/apiEndpoints.ts`; endpoint
-  strings are application configuration, while request behavior belongs to each
-  source API module.
-- Use semantic FE names rather than copying imprecise backend names. Examples:
-  `fetchPowerInventory` may call `/get_power_vm`, and `useVmStorageVolumes` may
-  call `/vdisks_by_vm`.
-- Preserve React Query keys during the migration where possible, so moving files
-  does not invalidate cache behavior or create duplicate requests.
-- `resources` and `infrastructure` may import from `sources`; source modules must
-  never import presentation modules.
-- Avoid broad barrel files initially. Direct imports make ownership and cycles
-  visible. A small public `index.ts` may be added only if it creates a proven,
-  stable boundary.
-- Do not implement the currently unused `/vms_in_folder` endpoint as part of
-  this refactor.
-
-## Dependency Flow
+After migration, the following generic top-level folders must not remain:
 
 ```text
-API_ENDPOINTS
-    ↓
-sources/<technology>/api + schemas
-    ↓
-sources/<technology>/helpers + model
-    ↓
-sources/<technology>/hooks
-    ↓
-resources and infrastructure presentation
+discovery-inventory/api
+discovery-inventory/helpers
+discovery-inventory/hooks
+discovery-inventory/model
+discovery-inventory/pages
+discovery-inventory/sources
+```
+
+## Ownership Rules
+
+| Capability | Owning feature | Endpoint |
+|---|---|---|
+| VMware VM inventory | `resources` | `/vms`, `/vms_by_tag` |
+| VMware tag filter data | `resources` | `/tags` |
+| Storage volumes related to a VM | `resources` | `/vdisks_by_vm` |
+| FlashSystem volume inventory | `resources` | `/get_volumes` |
+| IBM Power partition inventory | `resources` | `/get_power_vm` |
+| FlashSystem topology tree | `infrastructure` | `/get_volume_tree` |
+| VMware folder inventory | Not implemented in this refactor | `/vms_in_folder` |
+
+`Infrastructure` may consume the public inventory API and normalized resource
+models owned by `resources`. Recovery groups may do the same because they select
+resources for recovery groups. They must not import Resource UI components,
+filters or page state.
+
+## Dependency Direction
+
+```text
+config/API_ENDPOINTS
+        │
+        ├── resources/api → resources/model/helpers/hooks/components/pages
+        │                         │
+        │                         ├── infrastructure topology consumers
+        │                         └── recovery-group resource consumers
+        │
+        └── infrastructure/api → infrastructure/model/helpers/hooks/components/pages
+```
+
+Allowed cross-feature dependency:
+
+```text
+infrastructure → resources/api + resources/model
+recovery-groups → resources/api + resources/model
+```
+
+Forbidden dependencies:
+
+```text
+resources → infrastructure
+infrastructure → resources/components|pages|config
+resources/api → resources/components|pages
 ```
 
 ## Tasks
 
-### Task 1: Establish a behavioral baseline
+### Task 1: Lock the existing request contracts
 
-**Description:** Confirm and, only where necessary, strengthen tests around the
-current requests and query activation rules before moving files.
+**Description:** Establish a behavioral baseline before moving files. Existing
+tests should explicitly protect URLs, query parameters, schemas, mapping and
+query activation rules for all implemented inventory endpoints.
 
 **Acceptance criteria:**
-- [ ] Tests assert endpoint, query parameters and mapping for `/vms`,
-  `/vms_by_tag`, `/tags`, `/vdisks_by_vm`, `/get_volumes`,
-  `/get_volume_tree` and `/get_power_vm`.
-- [ ] Hook tests cover their current `enabled`, query-key and cache settings.
-- [ ] No production behavior is changed.
+- [ ] Tests cover `/vms`, `/vms_by_tag`, `/tags`, `/vdisks_by_vm`,
+  `/get_volumes`, `/get_power_vm` and `/get_volume_tree`.
+- [ ] Tests cover provider IDs, tag parameters and the three-value activation
+  rule for `/vdisks_by_vm`.
+- [ ] Current React Query keys, stale times and enabled conditions are recorded
+  by tests before any move.
 
 **Verification:**
 - [ ] `npm test -- src/features/discovery-inventory`
@@ -94,204 +133,200 @@ current requests and query activation rules before moving files.
 
 **Estimated scope:** Medium
 
-### Task 2: Move VMware inventory ownership
+### Task 2: Move VMware inventory into Resources
 
-**Description:** Create the VMware source boundary for VM inventory, including
-the response schema, mapper, model and React Query hook. Rename the misleading
-`useDiscoveryInventory` to `useVmwareInventory` while preserving its behavior.
+**Description:** Move VMware inventory transport, schema, mapper, types and hook
+from generic top-level folders into the `resources` feature.
 
 **Acceptance criteria:**
-- [ ] `/vms` and `/vms_by_tag` are called only from `sources/vmware/api`.
-- [ ] VMware inventory schema, mapper and source models live below
-  `sources/vmware`.
-- [ ] Resources and Infrastructure use `useVmwareInventory` or the VMware API
-  through the source boundary.
+- [ ] `/vms` and `/vms_by_tag` are implemented in
+  `resources/api/vmwareInventoryApi.ts`.
+- [ ] VMware schema, normalized types and mapper live below `resources`.
+- [ ] VMware Resources and Infrastructure continue using the same query keys
+  and normalized inventory.
 
 **Verification:**
-- [ ] VMware API, mapper and hook tests pass.
+- [ ] VMware API, schema, mapper and hook tests pass.
+- [ ] VMware Resources page tests pass.
 - [ ] `npm run typecheck`
 
 **Dependencies:** Task 1
 
-**Files likely touched:** VMware API/schema, mapper/model, hook and their tests.
+**Files likely touched:** VMware API/schema, mapper/model, hook and direct imports.
 
-**Estimated scope:** Medium, implemented as file moves plus import updates.
+**Estimated scope:** Medium
 
-### Task 3: Move VMware tags and VM storage discovery
+### Task 3: Move VMware tags and VM storage discovery into Resources
 
-**Description:** Complete the VMware source boundary by moving tag lookup and
-the `/vdisks_by_vm` integration out of the generic and `resources` folders.
-Adopt semantic names that identify the returned storage relationship.
+**Description:** Move `/tags` and `/vdisks_by_vm` implementations, their
+schemas, models, mappers and hooks into `resources`.
 
 **Acceptance criteria:**
-- [ ] `/tags` is owned by `sources/vmware/api` and exposed through
-  `useVmwareTags`.
-- [ ] `/vdisks_by_vm` is owned by `sources/vmware/api` and exposed through
-  `useVmStorageVolumes`.
-- [ ] Opening a VM detail remains the trigger for `/vdisks_by_vm`, including
-  the requirement for VM name, VMware provider ID and FlashSystem provider ID.
+- [ ] Tags are owned by `resources/api/vmwareTagsApi.ts`.
+- [ ] VM-related storage discovery is owned by
+  `resources/api/vmStorageVolumesApi.ts`.
+- [ ] Opening a VM detail remains the trigger for `/vdisks_by_vm`; no eager
+  request is introduced.
 
 **Verification:**
 - [ ] Tags API/hook tests pass.
-- [ ] VM storage API/hook and `VirtualMachineDetailPanel` tests pass.
-- [ ] `npm run typecheck`
+- [ ] VM storage API/hook tests pass.
+- [ ] `VirtualMachineDetailPanel` tests pass.
 
 **Dependencies:** Task 2
 
-**Files likely touched:** Tags and vdisk API, schemas, mappers, models, hooks and
-their direct consumers.
+**Files likely touched:** Tags and VM-storage API/schema/model/mapper/hook files.
 
 **Estimated scope:** Medium
 
-### Checkpoint 1: VMware boundary
+### Checkpoint 1: VMware Resources
 
-- [ ] `rg` finds no VMware endpoint implementation in the old generic API.
-- [ ] VMware Resources and VMware Infrastructure render with unchanged data.
-- [ ] Opening VM detail issues at most the same request set as before.
+- [ ] VMware Resources page loads and filters exactly as before.
+- [ ] VM detail issues `/vdisks_by_vm` only after selecting a VM and resolving
+  both providers.
 - [ ] Focused tests, lint and typecheck pass.
 
-### Task 4: Move FlashSystem volume inventory ownership
+### Task 4: Move FlashSystem volume inventory into Resources
 
-**Description:** Move `/get_volumes`, its validation, mapping, models and query
-hook into `sources/flash-system`, keeping table/filter/detail UI in `resources`.
+**Description:** Move `/get_volumes`, its schema, normalized models, mapper and
+query hook into the `resources` feature. FlashSystem topology is intentionally
+excluded from this task.
 
 **Acceptance criteria:**
-- [ ] `/get_volumes` is called only from `sources/flash-system/api`.
-- [ ] FlashSystem volume response types do not remain in the generic
-  `discoveryTypes.ts` file.
-- [ ] Provider selection, query keys, stale time and failure behavior remain
-  unchanged.
+- [ ] `/get_volumes` is implemented only in
+  `resources/api/flashSystemInventoryApi.ts`.
+- [ ] Volume, pool, host and resolved mapping types live in `resources/model`.
+- [ ] FlashSystem table, filters, details and metrics preserve existing behavior.
 
 **Verification:**
-- [ ] FlashSystem API/schema/mapper/hook tests pass.
-- [ ] FlashSystem resource page tests pass.
+- [ ] FlashSystem inventory API/schema/mapper tests pass.
+- [ ] FlashSystem Resources component and page tests pass.
 - [ ] `npm run typecheck`
 
 **Dependencies:** Task 1
 
-**Files likely touched:** FlashSystem volume API/schema, mapper/model, hook and
-resource-page imports.
+**Files likely touched:** FlashSystem resource API/schema/model/mapper/hook imports.
 
 **Estimated scope:** Medium
 
-### Task 5: Move FlashSystem topology ownership
+### Task 5: Move IBM Power inventory into Resources
 
-**Description:** Move `/get_volume_tree`, its schema and source response models
-under `sources/flash-system`; keep topology conversion and visualization under
-`infrastructure` because they are presentation-specific.
+**Description:** Move `/get_power_vm`, its schema, normalized models, mapper and
+query hook into the `resources` feature.
 
 **Acceptance criteria:**
-- [ ] `/get_volume_tree` is called only from `sources/flash-system/api`.
-- [ ] `useFlashSystemVolumeTree` resides in the FlashSystem source boundary.
-- [ ] Infrastructure topology helpers consume source models without importing
-  source implementation details from Resources.
+- [ ] `/get_power_vm` is implemented only in
+  `resources/api/powerInventoryApi.ts`.
+- [ ] IBM Power inventory and partition types live in `resources/model`.
+- [ ] The existing VIOS exclusion remains unchanged and protected by its mapper
+  regression test.
+
+**Verification:**
+- [ ] IBM Power API/schema/mapper tests pass.
+- [ ] IBM Power Resources component and page tests pass.
+- [ ] VIOS exclusion test passes.
+
+**Dependencies:** Task 1
+
+**Files likely touched:** Power API/schema/model/mapper/hook imports.
+
+**Estimated scope:** Medium
+
+### Checkpoint 2: Resources feature complete
+
+- [ ] All resource inventory endpoint implementations live under `resources`.
+- [ ] `resources` contains its own `api`, `components`, `helpers`, `hooks`,
+  `model` and `pages` layers like the other project features.
+- [ ] No Resources implementation imports from Infrastructure.
+- [ ] Focused tests, lint and typecheck pass.
+
+### Task 6: Move FlashSystem topology API into Infrastructure
+
+**Description:** Move `/get_volume_tree`, its schema, topology response types and
+query hook into the `infrastructure` feature.
+
+**Acceptance criteria:**
+- [ ] `/get_volume_tree` is implemented only in
+  `infrastructure/api/flashSystemVolumeTreeApi.ts`.
+- [ ] Tree views, nodes and count contracts live in `infrastructure/model`.
+- [ ] Topology mapping, layout and UI continue consuming the same normalized
+  tree data.
 
 **Verification:**
 - [ ] Volume-tree API/schema/hook tests pass.
-- [ ] FlashSystem topology mapping and Infrastructure page tests pass.
-- [ ] `npm run typecheck`
+- [ ] FlashSystem topology mapper tests pass.
+- [ ] Infrastructure page tests pass.
 
 **Dependencies:** Task 4
 
-**Files likely touched:** FlashSystem tree API/schema/model/hook and Infrastructure
-imports.
+**Files likely touched:** Volume-tree API/schema/model/hook and topology imports.
 
 **Estimated scope:** Medium
 
-### Task 6: Move IBM Power inventory ownership
+### Task 7: Update external inventory consumers
 
-**Description:** Move `/get_power_vm`, its schema, mapper, models and hook to
-`sources/ibm-power`. Preserve the existing VIOS exclusion and document it close
-to the Power mapper tests.
+**Description:** Point Infrastructure and Recovery Groups at the public
+Resources API/model boundary without importing Resource presentation internals.
 
 **Acceptance criteria:**
-- [ ] `/get_power_vm` is called only from `sources/ibm-power/api`.
-- [ ] IBM Power schema, mapper and models live below `sources/ibm-power`.
-- [ ] VIOS records remain excluded and the regression test moves with the
-  mapper.
+- [ ] Infrastructure imports VMware and Power inventories only from
+  `resources/api` and `resources/model`.
+- [ ] Recovery Groups imports selectable inventory and related VM storage only
+  from `resources/api` and `resources/model`.
+- [ ] No consumer imports `resources/components`, `resources/pages` or private
+  filter state.
 
 **Verification:**
-- [ ] IBM Power API/schema/mapper/hook tests pass.
-- [ ] Power Resources and Infrastructure tests pass.
-- [ ] `npm run typecheck`
+- [ ] Infrastructure inventory hook/page tests pass.
+- [ ] Recovery-group resource inventory tests pass.
+- [ ] `rg` confirms the allowed dependency paths.
 
-**Dependencies:** Task 1
+**Dependencies:** Tasks 2–6
 
-**Files likely touched:** Power API/schema, mapper/model, hook and presentation
-imports.
+**Files likely touched:** Infrastructure inventory hook and recovery-group hooks/tests.
 
 **Estimated scope:** Medium
 
-### Checkpoint 2: All source boundaries
+### Task 8: Remove generic and rejected folder structures
 
-- [ ] Each backend endpoint has exactly one owning source API module.
-- [ ] Resources and Infrastructure use source hooks without cross-importing
-  each other's internals.
-- [ ] Focused tests, lint and typecheck pass.
-
-### Task 7: Replace the mixed resource query coordinator
-
-**Description:** Remove the FlashSystem/Power-specific branching from the
-misleading `useResourceInventoryQueries`. Each source page should consume its
-own source hook; only genuinely shared presentation state stays in Resources.
+**Description:** After all consumers use their owning feature, delete obsolete
+generic top-level files and the rejected `sources` structure. Do not leave
+compatibility re-export files without real consumers.
 
 **Acceptance criteria:**
-- [ ] No hook selects an API implementation using a provider-type ternary.
-- [ ] FlashSystem and IBM Power source pages invoke their technology-specific
-  hooks.
-- [ ] Provider filtering and partial/error UI behavior remain unchanged.
+- [ ] Top-level `api`, `helpers`, `hooks`, `model`, `pages` and `sources` are
+  absent from `discovery-inventory`.
+- [ ] Every moved file has one canonical implementation and one canonical test.
+- [ ] No import references an obsolete path.
 
 **Verification:**
-- [ ] Resource page, source tab and source-page tests pass.
-- [ ] React Query tests confirm no duplicate request is introduced.
-- [ ] `npm run typecheck`
+- [ ] `rg` finds no obsolete discovery-inventory import paths.
+- [ ] `git status` shows moves/deletions only within the approved scope.
+- [ ] `npm run lint && npm run typecheck`
 
-**Dependencies:** Tasks 4 and 6
+**Dependencies:** Task 7
 
-**Files likely touched:** Resource query coordinator, FlashSystem page, IBM Power
-page and associated tests.
-
-**Estimated scope:** Medium
-
-### Task 8: Remove obsolete generic data-layer files
-
-**Description:** Delete old files only after every consumer has migrated, then
-reduce shared types and helpers to contracts genuinely used across sources.
-
-**Acceptance criteria:**
-- [ ] Old `discoveryInventoryApi.ts`, obsolete generic hooks and superseded
-  schemas/mappers are removed.
-- [ ] `discoveryTypes.ts` is removed or contains only true cross-source types.
-- [ ] No compatibility re-export remains without a documented consumer.
-
-**Verification:**
-- [ ] `rg` confirms no imports from removed paths.
-- [ ] `npm run lint`
-- [ ] `npm run typecheck`
-
-**Dependencies:** Tasks 2–7
-
-**Files likely touched:** Obsolete generic files and remaining imports.
+**Files likely touched:** Obsolete root files and remaining imports.
 
 **Estimated scope:** Small
 
-### Task 9: Full regression verification and architecture audit
+### Task 9: Full regression and architecture verification
 
-**Description:** Verify the structural refactor end to end and ensure it did not
-change runtime behavior or introduce circular dependencies.
+**Description:** Verify the complete feature-first migration and confirm that it
+changed organization only.
 
 **Acceptance criteria:**
-- [ ] All seven documented endpoints still use the same URL and parameters.
-- [ ] VMware, FlashSystem and IBM Power Resources flows work.
-- [ ] VMware, FlashSystem and IBM Power Infrastructure flows work.
-- [ ] No source module imports from `resources` or `infrastructure`.
+- [ ] All endpoint URLs and query parameters are unchanged.
+- [ ] Resources and Infrastructure user flows behave as before.
+- [ ] Directory ownership matches the sidebar/navigation structure.
+- [ ] No duplicate API implementation, query hook or model remains.
 
 **Verification:**
 - [ ] `npm run lint`
 - [ ] `npm run typecheck`
 - [ ] `npm test`
-- [ ] `vite build` (or `npm run build` once the preceding commands are green)
-- [ ] Manual Network-panel check for request timing and duplicate calls.
+- [ ] `vite build` or the repository's complete `npm run build`
+- [ ] Manual Network-panel check for request timing and duplicate requests.
 
 **Dependencies:** Task 8
 
@@ -303,25 +338,25 @@ change runtime behavior or introduce circular dependencies.
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Large import churn hides a behavior change | High | Move one technology at a time and run focused tests after every task. |
-| Query keys change and trigger duplicate requests | High | Preserve key factories and asserted key values until the migration is complete. |
-| Circular dependency between sources and views | High | Enforce one-way imports: views → sources; never sources → views. |
-| Shared `discoveryTypes.ts` is split incorrectly | Medium | Move a type only with its schema/mapper slice; retain truly cross-source contracts temporarily. |
-| Git moves conflict with unrelated work | Medium | Do not touch current provider-test modifications; review `git status` before every slice. |
-| Naming follows backend implementation accidents | Medium | Use domain names in files and keep endpoint strings only in `API_ENDPOINTS`. |
+| Import churn accidentally changes behavior | High | Move one endpoint slice at a time and run focused tests after each task. |
+| React Query keys change during file moves | High | Preserve key values and test them before and after migration. |
+| Infrastructure couples to Resources UI | High | Allow imports only from `resources/api` and `resources/model`. |
+| FlashSystem inventory and topology types are mixed | Medium | Split `/get_volumes` contracts into Resources and `/get_volume_tree` contracts into Infrastructure. |
+| Duplicate compatibility files survive | Medium | Final `rg` audit requires exactly one implementation per endpoint. |
+| Unrelated provider work enters the commit | Medium | Stage only discovery-inventory, its direct recovery-group imports and corrected plan files. |
 
 ## Out of Scope
 
-- Backend endpoint renaming.
 - Implementing `/vms_in_folder`.
-- UI text, layout, routing or filter behavior changes.
-- Changing client-side/server-side filtering decisions.
-- Adding new providers or resource types.
+- Creating placeholder code for Discovery Jobs.
+- Backend endpoint renaming.
+- UI, navigation, route, translation, filter or pagination changes.
+- Changing when requests run or how failures are displayed.
 
 ## Completion Definition
 
-- Every backend-facing inventory capability has one clearly owned source module.
-- Resources and Infrastructure remain independent presentation layers.
-- Existing runtime behavior and query semantics are protected by tests.
-- Lint, typecheck, full tests and production build pass.
-
+- The folder tree mirrors the Discovery & Inventory navigation.
+- Resources and Infrastructure are self-contained features with conventional
+  internal layers.
+- Shared consumers use explicit public API/model boundaries.
+- All tests, lint, typecheck and production build pass.

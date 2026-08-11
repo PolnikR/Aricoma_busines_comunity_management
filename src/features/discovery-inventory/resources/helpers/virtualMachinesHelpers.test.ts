@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fetchVmwareInventory } from '../../api/discoveryInventoryApi'
+import { fetchVmwareInventory } from '../api/vmwareInventoryApi'
 import type { VirtualMachinesQuery } from '../types'
 import { applyFiltersAndPagination } from './filterVirtualMachines'
 import { mapInventoryToVirtualMachines } from './mapInventoryToVirtualMachines'

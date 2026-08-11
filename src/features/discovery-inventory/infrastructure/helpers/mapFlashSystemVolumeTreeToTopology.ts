@@ -1,4 +1,4 @@
-import type { FlashSystemTreeNode } from '../../model/discoveryTypes'
+import type { FlashSystemTreeNode } from '../model/flashSystemVolumeTreeTypes'
 import type {
   ConsistencyGroupTopologyNode,
   FlashCopyMapTopologyNode,

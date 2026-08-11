@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { FlashSystemTreeNode } from '../../model/discoveryTypes'
+import type { FlashSystemTreeNode } from '../../model/flashSystemVolumeTreeTypes'
 
 const poolDetailSchema = z.object({
   id: z.string().catch(''),

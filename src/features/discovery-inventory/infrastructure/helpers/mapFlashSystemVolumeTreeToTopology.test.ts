@@ -4,7 +4,7 @@ import type {
   FlashSystemTreeNode,
   FlashSystemTreePoolDetail,
   FlashSystemTreeVolumeDetail,
-} from '../../model/discoveryTypes'
+} from '../model/flashSystemVolumeTreeTypes'
 import { mapFlashSystemVolumeTreeToTopology } from './mapFlashSystemVolumeTreeToTopology'
 
 const poolDetail: FlashSystemTreePoolDetail = {

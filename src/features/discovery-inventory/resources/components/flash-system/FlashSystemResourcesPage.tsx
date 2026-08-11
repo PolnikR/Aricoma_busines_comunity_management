@@ -1,7 +1,7 @@
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
-import { useResourceInventoryQueries } from '../../../hooks/useResourceInventoryQueries'
+import { useResourceInventoryQueries } from '../../hooks/useResourceInventoryQueries'
 import { MetricsSkeleton } from '../../skeletons'
 import { ResourceInventoryShell } from '../ResourceInventoryShell'
 import { ResourceInventoryLoading, ResourceInventoryState } from '../ResourceInventoryStates'

@@ -1,12 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import {
-  fetchFlashSystemInventory,
-  fetchFlashSystemVolumeTree,
-  fetchInventory,
-  fetchPowerInventory,
-  fetchVmwareInventory,
-} from './discoveryInventoryApi'
+import { fetchFlashSystemInventory } from './flashSystemInventoryApi'
+import { fetchPowerInventory } from './powerInventoryApi'
+import { fetchVmwareInventory } from './vmwareInventoryApi'
+import { fetchInventory } from './resourceInventoryApi'
+import { fetchFlashSystemVolumeTree } from '../../infrastructure/api/flashSystemVolumeTreeApi'
 
 const validPayload = {
   count: 1,

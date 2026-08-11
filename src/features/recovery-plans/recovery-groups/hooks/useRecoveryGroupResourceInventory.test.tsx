@@ -2,23 +2,25 @@ import type { PropsWithChildren } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  fetchFlashSystemInventory,
-  fetchPowerInventory,
-  fetchVmwareInventory,
-} from '@/features/discovery-inventory/api/discoveryInventoryApi'
-import { discoveryInventoryKeys } from '@/features/discovery-inventory/api/discoveryInventoryQueryKeys'
+import { fetchFlashSystemInventory } from '@/features/discovery-inventory/resources/api/flashSystemInventoryApi'
+import { fetchPowerInventory } from '@/features/discovery-inventory/resources/api/powerInventoryApi'
+import { fetchVmwareInventory } from '@/features/discovery-inventory/resources/api/vmwareInventoryApi'
+import { discoveryInventoryKeys } from '@/features/discovery-inventory/resources/api/resourceInventoryQueryKeys'
 import type {
   DiscoveredVirtualMachine,
   FlashSystemVolumeResource,
   PowerPartitionResource,
-} from '@/features/discovery-inventory/model/discoveryTypes'
+} from '@/features/discovery-inventory/resources/model/discoveryTypes'
 import { useRecoveryGroupResourceInventory } from './useRecoveryGroupResourceInventory'
 
-vi.mock('@/features/discovery-inventory/api/discoveryInventoryApi', () => ({
-  fetchVmwareInventory: vi.fn(),
-  fetchPowerInventory: vi.fn(),
+vi.mock('@/features/discovery-inventory/resources/api/flashSystemInventoryApi', () => ({
   fetchFlashSystemInventory: vi.fn(),
+}))
+vi.mock('@/features/discovery-inventory/resources/api/powerInventoryApi', () => ({
+  fetchPowerInventory: vi.fn(),
+}))
+vi.mock('@/features/discovery-inventory/resources/api/vmwareInventoryApi', () => ({
+  fetchVmwareInventory: vi.fn(),
 }))
 
 function createWrapper(queryClient = new QueryClient({

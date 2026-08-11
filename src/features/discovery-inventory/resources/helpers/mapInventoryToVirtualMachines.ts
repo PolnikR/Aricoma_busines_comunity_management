@@ -1,4 +1,4 @@
-import type { DiscoveredVirtualMachine, DiscoveryInventory } from '../../model/discoveryTypes'
+import type { DiscoveredVirtualMachine, DiscoveryInventory } from '../model/discoveryTypes'
 import type { VirtualMachine, VirtualMachinesPageData } from '../types'
 
 function mapVirtualMachine(vm: DiscoveredVirtualMachine): VirtualMachine {

@@ -3,11 +3,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import { fetchFlashSystemInventory, fetchPowerInventory } from '../api/discoveryInventoryApi'
+import { fetchFlashSystemInventory } from '../api/flashSystemInventoryApi'
+import { fetchPowerInventory } from '../api/powerInventoryApi'
 import { useResourceInventoryQueries } from './useResourceInventoryQueries'
 
-vi.mock('../api/discoveryInventoryApi', () => ({
+vi.mock('../api/flashSystemInventoryApi', () => ({
   fetchFlashSystemInventory: vi.fn(),
+}))
+vi.mock('../api/powerInventoryApi', () => ({
   fetchPowerInventory: vi.fn(),
 }))
 

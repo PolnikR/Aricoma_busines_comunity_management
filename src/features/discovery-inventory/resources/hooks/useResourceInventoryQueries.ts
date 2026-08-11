@@ -5,8 +5,9 @@ import {
   DISCOVERY_INVENTORY_GC_TIME_MS,
   DISCOVERY_INVENTORY_STALE_TIME_MS,
   discoveryInventoryKeys,
-} from '../api/discoveryInventoryQueryKeys'
-import { fetchFlashSystemInventory, fetchPowerInventory } from '../api/discoveryInventoryApi'
+} from '../api/resourceInventoryQueryKeys'
+import { fetchFlashSystemInventory } from '../api/flashSystemInventoryApi'
+import { fetchPowerInventory } from '../api/powerInventoryApi'
 import type {
   FlashSystemInventory,
   FlashSystemVolumeResource,

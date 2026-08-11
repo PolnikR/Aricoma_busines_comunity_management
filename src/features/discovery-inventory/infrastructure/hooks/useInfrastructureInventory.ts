@@ -4,9 +4,10 @@ import {
   DISCOVERY_INVENTORY_GC_TIME_MS,
   DISCOVERY_INVENTORY_STALE_TIME_MS,
   discoveryInventoryKeys,
-} from '../../api/discoveryInventoryQueryKeys'
-import { fetchPowerInventory, fetchVmwareInventory } from '../../api/discoveryInventoryApi'
-import type { DiscoveryInventory, PowerInventory } from '../../model/discoveryTypes'
+} from '../../resources/api/resourceInventoryQueryKeys'
+import { fetchPowerInventory } from '../../resources/api/powerInventoryApi'
+import { fetchVmwareInventory } from '../../resources/api/vmwareInventoryApi'
+import type { DiscoveryInventory, PowerInventory } from '../../resources/model/discoveryTypes'
 
 export type InfrastructureInventory = DiscoveryInventory | PowerInventory
 

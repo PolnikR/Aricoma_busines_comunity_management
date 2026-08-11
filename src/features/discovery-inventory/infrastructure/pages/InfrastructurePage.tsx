@@ -6,7 +6,7 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
-import type { FlashSystemVolumeTreeView } from '../../model/discoveryTypes'
+import type { FlashSystemVolumeTreeView } from '../model/flashSystemVolumeTreeTypes'
 import { resolveInfrastructureTopology } from '../helpers/resolveInfrastructureTopology'
 import { useInfrastructureInventory } from '../hooks/useInfrastructureInventory'
 import { useFlashSystemVolumeTree } from '../hooks/useFlashSystemVolumeTree'

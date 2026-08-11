@@ -3,7 +3,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { useTranslation } from '@/test-utils/mockUseTranslation'
-import type { PowerPartitionResource } from '../../../model/discoveryTypes'
+import type { PowerPartitionResource } from '../../model/discoveryTypes'
 import { PowerInventoryView } from './PowerInventoryView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))

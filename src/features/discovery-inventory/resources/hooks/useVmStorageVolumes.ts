@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { discoveryInventoryKeys } from '../../api/discoveryInventoryQueryKeys'
-import { fetchVdisksByVm } from '../api/vdisksApi'
+import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
+import { fetchVdisksByVm } from '../api/vmStorageVolumesApi'
 
 export function useVdisksByVm(
   vmName: string,

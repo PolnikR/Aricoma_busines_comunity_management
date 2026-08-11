@@ -4,8 +4,8 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { DataTablePagination } from '@/shared/components/data-table'
-import { useDiscoveryInventory } from '@/features/discovery-inventory/hooks/useDiscoveryInventory'
-import { useTags } from '../../../hooks/useTags'
+import { useDiscoveryInventory } from '@/features/discovery-inventory/resources/hooks/useVmwareInventory'
+import { useTags } from '../../hooks/useVmwareTags'
 import {
   applyFiltersAndPagination,
   getServerSideTagFilter,

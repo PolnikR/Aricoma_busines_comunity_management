@@ -1,6 +1,6 @@
 import type { FlashSystemInventory } from '../model/discoveryTypes'
 import type { FlashSystemInventoryPayload } from '../api/schemas/flashSystemInventorySchema'
-import { parseCapacityBytes } from '../resources/helpers/parseCapacity'
+import { parseCapacityBytes } from './parseCapacity'
 
 function normalizeIdentity(value: string | undefined): string {
   return value?.trim() ?? ''

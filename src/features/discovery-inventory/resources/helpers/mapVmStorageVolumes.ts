@@ -2,12 +2,12 @@ import type {
   StorageVolume,
   StorageVolumeMapping,
   VmStorageVolumes,
-} from '../model/vdisksTypes'
+} from '../model/vmStorageVolumesTypes'
 import type {
   StorageVolumeMappingPayload,
   StorageVolumePayload,
   VdisksPayload,
-} from '../api/schemas/vdisksSchema'
+} from '../api/schemas/vmStorageVolumesSchema'
 
 function mapMapping(raw: StorageVolumeMappingPayload): StorageVolumeMapping {
   return {

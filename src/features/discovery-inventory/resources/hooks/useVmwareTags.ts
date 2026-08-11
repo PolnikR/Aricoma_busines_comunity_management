@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { discoveryInventoryKeys } from '../api/discoveryInventoryQueryKeys'
-import { fetchTags } from '../api/tagsApi'
+import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
+import { fetchTags } from '../api/vmwareTagsApi'
 
 export function useTags(enabled = true) {
   return useQuery({

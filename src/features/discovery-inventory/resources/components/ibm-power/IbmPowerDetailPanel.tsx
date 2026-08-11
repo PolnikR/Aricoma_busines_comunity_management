@@ -1,5 +1,5 @@
 import { DetailDrawer, DetailRow } from '@/shared/components/data-table'
-import type { PowerPartitionData, PowerPartitionResource } from '../../../model/discoveryTypes'
+import type { PowerPartitionData, PowerPartitionResource } from '../../model/discoveryTypes'
 
 type SectionKey = 'summary' | 'processorMemory' | 'network' | 'storage' | 'virtualIo'
 type FieldKey =

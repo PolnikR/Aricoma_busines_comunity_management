@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { discoveryInventoryKeys } from './discoveryInventoryQueryKeys'
+import { discoveryInventoryKeys } from './resourceInventoryQueryKeys'
 
 describe('discoveryInventoryKeys', () => {
   it('builds stable inventory, tag, and vdisk query keys', () => {

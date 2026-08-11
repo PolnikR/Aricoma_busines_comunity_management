@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
 import type { VirtualMachine } from '../../types'
-import type { VmStorageVolumes } from '../../model/vdisksTypes'
+import type { VmStorageVolumes } from '../../model/vmStorageVolumesTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -12,7 +12,7 @@ const useVdisksByVmMock = vi.hoisted(() => vi.fn<() => {
   data: VmStorageVolumes | undefined
   isLoading: boolean
 }>(() => ({ data: undefined, isLoading: false })))
-vi.mock('../../hooks/useVdisksByVm', () => ({ useVdisksByVm: useVdisksByVmMock }))
+vi.mock('../../hooks/useVmStorageVolumes', () => ({ useVdisksByVm: useVdisksByVmMock }))
 
 const vmwareProvider = {
   id: 'vmware-vcenter-01',

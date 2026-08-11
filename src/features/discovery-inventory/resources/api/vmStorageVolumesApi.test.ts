@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchVdisksByVm } from './vdisksApi'
+import { fetchVdisksByVm } from './vmStorageVolumesApi'
 
 const validPayload = {
   name: 'TEST-WEB02',

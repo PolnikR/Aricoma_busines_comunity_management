@@ -5,7 +5,7 @@ import {
   getFlashSystemFilterOptions,
 } from './filterSourceResources'
 import { buildFlashSystemHostSummaries } from './buildFlashSystemHostSummaries'
-import type { FlashSystemVolumeResource, PowerPartitionResource } from '../../model/discoveryTypes'
+import type { FlashSystemVolumeResource, PowerPartitionResource } from '../model/discoveryTypes'
 
 const partition: PowerPartitionResource = {
   id: 'provider:VIOS:1', providerId: 'provider', providerType: 'IBM_POWER',

@@ -1,7 +1,7 @@
 import type {
   FlashSystemVolumeResource,
   PowerPartitionResource,
-} from '../../model/discoveryTypes'
+} from '../model/discoveryTypes'
 import type {
   FlashSystemFilterOptions,
   FlashSystemFilters,

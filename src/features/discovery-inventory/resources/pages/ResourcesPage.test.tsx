@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ResourcesPage } from './ResourcesPage'
-import type { DiscoveryInventory } from '../../model/discoveryTypes'
+import type { DiscoveryInventory } from '../model/discoveryTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
 const refetch = vi.fn()
@@ -51,16 +51,16 @@ let inventoryQuery: {
 }
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/discovery-inventory/hooks/useDiscoveryInventory', () => ({
+vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareInventory', () => ({
   useDiscoveryInventory: () => inventoryQuery,
 }))
-vi.mock('@/features/discovery-inventory/hooks/useResourceInventoryQueries', () => ({
+vi.mock('@/features/discovery-inventory/resources/hooks/useResourceInventoryQueries', () => ({
   useResourceInventoryQueries: (...args: unknown[]) => {
     resourceInventoryQuerySpy(...args)
     return resourceInventoryQuery
   },
 }))
-vi.mock('../../hooks/useTags', () => ({ useTags: () => ({ data: [] }) }))
+vi.mock('../hooks/useVmwareTags', () => ({ useTags: () => ({ data: [] }) }))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
   useProviders: () => providersQuery,
 }))
