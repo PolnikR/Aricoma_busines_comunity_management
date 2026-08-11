@@ -30,7 +30,7 @@ describe('mapPowerInventory', () => {
     expect(inventory.partitions[0]?.id).not.toBe(inventory.partitions[1]?.id)
   })
 
-  it('normalizes VIOS data and keeps volume capacity unitless', () => {
+  it('excludes VIOS-only records from normalized inventory', () => {
     const inventory = mapPowerInventory({
       count: 1,
       counts_by_type: { LogicalPartition: 0, VirtualIOServer: 1 },
@@ -52,14 +52,7 @@ describe('mapPowerInventory', () => {
       }],
     }, 'power-01')
 
-    expect(inventory.partitions[0]).toMatchObject({
-      id: 'power-01:VIOS:partition-1',
-      partitionKind: 'VIOS',
-      partitionName: 'vios1',
-      volumeCapacity: '270648',
-      providerId: 'power-01',
-    })
-    expect(inventory.partitions[0]?.partitionData['State']).toBe('Inactive')
+    expect(inventory.partitions).toEqual([])
   })
 
   it('prefers a populated LPAR deterministically and ignores empty records', () => {
@@ -85,10 +78,6 @@ describe('mapPowerInventory', () => {
       ],
     }, 'power-01')
 
-    expect(inventory.partitions.map(({ id }) => id)).toEqual([
-      'power-01:VIOS:vios1',
-      'power-01:VIOS:vios1:2-1',
-    ])
-    expect(new Set(inventory.partitions.map(({ id }) => id)).size).toBe(2)
+    expect(inventory.partitions).toEqual([])
   })
 })

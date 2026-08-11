@@ -31,6 +31,8 @@ export function mapPowerInventory(payload: PowerInventoryPayload, providerId = '
     if (!hasLpar && !hasVios) return []
 
     const partitionKind = hasLpar ? 'LPAR' as const : 'VIOS' as const
+    // Product rule: VIOS partitions are not supported by the application.
+    if (partitionKind === 'VIOS') return []
     const partitionData = hasLpar ? virtualMachine.lpar : virtualMachine.vios
     const resourceProviderId = asDisplayValue(virtualMachine.provider_id)
       || asDisplayValue(partitionData['provider_id'])
