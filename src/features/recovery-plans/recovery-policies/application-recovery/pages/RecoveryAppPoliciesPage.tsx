@@ -16,7 +16,6 @@ export function RecoveryAppPoliciesPage() {
   const { data: policies = [], isLoading, isFetching, error, refetch } = useRecoveryAppPolicies()
   const policyTabs: readonly TabItem<RecoveryPolicyTab>[] = [
     { value: 'snapshot', label: t('recoveryPolicies.tabs.snapshot') },
-    { value: 'validation', label: t('recoveryPolicies.tabs.validation') },
     { value: 'application-recovery', label: t('recoveryPolicies.tabs.applicationRecovery') },
   ]
 

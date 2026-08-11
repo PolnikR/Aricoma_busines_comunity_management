@@ -42,11 +42,6 @@ const SnapshotPoliciesPage = lazy(async () => {
   return { default: page.SnapshotPoliciesPage }
 })
 
-const ValidationPoliciesPage = lazy(async () => {
-  const page = await import('@/features/recovery-plans/recovery-policies/validation/pages/ValidationPoliciesPage')
-  return { default: page.ValidationPoliciesPage }
-})
-
 const PolicySetsPage = lazy(async () => {
   const page = await import('@/features/recovery-plans/policy-sets/pages/PolicySetsPage')
   return { default: page.PolicySetsPage }
@@ -266,14 +261,6 @@ export function AppRoutes() {
               element={(
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <SnapshotPoliciesPage />
-                </Suspense>
-              )}
-            />
-            <Route
-              path="validation"
-              element={(
-                <Suspense fallback={<RouteLoadingSkeleton />}>
-                  <ValidationPoliciesPage />
                 </Suspense>
               )}
             />

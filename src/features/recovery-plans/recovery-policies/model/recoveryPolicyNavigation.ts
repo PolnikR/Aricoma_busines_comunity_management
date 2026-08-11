@@ -2,7 +2,6 @@ import { routes } from '@/app/routes'
 
 export const RECOVERY_POLICY_TABS = [
   { value: 'snapshot', pathSegment: 'snapshot' },
-  { value: 'validation', pathSegment: 'validation' },
   { value: 'application-recovery', pathSegment: 'application-recovery' },
 ] as const
 

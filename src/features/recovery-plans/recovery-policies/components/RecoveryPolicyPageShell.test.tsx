@@ -4,7 +4,6 @@ import { RecoveryPolicyPageShell } from './RecoveryPolicyPageShell'
 
 const tabs = [
   { value: 'snapshot', label: 'Snapshot' },
-  { value: 'validation', label: 'Validation' },
   { value: 'application-recovery', label: 'Application Recovery' },
 ] as const
 
@@ -32,7 +31,7 @@ describe('RecoveryPolicyPageShell', () => {
     expect(screen.getByRole('tab', { name: 'Snapshot' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Policy content')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Validation' }))
-    expect(onTabChange).toHaveBeenCalledWith('validation')
+    fireEvent.click(screen.getByRole('tab', { name: 'Application Recovery' }))
+    expect(onTabChange).toHaveBeenCalledWith('application-recovery')
   })
 })
