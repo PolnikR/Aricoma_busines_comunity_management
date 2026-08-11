@@ -44,6 +44,23 @@ describe('AppSidebar', () => {
     )
   })
 
+  it('links Recovery App Policies from the Recovery Plans section', async () => {
+    render(
+      <MemoryRouter initialEntries={['/recovery-plans/recovery-app-policies']}>
+        <LanguageProvider>
+          <SidebarProvider>
+            <AppSidebar />
+          </SidebarProvider>
+        </LanguageProvider>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('link', { name: 'Recovery App Policies' })).toHaveAttribute(
+      'href',
+      '/recovery-plans/recovery-app-policies',
+    )
+  })
+
   it('links Resources to the consolidated inventory page', async () => {
     render(
       <MemoryRouter initialEntries={['/discovery-inventory/resources']}>

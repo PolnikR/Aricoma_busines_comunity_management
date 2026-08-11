@@ -72,6 +72,11 @@ const CredentialsPage = lazy(async () => {
   return { default: page.CredentialsPage }
 })
 
+const RecoveryAppPoliciesPage = lazy(async () => {
+  const page = await import('@/features/recovery-plans/recovery-app-policies/pages/RecoveryAppPoliciesPage')
+  return { default: page.RecoveryAppPoliciesPage }
+})
+
 const DiscoverySettingsPage = lazy(async () => {
   const page = await import('@/features/providers-connectors/discovery-settings/pages/DiscoverySettingsPage')
   return { default: page.DiscoverySettingsPage }
@@ -254,6 +259,14 @@ export function AppRoutes() {
             element={(
               <Suspense fallback={<RouteLoadingSkeleton />}>
                 <SnapshotPoliciesPage />
+              </Suspense>
+            )}
+          />
+          <Route
+            path="recovery-app-policies"
+            element={(
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <RecoveryAppPoliciesPage />
               </Suspense>
             )}
           />
