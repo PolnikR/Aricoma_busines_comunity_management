@@ -6,7 +6,6 @@ import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useCredentials } from '@/features/providers-connectors/credentials/hooks/useCredentials'
 import { useUpsertPlatformProvider } from '../hooks/useUpsertPlatformProvider'
-import { PLATFORM_PROVIDERS_CONFIG } from '../config/platformProvidersConfig'
 import type {
   PlatformProviderRecord,
   PlatformProviderSubmitData,
@@ -30,7 +29,7 @@ const EMPTY_PLATFORM_PROVIDER_FORM: PlatformProviderFormData = {
   description: '',
   type: '',
   ipAddress: '',
-  port: String(PLATFORM_PROVIDERS_CONFIG.connection.defaultPort),
+  port: '22',
   dagDir: '',
   credentialId: '',
 }
@@ -123,8 +122,8 @@ export function PlatformProvidersModal({
     if (!formData.ipAddress.trim()) nextErrors.ipAddress = t('forms.ipRequired')
     if (
       !Number.isInteger(port)
-      || port < PLATFORM_PROVIDERS_CONFIG.connection.minPort
-      || port > PLATFORM_PROVIDERS_CONFIG.connection.maxPort
+      || port < 1
+      || port > 65535
     ) {
       nextErrors.port = t('forms.portRequired')
     }

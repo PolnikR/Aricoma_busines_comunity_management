@@ -3,7 +3,6 @@ import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PLATFORM_PROVIDER_TYPES } from '../model/platformProviderTypes'
 import type { CredentialRecord } from '@/features/providers-connectors/credentials/model/credentialTypes'
-import { PLATFORM_PROVIDERS_CONFIG } from '../config/platformProvidersConfig'
 
 export interface PlatformProviderFormData {
   id: string
@@ -121,8 +120,8 @@ export function PlatformProviderForm({
           <Input
             id="platform-provider-port"
             type="number"
-            min={PLATFORM_PROVIDERS_CONFIG.connection.minPort}
-            max={PLATFORM_PROVIDERS_CONFIG.connection.maxPort}
+            min={1}
+            max={65535}
             step={1}
             value={data.port}
             onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('port', event.target.value) }}

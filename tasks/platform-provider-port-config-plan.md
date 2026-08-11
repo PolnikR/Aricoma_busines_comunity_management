@@ -1,8 +1,10 @@
 # Implementačný plán: Konfigurovateľný port platform providera
 
+> **Superseded decision:** Na žiadosť používateľa sa feature config pre port nepoužíva. Predvolený port `22` a rozsah `1–65535` zostávajú priamo v platform-provider kóde; tento dokument slúži ako história pôvodného návrhu a nižšie uvedený configový variant už nie je cieľový.
+
 ## Prehľad
 
-Formulár platform providera už obsahuje pole `port`, zobrazuje ho vedľa IP adresy, validuje rozsah `1–65535` a posiela ho do API ako číslo. Úprava preto nebude vytvárať druhé pole. Zavedie samostatný feature config podľa vzoru `discoveryInventoryConfig.ts`, odstráni roztrúsené číselné literály a pridá regresné testy pre predvolený port `22`, responzívny layout a API kontrakt.
+Formulár platform providera už obsahuje pole `port`, zobrazuje ho vedľa IP adresy, validuje rozsah `1–65535` a posiela ho do API ako číslo. Úprava preto nebude vytvárať druhé pole. Pôvodný návrh centralizácie cez feature config bol následne zrušený; aktuálne riešenie drží dočasný default `22` priamo v modale a pridáva regresné testy pre default, responzívny layout a API kontrakt.
 
 ## Rozsah
 

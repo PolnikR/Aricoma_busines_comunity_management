@@ -1,9 +1,10 @@
 # Task checklist: Konfigurovateľný port platform providera
 
+> **Aktuálne rozhodnutie:** `platformProvidersConfig.ts` bol odstránený na žiadosť používateľa. Default port `22` a validačné hranice sú zámerne priamo v kóde platform-provider feature.
+
 ## Config
 
-- [x] Vytvoriť `platformProvidersConfig.ts` s `defaultPort: 22`, `minPort: 1` a `maxPort: 65_535`.
-- [x] Pridať kontraktový test feature configu.
+- [x] Pôvodný configový návrh bol implementovaný a následne odstránený podľa zmeneného rozhodnutia.
 
 ## Formulár a dátový tok
 

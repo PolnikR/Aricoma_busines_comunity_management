@@ -20,16 +20,6 @@ vi.mock('@/shared/hooks/useUnsavedChangesGuard', () => ({
     runWithoutBlocking: (action: () => void) => { action() },
   }),
 }))
-vi.mock('../config/platformProvidersConfig', () => ({
-  PLATFORM_PROVIDERS_CONFIG: {
-    connection: {
-      defaultPort: 2222,
-      minPort: 1,
-      maxPort: 65_535,
-    },
-  },
-}))
-
 const emptyCredentialsQuery = {
   data: [],
   isLoading: false,
@@ -55,7 +45,7 @@ describe('PlatformProvidersModal', () => {
       />,
     )
 
-    expect(await screen.findByLabelText('Port')).toHaveValue(2222)
+    expect(await screen.findByLabelText('Port')).toHaveValue(22)
   })
 
   it('keeps the saved port when editing a provider', async () => {
