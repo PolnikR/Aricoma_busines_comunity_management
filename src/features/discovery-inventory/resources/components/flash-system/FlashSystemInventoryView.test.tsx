@@ -15,6 +15,7 @@ const provider: ProviderRecord = {
   description: '',
   type: 'FLASHCOPY',
   ipAddress: '10.0.0.1',
+  port: 22,
   credentialId: null,
   credentialStatus: 'none',
 }

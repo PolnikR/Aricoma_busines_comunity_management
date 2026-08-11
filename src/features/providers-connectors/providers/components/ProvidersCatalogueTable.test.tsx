@@ -17,6 +17,7 @@ const providerA: ProviderRecord = {
   description: 'Primary vCenter',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  port: 22,
   credentialId: 'vcenter-admin',
   credentialStatus: 'ok',
 }
@@ -26,6 +27,7 @@ const providerB: ProviderRecord = {
   description: 'DR array',
   type: 'FLASHCOPY',
   ipAddress: '10.99.99.41',
+  port: 22,
   credentialId: null,
   credentialStatus: 'none',
 }

@@ -11,6 +11,7 @@ const provider: ProviderRecord = {
   description: 'Primary vCenter',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  port: 22,
   credentialId: 'vcenter-admin',
   credentialStatus: 'ok',
 }

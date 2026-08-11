@@ -32,9 +32,9 @@ vi.mock('../components/InfrastructureTopologyWorkspace', () => ({
 }))
 
 const providers: ProviderRecord[] = [
-  { id: 'vcenter-01', name: 'vCenter', description: '', type: 'VMWARE', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
-  { id: 'power-01', name: 'Power', description: '', type: 'IBM_POWER', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
-  { id: 'flash-01', name: 'Flash', description: '', type: 'FLASHCOPY', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
+  { id: 'vcenter-01', name: 'vCenter', description: '', type: 'VMWARE', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
+  { id: 'power-01', name: 'Power', description: '', type: 'IBM_POWER', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
+  { id: 'flash-01', name: 'Flash', description: '', type: 'FLASHCOPY', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
 ]
 
 const vmwareInventory: DiscoveryInventory = {

@@ -15,6 +15,7 @@ describe('useDeleteProvider', () => {
       description: '',
       type: 'VMWARE',
       ipAddress: '10.0.0.2',
+      port: 22,
       credentialId: null,
       credentialStatus: 'none',
     }]

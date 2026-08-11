@@ -20,6 +20,7 @@ const vmwareProvider = {
   description: '',
   type: 'VMWARE',
   ipAddress: '10.0.0.10',
+  port: 22,
   credentialId: 'vcenter-admin',
   credentialStatus: 'ok',
   defaultFlashcopyProviderId: 'ibm-flashsystem-01',
@@ -31,6 +32,7 @@ const flashProvider: ProviderRecord = {
   description: '',
   type: 'FLASHCOPY',
   ipAddress: '10.0.0.20',
+  port: 22,
   credentialId: 'flash-admin',
   credentialStatus: 'ok',
 }

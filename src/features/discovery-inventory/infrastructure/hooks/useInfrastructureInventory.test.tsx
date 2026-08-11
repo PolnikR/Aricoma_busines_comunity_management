@@ -12,7 +12,7 @@ vi.mock('../../api/discoveryInventoryApi', () => ({
 }))
 
 function provider(type: ProviderRecord['type'], id: string): ProviderRecord {
-  return { id, type, name: id, description: '', ipAddress: '', credentialId: null, credentialStatus: 'ok' }
+  return { id, type, name: id, description: '', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' }
 }
 
 function wrapper({ children }: { children: ReactNode }) {

@@ -8,6 +8,7 @@ const providerA: ProviderRecord = {
   description: 'Primary VMware vCenter for production virtual infrastructure.',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  port: 22,
   credentialId: 'vcenter-admin',
   credentialStatus: 'ok',
 }
@@ -18,6 +19,7 @@ const providerB: ProviderRecord = {
   description: 'Primary IBM FlashSystem storage array.',
   type: 'FLASHCOPY',
   ipAddress: '10.99.99.246',
+  port: 22,
   credentialId: 'ibm-admin',
   credentialStatus: 'ok',
 }
@@ -96,6 +98,7 @@ describe('submitProvider', () => {
       description: 'x',
       type: 'VMWARE',
       ipAddress: '10.0.0.1',
+      port: 22,
       credentialId: 'vcenter-admin',
     }
     const mock = stubFetch({})
@@ -119,9 +122,31 @@ describe('submitProvider', () => {
       description: providerA.description,
       type: providerA.type,
       ipAddress: providerA.ipAddress,
+      port: providerA.port,
       credentialId: providerA.credentialId,
     }
     await expect(submitProvider(submitData)).rejects.toThrow('Submit provider request failed with status 500')
+  })
+
+  it.each([
+    ['zero', 0],
+    ['fractional', 22.5],
+    ['too high', 65_536],
+  ])('rejects a provider with a %s port before sending the request', async (_label, port) => {
+    const mock = vi.fn()
+    vi.stubGlobal('fetch', mock)
+    const submitData: ProviderSubmitData = {
+      id: 'new-01',
+      name: 'New',
+      description: 'x',
+      type: 'VMWARE',
+      ipAddress: '10.0.0.1',
+      port,
+      credentialId: 'vcenter-admin',
+    }
+
+    await expect(submitProvider(submitData)).rejects.toBeInstanceOf(Error)
+    expect(mock).not.toHaveBeenCalled()
   })
 })
 

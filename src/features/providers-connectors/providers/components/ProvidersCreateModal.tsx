@@ -26,6 +26,7 @@ const EMPTY_FORM: ProviderCreateFormData = {
   description: '',
   type: '',
   ipAddress: '',
+  port: '22',
   credentialId: '',
 }
 
@@ -37,6 +38,7 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         description: provider.description,
         type: provider.type,
         ipAddress: provider.ipAddress,
+        port: String(provider.port),
         credentialId: provider.credentialId ?? '',
       }
     : EMPTY_FORM
@@ -58,6 +60,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     || formData.description !== initialForm.description
     || formData.type !== initialForm.type
     || formData.ipAddress !== initialForm.ipAddress
+    || formData.port !== initialForm.port
     || formData.credentialId !== initialForm.credentialId
   )
   const navigationGuard = useUnsavedChangesGuard(isDirty)
@@ -128,6 +131,10 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     if (!formData.description.trim()) newErrors.description = t('forms.descriptionRequired')
     if (!formData.type) newErrors.type = t('forms.typeRequired')
     if (!formData.ipAddress.trim()) newErrors.ipAddress = t('forms.ipRequired')
+    const port = Number(formData.port)
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      newErrors.port = t('forms.portRequired')
+    }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -143,6 +150,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
       description: formData.description.trim(),
       type: formData.type as ProviderType,
       ipAddress: formData.ipAddress.trim(),
+      port: Number(formData.port),
       credentialId: formData.credentialId || null,
     }
 

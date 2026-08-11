@@ -15,6 +15,7 @@ describe('useProviders', () => {
       description: 'Primary',
       type: 'VMWARE',
       ipAddress: '10.0.0.1',
+      port: 22,
       credentialId: 'vcenter-admin',
       credentialStatus: 'ok',
     }

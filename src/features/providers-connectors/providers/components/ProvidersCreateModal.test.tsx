@@ -29,6 +29,7 @@ const mockProviderA: ProviderRecord = {
   description: 'Primary vCenter',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  port: 22,
   credentialId: 'vcenter-admin',
   credentialStatus: 'ok',
 }
@@ -62,7 +63,33 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByLabelText('Description')).toBeInTheDocument()
     expect(screen.getByLabelText('Type')).toBeInTheDocument()
     expect(screen.getByLabelText('IP address')).toBeInTheDocument()
+    expect(screen.getByLabelText('Port')).toHaveValue(22)
     expect(screen.getByLabelText('Credentials')).toBeInTheDocument()
+  })
+
+  it('preserves an edited provider port and sends it as a number', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ providers: [] }), { status: 200 }),
+    )
+    vi.stubGlobal('fetch', mockFetch)
+    const onClose = vi.fn()
+    const editedProvider = { ...mockProviderA, port: 8443 }
+    renderWithQueryClient(
+      <ProvidersCreateModal
+        open
+        onClose={onClose}
+        existingProviders={[editedProvider]}
+        provider={editedProvider}
+      />,
+    )
+
+    expect(screen.getByLabelText('Port')).toHaveValue(8443)
+    fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
+
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    const init = mockFetch.mock.calls[0]?.[1] as RequestInit
+    expect(JSON.parse(init.body as string)).toMatchObject({ port: 8443 })
+    vi.unstubAllGlobals()
   })
 
   it('renders nothing when closed', () => {
@@ -211,6 +238,7 @@ describe('ProvidersCreateModal', () => {
       name: 'New Provider',
       type: 'VMWARE',
       ipAddress: '10.0.0.1',
+      port: 22,
       credentialId: 'vcenter-admin',
     })
     expect(body).not.toHaveProperty('credentialStatus')

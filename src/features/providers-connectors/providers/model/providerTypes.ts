@@ -12,6 +12,7 @@ export interface ProviderRecord {
   description: string
   type: ProviderType
   ipAddress: string
+  port: number
   credentialId: string | null
   defaultFlashcopyProviderId?: string | null | undefined
   credentialStatus: ProviderCredentialStatus

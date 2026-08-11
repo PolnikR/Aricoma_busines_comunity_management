@@ -13,11 +13,11 @@ vi.mock('../api/discoveryInventoryApi', () => ({
 
 const flashProvider: ProviderRecord = {
   id: 'flash-01', name: 'Flash 01', description: '', type: 'FLASHCOPY',
-  ipAddress: '10.0.0.1', credentialId: null, credentialStatus: 'none',
+  ipAddress: '10.0.0.1', port: 22, credentialId: null, credentialStatus: 'none',
 }
 const powerProvider: ProviderRecord = {
   id: 'power-01', name: 'Power 01', description: '', type: 'IBM_POWER',
-  ipAddress: '10.0.0.2', credentialId: null, credentialStatus: 'none',
+  ipAddress: '10.0.0.2', port: 22, credentialId: null, credentialStatus: 'none',
 }
 const secondFlashProvider: ProviderRecord = {
   ...flashProvider,

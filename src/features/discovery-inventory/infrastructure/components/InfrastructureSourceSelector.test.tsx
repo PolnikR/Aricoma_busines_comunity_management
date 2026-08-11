@@ -7,8 +7,8 @@ import { InfrastructureSourceSelector } from './InfrastructureSourceSelector'
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 const providers: ProviderRecord[] = [
-  { id: 'power-01', name: 'Production Power', description: '', type: 'IBM_POWER', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
-  { id: 'power-02', name: 'DR Power', description: '', type: 'IBM_POWER', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
+  { id: 'power-01', name: 'Production Power', description: '', type: 'IBM_POWER', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
+  { id: 'power-02', name: 'DR Power', description: '', type: 'IBM_POWER', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
 ]
 
 describe('InfrastructureSourceSelector', () => {

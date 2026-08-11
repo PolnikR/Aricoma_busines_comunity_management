@@ -10,6 +10,7 @@ export interface ProviderCreateFormData {
   description: string
   type: string
   ipAddress: string
+  port: string
   credentialId: string
 }
 
@@ -113,19 +114,37 @@ export function ProviderCreateForm({
         {errors.type ? <p className="mt-1 text-xs text-red-600">{errors.type}</p> : null}
       </Field>
 
-      <Field label={t('forms.ip')} htmlFor="create-ipAddress">
-        <Input
-          id="create-ipAddress"
-          type="text"
-          placeholder={t('forms.ipExample')}
-          value={data.ipAddress}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('ipAddress', event.target.value) }}
-          onKeyDown={handleKeyDown}
-          disabled={isSubmitting}
-          aria-invalid={Boolean(errors.ipAddress)}
-        />
-        {errors.ipAddress ? <p className="mt-1 text-xs text-red-600">{errors.ipAddress}</p> : null}
-      </Field>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_7.5rem]">
+        <Field label={t('forms.ip')} htmlFor="create-ipAddress">
+          <Input
+            id="create-ipAddress"
+            type="text"
+            placeholder={t('forms.ipExample')}
+            value={data.ipAddress}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('ipAddress', event.target.value) }}
+            onKeyDown={handleKeyDown}
+            disabled={isSubmitting}
+            aria-invalid={Boolean(errors.ipAddress)}
+          />
+          {errors.ipAddress ? <p className="mt-1 text-xs text-red-600">{errors.ipAddress}</p> : null}
+        </Field>
+
+        <Field label={t('forms.port')} htmlFor="create-port">
+          <Input
+            id="create-port"
+            type="number"
+            min={1}
+            max={65535}
+            step={1}
+            value={data.port}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('port', event.target.value) }}
+            onKeyDown={handleKeyDown}
+            disabled={isSubmitting}
+            aria-invalid={Boolean(errors.port)}
+          />
+          {errors.port ? <p className="mt-1 text-xs text-red-600">{errors.port}</p> : null}
+        </Field>
+      </div>
 
       <Field label={t('forms.credentials')} htmlFor="create-credentials">
         <Select

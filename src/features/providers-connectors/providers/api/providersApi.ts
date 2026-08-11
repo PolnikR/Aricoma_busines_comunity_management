@@ -4,7 +4,7 @@ import {
   type ProviderRecord,
   type ProviderSubmitData,
 } from '../model/providerTypes'
-import { providersResponseSchema } from './schemas/providersSchema'
+import { providerSubmitSchema, providersResponseSchema } from './schemas/providersSchema'
 
 // List providers -> { providers: [...] }
 export async function fetchProviders(): Promise<ProviderRecord[]> {
@@ -21,10 +21,11 @@ export async function fetchProviders(): Promise<ProviderRecord[]> {
 // Submit a single provider object. The backend upserts
 // by id (create when new, update when the id already exists).
 export async function submitProvider(provider: ProviderSubmitData): Promise<void> {
+  const validatedProvider = providerSubmitSchema.parse(provider)
   const response = await apiFetch(API_ENDPOINTS.providers.submit, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(provider),
+    body: JSON.stringify(validatedProvider),
   })
 
   if (!response.ok) {

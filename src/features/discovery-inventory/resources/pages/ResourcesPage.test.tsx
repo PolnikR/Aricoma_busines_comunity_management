@@ -15,7 +15,7 @@ let resourceTab: 'vmware' | 'flashsystem' | 'ibm-power' = 'vmware'
 let selectedProviderId: string | null = null
 const vmwareProvider: ProviderRecord = {
   id: 'vmware-01', name: 'VMware 01', description: '', type: 'VMWARE',
-  ipAddress: '10.0.0.1', credentialId: null, credentialStatus: 'none',
+  ipAddress: '10.0.0.1', port: 22, credentialId: null, credentialStatus: 'none',
 }
 const flashProvider: ProviderRecord = {
   ...vmwareProvider,
