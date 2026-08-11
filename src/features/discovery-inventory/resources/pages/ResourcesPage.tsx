@@ -53,6 +53,7 @@ export function ResourcesPage() {
         }
       }}
       ariaLabel={t('pages.virtualMachines.tabs.label')}
+      indicator="inset"
       scrollControls={{
         previousLabel: t('pages.virtualMachines.tabs.previous'),
         nextLabel: t('pages.virtualMachines.tabs.next'),

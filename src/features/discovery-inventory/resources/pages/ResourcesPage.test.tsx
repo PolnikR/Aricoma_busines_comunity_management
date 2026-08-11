@@ -155,6 +155,11 @@ describe('ResourcesPage', () => {
     expect(screen.getByText('VM metrics')).toBeInTheDocument()
     expect(screen.getByText('VM toolbar')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'VMware VMs' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'VMware VMs' })).toHaveClass(
+      'after:bottom-1.5',
+      'after:inset-x-4',
+      'after:h-0.5',
+    )
     expect(screen.getByRole('tab', { name: 'FlashSystem Volumes' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'IBM Power Partitions' })).toBeInTheDocument()
     expect(screen.getByText('No virtual machines found')).toBeInTheDocument()
