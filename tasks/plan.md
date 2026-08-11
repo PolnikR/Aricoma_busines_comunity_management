@@ -1,336 +1,455 @@
-# Implementation Plan: Feature-First Discovery & Inventory Structure
+# Implementation Plan: Recovery Actions UI — Variant A
 
 ## Overview
 
-Reorganize `src/features/discovery-inventory` to follow the same feature-first
-convention as `recovery-plans`, `providers-connectors` and
-`platform-administration`. The top-level folders will represent user-facing
-sections: `resources`, `infrastructure` and, once implemented,
-`discovery-jobs`. Technical layers (`api`, `components`, `hooks`, `helpers`,
-`model`, `pages`) will live inside the feature that owns them.
+Add a new top-level **Recovery Actions** workspace beside **Recovery Plans**.
+The workspace is UI-only and uses deterministic mock data; it does not add API
+endpoints, React Query hooks, persistence, or backend mutations.
 
-This is a structural refactor. It must not change endpoint URLs, query
-parameters, response mapping, React Query behavior, routes, filters, UI text or
-request timing.
-
-## Target Structure
+The selected design is Variant A: a bordered **Recovery workspace** card with a
+horizontal row of four rich action tabs:
 
 ```text
-src/features/discovery-inventory/
-├── resources/
-│   ├── api/
-│   │   ├── schemas/
-│   │   ├── resourceInventoryQueryKeys.ts
-│   │   ├── vmwareInventoryApi.ts
-│   │   ├── vmwareTagsApi.ts
-│   │   ├── vmStorageVolumesApi.ts
-│   │   ├── flashSystemInventoryApi.ts
-│   │   └── powerInventoryApi.ts
+Recovery workspace
+Operational controls and test evidence
+
+Validate | Execute | Schedule | History
+```
+
+Each action tab has an icon, label, short description, and optional status.
+Unlike inventory tabs, the selected item uses a filled action-card treatment
+instead of an underline attached to a table.
+
+## Scope
+
+### In scope
+
+- A new top-level App Sidebar item named **Recovery Actions**, positioned beside
+  **Recovery Plans**.
+- Canonical URL-backed sections:
+  - `/recovery-actions/validate`
+  - `/recovery-actions/execute`
+  - `/recovery-actions/schedule`
+  - `/recovery-actions/history`
+- A reusable shared `WorkspaceTabs` component implementing Variant A.
+- UI-only Validate, Execute, Schedule, and History pages.
+- Deterministic typed mock data and local component state.
+- English, Slovak, and Czech translations.
+- Responsive and keyboard-accessible behavior.
+- A compatibility redirect from the old Recovery Runs placeholder route to
+  Recovery Actions History.
+
+### Out of scope
+
+- Backend endpoints, API schemas, React Query hooks, mutations, polling, or
+  persistence.
+- Starting a real recovery or recovery test.
+- Resolving real point-in-time VM configurations or snapshots.
+- Sending email notifications.
+- Provider-specific execution adapters.
+- Changes to Recovery Groups, Recovery Applications, Recovery Policies, or
+  Policy Sets contracts.
+
+## Architecture Decisions
+
+### Navigation hierarchy
+
+- `Recovery Actions` is a top-level sibling of `Recovery Plans`, not one of
+  its children.
+- `Recovery Actions` navigates directly to
+  `/recovery-actions/validate`.
+- Validate, Execute, Schedule, and History are route-backed tabs inside one
+  workspace shell.
+- The existing `/recovery-plans/recovery-runs` placeholder becomes a legacy
+  redirect to `/recovery-actions/history`; its sidebar child is removed to
+  avoid two competing history destinations.
+
+### Shared tab component
+
+- Add `src/shared/components/tabs/WorkspaceTabs.tsx` rather than adding a
+  visual variant to the existing table-oriented `Tabs` component.
+- `WorkspaceTabs<T>` is controlled and generic. Each item exposes:
+  `value`, `label`, `description`, optional `icon`, optional `meta`,
+  and optional `disabled`.
+- The component owns only interaction, accessibility, responsive layout, and
+  shared styling. It does not know about Recovery Actions or React Router.
+- It uses `role="tablist"`, `role="tab"`, `aria-selected`, roving
+  `tabIndex`, and Left/Right/Home/End keyboard navigation.
+- Desktop uses four equal action cards. Narrow screens use a two-column layout,
+  then a horizontally scrollable fallback only when content cannot fit.
+- Existing `Tabs` stays unchanged for inventory and policy tables.
+
+### Feature boundaries
+
+```text
+src/features/recovery-actions/
+├── components/
+│   ├── RecoveryActionsPageShell.tsx
+│   └── RecoveryPointSummary.tsx
+├── execute/
 │   ├── components/
-│   │   ├── vmware/
-│   │   ├── flash-system/
-│   │   └── ibm-power/
-│   ├── config/
-│   ├── helpers/
-│   ├── hooks/
-│   ├── model/
-│   ├── pages/
-│   └── types.ts
-│
-├── infrastructure/
-│   ├── api/
-│   │   ├── schemas/
-│   │   └── flashSystemVolumeTreeApi.ts
-│   ├── components/
-│   ├── helpers/
-│   ├── hooks/
-│   ├── layout/
-│   ├── model/
 │   └── pages/
-│
-└── discovery-jobs/      # only when the feature receives real implementation
+├── history/
+│   ├── components/
+│   └── pages/
+├── mocks/
+│   └── recoveryActionsMocks.ts
+├── model/
+│   ├── recoveryActionNavigation.ts
+│   └── recoveryActionTypes.ts
+├── schedule/
+│   ├── components/
+│   └── pages/
+└── validate/
+    ├── components/
+    └── pages/
 ```
 
-After migration, the following generic top-level folders must not remain:
+- Cross-section models and mock records live at the feature root.
+- Components reused by Validate and Execute stay in
+  `recovery-actions/components`.
+- Components used by only one section remain within that section.
+- Reuse existing shared `PageHeader`, `Card`, `FilterTabs`,
+  `SettingsSectionCard`, `Toggle`, form controls, `Badge`, `DataTable`,
+  and confirmation/modal components.
+- Do not move a component to global `shared` unless it is genuinely
+  domain-independent. The only new global shared component required by this
+  scope is `WorkspaceTabs`.
+
+### UI-only state
+
+- Mock application groups, recovery points, validation checks, schedules,
+  recipients, and history rows are stored in one typed mock module.
+- Forms use local React state and reset on refresh.
+- No `localStorage` is added.
+- Execute may show a confirmation and deterministic mock queued/running state,
+  but the UI must not call a network client or claim that a real recovery ran.
+- Schedule changes remain in memory and clearly behave as a frontend prototype.
+
+### Recovery semantics
+
+- **Validate** performs a read-only readiness/preflight check. It does not
+  restore resources.
+- **Execute** previews the resolved VM configuration and snapshot timestamps
+  before allowing a mock recovery test confirmation.
+- **Schedule** configures recurring recovery tests and one selected failure
+  notification recipient, following the existing Discovery Settings pattern.
+- **History** lists manual and automated recovery tests for a selected period.
+
+## Dependency Graph
 
 ```text
-discovery-inventory/api
-discovery-inventory/helpers
-discovery-inventory/hooks
-discovery-inventory/model
-discovery-inventory/pages
-discovery-inventory/sources
-```
-
-## Ownership Rules
-
-| Capability | Owning feature | Endpoint |
-|---|---|---|
-| VMware VM inventory | `resources` | `/vms`, `/vms_by_tag` |
-| VMware tag filter data | `resources` | `/tags` |
-| Storage volumes related to a VM | `resources` | `/vdisks_by_vm` |
-| FlashSystem volume inventory | `resources` | `/get_volumes` |
-| IBM Power partition inventory | `resources` | `/get_power_vm` |
-| FlashSystem topology tree | `infrastructure` | `/get_volume_tree` |
-| VMware folder inventory | Not implemented in this refactor | `/vms_in_folder` |
-
-`Infrastructure` may consume the public inventory API and normalized resource
-models owned by `resources`. Recovery groups may do the same because they select
-resources for recovery groups. They must not import Resource UI components,
-filters or page state.
-
-## Dependency Direction
-
-```text
-config/API_ENDPOINTS
-        │
-        ├── resources/api → resources/model/helpers/hooks/components/pages
-        │                         │
-        │                         ├── infrastructure topology consumers
-        │                         └── recovery-group resource consumers
-        │
-        └── infrastructure/api → infrastructure/model/helpers/hooks/components/pages
-```
-
-Allowed cross-feature dependency:
-
-```text
-infrastructure → resources/api + resources/model
-recovery-groups → resources/api + resources/model
-```
-
-Forbidden dependencies:
-
-```text
-resources → infrastructure
-infrastructure → resources/components|pages|config
-resources/api → resources/components|pages
+WorkspaceTabs
+    │
+    ├── Recovery action navigation model
+    │       │
+    │       └── RecoveryActionsPageShell
+    │               │
+    │               ├── Validate UI
+    │               ├── Execute UI
+    │               ├── Schedule UI
+    │               └── History UI
+    │
+    └── App routes + sidebar + translations
 ```
 
 ## Tasks
 
-### Task 1: Lock the existing request contracts
+### Task 1: Build the shared WorkspaceTabs component
 
-**Description:** Establish a behavioral baseline before moving files. Existing
-tests should explicitly protect URLs, query parameters, schemas, mapping and
-query activation rules for all implemented inventory endpoints.
+**Description:** Add the reusable action-card tab component represented by
+Variant A without changing the existing `Tabs` API or styling.
 
 **Acceptance criteria:**
-- [ ] Tests cover `/vms`, `/vms_by_tag`, `/tags`, `/vdisks_by_vm`,
-  `/get_volumes`, `/get_power_vm` and `/get_volume_tree`.
-- [ ] Tests cover provider IDs, tag parameters and the three-value activation
-  rule for `/vdisks_by_vm`.
-- [ ] Current React Query keys, stale times and enabled conditions are recorded
-  by tests before any move.
+
+- [ ] Generic items support label, description, icon, meta, and disabled state.
+- [ ] Mouse and Left/Right/Home/End keyboard navigation call the controlled
+  `onChange` callback and move focus correctly.
+- [ ] Selected, disabled, focus, hover, and responsive states use existing
+  semantic Tailwind tokens.
+- [ ] The component contains no Recovery Actions imports, labels, or routing.
 
 **Verification:**
-- [ ] `npm test -- src/features/discovery-inventory`
-- [ ] `npm run typecheck`
+
+- [ ] `npx vitest run src/shared/components/tabs/WorkspaceTabs.test.tsx`
+- [ ] Keyboard and ARIA assertions cover selection and focus movement.
+- [ ] Manual check at 320 px, 768 px, 1024 px, and 1440 px.
 
 **Dependencies:** None
 
-**Files likely touched:** Existing API and hook tests only.
+**Files likely touched:**
 
-**Estimated scope:** Medium
-
-### Task 2: Move VMware inventory into Resources
-
-**Description:** Move VMware inventory transport, schema, mapper, types and hook
-from generic top-level folders into the `resources` feature.
-
-**Acceptance criteria:**
-- [ ] `/vms` and `/vms_by_tag` are implemented in
-  `resources/api/vmwareInventoryApi.ts`.
-- [ ] VMware schema, normalized types and mapper live below `resources`.
-- [ ] VMware Resources and Infrastructure continue using the same query keys
-  and normalized inventory.
-
-**Verification:**
-- [ ] VMware API, schema, mapper and hook tests pass.
-- [ ] VMware Resources page tests pass.
-- [ ] `npm run typecheck`
-
-**Dependencies:** Task 1
-
-**Files likely touched:** VMware API/schema, mapper/model, hook and direct imports.
-
-**Estimated scope:** Medium
-
-### Task 3: Move VMware tags and VM storage discovery into Resources
-
-**Description:** Move `/tags` and `/vdisks_by_vm` implementations, their
-schemas, models, mappers and hooks into `resources`.
-
-**Acceptance criteria:**
-- [ ] Tags are owned by `resources/api/vmwareTagsApi.ts`.
-- [ ] VM-related storage discovery is owned by
-  `resources/api/vmStorageVolumesApi.ts`.
-- [ ] Opening a VM detail remains the trigger for `/vdisks_by_vm`; no eager
-  request is introduced.
-
-**Verification:**
-- [ ] Tags API/hook tests pass.
-- [ ] VM storage API/hook tests pass.
-- [ ] `VirtualMachineDetailPanel` tests pass.
-
-**Dependencies:** Task 2
-
-**Files likely touched:** Tags and VM-storage API/schema/model/mapper/hook files.
-
-**Estimated scope:** Medium
-
-### Checkpoint 1: VMware Resources
-
-- [ ] VMware Resources page loads and filters exactly as before.
-- [ ] VM detail issues `/vdisks_by_vm` only after selecting a VM and resolving
-  both providers.
-- [ ] Focused tests, lint and typecheck pass.
-
-### Task 4: Move FlashSystem volume inventory into Resources
-
-**Description:** Move `/get_volumes`, its schema, normalized models, mapper and
-query hook into the `resources` feature. FlashSystem topology is intentionally
-excluded from this task.
-
-**Acceptance criteria:**
-- [ ] `/get_volumes` is implemented only in
-  `resources/api/flashSystemInventoryApi.ts`.
-- [ ] Volume, pool, host and resolved mapping types live in `resources/model`.
-- [ ] FlashSystem table, filters, details and metrics preserve existing behavior.
-
-**Verification:**
-- [ ] FlashSystem inventory API/schema/mapper tests pass.
-- [ ] FlashSystem Resources component and page tests pass.
-- [ ] `npm run typecheck`
-
-**Dependencies:** Task 1
-
-**Files likely touched:** FlashSystem resource API/schema/model/mapper/hook imports.
-
-**Estimated scope:** Medium
-
-### Task 5: Move IBM Power inventory into Resources
-
-**Description:** Move `/get_power_vm`, its schema, normalized models, mapper and
-query hook into the `resources` feature.
-
-**Acceptance criteria:**
-- [ ] `/get_power_vm` is implemented only in
-  `resources/api/powerInventoryApi.ts`.
-- [ ] IBM Power inventory and partition types live in `resources/model`.
-- [ ] The existing VIOS exclusion remains unchanged and protected by its mapper
-  regression test.
-
-**Verification:**
-- [ ] IBM Power API/schema/mapper tests pass.
-- [ ] IBM Power Resources component and page tests pass.
-- [ ] VIOS exclusion test passes.
-
-**Dependencies:** Task 1
-
-**Files likely touched:** Power API/schema/model/mapper/hook imports.
-
-**Estimated scope:** Medium
-
-### Checkpoint 2: Resources feature complete
-
-- [ ] All resource inventory endpoint implementations live under `resources`.
-- [ ] `resources` contains its own `api`, `components`, `helpers`, `hooks`,
-  `model` and `pages` layers like the other project features.
-- [ ] No Resources implementation imports from Infrastructure.
-- [ ] Focused tests, lint and typecheck pass.
-
-### Task 6: Move FlashSystem topology API into Infrastructure
-
-**Description:** Move `/get_volume_tree`, its schema, topology response types and
-query hook into the `infrastructure` feature.
-
-**Acceptance criteria:**
-- [ ] `/get_volume_tree` is implemented only in
-  `infrastructure/api/flashSystemVolumeTreeApi.ts`.
-- [ ] Tree views, nodes and count contracts live in `infrastructure/model`.
-- [ ] Topology mapping, layout and UI continue consuming the same normalized
-  tree data.
-
-**Verification:**
-- [ ] Volume-tree API/schema/hook tests pass.
-- [ ] FlashSystem topology mapper tests pass.
-- [ ] Infrastructure page tests pass.
-
-**Dependencies:** Task 4
-
-**Files likely touched:** Volume-tree API/schema/model/hook and topology imports.
-
-**Estimated scope:** Medium
-
-### Task 7: Update external inventory consumers
-
-**Description:** Point Infrastructure and Recovery Groups at the public
-Resources API/model boundary without importing Resource presentation internals.
-
-**Acceptance criteria:**
-- [ ] Infrastructure imports VMware and Power inventories only from
-  `resources/api` and `resources/model`.
-- [ ] Recovery Groups imports selectable inventory and related VM storage only
-  from `resources/api` and `resources/model`.
-- [ ] No consumer imports `resources/components`, `resources/pages` or private
-  filter state.
-
-**Verification:**
-- [ ] Infrastructure inventory hook/page tests pass.
-- [ ] Recovery-group resource inventory tests pass.
-- [ ] `rg` confirms the allowed dependency paths.
-
-**Dependencies:** Tasks 2–6
-
-**Files likely touched:** Infrastructure inventory hook and recovery-group hooks/tests.
-
-**Estimated scope:** Medium
-
-### Task 8: Remove generic and rejected folder structures
-
-**Description:** After all consumers use their owning feature, delete obsolete
-generic top-level files and the rejected `sources` structure. Do not leave
-compatibility re-export files without real consumers.
-
-**Acceptance criteria:**
-- [ ] Top-level `api`, `helpers`, `hooks`, `model`, `pages` and `sources` are
-  absent from `discovery-inventory`.
-- [ ] Every moved file has one canonical implementation and one canonical test.
-- [ ] No import references an obsolete path.
-
-**Verification:**
-- [ ] `rg` finds no obsolete discovery-inventory import paths.
-- [ ] `git status` shows moves/deletions only within the approved scope.
-- [ ] `npm run lint && npm run typecheck`
-
-**Dependencies:** Task 7
-
-**Files likely touched:** Obsolete root files and remaining imports.
+- `src/shared/components/tabs/WorkspaceTabs.tsx`
+- `src/shared/components/tabs/WorkspaceTabs.test.tsx`
 
 **Estimated scope:** Small
 
-### Task 9: Full regression and architecture verification
+### Task 2: Define Recovery Actions navigation, models, and mock data
 
-**Description:** Verify the complete feature-first migration and confirm that it
-changed organization only.
+**Description:** Create provider-neutral UI contracts for application groups,
+recovery points, validation results, schedules, recipients, and history runs.
+Define the canonical tab order and path mapping.
 
 **Acceptance criteria:**
-- [ ] All endpoint URLs and query parameters are unchanged.
-- [ ] Resources and Infrastructure user flows behave as before.
-- [ ] Directory ownership matches the sidebar/navigation structure.
-- [ ] No duplicate API implementation, query hook or model remains.
+
+- [ ] The canonical tab order is Validate, Execute, Schedule, History.
+- [ ] Every mock record has a stable ID and explicit ISO timestamp.
+- [ ] Manual and automated history records are represented by one shared type.
+- [ ] No API client, query key, or persistence utility is introduced.
 
 **Verification:**
+
+- [ ] Navigation mapping tests cover every canonical path and the default tab.
+- [ ] Model tests confirm deterministic recovery-point selection examples.
+- [ ] `npm run typecheck`.
+
+**Dependencies:** Task 1
+
+**Files likely touched:**
+
+- `src/features/recovery-actions/model/recoveryActionNavigation.ts`
+- `src/features/recovery-actions/model/recoveryActionNavigation.test.ts`
+- `src/features/recovery-actions/model/recoveryActionTypes.ts`
+- `src/features/recovery-actions/mocks/recoveryActionsMocks.ts`
+
+**Estimated scope:** Medium
+
+### Task 3: Build the Recovery Actions shell and Validate slice
+
+**Description:** Create the common page header and Recovery workspace card,
+wire `WorkspaceTabs` to route changes, and deliver the complete Validate UI
+with its two modes.
+
+**Acceptance criteria:**
+
+- [ ] The shell renders the workspace title, description, provider status, and
+  four Variant A action tabs.
+- [ ] Latest automated mode reports timestamp, recovery point, resource counts,
+  duration, overall state, and detailed issues.
+- [ ] Manual mode accepts application group and validation date/time and shows
+  deterministic VM configuration, dependency, snapshot, and provider checks.
+- [ ] Validation remains read-only and performs no network request.
+
+**Verification:**
+
+- [ ] Focused shell and Validate component/page tests pass.
+- [ ] Switching Validate modes is keyboard accessible.
+- [ ] Manual date changes update the displayed mock recovery point.
+
+**Dependencies:** Tasks 1–2
+
+**Files likely touched:**
+
+- `src/features/recovery-actions/components/RecoveryActionsPageShell.tsx`
+- `src/features/recovery-actions/components/RecoveryActionsPageShell.test.tsx`
+- `src/features/recovery-actions/components/RecoveryPointSummary.tsx`
+- `src/features/recovery-actions/validate/components/RecoveryValidationPanel.tsx`
+- `src/features/recovery-actions/validate/pages/RecoveryValidationPage.tsx`
+
+**Estimated scope:** Medium
+
+### Checkpoint 1: Shared navigation and Validate
+
+- [ ] `WorkspaceTabs` is independent of Recovery Actions.
+- [ ] Existing inventory and recovery-policy `Tabs` tests remain unchanged and
+  pass.
+- [ ] Validate works with mock data at all supported responsive breakpoints.
+- [ ] Lint and typecheck pass.
+
+### Task 4: Build the Execute recovery-test slice
+
+**Description:** Add a UI-only manual recovery-test flow that resolves and
+displays the exact mock configuration and snapshot timestamps before
+confirmation.
+
+**Acceptance criteria:**
+
+- [ ] Users select application group, requested recovery time, and test target.
+- [ ] A preview displays the resolved VM configuration time, snapshot time,
+  resources, gaps, and target environment before execution is enabled.
+- [ ] Confirmation explicitly says this is an isolated recovery test.
+- [ ] Confirming changes only local mock state and performs no network request.
+
+**Verification:**
+
+- [ ] Focused Execute page/component tests pass.
+- [ ] Execute remains disabled until all required fields and preview data exist.
+- [ ] Confirmation dialog is keyboard accessible and restores focus on close.
+
+**Dependencies:** Tasks 2–3
+
+**Files likely touched:**
+
+- `src/features/recovery-actions/execute/components/RecoveryRequestForm.tsx`
+- `src/features/recovery-actions/execute/components/RecoveryPointPreview.tsx`
+- `src/features/recovery-actions/execute/pages/RecoveryExecutePage.tsx`
+- `src/features/recovery-actions/execute/pages/RecoveryExecutePage.test.tsx`
+
+**Estimated scope:** Medium
+
+### Task 5: Build the Schedule slice with failure notifications
+
+**Description:** Add UI-only recurring recovery-test settings using established
+Discovery Settings patterns.
+
+**Acceptance criteria:**
+
+- [ ] Schedule enablement, application group, recurrence, day/time, timezone,
+  and test environment are editable in local state.
+- [ ] The next scheduled test timestamp updates from the selected mock cadence.
+- [ ] Failure notifications are configured in a dedicated card within Schedule.
+- [ ] One mock user recipient can be selected and previewed with name and email.
+
+**Verification:**
+
+- [ ] Focused Schedule tests cover enabled/disabled state and next-run preview.
+- [ ] Notification controls disable when notifications are off.
+- [ ] Labels, switches, and recipient controls are keyboard accessible.
+
+**Dependencies:** Tasks 2–3
+
+**Files likely touched:**
+
+- `src/features/recovery-actions/schedule/components/RecoveryTestScheduleCard.tsx`
+- `src/features/recovery-actions/schedule/components/RecoveryFailureNotificationsCard.tsx`
+- `src/features/recovery-actions/schedule/pages/RecoverySchedulePage.tsx`
+- `src/features/recovery-actions/schedule/pages/RecoverySchedulePage.test.tsx`
+
+**Estimated scope:** Medium
+
+### Task 6: Build the History slice
+
+**Description:** Add a responsive history view for manual and automated
+recovery tests over a selected period.
+
+**Acceptance criteria:**
+
+- [ ] Filters cover date range, trigger type, status, and application group.
+- [ ] The table shows start time, trigger, application group, recovery point,
+  duration, status, failed checks, and notification state.
+- [ ] Selecting a row opens an accessible detail drawer with its mock report.
+- [ ] Empty filtered results render a meaningful empty state.
+
+**Verification:**
+
+- [ ] Focused History tests cover filters, empty state, and row details.
+- [ ] Existing shared DataTable pagination and keyboard behavior are preserved.
+- [ ] The table remains usable at supported breakpoints.
+
+**Dependencies:** Tasks 2–3
+
+**Files likely touched:**
+
+- `src/features/recovery-actions/history/components/RecoveryHistoryFilters.tsx`
+- `src/features/recovery-actions/history/components/RecoveryHistoryTable.tsx`
+- `src/features/recovery-actions/history/pages/RecoveryHistoryPage.tsx`
+- `src/features/recovery-actions/history/pages/RecoveryHistoryPage.test.tsx`
+
+**Estimated scope:** Medium
+
+### Checkpoint 2: Four UI slices
+
+- [ ] Validate, Execute, Schedule, and History render inside the same shell.
+- [ ] Switching sections preserves canonical URL state.
+- [ ] All actions remain local UI demonstrations with no network requests.
+- [ ] Focused feature tests, lint, and typecheck pass.
+
+### Task 7: Add canonical routes and legacy Recovery Runs redirect
+
+**Description:** Register the new top-level nested routes and preserve the old
+Recovery Runs URL as a redirect to History.
+
+**Acceptance criteria:**
+
+- [ ] `/recovery-actions` redirects to `/recovery-actions/validate`.
+- [ ] All four section routes lazy-load their pages.
+- [ ] Unknown Recovery Actions children redirect to Validate.
+- [ ] `/recovery-plans/recovery-runs` redirects to
+  `/recovery-actions/history`.
+
+**Verification:**
+
+- [ ] Router tests cover canonical routes, index redirect, fallback, and legacy
+  redirect.
+- [ ] Direct browser navigation and refresh work on every canonical URL.
+
+**Dependencies:** Tasks 3–6
+
+**Files likely touched:**
+
+- `src/app/routes.ts`
+- `src/app/AppRoutes.tsx`
+- `src/app/router.test.tsx`
+
+**Estimated scope:** Medium
+
+### Task 8: Integrate App Sidebar and translations
+
+**Description:** Add Recovery Actions beside Recovery Plans, remove the
+duplicate Recovery Runs child, and translate all new UI content.
+
+**Acceptance criteria:**
+
+- [ ] Recovery Actions is a top-level sibling of Recovery Plans.
+- [ ] It is active for all `/recovery-actions/*` routes.
+- [ ] Recovery Runs is absent from the Recovery Plans submenu.
+- [ ] English, Slovak, and Czech contain complete navigation, tab, form, status,
+  empty-state, confirmation, and accessibility labels.
+
+**Verification:**
+
+- [ ] App Sidebar tests cover position, active state, and removed duplicate.
+- [ ] Language-switching tests show translated Recovery Actions content.
+- [ ] No hard-coded user-facing text remains in the feature.
+
+**Dependencies:** Task 7
+
+**Files likely touched:**
+
+- `src/layouts/app-shell/AppSidebar.tsx`
+- `src/layouts/app-shell/AppSidebar.test.tsx`
+- `src/locales/en.json`
+- `src/locales/sk.json`
+- `src/locales/cs.json`
+
+**Estimated scope:** Medium
+
+### Checkpoint 3: Integrated navigation
+
+- [ ] Recovery Actions and Recovery Plans are visually equal top-level items.
+- [ ] Variant A tabs are visually distinct from table/inventory tabs.
+- [ ] Legacy Recovery Runs links land on History.
+- [ ] Route, sidebar, and translation tests pass.
+
+### Task 9: Accessibility, responsive, and regression verification
+
+**Description:** Complete the quality pass without expanding backend scope.
+
+**Acceptance criteria:**
+
+- [ ] All interactive elements are reachable and usable by keyboard.
+- [ ] Focus indicators, selected states, warnings, and failures do not rely on
+  color alone.
+- [ ] The workspace fits at 1024 px and 1440 px without page-level horizontal
+  scrolling; 320 px and 768 px use the documented responsive tab layout.
+- [ ] Existing Recovery Plans, Discovery Settings, and shared Tabs behavior
+  remain unchanged.
+
+**Verification:**
+
 - [ ] `npm run lint`
 - [ ] `npm run typecheck`
+- [ ] Focused Vitest suites for WorkspaceTabs, Recovery Actions, routing,
+  sidebar, and translations.
 - [ ] `npm test`
-- [ ] `vite build` or the repository's complete `npm run build`
-- [ ] Manual Network-panel check for request timing and duplicate requests.
+- [ ] `npm run build`
+- [ ] Manual browser check in light and dark themes at 320, 768, 1024, and
+  1440 px.
+- [ ] Browser console contains no errors or accessibility warnings.
 
-**Dependencies:** Task 8
+**Dependencies:** Tasks 1–8
 
-**Files likely touched:** Tests only if a missing regression is discovered.
+**Files likely touched:** Tests only if verification finds a missing regression.
 
 **Estimated scope:** Small
 
@@ -338,184 +457,30 @@ changed organization only.
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Import churn accidentally changes behavior | High | Move one endpoint slice at a time and run focused tests after each task. |
-| React Query keys change during file moves | High | Preserve key values and test them before and after migration. |
-| Infrastructure couples to Resources UI | High | Allow imports only from `resources/api` and `resources/model`. |
-| FlashSystem inventory and topology types are mixed | Medium | Split `/get_volumes` contracts into Resources and `/get_volume_tree` contracts into Infrastructure. |
-| Duplicate compatibility files survive | Medium | Final `rg` audit requires exactly one implementation per endpoint. |
-| Unrelated provider work enters the commit | Medium | Stage only discovery-inventory, its direct recovery-group imports and corrected plan files. |
+| New navigation looks like inventory tabs | High | Keep `WorkspaceTabs` separate from `Tabs`; use filled action cards with icons, descriptions, and meta status. |
+| Recovery Actions and Recovery Runs duplicate each other | High | Remove the Recovery Runs sidebar child and redirect its legacy URL to History. |
+| Mock actions are mistaken for backend operations | High | Keep all state local, add no API client, and make confirmation language explicitly describe a recovery test preview. |
+| Shared component becomes Recovery-specific | Medium | Use generic item descriptors and keep route mapping/status semantics inside the feature. |
+| Four cards overflow narrow layouts | Medium | Use responsive two-column layout and a last-resort horizontal scroll behavior with visible focus. |
+| Recovery point timestamps are ambiguous | Medium | Store ISO timestamps and display timezone next to every resolved point-in-time value. |
+| Existing dirty Recovery Policies work is overwritten | High | Restrict implementation and staging to Recovery Actions, shared WorkspaceTabs, app integration, translations, tests, and these plan files. |
+| Full test suite is slow | Medium | Run focused suites at every checkpoint, then one complete suite before completion. |
 
-## Out of Scope
+## Definition of Done
 
-- Implementing `/vms_in_folder`.
-- Creating placeholder code for Discovery Jobs.
-- Backend endpoint renaming.
-- UI, navigation, route, translation, filter or pagination changes.
-- Changing when requests run or how failures are displayed.
+- Recovery Actions is a separate top-level navigation area.
+- Variant A horizontal action-card tabs are implemented once as a reusable
+  shared component.
+- Validate, Execute, Schedule, and History are complete UI-only sections backed
+  by deterministic mock data.
+- The old Recovery Runs placeholder redirects to History.
+- All user-facing text is translated into EN, SK, and CS.
+- Accessibility, responsive checks, focused tests, lint, typecheck, full tests,
+  and production build pass.
+- No backend contract or unrelated Recovery Plans implementation is changed.
 
-## Completion Definition
+## Open Questions
 
-- The folder tree mirrors the Discovery & Inventory navigation.
-- Resources and Infrastructure are self-contained features with conventional
-  internal layers.
-- Shared consumers use explicit public API/model boundaries.
-- All tests, lint, typecheck and production build pass.
-
----
-
-# Follow-up Plan: Consistent Skeleton Placement
-
-## Overview
-
-Remove the feature-local `discovery-inventory/resources/skeletons` layer and
-make loading placeholders follow the existing shared-component boundaries.
-This is a structural-only change: rendered markup, classes, accessibility
-attributes, translations and loading behavior remain unchanged.
-
-No new component files or new `shared/components/skeletons` directory will be
-created. Existing shared component files will be extended where the skeleton
-belongs semantically, and the current feature skeleton files will then be
-removed.
-
-## Architecture decisions
-
-- `DataTableSkeleton` remains in `shared/components/data-table` and owns the
-  reusable `SkeletonBlock` primitive. Its small prop type stays beside the
-  component; it does not belong in a feature `model` directory.
-- The metrics placeholder belongs with the existing `StatCard` component in
-  `shared/components/stat-card`, because it renders stat-card placeholders.
-- The filter placeholder belongs with the existing filter components in
-  `shared/components/filters`.
-- The composite inventory loading state belongs with the existing
-  `shared/components/inventory-shell` component. It is a reusable shell state,
-  not a VMware resource model.
-- Existing `ListSkeleton`, `DataTableSkeleton` and `RouteLoadingSkeleton` stay
-  in their current shared locations. No duplicate generic skeleton API is
-  introduced.
-- Skeleton props are view/component contracts and remain local to the existing
-  component files. No new `resources/model` or `shared/model` types are needed.
-- Resources domain contracts are grouped under a dedicated `resources/types`
-  directory. The existing `types.ts` module is moved to
-  `types/virtualMachineTypes.ts`; this is a path-only organization change and
-  does not alter the exported interfaces.
-
-## Target ownership
-
-| Current file | Existing destination | Result |
-|---|---|---|
-| `resources/skeletons/SkeletonBlock.tsx` | `shared/components/data-table/DataTableSkeleton.tsx` | Export/reuse the existing primitive; remove standalone file. |
-| `resources/skeletons/MetricsSkeleton.tsx` | `shared/components/stat-card/StatCard.tsx` | Add the metrics skeleton export beside `StatCard`. |
-| `resources/skeletons/FilterPanelSkeleton.tsx` | `shared/components/filters/FilterTabs.tsx` | Add the filter loading export beside filter UI. |
-| `resources/skeletons/VirtualMachinesSkeleton.tsx` | `shared/components/inventory-shell/InventoryShell.tsx` | Add the composite inventory loading export. |
-| `resources/skeletons/index.ts` | Existing shared component exports | Update existing barrel exports; do not create a new barrel. |
-| `resources/types.ts` | `resources/types/virtualMachineTypes.ts` | Move the existing Resources domain type module into the dedicated types directory; preserve exports and contracts. |
-
-## Tasks
-
-### Task 1: Confirm existing shared contracts
-
-**Description:** Inspect the current shared component exports and tests so the
-new exports can be added without changing public behavior or creating files.
-
-**Acceptance criteria:**
-- [ ] Existing `DataTableSkeleton`, `StatCard`, filter and inventory-shell
-  APIs remain backward compatible.
-- [ ] Current skeleton accessibility labels and `aria-busy` behavior are
-  recorded in tests.
-
-**Verification:**
-- [ ] Run the existing shared component tests before edits.
-
-**Dependencies:** None
-
-**Files likely touched:** Existing shared component/test files only.
-
-**Estimated scope:** Small
-
-### Task 2: Extend existing shared components
-
-**Description:** Move the four implementations into the existing shared files
-  identified above. Keep local prop types next to their component and preserve
-  the current class names, dimensions and translations.
-
-**Acceptance criteria:**
-- [ ] No new skeleton `.tsx`, `index.ts` or model file is created.
-- [ ] Shared exports expose the migrated skeletons through existing barrels.
-- [ ] `SkeletonBlock` is not duplicated in another module.
-
-**Verification:**
-- [ ] TypeScript resolves all new shared exports.
-- [ ] Existing skeleton unit assertions still pass.
-
-**Dependencies:** Task 1
-
-**Files likely touched:**
-- `src/shared/components/data-table/DataTableSkeleton.tsx`
-- `src/shared/components/stat-card/StatCard.tsx`
-- `src/shared/components/filters/FilterTabs.tsx`
-- `src/shared/components/inventory-shell/InventoryShell.tsx`
-- Existing corresponding `index.ts`/test files.
-
-**Estimated scope:** Medium
-
-### Task 3: Migrate feature imports and remove the local layer
-
-**Description:** Move the existing Resources type module under `resources/types`,
-update Resources page/components and tests to import from the new type path and
-existing shared component files, then delete `resources/skeletons` and its
-barrel.
-
-**Acceptance criteria:**
-- [ ] No import references `discovery-inventory/resources/skeletons`.
-- [ ] `discovery-inventory/resources` has no `skeletons` directory.
-- [ ] `discovery-inventory/resources/types/virtualMachineTypes.ts` is the sole
-  owner of the migrated Resources domain type contracts.
-- [ ] Resources loading, empty and error states render the same UI.
-
-**Verification:**
-- [ ] Focused Resources page/component tests pass.
-- [ ] `rg` finds no feature-local skeleton imports.
-
-**Dependencies:** Task 2
-
-**Files likely touched:** Resources page/components and existing tests.
-
-**Estimated scope:** Medium
-
-### Checkpoint: Shared skeleton policy
-
-- [ ] Only shared component areas own skeleton implementations.
-- [ ] No new skeleton files were introduced for the migration.
-- [ ] Resources types are grouped under `resources/types`.
-- [ ] Shared and Resources focused tests pass.
-
-### Task 4: Full quality verification
-
-**Description:** Validate that the structural change has no runtime, type or
-  accessibility regression.
-
-**Acceptance criteria:**
-- [ ] No feature contains a `skeletons` directory.
-- [ ] Skeleton labels and `aria-busy` remain unchanged.
-- [ ] No unrelated feature files are modified.
-
-**Verification:**
-- [ ] `eslint . --max-warnings 0`
-- [ ] `tsc -b`
-- [ ] Focused Vitest tests for shared components and Resources.
-- [ ] `vite build`
-
-**Dependencies:** Task 3
-
-**Files likely touched:** None; verification only.
-
-**Estimated scope:** Small
-
-## Risks and mitigations
-
-| Risk | Impact | Mitigation |
-|---|---|---|
-| Shared export path changes break lazy-loaded Resources code | Medium | Update imports through existing barrels and run typecheck/build. |
-| Visual spacing changes during relocation | Medium | Preserve the existing JSX/class markup and compare focused tests. |
-| Skeleton types leak into domain models | Low | Keep props local to the component files; no model changes. |
-| A second skeleton primitive is introduced accidentally | Medium | Audit `SkeletonBlock` definitions with `rg` before commit. |
+None required for the UI-only implementation. Backend contracts, provider
+adapter behavior, recovery-point resolution rules, and real notification
+delivery remain deferred.

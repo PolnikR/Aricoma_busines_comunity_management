@@ -82,6 +82,26 @@ const DiscoverySettingsPage = lazy(async () => {
   return { default: page.DiscoverySettingsPage }
 })
 
+const RecoveryActionsValidatePage = lazy(async () => {
+  const page = await import('@/features/recovery-actions/pages/RecoveryActionsValidatePage')
+  return { default: page.RecoveryActionsValidatePage }
+})
+
+const RecoveryActionsExecutePage = lazy(async () => {
+  const page = await import('@/features/recovery-actions/pages/RecoveryActionsExecutePage')
+  return { default: page.RecoveryActionsExecutePage }
+})
+
+const RecoveryActionsSchedulePage = lazy(async () => {
+  const page = await import('@/features/recovery-actions/pages/RecoveryActionsSchedulePage')
+  return { default: page.RecoveryActionsSchedulePage }
+})
+
+const RecoveryActionsHistoryPage = lazy(async () => {
+  const page = await import('@/features/recovery-actions/pages/RecoveryActionsHistoryPage')
+  return { default: page.RecoveryActionsHistoryPage }
+})
+
 const PlatformProvidersPage = lazy(async () => {
   const page = await import('@/features/platform-administration/platform-providers/pages/PlatformProvidersPage')
   return { default: page.PlatformProvidersPage }
@@ -243,16 +263,7 @@ export function AppRoutes() {
           </Route>
           <Route
             path="recovery-runs"
-            element={(
-              <ModuleWorkQueuePage
-                eyebrow="Recovery Plans"
-                title="Recovery Runs"
-                description="Execution history and status of recovery runs."
-                excelSource="EP-07 Recovery Plans"
-                apiBoundary="Pending backend API contract for recovery runs"
-                workflowItems={['Run history', 'Active runs', 'Run results']}
-              />
-            )}
+            element={<Navigate to={routes.recoveryActionHistory} replace />}
           />
           <Route path="recovery-policies">
             <Route index element={<Navigate to={routes.recoveryPolicySnapshot} replace />} />
@@ -283,6 +294,42 @@ export function AppRoutes() {
               </Suspense>
             )}
           />
+        </Route>
+        <Route path="recovery-actions">
+          <Route index element={<Navigate to={routes.recoveryActionValidate} replace />} />
+          <Route
+            path="validate"
+            element={(
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <RecoveryActionsValidatePage />
+              </Suspense>
+            )}
+          />
+          <Route
+            path="execute"
+            element={(
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <RecoveryActionsExecutePage />
+              </Suspense>
+            )}
+          />
+          <Route
+            path="schedule"
+            element={(
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <RecoveryActionsSchedulePage />
+              </Suspense>
+            )}
+          />
+          <Route
+            path="history"
+            element={(
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <RecoveryActionsHistoryPage />
+              </Suspense>
+            )}
+          />
+          <Route path="*" element={<Navigate to={routes.recoveryActionValidate} replace />} />
         </Route>
         <Route path="discovery-inventory" element={<Navigate to={routes.resources} replace />} />
         <Route path="discovery-inventory/resources" element={<ResourcesPage />} />

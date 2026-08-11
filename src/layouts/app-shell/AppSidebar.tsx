@@ -5,6 +5,7 @@ import { routes } from '@/app/routes'
 import { useTranslation } from '@/hooks/useTranslation'
 import {
   ChevronDownIcon,
+  ExecutionIcon,
   LayersIcon,
   PlugIcon,
   ServerIcon,
@@ -64,9 +65,13 @@ const navItems: NavItem[] = [
       { name: 'Recovery Groups', path: routes.recoveryGroups },
       { name: 'Recovery Policies', path: routes.recoveryPolicies },
       { name: 'Policy Sets', path: routes.policySets },
-      { name: 'Recovery Runs', path: routes.recoveryRuns },
     ],
-  }
+  },
+  {
+    name: 'Recovery Actions',
+    icon: <ExecutionIcon />,
+    path: routes.recoveryActions,
+  },
 ]
 
 const navKeyMap: Record<string, string> = {
@@ -89,7 +94,7 @@ const navKeyMap: Record<string, string> = {
   'Recovery Groups': 'nav.recovery.groups',
   'Recovery Policies': 'nav.recovery.policies',
   'Policy Sets': 'nav.recovery.policySets',
-  'Recovery Runs': 'nav.recovery.runs',
+  'Recovery Actions': 'nav.recoveryActions',
 }
 
 function findRouteMenu(pathname: string): string | undefined {
@@ -172,14 +177,20 @@ export function AppSidebar() {
                   <NavLink
                     to={item.path}
                     onClick={closeMobileSidebar}
-                    className={({ isActive }) => `group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition ${isActive ? 'bg-accent-soft text-accent' : 'text-text-secondary hover:bg-surface-muted hover:text-text-secondary'}`}
+                    className={({ isActive }) => {
+                      const routeActive = isActive || (item.path === routes.recoveryActions && location.pathname.startsWith(`${routes.recoveryActions}/`))
+                      return `group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition ${routeActive ? 'bg-accent-soft text-accent' : 'text-text-secondary hover:bg-surface-muted hover:text-text-secondary'}`
+                    }}
                   >
-                    {({ isActive }) => (
+                    {({ isActive }) => {
+                      const routeActive = isActive || (item.path === routes.recoveryActions && location.pathname.startsWith(`${routes.recoveryActions}/`))
+                      return (
                       <>
-                        <span className={`shrink-0 ${isActive ? 'text-accent' : 'text-text-muted'}`}>{item.icon}</span>
+                        <span className={`shrink-0 ${routeActive ? 'text-accent' : 'text-text-muted'}`}>{item.icon}</span>
                         <span className="min-w-0 flex-1 whitespace-normal leading-4 [overflow-wrap:anywhere]">{t(getTranslationKey(item.name))}</span>
                       </>
-                    )}
+                      )
+                    }}
                   </NavLink>
                 ) : null}
               </li>

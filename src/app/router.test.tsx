@@ -24,6 +24,11 @@ describe('createAppRouter', () => {
     expect(paths).toContain('discovery-inventory/resources')
     expect(paths).toContain('discovery-inventory/virtual-machines')
     expect(paths).toContain('platform-administration/platform-providers')
+    expect(paths).toContain('recovery-actions')
+    expect(paths).toContain('validate')
+    expect(paths).toContain('execute')
+    expect(paths).toContain('schedule')
+    expect(paths).toContain('history')
 
     router.dispose()
   })
