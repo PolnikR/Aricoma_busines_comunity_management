@@ -1262,6 +1262,7 @@
   "recoveryAppPolicies.selection.exactTimeSummary": "Najbližšie k {time}",
   "recoveryAppPolicies.modal.createTitle": "Vytvoriť politiku",
   "recoveryAppPolicies.modal.editTitle": "Upraviť politiku",
+  "recoveryAppPolicies.modal.description": "Nastavte politiku pre automatizované testy obnovy aplikácie a výber snapshotu.",
   "recoveryAppPolicies.submitFailed": "Politiku obnovy aplikácie sa nepodarilo uložiť",
   "recoveryAppPolicies.validation.idRequired": "ID politiky je povinné",
   "recoveryAppPolicies.validation.idExists": "Politika s týmto ID už existuje",

@@ -1298,6 +1298,7 @@
   "recoveryAppPolicies.selection.exactTimeSummary": "Closest to {time}",
   "recoveryAppPolicies.modal.createTitle": "Create policy",
   "recoveryAppPolicies.modal.editTitle": "Edit policy",
+  "recoveryAppPolicies.modal.description": "Configure a policy for automated application recovery tests and snapshot selection.",
   "recoveryAppPolicies.submitFailed": "Failed to save recovery app policy",
   "recoveryAppPolicies.validation.idRequired": "Policy ID is required",
   "recoveryAppPolicies.validation.idExists": "A recovery app policy with this ID already exists",

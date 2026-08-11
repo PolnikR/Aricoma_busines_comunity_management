@@ -26,4 +26,21 @@ export interface RecoveryAppPolicy {
   enabled: boolean
 }
 
-export type RecoveryAppPolicySubmitData = RecoveryAppPolicy
+type RecoveryAppPolicySubmitCommon = Omit<
+  RecoveryAppPolicy,
+  'snapshotSelectionMode' | 'snapshotMaxAgeValue' | 'snapshotMaxAgeUnit' | 'snapshotTargetTime'
+>
+
+export type RecoveryAppPolicySubmitData =
+  | (RecoveryAppPolicySubmitCommon & {
+    snapshotSelectionMode: 'latest'
+  })
+  | (RecoveryAppPolicySubmitCommon & {
+    snapshotSelectionMode: 'time_range'
+    snapshotMaxAgeValue: number
+    snapshotMaxAgeUnit: RecoveryAppPolicyTimeUnit
+  })
+  | (RecoveryAppPolicySubmitCommon & {
+    snapshotSelectionMode: 'exact_time'
+    snapshotTargetTime: string
+  })

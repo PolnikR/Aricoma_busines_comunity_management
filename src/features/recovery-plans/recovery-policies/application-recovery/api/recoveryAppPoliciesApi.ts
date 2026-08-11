@@ -8,6 +8,7 @@ import type {
 import {
   recoveryAppPoliciesResponseSchema,
   recoveryAppPolicySubmitSchema,
+  type RecoveryAppPolicySubmitWire,
   type RecoveryAppPolicyWire,
 } from './schemas/recoveryAppPoliciesSchema'
 
@@ -39,9 +40,9 @@ function fromWire(policy: RecoveryAppPolicyWire): RecoveryAppPolicy {
   }
 }
 
-function toWire(policy: RecoveryAppPolicySubmitData): RecoveryAppPolicyWire {
+function toWire(policy: RecoveryAppPolicySubmitData): RecoveryAppPolicySubmitWire {
   const validated = recoveryAppPolicySubmitSchema.parse(policy)
-  return {
+  const common = {
     id: validated.id,
     name: validated.name,
     description: validated.description,
@@ -51,11 +52,25 @@ function toWire(policy: RecoveryAppPolicySubmitData): RecoveryAppPolicyWire {
     retention_value: validated.retentionValue,
     retention_unit: validated.retentionUnit,
     boot_verify: validated.bootVerify,
-    snapshot_selection_mode: validated.snapshotSelectionMode,
-    snapshot_max_age_value: validated.snapshotMaxAgeValue,
-    snapshot_max_age_unit: validated.snapshotMaxAgeUnit,
-    snapshot_target_time: validated.snapshotTargetTime,
     enabled: validated.enabled,
+  }
+
+  switch (validated.snapshotSelectionMode) {
+    case 'latest':
+      return { ...common, snapshot_selection_mode: 'latest' }
+    case 'time_range':
+      return {
+        ...common,
+        snapshot_selection_mode: 'time_range',
+        snapshot_max_age_value: validated.snapshotMaxAgeValue,
+        snapshot_max_age_unit: validated.snapshotMaxAgeUnit,
+      }
+    case 'exact_time':
+      return {
+        ...common,
+        snapshot_selection_mode: 'exact_time',
+        snapshot_target_time: validated.snapshotTargetTime,
+      }
   }
 }
 

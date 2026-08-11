@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { recoveryAppPolicyKeys } from '../api/recoveryAppPolicyQueryKeys'
-import type { RecoveryAppPolicy } from '../model/recoveryAppPolicyTypes'
+import type { RecoveryAppPolicy, RecoveryAppPolicySubmitData } from '../model/recoveryAppPolicyTypes'
 import { useDeleteRecoveryAppPolicy } from './useDeleteRecoveryAppPolicy'
 import { useRecoveryAppPolicies } from './useRecoveryAppPolicies'
 import { useSubmitRecoveryAppPolicy } from './useSubmitRecoveryAppPolicy'
@@ -23,6 +23,20 @@ const policy: RecoveryAppPolicy = {
   snapshotMaxAgeUnit: null,
   snapshotTargetTime: null,
   enabled: true,
+}
+
+const submitPolicy: RecoveryAppPolicySubmitData = {
+  id: policy.id,
+  name: policy.name,
+  description: policy.description,
+  level: policy.level,
+  frequencyValue: policy.frequencyValue,
+  frequencyUnit: policy.frequencyUnit,
+  retentionValue: policy.retentionValue,
+  retentionUnit: policy.retentionUnit,
+  bootVerify: policy.bootVerify,
+  snapshotSelectionMode: 'latest',
+  enabled: policy.enabled,
 }
 
 const wirePolicy = {
@@ -82,7 +96,7 @@ describe('recovery app policy hooks', () => {
     const { client, wrapper } = createQueryContext()
 
     const { result } = renderHook(() => useSubmitRecoveryAppPolicy(), { wrapper })
-    result.current.mutate(policy)
+    result.current.mutate(submitPolicy)
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
 
     expect(client.getQueryData(recoveryAppPolicyKeys.list())).toEqual([policy])

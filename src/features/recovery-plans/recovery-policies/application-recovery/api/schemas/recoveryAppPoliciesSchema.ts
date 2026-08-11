@@ -23,7 +23,7 @@ export const recoveryAppPolicyWireSchema = z.object({
   enabled: z.boolean(),
 })
 
-export const recoveryAppPolicySubmitSchema = z.object({
+const recoveryAppPolicySubmitCommonSchema = {
   id: z.string().min(1),
   name: z.string().min(1),
   description: z.string(),
@@ -33,15 +33,50 @@ export const recoveryAppPolicySubmitSchema = z.object({
   retentionValue: positiveInteger,
   retentionUnit: z.enum(RECOVERY_APP_POLICY_TIME_UNITS),
   bootVerify: z.boolean(),
-  snapshotSelectionMode: z.enum(RECOVERY_APP_POLICY_SELECTION_MODES),
-  snapshotMaxAgeValue: positiveInteger.nullable(),
-  snapshotMaxAgeUnit: z.enum(RECOVERY_APP_POLICY_TIME_UNITS).nullable(),
-  snapshotTargetTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable(),
   enabled: z.boolean(),
-})
+}
+
+const targetTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+
+export const recoveryAppPolicySubmitSchema = z.discriminatedUnion('snapshotSelectionMode', [
+  z.object({
+    ...recoveryAppPolicySubmitCommonSchema,
+    snapshotSelectionMode: z.literal('latest'),
+  }).strict(),
+  z.object({
+    ...recoveryAppPolicySubmitCommonSchema,
+    snapshotSelectionMode: z.literal('time_range'),
+    snapshotMaxAgeValue: positiveInteger,
+    snapshotMaxAgeUnit: z.enum(RECOVERY_APP_POLICY_TIME_UNITS),
+  }).strict(),
+  z.object({
+    ...recoveryAppPolicySubmitCommonSchema,
+    snapshotSelectionMode: z.literal('exact_time'),
+    snapshotTargetTime: targetTime,
+  }).strict(),
+])
 
 export const recoveryAppPoliciesResponseSchema = z.object({
   recovery_app_policies: z.array(recoveryAppPolicyWireSchema),
 })
 
 export type RecoveryAppPolicyWire = z.infer<typeof recoveryAppPolicyWireSchema>
+
+type RecoveryAppPolicySubmitWireCommon = Omit<
+  RecoveryAppPolicyWire,
+  'snapshot_selection_mode' | 'snapshot_max_age_value' | 'snapshot_max_age_unit' | 'snapshot_target_time'
+>
+
+export type RecoveryAppPolicySubmitWire =
+  | (RecoveryAppPolicySubmitWireCommon & {
+    snapshot_selection_mode: 'latest'
+  })
+  | (RecoveryAppPolicySubmitWireCommon & {
+    snapshot_selection_mode: 'time_range'
+    snapshot_max_age_value: number
+    snapshot_max_age_unit: (typeof RECOVERY_APP_POLICY_TIME_UNITS)[number]
+  })
+  | (RecoveryAppPolicySubmitWireCommon & {
+    snapshot_selection_mode: 'exact_time'
+    snapshot_target_time: string
+  })

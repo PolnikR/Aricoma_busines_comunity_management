@@ -128,7 +128,7 @@ export function RecoveryAppPolicyModal({ open, onClose, existingPolicies, policy
   const handleSubmit = () => {
     if (!validate()) return
     const mode = formData.snapshotSelectionMode as RecoveryAppPolicySelectionMode
-    const record: RecoveryAppPolicySubmitData = {
+    const commonRecord = {
       id: formData.id.trim(),
       name: formData.name.trim(),
       description: formData.description.trim(),
@@ -138,12 +138,25 @@ export function RecoveryAppPolicyModal({ open, onClose, existingPolicies, policy
       retentionValue: Number(formData.retentionValue),
       retentionUnit: formData.retentionUnit as RecoveryAppPolicyTimeUnit,
       bootVerify: formData.bootVerify,
-      snapshotSelectionMode: mode,
-      snapshotMaxAgeValue: mode === 'time_range' ? Number(formData.snapshotMaxAgeValue) : null,
-      snapshotMaxAgeUnit: mode === 'time_range' ? formData.snapshotMaxAgeUnit as RecoveryAppPolicyTimeUnit : null,
-      snapshotTargetTime: mode === 'exact_time' ? formData.snapshotTargetTime : null,
       enabled: formData.enabled,
     }
+    const record: RecoveryAppPolicySubmitData = mode === 'time_range'
+      ? {
+        ...commonRecord,
+        snapshotSelectionMode: 'time_range',
+        snapshotMaxAgeValue: Number(formData.snapshotMaxAgeValue),
+        snapshotMaxAgeUnit: formData.snapshotMaxAgeUnit as RecoveryAppPolicyTimeUnit,
+      }
+      : mode === 'exact_time'
+        ? {
+          ...commonRecord,
+          snapshotSelectionMode: 'exact_time',
+          snapshotTargetTime: formData.snapshotTargetTime,
+        }
+        : {
+          ...commonRecord,
+          snapshotSelectionMode: 'latest',
+        }
     submitPolicy.mutate(record, {
       onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
       onError: (error: unknown) => {
@@ -171,6 +184,7 @@ export function RecoveryAppPolicyModal({ open, onClose, existingPolicies, policy
         )}
       >
         {errorMessage ? <div className="mx-6 mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">{errorMessage}</div> : null}
+        <p className="mx-6 mt-4 text-sm text-text-muted">{t('recoveryAppPolicies.modal.description')}</p>
         <RecoveryAppPolicyForm data={formData} errors={errors} isSubmitting={submitPolicy.isPending} idDisabled={isEdit} onChange={handleChange} onSubmit={handleSubmit} />
       </Modal>
       <ConfirmDialog

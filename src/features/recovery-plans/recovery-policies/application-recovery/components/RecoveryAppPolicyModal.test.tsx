@@ -27,6 +27,19 @@ const policy: RecoveryAppPolicy = {
   enabled: true,
 }
 
+const exactTimePolicy: RecoveryAppPolicy = {
+  ...policy,
+  id: 'medium-monthly-exacttime',
+  name: 'Medium - Monthly DR Test',
+  description: 'Monthly recovery test using the snapshot closest to 02:00.',
+  level: 'medium',
+  frequencyValue: 30,
+  retentionValue: 2,
+  retentionUnit: 'days',
+  snapshotSelectionMode: 'exact_time',
+  snapshotTargetTime: '02:00',
+}
+
 function renderModal(props: Partial<React.ComponentProps<typeof RecoveryAppPolicyModal>> = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   return render(
@@ -43,6 +56,7 @@ describe('RecoveryAppPolicyModal', () => {
     renderModal()
 
     expect(screen.getByLabelText('Policy ID')).toBeInTheDocument()
+    expect(screen.getByText('Configure a policy for automated application recovery tests and snapshot selection.')).toBeInTheDocument()
     expect(screen.getByLabelText('Snapshot selection')).toHaveValue('latest')
     expect(screen.getByRole('checkbox', { name: 'Boot verification' })).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: 'Enabled' })).toBeChecked()
@@ -78,12 +92,71 @@ describe('RecoveryAppPolicyModal', () => {
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
 
     const init = fetchMock.mock.calls[0]?.[1] as RequestInit
-    expect(init.body).toBe(JSON.stringify({
+    expect(JSON.parse(init.body as string)).toEqual({
       id: 'high-weekly', name: 'High weekly', description: 'Weekly', level: 'high',
       frequency_value: 7, frequency_unit: 'days', retention_value: 1, retention_unit: 'days',
       boot_verify: true, snapshot_selection_mode: 'time_range', snapshot_max_age_value: 2,
-      snapshot_max_age_unit: 'hours', snapshot_target_time: null, enabled: true,
-    }))
+      snapshot_max_age_unit: 'hours', enabled: true,
+    })
+  })
+
+  it('submits latest without mode-specific fields after switching from time range', async () => {
+    const onClose = vi.fn()
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      recovery_app_policies: [{
+        id: 'critical-daily', name: 'Critical daily', description: 'Daily', level: 'critical',
+        frequency_value: 1, frequency_unit: 'days', retention_value: 4, retention_unit: 'hours',
+        boot_verify: false, snapshot_selection_mode: 'latest', snapshot_max_age_value: null,
+        snapshot_max_age_unit: null, snapshot_target_time: null, enabled: true,
+      }],
+    }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderModal({ onClose })
+
+    fireEvent.change(screen.getByLabelText('Policy ID'), { target: { value: 'critical-daily' } })
+    fireEvent.change(screen.getByLabelText('Policy name'), { target: { value: 'Critical daily' } })
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Daily' } })
+    fireEvent.change(screen.getByLabelText('Level'), { target: { value: 'critical' } })
+    fireEvent.change(screen.getByLabelText('Snapshot selection'), { target: { value: 'time_range' } })
+    fireEvent.change(screen.getByLabelText('Maximum snapshot age'), { target: { value: '2' } })
+    fireEvent.change(screen.getByLabelText('Maximum snapshot age unit'), { target: { value: 'hours' } })
+    fireEvent.change(screen.getByLabelText('Snapshot selection'), { target: { value: 'latest' } })
+    expect(screen.queryByLabelText('Maximum snapshot age')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit
+    expect(JSON.parse(init.body as string)).toEqual({
+      id: 'critical-daily', name: 'Critical daily', description: 'Daily', level: 'critical',
+      frequency_value: 1, frequency_unit: 'minutes', retention_value: 1, retention_unit: 'days',
+      boot_verify: false, snapshot_selection_mode: 'latest', enabled: true,
+    })
+  })
+
+  it('submits exact-time policies without max-age fields', async () => {
+    const onClose = vi.fn()
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      recovery_app_policies: [{
+        id: exactTimePolicy.id, name: exactTimePolicy.name, description: exactTimePolicy.description, level: exactTimePolicy.level,
+        frequency_value: exactTimePolicy.frequencyValue, frequency_unit: exactTimePolicy.frequencyUnit,
+        retention_value: exactTimePolicy.retentionValue, retention_unit: exactTimePolicy.retentionUnit,
+        boot_verify: exactTimePolicy.bootVerify, snapshot_selection_mode: 'exact_time',
+        snapshot_max_age_value: null, snapshot_max_age_unit: null, snapshot_target_time: '02:00', enabled: true,
+      }],
+    }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderModal({ onClose, policy: exactTimePolicy, existingPolicies: [exactTimePolicy] })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit
+    expect(JSON.parse(init.body as string)).toEqual({
+      id: exactTimePolicy.id, name: exactTimePolicy.name, description: exactTimePolicy.description, level: exactTimePolicy.level,
+      frequency_value: 30, frequency_unit: 'days', retention_value: 2, retention_unit: 'days',
+      boot_verify: true, snapshot_selection_mode: 'exact_time', snapshot_target_time: '02:00', enabled: true,
+    })
   })
 
   it('prefills edit data and locks the id', () => {

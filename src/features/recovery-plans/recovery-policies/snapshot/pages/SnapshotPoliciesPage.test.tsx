@@ -32,8 +32,8 @@ describe('SnapshotPoliciesPage', () => {
 
     expect(screen.getByRole('heading', { name: 'Recovery Policies', level: 1 })).toBeInTheDocument()
     expect(screen.getByText('Snapshot policy catalogue')).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Snapshot' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('tab', { name: 'Application Recovery' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Snapshot policies' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Application Recovery Policies' })).toBeInTheDocument()
   })
 
   it('opens the create modal with cached policies', async () => {

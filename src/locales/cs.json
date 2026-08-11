@@ -1298,6 +1298,7 @@
   "recoveryAppPolicies.selection.exactTimeSummary": "Nejblíže k {time}",
   "recoveryAppPolicies.modal.createTitle": "Vytvořit zásadu",
   "recoveryAppPolicies.modal.editTitle": "Upravit zásadu",
+  "recoveryAppPolicies.modal.description": "Nastavte zásadu pro automatizované testy obnovy aplikace a výběr snímku.",
   "recoveryAppPolicies.submitFailed": "Zásadu obnovy aplikace se nepodařilo uložit",
   "recoveryAppPolicies.validation.idRequired": "ID zásady je povinné",
   "recoveryAppPolicies.validation.idExists": "Zásada s tímto ID již existuje",
