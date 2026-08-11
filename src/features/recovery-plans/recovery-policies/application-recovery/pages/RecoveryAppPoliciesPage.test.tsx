@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useRecoveryAppPolicies } from '../hooks/useRecoveryAppPolicies'
 import { RecoveryAppPoliciesPage } from './RecoveryAppPoliciesPage'
@@ -23,13 +24,14 @@ beforeEach(() => {
 
 describe('RecoveryAppPoliciesPage', () => {
   it('renders the shared inventory layout', () => {
-    render(<RecoveryAppPoliciesPage />)
-    expect(screen.getByRole('heading', { name: 'Recovery App Policies', level: 1 })).toBeInTheDocument()
+    render(<MemoryRouter><RecoveryAppPoliciesPage /></MemoryRouter>)
+    expect(screen.getByRole('heading', { name: 'Recovery Policies', level: 1 })).toBeInTheDocument()
     expect(screen.getByText('Recovery app policy catalogue')).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Application Recovery' })).toHaveAttribute('aria-selected', 'true')
   })
 
   it('opens the create modal with cached policies', async () => {
-    render(<RecoveryAppPoliciesPage />)
+    render(<MemoryRouter><RecoveryAppPoliciesPage /></MemoryRouter>)
     await userEvent.click(screen.getByRole('button', { name: 'Add Policy' }))
     expect(screen.getByText('Recovery app policy modal with 1 existing')).toBeInTheDocument()
   })

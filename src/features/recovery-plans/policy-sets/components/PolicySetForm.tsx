@@ -1,7 +1,7 @@
 import type { ChangeEvent, KeyboardEvent } from 'react'
 import { Field, Input, RadioField, Textarea } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
-import type { SnapshotPolicy } from '@/features/recovery-plans/snapshot-policies/model/snapshotPolicyTypes'
+import type { SnapshotPolicy } from '@/features/recovery-plans/recovery-policies/snapshot/model/snapshotPolicyTypes'
 
 export interface PolicySetFormData {
   id: string

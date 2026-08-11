@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useSnapshotPolicies } from '../hooks/useSnapshotPolicies'
 import { SnapshotPoliciesPage } from './SnapshotPoliciesPage'
@@ -27,15 +28,16 @@ beforeEach(() => {
 
 describe('SnapshotPoliciesPage', () => {
   it('renders the shared inventory layout without category tabs', () => {
-    render(<SnapshotPoliciesPage />)
+    render(<MemoryRouter><SnapshotPoliciesPage /></MemoryRouter>)
 
-    expect(screen.getByRole('heading', { name: 'Snapshot Policies', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Recovery Policies', level: 1 })).toBeInTheDocument()
     expect(screen.getByText('Snapshot policy catalogue')).toBeInTheDocument()
-    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Snapshot' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Application Recovery' })).toBeInTheDocument()
   })
 
   it('opens the create modal with cached policies', async () => {
-    render(<SnapshotPoliciesPage />)
+    render(<MemoryRouter><SnapshotPoliciesPage /></MemoryRouter>)
 
     await userEvent.click(screen.getByRole('button', { name: 'Add Policy' }))
     expect(screen.getByText('Policy modal with 1 existing')).toBeInTheDocument()
@@ -50,7 +52,7 @@ describe('SnapshotPoliciesPage', () => {
       error: null,
       refetch,
     } as unknown as ReturnType<typeof useSnapshotPolicies>)
-    render(<SnapshotPoliciesPage />)
+    render(<MemoryRouter><SnapshotPoliciesPage /></MemoryRouter>)
 
     await userEvent.click(screen.getByRole('button', { name: 'Refresh' }))
     expect(refetch).toHaveBeenCalledOnce()

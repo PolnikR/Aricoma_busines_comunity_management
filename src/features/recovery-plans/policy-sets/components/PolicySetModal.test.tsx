@@ -9,7 +9,7 @@ vi.mock('react-router', async (importOriginal) => ({
   ...await importOriginal<typeof import('react-router')>(),
   useBlocker: () => ({ state: 'unblocked' as const }),
 }))
-vi.mock('@/features/recovery-plans/snapshot-policies/hooks/useSnapshotPolicies', () => ({
+vi.mock('@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies', () => ({
   useSnapshotPolicies: () => ({
     data: [
       { id: 'medium-6h', name: 'Medium — 6h', description: '', level: 'medium', frequencyValue: 6, frequencyUnit: 'hours', retentionValue: 7, retentionUnit: 'days', maxSnapshots: null, enabled: true },

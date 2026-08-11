@@ -13,7 +13,7 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useSnapshotPolicies } from '@/features/recovery-plans/snapshot-policies/hooks/useSnapshotPolicies'
+import { useSnapshotPolicies } from '@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies'
 import { useDeletePolicySet } from '../hooks/useDeletePolicySet'
 import type { PolicySet } from '../model/policySetTypes'
 import { PolicySetModal } from './PolicySetModal'

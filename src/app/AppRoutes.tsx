@@ -38,8 +38,13 @@ const RecoveryGroupsListPage = lazy(async () => {
 })
 
 const SnapshotPoliciesPage = lazy(async () => {
-  const page = await import('@/features/recovery-plans/snapshot-policies/pages/SnapshotPoliciesPage')
+  const page = await import('@/features/recovery-plans/recovery-policies/snapshot/pages/SnapshotPoliciesPage')
   return { default: page.SnapshotPoliciesPage }
+})
+
+const ValidationPoliciesPage = lazy(async () => {
+  const page = await import('@/features/recovery-plans/recovery-policies/validation/pages/ValidationPoliciesPage')
+  return { default: page.ValidationPoliciesPage }
 })
 
 const PolicySetsPage = lazy(async () => {
@@ -73,7 +78,7 @@ const CredentialsPage = lazy(async () => {
 })
 
 const RecoveryAppPoliciesPage = lazy(async () => {
-  const page = await import('@/features/recovery-plans/recovery-app-policies/pages/RecoveryAppPoliciesPage')
+  const page = await import('@/features/recovery-plans/recovery-policies/application-recovery/pages/RecoveryAppPoliciesPage')
   return { default: page.RecoveryAppPoliciesPage }
 })
 
@@ -254,22 +259,35 @@ export function AppRoutes() {
               />
             )}
           />
-          <Route
-            path="snapshot-policies"
-            element={(
-              <Suspense fallback={<RouteLoadingSkeleton />}>
-                <SnapshotPoliciesPage />
-              </Suspense>
-            )}
-          />
-          <Route
-            path="recovery-app-policies"
-            element={(
-              <Suspense fallback={<RouteLoadingSkeleton />}>
-                <RecoveryAppPoliciesPage />
-              </Suspense>
-            )}
-          />
+          <Route path="recovery-policies">
+            <Route index element={<Navigate to={routes.recoveryPolicySnapshot} replace />} />
+            <Route
+              path="snapshot"
+              element={(
+                <Suspense fallback={<RouteLoadingSkeleton />}>
+                  <SnapshotPoliciesPage />
+                </Suspense>
+              )}
+            />
+            <Route
+              path="validation"
+              element={(
+                <Suspense fallback={<RouteLoadingSkeleton />}>
+                  <ValidationPoliciesPage />
+                </Suspense>
+              )}
+            />
+            <Route
+              path="application-recovery"
+              element={(
+                <Suspense fallback={<RouteLoadingSkeleton />}>
+                  <RecoveryAppPoliciesPage />
+                </Suspense>
+              )}
+            />
+          </Route>
+          <Route path="snapshot-policies" element={<Navigate to={routes.recoveryPolicySnapshot} replace />} />
+          <Route path="recovery-app-policies" element={<Navigate to={routes.recoveryPolicyApplicationRecovery} replace />} />
           <Route
             path="policy-sets"
             element={(

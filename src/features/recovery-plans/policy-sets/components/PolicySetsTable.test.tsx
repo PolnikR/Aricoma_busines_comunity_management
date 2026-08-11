@@ -8,7 +8,7 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 vi.mock('../hooks/useDeletePolicySet', () => ({
   useDeletePolicySet: () => ({ mutate: vi.fn(), isPending: false }),
 }))
-vi.mock('@/features/recovery-plans/snapshot-policies/hooks/useSnapshotPolicies', () => ({
+vi.mock('@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies', () => ({
   useSnapshotPolicies: () => ({
     data: [{ id: 'medium-6h', name: 'Medium — 6h' }],
   }),
