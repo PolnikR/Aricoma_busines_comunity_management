@@ -207,7 +207,8 @@ export function ProvidersCatalogueTable({
             <div className="flex min-w-0 flex-col items-end gap-1">
               <Button
                 size="xs"
-                variant="outline"
+                variant="soft"
+                className="border border-accent/30 bg-accent-soft text-accent shadow-none hover:border-accent hover:bg-accent-soft hover:text-accent"
                 startIcon={<PlugIcon className="size-3.5" />}
                 onClick={openConnectionTest}
                 disabled={selected.credentialStatus !== 'ok'}

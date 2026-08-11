@@ -111,7 +111,7 @@ describe('ProvidersCatalogueTable', () => {
     fireEvent.click(await screen.findByText('Production vCenter'))
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Test connection' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Test connection' })).toHaveClass('bg-accent-soft', 'text-accent', 'border-accent/30')
   })
 
   it('opens the connection test for the selected provider and shows the mock success', async () => {
