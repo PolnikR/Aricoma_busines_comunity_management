@@ -32,6 +32,7 @@ export function WorkspaceTabs<T extends string>({
     const nextIndex = items.findIndex((item, itemIndex) => itemIndex === index && !item.disabled)
     if (nextIndex < 0) return
     const item = items[nextIndex]
+    if (!item) return
     onChange(item.value)
     tabRefs.current[nextIndex]?.focus()
   }
@@ -55,7 +56,8 @@ export function WorkspaceTabs<T extends string>({
 
     for (let offset = 0; offset < items.length; offset += 1) {
       const candidateIndex = (nextIndex + (event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -offset : offset) + items.length * 2) % items.length
-      if (!items[candidateIndex].disabled) {
+      const candidate = items[candidateIndex]
+      if (candidate && !candidate.disabled) {
         focusItem(candidateIndex)
         return
       }

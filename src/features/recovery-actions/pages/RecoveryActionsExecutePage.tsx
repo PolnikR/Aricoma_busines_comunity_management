@@ -13,12 +13,13 @@ import { latestRecoveryPoint, recoveryApplicationGroups } from '../mocks/recover
 
 export function RecoveryActionsExecutePage() {
   const { t } = useTranslation()
-  const [groupId, setGroupId] = useState(recoveryApplicationGroups[0].id)
+  const [groupId, setGroupId] = useState(recoveryApplicationGroups[0]?.id ?? '')
   const [recoveryDate, setRecoveryDate] = useState('2026-08-11T04:15')
   const [target, setTarget] = useState('isolated-validation')
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [started, setStarted] = useState(false)
   const selectedGroup = recoveryApplicationGroups.find((group) => group.id === groupId) ?? recoveryApplicationGroups[0]
+  const selectedGroupName = selectedGroup?.name ?? t('messages.noDataAvailable')
 
   return (
     <RecoveryActionsPageShell activeTab="execute">
@@ -51,7 +52,7 @@ export function RecoveryActionsExecutePage() {
               <Input id="execute-date" type="datetime-local" value={recoveryDate} onChange={(event) => { setRecoveryDate(event.target.value) }} />
             </Field>
             <p className="text-xs leading-5 text-text-muted">{t('pages.recoveryActions.execute.dateHelper')}</p>
-            <Button startIcon={<ExecutionIcon className="size-4" />} onClick={() => { setConfirmOpen(true) }}>{t('pages.recoveryActions.execute.run')}</Button>
+            <Button disabled={!selectedGroup} startIcon={<ExecutionIcon className="size-4" />} onClick={() => { setConfirmOpen(true) }}>{t('pages.recoveryActions.execute.run')}</Button>
           </Card>
           <Card className="space-y-4 bg-surface-subtle">
             <div className="flex items-start justify-between gap-3">
@@ -59,7 +60,7 @@ export function RecoveryActionsExecutePage() {
               <Badge color="info" size="sm">{t('pages.recoveryActions.execute.previewBadge')}</Badge>
             </div>
             <dl className="divide-y divide-border rounded-xl border border-border bg-surface">
-              <PreviewRow label={t('pages.recoveryActions.execute.previewGroup')} value={selectedGroup.name} />
+              <PreviewRow label={t('pages.recoveryActions.execute.previewGroup')} value={selectedGroupName} />
               <PreviewRow label={t('pages.recoveryActions.execute.previewTarget')} value={target === 'dr-site' ? 'DR site' : 'Isolated validation'} />
             </dl>
             <RecoveryPointSummary
@@ -74,7 +75,7 @@ export function RecoveryActionsExecutePage() {
       <ConfirmDialog
         open={confirmOpen}
         title={t('pages.recoveryActions.execute.confirmTitle')}
-        message={t('pages.recoveryActions.execute.confirmDescription', { group: selectedGroup.name, date: recoveryDate.replace('T', ' ') })}
+        message={t('pages.recoveryActions.execute.confirmDescription', { group: selectedGroupName, date: recoveryDate.replace('T', ' ') })}
         confirmLabel={t('pages.recoveryActions.execute.confirm')}
         cancelLabel={t('common.cancel')}
         onCancel={() => { setConfirmOpen(false) }}

@@ -75,7 +75,7 @@ export function RecoveryActionsSchedulePage() {
                 </Select>
               </Field>
               <p className="mt-2 text-xs leading-5 text-text-muted">{t('pages.recoveryActions.schedule.recipientHelper')}</p>
-              <div className="mt-4 rounded-lg border border-border bg-surface-subtle px-3 py-2.5 text-xs"><p className="font-semibold text-text-primary">{recipient.name}</p><p className="mt-0.5 text-text-muted">{recipient.email}</p></div>
+              {recipient ? <div className="mt-4 rounded-lg border border-border bg-surface-subtle px-3 py-2.5 text-xs"><p className="font-semibold text-text-primary">{recipient.name}</p><p className="mt-0.5 text-text-muted">{recipient.email}</p></div> : <p className="mt-4 text-xs text-text-muted">{t('messages.noDataAvailable')}</p>}
             </div>
           </SettingsSectionCard>
         </div>

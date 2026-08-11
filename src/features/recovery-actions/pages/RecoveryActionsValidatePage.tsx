@@ -21,10 +21,11 @@ type ValidationMode = 'latest' | 'manual'
 export function RecoveryActionsValidatePage() {
   const { t } = useTranslation()
   const [mode, setMode] = useState<ValidationMode>('latest')
-  const [groupId, setGroupId] = useState(recoveryApplicationGroups[0].id)
+  const [groupId, setGroupId] = useState(recoveryApplicationGroups[0]?.id ?? '')
   const [validationDate, setValidationDate] = useState('2026-08-11T04:15')
   const [manualSubmitted, setManualSubmitted] = useState(false)
   const selectedGroup = recoveryApplicationGroups.find((group) => group.id === groupId) ?? recoveryApplicationGroups[0]
+  const selectedGroupName = selectedGroup?.name ?? t('messages.noDataAvailable')
 
   return (
     <RecoveryActionsPageShell activeTab="validate">
@@ -91,13 +92,13 @@ export function RecoveryActionsValidatePage() {
                   snapshotsLabel={t('pages.recoveryActions.validate.manual.snapshots')}
                 />
               </div>
-              <button type="button" onClick={() => { setManualSubmitted(true) }} className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15">
+              <button type="button" disabled={!selectedGroup} onClick={() => { setManualSubmitted(true) }} className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15 disabled:cursor-not-allowed disabled:opacity-50">
                 <ExecutionIcon className="size-4" />
                 {t('pages.recoveryActions.validate.manual.run')}
               </button>
             </Card>
             <div className="space-y-4">
-              {manualSubmitted ? <Alert variant="success" title={t('pages.recoveryActions.validate.manual.successTitle')} description={t('pages.recoveryActions.validate.manual.successDescription', { group: selectedGroup.name })} /> : null}
+              {manualSubmitted ? <Alert variant="success" title={t('pages.recoveryActions.validate.manual.successTitle')} description={t('pages.recoveryActions.validate.manual.successDescription', { group: selectedGroupName })} /> : null}
               <CheckList />
             </div>
           </div>
