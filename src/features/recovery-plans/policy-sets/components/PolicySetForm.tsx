@@ -1,19 +1,26 @@
 import type { ChangeEvent, KeyboardEvent } from 'react'
+import { Button } from '@/shared/components/button/Button'
 import { Field, Input, RadioField, Textarea } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { SnapshotPolicy } from '@/features/recovery-plans/recovery-policies/snapshot/model/snapshotPolicyTypes'
+import type { RecoveryAppPolicy } from '@/features/recovery-plans/recovery-policies/application-recovery/model/recoveryAppPolicyTypes'
 
 export interface PolicySetFormData {
   id: string
   name: string
   description: string
-  policyIds: string[]
+  snapshotPolicyIds: string[]
+  recoveryAppPolicyId: string
 }
 
 interface PolicySetFormProps {
   data: PolicySetFormData
   errors: Partial<Record<keyof PolicySetFormData, string>>
-  availablePolicies: SnapshotPolicy[]
+  availableSnapshotPolicies: SnapshotPolicy[]
+  availableRecoveryAppPolicies: RecoveryAppPolicy[]
+  isRecoveryAppPoliciesLoading: boolean
+  recoveryAppPoliciesError: Error | null
+  onRetryRecoveryAppPolicies: () => void
   isSubmitting: boolean
   idDisabled?: boolean
   onChange: <K extends keyof PolicySetFormData>(field: K, value: PolicySetFormData[K]) => void
@@ -23,7 +30,11 @@ interface PolicySetFormProps {
 export function PolicySetForm({
   data,
   errors,
-  availablePolicies,
+  availableSnapshotPolicies,
+  availableRecoveryAppPolicies,
+  isRecoveryAppPoliciesLoading,
+  recoveryAppPoliciesError,
+  onRetryRecoveryAppPolicies,
   isSubmitting,
   idDisabled = false,
   onChange,
@@ -36,8 +47,11 @@ export function PolicySetForm({
       onSubmit()
     }
   }
-  const selectPolicy = (policyId: string) => {
-    onChange('policyIds', [policyId])
+  const selectSnapshotPolicy = (policyId: string) => {
+    onChange('snapshotPolicyIds', [policyId])
+  }
+  const selectRecoveryAppPolicy = (policyId: string) => {
+    onChange('recoveryAppPolicyId', policyId)
   }
 
   return (
@@ -59,26 +73,63 @@ export function PolicySetForm({
       </Field>
 
       <div>
-        <span className="mb-1.5 block text-xs font-medium text-text-secondary">{t('policySets.form.policies')}</span>
-        {availablePolicies.length === 0 ? (
+        <span className="mb-1.5 block text-xs font-medium text-text-secondary">{t('policySets.form.snapshotPolicies')}</span>
+        {availableSnapshotPolicies.length === 0 ? (
           <p className="text-xs text-text-muted">{t('policySets.form.noPolicies')}</p>
         ) : (
           <div className="space-y-2">
-            {availablePolicies.map(policy => (
+            {availableSnapshotPolicies.map(policy => (
               <RadioField
                 key={policy.id}
                 id={`policy-set-policy-${policy.id}`}
                 name="policy-set-policy"
                 label={`${policy.name} (${policy.id})`}
-                checked={data.policyIds.includes(policy.id)}
+                checked={data.snapshotPolicyIds.includes(policy.id)}
                 disabled={isSubmitting}
                 variant="bordered"
-                onChange={() => { selectPolicy(policy.id) }}
+                onChange={() => { selectSnapshotPolicy(policy.id) }}
               />
             ))}
           </div>
         )}
-        {errors.policyIds ? <p className="mt-1 text-xs text-red-600">{errors.policyIds}</p> : null}
+        {errors.snapshotPolicyIds ? <p className="mt-1 text-xs text-red-600">{errors.snapshotPolicyIds}</p> : null}
+      </div>
+
+      <div>
+        <span className="mb-1.5 block text-xs font-medium text-text-secondary">{t('policySets.form.recoveryAppPolicy')}</span>
+        {isRecoveryAppPoliciesLoading ? (
+          <p className="text-xs text-text-muted" role="status">{t('policySets.form.loadingRecoveryAppPolicies')}</p>
+        ) : recoveryAppPoliciesError ? (
+          <div className="space-y-2" role="alert">
+            <p className="text-xs text-red-600">{t('policySets.form.recoveryAppPoliciesLoadFailed')}</p>
+            <Button type="button" size="xs" variant="outline" onClick={onRetryRecoveryAppPolicies} disabled={isSubmitting}>
+              {t('buttons.retry')}
+            </Button>
+          </div>
+        ) : availableRecoveryAppPolicies.length === 0 ? (
+          <p className="text-xs text-text-muted">{t('policySets.form.noRecoveryAppPolicies')}</p>
+        ) : (
+          <div className="space-y-2">
+            {availableRecoveryAppPolicies.map(policy => (
+              <RadioField
+                key={policy.id}
+                id={`policy-set-recovery-app-policy-${policy.id}`}
+                name="policy-set-recovery-app-policy"
+                label={`${policy.name} (${policy.id})`}
+                checked={data.recoveryAppPolicyId === policy.id}
+                disabled={isSubmitting}
+                variant="bordered"
+                onChange={() => { selectRecoveryAppPolicy(policy.id) }}
+              />
+            ))}
+            {data.recoveryAppPolicyId && !availableRecoveryAppPolicies.some(policy => policy.id === data.recoveryAppPolicyId) ? (
+              <p className="text-xs text-amber-700" role="status">
+                {t('policySets.form.unavailableRecoveryAppPolicy').replace('{id}', data.recoveryAppPolicyId)}
+              </p>
+            ) : null}
+          </div>
+        )}
+        {errors.recoveryAppPolicyId ? <p className="mt-1 text-xs text-red-600">{errors.recoveryAppPolicyId}</p> : null}
       </div>
     </div>
   )

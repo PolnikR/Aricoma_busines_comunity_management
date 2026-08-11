@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { PolicySet } from '../model/policySetTypes'
@@ -13,12 +13,18 @@ vi.mock('@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotP
     data: [{ id: 'medium-6h', name: 'Medium — 6h' }],
   }),
 }))
+vi.mock('@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies', () => ({
+  useRecoveryAppPolicies: () => ({
+    data: [{ id: 'critical-daily-latest', name: 'Critical — Daily DR Test' }],
+  }),
+}))
 
 const policySet: PolicySet = {
   id: 'tier2-apps',
   name: 'Tier 2 applications',
   description: 'Policy set using the medium-tier, 6-hour cadence.',
-  policyIds: ['medium-6h'],
+  snapshotPolicyIds: ['medium-6h'],
+  recoveryAppPolicyId: 'critical-daily-latest',
 }
 
 describe('PolicySetsTable', () => {
@@ -37,8 +43,10 @@ describe('PolicySetsTable', () => {
     expect(screen.getByText('1')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('Tier 2 applications'))
-    expect(screen.getByRole('dialog', { name: 'Policy set detail' })).toBeInTheDocument()
-    expect(screen.getByText('Medium — 6h')).toBeInTheDocument()
+    const detail = screen.getByRole('dialog', { name: 'Policy set detail' })
+    expect(detail).toBeInTheDocument()
+    expect(within(detail).getByText('Medium — 6h')).toBeInTheDocument()
+    expect(within(detail).getByText('Critical — Daily DR Test')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
   })

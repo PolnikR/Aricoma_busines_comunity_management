@@ -12,14 +12,16 @@ const policySet: PolicySet = {
   id: 'tier2-apps',
   name: 'Tier 2 applications',
   description: 'Policy set using the medium-tier, 6-hour cadence.',
-  policyIds: ['medium-6h'],
+  snapshotPolicyIds: ['medium-6h'],
+  recoveryAppPolicyId: 'critical-daily-latest',
 }
 
 const wirePolicySet = {
   id: policySet.id,
   name: policySet.name,
   description: policySet.description,
-  policy_ids: policySet.policyIds,
+  snapshot_policy_ids: policySet.snapshotPolicyIds,
+  recovery_app_policy_id: policySet.recoveryAppPolicyId,
 }
 
 function createQueryContext() {

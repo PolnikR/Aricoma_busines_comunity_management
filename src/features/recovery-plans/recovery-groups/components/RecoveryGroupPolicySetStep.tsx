@@ -42,7 +42,7 @@ export function RecoveryGroupPolicySetStep({
               selected={policySet.id === selectedPolicySetId}
               title={policySet.name}
               description={policySet.description}
-              meta={t('pages.recoveryGroupBuilder.policySet.policiesCount').replace('{count}', String(policySet.policyIds.length))}
+              meta={t('pages.recoveryGroupBuilder.policySet.policiesCount').replace('{count}', String(policySet.snapshotPolicyIds.length))}
               onClick={() => { onSelect(policySet.id) }}
             />
           ))}

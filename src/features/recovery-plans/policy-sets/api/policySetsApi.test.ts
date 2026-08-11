@@ -10,14 +10,16 @@ const policySet: PolicySet = {
   id: 'tier2-apps',
   name: 'Tier 2 applications',
   description: 'Policy set using the medium-tier, 6-hour cadence.',
-  policyIds: ['medium-6h'],
+  snapshotPolicyIds: ['medium-6h'],
+  recoveryAppPolicyId: 'critical-daily-latest',
 }
 
 const wirePolicySet = {
   id: policySet.id,
   name: policySet.name,
   description: policySet.description,
-  policy_ids: policySet.policyIds,
+  snapshot_policy_ids: policySet.snapshotPolicyIds,
+  recovery_app_policy_id: policySet.recoveryAppPolicyId,
 }
 
 function stubFetch(payload: unknown, status = 200) {
@@ -35,12 +37,12 @@ afterEach(() => {
 describe('fetchPolicySets', () => {
   it('loads, validates and normalizes policy sets', async () => {
     const fetchMock = stubFetch({
-      policy_sets: [wirePolicySet, { ...wirePolicySet, id: 'archive', policy_ids: ['low-24h'] }],
+      policy_sets: [wirePolicySet, { ...wirePolicySet, id: 'archive', snapshot_policy_ids: ['low-24h'] }],
     })
 
     await expect(fetchPolicySets()).resolves.toEqual([
       policySet,
-      { ...policySet, id: 'archive', policyIds: ['low-24h'] },
+      { ...policySet, id: 'archive', snapshotPolicyIds: ['low-24h'] },
     ])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
@@ -50,7 +52,8 @@ describe('fetchPolicySets', () => {
 
   it.each([
     ['missing policy set list', {}],
-    ['empty policy ids', { policy_sets: [{ ...wirePolicySet, policy_ids: [] }] }],
+    ['empty snapshot policy ids', { policy_sets: [{ ...wirePolicySet, snapshot_policy_ids: [] }] }],
+    ['missing recovery app policy id', { policy_sets: [{ ...wirePolicySet, recovery_app_policy_id: '' }] }],
   ])('rejects malformed responses: %s', async (_case, payload) => {
     stubFetch(payload)
     await expect(fetchPolicySets()).rejects.toBeInstanceOf(Error)
@@ -83,7 +86,8 @@ describe('submitPolicySet', () => {
   it('rejects invalid input before calling the backend', async () => {
     const fetchMock = stubFetch({ policy_sets: [] })
 
-    await expect(submitPolicySet({ ...policySet, policyIds: [] })).rejects.toBeInstanceOf(Error)
+    await expect(submitPolicySet({ ...policySet, snapshotPolicyIds: [] })).rejects.toBeInstanceOf(Error)
+    await expect(submitPolicySet({ ...policySet, recoveryAppPolicyId: '' })).rejects.toBeInstanceOf(Error)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })
