@@ -96,9 +96,14 @@ vi.mock('../components/vmware/VirtualMachinesTable', () => ({
 vi.mock('../components/vmware/VirtualMachineDetailPanel', () => ({
   VirtualMachineDetailPanel: () => <div>VM detail</div>,
 }))
-vi.mock('../skeletons', () => ({
-  MetricsSkeleton: () => <div>Metrics skeleton</div>,
-}))
+vi.mock('@/shared/components/stat-card/StatCard', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/components/stat-card/StatCard')>()
+
+  return {
+    ...actual,
+    MetricsSkeleton: () => <div>Metrics skeleton</div>,
+  }
+})
 
 beforeEach(() => {
   vi.clearAllMocks()

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { applyFiltersAndPagination, getServerSideTagFilter } from './filterVirtualMachines'
 import type { AllVirtualMachinesData } from './mapInventoryToVirtualMachines'
-import type { VirtualMachine, VirtualMachinesQuery } from '../types'
+import type { VirtualMachine, VirtualMachinesQuery } from '../types/virtualMachineTypes'
 
 function vm(name: string, tags: string[] = []): VirtualMachine {
   return {

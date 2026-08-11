@@ -28,3 +28,13 @@
 - [x] Production build (run with the repository's local Vite binary).
 - [x] Stage only discovery-inventory, direct Recovery Groups import updates and
   the corrected plan/checklist before commit.
+
+## Follow-up: Skeleton placement consistency
+
+- [x] Confirm shared component destinations and preserve current contracts.
+- [x] Extend existing shared files without creating new component files.
+- [x] Migrate Resources imports and remove `resources/skeletons`.
+- [x] Move Resources domain types into `resources/types/virtualMachineTypes.ts`.
+- [x] Verify no feature-local skeleton directory or duplicate `SkeletonBlock`
+  remains.
+- [x] Run shared/Resources tests, lint, typecheck and production build.

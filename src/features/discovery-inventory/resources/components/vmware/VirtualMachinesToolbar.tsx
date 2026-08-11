@@ -4,7 +4,7 @@ import { CheckboxField, Field, Select } from '@/shared/components/form/FormContr
 import { DataTableToolbar } from '@/shared/components/data-table'
 import type { TableDensity } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
-import type { VirtualMachineFilterOptions, VirtualMachineFilters } from '../../types'
+import type { VirtualMachineFilterOptions, VirtualMachineFilters } from '../../types/virtualMachineTypes'
 
 interface VirtualMachinesToolbarProps {
   filters: VirtualMachineFilters

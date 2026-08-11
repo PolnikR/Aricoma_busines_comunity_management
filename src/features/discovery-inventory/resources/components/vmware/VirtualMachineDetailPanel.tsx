@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { VirtualMachine } from '../../types'
+import type { VirtualMachine } from '../../types/virtualMachineTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
 import { formatStartTime } from '@/shared/utils/dateFormat'

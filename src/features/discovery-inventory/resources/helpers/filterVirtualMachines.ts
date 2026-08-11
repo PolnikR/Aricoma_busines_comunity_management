@@ -1,5 +1,5 @@
 import type { AllVirtualMachinesData } from './mapInventoryToVirtualMachines'
-import type { VirtualMachine, VirtualMachinesPageData, VirtualMachinesQuery } from '../types'
+import type { VirtualMachine, VirtualMachinesPageData, VirtualMachinesQuery } from '../types/virtualMachineTypes'
 
 export function getServerSideTagFilter(tags: string[]): string | undefined {
   return tags.length === 1 ? tags[0] : undefined

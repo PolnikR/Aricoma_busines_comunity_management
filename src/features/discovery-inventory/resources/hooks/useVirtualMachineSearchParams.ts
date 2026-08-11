@@ -1,5 +1,5 @@
 import { useResourceInventorySearchParams } from './useResourceInventorySearchParams'
-import type { VirtualMachineFilters } from '../types'
+import type { VirtualMachineFilters } from '../types/virtualMachineTypes'
 
 type VirtualMachineUrlFilters = Omit<VirtualMachineFilters, 'search'>
 

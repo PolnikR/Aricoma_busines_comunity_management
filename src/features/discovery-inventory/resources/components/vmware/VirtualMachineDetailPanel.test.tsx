@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
-import type { VirtualMachine } from '../../types'
+import type { VirtualMachine } from '../../types/virtualMachineTypes'
 import type { VmStorageVolumes } from '../../model/vmStorageVolumesTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 

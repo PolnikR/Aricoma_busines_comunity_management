@@ -1,4 +1,4 @@
-import type { DiscoveredVirtualDisk } from './model/discoveryTypes'
+import type { DiscoveredVirtualDisk } from '../model/discoveryTypes'
 
 export interface VirtualMachine {
   id: string

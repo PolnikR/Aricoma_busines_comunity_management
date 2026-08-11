@@ -1,6 +1,9 @@
 import { render, screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
-import { DataTableSkeleton } from './DataTableSkeleton'
+import { describe, expect, it, vi } from 'vitest'
+import { DataTableSkeleton, SkeletonBlock } from './DataTableSkeleton'
+import { FilterPanelSkeleton } from '../filters/FilterTabs'
+
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 describe('DataTableSkeleton', () => {
   it('renders the requested table shape and accessible loading state', () => {
@@ -26,5 +29,18 @@ describe('DataTableSkeleton', () => {
     const skeleton = screen.getByRole('status')
     expect(skeleton.children).toHaveLength(1)
     expect(within(skeleton).getAllByRole('columnheader', { hidden: true })).toHaveLength(2)
+  })
+
+  it('renders the shared skeleton block with caller classes', () => {
+    const { container } = render(<SkeletonBlock className="h-4 w-20" />)
+
+    expect(container.firstElementChild).toHaveClass('block', 'rounded-md', 'h-4', 'w-20')
+  })
+
+  it('renders an accessible filter loading state', () => {
+    const { container } = render(<FilterPanelSkeleton />)
+
+    expect(screen.getByLabelText('Loading filters')).toHaveAttribute('aria-busy', 'true')
+    expect(container.querySelectorAll('.space-y-1\\.5')).toHaveLength(4)
   })
 })

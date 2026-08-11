@@ -35,7 +35,7 @@ src/features/discovery-inventory/
 │   ├── hooks/
 │   ├── model/
 │   ├── pages/
-│   └── skeletons/
+│   └── types.ts
 │
 ├── infrastructure/
 │   ├── api/
@@ -360,3 +360,162 @@ changed organization only.
   internal layers.
 - Shared consumers use explicit public API/model boundaries.
 - All tests, lint, typecheck and production build pass.
+
+---
+
+# Follow-up Plan: Consistent Skeleton Placement
+
+## Overview
+
+Remove the feature-local `discovery-inventory/resources/skeletons` layer and
+make loading placeholders follow the existing shared-component boundaries.
+This is a structural-only change: rendered markup, classes, accessibility
+attributes, translations and loading behavior remain unchanged.
+
+No new component files or new `shared/components/skeletons` directory will be
+created. Existing shared component files will be extended where the skeleton
+belongs semantically, and the current feature skeleton files will then be
+removed.
+
+## Architecture decisions
+
+- `DataTableSkeleton` remains in `shared/components/data-table` and owns the
+  reusable `SkeletonBlock` primitive. Its small prop type stays beside the
+  component; it does not belong in a feature `model` directory.
+- The metrics placeholder belongs with the existing `StatCard` component in
+  `shared/components/stat-card`, because it renders stat-card placeholders.
+- The filter placeholder belongs with the existing filter components in
+  `shared/components/filters`.
+- The composite inventory loading state belongs with the existing
+  `shared/components/inventory-shell` component. It is a reusable shell state,
+  not a VMware resource model.
+- Existing `ListSkeleton`, `DataTableSkeleton` and `RouteLoadingSkeleton` stay
+  in their current shared locations. No duplicate generic skeleton API is
+  introduced.
+- Skeleton props are view/component contracts and remain local to the existing
+  component files. No new `resources/model` or `shared/model` types are needed.
+- Resources domain contracts are grouped under a dedicated `resources/types`
+  directory. The existing `types.ts` module is moved to
+  `types/virtualMachineTypes.ts`; this is a path-only organization change and
+  does not alter the exported interfaces.
+
+## Target ownership
+
+| Current file | Existing destination | Result |
+|---|---|---|
+| `resources/skeletons/SkeletonBlock.tsx` | `shared/components/data-table/DataTableSkeleton.tsx` | Export/reuse the existing primitive; remove standalone file. |
+| `resources/skeletons/MetricsSkeleton.tsx` | `shared/components/stat-card/StatCard.tsx` | Add the metrics skeleton export beside `StatCard`. |
+| `resources/skeletons/FilterPanelSkeleton.tsx` | `shared/components/filters/FilterTabs.tsx` | Add the filter loading export beside filter UI. |
+| `resources/skeletons/VirtualMachinesSkeleton.tsx` | `shared/components/inventory-shell/InventoryShell.tsx` | Add the composite inventory loading export. |
+| `resources/skeletons/index.ts` | Existing shared component exports | Update existing barrel exports; do not create a new barrel. |
+| `resources/types.ts` | `resources/types/virtualMachineTypes.ts` | Move the existing Resources domain type module into the dedicated types directory; preserve exports and contracts. |
+
+## Tasks
+
+### Task 1: Confirm existing shared contracts
+
+**Description:** Inspect the current shared component exports and tests so the
+new exports can be added without changing public behavior or creating files.
+
+**Acceptance criteria:**
+- [ ] Existing `DataTableSkeleton`, `StatCard`, filter and inventory-shell
+  APIs remain backward compatible.
+- [ ] Current skeleton accessibility labels and `aria-busy` behavior are
+  recorded in tests.
+
+**Verification:**
+- [ ] Run the existing shared component tests before edits.
+
+**Dependencies:** None
+
+**Files likely touched:** Existing shared component/test files only.
+
+**Estimated scope:** Small
+
+### Task 2: Extend existing shared components
+
+**Description:** Move the four implementations into the existing shared files
+  identified above. Keep local prop types next to their component and preserve
+  the current class names, dimensions and translations.
+
+**Acceptance criteria:**
+- [ ] No new skeleton `.tsx`, `index.ts` or model file is created.
+- [ ] Shared exports expose the migrated skeletons through existing barrels.
+- [ ] `SkeletonBlock` is not duplicated in another module.
+
+**Verification:**
+- [ ] TypeScript resolves all new shared exports.
+- [ ] Existing skeleton unit assertions still pass.
+
+**Dependencies:** Task 1
+
+**Files likely touched:**
+- `src/shared/components/data-table/DataTableSkeleton.tsx`
+- `src/shared/components/stat-card/StatCard.tsx`
+- `src/shared/components/filters/FilterTabs.tsx`
+- `src/shared/components/inventory-shell/InventoryShell.tsx`
+- Existing corresponding `index.ts`/test files.
+
+**Estimated scope:** Medium
+
+### Task 3: Migrate feature imports and remove the local layer
+
+**Description:** Move the existing Resources type module under `resources/types`,
+update Resources page/components and tests to import from the new type path and
+existing shared component files, then delete `resources/skeletons` and its
+barrel.
+
+**Acceptance criteria:**
+- [ ] No import references `discovery-inventory/resources/skeletons`.
+- [ ] `discovery-inventory/resources` has no `skeletons` directory.
+- [ ] `discovery-inventory/resources/types/virtualMachineTypes.ts` is the sole
+  owner of the migrated Resources domain type contracts.
+- [ ] Resources loading, empty and error states render the same UI.
+
+**Verification:**
+- [ ] Focused Resources page/component tests pass.
+- [ ] `rg` finds no feature-local skeleton imports.
+
+**Dependencies:** Task 2
+
+**Files likely touched:** Resources page/components and existing tests.
+
+**Estimated scope:** Medium
+
+### Checkpoint: Shared skeleton policy
+
+- [ ] Only shared component areas own skeleton implementations.
+- [ ] No new skeleton files were introduced for the migration.
+- [ ] Resources types are grouped under `resources/types`.
+- [ ] Shared and Resources focused tests pass.
+
+### Task 4: Full quality verification
+
+**Description:** Validate that the structural change has no runtime, type or
+  accessibility regression.
+
+**Acceptance criteria:**
+- [ ] No feature contains a `skeletons` directory.
+- [ ] Skeleton labels and `aria-busy` remain unchanged.
+- [ ] No unrelated feature files are modified.
+
+**Verification:**
+- [ ] `eslint . --max-warnings 0`
+- [ ] `tsc -b`
+- [ ] Focused Vitest tests for shared components and Resources.
+- [ ] `vite build`
+
+**Dependencies:** Task 3
+
+**Files likely touched:** None; verification only.
+
+**Estimated scope:** Small
+
+## Risks and mitigations
+
+| Risk | Impact | Mitigation |
+|---|---|---|
+| Shared export path changes break lazy-loaded Resources code | Medium | Update imports through existing barrels and run typecheck/build. |
+| Visual spacing changes during relocation | Medium | Preserve the existing JSX/class markup and compare focused tests. |
+| Skeleton types leak into domain models | Low | Keep props local to the component files; no model changes. |
+| A second skeleton primitive is introduced accidentally | Medium | Audit `SkeletonBlock` definitions with `rg` before commit. |
