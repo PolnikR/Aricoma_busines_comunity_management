@@ -8,7 +8,7 @@ const labels = {
   'ibm-power': 'IBM Power Partitions',
 } as const
 
-function provider(id: string, name: string, type: ProviderRecord['type']): ProviderRecord {
+function provider(id: string, name: string, type: ProviderRecord['type'], role: ProviderRecord['role'] = 'source'): ProviderRecord {
   return {
     id,
     name,
@@ -17,6 +17,7 @@ function provider(id: string, name: string, type: ProviderRecord['type']): Provi
     ipAddress: '10.0.0.1',
     port: 22,
     credentialId: null,
+    role,
     credentialStatus: 'none',
   }
 }
@@ -55,5 +56,16 @@ describe('buildResourceSourceTabs', () => {
     expect(vmwareTabs).toHaveLength(10)
     expect(vmwareTabs[0]).toMatchObject({ value: 'vmware:vm-01', label: 'VMware VMs · vCenter 01' })
     expect(vmwareTabs[9]).toMatchObject({ value: 'vmware:vm-10', label: 'VMware VMs · vCenter 10' })
+  })
+
+  it('does not expose target providers as discovery sources', () => {
+    const tabs = buildResourceSourceTabs([
+      provider('target-01', 'Target vCenter', 'VMWARE', 'target'),
+    ], labels)
+
+    expect(tabs.find(tab => tab.resourceTab === 'vmware')).toMatchObject({
+      value: 'vmware:none',
+      providerId: null,
+    })
   })
 })

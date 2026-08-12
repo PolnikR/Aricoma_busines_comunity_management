@@ -28,7 +28,7 @@ function fromWire(policySet: PolicySetWire): PolicySet {
   }
 }
 
-function toWire(policySet: PolicySetSubmitData): PolicySetWire {
+export function toPolicySetSubmitPayload(policySet: PolicySetSubmitData): PolicySetWire {
   const validated = policySetSubmitSchema.parse(policySet)
   return {
     id: validated.id,
@@ -56,7 +56,7 @@ export async function fetchPolicySets(): Promise<PolicySet[]> {
 export async function submitPolicySet(
   policySet: PolicySetSubmitData,
 ): Promise<PolicySet[]> {
-  const wirePolicySet = toWire(policySet)
+  const wirePolicySet = toPolicySetSubmitPayload(policySet)
   const response = requireSuccessfulResponse(
     await apiFetch(API_ENDPOINTS.policySets.submit, {
       method: 'POST',

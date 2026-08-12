@@ -17,8 +17,10 @@ const providerA: ProviderRecord = {
   description: 'Primary vCenter',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  url: 'https://10.99.99.40/ui/',
   port: 22,
   credentialId: 'vcenter-admin',
+  role: 'source',
   credentialStatus: 'ok',
 }
 const providerB: ProviderRecord = {
@@ -29,16 +31,20 @@ const providerB: ProviderRecord = {
   ipAddress: '10.99.99.41',
   port: 22,
   credentialId: null,
+  role: 'source',
   credentialStatus: 'none',
 }
 
 function mockFetch() {
+  let deleted = false
   return vi.fn((input: string | URL) => {
     const url = String(input)
     if (url.includes('get_providers')) {
-      return Promise.resolve(new Response(JSON.stringify({ providers: [providerA, providerB] }), { status: 200 }))
+      const providers = deleted ? [providerB] : [providerA, providerB]
+      return Promise.resolve(new Response(JSON.stringify({ providers }), { status: 200 }))
     }
     if (url.includes('delete_provider')) {
+      deleted = true
       return Promise.resolve(new Response(JSON.stringify({ providers: [providerB] }), { status: 200 }))
     }
     return Promise.reject(new Error(`unexpected fetch: ${url}`))
@@ -109,9 +115,11 @@ describe('ProvidersCatalogueTable', () => {
   it('opens the detail drawer with actions when a row is clicked', async () => {
     renderTable()
     fireEvent.click(await screen.findByText('Production vCenter'))
+    expect(screen.getAllByText('Source').length).toBeGreaterThanOrEqual(2)
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Test connection' })).toHaveClass('bg-accent-soft', 'text-accent', 'border-accent/30')
+    expect(screen.getByRole('link', { name: 'https://10.99.99.40/ui/' })).toHaveAttribute('target', '_blank')
   })
 
   it('opens the connection test for the selected provider and shows the mock success', async () => {
@@ -129,6 +137,22 @@ describe('ProvidersCatalogueTable', () => {
     renderTable()
     fireEvent.click(await screen.findByText('Backup FlashSystem'))
     expect(screen.getByRole('button', { name: 'Test connection' })).toBeDisabled()
+  })
+
+  it('shows the provider submit payload without opening the detail drawer', async () => {
+    renderTable()
+
+    const [viewButton] = await screen.findAllByRole('button', { name: 'View' })
+    if (!viewButton) throw new Error('Expected a View button for the provider row')
+    fireEvent.click(viewButton)
+
+    const dialog = screen.getByRole('dialog', { name: 'Provider JSON' })
+    expect(dialog).toHaveTextContent('"id": "vmware-vcenter-01"')
+    expect(dialog).toHaveTextContent('"ipAddress": "10.99.99.40"')
+    expect(dialog).toHaveTextContent('"credentialId": "vcenter-admin"')
+    expect(dialog).not.toHaveTextContent('"credentialStatus"')
+    expect(dialog).not.toHaveTextContent('"port"')
+    expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
   })
 
   it('Edit closes the drawer and opens the prefilled modal with a locked id', async () => {

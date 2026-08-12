@@ -14,7 +14,9 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
+import { toPlatformProviderSubmitPayload } from '../api/platformProvidersApi'
 import { useDeletePlatformProvider } from '../hooks/useDeletePlatformProvider'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { PlatformProvidersModal } from './PlatformProvidersModal'
@@ -25,7 +27,10 @@ function credentialStatusColor(status: PlatformProviderRecord['credentialStatus'
   return 'light' as const
 }
 
-function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<PlatformProviderRecord>[] {
+function getColumns(
+  t: ReturnType<typeof useTranslation>['t'],
+  onViewJson: (providerId: string) => void,
+): ColumnDef<PlatformProviderRecord>[] {
   return [
     {
       id: 'name',
@@ -69,6 +74,22 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Platfo
         </div>
       ),
     },
+    {
+      id: 'json',
+      header: t('tables.common.json'),
+      cell: provider => (
+        <Button
+          size="xs"
+          variant="soft"
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation()
+            onViewJson(provider.id)
+          }}
+        >
+          {t('buttons.viewJson')}
+        </Button>
+      ),
+    },
   ]
 }
 
@@ -88,19 +109,21 @@ export function PlatformProvidersTable({
   onRetry,
 }: PlatformProvidersTableProps) {
   const { t } = useTranslation()
-  const columns = getColumns(t)
   const deleteProvider = useDeletePlatformProvider()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<PlatformProviderRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<PlatformProviderRecord | null>(null)
+  const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const rows = useMemo(() => providers, [providers])
   const selected = rows.find(provider => provider.id === selectedId) ?? null
+  const jsonViewed = rows.find(provider => provider.id === jsonViewId) ?? null
+  const columns = getColumns(t, setJsonViewId)
   const table = useTableState(rows, { searchFields: ['name', 'id', 'ipAddress'] })
 
   if (isLoading) {
     return (
       <DataTableSkeleton
-        columnCount={6}
+        columnCount={7}
         ariaLabel={t('platformProviders.loading')}
         className="flex-1 rounded-none border-0 shadow-none lg:min-h-0"
       />
@@ -228,6 +251,14 @@ export function PlatformProvidersTable({
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
           })
         }}
+      />
+
+      <JsonViewerModal
+        open={jsonViewed !== null}
+        title={t('platformProviders.jsonViewer.title')}
+        data={jsonViewed ? toPlatformProviderSubmitPayload(jsonViewed) : null}
+        closeLabel={t('buttons.close')}
+        onClose={() => { setJsonViewId(null) }}
       />
     </div>
   )

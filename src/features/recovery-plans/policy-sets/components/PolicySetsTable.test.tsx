@@ -58,6 +58,28 @@ describe('PolicySetsTable', () => {
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
   })
 
+  it('shows the policy set submit payload without opening the detail drawer', async () => {
+    const user = userEvent.setup()
+    render(
+      <PolicySetsTable
+        policySets={[policySet]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'View' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Policy Set JSON' })
+    expect(dialog).toHaveTextContent('"snapshot_policy_id": "medium-6h"')
+    expect(dialog).toHaveTextContent('"recovery_app_policy_id": "critical-daily-latest"')
+    expect(dialog).toHaveTextContent('"clean_room_policy_id": "enforce-clean-target"')
+    expect(dialog).not.toHaveTextContent('"snapshotPolicyId"')
+    expect(screen.queryByRole('dialog', { name: 'Policy set detail' })).not.toBeInTheDocument()
+  })
+
   it('keeps table controls available while showing a shared request error', () => {
     render(
       <PolicySetsTable

@@ -92,6 +92,7 @@ vi.mock('./TierCanvas', () => ({
     onRecoveryVmSelectionChange?: (tierId: string, vmName: string, selected: boolean) => void
   }) => (
     <div>
+      <span>Tier count: {Object.keys(tiers).length}</span>
       <span>Database VMs: {tiers['database']?.recovery_group?.vms.length ?? 0}</span>
       <span>Database options: {recoveryGroupVmOptions?.['database_group']?.length ?? 0}</span>
       <button type="button" onClick={() => { onRecoveryGroupAdded?.('database', 'database_group') }}>
@@ -176,6 +177,7 @@ describe('RecoveryAppBuilder', () => {
     render(<RecoveryAppBuilder />)
     await openTiers()
     expect(screen.getByRole('button', { name: 'Recovery groups & tiers' })).toHaveAttribute('aria-current', 'step')
+    expect(screen.getByText('Tier count: 1')).toBeInTheDocument()
     expect(screen.getByText('Database options: 2')).toBeInTheDocument()
   })
 

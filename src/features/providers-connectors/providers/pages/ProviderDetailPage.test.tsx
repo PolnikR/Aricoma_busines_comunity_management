@@ -11,7 +11,11 @@ let query: {
     description: string
     type: 'VMWARE'
     ipAddress: string
+    url?: string | null
     credentialId: string | null
+    role?: 'source' | 'target'
+    defaultFlashcopyProviderId?: string | null
+    orchestratorConnId?: string | null
     credentialStatus: 'ok' | 'missing' | 'none'
   }[] | undefined
   isLoading: boolean
@@ -36,7 +40,11 @@ beforeEach(() => {
       description: 'Prod',
       type: 'VMWARE',
       ipAddress: '10.0.0.1',
+      url: 'https://10.0.0.1/ui/',
       credentialId: 'vcenter-admin',
+      role: 'source',
+      defaultFlashcopyProviderId: 'flash-01',
+      orchestratorConnId: 'airflow-01',
       credentialStatus: 'ok',
     }],
     isLoading: false,
@@ -51,6 +59,11 @@ describe('ProviderDetailPage', () => {
     render(<ProviderDetailPage />)
     expect(screen.getByText('Primary')).toBeInTheDocument()
     expect(screen.getAllByText('VMware')).toHaveLength(2)
+    expect(screen.getByText('Source')).toBeInTheDocument()
+    expect(screen.getByText('flash-01')).toBeInTheDocument()
+    expect(screen.getByText('airflow-01')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'https://10.0.0.1/ui/' })).toHaveAttribute('href', 'https://10.0.0.1/ui/')
+    expect(screen.getByRole('link', { name: 'https://10.0.0.1/ui/' })).toHaveAttribute('target', '_blank')
     await user.click(screen.getByRole('button', { name: 'Back' }))
     expect(navigate).toHaveBeenCalledWith('/providers-connectors/providers')
   })

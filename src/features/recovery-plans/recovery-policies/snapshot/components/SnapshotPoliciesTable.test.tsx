@@ -58,6 +58,28 @@ describe('SnapshotPoliciesTable', () => {
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
   })
 
+  it('shows the snapshot policy submit payload without opening the detail drawer', async () => {
+    const user = userEvent.setup()
+    render(
+      <SnapshotPoliciesTable
+        policies={[policy]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'View' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Snapshot Policy JSON' })
+    expect(dialog).toHaveTextContent('"frequency_value": 15')
+    expect(dialog).toHaveTextContent('"retention_unit": "hours"')
+    expect(dialog).toHaveTextContent('"max_snapshots": 12')
+    expect(dialog).not.toHaveTextContent('"frequencyValue"')
+    expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
+  })
+
   it('keeps table controls available while showing a shared request error', () => {
     render(
       <SnapshotPoliciesTable

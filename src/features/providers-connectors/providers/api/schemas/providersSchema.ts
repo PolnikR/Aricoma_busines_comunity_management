@@ -11,7 +11,7 @@ export const providerSubmitSchema = z.object({
   description: z.string(),
   type: z.enum(PROVIDER_TYPES),
   ipAddress: z.string().min(1),
-  url: z.string().url().nullable().optional(),
+  url: z.url().nullable().optional(),
   credentialId: z.string().nullable(),
   role: z.enum(PROVIDER_ROLES),
   defaultFlashcopyProviderId: z.string().min(1).nullable().optional(),

@@ -27,10 +27,16 @@ export async function fetchPlatformProviders(): Promise<PlatformProviderRecord[]
   return platformProvidersResponseSchema.parse(payload).providers
 }
 
+export function toPlatformProviderSubmitPayload(
+  provider: PlatformProviderSubmitData,
+): PlatformProviderSubmitData {
+  return platformProviderSubmitSchema.parse(provider)
+}
+
 export async function submitPlatformProvider(
   provider: PlatformProviderSubmitData,
 ): Promise<PlatformProviderWriteRecord[]> {
-  const validatedProvider = platformProviderSubmitSchema.parse(provider)
+  const validatedProvider = toPlatformProviderSubmitPayload(provider)
   const response = requireSuccessfulResponse(
     await apiFetch(API_ENDPOINTS.platformProviders.submit, {
       method: 'POST',

@@ -17,6 +17,7 @@ describe('useDeleteProvider', () => {
       ipAddress: '10.0.0.2',
       port: 22,
       credentialId: null,
+      role: 'source',
       credentialStatus: 'none',
     }]
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
@@ -33,6 +34,6 @@ describe('useDeleteProvider', () => {
     result.current.mutate('provider-1')
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
 
-    expect(client.getQueryData(providerKeys.list())).toEqual(remaining)
+    expect(client.getQueryState(providerKeys.list())?.isInvalidated).toBe(true)
   })
 })

@@ -29,7 +29,7 @@ export function getInfrastructureProviders(
   platform: InfrastructureTopologyPlatform,
 ): ProviderRecord[] {
   const providerType = getProviderTypeForPlatform(platform)
-  return providers.filter(({ type }) => type === providerType)
+  return providers.filter(({ type, role }) => type === providerType && role !== 'target')
 }
 
 export function resolveInfrastructureProvider(

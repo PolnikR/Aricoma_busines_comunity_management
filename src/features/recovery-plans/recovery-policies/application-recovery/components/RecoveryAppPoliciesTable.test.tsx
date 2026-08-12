@@ -37,6 +37,20 @@ describe('RecoveryAppPoliciesTable', () => {
     expect(screen.getByRole('dialog', { name: 'Recovery app policy detail' })).toBeInTheDocument()
   })
 
+  it('shows the mode-specific recovery policy submit payload without opening the drawer', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryAppPoliciesTable policies={[policy]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: 'View' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Application Recovery Policy JSON' })
+    expect(dialog).toHaveTextContent('"snapshot_selection_mode": "exact_time"')
+    expect(dialog).toHaveTextContent('"snapshot_target_time": "02:00"')
+    expect(dialog).not.toHaveTextContent('"snapshot_max_age_value"')
+    expect(dialog).not.toHaveTextContent('"snapshotTargetTime"')
+    expect(screen.queryByRole('dialog', { name: 'Recovery app policy detail' })).not.toBeInTheDocument()
+  })
+
   it('filters by snapshot selection mode', async () => {
     const user = userEvent.setup()
     render(<RecoveryAppPoliciesTable policies={[policy, latestPolicy]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} />)

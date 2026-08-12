@@ -8,7 +8,7 @@ import { isProgrammaticIdAvailable, toProgrammaticId } from '@/shared/utils/prog
 import { useUpsertProvider } from '../hooks/useUpsertProvider'
 import { useCredentials } from '../../credentials/hooks/useCredentials'
 import { ProviderCreateForm } from './ProviderCreateForm'
-import type { ProviderRecord, ProviderSubmitData, ProviderType } from '../model/providerTypes'
+import type { ProviderRecord, ProviderRole, ProviderSubmitData, ProviderType } from '../model/providerTypes'
 import type { ProviderCreateFormData } from './ProviderCreateForm'
 
 interface ProvidersCreateModalProps {
@@ -25,9 +25,12 @@ const EMPTY_FORM: ProviderCreateFormData = {
   name: '',
   description: '',
   type: '',
+  role: '',
   ipAddress: '',
   port: '22',
   credentialId: '',
+  defaultFlashcopyProviderId: '',
+  orchestratorConnId: '',
 }
 
 function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
@@ -37,9 +40,12 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         name: provider.name,
         description: provider.description,
         type: provider.type,
+        role: provider.role ?? 'source',
         ipAddress: provider.ipAddress,
         port: String(provider.port ?? 22),
         credentialId: provider.credentialId ?? '',
+        defaultFlashcopyProviderId: provider.defaultFlashcopyProviderId ?? '',
+        orchestratorConnId: provider.orchestratorConnId ?? '',
       }
     : EMPTY_FORM
 }
@@ -59,9 +65,12 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     || formData.name !== initialForm.name
     || formData.description !== initialForm.description
     || formData.type !== initialForm.type
+    || formData.role !== initialForm.role
     || formData.ipAddress !== initialForm.ipAddress
     || formData.port !== initialForm.port
     || formData.credentialId !== initialForm.credentialId
+    || formData.defaultFlashcopyProviderId !== initialForm.defaultFlashcopyProviderId
+    || formData.orchestratorConnId !== initialForm.orchestratorConnId
   )
   const navigationGuard = useUnsavedChangesGuard(isDirty)
 
@@ -130,6 +139,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     if (!formData.name.trim()) newErrors.name = t('forms.nameRequired')
     if (!formData.description.trim()) newErrors.description = t('forms.descriptionRequired')
     if (!formData.type) newErrors.type = t('forms.typeRequired')
+    if (!formData.role) newErrors.role = t('forms.roleRequired')
     if (!formData.ipAddress.trim()) newErrors.ipAddress = t('forms.ipRequired')
     const port = Number(formData.port)
     if (!Number.isInteger(port) || port < 1 || port > 65535) {
@@ -151,7 +161,12 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
       type: formData.type as ProviderType,
       ipAddress: formData.ipAddress.trim(),
       credentialId: formData.credentialId || null,
+      role: formData.role as ProviderRole,
     }
+    const defaultFlashcopyProviderId = formData.defaultFlashcopyProviderId.trim()
+    const orchestratorConnId = formData.orchestratorConnId.trim()
+    if (defaultFlashcopyProviderId) record.defaultFlashcopyProviderId = defaultFlashcopyProviderId
+    if (orchestratorConnId) record.orchestratorConnId = orchestratorConnId
 
     upsert.mutate(
       { provider: record },
@@ -211,6 +226,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
           credentialsLoading={credentialsQuery.isLoading}
           credentialsError={credentialsQuery.error !== null}
           onRetryCredentials={() => { void credentialsQuery.refetch() }}
+          flashcopyProviders={existingProviders.filter(provider => provider.type === 'FLASHCOPY' && provider.role !== 'target')}
           onChange={handleChange}
           onIdBlur={handleIdBlur}
           onSubmit={handleSubmit}

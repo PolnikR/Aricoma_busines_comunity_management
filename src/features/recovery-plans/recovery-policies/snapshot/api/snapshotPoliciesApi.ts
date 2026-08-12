@@ -35,7 +35,9 @@ function fromWire(policy: SnapshotPolicyWire): SnapshotPolicy {
   }
 }
 
-function toWire(policy: SnapshotPolicySubmitData): SnapshotPolicyWire {
+export function toSnapshotPolicySubmitPayload(
+  policy: SnapshotPolicySubmitData,
+): SnapshotPolicyWire {
   const validated = snapshotPolicySubmitSchema.parse(policy)
   return {
     id: validated.id,
@@ -67,7 +69,7 @@ export async function fetchSnapshotPolicies(): Promise<SnapshotPolicy[]> {
 export async function submitSnapshotPolicy(
   policy: SnapshotPolicySubmitData,
 ): Promise<SnapshotPolicy[]> {
-  const wirePolicy = toWire(policy)
+  const wirePolicy = toSnapshotPolicySubmitPayload(policy)
   const response = requireSuccessfulResponse(
     await apiFetch(API_ENDPOINTS.snapshotPolicies.submit, {
       method: 'POST',

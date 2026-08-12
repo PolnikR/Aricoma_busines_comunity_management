@@ -1,7 +1,8 @@
 import type { ChangeEvent } from 'react'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
-import { PROVIDER_TYPES } from '../model/providerTypes'
+import { PROVIDER_ROLES, PROVIDER_TYPES } from '../model/providerTypes'
+import type { ProviderRecord } from '../model/providerTypes'
 import type { CredentialRecord } from '../../credentials/model/credentialTypes'
 
 export interface ProviderCreateFormData {
@@ -9,9 +10,12 @@ export interface ProviderCreateFormData {
   name: string
   description: string
   type: string
+  role: string
   ipAddress: string
   port: string
   credentialId: string
+  defaultFlashcopyProviderId: string
+  orchestratorConnId: string
 }
 
 interface ProviderCreateFormProps {
@@ -25,6 +29,7 @@ interface ProviderCreateFormProps {
   credentialsLoading: boolean
   credentialsError: boolean
   onRetryCredentials: () => void
+  flashcopyProviders?: ProviderRecord[]
   onChange: (field: keyof ProviderCreateFormData, value: string) => void
   onIdBlur?: () => void
   onSubmit: () => void
@@ -40,6 +45,7 @@ export function ProviderCreateForm({
   credentialsLoading,
   credentialsError,
   onRetryCredentials,
+  flashcopyProviders = [],
   onChange,
   onIdBlur,
   onSubmit,
@@ -114,6 +120,22 @@ export function ProviderCreateForm({
         {errors.type ? <p className="mt-1 text-xs text-red-600">{errors.type}</p> : null}
       </Field>
 
+      <Field label={t('forms.role')} htmlFor="create-role">
+        <Select
+          id="create-role"
+          value={data.role}
+          onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('role', event.target.value) }}
+          disabled={isSubmitting}
+          aria-invalid={Boolean(errors.role)}
+        >
+          <option value="">{t('forms.roleSelect')}</option>
+          {PROVIDER_ROLES.map((role) => (
+            <option key={role} value={role}>{t(`forms.role.${role}`)}</option>
+          ))}
+        </Select>
+        {errors.role ? <p className="mt-1 text-xs text-red-600">{errors.role}</p> : null}
+      </Field>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_7.5rem]">
         <Field label={t('forms.ip')} htmlFor="create-ipAddress">
           <Input
@@ -175,6 +197,35 @@ export function ProviderCreateForm({
             </button>
           </p>
         ) : null}
+      </Field>
+
+      <Field label={t('forms.defaultFlashcopyProvider')} htmlFor="create-defaultFlashcopyProviderId">
+        <Select
+          id="create-defaultFlashcopyProviderId"
+          value={data.defaultFlashcopyProviderId}
+          onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('defaultFlashcopyProviderId', event.target.value) }}
+          disabled={isSubmitting}
+        >
+          <option value="">{t('forms.optionalSelect')}</option>
+          {data.defaultFlashcopyProviderId && !flashcopyProviders.some(provider => provider.id === data.defaultFlashcopyProviderId) ? (
+            <option value={data.defaultFlashcopyProviderId}>{data.defaultFlashcopyProviderId} ({t('forms.unavailable')})</option>
+          ) : null}
+          {flashcopyProviders.map(provider => (
+            <option key={provider.id} value={provider.id}>{provider.name} — {provider.id}</option>
+          ))}
+        </Select>
+      </Field>
+
+      <Field label={t('forms.orchestratorConnId')} htmlFor="create-orchestratorConnId">
+        <Input
+          id="create-orchestratorConnId"
+          type="text"
+          placeholder={t('forms.orchestratorConnIdExample')}
+          value={data.orchestratorConnId}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('orchestratorConnId', event.target.value) }}
+          onKeyDown={handleKeyDown}
+          disabled={isSubmitting}
+        />
       </Field>
     </div>
   )

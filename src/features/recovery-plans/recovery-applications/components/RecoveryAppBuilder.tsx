@@ -32,9 +32,6 @@ interface RecoveryAppBuilderProps {
 
 const DEFAULT_TIERS: Record<string, RecoveryTier> = {
   database: { order: 1, description: 'Database server group' },
-  db_cluster: { order: 2, description: 'DB Cluster Master Node' },
-  application: { order: 3, description: 'Application server group' },
-  web: { order: 4, description: 'Web server group' },
 }
 
 function createInitialFormState(initialData?: RecoveryApplicationFormState): RecoveryApplicationFormState {
@@ -273,8 +270,8 @@ export function RecoveryAppBuilder({
 
   return (
     <div className="flex min-h-0 flex-1 p-4">
-      <div className="grid min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-surface shadow-sm lg:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="custom-scrollbar min-h-0 overflow-y-auto border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
+      <div className="grid min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-surface shadow-sm lg:grid-cols-[280px_minmax(0,1fr)]">
+        <aside className="custom-scrollbar min-h-0 overflow-x-hidden overflow-y-auto border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
           <WizardSteps
             items={steps}
             currentStep={step}

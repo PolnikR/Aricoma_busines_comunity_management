@@ -11,7 +11,7 @@ describe('RecoveryGroupsListPage', () => {
     localStorage.clear()
     localStorage.setItem('app-language', 'en')
     vi.stubGlobal('fetch', vi.fn().mockImplementation((input: string) => {
-      if (input === '/api/get_providers') {
+      if (input.startsWith('/api/get_providers')) {
         return Promise.resolve(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
       }
       if (input === '/api/get_recovery_groups') {
@@ -45,7 +45,7 @@ describe('RecoveryGroupsListPage', () => {
 
   it('keeps table filters available when loading recovery groups fails', async () => {
     vi.stubGlobal('fetch', vi.fn().mockImplementation((input: string) => {
-      if (input === '/api/get_providers') {
+      if (input.startsWith('/api/get_providers')) {
         return Promise.resolve(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
       }
       if (input === '/api/get_recovery_groups') {
@@ -71,7 +71,7 @@ describe('RecoveryGroupsListPage', () => {
 
   it('refreshes recovery groups from the shared page toolbar', async () => {
     const fetchMock = vi.fn().mockImplementation((input: string) => {
-      if (input === '/api/get_providers') {
+      if (input.startsWith('/api/get_providers')) {
         return Promise.resolve(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
       }
       if (input === '/api/get_recovery_groups') {

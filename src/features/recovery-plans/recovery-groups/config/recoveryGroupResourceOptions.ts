@@ -57,7 +57,7 @@ export function getAvailableRecoveryGroupResourceOptions(
 ): RecoveryGroupResourceOption[] {
   const availableTypes = new Set(
     providers
-      .filter(provider => provider.credentialStatus === 'ok')
+      .filter(provider => provider.credentialStatus === 'ok' && provider.role !== 'target')
       .map(provider => provider.type),
   )
 

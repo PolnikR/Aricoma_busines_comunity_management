@@ -13,12 +13,17 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
+import { toCleanRoomPolicySubmitPayload } from '../api/cleanRoomPoliciesApi'
 import { useDeleteCleanRoomPolicy } from '../hooks/useDeleteCleanRoomPolicy'
 import type { CleanRoomPolicy } from '../model/cleanRoomPolicyTypes'
 import { CleanRoomPolicyModal } from './CleanRoomPolicyModal'
 
-function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<CleanRoomPolicy>[] {
+function getColumns(
+  t: ReturnType<typeof useTranslation>['t'],
+  onViewJson: (policyId: string) => void,
+): ColumnDef<CleanRoomPolicy>[] {
   return [
     {
       id: 'name',
@@ -44,6 +49,22 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<CleanR
         </Badge>
       ),
     },
+    {
+      id: 'json',
+      header: t('tables.common.json'),
+      cell: policy => (
+        <Button
+          size="xs"
+          variant="soft"
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation()
+            onViewJson(policy.id)
+          }}
+        >
+          {t('buttons.viewJson')}
+        </Button>
+      ),
+    },
   ]
 }
 
@@ -61,12 +82,14 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<CleanRoomPolicy | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<CleanRoomPolicy | null>(null)
+  const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const rows = useMemo(() => policies, [policies])
   const selected = rows.find(policy => policy.id === selectedId) ?? null
+  const jsonViewed = rows.find(policy => policy.id === jsonViewId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'id', 'description'] })
 
   if (isLoading) {
-    return <DataTableSkeleton columnCount={3} ariaLabel={t('cleanRoomPolicies.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
+    return <DataTableSkeleton columnCount={4} ariaLabel={t('cleanRoomPolicies.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
   }
 
   return (
@@ -89,7 +112,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
         } : null}
       >
         <DataTable
-          columns={getColumns(t)}
+          columns={getColumns(t, setJsonViewId)}
           rows={table.pageItems}
           rowKey={policy => policy.id}
           density={table.density}
@@ -156,6 +179,14 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
           })
         }}
+      />
+
+      <JsonViewerModal
+        open={jsonViewed !== null}
+        title={t('cleanRoomPolicies.jsonViewer.title')}
+        data={jsonViewed ? toCleanRoomPolicySubmitPayload(jsonViewed) : null}
+        closeLabel={t('buttons.close')}
+        onClose={() => { setJsonViewId(null) }}
       />
     </div>
   )

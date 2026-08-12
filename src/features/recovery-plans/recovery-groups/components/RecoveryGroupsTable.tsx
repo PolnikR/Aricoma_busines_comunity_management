@@ -13,7 +13,7 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
-import { Modal } from '@/shared/components/modal/Modal'
+import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { ExternalLinkIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { EXTERNAL_SERVICES } from '@/config/externalServices'
@@ -49,34 +49,6 @@ interface RecoveryGroupFilters {
 const EMPTY_FILTERS: RecoveryGroupFilters = {
   workloadType: '',
   resourceType: '',
-}
-
-interface JsonViewerModalProps {
-  isOpen: boolean
-  group: RecoveryGroup | null
-  onClose: () => void
-}
-
-function JsonViewerModal({ isOpen, group, onClose }: JsonViewerModalProps) {
-  const { t } = useTranslation()
-  if (!isOpen || !group) return null
-
-  return (
-    <Modal
-      open={isOpen}
-      onClose={onClose}
-      title={t('recoveryGroups.modal.jsonViewer.title')}
-      size="lg"
-      className="flex max-h-96 flex-col overflow-hidden"
-      footer={<Button onClick={onClose} size="sm" fullWidth>{t('buttons.close')}</Button>}
-    >
-      <div className="flex-1 overflow-y-auto bg-surface-subtle px-6 py-4">
-        <pre className="text-xs font-mono text-text-secondary whitespace-pre-wrap break-word">
-          {JSON.stringify(toRecoveryGroupJson(group), null, 2)}
-        </pre>
-      </div>
-    </Modal>
-  )
 }
 
 export function RecoveryGroupsTable({
@@ -488,8 +460,10 @@ export function RecoveryGroupsTable({
       />
 
       <JsonViewerModal
-        isOpen={jsonViewId !== null}
-        group={jsonViewed}
+        open={jsonViewed !== null}
+        title={t('recoveryGroups.modal.jsonViewer.title')}
+        data={jsonViewed ? toRecoveryGroupJson(jsonViewed) : null}
+        closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
       />
     </div>

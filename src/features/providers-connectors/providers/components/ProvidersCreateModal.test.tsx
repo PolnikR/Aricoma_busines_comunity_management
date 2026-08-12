@@ -31,6 +31,7 @@ const mockProviderA: ProviderRecord = {
   ipAddress: '10.99.99.40',
   port: 22,
   credentialId: 'vcenter-admin',
+  role: 'source',
   credentialStatus: 'ok',
 }
 
@@ -44,6 +45,7 @@ function fillValidForm() {
   fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'New Provider' } })
   fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Test description' } })
   fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'VMWARE' } })
+  fireEvent.change(screen.getByLabelText('Role'), { target: { value: 'source' } })
   fireEvent.change(screen.getByLabelText('IP address'), { target: { value: '10.0.0.1' } })
 }
 
@@ -239,6 +241,7 @@ describe('ProvidersCreateModal', () => {
       type: 'VMWARE',
       ipAddress: '10.0.0.1',
       credentialId: 'vcenter-admin',
+      role: 'source',
     })
     expect(body).not.toHaveProperty('credentialStatus')
     expect(body).not.toHaveProperty('port')

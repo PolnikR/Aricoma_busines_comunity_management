@@ -28,7 +28,7 @@ export function buildResourceSourceTabs(
 ): ResourceSourceTab[] {
   return RESOURCE_SOURCE_TAB_DEFINITIONS.flatMap<ResourceSourceTab>(({ resourceTab, providerType }) => {
     const matchingProviders = providers
-      .filter(provider => provider.type === providerType)
+      .filter(provider => provider.type === providerType && provider.role !== 'target')
       .slice()
       .sort(compareProviders)
 

@@ -12,10 +12,12 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useSnapshotPolicies } from '@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies'
 import { useRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies'
 import { useCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies'
+import { toPolicySetSubmitPayload } from '../api/policySetsApi'
 import { useDeletePolicySet } from '../hooks/useDeletePolicySet'
 import type { PolicySet } from '../model/policySetTypes'
 import { PolicySetModal } from './PolicySetModal'
@@ -23,6 +25,7 @@ import { PolicySetModal } from './PolicySetModal'
 function getColumns(
   t: ReturnType<typeof useTranslation>['t'],
   recoveryAppPolicyName: (policyId: string) => string,
+  onViewJson: (policySetId: string) => void,
 ): ColumnDef<PolicySet>[] {
   return [
     {
@@ -51,6 +54,22 @@ function getColumns(
       header: t('tables.policySet.recoveryAppPolicy'),
       cell: policySet => recoveryAppPolicyName(policySet.recoveryAppPolicyId),
     },
+    {
+      id: 'json',
+      header: t('tables.common.json'),
+      cell: policySet => (
+        <Button
+          size="xs"
+          variant="soft"
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation()
+            onViewJson(policySet.id)
+          }}
+        >
+          {t('buttons.viewJson')}
+        </Button>
+      ),
+    },
   ]
 }
 
@@ -71,15 +90,17 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<PolicySet | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<PolicySet | null>(null)
+  const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const rows = useMemo(() => policySets, [policySets])
   const selected = rows.find(policySet => policySet.id === selectedId) ?? null
+  const jsonViewed = rows.find(policySet => policySet.id === jsonViewId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'id', 'description'] })
   const policyName = (policyId: string) => availablePolicies.find(policy => policy.id === policyId)?.name ?? policyId
   const recoveryAppPolicyName = (policyId: string) => availableRecoveryAppPolicies.find(policy => policy.id === policyId)?.name ?? policyId
   const cleanRoomPolicyName = (policyId: string) => availableCleanRoomPolicies.find(policy => policy.id === policyId)?.name ?? policyId
 
   if (isLoading) {
-    return <DataTableSkeleton columnCount={4} ariaLabel={t('policySets.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
+    return <DataTableSkeleton columnCount={5} ariaLabel={t('policySets.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
   }
 
   return (
@@ -102,7 +123,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         } : null}
       >
         <DataTable
-          columns={getColumns(t, recoveryAppPolicyName)}
+          columns={getColumns(t, recoveryAppPolicyName, setJsonViewId)}
           rows={table.pageItems}
           rowKey={policySet => policySet.id}
           density={table.density}
@@ -170,6 +191,14 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
           })
         }}
+      />
+
+      <JsonViewerModal
+        open={jsonViewed !== null}
+        title={t('policySets.jsonViewer.title')}
+        data={jsonViewed ? toPolicySetSubmitPayload(jsonViewed) : null}
+        closeLabel={t('buttons.close')}
+        onClose={() => { setJsonViewId(null) }}
       />
     </div>
   )

@@ -38,6 +38,26 @@ describe('CleanRoomPoliciesTable', () => {
     expect(within(drawer).getByRole('button', { name: 'Delete' })).toBeInTheDocument()
   })
 
+  it('shows the clean room submit payload without opening the detail drawer', async () => {
+    const user = userEvent.setup()
+    render(
+      <CleanRoomPoliciesTable
+        policies={[policy]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'View' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Clean Room Policy JSON' })
+    expect(dialog).toHaveTextContent('"id": "enforce-clean-target"')
+    expect(dialog).toHaveTextContent('"enabled": true')
+    expect(screen.queryByRole('dialog', { name: 'Clean room policy detail' })).not.toBeInTheDocument()
+  })
+
   it('keeps controls available while rendering a shared request error', () => {
     render(
       <CleanRoomPoliciesTable

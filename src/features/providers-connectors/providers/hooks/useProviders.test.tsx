@@ -17,6 +17,7 @@ describe('useProviders', () => {
       ipAddress: '10.0.0.1',
       port: 22,
       credentialId: 'vcenter-admin',
+      role: 'source',
       credentialStatus: 'ok',
     }
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(

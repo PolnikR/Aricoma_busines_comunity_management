@@ -40,8 +40,61 @@ function fromWire(policy: RecoveryAppPolicyWire): RecoveryAppPolicy {
   }
 }
 
-function toWire(policy: RecoveryAppPolicySubmitData): RecoveryAppPolicySubmitWire {
-  const validated = recoveryAppPolicySubmitSchema.parse(policy)
+export function toRecoveryAppPolicySubmitPayload(
+  policy: RecoveryAppPolicy | RecoveryAppPolicySubmitData,
+): RecoveryAppPolicySubmitWire {
+  const policyWithReadFields = policy as RecoveryAppPolicy
+  const runtimeSelectionMode: unknown = (
+    policy as { snapshotSelectionMode: unknown }
+  ).snapshotSelectionMode
+  if (
+    runtimeSelectionMode !== 'latest'
+    && runtimeSelectionMode !== 'time_range'
+    && runtimeSelectionMode !== 'exact_time'
+  ) {
+    recoveryAppPolicySubmitSchema.parse(policy)
+  }
+
+  const hasUnexpectedSelectionFields = policy.snapshotSelectionMode === 'latest'
+    ? policyWithReadFields.snapshotMaxAgeValue != null
+      || policyWithReadFields.snapshotMaxAgeUnit != null
+      || policyWithReadFields.snapshotTargetTime != null
+    : policy.snapshotSelectionMode === 'time_range'
+      ? policyWithReadFields.snapshotTargetTime != null
+      : policyWithReadFields.snapshotMaxAgeValue != null
+        || policyWithReadFields.snapshotMaxAgeUnit != null
+
+  if (hasUnexpectedSelectionFields) {
+    recoveryAppPolicySubmitSchema.parse(policy)
+  }
+
+  const submitCommon = {
+    id: policy.id,
+    name: policy.name,
+    description: policy.description,
+    level: policy.level,
+    frequencyValue: policy.frequencyValue,
+    frequencyUnit: policy.frequencyUnit,
+    retentionValue: policy.retentionValue,
+    retentionUnit: policy.retentionUnit,
+    bootVerify: policy.bootVerify,
+    enabled: policy.enabled,
+  }
+  const submitPolicy = policy.snapshotSelectionMode === 'time_range'
+    ? {
+        ...submitCommon,
+        snapshotSelectionMode: 'time_range' as const,
+        snapshotMaxAgeValue: policy.snapshotMaxAgeValue,
+        snapshotMaxAgeUnit: policy.snapshotMaxAgeUnit,
+      }
+    : policy.snapshotSelectionMode === 'exact_time'
+      ? {
+          ...submitCommon,
+          snapshotSelectionMode: 'exact_time' as const,
+          snapshotTargetTime: policy.snapshotTargetTime,
+        }
+      : { ...submitCommon, snapshotSelectionMode: 'latest' as const }
+  const validated = recoveryAppPolicySubmitSchema.parse(submitPolicy)
   const common = {
     id: validated.id,
     name: validated.name,
@@ -94,7 +147,7 @@ export async function submitRecoveryAppPolicy(
     await apiFetch(API_ENDPOINTS.recoveryAppPolicies.submit, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(toWire(policy)),
+      body: JSON.stringify(toRecoveryAppPolicySubmitPayload(policy)),
     }),
     'Submit recovery app policy',
   )

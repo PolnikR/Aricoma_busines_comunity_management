@@ -14,7 +14,9 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
+import { toSnapshotPolicySubmitPayload } from '../api/snapshotPoliciesApi'
 import { useDeleteSnapshotPolicy } from '../hooks/useDeleteSnapshotPolicy'
 import type { SnapshotPolicy } from '../model/snapshotPolicyTypes'
 import { SnapshotPolicyModal } from './SnapshotPolicyModal'
@@ -37,7 +39,10 @@ function formatInterval(value: number, unit: string, t: ReturnType<typeof useTra
   return `${String(value)} ${t(`snapshotPolicies.unit.${unit}`)}`
 }
 
-function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<SnapshotPolicy>[] {
+function getColumns(
+  t: ReturnType<typeof useTranslation>['t'],
+  onViewJson: (policyId: string) => void,
+): ColumnDef<SnapshotPolicy>[] {
   return [
     {
       id: 'name',
@@ -84,6 +89,22 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Snapsh
         </Badge>
       ),
     },
+    {
+      id: 'json',
+      header: t('tables.common.json'),
+      cell: policy => (
+        <Button
+          size="xs"
+          variant="soft"
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation()
+            onViewJson(policy.id)
+          }}
+        >
+          {t('buttons.viewJson')}
+        </Button>
+      ),
+    },
   ]
 }
 
@@ -101,6 +122,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<SnapshotPolicy | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<SnapshotPolicy | null>(null)
+  const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const [filters, setFilters] = useState<SnapshotPolicyFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<SnapshotPolicyFilters>(EMPTY_FILTERS)
   const filterOptions = useMemo(() => ({
@@ -111,6 +133,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
     && (!filters.status || (filters.status === 'enabled' ? policy.enabled : !policy.enabled))
   )), [filters, policies])
   const selected = rows.find(policy => policy.id === selectedId) ?? null
+  const jsonViewed = rows.find(policy => policy.id === jsonViewId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'id', 'description', 'level'] })
   const activeFilterCount = Number(Boolean(filters.level)) + Number(Boolean(filters.status))
 
@@ -125,7 +148,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
   }
 
   if (isLoading) {
-    return <DataTableSkeleton columnCount={7} ariaLabel={t('snapshotPolicies.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
+    return <DataTableSkeleton columnCount={8} ariaLabel={t('snapshotPolicies.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
   }
 
   return (
@@ -191,7 +214,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
         } : null}
       >
         <DataTable
-          columns={getColumns(t)}
+          columns={getColumns(t, setJsonViewId)}
           rows={table.pageItems}
           rowKey={policy => policy.id}
           density={table.density}
@@ -262,6 +285,14 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
           })
         }}
+      />
+
+      <JsonViewerModal
+        open={jsonViewed !== null}
+        title={t('snapshotPolicies.jsonViewer.title')}
+        data={jsonViewed ? toSnapshotPolicySubmitPayload(jsonViewed) : null}
+        closeLabel={t('buttons.close')}
+        onClose={() => { setJsonViewId(null) }}
       />
     </div>
   )

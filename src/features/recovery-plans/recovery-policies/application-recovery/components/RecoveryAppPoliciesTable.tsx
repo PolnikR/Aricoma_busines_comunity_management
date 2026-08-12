@@ -14,7 +14,9 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
+import { toRecoveryAppPolicySubmitPayload } from '../api/recoveryAppPoliciesApi'
 import { useDeleteRecoveryAppPolicy } from '../hooks/useDeleteRecoveryAppPolicy'
 import type { RecoveryAppPolicy } from '../model/recoveryAppPolicyTypes'
 import { RecoveryAppPolicyModal } from './RecoveryAppPolicyModal'
@@ -47,7 +49,10 @@ function formatSelection(policy: RecoveryAppPolicy, t: ReturnType<typeof useTran
   return t('recoveryAppPolicies.selection.exactTimeSummary').replace('{time}', policy.snapshotTargetTime ?? '-')
 }
 
-function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<RecoveryAppPolicy>[] {
+function getColumns(
+  t: ReturnType<typeof useTranslation>['t'],
+  onViewJson: (policyId: string) => void,
+): ColumnDef<RecoveryAppPolicy>[] {
   return [
     {
       id: 'name',
@@ -84,6 +89,22 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Recove
       header: t('tables.recoveryAppPolicy.status'),
       cell: policy => <Badge color={policy.enabled ? 'success' : 'light'} size="sm">{t(policy.enabled ? 'recoveryAppPolicies.enabled' : 'recoveryAppPolicies.disabled')}</Badge>,
     },
+    {
+      id: 'json',
+      header: t('tables.common.json'),
+      cell: policy => (
+        <Button
+          size="xs"
+          variant="soft"
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation()
+            onViewJson(policy.id)
+          }}
+        >
+          {t('buttons.viewJson')}
+        </Button>
+      ),
+    },
   ]
 }
 
@@ -101,6 +122,7 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<RecoveryAppPolicy | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<RecoveryAppPolicy | null>(null)
+  const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const [filters, setFilters] = useState<RecoveryAppPolicyFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<RecoveryAppPolicyFilters>(EMPTY_FILTERS)
   const filterOptions = useMemo(() => ({ levels: Array.from(new Set(policies.map(policy => policy.level))).sort() }), [policies])
@@ -110,11 +132,12 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
     && (!filters.selectionMode || policy.snapshotSelectionMode === filters.selectionMode)
   )), [filters, policies])
   const selected = rows.find(policy => policy.id === selectedId) ?? null
+  const jsonViewed = rows.find(policy => policy.id === jsonViewId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'id', 'description', 'level', 'snapshotSelectionMode'] })
   const activeFilterCount = Number(Boolean(filters.level)) + Number(Boolean(filters.status)) + Number(Boolean(filters.selectionMode))
 
   if (isLoading) {
-    return <DataTableSkeleton columnCount={6} ariaLabel={t('recoveryAppPolicies.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
+    return <DataTableSkeleton columnCount={7} ariaLabel={t('recoveryAppPolicies.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
   }
 
   return (
@@ -164,7 +187,7 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
 
       <DataTableRequestState error={error ? { title: t('recoveryAppPolicies.loadFailed'), retryLabel: t('buttons.retry'), isRetrying, onRetry } : null}>
         <DataTable
-          columns={getColumns(t)}
+          columns={getColumns(t, setJsonViewId)}
           rows={table.pageItems}
           rowKey={policy => policy.id}
           density={table.density}
@@ -226,6 +249,14 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
           if (!deleteTarget) return
           deletePolicy.mutate(deleteTarget.id, { onSuccess: () => { setDeleteTarget(null); setSelectedId(null) } })
         }}
+      />
+
+      <JsonViewerModal
+        open={jsonViewed !== null}
+        title={t('recoveryAppPolicies.jsonViewer.title')}
+        data={jsonViewed ? toRecoveryAppPolicySubmitPayload(jsonViewed) : null}
+        closeLabel={t('buttons.close')}
+        onClose={() => { setJsonViewId(null) }}
       />
     </div>
   )

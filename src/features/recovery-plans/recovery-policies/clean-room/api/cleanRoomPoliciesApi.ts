@@ -29,10 +29,16 @@ export async function fetchCleanRoomPolicies(): Promise<CleanRoomPolicy[]> {
   return parsePolicies(response)
 }
 
+export function toCleanRoomPolicySubmitPayload(
+  policy: CleanRoomPolicySubmitData,
+): CleanRoomPolicySubmitData {
+  return cleanRoomPolicySchema.parse(policy)
+}
+
 export async function submitCleanRoomPolicy(
   policy: CleanRoomPolicySubmitData,
 ): Promise<CleanRoomPolicy[]> {
-  const validated = cleanRoomPolicySchema.parse(policy)
+  const validated = toCleanRoomPolicySubmitPayload(policy)
   const response = requireSuccessfulResponse(
     await apiFetch(API_ENDPOINTS.cleanRoomPolicies.submit, {
       method: 'POST',

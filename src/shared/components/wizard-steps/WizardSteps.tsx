@@ -22,7 +22,7 @@ export function WizardSteps({
 }: WizardStepsProps) {
   return (
     <ol
-      className="flex gap-2 overflow-x-auto p-4 lg:flex-col lg:gap-1"
+      className="flex min-w-0 gap-2 overflow-x-auto p-4 lg:flex-col lg:gap-1 lg:overflow-x-hidden"
       aria-label={ariaLabel}
     >
       {items.map((item, index) => {
@@ -33,7 +33,7 @@ export function WizardSteps({
         const isLast = index === items.length - 1
 
         return (
-          <li key={item.id} className="relative min-w-max">
+          <li key={item.id} className="relative min-w-max lg:min-w-0">
             {!isLast ? (
               <span
                 aria-hidden="true"
@@ -49,7 +49,7 @@ export function WizardSteps({
               disabled={disabled}
               onClick={() => { onStepChange?.(number) }}
               className={cn(
-                'relative flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
+                'relative flex min-w-0 w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
                 active
                   ? 'cursor-pointer bg-accent-soft font-semibold text-accent'
                   : disabled
@@ -70,7 +70,7 @@ export function WizardSteps({
               >
                 {complete ? '✓' : number}
               </span>
-              {item.label}
+              <span className="min-w-0 break-words">{item.label}</span>
             </button>
           </li>
         )
