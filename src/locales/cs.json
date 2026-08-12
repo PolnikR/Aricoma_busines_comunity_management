@@ -356,6 +356,7 @@
   "pages.recoveryGroups.errors.duplicate_id": "Skupina obnovy s tímto ID již existuje.",
   "pages.recoveryGroups.errors.not_found": "Skupina obnovy nebyla nalezena.",
   "pages.recoveryGroups.errors.immutable_type": "Typ zdroje existující skupiny obnovy nelze změnit.",
+  "pages.recoveryGroups.errors.missing_orchestration_provider": "K odstranění této odeslané skupiny obnovy je potřeba orchestration provider.",
   "pages.recoveryGroups.errors.unknown": "Operace se skupinou obnovy selhala.",
   "pages.recoveryGroups.filters.button": "Filtry",
   "pages.recoveryGroups.filters.title": "Filtrovat skupiny obnovy",

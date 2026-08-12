@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as apiFetchModule from '@/shared/api/apiClient'
 import type { RollbackReport } from './schemas/recoveryGroupsSchema'
-import { rollbackRecoveryGroupOrchestration } from './recoveryGroupsApi'
+import { deleteRecoveryGroup, rollbackRecoveryGroupOrchestration } from './recoveryGroupsApi'
+
+const recoveryGroupsPayload = { recovery_groups: [] }
 
 describe('rollbackRecoveryGroupOrchestration', () => {
   afterEach(() => {
@@ -123,5 +125,82 @@ describe('rollbackRecoveryGroupOrchestration', () => {
     await expect(
       rollbackRecoveryGroupOrchestration('test-group', 'airflow-01')
     ).rejects.toThrow('Rollback recovery group orchestration request failed with status 500')
+  })
+})
+
+describe('deleteRecoveryGroup', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('deletes a non-orchestrated group without a provider id and returns no rollback report', async () => {
+    const mockFetch = vi.spyOn(apiFetchModule, 'apiFetch').mockResolvedValue(
+      new Response(JSON.stringify(recoveryGroupsPayload), { status: 200 }),
+    )
+
+    const result = await deleteRecoveryGroup({
+      recoveryGroupId: 'plain group',
+      rollbackFromOrchestrator: false,
+    })
+
+    const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit]
+    expect(url).toContain('/api/delete_recovery_group')
+    expect(url).toContain('recovery_group_id=plain+group')
+    expect(url).toContain('rollback_from_orchestrator=false')
+    expect(url).not.toContain('provider_id=')
+    expect(init.method).toBe('DELETE')
+    expect(result).toBeNull()
+  })
+
+  it('deletes an orchestrated group with its orchestration provider and returns the rollback report', async () => {
+    const rollback = {
+      status: 'ok',
+      airflow: {
+        status: 'ok',
+        dag_id: 'dag_260805112701-9f34e409',
+        dag_file: 'removed',
+        dag_record: 'deleted',
+      },
+      ibm: { status: 'ok', consistency_groups: [], fcmaps: [], volumes: [], errors: [] },
+    }
+    const mockFetch = vi.spyOn(apiFetchModule, 'apiFetch').mockResolvedValue(
+      new Response(JSON.stringify({ ...recoveryGroupsPayload, rollback }), { status: 200 }),
+    )
+
+    const result = await deleteRecoveryGroup({
+      recoveryGroupId: 'database-group',
+      rollbackFromOrchestrator: true,
+      providerId: 'airflow-01',
+    })
+
+    const [url] = mockFetch.mock.calls[0] as [string, RequestInit]
+    expect(url).toContain('recovery_group_id=database-group')
+    expect(url).toContain('rollback_from_orchestrator=true')
+    expect(url).toContain('provider_id=airflow-01')
+    expect(result).toEqual(rollback)
+  })
+
+  it('rejects rollback deletion without a provider before making the request', async () => {
+    const mockFetch = vi.spyOn(apiFetchModule, 'apiFetch')
+
+    await expect(deleteRecoveryGroup({
+      recoveryGroupId: 'database-group',
+      rollbackFromOrchestrator: true,
+      providerId: '  ',
+    })).rejects.toMatchObject({ code: 'missing_orchestration_provider' })
+
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('rejects a rollback deletion response without a rollback report', async () => {
+    vi.spyOn(apiFetchModule, 'apiFetch').mockResolvedValue(
+      new Response(JSON.stringify(recoveryGroupsPayload), { status: 200 }),
+    )
+
+    await expect(deleteRecoveryGroup({
+      recoveryGroupId: 'database-group',
+      rollbackFromOrchestrator: true,
+      providerId: 'airflow-01',
+    })).rejects.toThrow()
   })
 })

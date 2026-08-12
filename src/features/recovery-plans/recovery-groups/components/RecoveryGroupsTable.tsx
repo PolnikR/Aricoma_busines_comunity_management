@@ -33,10 +33,11 @@ import type { RollbackReport } from '../api/schemas/recoveryGroupsSchema'
 interface RecoveryGroupsTableProps {
   groups: RecoveryGroup[]
   onEdit: (id: string) => void
-  onDelete: (id: string) => void
+  onDelete: (group: RecoveryGroup) => Promise<RollbackReport | null>
   onRollback: (groupId: string, providerId: string) => Promise<RollbackReport>
   error?: Error | null
   isRetrying?: boolean
+  isDeleting?: boolean
   onRetry?: () => void
 }
 
@@ -85,6 +86,7 @@ export function RecoveryGroupsTable({
   onRollback,
   error = null,
   isRetrying = false,
+  isDeleting = false,
   onRetry = () => undefined,
 }: RecoveryGroupsTableProps) {
   const { t } = useTranslation()
@@ -425,14 +427,25 @@ export function RecoveryGroupsTable({
         title={t('dialogs.deleteRecoveryGroup')}
         message={t('dialogs.deleteRecoveryGroupMessage').replace('{name}', deleteTarget?.name ?? '')}
         confirmLabel={t('buttons.delete')}
+        loadingLabel={t('buttons.deleting')}
         cancelLabel={t('buttons.cancel')}
+        isLoading={isDeleting}
         tone="danger"
         onCancel={() => { setDeleteTarget(null) }}
         onConfirm={() => {
-          if (!deleteTarget) return
-          onDelete(deleteTarget.id)
-          setDeleteTarget(null)
-          setSelectedId(null)
+          if (!deleteTarget || isDeleting) return
+          const target = deleteTarget
+          void (async () => {
+            try {
+              const report = await onDelete(target)
+              if (report) setRollbackResult({ groupName: target.name, report })
+              setDeleteTarget(null)
+              setSelectedId(null)
+              setOpenMenuId(null)
+            } catch {
+              setDeleteTarget(null)
+            }
+          })()
         }}
       />
 

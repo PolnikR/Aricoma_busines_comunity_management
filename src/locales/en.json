@@ -356,6 +356,7 @@
   "pages.recoveryGroups.errors.duplicate_id": "A recovery group with this ID already exists.",
   "pages.recoveryGroups.errors.not_found": "Recovery group was not found.",
   "pages.recoveryGroups.errors.immutable_type": "The resource type of an existing recovery group cannot be changed.",
+  "pages.recoveryGroups.errors.missing_orchestration_provider": "An orchestration provider is required to remove this pushed recovery group.",
   "pages.recoveryGroups.errors.unknown": "Recovery group operation failed.",
   "pages.recoveryGroups.filters.button": "Filters",
   "pages.recoveryGroups.filters.title": "Filter recovery groups",
