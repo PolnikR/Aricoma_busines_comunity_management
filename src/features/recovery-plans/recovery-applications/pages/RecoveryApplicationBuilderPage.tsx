@@ -68,6 +68,7 @@ export function RecoveryApplicationBuilderPage() {
           />
         ) : null}
         <RecoveryAppBuilder
+          onCancel={handleBackClick}
           onSave={handleSave}
           onDirtyChange={setIsDirty}
           isSaving={submitApplication.isPending}

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import type { RecoveryAppPolicy } from '@/features/recovery-plans/recovery-policies/application-recovery/model/recoveryAppPolicyTypes'
 import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import { getEligibleSourceProviders } from '../utils/eligibleProviders'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
@@ -11,7 +10,6 @@ interface AppMetadataFormProps {
   onMetadataChange?: (metadata: Partial<RecoveryApplicationFormState>) => void
   initialValues?: {
     fileName: string
-    policySetId: string
     name: string
     description: string
     environment: 'dev' | 'staging' | 'prod'
@@ -21,10 +19,6 @@ interface AppMetadataFormProps {
   providersLoading?: boolean
   providersError?: Error | null
   onRetryProviders?: () => void
-  recoveryAppPolicies?: RecoveryAppPolicy[]
-  recoveryAppPoliciesLoading?: boolean
-  recoveryAppPoliciesError?: Error | null
-  onRetryRecoveryAppPolicies?: () => void
   disableFileName?: boolean
 }
 
@@ -35,15 +29,10 @@ export function AppMetadataForm({
   providersLoading = false,
   providersError = null,
   onRetryProviders,
-  recoveryAppPolicies = [],
-  recoveryAppPoliciesLoading = false,
-  recoveryAppPoliciesError = null,
-  onRetryRecoveryAppPolicies,
   disableFileName = false,
 }: AppMetadataFormProps) {
   const { t } = useTranslation()
   const [fileName, setFileName] = useState(initialValues?.fileName ?? '')
-  const [policySetId, setPolicySetId] = useState(initialValues?.policySetId ?? '')
   const [name, setName] = useState(initialValues?.name ?? '')
   const [description, setDescription] = useState(initialValues?.description ?? '')
   const [environment, setEnvironment] = useState<'dev' | 'staging' | 'prod'>(
@@ -64,10 +53,6 @@ export function AppMetadataForm({
       case 'name':
         setName(value)
         onMetadataChange?.({ name: value })
-        break
-      case 'policySetId':
-        setPolicySetId(value)
-        onMetadataChange?.({ policySetId: value })
         break
       case 'description':
         setDescription(value)
@@ -132,33 +117,6 @@ export function AppMetadataForm({
         />
       </Field>
 
-      <Field label={t('forms.policySet')} htmlFor="application-policy-set">
-        <Select
-          id="application-policy-set"
-          value={policySetId}
-          onChange={e => { handleChange('policySetId', e.target.value) }}
-          disabled={recoveryAppPoliciesLoading || recoveryAppPoliciesError !== null}
-          required
-        >
-          <option value="">
-            {recoveryAppPoliciesLoading ? t('recoveryAppPolicies.loading') : t('forms.policySetSelect')}
-          </option>
-          {recoveryAppPolicies.map(policy => (
-            <option key={policy.id} value={policy.id}>{policy.name} ({policy.id})</option>
-          ))}
-        </Select>
-        {recoveryAppPoliciesError ? (
-          <p className="mt-1 text-xs text-red-600" role="alert">
-            {t('recoveryAppPolicies.loadFailed')}{' '}
-            {onRetryRecoveryAppPolicies ? (
-              <button type="button" className="font-semibold underline" onClick={onRetryRecoveryAppPolicies}>
-                {t('buttons.retry')}
-              </button>
-            ) : null}
-          </p>
-        ) : null}
-      </Field>
-
       <Field label={t('forms.environment')} htmlFor="application-environment">
         <Select
           id="application-environment"
@@ -172,7 +130,7 @@ export function AppMetadataForm({
         </Select>
       </Field>
 
-      <Field label={t('forms.platform')} htmlFor="application-platform">
+      <Field label={t('forms.providerId')} htmlFor="application-platform">
         <Select
           id="application-platform"
           value={platform}
@@ -181,7 +139,7 @@ export function AppMetadataForm({
           required
         >
           <option value="">
-            {providersLoading ? t('platformProviders.loading') : t('forms.platformSelect')}
+            {providersLoading ? t('platformProviders.loading') : t('forms.providerIdSelect')}
           </option>
           {selectedPlatformIsMissing ? (
             <option value={platform}>{t('providers.credentials.unavailable').replace('{id}', platform)}</option>

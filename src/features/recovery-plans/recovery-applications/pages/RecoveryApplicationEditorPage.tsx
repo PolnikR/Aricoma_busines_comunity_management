@@ -127,6 +127,7 @@ export function RecoveryApplicationEditorPage() {
           />
         ) : null}
         <RecoveryAppBuilder
+          onCancel={goBack}
           initialData={initialData}
           onSave={handleSave}
           onDirtyChange={setIsDirty}

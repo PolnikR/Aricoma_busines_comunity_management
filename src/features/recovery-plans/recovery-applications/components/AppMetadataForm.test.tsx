@@ -17,7 +17,6 @@ describe('AppMetadataForm', () => {
         <AppMetadataForm
           initialValues={{
             fileName: 'finance_app',
-            policySetId: 'test_1_hour_ps',
             name: 'Finance',
             description: 'Primary',
             environment: 'dev',
@@ -44,7 +43,6 @@ describe('AppMetadataForm', () => {
         <AppMetadataForm
           initialValues={{
             fileName: 'finance_app',
-            policySetId: 'test_1_hour_ps',
             name: 'Finance',
             description: 'Primary',
             environment: 'dev',
@@ -85,33 +83,14 @@ describe('AppMetadataForm', () => {
     expect(description).toHaveAttribute('autocomplete', 'off')
   })
 
-  it('shows recovery app policies without orchestration-only controls', async () => {
+  it('keeps policy and orchestration controls outside the metadata form', () => {
     render(
       <LanguageProvider>
-        <AppMetadataForm
-          recoveryAppPolicies={[{
-            id: 'critical-daily-latest',
-            name: 'Critical - Daily DR Test',
-            description: 'Daily recovery test',
-            level: 'critical',
-            frequencyValue: 1,
-            frequencyUnit: 'days',
-            retentionValue: 4,
-            retentionUnit: 'hours',
-            bootVerify: true,
-            snapshotSelectionMode: 'latest',
-            snapshotMaxAgeValue: null,
-            snapshotMaxAgeUnit: null,
-            snapshotTargetTime: null,
-            enabled: true,
-          }]}
-        />
+        <AppMetadataForm />
       </LanguageProvider>,
     )
 
-    expect(await screen.findByRole('option', {
-      name: 'Critical - Daily DR Test (critical-daily-latest)',
-    })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Policy set *')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Airflow platform provider *')).not.toBeInTheDocument()
     expect(screen.queryByText('Push to orchestrator')).not.toBeInTheDocument()
   })
