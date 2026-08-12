@@ -4,6 +4,7 @@ export interface PolicySet {
   description: string
   snapshotPolicyId: string
   recoveryAppPolicyId: string
+  cleanRoomPolicyId: string
 }
 
 // Kept as a separate public contract even though the backend currently accepts

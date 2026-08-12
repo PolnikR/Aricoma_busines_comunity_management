@@ -13,6 +13,7 @@ const policySets: PolicySet[] = [
     description: 'Policy set using the medium-tier, 6-hour cadence.',
     snapshotPolicyId: 'medium-6h',
     recoveryAppPolicyId: 'critical-daily-latest',
+    cleanRoomPolicyId: 'enforce-clean-target',
   },
   {
     id: 'tier3-web',
@@ -20,6 +21,7 @@ const policySets: PolicySet[] = [
     description: 'Low priority web tier.',
     snapshotPolicyId: 'low-24h',
     recoveryAppPolicyId: 'high-weekly-timerange',
+    cleanRoomPolicyId: 'block-on-conflict',
   },
 ]
 

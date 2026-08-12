@@ -14,6 +14,7 @@ vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
         description: 'Policy set using the medium-tier, 6-hour cadence.',
         snapshotPolicyId: 'medium-6h',
         recoveryAppPolicyId: 'critical-daily-latest',
+        cleanRoomPolicyId: 'enforce-clean-target',
       },
     ],
   }),

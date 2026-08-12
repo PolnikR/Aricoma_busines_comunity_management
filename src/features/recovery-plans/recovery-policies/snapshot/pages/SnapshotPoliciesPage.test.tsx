@@ -34,6 +34,7 @@ describe('SnapshotPoliciesPage', () => {
     expect(screen.getByText('Snapshot policy catalogue')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Snapshot policies' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Application Recovery Policies' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Clean Room Policies' })).toBeInTheDocument()
   })
 
   it('opens the create modal with cached policies', async () => {

@@ -12,6 +12,7 @@ const policySet: PolicySet = {
   description: 'Policy set using the medium-tier, 6-hour cadence.',
   snapshotPolicyId: 'medium-6h',
   recoveryAppPolicyId: 'critical-daily-latest',
+  cleanRoomPolicyId: 'enforce-clean-target',
 }
 
 const wirePolicySet = {
@@ -20,6 +21,7 @@ const wirePolicySet = {
   description: policySet.description,
   snapshot_policy_id: policySet.snapshotPolicyId,
   recovery_app_policy_id: policySet.recoveryAppPolicyId,
+  clean_room_policy_id: policySet.cleanRoomPolicyId,
 }
 
 function stubFetch(payload: unknown, status = 200) {
@@ -54,6 +56,7 @@ describe('fetchPolicySets', () => {
     ['missing policy set list', {}],
     ['missing snapshot policy id', { policy_sets: [{ ...wirePolicySet, snapshot_policy_id: '' }] }],
     ['missing recovery app policy id', { policy_sets: [{ ...wirePolicySet, recovery_app_policy_id: '' }] }],
+    ['missing clean room policy id', { policy_sets: [{ ...wirePolicySet, clean_room_policy_id: '' }] }],
   ])('rejects malformed responses: %s', async (_case, payload) => {
     stubFetch(payload)
     await expect(fetchPolicySets()).rejects.toBeInstanceOf(Error)
@@ -88,6 +91,7 @@ describe('submitPolicySet', () => {
 
     await expect(submitPolicySet({ ...policySet, snapshotPolicyId: '' })).rejects.toBeInstanceOf(Error)
     await expect(submitPolicySet({ ...policySet, recoveryAppPolicyId: '' })).rejects.toBeInstanceOf(Error)
+    await expect(submitPolicySet({ ...policySet, cleanRoomPolicyId: '' })).rejects.toBeInstanceOf(Error)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })

@@ -12,6 +12,7 @@ export const routes = {
   recoveryPolicies: '/recovery-plans/recovery-policies',
   recoveryPolicySnapshot: '/recovery-plans/recovery-policies/snapshot',
   recoveryPolicyApplicationRecovery: '/recovery-plans/recovery-policies/application-recovery',
+  recoveryPolicyCleanRoom: '/recovery-plans/recovery-policies/clean-room',
   snapshotPolicies: '/recovery-plans/snapshot-policies',
   recoveryAppPolicies: '/recovery-plans/recovery-app-policies',
   policySets: '/recovery-plans/policy-sets',

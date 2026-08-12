@@ -15,6 +15,7 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useSnapshotPolicies } from '@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies'
 import { useRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies'
+import { useCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies'
 import { useDeletePolicySet } from '../hooks/useDeletePolicySet'
 import type { PolicySet } from '../model/policySetTypes'
 import { PolicySetModal } from './PolicySetModal'
@@ -66,6 +67,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
   const deletePolicySet = useDeletePolicySet()
   const { data: availablePolicies = [] } = useSnapshotPolicies()
   const { data: availableRecoveryAppPolicies = [] } = useRecoveryAppPolicies()
+  const { data: availableCleanRoomPolicies = [] } = useCleanRoomPolicies()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<PolicySet | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<PolicySet | null>(null)
@@ -74,6 +76,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
   const table = useTableState(rows, { searchFields: ['name', 'id', 'description'] })
   const policyName = (policyId: string) => availablePolicies.find(policy => policy.id === policyId)?.name ?? policyId
   const recoveryAppPolicyName = (policyId: string) => availableRecoveryAppPolicies.find(policy => policy.id === policyId)?.name ?? policyId
+  const cleanRoomPolicyName = (policyId: string) => availableCleanRoomPolicies.find(policy => policy.id === policyId)?.name ?? policyId
 
   if (isLoading) {
     return <DataTableSkeleton columnCount={4} ariaLabel={t('policySets.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
@@ -144,6 +147,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
             <DetailRow label={t('details.description')} value={selected.description || '-'} />
             <DetailRow label={t('details.snapshotPolicies')} value={selected.snapshotPolicyId ? policyName(selected.snapshotPolicyId) : '-'} />
             <DetailRow label={t('details.recoveryAppPolicy')} value={recoveryAppPolicyName(selected.recoveryAppPolicyId)} />
+            <DetailRow label={t('details.cleanRoomPolicy')} value={cleanRoomPolicyName(selected.cleanRoomPolicyId)} />
           </dl>
         ) : null}
       </DetailDrawer>

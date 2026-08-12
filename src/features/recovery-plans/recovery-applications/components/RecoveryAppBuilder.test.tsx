@@ -22,6 +22,7 @@ const policySetsQuery = vi.hoisted(() => ({
       description: 'Daily recovery test',
       snapshotPolicyId: 'daily-latest',
       recoveryAppPolicyId: 'critical-daily-latest',
+      cleanRoomPolicyId: 'enforce-clean-target',
     }],
     isLoading: false,
     error: null as Error | null,

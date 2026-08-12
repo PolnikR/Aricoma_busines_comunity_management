@@ -10,6 +10,7 @@ describe('recovery policy navigation', () => {
     expect(RECOVERY_POLICY_TABS.map(tab => tab.value)).toEqual([
       'snapshot',
       'application-recovery',
+      'clean-room',
     ])
   })
 
@@ -21,6 +22,9 @@ describe('recovery policy navigation', () => {
   it('builds canonical child paths', () => {
     expect(getRecoveryPolicyPath('application-recovery')).toBe(
       '/recovery-plans/recovery-policies/application-recovery',
+    )
+    expect(getRecoveryPolicyPath('clean-room')).toBe(
+      '/recovery-plans/recovery-policies/clean-room',
     )
   })
 })

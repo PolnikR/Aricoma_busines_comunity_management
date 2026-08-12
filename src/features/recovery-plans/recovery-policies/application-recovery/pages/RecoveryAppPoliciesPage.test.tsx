@@ -28,6 +28,7 @@ describe('RecoveryAppPoliciesPage', () => {
     expect(screen.getByRole('heading', { name: 'Recovery Policies', level: 1 })).toBeInTheDocument()
     expect(screen.getByText('Recovery app policy catalogue')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Application Recovery Policies' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Clean Room Policies' })).toBeInTheDocument()
   })
 
   it('opens the create modal with cached policies', async () => {

@@ -24,6 +24,7 @@ function fromWire(policySet: PolicySetWire): PolicySet {
     description: policySet.description,
     snapshotPolicyId: policySet.snapshot_policy_id,
     recoveryAppPolicyId: policySet.recovery_app_policy_id,
+    cleanRoomPolicyId: policySet.clean_room_policy_id,
   }
 }
 
@@ -35,6 +36,7 @@ function toWire(policySet: PolicySetSubmitData): PolicySetWire {
     description: validated.description,
     snapshot_policy_id: validated.snapshotPolicyId,
     recovery_app_policy_id: validated.recoveryAppPolicyId,
+    clean_room_policy_id: validated.cleanRoomPolicyId,
   }
 }
 

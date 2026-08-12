@@ -18,6 +18,11 @@ vi.mock('@/features/recovery-plans/recovery-policies/application-recovery/hooks/
     data: [{ id: 'critical-daily-latest', name: 'Critical — Daily DR Test' }],
   }),
 }))
+vi.mock('@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies', () => ({
+  useCleanRoomPolicies: () => ({
+    data: [{ id: 'enforce-clean-target', name: 'Enforce Clean Target' }],
+  }),
+}))
 
 const policySet: PolicySet = {
   id: 'tier2-apps',
@@ -25,6 +30,7 @@ const policySet: PolicySet = {
   description: 'Policy set using the medium-tier, 6-hour cadence.',
   snapshotPolicyId: 'medium-6h',
   recoveryAppPolicyId: 'critical-daily-latest',
+  cleanRoomPolicyId: 'enforce-clean-target',
 }
 
 describe('PolicySetsTable', () => {
@@ -47,6 +53,7 @@ describe('PolicySetsTable', () => {
     expect(detail).toBeInTheDocument()
     expect(within(detail).getByText('Medium — 6h')).toBeInTheDocument()
     expect(within(detail).getByText('Critical — Daily DR Test')).toBeInTheDocument()
+    expect(within(detail).getByText('Enforce Clean Target')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
   })

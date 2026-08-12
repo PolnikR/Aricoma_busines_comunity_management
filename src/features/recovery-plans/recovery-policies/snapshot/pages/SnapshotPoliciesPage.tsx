@@ -17,6 +17,7 @@ export function SnapshotPoliciesPage() {
   const policyTabs: readonly TabItem<RecoveryPolicyTab>[] = [
     { value: 'snapshot', label: t('recoveryPolicies.tabs.snapshot') },
     { value: 'application-recovery', label: t('recoveryPolicies.tabs.applicationRecovery') },
+    { value: 'clean-room', label: t('recoveryPolicies.tabs.cleanRoom') },
   ]
 
   return (

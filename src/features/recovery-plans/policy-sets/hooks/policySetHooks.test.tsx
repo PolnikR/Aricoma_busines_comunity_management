@@ -14,6 +14,7 @@ const policySet: PolicySet = {
   description: 'Policy set using the medium-tier, 6-hour cadence.',
   snapshotPolicyId: 'medium-6h',
   recoveryAppPolicyId: 'critical-daily-latest',
+  cleanRoomPolicyId: 'enforce-clean-target',
 }
 
 const wirePolicySet = {
@@ -22,6 +23,7 @@ const wirePolicySet = {
   description: policySet.description,
   snapshot_policy_id: policySet.snapshotPolicyId,
   recovery_app_policy_id: policySet.recoveryAppPolicyId,
+  clean_room_policy_id: policySet.cleanRoomPolicyId,
 }
 
 function createQueryContext() {

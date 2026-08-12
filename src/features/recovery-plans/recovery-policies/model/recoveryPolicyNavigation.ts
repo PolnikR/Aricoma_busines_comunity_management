@@ -3,6 +3,7 @@ import { routes } from '@/app/routes'
 export const RECOVERY_POLICY_TABS = [
   { value: 'snapshot', pathSegment: 'snapshot' },
   { value: 'application-recovery', pathSegment: 'application-recovery' },
+  { value: 'clean-room', pathSegment: 'clean-room' },
 ] as const
 
 export type RecoveryPolicyTab = (typeof RECOVERY_POLICY_TABS)[number]['value']

@@ -4,6 +4,7 @@ import { Field, Input, RadioField, Textarea } from '@/shared/components/form/For
 import { useTranslation } from '@/hooks/useTranslation'
 import type { SnapshotPolicy } from '@/features/recovery-plans/recovery-policies/snapshot/model/snapshotPolicyTypes'
 import type { RecoveryAppPolicy } from '@/features/recovery-plans/recovery-policies/application-recovery/model/recoveryAppPolicyTypes'
+import type { CleanRoomPolicy } from '@/features/recovery-plans/recovery-policies/clean-room/model/cleanRoomPolicyTypes'
 
 export interface PolicySetFormData {
   id: string
@@ -11,6 +12,7 @@ export interface PolicySetFormData {
   description: string
   snapshotPolicyId: string
   recoveryAppPolicyId: string
+  cleanRoomPolicyId: string
 }
 
 interface PolicySetFormProps {
@@ -18,9 +20,13 @@ interface PolicySetFormProps {
   errors: Partial<Record<keyof PolicySetFormData, string>>
   availableSnapshotPolicies: SnapshotPolicy[]
   availableRecoveryAppPolicies: RecoveryAppPolicy[]
+  availableCleanRoomPolicies: CleanRoomPolicy[]
   isRecoveryAppPoliciesLoading: boolean
   recoveryAppPoliciesError: Error | null
   onRetryRecoveryAppPolicies: () => void
+  isCleanRoomPoliciesLoading: boolean
+  cleanRoomPoliciesError: Error | null
+  onRetryCleanRoomPolicies: () => void
   isSubmitting: boolean
   idDisabled?: boolean
   onChange: <K extends keyof PolicySetFormData>(field: K, value: PolicySetFormData[K]) => void
@@ -32,9 +38,13 @@ export function PolicySetForm({
   errors,
   availableSnapshotPolicies,
   availableRecoveryAppPolicies,
+  availableCleanRoomPolicies,
   isRecoveryAppPoliciesLoading,
   recoveryAppPoliciesError,
   onRetryRecoveryAppPolicies,
+  isCleanRoomPoliciesLoading,
+  cleanRoomPoliciesError,
+  onRetryCleanRoomPolicies,
   isSubmitting,
   idDisabled = false,
   onChange,
@@ -52,6 +62,9 @@ export function PolicySetForm({
   }
   const selectRecoveryAppPolicy = (policyId: string) => {
     onChange('recoveryAppPolicyId', policyId)
+  }
+  const selectCleanRoomPolicy = (policyId: string) => {
+    onChange('cleanRoomPolicyId', policyId)
   }
 
   return (
@@ -130,6 +143,43 @@ export function PolicySetForm({
           </div>
         )}
         {errors.recoveryAppPolicyId ? <p className="mt-1 text-xs text-red-600">{errors.recoveryAppPolicyId}</p> : null}
+      </div>
+
+      <div>
+        <span className="mb-1.5 block text-xs font-medium text-text-secondary">{t('policySets.form.cleanRoomPolicy')}</span>
+        {isCleanRoomPoliciesLoading ? (
+          <p className="text-xs text-text-muted" role="status">{t('policySets.form.loadingCleanRoomPolicies')}</p>
+        ) : cleanRoomPoliciesError ? (
+          <div className="space-y-2" role="alert">
+            <p className="text-xs text-red-600">{t('policySets.form.cleanRoomPoliciesLoadFailed')}</p>
+            <Button type="button" size="xs" variant="outline" onClick={onRetryCleanRoomPolicies} disabled={isSubmitting}>
+              {t('buttons.retry')}
+            </Button>
+          </div>
+        ) : availableCleanRoomPolicies.length === 0 ? (
+          <p className="text-xs text-text-muted">{t('policySets.form.noCleanRoomPolicies')}</p>
+        ) : (
+          <div className="space-y-2">
+            {availableCleanRoomPolicies.map(policy => (
+              <RadioField
+                key={policy.id}
+                id={`policy-set-clean-room-policy-${policy.id}`}
+                name="policy-set-clean-room-policy"
+                label={`${policy.name} (${policy.id})`}
+                checked={data.cleanRoomPolicyId === policy.id}
+                disabled={isSubmitting}
+                variant="bordered"
+                onChange={() => { selectCleanRoomPolicy(policy.id) }}
+              />
+            ))}
+            {data.cleanRoomPolicyId && !availableCleanRoomPolicies.some(policy => policy.id === data.cleanRoomPolicyId) ? (
+              <p className="text-xs text-amber-700" role="status">
+                {t('policySets.form.unavailableCleanRoomPolicy').replace('{id}', data.cleanRoomPolicyId)}
+              </p>
+            ) : null}
+          </div>
+        )}
+        {errors.cleanRoomPolicyId ? <p className="mt-1 text-xs text-red-600">{errors.cleanRoomPolicyId}</p> : null}
       </div>
     </div>
   )

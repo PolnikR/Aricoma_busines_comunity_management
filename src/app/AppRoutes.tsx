@@ -77,6 +77,11 @@ const RecoveryAppPoliciesPage = lazy(async () => {
   return { default: page.RecoveryAppPoliciesPage }
 })
 
+const CleanRoomPoliciesPage = lazy(async () => {
+  const page = await import('@/features/recovery-plans/recovery-policies/clean-room/pages/CleanRoomPoliciesPage')
+  return { default: page.CleanRoomPoliciesPage }
+})
+
 const DiscoverySettingsPage = lazy(async () => {
   const page = await import('@/features/providers-connectors/discovery-settings/pages/DiscoverySettingsPage')
   return { default: page.DiscoverySettingsPage }
@@ -280,6 +285,14 @@ export function AppRoutes() {
               element={(
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryAppPoliciesPage />
+                </Suspense>
+              )}
+            />
+            <Route
+              path="clean-room"
+              element={(
+                <Suspense fallback={<RouteLoadingSkeleton />}>
+                  <CleanRoomPoliciesPage />
                 </Suspense>
               )}
             />

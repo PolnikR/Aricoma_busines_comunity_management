@@ -5,15 +5,15 @@ import { useTranslation } from '@/hooks/useTranslation'
 import type { TabItem } from '@/shared/components/tabs/Tabs'
 import { RecoveryPolicyPageShell } from '../../components/RecoveryPolicyPageShell'
 import { getRecoveryPolicyPath, type RecoveryPolicyTab } from '../../model/recoveryPolicyNavigation'
-import { RecoveryAppPoliciesTable } from '../components/RecoveryAppPoliciesTable'
-import { RecoveryAppPolicyModal } from '../components/RecoveryAppPolicyModal'
-import { useRecoveryAppPolicies } from '../hooks/useRecoveryAppPolicies'
+import { CleanRoomPoliciesTable } from '../components/CleanRoomPoliciesTable'
+import { CleanRoomPolicyModal } from '../components/CleanRoomPolicyModal'
+import { useCleanRoomPolicies } from '../hooks/useCleanRoomPolicies'
 
-export function RecoveryAppPoliciesPage() {
+export function CleanRoomPoliciesPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const { data: policies = [], isLoading, isFetching, error, refetch } = useRecoveryAppPolicies()
+  const { data: policies = [], isLoading, isFetching, error, refetch } = useCleanRoomPolicies()
   const policyTabs: readonly TabItem<RecoveryPolicyTab>[] = [
     { value: 'snapshot', label: t('recoveryPolicies.tabs.snapshot') },
     { value: 'application-recovery', label: t('recoveryPolicies.tabs.applicationRecovery') },
@@ -23,7 +23,7 @@ export function RecoveryAppPoliciesPage() {
   return (
     <>
       <RecoveryPolicyPageShell
-        activeTab="application-recovery"
+        activeTab="clean-room"
         tabs={policyTabs}
         onTabChange={(tab) => { void navigate(getRecoveryPolicyPath(tab)) }}
         tabsAriaLabel={t('recoveryPolicies.tabs.label')}
@@ -32,11 +32,11 @@ export function RecoveryAppPoliciesPage() {
         description={t('recoveryPolicies.description')}
         isFetching={isFetching}
         onRefresh={() => { void refetch() }}
-        actions={<Button size="sm" variant="outline" onClick={() => { setIsCreateModalOpen(true) }}>{t('pages.recoveryAppPolicies.addButton')}</Button>}
-        inventoryTitle={t('pages.recoveryAppPolicies.inventoryTitle')}
-        inventoryDescription={t('pages.recoveryAppPolicies.inventoryDescription')}
+        actions={<Button size="sm" variant="outline" onClick={() => { setIsCreateModalOpen(true) }}>{t('pages.cleanRoomPolicies.addButton')}</Button>}
+        inventoryTitle={t('pages.cleanRoomPolicies.inventoryTitle')}
+        inventoryDescription={t('pages.cleanRoomPolicies.inventoryDescription')}
       >
-        <RecoveryAppPoliciesTable
+        <CleanRoomPoliciesTable
           policies={policies}
           isLoading={isLoading}
           error={error instanceof Error ? error : null}
@@ -45,7 +45,7 @@ export function RecoveryAppPoliciesPage() {
         />
       </RecoveryPolicyPageShell>
 
-      <RecoveryAppPolicyModal open={isCreateModalOpen} onClose={() => { setIsCreateModalOpen(false) }} existingPolicies={policies} />
+      <CleanRoomPolicyModal open={isCreateModalOpen} onClose={() => { setIsCreateModalOpen(false) }} existingPolicies={policies} />
     </>
   )
 }

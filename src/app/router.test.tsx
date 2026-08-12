@@ -18,6 +18,7 @@ describe('createAppRouter', () => {
     expect(paths).toContain('recovery-policies')
     expect(paths).toContain('snapshot')
     expect(paths).toContain('application-recovery')
+    expect(paths).toContain('clean-room')
     expect(paths).toContain('recovery-app-policies')
     expect(paths).toContain('create')
     expect(paths).toContain(':id/edit')
