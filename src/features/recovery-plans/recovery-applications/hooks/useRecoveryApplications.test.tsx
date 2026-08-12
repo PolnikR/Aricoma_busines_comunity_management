@@ -49,6 +49,7 @@ describe('recovery application hooks', () => {
     result.current.mutate({
       providerId: 'airflow-01',
       data,
+      pushToOrchestrator: false,
     })
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true)

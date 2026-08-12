@@ -51,6 +51,18 @@ describe('recoveryApplicationFormMapper', () => {
     expect(application.data.application.tiers['database']?.recovery_group?.vms).toEqual([{ name: 'db-01' }])
   })
 
+  it('restores the orchestrator toggle without adding it to the request body', () => {
+    const pushedApplication: RecoveryApplicationListItem = {
+      ...application,
+      pushToOrchestrator: true,
+    }
+
+    const formState = toRecoveryApplicationFormState(pushedApplication)
+
+    expect(formState.pushToOrchestrator).toBe(true)
+    expect(toRecoveryApplicationData(formState)).not.toHaveProperty('pushToOrchestrator')
+  })
+
   it('maps builder state to the submit_recovery_dag contract', () => {
     const data = toRecoveryApplicationData(toRecoveryApplicationFormState(application))
 

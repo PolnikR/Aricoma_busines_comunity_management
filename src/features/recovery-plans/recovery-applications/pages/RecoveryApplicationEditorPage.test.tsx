@@ -1,17 +1,18 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryApplicationEditorPage } from './RecoveryApplicationEditorPage'
 import type {
   RecoveryApplicationFormState,
   RecoveryApplicationListItem,
+  SubmitDagResponse,
 } from '../model/recoveryApplicationTypes'
 import type { SubmitRecoveryApplicationInput } from '../model/recoveryApplicationTypes'
 
 const navigate = vi.fn()
 const mutate = vi.fn<(
   input: SubmitRecoveryApplicationInput,
-  options: { onSuccess: () => void },
+  options: { onSuccess: (response: SubmitDagResponse) => void },
 ) => void>()
 const refetch = vi.fn()
 
@@ -93,6 +94,12 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
       >
         Save renamed
       </button>
+      <button
+        type="button"
+        onClick={() => { onSave({ ...initialData, pushToOrchestrator: true }) }}
+      >
+        Save orchestrated
+      </button>
       <button type="button" onClick={() => { onDirtyChange?.(true) }}>
         Change builder
       </button>
@@ -143,6 +150,36 @@ describe('RecoveryApplicationEditorPage', () => {
 
     expect(call[0].data.id).toBe('finance_app')
     expect(call[0].data.application.name).toBe('Renamed App')
+  })
+
+  it('shows orchestrator details for an orchestrated edit and navigates after close', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationEditorPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Save orchestrated' }))
+
+    const call = mutate.mock.calls[0]
+    expect(call).toBeDefined()
+    if (!call) throw new Error('Expected submit mutation to be called')
+
+    call[1].onSuccess({
+      recovery_applications: [],
+      orchestrator_push: {
+        status: 'pushed',
+        dag: '/home/airflow/dags/finance-edit.py',
+        json: '/home/airflow/dags/finance-edit.json',
+        dag_id: 'dag_finance_edit',
+      },
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
+    expect(screen.getByText('/home/airflow/dags/finance-edit.py')).toBeInTheDocument()
+    expect(navigate).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')
   })
 
   it('warns before leaving with unsaved edit changes', async () => {

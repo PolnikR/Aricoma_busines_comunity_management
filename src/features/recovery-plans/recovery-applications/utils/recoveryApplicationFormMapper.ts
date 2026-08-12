@@ -37,6 +37,7 @@ export function toRecoveryApplicationFormState(
   return {
     fileName: toRecoveryApplicationFileName(application.id),
     policySetId: application.policySetId ?? '',
+    pushToOrchestrator: application.pushToOrchestrator ?? false,
     name: data.name,
     description: data.description ?? '',
     environment: toFormEnvironment(data.environment),

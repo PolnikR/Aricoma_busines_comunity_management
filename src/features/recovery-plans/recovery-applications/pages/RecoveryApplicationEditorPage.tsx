@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
+import { RecoveryApplicationOrchestratorSuccessModal } from '../components/RecoveryApplicationOrchestratorSuccessModal'
 import {
   useRecoveryApplications,
   useSubmitRecoveryApplication,
@@ -15,7 +16,7 @@ import {
   toRecoveryApplicationData,
   toRecoveryApplicationFormState,
 } from '../utils/recoveryApplicationFormMapper'
-import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import type { OrchestratorPush, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 
@@ -26,6 +27,8 @@ export function RecoveryApplicationEditorPage() {
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
   const submitApplication = useSubmitRecoveryApplication()
   const [isDirty, setIsDirty] = useState(false)
+  const [orchestratorPush, setOrchestratorPush] = useState<OrchestratorPush | null>(null)
+  const [orchestratedApplicationName, setOrchestratedApplicationName] = useState('')
   const navigationGuard = useUnsavedChangesGuard(isDirty)
   const application = applications?.find(
     (item) => toRecoveryApplicationFileName(item.id) === id,
@@ -47,9 +50,15 @@ export function RecoveryApplicationEditorPage() {
     submitApplication.mutate({
       providerId: formState.orchestrationProviderId,
       data: toRecoveryApplicationData(formState),
+      pushToOrchestrator: formState.pushToOrchestrator,
     }, {
-      onSuccess: () => {
+      onSuccess: (response) => {
         setIsDirty(false)
+        if (formState.pushToOrchestrator && 'orchestrator_push' in response) {
+          setOrchestratedApplicationName(formState.name)
+          setOrchestratorPush(response.orchestrator_push)
+          return
+        }
         navigationGuard.runWithoutBlocking(navigateToApplications)
       },
     })
@@ -135,6 +144,18 @@ export function RecoveryApplicationEditorPage() {
         onCancel={navigationGuard.cancelNavigation}
         onConfirm={navigationGuard.confirmNavigation}
       />
+      {orchestratorPush ? (
+        <RecoveryApplicationOrchestratorSuccessModal
+          open
+          onClose={() => {
+            setOrchestratorPush(null)
+            setOrchestratedApplicationName('')
+            navigationGuard.runWithoutBlocking(navigateToApplications)
+          }}
+          applicationName={orchestratedApplicationName}
+          orchestratorPush={orchestratorPush}
+        />
+      ) : null}
     </div>
   )
 }

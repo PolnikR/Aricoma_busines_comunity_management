@@ -23,14 +23,23 @@ const platformProvidersQuery = vi.hoisted(() => ({
     refetch: vi.fn(),
   },
 }))
-const policySetsQuery = vi.hoisted(() => ({
+const recoveryAppPoliciesQuery = vi.hoisted(() => ({
   current: {
     data: [{
-      id: 'test_1_hour_ps',
-      name: 'Test one hour',
-      description: 'Test policy set',
-      snapshotPolicyId: 'snapshot-hourly',
-      recoveryAppPolicyId: 'recovery-default',
+      id: 'critical-daily-latest',
+      name: 'Critical - Daily DR Test',
+      description: 'Daily recovery test',
+      level: 'critical',
+      frequencyValue: 1,
+      frequencyUnit: 'days',
+      retentionValue: 4,
+      retentionUnit: 'hours',
+      bootVerify: true,
+      snapshotSelectionMode: 'latest',
+      snapshotMaxAgeValue: null,
+      snapshotMaxAgeUnit: null,
+      snapshotTargetTime: null,
+      enabled: true,
     }],
     isLoading: false,
     error: null as Error | null,
@@ -77,7 +86,7 @@ vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatform
   usePlatformProviders: () => platformProvidersQuery.current,
 }))
 vi.mock('@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies', () => ({
-  useRecoveryAppPolicies: () => policySetsQuery.current,
+  useRecoveryAppPolicies: () => recoveryAppPoliciesQuery.current,
 }))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
   useProviders: () => providersQuery.current,
@@ -160,9 +169,9 @@ describe('RecoveryAppBuilder', () => {
       credentialStatus: 'ok',
     }]
     platformProvidersQuery.current.refetch.mockReset()
-    policySetsQuery.current.isLoading = false
-    policySetsQuery.current.error = null
-    policySetsQuery.current.refetch.mockReset()
+    recoveryAppPoliciesQuery.current.isLoading = false
+    recoveryAppPoliciesQuery.current.error = null
+    recoveryAppPoliciesQuery.current.refetch.mockReset()
     providersQuery.current.isLoading = false
     providersQuery.current.error = null
     providersQuery.current.data = [{
@@ -217,22 +226,20 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
-    fireEvent.change(screen.getByLabelText('Policy set *'), { target: { value: 'test_1_hour_ps' } })
+    fireEvent.change(screen.getByLabelText('Policy set *'), { target: { value: 'critical-daily-latest' } })
     fireEvent.change(screen.getByLabelText('Environment *'), { target: { value: 'prod' } })
     fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
-    fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
     fireEvent.click(screen.getByRole('button', { name: 'Assign all tiers' }))
     fireEvent.click(screen.getByRole('button', { name: 'Save Application' }))
 
     expect(onSave).toHaveBeenCalledOnce()
     expect(onSave.mock.calls[0]?.[0]).toMatchObject({
       fileName: 'finance_recovery',
-      policySetId: 'test_1_hour_ps',
+      policySetId: 'critical-daily-latest',
       name: 'Finance',
       description: 'Finance recovery',
       environment: 'prod',
       platform: 'vmware-01',
-      orchestrationProviderId: 'airflow-01',
     })
     expect((onSave.mock.calls[0]?.[0] as { tiers: Map<string, unknown> }).tiers.size).toBe(4)
   })
@@ -250,6 +257,23 @@ describe('RecoveryAppBuilder', () => {
       target: { value: 'Finance' },
     })
 
+    expect(onDirtyChange).toHaveBeenCalledWith(true)
+  })
+
+  it('allows enabling orchestrator push and selecting an eligible platform provider', async () => {
+    const user = userEvent.setup()
+    const onDirtyChange = vi.fn()
+    render(<RecoveryAppBuilder onDirtyChange={onDirtyChange} />)
+
+    const toggle = screen.getByRole('switch', { name: 'Push to orchestrator' })
+    expect(toggle).toHaveAttribute('aria-checked', 'false')
+
+    await user.click(toggle)
+    const provider = screen.getByLabelText('Airflow platform provider *')
+    await user.selectOptions(provider, 'airflow-01')
+
+    expect(toggle).toHaveAttribute('aria-checked', 'true')
+    expect(provider).toHaveValue('airflow-01')
     expect(onDirtyChange).toHaveBeenCalledWith(true)
   })
 
@@ -275,42 +299,11 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
-    fireEvent.change(screen.getByLabelText('Policy set *'), { target: { value: 'test_1_hour_ps' } })
+    fireEvent.change(screen.getByLabelText('Policy set *'), { target: { value: 'critical-daily-latest' } })
     fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
-    fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
 
     expect(alertMock).toHaveBeenCalledWith('Assign a recovery group to every tier.')
-    expect(onSave).not.toHaveBeenCalled()
-  })
-
-  it('rejects a platform provider whose credentials are unavailable', () => {
-    const alertMock = vi.fn()
-    const onSave = vi.fn()
-    vi.stubGlobal('alert', alertMock)
-    platformProvidersQuery.current.data = [{
-      id: 'airflow-01',
-      name: 'Primary Airflow',
-      description: 'DAG orchestration',
-      type: 'AIRFLOW',
-      ipAddress: '10.99.99.55',
-      port: 22,
-      dagDir: '/opt/airflow/dags',
-      credentialId: 'airflow-ssh',
-      credentialStatus: 'missing',
-    }]
-
-    render(<RecoveryAppBuilder onSave={onSave} />)
-    fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
-    fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
-    fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
-    fireEvent.change(screen.getByLabelText('Policy set *'), { target: { value: 'test_1_hour_ps' } })
-    fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
-    fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Assign all tiers' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Save Application' }))
-
-    expect(alertMock).toHaveBeenCalledWith('Select a platform provider.')
     expect(onSave).not.toHaveBeenCalled()
   })
 
@@ -323,9 +316,8 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
-    fireEvent.change(screen.getByLabelText('Policy set *'), { target: { value: 'test_1_hour_ps' } })
+    fireEvent.change(screen.getByLabelText('Policy set *'), { target: { value: 'critical-daily-latest' } })
     fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
-    fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
 
     const savedState = onSave.mock.calls[0]?.[0] as { tiers: Map<string, RecoveryTier> }
@@ -348,9 +340,8 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
-    fireEvent.change(screen.getByLabelText('Policy set *'), { target: { value: 'test_1_hour_ps' } })
+    fireEvent.change(screen.getByLabelText('Policy set *'), { target: { value: 'critical-daily-latest' } })
     fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
-    fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
 
     const savedState = onSave.mock.calls[0]?.[0] as { tiers: Map<string, RecoveryTier> }

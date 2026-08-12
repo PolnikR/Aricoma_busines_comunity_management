@@ -6,25 +6,34 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
+import { RecoveryApplicationOrchestratorSuccessModal } from '../components/RecoveryApplicationOrchestratorSuccessModal'
 import { useSubmitRecoveryApplication } from '../hooks/useRecoveryApplications'
 import { toRecoveryApplicationData } from '../utils/recoveryApplicationFormMapper'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
-import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import type { OrchestratorPush, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 export function RecoveryApplicationBuilderPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const submitApplication = useSubmitRecoveryApplication()
   const [isDirty, setIsDirty] = useState(false)
+  const [orchestratorPush, setOrchestratorPush] = useState<OrchestratorPush | null>(null)
+  const [orchestratedApplicationName, setOrchestratedApplicationName] = useState('')
   const navigationGuard = useUnsavedChangesGuard(isDirty)
 
   const handleSave = (appState: RecoveryApplicationFormState): void => {
     submitApplication.mutate({
       providerId: appState.orchestrationProviderId,
       data: toRecoveryApplicationData(appState),
+      pushToOrchestrator: appState.pushToOrchestrator,
     }, {
-      onSuccess: () => {
+      onSuccess: (response) => {
         setIsDirty(false)
+        if (appState.pushToOrchestrator && 'orchestrator_push' in response) {
+          setOrchestratedApplicationName(appState.name)
+          setOrchestratorPush(response.orchestrator_push)
+          return
+        }
         navigationGuard.runWithoutBlocking(() => {
           void navigate('/recovery-plans/recovery-applications')
         })
@@ -74,6 +83,20 @@ export function RecoveryApplicationBuilderPage() {
         onCancel={navigationGuard.cancelNavigation}
         onConfirm={navigationGuard.confirmNavigation}
       />
+      {orchestratorPush ? (
+        <RecoveryApplicationOrchestratorSuccessModal
+          open
+          onClose={() => {
+            setOrchestratorPush(null)
+            setOrchestratedApplicationName('')
+            navigationGuard.runWithoutBlocking(() => {
+              void navigate('/recovery-plans/recovery-applications')
+            })
+          }}
+          applicationName={orchestratedApplicationName}
+          orchestratorPush={orchestratorPush}
+        />
+      ) : null}
     </div>
   )
 }

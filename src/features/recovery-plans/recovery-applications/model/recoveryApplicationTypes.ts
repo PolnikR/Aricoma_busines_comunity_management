@@ -40,6 +40,7 @@ export interface RecoveryApplicationData {
 export interface SubmitRecoveryApplicationInput {
   providerId: string
   data: RecoveryApplicationData
+  pushToOrchestrator: boolean
 }
 
 export interface ApplicationSubmission {
@@ -47,10 +48,15 @@ export interface ApplicationSubmission {
   remotePath: string
 }
 
-export interface SubmitDagResponse {
+export interface SubmitDagLocalResponse {
   recovery_applications: RecoveryApplicationApiRecord[]
-  orchestrator_push?: OrchestratorPush | undefined
 }
+
+export interface SubmitDagOrchestratedResponse extends SubmitDagLocalResponse {
+  orchestrator_push: OrchestratorPush
+}
+
+export type SubmitDagResponse = SubmitDagLocalResponse | SubmitDagOrchestratedResponse
 
 export interface OrchestratorPush {
   status: string
@@ -91,6 +97,7 @@ export interface RecoveryApplicationListItem {
 export interface RecoveryApplicationFormState {
   fileName: string
   policySetId: string
+  pushToOrchestrator: boolean
   name: string
   description: string
   environment: 'dev' | 'staging' | 'prod'

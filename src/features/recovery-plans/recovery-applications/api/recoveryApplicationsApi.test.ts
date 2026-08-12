@@ -287,13 +287,26 @@ describe('recoveryApplicationsApi', () => {
     )
   })
 
-  it('rejects an empty platform provider before issuing the DAG request', async () => {
+  it('submits locally without an orchestration provider', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       recovery_applications: [],
     }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(submitRecoveryApplicationDag('   ', data)).rejects.toThrow(
+    await expect(submitRecoveryApplicationDag('   ', data)).resolves.toMatchObject(
+      { recovery_applications: [] },
+    )
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/submit_recovery_dag?push_to_orchestrator=false',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify(data) }),
+    )
+  })
+
+  it('requires an orchestration provider when pushing the DAG', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(submitRecoveryApplicationDag('   ', data, true)).rejects.toThrow(
       'Platform provider ID is required',
     )
     expect(fetchMock).not.toHaveBeenCalled()
@@ -307,6 +320,18 @@ describe('recoveryApplicationsApi', () => {
     await expect(submitRecoveryApplicationDag(
       'airflow-01',
       data,
+    )).rejects.toBeInstanceOf(Error)
+  })
+
+  it('rejects an orchestrated response that omits orchestrator details', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ recovery_applications: [] }), { status: 200 }),
+    ))
+
+    await expect(submitRecoveryApplicationDag(
+      'airflow-01',
+      data,
+      true,
     )).rejects.toBeInstanceOf(Error)
   })
 

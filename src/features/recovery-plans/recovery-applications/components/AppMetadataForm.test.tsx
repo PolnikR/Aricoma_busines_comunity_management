@@ -22,19 +22,7 @@ describe('AppMetadataForm', () => {
             description: 'Primary',
             environment: 'dev',
             platform: 'airflow-01',
-            orchestrationProviderId: '',
           }}
-          platformProviders={[{
-            id: 'airflow-01',
-            name: 'Primary Airflow',
-            description: 'DAG orchestration',
-            type: 'AIRFLOW',
-            ipAddress: '10.99.99.55',
-            port: 22,
-            dagDir: '/opt/airflow/dags',
-            credentialId: 'airflow-ssh',
-            credentialStatus: 'ok',
-          }]}
           onMetadataChange={onMetadataChange}
         />
       </LanguageProvider>
@@ -61,7 +49,6 @@ describe('AppMetadataForm', () => {
             description: 'Primary',
             environment: 'dev',
             platform: '',
-            orchestrationProviderId: '',
           }}
           disableFileName
         />
@@ -98,54 +85,35 @@ describe('AppMetadataForm', () => {
     expect(description).toHaveAttribute('autocomplete', 'off')
   })
 
-  it('reports platform provider selection', async () => {
-    const user = userEvent.setup()
-    const onMetadataChange = vi.fn()
+  it('shows recovery app policies without orchestration-only controls', async () => {
     render(
       <LanguageProvider>
         <AppMetadataForm
-          onMetadataChange={onMetadataChange}
-          platformProviders={[{
-            id: 'airflow-01',
-            name: 'Primary Airflow',
-            description: 'DAG orchestration',
-            type: 'AIRFLOW',
-            ipAddress: '10.99.99.55',
-            port: 22,
-            dagDir: '/opt/airflow/dags',
-            credentialId: 'airflow-ssh',
-            credentialStatus: 'ok',
+          recoveryAppPolicies={[{
+            id: 'critical-daily-latest',
+            name: 'Critical - Daily DR Test',
+            description: 'Daily recovery test',
+            level: 'critical',
+            frequencyValue: 1,
+            frequencyUnit: 'days',
+            retentionValue: 4,
+            retentionUnit: 'hours',
+            bootVerify: true,
+            snapshotSelectionMode: 'latest',
+            snapshotMaxAgeValue: null,
+            snapshotMaxAgeUnit: null,
+            snapshotTargetTime: null,
+            enabled: true,
           }]}
-        />
-      </LanguageProvider>
-    )
-
-    await user.selectOptions(await screen.findByLabelText('Airflow platform provider *'), 'airflow-01')
-
-    expect(onMetadataChange).toHaveBeenCalledWith({ orchestrationProviderId: 'airflow-01' })
-  })
-
-  it('offers only providers with valid credentials', async () => {
-    render(
-      <LanguageProvider>
-        <AppMetadataForm
-          platformProviders={[
-            {
-              id: 'airflow-01', name: 'Primary Airflow', description: '', type: 'AIRFLOW',
-              ipAddress: '10.0.0.1', port: 22, dagDir: '/dags', credentialId: 'cred-1',
-              credentialStatus: 'ok',
-            },
-            {
-              id: 'airflow-02', name: 'Broken Airflow', description: '', type: 'AIRFLOW',
-              ipAddress: '10.0.0.2', port: 22, dagDir: '/dags', credentialId: 'cred-2',
-              credentialStatus: 'missing',
-            },
-          ]}
         />
       </LanguageProvider>,
     )
 
-    expect(await screen.findByRole('option', { name: 'Primary Airflow - AIRFLOW' })).toBeInTheDocument()
-    expect(screen.queryByRole('option', { name: 'Broken Airflow - AIRFLOW' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('option', {
+      name: 'Critical - Daily DR Test (critical-daily-latest)',
+    })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Airflow platform provider *')).not.toBeInTheDocument()
+    expect(screen.queryByText('Push to orchestrator')).not.toBeInTheDocument()
   })
+
 })

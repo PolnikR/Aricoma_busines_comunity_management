@@ -2,17 +2,17 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 import { isValidRecoveryApplicationFileName } from './recoveryApplicationFileName'
-import { isEligibleSourceProvider, isEligiblePlatformProvider } from './eligibleProviders'
+import { isEligibleSourceProvider } from './eligibleProviders'
 
 export interface ValidationError {
-  field: 'fileName' | 'name' | 'description' | 'policySet' | 'platform' | 'orchestrationProvider' | 'recoveryGroup'
+  field: 'fileName' | 'name' | 'description' | 'policySet' | 'platform' | 'recoveryGroup'
   messageKey: string
 }
 
 export function validateRecoveryApplication(
   formState: RecoveryApplicationFormState,
   providers: ProviderRecord[],
-  platformProviders: PlatformProviderRecord[],
+  platformProviders: PlatformProviderRecord[] = [],
 ): ValidationError | null {
   if (!isValidRecoveryApplicationFileName(formState.fileName)) {
     return {
@@ -52,13 +52,15 @@ export function validateRecoveryApplication(
     }
   }
 
-  const platformProviderIsAvailable = platformProviders.some(
-    provider => isEligiblePlatformProvider(provider) && provider.id === formState.orchestrationProviderId,
-  )
-  if (!platformProviderIsAvailable) {
-    return {
-      field: 'orchestrationProvider',
-      messageKey: 'recovery.application.validation.platformProviderRequired',
+  if (formState.pushToOrchestrator) {
+    const orchestrationProviderIsAvailable = platformProviders.some(
+      provider => provider.id === formState.orchestrationProviderId,
+    )
+    if (!orchestrationProviderIsAvailable) {
+      return {
+        field: 'platform',
+        messageKey: 'recovery.application.validation.platformProviderRequired',
+      }
     }
   }
 

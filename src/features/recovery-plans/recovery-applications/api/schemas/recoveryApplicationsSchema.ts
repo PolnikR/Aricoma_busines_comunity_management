@@ -43,15 +43,27 @@ export const recoveryApplicationListResponseSchema = z.object({
   applications: z.array(recoveryApplicationRecordSchema),
 })
 
-export const submitDagResponseSchema = z.object({
+const submitDagBaseResponseSchema = z.object({
   recovery_applications: z.array(recoveryApplicationRecordSchema),
-  orchestrator_push: z.object({
-    status: z.string(),
-    dag: z.string(),
-    json: z.string(),
-    dag_id: z.string(),
-  }).optional(),
 })
+
+export const orchestratorPushSchema = z.object({
+  status: z.string().min(1),
+  dag: z.string().min(1),
+  json: z.string().min(1),
+  dag_id: z.string().min(1),
+})
+
+export const submitDagLocalResponseSchema = submitDagBaseResponseSchema
+
+export const submitDagOrchestratedResponseSchema = submitDagBaseResponseSchema.extend({
+  orchestrator_push: orchestratorPushSchema,
+})
+
+export const submitDagResponseSchema = z.union([
+  submitDagOrchestratedResponseSchema,
+  submitDagLocalResponseSchema,
+])
 
 export type RecoveryApplicationListPayload = z.infer<typeof recoveryApplicationListResponseSchema>
 export type RecoveryTierPayload = z.infer<typeof recoveryTierSchema>

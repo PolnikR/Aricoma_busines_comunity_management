@@ -17,8 +17,8 @@ export function useSubmitRecoveryApplication() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ providerId, data }: SubmitRecoveryApplicationInput) => (
-      submitRecoveryApplicationDag(providerId, data, false)
+    mutationFn: ({ providerId, data, pushToOrchestrator }: SubmitRecoveryApplicationInput) => (
+      submitRecoveryApplicationDag(providerId, data, pushToOrchestrator)
     ),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: recoveryApplicationsQueryKey })

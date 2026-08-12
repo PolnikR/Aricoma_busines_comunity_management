@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
-import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { RecoveryAppPolicy } from '@/features/recovery-plans/recovery-policies/application-recovery/model/recoveryAppPolicyTypes'
 import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
-import { getEligibleSourceProviders, getEligiblePlatformProviders } from '../utils/eligibleProviders'
+import { getEligibleSourceProviders } from '../utils/eligibleProviders'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface AppMetadataFormProps {
@@ -17,16 +16,11 @@ interface AppMetadataFormProps {
     description: string
     environment: 'dev' | 'staging' | 'prod'
     platform: string
-    orchestrationProviderId: string
   }
   providers?: ProviderRecord[]
   providersLoading?: boolean
   providersError?: Error | null
   onRetryProviders?: () => void
-  platformProviders?: PlatformProviderRecord[]
-  platformProvidersLoading?: boolean
-  platformProvidersError?: Error | null
-  onRetryPlatformProviders?: () => void
   recoveryAppPolicies?: RecoveryAppPolicy[]
   recoveryAppPoliciesLoading?: boolean
   recoveryAppPoliciesError?: Error | null
@@ -41,10 +35,6 @@ export function AppMetadataForm({
   providersLoading = false,
   providersError = null,
   onRetryProviders,
-  platformProviders = [],
-  platformProvidersLoading = false,
-  platformProvidersError = null,
-  onRetryPlatformProviders,
   recoveryAppPolicies = [],
   recoveryAppPoliciesLoading = false,
   recoveryAppPoliciesError = null,
@@ -60,17 +50,9 @@ export function AppMetadataForm({
     initialValues?.environment ?? 'dev'
   )
   const [platform, setPlatform] = useState(initialValues?.platform ?? '')
-  const [orchestrationProviderId, setOrchestrationProviderId] = useState(
-    initialValues?.orchestrationProviderId ?? '',
-  )
   const eligibleProviders = getEligibleSourceProviders(providers)
   const selectedPlatformIsMissing = Boolean(
     platform && !eligibleProviders.some(provider => provider.id === platform),
-  )
-  const eligiblePlatformProviders = getEligiblePlatformProviders(platformProviders)
-  const selectedOrchestrationProviderIsMissing = Boolean(
-    orchestrationProviderId
-    && !eligiblePlatformProviders.some(provider => provider.id === orchestrationProviderId),
   )
 
   const handleChange = (field: string, value: string) => {
@@ -98,10 +80,6 @@ export function AppMetadataForm({
       case 'platform':
         setPlatform(value)
         onMetadataChange?.({ platform: value })
-        break
-      case 'orchestrationProviderId':
-        setOrchestrationProviderId(value)
-        onMetadataChange?.({ orchestrationProviderId: value })
         break
     }
   }
@@ -226,39 +204,6 @@ export function AppMetadataForm({
         ) : null}
       </Field>
 
-      <Field label={t('forms.platformProvider')} htmlFor="application-platform-provider">
-        <Select
-          id="application-platform-provider"
-          value={orchestrationProviderId}
-          onChange={e => { handleChange('orchestrationProviderId', e.target.value); }}
-          disabled={platformProvidersLoading || platformProvidersError !== null}
-          required
-        >
-          <option value="">
-            {platformProvidersLoading ? t('platformProviders.loading') : t('forms.platformProviderSelect')}
-          </option>
-          {selectedOrchestrationProviderIsMissing ? (
-            <option value={orchestrationProviderId}>
-              {t('providers.credentials.unavailable').replace('{id}', orchestrationProviderId)}
-            </option>
-          ) : null}
-          {eligiblePlatformProviders.map(provider => (
-            <option key={provider.id} value={provider.id}>
-              {provider.name} - {provider.type}
-            </option>
-          ))}
-        </Select>
-        {platformProvidersError ? (
-          <p className="mt-1 text-xs text-red-600" role="alert">
-            {t('platformProviders.loadFailed')}{' '}
-            {onRetryPlatformProviders ? (
-              <button type="button" className="font-semibold underline" onClick={onRetryPlatformProviders}>
-                {t('buttons.retry')}
-              </button>
-            ) : null}
-          </p>
-        ) : null}
-      </Field>
     </form>
   )
 }

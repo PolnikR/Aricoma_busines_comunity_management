@@ -3,6 +3,8 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { Spinner } from '@/shared/components/spinner/Spinner'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
+import { Field, Select } from '@/shared/components/form/FormControls'
+import { Toggle } from '@/shared/components/toggle/Toggle'
 import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
 import { useRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies'
@@ -10,6 +12,7 @@ import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
 import { cloneTier } from '../utils/recoveryApplicationFormMapper'
+import { getEligiblePlatformProviders } from '../utils/eligibleProviders'
 import { validateRecoveryApplication } from '../utils/validateRecoveryApplication'
 import type { RecoveryTier, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
@@ -58,6 +61,7 @@ function createInitialFormState(
   return {
     fileName: '',
     policySetId: '',
+    pushToOrchestrator: false,
     name: '',
     description: '',
     environment: 'dev',
@@ -84,6 +88,10 @@ export function RecoveryAppBuilder({
   const platformProvidersQuery = usePlatformProviders()
   const providersQuery = useProviders()
   const recoveryAppPoliciesQuery = useRecoveryAppPolicies()
+  const eligiblePlatformProviders = useMemo(
+    () => getEligiblePlatformProviders(platformProvidersQuery.data ?? []),
+    [platformProvidersQuery.data],
+  )
   const {
     groups,
     isLoading: areGroupsLoading,
@@ -249,7 +257,7 @@ export function RecoveryAppBuilder({
     const validationError = validateRecoveryApplication(
       formState,
       providersQuery.data ?? [],
-      platformProvidersQuery.data ?? [],
+      eligiblePlatformProviders,
     )
 
     if (validationError) {
@@ -277,21 +285,78 @@ export function RecoveryAppBuilder({
                 description: formState.description,
                 environment: formState.environment,
                 platform: formState.platform,
-                orchestrationProviderId: formState.orchestrationProviderId,
               }}
               providers={providersQuery.data ?? []}
               providersLoading={providersQuery.isLoading}
               providersError={providersQuery.error instanceof Error ? providersQuery.error : null}
               onRetryProviders={() => { void providersQuery.refetch() }}
-              platformProviders={platformProvidersQuery.data ?? []}
-              platformProvidersLoading={platformProvidersQuery.isLoading}
-              platformProvidersError={platformProvidersQuery.error instanceof Error ? platformProvidersQuery.error : null}
-              onRetryPlatformProviders={() => { void platformProvidersQuery.refetch() }}
               recoveryAppPolicies={recoveryAppPoliciesQuery.data ?? []}
               recoveryAppPoliciesLoading={recoveryAppPoliciesQuery.isLoading}
               recoveryAppPoliciesError={recoveryAppPoliciesQuery.error instanceof Error ? recoveryAppPoliciesQuery.error : null}
               onRetryRecoveryAppPolicies={() => { void recoveryAppPoliciesQuery.refetch() }}
             />
+          </div>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-64">
+            <div className="flex min-h-10 items-center gap-3 rounded-lg border border-border bg-surface-subtle px-3 py-2">
+              <Toggle
+                checked={formState.pushToOrchestrator}
+                onChange={(checked) => {
+                  setFormState(prev => ({ ...prev, pushToOrchestrator: checked }))
+                  onDirtyChange?.(true)
+                }}
+                label={t('recovery.application.orchestration.toggleLabel')}
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-text-primary">
+                  {t('recovery.application.orchestration.toggleLabel')}
+                </p>
+                <p className="text-xs text-text-muted">
+                  {t(formState.pushToOrchestrator
+                    ? 'recovery.application.orchestration.enabled'
+                    : 'recovery.application.orchestration.disabled')}
+                </p>
+              </div>
+            </div>
+            {formState.pushToOrchestrator ? (
+              <Field
+                label={t('pages.recoveryGroupBuilder.orchestration.providerLabel')}
+                htmlFor="recovery-application-orchestration-provider"
+              >
+                <Select
+                  id="recovery-application-orchestration-provider"
+                  value={formState.orchestrationProviderId}
+                  onChange={(event) => {
+                    setFormState(prev => ({ ...prev, orchestrationProviderId: event.target.value }))
+                    onDirtyChange?.(true)
+                  }}
+                  disabled={platformProvidersQuery.isLoading || platformProvidersQuery.error !== null}
+                  required
+                >
+                  <option value="">
+                    {platformProvidersQuery.isLoading
+                      ? t('platformProviders.loading')
+                      : t('pages.recoveryGroupBuilder.orchestration.providerPlaceholder')}
+                  </option>
+                  {eligiblePlatformProviders.map(provider => (
+                    <option key={provider.id} value={provider.id}>
+                      {provider.name} - {provider.type}
+                    </option>
+                  ))}
+                </Select>
+                {platformProvidersQuery.error ? (
+                  <p className="mt-1 text-xs text-red-600" role="alert">
+                    {t('platformProviders.loadFailed')}{' '}
+                    <button
+                      type="button"
+                      className="font-semibold underline"
+                      onClick={() => { void platformProvidersQuery.refetch() }}
+                    >
+                      {t('buttons.retry')}
+                    </button>
+                  </p>
+                ) : null}
+              </Field>
+            ) : null}
           </div>
           <Button
             onClick={handleSave}
