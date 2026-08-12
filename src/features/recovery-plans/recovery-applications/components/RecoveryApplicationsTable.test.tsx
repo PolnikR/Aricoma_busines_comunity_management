@@ -8,6 +8,9 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 
 const application: RecoveryApplicationListItem = {
   id: 'finance-app',
+  policySetId: 'critical-daily-latest',
+  airflowRunId: '260811133132_fbffbefb',
+  pushToOrchestrator: true,
   data: {
     application: {
       name: 'Finance Recovery',
@@ -69,6 +72,10 @@ describe('RecoveryApplicationsTable', () => {
     await user.click(screen.getByRole('button', { name: 'View' }))
     const modal = screen.getByRole('dialog', { name: 'Application JSON' })
     expect(within(modal).getByText(/Finance Recovery/)).toBeInTheDocument()
+    expect(within(modal).getByText(/"id": "finance-app"/)).toBeInTheDocument()
+    expect(within(modal).getByText(/"policy_set_id": "critical-daily-latest"/)).toBeInTheDocument()
+    expect(within(modal).getByText(/"airflow_run_id": "260811133132_fbffbefb"/)).toBeInTheDocument()
+    expect(within(modal).getByText(/"push_to_orchestrator": true/)).toBeInTheDocument()
 
     await user.click(within(modal).getByRole('button', { name: 'Close' }))
     expect(screen.queryByRole('dialog', { name: 'Application JSON' })).not.toBeInTheDocument()

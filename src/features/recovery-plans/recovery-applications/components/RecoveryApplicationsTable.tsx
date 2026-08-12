@@ -106,6 +106,16 @@ interface JsonViewerModalProps {
   onClose: () => void
 }
 
+function getRecoveryApplicationJson(app: RecoveryApplicationListItem) {
+  return {
+    id: app.id,
+    ...(app.policySetId !== undefined ? { policy_set_id: app.policySetId } : {}),
+    application: app.data.application,
+    ...(app.airflowRunId !== undefined ? { airflow_run_id: app.airflowRunId } : {}),
+    ...(app.pushToOrchestrator !== undefined ? { push_to_orchestrator: app.pushToOrchestrator } : {}),
+  }
+}
+
 function JsonViewerModal({ isOpen, app, onClose }: JsonViewerModalProps) {
   const { t } = useTranslation()
   if (!isOpen || !app) return null
@@ -129,7 +139,7 @@ function JsonViewerModal({ isOpen, app, onClose }: JsonViewerModalProps) {
     >
       <div className="flex-1 overflow-y-auto bg-surface-subtle px-6 py-4">
         <pre className="text-xs font-mono text-text-secondary whitespace-pre-wrap break-word">
-          {JSON.stringify(app.data, null, 2)}
+          {JSON.stringify(getRecoveryApplicationJson(app), null, 2)}
         </pre>
       </div>
     </Modal>
