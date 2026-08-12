@@ -25,6 +25,8 @@ export function RecoveryGroupsListPage() {
         eyebrow={t('pages.recoveryGroups.eyebrow')}
         title={t('pages.recoveryGroups.title')}
         description={t('pages.recoveryGroups.description')}
+        isFetching={isFetching}
+        onRefresh={() => { void refresh() }}
         actions={
           <Button size="sm" variant="outline" onClick={navigateToCreate}>
             {t('pages.recoveryGroups.createButton')}
