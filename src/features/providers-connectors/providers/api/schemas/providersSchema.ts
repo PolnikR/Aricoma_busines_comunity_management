@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import {
   PROVIDER_CREDENTIAL_STATUSES,
+  PROVIDER_ROLES,
   PROVIDER_TYPES,
 } from '../../model/providerTypes'
 
@@ -12,11 +13,13 @@ export const providerSubmitSchema = z.object({
   ipAddress: z.string().min(1),
   url: z.string().url().nullable().optional(),
   credentialId: z.string().nullable(),
+  role: z.enum(PROVIDER_ROLES),
+  defaultFlashcopyProviderId: z.string().min(1).nullable().optional(),
+  orchestratorConnId: z.string().min(1).nullable().optional(),
 })
 
 const providerRecordSchema = providerSubmitSchema.extend({
   port: z.number().int().min(1).max(65_535).optional(),
-  defaultFlashcopyProviderId: z.string().min(1).nullable().optional(),
   credentialStatus: z.enum(PROVIDER_CREDENTIAL_STATUSES),
 })
 

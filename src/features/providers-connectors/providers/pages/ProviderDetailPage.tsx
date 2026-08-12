@@ -15,6 +15,10 @@ function credentialStatusColor(status: ProviderCredentialStatus) {
   return 'light' as const
 }
 
+function roleColor(role: 'source' | 'target') {
+  return role === 'source' ? 'success' as const : 'warning' as const
+}
+
 export function ProviderDetailPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -103,6 +107,12 @@ export function ProviderDetailPage() {
               </dd>
             </div>
             <div>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.role')}</dt>
+              <dd className="mt-1">
+                <Badge color={roleColor(provider.role ?? 'source')} size="sm">{t(`forms.role.${provider.role ?? 'source'}`)}</Badge>
+              </dd>
+            </div>
+            <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.ipAddress')}</dt>
               <dd className="mt-1 font-mono text-sm text-text-primary">{provider.ipAddress || '-'}</dd>
             </div>
@@ -124,6 +134,14 @@ export function ProviderDetailPage() {
             <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.description')}</dt>
               <dd className="mt-1 text-sm text-text-primary">{provider.description || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.defaultFlashcopyProviderId')}</dt>
+              <dd className="mt-1 font-mono text-sm text-text-primary">{provider.defaultFlashcopyProviderId ?? '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.orchestratorConnId')}</dt>
+              <dd className="mt-1 font-mono text-sm text-text-primary">{provider.orchestratorConnId ?? '-'}</dd>
             </div>
             <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.credential')}</dt>

@@ -14,6 +14,7 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { PlugIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useDeleteProvider } from '../hooks/useDeleteProvider'
@@ -21,6 +22,7 @@ import { useTestProviderConnection } from '../hooks/useTestProviderConnection'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
 import { ProviderConnectionTestDialog } from './ProviderConnectionTestDialog'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
+import { toProviderSubmitPayload } from '../api/providersApi'
 import type { ProviderRecord } from '../model/providerTypes'
 
 function credentialStatusLabel(
@@ -36,7 +38,14 @@ function credentialStatusColor(status: ProviderRecord['credentialStatus']) {
   return 'light' as const
 }
 
-function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<ProviderRecord>[] {
+function roleColor(role: ProviderRecord['role']) {
+  return role === 'source' ? 'success' as const : 'warning' as const
+}
+
+function getColumns(
+  t: ReturnType<typeof useTranslation>['t'],
+  onViewJson: (providerId: string) => void,
+): ColumnDef<ProviderRecord>[] {
   return [
     {
       id: 'name',
@@ -59,6 +68,14 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Provid
       cell: (provider) => <Badge color="info" size="sm">{providerTypeLabel(provider.type)}</Badge>,
     },
     {
+      id: 'role',
+      header: t('tables.provider.role'),
+      cell: (provider) => {
+        const role = provider.role ?? 'source'
+        return <Badge color={roleColor(role)} size="sm">{t(`forms.role.${role}`)}</Badge>
+      },
+    },
+    {
       id: 'ipAddress',
       header: t('tables.provider.ip'),
       cell: (provider) => <span className="font-mono text-[12px] text-text-secondary">{provider.ipAddress || '-'}</span>,
@@ -73,6 +90,22 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Provid
             {credentialStatusLabel(provider.credentialStatus, t)}
           </Badge>
         </div>
+      ),
+    },
+    {
+      id: 'json',
+      header: t('tables.common.json'),
+      cell: provider => (
+        <Button
+          size="xs"
+          variant="soft"
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation()
+            onViewJson(provider.id)
+          }}
+        >
+          {t('buttons.viewJson')}
+        </Button>
       ),
     },
   ]
@@ -94,7 +127,6 @@ export function ProvidersCatalogueTable({
   onRetry,
 }: ProvidersCatalogueTableProps) {
   const { t } = useTranslation()
-  const columns = getColumns(t)
   const deleteProvider = useDeleteProvider()
   const testConnection = useTestProviderConnection()
   const [typeFilter, setTypeFilter] = useState('')
@@ -103,9 +135,12 @@ export function ProvidersCatalogueTable({
   const [editing, setEditing] = useState<ProviderRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ProviderRecord | null>(null)
   const [isConnectionTestOpen, setIsConnectionTestOpen] = useState(false)
+  const [jsonViewId, setJsonViewId] = useState<string | null>(null)
 
   const rows = useMemo(() => providers, [providers])
   const selected = rows.find((provider) => provider.id === selectedId) ?? null
+  const jsonViewed = rows.find(provider => provider.id === jsonViewId) ?? null
+  const columns = getColumns(t, setJsonViewId)
   const types = useMemo(
     () => [...new Set(rows.map((provider) => provider.type).filter(Boolean))].sort(),
     [rows],
@@ -133,7 +168,7 @@ export function ProvidersCatalogueTable({
   if (isLoading) {
     return (
       <DataTableSkeleton
-        columnCount={5}
+        columnCount={7}
         ariaLabel={t('providers.loading')}
         className="flex-1 rounded-none border-0 shadow-none lg:min-h-0"
       />
@@ -249,6 +284,13 @@ export function ProvidersCatalogueTable({
           <dl className="px-5 py-2">
             <DetailRow label={t('details.providerId')} value={<span className="font-mono">{selected.id}</span>} />
             <DetailRow label={t('details.type')} value={providerTypeLabel(selected.type)} />
+            <DetailRow
+              label={t('details.role')}
+              value={(() => {
+                const role = selected.role ?? 'source'
+                return <Badge color={roleColor(role)} size="sm">{t(`forms.role.${role}`)}</Badge>
+              })()}
+            />
             <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{selected.ipAddress || '-'}</span>} />
             <DetailRow
               label={t('details.url')}
@@ -262,6 +304,14 @@ export function ProvidersCatalogueTable({
                   {selected.url}
                 </a>
               ) : '-'}
+            />
+            <DetailRow
+              label={t('details.defaultFlashcopyProviderId')}
+              value={<span className="font-mono">{selected.defaultFlashcopyProviderId ?? '-'}</span>}
+            />
+            <DetailRow
+              label={t('details.orchestratorConnId')}
+              value={<span className="font-mono">{selected.orchestratorConnId ?? '-'}</span>}
             />
             <DetailRow
               label={t('details.credential')}
@@ -318,6 +368,17 @@ export function ProvidersCatalogueTable({
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
           })
         }}
+      />
+
+      <JsonViewerModal
+        open={jsonViewed !== null}
+        title={t('providers.jsonViewer.title')}
+        data={jsonViewed ? toProviderSubmitPayload({
+          ...jsonViewed,
+          role: jsonViewed.role ?? 'source',
+        }) : null}
+        closeLabel={t('buttons.close')}
+        onClose={() => { setJsonViewId(null) }}
       />
     </div>
   )

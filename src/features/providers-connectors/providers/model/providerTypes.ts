@@ -2,6 +2,12 @@ export const PROVIDER_TYPES = ['VMWARE', 'FLASHCOPY', 'IBM_POWER'] as const
 
 export type ProviderType = (typeof PROVIDER_TYPES)[number]
 
+export const PROVIDER_ROLES = ['source', 'target'] as const
+
+export type ProviderRole = (typeof PROVIDER_ROLES)[number]
+
+export type ProviderRoleFilter = ProviderRole | 'all'
+
 export const PROVIDER_CREDENTIAL_STATUSES = ['ok', 'missing', 'none'] as const
 
 export type ProviderCredentialStatus = (typeof PROVIDER_CREDENTIAL_STATUSES)[number]
@@ -17,7 +23,10 @@ export interface ProviderRecord {
   /** Optional until the providers backend exposes port in its contract. */
   port?: number | undefined
   credentialId: string | null
+  /** Present on current backend responses; optional internally for legacy fixtures. */
+  role?: ProviderRole
   defaultFlashcopyProviderId?: string | null | undefined
+  orchestratorConnId?: string | null | undefined
   credentialStatus: ProviderCredentialStatus
 }
 
@@ -30,4 +39,7 @@ export interface ProviderSubmitData {
   /** Optional management URL accepted when the backend supports it. */
   url?: string | null | undefined
   credentialId: string | null
+  role: ProviderRole
+  defaultFlashcopyProviderId?: string | null | undefined
+  orchestratorConnId?: string | null | undefined
 }
