@@ -17,6 +17,7 @@ const refetch = vi.fn()
 
 const application: RecoveryApplicationListItem = {
   id: 'finance_app.json',
+  policySetId: 'test_1_hour_ps',
   data: {
     application: {
       name: 'Finance App',
@@ -123,8 +124,8 @@ describe('RecoveryApplicationEditorPage', () => {
     if (!call) throw new Error('Expected submit mutation to be called')
 
     const [submission, options] = call
-    expect(submission.fileName).toBe('finance_app')
-    expect(submission.providerId).toBe('airflow-01')
+    expect(submission.data.id).toBe('finance_app')
+    expect(submission.providerId).toBe('')
     expect(submission.data.application.name).toBe('Finance App')
     expect(options.onSuccess).toBeTypeOf('function')
     expect(screen.getByText('Filename disabled')).toBeInTheDocument()
@@ -140,7 +141,7 @@ describe('RecoveryApplicationEditorPage', () => {
     expect(call).toBeDefined()
     if (!call) throw new Error('Expected submit mutation to be called')
 
-    expect(call[0].fileName).toBe('finance_app')
+    expect(call[0].data.id).toBe('finance_app')
     expect(call[0].data.application.name).toBe('Renamed App')
   })
 

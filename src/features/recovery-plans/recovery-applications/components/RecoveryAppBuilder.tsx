@@ -5,6 +5,7 @@ import { Spinner } from '@/shared/components/spinner/Spinner'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
 import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
+import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
 import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
@@ -56,6 +57,7 @@ function createInitialFormState(
 
   return {
     fileName: '',
+    policySetId: '',
     name: '',
     description: '',
     environment: 'dev',
@@ -81,6 +83,7 @@ export function RecoveryAppBuilder({
   const { t } = useTranslation()
   const platformProvidersQuery = usePlatformProviders()
   const providersQuery = useProviders()
+  const policySetsQuery = usePolicySets()
   const {
     groups,
     isLoading: areGroupsLoading,
@@ -269,6 +272,7 @@ export function RecoveryAppBuilder({
               disableFileName={disableFileName}
               initialValues={{
                 fileName: formState.fileName,
+                policySetId: formState.policySetId,
                 name: formState.name,
                 description: formState.description,
                 environment: formState.environment,
@@ -283,6 +287,10 @@ export function RecoveryAppBuilder({
               platformProvidersLoading={platformProvidersQuery.isLoading}
               platformProvidersError={platformProvidersQuery.error instanceof Error ? platformProvidersQuery.error : null}
               onRetryPlatformProviders={() => { void platformProvidersQuery.refetch() }}
+              policySets={policySetsQuery.data ?? []}
+              policySetsLoading={policySetsQuery.isLoading}
+              policySetsError={policySetsQuery.error instanceof Error ? policySetsQuery.error : null}
+              onRetryPolicySets={() => { void policySetsQuery.refetch() }}
             />
           </div>
           <Button

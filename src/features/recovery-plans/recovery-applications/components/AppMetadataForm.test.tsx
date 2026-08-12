@@ -17,6 +17,7 @@ describe('AppMetadataForm', () => {
         <AppMetadataForm
           initialValues={{
             fileName: 'finance_app',
+            policySetId: 'test_1_hour_ps',
             name: 'Finance',
             description: 'Primary',
             environment: 'dev',
@@ -55,6 +56,7 @@ describe('AppMetadataForm', () => {
         <AppMetadataForm
           initialValues={{
             fileName: 'finance_app',
+            policySetId: 'test_1_hour_ps',
             name: 'Finance',
             description: 'Primary',
             environment: 'dev',

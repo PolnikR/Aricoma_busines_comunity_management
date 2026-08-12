@@ -11,6 +11,7 @@ describe('recoveryApplicationFileName', () => {
     'Nazov',
     'naZov',
     'recovery_app_2',
+    'sample-app-recovery2',
   ])('accepts %s', (fileName) => {
     expect(isValidRecoveryApplicationFileName(fileName)).toBe(true)
   })
@@ -18,7 +19,6 @@ describe('recoveryApplicationFileName', () => {
   it.each([
     '',
     'Test App',
-    'test-app',
     'test.app',
     '_test',
     '2test',

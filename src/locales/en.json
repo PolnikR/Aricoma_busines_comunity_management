@@ -509,6 +509,8 @@
   "forms.applicationNameExample": "e.g., SampleAppRecovery2",
   "forms.applicationDescription": "Description *",
   "forms.applicationDescriptionExample": "e.g., Recovery of FinanceTBApp2",
+  "forms.policySet": "Policy set *",
+  "forms.policySetSelect": "Select policy set",
   "forms.environment": "Environment *",
   "forms.environmentDev": "dev",
   "forms.environmentStaging": "staging",
@@ -756,6 +758,7 @@
   "recovery.application.validation.fileNameRequired": "Enter a valid file name using letters, numbers, and underscores.",
   "recovery.application.validation.platformRequired": "Select a platform.",
   "recovery.application.validation.platformProviderRequired": "Select a platform provider.",
+  "recovery.application.validation.policySetRequired": "Select a policy set.",
   "recovery.application.validation.recoveryGroupRequired": "Assign a recovery group to every tier.",
 
   "recovery.tier.order": "Order",

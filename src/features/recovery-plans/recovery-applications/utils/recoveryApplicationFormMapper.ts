@@ -22,7 +22,9 @@ export function cloneTier(tier: RecoveryTier): RecoveryTier {
     recovery_group: {
       ...tier.recovery_group,
       vms: tier.recovery_group.vms.map((vm) => ({ ...vm })),
-      volumes: tier.recovery_group.volumes?.map((vol) => ({ ...vol })),
+      ...(tier.recovery_group.volumes
+        ? { volumes: tier.recovery_group.volumes.map((vol) => ({ ...vol })) }
+        : {}),
     },
   }
 }
@@ -34,6 +36,7 @@ export function toRecoveryApplicationFormState(
 
   return {
     fileName: toRecoveryApplicationFileName(application.id),
+    policySetId: application.policySetId ?? '',
     name: data.name,
     description: data.description ?? '',
     environment: toFormEnvironment(data.environment),
@@ -51,6 +54,8 @@ export function toRecoveryApplicationData(
   formState: RecoveryApplicationFormState,
 ): RecoveryApplicationData {
   return {
+    id: formState.fileName,
+    policy_set_id: formState.policySetId,
     application: {
       name: formState.name,
       description: formState.description,

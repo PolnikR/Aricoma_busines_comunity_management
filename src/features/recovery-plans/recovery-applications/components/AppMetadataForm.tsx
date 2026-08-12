@@ -3,6 +3,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import type { PolicySet } from '@/features/recovery-plans/policy-sets/model/policySetTypes'
 import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import { getEligibleSourceProviders, getEligiblePlatformProviders } from '../utils/eligibleProviders'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
@@ -11,6 +12,7 @@ interface AppMetadataFormProps {
   onMetadataChange?: (metadata: Partial<RecoveryApplicationFormState>) => void
   initialValues?: {
     fileName: string
+    policySetId: string
     name: string
     description: string
     environment: 'dev' | 'staging' | 'prod'
@@ -25,6 +27,10 @@ interface AppMetadataFormProps {
   platformProvidersLoading?: boolean
   platformProvidersError?: Error | null
   onRetryPlatformProviders?: () => void
+  policySets?: PolicySet[]
+  policySetsLoading?: boolean
+  policySetsError?: Error | null
+  onRetryPolicySets?: () => void
   disableFileName?: boolean
 }
 
@@ -39,10 +45,15 @@ export function AppMetadataForm({
   platformProvidersLoading = false,
   platformProvidersError = null,
   onRetryPlatformProviders,
+  policySets = [],
+  policySetsLoading = false,
+  policySetsError = null,
+  onRetryPolicySets,
   disableFileName = false,
 }: AppMetadataFormProps) {
   const { t } = useTranslation()
   const [fileName, setFileName] = useState(initialValues?.fileName ?? '')
+  const [policySetId, setPolicySetId] = useState(initialValues?.policySetId ?? '')
   const [name, setName] = useState(initialValues?.name ?? '')
   const [description, setDescription] = useState(initialValues?.description ?? '')
   const [environment, setEnvironment] = useState<'dev' | 'staging' | 'prod'>(
@@ -71,6 +82,10 @@ export function AppMetadataForm({
       case 'name':
         setName(value)
         onMetadataChange?.({ name: value })
+        break
+      case 'policySetId':
+        setPolicySetId(value)
+        onMetadataChange?.({ policySetId: value })
         break
       case 'description':
         setDescription(value)
@@ -137,6 +152,33 @@ export function AppMetadataForm({
           placeholder={t('forms.applicationDescriptionExample')}
           required
         />
+      </Field>
+
+      <Field label={t('forms.policySet')} htmlFor="application-policy-set">
+        <Select
+          id="application-policy-set"
+          value={policySetId}
+          onChange={e => { handleChange('policySetId', e.target.value) }}
+          disabled={policySetsLoading || policySetsError !== null}
+          required
+        >
+          <option value="">
+            {policySetsLoading ? t('policySets.loading') : t('forms.policySetSelect')}
+          </option>
+          {policySets.map(policySet => (
+            <option key={policySet.id} value={policySet.id}>{policySet.name} ({policySet.id})</option>
+          ))}
+        </Select>
+        {policySetsError ? (
+          <p className="mt-1 text-xs text-red-600" role="alert">
+            {t('policySets.loadFailed')}{' '}
+            {onRetryPolicySets ? (
+              <button type="button" className="font-semibold underline" onClick={onRetryPolicySets}>
+                {t('buttons.retry')}
+              </button>
+            ) : null}
+          </p>
+        ) : null}
       </Field>
 
       <Field label={t('forms.environment')} htmlFor="application-environment">

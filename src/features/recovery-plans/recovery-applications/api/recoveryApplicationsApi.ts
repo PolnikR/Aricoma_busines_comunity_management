@@ -26,7 +26,6 @@ export async function fetchRecoveryApplications(): Promise<RecoveryApplicationLi
 // In dev the /api prefix is proxied to the backend (see vite.config.ts),
 // so this becomes POST http://<backend>/submit_recovery_dag.
 export async function submitRecoveryApplicationDag(
-  fileName: string,
   providerId: string,
   data: RecoveryApplicationData,
   pushToOrchestrator = false,
@@ -37,7 +36,6 @@ export async function submitRecoveryApplicationDag(
   }
 
   const params = new URLSearchParams({
-    filename: fileName,
     provider_id: normalizedProviderId,
     push_to_orchestrator: String(pushToOrchestrator),
   })

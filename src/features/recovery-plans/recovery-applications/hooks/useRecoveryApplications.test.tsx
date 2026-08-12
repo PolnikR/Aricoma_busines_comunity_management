@@ -9,6 +9,8 @@ import { recoveryApplicationsQueryKey } from '../api/recoveryApplicationQueryKey
 import type { RecoveryApplicationData } from '../model/recoveryApplicationTypes'
 
 const data: RecoveryApplicationData = {
+  id: 'finance-recovery',
+  policy_set_id: 'test_1_hour_ps',
   application: {
     name: 'Finance',
     description: 'Finance recovery',
@@ -37,9 +39,7 @@ afterEach(() => {
 describe('recovery application hooks', () => {
   it('submits to the real DAG endpoint and invalidates the backend list', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
-      status: 'ok',
-      filename: 'Finance.json',
-      local: 'C:\\projects\\abco-be\\persistency\\dag_jsons\\Finance.json',
+      recovery_applications: [],
     }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
     const { queryClient, wrapper } = setup()
@@ -47,7 +47,6 @@ describe('recovery application hooks', () => {
     const { result } = renderHook(() => useSubmitRecoveryApplication(), { wrapper })
 
     result.current.mutate({
-      fileName: 'finance_recovery',
       providerId: 'airflow-01',
       data,
     })
@@ -57,7 +56,7 @@ describe('recovery application hooks', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/submit_recovery_dag?filename=finance_recovery&provider_id=airflow-01&push_to_orchestrator=false',
+      '/api/submit_recovery_dag?provider_id=airflow-01&push_to_orchestrator=false',
       expect.objectContaining({ method: 'POST', body: JSON.stringify(data) }),
     )
     expect(queryClient.getQueryState(recoveryApplicationsQueryKey)?.isInvalidated).toBe(true)

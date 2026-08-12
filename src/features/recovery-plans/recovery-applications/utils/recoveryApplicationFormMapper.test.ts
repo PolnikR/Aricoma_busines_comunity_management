@@ -7,6 +7,7 @@ import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTy
 
 const application: RecoveryApplicationListItem = {
   id: 'Finance.json',
+  policySetId: 'test_1_hour_ps',
   data: {
     application: {
       name: 'Finance',
@@ -36,6 +37,7 @@ describe('recoveryApplicationFormMapper', () => {
 
     expect(formState).toMatchObject({
       fileName: 'Finance',
+      policySetId: 'test_1_hour_ps',
       name: 'Finance',
       description: 'Finance recovery',
       environment: 'prod',
@@ -53,6 +55,8 @@ describe('recoveryApplicationFormMapper', () => {
     const data = toRecoveryApplicationData(toRecoveryApplicationFormState(application))
 
     expect(data).toEqual({
+      id: 'Finance',
+      policy_set_id: 'test_1_hour_ps',
       application: {
         ...application.data.application,
         tiers: application.data.application.tiers,

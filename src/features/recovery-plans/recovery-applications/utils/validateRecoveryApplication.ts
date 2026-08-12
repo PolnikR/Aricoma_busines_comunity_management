@@ -5,7 +5,7 @@ import { isValidRecoveryApplicationFileName } from './recoveryApplicationFileNam
 import { isEligibleSourceProvider, isEligiblePlatformProvider } from './eligibleProviders'
 
 export interface ValidationError {
-  field: 'fileName' | 'name' | 'description' | 'platform' | 'orchestrationProvider' | 'recoveryGroup'
+  field: 'fileName' | 'name' | 'description' | 'policySet' | 'platform' | 'orchestrationProvider' | 'recoveryGroup'
   messageKey: string
 }
 
@@ -32,6 +32,13 @@ export function validateRecoveryApplication(
     return {
       field: 'description',
       messageKey: 'alerts.pleaseEnterDescription',
+    }
+  }
+
+  if (!formState.policySetId.trim()) {
+    return {
+      field: 'policySet',
+      messageKey: 'recovery.application.validation.policySetRequired',
     }
   }
 

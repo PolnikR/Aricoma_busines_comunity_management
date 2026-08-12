@@ -509,6 +509,8 @@
   "forms.applicationNameExample": "např. SampleAppRecovery2",
   "forms.applicationDescription": "Popis *",
   "forms.applicationDescriptionExample": "např. Obnovení FinanceTBApp2",
+  "forms.policySet": "Sada politik *",
+  "forms.policySetSelect": "Vyberte sadu politik",
   "forms.environment": "Prostředí *",
   "forms.environmentDev": "vývoj",
   "forms.environmentStaging": "testovací prostředí",
@@ -756,6 +758,7 @@
   "recovery.application.validation.fileNameRequired": "Zadejte platný název souboru obsahující písmena, čísla a podtržítka.",
   "recovery.application.validation.platformRequired": "Vyberte platformu.",
   "recovery.application.validation.platformProviderRequired": "Vyberte platform providera.",
+  "recovery.application.validation.policySetRequired": "Vyberte sadu politik.",
   "recovery.application.validation.recoveryGroupRequired": "Každé vrstvě přiřaďte skupinu obnovy.",
 
   "recovery.tier.order": "Pořadí",

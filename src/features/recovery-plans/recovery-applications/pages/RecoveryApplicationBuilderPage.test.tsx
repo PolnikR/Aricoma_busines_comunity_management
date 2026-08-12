@@ -40,6 +40,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
         onClick={() => {
           onSave?.({
             fileName: 'finance_recovery',
+            policySetId: 'test_1_hour_ps',
             name: 'Finance',
             description: 'Finance recovery',
             environment: 'prod',

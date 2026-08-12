@@ -23,6 +23,20 @@ const platformProvidersQuery = vi.hoisted(() => ({
     refetch: vi.fn(),
   },
 }))
+const policySetsQuery = vi.hoisted(() => ({
+  current: {
+    data: [{
+      id: 'test_1_hour_ps',
+      name: 'Test one hour',
+      description: 'Test policy set',
+      snapshotPolicyId: 'snapshot-hourly',
+      recoveryAppPolicyId: 'recovery-default',
+    }],
+    isLoading: false,
+    error: null as Error | null,
+    refetch: vi.fn(),
+  },
+}))
 const providersQuery = vi.hoisted(() => ({
   current: {
     data: [{
@@ -61,6 +75,9 @@ const recoveryGroupsQuery = vi.hoisted(() => ({
 
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
   usePlatformProviders: () => platformProvidersQuery.current,
+}))
+vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
+  usePolicySets: () => policySetsQuery.current,
 }))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
   useProviders: () => providersQuery.current,
@@ -143,6 +160,9 @@ describe('RecoveryAppBuilder', () => {
       credentialStatus: 'ok',
     }]
     platformProvidersQuery.current.refetch.mockReset()
+    policySetsQuery.current.isLoading = false
+    policySetsQuery.current.error = null
+    policySetsQuery.current.refetch.mockReset()
     providersQuery.current.isLoading = false
     providersQuery.current.error = null
     providersQuery.current.data = [{
@@ -197,6 +217,7 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
+    fireEvent.change(screen.getByLabelText('Policy set *'), { target: { value: 'test_1_hour_ps' } })
     fireEvent.change(screen.getByLabelText('Environment *'), { target: { value: 'prod' } })
     fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
     fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
@@ -206,6 +227,7 @@ describe('RecoveryAppBuilder', () => {
     expect(onSave).toHaveBeenCalledOnce()
     expect(onSave.mock.calls[0]?.[0]).toMatchObject({
       fileName: 'finance_recovery',
+      policySetId: 'test_1_hour_ps',
       name: 'Finance',
       description: 'Finance recovery',
       environment: 'prod',
@@ -253,6 +275,7 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
+    fireEvent.change(screen.getByLabelText('Policy set *'), { target: { value: 'test_1_hour_ps' } })
     fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
     fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
@@ -281,6 +304,7 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
+    fireEvent.change(screen.getByLabelText('Policy set *'), { target: { value: 'test_1_hour_ps' } })
     fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
     fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
     fireEvent.click(screen.getByRole('button', { name: 'Assign all tiers' }))
@@ -299,6 +323,7 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
+    fireEvent.change(screen.getByLabelText('Policy set *'), { target: { value: 'test_1_hour_ps' } })
     fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
     fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
@@ -323,6 +348,7 @@ describe('RecoveryAppBuilder', () => {
     fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
+    fireEvent.change(screen.getByLabelText('Policy set *'), { target: { value: 'test_1_hour_ps' } })
     fireEvent.change(screen.getByLabelText('Platform *'), { target: { value: 'vmware-01' } })
     fireEvent.change(screen.getByLabelText('Airflow platform provider *'), { target: { value: 'airflow-01' } })
     await user.click(screen.getByRole('button', { name: 'Save Application' }))

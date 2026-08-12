@@ -6,6 +6,8 @@ import {
 import type { RecoveryApplicationData } from '../model/recoveryApplicationTypes'
 
 const data: RecoveryApplicationData = {
+  id: 'finance-recovery',
+  policy_set_id: 'test_1_hour_ps',
   application: {
     name: 'Finance',
     description: 'Finance recovery',
@@ -19,24 +21,29 @@ const data: RecoveryApplicationData = {
 
 const listPayload = {
   applications: [{
-    name: 'Finance',
-    description: 'Finance recovery',
-    environment: 'prod',
-    platform: 'VMware vCenter ESXi',
-    source_connection: 'vcenter_default',
-    target_connection: 'vcenter_default_destination',
-    tiers: {
-      database: {
-        order: 1,
-        description: 'Database server tier',
-        recovery_group: {
-          name: 'database_group',
-          description: 'Database recovery group',
-          vms: [{ name: 'db-01' }],
+    id: 'finance-recovery',
+    policy_set_id: 'test_1_hour_ps',
+    application: {
+      name: 'Finance',
+      description: 'Finance recovery',
+      environment: 'prod',
+      platform: 'VMware vCenter ESXi',
+      source_connection: 'vcenter_default',
+      target_connection: 'vcenter_default_destination',
+      tiers: {
+        database: {
+          order: 1,
+          description: 'Database server tier',
+          recovery_group: {
+            name: 'database_group',
+            description: 'Database recovery group',
+            vms: [{ name: 'db-01' }],
+          },
         },
       },
     },
-    file: 'Finance.json',
+    airflow_run_id: 'run-1',
+    push_to_orchestrator: false,
   }],
 }
 
@@ -52,18 +59,15 @@ describe('recoveryApplicationsApi', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(fetchRecoveryApplications()).resolves.toEqual([{
-      id: 'Finance.json',
+      id: 'finance-recovery',
+      policySetId: 'test_1_hour_ps',
       data: {
         application: {
-          name: 'Finance',
-          description: 'Finance recovery',
-          environment: 'prod',
-          platform: 'VMware vCenter ESXi',
-          source_connection: 'vcenter_default',
-          target_connection: 'vcenter_default_destination',
-          tiers: listPayload.applications[0]?.tiers,
+          ...listPayload.applications[0]?.application,
         },
       },
+      airflowRunId: 'run-1',
+      pushToOrchestrator: false,
     }])
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/get_recovery_apps')
@@ -86,13 +90,16 @@ describe('recoveryApplicationsApi', () => {
     const invalidPayload = {
       applications: [{
         ...listPayload.applications[0],
-        tiers: {
-          database: {
-            order: 1,
-            description: 'Database server tier',
-            recovery_group: {
-              name: 'database_group',
-              description: 'Database recovery group',
+        application: {
+          ...listPayload.applications[0]?.application,
+          tiers: {
+            database: {
+              order: 1,
+              description: 'Database server tier',
+              recovery_group: {
+                name: 'database_group',
+                description: 'Database recovery group',
+              },
             },
           },
         },
@@ -109,10 +116,13 @@ describe('recoveryApplicationsApi', () => {
     const payloadWithoutRecoveryGroup = {
       applications: [{
         ...listPayload.applications[0],
-        tiers: {
-          database: {
-            order: 1,
-            description: 'Database server tier',
+        application: {
+          ...listPayload.applications[0]?.application,
+          tiers: {
+            database: {
+              order: 1,
+              description: 'Database server tier',
+            },
           },
         },
       }],
@@ -132,28 +142,31 @@ describe('recoveryApplicationsApi', () => {
   it('loads a real-world application with no description/connections, a non-enum environment, direct tier vms, and rich VM fields', async () => {
     const sampleAppPayload = {
       applications: [{
-        name: 'SampleApp',
-        environment: 'production',
-        platform: 'VMware vCenter ESXi',
-        tiers: {
-          database: {
-            order: 1,
-            description: 'Database server group',
-            vms: [
-              {
-                order: 1,
-                name: 'db-vm-01',
-                hostname: 'db01.sampleapp.local',
-                ip_address: '192.168.10.11',
-                os: 'Ubuntu 22.04',
-                cpu: 4,
-                memory_gb: 16,
-                storage_gb: 200,
-              },
-            ],
+        id: 'application1',
+        policy_set_id: 'test_1_hour_ps',
+        application: {
+          name: 'SampleApp',
+          environment: 'production',
+          platform: 'VMware vCenter ESXi',
+          tiers: {
+            database: {
+              order: 1,
+              description: 'Database server group',
+              vms: [
+                {
+                  order: 1,
+                  name: 'db-vm-01',
+                  hostname: 'db01.sampleapp.local',
+                  ip_address: '192.168.10.11',
+                  os: 'Ubuntu 22.04',
+                  cpu: 4,
+                  memory_gb: 16,
+                  storage_gb: 200,
+                },
+              ],
+            },
           },
         },
-        file: 'application1.json',
         airflow_run_id: null,
         push_to_orchestrator: false,
       }],
@@ -165,7 +178,8 @@ describe('recoveryApplicationsApi', () => {
     const applications = await fetchRecoveryApplications()
 
     expect(applications).toEqual([{
-      id: 'application1.json',
+      id: 'application1',
+      policySetId: 'test_1_hour_ps',
       data: {
         application: {
           name: 'SampleApp',
@@ -189,10 +203,10 @@ describe('recoveryApplicationsApi', () => {
               ],
             },
           },
-          airflow_run_id: null,
-          push_to_orchestrator: false,
         },
       },
+      airflowRunId: null,
+      pushToOrchestrator: false,
     }])
   })
 
@@ -200,15 +214,18 @@ describe('recoveryApplicationsApi', () => {
     const payloadWithVolumes = {
       applications: [{
         ...listPayload.applications[0],
-        tiers: {
-          database: {
-            order: 1,
-            description: 'Database server tier',
-            recovery_group: {
-              name: 'database_group',
-              description: 'Recovery group containing the database tier VMs',
-              vms: [{ name: 'TEST-DB01' }, { name: 'TEST-DB02' }],
-              volumes: [{ name: 'TEST-VOLUME1' }, { name: 'TEST-VOLUME2' }],
+        application: {
+          ...listPayload.applications[0]?.application,
+          tiers: {
+            database: {
+              order: 1,
+              description: 'Database server tier',
+              recovery_group: {
+                name: 'database_group',
+                description: 'Recovery group containing the database tier VMs',
+                vms: [{ name: 'TEST-DB01' }, { name: 'TEST-DB02' }],
+                volumes: [{ name: 'TEST-VOLUME1' }, { name: 'TEST-VOLUME2' }],
+              },
             },
           },
         },
@@ -232,53 +249,51 @@ describe('recoveryApplicationsApi', () => {
     })
   })
 
-  it('submits an encoded DAG name without pushing to the orchestrator by default and preserves the response', async () => {
+  it('submits the application body without pushing to the orchestrator by default', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
-      status: 'ok',
-      filename: 'Finance App.json',
-      local: 'C:\\projects\\abco-be\\persistency\\dag_jsons\\Finance App.json',
+      recovery_applications: [],
     }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(submitRecoveryApplicationDag(
-      'Finance App',
       'airflow primary/01',
       data,
     )).resolves.toMatchObject({
-      status: 'ok',
-      local: 'C:\\projects\\abco-be\\persistency\\dag_jsons\\Finance App.json',
+      recovery_applications: [],
     })
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/submit_recovery_dag?filename=Finance+App&provider_id=airflow+primary%2F01&push_to_orchestrator=false',
+      '/api/submit_recovery_dag?provider_id=airflow+primary%2F01&push_to_orchestrator=false',
       expect.objectContaining({ method: 'POST', body: JSON.stringify(data) }),
     )
   })
 
   it('supports pushing an explicit DAG submission to the orchestrator', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
-      status: 'ok',
-      filename: 'Finance.json',
-      local: 'C:\\projects\\abco-be\\persistency\\dag_jsons\\Finance.json',
+      recovery_applications: [],
+      orchestrator_push: {
+        status: 'pushed',
+        dag: '/home/airflow/dags/dag.py',
+        json: '/home/airflow/dags/dag.json',
+        dag_id: 'dag_1',
+      },
     }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    await submitRecoveryApplicationDag('Finance', 'airflow-01', data, true)
+    await submitRecoveryApplicationDag('airflow-01', data, true)
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/submit_recovery_dag?filename=Finance&provider_id=airflow-01&push_to_orchestrator=true',
+      '/api/submit_recovery_dag?provider_id=airflow-01&push_to_orchestrator=true',
       expect.objectContaining({ method: 'POST', body: JSON.stringify(data) }),
     )
   })
 
   it('rejects an empty platform provider before issuing the DAG request', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
-      status: 'ok',
-      filename: 'Finance.json',
-      local: 'C:\\projects\\abco-be\\persistency\\dag_jsons\\Finance.json',
+      recovery_applications: [],
     }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(submitRecoveryApplicationDag('Finance', '   ', data)).rejects.toThrow(
+    await expect(submitRecoveryApplicationDag('   ', data)).rejects.toThrow(
       'Platform provider ID is required',
     )
     expect(fetchMock).not.toHaveBeenCalled()
@@ -290,7 +305,6 @@ describe('recoveryApplicationsApi', () => {
     ))
 
     await expect(submitRecoveryApplicationDag(
-      'Finance',
       'airflow-01',
       data,
     )).rejects.toBeInstanceOf(Error)
@@ -303,12 +317,10 @@ describe('recoveryApplicationsApi', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(submitRecoveryApplicationDag(
-      'Finance',
       'airflow-01',
       data,
     )).rejects.toThrow('Network error')
     await expect(submitRecoveryApplicationDag(
-      'Finance',
       'airflow-01',
       data,
     )).rejects.toThrow('invalid DAG')

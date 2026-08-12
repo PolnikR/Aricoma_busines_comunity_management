@@ -23,8 +23,10 @@ export const recoveryTierSchema = z.object({
   }).optional(),
 })
 
-export const recoveryApplicationListResponseSchema = z.object({
-  applications: z.array(z.object({
+export const recoveryApplicationRecordSchema = z.object({
+  id: z.string(),
+  policy_set_id: z.string(),
+  application: z.object({
     name: z.string(),
     description: z.string().optional(),
     environment: z.string(),
@@ -32,17 +34,25 @@ export const recoveryApplicationListResponseSchema = z.object({
     source_connection: z.string().optional(),
     target_connection: z.string().optional(),
     tiers: z.record(z.string(), recoveryTierSchema),
-    file: z.string(),
-    airflow_run_id: z.string().nullable().optional(),
-    push_to_orchestrator: z.boolean().optional(),
-  })),
+  }),
+  airflow_run_id: z.string().nullable().optional(),
+  push_to_orchestrator: z.boolean(),
+})
+
+export const recoveryApplicationListResponseSchema = z.object({
+  applications: z.array(recoveryApplicationRecordSchema),
 })
 
 export const submitDagResponseSchema = z.object({
-  status: z.string(),
-  filename: z.string(),
-  local: z.string(),
+  recovery_applications: z.array(recoveryApplicationRecordSchema),
+  orchestrator_push: z.object({
+    status: z.string(),
+    dag: z.string(),
+    json: z.string(),
+    dag_id: z.string(),
+  }).optional(),
 })
 
 export type RecoveryApplicationListPayload = z.infer<typeof recoveryApplicationListResponseSchema>
 export type RecoveryTierPayload = z.infer<typeof recoveryTierSchema>
+export type RecoveryApplicationRecordPayload = z.infer<typeof recoveryApplicationRecordSchema>
