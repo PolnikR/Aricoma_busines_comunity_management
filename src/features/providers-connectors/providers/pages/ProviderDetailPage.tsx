@@ -107,6 +107,21 @@ export function ProviderDetailPage() {
               <dd className="mt-1 font-mono text-sm text-text-primary">{provider.ipAddress || '-'}</dd>
             </div>
             <div>
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.url')}</dt>
+              <dd className="mt-1 text-sm text-text-primary">
+                {provider.url ? (
+                  <a
+                    href={provider.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="wrap-break-word text-accent underline hover:text-accent/80"
+                  >
+                    {provider.url}
+                  </a>
+                ) : '-'}
+              </dd>
+            </div>
+            <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.description')}</dt>
               <dd className="mt-1 text-sm text-text-primary">{provider.description || '-'}</dd>
             </div>

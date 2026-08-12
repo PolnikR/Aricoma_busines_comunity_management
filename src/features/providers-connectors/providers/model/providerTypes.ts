@@ -12,6 +12,8 @@ export interface ProviderRecord {
   description: string
   type: ProviderType
   ipAddress: string
+  /** Optional management URL exposed by the providers backend. */
+  url?: string | null | undefined
   /** Optional until the providers backend exposes port in its contract. */
   port?: number | undefined
   credentialId: string | null
@@ -25,5 +27,7 @@ export interface ProviderSubmitData {
   description: string
   type: ProviderType
   ipAddress: string
+  /** Optional management URL accepted when the backend supports it. */
+  url?: string | null | undefined
   credentialId: string | null
 }

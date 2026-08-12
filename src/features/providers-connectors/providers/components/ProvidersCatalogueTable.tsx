@@ -251,6 +251,19 @@ export function ProvidersCatalogueTable({
             <DetailRow label={t('details.type')} value={providerTypeLabel(selected.type)} />
             <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{selected.ipAddress || '-'}</span>} />
             <DetailRow
+              label={t('details.url')}
+              value={selected.url ? (
+                <a
+                  href={selected.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="wrap-break-word text-accent underline hover:text-accent/80"
+                >
+                  {selected.url}
+                </a>
+              ) : '-'}
+            />
+            <DetailRow
               label={t('details.credential')}
               value={<span className="font-mono">{selected.credentialId ?? '-'}</span>}
             />

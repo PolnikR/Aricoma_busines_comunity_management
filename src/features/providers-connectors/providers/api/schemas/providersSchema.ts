@@ -10,6 +10,7 @@ export const providerSubmitSchema = z.object({
   description: z.string(),
   type: z.enum(PROVIDER_TYPES),
   ipAddress: z.string().min(1),
+  url: z.string().url().nullable().optional(),
   credentialId: z.string().nullable(),
 })
 
