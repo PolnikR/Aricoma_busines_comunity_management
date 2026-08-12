@@ -23,7 +23,7 @@ const EMPTY_FORM: PolicySetFormData = {
   id: '',
   name: '',
   description: '',
-  snapshotPolicyIds: [],
+  snapshotPolicyId: '',
   recoveryAppPolicyId: '',
 }
 
@@ -32,7 +32,7 @@ function toFormData(policySet: PolicySet): PolicySetFormData {
     id: policySet.id,
     name: policySet.name,
     description: policySet.description,
-    snapshotPolicyIds: [...policySet.snapshotPolicyIds],
+    snapshotPolicyId: policySet.snapshotPolicyId,
     recoveryAppPolicyId: policySet.recoveryAppPolicyId,
   }
 }
@@ -92,7 +92,7 @@ export function PolicySetModal({ open, onClose, existingPolicySets, policySet }:
     else if (!isEdit && existingPolicySets.some(entry => entry.id === formData.id.trim())) next.id = t('policySets.validation.idExists')
     if (!formData.name.trim()) next.name = t('policySets.validation.nameRequired')
     if (!formData.description.trim()) next.description = t('policySets.validation.descriptionRequired')
-    if (formData.snapshotPolicyIds.length === 0) next.snapshotPolicyIds = t('policySets.validation.policiesRequired')
+    if (!formData.snapshotPolicyId.trim()) next.snapshotPolicyId = t('policySets.validation.policiesRequired')
     if (!formData.recoveryAppPolicyId.trim()) next.recoveryAppPolicyId = t('policySets.validation.recoveryAppPolicyRequired')
     setErrors(next)
     return Object.keys(next).length === 0
@@ -104,7 +104,7 @@ export function PolicySetModal({ open, onClose, existingPolicySets, policySet }:
       id: formData.id.trim(),
       name: formData.name.trim(),
       description: formData.description.trim(),
-      snapshotPolicyIds: formData.snapshotPolicyIds,
+      snapshotPolicyId: formData.snapshotPolicyId,
       recoveryAppPolicyId: formData.recoveryAppPolicyId.trim(),
     }
     submitPolicySet.mutate(record, {

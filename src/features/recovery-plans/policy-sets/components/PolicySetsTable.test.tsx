@@ -23,7 +23,7 @@ const policySet: PolicySet = {
   id: 'tier2-apps',
   name: 'Tier 2 applications',
   description: 'Policy set using the medium-tier, 6-hour cadence.',
-  snapshotPolicyIds: ['medium-6h'],
+  snapshotPolicyId: 'medium-6h',
   recoveryAppPolicyId: 'critical-daily-latest',
 }
 

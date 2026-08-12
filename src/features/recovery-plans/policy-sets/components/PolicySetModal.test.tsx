@@ -44,7 +44,7 @@ const policySet: PolicySet = {
   id: 'tier2-apps',
   name: 'Tier 2 applications',
   description: 'Policy set using the medium-tier, 6-hour cadence.',
-  snapshotPolicyIds: ['medium-6h'],
+  snapshotPolicyId: 'medium-6h',
   recoveryAppPolicyId: 'critical-daily-latest',
 }
 
@@ -89,7 +89,7 @@ describe('PolicySetModal', () => {
         id: 'tier3-web',
         name: 'Tier 3 web',
         description: 'Low priority web tier.',
-        snapshot_policy_ids: ['low-24h'],
+        snapshot_policy_id: 'low-24h',
         recovery_app_policy_id: 'critical-daily-latest',
       }],
     }), { status: 200 }))
@@ -109,7 +109,7 @@ describe('PolicySetModal', () => {
       id: 'tier3-web',
       name: 'Tier 3 web',
       description: 'Low priority web tier.',
-      snapshot_policy_ids: ['low-24h'],
+        snapshot_policy_id: 'low-24h',
       recovery_app_policy_id: 'critical-daily-latest',
     }))
   })

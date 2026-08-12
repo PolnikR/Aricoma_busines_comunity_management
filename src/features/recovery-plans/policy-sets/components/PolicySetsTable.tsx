@@ -43,7 +43,7 @@ function getColumns(
       id: 'snapshotPolicies',
       header: t('tables.policySet.snapshotPolicies'),
       align: 'right',
-      cell: policySet => String(policySet.snapshotPolicyIds.length),
+      cell: policySet => policySet.snapshotPolicyId ? '1' : '0',
     },
     {
       id: 'recoveryAppPolicy',
@@ -142,7 +142,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
           <dl className="px-5 py-2">
             <DetailRow label={t('details.policySetId')} value={<span className="font-mono">{selected.id}</span>} />
             <DetailRow label={t('details.description')} value={selected.description || '-'} />
-            <DetailRow label={t('details.snapshotPolicies')} value={selected.snapshotPolicyIds.map(policyName).join(', ') || '-'} />
+            <DetailRow label={t('details.snapshotPolicies')} value={selected.snapshotPolicyId ? policyName(selected.snapshotPolicyId) : '-'} />
             <DetailRow label={t('details.recoveryAppPolicy')} value={recoveryAppPolicyName(selected.recoveryAppPolicyId)} />
           </dl>
         ) : null}

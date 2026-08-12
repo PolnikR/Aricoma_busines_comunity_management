@@ -22,7 +22,7 @@ function fromWire(policySet: PolicySetWire): PolicySet {
     id: policySet.id,
     name: policySet.name,
     description: policySet.description,
-    snapshotPolicyIds: policySet.snapshot_policy_ids,
+    snapshotPolicyId: policySet.snapshot_policy_id,
     recoveryAppPolicyId: policySet.recovery_app_policy_id,
   }
 }
@@ -33,7 +33,7 @@ function toWire(policySet: PolicySetSubmitData): PolicySetWire {
     id: validated.id,
     name: validated.name,
     description: validated.description,
-    snapshot_policy_ids: validated.snapshotPolicyIds,
+    snapshot_policy_id: validated.snapshotPolicyId,
     recovery_app_policy_id: validated.recoveryAppPolicyId,
   }
 }

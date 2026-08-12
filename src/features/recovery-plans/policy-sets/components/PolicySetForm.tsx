@@ -9,7 +9,7 @@ export interface PolicySetFormData {
   id: string
   name: string
   description: string
-  snapshotPolicyIds: string[]
+  snapshotPolicyId: string
   recoveryAppPolicyId: string
 }
 
@@ -48,7 +48,7 @@ export function PolicySetForm({
     }
   }
   const selectSnapshotPolicy = (policyId: string) => {
-    onChange('snapshotPolicyIds', [policyId])
+    onChange('snapshotPolicyId', policyId)
   }
   const selectRecoveryAppPolicy = (policyId: string) => {
     onChange('recoveryAppPolicyId', policyId)
@@ -84,7 +84,7 @@ export function PolicySetForm({
                 id={`policy-set-policy-${policy.id}`}
                 name="policy-set-policy"
                 label={`${policy.name} (${policy.id})`}
-                checked={data.snapshotPolicyIds.includes(policy.id)}
+                checked={data.snapshotPolicyId === policy.id}
                 disabled={isSubmitting}
                 variant="bordered"
                 onChange={() => { selectSnapshotPolicy(policy.id) }}
@@ -92,7 +92,7 @@ export function PolicySetForm({
             ))}
           </div>
         )}
-        {errors.snapshotPolicyIds ? <p className="mt-1 text-xs text-red-600">{errors.snapshotPolicyIds}</p> : null}
+        {errors.snapshotPolicyId ? <p className="mt-1 text-xs text-red-600">{errors.snapshotPolicyId}</p> : null}
       </div>
 
       <div>

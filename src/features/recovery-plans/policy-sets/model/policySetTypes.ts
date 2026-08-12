@@ -2,7 +2,7 @@ export interface PolicySet {
   id: string
   name: string
   description: string
-  snapshotPolicyIds: string[]
+  snapshotPolicyId: string
   recoveryAppPolicyId: string
 }
 
