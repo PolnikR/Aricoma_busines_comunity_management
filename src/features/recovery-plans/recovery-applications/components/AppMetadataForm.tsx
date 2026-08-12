@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
-import { Field, Input, Select } from '@/shared/components/form/FormControls'
+import { Field, Input, Select, Textarea } from '@/shared/components/form/FormControls'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import { getEligibleSourceProviders } from '../utils/eligibleProviders'
@@ -72,7 +72,7 @@ export function AppMetadataForm({
   return (
     <form
       autoComplete="off"
-      className="grid grid-cols-1 gap-4 items-end sm:grid-cols-2 xl:grid-cols-5"
+      className="grid max-w-3xl gap-5"
     >
       <Field label={t('recovery.application.form.fileName')} htmlFor="application-file-name">
         <Input
@@ -106,13 +106,13 @@ export function AppMetadataForm({
       </Field>
 
       <Field label={t('forms.applicationDescription')} htmlFor="application-description">
-        <Input
+        <Textarea
           id="application-description"
-          type="text"
           autoComplete="off"
           value={description}
           onChange={e => { handleChange('description', e.target.value); }}
           placeholder={t('forms.applicationDescriptionExample')}
+          rows={5}
           required
         />
       </Field>

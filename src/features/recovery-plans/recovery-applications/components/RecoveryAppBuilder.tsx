@@ -11,7 +11,7 @@ import { Toggle } from '@/shared/components/toggle/Toggle'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
 import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
-import { useRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies'
+import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
 import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
@@ -82,7 +82,7 @@ export function RecoveryAppBuilder({
 
   const providersQuery = useProviders()
   const platformProvidersQuery = usePlatformProviders()
-  const recoveryAppPoliciesQuery = useRecoveryAppPolicies()
+  const policySetsQuery = usePolicySets()
   const {
     groups,
     isLoading: areGroupsLoading,
@@ -350,20 +350,20 @@ export function RecoveryAppBuilder({
               <div>
                 <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.policySet.title')}</h2>
                 <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.policySet.description')}</p>
-                {recoveryAppPoliciesQuery.isLoading ? (
-                  <p className="mt-5 text-sm text-text-muted" role="status">{t('recoveryAppPolicies.loading')}</p>
-                ) : recoveryAppPoliciesQuery.error ? (
+                {policySetsQuery.isLoading ? (
+                  <p className="mt-5 text-sm text-text-muted" role="status">{t('pages.recoveryGroupBuilder.policySet.loading')}</p>
+                ) : policySetsQuery.error ? (
                   <div className="mt-5 max-w-4xl">
                     <FetchErrorAlert
-                      title={t('recoveryAppPolicies.loadFailed')}
+                      title={t('policySets.loadFailed')}
                       retryLabel={t('buttons.retry')}
-                      onRetry={() => { void recoveryAppPoliciesQuery.refetch() }}
+                      onRetry={() => { void policySetsQuery.refetch() }}
                       variant="full"
                     />
                   </div>
-                ) : recoveryAppPoliciesQuery.data?.length ? (
+                ) : policySetsQuery.data?.length ? (
                   <div className="mt-5 grid max-w-5xl gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    {formState.policySetId && !recoveryAppPoliciesQuery.data.some(policy => policy.id === formState.policySetId) ? (
+                    {formState.policySetId && !policySetsQuery.data.some(policySet => policySet.id === formState.policySetId) ? (
                       <SelectableCard
                         selected
                         disabled
@@ -372,22 +372,22 @@ export function RecoveryAppBuilder({
                         meta={formState.policySetId}
                       />
                     ) : null}
-                    {recoveryAppPoliciesQuery.data.map(policy => (
+                    {policySetsQuery.data.map(policySet => (
                       <SelectableCard
-                        key={policy.id}
-                        selected={policy.id === formState.policySetId}
-                        title={policy.name}
-                        description={policy.description}
-                        meta={policy.id}
-                        onClick={() => { updateFormState({ policySetId: policy.id }) }}
+                        key={policySet.id}
+                        selected={policySet.id === formState.policySetId}
+                        title={policySet.name}
+                        description={policySet.description}
+                        meta={policySet.id}
+                        onClick={() => { updateFormState({ policySetId: policySet.id }) }}
                       />
                     ))}
                   </div>
                 ) : (
                   <div className="mt-5 max-w-4xl">
                     <EmptyState
-                      title={t('pages.recoveryBuilder.policySet.empty.title')}
-                      description={t('pages.recoveryBuilder.policySet.empty.description')}
+                      title={t('pages.recoveryGroupBuilder.policySet.empty.title')}
+                      description={t('pages.recoveryGroupBuilder.policySet.empty.description')}
                     />
                   </div>
                 )}

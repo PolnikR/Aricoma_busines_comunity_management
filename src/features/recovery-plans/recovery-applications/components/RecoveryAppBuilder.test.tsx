@@ -14,23 +14,14 @@ const platformProvidersQuery = vi.hoisted(() => ({
     refetch: vi.fn(),
   },
 }))
-const recoveryAppPoliciesQuery = vi.hoisted(() => ({
+const policySetsQuery = vi.hoisted(() => ({
   current: {
     data: [{
       id: 'critical-daily-latest',
       name: 'Critical - Daily DR Test',
       description: 'Daily recovery test',
-      level: 'critical',
-      frequencyValue: 1,
-      frequencyUnit: 'days',
-      retentionValue: 4,
-      retentionUnit: 'hours',
-      bootVerify: true,
-      snapshotSelectionMode: 'latest',
-      snapshotMaxAgeValue: null,
-      snapshotMaxAgeUnit: null,
-      snapshotTargetTime: null,
-      enabled: true,
+      snapshotPolicyId: 'daily-latest',
+      recoveryAppPolicyId: 'critical-daily-latest',
     }],
     isLoading: false,
     error: null as Error | null,
@@ -76,8 +67,8 @@ const recoveryGroupsQuery = vi.hoisted(() => ({
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
   usePlatformProviders: () => platformProvidersQuery.current,
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies', () => ({
-  useRecoveryAppPolicies: () => recoveryAppPoliciesQuery.current,
+vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
+  usePolicySets: () => policySetsQuery.current,
 }))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
   useProviders: () => providersQuery.current,
@@ -163,9 +154,9 @@ describe('RecoveryAppBuilder', () => {
     platformProvidersQuery.current.isLoading = false
     platformProvidersQuery.current.error = null
     platformProvidersQuery.current.refetch.mockReset()
-    recoveryAppPoliciesQuery.current.isLoading = false
-    recoveryAppPoliciesQuery.current.error = null
-    recoveryAppPoliciesQuery.current.refetch.mockReset()
+    policySetsQuery.current.isLoading = false
+    policySetsQuery.current.error = null
+    policySetsQuery.current.refetch.mockReset()
     providersQuery.current.isLoading = false
     providersQuery.current.error = null
     providersQuery.current.refetch.mockReset()
