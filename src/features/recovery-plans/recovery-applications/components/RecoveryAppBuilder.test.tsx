@@ -76,8 +76,8 @@ const recoveryGroupsQuery = vi.hoisted(() => ({
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
   usePlatformProviders: () => platformProvidersQuery.current,
 }))
-vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
-  usePolicySets: () => policySetsQuery.current,
+vi.mock('@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies', () => ({
+  useRecoveryAppPolicies: () => policySetsQuery.current,
 }))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
   useProviders: () => providersQuery.current,

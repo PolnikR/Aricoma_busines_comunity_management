@@ -3,7 +3,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import type { PolicySet } from '@/features/recovery-plans/policy-sets/model/policySetTypes'
+import type { RecoveryAppPolicy } from '@/features/recovery-plans/recovery-policies/application-recovery/model/recoveryAppPolicyTypes'
 import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import { getEligibleSourceProviders, getEligiblePlatformProviders } from '../utils/eligibleProviders'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
@@ -27,10 +27,10 @@ interface AppMetadataFormProps {
   platformProvidersLoading?: boolean
   platformProvidersError?: Error | null
   onRetryPlatformProviders?: () => void
-  policySets?: PolicySet[]
-  policySetsLoading?: boolean
-  policySetsError?: Error | null
-  onRetryPolicySets?: () => void
+  recoveryAppPolicies?: RecoveryAppPolicy[]
+  recoveryAppPoliciesLoading?: boolean
+  recoveryAppPoliciesError?: Error | null
+  onRetryRecoveryAppPolicies?: () => void
   disableFileName?: boolean
 }
 
@@ -45,10 +45,10 @@ export function AppMetadataForm({
   platformProvidersLoading = false,
   platformProvidersError = null,
   onRetryPlatformProviders,
-  policySets = [],
-  policySetsLoading = false,
-  policySetsError = null,
-  onRetryPolicySets,
+  recoveryAppPolicies = [],
+  recoveryAppPoliciesLoading = false,
+  recoveryAppPoliciesError = null,
+  onRetryRecoveryAppPolicies,
   disableFileName = false,
 }: AppMetadataFormProps) {
   const { t } = useTranslation()
@@ -159,21 +159,21 @@ export function AppMetadataForm({
           id="application-policy-set"
           value={policySetId}
           onChange={e => { handleChange('policySetId', e.target.value) }}
-          disabled={policySetsLoading || policySetsError !== null}
+          disabled={recoveryAppPoliciesLoading || recoveryAppPoliciesError !== null}
           required
         >
           <option value="">
-            {policySetsLoading ? t('policySets.loading') : t('forms.policySetSelect')}
+            {recoveryAppPoliciesLoading ? t('recoveryAppPolicies.loading') : t('forms.policySetSelect')}
           </option>
-          {policySets.map(policySet => (
-            <option key={policySet.id} value={policySet.id}>{policySet.name} ({policySet.id})</option>
+          {recoveryAppPolicies.map(policy => (
+            <option key={policy.id} value={policy.id}>{policy.name} ({policy.id})</option>
           ))}
         </Select>
-        {policySetsError ? (
+        {recoveryAppPoliciesError ? (
           <p className="mt-1 text-xs text-red-600" role="alert">
-            {t('policySets.loadFailed')}{' '}
-            {onRetryPolicySets ? (
-              <button type="button" className="font-semibold underline" onClick={onRetryPolicySets}>
+            {t('recoveryAppPolicies.loadFailed')}{' '}
+            {onRetryRecoveryAppPolicies ? (
+              <button type="button" className="font-semibold underline" onClick={onRetryRecoveryAppPolicies}>
                 {t('buttons.retry')}
               </button>
             ) : null}
