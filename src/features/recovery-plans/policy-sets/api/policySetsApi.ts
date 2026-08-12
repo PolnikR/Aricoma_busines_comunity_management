@@ -22,17 +22,21 @@ function fromWire(policySet: PolicySetWire): PolicySet {
     id: policySet.id,
     name: policySet.name,
     description: policySet.description,
-    policyIds: policySet.policy_ids,
+    snapshotPolicyId: policySet.snapshot_policy_id,
+    recoveryAppPolicyId: policySet.recovery_app_policy_id,
+    cleanRoomPolicyId: policySet.clean_room_policy_id,
   }
 }
 
-function toWire(policySet: PolicySetSubmitData): PolicySetWire {
+export function toPolicySetSubmitPayload(policySet: PolicySetSubmitData): PolicySetWire {
   const validated = policySetSubmitSchema.parse(policySet)
   return {
     id: validated.id,
     name: validated.name,
     description: validated.description,
-    policy_ids: validated.policyIds,
+    snapshot_policy_id: validated.snapshotPolicyId,
+    recovery_app_policy_id: validated.recoveryAppPolicyId,
+    clean_room_policy_id: validated.cleanRoomPolicyId,
   }
 }
 
@@ -52,7 +56,7 @@ export async function fetchPolicySets(): Promise<PolicySet[]> {
 export async function submitPolicySet(
   policySet: PolicySetSubmitData,
 ): Promise<PolicySet[]> {
-  const wirePolicySet = toWire(policySet)
+  const wirePolicySet = toPolicySetSubmitPayload(policySet)
   const response = requireSuccessfulResponse(
     await apiFetch(API_ENDPOINTS.policySets.submit, {
       method: 'POST',

@@ -15,6 +15,17 @@ import { validateRecoveryGroupDraft } from './recoveryGroupsValidation'
 
 export const toRecoveryGroupId = toProgrammaticId
 
+export type DeleteRecoveryGroupRequest =
+  | {
+      recoveryGroupId: string
+      rollbackFromOrchestrator: false
+    }
+  | {
+      recoveryGroupId: string
+      rollbackFromOrchestrator: true
+      providerId: string
+    }
+
 function requireOk(response: Response, operation: string): void {
   if (!response.ok) {
     throw new Error(`${operation} request failed with status ${String(response.status)}`)
@@ -87,14 +98,33 @@ export async function updateRecoveryGroup(
   return submitRecoveryGroup(draft, id)
 }
 
-export async function deleteRecoveryGroup(id: string): Promise<void> {
-  const query = new URLSearchParams({ recovery_group_id: id })
+export async function deleteRecoveryGroup(
+  request: DeleteRecoveryGroupRequest,
+): Promise<RollbackReport | null> {
+  const query = new URLSearchParams({
+    recovery_group_id: request.recoveryGroupId,
+    rollback_from_orchestrator: String(request.rollbackFromOrchestrator),
+  })
+  if (request.rollbackFromOrchestrator) {
+    const providerId = request.providerId.trim()
+    if (!providerId) {
+      throw new RecoveryGroupsError(
+        'missing_orchestration_provider',
+        'An orchestration provider is required to roll back this recovery group',
+      )
+    }
+    query.set('provider_id', providerId)
+  }
   const response = await apiFetch(`${API_ENDPOINTS.recoveryGroups.delete}?${query.toString()}`, {
     method: 'DELETE',
   })
   requireOk(response, 'Delete recovery group')
   const payload: unknown = await response.json()
+  if (request.rollbackFromOrchestrator) {
+    return rollbackResponseSchema.parse(payload).rollback
+  }
   recoveryGroupsResponseSchema.parse(payload)
+  return null
 }
 
 export async function rollbackRecoveryGroupOrchestration(

@@ -3,8 +3,8 @@ import {
   DISCOVERY_INVENTORY_GC_TIME_MS,
   DISCOVERY_INVENTORY_STALE_TIME_MS,
   discoveryInventoryKeys,
-} from '@/features/discovery-inventory/api/discoveryInventoryQueryKeys'
-import { fetchVdisksByVm } from '@/features/discovery-inventory/resources/api/vdisksApi'
+} from '@/features/discovery-inventory/resources/api/resourceInventoryQueryKeys'
+import { fetchVdisksByVm } from '@/features/discovery-inventory/resources/api/vmStorageVolumesApi'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
 export function resolveDefaultFlashcopyProviderId(

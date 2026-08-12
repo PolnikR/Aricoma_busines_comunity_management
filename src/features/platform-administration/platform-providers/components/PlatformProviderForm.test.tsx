@@ -1,0 +1,47 @@
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import { PlatformProviderForm, type PlatformProviderFormData } from './PlatformProviderForm'
+
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
+const formData: PlatformProviderFormData = {
+  id: 'airflow-1',
+  name: 'Production Airflow',
+  description: 'Production orchestration',
+  type: 'AIRFLOW',
+  ipAddress: '10.99.99.40',
+  port: '22',
+  dagDir: '/opt/airflow/dags',
+  credentialId: 'credential-1',
+}
+
+describe('PlatformProviderForm', () => {
+  it('keeps IP address and port in a responsive grid row', () => {
+    render(
+      <PlatformProviderForm
+        data={formData}
+        errors={{}}
+        isSubmitting={false}
+        credentials={[]}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    const ipField = screen.getByLabelText('IP address').closest('label')
+    const portField = screen.getByLabelText('Port').closest('label')
+    const row = ipField?.parentElement
+
+    expect(row).toBe(portField?.parentElement)
+    expect(row).toHaveClass('grid', 'grid-cols-1', 'sm:grid-cols-[minmax(0,1fr)_7.5rem]')
+
+    const portInput = screen.getByLabelText('Port')
+    expect(portInput).toHaveAttribute('type', 'number')
+    expect(portInput).toHaveAttribute('min', '1')
+    expect(portInput).toHaveAttribute('max', '65535')
+    expect(portInput).toHaveAttribute('step', '1')
+  })
+})

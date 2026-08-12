@@ -7,7 +7,8 @@ export function useDeleteProvider() {
   return useMutation({
     mutationFn: (providerId: string) => deleteProvider(providerId),
     onSuccess: (remaining) => {
-      queryClient.setQueryData(providerKeys.list(), remaining)
+      queryClient.setQueryData(providerKeys.list('all'), remaining)
+      void queryClient.invalidateQueries({ queryKey: providerKeys.all })
     },
   })
 }

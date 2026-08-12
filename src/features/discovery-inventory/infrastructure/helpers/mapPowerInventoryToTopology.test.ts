@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { PowerInventory, PowerPartitionResource } from '../../model/discoveryTypes'
+import type { PowerInventory, PowerPartitionResource } from '../../resources/model/discoveryTypes'
 import { mapPowerInventoryToTopology } from './mapPowerInventoryToTopology'
 
 function partition(

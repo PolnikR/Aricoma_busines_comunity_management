@@ -1,22 +1,20 @@
 import { useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  fetchFlashSystemInventory,
-  fetchPowerInventory,
-  fetchVmwareInventory,
-} from '@/features/discovery-inventory/api/discoveryInventoryApi'
+import { fetchFlashSystemInventory } from '@/features/discovery-inventory/resources/api/flashSystemInventoryApi'
+import { fetchPowerInventory } from '@/features/discovery-inventory/resources/api/powerInventoryApi'
+import { fetchVmwareInventory } from '@/features/discovery-inventory/resources/api/vmwareInventoryApi'
 import {
   DISCOVERY_INVENTORY_GC_TIME_MS,
   DISCOVERY_INVENTORY_STALE_TIME_MS,
   discoveryInventoryKeys,
-} from '@/features/discovery-inventory/api/discoveryInventoryQueryKeys'
+} from '@/features/discovery-inventory/resources/api/resourceInventoryQueryKeys'
 import type {
   DiscoveredVirtualMachine,
   DiscoveryInventory,
   FlashSystemInventory,
   PowerInventory,
   PowerPartitionResource,
-} from '@/features/discovery-inventory/model/discoveryTypes'
+} from '@/features/discovery-inventory/resources/model/discoveryTypes'
 import type { RecoveryGroupVmMetadata, RecoveryGroupWorkloadType } from '../model/recoveryGroupTypes'
 
 interface RecoveryGroupResourceInventory {

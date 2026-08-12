@@ -1,4 +1,4 @@
-import type { DiscoveryInventory } from '../../model/discoveryTypes'
+import type { DiscoveryInventory } from '../../resources/model/discoveryTypes'
 import type {
   DatastoreTopologyNode,
   HostTopologyNode,

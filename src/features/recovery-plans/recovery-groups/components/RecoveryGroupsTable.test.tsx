@@ -12,7 +12,9 @@ vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
         id: 'tier2-apps',
         name: 'Tier 2 applications',
         description: 'Policy set using the medium-tier, 6-hour cadence.',
-        policyIds: ['medium-6h'],
+        snapshotPolicyId: 'medium-6h',
+        recoveryAppPolicyId: 'critical-daily-latest',
+        cleanRoomPolicyId: 'enforce-clean-target',
       },
     ],
   }),
@@ -92,6 +94,8 @@ describe('RecoveryGroupsTable', () => {
     const user = userEvent.setup()
     const onEdit = vi.fn()
     const onDelete = vi.fn()
+    const databaseGroup = groups.find(group => group.id === 'database-group')
+    if (!databaseGroup) throw new Error('Expected database group fixture')
     render(
       <RecoveryGroupsTable groups={groups} onEdit={onEdit} onDelete={onDelete} onRollback={vi.fn()} />,
     )
@@ -106,7 +110,59 @@ describe('RecoveryGroupsTable', () => {
     expect(confirmDialog).toHaveTextContent('Database group')
 
     await user.click(within(confirmDialog).getByRole('button', { name: 'Delete' }))
-    expect(onDelete).toHaveBeenCalledWith('database-group')
+    expect(onDelete).toHaveBeenCalledWith(databaseGroup)
+  })
+
+  it('shows the rollback report after deleting an orchestrated group', async () => {
+    const user = userEvent.setup()
+    const databaseGroup = groups.find(group => group.id === 'database-group')
+    if (!databaseGroup) throw new Error('Expected database group fixture')
+    const orchestratedGroup: RecoveryGroup = {
+      ...databaseGroup,
+      pushToOrchestrator: true,
+      orchestrationProviderId: 'airflow-01',
+    }
+    const report = {
+      status: 'ok',
+      airflow: { status: 'ok', dag_id: 'dag_123' },
+      ibm: { status: 'ok', errors: [] },
+    }
+    const onDelete = vi.fn().mockResolvedValue(report)
+    render(
+      <RecoveryGroupsTable
+        groups={[orchestratedGroup]}
+        onEdit={vi.fn()}
+        onDelete={onDelete}
+        onRollback={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByText('Database group'))
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    const confirmDialog = screen.getByRole('dialog', { name: 'Delete recovery group' })
+    await user.click(within(confirmDialog).getByRole('button', { name: 'Delete' }))
+
+    expect(onDelete).toHaveBeenCalledWith(orchestratedGroup)
+    expect(await screen.findByText('Orchestration rolled back')).toBeInTheDocument()
+    expect(screen.getByText('dag_123')).toBeInTheDocument()
+  })
+
+  it('does not show a rollback report after a regular delete', async () => {
+    const user = userEvent.setup()
+    const onDelete = vi.fn().mockResolvedValue(null)
+    const databaseGroup = groups.find(group => group.id === 'database-group')
+    if (!databaseGroup) throw new Error('Expected database group fixture')
+    render(
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={onDelete} onRollback={vi.fn()} />,
+    )
+
+    await user.click(screen.getByText('Database group'))
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    const confirmDialog = screen.getByRole('dialog', { name: 'Delete recovery group' })
+    await user.click(within(confirmDialog).getByRole('button', { name: 'Delete' }))
+
+    expect(onDelete).toHaveBeenCalledWith(databaseGroup)
+    expect(screen.queryByText('Orchestration rolled back')).not.toBeInTheDocument()
   })
 
   it('shows the resolved policy set name in the detail drawer', async () => {

@@ -8,7 +8,10 @@ const providerA: ProviderRecord = {
   description: 'Primary VMware vCenter for production virtual infrastructure.',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  url: 'https://10.99.99.40/ui/',
+  port: 22,
   credentialId: 'vcenter-admin',
+  role: 'source',
   credentialStatus: 'ok',
 }
 
@@ -18,7 +21,9 @@ const providerB: ProviderRecord = {
   description: 'Primary IBM FlashSystem storage array.',
   type: 'FLASHCOPY',
   ipAddress: '10.99.99.246',
+  port: 22,
   credentialId: 'ibm-admin',
+  role: 'source',
   credentialStatus: 'ok',
 }
 
@@ -41,10 +46,36 @@ describe('fetchProviders', () => {
     const providers = await fetchProviders()
 
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/get_providers')
+    expect(url).toBe('/api/get_providers?role=all')
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
     expect(providers).toHaveLength(2)
-    expect(providers[0]).toMatchObject({ id: 'vmware-vcenter-01', type: 'VMWARE', ipAddress: '10.99.99.40' })
+    expect(providers[0]).toMatchObject({
+      id: 'vmware-vcenter-01',
+      type: 'VMWARE',
+      ipAddress: '10.99.99.40',
+      url: 'https://10.99.99.40/ui/',
+    })
+  })
+
+  it('accepts the current backend response without a port field', async () => {
+    const backendProvider = { ...providerA }
+    delete backendProvider.port
+    stubFetch({ providers: [backendProvider] })
+
+    const providers = await fetchProviders()
+
+    expect(providers[0]).not.toHaveProperty('port')
+  })
+
+  it.each([
+    ['source', '/api/get_providers?role=source'],
+    ['target', '/api/get_providers?role=target'],
+  ] as const)('passes the role filter %s', async (role, expectedUrl) => {
+    const mock = stubFetch(listPayload)
+
+    await fetchProviders(role)
+
+    expect(mock.mock.calls[0]?.[0]).toBe(expectedUrl)
   })
 
   it('preserves an optional default FlashSystem provider reference', async () => {
@@ -97,6 +128,7 @@ describe('submitProvider', () => {
       type: 'VMWARE',
       ipAddress: '10.0.0.1',
       credentialId: 'vcenter-admin',
+      role: 'source',
     }
     const mock = stubFetch({})
 
@@ -120,9 +152,17 @@ describe('submitProvider', () => {
       type: providerA.type,
       ipAddress: providerA.ipAddress,
       credentialId: providerA.credentialId,
+      role: providerA.role ?? 'source',
     }
     await expect(submitProvider(submitData)).rejects.toThrow('Submit provider request failed with status 500')
   })
+
+  it('rejects a provider with an invalid URL', async () => {
+    stubFetch({ providers: [{ ...providerA, url: 'not-a-url' }] })
+
+    await expect(fetchProviders()).rejects.toBeInstanceOf(Error)
+  })
+
 })
 
 describe('deleteProvider', () => {

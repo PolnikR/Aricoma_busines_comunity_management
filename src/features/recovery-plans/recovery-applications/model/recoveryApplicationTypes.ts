@@ -24,21 +24,23 @@ export interface RecoveryTier {
 }
 
 export interface RecoveryApplicationData {
+  id: string
+  policy_set_id: string
   application: {
     name: string
-    description: string
-    environment: 'dev' | 'staging' | 'prod'
+    description?: string | undefined
+    environment: string
     platform: string
-    source_connection: string
-    target_connection: string
+    source_connection?: string | undefined
+    target_connection?: string | undefined
     tiers: Record<string, RecoveryTier>
   }
 }
 
 export interface SubmitRecoveryApplicationInput {
-  fileName: string
   providerId: string
   data: RecoveryApplicationData
+  pushToOrchestrator: boolean
 }
 
 export interface ApplicationSubmission {
@@ -46,14 +48,34 @@ export interface ApplicationSubmission {
   remotePath: string
 }
 
-export interface SubmitDagResponse {
+export interface SubmitDagLocalResponse {
+  recovery_applications: RecoveryApplicationApiRecord[]
+}
+
+export interface SubmitDagOrchestratedResponse extends SubmitDagLocalResponse {
+  orchestrator_push: OrchestratorPush
+}
+
+export type SubmitDagResponse = SubmitDagLocalResponse | SubmitDagOrchestratedResponse
+
+export interface OrchestratorPush {
   status: string
-  filename: string
-  local: string
+  dag: string
+  json: string
+  dag_id: string
+}
+
+export interface RecoveryApplicationApiRecord {
+  id: string
+  policy_set_id: string
+  application: RecoveryApplicationData['application']
+  airflow_run_id?: string | null | undefined
+  push_to_orchestrator: boolean
 }
 
 export interface RecoveryApplicationListItem {
   id: string
+  policySetId?: string | undefined
   data: {
     application: {
       name: string
@@ -67,11 +89,15 @@ export interface RecoveryApplicationListItem {
       push_to_orchestrator?: boolean | undefined
     }
   }
+  airflowRunId?: string | null | undefined
+  pushToOrchestrator?: boolean | undefined
   submission?: ApplicationSubmission
 }
 
 export interface RecoveryApplicationFormState {
   fileName: string
+  policySetId: string
+  pushToOrchestrator: boolean
   name: string
   description: string
   environment: 'dev' | 'staging' | 'prod'

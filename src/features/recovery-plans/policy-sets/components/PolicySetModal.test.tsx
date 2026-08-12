@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { useRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies'
+import { useCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies'
 import type { PolicySet } from '../model/policySetTypes'
 import { PolicySetModal } from './PolicySetModal'
 
@@ -9,7 +11,7 @@ vi.mock('react-router', async (importOriginal) => ({
   ...await importOriginal<typeof import('react-router')>(),
   useBlocker: () => ({ state: 'unblocked' as const }),
 }))
-vi.mock('@/features/recovery-plans/snapshot-policies/hooks/useSnapshotPolicies', () => ({
+vi.mock('@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies', () => ({
   useSnapshotPolicies: () => ({
     data: [
       { id: 'medium-6h', name: 'Medium — 6h', description: '', level: 'medium', frequencyValue: 6, frequencyUnit: 'hours', retentionValue: 7, retentionUnit: 'days', maxSnapshots: null, enabled: true },
@@ -17,12 +19,39 @@ vi.mock('@/features/recovery-plans/snapshot-policies/hooks/useSnapshotPolicies',
     ],
   }),
 }))
+vi.mock('@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies', () => ({
+  useRecoveryAppPolicies: vi.fn(),
+}))
+vi.mock('@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies', () => ({
+  useCleanRoomPolicies: vi.fn(),
+}))
+
+const mockUseRecoveryAppPolicies = vi.mocked(useRecoveryAppPolicies)
+const mockUseCleanRoomPolicies = vi.mocked(useCleanRoomPolicies)
+const recoveryAppPolicy = {
+  id: 'critical-daily-latest',
+  name: 'Critical — Daily DR Test',
+  description: '',
+  level: 'critical',
+  frequencyValue: 1,
+  frequencyUnit: 'days' as const,
+  retentionValue: 4,
+  retentionUnit: 'hours' as const,
+  bootVerify: true,
+  snapshotSelectionMode: 'latest' as const,
+  snapshotMaxAgeValue: null,
+  snapshotMaxAgeUnit: null,
+  snapshotTargetTime: null,
+  enabled: true,
+}
 
 const policySet: PolicySet = {
   id: 'tier2-apps',
   name: 'Tier 2 applications',
   description: 'Policy set using the medium-tier, 6-hour cadence.',
-  policyIds: ['medium-6h'],
+  snapshotPolicyId: 'medium-6h',
+  recoveryAppPolicyId: 'critical-daily-latest',
+  cleanRoomPolicyId: 'enforce-clean-target',
 }
 
 function renderModal(props: Partial<React.ComponentProps<typeof PolicySetModal>> = {}) {
@@ -38,6 +67,21 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+beforeEach(() => {
+  mockUseRecoveryAppPolicies.mockReturnValue({
+    data: [recoveryAppPolicy],
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  } as unknown as ReturnType<typeof useRecoveryAppPolicies>)
+  mockUseCleanRoomPolicies.mockReturnValue({
+    data: [{ id: 'enforce-clean-target', name: 'Enforce Clean Target', description: 'Remove conflicts.', enabled: true }],
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  } as unknown as ReturnType<typeof useCleanRoomPolicies>)
+})
+
 describe('PolicySetModal', () => {
   it('renders the id, name, description and available policy options', () => {
     renderModal()
@@ -47,6 +91,8 @@ describe('PolicySetModal', () => {
     expect(screen.getByLabelText('Description')).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'Medium — 6h (medium-6h)' })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'Low — 24h (low-24h)' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Critical — Daily DR Test (critical-daily-latest)' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Enforce Clean Target (enforce-clean-target)' })).toBeInTheDocument()
   })
 
   it('submits normalized values and updates the shared query cache', async () => {
@@ -56,7 +102,9 @@ describe('PolicySetModal', () => {
         id: 'tier3-web',
         name: 'Tier 3 web',
         description: 'Low priority web tier.',
-        policy_ids: ['low-24h'],
+        snapshot_policy_id: 'low-24h',
+        recovery_app_policy_id: 'critical-daily-latest',
+        clean_room_policy_id: 'enforce-clean-target',
       }],
     }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
@@ -66,6 +114,8 @@ describe('PolicySetModal', () => {
     fireEvent.change(screen.getByLabelText('Policy set name'), { target: { value: 'Tier 3 web' } })
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Low priority web tier.' } })
     fireEvent.click(screen.getByRole('radio', { name: 'Low — 24h (low-24h)' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Critical — Daily DR Test (critical-daily-latest)' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Enforce Clean Target (enforce-clean-target)' }))
     fireEvent.click(screen.getByRole('button', { name: 'Create policy set' }))
 
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
@@ -74,7 +124,9 @@ describe('PolicySetModal', () => {
       id: 'tier3-web',
       name: 'Tier 3 web',
       description: 'Low priority web tier.',
-      policy_ids: ['low-24h'],
+        snapshot_policy_id: 'low-24h',
+      recovery_app_policy_id: 'critical-daily-latest',
+      clean_room_policy_id: 'enforce-clean-target',
     }))
   })
 
@@ -86,6 +138,8 @@ describe('PolicySetModal', () => {
     expect(screen.getByLabelText('Policy set name')).toHaveValue('Tier 2 applications')
     expect(screen.getByRole('radio', { name: 'Medium — 6h (medium-6h)' })).toBeChecked()
     expect(screen.getByRole('radio', { name: 'Low — 24h (low-24h)' })).not.toBeChecked()
+    expect(screen.getByRole('radio', { name: 'Critical — Daily DR Test (critical-daily-latest)' })).toBeChecked()
+    expect(screen.getByRole('radio', { name: 'Enforce Clean Target (enforce-clean-target)' })).toBeChecked()
   })
 
   it('requires at least one policy before submitting', () => {
@@ -97,5 +151,66 @@ describe('PolicySetModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create policy set' }))
 
     expect(screen.getByText('Select at least one snapshot policy')).toBeInTheDocument()
+  })
+
+  it('requires a recovery application policy before submitting', () => {
+    mockUseRecoveryAppPolicies.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useRecoveryAppPolicies>)
+    renderModal()
+
+    fireEvent.change(screen.getByLabelText('Policy set ID'), { target: { value: 'missing-recovery-policy' } })
+    fireEvent.change(screen.getByLabelText('Policy set name'), { target: { value: 'Missing recovery policy' } })
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'No recovery policy yet.' } })
+    fireEvent.click(screen.getByRole('radio', { name: 'Medium — 6h (medium-6h)' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy set' }))
+
+    expect(screen.getByText('Select one recovery application policy')).toBeInTheDocument()
+  })
+
+  it('requires a clean room policy before submitting', () => {
+    mockUseCleanRoomPolicies.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useCleanRoomPolicies>)
+    renderModal()
+
+    fireEvent.change(screen.getByLabelText('Policy set ID'), { target: { value: 'missing-clean-room-policy' } })
+    fireEvent.change(screen.getByLabelText('Policy set name'), { target: { value: 'Missing clean room policy' } })
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'No clean room policy yet.' } })
+    fireEvent.click(screen.getByRole('radio', { name: 'Medium — 6h (medium-6h)' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Critical — Daily DR Test (critical-daily-latest)' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy set' }))
+
+    expect(screen.getByText('Select one clean room policy')).toBeInTheDocument()
+  })
+
+  it('shows a retry action when recovery application policies fail to load', () => {
+    const refetch = vi.fn()
+    mockUseRecoveryAppPolicies.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: new Error('private backend details'),
+      refetch,
+    } as unknown as ReturnType<typeof useRecoveryAppPolicies>)
+    renderModal()
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Recovery application policies could not be loaded.')
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(refetch).toHaveBeenCalledOnce()
+  })
+
+  it('keeps an unavailable recovery policy reference visible while editing', () => {
+    renderModal({
+      policySet: { ...policySet, recoveryAppPolicyId: 'removed-policy' },
+      existingPolicySets: [policySet],
+    })
+
+    expect(screen.getByText('Stored recovery application policy removed-policy is not available.')).toBeInTheDocument()
   })
 })

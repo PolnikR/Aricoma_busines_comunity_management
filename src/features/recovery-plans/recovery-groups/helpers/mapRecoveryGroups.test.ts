@@ -14,6 +14,7 @@ const vmwareProvider: ProviderRecord = {
   description: 'VMware inventory',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  port: 22,
   credentialId: 'vcenter-admin',
   credentialStatus: 'ok',
 }
@@ -24,6 +25,7 @@ const flashSystemProvider: ProviderRecord = {
   description: 'Storage inventory',
   type: 'FLASHCOPY',
   ipAddress: '10.99.99.246',
+  port: 22,
   credentialId: 'ibm-admin',
   credentialStatus: 'ok',
 }

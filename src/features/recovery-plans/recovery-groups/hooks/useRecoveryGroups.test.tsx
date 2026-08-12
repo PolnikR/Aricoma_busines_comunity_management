@@ -31,6 +31,7 @@ const provider: ProviderRecord = {
   description: 'VMware inventory',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  port: 22,
   credentialId: 'vcenter-admin',
   credentialStatus: 'ok',
 }
@@ -76,7 +77,7 @@ describe('useRecoveryGroups', () => {
     mocks.fetchRecoveryGroups.mockResolvedValue([group])
     mocks.createRecoveryGroup.mockResolvedValue(group)
     mocks.updateRecoveryGroup.mockResolvedValue(group)
-    mocks.deleteRecoveryGroup.mockResolvedValue(undefined)
+    mocks.deleteRecoveryGroup.mockResolvedValue(null)
   })
 
   it('loads groups using the provider records needed to identify VM type', async () => {
@@ -123,5 +124,54 @@ describe('useRecoveryGroups', () => {
     })
 
     await waitFor(() => { expect(mocks.fetchRecoveryGroups).toHaveBeenCalledWith([provider]) })
+  })
+
+  it('removes a non-orchestrated group without rollback parameters', async () => {
+    const { result } = renderHook(() => useRecoveryGroups(), { wrapper: createWrapper() })
+    await waitFor(() => { expect(result.current.groups).toEqual([group]) })
+
+    await act(async () => {
+      await result.current.remove(group)
+    })
+
+    expect(mocks.deleteRecoveryGroup).toHaveBeenCalledWith({
+      recoveryGroupId: group.id,
+      rollbackFromOrchestrator: false,
+    })
+  })
+
+  it('removes an orchestrated group with its orchestration provider and returns the report', async () => {
+    const report = { status: 'ok', airflow: { status: 'ok' }, ibm: { status: 'ok', errors: [] } }
+    mocks.deleteRecoveryGroup.mockResolvedValue(report)
+    const orchestratedGroup: RecoveryGroup = {
+      ...group,
+      pushToOrchestrator: true,
+      orchestrationProviderId: 'airflow-01',
+    }
+    const { result } = renderHook(() => useRecoveryGroups(), { wrapper: createWrapper() })
+    await waitFor(() => { expect(result.current.groups).toEqual([group]) })
+
+    let returned: unknown
+    await act(async () => {
+      returned = await result.current.remove(orchestratedGroup)
+    })
+
+    expect(mocks.deleteRecoveryGroup).toHaveBeenCalledWith({
+      recoveryGroupId: group.id,
+      rollbackFromOrchestrator: true,
+      providerId: 'airflow-01',
+    })
+    expect(returned).toEqual(report)
+  })
+
+  it('rejects an orchestrated group without a provider before calling the API', async () => {
+    const orchestratedGroup: RecoveryGroup = { ...group, pushToOrchestrator: true }
+    const { result } = renderHook(() => useRecoveryGroups(), { wrapper: createWrapper() })
+    await waitFor(() => { expect(result.current.groups).toEqual([group]) })
+
+    await expect(result.current.remove(orchestratedGroup)).rejects.toMatchObject({
+      code: 'missing_orchestration_provider',
+    })
+    expect(mocks.deleteRecoveryGroup).not.toHaveBeenCalled()
   })
 })

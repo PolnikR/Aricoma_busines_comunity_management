@@ -97,22 +97,24 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
             className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize bg-transparent transition hover:bg-accent/30 focus:bg-accent/40 focus:outline-none"
           />
         ) : null}
-        <div className="flex items-start justify-between gap-4 border-b border-border p-5">
-          <div className="min-w-0">
-            {eyebrow ? <p className="text-xs font-medium text-text-subtle">{eyebrow}</p> : null}
-            <h2 className="mt-1 truncate text-base font-semibold text-text-primary">{title}</h2>
-            {subtitle ? <div className="mt-1 truncate text-xs text-text-muted">{subtitle}</div> : null}
-            {headerExtra ? <div className="mt-3 flex flex-wrap gap-2">{headerExtra}</div> : null}
+        <div className="border-b border-border p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              {eyebrow ? <p className="text-xs font-medium text-text-subtle">{eyebrow}</p> : null}
+              <h2 className="mt-1 truncate text-base font-semibold text-text-primary">{title}</h2>
+              {subtitle ? <div className="mt-1 truncate text-xs text-text-muted">{subtitle}</div> : null}
+            </div>
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={onClose}
+              aria-label={closeLabel}
+              className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border text-text-muted transition hover:border-accent hover:text-accent"
+            >
+              ✕
+            </button>
           </div>
-          <button
-            ref={closeRef}
-            type="button"
-            onClick={onClose}
-            aria-label={closeLabel}
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border text-text-muted transition hover:border-accent hover:text-accent"
-          >
-            ✕
-          </button>
+          {headerExtra ? <div className="mt-3 w-full">{headerExtra}</div> : null}
         </div>
         <div className={cn('custom-scrollbar flex-1', bodyClassName ?? 'overflow-y-auto')}>{children}</div>
         {footer ? <div className="flex gap-3 border-t border-border p-4">{footer}</div> : null}

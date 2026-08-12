@@ -7,7 +7,7 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 import { useInfrastructureInventory } from '../hooks/useInfrastructureInventory'
 import { useFlashSystemVolumeTree } from '../hooks/useFlashSystemVolumeTree'
 import { InfrastructurePage } from './InfrastructurePage'
-import type { DiscoveryInventory, PowerInventory } from '../../model/discoveryTypes'
+import type { DiscoveryInventory, PowerInventory } from '../../resources/model/discoveryTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
@@ -32,9 +32,9 @@ vi.mock('../components/InfrastructureTopologyWorkspace', () => ({
 }))
 
 const providers: ProviderRecord[] = [
-  { id: 'vcenter-01', name: 'vCenter', description: '', type: 'VMWARE', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
-  { id: 'power-01', name: 'Power', description: '', type: 'IBM_POWER', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
-  { id: 'flash-01', name: 'Flash', description: '', type: 'FLASHCOPY', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
+  { id: 'vcenter-01', name: 'vCenter', description: '', type: 'VMWARE', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
+  { id: 'power-01', name: 'Power', description: '', type: 'IBM_POWER', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
+  { id: 'flash-01', name: 'Flash', description: '', type: 'FLASHCOPY', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
 ]
 
 const vmwareInventory: DiscoveryInventory = {

@@ -7,7 +7,7 @@ import {
 } from '../model/filterInfrastructureTopology'
 import type { InfrastructureTopologyFilters } from '../model/filterInfrastructureTopology'
 import type { InfrastructureTopology, InfrastructureTopologyPlatform } from '../model/topologyTypes'
-import type { FlashSystemVolumeTreeView } from '../../model/discoveryTypes'
+import type { FlashSystemVolumeTreeView } from '../model/flashSystemVolumeTreeTypes'
 import { useTopologyNodePositionOverrides } from '../hooks/useTopologyNodePositionOverrides'
 import { useTopologyLayout } from '../hooks/useTopologyLayout'
 import { InfrastructureTopologyCanvas } from './InfrastructureTopologyCanvas'

@@ -3,6 +3,7 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 
 export function isEligibleSourceProvider(provider: ProviderRecord): boolean {
   return (provider.type === 'VMWARE' || provider.type === 'IBM_POWER')
+    && provider.role !== 'target'
     && provider.credentialStatus === 'ok'
 }
 

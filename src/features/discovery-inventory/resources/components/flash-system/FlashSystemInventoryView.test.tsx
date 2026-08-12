@@ -1,9 +1,10 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { useTranslation } from '@/test-utils/mockUseTranslation'
-import { flashSystemInventoryResponseSchema } from '../../../api/schemas/flashSystemInventorySchema'
-import { mapFlashSystemInventory } from '../../../helpers/mapFlashSystemInventory'
+import { flashSystemInventoryResponseSchema } from '../../api/schemas/flashSystemInventorySchema'
+import { mapFlashSystemInventory } from '../../helpers/mapFlashSystemInventory'
 import { FlashSystemInventoryView } from './FlashSystemInventoryView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -14,6 +15,7 @@ const provider: ProviderRecord = {
   description: '',
   type: 'FLASHCOPY',
   ipAddress: '10.0.0.1',
+  port: 22,
   credentialId: null,
   credentialStatus: 'none',
 }
@@ -55,15 +57,11 @@ describe('FlashSystemInventoryView', () => {
     }), provider.id)
     const { t } = useTranslation()
 
-    render(
-      <FlashSystemInventoryView
-        resources={inventory.resources}
-        providers={[provider]}
-        providerId=""
-        onProviderIdChange={vi.fn()}
-        t={t}
-      />,
-    )
+    render(<MemoryRouter><FlashSystemInventoryView
+      resources={inventory.resources}
+      providers={[provider]}
+      t={t}
+    /></MemoryRouter>)
     expect(screen.getByRole('columnheader', { name: 'Capacity' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Pool' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Type' })).toBeInTheDocument()
@@ -103,9 +101,8 @@ describe('FlashSystemInventoryView', () => {
     expect(within(dialog).queryByText('mdisk_grp_id')).not.toBeInTheDocument()
   })
 
-  it('filters loaded data and requests provider-scoped data when applied', () => {
+  it('does not render a duplicate provider filter for the selected source tab', () => {
     const { t } = useTranslation()
-    const onProviderIdChange = vi.fn()
     const inventory = mapFlashSystemInventory(flashSystemInventoryResponseSchema.parse({
       count: 1,
       volumes: [{
@@ -121,21 +118,14 @@ describe('FlashSystemInventoryView', () => {
       clusters: {},
     }), provider.id)
 
-    render(
-      <FlashSystemInventoryView
-        resources={inventory.resources}
-        providers={[provider, secondProvider]}
-        providerId=""
-        onProviderIdChange={onProviderIdChange}
-        t={t}
-      />,
-    )
+    render(<MemoryRouter><FlashSystemInventoryView
+      resources={inventory.resources}
+      providers={[provider, secondProvider]}
+      t={t}
+    /></MemoryRouter>)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
-    fireEvent.change(screen.getByLabelText('Provider'), { target: { value: 'flash-02' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
-
-    expect(onProviderIdChange).toHaveBeenCalledWith('flash-02')
-    expect(screen.queryByText('V5000_Volume1')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Filters/ }))
+    expect(screen.queryByLabelText('Provider')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Pool')).toBeInTheDocument()
   })
 })

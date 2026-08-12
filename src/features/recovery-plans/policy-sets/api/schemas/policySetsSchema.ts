@@ -4,14 +4,18 @@ export const policySetSubmitSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   description: z.string(),
-  policyIds: z.array(z.string().min(1)).min(1),
+  snapshotPolicyId: z.string().min(1),
+  recoveryAppPolicyId: z.string().min(1),
+  cleanRoomPolicyId: z.string().min(1),
 })
 
 export const policySetWireSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   description: z.string(),
-  policy_ids: z.array(z.string().min(1)).min(1),
+  snapshot_policy_id: z.string().min(1),
+  recovery_app_policy_id: z.string().min(1),
+  clean_room_policy_id: z.string().min(1),
 })
 
 export const policySetsResponseSchema = z.object({

@@ -12,13 +12,21 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useSnapshotPolicies } from '@/features/recovery-plans/snapshot-policies/hooks/useSnapshotPolicies'
+import { useSnapshotPolicies } from '@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies'
+import { useRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies'
+import { useCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies'
+import { toPolicySetSubmitPayload } from '../api/policySetsApi'
 import { useDeletePolicySet } from '../hooks/useDeletePolicySet'
 import type { PolicySet } from '../model/policySetTypes'
 import { PolicySetModal } from './PolicySetModal'
 
-function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<PolicySet>[] {
+function getColumns(
+  t: ReturnType<typeof useTranslation>['t'],
+  recoveryAppPolicyName: (policyId: string) => string,
+  onViewJson: (policySetId: string) => void,
+): ColumnDef<PolicySet>[] {
   return [
     {
       id: 'name',
@@ -36,10 +44,31 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Policy
       cell: policySet => <span className="block max-w-md truncate" title={policySet.description}>{policySet.description || '-'}</span>,
     },
     {
-      id: 'policies',
-      header: t('tables.policySet.policies'),
+      id: 'snapshotPolicies',
+      header: t('tables.policySet.snapshotPolicies'),
       align: 'right',
-      cell: policySet => String(policySet.policyIds.length),
+      cell: policySet => policySet.snapshotPolicyId ? '1' : '0',
+    },
+    {
+      id: 'recoveryAppPolicy',
+      header: t('tables.policySet.recoveryAppPolicy'),
+      cell: policySet => recoveryAppPolicyName(policySet.recoveryAppPolicyId),
+    },
+    {
+      id: 'json',
+      header: t('tables.common.json'),
+      cell: policySet => (
+        <Button
+          size="xs"
+          variant="soft"
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation()
+            onViewJson(policySet.id)
+          }}
+        >
+          {t('buttons.viewJson')}
+        </Button>
+      ),
     },
   ]
 }
@@ -56,16 +85,22 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
   const { t } = useTranslation()
   const deletePolicySet = useDeletePolicySet()
   const { data: availablePolicies = [] } = useSnapshotPolicies()
+  const { data: availableRecoveryAppPolicies = [] } = useRecoveryAppPolicies()
+  const { data: availableCleanRoomPolicies = [] } = useCleanRoomPolicies()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<PolicySet | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<PolicySet | null>(null)
+  const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const rows = useMemo(() => policySets, [policySets])
   const selected = rows.find(policySet => policySet.id === selectedId) ?? null
+  const jsonViewed = rows.find(policySet => policySet.id === jsonViewId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'id', 'description'] })
   const policyName = (policyId: string) => availablePolicies.find(policy => policy.id === policyId)?.name ?? policyId
+  const recoveryAppPolicyName = (policyId: string) => availableRecoveryAppPolicies.find(policy => policy.id === policyId)?.name ?? policyId
+  const cleanRoomPolicyName = (policyId: string) => availableCleanRoomPolicies.find(policy => policy.id === policyId)?.name ?? policyId
 
   if (isLoading) {
-    return <DataTableSkeleton columnCount={3} ariaLabel={t('policySets.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
+    return <DataTableSkeleton columnCount={5} ariaLabel={t('policySets.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
   }
 
   return (
@@ -88,7 +123,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         } : null}
       >
         <DataTable
-          columns={getColumns(t)}
+          columns={getColumns(t, recoveryAppPolicyName, setJsonViewId)}
           rows={table.pageItems}
           rowKey={policySet => policySet.id}
           density={table.density}
@@ -131,7 +166,9 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
           <dl className="px-5 py-2">
             <DetailRow label={t('details.policySetId')} value={<span className="font-mono">{selected.id}</span>} />
             <DetailRow label={t('details.description')} value={selected.description || '-'} />
-            <DetailRow label={t('details.policies')} value={selected.policyIds.map(policyName).join(', ') || '-'} />
+            <DetailRow label={t('details.snapshotPolicies')} value={selected.snapshotPolicyId ? policyName(selected.snapshotPolicyId) : '-'} />
+            <DetailRow label={t('details.recoveryAppPolicy')} value={recoveryAppPolicyName(selected.recoveryAppPolicyId)} />
+            <DetailRow label={t('details.cleanRoomPolicy')} value={cleanRoomPolicyName(selected.cleanRoomPolicyId)} />
           </dl>
         ) : null}
       </DetailDrawer>
@@ -154,6 +191,14 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
           })
         }}
+      />
+
+      <JsonViewerModal
+        open={jsonViewed !== null}
+        title={t('policySets.jsonViewer.title')}
+        data={jsonViewed ? toPolicySetSubmitPayload(jsonViewed) : null}
+        closeLabel={t('buttons.close')}
+        onClose={() => { setJsonViewId(null) }}
       />
     </div>
   )

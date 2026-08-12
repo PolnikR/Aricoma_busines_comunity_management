@@ -2,13 +2,15 @@ import { apiFetch } from '@/shared/api/apiClient'
 import { API_ENDPOINTS } from '@/config/apiEndpoints'
 import {
   type ProviderRecord,
+  type ProviderRoleFilter,
   type ProviderSubmitData,
 } from '../model/providerTypes'
-import { providersResponseSchema } from './schemas/providersSchema'
+import { providerSubmitSchema, providersResponseSchema } from './schemas/providersSchema'
 
 // List providers -> { providers: [...] }
-export async function fetchProviders(): Promise<ProviderRecord[]> {
-  const response = await apiFetch(API_ENDPOINTS.providers.list)
+export async function fetchProviders(role: ProviderRoleFilter = 'all'): Promise<ProviderRecord[]> {
+  const params = new URLSearchParams({ role })
+  const response = await apiFetch(`${API_ENDPOINTS.providers.list}?${params.toString()}`)
 
   if (!response.ok) {
     throw new Error(`Get providers request failed with status ${String(response.status)}`)
@@ -20,11 +22,16 @@ export async function fetchProviders(): Promise<ProviderRecord[]> {
 
 // Submit a single provider object. The backend upserts
 // by id (create when new, update when the id already exists).
+export function toProviderSubmitPayload(provider: ProviderSubmitData): ProviderSubmitData {
+  return providerSubmitSchema.parse(provider)
+}
+
 export async function submitProvider(provider: ProviderSubmitData): Promise<void> {
+  const validatedProvider = toProviderSubmitPayload(provider)
   const response = await apiFetch(API_ENDPOINTS.providers.submit, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(provider),
+    body: JSON.stringify(validatedProvider),
   })
 
   if (!response.ok) {

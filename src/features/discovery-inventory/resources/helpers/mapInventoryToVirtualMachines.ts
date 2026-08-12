@@ -1,5 +1,5 @@
-import type { DiscoveredVirtualMachine, DiscoveryInventory } from '../../model/discoveryTypes'
-import type { VirtualMachine, VirtualMachinesPageData } from '../types'
+import type { DiscoveredVirtualMachine, DiscoveryInventory } from '../model/discoveryTypes'
+import type { VirtualMachine, VirtualMachinesPageData } from '../types/virtualMachineTypes'
 
 function mapVirtualMachine(vm: DiscoveredVirtualMachine): VirtualMachine {
   const diskCapacityGb = vm.disks.reduce((total, disk) => total + disk.capacityGb, 0)

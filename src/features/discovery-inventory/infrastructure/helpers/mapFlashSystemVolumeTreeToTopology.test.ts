@@ -4,7 +4,7 @@ import type {
   FlashSystemTreeNode,
   FlashSystemTreePoolDetail,
   FlashSystemTreeVolumeDetail,
-} from '../../model/discoveryTypes'
+} from '../model/flashSystemVolumeTreeTypes'
 import { mapFlashSystemVolumeTreeToTopology } from './mapFlashSystemVolumeTreeToTopology'
 
 const poolDetail: FlashSystemTreePoolDetail = {
@@ -106,10 +106,10 @@ describe('mapFlashSystemVolumeTreeToTopology', () => {
     ))).toBe(false)
   })
 
-  it('maps a consistency_group view (pool -> consistency_group -> fcmap -> volume -> volume)', () => {
-    const target = volume('2', 'pool:0/cg:5/fcmap:11/volume:2', [], { role: 'target' })
-    const map = fcmap('11', 'pool:0/cg:5/fcmap:11', [target], { source_vdisk_id: '0', target_vdisk_id: '2' })
-    const source = volume('0', 'pool:0/cg:5/fcmap:11/volume:0', [])
+  it('maps a consistency_group view with structural source ownership and a semantic copy edge', () => {
+    const target = volume('2', 'pool:0/cg:5/fcmap:11/volume:0/volume:2', [], { role: 'target' })
+    const source = volume('0', 'pool:0/cg:5/fcmap:11/volume:0', [target], { role: 'source' })
+    const map = fcmap('11', 'pool:0/cg:5/fcmap:11', [source], { source_vdisk_id: '0', target_vdisk_id: '2' })
     const group: FlashSystemTreeNode = {
       kind: 'consistency_group',
       id: '5',
@@ -119,13 +119,36 @@ describe('mapFlashSystemVolumeTreeToTopology', () => {
         id: '5', name: 'cg5', status: 'copying', start_time: '', fc_mapping_count: 1,
         pool_ids: ['0'], spans_pools: false, is_synthetic: false,
       },
-      children: [map, source],
+      children: [map],
     }
     const topology = mapFlashSystemVolumeTreeToTopology([pool([group])])
 
     expect(topology.nodes.find(({ kind }) => kind === 'consistencyGroup')).toMatchObject({ label: 'cg5' })
     expect(topology.nodes.filter(({ kind }) => kind === 'volume')).toHaveLength(2)
-    expect(topology.edges.filter(({ kind }) => kind === 'copies')).toHaveLength(1)
+    expect(topology.edges).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        kind: 'contains',
+        source: 'consistencyGroup:5',
+        target: 'fcmap:11',
+      }),
+      expect.objectContaining({
+        kind: 'contains',
+        source: 'fcmap:11',
+        target: 'volume:0',
+      }),
+      expect.objectContaining({
+        kind: 'copies',
+        source: 'volume:0',
+        target: 'volume:2',
+      }),
+    ]))
+    expect(topology.edges).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        kind: 'contains',
+        source: 'volume:0',
+        target: 'volume:2',
+      }),
+    ]))
   })
 
   it('deduplicates a source volume referenced by multiple fcmaps into a single node with multiple copies edges', () => {

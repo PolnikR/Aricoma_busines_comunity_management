@@ -1,6 +1,5 @@
 export interface FlashSystemFilters {
   search: string
-  providerId: string
   poolId: string
   hostId: string
   status: string
@@ -8,7 +7,6 @@ export interface FlashSystemFilters {
 
 export interface PowerFilters {
   search: string
-  providerId: string
   partitionKind: string
   partitionState: string
   operatingSystemType: string

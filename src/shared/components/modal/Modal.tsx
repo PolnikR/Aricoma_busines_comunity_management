@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { cn } from '@/shared/utils/cn'
 
@@ -28,12 +28,53 @@ export function Modal({
   size = 'md',
   closeOnBackdrop = true,
 }: ModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const openerRef = useRef<HTMLElement | null>(null)
+  const onCloseRef = useRef(onClose)
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
   useEffect(() => {
     if (!open) return
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    const getFocusable = () => [...(dialogRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? [])].filter((element) => !element.hasAttribute('hidden'))
+    const firstFocusable = getFocusable()[0]
+    if (firstFocusable) firstFocusable.focus()
+    else dialogRef.current?.focus()
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onCloseRef.current()
+        return
+      }
+      if (event.key !== 'Tab') return
+      const focusable = getFocusable()
+      if (focusable.length === 0) {
+        event.preventDefault()
+        dialogRef.current?.focus()
+        return
+      }
+      const first = focusable[0]
+      const last = focusable.at(-1)
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last?.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first?.focus()
+      }
+    }
     window.addEventListener('keydown', onKey)
-    return () => { window.removeEventListener('keydown', onKey) }
-  }, [open, onClose])
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      openerRef.current?.focus()
+      openerRef.current = null
+    }
+  }, [open])
 
   if (!open) return null
 
@@ -45,6 +86,8 @@ export function Modal({
         aria-hidden="true"
       />
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         className={cn(
           'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-surface shadow-lg',
           size === 'lg' ? 'max-w-2xl' : 'max-w-md',

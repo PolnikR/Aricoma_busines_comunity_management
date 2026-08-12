@@ -2,7 +2,7 @@ import { DataTable } from '@/shared/components/data-table'
 import type { TableDensity } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import { createVmwareColumns } from '../../config/vmwareColumns'
-import type { VirtualMachine } from '../../types'
+import type { VirtualMachine } from '../../types/virtualMachineTypes'
 
 export type { TableDensity }
 

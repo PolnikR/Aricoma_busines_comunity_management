@@ -1,51 +1,17 @@
-# Task Checklist: Fix Context Menu Bug, Shared Spinner, Code Review
+# Task Checklist: Clean Room Policies
 
-## Phase 1: Fix Broken Edit/Delete
-
-- [ ] **Task 1: Remove duplicate context-menu render block**
-  - [ ] Delete the `!currentMenuGroup.pushToOrchestrator` block (dead menu without `rollback` prop) in RecoveryGroupsTable.tsx
-  - [ ] Keep the single remaining block (with `rollback` prop) as the only menu
-  - [ ] Manual check: Edit works when `pushToOrchestrator = false`
-  - [ ] Manual check: Delete works when `pushToOrchestrator = false`
-  - [ ] Manual check: rollback still disabled/enabled correctly
-
-## Phase 2: Shared Spinner Component
-
-- [ ] **Task 2: Create shared `Spinner` component**
-  - [ ] New file `src/shared/components/spinner/Spinner.tsx`
-  - [ ] Extract exact markup/classes from RecoveryGroupBuilder's inline spinner
-  - [ ] Accept optional `className` override
-
-- [ ] **Task 3: Use `Spinner` in RecoveryGroupBuilder.tsx**
-  - [ ] Replace inline spinner span with `<Spinner />`
-  - [ ] Visual check: no change in appearance
-
-- [ ] **Task 4: Add spinner to ConfirmDialog (rollback)**
-  - [ ] Add `Spinner` next to `loadingLabel` text when `isLoading`
-  - [ ] Manual: Roll back confirm → spinner + "Rolling back..." shows
-
-- [ ] **Task 5: Add spinner to remaining save buttons**
-  - [ ] RecoveryAppBuilder.tsx save button
-  - [ ] PolicySetModal.tsx submit button
-  - [ ] SnapshotPolicyModal.tsx submit button
-
-## Checkpoint: Phases 1–2
-
-- [ ] Run test suite: `npm test` ✓ All tests pass
-- [ ] Build succeeds: `npm run build` ✓ No errors
-- [ ] Manual: edit/delete work in every menu state
-- [ ] Manual: all 5 save/confirm flows show spinner + text while pending
-
-## Phase 3: Code Review
-
-- [ ] **Task 6: Review commits differing from `test` branch**
-  - [ ] Diff scope: `origin/test...HEAD` (14 commits, merge base `9562e06`)
-  - [ ] Apply five-axis review (correctness, readability, architecture, security, performance)
-  - [ ] Label findings by severity
-  - [ ] Report findings before making further changes
-
-## Checkpoint: Complete
-
-- [ ] All changes committed
-- [ ] Code review report delivered
-- [ ] Ready for merge
+- [x] API contract tests fail for the missing Clean Room feature.
+- [x] GET `/api/get_clean_room_policies` is implemented and validated.
+- [x] POST `/api/submit_clean_room_policy` sends the confirmed body.
+- [x] DELETE `/api/delete_clean_room_policy?policy_id=...` is implemented.
+- [x] Query hooks update the authoritative Clean Room cache.
+- [x] Third Recovery Policies tab and route are implemented.
+- [x] Clean Room table, drawer, create/edit, delete, and translations are implemented.
+- [x] Policy Set GET maps `clean_room_policy_id`.
+- [x] Policy Set POST sends `clean_room_policy_id`.
+- [x] Policy Set form requires and selects a Clean Room Policy.
+- [x] Policy Set drawer resolves the Clean Room Policy name.
+- [x] Focused tests pass (48 tests across the affected contracts and UI).
+- [x] Typecheck, lint, and production Vite build pass.
+- [ ] Browser verification: Chrome DevTools MCP is not configured in this session.
+- [ ] Full repository test suite: command timed out without test output; focused suites pass.

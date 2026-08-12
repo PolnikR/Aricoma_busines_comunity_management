@@ -9,7 +9,7 @@ import type {
   InfrastructureTopologyFilters,
 } from '../model/filterInfrastructureTopology'
 import type { InfrastructureTopologyPlatform } from '../model/topologyTypes'
-import type { FlashSystemVolumeTreeView } from '../../model/discoveryTypes'
+import type { FlashSystemVolumeTreeView } from '../model/flashSystemVolumeTreeTypes'
 
 interface InfrastructureTopologyToolbarProps {
   platform: InfrastructureTopologyPlatform

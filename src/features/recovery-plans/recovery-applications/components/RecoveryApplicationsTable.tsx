@@ -13,7 +13,7 @@ import {
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
-import { Modal } from '@/shared/components/modal/Modal'
+import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 
 interface RecoveryApplicationsTableProps {
@@ -100,40 +100,14 @@ function getBaseColumns(t: ReturnType<typeof useTranslation>['t'], providers?: {
   ]
 }
 
-interface JsonViewerModalProps {
-  isOpen: boolean
-  app: RecoveryApplicationListItem | null
-  onClose: () => void
-}
-
-function JsonViewerModal({ isOpen, app, onClose }: JsonViewerModalProps) {
-  const { t } = useTranslation()
-  if (!isOpen || !app) return null
-
-  return (
-    <Modal
-      open={isOpen}
-      onClose={onClose}
-      title={t('recovery.modal.jsonViewer.title')}
-      size="lg"
-      className="flex max-h-96 flex-col overflow-hidden"
-      footer={
-          <Button
-            onClick={onClose}
-            size="sm"
-            fullWidth
-          >
-            {t('buttons.close')}
-          </Button>
-      }
-    >
-      <div className="flex-1 overflow-y-auto bg-surface-subtle px-6 py-4">
-        <pre className="text-xs font-mono text-text-secondary whitespace-pre-wrap break-word">
-          {JSON.stringify(app.data, null, 2)}
-        </pre>
-      </div>
-    </Modal>
-  )
+function getRecoveryApplicationJson(app: RecoveryApplicationListItem) {
+  return {
+    id: app.id,
+    ...(app.policySetId !== undefined ? { policy_set_id: app.policySetId } : {}),
+    application: app.data.application,
+    ...(app.airflowRunId !== undefined ? { airflow_run_id: app.airflowRunId } : {}),
+    ...(app.pushToOrchestrator !== undefined ? { push_to_orchestrator: app.pushToOrchestrator } : {}),
+  }
 }
 
 export function RecoveryApplicationsTable({
@@ -349,8 +323,10 @@ export function RecoveryApplicationsTable({
       </DetailDrawer>
 
       <JsonViewerModal
-        isOpen={jsonViewId !== null}
-        app={jsonViewed}
+        open={jsonViewed !== null}
+        title={t('recovery.modal.jsonViewer.title')}
+        data={jsonViewed ? getRecoveryApplicationJson(jsonViewed) : null}
+        closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
       />
     </div>

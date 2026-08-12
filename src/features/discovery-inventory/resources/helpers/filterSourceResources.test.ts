@@ -5,7 +5,7 @@ import {
   getFlashSystemFilterOptions,
 } from './filterSourceResources'
 import { buildFlashSystemHostSummaries } from './buildFlashSystemHostSummaries'
-import type { FlashSystemVolumeResource, PowerPartitionResource } from '../../model/discoveryTypes'
+import type { FlashSystemVolumeResource, PowerPartitionResource } from '../model/discoveryTypes'
 
 const partition: PowerPartitionResource = {
   id: 'provider:VIOS:1', providerId: 'provider', providerType: 'IBM_POWER',
@@ -19,11 +19,11 @@ const partition: PowerPartitionResource = {
 describe('filterPowerResources', () => {
   it('searches operational fields and applies structured filters', () => {
     expect(filterPowerResources([partition], {
-      search: '10.99.99.56', providerId: 'provider', partitionKind: 'VIOS',
+      search: '10.99.99.56', partitionKind: 'VIOS',
       partitionState: 'running', operatingSystemType: 'VIOS', volumeState: 'active',
     })).toEqual([partition])
     expect(filterPowerResources([partition], {
-      search: '', providerId: '', partitionKind: 'LPAR', partitionState: '',
+      search: '', partitionKind: 'LPAR', partitionState: '',
       operatingSystemType: '', volumeState: '',
     })).toEqual([])
   })
@@ -80,7 +80,6 @@ describe('FlashSystem provider-scoped filters', () => {
     expect(options.hosts).toHaveLength(2)
     expect(filterFlashSystemResources(resources, {
       search: '',
-      providerId: '',
       poolId: options.pools[0]?.id ?? '',
       hostId: options.hosts[0]?.id ?? '',
       status: '',

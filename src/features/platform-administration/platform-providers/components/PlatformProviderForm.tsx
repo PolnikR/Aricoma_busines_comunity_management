@@ -103,7 +103,7 @@ export function PlatformProviderForm({
         {errors.type ? <p className="mt-1 text-xs text-red-600">{errors.type}</p> : null}
       </Field>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_120px]">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_7.5rem]">
         <Field label={t('forms.ip')} htmlFor="platform-provider-ip">
           <Input
             id="platform-provider-ip"
@@ -122,6 +122,7 @@ export function PlatformProviderForm({
             type="number"
             min={1}
             max={65535}
+            step={1}
             value={data.port}
             onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('port', event.target.value) }}
             onKeyDown={handleKeyDown}

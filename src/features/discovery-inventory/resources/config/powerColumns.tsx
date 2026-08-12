@@ -1,6 +1,6 @@
 import { StateCell } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
-import type { PowerPartitionResource } from '../../model/discoveryTypes'
+import type { PowerPartitionResource } from '../model/discoveryTypes'
 
 interface PowerColumnLabels {
   partition: string

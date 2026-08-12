@@ -1,5 +1,5 @@
 import type { useTranslation } from '@/hooks/useTranslation'
-import type { VirtualMachine } from '../types'
+import type { VirtualMachine } from '../types/virtualMachineTypes'
 import type { ResourceDetailField } from './resourceDetailFields'
 
 type Translate = ReturnType<typeof useTranslation>['t']

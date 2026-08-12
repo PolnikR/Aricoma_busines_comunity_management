@@ -4,6 +4,7 @@ export type RecoveryGroupsErrorCode =
   | 'duplicate_id'
   | 'not_found'
   | 'immutable_type'
+  | 'missing_orchestration_provider'
 
 export class RecoveryGroupsError extends Error {
   readonly code: RecoveryGroupsErrorCode

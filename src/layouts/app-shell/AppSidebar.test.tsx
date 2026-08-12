@@ -27,9 +27,9 @@ describe('AppSidebar', () => {
     )
   })
 
-  it('links Snapshot Policies from the Recovery Plans section', async () => {
+  it('links Recovery Policies from the Recovery Plans section', async () => {
     render(
-      <MemoryRouter initialEntries={['/recovery-plans/snapshot-policies']}>
+      <MemoryRouter initialEntries={['/recovery-plans/recovery-policies/snapshot']}>
         <LanguageProvider>
           <SidebarProvider>
             <AppSidebar />
@@ -38,9 +38,26 @@ describe('AppSidebar', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByRole('link', { name: 'Snapshot Policies' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Recovery Policies' })).toHaveAttribute(
       'href',
-      '/recovery-plans/snapshot-policies',
+      '/recovery-plans/recovery-policies',
+    )
+  })
+
+  it('keeps Recovery Policies active for the Application Recovery tab', async () => {
+    render(
+      <MemoryRouter initialEntries={['/recovery-plans/recovery-policies/application-recovery']}>
+        <LanguageProvider>
+          <SidebarProvider>
+            <AppSidebar />
+          </SidebarProvider>
+        </LanguageProvider>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('link', { name: 'Recovery Policies' })).toHaveAttribute(
+      'href',
+      '/recovery-plans/recovery-policies',
     )
   })
 

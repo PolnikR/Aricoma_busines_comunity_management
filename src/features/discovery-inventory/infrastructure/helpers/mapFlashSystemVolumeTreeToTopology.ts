@@ -1,4 +1,4 @@
-import type { FlashSystemTreeNode } from '../../model/discoveryTypes'
+import type { FlashSystemTreeNode } from '../model/flashSystemVolumeTreeTypes'
 import type {
   ConsistencyGroupTopologyNode,
   FlashCopyMapTopologyNode,
@@ -134,7 +134,7 @@ export function mapFlashSystemVolumeTreeToTopology(tree: FlashSystemTreeNode[]):
     if (parentId) addContainsEdge(parentId, nodeId)
 
     for (const child of node.children) {
-      const isCopyTarget = node.kind === 'fcmap' && child.kind === 'volume'
+      const isCopyTarget = child.kind === 'volume' && child.detail.role === 'target'
       walk(child, isCopyTarget ? null : nodeId)
     }
   }

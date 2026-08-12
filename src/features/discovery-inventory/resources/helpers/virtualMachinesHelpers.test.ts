@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fetchVmwareInventory } from '../../api/discoveryInventoryApi'
-import type { VirtualMachinesQuery } from '../types'
+import { fetchVmwareInventory } from '../api/vmwareInventoryApi'
+import type { VirtualMachinesQuery } from '../types/virtualMachineTypes'
 import { applyFiltersAndPagination } from './filterVirtualMachines'
 import { mapInventoryToVirtualMachines } from './mapInventoryToVirtualMachines'
 
@@ -45,7 +45,6 @@ function createQuery(overrides: Partial<VirtualMachinesQuery> = {}): VirtualMach
     powerState: '',
     connectionState: '',
     cluster: '',
-    providerId: '',
     tags: [],
     untagged: false,
     page: 1,

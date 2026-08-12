@@ -78,4 +78,27 @@ describe('PlatformProvidersTable', () => {
 
     expect(screen.queryByRole('link')).not.toBeInTheDocument()
   })
+
+  it('shows the platform provider submit payload without opening the detail drawer', async () => {
+    const user = userEvent.setup()
+    render(
+      <PlatformProvidersTable
+        providers={[{ ...baseProvider, url: EXTERNAL_SERVICES.airflow.dagsUrl }]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'View' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Platform Provider JSON' })
+    expect(dialog).toHaveTextContent('"id": "airflow-01"')
+    expect(dialog).toHaveTextContent('"port": 22')
+    expect(dialog).toHaveTextContent('"dagDir": "/home/airflow/dags"')
+    expect(dialog).not.toHaveTextContent('"credentialStatus"')
+    expect(dialog).toHaveTextContent(`"url": "${EXTERNAL_SERVICES.airflow.dagsUrl}"`)
+    expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
+  })
 })

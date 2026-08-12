@@ -12,7 +12,9 @@ const providerA: ProviderRecord = {
   description: 'Primary vCenter',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  port: 22,
   credentialId: 'vcenter-admin',
+  role: 'source',
   credentialStatus: 'ok',
 }
 
@@ -50,6 +52,7 @@ describe('useUpsertProvider', () => {
       type: 'FLASHCOPY',
       ipAddress: '10.0.0.2',
       credentialId: 'ibm-admin',
+      role: 'source',
     }
     const { mockFetch, queryClient, result } = setup([
       providerA,
@@ -72,6 +75,7 @@ describe('useUpsertProvider', () => {
       type: providerA.type,
       ipAddress: providerA.ipAddress,
       credentialId: providerA.credentialId,
+      role: providerA.role ?? 'source',
     }
     const edited: ProviderSubmitData = { ...providerSubmitData, name: 'Renamed vCenter' }
     const { mockFetch, queryClient, result } = setup([{ ...providerA, name: edited.name }])
@@ -93,6 +97,7 @@ describe('useUpsertProvider', () => {
       type: 'FLASHCOPY',
       ipAddress: '10.0.0.2',
       credentialId: 'ibm-admin',
+      role: 'source',
     }
     const concurrentProvider: ProviderRecord = {
       id: 'powervm-01',
@@ -100,6 +105,7 @@ describe('useUpsertProvider', () => {
       description: '',
       type: 'IBM_POWER',
       ipAddress: '10.0.0.3',
+      port: 22,
       credentialId: null,
       credentialStatus: 'none',
     }

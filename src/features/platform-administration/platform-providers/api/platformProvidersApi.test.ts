@@ -30,6 +30,7 @@ const platformProviderSubmitData: PlatformProviderSubmitData = {
   port: 22,
   dagDir: '/opt/airflow/dags',
   credentialId: 'airflow-ssh',
+  url: 'http://10.99.99.56:8080/',
 }
 
 function stubFetch(payload: unknown, status = 200) {

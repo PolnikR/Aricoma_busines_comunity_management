@@ -26,15 +26,18 @@ function mapRecoveryTier(tier: RecoveryTierPayload): RecoveryTier {
 export function mapRecoveryApplications(
   payload: RecoveryApplicationListPayload,
 ): RecoveryApplicationListItem[] {
-  return payload.applications.map(({ file, tiers, ...application }) => ({
-    id: file,
+  return payload.applications.map((record) => ({
+    id: record.id,
+    policySetId: record.policy_set_id,
     data: {
       application: {
-        ...application,
+        ...record.application,
         tiers: Object.fromEntries(
-          Object.entries(tiers).map(([id, tier]) => [id, mapRecoveryTier(tier)]),
+          Object.entries(record.application.tiers).map(([id, tier]) => [id, mapRecoveryTier(tier)]),
         ),
       },
     },
+    airflowRunId: record.airflow_run_id,
+    pushToOrchestrator: record.push_to_orchestrator,
   }))
 }

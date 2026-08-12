@@ -8,7 +8,8 @@ import {
   updateRecoveryGroup,
 } from '../api/recoveryGroupsApi'
 import { recoveryGroupKeys } from '../api/recoveryGroupQueryKeys'
-import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
+import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
+import { RecoveryGroupsError } from '../api/recoveryGroupsErrors'
 
 export function useRecoveryGroups() {
   const queryClient = useQueryClient()
@@ -37,7 +38,26 @@ export function useRecoveryGroups() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() }),
   })
   const deleteMutation = useMutation({
-    mutationFn: deleteRecoveryGroup,
+    mutationFn: (group: RecoveryGroup) => {
+      if (group.pushToOrchestrator) {
+        const providerId = group.orchestrationProviderId?.trim()
+        if (!providerId) {
+          throw new RecoveryGroupsError(
+            'missing_orchestration_provider',
+            'An orchestration provider is required to roll back this recovery group',
+          )
+        }
+        return deleteRecoveryGroup({
+          recoveryGroupId: group.id,
+          rollbackFromOrchestrator: true,
+          providerId,
+        })
+      }
+      return deleteRecoveryGroup({
+        recoveryGroupId: group.id,
+        rollbackFromOrchestrator: false,
+      })
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() }),
   })
   const rollbackMutation = useMutation({
@@ -55,7 +75,7 @@ export function useRecoveryGroups() {
     refresh: providerQuery.isSuccess ? query.refetch : providerQuery.refetch,
     create: createMutation.mutateAsync,
     update: (id: string, draft: RecoveryGroupDraft) => updateMutation.mutateAsync({ id, draft }),
-    remove: deleteMutation.mutate,
+    remove: (group: RecoveryGroup) => deleteMutation.mutateAsync(group),
     rollback: (groupId: string, providerId: string) => rollbackMutation.mutateAsync({ groupId, providerId }),
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,

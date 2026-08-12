@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type {
   DiscoveredVirtualMachine,
   DiscoveryInventory,
-} from '../../model/discoveryTypes'
+} from '../../resources/model/discoveryTypes'
 import { mapInventoryToTopology } from './mapInventoryToTopology'
 
 function createVirtualMachine(

@@ -1,7 +1,7 @@
 import { StateCell } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import type { useTranslation } from '@/hooks/useTranslation'
-import type { VirtualMachine } from '../types'
+import type { VirtualMachine } from '../types/virtualMachineTypes'
 
 type Translate = ReturnType<typeof useTranslation>['t']
 

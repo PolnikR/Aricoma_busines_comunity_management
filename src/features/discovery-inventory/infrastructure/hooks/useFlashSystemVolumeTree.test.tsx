@@ -2,10 +2,10 @@ import type { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchFlashSystemVolumeTree } from '../../api/discoveryInventoryApi'
+import { fetchFlashSystemVolumeTree } from '../api/flashSystemVolumeTreeApi'
 import { useFlashSystemVolumeTree } from './useFlashSystemVolumeTree'
 
-vi.mock('../../api/discoveryInventoryApi', () => ({
+vi.mock('../api/flashSystemVolumeTreeApi', () => ({
   fetchFlashSystemVolumeTree: vi.fn(),
 }))
 

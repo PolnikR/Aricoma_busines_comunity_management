@@ -7,7 +7,8 @@ import type {
 } from '../model/recoveryApplicationTypes'
 import {
   recoveryApplicationListResponseSchema,
-  submitDagResponseSchema,
+  submitDagLocalResponseSchema,
+  submitDagOrchestratedResponseSchema,
 } from './schemas/recoveryApplicationsSchema'
 import { mapRecoveryApplications } from '../helpers/mapRecoveryApplications'
 
@@ -26,21 +27,18 @@ export async function fetchRecoveryApplications(): Promise<RecoveryApplicationLi
 // In dev the /api prefix is proxied to the backend (see vite.config.ts),
 // so this becomes POST http://<backend>/submit_recovery_dag.
 export async function submitRecoveryApplicationDag(
-  fileName: string,
   providerId: string,
   data: RecoveryApplicationData,
   pushToOrchestrator = false,
 ): Promise<SubmitDagResponse> {
   const normalizedProviderId = providerId.trim()
-  if (!normalizedProviderId) {
+  if (pushToOrchestrator && !normalizedProviderId) {
     throw new Error('Platform provider ID is required')
   }
 
-  const params = new URLSearchParams({
-    filename: fileName,
-    provider_id: normalizedProviderId,
-    push_to_orchestrator: String(pushToOrchestrator),
-  })
+  const params = new URLSearchParams()
+  if (normalizedProviderId) params.set('provider_id', normalizedProviderId)
+  params.set('push_to_orchestrator', String(pushToOrchestrator))
   const url = `${API_ENDPOINTS.recoveryApplications.submitDag}?${params.toString()}`
   let response: Response
   try {
@@ -59,5 +57,8 @@ export async function submitRecoveryApplicationDag(
     throw new Error(`submit_recovery_dag failed: ${String(response.status)} ${response.statusText}${body ? ` — ${body}` : ''}`)
   }
   const payload: unknown = await response.json()
-  return submitDagResponseSchema.parse(payload)
+  return (pushToOrchestrator
+    ? submitDagOrchestratedResponseSchema
+    : submitDagLocalResponseSchema
+  ).parse(payload)
 }

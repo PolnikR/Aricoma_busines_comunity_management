@@ -4,17 +4,17 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { DataTablePagination } from '@/shared/components/data-table'
-import { useDiscoveryInventory } from '@/features/discovery-inventory/hooks/useDiscoveryInventory'
-import { useTags } from '../../../hooks/useTags'
+import { MetricsSkeleton } from '@/shared/components/stat-card/StatCard'
+import { useDiscoveryInventory } from '@/features/discovery-inventory/resources/hooks/useVmwareInventory'
+import { useTags } from '../../hooks/useVmwareTags'
 import {
   applyFiltersAndPagination,
   getServerSideTagFilter,
 } from '../../helpers/filterVirtualMachines'
 import { mapInventoryToVirtualMachines } from '../../helpers/mapInventoryToVirtualMachines'
 import { useVirtualMachineSearchParams } from '../../hooks/useVirtualMachineSearchParams'
-import type { VirtualMachineFilterOptions, VirtualMachineFilters, VirtualMachinePageSize } from '../../types'
+import type { VirtualMachineFilterOptions, VirtualMachineFilters, VirtualMachinePageSize } from '../../types/virtualMachineTypes'
 import { filterByType } from '@/features/providers-connectors/providers/utils/providerFilters'
-import { MetricsSkeleton } from '../../skeletons'
 import { ResourceInventoryPanel } from '../ResourceInventoryPanel'
 import { ResourceInventoryShell } from '../ResourceInventoryShell'
 import { ResourceInventoryLoading, ResourceInventoryState } from '../ResourceInventoryStates'
@@ -29,7 +29,6 @@ const defaultFilters: VirtualMachineFilters = {
   powerState: '',
   connectionState: '',
   cluster: '',
-  providerId: '',
   tags: [],
   untagged: false,
 }
@@ -43,10 +42,11 @@ const emptyFilterOptions: VirtualMachineFilterOptions = {
 export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   const {
     providers, providersPending, providersSuccess, providersFetching,
-    providersError, onRefetchProviders, tabs, t,
+    providersError, onRefetchProviders, providerId, tabs, t,
   } = props
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
   const vmwareProviders = filterByType(providers, 'VMWARE')
+  const selectedProviderId = providerId ?? vmwareProviders[0]?.id ?? null
   const inventoryEnabled = providersSuccess && vmwareProviders.length > 0
   const {
     data: inventory,
@@ -55,7 +55,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     isFetching,
     refetch,
   } = useDiscoveryInventory(
-    query.providerId ?? undefined,
+    selectedProviderId ?? undefined,
     getServerSideTagFilter(query.tags),
     inventoryEnabled,
   )
@@ -88,7 +88,6 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     powerState: query.powerState,
     connectionState: query.connectionState,
     cluster: query.cluster,
-    providerId: query.providerId,
     tags: query.tags,
     untagged: query.untagged,
   }
@@ -139,8 +138,6 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
           filters={filters}
           options={data?.filterOptions ?? emptyFilterOptions}
           availableTags={availableTags}
-          providers={vmwareProviders}
-          providersLoading={false}
           onFiltersChange={updateFilters}
           onReset={() => { updateFilters(defaultFilters) }}
           density={density}

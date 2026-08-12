@@ -1,8 +1,11 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryApplicationBuilderPage } from './RecoveryApplicationBuilderPage'
-import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import type {
+  RecoveryApplicationFormState,
+  SubmitDagResponse,
+} from '../model/recoveryApplicationTypes'
 
 const navigate = vi.fn()
 const mutate = vi.fn()
@@ -40,6 +43,8 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
         onClick={() => {
           onSave?.({
             fileName: 'finance_recovery',
+            policySetId: 'test_1_hour_ps',
+            pushToOrchestrator: false,
             name: 'Finance',
             description: 'Finance recovery',
             environment: 'prod',
@@ -52,6 +57,26 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
         }}
       >
         Save fixture
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          onSave?.({
+            fileName: 'finance_recovery',
+            policySetId: 'test_1_hour_ps',
+            pushToOrchestrator: true,
+            name: 'Finance',
+            description: 'Finance recovery',
+            environment: 'prod',
+            platform: 'vmware-01',
+            orchestrationProviderId: 'airflow-01',
+            sourceConnection: 'vcenter_default',
+            targetConnection: 'vcenter_default_destination',
+            tiers: new Map(),
+          })
+        }}
+      >
+        Save orchestrated fixture
       </button>
       <button type="button" onClick={() => { onDirtyChange?.(true) }}>
         Change builder
@@ -75,6 +100,54 @@ describe('RecoveryApplicationBuilderPage', () => {
       expect.objectContaining({ providerId: 'airflow-01' }),
       expect.any(Object),
     )
+  })
+
+  it('returns to the list after a local-only submit response', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationBuilderPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Save fixture' }))
+    const call = mutate.mock.calls[0]
+    expect(call).toBeDefined()
+    if (!call) throw new Error('Expected submit mutation to be called')
+
+    const options = call[1] as { onSuccess: (response: SubmitDagResponse) => void }
+    options.onSuccess({ recovery_applications: [] })
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')
+  })
+
+  it('shows orchestrator details and waits for close after an orchestrated submit', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationBuilderPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Save orchestrated fixture' }))
+    const call = mutate.mock.calls[0]
+    expect(call).toBeDefined()
+    if (!call) throw new Error('Expected submit mutation to be called')
+
+    const options = call[1] as { onSuccess: (response: SubmitDagResponse) => void }
+    options.onSuccess({
+      recovery_applications: [],
+      orchestrator_push: {
+        status: 'pushed',
+        dag: '/home/airflow/dags/finance.py',
+        json: '/home/airflow/dags/finance.json',
+        dag_id: 'dag_finance',
+      },
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
+    expect(screen.getByText('/home/airflow/dags/finance.py')).toBeInTheDocument()
+    expect(screen.getByText('/home/airflow/dags/finance.json')).toBeInTheDocument()
+    expect(screen.getByText('dag_finance')).toBeInTheDocument()
+    expect(navigate).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')
   })
 
   it('navigates back immediately when the builder is unchanged', async () => {

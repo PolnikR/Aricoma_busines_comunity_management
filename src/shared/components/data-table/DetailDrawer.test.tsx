@@ -11,6 +11,24 @@ afterEach(cleanup)
     expect(screen.getByText('Body content')).toBeInTheDocument()
   })
 
+  it('lets the header action row share the drawer content axis with the close control', () => {
+    render(
+      <DetailDrawer
+        open
+        title="My Item"
+        closeLabel="Close detail"
+        onClose={vi.fn()}
+        headerExtra={<span data-testid="header-action">Test connection</span>}
+      >
+        body
+      </DetailDrawer>,
+    )
+
+    const action = screen.getByTestId('header-action')
+    const close = screen.getByRole('button', { name: 'Close detail' })
+    expect(action.parentElement?.parentElement).toContainElement(close)
+  })
+
   it('calls onClose when the close button is clicked', () => {
     const onClose = vi.fn()
     render(<DetailDrawer open title="X" closeLabel="Close provider" onClose={onClose}>body</DetailDrawer>)

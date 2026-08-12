@@ -1,7 +1,7 @@
 import { CpuIcon, LayersIcon, MemoryIcon, ServerIcon } from '@/shared/icons/Icons'
 import { StatCard } from '@/shared/components/stat-card/StatCard'
 import { useTranslation } from '@/hooks/useTranslation'
-import type { VirtualMachineMetricsData } from '../../types'
+import type { VirtualMachineMetricsData } from '../../types/virtualMachineTypes'
 
 interface VirtualMachineMetricsProps {
   metrics: VirtualMachineMetricsData

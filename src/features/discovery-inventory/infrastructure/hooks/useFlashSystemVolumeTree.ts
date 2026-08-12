@@ -3,9 +3,9 @@ import {
   DISCOVERY_INVENTORY_GC_TIME_MS,
   DISCOVERY_INVENTORY_STALE_TIME_MS,
   discoveryInventoryKeys,
-} from '../../api/discoveryInventoryQueryKeys'
-import { fetchFlashSystemVolumeTree } from '../../api/discoveryInventoryApi'
-import type { FlashSystemVolumeTreeView } from '../../model/discoveryTypes'
+} from '../../resources/api/resourceInventoryQueryKeys'
+import { fetchFlashSystemVolumeTree } from '../api/flashSystemVolumeTreeApi'
+import type { FlashSystemVolumeTreeView } from '../model/flashSystemVolumeTreeTypes'
 
 export function useFlashSystemVolumeTree(providerId: string | undefined, view: FlashSystemVolumeTreeView | undefined) {
   return useQuery({

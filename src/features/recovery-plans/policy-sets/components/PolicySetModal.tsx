@@ -5,7 +5,9 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useSnapshotPolicies } from '@/features/recovery-plans/snapshot-policies/hooks/useSnapshotPolicies'
+import { useSnapshotPolicies } from '@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies'
+import { useRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies'
+import { useCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies'
 import { useSubmitPolicySet } from '../hooks/useSubmitPolicySet'
 import type { PolicySet, PolicySetSubmitData } from '../model/policySetTypes'
 import { PolicySetForm } from './PolicySetForm'
@@ -18,14 +20,23 @@ interface PolicySetModalProps {
   policySet?: PolicySet
 }
 
-const EMPTY_FORM: PolicySetFormData = { id: '', name: '', description: '', policyIds: [] }
+const EMPTY_FORM: PolicySetFormData = {
+  id: '',
+  name: '',
+  description: '',
+  snapshotPolicyId: '',
+  recoveryAppPolicyId: '',
+  cleanRoomPolicyId: '',
+}
 
 function toFormData(policySet: PolicySet): PolicySetFormData {
   return {
     id: policySet.id,
     name: policySet.name,
     description: policySet.description,
-    policyIds: [...policySet.policyIds],
+    snapshotPolicyId: policySet.snapshotPolicyId,
+    recoveryAppPolicyId: policySet.recoveryAppPolicyId,
+    cleanRoomPolicyId: policySet.cleanRoomPolicyId,
   }
 }
 
@@ -36,7 +47,9 @@ function initialForm(policySet?: PolicySet) {
 export function PolicySetModal({ open, onClose, existingPolicySets, policySet }: PolicySetModalProps) {
   const { t } = useTranslation()
   const submitPolicySet = useSubmitPolicySet()
-  const { data: availablePolicies = [] } = useSnapshotPolicies()
+  const snapshotPoliciesQuery = useSnapshotPolicies()
+  const recoveryAppPoliciesQuery = useRecoveryAppPolicies()
+  const cleanRoomPoliciesQuery = useCleanRoomPolicies()
   const isEdit = Boolean(policySet)
   const [formData, setFormData] = useState<PolicySetFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof PolicySetFormData, string>>>({})
@@ -83,7 +96,9 @@ export function PolicySetModal({ open, onClose, existingPolicySets, policySet }:
     else if (!isEdit && existingPolicySets.some(entry => entry.id === formData.id.trim())) next.id = t('policySets.validation.idExists')
     if (!formData.name.trim()) next.name = t('policySets.validation.nameRequired')
     if (!formData.description.trim()) next.description = t('policySets.validation.descriptionRequired')
-    if (formData.policyIds.length === 0) next.policyIds = t('policySets.validation.policiesRequired')
+    if (!formData.snapshotPolicyId.trim()) next.snapshotPolicyId = t('policySets.validation.policiesRequired')
+    if (!formData.recoveryAppPolicyId.trim()) next.recoveryAppPolicyId = t('policySets.validation.recoveryAppPolicyRequired')
+    if (!formData.cleanRoomPolicyId.trim()) next.cleanRoomPolicyId = t('policySets.validation.cleanRoomPolicyRequired')
     setErrors(next)
     return Object.keys(next).length === 0
   }
@@ -94,7 +109,9 @@ export function PolicySetModal({ open, onClose, existingPolicySets, policySet }:
       id: formData.id.trim(),
       name: formData.name.trim(),
       description: formData.description.trim(),
-      policyIds: formData.policyIds,
+      snapshotPolicyId: formData.snapshotPolicyId,
+      recoveryAppPolicyId: formData.recoveryAppPolicyId.trim(),
+      cleanRoomPolicyId: formData.cleanRoomPolicyId.trim(),
     }
     submitPolicySet.mutate(record, {
       onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
@@ -123,7 +140,23 @@ export function PolicySetModal({ open, onClose, existingPolicySets, policySet }:
         )}
       >
         {errorMessage ? <div className="mx-6 mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">{errorMessage}</div> : null}
-        <PolicySetForm data={formData} errors={errors} availablePolicies={availablePolicies} isSubmitting={submitPolicySet.isPending} idDisabled={isEdit} onChange={handleChange} onSubmit={handleSubmit} />
+        <PolicySetForm
+          data={formData}
+          errors={errors}
+          availableSnapshotPolicies={snapshotPoliciesQuery.data ?? []}
+          availableRecoveryAppPolicies={recoveryAppPoliciesQuery.data ?? []}
+          availableCleanRoomPolicies={cleanRoomPoliciesQuery.data ?? []}
+          isRecoveryAppPoliciesLoading={recoveryAppPoliciesQuery.isLoading}
+          recoveryAppPoliciesError={recoveryAppPoliciesQuery.error}
+          onRetryRecoveryAppPolicies={() => { void recoveryAppPoliciesQuery.refetch() }}
+          isCleanRoomPoliciesLoading={cleanRoomPoliciesQuery.isLoading}
+          cleanRoomPoliciesError={cleanRoomPoliciesQuery.error}
+          onRetryCleanRoomPolicies={() => { void cleanRoomPoliciesQuery.refetch() }}
+          isSubmitting={submitPolicySet.isPending}
+          idDisabled={isEdit}
+          onChange={handleChange}
+          onSubmit={handleSubmit}
+        />
       </Modal>
       <ConfirmDialog
         open={navigationGuard.isNavigationBlocked}

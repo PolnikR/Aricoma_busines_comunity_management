@@ -1,9 +1,8 @@
-import { useState } from 'react'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
-import { useResourceInventoryQueries } from '../../../hooks/useResourceInventoryQueries'
-import { MetricsSkeleton } from '../../skeletons'
+import { MetricsSkeleton } from '@/shared/components/stat-card/StatCard'
+import { useResourceInventoryQueries } from '../../hooks/useResourceInventoryQueries'
 import { ResourceInventoryShell } from '../ResourceInventoryShell'
 import { ResourceInventoryLoading, ResourceInventoryState } from '../ResourceInventoryStates'
 import type { SourceResourcesPageProps } from '../SourceResourcesPageProps'
@@ -13,14 +12,13 @@ import { PowerInventoryView } from './PowerInventoryView'
 export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
   const {
     providers, providersPending, providersSuccess, providersFetching,
-    providersError, onRefetchProviders, tabs, t,
+    providersError, onRefetchProviders, providerId, tabs, t,
   } = props
-  const [providerId, setProviderId] = useState('')
   const sourceProviders = providers.filter((provider) => provider.type === 'IBM_POWER')
   const sourceQuery = useResourceInventoryQueries(
     providersSuccess ? 'ibm-power' : null,
     providers,
-    providerId || undefined,
+    providerId ?? undefined,
   )
   const hasData = sourceQuery.powerResources.length > 0
   const requestFailed = sourceQuery.hasProviders && sourceQuery.failures.length > 0 && !hasData
@@ -78,9 +76,6 @@ export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
     content = (
       <PowerInventoryView
         resources={sourceQuery.powerResources}
-        providers={sourceProviders}
-        providerId={providerId}
-        onProviderIdChange={setProviderId}
         error={requestFailed ? {
           title: t('resources.common.loadFailed'),
           description: t('resources.common.loadFailed'),

@@ -24,4 +24,12 @@ describe('API_ENDPOINTS', () => {
       delete: '/api/delete_policy',
     })
   })
+
+  it('defines the clean room policy API contract', () => {
+    expect(API_ENDPOINTS.cleanRoomPolicies).toEqual({
+      list: '/api/get_clean_room_policies',
+      submit: '/api/submit_clean_room_policy',
+      delete: '/api/delete_clean_room_policy',
+    })
+  })
 })

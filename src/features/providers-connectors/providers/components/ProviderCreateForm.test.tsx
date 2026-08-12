@@ -10,8 +10,12 @@ const data = {
   name: 'Primary',
   description: 'Production provider',
   type: 'VMWARE',
+  role: 'source',
   ipAddress: '10.0.0.1',
+  port: '22',
   credentialId: 'vcenter-admin',
+  defaultFlashcopyProviderId: '',
+  orchestratorConnId: '',
 }
 
 const credentials = [{
@@ -61,7 +65,7 @@ describe('ProviderCreateForm', () => {
         onSubmit={vi.fn()}
       />,
     )
-    expect(screen.getByRole('textbox', { name: /ID/ })).toBeDisabled()
+    expect(screen.getByDisplayValue('provider-1')).toBeDisabled()
     expect(screen.getByText('ID error')).toBeInTheDocument()
   })
 })

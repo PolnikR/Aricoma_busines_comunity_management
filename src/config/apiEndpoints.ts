@@ -23,6 +23,16 @@ export const API_ENDPOINTS = {
     submit: '/api/submit_policy',
     delete: '/api/delete_policy',
   },
+  recoveryAppPolicies: {
+    list: '/api/get_recovery_app_policies',
+    submit: '/api/submit_recovery_app_policy',
+    delete: '/api/delete_recovery_app_policy',
+  },
+  cleanRoomPolicies: {
+    list: '/api/get_clean_room_policies',
+    submit: '/api/submit_clean_room_policy',
+    delete: '/api/delete_clean_room_policy',
+  },
   policySets: {
     list: '/api/get_policy_sets',
     submit: '/api/submit_policy_set',

@@ -18,11 +18,11 @@ export interface PlatformProviderSubmitData {
   port: number
   dagDir: string
   credentialId: string
+  url?: string | undefined
 }
 
 export interface PlatformProviderRecord extends PlatformProviderSubmitData {
   credentialStatus: PlatformProviderCredentialStatus
-  url?: string | undefined
 }
 
 export interface PlatformProviderWriteRecord extends PlatformProviderSubmitData {

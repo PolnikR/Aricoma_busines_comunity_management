@@ -13,7 +13,7 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
-import { Modal } from '@/shared/components/modal/Modal'
+import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { ExternalLinkIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { EXTERNAL_SERVICES } from '@/config/externalServices'
@@ -33,10 +33,11 @@ import type { RollbackReport } from '../api/schemas/recoveryGroupsSchema'
 interface RecoveryGroupsTableProps {
   groups: RecoveryGroup[]
   onEdit: (id: string) => void
-  onDelete: (id: string) => void
+  onDelete: (group: RecoveryGroup) => Promise<RollbackReport | null>
   onRollback: (groupId: string, providerId: string) => Promise<RollbackReport>
   error?: Error | null
   isRetrying?: boolean
+  isDeleting?: boolean
   onRetry?: () => void
 }
 
@@ -50,34 +51,6 @@ const EMPTY_FILTERS: RecoveryGroupFilters = {
   resourceType: '',
 }
 
-interface JsonViewerModalProps {
-  isOpen: boolean
-  group: RecoveryGroup | null
-  onClose: () => void
-}
-
-function JsonViewerModal({ isOpen, group, onClose }: JsonViewerModalProps) {
-  const { t } = useTranslation()
-  if (!isOpen || !group) return null
-
-  return (
-    <Modal
-      open={isOpen}
-      onClose={onClose}
-      title={t('recoveryGroups.modal.jsonViewer.title')}
-      size="lg"
-      className="flex max-h-96 flex-col overflow-hidden"
-      footer={<Button onClick={onClose} size="sm" fullWidth>{t('buttons.close')}</Button>}
-    >
-      <div className="flex-1 overflow-y-auto bg-surface-subtle px-6 py-4">
-        <pre className="text-xs font-mono text-text-secondary whitespace-pre-wrap break-word">
-          {JSON.stringify(toRecoveryGroupJson(group), null, 2)}
-        </pre>
-      </div>
-    </Modal>
-  )
-}
-
 export function RecoveryGroupsTable({
   groups,
   onEdit,
@@ -85,6 +58,7 @@ export function RecoveryGroupsTable({
   onRollback,
   error = null,
   isRetrying = false,
+  isDeleting = false,
   onRetry = () => undefined,
 }: RecoveryGroupsTableProps) {
   const { t } = useTranslation()
@@ -425,14 +399,25 @@ export function RecoveryGroupsTable({
         title={t('dialogs.deleteRecoveryGroup')}
         message={t('dialogs.deleteRecoveryGroupMessage').replace('{name}', deleteTarget?.name ?? '')}
         confirmLabel={t('buttons.delete')}
+        loadingLabel={t('buttons.deleting')}
         cancelLabel={t('buttons.cancel')}
+        isLoading={isDeleting}
         tone="danger"
         onCancel={() => { setDeleteTarget(null) }}
         onConfirm={() => {
-          if (!deleteTarget) return
-          onDelete(deleteTarget.id)
-          setDeleteTarget(null)
-          setSelectedId(null)
+          if (!deleteTarget || isDeleting) return
+          const target = deleteTarget
+          void (async () => {
+            try {
+              const report = await onDelete(target)
+              if (report) setRollbackResult({ groupName: target.name, report })
+              setDeleteTarget(null)
+              setSelectedId(null)
+              setOpenMenuId(null)
+            } catch {
+              setDeleteTarget(null)
+            }
+          })()
         }}
       />
 
@@ -475,8 +460,10 @@ export function RecoveryGroupsTable({
       />
 
       <JsonViewerModal
-        isOpen={jsonViewId !== null}
-        group={jsonViewed}
+        open={jsonViewed !== null}
+        title={t('recoveryGroups.modal.jsonViewer.title')}
+        data={jsonViewed ? toRecoveryGroupJson(jsonViewed) : null}
+        closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
       />
     </div>
