@@ -72,7 +72,7 @@ export function AppMetadataForm({
   return (
     <form
       autoComplete="off"
-      className="grid max-w-3xl gap-5"
+      className="grid max-w-3xl grid-cols-1 gap-4 md:grid-cols-2"
     >
       <Field label={t('recovery.application.form.fileName')} htmlFor="application-file-name">
         <Input
@@ -101,18 +101,6 @@ export function AppMetadataForm({
           value={name}
           onChange={e => { handleChange('name', e.target.value); }}
           placeholder={t('forms.applicationNameExample')}
-          required
-        />
-      </Field>
-
-      <Field label={t('forms.applicationDescription')} htmlFor="application-description">
-        <Textarea
-          id="application-description"
-          autoComplete="off"
-          value={description}
-          onChange={e => { handleChange('description', e.target.value); }}
-          placeholder={t('forms.applicationDescriptionExample')}
-          rows={5}
           required
         />
       </Field>
@@ -163,6 +151,18 @@ export function AppMetadataForm({
             ) : null}
           </p>
         ) : null}
+      </Field>
+
+      <Field label={t('forms.applicationDescription')} htmlFor="application-description">
+        <Textarea
+          id="application-description"
+          autoComplete="off"
+          value={description}
+          onChange={e => { handleChange('description', e.target.value); }}
+          placeholder={t('forms.applicationDescriptionExample')}
+          rows={3}
+          required
+        />
       </Field>
 
     </form>
