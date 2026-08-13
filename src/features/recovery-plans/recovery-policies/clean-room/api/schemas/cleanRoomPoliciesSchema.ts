@@ -6,9 +6,3 @@ export const cleanRoomPolicySchema = z.object({
   description: z.string(),
   enabled: z.boolean(),
 })
-
-export const cleanRoomPoliciesResponseSchema = z.object({
-  clean_room_policies: z.array(cleanRoomPolicySchema),
-})
-
-export type CleanRoomPolicyWire = z.infer<typeof cleanRoomPolicySchema>

@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import type { VmwareInventoryPayload } from '../api/schemas/vmwareInventorySchema'
+import {
+  VmsResponse as VmsResponseSchema,
+  type VmsResponse as VmsResponseInput,
+} from '@/generated/api/zod.gen'
 import { mapVmwareInventory } from './mapVmwareInventory'
 
-function createVm(providerId: string): VmwareInventoryPayload['vms'][number] {
+function createVm(providerId: string): VmsResponseInput['vms'][number] {
   return {
     moId: 'vm-101',
     name: 'application-01',
@@ -36,10 +39,10 @@ function createVm(providerId: string): VmwareInventoryPayload['vms'][number] {
 
 describe('mapVmwareInventory', () => {
   it('creates provider-scoped VM and fallback disk identifiers', () => {
-    const inventory = mapVmwareInventory({
+    const inventory = mapVmwareInventory(VmsResponseSchema.parse({
       count: 2,
       vms: [createVm('vcenter-01'), createVm('vcenter-02')],
-    })
+    }))
 
     expect(inventory.virtualMachines.map((vm) => vm.id)).toEqual([
       'vcenter-01:vm-101',

@@ -4,6 +4,8 @@ import type { FlashSystemInventory } from '../model/discoveryTypes'
 import { mapFlashSystemInventory } from '../helpers/mapFlashSystemInventory'
 import { flashSystemInventoryResponseSchema } from './schemas/flashSystemInventorySchema'
 
+// OpenAPI exposes FlashSystem volume, pool and host records as `unknown`.
+// Retain feature validation until the backend contract describes these records.
 export async function fetchFlashSystemInventory(providerId?: string): Promise<FlashSystemInventory> {
   try {
     const payload = await getVolumesRouteGetVolumesGet(providerId ? { provider_id: providerId } : {})

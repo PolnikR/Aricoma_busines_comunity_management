@@ -12,6 +12,8 @@ export interface FlashSystemVolumeTree {
   nodes: FlashSystemTreeNode[]
 }
 
+// The generated node contract has an open `kind` and unknown `detail` record.
+// This local discriminated schema guarantees the fields consumed by topology UI.
 export async function fetchFlashSystemVolumeTree(
   providerId: string,
   view: FlashSystemVolumeTreeView,

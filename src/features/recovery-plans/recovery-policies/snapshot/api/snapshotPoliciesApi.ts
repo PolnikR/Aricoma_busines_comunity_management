@@ -4,13 +4,17 @@ import {
   getPoliciesGetPoliciesGet,
   submitPolicySubmitPolicyPost,
 } from '@/generated/api/client.gen'
+import {
+  SnapshotPoliciesResponse,
+  type SnapshotPolicyRecordOutput,
+} from '@/generated/api/zod.gen'
+import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type {
   SnapshotPolicy,
   SnapshotPolicySubmitData,
 } from '../model/snapshotPolicyTypes'
 import {
-  snapshotPoliciesResponseSchema,
   snapshotPolicySubmitSchema,
   type SnapshotPolicyWire,
 } from './schemas/snapshotPoliciesSchema'
@@ -24,17 +28,17 @@ function requestError(error: unknown, operation: string): Error {
   return error instanceof Error ? error : new Error(`${operation} request failed`)
 }
 
-function fromWire(policy: SnapshotPolicyWire): SnapshotPolicy {
+function fromWire(policy: SnapshotPolicyRecordOutput): SnapshotPolicy {
   return {
     id: policy.id,
     name: policy.name,
-    description: policy.description,
-    level: policy.level,
+    description: policy.description ?? '',
+    level: policy.level ?? '',
     frequencyValue: policy.frequency_value,
     frequencyUnit: policy.frequency_unit,
     retentionValue: policy.retention_value,
     retentionUnit: policy.retention_unit,
-    maxSnapshots: policy.max_snapshots,
+    maxSnapshots: policy.max_snapshots ?? null,
     enabled: policy.enabled,
   }
 }
@@ -58,7 +62,11 @@ export function toSnapshotPolicySubmitPayload(
 }
 
 function parsePolicies(payload: unknown): SnapshotPolicy[] {
-  return snapshotPoliciesResponseSchema.parse(payload).snapshot_policies.map(fromWire)
+  return parseGeneratedResponse(
+    SnapshotPoliciesResponse,
+    payload,
+    'Snapshot policies response',
+  ).snapshot_policies.map(fromWire)
 }
 
 export async function fetchSnapshotPolicies(): Promise<SnapshotPolicy[]> {

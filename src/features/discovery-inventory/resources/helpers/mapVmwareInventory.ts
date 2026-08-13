@@ -1,16 +1,16 @@
 import type {
+  VmDiskOutput,
+  VmRecordOutput,
+  VmsResponseOutput,
+} from '@/generated/api/zod.gen'
+import type {
   DiscoveredVirtualDisk,
   DiscoveredVirtualMachine,
   DiscoveryInventory,
 } from '../model/discoveryTypes'
-import type {
-  VmwareInventoryPayload,
-  VmwareVirtualDiskPayload,
-  VmwareVirtualMachinePayload,
-} from '../api/schemas/vmwareInventorySchema'
 
 function mapVirtualDisk(
-  disk: VmwareVirtualDiskPayload,
+  disk: VmDiskOutput,
   virtualMachineId: string,
   index: number,
 ): DiscoveredVirtualDisk {
@@ -20,16 +20,17 @@ function mapVirtualDisk(
       : `${virtualMachineId}:disk:${String(index)}`,
     label: disk.label,
     capacityGb: disk.capacity_gb,
-    datastore: disk.datastore,
+    datastore: disk.datastore ?? '-',
     filePath: disk.file,
-    thinProvisioned: disk.thin_provisioned,
+    thinProvisioned: disk.thin_provisioned ?? false,
   }
 }
 
 function mapVirtualMachine(
-  virtualMachine: VmwareVirtualMachinePayload,
+  virtualMachine: VmRecordOutput,
 ): DiscoveredVirtualMachine {
-  const virtualMachineId = `${virtualMachine.provider_id}:${virtualMachine.moId}`
+  const providerId = virtualMachine.provider_id ?? '-'
+  const virtualMachineId = `${providerId}:${virtualMachine.moId}`
 
   return {
     id: virtualMachineId,
@@ -46,8 +47,8 @@ function mapVirtualMachine(
     primaryDatastore: virtualMachine.datastore,
     folder: virtualMachine.folder,
     vmPath: virtualMachine.vm_path,
-    providerId: virtualMachine.provider_id,
-    providerType: virtualMachine.provider_type,
+    providerId,
+    providerType: virtualMachine.provider_type ?? '-',
     disks: virtualMachine.vdisks.map((disk, index) => (
       mapVirtualDisk(disk, virtualMachineId, index)
     )),
@@ -57,7 +58,7 @@ function mapVirtualMachine(
   }
 }
 
-export function mapVmwareInventory(payload: VmwareInventoryPayload): DiscoveryInventory {
+export function mapVmwareInventory(payload: VmsResponseOutput): DiscoveryInventory {
   return {
     reportedCount: payload.count,
     virtualMachines: payload.vms.map(mapVirtualMachine),

@@ -36,6 +36,22 @@ describe('cleanRoomPoliciesApi', () => {
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
+  it('applies generated defaults to nullable clean room policy metadata', async () => {
+    stubFetch({
+      clean_room_policies: [{
+        id: policy.id,
+        name: policy.name,
+        description: null,
+      }],
+    })
+
+    await expect(fetchCleanRoomPolicies()).resolves.toEqual([{
+      ...policy,
+      description: '',
+      enabled: true,
+    }])
+  })
+
   it('submits the wire contract and reads only the returned clean room list', async () => {
     const fetchMock = stubFetch({
       recovery_app_policies: [{ id: 'unrelated' }],

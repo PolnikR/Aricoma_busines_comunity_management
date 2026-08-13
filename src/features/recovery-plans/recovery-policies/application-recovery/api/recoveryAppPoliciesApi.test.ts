@@ -126,6 +126,26 @@ describe('fetchRecoveryAppPolicies', () => {
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
+  it('applies generated defaults to omitted optional recovery policy fields', async () => {
+    const minimalWirePolicy = {
+      id: latestPolicy.id,
+      name: latestPolicy.name,
+      frequency_value: latestPolicy.frequencyValue,
+      frequency_unit: latestPolicy.frequencyUnit,
+      retention_value: latestPolicy.retentionValue,
+      retention_unit: latestPolicy.retentionUnit,
+    }
+    stubFetch({ recovery_app_policies: [minimalWirePolicy] })
+
+    await expect(fetchRecoveryAppPolicies()).resolves.toEqual([{
+      ...latestPolicy,
+      description: '',
+      level: '',
+      bootVerify: false,
+      enabled: true,
+    }])
+  })
+
   it.each([
     ['missing policy list', {}],
     ['invalid selection mode', { recovery_app_policies: [{ ...wirePolicy, snapshot_selection_mode: 'oldest' }] }],

@@ -1,5 +1,5 @@
-import type { TagsPayload } from '../api/schemas/tagsSchema'
+import type { TagsResponseOutput } from '@/generated/api/zod.gen'
 
-export function mapTags(payload: TagsPayload): string[] {
+export function mapTags(payload: TagsResponseOutput): string[] {
   return payload.tags.map((tag) => tag.name)
 }

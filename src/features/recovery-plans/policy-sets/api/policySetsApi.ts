@@ -4,10 +4,14 @@ import {
   getPolicySetsGetPolicySetsGet,
   submitPolicySetSubmitPolicySetPost,
 } from '@/generated/api/client.gen'
+import {
+  PolicySetsResponse,
+  type PolicySetRecordOutput,
+} from '@/generated/api/zod.gen'
+import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { PolicySet, PolicySetSubmitData } from '../model/policySetTypes'
 import {
-  policySetsResponseSchema,
   policySetSubmitSchema,
   type PolicySetWire,
 } from './schemas/policySetsSchema'
@@ -21,15 +25,15 @@ function requestError(error: unknown, operation: string): Error {
   return error instanceof Error ? error : new Error(`${operation} request failed`)
 }
 
-function fromWire(policySet: PolicySetWire): PolicySet {
-  return {
+function fromWire(policySet: PolicySetRecordOutput): PolicySet {
+  return policySetSubmitSchema.parse({
     id: policySet.id,
     name: policySet.name,
-    description: policySet.description,
-    snapshotPolicyId: policySet.snapshot_policy_id,
-    recoveryAppPolicyId: policySet.recovery_app_policy_id,
-    cleanRoomPolicyId: policySet.clean_room_policy_id,
-  }
+    description: policySet.description ?? '',
+    snapshotPolicyId: policySet.snapshot_policy_id ?? '',
+    recoveryAppPolicyId: policySet.recovery_app_policy_id ?? '',
+    cleanRoomPolicyId: policySet.clean_room_policy_id ?? '',
+  })
 }
 
 export function toPolicySetSubmitPayload(policySet: PolicySetSubmitData): PolicySetWire {
@@ -45,7 +49,11 @@ export function toPolicySetSubmitPayload(policySet: PolicySetSubmitData): Policy
 }
 
 function parsePolicySets(payload: unknown): PolicySet[] {
-  return policySetsResponseSchema.parse(payload).policy_sets.map(fromWire)
+  return parseGeneratedResponse(
+    PolicySetsResponse,
+    payload,
+    'Policy sets response',
+  ).policy_sets.map(fromWire)
 }
 
 export async function fetchPolicySets(): Promise<PolicySet[]> {

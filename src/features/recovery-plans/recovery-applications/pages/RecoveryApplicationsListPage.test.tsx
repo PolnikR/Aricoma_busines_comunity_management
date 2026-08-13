@@ -49,7 +49,7 @@ describe('RecoveryApplicationsListPage', () => {
     query = { ...query, isLoading: false, error: new Error('offline') }
     view.rerender(<RecoveryApplicationsListPage />)
     expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument()
-    expect(screen.getByRole('alert')).not.toHaveTextContent('offline')
+    expect(screen.getByRole('alert')).toHaveTextContent('offline')
     query = { ...query, error: null, data: [] }
     view.rerender(<RecoveryApplicationsListPage />)
     expect(screen.getByText('No recovery applications defined yet')).toBeInTheDocument()

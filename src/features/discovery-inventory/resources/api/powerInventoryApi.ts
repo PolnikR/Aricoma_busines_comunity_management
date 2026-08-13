@@ -4,6 +4,8 @@ import type { PowerInventory } from '../model/discoveryTypes'
 import { mapPowerInventory } from '../helpers/mapPowerInventory'
 import { powerInventoryResponseSchema } from './schemas/powerInventorySchema'
 
+// OpenAPI exposes Power LPAR and VIOS records as `unknown`. This local schema
+// protects the mapper until those vendor-specific response models are declared.
 export async function fetchPowerInventory(providerId?: string): Promise<PowerInventory> {
   try {
     const payload = await getPowerVmGetPowerVmGet(providerId ? { provider_id: providerId } : {})

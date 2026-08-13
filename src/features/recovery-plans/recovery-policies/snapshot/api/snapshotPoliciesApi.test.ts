@@ -60,6 +60,24 @@ describe('fetchSnapshotPolicies', () => {
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
+  it('applies the generated enabled default and normalizes nullable labels', async () => {
+    stubFetch({
+      snapshot_policies: [{
+        ...wirePolicy,
+        description: null,
+        level: null,
+        enabled: undefined,
+      }],
+    })
+
+    await expect(fetchSnapshotPolicies()).resolves.toEqual([{
+      ...policy,
+      description: '',
+      level: '',
+      enabled: true,
+    }])
+  })
+
   it.each([
     ['missing policy list', {}],
     ['invalid frequency', { snapshot_policies: [{ ...wirePolicy, frequency_value: 0 }] }],

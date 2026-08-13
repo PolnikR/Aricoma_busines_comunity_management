@@ -49,6 +49,27 @@ describe('fetchRecoveryGroups', () => {
       workloadType: null,
     })
   })
+
+  it('applies generated defaults to optional recovery group fields', async () => {
+    vi.spyOn(apiFetchModule, 'apiFetch').mockResolvedValue(
+      new Response(JSON.stringify({
+        recovery_groups: [{
+          id: 'minimal-group',
+          name: 'Minimal group',
+        }],
+      }), { status: 200 }),
+    )
+
+    const groups = await fetchRecoveryGroups([])
+
+    expect(groups[0]).toMatchObject({
+      id: 'minimal-group',
+      description: '',
+      policySetId: '',
+      resources: [],
+      relatedVolumes: [],
+    })
+  })
 })
 
 describe('createRecoveryGroup', () => {
@@ -153,7 +174,7 @@ describe('rollbackRecoveryGroupOrchestration', () => {
     expect(result).toEqual(report)
   })
 
-  it('allows unrecognised status strings', async () => {
+  it('rejects rollback statuses outside the generated contract', async () => {
     const report = {
       status: 'unknown_status',
       airflow: { status: 'ok' },
@@ -170,8 +191,9 @@ describe('rollbackRecoveryGroupOrchestration', () => {
       )
     )
 
-    const result = await rollbackRecoveryGroupOrchestration('test-group', 'airflow-01')
-    expect(result.status).toBe('unknown_status')
+    await expect(
+      rollbackRecoveryGroupOrchestration('test-group', 'airflow-01'),
+    ).rejects.toThrow('rollback')
   })
 
   it('preserves unknown keys in rollback report', async () => {

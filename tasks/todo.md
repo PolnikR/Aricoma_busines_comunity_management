@@ -10,31 +10,31 @@
 
 ## Implementation
 
-- [ ] Add and test the shared generated-response parser/error.
-- [ ] Migrate Recovery Applications list and submit responses.
-- [ ] Update the Recovery Application mapper/domain for omitted group details.
-- [ ] Surface response contract diagnostics in the Recovery Applications error state.
-- [ ] Migrate provider response validation.
-- [ ] Migrate credential response validation; preserve manual pubkey handling.
-- [ ] Migrate platform-provider response validation.
-- [ ] Migrate Recovery Groups response validation.
-- [ ] Migrate Policy Sets response validation.
-- [ ] Migrate snapshot-policy response validation.
-- [ ] Migrate application-recovery-policy response validation.
-- [ ] Migrate clean-room-policy response validation.
-- [ ] Classify and migrate exact discovery response contracts.
-- [ ] Document intentionally retained dynamic discovery schemas.
-- [ ] Remove unused handwritten response schemas and imports.
+- [x] Add and test the shared generated-response parser/error.
+- [x] Migrate Recovery Applications list and submit responses.
+- [x] Update the Recovery Application mapper/domain for omitted group details.
+- [x] Surface response contract diagnostics in the Recovery Applications error state.
+- [x] Migrate provider response validation.
+- [x] Migrate credential response validation; preserve manual pubkey handling.
+- [x] Migrate platform-provider response validation.
+- [x] Migrate Recovery Groups response validation.
+- [x] Migrate Policy Sets response validation.
+- [x] Migrate snapshot-policy response validation.
+- [x] Migrate application-recovery-policy response validation.
+- [x] Migrate clean-room-policy response validation.
+- [x] Classify and migrate exact discovery response contracts.
+- [x] Document intentionally retained dynamic discovery schemas.
+- [x] Remove unused handwritten response schemas and imports.
 
 ## Verification
 
-- [ ] Focused red/green regression test proves current Recovery Applications response.
-- [ ] Focused tests pass after every feature slice.
-- [ ] `npm run api:check` passes.
-- [ ] `npm run lint` passes.
-- [ ] `npm run typecheck` passes.
-- [ ] `npm test` passes.
-- [ ] `npm exec vite build` passes.
-- [ ] `git diff --check` passes.
-- [ ] Final reference search confirms `/credentials/pubkey` remains manual and unique.
-- [ ] Final diff contains no unrelated changes or secrets.
+- [x] Focused red/green regression test proves current Recovery Applications response.
+- [x] Focused tests pass after every feature slice.
+- [x] `npm run api:check` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm test` passes.
+- [x] `npm exec vite build` passes.
+- [x] `git diff --check` passes.
+- [x] Final reference search confirms `/credentials/pubkey` remains manual and unique.
+- [x] Final diff contains no unrelated changes or secrets.

@@ -18,7 +18,6 @@ const providerA: ProviderRecord = {
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
   url: 'https://10.99.99.40/ui/',
-  port: 22,
   credentialId: 'vcenter-admin',
   role: 'source',
   credentialStatus: 'ok',
@@ -29,7 +28,6 @@ const providerB: ProviderRecord = {
   description: 'DR array',
   type: 'FLASHCOPY',
   ipAddress: '10.99.99.41',
-  port: 22,
   credentialId: null,
   role: 'source',
   credentialStatus: 'none',
@@ -151,7 +149,7 @@ describe('ProvidersCatalogueTable', () => {
     expect(dialog).toHaveTextContent('"ipAddress": "10.99.99.40"')
     expect(dialog).toHaveTextContent('"credentialId": "vcenter-admin"')
     expect(dialog).toHaveTextContent('"credentialStatus": "ok"')
-    expect(dialog).toHaveTextContent('"port": 22')
+    expect(dialog).not.toHaveTextContent('"port"')
     expect(dialog).toHaveTextContent('"url": "https://10.99.99.40/ui/"')
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
   })

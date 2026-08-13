@@ -4,6 +4,8 @@ import type { VmStorageVolumes } from '../model/vmStorageVolumesTypes'
 import { vdisksResponseSchema } from './schemas/vmStorageVolumesSchema'
 import { mapVdisks } from '../helpers/mapVmStorageVolumes'
 
+// OpenAPI exposes each vdisk value as `unknown`. Keep this feature boundary
+// until the backend publishes the vendor record shape required by the mapper.
 // Returns the IBM storage volumes backing a VM. Explicit provider identifiers
 // prevent the backend defaults from selecting the wrong infrastructure source.
 export async function fetchVdisksByVm(

@@ -29,8 +29,4 @@ export const snapshotPolicyWireSchema = z.object({
   enabled: z.boolean(),
 })
 
-export const snapshotPoliciesResponseSchema = z.object({
-  snapshot_policies: z.array(snapshotPolicyWireSchema),
-})
-
 export type SnapshotPolicyWire = z.infer<typeof snapshotPolicyWireSchema>

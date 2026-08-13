@@ -56,10 +56,6 @@ export const recoveryAppPolicySubmitSchema = z.discriminatedUnion('snapshotSelec
   }).strict(),
 ])
 
-export const recoveryAppPoliciesResponseSchema = z.object({
-  recovery_app_policies: z.array(recoveryAppPolicyWireSchema),
-})
-
 export type RecoveryAppPolicyWire = z.infer<typeof recoveryAppPolicyWireSchema>
 
 type RecoveryAppPolicySubmitWireCommon = Omit<

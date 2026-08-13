@@ -18,8 +18,4 @@ export const policySetWireSchema = z.object({
   clean_room_policy_id: z.string().min(1),
 })
 
-export const policySetsResponseSchema = z.object({
-  policy_sets: z.array(policySetWireSchema),
-})
-
 export type PolicySetWire = z.infer<typeof policySetWireSchema>

@@ -4,13 +4,17 @@ import {
   getRecoveryAppPoliciesGetRecoveryAppPoliciesGet,
   submitRecoveryAppPolicySubmitRecoveryAppPolicyPost,
 } from '@/generated/api/client.gen'
+import {
+  RecoveryAppPoliciesResponse,
+  type RecoveryAppPolicyRecordOutput,
+} from '@/generated/api/zod.gen'
+import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type {
   RecoveryAppPolicy,
   RecoveryAppPolicySubmitData,
 } from '../model/recoveryAppPolicyTypes'
 import {
-  recoveryAppPoliciesResponseSchema,
   recoveryAppPolicySubmitSchema,
   type RecoveryAppPolicySubmitWire,
   type RecoveryAppPolicyWire,
@@ -25,21 +29,21 @@ function requestError(error: unknown, operation: string): Error {
   return error instanceof Error ? error : new Error(`${operation} request failed`)
 }
 
-function fromWire(policy: RecoveryAppPolicyWire): RecoveryAppPolicy {
+function fromWire(policy: RecoveryAppPolicyRecordOutput): RecoveryAppPolicy {
   return {
     id: policy.id,
     name: policy.name,
-    description: policy.description,
-    level: policy.level,
+    description: policy.description ?? '',
+    level: policy.level ?? '',
     frequencyValue: policy.frequency_value,
     frequencyUnit: policy.frequency_unit,
     retentionValue: policy.retention_value,
     retentionUnit: policy.retention_unit,
     bootVerify: policy.boot_verify,
     snapshotSelectionMode: policy.snapshot_selection_mode,
-    snapshotMaxAgeValue: policy.snapshot_max_age_value,
-    snapshotMaxAgeUnit: policy.snapshot_max_age_unit,
-    snapshotTargetTime: policy.snapshot_target_time,
+    snapshotMaxAgeValue: policy.snapshot_max_age_value ?? null,
+    snapshotMaxAgeUnit: policy.snapshot_max_age_unit ?? null,
+    snapshotTargetTime: policy.snapshot_target_time ?? null,
     enabled: policy.enabled,
   }
 }
@@ -151,7 +155,11 @@ export function toRecoveryAppPolicyReadPayload(policy: RecoveryAppPolicy): Recov
 }
 
 function parsePolicies(payload: unknown): RecoveryAppPolicy[] {
-  return recoveryAppPoliciesResponseSchema.parse(payload).recovery_app_policies.map(fromWire)
+  return parseGeneratedResponse(
+    RecoveryAppPoliciesResponse,
+    payload,
+    'Recovery application policies response',
+  ).recovery_app_policies.map(fromWire)
 }
 
 export async function fetchRecoveryAppPolicies(): Promise<RecoveryAppPolicy[]> {

@@ -6,13 +6,12 @@ import type {
   RecoveryGroupVmMetadata,
 } from '../model/recoveryGroupTypes'
 import type {
-  RecoveryGroupApiRecord,
   RecoveryGroupSubmitPayload,
 } from '../api/schemas/recoveryGroupsSchema'
 import type { ValidatedRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
 
 function toVmMetadataByName(
-  vms: RecoveryGroupApiRecord['vms'],
+  vms: RecoveryGroupReadRecord['vms'],
 ): Record<string, RecoveryGroupVmMetadata> {
   return Object.fromEntries(
     vms.map(({ name, ...metadata }) => [name, metadata] as const),
@@ -49,7 +48,7 @@ function vmConfiguration(provider: ProviderRecord): RecoveryGroupResourceConfigu
 }
 
 export function mapRecoveryGroupApiRecord(
-  record: RecoveryGroupApiRecord,
+  record: RecoveryGroupReadRecord,
   providers: ProviderRecord[],
 ): RecoveryGroup {
   const vmProviderId = record.provider_id_vm.trim()

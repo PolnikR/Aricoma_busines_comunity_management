@@ -4,10 +4,11 @@ import {
   getCleanRoomPoliciesGetCleanRoomPoliciesGet,
   submitCleanRoomPolicySubmitCleanRoomPolicyPost,
 } from '@/generated/api/client.gen'
+import { CleanRoomPoliciesResponse } from '@/generated/api/zod.gen'
+import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { CleanRoomPolicy, CleanRoomPolicySubmitData } from '../model/cleanRoomPolicyTypes'
 import {
-  cleanRoomPoliciesResponseSchema,
   cleanRoomPolicySchema,
 } from './schemas/cleanRoomPoliciesSchema'
 
@@ -21,7 +22,16 @@ function requestError(error: unknown, operation: string): Error {
 }
 
 function parsePolicies(payload: unknown): CleanRoomPolicy[] {
-  return cleanRoomPoliciesResponseSchema.parse(payload).clean_room_policies
+  return parseGeneratedResponse(
+    CleanRoomPoliciesResponse,
+    payload,
+    'Clean room policies response',
+  ).clean_room_policies.map(policy => ({
+    id: policy.id,
+    name: policy.name,
+    description: policy.description ?? '',
+    enabled: policy.enabled,
+  }))
 }
 
 export async function fetchCleanRoomPolicies(): Promise<CleanRoomPolicy[]> {
