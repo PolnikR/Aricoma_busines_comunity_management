@@ -1,21 +1,17 @@
-import { apiFetch } from '@/shared/api/apiClient'
-import { API_ENDPOINTS } from '@/config/apiEndpoints'
+import { getPowerVmGetPowerVmGet } from '@/generated/api/client.gen'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { PowerInventory } from '../model/discoveryTypes'
 import { mapPowerInventory } from '../helpers/mapPowerInventory'
 import { powerInventoryResponseSchema } from './schemas/powerInventorySchema'
 
-async function fetchProviderPayload(providerId: string | undefined): Promise<unknown> {
-  const url = providerId
-    ? `${API_ENDPOINTS.discovery.powerVirtualMachines}?${new URLSearchParams({ provider_id: providerId }).toString()}`
-    : API_ENDPOINTS.discovery.powerVirtualMachines
-  const response = await apiFetch(url)
-  if (!response.ok) {
-    throw new Error(`IBM Power inventory request failed with status ${String(response.status)}`)
-  }
-  return response.json()
-}
-
 export async function fetchPowerInventory(providerId?: string): Promise<PowerInventory> {
-  const payload = await fetchProviderPayload(providerId)
-  return mapPowerInventory(powerInventoryResponseSchema.parse(payload), providerId)
+  try {
+    const payload = await getPowerVmGetPowerVmGet(providerId ? { provider_id: providerId } : {})
+    return mapPowerInventory(powerInventoryResponseSchema.parse(payload), providerId)
+  } catch (error) {
+    if (error instanceof OrvalApiError) {
+      throw new Error(`IBM Power inventory request failed with status ${String(error.status)}`, { cause: error })
+    }
+    throw error
+  }
 }

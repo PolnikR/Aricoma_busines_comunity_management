@@ -270,7 +270,7 @@ describe('deleteRecoveryAppPolicy', () => {
     await expect(deleteRecoveryAppPolicy('high/main weekly')).resolves.toEqual([])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/delete_recovery_app_policy?policy_id=high%2Fmain%20weekly')
+    expect(url).toBe('/api/delete_recovery_app_policy?policy_id=high%2Fmain+weekly')
     expect(init.method).toBe('DELETE')
   })
 

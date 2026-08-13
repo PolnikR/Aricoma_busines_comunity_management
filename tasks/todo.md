@@ -1,24 +1,37 @@
-# Task Checklist: Code Review Follow-up Fixes
+# Task Checklist: Orval API Contract Generation
 
-## Implemented
+## Planning
 
-- [x] Infrastructure and platform provider URL fields flow through create/edit; infrastructure `port` remains omitted from POST.
-- [x] Provider View JSON now uses the validated GET records, including URL, port, and credential status where present.
-- [x] Recovery Group builder preserves orchestration selection and performs automatic volume hydration without render-phase state updates or false dirty state.
-- [x] Recovery Application edit preserves backend environment values outside the standard select options.
-- [x] Recovery Groups with unavailable providers remain visible, preserve their IDs/resources/raw JSON, and expose an explicit unresolved state with Edit disabled.
-- [x] Recovery Group submit response is matched by normalized group ID.
-- [x] VMware HTTP 400 responses now surface as errors instead of being converted to empty inventory.
-- [x] Recovery App Policy View JSON preserves nullable GET fields; remaining JSON consumers were audited and found to have no lossy field mapping.
-- [x] Regression tests added or updated for all changed behavior.
+- [x] Inspect the current API client, endpoint registry, feature APIs and hooks.
+- [x] Validate the supplied OpenAPI structure and identify the public-key exception.
+- [x] Define the generated/manual boundary.
+- [x] User approves `tasks/plan.md`.
+
+## Implementation
+
+- [x] Add and validate `openapi/abco-api.json`.
+- [x] Add the codegen filter that excludes only `/credentials/pubkey`.
+- [x] Add pinned Orval dependency, configuration and package scripts.
+- [x] Add tests and implementation for the shared Orval fetch mutator.
+- [x] Generate typed fetch clients, TypeScript models and Zod schemas.
+- [x] Verify deterministic output and absence of generated pubkey code.
+- [x] Migrate providers while retaining existing hooks/cache behavior.
+- [x] Migrate credentials while retaining manual `credentialsCrypto.ts`.
+- [x] Migrate platform providers.
+- [x] Migrate recovery policies and policy sets.
+- [x] Migrate Recovery Groups.
+- [x] Migrate Recovery Applications.
+- [x] Migrate discovery APIs by technology.
+- [x] Remove only confirmed-unused manual contracts and endpoint constants.
 
 ## Verification
 
-- [x] Focused provider, platform-provider, Recovery Group, Recovery Application, inventory, and policy tests: 17 files, 161 tests passed.
-- [x] Full unit suite: 54 files, 278 tests passed.
-- [x] `npm run lint` passed with zero errors.
-- [x] `npm run typecheck` passed.
-- [x] `npm exec vite build` passed; Vite reported only existing chunk-size warnings.
-- [x] `git diff --check` returned no diff errors.
-- [ ] Full UI suite/manual browser smoke test: Vitest UI process does not terminate in this environment despite the changed-flow suites passing; investigate separately before release.
-- [x] X-User handling, development-only screens, pagination, ports, and hard-coded recovery connection defaults were not changed outside the approved scope.
+- [x] Focused tests pass at every migration checkpoint.
+- [ ] `npm run api:generate` is deterministic.
+- [ ] `npm run api:check` passes.
+- [ ] `npm run lint` passes.
+- [ ] `npm run typecheck` passes.
+- [ ] `npm test` passes.
+- [ ] `npm exec vite build` passes.
+- [ ] `git diff --check` passes.
+- [ ] Final reference search confirms pubkey remains manual and unique.

@@ -185,7 +185,7 @@ describe('deleteProvider', () => {
   it('url-encodes the provider id', async () => {
     const mock = stubFetch({ providers: [] })
     await deleteProvider('vmware/vcenter 01')
-    expect(mock).toHaveBeenCalledWith('/api/delete_provider?provider_id=vmware%2Fvcenter%2001', expect.anything())
+    expect(mock).toHaveBeenCalledWith('/api/delete_provider?provider_id=vmware%2Fvcenter+01', expect.anything())
   })
 
   it('throws on an HTTP failure', async () => {

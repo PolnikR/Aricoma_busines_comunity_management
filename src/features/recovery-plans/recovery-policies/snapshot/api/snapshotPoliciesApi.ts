@@ -1,6 +1,10 @@
 import { z } from 'zod'
-import { API_ENDPOINTS } from '@/config/apiEndpoints'
-import { apiFetch } from '@/shared/api/apiClient'
+import {
+  deletePolicyDeletePolicyDelete,
+  getPoliciesGetPoliciesGet,
+  submitPolicySubmitPolicyPost,
+} from '@/generated/api/client.gen'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type {
   SnapshotPolicy,
   SnapshotPolicySubmitData,
@@ -13,11 +17,11 @@ import {
 
 const policyIdSchema = z.string().min(1)
 
-function requireSuccessfulResponse(response: Response, operation: string): Response {
-  if (!response.ok) {
-    throw new Error(`${operation} request failed with status ${String(response.status)}`)
+function requestError(error: unknown, operation: string): Error {
+  if (error instanceof OrvalApiError) {
+    return new Error(`${operation} request failed with status ${String(error.status)}`, { cause: error })
   }
-  return response
+  return error instanceof Error ? error : new Error(`${operation} request failed`)
 }
 
 function fromWire(policy: SnapshotPolicyWire): SnapshotPolicy {
@@ -53,42 +57,34 @@ export function toSnapshotPolicySubmitPayload(
   }
 }
 
-async function parsePolicies(response: Response): Promise<SnapshotPolicy[]> {
-  const payload: unknown = await response.json()
+function parsePolicies(payload: unknown): SnapshotPolicy[] {
   return snapshotPoliciesResponseSchema.parse(payload).snapshot_policies.map(fromWire)
 }
 
 export async function fetchSnapshotPolicies(): Promise<SnapshotPolicy[]> {
-  const response = requireSuccessfulResponse(
-    await apiFetch(API_ENDPOINTS.snapshotPolicies.list),
-    'Get snapshot policies',
-  )
-  return parsePolicies(response)
+  try {
+    return parsePolicies(await getPoliciesGetPoliciesGet())
+  } catch (error) {
+    throw requestError(error, 'Get snapshot policies')
+  }
 }
 
 export async function submitSnapshotPolicy(
   policy: SnapshotPolicySubmitData,
 ): Promise<SnapshotPolicy[]> {
   const wirePolicy = toSnapshotPolicySubmitPayload(policy)
-  const response = requireSuccessfulResponse(
-    await apiFetch(API_ENDPOINTS.snapshotPolicies.submit, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(wirePolicy),
-    }),
-    'Submit snapshot policy',
-  )
-  return parsePolicies(response)
+  try {
+    return parsePolicies(await submitPolicySubmitPolicyPost(wirePolicy))
+  } catch (error) {
+    throw requestError(error, 'Submit snapshot policy')
+  }
 }
 
 export async function deleteSnapshotPolicy(policyId: string): Promise<SnapshotPolicy[]> {
   const validatedPolicyId = policyIdSchema.parse(policyId)
-  const response = requireSuccessfulResponse(
-    await apiFetch(
-      `${API_ENDPOINTS.snapshotPolicies.delete}?policy_id=${encodeURIComponent(validatedPolicyId)}`,
-      { method: 'DELETE' },
-    ),
-    'Delete snapshot policy',
-  )
-  return parsePolicies(response)
+  try {
+    return parsePolicies(await deletePolicyDeletePolicyDelete({ policy_id: validatedPolicyId }))
+  } catch (error) {
+    throw requestError(error, 'Delete snapshot policy')
+  }
 }

@@ -1,6 +1,10 @@
 import { z } from 'zod'
-import { API_ENDPOINTS } from '@/config/apiEndpoints'
-import { apiFetch } from '@/shared/api/apiClient'
+import {
+  deleteCleanRoomPolicyRouteDeleteCleanRoomPolicyDelete,
+  getCleanRoomPoliciesGetCleanRoomPoliciesGet,
+  submitCleanRoomPolicySubmitCleanRoomPolicyPost,
+} from '@/generated/api/client.gen'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { CleanRoomPolicy, CleanRoomPolicySubmitData } from '../model/cleanRoomPolicyTypes'
 import {
   cleanRoomPoliciesResponseSchema,
@@ -9,24 +13,23 @@ import {
 
 const policyIdSchema = z.string().min(1)
 
-function requireSuccessfulResponse(response: Response, operation: string): Response {
-  if (!response.ok) {
-    throw new Error(`${operation} request failed with status ${String(response.status)}`)
+function requestError(error: unknown, operation: string): Error {
+  if (error instanceof OrvalApiError) {
+    return new Error(`${operation} request failed with status ${String(error.status)}`, { cause: error })
   }
-  return response
+  return error instanceof Error ? error : new Error(`${operation} request failed`)
 }
 
-async function parsePolicies(response: Response): Promise<CleanRoomPolicy[]> {
-  const payload: unknown = await response.json()
+function parsePolicies(payload: unknown): CleanRoomPolicy[] {
   return cleanRoomPoliciesResponseSchema.parse(payload).clean_room_policies
 }
 
 export async function fetchCleanRoomPolicies(): Promise<CleanRoomPolicy[]> {
-  const response = requireSuccessfulResponse(
-    await apiFetch(API_ENDPOINTS.cleanRoomPolicies.list),
-    'Get clean room policies',
-  )
-  return parsePolicies(response)
+  try {
+    return parsePolicies(await getCleanRoomPoliciesGetCleanRoomPoliciesGet())
+  } catch (error) {
+    throw requestError(error, 'Get clean room policies')
+  }
 }
 
 export function toCleanRoomPolicySubmitPayload(
@@ -39,25 +42,18 @@ export async function submitCleanRoomPolicy(
   policy: CleanRoomPolicySubmitData,
 ): Promise<CleanRoomPolicy[]> {
   const validated = toCleanRoomPolicySubmitPayload(policy)
-  const response = requireSuccessfulResponse(
-    await apiFetch(API_ENDPOINTS.cleanRoomPolicies.submit, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(validated),
-    }),
-    'Submit clean room policy',
-  )
-  return parsePolicies(response)
+  try {
+    return parsePolicies(await submitCleanRoomPolicySubmitCleanRoomPolicyPost(validated))
+  } catch (error) {
+    throw requestError(error, 'Submit clean room policy')
+  }
 }
 
 export async function deleteCleanRoomPolicy(policyId: string): Promise<CleanRoomPolicy[]> {
   const validatedPolicyId = policyIdSchema.parse(policyId)
-  const response = requireSuccessfulResponse(
-    await apiFetch(
-      `${API_ENDPOINTS.cleanRoomPolicies.delete}?policy_id=${encodeURIComponent(validatedPolicyId)}`,
-      { method: 'DELETE' },
-    ),
-    'Delete clean room policy',
-  )
-  return parsePolicies(response)
+  try {
+    return parsePolicies(await deleteCleanRoomPolicyRouteDeleteCleanRoomPolicyDelete({ policy_id: validatedPolicyId }))
+  } catch (error) {
+    throw requestError(error, 'Delete clean room policy')
+  }
 }

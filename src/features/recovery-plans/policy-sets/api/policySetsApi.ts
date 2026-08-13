@@ -1,6 +1,10 @@
 import { z } from 'zod'
-import { API_ENDPOINTS } from '@/config/apiEndpoints'
-import { apiFetch } from '@/shared/api/apiClient'
+import {
+  deletePolicySetRouteDeletePolicySetDelete,
+  getPolicySetsGetPolicySetsGet,
+  submitPolicySetSubmitPolicySetPost,
+} from '@/generated/api/client.gen'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { PolicySet, PolicySetSubmitData } from '../model/policySetTypes'
 import {
   policySetsResponseSchema,
@@ -10,11 +14,11 @@ import {
 
 const policySetIdSchema = z.string().min(1)
 
-function requireSuccessfulResponse(response: Response, operation: string): Response {
-  if (!response.ok) {
-    throw new Error(`${operation} request failed with status ${String(response.status)}`)
+function requestError(error: unknown, operation: string): Error {
+  if (error instanceof OrvalApiError) {
+    return new Error(`${operation} request failed with status ${String(error.status)}`, { cause: error })
   }
-  return response
+  return error instanceof Error ? error : new Error(`${operation} request failed`)
 }
 
 function fromWire(policySet: PolicySetWire): PolicySet {
@@ -40,42 +44,34 @@ export function toPolicySetSubmitPayload(policySet: PolicySetSubmitData): Policy
   }
 }
 
-async function parsePolicySets(response: Response): Promise<PolicySet[]> {
-  const payload: unknown = await response.json()
+function parsePolicySets(payload: unknown): PolicySet[] {
   return policySetsResponseSchema.parse(payload).policy_sets.map(fromWire)
 }
 
 export async function fetchPolicySets(): Promise<PolicySet[]> {
-  const response = requireSuccessfulResponse(
-    await apiFetch(API_ENDPOINTS.policySets.list),
-    'Get policy sets',
-  )
-  return parsePolicySets(response)
+  try {
+    return parsePolicySets(await getPolicySetsGetPolicySetsGet())
+  } catch (error) {
+    throw requestError(error, 'Get policy sets')
+  }
 }
 
 export async function submitPolicySet(
   policySet: PolicySetSubmitData,
 ): Promise<PolicySet[]> {
   const wirePolicySet = toPolicySetSubmitPayload(policySet)
-  const response = requireSuccessfulResponse(
-    await apiFetch(API_ENDPOINTS.policySets.submit, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(wirePolicySet),
-    }),
-    'Submit policy set',
-  )
-  return parsePolicySets(response)
+  try {
+    return parsePolicySets(await submitPolicySetSubmitPolicySetPost(wirePolicySet))
+  } catch (error) {
+    throw requestError(error, 'Submit policy set')
+  }
 }
 
 export async function deletePolicySet(policySetId: string): Promise<PolicySet[]> {
   const validatedPolicySetId = policySetIdSchema.parse(policySetId)
-  const response = requireSuccessfulResponse(
-    await apiFetch(
-      `${API_ENDPOINTS.policySets.delete}?policy_set_id=${encodeURIComponent(validatedPolicySetId)}`,
-      { method: 'DELETE' },
-    ),
-    'Delete policy set',
-  )
-  return parsePolicySets(response)
+  try {
+    return parsePolicySets(await deletePolicySetRouteDeletePolicySetDelete({ policy_set_id: validatedPolicySetId }))
+  } catch (error) {
+    throw requestError(error, 'Delete policy set')
+  }
 }

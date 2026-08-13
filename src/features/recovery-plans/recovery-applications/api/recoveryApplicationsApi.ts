@@ -1,5 +1,8 @@
-import { apiFetch } from '@/shared/api/apiClient'
-import { API_ENDPOINTS } from '@/config/apiEndpoints'
+import {
+  getRecoveryAppsGetRecoveryAppsGet,
+  submitRecoveryDagSubmitRecoveryDagPost,
+} from '@/generated/api/client.gen'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type {
   RecoveryApplicationData,
   RecoveryApplicationListItem,
@@ -13,14 +16,17 @@ import {
 import { mapRecoveryApplications } from '../helpers/mapRecoveryApplications'
 
 export async function fetchRecoveryApplications(): Promise<RecoveryApplicationListItem[]> {
-  const response = await apiFetch(API_ENDPOINTS.recoveryApplications.list)
-  if (!response.ok) {
-    throw new Error(`Failed to fetch recovery applications: ${response.statusText}`)
+  try {
+    const payload = await getRecoveryAppsGetRecoveryAppsGet()
+    const parsed = recoveryApplicationListResponseSchema.parse(payload)
+    return mapRecoveryApplications(parsed)
+  } catch (error) {
+    if (error instanceof OrvalApiError) {
+      const reason = error.statusText || String(error.status)
+      throw new Error(`Failed to fetch recovery applications: ${reason}`, { cause: error })
+    }
+    throw error
   }
-
-  const payload: unknown = await response.json()
-  const parsed = recoveryApplicationListResponseSchema.parse(payload)
-  return mapRecoveryApplications(parsed)
 }
 
 // Submits the application JSON to the Airflow recovery-orchestration DAG.
@@ -36,29 +42,35 @@ export async function submitRecoveryApplicationDag(
     throw new Error('Platform provider ID is required')
   }
 
-  const params = new URLSearchParams()
-  if (normalizedProviderId) params.set('provider_id', normalizedProviderId)
-  params.set('push_to_orchestrator', String(pushToOrchestrator))
-  const url = `${API_ENDPOINTS.recoveryApplications.submitDag}?${params.toString()}`
-  let response: Response
+  let payload: unknown
   try {
-    response = await apiFetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-  } catch (cause) {
-    // Network-level failure (proxy unreachable, CORS, backend down, DNS).
-    const reason = cause instanceof Error ? cause.message : String(cause)
-    throw new Error(`Network error calling ${url}: ${reason}`, { cause })
+    const params = normalizedProviderId
+      ? { provider_id: normalizedProviderId, push_to_orchestrator: pushToOrchestrator }
+      : { push_to_orchestrator: pushToOrchestrator }
+    payload = await submitRecoveryDagSubmitRecoveryDagPost(
+      data as Parameters<typeof submitRecoveryDagSubmitRecoveryDagPost>[0],
+      params,
+    )
+  } catch (error) {
+    if (error instanceof OrvalApiError) {
+      const body = typeof error.body === 'string' ? ` — ${error.body}` : ''
+      const status = [String(error.status), error.statusText].filter(Boolean).join(' ')
+      throw new Error(`submit_recovery_dag failed: ${status}${body}`, { cause: error })
+    }
+    const reason = error instanceof Error ? error.message : String(error)
+    throw new Error(`Network error calling /submit_recovery_dag: ${reason}`, { cause: error })
   }
-  if (!response.ok) {
-    const body = await response.text().catch(() => '')
-    throw new Error(`submit_recovery_dag failed: ${String(response.status)} ${response.statusText}${body ? ` — ${body}` : ''}`)
-  }
-  const payload: unknown = await response.json()
+
+  const normalized = normalizeSubmitResponse(payload)
   return (pushToOrchestrator
     ? submitDagOrchestratedResponseSchema
     : submitDagLocalResponseSchema
-  ).parse(payload)
+  ).parse(normalized)
+}
+
+function normalizeSubmitResponse(payload: unknown): unknown {
+  if (!payload || typeof payload !== 'object') return payload
+  const record = payload as Record<string, unknown>
+  if ('recovery_applications' in record || !('applications' in record)) return payload
+  return { ...record, recovery_applications: record['applications'] }
 }

@@ -57,7 +57,7 @@ describe('cleanRoomPoliciesApi', () => {
     await expect(deleteCleanRoomPolicy('clean/target policy')).resolves.toEqual([])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/delete_clean_room_policy?policy_id=clean%2Ftarget%20policy')
+    expect(url).toBe('/api/delete_clean_room_policy?policy_id=clean%2Ftarget+policy')
     expect(init.method).toBe('DELETE')
   })
 

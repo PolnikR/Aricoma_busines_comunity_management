@@ -103,7 +103,7 @@ describe('deletePolicySet', () => {
     await expect(deletePolicySet('tier2/main apps')).resolves.toEqual([])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/delete_policy_set?policy_set_id=tier2%2Fmain%20apps')
+    expect(url).toBe('/api/delete_policy_set?policy_set_id=tier2%2Fmain+apps')
     expect(init.method).toBe('DELETE')
   })
 

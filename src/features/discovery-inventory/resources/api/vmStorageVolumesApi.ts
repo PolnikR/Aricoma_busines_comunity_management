@@ -1,5 +1,5 @@
-import { apiFetch } from '@/shared/api/apiClient'
-import { API_ENDPOINTS } from '@/config/apiEndpoints'
+import { vdisksByVmVdisksByVmGet } from '@/generated/api/client.gen'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { VmStorageVolumes } from '../model/vmStorageVolumesTypes'
 import { vdisksResponseSchema } from './schemas/vmStorageVolumesSchema'
 import { mapVdisks } from '../helpers/mapVmStorageVolumes'
@@ -11,19 +11,17 @@ export async function fetchVdisksByVm(
   providerId?: string,
   ibmProviderId?: string,
 ): Promise<VmStorageVolumes> {
-  const params = new URLSearchParams({ vm_name: vmName })
-  if (providerId) params.set('provider_id', providerId)
-  if (ibmProviderId) params.set('ibm_provider_id', ibmProviderId)
-
-  const response = await apiFetch(
-    `${API_ENDPOINTS.discovery.virtualDisksByVm}?${params.toString()}`,
-  )
-
-  if (!response.ok) {
-    throw new Error(`Vdisks request failed with status ${String(response.status)}`)
+  try {
+    const payload = await vdisksByVmVdisksByVmGet({
+      vm_name: vmName,
+      ...(providerId ? { provider_id: providerId } : {}),
+      ...(ibmProviderId ? { ibm_provider_id: ibmProviderId } : {}),
+    })
+    return mapVdisks(vdisksResponseSchema.parse(payload))
+  } catch (error) {
+    if (error instanceof OrvalApiError) {
+      throw new Error(`Vdisks request failed with status ${String(error.status)}`, { cause: error })
+    }
+    throw error
   }
-
-  const payload: unknown = await response.json()
-  const parsed = vdisksResponseSchema.parse(payload)
-  return mapVdisks(parsed)
 }

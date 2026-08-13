@@ -118,7 +118,7 @@ describe('deletePlatformProvider', () => {
     ])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/delete_platform_provider?provider_id=airflow%2Fmain%2001')
+    expect(url).toBe('/api/delete_platform_provider?provider_id=airflow%2Fmain+01')
     expect(init.method).toBe('DELETE')
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })

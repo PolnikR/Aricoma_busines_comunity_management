@@ -1,16 +1,16 @@
-import { apiFetch } from '@/shared/api/apiClient'
-import { API_ENDPOINTS } from '@/config/apiEndpoints'
+import { tagsTagsGet } from '@/generated/api/client.gen'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { tagsResponseSchema } from './schemas/tagsSchema'
 import { mapTags } from '../helpers/mapTags'
 
 export async function fetchTags(): Promise<string[]> {
-  const response = await apiFetch(API_ENDPOINTS.discovery.tags)
-
-  if (!response.ok) {
-    throw new Error(`Tags request failed with status ${String(response.status)}`)
+  try {
+    const payload = await tagsTagsGet()
+    return mapTags(tagsResponseSchema.parse(payload))
+  } catch (error) {
+    if (error instanceof OrvalApiError) {
+      throw new Error(`Tags request failed with status ${String(error.status)}`, { cause: error })
+    }
+    throw error
   }
-
-  const payload: unknown = await response.json()
-  const parsed = tagsResponseSchema.parse(payload)
-  return mapTags(parsed)
 }

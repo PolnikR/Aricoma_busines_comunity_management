@@ -108,7 +108,7 @@ describe('deleteSnapshotPolicy', () => {
     await expect(deleteSnapshotPolicy('critical/main 15m')).resolves.toEqual([])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/delete_policy?policy_id=critical%2Fmain%2015m')
+    expect(url).toBe('/api/delete_policy?policy_id=critical%2Fmain+15m')
     expect(init.method).toBe('DELETE')
   })
 

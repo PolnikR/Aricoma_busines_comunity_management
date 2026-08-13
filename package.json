@@ -14,6 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run test && npm run build",
+    "api:generate": "orval --config orval.config.ts",
+    "api:check": "npm run api:generate && node scripts/orval/verify-output.mjs && git diff --exit-code -- src/generated/api",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -43,6 +45,7 @@
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.7.0",
     "jsdom": "^29.1.1",
+    "orval": "^8.24.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.62.0",
     "vite": "^8.1.1",

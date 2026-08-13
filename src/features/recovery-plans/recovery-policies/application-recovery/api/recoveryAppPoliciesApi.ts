@@ -1,6 +1,10 @@
 import { z } from 'zod'
-import { API_ENDPOINTS } from '@/config/apiEndpoints'
-import { apiFetch } from '@/shared/api/apiClient'
+import {
+  deleteRecoveryAppPolicyRouteDeleteRecoveryAppPolicyDelete,
+  getRecoveryAppPoliciesGetRecoveryAppPoliciesGet,
+  submitRecoveryAppPolicySubmitRecoveryAppPolicyPost,
+} from '@/generated/api/client.gen'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type {
   RecoveryAppPolicy,
   RecoveryAppPolicySubmitData,
@@ -14,11 +18,11 @@ import {
 
 const policyIdSchema = z.string().min(1)
 
-function requireSuccessfulResponse(response: Response, operation: string): Response {
-  if (!response.ok) {
-    throw new Error(`${operation} request failed with status ${String(response.status)}`)
+function requestError(error: unknown, operation: string): Error {
+  if (error instanceof OrvalApiError) {
+    return new Error(`${operation} request failed with status ${String(error.status)}`, { cause: error })
   }
-  return response
+  return error instanceof Error ? error : new Error(`${operation} request failed`)
 }
 
 function fromWire(policy: RecoveryAppPolicyWire): RecoveryAppPolicy {
@@ -146,41 +150,33 @@ export function toRecoveryAppPolicyReadPayload(policy: RecoveryAppPolicy): Recov
   }
 }
 
-async function parsePolicies(response: Response): Promise<RecoveryAppPolicy[]> {
-  const payload: unknown = await response.json()
+function parsePolicies(payload: unknown): RecoveryAppPolicy[] {
   return recoveryAppPoliciesResponseSchema.parse(payload).recovery_app_policies.map(fromWire)
 }
 
 export async function fetchRecoveryAppPolicies(): Promise<RecoveryAppPolicy[]> {
-  const response = requireSuccessfulResponse(
-    await apiFetch(API_ENDPOINTS.recoveryAppPolicies.list),
-    'Get recovery app policies',
-  )
-  return parsePolicies(response)
+  try {
+    return parsePolicies(await getRecoveryAppPoliciesGetRecoveryAppPoliciesGet())
+  } catch (error) {
+    throw requestError(error, 'Get recovery app policies')
+  }
 }
 
 export async function submitRecoveryAppPolicy(
   policy: RecoveryAppPolicySubmitData,
 ): Promise<RecoveryAppPolicy[]> {
-  const response = requireSuccessfulResponse(
-    await apiFetch(API_ENDPOINTS.recoveryAppPolicies.submit, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(toRecoveryAppPolicySubmitPayload(policy)),
-    }),
-    'Submit recovery app policy',
-  )
-  return parsePolicies(response)
+  try {
+    return parsePolicies(await submitRecoveryAppPolicySubmitRecoveryAppPolicyPost(toRecoveryAppPolicySubmitPayload(policy)))
+  } catch (error) {
+    throw requestError(error, 'Submit recovery app policy')
+  }
 }
 
 export async function deleteRecoveryAppPolicy(policyId: string): Promise<RecoveryAppPolicy[]> {
   const validatedPolicyId = policyIdSchema.parse(policyId)
-  const response = requireSuccessfulResponse(
-    await apiFetch(
-      `${API_ENDPOINTS.recoveryAppPolicies.delete}?policy_id=${encodeURIComponent(validatedPolicyId)}`,
-      { method: 'DELETE' },
-    ),
-    'Delete recovery app policy',
-  )
-  return parsePolicies(response)
+  try {
+    return parsePolicies(await deleteRecoveryAppPolicyRouteDeleteRecoveryAppPolicyDelete({ policy_id: validatedPolicyId }))
+  } catch (error) {
+    throw requestError(error, 'Delete recovery app policy')
+  }
 }

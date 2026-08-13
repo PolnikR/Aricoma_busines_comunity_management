@@ -1,5 +1,5 @@
-import { apiFetch } from '@/shared/api/apiClient'
-import { API_ENDPOINTS } from '@/config/apiEndpoints'
+import { getVolumeTreeRouteGetVolumeTreeGet } from '@/generated/api/client.gen'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type {
   FlashSystemTreeNode,
   FlashSystemVolumeTreeCounts,
@@ -16,12 +16,14 @@ export async function fetchFlashSystemVolumeTree(
   providerId: string,
   view: FlashSystemVolumeTreeView,
 ): Promise<FlashSystemVolumeTree> {
-  const params = new URLSearchParams({ provider_id: providerId, view })
-  const response = await apiFetch(`${API_ENDPOINTS.discovery.flashSystemVolumeTree}?${params.toString()}`)
-  if (!response.ok) {
-    throw new Error(`FlashSystem volume tree request failed with status ${String(response.status)}`)
+  try {
+    const payload = await getVolumeTreeRouteGetVolumeTreeGet({ provider_id: providerId, view })
+    const parsed = flashSystemVolumeTreeResponseSchema.parse(payload)
+    return { counts: parsed.counts, nodes: parsed.views[view] ?? [] }
+  } catch (error) {
+    if (error instanceof OrvalApiError) {
+      throw new Error(`FlashSystem volume tree request failed with status ${String(error.status)}`, { cause: error })
+    }
+    throw error
   }
-  const payload: unknown = await response.json()
-  const parsed = flashSystemVolumeTreeResponseSchema.parse(payload)
-  return { counts: parsed.counts, nodes: parsed.views[view] ?? [] }
 }
