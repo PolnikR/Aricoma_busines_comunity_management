@@ -14,22 +14,21 @@ Generation happens during development or CI. The production browser application 
 
 ## Current OpenAPI state
 
-Most POST request schemas already exist:
+The backend now publishes request and response models for the stable endpoints
+used by providers, credentials, policies, policy sets, recovery groups, and
+recovery applications. The frontend generates a typed fetch client and Zod
+schemas from the reviewed snapshot into `src/generated/api`.
 
-- `Provider`
-- `OrchestrationProvider`
-- `Credential`
-- `SnapshotPolicy`
-- `RecoveryAppPolicy`
-- `CleanRoomPolicy`
-- `PolicySet`
-- `RecoveryGroup`
+The remaining backend contract gaps are:
 
-Before Orval can provide a complete contract, the backend must still add:
-
-1. Explicit response models for successful responses. Current `200` responses contain an empty `"schema": {}`.
-2. A concrete request model for `POST /submit_recovery_dag`. It currently accepts an unrestricted object with `additionalProperties: true`.
-3. Any VM metadata fields that the backend is expected to preserve in `RecoveryVM`, such as `order`, `hostname`, `ip_address`, `os`, `cpu`, `memory_gb`, and `storage_gb`.
+1. `RecoveryGroupRef` embedded in a recovery application tier contains only
+   `name` and `vms`. If the final JSON must retain `description` and `volumes`,
+   the backend must add them to this model.
+2. `RecoveryVM` declares only `name`. The backend must add every VM metadata
+   field it needs to preserve, such as `order`, `hostname`, `ip_address`, `os`,
+   `cpu`, `memory_gb`, and `storage_gb`.
+3. Some vendor-specific inventory records are still exposed as `unknown` in
+   OpenAPI, so feature schemas temporarily validate those boundaries.
 
 The backend source must define Pydantic response models and assign them through FastAPI `response_model`. The generated `openapi.json` must not be edited manually.
 
@@ -113,7 +112,14 @@ downloaded document is validated before it is written; HTTP, JSON or OpenAPI
 validation failures leave the existing `openapi/abco-api.json` unchanged.
 
 `api:check` intentionally never downloads the live contract. CI and production
-builds therefore use only the reviewed snapshot committed to Git.
+builds therefore use only the reviewed snapshot committed to Git. Before
+generation, the check copies `src/generated/api` to a temporary directory and
+compares both directories afterward, so it does not require `.git` to exist in
+the Docker build context.
+
+`npm run build` runs `api:check` first. The build therefore fails when the
+committed snapshot and generated files are out of sync while remaining
+independent of backend availability.
 
 ### Complete when
 
@@ -193,11 +199,11 @@ Implement this phase when the project needs backend-independent integration test
 
 ## Recommended delivery order
 
-1. Backend completes the missing response models and the `submit_recovery_dag` request model.
-2. Implement phase 1 for providers and credentials.
-3. Evaluate the generated code and mapping boundaries.
-4. Extend phase 1 to policies, policy sets, recovery groups, recovery applications, and inventory.
-5. Add phase 2 CI enforcement.
-6. Adopt phases 3 to 5 only when their concrete maintenance benefit exceeds the migration cost.
+1. Backend completes the remaining `RecoveryGroupRef`, `RecoveryVM`, and
+   vendor-specific inventory fields.
+2. The GitLab pipeline uses the existing `npm run build`, which includes the
+   offline `api:check` gate.
+3. Adopt the generated React Query hooks and mocks from phases 4 and 5 only
+   when their concrete maintenance benefit exceeds the migration cost.
 
 Phases 1 and 2 are the production foundation. Phases 3, 4, and 5 are optional optimizations and should be introduced from measured project needs rather than as prerequisites for Orval adoption.

@@ -14,22 +14,21 @@ Generovanie prebieha počas vývoja alebo v CI. Produkčná aplikácia v prehlia
 
 ## Aktuálny stav OpenAPI
 
-Väčšina POST request schém už existuje:
+Backend už publikuje request a response modely pre stabilné endpointy používané
+providermi, prihlasovacími údajmi, politikami, sadami politík, skupinami obnovy
+a aplikáciami obnovy. Frontend z kontrolovaného snapshotu generuje typovaný fetch
+klient aj Zod schémy do `src/generated/api`.
 
-- `Provider`
-- `OrchestrationProvider`
-- `Credential`
-- `SnapshotPolicy`
-- `RecoveryAppPolicy`
-- `CleanRoomPolicy`
-- `PolicySet`
-- `RecoveryGroup`
+Zostávajúce medzery v backendovom kontrakte:
 
-Predtým, než bude Orval poskytovať úplný kontrakt, musí backend doplniť:
-
-1. Explicitné response modely pre úspešné odpovede. Aktuálne odpovede `200` obsahujú prázdnu schému `"schema": {}`.
-2. Konkrétny request model pre `POST /submit_recovery_dag`. Aktuálne prijíma neobmedzený objekt s `additionalProperties: true`.
-3. Všetky VM metadata, ktoré má backend zachovať v modeli `RecoveryVM`, napríklad `order`, `hostname`, `ip_address`, `os`, `cpu`, `memory_gb` a `storage_gb`.
+1. `RecoveryGroupRef` vložený do tieru aplikácie obnovy obsahuje iba `name` a
+   `vms`. Ak má výsledný JSON zachovať aj `description` a `volumes`, backend ich
+   musí pridať do tohto modelu.
+2. `RecoveryVM` deklaruje iba `name`. Backend musí doplniť všetky VM metadata,
+   ktoré má zachovať, napríklad `order`, `hostname`, `ip_address`, `os`, `cpu`,
+   `memory_gb` a `storage_gb`.
+3. Niektoré vendor-specific inventory záznamy sú v OpenAPI stále deklarované
+   ako `unknown`; tieto hranice preto dočasne validujú feature schémy.
 
 Backend musí definovať Pydantic response modely a priradiť ich cez FastAPI `response_model`. Generovaný súbor `openapi.json` sa nesmie upravovať ručne.
 
@@ -114,7 +113,14 @@ overí a pri HTTP, JSON alebo OpenAPI validačnej chybe zostane existujúci
 `openapi/abco-api.json` nezmenený.
 
 `api:check` zámerne nikdy nesťahuje živú schému. CI a produkčný build tak
-pracujú iba s kontrolovaným snapshotom uloženým v Gite.
+pracujú iba s kontrolovaným snapshotom uloženým v Gite. Kontrola si pred
+generovaním vytvorí dočasnú kópiu `src/generated/api` a po generovaní porovná
+obsah oboch priečinkov, takže nevyžaduje prítomnosť `.git` v Docker build
+kontexte.
+
+`npm run build` spúšťa `api:check` ako prvý krok. Build preto zlyhá, ak
+commitnutý snapshot a generované súbory nie sú synchronizované, ale zostáva
+nezávislý od dostupnosti backendu.
 
 ### Fáza je hotová, keď
 
@@ -194,11 +200,11 @@ Túto fázu implementovať, keď projekt potrebuje integračné testy nezávisl�
 
 ## Odporúčané poradie realizácie
 
-1. Backend doplní chýbajúce response modely a request model pre `submit_recovery_dag`.
-2. Implementovať fázu 1 pre providers a credentials.
-3. Vyhodnotiť generovaný kód a hranice mapovania.
-4. Rozšíriť fázu 1 na policies, policy sets, recovery groups, recovery applications a inventory.
-5. Pridať CI kontrolu z fázy 2.
-6. Fázy 3 až 5 zaviesť iba vtedy, keď je ich konkrétny prínos pre údržbu väčší než cena migrácie.
+1. Backend doplní zostávajúce polia `RecoveryGroupRef`, `RecoveryVM` a
+   vendor-specific inventory modelov.
+2. GitLab pipeline bude používať existujúci `npm run build`, ktorý zahŕňa
+   offline `api:check`.
+3. Generované React Query hooky a mocky z fáz 4 a 5 zaviesť iba vtedy, keď je
+   ich konkrétny prínos pre údržbu väčší než cena migrácie.
 
 Fázy 1 a 2 tvoria produkčný základ. Fázy 3, 4 a 5 sú voliteľné optimalizácie, ktoré sa majú zavádzať podľa reálnych potrieb projektu, nie ako podmienka použitia Orvalu.

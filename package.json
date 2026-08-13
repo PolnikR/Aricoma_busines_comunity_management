@@ -9,16 +9,17 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc -b",
-    "build": "npm run lint && npm run typecheck && npm run test && vite build",
+    "build": "npm run api:check && npm run lint && npm run typecheck && npm run test && vite build",
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run test && npm run build",
+    "check": "npm run build",
     "api:pull": "node scripts/orval/pull-openapi.mjs",
     "api:pull:test": "node --test scripts/orval/pull-openapi.test.mjs",
+    "api:generated:test": "node --test scripts/orval/check-generated.test.mjs",
     "api:generate": "orval --config orval.config.ts",
     "api:update": "npm run api:pull && npm run api:generate",
-    "api:check": "npm run api:pull:test && npm run api:generate && node scripts/orval/verify-output.mjs && git diff --exit-code -- src/generated/api",
+    "api:check": "npm run api:pull:test && npm run api:generated:test && node scripts/orval/check-generated.mjs && node scripts/orval/verify-output.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
