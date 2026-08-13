@@ -5,7 +5,9 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { RecoveryAppRecord } from './recoveryAppRecord.gen';
+import type { RollbackReport } from './rollbackReport.gen';
 
 export interface RecoveryAppsResponse {
   applications: RecoveryAppRecord[];
+  rollback?: RollbackReport | null;
 }

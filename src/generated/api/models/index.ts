@@ -18,6 +18,7 @@ export * from './deletePolicyDeletePolicyDeleteParams.gen';
 export * from './deletePolicySetRouteDeletePolicySetDeleteParams.gen';
 export * from './deleteProviderRouteDeleteProviderDeleteParams.gen';
 export * from './deleteRecoveryAppPolicyRouteDeleteRecoveryAppPolicyDeleteParams.gen';
+export * from './deleteRecoveryAppRouteDeleteRecoveryAppDeleteParams.gen';
 export * from './deleteRecoveryGroupRouteDeleteRecoveryGroupDeleteParams.gen';
 export * from './getOrchestratorRunsGetOrchestratorRunsGetParams.gen';
 export * from './getPowerVmGetPowerVmGetParams.gen';

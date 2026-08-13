@@ -14,8 +14,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run test && npm run build",
+    "api:pull": "node scripts/orval/pull-openapi.mjs",
+    "api:pull:test": "node --test scripts/orval/pull-openapi.test.mjs",
     "api:generate": "orval --config orval.config.ts",
-    "api:check": "npm run api:generate && node scripts/orval/verify-output.mjs && git diff --exit-code -- src/generated/api",
+    "api:update": "npm run api:pull && npm run api:generate",
+    "api:check": "npm run api:pull:test && npm run api:generate && node scripts/orval/verify-output.mjs && git diff --exit-code -- src/generated/api",
     "preview": "vite preview"
   },
   "dependencies": {

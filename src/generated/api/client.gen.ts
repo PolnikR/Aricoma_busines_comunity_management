@@ -16,6 +16,7 @@ import type {
   DeletePolicySetRouteDeletePolicySetDeleteParams,
   DeleteProviderRouteDeleteProviderDeleteParams,
   DeleteRecoveryAppPolicyRouteDeleteRecoveryAppPolicyDeleteParams,
+  DeleteRecoveryAppRouteDeleteRecoveryAppDeleteParams,
   DeleteRecoveryGroupRouteDeleteRecoveryGroupDeleteParams,
   GetOrchestratorRunsGetOrchestratorRunsGetParams,
   GetPowerVmGetPowerVmGetParams,
@@ -656,6 +657,37 @@ export const submitRecoveryDagSubmitRecoveryDagPost = async (recoveryAppSubmissi
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(recoveryAppSubmission)
+  }
+);}
+
+
+
+export const getDeleteRecoveryAppRouteDeleteRecoveryAppDeleteUrl = (params: DeleteRecoveryAppRouteDeleteRecoveryAppDeleteParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/delete_recovery_app?${stringifiedParams}` : `/delete_recovery_app`
+}
+
+/**
+ * @summary Delete Recovery App Route
+ */
+export const deleteRecoveryAppRouteDeleteRecoveryAppDelete = async (params: DeleteRecoveryAppRouteDeleteRecoveryAppDeleteParams, options?: Parameters<typeof orvalMutator>[1]): Promise<RecoveryAppsResponse> => {
+
+  return orvalMutator<RecoveryAppsResponse>(getDeleteRecoveryAppRouteDeleteRecoveryAppDeleteUrl(params),
+  {
+    ...options,
+    method: 'DELETE'
+
+
   }
 );}
 

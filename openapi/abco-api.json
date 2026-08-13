@@ -1385,6 +1385,128 @@
         }
       }
     },
+    "/delete_recovery_app": {
+      "delete": {
+        "tags": [
+          "Recovery Apps"
+        ],
+        "summary": "Delete Recovery App Route",
+        "operationId": "delete_recovery_app_route_delete_recovery_app_delete",
+        "parameters": [
+          {
+            "name": "recovery_app_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the recovery app to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed).",
+              "title": "Recovery App Id"
+            },
+            "description": "id of the recovery app to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed)."
+          },
+          {
+            "name": "rollback_from_orchestrator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "if true, tear down the app's Airflow DAG, then unmap (unpresent) its IBM target volumes from their host. Does not delete the FlashCopy mapping or the volume itself.",
+              "default": false,
+              "title": "Rollback From Orchestrator"
+            },
+            "description": "if true, tear down the app's Airflow DAG, then unmap (unpresent) its IBM target volumes from their host. Does not delete the FlashCopy mapping or the volume itself."
+          },
+          {
+            "name": "rollback_orphans",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "if true, recovery_app_id is read as an airflow_run_id: skip the recovery_applications.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_PLAN.",
+              "default": false,
+              "title": "Rollback Orphans"
+            },
+            "description": "if true, recovery_app_id is read as an airflow_run_id: skip the recovery_applications.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_PLAN."
+          },
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "orchestration (AIRFLOW) provider - required when rollback_from_orchestrator",
+              "default": "airflow-01",
+              "title": "Provider Id"
+            },
+            "description": "orchestration (AIRFLOW) provider - required when rollback_from_orchestrator"
+          },
+          {
+            "name": "ibm_provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IBM FlashSystem provider - required when rollback_from_orchestrator, to unmap the app's target volumes from their host",
+              "title": "Ibm Provider Id"
+            },
+            "description": "IBM FlashSystem provider - required when rollback_from_orchestrator, to unmap the app's target volumes from their host"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryAppsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/get_recovery_groups": {
       "get": {
         "tags": [
@@ -3428,7 +3550,7 @@
           },
           "frequency_value": {
             "type": "integer",
-            "exclusiveMinimum": 0.0,
+            "exclusiveMinimum": 0,
             "title": "Frequency Value"
           },
           "frequency_unit": {
@@ -3442,7 +3564,7 @@
           },
           "retention_value": {
             "type": "integer",
-            "exclusiveMinimum": 0.0,
+            "exclusiveMinimum": 0,
             "title": "Retention Value"
           },
           "retention_unit": {
@@ -3473,7 +3595,7 @@
             "anyOf": [
               {
                 "type": "integer",
-                "exclusiveMinimum": 0.0
+                "exclusiveMinimum": 0
               },
               {
                 "type": "null"
@@ -3559,7 +3681,7 @@
           },
           "frequency_value": {
             "type": "integer",
-            "exclusiveMinimum": 0.0,
+            "exclusiveMinimum": 0,
             "title": "Frequency Value"
           },
           "frequency_unit": {
@@ -3573,7 +3695,7 @@
           },
           "retention_value": {
             "type": "integer",
-            "exclusiveMinimum": 0.0,
+            "exclusiveMinimum": 0,
             "title": "Retention Value"
           },
           "retention_unit": {
@@ -3604,7 +3726,7 @@
             "anyOf": [
               {
                 "type": "integer",
-                "exclusiveMinimum": 0.0
+                "exclusiveMinimum": 0
               },
               {
                 "type": "null"
@@ -3820,6 +3942,16 @@
             },
             "type": "array",
             "title": "Applications"
+          },
+          "rollback": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RollbackReport"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -4194,7 +4326,7 @@
           },
           "frequency_value": {
             "type": "integer",
-            "exclusiveMinimum": 0.0,
+            "exclusiveMinimum": 0,
             "title": "Frequency Value"
           },
           "frequency_unit": {
@@ -4208,7 +4340,7 @@
           },
           "retention_value": {
             "type": "integer",
-            "exclusiveMinimum": 0.0,
+            "exclusiveMinimum": 0,
             "title": "Retention Value"
           },
           "retention_unit": {
@@ -4224,7 +4356,7 @@
             "anyOf": [
               {
                 "type": "integer",
-                "exclusiveMinimum": 0.0
+                "exclusiveMinimum": 0
               },
               {
                 "type": "null"
@@ -4283,7 +4415,7 @@
           },
           "frequency_value": {
             "type": "integer",
-            "exclusiveMinimum": 0.0,
+            "exclusiveMinimum": 0,
             "title": "Frequency Value"
           },
           "frequency_unit": {
@@ -4297,7 +4429,7 @@
           },
           "retention_value": {
             "type": "integer",
-            "exclusiveMinimum": 0.0,
+            "exclusiveMinimum": 0,
             "title": "Retention Value"
           },
           "retention_unit": {
@@ -4313,7 +4445,7 @@
             "anyOf": [
               {
                 "type": "integer",
-                "exclusiveMinimum": 0.0
+                "exclusiveMinimum": 0
               },
               {
                 "type": "null"

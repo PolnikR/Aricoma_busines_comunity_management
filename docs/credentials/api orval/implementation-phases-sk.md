@@ -98,6 +98,24 @@ publikovaný backend /openapi.json
   -> api:check v CI
 ```
 
+### Príkazy projektu
+
+```bash
+npm run api:pull      # stiahne a validuje vzdialený OpenAPI snapshot
+npm run api:generate  # vygeneruje klienta, modely a Zod schémy zo snapshotu
+npm run api:update    # vykoná api:pull a následne api:generate
+npm run api:check     # bez siete overí test pull skriptu a synchronizáciu generovaných súborov
+```
+
+`api:pull` používa predvolenú vývojovú adresu
+`http://10.99.99.54:8000/openapi.json`. Inú adresu možno nastaviť cez
+premennú prostredia `ABCO_OPENAPI_URL`. Stiahnutý dokument sa pred zápisom
+overí a pri HTTP, JSON alebo OpenAPI validačnej chybe zostane existujúci
+`openapi/abco-api.json` nezmenený.
+
+`api:check` zámerne nikdy nesťahuje živú schému. CI a produkčný build tak
+pracujú iba s kontrolovaným snapshotom uloženým v Gite.
+
 ### Fáza je hotová, keď
 
 - Zmena backendového kontraktu vytvorí viditeľný diff generovaných súborov.

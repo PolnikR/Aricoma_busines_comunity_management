@@ -98,6 +98,23 @@ published backend /openapi.json
   -> api:check in CI
 ```
 
+### Project commands
+
+```bash
+npm run api:pull      # downloads and validates the remote OpenAPI snapshot
+npm run api:generate  # generates the client, models and Zod schemas from the snapshot
+npm run api:update    # runs api:pull followed by api:generate
+npm run api:check     # checks the pull script and generated-file synchronization offline
+```
+
+`api:pull` uses `http://10.99.99.54:8000/openapi.json` as the default
+development endpoint. Set `ABCO_OPENAPI_URL` to use another endpoint. The
+downloaded document is validated before it is written; HTTP, JSON or OpenAPI
+validation failures leave the existing `openapi/abco-api.json` unchanged.
+
+`api:check` intentionally never downloads the live contract. CI and production
+builds therefore use only the reviewed snapshot committed to Git.
+
 ### Complete when
 
 - A backend contract change produces a visible generated diff.

@@ -400,8 +400,16 @@ export const RecoveryAppSubmitResponse = zod.object({
 export type RecoveryAppSubmitResponse = zod.input<typeof RecoveryAppSubmitResponse>;
 export type RecoveryAppSubmitResponseOutput = zod.output<typeof RecoveryAppSubmitResponse>;
 
+export const RollbackReport = zod.object({
+  "status": zod.enum(['ok', 'partial', 'failed', 'skipped'])
+}).describe('recovery\/rollback.py\'s report: shape varies a lot by status (see\nrollback_recovery_group\'s docstring), so only `status` is pinned down.');
+
+export type RollbackReport = zod.input<typeof RollbackReport>;
+export type RollbackReportOutput = zod.output<typeof RollbackReport>;
+
 export const RecoveryAppsResponse = zod.object({
-  "applications": zod.array(RecoveryAppRecord)
+  "applications": zod.array(RecoveryAppRecord),
+  "rollback": zod.union([RollbackReport,zod.null()]).exactOptional()
 });
 
 export type RecoveryAppsResponse = zod.input<typeof RecoveryAppsResponse>;
@@ -450,13 +458,6 @@ export const RecoveryGroupRecord = zod.object({
 
 export type RecoveryGroupRecord = zod.input<typeof RecoveryGroupRecord>;
 export type RecoveryGroupRecordOutput = zod.output<typeof RecoveryGroupRecord>;
-
-export const RollbackReport = zod.object({
-  "status": zod.enum(['ok', 'partial', 'failed', 'skipped'])
-}).describe('recovery\/rollback.py\'s report: shape varies a lot by status (see\nrollback_recovery_group\'s docstring), so only `status` is pinned down.');
-
-export type RollbackReport = zod.input<typeof RollbackReport>;
-export type RollbackReportOutput = zod.output<typeof RollbackReport>;
 
 export const RecoveryGroupsResponse = zod.object({
   "recovery_groups": zod.array(RecoveryGroupRecord),
@@ -1051,6 +1052,30 @@ export const SubmitRecoveryDagSubmitRecoveryDagPostHeader = zod.object({
 export const SubmitRecoveryDagSubmitRecoveryDagPostBody = RecoveryAppSubmission
 
 export const SubmitRecoveryDagSubmitRecoveryDagPostResponse = RecoveryAppSubmitResponse
+
+
+/**
+ * @summary Delete Recovery App Route
+ */
+export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryRollbackFromOrchestratorDefault = false;
+export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryRollbackOrphansDefault = false;
+export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryProviderIdDefault = `airflow-01`;
+
+export const DeleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryParams = zod.object({
+  "recovery_app_id": zod.string().describe('id of the recovery app to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed).'),
+  "rollback_from_orchestrator": zod.boolean().default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryRollbackFromOrchestratorDefault).describe('if true, tear down the app\'s Airflow DAG, then unmap (unpresent) its IBM target volumes from their host. Does not delete the FlashCopy mapping or the volume itself.'),
+  "rollback_orphans": zod.boolean().default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryRollbackOrphansDefault).describe('if true, recovery_app_id is read as an airflow_run_id: skip the recovery_applications.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_PLAN.'),
+  "provider_id": zod.union([zod.string(),zod.null()]).default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryProviderIdDefault).describe('orchestration (AIRFLOW) provider - required when rollback_from_orchestrator'),
+  "ibm_provider_id": zod.union([zod.string(),zod.null()]).exactOptional().describe('IBM FlashSystem provider - required when rollback_from_orchestrator, to unmap the app\'s target volumes from their host')
+})
+
+export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteHeaderXUserDefault = `admin`;
+
+export const DeleteRecoveryAppRouteDeleteRecoveryAppDeleteHeader = zod.object({
+  "X-User": zod.union([zod.string(),zod.null()]).default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteHeaderXUserDefault)
+})
+
+export const DeleteRecoveryAppRouteDeleteRecoveryAppDeleteResponse = RecoveryAppsResponse
 
 
 /**
