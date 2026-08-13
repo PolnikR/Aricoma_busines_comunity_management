@@ -1,37 +1,40 @@
-# Task Checklist: Orval API Contract Generation
+# Task Checklist: Generated Runtime API Contracts
 
 ## Planning
 
-- [x] Inspect the current API client, endpoint registry, feature APIs and hooks.
-- [x] Validate the supplied OpenAPI structure and identify the public-key exception.
-- [x] Define the generated/manual boundary.
-- [x] User approves `tasks/plan.md`.
+- [x] Inspect the generated Zod schemas and current feature response parsers.
+- [x] Reproduce the `recovery_group.description` contract drift.
+- [x] Define generated, domain-adapter and manual-validation boundaries.
+- [x] Record the implementation plan and acceptance criteria.
+- [x] User approved planning and implementation in the same request.
 
 ## Implementation
 
-- [x] Add and validate `openapi/abco-api.json`.
-- [x] Add the codegen filter that excludes only `/credentials/pubkey`.
-- [x] Add pinned Orval dependency, configuration and package scripts.
-- [x] Add tests and implementation for the shared Orval fetch mutator.
-- [x] Generate typed fetch clients, TypeScript models and Zod schemas.
-- [x] Verify deterministic output and absence of generated pubkey code.
-- [x] Migrate providers while retaining existing hooks/cache behavior.
-- [x] Migrate credentials while retaining manual `credentialsCrypto.ts`.
-- [x] Migrate platform providers.
-- [x] Migrate recovery policies and policy sets.
-- [x] Migrate Recovery Groups.
-- [x] Migrate Recovery Applications.
-- [x] Migrate discovery APIs by technology.
-- [x] Remove only confirmed-unused manual contracts and endpoint constants.
+- [ ] Add and test the shared generated-response parser/error.
+- [ ] Migrate Recovery Applications list and submit responses.
+- [ ] Update the Recovery Application mapper/domain for omitted group details.
+- [ ] Surface response contract diagnostics in the Recovery Applications error state.
+- [ ] Migrate provider response validation.
+- [ ] Migrate credential response validation; preserve manual pubkey handling.
+- [ ] Migrate platform-provider response validation.
+- [ ] Migrate Recovery Groups response validation.
+- [ ] Migrate Policy Sets response validation.
+- [ ] Migrate snapshot-policy response validation.
+- [ ] Migrate application-recovery-policy response validation.
+- [ ] Migrate clean-room-policy response validation.
+- [ ] Classify and migrate exact discovery response contracts.
+- [ ] Document intentionally retained dynamic discovery schemas.
+- [ ] Remove unused handwritten response schemas and imports.
 
 ## Verification
 
-- [x] Focused tests pass at every migration checkpoint.
-- [ ] `npm run api:generate` is deterministic.
+- [ ] Focused red/green regression test proves current Recovery Applications response.
+- [ ] Focused tests pass after every feature slice.
 - [ ] `npm run api:check` passes.
 - [ ] `npm run lint` passes.
 - [ ] `npm run typecheck` passes.
 - [ ] `npm test` passes.
 - [ ] `npm exec vite build` passes.
 - [ ] `git diff --check` passes.
-- [ ] Final reference search confirms pubkey remains manual and unique.
+- [ ] Final reference search confirms `/credentials/pubkey` remains manual and unique.
+- [ ] Final diff contains no unrelated changes or secrets.

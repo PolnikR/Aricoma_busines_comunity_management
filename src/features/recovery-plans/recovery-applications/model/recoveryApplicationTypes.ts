@@ -11,7 +11,7 @@ export interface RecoveryVM {
 
 export interface RecoveryGroup {
   name: string
-  description: string
+  description?: string | undefined
   vms: RecoveryVM[]
   volumes?: { name: string }[] | undefined
 }
@@ -49,7 +49,7 @@ export interface ApplicationSubmission {
 }
 
 export interface SubmitDagLocalResponse {
-  recovery_applications: RecoveryApplicationApiRecord[]
+  applications: RecoveryApplicationApiRecord[]
 }
 
 export interface SubmitDagOrchestratedResponse extends SubmitDagLocalResponse {
@@ -67,10 +67,10 @@ export interface OrchestratorPush {
 
 export interface RecoveryApplicationApiRecord {
   id: string
-  policy_set_id: string
+  policy_set_id?: string | null | undefined
   application: RecoveryApplicationData['application']
   airflow_run_id?: string | null | undefined
-  push_to_orchestrator: boolean
+  push_to_orchestrator?: boolean | null | undefined
 }
 
 export interface RecoveryApplicationListItem {

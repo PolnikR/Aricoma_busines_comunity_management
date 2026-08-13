@@ -163,7 +163,7 @@ describe('RecoveryApplicationEditorPage', () => {
     if (!call) throw new Error('Expected submit mutation to be called')
 
     call[1].onSuccess({
-      recovery_applications: [],
+      applications: [],
       orchestrator_push: {
         status: 'pushed',
         dag: '/home/airflow/dags/finance-edit.py',

@@ -1,34 +1,29 @@
 import type {
+  RecoveryAppsResponseOutput,
+  RecoveryTierOutput,
+} from '@/generated/api/zod.gen'
+import type {
   RecoveryApplicationListItem,
   RecoveryTier,
 } from '../model/recoveryApplicationTypes'
-import type {
-  RecoveryApplicationListPayload,
-  RecoveryTierPayload,
-} from '../api/schemas/recoveryApplicationsSchema'
 
-function mapRecoveryTier(tier: RecoveryTierPayload): RecoveryTier {
+function mapRecoveryTier(tier: RecoveryTierOutput): RecoveryTier {
   return {
     order: tier.order,
     description: tier.description,
-    ...(tier.vms ? { vms: tier.vms } : {}),
-    ...(tier.recovery_group ? {
-      recovery_group: {
-        name: tier.recovery_group.name,
-        description: tier.recovery_group.description,
-        vms: tier.recovery_group.vms,
-        ...(tier.recovery_group.volumes ? { volumes: tier.recovery_group.volumes } : {}),
-      },
-    } : {}),
+    recovery_group: {
+      name: tier.recovery_group.name,
+      vms: tier.recovery_group.vms,
+    },
   }
 }
 
 export function mapRecoveryApplications(
-  payload: RecoveryApplicationListPayload,
+  payload: RecoveryAppsResponseOutput,
 ): RecoveryApplicationListItem[] {
   return payload.applications.map((record) => ({
     id: record.id,
-    policySetId: record.policy_set_id,
+    ...(record.policy_set_id != null ? { policySetId: record.policy_set_id } : {}),
     data: {
       application: {
         ...record.application,
@@ -37,7 +32,9 @@ export function mapRecoveryApplications(
         ),
       },
     },
-    airflowRunId: record.airflow_run_id,
-    pushToOrchestrator: record.push_to_orchestrator,
+    ...(record.airflow_run_id !== undefined ? { airflowRunId: record.airflow_run_id } : {}),
+    ...(record.push_to_orchestrator != null
+      ? { pushToOrchestrator: record.push_to_orchestrator }
+      : {}),
   }))
 }

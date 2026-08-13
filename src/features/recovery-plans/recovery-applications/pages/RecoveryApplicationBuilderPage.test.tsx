@@ -112,7 +112,7 @@ describe('RecoveryApplicationBuilderPage', () => {
     if (!call) throw new Error('Expected submit mutation to be called')
 
     const options = call[1] as { onSuccess: (response: SubmitDagResponse) => void }
-    options.onSuccess({ recovery_applications: [] })
+    options.onSuccess({ applications: [] })
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')
@@ -129,7 +129,7 @@ describe('RecoveryApplicationBuilderPage', () => {
 
     const options = call[1] as { onSuccess: (response: SubmitDagResponse) => void }
     options.onSuccess({
-      recovery_applications: [],
+      applications: [],
       orchestrator_push: {
         status: 'pushed',
         dag: '/home/airflow/dags/finance.py',

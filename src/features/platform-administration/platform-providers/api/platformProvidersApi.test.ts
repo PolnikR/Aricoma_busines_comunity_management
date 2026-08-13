@@ -56,8 +56,24 @@ describe('fetchPlatformProviders', () => {
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
+  it('applies the generated SSH port default when the response omits port', async () => {
+    const backendProvider = { ...airflowProvider, port: undefined }
+    stubFetch({ providers: [backendProvider] })
+
+    const providers = await fetchPlatformProviders()
+
+    expect(providers[0]?.port).toBe(22)
+  })
+
+  it('uses the safe unavailable status when the generated response omits credential status', async () => {
+    stubFetch({ providers: [{ ...airflowProvider, credentialStatus: undefined }] })
+
+    const providers = await fetchPlatformProviders()
+
+    expect(providers[0]?.credentialStatus).toBe('none')
+  })
+
   it.each([
-    ['missing credential status', { ...airflowProvider, credentialStatus: undefined }],
     ['invalid port', { ...airflowProvider, port: 70000 }],
     ['infrastructure type', { ...airflowProvider, type: 'VMWARE' }],
     ['unknown type', { ...airflowProvider, type: 'UNKNOWN' }],

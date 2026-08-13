@@ -250,7 +250,7 @@ export function RecoveryApplicationsTable({
       <DataTableRequestState
         error={error ? {
           title: t('pages.recovery.error.title'),
-          description: t('pages.recovery.error.unknown'),
+          description: error.message,
           retryLabel: t('pages.recovery.error.retryButton'),
           isRetrying,
           onRetry,

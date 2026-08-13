@@ -1,167 +1,181 @@
-# Implementation Plan: Orval API Contract Generation
+# Implementation Plan: Generated Runtime API Contracts
 
 ## Goal
 
-Introduce Orval as the generated HTTP-contract layer for the existing frontend,
-using a committed OpenAPI snapshot as the reproducible source. Preserve the
-current feature hooks, React Query cache behavior, UI/domain models, mappers and
-runtime behavior. The `/credentials/pubkey` operation is explicitly excluded
-from generation and remains implemented manually in `credentialsCrypto.ts`.
+Finish the Orval adoption by using generated Zod response schemas as the
+runtime source of truth for stable backend endpoints. Remove duplicate
+feature-owned response schemas that can drift from OpenAPI, while preserving
+feature domain models, mappers, form validation, cache behavior and the manual
+`/credentials/pubkey` encryption flow.
 
-## Confirmed Decisions
+## Architecture Decisions
 
-- The backend OpenAPI document is the source of truth for generated request and
-  response contracts.
-- Generation runs from a committed local snapshot, never directly from the
-  live backend during a normal build.
-- Generate typed fetch functions and Zod schemas, but retain the existing
-  feature-owned React Query hooks and cache invalidation logic.
-- Generated files live under `src/generated/api` and are not edited manually.
-- The custom Orval fetch mutator delegates transport concerns to the existing
-  `apiFetch`, including the locked `X-User` header and `/api` proxy prefix.
-- `/credentials/pubkey` is removed only from the code-generation input. The
-  original OpenAPI snapshot and the manual WebCrypto flow remain intact.
-- Migration is incremental. A manual API implementation is removed only after
-  its generated replacement has tests and no remaining references.
+- Stable wire responses are validated exactly once with schemas generated in
+  `src/generated/api/zod.gen.ts`.
+- Feature API modules remain adapters: generated wire data is mapped to stable
+  frontend/domain models instead of leaking generated models into components.
+- Form validation and business rules remain feature-owned; they are not API
+  response contracts and must not be generated.
+- Discovery payload schemas remain feature-owned where OpenAPI intentionally
+  exposes dynamic vendor records as `unknown`.
+- Contract failures use one shared parser that includes the operation and Zod
+  issue path, so the UI does not reduce schema drift to `Unknown error`.
+- `/credentials/pubkey` remains manual and excluded from Orval generation.
 
-## Architecture
+## Dependency Graph
 
 ```text
-openapi/abco-api.json
-        |
-        | filtered for codegen: omit /credentials/pubkey
-        v
-orval.config.ts
-        |
-        +--> src/generated/api/client      typed endpoint functions
-        +--> src/generated/api/models      generated TypeScript contracts
-        +--> src/generated/api/schemas     generated Zod schemas
-
-feature hooks / cache rules / mappers
-        |
-        v
-generated endpoint functions
-        |
-        v
-shared Orval mutator -> apiFetch -> /api/*
-
-credentialsCrypto.ts -> manual GET /credentials/pubkey -> WebCrypto
+OpenAPI snapshot
+    -> generated Orval Zod schemas
+        -> shared response parser/error
+            -> feature API adapters
+                -> existing hooks and UI/domain models
 ```
 
-## Task 1: Establish and validate the OpenAPI snapshot
+## Task 1: Add the shared generated-response boundary
 
-- Copy the supplied backend OpenAPI document to `openapi/abco-api.json`.
-- Add a deterministic preprocessing/transform step that removes exactly
-  `/credentials/pubkey` from Orval input without modifying the snapshot.
-- Validate that every `$ref` resolves and the important submit/read schemas are
-  present before generation.
+**Description:** Add a typed parser for generated Zod schemas and a diagnostic
+contract error. This creates one response-validation/error pattern for all
+stable API modules.
 
-Acceptance criteria:
+**Acceptance criteria:**
 
-- [ ] The snapshot is committed and parseable as OpenAPI 3.1.
-- [ ] Only `/credentials/pubkey` is absent from generated operations.
-- [ ] The snapshot still documents `/credentials/pubkey` for humans.
-- [ ] Missing references fail generation with a clear error.
+- [ ] Valid payloads are returned with generated Zod defaults applied.
+- [ ] Invalid payloads throw an error containing the operation and failing path.
+- [ ] HTTP errors continue to use the existing `OrvalApiError` handling.
 
-## Task 2: Add Orval configuration and scripts
+**Verification:**
 
-- Add a pinned Orval development dependency.
-- Add `orval.config.ts` with separate typed fetch-client and Zod outputs.
-- Configure deterministic names/paths and Zod v4 generation.
-- Add package scripts for generation and drift checking.
-- Exclude generated source from ESLint style rules while keeping it in the
-  TypeScript build.
+- [ ] Focused unit test proves valid and invalid parsing behavior.
+- [ ] Shared API tests pass.
 
-Acceptance criteria:
+**Dependencies:** None.
 
-- [ ] `npm run api:generate` succeeds from a clean checkout.
-- [ ] A second generation produces no diff.
-- [ ] `npm run api:check` fails when generated output is stale.
-- [ ] No generated public-key endpoint, model-specific operation or hook exists.
+**Files likely touched:**
 
-## Task 3: Implement the shared Orval fetch mutator test-first
+- `src/shared/api/generatedResponse.ts`
+- `src/shared/api/generatedResponse.test.ts`
 
-- Add unit tests for URL prefixing, query preservation, JSON/text/no-content
-  responses, request bodies, `X-User` preservation through `apiFetch`, abort
-  signals and non-2xx errors.
-- Implement the generic mutator expected by generated fetch functions.
-- Preserve useful HTTP status/body information in a shared request error.
+**Estimated scope:** Small.
 
-Acceptance criteria:
+## Task 2: Fix Recovery Applications against the generated contract
 
-- [ ] Generated operations call `/api/<backend-path>` exactly once.
-- [ ] Orval cannot override the authenticated `X-User` header.
-- [ ] JSON, plain text and 204 responses are handled safely.
-- [ ] Non-2xx responses reject with stable diagnostic information.
+**Description:** Reproduce the current backend response (including a nested
+recovery group without `description` and an extra top-level `rollback`) and
+replace the handwritten list/submit response schemas with generated ones.
+Adapt the generated wire model to the existing application domain model without
+inventing missing descriptions.
 
-## Task 4: Generate and validate the contract layer
+**Acceptance criteria:**
 
-- Generate clients, models and Zod schemas.
-- Add focused contract tests for providers, credentials, Recovery Applications
-  and Recovery Groups, including optional orchestrator responses.
-- Verify generated files compile under strict TypeScript settings.
+- [ ] The supplied current `get_recovery_apps` response loads successfully.
+- [ ] Missing `recovery_group.description` is not treated as a contract error.
+- [ ] Invalid generated-contract data reports the exact response path.
+- [ ] Submit responses use the generated `applications` envelope and preserve
+      current local/orchestrated domain behavior.
 
-Acceptance criteria:
+**Verification:**
 
-- [ ] Generated request/response types match the supplied OpenAPI definitions.
-- [ ] `submit_recovery_dag` includes `provider_id`,
-  `push_to_orchestrator` and the request body contract.
-- [ ] GET Recovery Applications uses `applications` and preserves
-  `policy_set_id`, Airflow fields and nested groups/resources.
-- [ ] Public-key encryption remains exclusively manual.
+- [ ] Regression test fails before the implementation and passes afterwards.
+- [ ] Recovery Applications API, mapper and UI tests pass.
 
-## Task 5: Pilot migration — providers and credentials
+**Dependencies:** Task 1.
 
-- Replace manual provider and credential HTTP implementations with generated
-  endpoint functions.
-- Retain feature hooks, cache keys, form types, mappers and UI error states.
-- Keep `credentialsCrypto.ts` unchanged for public-key retrieval/encryption.
-- Update tests to assert generated request paths, query/header/body contracts
-  and unchanged user-visible behavior.
+**Files likely touched:**
 
-Acceptance criteria:
+- `src/features/recovery-plans/recovery-applications/api/recoveryApplicationsApi.ts`
+- `src/features/recovery-plans/recovery-applications/helpers/mapRecoveryApplications.ts`
+- `src/features/recovery-plans/recovery-applications/model/recoveryApplicationTypes.ts`
+- `src/features/recovery-plans/recovery-applications/api/recoveryApplicationsApi.test.ts`
+- `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx`
 
-- [ ] Provider list/create/edit/delete behavior and cache updates are unchanged.
-- [ ] Credential list/create/edit/delete behavior is unchanged.
-- [ ] Credential submit still receives the browser-encrypted password.
-- [ ] No call to `/credentials/pubkey` comes from generated code.
+**Estimated scope:** Medium.
 
-## Task 6: Migrate the remaining stable feature APIs incrementally
+## Checkpoint: Recovery Applications
 
-Migrate in isolated checkpoints:
+- [ ] Focused tests pass.
+- [ ] Typecheck passes for the completed slice.
+- [ ] The error state exposes contract diagnostics rather than `Unknown error`.
 
-1. Platform providers.
-2. Recovery policies and policy sets.
-3. Recovery Groups, including submit/delete/rollback response variants.
-4. Recovery Applications, including both orchestrator push modes.
-5. Discovery APIs grouped by VMware, IBM Power and FlashSystem.
+## Task 3: Migrate stable provider and credential responses
 
-For each slice:
+**Description:** Replace duplicate response schemas for providers, platform
+providers and credentials with generated schemas. Keep submit/form validation
+and explicit adapters for nullable backend fields.
 
-- add/adjust API contract tests first;
-- replace only the transport call;
-- preserve feature-owned transformation and cache logic;
-- remove obsolete manual schemas/constants only after reference search;
-- run focused tests before proceeding.
+**Acceptance criteria:**
 
-Acceptance criteria:
+- [ ] List/write/delete responses are parsed by generated schemas.
+- [ ] Domain models receive deliberate defaults or nullable mappings.
+- [ ] Credential public-key retrieval and encryption remain manual.
 
-- [ ] No feature imports generated contracts directly into UI components.
-- [ ] Dynamic vendor payload normalization remains feature-owned where the
-  OpenAPI schema is intentionally permissive.
-- [ ] Existing retry, loading, error and cache behavior remains unchanged.
-- [ ] Manual endpoint definitions are removed only when unused.
+**Verification:**
 
-## Task 7: Final cleanup and verification
+- [ ] Provider, platform-provider and credential API tests pass.
+- [ ] Typecheck passes after the slice.
 
-- Search for duplicate request/response types and obsolete endpoint constants.
-- Confirm the only manual credential contract is public-key retrieval.
-- Run generation drift check and the complete project quality gate.
-- Review the final diff for accidental generated or behavioral churn.
+**Dependencies:** Task 1.
 
-Verification:
+**Estimated scope:** Medium per feature slice.
 
-- [ ] `npm run api:generate`
+## Task 4: Migrate stable Recovery Plans responses
+
+**Description:** Replace duplicate response schemas for Recovery Groups,
+Policy Sets, snapshot policies, application-recovery policies and clean-room
+policies. Preserve feature input/business schemas and domain mappers.
+
+**Acceptance criteria:**
+
+- [ ] Generated schemas validate all stable read/write responses.
+- [ ] Recovery Group rollback details remain available through the feature
+      adapter even though the generated report intentionally pins only status.
+- [ ] No response schema is duplicated in feature folders.
+
+**Verification:**
+
+- [ ] Focused API tests pass after each feature migration.
+- [ ] Typecheck passes after the slice.
+
+**Dependencies:** Task 1.
+
+**Estimated scope:** Medium per feature slice.
+
+## Task 5: Classify discovery schemas and remove only true duplicates
+
+**Description:** Compare discovery response schemas with generated OpenAPI
+schemas. Use generated schemas where the contract is exact; retain and document
+feature-owned normalization where vendor payloads are intentionally dynamic.
+
+**Acceptance criteria:**
+
+- [ ] Exact VMware/tag responses use generated runtime schemas.
+- [ ] Dynamic FlashSystem/Power payload schemas remain local only when the
+      generated contract is too permissive to protect the mapper.
+- [ ] Every retained local response schema has an explicit reason.
+
+**Verification:**
+
+- [ ] Discovery API and mapper tests pass.
+- [ ] Typecheck passes after the slice.
+
+**Dependencies:** Task 1.
+
+**Estimated scope:** Medium.
+
+## Task 6: Cleanup, generation drift and complete verification
+
+**Description:** Remove unused response exports/imports, confirm the manual and
+generated boundaries, then run the repository's full quality gate.
+
+**Acceptance criteria:**
+
+- [ ] No stable response schema duplicates generated Orval schemas.
+- [ ] Form/business validation schemas remain feature-owned.
+- [ ] `/credentials/pubkey` remains manual and unique.
+- [ ] Generated output matches the committed OpenAPI snapshot.
+
+**Verification:**
+
 - [ ] `npm run api:check`
 - [ ] `npm run lint`
 - [ ] `npm run typecheck`
@@ -169,27 +183,29 @@ Verification:
 - [ ] `npm exec vite build`
 - [ ] `git diff --check`
 
+**Dependencies:** Tasks 2-5.
+
+**Estimated scope:** Small.
+
 ## Risks and Mitigations
 
-| Risk | Mitigation |
-| --- | --- |
-| OpenAPI changes create a very large diff | Pin Orval, commit the snapshot, use deterministic output and migrate feature slices independently. |
-| Generated hooks break custom cache behavior | Generate fetch functions only; keep existing feature React Query hooks. |
-| `/credentials/pubkey` gets generated with an incorrect JSON contract | Remove that exact path in the codegen transform and add a negative generation test/search. |
-| Generated endpoint URLs bypass the Vite `/api` proxy | Central mutator prepends `/api` and has URL contract tests. |
-| Error handling changes silently | Centralize a typed HTTP error and retain feature-level UI error tests. |
-| Runtime response differs from OpenAPI | Use generated Zod at stable boundaries and preserve existing feature mappers for permissive/vendor-specific payloads. |
-| Generated code fails lint rules intended for handwritten code | Ignore only `src/generated/**` in lint; keep it included in typecheck and builds. |
+| Risk | Impact | Mitigation |
+| --- | --- | --- |
+| OpenAPI omits data the UI previously accepted | High | Do not invent fields; surface contract gap and keep domain fields optional where the backend omits them. |
+| Generated nullable fields conflict with strict domain types | Medium | Normalize explicitly in feature adapters and test the chosen defaults. |
+| Zod strips undocumented response properties | Medium | Test current backend fixtures; require OpenAPI to declare fields the UI must preserve. |
+| Dynamic discovery contracts are over-constrained | Medium | Retain local vendor normalization only where generated schemas use unknown records. |
+| Large migration hides regressions | High | Implement and verify one feature slice at a time. |
 
 ## Out of Scope
 
-- Replacing the current React Query hooks with Orval-generated hooks.
-- Changing authentication or Keycloak integration.
-- Changing the public-key WebCrypto implementation.
-- Fetching the live OpenAPI document automatically during normal builds.
-- Refactoring UI/domain models merely to mirror backend naming.
+- Replacing feature-owned React Query hooks with generated hooks.
+- Changing backend OpenAPI definitions from the frontend repository.
+- Generating `/credentials/pubkey` or changing WebCrypto behavior.
+- Keeping compatibility with undocumented legacy Recovery Application shapes.
 
 ## Open Questions
 
-None blocking. The supplied OpenAPI document will be used as the initial local
-snapshot, and the public-key operation will remain manual as requested.
+None blocking. The current committed OpenAPI snapshot is the contract for this
+migration; missing response fields must be added by the backend if the UI needs
+to preserve them.

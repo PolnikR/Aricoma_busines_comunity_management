@@ -51,6 +51,17 @@ const developmentApplication: RecoveryApplicationListItem = {
 }
 
 describe('RecoveryApplicationsTable', () => {
+  it('shows generated response contract diagnostics in the request error state', () => {
+    render(
+      <RecoveryApplicationsTable
+        applications={[]}
+        error={new Error('GET /get_recovery_apps response does not match OpenAPI: applications: expected array')}
+      />,
+    )
+
+    expect(screen.getByText(/applications: expected array/)).toBeInTheDocument()
+  })
+
   it('opens backend application details and dispatches Edit without Delete', async () => {
     const user = userEvent.setup()
     const onEdit = vi.fn()

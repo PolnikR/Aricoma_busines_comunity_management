@@ -67,6 +67,16 @@ describe('fetchProviders', () => {
     expect(providers[0]).not.toHaveProperty('port')
   })
 
+  it('applies the generated source role default when the response omits role', async () => {
+    const backendProvider = { ...providerA }
+    delete backendProvider.role
+    stubFetch({ providers: [backendProvider] })
+
+    const providers = await fetchProviders()
+
+    expect(providers[0]?.role).toBe('source')
+  })
+
   it.each([
     ['source', '/api/get_providers?role=source'],
     ['target', '/api/get_providers?role=target'],
@@ -179,7 +189,13 @@ describe('deleteProvider', () => {
     expect(url).toBe('/api/delete_provider?provider_id=vmware-vcenter-01')
     expect(init.method).toBe('DELETE')
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
-    expect(result).toEqual([providerB])
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      id: providerB.id,
+      name: providerB.name,
+      type: providerB.type,
+    })
+    expect(result[0]).not.toHaveProperty('port')
   })
 
   it('url-encodes the provider id', async () => {

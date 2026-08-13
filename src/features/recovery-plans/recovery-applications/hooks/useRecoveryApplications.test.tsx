@@ -39,7 +39,7 @@ afterEach(() => {
 describe('recovery application hooks', () => {
   it('submits to the real DAG endpoint and invalidates the backend list', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
-      recovery_applications: [],
+      applications: [],
     }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
     const { queryClient, wrapper } = setup()

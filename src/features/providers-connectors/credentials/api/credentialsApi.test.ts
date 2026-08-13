@@ -41,6 +41,20 @@ describe('credentialsApi', () => {
     expect(mocks.fetch).toHaveBeenCalledWith('/api/get_credentials', expect.objectContaining({ method: 'GET' }))
   })
 
+  it('normalizes a nullable generated description for the credential UI', async () => {
+    mocks.fetch.mockResolvedValue(new Response(JSON.stringify({
+      credentials: [{
+        ...responseBody.credentials[0],
+        description: null,
+      }],
+    }), { status: 200 }))
+
+    await expect(fetchCredentials()).resolves.toEqual([{
+      ...responseBody.credentials[0],
+      description: '',
+    }])
+  })
+
   it('encrypts the password before submitting and marks the payload encrypted', async () => {
     const payload = await createEncryptedCredentialPayload({
       id: ' vcenter-admin ',
