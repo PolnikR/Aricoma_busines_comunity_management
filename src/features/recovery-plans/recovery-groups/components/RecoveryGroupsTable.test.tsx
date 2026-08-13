@@ -53,6 +53,24 @@ const groups: RecoveryGroup[] = [
   },
 ]
 
+const unresolvedGroup: RecoveryGroup = {
+  ...groups[0],
+  id: 'orphan-vm-group',
+  name: 'Orphan VM group',
+  description: 'Provider no longer exists',
+  providerId: 'removed-vmware-provider',
+  policySetId: 'tier2-apps',
+  resources: ['ORPHAN-VM-01'],
+  relatedVolumeProviderId: null,
+  relatedVolumes: [],
+  resourceCount: 1,
+  status: 'Active',
+  sourceCategory: 'backup_system_workload',
+  resourceType: 'vm',
+  workloadType: null,
+  providerResolution: 'unresolved',
+}
+
 describe('RecoveryGroupsTable', () => {
   it('renders group columns and opens the group detail drawer', async () => {
     const user = userEvent.setup()
@@ -192,6 +210,28 @@ describe('RecoveryGroupsTable', () => {
     expect(within(dialog).getByText(/"provider_id_vm": "vmware-vcenter-01"/)).toBeInTheDocument()
     expect(within(dialog).getByText(/"provider_id_volume": "ibm-flashsystem-01"/)).toBeInTheDocument()
     expect(within(dialog).getByText(/"policy_set_id": "tier2-apps"/)).toBeInTheDocument()
+  })
+
+  it('keeps unresolved groups visible and disables only unsafe editing', async () => {
+    const user = userEvent.setup()
+    const onEdit = vi.fn()
+    render(
+      <RecoveryGroupsTable
+        groups={[unresolvedGroup]}
+        onEdit={onEdit}
+        onDelete={vi.fn()}
+        onRollback={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Orphan VM group')).toBeInTheDocument()
+    expect(screen.getAllByText('Provider unavailable').length).toBeGreaterThan(0)
+    await user.click(screen.getByText('Orphan VM group'))
+
+    const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+    expect(detail).toHaveTextContent('removed-vmware-provider')
+    expect(within(detail).getByRole('button', { name: 'Edit' })).toBeDisabled()
+    expect(within(detail).getByRole('button', { name: 'Delete' })).toBeEnabled()
   })
 
 })

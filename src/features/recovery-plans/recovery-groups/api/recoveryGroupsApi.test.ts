@@ -1,9 +1,90 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as apiFetchModule from '@/shared/api/apiClient'
 import type { RollbackReport } from './schemas/recoveryGroupsSchema'
-import { deleteRecoveryGroup, rollbackRecoveryGroupOrchestration } from './recoveryGroupsApi'
+import { createRecoveryGroup, deleteRecoveryGroup, fetchRecoveryGroups, rollbackRecoveryGroupOrchestration } from './recoveryGroupsApi'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 
 const recoveryGroupsPayload = { recovery_groups: [] }
+
+const orphanGroup = {
+  id: 'orphan-vm-group',
+  name: 'Orphan VM group',
+  description: 'Provider was removed',
+  provider_id_vm: 'removed-provider',
+  provider_id_volume: '',
+  policy_set_id: 'tier2-apps',
+  vms: [{ name: 'ORPHAN-VM-01' }],
+  volumes: [],
+}
+
+const knownProvider: ProviderRecord = {
+  id: 'vmware-vcenter-01',
+  name: 'Production vCenter',
+  description: 'VMware inventory',
+  type: 'VMWARE',
+  ipAddress: '10.99.99.40',
+  port: 22,
+  credentialId: 'vcenter-admin',
+  credentialStatus: 'ok',
+}
+
+describe('fetchRecoveryGroups', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('keeps records whose configured provider is no longer available', async () => {
+    vi.spyOn(apiFetchModule, 'apiFetch').mockResolvedValue(
+      new Response(JSON.stringify({ recovery_groups: [orphanGroup] }), { status: 200 }),
+    )
+
+    const groups = await fetchRecoveryGroups([knownProvider])
+
+    expect(groups).toHaveLength(1)
+    expect(groups[0]).toMatchObject({
+      id: 'orphan-vm-group',
+      providerId: 'removed-provider',
+      providerResolution: 'unresolved',
+      workloadType: null,
+    })
+  })
+})
+
+describe('createRecoveryGroup', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('takes the airflow run ID from the response record matching the submitted ID', async () => {
+    vi.spyOn(apiFetchModule, 'apiFetch').mockResolvedValue(
+      new Response(JSON.stringify({
+        recovery_groups: [
+          { ...orphanGroup, id: 'another-group', airflow_run_id: 'wrong-run' },
+          { ...orphanGroup, id: 'target_group', airflow_run_id: 'matching-run' },
+        ],
+      }), { status: 200 }),
+    )
+
+    const draft: RecoveryGroupDraft = {
+      id: 'target-group',
+      name: 'Target group',
+      description: 'Target group',
+      sourceCategory: 'backup_system_workload',
+      workloadType: 'vmware_virtual_machines',
+      resourceType: 'vm',
+      providerId: 'vmware-vcenter-01',
+      policySetId: 'tier2-apps',
+      resources: ['VM-01'],
+      relatedVolumeProviderId: null,
+      relatedVolumes: [],
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: false,
+    }
+
+    await expect(createRecoveryGroup(draft)).resolves.toMatchObject({ airflowRunId: 'matching-run' })
+  })
+})
 
 describe('rollbackRecoveryGroupOrchestration', () => {
   afterEach(() => {

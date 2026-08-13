@@ -10,6 +10,7 @@ const formData: PlatformProviderFormData = {
   description: 'Production orchestration',
   type: 'AIRFLOW',
   ipAddress: '10.99.99.40',
+  url: 'https://airflow.example.test',
   port: '22',
   dagDir: '/opt/airflow/dags',
   credentialId: 'credential-1',
@@ -39,6 +40,7 @@ describe('PlatformProviderForm', () => {
     expect(row).toHaveClass('grid', 'grid-cols-1', 'sm:grid-cols-[minmax(0,1fr)_7.5rem]')
 
     const portInput = screen.getByLabelText('Port')
+    expect(screen.getByLabelText('URL')).toHaveValue('https://airflow.example.test')
     expect(portInput).toHaveAttribute('type', 'number')
     expect(portInput).toHaveAttribute('min', '1')
     expect(portInput).toHaveAttribute('max', '65535')

@@ -10,7 +10,7 @@ import {
 import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsError } from './recoveryGroupsErrors'
 import { recoveryGroupsResponseSchema, rollbackResponseSchema } from './schemas/recoveryGroupsSchema'
-import type { RecoveryGroupApiRecord, RollbackReport } from './schemas/recoveryGroupsSchema'
+import type { RollbackReport } from './schemas/recoveryGroupsSchema'
 import { validateRecoveryGroupDraft } from './recoveryGroupsValidation'
 
 export const toRecoveryGroupId = toProgrammaticId
@@ -32,30 +32,11 @@ function requireOk(response: Response, operation: string): void {
   }
 }
 
-function hasResolvableProvider(
-  record: RecoveryGroupApiRecord,
-  providers: ProviderRecord[],
-): boolean {
-  const vmProviderId = record.provider_id_vm.trim()
-  if (vmProviderId) {
-    return providers.some(
-      (provider) => provider.id === vmProviderId
-        && (provider.type === 'VMWARE' || provider.type === 'IBM_POWER'),
-    )
-  }
-
-  const volumeProviderId = record.provider_id_volume.trim()
-  return !!volumeProviderId && providers.some(
-    (provider) => provider.id === volumeProviderId && provider.type === 'FLASHCOPY',
-  )
-}
-
 export async function fetchRecoveryGroups(providers: ProviderRecord[]): Promise<RecoveryGroup[]> {
   const response = await apiFetch(API_ENDPOINTS.recoveryGroups.list)
   requireOk(response, 'Get recovery groups')
   const payload: unknown = await response.json()
   return recoveryGroupsResponseSchema.parse(payload).recovery_groups
-    .filter(record => hasResolvableProvider(record, providers))
     .map(record => mapRecoveryGroupApiRecord(record, providers))
 }
 
@@ -77,14 +58,16 @@ async function submitRecoveryGroup(
     body: JSON.stringify(toRecoveryGroupSubmitPayload(validated, id)),
   })
   requireOk(response, 'Submit recovery group')
-  const airflowRunId = await extractAirflowRunId(response)
+  const airflowRunId = await extractAirflowRunId(response, id)
   return { ...toRecoveryGroup(validated, id), airflowRunId }
 }
 
-async function extractAirflowRunId(response: Response): Promise<string | null> {
+async function extractAirflowRunId(response: Response, requestedId: string): Promise<string | null> {
   const payload: unknown = await response.json().catch(() => null)
   const parsed = payload ? recoveryGroupsResponseSchema.safeParse(payload) : null
-  return parsed?.success ? (parsed.data.recovery_groups[0]?.airflow_run_id ?? null) : null
+  if (!parsed?.success) return null
+  const matchingRecord = parsed.data.recovery_groups.find(record => record.id === requestedId)
+  return matchingRecord?.airflow_run_id ?? null
 }
 
 export async function createRecoveryGroup(draft: RecoveryGroupDraft): Promise<RecoveryGroup> {

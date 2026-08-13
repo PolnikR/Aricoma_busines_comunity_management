@@ -12,6 +12,7 @@ export interface ProviderCreateFormData {
   type: string
   role: string
   ipAddress: string
+  url: string
   port: string
   credentialId: string
   defaultFlashcopyProviderId: string
@@ -167,6 +168,19 @@ export function ProviderCreateForm({
           {errors.port ? <p className="mt-1 text-xs text-red-600">{errors.port}</p> : null}
         </Field>
       </div>
+
+      <Field label={t('forms.url')} htmlFor="create-url">
+        <Input
+          id="create-url"
+          type="url"
+          value={data.url}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('url', event.target.value) }}
+          onKeyDown={handleKeyDown}
+          disabled={isSubmitting}
+          aria-invalid={Boolean(errors.url)}
+        />
+        {errors.url ? <p className="mt-1 text-xs text-red-600">{errors.url}</p> : null}
+      </Field>
 
       <Field label={t('forms.credentials')} htmlFor="create-credentials">
         <Select

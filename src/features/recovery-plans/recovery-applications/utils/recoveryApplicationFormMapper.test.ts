@@ -102,4 +102,19 @@ describe('recoveryApplicationFormMapper', () => {
       description: 'Database server tier',
     })
   })
+
+  it('preserves an environment value introduced by the backend', () => {
+    const formState = toRecoveryApplicationFormState({
+      ...application,
+      data: {
+        application: {
+          ...application.data.application,
+          environment: 'production',
+        },
+      },
+    })
+
+    expect(formState.environment).toBe('production')
+    expect(toRecoveryApplicationData(formState).application.environment).toBe('production')
+  })
 })

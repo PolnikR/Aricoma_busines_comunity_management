@@ -5,6 +5,7 @@ export type RecoveryGroupWorkloadType =
   | 'ibm_flashsystem'
 export type RecoveryGroupResourceType = 'vm' | 'volume'
 export type RecoveryGroupStatus = 'Draft' | 'Active'
+export type RecoveryGroupProviderResolution = 'resolved' | 'unresolved'
 
 export type RecoveryGroupResourceConfiguration =
   | {
@@ -15,6 +16,11 @@ export type RecoveryGroupResourceConfiguration =
   | {
       sourceCategory: 'backup_system_workload'
       workloadType: 'ibm_power_virtual_machines'
+      resourceType: 'vm'
+    }
+  | {
+      sourceCategory: 'backup_system_workload'
+      workloadType: null
       resourceType: 'vm'
     }
   | {
@@ -41,6 +47,7 @@ interface RecoveryGroupBase {
   policySetId: string
   resourceCount: number
   status: RecoveryGroupStatus
+  providerResolution?: RecoveryGroupProviderResolution
 }
 
 export type RecoveryGroupListItem = RecoveryGroupBase & RecoveryGroupResourceConfiguration
@@ -56,6 +63,21 @@ export type RecoveryGroup = RecoveryGroupListItem & {
   pushToOrchestrator?: boolean | undefined
   // Platform provider (AIRFLOW) this group is/was orchestrated to. Read-only.
   orchestrationProviderId?: string | null | undefined
+  rawRecord?: RecoveryGroupReadRecord | undefined
+}
+
+export interface RecoveryGroupReadRecord {
+  id: string
+  name: string
+  description: string
+  provider_id_vm: string
+  provider_id_volume: string
+  policy_set_id: string
+  vms: ({ name: string } & RecoveryGroupVmMetadata)[]
+  volumes: { name: string }[]
+  airflow_run_id?: string | null | undefined
+  push_to_orchestrator?: boolean | undefined
+  orchestration_provider_id?: string | undefined
 }
 
 export interface RecoveryGroupDraft {

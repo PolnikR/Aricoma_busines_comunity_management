@@ -12,7 +12,7 @@ interface AppMetadataFormProps {
     fileName: string
     name: string
     description: string
-    environment: 'dev' | 'staging' | 'prod'
+    environment: string
     platform: string
   }
   providers?: ProviderRecord[]
@@ -35,7 +35,7 @@ export function AppMetadataForm({
   const [fileName, setFileName] = useState(initialValues?.fileName ?? '')
   const [name, setName] = useState(initialValues?.name ?? '')
   const [description, setDescription] = useState(initialValues?.description ?? '')
-  const [environment, setEnvironment] = useState<'dev' | 'staging' | 'prod'>(
+  const [environment, setEnvironment] = useState<string>(
     initialValues?.environment ?? 'dev'
   )
   const [platform, setPlatform] = useState(initialValues?.platform ?? '')
@@ -59,8 +59,8 @@ export function AppMetadataForm({
         onMetadataChange?.({ description: value })
         break
       case 'environment':
-        setEnvironment(value as 'dev' | 'staging' | 'prod')
-        onMetadataChange?.({ environment: value as 'dev' | 'staging' | 'prod' })
+        setEnvironment(value)
+        onMetadataChange?.({ environment: value })
         break
       case 'platform':
         setPlatform(value)
@@ -127,6 +127,9 @@ export function AppMetadataForm({
           <option value="dev">{t('forms.environmentDev')}</option>
           <option value="staging">{t('forms.environmentStaging')}</option>
           <option value="prod">{t('forms.environmentProd')}</option>
+          {environment && !['dev', 'staging', 'prod'].includes(environment) ? (
+            <option value={environment}>{environment}</option>
+          ) : null}
         </Select>
       </Field>
 

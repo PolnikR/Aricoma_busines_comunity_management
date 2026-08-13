@@ -1,9 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupBuilder } from './RecoveryGroupBuilder'
 import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
+
+const { usePlatformProvidersMock } = vi.hoisted(() => ({ usePlatformProvidersMock: vi.fn() }))
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
@@ -80,7 +82,10 @@ vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
   }),
 }))
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
-  usePlatformProviders: () => ({
+  usePlatformProviders: usePlatformProvidersMock,
+}))
+
+const defaultPlatformProvidersResult = {
     data: [{
       id: 'airflow-01',
       name: 'Primary Airflow',
@@ -95,8 +100,8 @@ vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatform
     isLoading: false,
     error: null,
     refetch: vi.fn(),
-  }),
-}))
+}
+usePlatformProvidersMock.mockReturnValue(defaultPlatformProvidersResult)
 
 async function completeOrchestrationAndCreate(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'Next' }))
@@ -137,6 +142,54 @@ const existingStorageGroup: RecoveryGroup = {
 }
 
 describe('RecoveryGroupBuilder', () => {
+  beforeEach(() => {
+    usePlatformProvidersMock.mockReturnValue(defaultPlatformProvidersResult)
+  })
+
+  it('preserves the existing orchestration provider when multiple providers are available', async () => {
+    usePlatformProvidersMock.mockReturnValue({
+      data: [
+        {
+          id: 'airflow-01',
+          name: 'Primary Airflow',
+          description: 'Primary orchestrator',
+          type: 'AIRFLOW',
+          ipAddress: '10.99.99.60',
+          port: 8080,
+          dagDir: '/opt/airflow/dags',
+          credentialId: 'airflow-admin',
+          credentialStatus: 'ok',
+        },
+        {
+          id: 'airflow-02',
+          name: 'Secondary Airflow',
+          description: 'Secondary orchestrator',
+          type: 'AIRFLOW',
+          ipAddress: '10.99.99.61',
+          port: 8080,
+          dagDir: '/opt/airflow/dags',
+          credentialId: 'airflow-admin',
+          credentialStatus: 'ok',
+        },
+      ],
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    })
+
+    render(
+      <RecoveryGroupBuilder
+        initialData={{ ...existingGroup, orchestrationProviderId: 'airflow-02', pushToOrchestrator: true }}
+        onCreate={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Orchestration' }))
+
+    expect(screen.getByRole('combobox')).toHaveValue('airflow-02')
+  })
+
   it('uses a dedicated provider step between resource type and resources', () => {
     render(
       <RecoveryGroupBuilder

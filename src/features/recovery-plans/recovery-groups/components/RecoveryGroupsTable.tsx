@@ -74,12 +74,14 @@ export function RecoveryGroupsTable({
   const [isRollingBack, setIsRollingBack] = useState(false)
 
   const filterOptions = useMemo(() => ({
-    workloadTypes: Array.from(new Set(groups.map(group => group.workloadType))).sort(),
+    workloadTypes: Array.from(new Set(groups.map(group => group.workloadType ?? 'unresolved'))).sort(),
     resourceTypes: Array.from(new Set(groups.map(group => group.resourceType))).sort(),
   }), [groups])
 
   const rows = useMemo(() => groups.filter(group => (
-    (!filters.workloadType || group.workloadType === filters.workloadType)
+    (!filters.workloadType || (filters.workloadType === 'unresolved'
+      ? group.workloadType === null
+      : group.workloadType === filters.workloadType))
     && (!filters.resourceType || group.resourceType === filters.resourceType)
   )), [filters, groups])
 
@@ -223,7 +225,7 @@ export function RecoveryGroupsTable({
                 <option value="">{t('pages.recoveryGroups.filters.allWorkloadTypes')}</option>
                 {filterOptions.workloadTypes.map(type => (
                   <option key={type} value={type}>
-                    {t(getWorkloadTypeLabelKey(type))}
+                    {t(type === 'unresolved' ? getWorkloadTypeLabelKey(null) : getWorkloadTypeLabelKey(type))}
                   </option>
                 ))}
               </Select>
@@ -286,6 +288,10 @@ export function RecoveryGroupsTable({
           onClose={() => { setOpenMenuId(null) }}
           ariaLabel={`${t('tables.recoveryGroups.actions')} for ${currentMenuGroup.name}`}
           editLabel={t('buttons.edit')}
+          {...(currentMenuGroup.providerResolution === 'unresolved' ? {
+            editDisabled: true,
+            editDisabledTitle: t('pages.recoveryGroups.providerUnavailableEdit'),
+          } : {})}
           deleteLabel={t('buttons.delete')}
           edit={() => {
             onEdit(openMenuId)
@@ -326,19 +332,33 @@ export function RecoveryGroupsTable({
             <Button
               size="sm"
               className="flex-1"
+              disabled={selected.providerResolution === 'unresolved'}
+              title={selected.providerResolution === 'unresolved'
+                ? t('pages.recoveryGroups.providerUnavailableEdit')
+                : undefined}
+              aria-describedby={selected.providerResolution === 'unresolved'
+                ? 'recovery-group-unresolved-edit-hint'
+                : undefined}
               onClick={() => {
+                if (selected.providerResolution === 'unresolved') return
                 onEdit(selected.id)
                 setSelectedId(null)
               }}
             >
               {t('buttons.edit')}
             </Button>
+            {selected.providerResolution === 'unresolved' ? (
+              <span id="recovery-group-unresolved-edit-hint" className="sr-only">
+                {t('pages.recoveryGroups.providerUnavailableEdit')}
+              </span>
+            ) : null}
           </>
         ) : null}
       >
         {selected ? (
           <dl className="space-y-3 px-5 py-2">
             <DetailRow label={t('details.description')} value={selected.description || '—'} />
+            <DetailRow label={t('details.providerId')} value={<span className="font-mono">{selected.providerId ?? '—'}</span>} />
             <DetailRow
               label={t('tables.recoveryGroups.sourceCategory')}
               value={t(getSourceCategoryLabelKey(selected.sourceCategory))}

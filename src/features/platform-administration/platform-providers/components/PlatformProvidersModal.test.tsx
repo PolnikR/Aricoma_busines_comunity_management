@@ -60,6 +60,7 @@ describe('PlatformProvidersModal', () => {
           description: 'Production orchestration',
           type: 'AIRFLOW',
           ipAddress: '10.99.99.40',
+          url: 'https://airflow.example.test',
           port: 8443,
           dagDir: '/opt/airflow/dags',
           credentialId: 'credential-1',
@@ -69,5 +70,6 @@ describe('PlatformProvidersModal', () => {
     )
 
     expect(await screen.findByLabelText('Port')).toHaveValue(8443)
+    expect(screen.getByLabelText('URL')).toHaveValue('https://airflow.example.test')
   })
 })

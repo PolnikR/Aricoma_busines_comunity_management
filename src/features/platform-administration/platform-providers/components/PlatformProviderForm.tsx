@@ -10,6 +10,7 @@ export interface PlatformProviderFormData {
   description: string
   type: string
   ipAddress: string
+  url: string
   port: string
   dagDir: string
   credentialId: string
@@ -132,6 +133,19 @@ export function PlatformProviderForm({
           {errors.port ? <p className="mt-1 text-xs text-red-600">{errors.port}</p> : null}
         </Field>
       </div>
+
+      <Field label={t('forms.url')} htmlFor="platform-provider-url">
+        <Input
+          id="platform-provider-url"
+          type="url"
+          value={data.url}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('url', event.target.value) }}
+          onKeyDown={handleKeyDown}
+          disabled={isSubmitting}
+          aria-invalid={Boolean(errors.url)}
+        />
+        {errors.url ? <p className="mt-1 text-xs text-red-600">{errors.url}</p> : null}
+      </Field>
 
       <Field label={t('forms.dagDir')} htmlFor="platform-provider-dag-dir">
         <Input

@@ -15,9 +15,6 @@ export async function fetchVmwareInventory(providerId?: string, tag?: string): P
   const url = search ? `${base}?${search}` : base
   const response = await apiFetch(url)
 
-  if (response.status === 400 && (providerId || tag)) {
-    return { reportedCount: 0, virtualMachines: [] }
-  }
   if (!response.ok) {
     throw new Error(`Discovery inventory request failed with status ${String(response.status)}`)
   }

@@ -233,4 +233,45 @@ describe('mapRecoveryGroupApiRecord', () => {
 
     expect(group.orchestrationProviderId).toBeNull()
   })
+
+  it('keeps a VM group when its provider is missing without guessing its platform', () => {
+    const record = {
+      id: 'orphan-vm-group',
+      name: 'Orphan VM group',
+      description: 'Provider was removed after discovery',
+      provider_id_vm: 'removed-vmware-provider',
+      provider_id_volume: '',
+      policy_set_id: 'tier2-apps',
+      vms: [{ name: 'ORPHAN-VM-01' }],
+      volumes: [],
+    }
+
+    const group = mapRecoveryGroupApiRecord(record, [])
+
+    expect(group.providerResolution).toBe('unresolved')
+    expect(group.providerId).toBe('removed-vmware-provider')
+    expect(group.workloadType).toBeNull()
+    expect(group.resourceType).toBe('vm')
+    expect(toRecoveryGroupJson(group)).toMatchObject(record)
+  })
+
+  it('keeps a volume group when its FlashSystem provider is missing', () => {
+    const record = {
+      id: 'orphan-volume-group',
+      name: 'Orphan volume group',
+      description: 'Provider was removed after discovery',
+      provider_id_vm: '',
+      provider_id_volume: 'removed-flashsystem-provider',
+      policy_set_id: 'tier2-apps',
+      vms: [],
+      volumes: [{ name: 'ORPHAN-VOLUME-01' }],
+    }
+
+    const group = mapRecoveryGroupApiRecord(record, [])
+
+    expect(group.providerResolution).toBe('unresolved')
+    expect(group.providerId).toBe('removed-flashsystem-provider')
+    expect(group.workloadType).toBe('ibm_flashsystem')
+    expect(group.resourceType).toBe('volume')
+  })
 })

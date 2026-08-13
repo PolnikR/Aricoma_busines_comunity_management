@@ -1,17 +1,24 @@
-# Task Checklist: Clean Room Policies
+# Task Checklist: Code Review Follow-up Fixes
 
-- [x] API contract tests fail for the missing Clean Room feature.
-- [x] GET `/api/get_clean_room_policies` is implemented and validated.
-- [x] POST `/api/submit_clean_room_policy` sends the confirmed body.
-- [x] DELETE `/api/delete_clean_room_policy?policy_id=...` is implemented.
-- [x] Query hooks update the authoritative Clean Room cache.
-- [x] Third Recovery Policies tab and route are implemented.
-- [x] Clean Room table, drawer, create/edit, delete, and translations are implemented.
-- [x] Policy Set GET maps `clean_room_policy_id`.
-- [x] Policy Set POST sends `clean_room_policy_id`.
-- [x] Policy Set form requires and selects a Clean Room Policy.
-- [x] Policy Set drawer resolves the Clean Room Policy name.
-- [x] Focused tests pass (48 tests across the affected contracts and UI).
-- [x] Typecheck, lint, and production Vite build pass.
-- [ ] Browser verification: Chrome DevTools MCP is not configured in this session.
-- [ ] Full repository test suite: command timed out without test output; focused suites pass.
+## Implemented
+
+- [x] Infrastructure and platform provider URL fields flow through create/edit; infrastructure `port` remains omitted from POST.
+- [x] Provider View JSON now uses the validated GET records, including URL, port, and credential status where present.
+- [x] Recovery Group builder preserves orchestration selection and performs automatic volume hydration without render-phase state updates or false dirty state.
+- [x] Recovery Application edit preserves backend environment values outside the standard select options.
+- [x] Recovery Groups with unavailable providers remain visible, preserve their IDs/resources/raw JSON, and expose an explicit unresolved state with Edit disabled.
+- [x] Recovery Group submit response is matched by normalized group ID.
+- [x] VMware HTTP 400 responses now surface as errors instead of being converted to empty inventory.
+- [x] Recovery App Policy View JSON preserves nullable GET fields; remaining JSON consumers were audited and found to have no lossy field mapping.
+- [x] Regression tests added or updated for all changed behavior.
+
+## Verification
+
+- [x] Focused provider, platform-provider, Recovery Group, Recovery Application, inventory, and policy tests: 17 files, 161 tests passed.
+- [x] Full unit suite: 54 files, 278 tests passed.
+- [x] `npm run lint` passed with zero errors.
+- [x] `npm run typecheck` passed.
+- [x] `npm exec vite build` passed; Vite reported only existing chunk-size warnings.
+- [x] `git diff --check` returned no diff errors.
+- [ ] Full UI suite/manual browser smoke test: Vitest UI process does not terminate in this environment despite the changed-flow suites passing; investigate separately before release.
+- [x] X-User handling, development-only screens, pagination, ports, and hard-coded recovery connection defaults were not changed outside the approved scope.

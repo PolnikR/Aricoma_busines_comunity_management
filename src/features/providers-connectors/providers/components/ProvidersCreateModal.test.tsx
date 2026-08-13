@@ -29,6 +29,7 @@ const mockProviderA: ProviderRecord = {
   description: 'Primary vCenter',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  url: 'https://vcenter.example.test',
   port: 22,
   credentialId: 'vcenter-admin',
   role: 'source',
@@ -65,6 +66,7 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByLabelText('Description')).toBeInTheDocument()
     expect(screen.getByLabelText('Type')).toBeInTheDocument()
     expect(screen.getByLabelText('IP address')).toBeInTheDocument()
+    expect(screen.getByLabelText('URL')).toBeInTheDocument()
     expect(screen.getByLabelText('Port')).toHaveValue(22)
     expect(screen.getByLabelText('Credentials')).toBeInTheDocument()
   })
@@ -91,6 +93,31 @@ describe('ProvidersCreateModal', () => {
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
     const init = mockFetch.mock.calls[0]?.[1] as RequestInit
     expect(JSON.parse(init.body as string)).not.toHaveProperty('port')
+    vi.unstubAllGlobals()
+  })
+
+  it('preserves and submits an edited provider URL', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ providers: [] }), { status: 200 }),
+    )
+    vi.stubGlobal('fetch', mockFetch)
+    const onClose = vi.fn()
+    renderWithQueryClient(
+      <ProvidersCreateModal
+        open
+        onClose={onClose}
+        existingProviders={[mockProviderA]}
+        provider={mockProviderA}
+      />,
+    )
+
+    expect(screen.getByLabelText('URL')).toHaveValue('https://vcenter.example.test')
+    fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'Renamed vCenter' } })
+    fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
+
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    const init = mockFetch.mock.calls[0]?.[1] as RequestInit
+    expect(JSON.parse(init.body as string)).toMatchObject({ url: 'https://vcenter.example.test' })
     vi.unstubAllGlobals()
   })
 

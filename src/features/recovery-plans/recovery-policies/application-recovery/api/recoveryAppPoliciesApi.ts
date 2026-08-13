@@ -127,6 +127,25 @@ export function toRecoveryAppPolicySubmitPayload(
   }
 }
 
+export function toRecoveryAppPolicyReadPayload(policy: RecoveryAppPolicy): RecoveryAppPolicyWire {
+  return {
+    id: policy.id,
+    name: policy.name,
+    description: policy.description,
+    level: policy.level,
+    frequency_value: policy.frequencyValue,
+    frequency_unit: policy.frequencyUnit,
+    retention_value: policy.retentionValue,
+    retention_unit: policy.retentionUnit,
+    boot_verify: policy.bootVerify,
+    snapshot_selection_mode: policy.snapshotSelectionMode,
+    snapshot_max_age_value: policy.snapshotMaxAgeValue,
+    snapshot_max_age_unit: policy.snapshotMaxAgeUnit,
+    snapshot_target_time: policy.snapshotTargetTime,
+    enabled: policy.enabled,
+  }
+}
+
 async function parsePolicies(response: Response): Promise<RecoveryAppPolicy[]> {
   const payload: unknown = await response.json()
   return recoveryAppPoliciesResponseSchema.parse(payload).recovery_app_policies.map(fromWire)

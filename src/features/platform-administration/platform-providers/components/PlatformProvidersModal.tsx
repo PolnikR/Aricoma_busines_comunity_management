@@ -29,6 +29,7 @@ const EMPTY_PLATFORM_PROVIDER_FORM: PlatformProviderFormData = {
   description: '',
   type: '',
   ipAddress: '',
+  url: '',
   port: '22',
   dagDir: '',
   credentialId: '',
@@ -41,6 +42,7 @@ function toPlatformProviderFormData(provider: PlatformProviderRecord): PlatformP
     description: provider.description,
     type: provider.type,
     ipAddress: provider.ipAddress,
+    url: provider.url ?? '',
     port: String(provider.port),
     dagDir: provider.dagDir,
     credentialId: provider.credentialId,
@@ -71,6 +73,7 @@ export function PlatformProvidersModal({
     || formData.description !== initialForm.description
     || formData.type !== initialForm.type
     || formData.ipAddress !== initialForm.ipAddress
+    || formData.url !== initialForm.url
     || formData.port !== initialForm.port
     || formData.dagDir !== initialForm.dagDir
     || formData.credentialId !== initialForm.credentialId
@@ -146,6 +149,8 @@ export function PlatformProvidersModal({
       dagDir: formData.dagDir.trim(),
       credentialId: formData.credentialId.trim(),
     }
+    const url = formData.url.trim()
+    if (url) record.url = url
 
     upsert.mutate(
       { provider: record },

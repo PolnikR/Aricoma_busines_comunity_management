@@ -19,6 +19,8 @@ interface RecoveryGroupContextMenuProps {
   onClose: () => void
   ariaLabel: string
   editLabel: string
+  editDisabled?: boolean
+  editDisabledTitle?: string
   deleteLabel: string
   edit: () => void
   delete: () => void
@@ -36,6 +38,8 @@ export function RecoveryGroupContextMenu({
   onClose,
   ariaLabel,
   editLabel,
+  editDisabled = false,
+  editDisabledTitle,
   deleteLabel,
   edit,
   delete: onDelete,
@@ -110,9 +114,13 @@ export function RecoveryGroupContextMenu({
     >
       <button
         role="menuitem"
-        className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-surface-subtle transition-colors first:rounded-t-lg"
+        disabled={editDisabled}
+        title={editDisabled ? editDisabledTitle : undefined}
+        aria-disabled={editDisabled}
+        className={`w-full text-left px-4 py-2 text-sm transition-colors first:rounded-t-lg ${editDisabled ? 'cursor-not-allowed text-text-muted opacity-60' : 'text-text-primary hover:bg-surface-subtle'}`}
         onClick={(e) => {
           e.stopPropagation()
+          if (editDisabled) return
           edit()
           onClose()
         }}

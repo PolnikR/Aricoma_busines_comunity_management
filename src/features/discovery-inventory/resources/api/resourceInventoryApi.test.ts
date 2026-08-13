@@ -122,15 +122,14 @@ describe('fetchVmwareInventory', () => {
     )
   })
 
-  it('returns an empty inventory when a provider is rejected with 400', async () => {
+  it('propagates a provider rejection with 400', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ detail: "provider 'ibm-flashsystem-01' is not a VMWARE provider" }), { status: 400 }),
     ))
 
-    const inventory = await fetchVmwareInventory('ibm-flashsystem-01')
-
-    expect(inventory.reportedCount).toBe(0)
-    expect(inventory.virtualMachines).toEqual([])
+    await expect(fetchVmwareInventory('ibm-flashsystem-01')).rejects.toThrow(
+      'Discovery inventory request failed with status 400',
+    )
   })
 
   it('still throws on a 400 when no provider filter is set', async () => {

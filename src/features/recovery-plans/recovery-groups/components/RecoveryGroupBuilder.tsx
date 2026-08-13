@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { Spinner } from '@/shared/components/spinner/Spinner'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
@@ -59,7 +59,7 @@ export function RecoveryGroupBuilder({
   const providerQuery = useProviders()
   const providers = providerQuery.data ?? []
   const [step, setStep] = useState(1)
-  const [draft, setDraft] = useState<RecoveryGroupDraft>(() => initialData
+  const [draftState, setDraft] = useState<RecoveryGroupDraft>(() => initialData
     ? {
         id: initialData.id,
         name: initialData.name,
@@ -73,7 +73,7 @@ export function RecoveryGroupBuilder({
         relatedVolumeProviderId: initialData.relatedVolumeProviderId ?? null,
         relatedVolumes: [...initialData.relatedVolumes],
         vmMetadataByName: initialData.vmMetadataByName,
-        orchestrationProviderId: null,
+        orchestrationProviderId: initialData.orchestrationProviderId ?? null,
         pushToOrchestrator: initialData.pushToOrchestrator ?? false,
       }
     : INITIAL_DRAFT)
@@ -88,37 +88,40 @@ export function RecoveryGroupBuilder({
     }))
   }, [])
   const idAvailable = isProgrammaticIdAvailable(
-    draft.id,
+    draftState.id,
     existingIds,
     initialData?.id,
   )
   const detailsValid = Boolean(
-    draft.id
+    draftState.id
     && idAvailable
-    && draft.name.trim()
-    && draft.description.trim(),
+    && draftState.name.trim()
+    && draftState.description.trim(),
   )
-  const typeValid = Boolean(draft.sourceCategory && draft.workloadType && draft.resourceType)
-  const selectedOption = getRecoveryGroupResourceOption(draft.workloadType)
+  const typeValid = Boolean(draftState.sourceCategory && draftState.workloadType && draftState.resourceType)
+  const selectedOption = getRecoveryGroupResourceOption(draftState.workloadType)
   const providerValid = Boolean(
-    draft.providerId
+    draftState.providerId
     && selectedOption
     && providers.some(provider => (
-      provider.id === draft.providerId
+      provider.id === draftState.providerId
       && provider.type === selectedOption.providerType
       && isCredentialOk(provider)
     )),
   )
   const policySetQuery = usePolicySets()
   const policySets = policySetQuery.data ?? []
-  const policySetValid = Boolean(draft.policySetId)
+  const policySetValid = Boolean(draftState.policySetId)
   const platformProvidersQuery = usePlatformProviders()
   const eligiblePlatformProviders = filterByPlatformProviderCredentialStatus(platformProvidersQuery.data ?? [])
+  const soleEligibleProviderId = eligiblePlatformProviders.length === 1
+    ? (eligiblePlatformProviders[0]?.id ?? null)
+    : null
   const orchestrationValid = Boolean(
-    draft.orchestrationProviderId
-    && eligiblePlatformProviders.some(provider => provider.id === draft.orchestrationProviderId),
+    (draftState.orchestrationProviderId ?? soleEligibleProviderId)
+    && eligiblePlatformProviders.some(provider => provider.id === (draftState.orchestrationProviderId ?? soleEligibleProviderId)),
   )
-  const hasRelatedStorageStep = draft.resourceType === 'vm'
+  const hasRelatedStorageStep = draftState.resourceType === 'vm'
   const {
     resourcesStepIndex,
     relatedStorageStepIndex,
@@ -127,37 +130,39 @@ export function RecoveryGroupBuilder({
     lastStep,
   } = calculateRecoveryGroupStepIndices(hasRelatedStorageStep)
   const relatedVolumesDiscovery = useRecoveryGroupRelatedVolumes(
-    draft.providerId,
-    draft.resources,
+    draftState.providerId,
+    draftState.resources,
     providers,
     hasRelatedStorageStep && step === relatedStorageStepIndex,
   )
 
   const discoveryKey = hasRelatedStorageStep
-    && step === relatedStorageStepIndex
     && relatedVolumesDiscovery.flashcopyProviderId
     ? `${relatedVolumesDiscovery.flashcopyProviderId}|${relatedVolumesDiscovery.discoveredVolumeNames.join(',')}`
     : null
-  const [appliedDiscoveryKey, setAppliedDiscoveryKey] = useState<string | null>(null)
+  const [hiddenDiscoveryKey, setHiddenDiscoveryKey] = useState<string | null>(null)
+  const draft = useMemo(() => {
+    const orchestrationProviderId = draftState.orchestrationProviderId ?? soleEligibleProviderId
+    const shouldApplyDiscovery = Boolean(discoveryKey && discoveryKey !== hiddenDiscoveryKey)
+    if (!shouldApplyDiscovery || !relatedVolumesDiscovery.flashcopyProviderId) {
+      return orchestrationProviderId === draftState.orchestrationProviderId
+        ? draftState
+        : { ...draftState, orchestrationProviderId }
+    }
 
-  if (discoveryKey && discoveryKey !== appliedDiscoveryKey) {
-    setAppliedDiscoveryKey(discoveryKey)
-    const currentVolumes = draft.relatedVolumes ?? []
-    const newlyDiscovered = relatedVolumesDiscovery.discoveredVolumeNames.filter(
-      name => !currentVolumes.includes(name),
+    const currentVolumes = draftState.relatedVolumes ?? []
+    const relatedVolumes = relatedVolumesDiscovery.discoveredVolumeNames.reduce<string[]>(
+      (volumes, name) => (volumes.includes(name) ? volumes : [...volumes, name]),
+      currentVolumes,
     )
-    updateDraft({
-      relatedVolumeProviderId: relatedVolumesDiscovery.flashcopyProviderId,
-      relatedVolumes: newlyDiscovered.length > 0 ? [...currentVolumes, ...newlyDiscovered] : currentVolumes,
-    })
-  }
 
-  const soleEligibleProviderId = eligiblePlatformProviders.length === 1
-    ? (eligiblePlatformProviders[0]?.id ?? null)
-    : null
-  if (soleEligibleProviderId && draft.orchestrationProviderId === null) {
-    setDraft(current => ({ ...current, orchestrationProviderId: soleEligibleProviderId }))
-  }
+    return {
+      ...draftState,
+      orchestrationProviderId,
+      relatedVolumeProviderId: relatedVolumesDiscovery.flashcopyProviderId,
+      relatedVolumes,
+    }
+  }, [discoveryKey, draftState, hiddenDiscoveryKey, relatedVolumesDiscovery.discoveredVolumeNames, relatedVolumesDiscovery.flashcopyProviderId, soleEligibleProviderId])
 
   const steps = [
     { id: 'details', label: t('pages.recoveryGroupBuilder.steps.details') },
@@ -327,6 +332,7 @@ export function RecoveryGroupBuilder({
                       size="sm"
                       onClick={() => {
                         updateDraft({ relatedVolumeProviderId: null, relatedVolumes: [] })
+                        setHiddenDiscoveryKey(discoveryKey)
                       }}
                     >
                       {t('pages.recoveryGroupBuilder.relatedStorage.clear')}

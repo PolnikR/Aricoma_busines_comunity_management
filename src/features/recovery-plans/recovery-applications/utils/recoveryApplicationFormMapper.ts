@@ -6,10 +6,8 @@ import type {
 } from '../model/recoveryApplicationTypes'
 import { toRecoveryApplicationFileName } from './recoveryApplicationFileName'
 
-const KNOWN_ENVIRONMENTS = new Set(['dev', 'staging', 'prod'])
-
-function toFormEnvironment(environment: string): 'dev' | 'staging' | 'prod' {
-  return KNOWN_ENVIRONMENTS.has(environment) ? environment as 'dev' | 'staging' | 'prod' : 'dev'
+function toFormEnvironment(environment: string): string {
+  return environment
 }
 
 export function cloneTier(tier: RecoveryTier): RecoveryTier {

@@ -16,7 +16,7 @@ import { Field, Select } from '@/shared/components/form/FormControls'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
-import { toRecoveryAppPolicySubmitPayload } from '../api/recoveryAppPoliciesApi'
+import { toRecoveryAppPolicyReadPayload } from '../api/recoveryAppPoliciesApi'
 import { useDeleteRecoveryAppPolicy } from '../hooks/useDeleteRecoveryAppPolicy'
 import type { RecoveryAppPolicy } from '../model/recoveryAppPolicyTypes'
 import { RecoveryAppPolicyModal } from './RecoveryAppPolicyModal'
@@ -254,7 +254,7 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
       <JsonViewerModal
         open={jsonViewed !== null}
         title={t('recoveryAppPolicies.jsonViewer.title')}
-        data={jsonViewed ? toRecoveryAppPolicySubmitPayload(jsonViewed) : null}
+        data={jsonViewed ? toRecoveryAppPolicyReadPayload(jsonViewed) : null}
         closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
       />

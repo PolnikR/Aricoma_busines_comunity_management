@@ -12,6 +12,7 @@ const data = {
   type: 'VMWARE',
   role: 'source',
   ipAddress: '10.0.0.1',
+  url: 'https://vcenter.example.test',
   port: '22',
   credentialId: 'vcenter-admin',
   defaultFlashcopyProviderId: '',
@@ -48,6 +49,7 @@ describe('ProviderCreateForm', () => {
     await user.type(screen.getByLabelText('IP address'), '{Enter}')
     expect(onChange).toHaveBeenCalled()
     expect(onSubmit).toHaveBeenCalledOnce()
+    expect(screen.getByLabelText('URL')).toHaveValue('https://vcenter.example.test')
   })
 
   it('locks ID in edit mode and renders validation errors', () => {

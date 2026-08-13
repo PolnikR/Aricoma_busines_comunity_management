@@ -95,4 +95,24 @@ describe('AppMetadataForm', () => {
     expect(screen.queryByText('Push to orchestrator')).not.toBeInTheDocument()
   })
 
+  it('keeps an unknown backend environment selectable during edit', async () => {
+    render(
+      <LanguageProvider>
+        <AppMetadataForm
+          initialValues={{
+            fileName: 'finance_app',
+            name: 'Finance',
+            description: 'Primary',
+      environment: 'production',
+            platform: 'airflow-01',
+          }}
+        />
+      </LanguageProvider>,
+    )
+
+    const environment = await screen.findByLabelText('Environment *')
+    expect(environment).toHaveValue('production')
+    expect(screen.getByRole('option', { name: 'production' })).toBeInTheDocument()
+  })
+
 })

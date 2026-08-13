@@ -10,7 +10,8 @@ export function getSourceCategoryLabelKey(category: RecoveryGroupSourceCategory)
     : 'pages.recoveryGroupBuilder.type.categories.storageSystem'
 }
 
-export function getWorkloadTypeLabelKey(workloadType: RecoveryGroupWorkloadType): string {
+export function getWorkloadTypeLabelKey(workloadType: RecoveryGroupWorkloadType | null): string {
+  if (workloadType === null) return 'pages.recoveryGroups.providerUnavailable'
   switch (workloadType) {
     case 'vmware_virtual_machines':
       return 'pages.recoveryGroupBuilder.type.workloads.vmware.title'

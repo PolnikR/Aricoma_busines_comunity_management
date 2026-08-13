@@ -1,6 +1,7 @@
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type {
   RecoveryGroup,
+  RecoveryGroupReadRecord,
   RecoveryGroupResourceConfiguration,
   RecoveryGroupVmMetadata,
 } from '../model/recoveryGroupTypes'
@@ -56,40 +57,54 @@ export function mapRecoveryGroupApiRecord(
   const vmResources = record.vms.map(resource => resource.name)
   const volumeResources = record.volumes.map(resource => resource.name)
 
+  const common = {
+    id: record.id,
+    name: record.name,
+    description: record.description,
+    policySetId: record.policy_set_id,
+    resourceCount: 0,
+    status: 'Draft' as const,
+    airflowRunId: record.airflow_run_id,
+    pushToOrchestrator: record.push_to_orchestrator,
+    orchestrationProviderId: record.orchestration_provider_id ?? null,
+    rawRecord: record,
+  }
+
   if (vmProviderId) {
     const provider = providers.find(candidate => candidate.id === vmProviderId)
     if (!provider || (provider.type !== 'VMWARE' && provider.type !== 'IBM_POWER')) {
-      throw new Error(`Unknown VM provider ${vmProviderId}`)
+      return {
+        ...common,
+        providerId: vmProviderId,
+        sourceCategory: 'backup_system_workload',
+        workloadType: null,
+        resourceType: 'vm',
+        resources: vmResources,
+        relatedVolumeProviderId: volumeProviderId || null,
+        relatedVolumes: volumeResources,
+        resourceCount: vmResources.length,
+        status: vmResources.length > 0 ? 'Active' : 'Draft',
+        providerResolution: 'unresolved' as const,
+        vmMetadataByName: toVmMetadataByName(record.vms),
+      }
     }
     return {
-      id: record.id,
-      name: record.name,
-      description: record.description,
+      ...common,
       providerId: vmProviderId,
-      policySetId: record.policy_set_id,
       ...vmConfiguration(provider),
       resources: vmResources,
       relatedVolumeProviderId: volumeProviderId || null,
       relatedVolumes: volumeResources,
       resourceCount: vmResources.length,
       status: vmResources.length > 0 ? 'Active' : 'Draft',
+      providerResolution: 'resolved' as const,
       vmMetadataByName: toVmMetadataByName(record.vms),
-      airflowRunId: record.airflow_run_id,
-      pushToOrchestrator: record.push_to_orchestrator,
-      orchestrationProviderId: record.orchestration_provider_id ?? null,
     }
   }
 
-  if (!volumeProviderId) {
-    throw new Error(`Recovery group ${record.id} has no provider`)
-  }
-
   return {
-    id: record.id,
-    name: record.name,
-    description: record.description,
-    providerId: volumeProviderId,
-    policySetId: record.policy_set_id,
+    ...common,
+    providerId: volumeProviderId || null,
     sourceCategory: 'storage_system',
     workloadType: 'ibm_flashsystem',
     resourceType: 'volume',
@@ -98,9 +113,9 @@ export function mapRecoveryGroupApiRecord(
     relatedVolumes: [],
     resourceCount: volumeResources.length,
     status: volumeResources.length > 0 ? 'Active' : 'Draft',
-    airflowRunId: record.airflow_run_id,
-    pushToOrchestrator: record.push_to_orchestrator,
-    orchestrationProviderId: record.orchestration_provider_id ?? null,
+    providerResolution: volumeProviderId && providers.some(
+      provider => provider.id === volumeProviderId && provider.type === 'FLASHCOPY',
+    ) ? 'resolved' as const : 'unresolved' as const,
   }
 }
 
@@ -125,7 +140,9 @@ export function toRecoveryGroupSubmitPayload(
   }
 }
 
-export function toRecoveryGroupJson(group: RecoveryGroup): RecoveryGroupSubmitPayload {
+export function toRecoveryGroupJson(group: RecoveryGroup): RecoveryGroupReadRecord {
+  if (group.rawRecord) return group.rawRecord
+
   const isVmGroup = group.resourceType === 'vm'
   return {
     id: group.id,
@@ -165,5 +182,6 @@ export function toRecoveryGroup(
     pushToOrchestrator: draft.pushToOrchestrator,
     airflowRunId: null,
     orchestrationProviderId: draft.orchestrationProviderId,
+    providerResolution: 'resolved',
   }
 }

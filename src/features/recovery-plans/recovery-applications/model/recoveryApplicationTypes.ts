@@ -100,7 +100,7 @@ export interface RecoveryApplicationFormState {
   pushToOrchestrator: boolean
   name: string
   description: string
-  environment: 'dev' | 'staging' | 'prod'
+  environment: string
   platform: string
   orchestrationProviderId: string
   sourceConnection: string

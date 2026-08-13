@@ -37,7 +37,7 @@ describe('RecoveryAppPoliciesTable', () => {
     expect(screen.getByRole('dialog', { name: 'Recovery app policy detail' })).toBeInTheDocument()
   })
 
-  it('shows the mode-specific recovery policy submit payload without opening the drawer', async () => {
+  it('shows the complete recovery policy GET payload without opening the drawer', async () => {
     const user = userEvent.setup()
     render(<RecoveryAppPoliciesTable policies={[policy]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} />)
 
@@ -46,9 +46,23 @@ describe('RecoveryAppPoliciesTable', () => {
     const dialog = screen.getByRole('dialog', { name: 'Application Recovery Policy JSON' })
     expect(dialog).toHaveTextContent('"snapshot_selection_mode": "exact_time"')
     expect(dialog).toHaveTextContent('"snapshot_target_time": "02:00"')
-    expect(dialog).not.toHaveTextContent('"snapshot_max_age_value"')
+    expect(dialog).toHaveTextContent('"snapshot_max_age_value": null')
+    expect(dialog).toHaveTextContent('"snapshot_max_age_unit": null')
     expect(dialog).not.toHaveTextContent('"snapshotTargetTime"')
     expect(screen.queryByRole('dialog', { name: 'Recovery app policy detail' })).not.toBeInTheDocument()
+  })
+
+  it('keeps nullable selection fields in latest policy JSON', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryAppPoliciesTable policies={[latestPolicy]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: 'View' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Application Recovery Policy JSON' })
+    expect(dialog).toHaveTextContent('"snapshot_selection_mode": "latest"')
+    expect(dialog).toHaveTextContent('"snapshot_max_age_value": null')
+    expect(dialog).toHaveTextContent('"snapshot_max_age_unit": null')
+    expect(dialog).toHaveTextContent('"snapshot_target_time": null')
   })
 
   it('filters by snapshot selection mode', async () => {

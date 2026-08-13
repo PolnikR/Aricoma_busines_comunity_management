@@ -27,6 +27,7 @@ const EMPTY_FORM: ProviderCreateFormData = {
   type: '',
   role: '',
   ipAddress: '',
+  url: '',
   port: '22',
   credentialId: '',
   defaultFlashcopyProviderId: '',
@@ -42,6 +43,7 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         type: provider.type,
         role: provider.role ?? 'source',
         ipAddress: provider.ipAddress,
+        url: provider.url ?? '',
         port: String(provider.port ?? 22),
         credentialId: provider.credentialId ?? '',
         defaultFlashcopyProviderId: provider.defaultFlashcopyProviderId ?? '',
@@ -67,6 +69,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     || formData.type !== initialForm.type
     || formData.role !== initialForm.role
     || formData.ipAddress !== initialForm.ipAddress
+    || formData.url !== initialForm.url
     || formData.port !== initialForm.port
     || formData.credentialId !== initialForm.credentialId
     || formData.defaultFlashcopyProviderId !== initialForm.defaultFlashcopyProviderId
@@ -163,6 +166,8 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
       credentialId: formData.credentialId || null,
       role: formData.role as ProviderRole,
     }
+    const url = formData.url.trim()
+    if (url) record.url = url
     const defaultFlashcopyProviderId = formData.defaultFlashcopyProviderId.trim()
     const orchestratorConnId = formData.orchestratorConnId.trim()
     if (defaultFlashcopyProviderId) record.defaultFlashcopyProviderId = defaultFlashcopyProviderId

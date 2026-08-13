@@ -139,7 +139,7 @@ describe('ProvidersCatalogueTable', () => {
     expect(screen.getByRole('button', { name: 'Test connection' })).toBeDisabled()
   })
 
-  it('shows the provider submit payload without opening the detail drawer', async () => {
+  it('shows the complete provider GET record without opening the detail drawer', async () => {
     renderTable()
 
     const [viewButton] = await screen.findAllByRole('button', { name: 'View' })
@@ -150,8 +150,9 @@ describe('ProvidersCatalogueTable', () => {
     expect(dialog).toHaveTextContent('"id": "vmware-vcenter-01"')
     expect(dialog).toHaveTextContent('"ipAddress": "10.99.99.40"')
     expect(dialog).toHaveTextContent('"credentialId": "vcenter-admin"')
-    expect(dialog).not.toHaveTextContent('"credentialStatus"')
-    expect(dialog).not.toHaveTextContent('"port"')
+    expect(dialog).toHaveTextContent('"credentialStatus": "ok"')
+    expect(dialog).toHaveTextContent('"port": 22')
+    expect(dialog).toHaveTextContent('"url": "https://10.99.99.40/ui/"')
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
   })
 
