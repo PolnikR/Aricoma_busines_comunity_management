@@ -10,7 +10,7 @@ import {
   type RecoveryGroupRecordOutput,
 } from '@/generated/api/zod.gen'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
-import { OrvalApiError } from '@/shared/api/orvalMutator'
+import { toOrvalRequestError } from '@/shared/api/orvalMutator'
 import { toProgrammaticId } from '@/shared/utils/programmaticId'
 import {
   mapRecoveryGroupApiRecord,
@@ -39,13 +39,6 @@ export type DeleteRecoveryGroupRequest =
       rollbackFromOrchestrator: true
       providerId: string
     }
-
-function requestError(error: unknown, operation: string): Error {
-  if (error instanceof OrvalApiError) {
-    return new Error(`${operation} request failed with status ${String(error.status)}`, { cause: error })
-  }
-  return error instanceof Error ? error : new Error(`${operation} request failed`)
-}
 
 function toRecoveryGroupReadRecord(record: RecoveryGroupRecordOutput): RecoveryGroupReadRecord {
   return {
@@ -86,7 +79,7 @@ export async function fetchRecoveryGroups(providers: ProviderRecord[]): Promise<
     return parseRecoveryGroups(payload, 'GET /get_recovery_groups').recovery_groups
       .map(record => mapRecoveryGroupApiRecord(toRecoveryGroupReadRecord(record), providers))
   } catch (error) {
-    throw requestError(error, 'Get recovery groups')
+    throw toOrvalRequestError(error, 'Get recovery groups')
   }
 }
 
@@ -109,7 +102,7 @@ async function submitRecoveryGroup(
     const airflowRunId = extractAirflowRunId(payload, id)
     return { ...toRecoveryGroup(validated, id), airflowRunId }
   } catch (error) {
-    throw requestError(error, 'Submit recovery group')
+    throw toOrvalRequestError(error, 'Submit recovery group')
   }
 }
 
@@ -135,13 +128,13 @@ export async function deleteRecoveryGroup(
 ): Promise<RollbackReport | null> {
   try {
     if (request.rollbackFromOrchestrator) {
-    const providerId = request.providerId.trim()
-    if (!providerId) {
-      throw new RecoveryGroupsError(
-        'missing_orchestration_provider',
-        'An orchestration provider is required to roll back this recovery group',
-      )
-    }
+      const providerId = request.providerId.trim()
+      if (!providerId) {
+        throw new RecoveryGroupsError(
+          'missing_orchestration_provider',
+          'An orchestration provider is required to roll back this recovery group',
+        )
+      }
       const payload = await deleteRecoveryGroupRouteDeleteRecoveryGroupDelete({
         recovery_group_id: request.recoveryGroupId,
         rollback_from_orchestrator: true,
@@ -156,7 +149,7 @@ export async function deleteRecoveryGroup(
     parseRecoveryGroups(payload, 'DELETE /delete_recovery_group')
     return null
   } catch (error) {
-    throw requestError(error, 'Delete recovery group')
+    throw toOrvalRequestError(error, 'Delete recovery group')
   }
 }
 
@@ -171,6 +164,6 @@ export async function rollbackRecoveryGroupOrchestration(
     })
     return parseRollbackReport(payload, 'POST /rollback_from_orchestrator')
   } catch (error) {
-    throw requestError(error, 'Rollback recovery group orchestration')
+    throw toOrvalRequestError(error, 'Rollback recovery group orchestration')
   }
 }

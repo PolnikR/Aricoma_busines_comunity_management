@@ -15,6 +15,15 @@ export class OrvalApiError extends Error {
   }
 }
 
+export function toOrvalRequestError(error: unknown, operation: string): Error {
+  if (error instanceof OrvalApiError) {
+    return new Error(`${operation} request failed with status ${String(error.status)}`, {
+      cause: error,
+    })
+  }
+  return error instanceof Error ? error : new Error(`${operation} request failed`)
+}
+
 function toProxyUrl(url: string): string {
   if (!url.startsWith('/') || url.startsWith('/api/')) return url
   return `/api${url}`

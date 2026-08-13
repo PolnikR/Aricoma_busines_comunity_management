@@ -8,7 +8,7 @@ import {
   type OrchestrationProviderRecordOutput,
 } from '@/generated/api/zod.gen'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
-import { OrvalApiError } from '@/shared/api/orvalMutator'
+import { toOrvalRequestError } from '@/shared/api/orvalMutator'
 import type {
   PlatformProviderCredentialStatus,
   PlatformProviderRecord,
@@ -68,20 +68,13 @@ function parsePlatformProviders(
   return parseGeneratedResponse(PlatformProvidersResponse, payload, operation).providers
 }
 
-function requestError(error: unknown, operation: string): Error {
-  if (error instanceof OrvalApiError) {
-    return new Error(`${operation} request failed with status ${String(error.status)}`, { cause: error })
-  }
-  return error instanceof Error ? error : new Error(`${operation} request failed`)
-}
-
 export async function fetchPlatformProviders(): Promise<PlatformProviderRecord[]> {
   try {
     const payload = await getPlatformProvidersGetPlatformProvidersGet()
     return parsePlatformProviders(payload, 'GET /get_platform_providers')
       .map(provider => mapPlatformProvider(provider, true))
   } catch (error) {
-    throw requestError(error, 'Get platform providers')
+    throw toOrvalRequestError(error, 'Get platform providers')
   }
 }
 
@@ -104,7 +97,7 @@ export async function submitPlatformProvider(
     return parsePlatformProviders(payload, 'POST /submit_platform_provider')
       .map(item => mapPlatformProvider(item, false))
   } catch (error) {
-    throw requestError(error, 'Submit platform provider')
+    throw toOrvalRequestError(error, 'Submit platform provider')
   }
 }
 
@@ -116,6 +109,6 @@ export async function deletePlatformProvider(
     return parsePlatformProviders(payload, 'DELETE /delete_platform_provider')
       .map(item => mapPlatformProvider(item, false))
   } catch (error) {
-    throw requestError(error, 'Delete platform provider')
+    throw toOrvalRequestError(error, 'Delete platform provider')
   }
 }

@@ -9,7 +9,7 @@ import {
   type SnapshotPolicyRecordOutput,
 } from '@/generated/api/zod.gen'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
-import { OrvalApiError } from '@/shared/api/orvalMutator'
+import { toOrvalRequestError } from '@/shared/api/orvalMutator'
 import type {
   SnapshotPolicy,
   SnapshotPolicySubmitData,
@@ -20,13 +20,6 @@ import {
 } from './schemas/snapshotPoliciesSchema'
 
 const policyIdSchema = z.string().min(1)
-
-function requestError(error: unknown, operation: string): Error {
-  if (error instanceof OrvalApiError) {
-    return new Error(`${operation} request failed with status ${String(error.status)}`, { cause: error })
-  }
-  return error instanceof Error ? error : new Error(`${operation} request failed`)
-}
 
 function fromWire(policy: SnapshotPolicyRecordOutput): SnapshotPolicy {
   return {
@@ -73,7 +66,7 @@ export async function fetchSnapshotPolicies(): Promise<SnapshotPolicy[]> {
   try {
     return parsePolicies(await getPoliciesGetPoliciesGet())
   } catch (error) {
-    throw requestError(error, 'Get snapshot policies')
+    throw toOrvalRequestError(error, 'Get snapshot policies')
   }
 }
 
@@ -84,7 +77,7 @@ export async function submitSnapshotPolicy(
   try {
     return parsePolicies(await submitPolicySubmitPolicyPost(wirePolicy))
   } catch (error) {
-    throw requestError(error, 'Submit snapshot policy')
+    throw toOrvalRequestError(error, 'Submit snapshot policy')
   }
 }
 
@@ -93,6 +86,6 @@ export async function deleteSnapshotPolicy(policyId: string): Promise<SnapshotPo
   try {
     return parsePolicies(await deletePolicyDeletePolicyDelete({ policy_id: validatedPolicyId }))
   } catch (error) {
-    throw requestError(error, 'Delete snapshot policy')
+    throw toOrvalRequestError(error, 'Delete snapshot policy')
   }
 }

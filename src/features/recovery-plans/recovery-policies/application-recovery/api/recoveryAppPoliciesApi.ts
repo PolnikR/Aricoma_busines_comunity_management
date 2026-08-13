@@ -9,7 +9,7 @@ import {
   type RecoveryAppPolicyRecordOutput,
 } from '@/generated/api/zod.gen'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
-import { OrvalApiError } from '@/shared/api/orvalMutator'
+import { toOrvalRequestError } from '@/shared/api/orvalMutator'
 import type {
   RecoveryAppPolicy,
   RecoveryAppPolicySubmitData,
@@ -21,13 +21,6 @@ import {
 } from './schemas/recoveryAppPoliciesSchema'
 
 const policyIdSchema = z.string().min(1)
-
-function requestError(error: unknown, operation: string): Error {
-  if (error instanceof OrvalApiError) {
-    return new Error(`${operation} request failed with status ${String(error.status)}`, { cause: error })
-  }
-  return error instanceof Error ? error : new Error(`${operation} request failed`)
-}
 
 function fromWire(policy: RecoveryAppPolicyRecordOutput): RecoveryAppPolicy {
   return {
@@ -166,7 +159,7 @@ export async function fetchRecoveryAppPolicies(): Promise<RecoveryAppPolicy[]> {
   try {
     return parsePolicies(await getRecoveryAppPoliciesGetRecoveryAppPoliciesGet())
   } catch (error) {
-    throw requestError(error, 'Get recovery app policies')
+    throw toOrvalRequestError(error, 'Get recovery app policies')
   }
 }
 
@@ -176,7 +169,7 @@ export async function submitRecoveryAppPolicy(
   try {
     return parsePolicies(await submitRecoveryAppPolicySubmitRecoveryAppPolicyPost(toRecoveryAppPolicySubmitPayload(policy)))
   } catch (error) {
-    throw requestError(error, 'Submit recovery app policy')
+    throw toOrvalRequestError(error, 'Submit recovery app policy')
   }
 }
 
@@ -185,6 +178,6 @@ export async function deleteRecoveryAppPolicy(policyId: string): Promise<Recover
   try {
     return parsePolicies(await deleteRecoveryAppPolicyRouteDeleteRecoveryAppPolicyDelete({ policy_id: validatedPolicyId }))
   } catch (error) {
-    throw requestError(error, 'Delete recovery app policy')
+    throw toOrvalRequestError(error, 'Delete recovery app policy')
   }
 }

@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { OrvalApiError, orvalMutator } from './orvalMutator'
+import {
+  OrvalApiError,
+  orvalMutator,
+  toOrvalRequestError,
+} from './orvalMutator'
 
 const mockedFetch = vi.fn()
 
@@ -48,5 +52,23 @@ describe('orvalMutator', () => {
       status: 404,
       body: { detail: 'not found' },
     } satisfies Partial<OrvalApiError>)
+  })
+
+  it('adds operation context to generated client errors', () => {
+    const cause = new OrvalApiError(503, 'Unavailable', undefined)
+
+    expect(toOrvalRequestError(cause, 'Get providers')).toMatchObject({
+      message: 'Get providers request failed with status 503',
+      cause,
+    })
+  })
+
+  it('preserves ordinary errors and normalizes unknown failures', () => {
+    const error = new Error('Network unavailable')
+
+    expect(toOrvalRequestError(error, 'Get providers')).toBe(error)
+    expect(toOrvalRequestError(null, 'Get providers')).toEqual(
+      new Error('Get providers request failed'),
+    )
   })
 })

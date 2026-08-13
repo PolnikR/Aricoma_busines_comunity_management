@@ -9,7 +9,7 @@ import {
   type PolicySetRecordOutput,
 } from '@/generated/api/zod.gen'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
-import { OrvalApiError } from '@/shared/api/orvalMutator'
+import { toOrvalRequestError } from '@/shared/api/orvalMutator'
 import type { PolicySet, PolicySetSubmitData } from '../model/policySetTypes'
 import {
   policySetSubmitSchema,
@@ -17,13 +17,6 @@ import {
 } from './schemas/policySetsSchema'
 
 const policySetIdSchema = z.string().min(1)
-
-function requestError(error: unknown, operation: string): Error {
-  if (error instanceof OrvalApiError) {
-    return new Error(`${operation} request failed with status ${String(error.status)}`, { cause: error })
-  }
-  return error instanceof Error ? error : new Error(`${operation} request failed`)
-}
 
 function fromWire(policySet: PolicySetRecordOutput): PolicySet {
   return policySetSubmitSchema.parse({
@@ -60,7 +53,7 @@ export async function fetchPolicySets(): Promise<PolicySet[]> {
   try {
     return parsePolicySets(await getPolicySetsGetPolicySetsGet())
   } catch (error) {
-    throw requestError(error, 'Get policy sets')
+    throw toOrvalRequestError(error, 'Get policy sets')
   }
 }
 
@@ -71,7 +64,7 @@ export async function submitPolicySet(
   try {
     return parsePolicySets(await submitPolicySetSubmitPolicySetPost(wirePolicySet))
   } catch (error) {
-    throw requestError(error, 'Submit policy set')
+    throw toOrvalRequestError(error, 'Submit policy set')
   }
 }
 
@@ -80,6 +73,6 @@ export async function deletePolicySet(policySetId: string): Promise<PolicySet[]>
   try {
     return parsePolicySets(await deletePolicySetRouteDeletePolicySetDelete({ policy_set_id: validatedPolicySetId }))
   } catch (error) {
-    throw requestError(error, 'Delete policy set')
+    throw toOrvalRequestError(error, 'Delete policy set')
   }
 }
