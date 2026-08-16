@@ -83,7 +83,16 @@ describe('PlatformProvidersTable', () => {
     const user = userEvent.setup()
     render(
       <PlatformProvidersTable
-        providers={[{ ...baseProvider, url: EXTERNAL_SERVICES.airflow.dagsUrl }]}
+        providers={[{
+          ...baseProvider,
+          url: EXTERNAL_SERVICES.airflow.dagsUrl,
+          rawRecord: {
+            ...baseProvider,
+            role: 'source',
+            description: null,
+            url: null,
+          },
+        }]}
         isLoading={false}
         error={null}
         isRetrying={false}
@@ -98,7 +107,9 @@ describe('PlatformProvidersTable', () => {
     expect(dialog).toHaveTextContent('"port": 22')
     expect(dialog).toHaveTextContent('"dagDir": "/home/airflow/dags"')
     expect(dialog).toHaveTextContent('"credentialStatus": "ok"')
-    expect(dialog).toHaveTextContent(`"url": "${EXTERNAL_SERVICES.airflow.dagsUrl}"`)
+    expect(dialog).toHaveTextContent('"description": null')
+    expect(dialog).toHaveTextContent('"url": null')
+    expect(dialog).not.toHaveTextContent(EXTERNAL_SERVICES.airflow.dagsUrl)
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
   })
 })

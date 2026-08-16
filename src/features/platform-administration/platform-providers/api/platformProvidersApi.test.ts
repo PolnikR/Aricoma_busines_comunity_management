@@ -49,7 +49,7 @@ describe('fetchPlatformProviders', () => {
   it('loads and validates platform providers independently from infrastructure providers', async () => {
     const fetchMock = stubFetch({ providers: [airflowProvider] })
 
-    await expect(fetchPlatformProviders()).resolves.toEqual([airflowProvider])
+    await expect(fetchPlatformProviders()).resolves.toMatchObject([airflowProvider])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/get_platform_providers')
@@ -71,6 +71,24 @@ describe('fetchPlatformProviders', () => {
     const providers = await fetchPlatformProviders()
 
     expect(providers[0]?.credentialStatus).toBe('none')
+  })
+
+  it('preserves the validated GET record before applying UI fallbacks', async () => {
+    const backendProvider = {
+      ...airflowProvider,
+      description: null,
+      url: null,
+      credentialStatus: null,
+    }
+    stubFetch({ providers: [backendProvider] })
+
+    const [provider] = await fetchPlatformProviders()
+
+    expect(provider).toMatchObject({
+      description: '',
+      credentialStatus: 'none',
+    })
+    expect(provider?.rawRecord).toEqual({ ...backendProvider, role: 'source' })
   })
 
   it.each([

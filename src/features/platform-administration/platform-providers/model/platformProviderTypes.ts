@@ -1,3 +1,5 @@
+import type { OrchestrationProviderRecordOutput } from '@/generated/api/zod.gen'
+
 export const PLATFORM_PROVIDER_TYPES = [
   'AIRFLOW',
 ] as const
@@ -23,6 +25,8 @@ export interface PlatformProviderSubmitData {
 
 export interface PlatformProviderRecord extends PlatformProviderSubmitData {
   credentialStatus: PlatformProviderCredentialStatus
+  /** Validated GET record before UI normalization; unknown API fields are removed by Zod. */
+  rawRecord?: OrchestrationProviderRecordOutput | undefined
 }
 
 export interface PlatformProviderWriteRecord extends PlatformProviderSubmitData {

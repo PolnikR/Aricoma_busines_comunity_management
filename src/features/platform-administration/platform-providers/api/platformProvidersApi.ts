@@ -58,6 +58,7 @@ function mapPlatformProvider(
   return {
     ...validated,
     ...(credentialStatus !== undefined ? { credentialStatus } : {}),
+    ...(requireCredentialStatus ? { rawRecord: provider } : {}),
   }
 }
 

@@ -17,6 +17,7 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useDeletePlatformProvider } from '../hooks/useDeletePlatformProvider'
+import { toPlatformProviderJson } from '../helpers/platformProviderJson'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { PlatformProvidersModal } from './PlatformProvidersModal'
 
@@ -255,7 +256,7 @@ export function PlatformProvidersTable({
       <JsonViewerModal
         open={jsonViewed !== null}
         title={t('platformProviders.jsonViewer.title')}
-        data={jsonViewed}
+        data={jsonViewed ? toPlatformProviderJson(jsonViewed) : null}
         closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
       />
