@@ -1,0 +1,34 @@
+import { useEffect, useState } from 'react'
+import type { User } from '../models/identityTypes'
+import { mockUsers } from '../services/mockIdentityService'
+
+interface UseUsersOptions {
+  organizationId?: string
+}
+
+export function useUsers(options?: UseUsersOptions) {
+  const [data, setData] = useState<User[] | undefined>(undefined)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        let filtered = [...mockUsers]
+        if (options?.organizationId) {
+          filtered = filtered.filter(u => u.organizationId === options.organizationId)
+        }
+        setData(filtered)
+        setError(null)
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to load users'))
+      } finally {
+        setIsLoading(false)
+      }
+    }, 200)
+
+    return () => clearTimeout(timer)
+  }, [options?.organizationId])
+
+  return { data, isLoading, error }
+}

@@ -118,6 +118,11 @@ const ConfigurationPage = lazy(async () => {
   return { default: page.ConfigurationPage }
 })
 
+const IdentityAccessPage = lazy(async () => {
+  const page = await import('@/features/identity-access/pages/IdentityAccessPage')
+  return { default: page.IdentityAccessPage }
+})
+
 function toRoutePath(path: string) {
   return path.replace(/^\//, '')
 }
@@ -200,6 +205,14 @@ export function AppRoutes() {
           element={(
             <Suspense fallback={<RouteLoadingSkeleton />}>
               <ConfigurationPage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path={toRoutePath(routes.platformIdentityAccess)}
+          element={(
+            <Suspense fallback={<RouteLoadingSkeleton />}>
+              <IdentityAccessPage />
             </Suspense>
           )}
         />
