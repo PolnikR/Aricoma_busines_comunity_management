@@ -1,8 +1,14 @@
+const AIRFLOW_BASE_URL = 'http://10.99.99.55:8080'
+const AIRFLOW_DAGS_PATH = '/dags'
+
 export const EXTERNAL_SERVICES = {
+  openApi: {
+    sourceUrl: 'http://10.99.99.54:8000/openapi.json',
+  },
   airflow: {
-    defaultBaseUrl: 'http://10.99.99.55:8080',
-    dagsPath: '/dags',
-    dagsUrl: 'http://10.99.99.55:8080/dags',
+    defaultBaseUrl: AIRFLOW_BASE_URL,
+    dagsPath: AIRFLOW_DAGS_PATH,
+    dagsUrl: `${AIRFLOW_BASE_URL}${AIRFLOW_DAGS_PATH}`,
   },
 } as const
 

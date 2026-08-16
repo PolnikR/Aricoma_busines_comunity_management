@@ -3,6 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, test } from 'node:test'
+import { EXTERNAL_SERVICES } from '../../src/config/externalServices.ts'
 import {
   DEFAULT_OPENAPI_URL,
   pullOpenApiSnapshot,
@@ -81,6 +82,7 @@ test('pullOpenApiSnapshot preserves the existing snapshot after an HTTP failure'
 })
 
 test('resolveOpenApiUrl uses an environment override and rejects non-HTTP protocols', () => {
+  assert.equal(DEFAULT_OPENAPI_URL, EXTERNAL_SERVICES.openApi.sourceUrl)
   assert.equal(
     resolveOpenApiUrl({ ABCO_OPENAPI_URL: 'https://backend.example.test/openapi.json' }),
     'https://backend.example.test/openapi.json',

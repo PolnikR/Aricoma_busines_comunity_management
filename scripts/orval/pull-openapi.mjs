@@ -2,8 +2,9 @@ import { randomUUID } from 'node:crypto'
 import { mkdir, rename, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { EXTERNAL_SERVICES } from '../../src/config/externalServices.ts'
 
-export const DEFAULT_OPENAPI_URL = 'http://10.99.99.54:8000/openapi.json'
+export const DEFAULT_OPENAPI_URL = EXTERNAL_SERVICES.openApi.sourceUrl
 
 const DEFAULT_OUTPUT_PATH = path.resolve('openapi/abco-api.json')
 const DEFAULT_TIMEOUT_MS = 30_000
