@@ -18,7 +18,9 @@
       "Bash(git stash *)",
       "Bash(node crop-before.mjs)",
       "Bash(npx vitest *)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(npm exec *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
