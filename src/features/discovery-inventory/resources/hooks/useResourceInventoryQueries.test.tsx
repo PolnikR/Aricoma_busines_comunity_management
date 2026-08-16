@@ -163,38 +163,48 @@ describe('useResourceInventoryQueries', () => {
     expect(fetchFlashSystemInventory).not.toHaveBeenCalled()
   })
 
-  it('restricts to target providers when role is "target"; restricts to source providers when role is "source" or omitted', () => {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
-    )
-
+  it('restricts to target providers when role is "target"; restricts to source providers when role is "source" or omitted', async () => {
     // With role='target', only targets are available
+    const clientTarget = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const wrapperTarget = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={clientTarget}>{children}</QueryClientProvider>
+    )
     const { result: resultTarget } = renderHook(
       () => useResourceInventoryQueries('flashsystem', [flashProvider, targetFlashProvider], undefined, 'target'),
-      { wrapper },
+      { wrapper: wrapperTarget },
     )
     expect(resultTarget.current.hasProviders).toBe(true)
+    await waitFor(() => { expect(resultTarget.current.isLoading).toBe(false) })
     expect(fetchFlashSystemInventory).toHaveBeenCalledWith(undefined)
 
     vi.clearAllMocks()
 
     // With role='source' (explicit), only sources are available
+    const clientSource = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const wrapperSource = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={clientSource}>{children}</QueryClientProvider>
+    )
     const { result: resultSource } = renderHook(
       () => useResourceInventoryQueries('flashsystem', [flashProvider, targetFlashProvider], undefined, 'source'),
-      { wrapper },
+      { wrapper: wrapperSource },
     )
     expect(resultSource.current.hasProviders).toBe(true)
+    await waitFor(() => { expect(resultSource.current.isLoading).toBe(false) })
     expect(fetchFlashSystemInventory).toHaveBeenCalledWith(undefined)
 
     vi.clearAllMocks()
 
     // With role omitted (default), only sources are available
+    const clientDefault = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const wrapperDefault = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={clientDefault}>{children}</QueryClientProvider>
+    )
     const { result: resultDefault } = renderHook(
       () => useResourceInventoryQueries('flashsystem', [flashProvider, targetFlashProvider], undefined),
-      { wrapper },
+      { wrapper: wrapperDefault },
     )
     expect(resultDefault.current.hasProviders).toBe(true)
+    await waitFor(() => { expect(resultDefault.current.isLoading).toBe(false) })
     expect(fetchFlashSystemInventory).toHaveBeenCalledWith(undefined)
   })
 })
