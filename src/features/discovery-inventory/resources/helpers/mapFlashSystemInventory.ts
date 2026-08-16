@@ -2,7 +2,7 @@ import type { FlashSystemInventory } from '../model/discoveryTypes'
 import type { FlashSystemInventoryPayload } from '../api/schemas/flashSystemInventorySchema'
 import { parseCapacityBytes } from './parseCapacity'
 
-function normalizeIdentity(value: string | undefined): string {
+function normalizeIdentity(value: string | null | undefined): string {
   return value?.trim() ?? ''
 }
 
