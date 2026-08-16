@@ -85,7 +85,7 @@ describe('recoveryApplicationsApi', () => {
 
     const applications = await fetchRecoveryApplications()
 
-    expect(applications[0]).toEqual({
+    expect(applications[0]).toMatchObject({
       id: 'ibu_rec-app',
       policySetId: 'test_1_hour_ps',
       data: {
@@ -96,6 +96,7 @@ describe('recoveryApplicationsApi', () => {
       airflowRunId: '260813110808_a8284a9c',
       pushToOrchestrator: true,
     })
+    expect(applications[0]?.rawRecord).toEqual(currentBackendPayload.applications[0])
   })
 
   it('loads and maps the real recovery applications response', async () => {
@@ -104,7 +105,7 @@ describe('recoveryApplicationsApi', () => {
     )
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(fetchRecoveryApplications()).resolves.toEqual([{
+    await expect(fetchRecoveryApplications()).resolves.toMatchObject([{
       id: 'finance-recovery',
       policySetId: 'test_1_hour_ps',
       data: {

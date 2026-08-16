@@ -15,6 +15,7 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
+import { toRecoveryApplicationJson } from '../helpers/mapRecoveryApplications'
 
 interface RecoveryApplicationsTableProps {
   applications: RecoveryApplicationListItem[]
@@ -98,16 +99,6 @@ function getBaseColumns(t: ReturnType<typeof useTranslation>['t'], providers?: {
     },
   },
   ]
-}
-
-function getRecoveryApplicationJson(app: RecoveryApplicationListItem) {
-  return {
-    id: app.id,
-    ...(app.policySetId !== undefined ? { policy_set_id: app.policySetId } : {}),
-    application: app.data.application,
-    ...(app.airflowRunId !== undefined ? { airflow_run_id: app.airflowRunId } : {}),
-    ...(app.pushToOrchestrator !== undefined ? { push_to_orchestrator: app.pushToOrchestrator } : {}),
-  }
 }
 
 export function RecoveryApplicationsTable({
@@ -325,7 +316,7 @@ export function RecoveryApplicationsTable({
       <JsonViewerModal
         open={jsonViewed !== null}
         title={t('recovery.modal.jsonViewer.title')}
-        data={jsonViewed ? getRecoveryApplicationJson(jsonViewed) : null}
+        data={jsonViewed ? toRecoveryApplicationJson(jsonViewed) : null}
         closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
       />

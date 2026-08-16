@@ -1,4 +1,5 @@
 import type {
+  RecoveryAppRecordOutput,
   RecoveryAppsResponseOutput,
   RecoveryTierOutput,
 } from '@/generated/api/zod.gen'
@@ -23,6 +24,7 @@ export function mapRecoveryApplications(
 ): RecoveryApplicationListItem[] {
   return payload.applications.map((record) => ({
     id: record.id,
+    rawRecord: record,
     ...(record.policy_set_id != null ? { policySetId: record.policy_set_id } : {}),
     data: {
       application: {
@@ -37,4 +39,20 @@ export function mapRecoveryApplications(
       ? { pushToOrchestrator: record.push_to_orchestrator }
       : {}),
   }))
+}
+
+export function toRecoveryApplicationJson(
+  application: RecoveryApplicationListItem,
+): RecoveryAppRecordOutput | object {
+  if (application.rawRecord) return application.rawRecord
+
+  return {
+    id: application.id,
+    ...(application.policySetId !== undefined ? { policy_set_id: application.policySetId } : {}),
+    application: application.data.application,
+    ...(application.airflowRunId !== undefined ? { airflow_run_id: application.airflowRunId } : {}),
+    ...(application.pushToOrchestrator !== undefined
+      ? { push_to_orchestrator: application.pushToOrchestrator }
+      : {}),
+  }
 }

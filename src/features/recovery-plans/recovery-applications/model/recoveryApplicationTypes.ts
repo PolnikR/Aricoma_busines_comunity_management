@@ -1,3 +1,5 @@
+import type { RecoveryAppRecordOutput } from '@/generated/api/zod.gen'
+
 export interface RecoveryVM {
   name: string
   order?: number | undefined
@@ -92,6 +94,8 @@ export interface RecoveryApplicationListItem {
   airflowRunId?: string | null | undefined
   pushToOrchestrator?: boolean | undefined
   submission?: ApplicationSubmission
+  /** Validated GET record before UI mapping; unknown API fields are removed by Zod. */
+  rawRecord?: RecoveryAppRecordOutput | undefined
 }
 
 export interface RecoveryApplicationFormState {
