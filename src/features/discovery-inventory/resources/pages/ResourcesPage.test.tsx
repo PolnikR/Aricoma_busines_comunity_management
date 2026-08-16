@@ -204,7 +204,7 @@ describe('ResourcesPage', () => {
 
     const view = render(<ResourcesPage />)
 
-    expect(resourceInventoryQuerySpy).toHaveBeenCalledWith(null, [], undefined)
+    expect(resourceInventoryQuerySpy).toHaveBeenCalledWith(null, [], undefined, 'source')
     const inventoryRegion = screen.getByRole('region', { name: 'Inventory records' })
     expect(within(inventoryRegion).getByRole('tab', { name: 'FlashSystem Volumes' })).toHaveAttribute('aria-selected', 'true')
     expect(inventoryRegion).toContainElement(screen.getByLabelText('Loading providers'))
@@ -220,6 +220,7 @@ describe('ResourcesPage', () => {
       'flashsystem',
       [flashProvider],
       'flash-01',
+      'source',
     )
   })
 
@@ -234,7 +235,7 @@ describe('ResourcesPage', () => {
 
     render(<ResourcesPage />)
 
-    expect(resourceInventoryQuerySpy).toHaveBeenCalledWith(null, [], undefined)
+    expect(resourceInventoryQuerySpy).toHaveBeenCalledWith(null, [], undefined, 'source')
     expect(screen.getByRole('alert')).toHaveTextContent('Failed to load providers.')
     expect(screen.getByRole('alert')).not.toHaveTextContent('provider service offline')
     expect(screen.queryByText('Metrics skeleton')).not.toBeInTheDocument()
