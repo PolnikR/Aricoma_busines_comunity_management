@@ -13,8 +13,8 @@ export function SessionsTab() {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
   const [dateFilter, setDateFilter] = useState<'24h' | '7d' | 'all'>('all')
 
-  const getUserName = (userId: string) => users?.find(u => u.id === userId)?.name || userId
-  const getOrgName = (orgId: string) => organizations?.find(o => o.id === orgId)?.name || orgId
+  const getUserName = (userId: string) => users?.find(u => u.id === userId)?.name ?? userId
+  const getOrgName = (orgId: string) => organizations?.find(o => o.id === orgId)?.name ?? orgId
 
   const filteredSessions = sessions?.filter((session) => {
     if (dateFilter === '24h') {
@@ -28,7 +28,7 @@ export function SessionsTab() {
       return new Date(session.loginTime) > weekAgo
     }
     return true
-  }) || []
+  }) ?? []
 
   if (isLoading) return <ListSkeleton rowCount={5} />
   if (error) return <div className="text-red-600 text-sm">Error loading sessions: {error.message}</div>
@@ -40,7 +40,7 @@ export function SessionsTab() {
         <h3 className="text-sm font-semibold text-text-primary">User Sessions</h3>
         <select
           value={dateFilter}
-          onChange={(e) => setDateFilter(e.target.value as '24h' | '7d' | 'all')}
+          onChange={(e) => { setDateFilter(e.target.value as '24h' | '7d' | 'all'); }}
           className="px-3 py-1.5 text-xs font-medium border border-border rounded bg-surface text-text-primary"
         >
           <option value="24h">Last 24 Hours</option>
@@ -65,7 +65,7 @@ export function SessionsTab() {
           <tbody>
             {filteredSessions.map((session) => (
               <tr key={session.id} className="border-b border-border hover:bg-surface-muted">
-                <td className="px-3 py-2 text-text-primary cursor-pointer" onClick={() => setSelectedSession(session)}>
+                <td className="px-3 py-2 text-text-primary cursor-pointer" onClick={() => { setSelectedSession(session); }}>
                   {getUserName(session.userId)}
                 </td>
                 <td className="px-3 py-2 text-text-secondary">{getOrgName(session.organizationId)}</td>
@@ -104,7 +104,7 @@ export function SessionsTab() {
               <p className="text-sm text-text-secondary">Status: {selectedSession.status}</p>
               <p className="text-sm text-text-secondary">User Agent: {selectedSession.userAgent}</p>
             </div>
-            <button onClick={() => setSelectedSession(null)} className="text-text-muted hover:text-text-primary">✕</button>
+            <button onClick={() => { setSelectedSession(null); }} className="text-text-muted hover:text-text-primary">✕</button>
           </div>
         </div>
       )}

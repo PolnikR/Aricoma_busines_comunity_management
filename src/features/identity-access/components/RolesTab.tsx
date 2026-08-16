@@ -12,8 +12,8 @@ export function RolesTab() {
   const { data: users } = useUsers()
   const [selectedRole, setSelectedRole] = useState<Role | null>(null)
 
-  const getPermissionName = (permId: string) => permissions?.find(p => p.id === permId)?.name || permId
-  const getMemberCount = (roleId: string) => users?.filter(u => u.roleIds.includes(roleId)).length || 0
+  const getPermissionName = (permId: string) => permissions?.find(p => p.id === permId)?.name ?? permId
+  const getMemberCount = (roleId: string) => users?.filter(u => u.roleIds.includes(roleId)).length ?? 0
 
   if (isLoading) return <ListSkeleton rowCount={5} />
   if (error) return <div className="text-red-600 text-sm">Error loading roles: {error.message}</div>
@@ -42,7 +42,7 @@ export function RolesTab() {
           <tbody>
             {roles.map((role) => (
               <tr key={role.id} className="border-b border-border hover:bg-surface-muted">
-                <td className="px-3 py-2 text-text-primary cursor-pointer" onClick={() => setSelectedRole(role)}>
+                <td className="px-3 py-2 text-text-primary cursor-pointer" onClick={() => { setSelectedRole(role); }}>
                   {role.name}
                 </td>
                 <td className="px-3 py-2 text-text-secondary">{role.description}</td>
@@ -71,7 +71,7 @@ export function RolesTab() {
                 ))}
               </ul>
             </div>
-            <button onClick={() => setSelectedRole(null)} className="text-text-muted hover:text-text-primary">✕</button>
+            <button onClick={() => { setSelectedRole(null); }} className="text-text-muted hover:text-text-primary">✕</button>
           </div>
         </div>
       )}

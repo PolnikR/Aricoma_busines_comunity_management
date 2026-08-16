@@ -12,8 +12,8 @@ export function UsersTab() {
   const { data: organizations } = useOrganizations()
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
 
-  const getRoleName = (roleId: string) => roles?.find(r => r.id === roleId)?.name || roleId
-  const getOrgName = (orgId: string) => organizations?.find(o => o.id === orgId)?.name || orgId
+  const getRoleName = (roleId: string) => roles?.find(r => r.id === roleId)?.name ?? roleId
+  const getOrgName = (orgId: string) => organizations?.find(o => o.id === orgId)?.name ?? orgId
 
   if (isLoading) return <ListSkeleton rowCount={5} />
   if (error) return <div className="text-red-600 text-sm">Error loading users: {error.message}</div>
@@ -44,7 +44,7 @@ export function UsersTab() {
           <tbody>
             {users.map((user) => (
               <tr key={user.id} className="border-b border-border hover:bg-surface-muted">
-                <td className="px-3 py-2 text-text-primary cursor-pointer" onClick={() => setSelectedUser(user)}>
+                <td className="px-3 py-2 text-text-primary cursor-pointer" onClick={() => { setSelectedUser(user); }}>
                   {user.name}
                 </td>
                 <td className="px-3 py-2 text-text-secondary">{user.email}</td>
@@ -84,7 +84,7 @@ export function UsersTab() {
               <p className="text-sm text-text-secondary">Status: {selectedUser.status}</p>
               <p className="text-sm text-text-secondary">Created: {new Date(selectedUser.createdAt).toLocaleDateString()}</p>
             </div>
-            <button onClick={() => setSelectedUser(null)} className="text-text-muted hover:text-text-primary">✕</button>
+            <button onClick={() => { setSelectedUser(null); }} className="text-text-muted hover:text-text-primary">✕</button>
           </div>
         </div>
       )}

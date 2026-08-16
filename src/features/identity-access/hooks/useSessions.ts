@@ -31,7 +31,7 @@ export function useSessions(options?: useSessionsOptions) {
       }
     }, 200)
 
-    return () => clearTimeout(timer)
+    return () => { clearTimeout(timer); }
   }, [options?.userId, options?.organizationId])
 
   return { data, isLoading, error }

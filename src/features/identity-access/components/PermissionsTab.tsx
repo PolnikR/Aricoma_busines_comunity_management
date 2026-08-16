@@ -10,7 +10,7 @@ export function PermissionsTab() {
   const { data: roles } = useRoles()
   const [selectedPermission, setSelectedPermission] = useState<Permission | null>(null)
 
-  const getRolesWithPermission = (permId: string) => roles?.filter(r => r.permissionIds.includes(permId)) || []
+  const getRolesWithPermission = (permId: string) => roles?.filter(r => r.permissionIds.includes(permId)) ?? []
 
   if (isLoading) return <ListSkeleton rowCount={5} />
   if (error) return <div className="text-red-600 text-sm">Error loading permissions: {error.message}</div>
@@ -33,7 +33,7 @@ export function PermissionsTab() {
           <tbody>
             {permissions.map((perm) => (
               <tr key={perm.id} className="border-b border-border hover:bg-surface-muted">
-                <td className="px-3 py-2 text-text-primary cursor-pointer" onClick={() => setSelectedPermission(perm)}>
+                <td className="px-3 py-2 text-text-primary cursor-pointer" onClick={() => { setSelectedPermission(perm); }}>
                   {perm.name}
                 </td>
                 <td className="px-3 py-2">
@@ -64,7 +64,7 @@ export function PermissionsTab() {
                 ))}
               </ul>
             </div>
-            <button onClick={() => setSelectedPermission(null)} className="text-text-muted hover:text-text-primary">✕</button>
+            <button onClick={() => { setSelectedPermission(null); }} className="text-text-muted hover:text-text-primary">✕</button>
           </div>
         </div>
       )}

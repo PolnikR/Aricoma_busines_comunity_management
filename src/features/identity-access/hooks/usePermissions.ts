@@ -27,7 +27,7 @@ export function usePermissions(options?: usePermissionsOptions) {
       }
     }, 200)
 
-    return () => clearTimeout(timer)
+    return () => { clearTimeout(timer); }
   }, [options?.category])
 
   return { data, isLoading, error }

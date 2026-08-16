@@ -19,7 +19,7 @@ export function useOrganizations() {
       }
     }, 200)
 
-    return () => clearTimeout(timer)
+    return () => { clearTimeout(timer); }
   }, [])
 
   return { data, isLoading, error }

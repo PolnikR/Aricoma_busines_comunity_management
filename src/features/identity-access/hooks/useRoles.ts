@@ -27,7 +27,7 @@ export function useRoles(options?: UseRolesOptions) {
       }
     }, 200)
 
-    return () => clearTimeout(timer)
+    return () => { clearTimeout(timer); }
   }, [options?.organizationId])
 
   return { data, isLoading, error }

@@ -12,10 +12,10 @@ export function OrganizationsTab() {
   const { data: roles } = useRoles()
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null)
 
-  const getMemberCount = (orgId: string) => users?.filter(u => u.organizationId === orgId).length || 0
-  const getRoleCount = (orgId: string) => roles?.filter(r => r.organizationId === orgId).length || 0
-  const getOrgUsers = (orgId: string) => users?.filter(u => u.organizationId === orgId) || []
-  const getOrgRoles = (orgId: string) => roles?.filter(r => r.organizationId === orgId) || []
+  const getMemberCount = (orgId: string) => users?.filter(u => u.organizationId === orgId).length ?? 0
+  const getRoleCount = (orgId: string) => roles?.filter(r => r.organizationId === orgId).length ?? 0
+  const getOrgUsers = (orgId: string) => users?.filter(u => u.organizationId === orgId) ?? []
+  const getOrgRoles = (orgId: string) => roles?.filter(r => r.organizationId === orgId) ?? []
 
   if (isLoading) return <ListSkeleton rowCount={5} />
   if (error) return <div className="text-red-600 text-sm">Error loading organizations: {error.message}</div>
@@ -45,7 +45,7 @@ export function OrganizationsTab() {
           <tbody>
             {organizations.map((org) => (
               <tr key={org.id} className="border-b border-border hover:bg-surface-muted">
-                <td className="px-3 py-2 text-text-primary cursor-pointer" onClick={() => setSelectedOrg(org)}>
+                <td className="px-3 py-2 text-text-primary cursor-pointer" onClick={() => { setSelectedOrg(org); }}>
                   {org.name}
                 </td>
                 <td className="px-3 py-2 text-text-secondary">{org.description}</td>
@@ -91,7 +91,7 @@ export function OrganizationsTab() {
                 ))}
               </ul>
             </div>
-            <button onClick={() => setSelectedOrg(null)} className="text-text-muted hover:text-text-primary">✕</button>
+            <button onClick={() => { setSelectedOrg(null); }} className="text-text-muted hover:text-text-primary">✕</button>
           </div>
         </div>
       )}
