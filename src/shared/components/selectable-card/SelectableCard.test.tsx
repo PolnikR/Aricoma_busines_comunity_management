@@ -4,6 +4,19 @@ import { describe, expect, it, vi } from 'vitest'
 import { SelectableCard } from './SelectableCard'
 
 describe('SelectableCard', () => {
+  it('renders optional supporting content inside the card', () => {
+    render(
+      <SelectableCard
+        selected={false}
+        title="Tier 2 applications"
+        description="Medium-tier protection"
+        supportingContent={<span>Snapshot policy: Medium — 6h</span>}
+      />,
+    )
+
+    expect(screen.getByText('Snapshot policy: Medium — 6h')).toBeInTheDocument()
+  })
+
   it('exposes selection state and supports keyboard activation', async () => {
     const user = userEvent.setup()
     const onClick = vi.fn()

@@ -1,7 +1,7 @@
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
-import { SelectableCard } from '@/shared/components/selectable-card/SelectableCard'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { PolicySet } from '@/features/recovery-plans/policy-sets/model/policySetTypes'
+import { RecoveryGroupPolicySetCatalogue } from './RecoveryGroupPolicySetCatalogue'
 
 interface RecoveryGroupPolicySetStepProps {
   policySets: PolicySet[]
@@ -35,18 +35,11 @@ export function RecoveryGroupPolicySetStep({
           />
         </div>
       ) : (
-        <div className="mt-5 grid max-w-4xl gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {policySets.map(policySet => (
-            <SelectableCard
-              key={policySet.id}
-              selected={policySet.id === selectedPolicySetId}
-              title={policySet.name}
-              description={policySet.description}
-              meta={t('pages.recoveryGroupBuilder.policySet.policiesCount').replace('{count}', '1')}
-              onClick={() => { onSelect(policySet.id) }}
-            />
-          ))}
-        </div>
+        <RecoveryGroupPolicySetCatalogue
+          policySets={policySets}
+          selectedPolicySetId={selectedPolicySetId}
+          onSelect={onSelect}
+        />
       )}
     </div>
   )

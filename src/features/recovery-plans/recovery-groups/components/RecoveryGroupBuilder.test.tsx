@@ -81,6 +81,58 @@ vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
     refetch: vi.fn(),
   }),
 }))
+vi.mock('@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies', () => ({
+  useSnapshotPolicies: () => ({
+    data: [{
+      id: 'medium-6h',
+      name: 'Medium — 6h',
+      description: 'Medium-tier snapshot cadence.',
+      level: 'medium',
+      frequencyValue: 6,
+      frequencyUnit: 'hours',
+      retentionValue: 7,
+      retentionUnit: 'days',
+      maxSnapshots: null,
+      enabled: true,
+    }],
+    isLoading: false,
+    error: null,
+  }),
+}))
+vi.mock('@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies', () => ({
+  useRecoveryAppPolicies: () => ({
+    data: [{
+      id: 'critical-daily-latest',
+      name: 'Critical — Daily DR Test',
+      description: 'Daily recovery validation.',
+      level: 'critical',
+      frequencyValue: 1,
+      frequencyUnit: 'days',
+      retentionValue: 4,
+      retentionUnit: 'hours',
+      bootVerify: true,
+      snapshotSelectionMode: 'latest',
+      snapshotMaxAgeValue: null,
+      snapshotMaxAgeUnit: null,
+      snapshotTargetTime: null,
+      enabled: true,
+    }],
+    isLoading: false,
+    error: null,
+  }),
+}))
+vi.mock('@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies', () => ({
+  useCleanRoomPolicies: () => ({
+    data: [{
+      id: 'enforce-clean-target',
+      name: 'Enforce Clean Target',
+      description: 'Remove conflicting target resources before recovery.',
+      enabled: true,
+    }],
+    isLoading: false,
+    error: null,
+  }),
+}))
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
   usePlatformProviders: usePlatformProvidersMock,
 }))
@@ -227,6 +279,7 @@ describe('RecoveryGroupBuilder', () => {
     await user.click(screen.getByRole('button', { name: 'Related storage' }))
     await user.click(screen.getByRole('button', { name: 'Policy Set' }))
     await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
+    expect(screen.getByRole('region', { name: 'Selected policy set details' })).toHaveTextContent('Critical — Daily DR Test')
     await completeOrchestrationAndCreate(user)
 
     expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
