@@ -2,7 +2,7 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { MetricsSkeleton } from '@/shared/components/stat-card/StatCard'
-import { getSourceProvidersByType } from '@/features/providers-connectors/providers/utils/providerFilters'
+import { getProvidersByTypeAndRole } from '@/features/providers-connectors/providers/utils/providerFilters'
 import { useResourceInventoryQueries } from '../../hooks/useResourceInventoryQueries'
 import { ResourceInventoryShell } from '../ResourceInventoryShell'
 import { ResourceInventoryLoading, ResourceInventoryState } from '../ResourceInventoryStates'
@@ -13,13 +13,14 @@ import { PowerInventoryView } from './PowerInventoryView'
 export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
   const {
     providers, providersPending, providersSuccess, providersFetching,
-    providersError, onRefetchProviders, providerId, tabs, t,
+    providersError, onRefetchProviders, providerId, tabs, t, role,
   } = props
-  const sourceProviders = getSourceProvidersByType(providers, 'IBM_POWER')
+  const sourceProviders = getProvidersByTypeAndRole(providers, 'IBM_POWER', role)
   const sourceQuery = useResourceInventoryQueries(
     providersSuccess ? 'ibm-power' : null,
     providers,
     providerId ?? undefined,
+    role,
   )
   const hasData = sourceQuery.powerResources.length > 0
   const requestFailed = sourceQuery.hasProviders && sourceQuery.failures.length > 0 && !hasData

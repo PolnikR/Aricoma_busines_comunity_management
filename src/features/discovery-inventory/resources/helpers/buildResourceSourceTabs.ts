@@ -1,5 +1,5 @@
-import type { ProviderRecord, ProviderType } from '@/features/providers-connectors/providers/model/providerTypes'
-import { getSourceProvidersByType } from '@/features/providers-connectors/providers/utils/providerFilters'
+import type { ProviderRecord, ProviderRole, ProviderType } from '@/features/providers-connectors/providers/model/providerTypes'
+import { getProvidersByTypeAndRole } from '@/features/providers-connectors/providers/utils/providerFilters'
 
 export const RESOURCE_SOURCE_TAB_DEFINITIONS = [
   { resourceTab: 'vmware', providerType: 'VMWARE' },
@@ -23,12 +23,13 @@ function compareProviders(left: ProviderRecord, right: ProviderRecord) {
     || left.id.localeCompare(right.id, undefined, { numeric: true, sensitivity: 'base' })
 }
 
-export function buildResourceSourceTabs(
+function buildResourceTabsByRole(
   providers: readonly ProviderRecord[],
   labels: ResourceSourceTabLabels,
+  role: ProviderRole,
 ): ResourceSourceTab[] {
   return RESOURCE_SOURCE_TAB_DEFINITIONS.flatMap<ResourceSourceTab>(({ resourceTab, providerType }) => {
-    const matchingProviders = getSourceProvidersByType(Array.from(providers), providerType)
+    const matchingProviders = getProvidersByTypeAndRole(Array.from(providers), providerType, role)
       .slice()
       .sort(compareProviders)
 
@@ -51,4 +52,18 @@ export function buildResourceSourceTabs(
         : labels[resourceTab],
     }))
   })
+}
+
+export function buildResourceSourceTabs(
+  providers: readonly ProviderRecord[],
+  labels: ResourceSourceTabLabels,
+): ResourceSourceTab[] {
+  return buildResourceTabsByRole(providers, labels, 'source')
+}
+
+export function buildResourceTargetTabs(
+  providers: readonly ProviderRecord[],
+  labels: ResourceSourceTabLabels,
+): ResourceSourceTab[] {
+  return buildResourceTabsByRole(providers, labels, 'target')
 }

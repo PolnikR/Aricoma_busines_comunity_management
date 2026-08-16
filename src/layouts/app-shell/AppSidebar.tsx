@@ -48,6 +48,7 @@ const navItems: NavItem[] = [
     icon: <ServerIcon />,
     subItems: [
       { name: 'Resources', path: routes.resources },
+      { name: 'Resources ISE', path: routes.resourcesIse },
       { name: 'Infrastructure Topology', path: routes.infrastructure },
       { name: 'Discovery Jobs', path: routes.discoveryJobs },
     ],
@@ -86,6 +87,7 @@ const navKeyMap: Record<string, string> = {
   'Discovery Settings': 'nav.providers.discovery',
   'Discovery & Inventory': 'nav.discovery',
   'Resources': 'nav.discovery.resources',
+  'Resources ISE': 'nav.discovery.resourcesIse',
   'Infrastructure Topology': 'nav.discovery.infrastructure',
   'Discovery Jobs': 'nav.discovery.jobs',
   'Storage Orchestration': 'nav.storage',

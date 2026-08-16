@@ -23,6 +23,7 @@ export const routes = {
   recoveryActionSchedule: '/recovery-actions/schedule',
   recoveryActionHistory: '/recovery-actions/history',
   resources: '/discovery-inventory/resources',
+  resourcesIse: '/discovery-inventory/resources-ise',
   infrastructure: '/discovery-inventory/infrastructure',
   discoveryJobs: '/discovery-inventory/discovery-jobs',
   storageOrchestration: '/storage-orchestration',
