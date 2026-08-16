@@ -128,7 +128,7 @@ describe('RecoveryGroupPolicySetStep', () => {
     useCleanRoomPoliciesMock.mockReturnValue({ data: cleanRoomPolicies, isLoading: false, error: null })
   })
 
-  it('shows resolved policy names on cards and details for the selected set', () => {
+  it('shows resolved policy names in list rows and details for the selected set', () => {
     render(
       <RecoveryGroupPolicySetStep
         policySets={policySets}
@@ -138,10 +138,9 @@ describe('RecoveryGroupPolicySetStep', () => {
       />,
     )
 
-    const selectedCard = screen.getByRole('button', { name: /Tier 2 applications/i })
-    expect(selectedCard).toHaveTextContent('Medium — 6h')
-    expect(selectedCard).toHaveTextContent('Critical — Daily DR Test')
-    expect(selectedCard).toHaveTextContent('Enforce Clean Target')
+    const listRow = screen.getByRole('button', { name: /Tier 2 applications.*Medium — 6h/i })
+    expect(listRow).toBeInTheDocument()
+    expect(listRow).toHaveAttribute('aria-pressed', 'true')
 
     const detail = screen.getByRole('region', { name: 'Selected policy set details' })
     expect(detail).toHaveTextContent('FrequencyEvery 6 hours')
@@ -189,7 +188,7 @@ describe('RecoveryGroupPolicySetStep', () => {
     expect(screen.getByRole('button', { name: /Tier 2 applications/i })).toBeEnabled()
   })
 
-  it('renders each policy set and reports a selection', async () => {
+  it('renders each policy set in the list and reports a selection', async () => {
     const user = userEvent.setup()
     const onSelect = vi.fn()
 
@@ -202,14 +201,14 @@ describe('RecoveryGroupPolicySetStep', () => {
       />,
     )
 
-    expect(screen.getByRole('button', { name: /Tier 2 applications/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Tier 3 web/i })).toBeInTheDocument()
+    expect(screen.getByText(/Tier 2 applications/i)).toBeInTheDocument()
+    expect(screen.getByText(/Tier 3 web/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /Tier 3 web/i }))
     expect(onSelect).toHaveBeenCalledWith('tier3-web')
   })
 
-  it('marks the selected policy set as pressed', () => {
+  it('marks the selected policy set as pressed in list', () => {
     render(
       <RecoveryGroupPolicySetStep
         policySets={policySets}
@@ -221,6 +220,25 @@ describe('RecoveryGroupPolicySetStep', () => {
 
     expect(screen.getByRole('button', { name: /Tier 2 applications/i })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: /Tier 3 web/i })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('filters policy sets by search text', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <RecoveryGroupPolicySetStep
+        policySets={policySets}
+        isLoading={false}
+        selectedPolicySetId={null}
+        onSelect={vi.fn()}
+      />,
+    )
+
+    const searchInput = screen.getByPlaceholderText(/search/i)
+    await user.type(searchInput, 'web')
+
+    expect(screen.getByText(/Tier 3 web/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Tier 2 applications/i)).not.toBeInTheDocument()
   })
 
   it('shows an empty state when no policy sets exist', () => {
