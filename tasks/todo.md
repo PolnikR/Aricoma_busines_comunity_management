@@ -1,54 +1,50 @@
-# Task Checklist: Provider Role Server Filter
+# Task Checklist: Recovery Group Policy Set Details (Variant A)
 
-## Query a cache kontrakt
+## Shared SelectableCard
 
-- [x] Doplniť query-key testy pre `all`, `source` a `target`.
-- [x] Doplniť hook test oddelených role caches.
-- [x] Overiť návrat na fresh cache bez nového requestu.
-- [x] Spustiť focused query testy.
-- [x] Commitnúť query/cache kontrakt.
+- [ ] Pridať voliteľný generický obsahový slot do `SelectableCard`.
+- [ ] Zachovať existujúci vzhľad a správanie bez použitia slotu.
+- [ ] Doplniť test obsahu, keyboard activation, selected a disabled stavu.
+- [ ] Spustiť focused test a lint shared karty.
 
-## Serverová orchestration
+## Policy Set karty a detail
 
-- [x] Doplniť `roleFilter` do `ProvidersPage`.
-- [x] Udržiavať kompletnú `all` query a viditeľnú role query.
-- [x] Použiť viditeľnú query pre tabuľku, refresh, loading a error.
-- [x] Použiť kompletnú query pre create/edit závislosti.
-- [x] Odovzdať controlled role props tabuľke.
-- [x] Doplniť a spustiť page testy.
-- [x] Commitnúť page orchestration.
+- [ ] Mountnúť policy katalóg iba pri neprázdnom zozname Policy Setov.
+- [ ] Načítať Snapshot, Recovery application a Clean Room policies existujúcimi hookmi.
+- [ ] Vytvoriť lookup podľa policy ID bez nového API alebo submit kontraktu.
+- [ ] Na každej karte zobraziť tri resolved policy názvy.
+- [ ] Pod kartami zobraziť detail aktuálne vybraného Policy Setu.
+- [ ] Zobraziť Snapshot frequency, retention a status.
+- [ ] Zobraziť Recovery frequency, selection mode, retention a boot verification.
+- [ ] Zobraziť Clean Room description a status.
+- [ ] Zachovať pôvodné ID a warning pri chýbajúcej referencii alebo query chybe.
+- [ ] Zachovať možnosť výberu a pokračovania pri chybe detailov.
+- [ ] Doplniť loading stav policy detailov.
+- [ ] Doplniť prístupný live región pre zmenu detailu.
+- [ ] Doplniť responzívny layout cez existujúce Tailwind tokeny.
 
-## Filter modal
+## Lokalizácie
 
-- [x] Doplniť `pendingRole` a synchronizáciu cez `onFilterOpen`.
-- [x] Pridať shared `Field` a `Select` pre Role.
-- [x] Implementovať Apply pre Type aj Role.
-- [x] Implementovať Cancel bez zmeny aplikovaných filtrov.
-- [x] Implementovať Clear all na Type prázdny a Role `all`.
-- [x] Resetovať pagination a zatvoriť detail pri zmene filtrov.
-- [x] Počítať aktívne filtre v rozsahu 0–2.
-- [x] Odvodzovať Type možnosti z kompletného datasetu.
-- [x] Posielať kompletný dataset aj edit modalu v tabuľke.
-- [x] Doplniť `providers.allRoles` do EN, SK a CS.
-- [x] Doplniť testy Apply, Cancel, Clear all a kombinovaných filtrov.
-- [x] Spustiť component a page testy.
-- [x] Commitnúť filter UI.
+- [ ] Opraviť opis Policy Set kroku tak, aby uvádzal všetky tri druhy politík.
+- [ ] Pridať potrebné EN, SK a CS texty.
+- [ ] Odstrániť nepoužívaný a zavádzajúci `policiesCount` kľúč.
 
-## Invalidácia cache
+## Testy Recovery Group flow
 
-- [x] Naplniť v mutation testoch cache `all`, `source` a `target`.
-- [x] Overiť prefix invalidáciu po create/update.
-- [x] Overiť prefix invalidáciu po delete.
-- [x] Spustiť mutation testy.
-- [x] Commitnúť invalidation kontrakt.
+- [ ] Rozšíriť `RecoveryGroupPolicySetStep.test.tsx` o tri policy fixtures.
+- [ ] Overiť resolved názvy na kartách a detail predvybraného setu.
+- [ ] Overiť prepnutie detailu a callback výberu.
+- [ ] Overiť loading, empty a missing-ID fallback.
+- [ ] Doplniť tri policy hook mocky do `RecoveryGroupBuilder.test.tsx`.
+- [ ] Overiť policy informácie v builder flow bez zmeny submit payloadu.
 
-## Finálne overenie
+## Finálne overenie a commit
 
-- [x] Spustiť `npm run test -- src/features/providers-connectors/providers`.
-- [x] Spustiť `npm run lint`.
-- [x] Spustiť `npm run typecheck`.
-- [ ] Spustiť `npm run build`.
-- [ ] Manuálne overiť requesty `role=all`, `role=source`, `role=target`.
-- [ ] Manuálne overiť cache návrat na už načítanú rolu.
-- [ ] Manuálne overiť kompletné create dáta pri aktívnom filtri.
-- [x] Skontrolovať `git diff --check` a rozsah zmien.
+- [ ] Spustiť tri dotknuté test súbory jedným focused Vitest príkazom.
+- [ ] Spustiť ESLint iba nad zmenenými TS/TSX súbormi.
+- [ ] Spustiť `npm run typecheck`, pretože sa mení shared TypeScript rozhranie.
+- [ ] Manuálne overiť create/edit flow, desktop a úzky viewport.
+- [ ] Manuálne overiť loading, chybu a chýbajúcu referenciu.
+- [ ] Spustiť `git diff --check`.
+- [ ] Skontrolovať, že staging neobsahuje cudzie zmeny.
+- [ ] Commitnúť ako `feat: show policy details in recovery group selection`.
