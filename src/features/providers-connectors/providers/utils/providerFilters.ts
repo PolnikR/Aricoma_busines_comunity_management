@@ -24,6 +24,11 @@ export function isFlashcopyProvider(provider: ProviderRecord): boolean {
   return provider.type === 'FLASHCOPY'
 }
 
+export function getSourceProvidersByType(providers: ProviderRecord[], type: ProviderType): ProviderRecord[] {
+  return filterByType(providers, type)
+    .filter(provider => provider.role !== 'target')
+}
+
 export function getEligibleSourceProviders(providers: ProviderRecord[]): ProviderRecord[] {
   return filterByTypes(providers, ['VMWARE', 'IBM_POWER'])
     .filter(provider => provider.role !== 'target')

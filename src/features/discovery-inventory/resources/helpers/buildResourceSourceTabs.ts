@@ -1,4 +1,5 @@
 import type { ProviderRecord, ProviderType } from '@/features/providers-connectors/providers/model/providerTypes'
+import { getSourceProvidersByType } from '@/features/providers-connectors/providers/utils/providerFilters'
 
 export const RESOURCE_SOURCE_TAB_DEFINITIONS = [
   { resourceTab: 'vmware', providerType: 'VMWARE' },
@@ -27,8 +28,7 @@ export function buildResourceSourceTabs(
   labels: ResourceSourceTabLabels,
 ): ResourceSourceTab[] {
   return RESOURCE_SOURCE_TAB_DEFINITIONS.flatMap<ResourceSourceTab>(({ resourceTab, providerType }) => {
-    const matchingProviders = providers
-      .filter(provider => provider.type === providerType && provider.role !== 'target')
+    const matchingProviders = getSourceProvidersByType(Array.from(providers), providerType)
       .slice()
       .sort(compareProviders)
 

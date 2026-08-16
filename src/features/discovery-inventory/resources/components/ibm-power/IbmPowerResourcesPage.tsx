@@ -2,6 +2,7 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { MetricsSkeleton } from '@/shared/components/stat-card/StatCard'
+import { getSourceProvidersByType } from '@/features/providers-connectors/providers/utils/providerFilters'
 import { useResourceInventoryQueries } from '../../hooks/useResourceInventoryQueries'
 import { ResourceInventoryShell } from '../ResourceInventoryShell'
 import { ResourceInventoryLoading, ResourceInventoryState } from '../ResourceInventoryStates'
@@ -14,7 +15,7 @@ export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
     providers, providersPending, providersSuccess, providersFetching,
     providersError, onRefetchProviders, providerId, tabs, t,
   } = props
-  const sourceProviders = providers.filter((provider) => provider.type === 'IBM_POWER')
+  const sourceProviders = getSourceProvidersByType(providers, 'IBM_POWER')
   const sourceQuery = useResourceInventoryQueries(
     providersSuccess ? 'ibm-power' : null,
     providers,

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { ProviderRecord, ProviderType } from '@/features/providers-connectors/providers/model/providerTypes'
+import { getSourceProvidersByType } from '@/features/providers-connectors/providers/utils/providerFilters'
 import {
   DISCOVERY_INVENTORY_GC_TIME_MS,
   DISCOVERY_INVENTORY_STALE_TIME_MS,
@@ -47,7 +48,7 @@ export function useResourceInventoryQueries(
 ): ResourceInventoryQueriesResult {
   const providerType = activeTab ? providerTypeByTab[activeTab] : null
   const matchingProviders = useMemo(
-    () => providerType ? providers.filter((provider) => provider.type === providerType) : [],
+    () => providerType ? getSourceProvidersByType(providers, providerType) : [],
     [providerType, providers],
   )
   const selectedProvider = matchingProviders.find((provider) => provider.id === providerId)

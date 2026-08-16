@@ -27,6 +27,12 @@ const secondFlashProvider: ProviderRecord = {
   id: 'flash-02',
   name: 'Flash 02',
 }
+const targetFlashProvider: ProviderRecord = {
+  ...flashProvider,
+  id: 'flash-target-01',
+  name: 'Flash Target',
+  role: 'target',
+}
 
 describe('useResourceInventoryQueries', () => {
   beforeEach(() => {
@@ -141,5 +147,19 @@ describe('useResourceInventoryQueries', () => {
 
     await waitFor(() => { expect(result.current.failures).toHaveLength(1) }, { timeout: 3_000 })
     expect(result.current.failures[0]?.provider.id).toBe('flash-02')
+  })
+
+  it('excludes target-role providers when filtering by type — no providers available when only target exists', () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+    const { result } = renderHook(
+      () => useResourceInventoryQueries('flashsystem', [targetFlashProvider]),
+      { wrapper },
+    )
+
+    expect(result.current.hasProviders).toBe(false)
+    expect(fetchFlashSystemInventory).not.toHaveBeenCalled()
   })
 })

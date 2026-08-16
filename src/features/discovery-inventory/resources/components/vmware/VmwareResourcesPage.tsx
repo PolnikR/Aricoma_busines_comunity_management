@@ -14,7 +14,7 @@ import {
 import { mapInventoryToVirtualMachines } from '../../helpers/mapInventoryToVirtualMachines'
 import { useVirtualMachineSearchParams } from '../../hooks/useVirtualMachineSearchParams'
 import type { VirtualMachineFilterOptions, VirtualMachineFilters, VirtualMachinePageSize } from '../../types/virtualMachineTypes'
-import { filterByType } from '@/features/providers-connectors/providers/utils/providerFilters'
+import { getSourceProvidersByType } from '@/features/providers-connectors/providers/utils/providerFilters'
 import { ResourceInventoryPanel } from '../ResourceInventoryPanel'
 import { ResourceInventoryShell } from '../ResourceInventoryShell'
 import { ResourceInventoryLoading, ResourceInventoryState } from '../ResourceInventoryStates'
@@ -45,7 +45,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     providersError, onRefetchProviders, providerId, tabs, t,
   } = props
   const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
-  const vmwareProviders = filterByType(providers, 'VMWARE')
+  const vmwareProviders = getSourceProvidersByType(providers, 'VMWARE')
   const selectedProviderId = providerId ?? vmwareProviders[0]?.id ?? null
   const inventoryEnabled = providersSuccess && vmwareProviders.length > 0
   const {
