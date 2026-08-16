@@ -171,3 +171,21 @@ export function SignOutIcon(props: IconProps) {
     </svg>
   )
 }
+
+export function RefreshIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="M17.5 8.333A6.667 6.667 0 0 0 5.417 4.167M2.5 11.667a6.667 6.667 0 0 0 12.083 4.166" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M17.5 6.667v1.666h-1.667M2.5 13.333v-1.666h1.667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function ShieldIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="M10 1.667 3.75 4.5v4.167c0 4.583 6.25 8.333 6.25 8.333s6.25-3.75 6.25-8.333V4.5L10 1.667Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="m7.5 10 1.667 1.667 3.333-3.334" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}

@@ -1441,6 +1441,7 @@
   "policySets.form.name": "Název sady zásad",
   "policySets.form.description": "Popis",
   "policySets.form.policies": "Zásady snímků",
+  "policySets.form.snapshotPolicy": "Zásada snímků",
   "policySets.form.snapshotPolicies": "Zásady snímků",
   "policySets.form.recoveryAppPolicy": "Zásada obnovy aplikace",
   "policySets.form.cleanRoomPolicy": "Clean Room zásada",

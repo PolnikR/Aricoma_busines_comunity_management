@@ -152,6 +152,21 @@ describe('RecoveryGroupPolicySetStep', () => {
     expect(detail).toHaveTextContent('Remove conflicting target resources before recovery.')
   })
 
+  it('renders one icon per policy type in the detail panel', () => {
+    render(
+      <RecoveryGroupPolicySetStep
+        policySets={policySets}
+        isLoading={false}
+        selectedPolicySetId="tier2-apps"
+        onSelect={vi.fn()}
+      />,
+    )
+
+    const detail = screen.getByRole('region', { name: 'Selected policy set details' })
+    const icons = detail.querySelectorAll('svg[aria-hidden="true"]')
+    expect(icons).toHaveLength(3)
+  })
+
   it('shows referenced policy IDs when policy details cannot be resolved', () => {
     useRecoveryAppPoliciesMock.mockReturnValue({
       data: [],

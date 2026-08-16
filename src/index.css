@@ -1009,3 +1009,14 @@ pre[class*="language-"] {
 pre[class*="language-"].line-numbers {
   padding-left: 2.8em !important;
 }
+
+/* Policy Detail Facts — responsive grid based on container width */
+.policy-detail-facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@container (max-width: 560px) {
+  .policy-detail-facts {
+    grid-template-columns: 1fr;
+  }
+}

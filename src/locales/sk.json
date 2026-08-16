@@ -1405,6 +1405,7 @@
   "policySets.form.name": "Názov sady politík",
   "policySets.form.description": "Popis",
   "policySets.form.policies": "Politiky snímok",
+  "policySets.form.snapshotPolicy": "Politika snímok",
   "policySets.form.snapshotPolicies": "Politiky snímok",
   "policySets.form.recoveryAppPolicy": "Politika obnovy aplikácie",
   "policySets.form.cleanRoomPolicy": "Clean Room politika",

@@ -1441,6 +1441,7 @@
   "policySets.form.name": "Policy set name",
   "policySets.form.description": "Description",
   "policySets.form.policies": "Snapshot policies",
+  "policySets.form.snapshotPolicy": "Snapshot policy",
   "policySets.form.snapshotPolicies": "Snapshot policies",
   "policySets.form.recoveryAppPolicy": "Recovery application policy",
   "policySets.form.cleanRoomPolicy": "Clean room policy",
