@@ -59,12 +59,22 @@ describe('useUpsertProvider', () => {
       { ...newProvider, credentialStatus: 'ok' },
     ])
 
-    queryClient.setQueryData(providerKeys.list(), [providerA])
+    const targetProvider: ProviderRecord = {
+      ...providerA,
+      id: 'vmware-vcenter-target',
+      name: 'Target vCenter',
+      role: 'target',
+    }
+    queryClient.setQueryData(providerKeys.list('all'), [providerA, targetProvider])
+    queryClient.setQueryData(providerKeys.list('source'), [providerA])
+    queryClient.setQueryData(providerKeys.list('target'), [targetProvider])
     result.current.mutate({ provider: newProvider })
 
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
     expect(submittedProvider(mockFetch)).toEqual(newProvider)
-    expect(queryClient.getQueryState(providerKeys.list())?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryState(providerKeys.list('all'))?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryState(providerKeys.list('source'))?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryState(providerKeys.list('target'))?.isInvalidated).toBe(true)
   })
 
   it('posts an edited provider without sending backend-owned credentialStatus', async () => {
