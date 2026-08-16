@@ -31,8 +31,9 @@ describe('useProviders', () => {
     const { result } = renderHook(() => useProviders(), { wrapper })
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
 
-    expect(result.current.data).toEqual([provider])
-    expect(client.getQueryData(providerKeys.list())).toEqual([provider])
+    const expectedProvider = { ...provider, rawRecord: provider }
+    expect(result.current.data).toEqual([expectedProvider])
+    expect(client.getQueryData(providerKeys.list())).toEqual([expectedProvider])
   })
 
   it('keeps role responses in separate caches and reuses fresh role data', async () => {
@@ -76,16 +77,19 @@ describe('useProviders', () => {
       ({ role }: { role: ProviderRoleFilter }) => useProviders(role),
       { initialProps: { role: 'source' as ProviderRoleFilter }, wrapper },
     )
-    await waitFor(() => { expect(result.current.data).toEqual([sourceProvider]) })
+    const expectedSourceProvider = { ...sourceProvider, rawRecord: sourceProvider }
+    const expectedTargetProvider = { ...targetProvider, rawRecord: targetProvider }
+
+    await waitFor(() => { expect(result.current.data).toEqual([expectedSourceProvider]) })
 
     rerender({ role: 'target' })
-    await waitFor(() => { expect(result.current.data).toEqual([targetProvider]) })
+    await waitFor(() => { expect(result.current.data).toEqual([expectedTargetProvider]) })
 
     rerender({ role: 'source' })
-    await waitFor(() => { expect(result.current.data).toEqual([sourceProvider]) })
+    await waitFor(() => { expect(result.current.data).toEqual([expectedSourceProvider]) })
 
-    expect(client.getQueryData(providerKeys.list('source'))).toEqual([sourceProvider])
-    expect(client.getQueryData(providerKeys.list('target'))).toEqual([targetProvider])
+    expect(client.getQueryData(providerKeys.list('source'))).toEqual([expectedSourceProvider])
+    expect(client.getQueryData(providerKeys.list('target'))).toEqual([expectedTargetProvider])
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 })
