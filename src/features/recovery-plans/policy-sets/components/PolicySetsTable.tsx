@@ -104,7 +104,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
@@ -114,27 +114,29 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         onDensityChange={table.setDensity}
       />
 
-      <DataTableRequestState
-        error={error ? {
-          title: t('policySets.loadFailed'),
-          retryLabel: t('buttons.retry'),
-          isRetrying,
-          onRetry,
-        } : null}
-      >
-        <DataTable
-          columns={getColumns(t, recoveryAppPolicyName, setJsonViewId)}
-          rows={table.pageItems}
-          rowKey={policySet => policySet.id}
-          density={table.density}
-          minWidthClassName="min-w-200"
-          ariaLabel={t('policySets.tableLabel')}
-          rowAriaLabel={policySet => policySet.name}
-          onRowClick={policySet => { setSelectedId(policySet.id) }}
-          selectedRowKey={selectedId}
-          emptyContent={rows.length > 0 ? t('policySets.noMatches') : t('policySets.empty')}
-        />
-      </DataTableRequestState>
+      <div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <DataTableRequestState
+          error={error ? {
+            title: t('policySets.loadFailed'),
+            retryLabel: t('buttons.retry'),
+            isRetrying,
+            onRetry,
+          } : null}
+        >
+          <DataTable
+            columns={getColumns(t, recoveryAppPolicyName, setJsonViewId)}
+            rows={table.pageItems}
+            rowKey={policySet => policySet.id}
+            density={table.density}
+            minWidthClassName="min-w-200"
+            ariaLabel={t('policySets.tableLabel')}
+            rowAriaLabel={policySet => policySet.name}
+            onRowClick={policySet => { setSelectedId(policySet.id) }}
+            selectedRowKey={selectedId}
+            emptyContent={rows.length > 0 ? t('policySets.noMatches') : t('policySets.empty')}
+          />
+        </DataTableRequestState>
+      </div>
 
       {!error ? (
         <DataTablePagination
