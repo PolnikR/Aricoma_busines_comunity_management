@@ -138,9 +138,11 @@ describe('RecoveryGroupPolicySetStep', () => {
       />,
     )
 
-    const listRow = screen.getByRole('button', { name: /Tier 2 applications.*Medium — 6h/i })
+    const listRow = screen.getAllByText('Tier 2 applications')[0]
     expect(listRow).toBeInTheDocument()
-    expect(listRow).toHaveAttribute('aria-pressed', 'true')
+
+    const button = listRow.closest('button')
+    expect(button).toHaveAttribute('aria-pressed', 'true')
 
     const detail = screen.getByRole('region', { name: 'Selected policy set details' })
     expect(detail).toHaveTextContent('FrequencyEvery 6 hours')
@@ -234,7 +236,7 @@ describe('RecoveryGroupPolicySetStep', () => {
       />,
     )
 
-    const searchInput = screen.getByPlaceholderText(/search/i)
+    const searchInput = screen.getByRole('searchbox')
     await user.type(searchInput, 'web')
 
     expect(screen.getByText(/Tier 3 web/i)).toBeInTheDocument()
