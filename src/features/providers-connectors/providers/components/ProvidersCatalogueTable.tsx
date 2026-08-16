@@ -22,6 +22,7 @@ import { useTestProviderConnection } from '../hooks/useTestProviderConnection'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
 import { ProviderConnectionTestDialog } from './ProviderConnectionTestDialog'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
+import { toProviderJson } from '../helpers/providerJson'
 import type { ProviderRecord, ProviderRoleFilter } from '../model/providerTypes'
 
 function credentialStatusLabel(
@@ -414,7 +415,7 @@ export function ProvidersCatalogueTable({
       <JsonViewerModal
         open={jsonViewed !== null}
         title={t('providers.jsonViewer.title')}
-        data={jsonViewed}
+        data={jsonViewed ? toProviderJson(jsonViewed) : null}
         closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
       />

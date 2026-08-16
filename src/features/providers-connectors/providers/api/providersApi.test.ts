@@ -77,6 +77,33 @@ describe('fetchProviders', () => {
     expect(providers[0]?.role).toBe('source')
   })
 
+  it('preserves the validated GET record before applying UI fallbacks', async () => {
+    const backendProvider = {
+      ...providerA,
+      description: null,
+      credentialStatus: null,
+    }
+    stubFetch({ providers: [backendProvider] })
+
+    const [provider] = await fetchProviders()
+
+    expect(provider).toMatchObject({
+      description: '',
+      credentialStatus: 'none',
+    })
+    expect(provider?.rawRecord).toEqual({
+      id: providerA.id,
+      name: providerA.name,
+      description: null,
+      type: providerA.type,
+      role: providerA.role,
+      ipAddress: providerA.ipAddress,
+      credentialId: providerA.credentialId,
+      url: providerA.url,
+      credentialStatus: null,
+    })
+  })
+
   it.each([
     ['source', '/api/get_providers?role=source'],
     ['target', '/api/get_providers?role=target'],

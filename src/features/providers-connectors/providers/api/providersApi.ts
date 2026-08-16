@@ -55,6 +55,7 @@ function mapProviderRecord(provider: GeneratedProviderRecord): ProviderRecord {
   return {
     ...validated,
     credentialStatus: provider.credentialStatus ?? 'none',
+    rawRecord: provider,
   }
 }
 

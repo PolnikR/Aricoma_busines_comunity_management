@@ -55,7 +55,8 @@ function mockFetch() {
   return vi.fn((input: string | URL) => {
     const url = String(input)
     if (url.includes('get_providers')) {
-      const allProviders = deleted ? [providerB, providerC] : [providerA, providerB, providerC]
+      const providerAResponse = { ...providerA, description: null }
+      const allProviders = deleted ? [providerB, providerC] : [providerAResponse, providerB, providerC]
       const providers = url.includes('role=target')
         ? allProviders.filter(provider => provider.role === 'target')
         : url.includes('role=source')
@@ -234,6 +235,7 @@ describe('ProvidersCatalogueTable', () => {
     expect(dialog).toHaveTextContent('"ipAddress": "10.99.99.40"')
     expect(dialog).toHaveTextContent('"credentialId": "vcenter-admin"')
     expect(dialog).toHaveTextContent('"credentialStatus": "ok"')
+    expect(dialog).toHaveTextContent('"description": null')
     expect(dialog).not.toHaveTextContent('"port"')
     expect(dialog).toHaveTextContent('"url": "https://10.99.99.40/ui/"')
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
