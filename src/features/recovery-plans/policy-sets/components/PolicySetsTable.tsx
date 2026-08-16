@@ -104,7 +104,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
@@ -114,7 +114,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         onDensityChange={table.setDensity}
       />
 
-      <div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="custom-scrollbar flex min-h-0 flex-1 flex-col lg:overflow-y-auto">
         <DataTableRequestState
           error={error ? {
             title: t('policySets.loadFailed'),

@@ -27,13 +27,13 @@ export function PolicySetsPage() {
         )}
       />
 
-      <div className="flex-1 overflow-hidden p-3 lg:min-h-0">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3">
         <InventoryShell
           inventoryTitle={t('pages.policySets.inventoryTitle')}
           inventoryDescription={t('pages.policySets.inventoryDescription')}
           tabs={null}
         >
-          <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm lg:min-h-0">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
             <PolicySetsTable
               policySets={policySets}
               isLoading={isLoading}
