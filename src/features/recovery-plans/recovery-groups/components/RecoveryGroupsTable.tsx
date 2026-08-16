@@ -417,7 +417,9 @@ export function RecoveryGroupsTable({
       <ConfirmDialog
         open={deleteTarget !== null}
         title={t('dialogs.deleteRecoveryGroup')}
-        message={t('dialogs.deleteRecoveryGroupMessage').replace('{name}', deleteTarget?.name ?? '')}
+        message={t(deleteTarget?.pushToOrchestrator
+          ? 'dialogs.deleteRecoveryGroupOrchestratedMessage'
+          : 'dialogs.deleteRecoveryGroupMessage').replace('{name}', deleteTarget?.name ?? '')}
         confirmLabel={t('buttons.delete')}
         loadingLabel={t('buttons.deleting')}
         cancelLabel={t('buttons.cancel')}

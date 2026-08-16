@@ -158,6 +158,9 @@ describe('RecoveryGroupsTable', () => {
     await user.click(screen.getByText('Database group'))
     await user.click(screen.getByRole('button', { name: 'Delete' }))
     const confirmDialog = screen.getByRole('dialog', { name: 'Delete recovery group' })
+    expect(confirmDialog).toHaveTextContent(
+      'This recovery group is deployed to the orchestrator. Deleting it will first roll back its Airflow and IBM FlashCopy resources.',
+    )
     await user.click(within(confirmDialog).getByRole('button', { name: 'Delete' }))
 
     expect(onDelete).toHaveBeenCalledWith(orchestratedGroup)
@@ -177,6 +180,10 @@ describe('RecoveryGroupsTable', () => {
     await user.click(screen.getByText('Database group'))
     await user.click(screen.getByRole('button', { name: 'Delete' }))
     const confirmDialog = screen.getByRole('dialog', { name: 'Delete recovery group' })
+    expect(confirmDialog).toHaveTextContent(
+      'Are you sure you want to delete the recovery group Database group?',
+    )
+    expect(confirmDialog).not.toHaveTextContent('deployed to the orchestrator')
     await user.click(within(confirmDialog).getByRole('button', { name: 'Delete' }))
 
     expect(onDelete).toHaveBeenCalledWith(databaseGroup)

@@ -629,6 +629,7 @@
   "dialogs.deleteApplicationMessage": "Are you sure you want to delete {itemName}? This action cannot be undone.",
   "dialogs.deleteRecoveryGroup": "Delete recovery group",
   "dialogs.deleteRecoveryGroupMessage": "Are you sure you want to delete the recovery group {name}? This action cannot be undone.",
+  "dialogs.deleteRecoveryGroupOrchestratedMessage": "This recovery group is deployed to the orchestrator. Deleting it will first roll back its Airflow and IBM FlashCopy resources. The recovery group {name} will then be permanently deleted. This action cannot be undone.",
   "dialogs.applicationJson": "Application JSON",
 
   "drawer.selectedVm": "Selected virtual machine",

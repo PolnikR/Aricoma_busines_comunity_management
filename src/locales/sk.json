@@ -606,6 +606,7 @@
   "dialogs.deleteApplicationMessage": "Naozaj chcete odstrániť aplikáciu „{itemName}“? Túto akciu nie je možné vrátiť späť.",
   "dialogs.deleteRecoveryGroup": "Odstrániť skupinu obnovy",
   "dialogs.deleteRecoveryGroupMessage": "Naozaj chcete odstrániť skupinu obnovy „{name}“? Túto akciu nie je možné vrátiť späť.",
+  "dialogs.deleteRecoveryGroupOrchestratedMessage": "Táto skupina obnovy je nasadená do orchestrátora. Pri odstránení sa najskôr vykoná rollback jej zdrojov Airflow a IBM FlashCopy. Skupina obnovy „{name}“ sa potom natrvalo odstráni. Túto akciu nie je možné vrátiť späť.",
   "dialogs.applicationJson": "JSON aplikácie",
   "drawer.selectedVm": "Vybraný virtuálny stroj",
   "drawer.selectedProvider": "Vybraný poskytovateľ",
