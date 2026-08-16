@@ -16,8 +16,9 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { ExternalLinkIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
-import { EXTERNAL_SERVICES } from '@/config/externalServices'
+import { buildAirflowDagUrl } from '@/config/externalServices'
 import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
+import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
 import { toRecoveryGroupJson } from '../helpers/mapRecoveryGroups'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupRollbackResultModal } from './RecoveryGroupRollbackResultModal'
@@ -63,6 +64,7 @@ export function RecoveryGroupsTable({
 }: RecoveryGroupsTableProps) {
   const { t } = useTranslation()
   const { data: policySets = [] } = usePolicySets()
+  const { data: platformProviders = [] } = usePlatformProviders()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const [filters, setFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)
@@ -89,6 +91,9 @@ export function RecoveryGroupsTable({
     searchFields: ['id', 'name', 'description'],
   })
   const selected = rows.find(group => group.id === selectedId) ?? null
+  const selectedOrchestrationProviderUrl = platformProviders.find(
+    provider => provider.id === selected?.orchestrationProviderId,
+  )?.url
   const jsonViewed = rows.find(group => group.id === jsonViewId) ?? null
   const activeFilterCount = Number(Boolean(filters.workloadType)) + Number(Boolean(filters.resourceType))
   const policySetName = (policySetId: string) => (
@@ -389,7 +394,7 @@ export function RecoveryGroupsTable({
               value={
                 selected.airflowRunId ? (
                   <a
-                    href={EXTERNAL_SERVICES.airflow.dagsUrl}
+                    href={buildAirflowDagUrl(selected.airflowRunId, selectedOrchestrationProviderUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"

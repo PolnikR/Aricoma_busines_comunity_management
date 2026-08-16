@@ -1,6 +1,6 @@
 import { OrchestratorResultModal } from '@/shared/components/modal/OrchestratorResultModal'
 import { useTranslation } from '@/hooks/useTranslation'
-import { EXTERNAL_SERVICES } from '@/config/externalServices'
+import { buildAirflowDagUrl } from '@/config/externalServices'
 
 interface RecoveryGroupOrchestratorSuccessModalProps {
   open: boolean
@@ -8,6 +8,7 @@ interface RecoveryGroupOrchestratorSuccessModalProps {
   groupName: string
   runId?: string | null
   providerName?: string | null
+  providerUrl?: string | null
 }
 
 export function RecoveryGroupOrchestratorSuccessModal({
@@ -16,6 +17,7 @@ export function RecoveryGroupOrchestratorSuccessModal({
   groupName,
   runId,
   providerName,
+  providerUrl,
 }: RecoveryGroupOrchestratorSuccessModalProps) {
   const { t } = useTranslation()
 
@@ -29,8 +31,12 @@ export function RecoveryGroupOrchestratorSuccessModal({
       statusLabel={t('recoveryGroups.orchestratorSuccessModal.status')}
       status={t('recoveryGroups.orchestratorSuccessModal.queued')}
       closeLabel={t('buttons.close')}
-      externalActionLabel={t('recoveryGroups.orchestratorSuccessModal.viewInAirflow')}
-      onExternalAction={() => { window.open(EXTERNAL_SERVICES.airflow.dagsUrl, '_blank', 'noopener,noreferrer') }}
+      {...(runId ? {
+        externalActionLabel: t('recoveryGroups.orchestratorSuccessModal.viewInAirflow'),
+        onExternalAction: () => {
+          window.open(buildAirflowDagUrl(runId, providerUrl), '_blank', 'noopener,noreferrer')
+        },
+      } : {})}
       details={[
         ...(providerName ? [{ label: t('recoveryGroups.orchestratorSuccessModal.provider'), value: providerName }] : []),
         ...(runId ? [{ label: t('recoveryGroups.orchestratorSuccessModal.runId'), value: runId, mono: true }] : []),

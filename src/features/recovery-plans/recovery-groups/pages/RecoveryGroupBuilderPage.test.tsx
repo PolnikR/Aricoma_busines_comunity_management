@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { EXTERNAL_SERVICES } from '@/config/externalServices'
 import { RecoveryGroupBuilderPage } from './RecoveryGroupBuilderPage'
 import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 
 const navigate = vi.fn()
 const create = vi.fn()
+const airflowProviderUrl = 'https://airflow.dynamic.test:8443'
 
 vi.mock('react-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router')>()
@@ -33,7 +33,7 @@ vi.mock('../hooks/useRecoveryGroups', () => ({
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
   usePlatformProviders: () => ({
     data: [
-      { id: 'airflow-01', name: 'Primary Airflow', url: EXTERNAL_SERVICES.airflow.dagsUrl },
+      { id: 'airflow-01', name: 'Primary Airflow', url: airflowProviderUrl },
     ],
   }),
 }))
@@ -78,6 +78,7 @@ beforeEach(() => {
 describe('RecoveryGroupBuilderPage', () => {
   it('shows the success modal with the airflow run id when pushed to the orchestrator', async () => {
     const user = userEvent.setup()
+    const openWindow = vi.spyOn(window, 'open').mockImplementation(() => null)
     create.mockResolvedValue({ airflowRunId: '260806091844_d023a7ef' })
     render(<RecoveryGroupBuilderPage />)
 
@@ -86,6 +87,25 @@ describe('RecoveryGroupBuilderPage', () => {
     expect(await screen.findByText('260806091844_d023a7ef')).toBeInTheDocument()
     expect(screen.getByText('Primary Airflow')).toBeInTheDocument()
     expect(navigate).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'View in Airflow' }))
+    expect(openWindow).toHaveBeenCalledWith(
+      `${airflowProviderUrl}/dags/dag_260806091844_d023a7ef`,
+      '_blank',
+      'noopener,noreferrer',
+    )
+    openWindow.mockRestore()
+  })
+
+  it('does not offer an exact DAG link when the API omits the airflow run id', async () => {
+    const user = userEvent.setup()
+    create.mockResolvedValue({ airflowRunId: null })
+    render(<RecoveryGroupBuilderPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Create with orchestration' }))
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'View in Airflow' })).not.toBeInTheDocument()
   })
 
   it('navigates back immediately without a modal when not pushed to the orchestrator', async () => {

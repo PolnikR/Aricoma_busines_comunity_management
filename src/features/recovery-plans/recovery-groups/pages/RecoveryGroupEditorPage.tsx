@@ -128,6 +128,7 @@ export function RecoveryGroupEditorPage() {
         groupName={orchestratorRun?.groupName ?? ''}
         runId={orchestratorRun?.runId ?? null}
         providerName={orchestratorRun?.providerName ?? null}
+        providerUrl={orchestratorRun?.providerUrl ?? null}
       />
     </div>
   )

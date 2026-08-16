@@ -19,6 +19,14 @@ vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
     ],
   }),
 }))
+vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
+  usePlatformProviders: () => ({
+    data: [
+      { id: 'airflow-01', name: 'Dynamic Airflow', url: 'https://airflow.dynamic.test:8443' },
+      { id: 'airflow-without-url', name: 'Fallback Airflow' },
+    ],
+  }),
+}))
 
 const groups: RecoveryGroup[] = [
   {
@@ -69,6 +77,12 @@ const unresolvedGroup: RecoveryGroup = {
   resourceType: 'vm',
   workloadType: null,
   providerResolution: 'unresolved',
+}
+
+function getDatabaseGroup(): RecoveryGroup {
+  const group = groups.find(candidate => candidate.id === 'database-group')
+  if (!group) throw new Error('Expected database group fixture')
+  return group
 }
 
 describe('RecoveryGroupsTable', () => {
@@ -200,6 +214,60 @@ describe('RecoveryGroupsTable', () => {
 
     expect(await screen.findByRole('dialog', { name: 'Recovery group detail' })).toBeInTheDocument()
     expect(screen.getByText('Tier 2 applications')).toBeInTheDocument()
+  })
+
+  it('links the airflow run id to the exact DAG under the selected provider URL', async () => {
+    const user = userEvent.setup()
+    const orchestratedGroup: RecoveryGroup = {
+      ...getDatabaseGroup(),
+      airflowRunId: '260812103627_4c06f9c8',
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: true,
+    }
+    render(
+      <RecoveryGroupsTable groups={[orchestratedGroup]} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
+    )
+
+    await user.click(screen.getByText('Database group'))
+
+    const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+    expect(within(detail).getByRole('link', { name: /260812103627_4c06f9c8/ })).toHaveAttribute(
+      'href',
+      'https://airflow.dynamic.test:8443/dags/dag_260812103627_4c06f9c8',
+    )
+  })
+
+  it('uses the central Airflow fallback when the selected provider has no URL', async () => {
+    const user = userEvent.setup()
+    const orchestratedGroup: RecoveryGroup = {
+      ...getDatabaseGroup(),
+      airflowRunId: 'run-123',
+      orchestrationProviderId: 'airflow-without-url',
+      pushToOrchestrator: true,
+    }
+    render(
+      <RecoveryGroupsTable groups={[orchestratedGroup]} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
+    )
+
+    await user.click(screen.getByText('Database group'))
+
+    const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+    expect(within(detail).getByRole('link', { name: /run-123/ })).toHaveAttribute(
+      'href',
+      'http://10.99.99.55:8080/dags/dag_run-123',
+    )
+  })
+
+  it('does not render an Airflow link when the group has no run id', async () => {
+    const user = userEvent.setup()
+    render(
+      <RecoveryGroupsTable groups={[getDatabaseGroup()]} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
+    )
+
+    await user.click(screen.getByText('Database group'))
+
+    const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+    expect(within(detail).queryByRole('link')).not.toBeInTheDocument()
   })
 
   it('opens a JSON viewer showing the recovery group submit payload', async () => {

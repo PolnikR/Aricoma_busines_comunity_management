@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { EXTERNAL_SERVICES } from '@/config/externalServices'
 import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { RecoveryGroupEditorPage } from './RecoveryGroupEditorPage'
 
 const navigate = vi.fn()
 const update = vi.fn()
+const airflowProviderUrl = 'https://airflow.dynamic.test:8443'
 const group: RecoveryGroup = {
   id: 'database_group',
   name: 'Database group',
@@ -42,7 +42,7 @@ vi.mock('../hooks/useRecoveryGroups', () => ({
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
   usePlatformProviders: () => ({
     data: [
-      { id: 'airflow-01', name: 'Primary Airflow', url: EXTERNAL_SERVICES.airflow.dagsUrl },
+      { id: 'airflow-01', name: 'Primary Airflow', url: airflowProviderUrl },
     ],
   }),
 }))
@@ -109,6 +109,7 @@ describe('RecoveryGroupEditorPage', () => {
 
   it('shows the orchestrator success modal instead of navigating when pushed to the orchestrator', async () => {
     const user = userEvent.setup()
+    const openWindow = vi.spyOn(window, 'open').mockImplementation(() => null)
     update.mockResolvedValue({ airflowRunId: '260806091844_d023a7ef' })
     render(<RecoveryGroupEditorPage />)
 
@@ -117,5 +118,13 @@ describe('RecoveryGroupEditorPage', () => {
     expect(await screen.findByText('260806091844_d023a7ef')).toBeInTheDocument()
     expect(screen.getByText('Primary Airflow')).toBeInTheDocument()
     expect(navigate).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'View in Airflow' }))
+    expect(openWindow).toHaveBeenCalledWith(
+      `${airflowProviderUrl}/dags/dag_260806091844_d023a7ef`,
+      '_blank',
+      'noopener,noreferrer',
+    )
+    openWindow.mockRestore()
   })
 })
