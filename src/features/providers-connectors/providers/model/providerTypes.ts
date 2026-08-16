@@ -24,7 +24,7 @@ export interface ProviderRecord {
   port?: number | undefined
   credentialId: string | null
   /** Present on current backend responses; optional internally for legacy fixtures. */
-  role?: ProviderRole
+  role?: ProviderRole | undefined
   defaultFlashcopyProviderId?: string | null | undefined
   orchestratorConnId?: string | null | undefined
   credentialStatus: ProviderCredentialStatus
