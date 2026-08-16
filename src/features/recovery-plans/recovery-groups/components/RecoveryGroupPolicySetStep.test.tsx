@@ -138,10 +138,10 @@ describe('RecoveryGroupPolicySetStep', () => {
       />,
     )
 
-    const listRow = screen.getAllByText('Tier 2 applications')[0]
-    expect(listRow).toBeInTheDocument()
+    const listRows = screen.getAllByText('Tier 2 applications')
+    expect(listRows.length).toBeGreaterThan(0)
 
-    const button = listRow.closest('button')
+    const button = listRows[0]?.closest('button')
     expect(button).toHaveAttribute('aria-pressed', 'true')
 
     const detail = screen.getByRole('region', { name: 'Selected policy set details' })
