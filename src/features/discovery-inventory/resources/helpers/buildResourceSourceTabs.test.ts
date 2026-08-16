@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import { buildResourceSourceTabs } from './buildResourceSourceTabs'
+import { buildResourceSourceTabs, buildResourceTargetTabs } from './buildResourceSourceTabs'
 
 const labels = {
   vmware: 'VMware VMs',
@@ -61,6 +61,42 @@ describe('buildResourceSourceTabs', () => {
   it('does not expose target providers as discovery sources', () => {
     const tabs = buildResourceSourceTabs([
       provider('target-01', 'Target vCenter', 'VMWARE', 'target'),
+    ], labels)
+
+    expect(tabs.find(tab => tab.resourceTab === 'vmware')).toMatchObject({
+      value: 'vmware:none',
+      providerId: null,
+    })
+  })
+})
+
+describe('buildResourceTargetTabs', () => {
+  it('returns target-only providers as target tabs', () => {
+    expect(buildResourceTargetTabs([
+      provider('target-01', 'Target vCenter', 'VMWARE', 'target'),
+      provider('flash-target-01', 'Target Flash', 'FLASHCOPY', 'target'),
+      provider('power-target-01', 'Target Power', 'IBM_POWER', 'target'),
+    ], labels)).toEqual([
+      { value: 'vmware:target-01', resourceTab: 'vmware', providerId: 'target-01', label: labels.vmware },
+      { value: 'flashsystem:flash-target-01', resourceTab: 'flashsystem', providerId: 'flash-target-01', label: labels.flashsystem },
+      { value: 'ibm-power:power-target-01', resourceTab: 'ibm-power', providerId: 'power-target-01', label: labels['ibm-power'] },
+    ])
+  })
+
+  it('excludes source providers from target tabs', () => {
+    const tabs = buildResourceTargetTabs([
+      provider('source-01', 'Source vCenter', 'VMWARE', 'source'),
+    ], labels)
+
+    expect(tabs.find(tab => tab.resourceTab === 'vmware')).toMatchObject({
+      value: 'vmware:none',
+      providerId: null,
+    })
+  })
+
+  it('excludes missing-role providers from target tabs', () => {
+    const tabs = buildResourceTargetTabs([
+      provider('legacy-01', 'Legacy vCenter', 'VMWARE'),
     ], labels)
 
     expect(tabs.find(tab => tab.resourceTab === 'vmware')).toMatchObject({

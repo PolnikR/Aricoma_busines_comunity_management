@@ -36,6 +36,7 @@
   "nav.providers.health": "Stav a diagnostika",
   "nav.discovery": "Inventár infraštruktúry",
   "nav.discovery.resources": "Zdroje",
+  "nav.discovery.resourcesIse": "Zdroje ISE",
   "nav.discovery.infrastructure": "Topológia infraštruktúry",
   "nav.discovery.jobs": "Úlohy zisťovania",
   "nav.discovery.search": "Vyhľadávanie v inventári",
@@ -110,6 +111,11 @@
   "pages.virtualMachines.detail.thinProvisioned": "Dynamické pridelenie",
   "pages.virtualMachines.detail.yes": "Áno",
   "pages.virtualMachines.detail.no": "Nie",
+
+  "pages.resourcesIse.eyebrow": "Inventár infraštruktúry",
+  "pages.resourcesIse.title": "Zdroje ISE",
+  "pages.resourcesIse.description": "Prehľad inventára zdrojov cieľovej role.",
+
   "pages.infrastructure.title": "Topológia infraštruktúry",
   "pages.infrastructure.description": "Zobrazte vzťahy medzi klastrami, hostiteľmi, virtuálnymi strojmi a dátovými úložiskami.",
   "pages.infrastructure.eyebrow": "Inventár infraštruktúry",

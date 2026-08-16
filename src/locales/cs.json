@@ -39,6 +39,7 @@
   "nav.providers.health": "Zdraví a diagnostika",
   "nav.discovery": "Zjišťování a inventář",
   "nav.discovery.resources": "Zdroje",
+  "nav.discovery.resourcesIse": "Zdroje ISE",
   "nav.discovery.infrastructure": "Topologie infrastruktury",
   "nav.discovery.jobs": "Úlohy zjišťování",
   "nav.discovery.search": "Vyhledávání inventáře",
@@ -114,6 +115,10 @@
   "pages.virtualMachines.detail.thinProvisioned": "Tenké",
   "pages.virtualMachines.detail.yes": "Ano",
   "pages.virtualMachines.detail.no": "Ne",
+
+  "pages.resourcesIse.eyebrow": "Zjišťování a inventář",
+  "pages.resourcesIse.title": "Zdroje ISE",
+  "pages.resourcesIse.description": "Přehled inventáře zdrojů cílové role.",
 
   "pages.infrastructure.description": "Prozkoumejte vztahy mezi zjištěnými clustery, hostiteli, virtuálními stroji a úložišti.",
   "pages.infrastructure.eyebrow": "Zjišťování a inventář",

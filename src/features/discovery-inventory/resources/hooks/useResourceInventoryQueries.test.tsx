@@ -162,4 +162,39 @@ describe('useResourceInventoryQueries', () => {
     expect(result.current.hasProviders).toBe(false)
     expect(fetchFlashSystemInventory).not.toHaveBeenCalled()
   })
+
+  it('restricts to target providers when role is "target"; restricts to source providers when role is "source" or omitted', () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+
+    // With role='target', only targets are available
+    const { result: resultTarget } = renderHook(
+      () => useResourceInventoryQueries('flashsystem', [flashProvider, targetFlashProvider], undefined, 'target'),
+      { wrapper },
+    )
+    expect(resultTarget.current.hasProviders).toBe(true)
+    expect(fetchFlashSystemInventory).toHaveBeenCalledWith(undefined)
+
+    vi.clearAllMocks()
+
+    // With role='source' (explicit), only sources are available
+    const { result: resultSource } = renderHook(
+      () => useResourceInventoryQueries('flashsystem', [flashProvider, targetFlashProvider], undefined, 'source'),
+      { wrapper },
+    )
+    expect(resultSource.current.hasProviders).toBe(true)
+    expect(fetchFlashSystemInventory).toHaveBeenCalledWith(undefined)
+
+    vi.clearAllMocks()
+
+    // With role omitted (default), only sources are available
+    const { result: resultDefault } = renderHook(
+      () => useResourceInventoryQueries('flashsystem', [flashProvider, targetFlashProvider], undefined),
+      { wrapper },
+    )
+    expect(resultDefault.current.hasProviders).toBe(true)
+    expect(fetchFlashSystemInventory).toHaveBeenCalledWith(undefined)
+  })
 })

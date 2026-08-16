@@ -5,11 +5,11 @@ import { useProviders } from '@/features/providers-connectors/providers/hooks/us
 import { FlashSystemResourcesPage } from '../components/flash-system/FlashSystemResourcesPage'
 import { IbmPowerResourcesPage } from '../components/ibm-power/IbmPowerResourcesPage'
 import type { SourceResourcesPageProps } from '../components/SourceResourcesPageProps'
-import { buildResourceSourceTabs } from '../helpers/buildResourceSourceTabs'
+import { buildResourceTargetTabs } from '../helpers/buildResourceSourceTabs'
 import { VmwareResourcesPage } from '../components/vmware/VmwareResourcesPage'
 import { useResourceTabSearchParam } from '../hooks/useResourceTabSearchParam'
 
-export function ResourcesPage() {
+export function ResourcesIsePage() {
   const { t } = useTranslation()
   const { resourceTab, providerId, setResourceSource } = useResourceTabSearchParam()
   const {
@@ -20,34 +20,34 @@ export function ResourcesPage() {
     isFetching: providersFetching,
     refetch: refetchProviders,
   } = useProviders()
-  const sourceTabs = useMemo(
-    () => buildResourceSourceTabs(providers, {
+  const targetTabs = useMemo(
+    () => buildResourceTargetTabs(providers, {
       vmware: t('pages.virtualMachines.tabs.vmware'),
       flashsystem: t('pages.virtualMachines.tabs.flashSystem'),
       'ibm-power': t('pages.virtualMachines.tabs.ibmPower'),
     }),
     [providers, t],
   )
-  const activeSourceTab = sourceTabs.find(
+  const activeTargetTab = targetTabs.find(
     tab => tab.resourceTab === resourceTab && tab.providerId === providerId,
-  ) ?? sourceTabs.find(tab => tab.resourceTab === resourceTab) ?? sourceTabs[0]
+  ) ?? targetTabs.find(tab => tab.resourceTab === resourceTab) ?? targetTabs[0]
 
   useEffect(() => {
-    if (!providersSuccess || !activeSourceTab) return
-    if (activeSourceTab.resourceTab !== resourceTab || activeSourceTab.providerId !== providerId) {
+    if (!providersSuccess || !activeTargetTab) return
+    if (activeTargetTab.resourceTab !== resourceTab || activeTargetTab.providerId !== providerId) {
       setResourceSource({
-        resourceTab: activeSourceTab.resourceTab,
-        providerId: activeSourceTab.providerId,
+        resourceTab: activeTargetTab.resourceTab,
+        providerId: activeTargetTab.providerId,
       })
     }
-  }, [activeSourceTab, providerId, providersSuccess, resourceTab, setResourceSource])
+  }, [activeTargetTab, providerId, providersSuccess, resourceTab, setResourceSource])
 
   const tabs = (
     <Tabs
-      items={sourceTabs}
-      value={activeSourceTab?.value ?? 'vmware:none'}
+      items={targetTabs}
+      value={activeTargetTab?.value ?? 'vmware:none'}
       onChange={(value) => {
-        const nextTab = sourceTabs.find(tab => tab.value === value)
+        const nextTab = targetTabs.find(tab => tab.value === value)
         if (nextTab) {
           setResourceSource({ resourceTab: nextTab.resourceTab, providerId: nextTab.providerId })
         }
@@ -61,25 +61,25 @@ export function ResourcesPage() {
       className="w-full shrink-0 border-b-0 bg-surface px-0 sm:w-auto"
     />
   )
-  const sourcePageProps: SourceResourcesPageProps = {
+  const targetPageProps: SourceResourcesPageProps = {
     providers,
     providersPending: providersLoading || (!providersSuccess && providersError === null),
     providersSuccess,
     providersFetching,
     providersError: providersError instanceof Error ? providersError : null,
     onRefetchProviders: () => { void refetchProviders() },
-    providerId: activeSourceTab?.providerId ?? null,
+    providerId: activeTargetTab?.providerId ?? null,
     tabs,
     t,
-    role: 'source',
+    role: 'target',
   }
 
   switch (resourceTab) {
     case 'flashsystem':
-      return <FlashSystemResourcesPage key={activeSourceTab?.value} {...sourcePageProps} />
+      return <FlashSystemResourcesPage key={activeTargetTab?.value} {...targetPageProps} />
     case 'ibm-power':
-      return <IbmPowerResourcesPage key={activeSourceTab?.value} {...sourcePageProps} />
+      return <IbmPowerResourcesPage key={activeTargetTab?.value} {...targetPageProps} />
     case 'vmware':
-      return <VmwareResourcesPage key={activeSourceTab?.value} {...sourcePageProps} />
+      return <VmwareResourcesPage key={activeTargetTab?.value} {...targetPageProps} />
   }
 }

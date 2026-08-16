@@ -39,6 +39,7 @@
   "nav.providers.health": "Health & Diagnostics",
   "nav.discovery": "Discovery & Inventory",
   "nav.discovery.resources": "Resources",
+  "nav.discovery.resourcesIse": "Resources ISE",
   "nav.discovery.infrastructure": "Infrastructure Topology",
   "nav.discovery.jobs": "Discovery Jobs",
   "nav.discovery.search": "Inventory Search",
@@ -114,6 +115,10 @@
   "pages.virtualMachines.detail.thinProvisioned": "Thin",
   "pages.virtualMachines.detail.yes": "Yes",
   "pages.virtualMachines.detail.no": "No",
+
+  "pages.resourcesIse.eyebrow": "Discovery & Inventory",
+  "pages.resourcesIse.title": "Resources ISE",
+  "pages.resourcesIse.description": "Target role resource inventory overview.",
 
   "pages.infrastructure.title": "Infrastructure Topology",
   "pages.infrastructure.description": "Explore discovered cluster, host, virtual machine, and datastore relationships.",

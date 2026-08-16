@@ -1,4 +1,4 @@
-import type { ProviderRecord, ProviderType } from '../model/providerTypes'
+import type { ProviderRecord, ProviderRole, ProviderType } from '../model/providerTypes'
 
 export function filterByType(providers: ProviderRecord[], type: ProviderType): ProviderRecord[] {
   return providers.filter(provider => provider.type === type)
@@ -24,9 +24,17 @@ export function isFlashcopyProvider(provider: ProviderRecord): boolean {
   return provider.type === 'FLASHCOPY'
 }
 
-export function getSourceProvidersByType(providers: ProviderRecord[], type: ProviderType): ProviderRecord[] {
+export function getProvidersByTypeAndRole(providers: ProviderRecord[], type: ProviderType, role: ProviderRole): ProviderRecord[] {
   return filterByType(providers, type)
-    .filter(provider => provider.role !== 'target')
+    .filter(provider => role === 'source' ? provider.role !== 'target' : provider.role === 'target')
+}
+
+export function getSourceProvidersByType(providers: ProviderRecord[], type: ProviderType): ProviderRecord[] {
+  return getProvidersByTypeAndRole(providers, type, 'source')
+}
+
+export function getTargetProvidersByType(providers: ProviderRecord[], type: ProviderType): ProviderRecord[] {
+  return getProvidersByTypeAndRole(providers, type, 'target')
 }
 
 export function getEligibleSourceProviders(providers: ProviderRecord[]): ProviderRecord[] {
