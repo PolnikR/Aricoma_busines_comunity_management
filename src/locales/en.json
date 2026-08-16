@@ -867,6 +867,7 @@
   "providers.searchLabel": "Search providers by name",
   "providers.filterTitle": "Filter providers",
   "providers.allTypes": "All types",
+  "providers.allRoles": "All roles",
   "providers.tableLabel": "Providers table",
   "providers.noMatches": "No providers match your search.",
   "providers.empty": "No providers were returned by the backend.",

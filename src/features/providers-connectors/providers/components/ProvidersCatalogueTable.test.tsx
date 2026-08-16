@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvidersCatalogueTable } from './ProvidersCatalogueTable'
-import type { ProviderRecord } from '../model/providerTypes'
+import type { ProviderRecord, ProviderRoleFilter } from '../model/providerTypes'
 import { useProviders } from '../hooks/useProviders'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -32,13 +33,34 @@ const providerB: ProviderRecord = {
   role: 'source',
   credentialStatus: 'none',
 }
+const providerC: ProviderRecord = {
+  id: 'vmware-vcenter-02',
+  name: 'Recovery vCenter',
+  description: 'Target vCenter',
+  type: 'VMWARE',
+  ipAddress: '10.99.99.42',
+  credentialId: 'vcenter-admin',
+  role: 'target',
+  credentialStatus: 'ok',
+}
+
+function requestUrl(input: RequestInfo | URL): string {
+  if (typeof input === 'string') return input
+  if (input instanceof URL) return input.href
+  return input.url
+}
 
 function mockFetch() {
   let deleted = false
   return vi.fn((input: string | URL) => {
     const url = String(input)
     if (url.includes('get_providers')) {
-      const providers = deleted ? [providerB] : [providerA, providerB]
+      const allProviders = deleted ? [providerB, providerC] : [providerA, providerB, providerC]
+      const providers = url.includes('role=target')
+        ? allProviders.filter(provider => provider.role === 'target')
+        : url.includes('role=source')
+          ? allProviders.filter(provider => provider.role === 'source')
+          : allProviders
       return Promise.resolve(new Response(JSON.stringify({ providers }), { status: 200 }))
     }
     if (url.includes('delete_provider')) {
@@ -52,13 +74,15 @@ function mockFetch() {
 function renderTable() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   function ProvidersTableHarness() {
-    const { data = [], isLoading, isFetching, error, refetch } = useProviders()
+    const [roleFilter, setRoleFilter] = useState<ProviderRoleFilter>('all')
+    const { data = [], isLoading, isFetching, error, refetch } = useProviders(roleFilter)
+    const { data: allProviders = [] } = useProviders('all')
     return (
       <ProvidersCatalogueTable
         providers={data}
-        allProviders={data}
-        roleFilter="all"
-        onRoleFilterChange={vi.fn()}
+        allProviders={allProviders}
+        roleFilter={roleFilter}
+        onRoleFilterChange={setRoleFilter}
         isLoading={isLoading}
         error={error}
         isRetrying={isFetching}
@@ -114,6 +138,61 @@ describe('ProvidersCatalogueTable', () => {
     expect(screen.getByRole('searchbox')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument()
     expect(alert).not.toHaveTextContent('provider service internals')
+  })
+
+  it('requests a role from the server only after filters are applied', async () => {
+    renderTable()
+    await screen.findByText('Production vCenter')
+    const fetchMock = vi.mocked(fetch)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
+    fireEvent.change(screen.getByLabelText('Role'), { target: { value: 'target' } })
+
+    expect(fetchMock.mock.calls.some(([input]) => requestUrl(input).includes('role=target'))).toBe(false)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+
+    expect(await screen.findByText('Recovery vCenter')).toBeInTheDocument()
+    expect(screen.queryByText('Production vCenter')).not.toBeInTheDocument()
+    expect(fetchMock.mock.calls.some(([input]) => requestUrl(input).includes('role=target'))).toBe(true)
+    expect(screen.getByRole('button', { name: /Filters/ })).toHaveTextContent('1')
+  })
+
+  it('discards pending role changes when the filter modal is cancelled', async () => {
+    renderTable()
+    await screen.findByText('Production vCenter')
+    const fetchMock = vi.mocked(fetch)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
+    fireEvent.change(screen.getByLabelText('Role'), { target: { value: 'target' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
+
+    expect(screen.getByLabelText('Role')).toHaveValue('all')
+    expect(fetchMock.mock.calls.some(([input]) => requestUrl(input).includes('role=target'))).toBe(false)
+  })
+
+  it('combines client type with server role and clears both filters', async () => {
+    renderTable()
+    await screen.findByText('Production vCenter')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'VMWARE' } })
+    fireEvent.change(screen.getByLabelText('Role'), { target: { value: 'target' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+
+    expect(await screen.findByText('Recovery vCenter')).toBeInTheDocument()
+    expect(screen.queryByText('Backup FlashSystem')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Filters/ })).toHaveTextContent('2')
+
+    fireEvent.click(screen.getByRole('button', { name: /Filters/ }))
+    expect(within(screen.getByLabelText('Type')).getByRole('option', { name: 'FlashCopy' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Clear all' }))
+
+    expect(await screen.findByText('Production vCenter')).toBeInTheDocument()
+    expect(screen.getByText('Backup FlashSystem')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Filters' })).not.toHaveTextContent('1')
+    expect(screen.getByRole('button', { name: 'Filters' })).not.toHaveTextContent('2')
   })
 
   it('opens the detail drawer with actions when a row is clicked', async () => {

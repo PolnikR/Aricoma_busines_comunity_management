@@ -831,6 +831,7 @@
   "providers.searchLabel": "Hľadať poskytovateľov podľa názvu",
   "providers.filterTitle": "Filtrovať poskytovateľov",
   "providers.allTypes": "Všetky typy",
+  "providers.allRoles": "Všetky roly",
   "providers.tableLabel": "Tabuľka poskytovateľov",
   "providers.noMatches": "Vyhľadávaniu nezodpovedajú žiadni poskytovatelia.",
   "providers.empty": "Backend nevrátil žiadnych poskytovateľov.",

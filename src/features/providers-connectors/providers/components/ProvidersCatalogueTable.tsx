@@ -123,6 +123,9 @@ interface ProvidersCatalogueTableProps {
 
 export function ProvidersCatalogueTable({
   providers,
+  allProviders,
+  roleFilter,
+  onRoleFilterChange,
   isLoading,
   error,
   isRetrying,
@@ -133,6 +136,7 @@ export function ProvidersCatalogueTable({
   const testConnection = useTestProviderConnection()
   const [typeFilter, setTypeFilter] = useState('')
   const [pendingType, setPendingType] = useState('')
+  const [pendingRole, setPendingRole] = useState<ProviderRoleFilter>(roleFilter)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<ProviderRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ProviderRecord | null>(null)
@@ -144,8 +148,8 @@ export function ProvidersCatalogueTable({
   const jsonViewed = rows.find(provider => provider.id === jsonViewId) ?? null
   const columns = getColumns(t, setJsonViewId)
   const types = useMemo(
-    () => [...new Set(rows.map((provider) => provider.type).filter(Boolean))].sort(),
-    [rows],
+    () => [...new Set(allProviders.map((provider) => provider.type).filter(Boolean))].sort(),
+    [allProviders],
   )
 
   const table = useTableState(rows, {
@@ -153,7 +157,28 @@ export function ProvidersCatalogueTable({
     predicate: (provider) => !typeFilter || provider.type === typeFilter,
   })
 
-  const changeType = (value: string) => { setTypeFilter(value); setPendingType(value); table.setPage(1) }
+  const openFilters = () => {
+    setPendingType(typeFilter)
+    setPendingRole(roleFilter)
+  }
+
+  const applyFilters = () => {
+    setTypeFilter(pendingType)
+    onRoleFilterChange(pendingRole)
+    table.setPage(1)
+    setSelectedId(null)
+  }
+
+  const clearFilters = () => {
+    setPendingType('')
+    setPendingRole('all')
+    setTypeFilter('')
+    onRoleFilterChange('all')
+    table.setPage(1)
+    setSelectedId(null)
+  }
+
+  const activeFilterCount = Number(Boolean(typeFilter)) + Number(roleFilter !== 'all')
 
   const openConnectionTest = () => {
     if (selected?.credentialStatus !== 'ok') return
@@ -187,16 +212,30 @@ export function ProvidersCatalogueTable({
         density={table.density}
         onDensityChange={table.setDensity}
         filterTitle={t('providers.filterTitle')}
-        activeFilterCount={typeFilter ? 1 : 0}
-        onApplyFilters={() => { changeType(pendingType) }}
-        onClearFilters={() => { setPendingType(''); changeType('') }}
+        activeFilterCount={activeFilterCount}
+        onFilterOpen={openFilters}
+        onApplyFilters={applyFilters}
+        onClearFilters={clearFilters}
         filterPanel={
-          <Field label={t('details.type')} htmlFor="provider-type-filter">
-            <Select id="provider-type-filter" value={pendingType} onChange={(event) => { setPendingType(event.target.value) }}>
-              <option value="">{t('providers.allTypes')}</option>
-              {types.map((type) => <option key={type} value={type}>{providerTypeLabel(type)}</option>)}
-            </Select>
-          </Field>
+          <>
+            <Field label={t('details.type')} htmlFor="provider-type-filter">
+              <Select id="provider-type-filter" value={pendingType} onChange={(event) => { setPendingType(event.target.value) }}>
+                <option value="">{t('providers.allTypes')}</option>
+                {types.map((type) => <option key={type} value={type}>{providerTypeLabel(type)}</option>)}
+              </Select>
+            </Field>
+            <Field label={t('forms.role')} htmlFor="provider-role-filter">
+              <Select
+                id="provider-role-filter"
+                value={pendingRole}
+                onChange={(event) => { setPendingRole(event.target.value as ProviderRoleFilter) }}
+              >
+                <option value="all">{t('providers.allRoles')}</option>
+                <option value="source">{t('forms.role.source')}</option>
+                <option value="target">{t('forms.role.target')}</option>
+              </Select>
+            </Field>
+          </>
         }
       />
 
@@ -349,7 +388,7 @@ export function ProvidersCatalogueTable({
         <ProvidersCreateModal
           open
           onClose={() => { setEditing(null) }}
-          existingProviders={rows}
+          existingProviders={allProviders}
           provider={editing}
         />
       ) : null}
