@@ -22,7 +22,7 @@ import { useTestProviderConnection } from '../hooks/useTestProviderConnection'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
 import { ProviderConnectionTestDialog } from './ProviderConnectionTestDialog'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
-import type { ProviderRecord } from '../model/providerTypes'
+import type { ProviderRecord, ProviderRoleFilter } from '../model/providerTypes'
 
 function credentialStatusLabel(
   status: ProviderRecord['credentialStatus'],
@@ -112,6 +112,9 @@ function getColumns(
 
 interface ProvidersCatalogueTableProps {
   providers: ProviderRecord[]
+  allProviders: ProviderRecord[]
+  roleFilter: ProviderRoleFilter
+  onRoleFilterChange: (role: ProviderRoleFilter) => void
   isLoading: boolean
   error: Error | null
   isRetrying: boolean

@@ -56,6 +56,9 @@ function renderTable() {
     return (
       <ProvidersCatalogueTable
         providers={data}
+        allProviders={data}
+        roleFilter="all"
+        onRoleFilterChange={vi.fn()}
         isLoading={isLoading}
         error={error}
         isRetrying={isFetching}
@@ -96,6 +99,9 @@ describe('ProvidersCatalogueTable', () => {
       <QueryClientProvider client={queryClient}>
         <ProvidersCatalogueTable
           providers={[]}
+          allProviders={[]}
+          roleFilter="all"
+          onRoleFilterChange={vi.fn()}
           isLoading={false}
           error={new Error('provider service internals')}
           isRetrying={false}
