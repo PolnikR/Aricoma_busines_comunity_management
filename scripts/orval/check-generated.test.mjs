@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, test } from 'node:test'
@@ -68,4 +68,35 @@ test('assertGeneratedApiIsCurrent rejects output changed by generation', async (
     }),
     /modified: client\.ts/,
   )
+})
+
+test('assertGeneratedApiIsCurrent restores the working tree even when it rejects', async () => {
+  const { actual } = await createDirectories()
+  const clientPath = path.join(actual, 'client.ts')
+  await writeFile(clientPath, 'before', 'utf8')
+
+  await assert.rejects(
+    assertGeneratedApiIsCurrent({
+      generate: async () => writeFile(clientPath, 'after', 'utf8'),
+      generatedDirectory: actual,
+    }),
+  )
+
+  assert.equal(await readFile(clientPath, 'utf8'), 'before')
+})
+
+test('assertGeneratedApiIsCurrent restores files added by generation', async () => {
+  const { actual } = await createDirectories()
+  const stalePath = path.join(actual, 'stale.ts')
+  await writeFile(stalePath, 'stale', 'utf8')
+
+  await assert.rejects(
+    assertGeneratedApiIsCurrent({
+      generate: async () => writeFile(path.join(actual, 'new.ts'), 'new', 'utf8'),
+      generatedDirectory: actual,
+    }),
+  )
+
+  assert.equal(await readFile(stalePath, 'utf8'), 'stale')
+  await assert.rejects(readFile(path.join(actual, 'new.ts'), 'utf8'))
 })

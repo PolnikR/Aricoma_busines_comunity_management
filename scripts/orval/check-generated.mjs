@@ -93,6 +93,11 @@ export async function assertGeneratedApiIsCurrent({
       )
     }
   } finally {
+    // generate() writes directly into generatedDirectory, so restore the
+    // pre-check snapshot regardless of outcome — this check must never
+    // leave the working tree modified as a side effect of verifying it.
+    await rm(generatedDirectory, { recursive: true, force: true })
+    await cp(expectedDirectory, generatedDirectory, { recursive: true })
     await rm(temporaryDirectory, { recursive: true, force: true })
   }
 }
