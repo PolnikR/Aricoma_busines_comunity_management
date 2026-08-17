@@ -1,0 +1,59 @@
+{
+  "application": {
+    "name": "SampleAppRecovery2",
+    "description": "Recovery of FinanceTBApp2",
+    "environment": "dev",
+    "platform": "VMware vCenter ESXi",
+    "source_connection": "vcenter_default",
+    "target_connection": "vcenter_default_destination",
+    "tiers": {
+      "database": {
+        "order": 1,
+        "description": "Database server tier",
+        "recovery_group": {
+          "name": "database_group",
+          "description": "Recovery group containing the database tier VMs",
+          "vms": [
+            { "name": "TEST-DB01" },
+            { "name": "TEST-DB02" }
+          ]
+        }
+      },
+      "db_cluster": {
+        "order": 2,
+        "description": "DB Cluster Master Node",
+        "recovery_group": {
+          "name": "db_cluster_group",
+          "description": "Recovery group containing the DB cluster master node",
+          "vms": [
+            { "name": "TEST-DB0_CLUSTER" }
+          ]
+        }
+      },
+      "application": {
+        "order": 3,
+        "description": "Application server tier",
+        "recovery_group": {
+          "name": "application_group",
+          "description": "Recovery group containing the application tier VMs",
+          "vms": [
+            { "name": "TEST-APP01" },
+            { "name": "TEST-APP02" }
+          ]
+        }
+      },
+      "web": {
+        "order": 4,
+        "description": "Web server tier",
+        "recovery_group": {
+          "name": "web_group",
+          "description": "Recovery group containing the web tier VMs",
+          "vms": [
+            { "name": "TEST-WEB01" },
+            { "name": "TEST-WEB02" }
+          ]
+        }
+      }
+    }
+  }
+}

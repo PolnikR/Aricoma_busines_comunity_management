@@ -1,0 +1,25 @@
+# React Router 8.3 Migration Tasks
+
+- [x] Task 1: Confirm Node 22.23.1 and record the blocked local-v7 baseline
+  - [x] Confirm Node 22.23.1 and npm 10.9.8
+  - [x] Record Windows native-module lock preventing local `npm ci`
+  - [x] Switch verification to a clean isolated installation
+- [x] Task 2: Convert production imports
+  - [x] Move `RouterProvider` to `react-router/dom`
+  - [x] Move all other runtime imports to `react-router`
+  - [x] Pass typecheck in the clean installation
+- [x] Task 3: Convert tests and mocks
+  - [x] Update router component imports
+  - [x] Update Vitest mocks and dynamic import types
+  - [x] Pass 479 tests across 133 test files
+- [x] Task 4: Upgrade package and Node metadata
+  - [x] Replace `react-router-dom` with exact `react-router@8.3.0`
+  - [x] Add `.nvmrc` and `engines.node`
+  - [x] Regenerate and verify the lockfile
+- [x] Task 5: Verify routing behavior
+  - [x] Pass lint, typecheck, tests, and Vite production build
+  - [x] Confirm `npm audit` reports 0 vulnerabilities
+  - [x] HTTP-smoke root and nested routes in an isolated Vite server
+  - [ ] Interactive Chrome DevTools smoke test (connector unavailable)
+- [x] Task 6: Update migration notes
+- [x] Final checkpoint: Review scoped diff and verification evidence
