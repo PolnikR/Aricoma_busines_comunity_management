@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ProviderConnectionTestDialog } from './ProviderConnectionTestDialog'
 import type { ProviderConnectionTestResult } from '../model/providerConnectionTestTypes'
@@ -102,5 +102,47 @@ describe('ProviderConnectionTestDialog', () => {
     )
 
     expect(screen.getByText('The provider did not report any connection checks.')).toBeInTheDocument()
+  })
+
+  it('opens the raw JSON response, matching the wire contract field names', () => {
+    render(
+      <ProviderConnectionTestDialog
+        open
+        providerName="Production vCenter"
+        providerId="vmware-vcenter-01"
+        isPending={false}
+        result={successResult}
+        error={null}
+        onClose={() => undefined}
+        onRetry={() => undefined}
+      />,
+    )
+
+    expect(screen.queryByText('"provider_id"', { exact: false })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'View' }))
+
+    expect(screen.getByRole('dialog', { name: 'Connection test response' })).toBeInTheDocument()
+    const jsonText = screen.getByRole('dialog', { name: 'Connection test response' }).textContent
+    expect(jsonText).toContain('"provider_id"')
+    expect(jsonText).toContain('"provider_type"')
+    expect(jsonText).toContain('vmware-vcenter-01')
+  })
+
+  it('does not show a JSON button before a result is available', () => {
+    render(
+      <ProviderConnectionTestDialog
+        open
+        providerName="Production vCenter"
+        providerId="vmware-vcenter-01"
+        isPending
+        result={null}
+        error={null}
+        onClose={() => undefined}
+        onRetry={() => undefined}
+      />,
+    )
+
+    expect(screen.queryByRole('button', { name: 'View' })).not.toBeInTheDocument()
   })
 })

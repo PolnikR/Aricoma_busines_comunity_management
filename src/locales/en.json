@@ -885,6 +885,7 @@
   "providers.connectionTest.button": "Test connection",
   "providers.jsonViewer.title": "Provider JSON",
   "providers.connectionTest.title": "Test provider connection",
+  "providers.connectionTest.jsonTitle": "Connection test response",
   "providers.connectionTest.ariaLabel": "Test provider connection",
   "providers.connectionTest.credentialRequired": "A valid credential is required to test this provider.",
   "providers.connectionTest.running": "Testing provider connection…",

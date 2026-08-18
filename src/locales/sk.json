@@ -850,6 +850,7 @@
   "providers.connectionTest.button": "Otestovať pripojenie",
   "providers.jsonViewer.title": "JSON poskytovateľa",
   "providers.connectionTest.title": "Test pripojenia poskytovateľa",
+  "providers.connectionTest.jsonTitle": "Odpoveď testu pripojenia",
   "providers.connectionTest.ariaLabel": "Test pripojenia poskytovateľa",
   "providers.connectionTest.credentialRequired": "Na testovanie poskytovateľa sú potrebné platné prihlasovacie údaje.",
   "providers.connectionTest.running": "Testuje sa pripojenie poskytovateľa…",
