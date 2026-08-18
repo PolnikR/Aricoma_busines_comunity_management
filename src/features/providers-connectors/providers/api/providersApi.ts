@@ -2,9 +2,11 @@ import {
   deleteProviderRouteDeleteProviderDelete,
   getProvidersGetProvidersGet,
   submitProviderSubmitProviderPost,
+  testProviderTestProviderGet,
 } from '@/generated/api/client.gen'
 import {
   ProvidersResponse,
+  ProviderTestResponse,
   type ProviderRecordOutput as GeneratedProviderRecord,
 } from '@/generated/api/zod.gen'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
@@ -18,6 +20,7 @@ import {
   type ProviderCredentialStatus,
   type ProviderType,
 } from '../model/providerTypes'
+import type { ProviderConnectionTestResult } from '../model/providerConnectionTestTypes'
 import { providerSubmitSchema } from './schemas/providersSchema'
 
 function isProviderType(value: string): value is ProviderType {
@@ -119,6 +122,25 @@ export async function deleteProvider(providerId: string): Promise<ProviderRecord
   } catch (error) {
     if (error instanceof OrvalApiError) {
       throw new Error(`Delete provider request failed with status ${String(error.status)}`, { cause: error })
+    }
+    throw error
+  }
+}
+
+// Test connectivity for a single provider -> { provider_id, provider_type, ok, checks: [...] }
+export async function testProviderConnection(providerId: string): Promise<ProviderConnectionTestResult> {
+  try {
+    const payload = await testProviderTestProviderGet({ provider_id: providerId })
+    const parsed = parseGeneratedResponse(ProviderTestResponse, payload, 'GET /test_provider')
+    return {
+      ok: parsed.ok,
+      providerId: parsed.provider_id,
+      providerType: parsed.provider_type,
+      checks: parsed.checks,
+    }
+  } catch (error) {
+    if (error instanceof OrvalApiError) {
+      throw new Error(`Test provider connection request failed with status ${String(error.status)}`, { cause: error })
     }
     throw error
   }

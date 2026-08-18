@@ -68,6 +68,17 @@ function mockFetch() {
       deleted = true
       return Promise.resolve(new Response(JSON.stringify({ providers: [providerB] }), { status: 200 }))
     }
+    if (url.includes('test_provider')) {
+      return Promise.resolve(new Response(
+        JSON.stringify({
+          provider_id: 'vmware-vcenter-01',
+          provider_type: 'VMWARE',
+          ok: true,
+          checks: [{ name: 'Credentials', status: 'ok', detail: 'Credential validated' }],
+        }),
+        { status: 200 },
+      ))
+    }
     return Promise.reject(new Error(`unexpected fetch: ${url}`))
   })
 }
@@ -206,14 +217,14 @@ describe('ProvidersCatalogueTable', () => {
     expect(screen.getByRole('link', { name: 'https://10.99.99.40/ui/' })).toHaveAttribute('target', '_blank')
   })
 
-  it('opens the connection test for the selected provider and shows the mock success', async () => {
+  it('opens the connection test for the selected provider and shows the real result', async () => {
     renderTable()
     fireEvent.click(await screen.findByText('Production vCenter'))
     fireEvent.click(screen.getByRole('button', { name: 'Test connection' }))
 
     const dialog = await screen.findByRole('dialog', { name: 'Test provider connection' })
-    expect(dialog).toHaveTextContent('Mock result for development')
-    expect(dialog).toHaveTextContent('10.99.99.40')
+    expect(dialog).toHaveTextContent('Connection test completed')
+    expect(dialog).toHaveTextContent('Credentials')
     expect(screen.queryByRole('dialog', { name: 'Provider detail' })).not.toBeInTheDocument()
   })
 

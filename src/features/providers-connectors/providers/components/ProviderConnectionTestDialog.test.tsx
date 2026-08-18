@@ -8,25 +8,27 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 afterEach(cleanup)
 
 const successResult: ProviderConnectionTestResult = {
-  status: 'success',
-  source: 'mock',
-  steps: [
-    { id: 'configuration', status: 'success' },
-    { id: 'credentials', status: 'success' },
-    { id: 'connection', status: 'success' },
-    { id: 'metadata', status: 'success' },
+  ok: true,
+  providerId: 'vmware-vcenter-01',
+  providerType: 'VMWARE',
+  checks: [
+    { name: 'Credentials', status: 'ok', detail: 'Credential validated' },
+    { name: 'API reachability', status: 'ok', detail: 'Reached vCenter API' },
   ],
-  providerInfo: {
-    name: 'Production vCenter',
-    hostname: 'vmware-vcenter-01.example.internal',
-    version: '8.0.2',
-    ipAddress: '10.99.99.40',
-    providerType: 'VMware',
-  },
+}
+
+const failedResult: ProviderConnectionTestResult = {
+  ok: false,
+  providerId: 'vmware-vcenter-01',
+  providerType: 'VMWARE',
+  checks: [
+    { name: 'Credentials', status: 'ok', detail: 'Credential validated' },
+    { name: 'API reachability', status: 'timeout', detail: 'Connection timed out after 5s' },
+  ],
 }
 
 describe('ProviderConnectionTestDialog', () => {
-  it('shows mock success metadata and completed steps', () => {
+  it('shows the real backend checks and overall success state', () => {
     render(
       <ProviderConnectionTestDialog
         open
@@ -41,13 +43,34 @@ describe('ProviderConnectionTestDialog', () => {
     )
 
     expect(screen.getByRole('dialog', { name: 'Test provider connection' })).toBeInTheDocument()
-    expect(screen.getByText('Mock result for development')).toBeInTheDocument()
-    expect(screen.getByText('vmware-vcenter-01.example.internal')).toBeInTheDocument()
-    expect(screen.getByText('8.0.2')).toBeInTheDocument()
-    expect(screen.getAllByText('Success')).toHaveLength(4)
+    expect(screen.getByText('Connection test completed')).toBeInTheDocument()
+    expect(screen.getByText('Credentials')).toBeInTheDocument()
+    expect(screen.getByText('API reachability')).toBeInTheDocument()
+    expect(screen.getByText('Reached vCenter API')).toBeInTheDocument()
+    expect(screen.getAllByText('ok')).toHaveLength(2)
   })
 
-  it('shows the running state before the mock result is available', () => {
+  it('shows individual check failures without an overall success banner', () => {
+    render(
+      <ProviderConnectionTestDialog
+        open
+        providerName="Production vCenter"
+        providerId="vmware-vcenter-01"
+        isPending={false}
+        result={failedResult}
+        error={null}
+        onClose={() => undefined}
+        onRetry={() => undefined}
+      />,
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent('The connection test could not be completed.')
+    expect(screen.queryByText('Connection test completed')).not.toBeInTheDocument()
+    expect(screen.getByText('timeout')).toBeInTheDocument()
+    expect(screen.getByText('Connection timed out after 5s')).toBeInTheDocument()
+  })
+
+  it('shows the running state before a result is available', () => {
     render(
       <ProviderConnectionTestDialog
         open
@@ -62,6 +85,22 @@ describe('ProviderConnectionTestDialog', () => {
     )
 
     expect(screen.getByRole('status')).toHaveTextContent('Testing provider connection…')
-    expect(screen.getByText('Connect to provider')).toBeInTheDocument()
+  })
+
+  it('shows a message when the backend reports no checks', () => {
+    render(
+      <ProviderConnectionTestDialog
+        open
+        providerName="Production vCenter"
+        providerId="vmware-vcenter-01"
+        isPending={false}
+        result={{ ok: true, providerId: 'vmware-vcenter-01', providerType: 'VMWARE', checks: [] }}
+        error={null}
+        onClose={() => undefined}
+        onRetry={() => undefined}
+      />,
+    )
+
+    expect(screen.getByText('The provider did not report any connection checks.')).toBeInTheDocument()
   })
 })

@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react'
 import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useTestProviderConnection } from './useTestProviderConnection'
 import type { ProviderRecord } from '../model/providerTypes'
+
+afterEach(() => { vi.unstubAllGlobals() })
 
 const provider: ProviderRecord = {
   id: 'vmware-vcenter-01',
@@ -17,7 +19,18 @@ const provider: ProviderRecord = {
 }
 
 describe('useTestProviderConnection', () => {
-  it('returns a successful development mock for the selected provider', async () => {
+  it('returns the real backend connection test result for the selected provider', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          provider_id: 'vmware-vcenter-01',
+          provider_type: 'VMWARE',
+          ok: true,
+          checks: [{ name: 'Credentials', status: 'ok', detail: 'Credential validated' }],
+        }),
+        { status: 200 },
+      ),
+    ))
     const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -27,8 +40,10 @@ describe('useTestProviderConnection', () => {
     result.current.mutate(provider)
 
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
-    expect(result.current.data?.status).toBe('success')
-    expect(result.current.data?.source).toBe('mock')
-    expect(result.current.data?.providerInfo?.ipAddress).toBe(provider.ipAddress)
+    expect(result.current.data?.ok).toBe(true)
+    expect(result.current.data?.providerId).toBe('vmware-vcenter-01')
+    expect(result.current.data?.checks).toEqual([
+      { name: 'Credentials', status: 'ok', detail: 'Credential validated' },
+    ])
   })
 })

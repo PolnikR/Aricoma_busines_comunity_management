@@ -2,7 +2,7 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 import {
   deleteRecoveryGroupRouteDeleteRecoveryGroupDelete,
   getRecoveryGroupsGetRecoveryGroupsGet,
-  rollbackFromOrchestratorRollbackFromOrchestratorPost,
+  rollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPost,
   submitRecoveryGroupSubmitRecoveryGroupPost,
 } from '@/generated/api/client.gen'
 import {
@@ -156,13 +156,13 @@ export async function deleteRecoveryGroup(
 export async function rollbackRecoveryGroupOrchestration(
   groupId: string,
   providerId: string,
-): Promise<RollbackReport> {
+): Promise<void> {
   try {
-    const payload = await rollbackFromOrchestratorRollbackFromOrchestratorPost({
+    const payload = await rollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPost({
       recovery_group_id: groupId,
       provider_id: providerId,
     })
-    return parseRollbackReport(payload, 'POST /rollback_from_orchestrator')
+    parseRecoveryGroups(payload, 'POST /rollback_group_from_orchestrator')
   } catch (error) {
     throw toOrvalRequestError(error, 'Rollback recovery group orchestration')
   }

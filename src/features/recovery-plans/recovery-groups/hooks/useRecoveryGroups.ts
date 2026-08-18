@@ -76,7 +76,9 @@ export function useRecoveryGroups() {
     create: createMutation.mutateAsync,
     update: (id: string, draft: RecoveryGroupDraft) => updateMutation.mutateAsync({ id, draft }),
     remove: (group: RecoveryGroup) => deleteMutation.mutateAsync(group),
-    rollback: (groupId: string, providerId: string) => rollbackMutation.mutateAsync({ groupId, providerId }),
+    rollback: (groupId: string, providerId: string): Promise<void> => (
+      rollbackMutation.mutateAsync({ groupId, providerId })
+    ),
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,

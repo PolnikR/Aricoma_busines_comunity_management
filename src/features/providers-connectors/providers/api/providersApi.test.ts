@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { deleteProvider, fetchProviders, submitProvider } from './providersApi'
+import { deleteProvider, fetchProviders, submitProvider, testProviderConnection } from './providersApi'
 import type { ProviderRecord, ProviderSubmitData } from '../model/providerTypes'
 
 const providerA: ProviderRecord = {
@@ -234,5 +234,43 @@ describe('deleteProvider', () => {
   it('throws on an HTTP failure', async () => {
     stubFetch(null, 404)
     await expect(deleteProvider('missing')).rejects.toThrow('Delete provider request failed with status 404')
+  })
+})
+
+describe('testProviderConnection', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('calls test_provider with the provider_id and returns the mapped result', async () => {
+    const mock = stubFetch({
+      provider_id: 'vmware-vcenter-01',
+      provider_type: 'VMWARE',
+      ok: true,
+      checks: [{ name: 'Credentials', status: 'ok', detail: 'Credential validated' }],
+    })
+
+    const result = await testProviderConnection('vmware-vcenter-01')
+
+    const [url] = mock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/test_provider?provider_id=vmware-vcenter-01')
+    expect(result).toEqual({
+      ok: true,
+      providerId: 'vmware-vcenter-01',
+      providerType: 'VMWARE',
+      checks: [{ name: 'Credentials', status: 'ok', detail: 'Credential validated' }],
+    })
+  })
+
+  it('rejects a response that does not match the test-provider contract', async () => {
+    stubFetch({ provider_id: 'vmware-vcenter-01' })
+    await expect(testProviderConnection('vmware-vcenter-01')).rejects.toThrow()
+  })
+
+  it('throws on an HTTP failure', async () => {
+    stubFetch(null, 500)
+    await expect(testProviderConnection('vmware-vcenter-01')).rejects.toThrow(
+      'Test provider connection request failed with status 500',
+    )
   })
 })

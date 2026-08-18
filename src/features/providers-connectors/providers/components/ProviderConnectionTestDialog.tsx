@@ -1,9 +1,8 @@
-import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { Modal } from '@/shared/components/modal/Modal'
 import { CheckIcon, PlugIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
-import type { ProviderConnectionStepId, ProviderConnectionTestResult, ProviderConnectionStepStatus } from '../model/providerConnectionTestTypes'
+import type { ProviderConnectionCheck, ProviderConnectionTestResult } from '../model/providerConnectionTestTypes'
 
 interface ProviderConnectionTestDialogProps {
   open: boolean
@@ -16,13 +15,13 @@ interface ProviderConnectionTestDialogProps {
   onRetry: () => void
 }
 
-const stepIds: ProviderConnectionStepId[] = ['configuration', 'credentials', 'connection', 'metadata']
+function isCheckOk(status: string): boolean {
+  return status.trim().toLowerCase() === 'ok'
+}
 
-function statusIcon(status: ProviderConnectionStepStatus) {
-  if (status === 'success') return <CheckIcon className="size-4" />
-  if (status === 'running') return <span className="size-2 animate-pulse rounded-full bg-accent" aria-hidden="true" />
-  if (status === 'failed') return <span aria-hidden="true">!</span>
-  return <span aria-hidden="true">–</span>
+function CheckStatusIcon({ status }: { status: string }) {
+  if (isCheckOk(status)) return <CheckIcon className="size-4" />
+  return <span aria-hidden="true">!</span>
 }
 
 export function ProviderConnectionTestDialog({
@@ -36,14 +35,7 @@ export function ProviderConnectionTestDialog({
   onRetry,
 }: ProviderConnectionTestDialogProps) {
   const { t } = useTranslation()
-  const isFailed = Boolean(error) || result?.status === 'failed'
-  const statuses: Record<ProviderConnectionStepId, ProviderConnectionStepStatus> = {
-    configuration: result?.steps.find((step) => step.id === 'configuration')?.status ?? 'success',
-    credentials: result?.steps.find((step) => step.id === 'credentials')?.status ?? 'success',
-    connection: result?.steps.find((step) => step.id === 'connection')?.status ?? (isPending ? 'running' : isFailed ? 'failed' : 'skipped'),
-    metadata: result?.steps.find((step) => step.id === 'metadata')?.status ?? (isPending ? 'skipped' : isFailed ? 'skipped' : 'skipped'),
-  }
-  const statusLabel = (status: ProviderConnectionStepStatus) => t(`providers.connectionTest.status.${status}`)
+  const isFailed = Boolean(error) || (result !== null && !result.ok)
 
   return (
     <Modal
@@ -72,10 +64,6 @@ export function ProviderConnectionTestDialog({
             <p className="text-sm font-semibold text-text-primary">{providerName}</p>
             <p className="mt-1 break-all font-mono text-xs text-text-muted">{providerId}</p>
           </div>
-          <div className="flex flex-col items-end gap-1">
-            <Badge color="warning" size="sm">{t('providers.connectionTest.mockBadge')}</Badge>
-            <span className="text-[11px] text-text-muted">{t('providers.connectionTest.mockNotice')}</span>
-          </div>
         </div>
 
         {isPending ? (
@@ -90,34 +78,35 @@ export function ProviderConnectionTestDialog({
           </div>
         ) : null}
 
-        <ol className="space-y-2" aria-label={t('providers.connectionTest.stepsLabel')}>
-          {stepIds.map((stepId) => {
-            const status = statuses[stepId]
-            return (
-              <li key={stepId} className="flex items-center gap-3 rounded-lg border border-border bg-surface-subtle px-3 py-2.5">
-                <span className={`flex size-7 shrink-0 items-center justify-center rounded-full ${status === 'success' ? 'bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-400' : status === 'failed' ? 'bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400' : status === 'running' ? 'bg-blue-light-50 text-blue-light-600 dark:bg-blue-light-500/15 dark:text-blue-light-400' : 'bg-surface-muted text-text-muted'}`}>
-                  {statusIcon(status)}
-                </span>
-                <span className="min-w-0 flex-1 text-sm text-text-primary">{t(`providers.connectionTest.steps.${stepId}`)}</span>
-                <span className="shrink-0 text-xs text-text-muted">{statusLabel(status)}</span>
-              </li>
-            )
-          })}
-        </ol>
-
-        {result?.status === 'success' && result.providerInfo ? (
-          <div className="rounded-xl border border-success-200 bg-success-50/60 p-4 dark:border-success-500/30 dark:bg-success-500/10">
-            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-success-700 dark:text-success-300">
-              <CheckIcon className="size-4" />
-              {t('providers.connectionTest.success')}
-            </div>
-            <dl className="grid gap-2 text-sm sm:grid-cols-2">
-              <div><dt className="text-xs text-text-muted">{t('providers.connectionTest.info.name')}</dt><dd className="mt-0.5 break-words font-medium text-text-primary">{result.providerInfo.name}</dd></div>
-              <div><dt className="text-xs text-text-muted">{t('providers.connectionTest.info.hostname')}</dt><dd className="mt-0.5 break-all font-mono text-xs font-medium text-text-primary">{result.providerInfo.hostname}</dd></div>
-              <div><dt className="text-xs text-text-muted">{t('providers.connectionTest.info.version')}</dt><dd className="mt-0.5 font-medium text-text-primary">{result.providerInfo.version}</dd></div>
-              <div><dt className="text-xs text-text-muted">{t('providers.connectionTest.info.ipAddress')}</dt><dd className="mt-0.5 font-mono text-xs font-medium text-text-primary">{result.providerInfo.ipAddress}</dd></div>
-            </dl>
+        {result?.ok ? (
+          <div className="rounded-lg border border-success-200 bg-success-50 px-3 py-2 text-sm text-success-700 dark:border-success-500/30 dark:bg-success-500/10 dark:text-success-300">
+            <span className="inline-flex items-center gap-2"><CheckIcon className="size-4" />{t('providers.connectionTest.success')}</span>
           </div>
+        ) : null}
+
+        {result ? (
+          result.checks.length > 0 ? (
+            <ol className="space-y-2" aria-label={t('providers.connectionTest.checksLabel')}>
+              {result.checks.map((check: ProviderConnectionCheck, index) => (
+                <li key={`${check.name}-${String(index)}`} className="flex items-start gap-3 rounded-lg border border-border bg-surface-subtle px-3 py-2.5">
+                  <span className={`flex size-7 shrink-0 items-center justify-center rounded-full ${isCheckOk(check.status) ? 'bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-400' : 'bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400'}`}>
+                    <CheckStatusIcon status={check.status} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-text-primary">{check.name}</span>
+                      <span className="shrink-0 text-xs text-text-muted">{check.status}</span>
+                    </div>
+                    {check.detail ? (
+                      <p className="mt-0.5 text-xs text-text-muted">{check.detail}</p>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="text-sm text-text-muted">{t('providers.connectionTest.noChecks')}</p>
+          )
         ) : null}
       </div>
     </Modal>
