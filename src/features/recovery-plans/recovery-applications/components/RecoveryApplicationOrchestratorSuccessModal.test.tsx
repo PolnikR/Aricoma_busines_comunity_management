@@ -36,4 +36,28 @@ describe('RecoveryApplicationOrchestratorSuccessModal', () => {
     await user.click(screen.getByRole('button', { name: 'Close' }))
     expect(onClose).toHaveBeenCalledOnce()
   })
+
+  it('opens the specific DAG page in Airflow using the central config', async () => {
+    const user = userEvent.setup()
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+    render(
+      <RecoveryApplicationOrchestratorSuccessModal
+        open
+        onClose={vi.fn()}
+        applicationName="Finance App"
+        orchestratorPush={push}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'View in Airflow' }))
+
+    expect(openSpy).toHaveBeenCalledWith(
+      'http://10.99.99.55:8080/dags/dag_recovery',
+      '_blank',
+      'noopener,noreferrer',
+    )
+
+    openSpy.mockRestore()
+  })
 })

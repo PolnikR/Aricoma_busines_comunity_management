@@ -1,5 +1,5 @@
 import { useTranslation } from '@/hooks/useTranslation'
-import { EXTERNAL_SERVICES } from '@/config/externalServices'
+import { buildAirflowDagUrl } from '@/config/externalServices'
 import { OrchestratorResultModal } from '@/shared/components/modal/OrchestratorResultModal'
 import type { OrchestratorPush } from '../model/recoveryApplicationTypes'
 
@@ -29,7 +29,7 @@ export function RecoveryApplicationOrchestratorSuccessModal({
       status={orchestratorPush.status}
       closeLabel={t('buttons.close')}
       externalActionLabel={t('recovery.application.orchestratorModal.viewInAirflow')}
-      onExternalAction={() => { window.open(EXTERNAL_SERVICES.airflow.dagsUrl, '_blank', 'noopener,noreferrer') }}
+      onExternalAction={() => { window.open(buildAirflowDagUrl(orchestratorPush.dag_id), '_blank', 'noopener,noreferrer') }}
       details={[
         { label: t('recovery.application.orchestratorModal.dag'), value: orchestratorPush.dag, mono: true },
         { label: t('recovery.application.orchestratorModal.json'), value: orchestratorPush.json, mono: true },
