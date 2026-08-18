@@ -7,7 +7,7 @@ import { CheckIcon } from '@/shared/icons/Icons'
 export interface CheckItem {
   name: string
   detail?: string
-  status: 'ok' | 'warning' | 'error'
+  status: 'ok' | 'warning' | 'error' | string
 }
 
 export interface BadgeConfig {
