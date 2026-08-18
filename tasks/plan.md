@@ -1,38 +1,82 @@
-# Implementation Plan: Fill-Height Policy Set Picker
+# Implementation Plan: Recovery Runs
 
 ## Overview
-`PolicySetPicker` currently sizes itself with a hardcoded `lg:h-96` (384px) box, `lg:w-96`/`min-h-96` on the list pane, and `max-h-96` on the details pane. On the recovery-applications wizard's Policy set step this leaves a large empty gap between the box and the footer buttons (visible in the screenshot). The fix is to make the picker fill whatever height its parent gives it (`h-full`, flex-based) instead of a fixed rem value — but since `PolicySetPicker` is shared with the recovery-groups wizard, and both wizards currently render this step inside a normal, page-scrolling container (not a height-constrained one), simply removing the fixed height would collapse the picker to near-zero height in both places. Both call sites' step containers need to switch to the same "flex-fill + overflow-hidden parent, internal scroll" pattern already used by each wizard's own tier/resource step (`TierCanvas` in recovery-applications, the resources/related-storage steps in recovery-groups) — this pattern already exists in the codebase, it's just not applied to the policy-set step yet.
+Build the real `RecoveryRunsPage` feature designed in brainstorming: an overview table showing only the *latest* orchestrator run per recovery application that has actually been pushed to orchestration (bounded set, cheap `limit=1` calls), and a detail drawer with the full paginated run history for one app, fetched only on demand. `/recovery-plans/recovery-runs` currently redirects to `recovery-actions/history` as a stub — this replaces that stub with the real page. Reuses `DataTable`, `TableToolbar`, `InventoryShell`, `DetailDrawer`, `DataTablePagination`, and `Badge` throughout rather than building new list/detail chrome.
 
 ## Architecture Decisions
-- `PolicySetPicker.tsx`: outer wrapper becomes `flex h-full min-h-[480px] flex-col overflow-hidden ... lg:flex-row` (drop `mt-5` and `lg:h-96` — spacing/height become the caller's job). List pane wrapper becomes `min-h-64 w-full shrink-0 overflow-hidden lg:h-full lg:min-h-0 lg:w-96` (drop the fixed `min-h-96`, keep the `lg:w-96` fixed rail width — a fixed-width list column is a deliberate, common master-detail pattern, not the bug being reported). Details pane wrapper becomes `min-h-0 min-w-0 flex-1 overflow-auto ...` (drop `max-h-96`/`lg:max-h-none`). `min-h-[480px]` mirrors the exact floor `TierCanvas`'s wrapper already uses, so short viewports don't collapse the picker.
-- `PolicySetPickerList.tsx` and `PolicySetPickerDetails.tsx` need no changes — the list already uses `h-full min-h-0 flex-col overflow-hidden` internally and will size correctly once its parent has a real height; the details pane's own `max-w-6xl` is a readability cap on fact-grid width, unrelated to this height fix, and stays.
-- Both call sites' step containers switch from "normal page scroll" to "fill height, overflow-hidden, internal scroll" for the policy-set step specifically — the same treatment `step === 2` (tiers) already gets in `RecoveryAppBuilder.tsx` and `resourcesStepIndex`/`relatedStorageStepIndex` already get in `RecoveryGroupBuilder.tsx`. Concretely: add the policy-set step to each file's `overflow-hidden` condition, and wrap each step's title/description/picker block in a `flex h-full min-h-0 flex-col` container so the picker (in a `min-h-0 flex-1` slot below the fixed-height title/description) receives real height to fill.
-- Loading/error/empty branches for the policy-set step don't need the fill treatment — they're short, non-scrolling content — only the actual `<PolicySetPicker>` render path gets wrapped in the flex-1 slot.
+- `GET /get_orchestrator_runs` requires `provider_id` + `dag_id` per call, with no bulk/multi-DAG mode (confirmed against `openapi/abco-api.json:1207-1270`). The response (`OrchestratorRunsResponse`) is deliberately permissive (`{ provider_id, dag_id, [key: string]: unknown }`) — it's Airflow's own `dagRuns` payload passed through, not validated by this backend's schema. A local mapper parses the `dag_runs` array using field names confirmed against a real captured response (below) instead of relying on `parseGeneratedResponse`/Zod (there's no generated Zod schema for this response, unlike other endpoints in this codebase).
+- Bound the app set client-side: only `RecoveryAppRecord`s with a non-null `airflow_run_id` actually have a queryable Airflow DAG — `push_to_orchestrator === true` alone is just intent and doesn't guarantee a run id was ever received (a submission could fail partway). `useRecoveryApplications()` (existing) is filtered on `Boolean(airflow_run_id)` before any run is ever fetched.
+- The Airflow DAG id is **not** the recovery app's own `id`. It's constructed as `` `dag_${airflow_run_id}` `` — confirmed directly from the OpenAPI spec's own description text on two other endpoints (`openapi/abco-api.json:1486,1826`: *"tear down the leftover Airflow DAG (`dag_<run_id>`)"*). `dag_id` for `/get_orchestrator_runs` must be built this way, not passed as the app's `id`.
+- Single orchestration provider assumption (confirmed): find the one AIRFLOW-type provider via the existing `usePlatformProviders()`/`getEligiblePlatformProviders` helper already used in `RecoveryAppBuilder.tsx`'s orchestration step — no per-provider fan-out.
+- Two distinct query shapes, matching the two-tier design: the overview fans out with `useQueries` (`limit: 1` per app — same pattern `useRecoveryGroupRelatedVolumes.ts` already establishes for "one query per item in a list"), while the drawer uses one plain `useQuery` per opened app, paginated via the endpoint's existing `limit`/`offset`/`order_by` params.
+- Status → `Badge` color mapping: `success` → `success`, `running` → `info`, `failed` → `error`, anything else (`queued`, `scheduled`, unknown) → `light`. No new badge/pill component — `Badge` already supports this.
 
 ## Task List
 
-### Phase 1: Shared component
-- [ ] Task 1: Update `PolicySetPicker.tsx`'s three wrapper `className`s per the Architecture Decisions above (drop hardcoded height/width bounds, add `h-full`/`flex-1`/`min-h-0` fill chain).
+### Phase 1: Foundation (models, API, query keys)
+- [ ] Task 1: Create `src/features/recovery-plans/recovery-runs/model/recoveryRunTypes.ts` — `OrchestratedApp { id, name, dagId }` (`dagId` precomputed as `` `dag_${airflow_run_id}` `` — see Architecture Decisions), `OrchestratorRun { runId, status, startedAt, endedAt, durationSeconds }`, `OrchestratorRunsPage { runs: OrchestratorRun[], total: number }`.
+- [ ] Task 2: Create `src/features/recovery-plans/recovery-runs/helpers/mapOrchestratorRuns.ts` — parses the raw `OrchestratorRunsResponse`'s `dag_runs` array using confirmed real Airflow field names (captured from an actual response, see below): `dag_run_id` → runId, `state` → status, `start_date` → startedAt (fallback `logical_date` while still queued/no start yet), `end_date` → endedAt, `duration` → durationSeconds (Airflow already computes this — don't derive it from start/end), `total_entries` → total. Still defensive (optional chaining, no throwing) since fields can be legitimately absent per run state (e.g. `end_date`/`duration` null while running).
 
-### Checkpoint: Component alone
-- [ ] `PolicySetPicker.test.tsx` still passes unmodified (no prop/behavior change, only layout classes)
-- [ ] Typecheck clean
+**Confirmed real response shape** (captured from the actual backend):
+```json
+{
+  "provider_id": "airflow-01",
+  "dag_id": "dag_260818094526_2918dccb",
+  "dag_runs": [
+    {
+      "dag_run_id": "scheduled__2026-08-18T00:00:00+00:00",
+      "logical_date": "2026-08-18T00:00:00Z",
+      "start_date": "2026-08-18T09:46:40.607667Z",
+      "end_date": "2026-08-18T09:46:50.636064Z",
+      "duration": 10.028397,
+      "state": "failed"
+    }
+  ],
+  "total_entries": 1,
+  "next_cursor": null,
+  "previous_cursor": null
+}
+```
+(trimmed to the fields the mapper uses; the real payload also carries `queued_at`, `run_type`, `dag_versions`, etc., which the mapper ignores)
+- [ ] Task 3: Create `src/features/recovery-plans/recovery-runs/api/recoveryRunsApi.ts` — `fetchOrchestratorRuns(providerId, dagId, { limit, offset, orderBy })` calling the generated `getOrchestratorRunsGetOrchestratorRunsGet`, following the try/catch + `OrvalApiError` message pattern in `recoveryApplicationsApi.ts`.
+- [ ] Task 4: Create `src/features/recovery-plans/recovery-runs/api/recoveryRunsQueryKeys.ts` (pattern: `discoveryInventoryKeys`) — `recoveryRunsKeys.latest(providerId, dagId)`, `.history(providerId, dagId, page, pageSize)`.
 
-### Phase 2: Wire the fill chain into both wizards
-- [ ] Task 2: In `RecoveryAppBuilder.tsx`, add `step === 3` to the body wrapper's `overflow-hidden` condition (currently `step === 2 ? 'overflow-hidden' : 'overflow-y-auto'`); wrap the step-3 block's title/description/picker in `flex h-full min-h-0 flex-col`, and wrap the `<PolicySetPicker>` render itself in a `mt-5 min-h-0 flex-1` div (loading/error/empty branches stay outside this slot).
-- [ ] Task 3: In `RecoveryGroupBuilder.tsx`, add `step === policySetStepIndex` to the equivalent `overflow-hidden` condition; apply the same `flex h-full min-h-0 flex-col` restructuring inside `RecoveryGroupPolicySetStep.tsx` (title/description stay fixed-height, the picker render gets the `min-h-0 flex-1` slot).
+### Checkpoint: Foundation
+- [ ] `npm run typecheck` clean
+- [ ] Unit test for `mapOrchestratorRuns.ts` covering a realistic Airflow payload and a malformed/missing-field one
+
+### Phase 2: Hooks
+- [ ] Task 5: Create `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps.ts` — combines `useRecoveryApplications()` + `usePlatformProviders()`, filters to `Boolean(record.airflow_run_id)` (not `push_to_orchestrator` — see Architecture Decisions), maps each to `{ id, name, dagId: `dag_${airflow_run_id}` }`, finds the single AIRFLOW provider id (reuse `getEligiblePlatformProviders`), returns `{ apps: OrchestratedApp[], providerId: string | null, isLoading, error }`.
+- [ ] Task 6: Create `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedAppRuns.ts` — `useQueries` fan-out over `apps`, one `fetchOrchestratorRuns(providerId, app.dagId, { limit: 1 })` per app (note: `app.dagId`, not `app.id`), same shape as `useRecoveryGroupRelatedVolumes.ts` (per-item `enabled`, `staleTime`/`gcTime`, `retry: 1`). Returns one summary row per app (latest run or `null`).
+- [ ] Task 7: Create `src/features/recovery-plans/recovery-runs/hooks/useAppRunHistory.ts` — plain `useQuery` keyed on `app.dagId`, enabled only while a drawer is open for one app, paginated (`limit`/`offset` from page/pageSize), returns `{ runs, total }`.
+
+### Checkpoint: Hooks
+- [ ] Hook tests: `useOrchestratedApps` filters out records with no `airflow_run_id` (regardless of `push_to_orchestrator`) and computes `dagId` correctly; `useOrchestratedAppRuns` only queries the filtered set, passes `limit: 1`, and calls with `dagId` (not the app's own `id`); `useAppRunHistory` stays disabled until given a `dagId`
+
+### Phase 3: UI (reusing shared components)
+- [ ] Task 8: Create `src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.tsx` — `DataTable` + `DataTableToolbar` (search by app name/id) + `DataTableSkeleton`/`DataTableRequestState` for loading/error, `Badge` for the status pill (mapping above), row click sets the selected app id.
+- [ ] Task 9: Create `src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDrawer.tsx` — `DetailDrawer` (eyebrow "Run history", title = app name, subtitle = the app's own business `id`, shown to the human — the drawer's data fetch underneath uses `dagId`, not this subtitle value) with a run-row list built from `useAppRunHistory`, `DataTablePagination` in the footer.
+- [ ] Task 10: Create `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx` — `TableToolbar` + `InventoryShell`, matching `PolicySetsPage.tsx`'s structure exactly; composes `useOrchestratedApps` → `useOrchestratedAppRuns` → `RecoveryRunsTable`, plus `RecoveryRunHistoryDrawer` for the selected app.
+
+### Checkpoint: UI
+- [ ] Component tests: table renders one row per orchestrated app with the right status color; clicking a row opens the drawer for that app; drawer pagination requests the next page
+
+### Phase 4: Wire up routing, nav, translations
+- [ ] Task 11: `src/app/AppRoutes.tsx` — replace the `recovery-runs` route's `<Navigate to={routes.recoveryActionHistory} />` with the lazy-loaded `RecoveryRunsPage` (same `Suspense`/`RouteLoadingSkeleton` pattern as sibling routes).
+- [ ] Task 12: `src/layouts/app-shell/AppSidebar.tsx` — add a "Recovery Runs" sub-item under "Recovery Plans" (`path: routes.recoveryRuns`), add its `nav.recovery.runs` translation mapping.
+- [ ] Task 13: Translations (en/sk/cs) — reuse existing `pages.recoveryRuns.title`/`.description`; add `recoveryRuns.*` keys for table columns, status labels, search placeholder/label, drawer eyebrow/note, and `nav.recovery.runs`.
 
 ### Checkpoint: Complete
-- [ ] Full focused test run across `PolicySetPicker.test.tsx`, `RecoveryGroupPolicySetStep.test.tsx`, `RecoveryAppBuilder.test.tsx`, `RecoveryGroupBuilder.test.tsx`
-- [ ] Typecheck and lint clean
-- [ ] Manual trace: on both wizards, the policy set step's box now fills the available vertical space down to the footer, with the list/detail panes scrolling internally instead of the page
+- [ ] Full focused test run across every file created/touched in Phases 1-4
+- [ ] `npm run typecheck` and `eslint` clean
+- [ ] Manual note: no browser available in this environment to visually confirm the route renders — flagged, not silently skipped
 
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Removing the fixed height without also fixing both step containers would collapse the picker to near-zero height | High | Both call sites are updated in the same change (Tasks 2-3), not just the shared component |
-| Mobile (below `lg`) stacking of list+details inside a flex-fill parent could squeeze one pane if not given its own floor | Medium | List pane keeps a `min-h-64` floor on mobile; details pane takes remaining space via `flex-1 min-h-0` with its own scroll |
-| Existing tests assert on specific class names for layout (e.g. `RecoveryGroupPolicySetStep.test.tsx`'s "keeps the policy detail panel visible below the lg breakpoint" test, now moved to `PolicySetPicker.test.tsx`) | Medium | That test only checks for absence of `hidden` and presence of `flex-col`, both still true after this change — verified at the checkpoint, updated if it doesn't hold |
+| A run's fields can legitimately be absent depending on state (`end_date`/`duration` null while running, `start_date` null while still queued) | Medium — naive parsing could show wrong/blank data | Mapper handles each field's known-absent cases explicitly (fallbacks and nulls), not just generic optional chaining; unit test covers a "queued, not yet started" run alongside the full/completed one |
+| No orchestration provider configured at all (e.g. fresh install) | Low | `useOrchestratedApps` returns `providerId: null`; the page shows the existing empty-state pattern, no queries fire |
+| A recovery app is deleted after being orchestrated, but Airflow still has its DAG runs | Low | Out of scope — the overview is driven by the current recovery-apps list, matching how the rest of this app already treats deleted-but-still-referenced ids (e.g. policy set "unavailable" notices) |
 
 ## Open Questions
-None — scope is the height-fill fix for the shared picker plus both call sites; no visual/behavioral change beyond filling available space.
+None — data flow, provider-count assumption, and status→color mapping were all settled during brainstorming.

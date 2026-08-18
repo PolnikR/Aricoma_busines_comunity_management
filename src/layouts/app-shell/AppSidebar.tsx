@@ -66,6 +66,7 @@ const navItems: NavItem[] = [
       { name: 'Recovery Groups', path: routes.recoveryGroups },
       { name: 'Recovery Policies', path: routes.recoveryPolicies },
       { name: 'Policy Sets', path: routes.policySets },
+      { name: 'Recovery Runs', path: routes.recoveryRuns },
     ],
   },
   {
@@ -96,6 +97,7 @@ const navKeyMap: Record<string, string> = {
   'Recovery Groups': 'nav.recovery.groups',
   'Recovery Policies': 'nav.recovery.policies',
   'Policy Sets': 'nav.recovery.policySets',
+  'Recovery Runs': 'nav.recovery.runs',
   'Recovery Actions': 'nav.recoveryActions',
 }
 

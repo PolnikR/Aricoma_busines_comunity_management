@@ -48,6 +48,11 @@ const PolicySetsPage = lazy(async () => {
   return { default: page.PolicySetsPage }
 })
 
+const RecoveryRunsPage = lazy(async () => {
+  const page = await import('@/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage')
+  return { default: page.RecoveryRunsPage }
+})
+
 const RecoveryGroupBuilderPage = lazy(async () => {
   const page = await import('@/features/recovery-plans/recovery-groups/pages/RecoveryGroupBuilderPage')
   return { default: page.RecoveryGroupBuilderPage }
@@ -284,7 +289,11 @@ export function AppRoutes() {
           </Route>
           <Route
             path="recovery-runs"
-            element={<Navigate to={routes.recoveryActionHistory} replace />}
+            element={(
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <RecoveryRunsPage />
+              </Suspense>
+            )}
           />
           <Route path="recovery-policies">
             <Route index element={<Navigate to={routes.recoveryPolicySnapshot} replace />} />

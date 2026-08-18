@@ -1,34 +1,99 @@
-# Fill-Height Policy Set Picker - Task Checklist
+# Recovery Runs - Task Checklist
 
-## Phase 1: Shared component
+## Phase 1: Foundation
 
-### Task 1: Update PolicySetPicker.tsx wrapper classes
-- [x] Outer div: `flex h-full min-h-[480px] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm lg:flex-row` (drop `mt-5`, drop `lg:h-96`)
-- [x] List wrapper div: `min-h-64 w-full shrink-0 overflow-hidden lg:h-full lg:min-h-0 lg:w-96` (drop `min-h-96`, keep `lg:w-96`)
-- [x] Details wrapper div: `min-h-0 min-w-0 flex-1 overflow-auto border-t border-border lg:border-l lg:border-t-0` (drop `max-h-96 lg:max-h-none`)
+### Task 1: Model types
+- [x] Create `src/features/recovery-plans/recovery-runs/model/recoveryRunTypes.ts`
+- [x] `OrchestratedApp { id: string; name: string; dagId: string }` — `dagId` is `` `dag_${airflow_run_id}` ``, NOT `id`
+- [x] `OrchestratorRun { runId: string; status: string; startedAt: string | null; endedAt: string | null; durationSeconds: number | null }`
+- [x] `OrchestratorRunsPage { runs: OrchestratorRun[]; total: number }`
+
+### Task 2: Response mapper
+- [x] Create `src/features/recovery-plans/recovery-runs/helpers/mapOrchestratorRuns.ts`
+- [x] Parse `response.dag_runs` (array) using confirmed real field names: `dag_run_id` → runId, `state` → status, `start_date` → startedAt (fallback `logical_date`), `end_date` → endedAt, `duration` → durationSeconds
+- [x] Parse `response.total_entries` → total
+- [x] Return `{ runs: [], total: 0 }` if `dag_runs` is missing or not an array (don't throw)
+
+### Task 3: API wrapper
+- [x] Create `src/features/recovery-plans/recovery-runs/api/recoveryRunsApi.ts`
+- [x] `fetchOrchestratorRuns(providerId: string, dagId: string, opts?: { limit?: number; offset?: number; orderBy?: string })`
+- [x] Calls generated `getOrchestratorRunsGetOrchestratorRunsGet`; wraps errors via `OrvalApiError` message pattern (mirror `recoveryApplicationsApi.ts:21-37`)
+- [x] Passes the raw response through `mapOrchestratorRuns`
+
+### Task 4: Query keys
+- [x] Create `src/features/recovery-plans/recovery-runs/api/recoveryRunsQueryKeys.ts`
+- [x] `recoveryRunsKeys.latest(providerId, dagId)`
+- [x] `recoveryRunsKeys.history(providerId, dagId, page, pageSize)`
 
 ### Checkpoint
-- [x] `npx vitest run src/shared/components/policy-set-picker/PolicySetPicker.test.tsx`
 - [x] `npm run typecheck`
+- [x] `npx vitest run src/features/recovery-plans/recovery-runs/helpers/mapOrchestratorRuns.test.ts`
 
-## Phase 2: Wire fill chain into both wizards
+## Phase 2: Hooks
 
-### Task 2: RecoveryAppBuilder.tsx (step 3)
-- [x] Change the body wrapper's overflow ternary from `step === 2 ? 'overflow-hidden' : 'overflow-y-auto'` to `step === 2 || step === 3 ? 'overflow-hidden' : 'overflow-y-auto'`
-- [x] Wrap the step-3 block in `<div className="flex h-full min-h-0 flex-col">`
-- [x] Wrap the `<PolicySetPicker>` render in `<div className="mt-5 min-h-0 flex-1">...</div>` (loading/error/empty/unavailable-notice branches stay outside this slot, above it)
+### Task 5: useOrchestratedApps
+- [x] Create `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps.ts`
+- [x] Combine `useRecoveryApplications()` + `usePlatformProviders()`
+- [x] Filter apps to `Boolean(record.airflow_run_id)` — NOT `push_to_orchestrator` (intent flag; run id is the actual proof a DAG exists)
+- [x] Map each to `{ id: record.id, name: record.application.name, dagId: `dag_${record.airflow_run_id}` }`
+- [x] Resolve the single AIRFLOW provider id via `getEligiblePlatformProviders`
+- [x] Return `{ apps, providerId, isLoading, error }`
 
-### Task 3: RecoveryGroupBuilder.tsx + RecoveryGroupPolicySetStep.tsx
-- [x] In `RecoveryGroupBuilder.tsx`, add `step === policySetStepIndex` to the overflow ternary at line ~233 (`step === resourcesStepIndex || step === relatedStorageStepIndex ? 'overflow-hidden' : 'overflow-y-auto'`)
-- [x] In `RecoveryGroupPolicySetStep.tsx`, wrap the whole return in `flex h-full min-h-0 flex-col`; wrap the `<PolicySetPicker>` render in a `mt-5 min-h-0 flex-1` div; keep the loading/empty branches as simple text outside that slot
+### Task 6: useOrchestratedAppRuns
+- [x] Create `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedAppRuns.ts`
+- [x] `useQueries` over `apps`, one `fetchOrchestratorRuns(providerId, app.dagId, { limit: 1 })` per app — use `app.dagId`, not `app.id`
+- [x] Mirror `useRecoveryGroupRelatedVolumes.ts`'s per-item `enabled`/`staleTime`/`gcTime`/`retry: 1` shape
+- [x] Return one `{ app, latestRun: OrchestratorRun | null, isLoading }` per input app
+
+### Task 7: useAppRunHistory
+- [x] Create `src/features/recovery-plans/recovery-runs/hooks/useAppRunHistory.ts`
+- [x] Plain `useQuery`, `enabled: Boolean(dagId) && Boolean(providerId)`
+- [x] Accepts `page`/`pageSize`, maps to `offset`/`limit` for `fetchOrchestratorRuns(providerId, dagId, ...)`
+- [x] Returns `{ runs, total }`
+
+### Checkpoint
+- [x] `npx vitest run src/features/recovery-plans/recovery-runs/hooks/*.test.ts`
+
+## Phase 3: UI
+
+### Task 8: RecoveryRunsTable
+- [x] Create `src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.tsx`
+- [x] `DataTable` + `DataTableToolbar` (search app name/id) + `DataTableSkeleton`/`DataTableRequestState`
+- [x] Columns: app name+id, status `Badge` (success/info/error/light mapping), started, duration
+- [x] Row click → `onSelectApp(appId)`
+
+### Task 9: RecoveryRunHistoryDrawer
+- [x] Create `src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDrawer.tsx`
+- [x] `DetailDrawer` (eyebrow "Run history", title = app name, subtitle = app id)
+- [x] Run-row list from `useAppRunHistory`, `DataTablePagination` in footer
+
+### Task 10: RecoveryRunsPage
+- [x] Create `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx`
+- [x] `TableToolbar` + `InventoryShell`, mirroring `PolicySetsPage.tsx`
+- [x] Wires `useOrchestratedApps` → `useOrchestratedAppRuns` → `RecoveryRunsTable` + `RecoveryRunHistoryDrawer`
+
+### Checkpoint
+- [x] `npx vitest run src/features/recovery-plans/recovery-runs/components/*.test.tsx src/features/recovery-plans/recovery-runs/pages/*.test.tsx`
+
+## Phase 4: Wiring
+
+### Task 11: Route
+- [x] `src/app/AppRoutes.tsx` — replace the `recovery-runs` `<Navigate>` stub with lazy `RecoveryRunsPage` + `Suspense`/`RouteLoadingSkeleton`
+
+### Task 12: Sidebar nav
+- [x] `src/layouts/app-shell/AppSidebar.tsx` — add `{ name: 'Recovery Runs', path: routes.recoveryRuns }` under "Recovery Plans"
+- [x] Add `'Recovery Runs': 'nav.recovery.runs'` to the translation-key map
+
+### Task 13: Translations (en/sk/cs)
+- [x] Reuse existing `pages.recoveryRuns.title`/`.description`
+- [x] Add `recoveryRuns.table.*` (columns), `recoveryRuns.status.*` (success/running/failed/queued labels), `recoveryRuns.search.*`, `recoveryRuns.drawer.*`, `nav.recovery.runs`
 
 ## Verification Steps
-- [x] Run: `npx vitest run src/shared/components/policy-set-picker/PolicySetPicker.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupPolicySetStep.test.tsx src/features/recovery-plans/recovery-applications/components/RecoveryAppBuilder.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx`
+- [x] Run: `npx vitest run src/features/recovery-plans/recovery-runs`
 - [x] Run: `npm run typecheck`
-- [x] Run: `npx eslint` on all changed files
-- [x] Manual/visual confirmation not required for this pass (no browser available) — rely on class-based reasoning matching the existing `TierCanvas`/resources-step pattern
+- [x] Run: `npx eslint` on all created/changed files
+- [x] Manual note: no browser in this environment — flag visual verification as not done, don't claim it
 
 ## Explicitly Out of Scope
-- `PolicySetPickerList.tsx` / `PolicySetPickerDetails.tsx` internals — unchanged
-- The list pane's fixed `lg:w-96` rail width — a deliberate master-detail pattern, not the reported bug
-- Any other wizard step's layout
+- Backend change enabling bulk/multi-DAG runs queries (separate request, flagged in brainstorming)
+- Any change to `RecoveryActionHistory` (the current redirect target) — stays as its own separate feature
