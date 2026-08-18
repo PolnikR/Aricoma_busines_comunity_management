@@ -289,11 +289,7 @@ export function AppRoutes() {
           </Route>
           <Route
             path="recovery-runs"
-            element={(
-              <Suspense fallback={<RouteLoadingSkeleton />}>
-                <RecoveryRunsPage />
-              </Suspense>
-            )}
+            element={<Navigate to={routes.storageOrchestration} replace />}
           />
           <Route path="recovery-policies">
             <Route index element={<Navigate to={routes.recoveryPolicySnapshot} replace />} />
@@ -382,7 +378,17 @@ export function AppRoutes() {
           )}
         />
         {renderModulePageRoutes(discoveryInventoryPlaceholderPages)}
-        {renderModulePageRoutes(remainingEpicPages.filter((page) => page.path !== routes.recoveryPlans))}
+        {renderModulePageRoutes(remainingEpicPages.filter((page) => (
+          page.path !== routes.recoveryPlans && page.path !== routes.storageOrchestration
+        )))}
+        <Route
+          path="storage-orchestration"
+          element={(
+            <Suspense fallback={<RouteLoadingSkeleton />}>
+              <RecoveryRunsPage />
+            </Suspense>
+          )}
+        />
         <Route path="*" element={<Navigate to={routes.resources} replace />} />
     </Route>
   )

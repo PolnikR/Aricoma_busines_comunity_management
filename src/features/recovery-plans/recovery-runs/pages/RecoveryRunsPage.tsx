@@ -23,7 +23,7 @@ export function RecoveryRunsPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow={t('pages.recoveryRuns.title')}
+        eyebrow={t('nav.storage')}
         title={t('pages.recoveryRuns.title')}
         description={t('pages.recoveryRuns.description')}
       />
