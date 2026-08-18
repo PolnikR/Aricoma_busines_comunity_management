@@ -13,7 +13,7 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
-import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
+import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import { toCleanRoomPolicySubmitPayload } from '../api/cleanRoomPoliciesApi'
 import { useDeleteCleanRoomPolicy } from '../hooks/useDeleteCleanRoomPolicy'
@@ -181,13 +181,48 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
         }}
       />
 
-      <JsonViewerModal
-        open={jsonViewed !== null}
-        title={t('cleanRoomPolicies.jsonViewer.title')}
-        data={jsonViewed ? toCleanRoomPolicySubmitPayload(jsonViewed) : null}
-        closeLabel={t('buttons.close')}
-        onClose={() => { setJsonViewId(null) }}
-      />
+      {jsonViewed ? (
+        <ChecklistResultDialog
+          open={jsonViewed !== null}
+          title={t('cleanRoomPolicies.jsonViewer.title')}
+          primaryName={jsonViewed.name}
+          subtitle={jsonViewed.id}
+          badges={[
+            { label: jsonViewed.enabled ? 'Active' : 'Inactive', color: jsonViewed.enabled ? 'success' : 'warning' },
+          ]}
+          statusBar={{
+            title: t('cleanRoomPolicies.policyLoaded'),
+            status: 'success',
+            passedCount: 4,
+            totalCount: 4,
+          }}
+          checks={[
+            {
+              name: t('cleanRoomPolicies.policyId'),
+              detail: jsonViewed.id,
+              status: 'ok',
+            },
+            {
+              name: t('cleanRoomPolicies.policyName'),
+              detail: jsonViewed.name,
+              status: 'ok',
+            },
+            {
+              name: t('cleanRoomPolicies.description'),
+              detail: jsonViewed.description || '—',
+              status: 'ok',
+            },
+            {
+              name: t('cleanRoomPolicies.enabled'),
+              detail: jsonViewed.enabled ? 'Yes' : 'No',
+              status: 'ok',
+            },
+          ]}
+          responseData={toCleanRoomPolicySubmitPayload(jsonViewed)}
+          responseSchemaType="CleanRoomPolicy"
+          onClose={() => { setJsonViewId(null) }}
+        />
+      ) : null}
     </div>
   )
 }
