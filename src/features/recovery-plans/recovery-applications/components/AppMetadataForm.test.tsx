@@ -53,7 +53,7 @@ describe('AppMetadataForm', () => {
       </LanguageProvider>
     )
 
-    expect(await screen.findByLabelText('File name *')).toBeDisabled()
+    expect(await screen.findByLabelText('ID *')).toBeDisabled()
   })
 
   it('marks filename as required', async () => {
@@ -63,7 +63,7 @@ describe('AppMetadataForm', () => {
       </LanguageProvider>
     )
 
-    expect(await screen.findByLabelText('File name *')).toBeRequired()
+    expect(await screen.findByLabelText('ID *')).toBeRequired()
   })
 
   it('disables browser autocomplete for application metadata fields', async () => {
@@ -73,7 +73,7 @@ describe('AppMetadataForm', () => {
       </LanguageProvider>
     )
 
-    const fileName = await screen.findByLabelText('File name *')
+    const fileName = await screen.findByLabelText('ID *')
     const applicationName = screen.getByLabelText('Application Name *')
     const description = screen.getByLabelText('Description *')
 

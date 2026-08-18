@@ -115,7 +115,7 @@ vi.mock('./TierCanvas', () => ({
 }))
 
 function fillDetails() {
-  fireEvent.change(screen.getByLabelText('File name *'), { target: { value: 'finance_recovery' } })
+  fireEvent.change(screen.getByLabelText('ID *'), { target: { value: 'finance_recovery' } })
   fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
   fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
   fireEvent.change(screen.getByLabelText('Provider ID *'), { target: { value: 'vmware-01' } })

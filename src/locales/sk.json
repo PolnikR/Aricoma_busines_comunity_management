@@ -777,7 +777,7 @@
   "recoveryGroups.rollback.resultIbmSection": "IBM FlashCopy",
   "recoveryGroups.rollback.resultErrors": "Errors",
   "recoveryGroups.rollback.resultRawDetails": "Raw response",
-  "recovery.application.form.fileName": "Názov súboru *",
+  "recovery.application.form.fileName": "ID *",
   "recovery.application.form.fileNamePlaceholder": "sample_application_recovery",
   "recovery.application.orchestration.toggleLabel": "Odoslať do orchestrátora",
   "recovery.application.orchestration.enabled": "DAG obnovy bude odoslaný do Airflow.",

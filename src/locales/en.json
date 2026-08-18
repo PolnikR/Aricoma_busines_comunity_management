@@ -809,7 +809,7 @@
   "recoveryGroups.rollback.resultIbmSection": "IBM FlashCopy",
   "recoveryGroups.rollback.resultErrors": "Errors",
   "recoveryGroups.rollback.resultRawDetails": "Raw response",
-  "recovery.application.form.fileName": "File name *",
+  "recovery.application.form.fileName": "ID *",
   "recovery.application.form.fileNamePlaceholder": "sample_application_recovery",
   "recovery.application.orchestration.toggleLabel": "Push to orchestrator",
   "recovery.application.orchestration.enabled": "The recovery DAG will be sent to Airflow.",
