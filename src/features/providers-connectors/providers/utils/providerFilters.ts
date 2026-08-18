@@ -1,10 +1,10 @@
 import type { ProviderRecord, ProviderRole, ProviderType } from '../model/providerTypes'
 
-export function filterByType(providers: ProviderRecord[], type: ProviderType): ProviderRecord[] {
+export function filterByType(providers: readonly ProviderRecord[], type: ProviderType): ProviderRecord[] {
   return providers.filter(provider => provider.type === type)
 }
 
-export function filterByTypes(providers: ProviderRecord[], types: ProviderType[]): ProviderRecord[] {
+export function filterByTypes(providers: readonly ProviderRecord[], types: ProviderType[]): ProviderRecord[] {
   return providers.filter(provider => types.includes(provider.type))
 }
 
@@ -24,20 +24,12 @@ export function isFlashcopyProvider(provider: ProviderRecord): boolean {
   return provider.type === 'FLASHCOPY'
 }
 
-export function getProvidersByTypeAndRole(providers: ProviderRecord[], type: ProviderType, role: ProviderRole): ProviderRecord[] {
+export function getProvidersByTypeAndRole(providers: readonly ProviderRecord[], type: ProviderType, role: ProviderRole): ProviderRecord[] {
   return filterByType(providers, type)
     .filter(provider => role === 'source' ? provider.role !== 'target' : provider.role === 'target')
 }
 
-export function getSourceProvidersByType(providers: ProviderRecord[], type: ProviderType): ProviderRecord[] {
-  return getProvidersByTypeAndRole(providers, type, 'source')
-}
-
-export function getTargetProvidersByType(providers: ProviderRecord[], type: ProviderType): ProviderRecord[] {
-  return getProvidersByTypeAndRole(providers, type, 'target')
-}
-
-export function getEligibleSourceProviders(providers: ProviderRecord[]): ProviderRecord[] {
+export function getEligibleSourceProviders(providers: readonly ProviderRecord[]): ProviderRecord[] {
   return filterByTypes(providers, ['VMWARE', 'IBM_POWER'])
     .filter(provider => provider.role !== 'target')
 }

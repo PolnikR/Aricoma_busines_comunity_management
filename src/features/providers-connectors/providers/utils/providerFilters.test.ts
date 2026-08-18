@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ProviderRecord } from '../model/providerTypes'
-import { getSourceProvidersByType, getTargetProvidersByType } from './providerFilters'
+import { getProvidersByTypeAndRole } from './providerFilters'
 
 describe('providerFilters', () => {
   const vmwareSourceProvider: ProviderRecord = {
@@ -32,25 +32,24 @@ describe('providerFilters', () => {
     type: 'FLASHCOPY',
   }
 
-  describe('getSourceProvidersByType', () => {
-
+  describe('getProvidersByTypeAndRole — source', () => {
     it('returns providers matching type and excludes target role', () => {
       const providers = [vmwareSourceProvider, vmwareTargetProvider, flashProvider]
-      const result = getSourceProvidersByType(providers, 'VMWARE')
+      const result = getProvidersByTypeAndRole(providers, 'VMWARE', 'source')
       expect(result).toHaveLength(1)
       expect(result[0]?.id).toBe('vmware-source-01')
     })
 
     it('treats missing role as source', () => {
       const providers = [vmwareLegacyProvider, vmwareTargetProvider]
-      const result = getSourceProvidersByType(providers, 'VMWARE')
+      const result = getProvidersByTypeAndRole(providers, 'VMWARE', 'source')
       expect(result).toHaveLength(1)
       expect(result[0]?.id).toBe('vmware-legacy-01')
     })
 
     it('excludes providers with non-matching type regardless of role', () => {
       const providers = [vmwareSourceProvider, flashProvider]
-      const result = getSourceProvidersByType(providers, 'FLASHCOPY')
+      const result = getProvidersByTypeAndRole(providers, 'FLASHCOPY', 'source')
       expect(result).toHaveLength(1)
       expect(result[0]?.id).toBe('flash-01')
       expect(result.some(p => p.type === 'VMWARE')).toBe(false)
@@ -58,41 +57,41 @@ describe('providerFilters', () => {
 
     it('returns empty array when no providers match', () => {
       const providers = [vmwareTargetProvider]
-      const result = getSourceProvidersByType(providers, 'FLASHCOPY')
+      const result = getProvidersByTypeAndRole(providers, 'FLASHCOPY', 'source')
       expect(result).toHaveLength(0)
     })
 
     it('returns empty array when all matching type providers are target role', () => {
       const providers = [vmwareTargetProvider, vmwareTargetProvider]
-      const result = getSourceProvidersByType(providers, 'VMWARE')
+      const result = getProvidersByTypeAndRole(providers, 'VMWARE', 'source')
       expect(result).toHaveLength(0)
     })
   })
 
-  describe('getTargetProvidersByType', () => {
+  describe('getProvidersByTypeAndRole — target', () => {
     it('returns providers matching type and including only target role', () => {
       const providers = [vmwareSourceProvider, vmwareTargetProvider, flashProvider]
-      const result = getTargetProvidersByType(providers, 'VMWARE')
+      const result = getProvidersByTypeAndRole(providers, 'VMWARE', 'target')
       expect(result).toHaveLength(1)
       expect(result[0]?.id).toBe('vmware-target-01')
     })
 
     it('excludes providers with missing role', () => {
       const providers = [vmwareLegacyProvider, vmwareTargetProvider]
-      const result = getTargetProvidersByType(providers, 'VMWARE')
+      const result = getProvidersByTypeAndRole(providers, 'VMWARE', 'target')
       expect(result).toHaveLength(1)
       expect(result[0]?.id).toBe('vmware-target-01')
     })
 
     it('returns empty array when no target role providers of type exist', () => {
       const providers = [vmwareSourceProvider, vmwareLegacyProvider]
-      const result = getTargetProvidersByType(providers, 'VMWARE')
+      const result = getProvidersByTypeAndRole(providers, 'VMWARE', 'target')
       expect(result).toHaveLength(0)
     })
 
     it('returns empty array when matching type providers are only source role', () => {
       const providers = [vmwareSourceProvider, vmwareLegacyProvider]
-      const result = getTargetProvidersByType(providers, 'VMWARE')
+      const result = getProvidersByTypeAndRole(providers, 'VMWARE', 'target')
       expect(result).toHaveLength(0)
     })
   })

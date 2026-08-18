@@ -29,7 +29,7 @@ export function buildResourceTabsByRole(
   role: ProviderRole,
 ): ResourceSourceTab[] {
   return RESOURCE_SOURCE_TAB_DEFINITIONS.flatMap<ResourceSourceTab>(({ resourceTab, providerType }) => {
-    const matchingProviders = getProvidersByTypeAndRole(Array.from(providers), providerType, role)
+    const matchingProviders = getProvidersByTypeAndRole(providers, providerType, role)
       .slice()
       .sort(compareProviders)
 
