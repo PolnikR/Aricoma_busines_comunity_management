@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Field, Input, Select, Textarea } from '@/shared/components/form/FormControls'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
+import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
 import { getEligibleSourceProviders } from '../utils/eligibleProviders'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
@@ -101,8 +101,14 @@ export function AppMetadataForm({
           value={name}
           onChange={e => { handleChange('name', e.target.value); }}
           placeholder={t('forms.applicationNameExample')}
+          invalid={Boolean(name) && !isValidRecoveryApplicationName(name)}
           required
         />
+        {name && !isValidRecoveryApplicationName(name) ? (
+          <p className="mt-1 text-xs text-red-600">
+            {t('recovery.application.validation.nameInvalid')}
+          </p>
+        ) : null}
       </Field>
 
       <Field label={t('forms.environment')} htmlFor="application-environment">

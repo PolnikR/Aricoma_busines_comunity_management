@@ -827,6 +827,7 @@
   "recovery.application.orchestratorModal.viewInAirflow": "Zobrazit v Airflow",
   "recovery.application.validation.fileNameInvalid": "Použijte písmena, čísla a podtržítka; název musí začínat písmenem.",
   "recovery.application.validation.fileNameRequired": "Zadejte platný název souboru obsahující písmena, čísla a podtržítka.",
+  "recovery.application.validation.nameInvalid": "Použijte pouze písmena, čísla, pomlčky, tečky a podtržítka; bez mezer.",
   "recovery.application.validation.platformRequired": "Vyberte platformu.",
   "recovery.application.validation.platformProviderRequired": "Vyberte platform providera.",
   "recovery.application.validation.policySetRequired": "Vyberte sadu politik.",

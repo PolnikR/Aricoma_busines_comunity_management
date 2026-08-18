@@ -181,7 +181,7 @@ describe('RecoveryApplicationBuilderPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Change builder' }))
     await user.click(screen.getByRole('button', { name: 'Back' }))
-    await user.click(screen.getByRole('button', { name: 'Discard' }))
+    await user.click(screen.getByRole('button', { name: 'Discard changes' }))
 
     expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')
   })

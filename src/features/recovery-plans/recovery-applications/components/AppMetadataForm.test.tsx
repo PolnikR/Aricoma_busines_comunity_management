@@ -37,6 +37,20 @@ describe('AppMetadataForm', () => {
     expect(onMetadataChange).toHaveBeenCalledWith({ name: 'Billing' })
   })
 
+  it('flags an application name containing a space as invalid', async () => {
+    const user = userEvent.setup()
+    render(
+      <LanguageProvider>
+        <AppMetadataForm />
+      </LanguageProvider>
+    )
+
+    const name = await screen.findByLabelText('Application Name *')
+    await user.type(name, 'init_test app')
+
+    expect(screen.getByText('Use letters, numbers, dashes, dots, and underscores only; no spaces.')).toBeInTheDocument()
+  })
+
   it('disables filename in Edit mode', async () => {
     render(
       <LanguageProvider>

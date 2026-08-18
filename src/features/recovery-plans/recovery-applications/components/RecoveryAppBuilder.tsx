@@ -17,7 +17,7 @@ import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
 import { cloneTier } from '../utils/recoveryApplicationFormMapper'
 import { getEligiblePlatformProviders, getEligibleSourceProviders } from '../utils/eligibleProviders'
-import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
+import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
 import { validateRecoveryApplication } from '../utils/validateRecoveryApplication'
 import type { RecoveryTier, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
@@ -223,7 +223,7 @@ export function RecoveryAppBuilder({
 
   const detailsValid = Boolean(
     isValidRecoveryApplicationFileName(formState.fileName)
-    && formState.name.trim()
+    && isValidRecoveryApplicationName(formState.name)
     && formState.description.trim()
     && eligibleSourceProviders.some(provider => provider.id === formState.platform),
   )

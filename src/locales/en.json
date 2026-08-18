@@ -827,6 +827,7 @@
   "recovery.application.orchestratorModal.viewInAirflow": "View in Airflow",
   "recovery.application.validation.fileNameInvalid": "Use letters, numbers, and underscores; start with a letter.",
   "recovery.application.validation.fileNameRequired": "Enter a valid file name using letters, numbers, and underscores.",
+  "recovery.application.validation.nameInvalid": "Use letters, numbers, dashes, dots, and underscores only; no spaces.",
   "recovery.application.validation.platformRequired": "Select a platform.",
   "recovery.application.validation.platformProviderRequired": "Select a platform provider.",
   "recovery.application.validation.policySetRequired": "Select a policy set.",

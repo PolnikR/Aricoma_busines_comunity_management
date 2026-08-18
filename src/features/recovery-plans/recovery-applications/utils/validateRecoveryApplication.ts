@@ -1,7 +1,7 @@
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
-import { isValidRecoveryApplicationFileName } from './recoveryApplicationFileName'
+import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from './recoveryApplicationFileName'
 import { isEligibleSourceProvider } from './eligibleProviders'
 
 export interface ValidationError {
@@ -25,6 +25,13 @@ export function validateRecoveryApplication(
     return {
       field: 'name',
       messageKey: 'alerts.pleaseEnterName',
+    }
+  }
+
+  if (!isValidRecoveryApplicationName(formState.name)) {
+    return {
+      field: 'name',
+      messageKey: 'recovery.application.validation.nameInvalid',
     }
   }
 
