@@ -17,6 +17,7 @@ import type {
   SubmitDagResponse,
 } from '../model/recoveryApplicationTypes'
 import { mapRecoveryApplications } from '../helpers/mapRecoveryApplications'
+import { rollbackReportSchema, type RollbackReport } from './schemas/recoveryApplicationsSchema'
 
 export async function fetchRecoveryApplications(): Promise<RecoveryApplicationListItem[]> {
   try {
@@ -106,35 +107,23 @@ function requireOrchestratorPush(
 export type DeleteRecoveryApplicationRequest =
   | {
       recoveryAppId: string
-      rollbackFromOrchestrator?: false
-      rollbackOrphans?: false
-      providerId?: string
-      computeProviderId?: string
+      rollbackFromOrchestrator: false
     }
   | {
       recoveryAppId: string
       rollbackFromOrchestrator: true
-      rollbackOrphans?: false
       providerId: string
-      computeProviderId?: string
-    }
-  | {
-      recoveryAppId: string
-      rollbackFromOrchestrator: true
-      rollbackOrphans: true
-      providerId: string
-      computeProviderId?: string
+      computeProviderId: string
     }
 
 export async function deleteRecoveryApplication(
   request: DeleteRecoveryApplicationRequest,
-): Promise<RecoveryApplicationListItem[]> {
+): Promise<{ applications: RecoveryApplicationListItem[]; rollback: RollbackReport | null }> {
   const params = {
     recovery_app_id: request.recoveryAppId,
-    rollback_from_orchestrator: request.rollbackFromOrchestrator ?? false,
-    ...(request.rollbackOrphans !== undefined && { rollback_orphans: request.rollbackOrphans }),
-    ...(request.providerId !== undefined && { provider_id: request.providerId }),
-    ...(request.computeProviderId !== undefined && {
+    rollback_from_orchestrator: request.rollbackFromOrchestrator,
+    ...(request.rollbackFromOrchestrator && {
+      provider_id: request.providerId,
       compute_provider_id: request.computeProviderId,
     }),
   }
@@ -146,7 +135,11 @@ export async function deleteRecoveryApplication(
       payload,
       'DELETE /delete_recovery_app',
     )
-    return mapRecoveryApplications(parsed)
+
+    return {
+      applications: mapRecoveryApplications(parsed),
+      rollback: request.rollbackFromOrchestrator && parsed.rollback ? rollbackReportSchema.parse(parsed.rollback) : null,
+    }
   } catch (error) {
     if (error instanceof OrvalApiError) {
       const reason = error.statusText || String(error.status)
