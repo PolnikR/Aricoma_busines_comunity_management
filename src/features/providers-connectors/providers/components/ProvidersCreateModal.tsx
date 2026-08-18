@@ -191,6 +191,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
         open={open}
         onClose={requestClose}
         closeOnBackdrop={false}
+        size="lg"
         title={t(isEdit ? 'providers.modal.editTitle' : 'providers.modal.createTitle')}
         footer={(
           <>
