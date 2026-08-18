@@ -31,6 +31,7 @@ import type {
   PolicySetsResponse,
   PowerVmsResponse,
   Provider,
+  ProviderTestResponse,
   ProvidersResponse,
   RecoveryAppPoliciesResponse,
   RecoveryAppPolicy,
@@ -39,13 +40,14 @@ import type {
   RecoveryAppsResponse,
   RecoveryGroup,
   RecoveryGroupsResponse,
-  RollbackFromOrchestratorRollbackFromOrchestratorPostParams,
+  RollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostParams,
   SnapshotPoliciesResponse,
   SnapshotPolicy,
   SubmitRecoveryDagSubmitRecoveryDagPostParams,
   SubmitRecoveryGroupSubmitRecoveryGroupPostParams,
   TagsResponse,
   TagsTagsGetParams,
+  TestProviderTestProviderGetParams,
   VdisksByVmResponse,
   VdisksByVmVdisksByVmGetParams,
   VmsByTagVmsByTagGetParams,
@@ -131,6 +133,37 @@ export const submitProviderSubmitProviderPost = async (provider: Provider, optio
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(provider)
+  }
+);}
+
+
+
+export const getTestProviderTestProviderGetUrl = (params: TestProviderTestProviderGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/test_provider?${stringifiedParams}` : `/test_provider`
+}
+
+/**
+ * @summary Test Provider
+ */
+export const testProviderTestProviderGet = async (params: TestProviderTestProviderGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<ProviderTestResponse> => {
+
+  return orvalMutator<ProviderTestResponse>(getTestProviderTestProviderGetUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
   }
 );}
 
@@ -749,7 +782,7 @@ export const submitRecoveryGroupSubmitRecoveryGroupPost = async (recoveryGroup: 
 
 
 
-export const getRollbackFromOrchestratorRollbackFromOrchestratorPostUrl = (params: RollbackFromOrchestratorRollbackFromOrchestratorPostParams,) => {
+export const getRollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostUrl = (params: RollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -761,18 +794,18 @@ export const getRollbackFromOrchestratorRollbackFromOrchestratorPostUrl = (param
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/rollback_from_orchestrator?${stringifiedParams}` : `/rollback_from_orchestrator`
+  return stringifiedParams.length > 0 ? `/rollback_group_from_orchestrator?${stringifiedParams}` : `/rollback_group_from_orchestrator`
 }
 
 /**
  * Delete the group's Airflow DAG (file, record, every run and task instance)
  * and every IBM FlashCopy object it created. The group record itself is kept —
  * only push_to_orchestrator flips to false.
- * @summary Rollback From Orchestrator
+ * @summary Rollback Group From Orchestrator
  */
-export const rollbackFromOrchestratorRollbackFromOrchestratorPost = async (params: RollbackFromOrchestratorRollbackFromOrchestratorPostParams, options?: Parameters<typeof orvalMutator>[1]): Promise<RecoveryGroupsResponse> => {
+export const rollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPost = async (params: RollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostParams, options?: Parameters<typeof orvalMutator>[1]): Promise<RecoveryGroupsResponse> => {
 
-  return orvalMutator<RecoveryGroupsResponse>(getRollbackFromOrchestratorRollbackFromOrchestratorPostUrl(params),
+  return orvalMutator<RecoveryGroupsResponse>(getRollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostUrl(params),
   {
     ...options,
     method: 'POST'

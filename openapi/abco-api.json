@@ -153,6 +153,67 @@
         }
       }
     },
+    "/test_provider": {
+      "get": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Test Provider",
+        "operationId": "test_provider_test_provider_get",
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the provider to test connectivity for",
+              "title": "Provider Id"
+            },
+            "description": "id of the provider to test connectivity for"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderTestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/delete_provider": {
       "delete": {
         "tags": [
@@ -1448,7 +1509,7 @@
             "description": "orchestration (AIRFLOW) provider - required when rollback_from_orchestrator"
           },
           {
-            "name": "ibm_provider_id",
+            "name": "compute_provider_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -1460,10 +1521,11 @@
                   "type": "null"
                 }
               ],
-              "description": "IBM FlashSystem provider - required when rollback_from_orchestrator, to unmap the app's target volumes from their host",
-              "title": "Ibm Provider Id"
+              "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped; its own defaultFlashcopyProviderId supplies the IBM FlashSystem provider for that unmap step.",
+              "default": "vmware-vcenter-02",
+              "title": "Compute Provider Id"
             },
-            "description": "IBM FlashSystem provider - required when rollback_from_orchestrator, to unmap the app's target volumes from their host"
+            "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped; its own defaultFlashcopyProviderId supplies the IBM FlashSystem provider for that unmap step."
           },
           {
             "name": "X-User",
@@ -1641,14 +1703,14 @@
         }
       }
     },
-    "/rollback_from_orchestrator": {
+    "/rollback_group_from_orchestrator": {
       "post": {
         "tags": [
           "Recovery Groups"
         ],
-        "summary": "Rollback From Orchestrator",
+        "summary": "Rollback Group From Orchestrator",
         "description": "Delete the group's Airflow DAG (file, record, every run and task instance)\nand every IBM FlashCopy object it created. The group record itself is kept —\nonly push_to_orchestrator flips to false.",
-        "operationId": "rollback_from_orchestrator_rollback_from_orchestrator_post",
+        "operationId": "rollback_group_from_orchestrator_rollback_group_from_orchestrator_post",
         "parameters": [
           {
             "name": "recovery_group_id",
@@ -3365,6 +3427,29 @@
         ],
         "title": "Provider"
       },
+      "ProviderCheck": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "status",
+          "detail"
+        ],
+        "title": "ProviderCheck"
+      },
       "ProviderRecord": {
         "properties": {
           "id": {
@@ -3473,6 +3558,37 @@
           "type"
         ],
         "title": "ProviderRecord"
+      },
+      "ProviderTestResponse": {
+        "properties": {
+          "provider_id": {
+            "type": "string",
+            "title": "Provider Id"
+          },
+          "provider_type": {
+            "type": "string",
+            "title": "Provider Type"
+          },
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/ProviderCheck"
+            },
+            "type": "array",
+            "title": "Checks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider_id",
+          "provider_type",
+          "ok",
+          "checks"
+        ],
+        "title": "ProviderTestResponse"
       },
       "ProviderType": {
         "type": "string",

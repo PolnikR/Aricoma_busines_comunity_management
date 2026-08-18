@@ -240,6 +240,15 @@ export const Provider = zod.object({
 export type Provider = zod.input<typeof Provider>;
 export type ProviderOutput = zod.output<typeof Provider>;
 
+export const ProviderCheck = zod.object({
+  "name": zod.string(),
+  "status": zod.string(),
+  "detail": zod.string()
+});
+
+export type ProviderCheck = zod.input<typeof ProviderCheck>;
+export type ProviderCheckOutput = zod.output<typeof ProviderCheck>;
+
 export const providerRecordRoleDefault = `source`;
 
 export const ProviderRecord = zod.object({
@@ -258,6 +267,16 @@ export const ProviderRecord = zod.object({
 
 export type ProviderRecord = zod.input<typeof ProviderRecord>;
 export type ProviderRecordOutput = zod.output<typeof ProviderRecord>;
+
+export const ProviderTestResponse = zod.object({
+  "provider_id": zod.string(),
+  "provider_type": zod.string(),
+  "ok": zod.boolean(),
+  "checks": zod.array(ProviderCheck)
+});
+
+export type ProviderTestResponse = zod.input<typeof ProviderTestResponse>;
+export type ProviderTestResponseOutput = zod.output<typeof ProviderTestResponse>;
 
 export const ProvidersResponse = zod.object({
   "providers": zod.array(ProviderRecord)
@@ -741,6 +760,22 @@ export const SubmitProviderSubmitProviderPostResponse = ProvidersResponse
 
 
 /**
+ * @summary Test Provider
+ */
+export const TestProviderTestProviderGetQueryParams = zod.object({
+  "provider_id": zod.string().describe('id of the provider to test connectivity for')
+})
+
+export const testProviderTestProviderGetHeaderXUserDefault = `admin`;
+
+export const TestProviderTestProviderGetHeader = zod.object({
+  "X-User": zod.union([zod.string(),zod.null()]).default(testProviderTestProviderGetHeaderXUserDefault)
+})
+
+export const TestProviderTestProviderGetResponse = ProviderTestResponse
+
+
+/**
  * @summary Delete Provider Route
  */
 export const DeleteProviderRouteDeleteProviderDeleteQueryParams = zod.object({
@@ -1060,13 +1095,14 @@ export const SubmitRecoveryDagSubmitRecoveryDagPostResponse = RecoveryAppSubmitR
 export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryRollbackFromOrchestratorDefault = false;
 export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryRollbackOrphansDefault = false;
 export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryProviderIdDefault = `airflow-01`;
+export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryComputeProviderIdDefault = `vmware-vcenter-02`;
 
 export const DeleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryParams = zod.object({
   "recovery_app_id": zod.string().describe('id of the recovery app to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed).'),
   "rollback_from_orchestrator": zod.boolean().default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryRollbackFromOrchestratorDefault).describe('if true, tear down the app\'s Airflow DAG, then unmap (unpresent) its IBM target volumes from their host. Does not delete the FlashCopy mapping or the volume itself.'),
   "rollback_orphans": zod.boolean().default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryRollbackOrphansDefault).describe('if true, recovery_app_id is read as an airflow_run_id: skip the recovery_applications.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_PLAN.'),
   "provider_id": zod.union([zod.string(),zod.null()]).default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryProviderIdDefault).describe('orchestration (AIRFLOW) provider - required when rollback_from_orchestrator'),
-  "ibm_provider_id": zod.union([zod.string(),zod.null()]).exactOptional().describe('IBM FlashSystem provider - required when rollback_from_orchestrator, to unmap the app\'s target volumes from their host')
+  "compute_provider_id": zod.union([zod.string(),zod.null()]).default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryComputeProviderIdDefault).describe('VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app\'s recovered datastore before its IBM target volume is unmapped; its own defaultFlashcopyProviderId supplies the IBM FlashSystem provider for that unmap step.')
 })
 
 export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteHeaderXUserDefault = `admin`;
@@ -1116,20 +1152,20 @@ export const SubmitRecoveryGroupSubmitRecoveryGroupPostResponse = RecoveryGroups
  * Delete the group's Airflow DAG (file, record, every run and task instance)
  * and every IBM FlashCopy object it created. The group record itself is kept —
  * only push_to_orchestrator flips to false.
- * @summary Rollback From Orchestrator
+ * @summary Rollback Group From Orchestrator
  */
-export const RollbackFromOrchestratorRollbackFromOrchestratorPostQueryParams = zod.object({
+export const RollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostQueryParams = zod.object({
   "recovery_group_id": zod.string().describe('id of the recovery group to roll back'),
   "provider_id": zod.string().describe('orchestration (AIRFLOW) provider the group was pushed to')
 })
 
-export const rollbackFromOrchestratorRollbackFromOrchestratorPostHeaderXUserDefault = `admin`;
+export const rollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostHeaderXUserDefault = `admin`;
 
-export const RollbackFromOrchestratorRollbackFromOrchestratorPostHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(rollbackFromOrchestratorRollbackFromOrchestratorPostHeaderXUserDefault)
+export const RollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostHeader = zod.object({
+  "X-User": zod.union([zod.string(),zod.null()]).default(rollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostHeaderXUserDefault)
 })
 
-export const RollbackFromOrchestratorRollbackFromOrchestratorPostResponse = RecoveryGroupsResponse
+export const RollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostResponse = RecoveryGroupsResponse
 
 
 /**

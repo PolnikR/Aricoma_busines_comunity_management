@@ -23,7 +23,7 @@ rollback_orphans?: boolean;
  */
 provider_id?: string | null;
 /**
- * IBM FlashSystem provider - required when rollback_from_orchestrator, to unmap the app's target volumes from their host
+ * VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped; its own defaultFlashcopyProviderId supplies the IBM FlashSystem provider for that unmap step.
  */
-ibm_provider_id?: string | null;
+compute_provider_id?: string | null;
 };
