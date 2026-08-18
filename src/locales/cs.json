@@ -2,12 +2,10 @@
   "language.en": "Angličtina",
   "language.sk": "Slovenština",
   "language.cs": "Čeština",
-
   "theme.label": "Vzhled",
   "theme.light": "Světlý",
   "theme.dark": "Tmavý",
   "theme.system": "Systémový",
-
   "header.language": "Jazyk",
   "header.userMenu.settings": "Nastavení",
   "header.userMenu.logout": "Odhlásit se",
@@ -20,7 +18,6 @@
   "header.userRoleType": "Správce",
   "header.toggleSidebar": "Přepnout postranní panel",
   "header.appHome": "Domov Aricome",
-
   "nav.administration": "Správa platformy",
   "nav.administration.overview": "Přehled",
   "nav.administration.platformProviders": "Platformoví poskytovatelé",
@@ -69,7 +66,6 @@
   "nav.monitoring": "Monitorování a audit",
   "nav.apis": "Vnitřní API komponent",
   "nav.menu": "Menu",
-
   "pages.virtualMachines.title": "Virtuální stroje",
   "pages.virtualMachines.description": "Přehled inventáře, stavu a umístění VMware.",
   "pages.virtualMachines.tabs.label": "Zdroj inventáře",
@@ -115,11 +111,9 @@
   "pages.virtualMachines.detail.thinProvisioned": "Tenké",
   "pages.virtualMachines.detail.yes": "Ano",
   "pages.virtualMachines.detail.no": "Ne",
-
   "pages.resourcesIse.eyebrow": "Zjišťování a inventář · Cíl",
   "pages.resourcesIse.title": "Zdroje ISE",
   "pages.resourcesIse.description": "Přehled inventáře zdrojů cílové role.",
-
   "pages.infrastructure.description": "Prozkoumejte vztahy mezi zjištěnými clustery, hostiteli, virtuálními stroji a úložišti.",
   "pages.infrastructure.eyebrow": "Zjišťování a inventář",
   "pages.infrastructure.error.title": "Topologii infrastruktury se nepodařilo načíst",
@@ -133,7 +127,6 @@
   "pages.infrastructure.empty.noMatching": "Žádná infrastruktura se shoduje",
   "pages.infrastructure.empty.adjustFilters": "Upravte hledání nebo filtry topologie.",
   "pages.infrastructure.title": "Topologie infrastruktury",
-
   "pages.providers.title": "Poskytovatelé",
   "pages.providers.description": "Zaregistrovaní poskytovatelé zjištění z backendu.",
   "pages.providers.eyebrow": "Poskytovatelé a konektory",
@@ -159,7 +152,6 @@
   "pages.providers.detail.source": "zdroj",
   "pages.providers.detail.target": "cíl",
   "pages.providers.detail.none": "Žádný",
-
   "pages.recovery.title": "Aplikace obnovy",
   "pages.recovery.description": "Spravujte definice aplikací zotavení po havárii a testujte pracovní postupy obnovy.",
   "pages.recovery.eyebrow": "Plány obnovy",
@@ -178,7 +170,6 @@
   "pages.recoveryGroups.empty.title": "Zatím není vytvořena žádná skupina obnovy",
   "pages.recoveryGroups.empty.description": "Vytvořte první skupinu obnovy pro virtuální stroje VMware nebo zdroje IBM FlashSystem.",
   "pages.recoveryGroups.empty.createButton": "Vytvořit první skupinu obnovy",
-
   "pages.recoveryBuilder.title": "Vytvořit aplikaci obnovy",
   "pages.recoveryBuilder.description": "Definujte novou aplikaci zotavení po havárii s organizací virtuálních strojů podle vrstev",
   "pages.recoveryBuilder.eyebrow": "Plány obnovy",
@@ -203,7 +194,6 @@
   "pages.recoveryBuilder.orchestration.providerPlaceholder": "Vyberte poskytovatele Airflow",
   "pages.recoveryBuilder.orchestration.empty.title": "Nejsou dostupní žádní poskytovatelé Airflow",
   "pages.recoveryBuilder.orchestration.empty.description": "Před zapnutím orchestrace nakonfigurujte platného poskytovatele Airflow.",
-
   "pages.recoveryEditor.title": "Upravit aplikaci obnovy",
   "pages.recoveryEditor.description": "Upravte konfiguraci aplikace zotavení po havárii",
   "pages.recoveryEditor.eyebrow": "Plány obnovy",
@@ -211,7 +201,6 @@
   "pages.recoveryEditor.error.notFound": "ID aplikace nenalezeno",
   "pages.recoveryEditor.error.loading": "Načítá se aplikace obnovy",
   "pages.recoveryEditor.error.failed": "Aplikaci se nepodařilo načíst.",
-
   "pages.recoveryRuns.title": "Spuštění obnovy",
   "pages.recoveryRuns.description": "Historie provádění a stav spuštění obnovy.",
   "recoveryRuns.scopeNote": "Zobrazuje se {count} orchestrovaných aplikací — aplikace, které nikdy nebyly odeslány do orchestrace, nemají spuštění a nedotazují se.",
@@ -231,7 +220,6 @@
   "recoveryRuns.drawer.label": "Detail historie spuštění",
   "recoveryRuns.drawer.close": "Zavřít historii spuštění",
   "recoveryRuns.drawer.note": "Načteno až nyní — přehled zobrazoval jen poslední spuštění této aplikace. Tato stránkovaná historie je jeden dotaz jen pro tuto aplikaci.",
-
   "metrics.discoveredVMs": "Zjištěné virtuální stroje",
   "metrics.discoveredVMs.helper": "Ověřený inventář",
   "metrics.poweredOn": "Zapnuto",
@@ -239,7 +227,6 @@
   "metrics.clusters.helper": "Aktivní umístění",
   "metrics.memory": "Přidělená paměť",
   "metrics.memory.helper": "celkový vCPU",
-
   "tables.vm.name": "Virtuální stroj",
   "tables.vm.os": "Operační systém",
   "tables.vm.placement": "Umístění",
@@ -253,7 +240,6 @@
   "tables.vm.powerOff": "Vypnuto",
   "tables.vm.connected": "Připojeno",
   "tables.vm.unknown": "Neznámý",
-
   "tables.provider.name": "Poskytovatel",
   "tables.common.json": "JSON",
   "tables.provider.description": "Popis",
@@ -263,7 +249,6 @@
   "tables.provider.endpoint": "Endpoint",
   "tables.provider.dagDir": "DAG složka",
   "tables.provider.credential": "Přihlašovací údaje",
-
   "tables.recovery.application": "Aplikace",
   "tables.recovery.environment": "Prostředí",
   "tables.recovery.platform": "Platforma",
@@ -290,7 +275,6 @@
   "tables.recoveryGroups.json": "JSON",
   "tables.recoveryGroups.viewJson": "Zobrazit",
   "recoveryGroups.modal.jsonViewer.title": "JSON skupiny obnovy",
-
   "toolbar.vmSearch": "Hledat virtuální stroje",
   "toolbar.vmSearchPlaceholder": "Hledat název, jméno hostitele nebo IP",
   "toolbar.infrastructureSearch": "Hledat v topologii infrastruktury",
@@ -323,7 +307,6 @@
   "toolbar.fitView": "Přizpůsobit zobrazení",
   "toolbar.refreshButton": "Obnovit",
   "toolbar.refreshLoading": "Obnovuji",
-
   "buttons.back": "Zpět",
   "buttons.next": "Další",
   "buttons.cancel": "Zrušit",
@@ -351,7 +334,6 @@
   "buttons.create": "Vytvořit",
   "buttons.search": "Hledat",
   "buttons.filter": "Filtr",
-
   "messages.noResults": "Žádné výsledky",
   "messages.loading": "Načítání",
   "messages.unknownError": "Neznámá chyba",
@@ -363,17 +345,14 @@
   "messages.deleting": "Mažu…",
   "messages.saving": "Ukládám…",
   "messages.creating": "Vytvářím…",
-
   "validation.required": "Toto pole je povinné",
   "validation.invalid": "Neplatný vstup",
   "validation.duplicateId": "Toto ID již existuje",
-
   "pages.recovery.applicationDetails": "Podrobnosti aplikace",
   "pages.recovery.latestRequestFailed": "Poslední požadavek selhal",
   "pages.recovery.showingPrevious": "Zobrazuji předchozí úspěšná data",
   "pages.infrastructure.latestRequestFailed": "Poslední požadavek selhal",
   "pages.infrastructure.showingPrevious": "Zobrazuji předchozí úspěšnou topologii",
-
   "recovery.table.header.application": "Aplikace",
   "recovery.table.header.environment": "Prostředí",
   "recovery.table.header.platform": "Platforma",
@@ -537,7 +516,6 @@
   "drawer.selectedRecoveryGroup": "Vybraná skupina obnovy",
   "drawer.recoveryGroupDetail": "Detail skupiny obnovy",
   "drawer.closeRecoveryGroup": "Zavřít detail skupiny obnovy",
-
   "forms.id": "ID",
   "forms.idExample": "např. vmware-vcenter-01",
   "forms.idRequired": "ID je povinné",
@@ -603,7 +581,6 @@
   "forms.deleteTier": "Smazat",
   "forms.cannotDeleteLastTier": "Poslední vrstvu nelze smazat",
   "forms.deleteThisTier": "Smazat tuto vrstvu",
-
   "details.os": "Operační systém",
   "details.cluster": "Cluster",
   "details.datastore": "Úložiště",
@@ -652,7 +629,6 @@
   "details.statusDraft": "Koncept",
   "details.unknown": "Neznámý",
   "providers.validation.idExists": "Poskytovatel s tímto ID již existuje",
-
   "dialogs.deleteProvider": "Smazat poskytovatele",
   "dialogs.deleteProviderMessage": "Jste si jistí, že chcete smazat {name}? Tuto akci nelze vrátit zpět.",
   "dialogs.deleteApplication": "Smazat aplikaci",
@@ -660,8 +636,10 @@
   "dialogs.deleteRecoveryGroup": "Smazat skupinu obnovy",
   "dialogs.deleteRecoveryGroupMessage": "Jste si jistí, že chcete smazat skupinu obnovy {name}? Tuto akci nelze vrátit zpět.",
   "dialogs.deleteRecoveryGroupOrchestratedMessage": "Tato skupina obnovy je nasazena do orchestrátoru. Při odstranění se nejprve provede rollback jejích zdrojů Airflow a IBM FlashCopy. Skupina obnovy {name} se poté trvale odstraní. Tuto akci nelze vrátit zpět.",
+  "dialogs.deleteRecoveryApplication": "Smazat aplikaci obnovy",
+  "dialogs.deleteRecoveryApplicationMessage": "Jste si jistí, že chcete smazat aplikaci obnovy {name}? Tuto akci nelze vrátit zpět.",
+  "dialogs.deleteRecoveryApplicationOrchestratedMessage": "Tato aplikace obnovy je nasazena do orchestrátoru. Při odstranění se nejprve provede rollback jejích zdrojů Airflow a IBM. Aplikace obnovy {name} se poté trvale odstraní. Tuto akci nelze vrátit zpět.",
   "dialogs.applicationJson": "JSON aplikace",
-
   "drawer.selectedVm": "Vybraný virtuální stroj",
   "drawer.selectedProvider": "Vybraný poskytovatel",
   "drawer.selectedApplication": "Aplikace obnovy",
@@ -681,7 +659,6 @@
   "pages.providers.detail.retry": "Zkusit znovu",
   "pages.providers.detail.title": "Podrobnosti poskytovatele",
   "pages.providers.detail.apiDescription": "Data vrácená API poskytovatele.",
-
   "pagination.showing": "Zobrazuji {start}-{end} z {total}",
   "pagination.rows": "Řádky",
   "pagination.rowsPerPage": "Řádků na stránku",
@@ -693,7 +670,6 @@
   "pagination.option10": "10",
   "pagination.option25": "25",
   "pagination.option50": "50",
-
   "legend.cluster": "Cluster",
   "legend.host": "Hostitel",
   "legend.vm": "Virtuální stroj",
@@ -708,7 +684,6 @@
   "legend.fcmap": "FlashCopy mapování",
   "legend.consistencyGroup": "Konzistenční skupina",
   "legend.copiesRelation": "Vztah FlashCopy",
-
   "tooltip.vm.name": "Název",
   "tooltip.vm.status": "Stav",
   "tooltip.vm.cpu": "CPU",
@@ -759,23 +734,18 @@
   "tooltip.consistencyGroup.no": "Ne",
   "units.cores": "jádra",
   "units.gb": "GB",
-
   "alerts.pleaseEnterName": "Prosím, zadejte jméno aplikace",
   "alerts.pleaseEnterDescription": "Prosím, zadejte popis",
-
   "errors.failed": "Nepodařilo se {action}",
   "errors.failedWithDetail": "Nepodařilo se {action}: {detail}",
   "errors.loadFailed": "Nepodařilo se načíst",
   "errors.unknown": "Došlo k neznámé chybě",
-
   "status.updating": "Aktualizuji",
   "status.working": "Pracuji…",
   "status.loading": "Načítám modul",
-
   "density.comfortable": "pohodlný",
   "density.compact": "kompaktní",
   "density.rowDensity": "Hustota řádků",
-
   "common.search": "Hledat",
   "common.filters": "Filtry",
   "common.refresh": "Obnovit",
@@ -788,7 +758,6 @@
   "common.matchesSchema": "Odpovídá",
   "common.copied": "Zkopírováno",
   "common.logout": "Odhlásit se",
-
   "recovery.sidebar.availableVms": "Dostupné VMs",
   "recovery.sidebar.searchPlaceholder": "Hledat VMs...",
   "recovery.sidebar.loadingVms": "Načítám VMs...",
@@ -842,6 +811,16 @@
   "recovery.application.orchestratorModal.json": "Cesta k JSON",
   "recovery.application.orchestratorModal.dagId": "ID DAG",
   "recovery.application.orchestratorModal.viewInAirflow": "Zobrazit v Airflow",
+  "recovery.application.rollback.resultAriaLabel": "Výsledek vrácení aplikace obnovy",
+  "recovery.application.rollback.resultSuccessTitle": "Odstranění aplikace obnovy bylo dokončeno",
+  "recovery.application.rollback.resultWarningTitle": "Odstranění bylo částečně dokončeno",
+  "recovery.application.rollback.resultSuccessDescription": "Aplikace obnovy {applicationName} a všechny její zdroje orchestrátoru byly odstraněny.",
+  "recovery.application.rollback.resultWarningDescription": "Některé operace čištění nebyly dokončeny. Viz podrobnosti níže.",
+  "recovery.application.rollback.resultDagId": "ID DAG",
+  "recovery.application.rollback.resultAirflowSection": "Airflow",
+  "recovery.application.rollback.resultIbmSection": "IBM",
+  "recovery.application.rollback.resultErrors": "Chyby",
+  "recovery.application.rollback.resultRawDetails": "Odpověď v surové podobě",
   "recovery.application.errors.noAirflowProvider": "Není dostupný žádný poskytovatel Airflow pro vrácení.",
   "recovery.application.errors.multipleAirflowProviders": "Nalezeni více poskytovatelů Airflow; nelze automaticky vybrat jeden.",
   "recovery.application.errors.noComputeProvider": "Není dostupný žádný cílový poskytovatel VMWARE pro vrácení.",
@@ -853,13 +832,11 @@
   "recovery.application.validation.platformProviderRequired": "Vyberte platform providera.",
   "recovery.application.validation.policySetRequired": "Vyberte sadu politik.",
   "recovery.application.validation.recoveryGroupRequired": "Každé vrstvě přiřaďte skupinu obnovy.",
-
   "recovery.tier.order": "Pořadí",
   "recovery.tier.dragVmsHere": "Přetáhněte VMs sem",
   "recovery.tier.removeVm": "Odstranit VM",
   "recovery.tier.confirm": "Potvrdit",
   "recovery.tier.cancel": "Zrušit",
-
   "recovery.tier.form.id": "ID",
   "recovery.tier.form.name": "Název",
   "recovery.tier.form.description": "Popis",
@@ -878,7 +855,6 @@
   "recovery.tier.emptyRecoveryGroupAriaLabel": "Nepřiřazená skupina obnovy",
   "recovery.tier.removeRecoveryGroup": "Odstranit skupinu obnovy",
   "recovery.tier.vmSelectionSummary": "{selected} z {total} VM vybrány",
-
   "recovery.tier.validation.nameRequired": "Název je povinný",
   "recovery.tier.validation.idRequired": "ID je povinné",
   "recovery.tier.validation.idInUse": "ID se již používá",

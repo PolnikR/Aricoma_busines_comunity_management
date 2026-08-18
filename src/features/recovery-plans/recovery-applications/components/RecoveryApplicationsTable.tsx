@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
+import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import {
   DataTable,
@@ -15,12 +16,16 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
+import type { RollbackReport } from '../api/schemas/recoveryApplicationsSchema'
 import { toRecoveryApplicationJson } from '../helpers/mapRecoveryApplications'
+import { RecoveryApplicationRollbackResultModal } from './RecoveryApplicationRollbackResultModal'
 
 interface RecoveryApplicationsTableProps {
   applications: RecoveryApplicationListItem[]
   providers?: { id: string; name: string }[]
   onEdit?: (id: string) => void
+  onDelete?: (app: RecoveryApplicationListItem) => Promise<{ applications: RecoveryApplicationListItem[]; rollback: RollbackReport | null }>
+  isDeleting?: boolean
   error?: Error | null
   isRetrying?: boolean
   onRetry?: () => void
@@ -105,6 +110,8 @@ export function RecoveryApplicationsTable({
   applications,
   providers,
   onEdit,
+  onDelete,
+  isDeleting = false,
   error = null,
   isRetrying = false,
   onRetry = () => undefined,
@@ -114,6 +121,8 @@ export function RecoveryApplicationsTable({
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const [filters, setFilters] = useState<RecoveryApplicationFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<RecoveryApplicationFilters>(EMPTY_FILTERS)
+  const [deleteTarget, setDeleteTarget] = useState<RecoveryApplicationListItem | null>(null)
+  const [rollbackResult, setRollbackResult] = useState<{ appName: string; report: RollbackReport } | null>(null)
 
   const filterOptions = useMemo(() => ({
     environments: Array.from(new Set(
@@ -278,14 +287,27 @@ export function RecoveryApplicationsTable({
         title={selected?.data.application.name ?? ''}
         ariaLabel={t('drawer.applicationDetail')}
         closeLabel={t('drawer.closeApplication')}
-        footer={selected && onEdit ? (
-          <Button
-            onClick={() => { onEdit(selected.id); setSelectedId(null) }}
-            size="sm"
-            className="w-full"
-          >
-            {t('buttons.edit')}
-          </Button>
+        footer={selected ? (
+          <div className="flex gap-2">
+            {onDelete ? (
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => { setDeleteTarget(selected) }}
+              >
+                {t('buttons.delete')}
+              </Button>
+            ) : null}
+            {onEdit ? (
+              <Button
+                size="sm"
+                onClick={() => { onEdit(selected.id); setSelectedId(null) }}
+                className="flex-1"
+              >
+                {t('buttons.edit')}
+              </Button>
+            ) : null}
+          </div>
         ) : null}
       >
         {selected ? (
@@ -319,6 +341,43 @@ export function RecoveryApplicationsTable({
         data={jsonViewed ? toRecoveryApplicationJson(jsonViewed) : null}
         closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title={t('dialogs.deleteRecoveryApplication')}
+        message={t(deleteTarget?.pushToOrchestrator
+          ? 'dialogs.deleteRecoveryApplicationOrchestratedMessage'
+          : 'dialogs.deleteRecoveryApplicationMessage').replace('{name}', deleteTarget?.data.application.name ?? '')}
+        confirmLabel={t('buttons.delete')}
+        loadingLabel={t('buttons.deleting')}
+        cancelLabel={t('buttons.cancel')}
+        isLoading={isDeleting}
+        tone="danger"
+        onCancel={() => { setDeleteTarget(null) }}
+        onConfirm={() => {
+          if (!deleteTarget || !onDelete || isDeleting) return
+          const target = deleteTarget
+          void (async () => {
+            try {
+              const result = await onDelete(target)
+              if (result.rollback) {
+                setRollbackResult({ appName: target.data.application.name, report: result.rollback })
+              }
+              setDeleteTarget(null)
+              setSelectedId(null)
+            } catch {
+              setDeleteTarget(null)
+            }
+          })()
+        }}
+      />
+
+      <RecoveryApplicationRollbackResultModal
+        open={rollbackResult !== null}
+        onClose={() => { setRollbackResult(null) }}
+        applicationName={rollbackResult?.appName ?? ''}
+        report={rollbackResult?.report ?? null}
       />
     </div>
   )

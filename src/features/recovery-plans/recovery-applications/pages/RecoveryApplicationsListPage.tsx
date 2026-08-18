@@ -6,18 +6,25 @@ import { DataTableSkeleton } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
 import { useRecoveryApplications } from '../hooks/useRecoveryApplications'
+import { useDeleteRecoveryApplication } from '../hooks/useDeleteRecoveryApplication'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
 import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
+import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 
 export function RecoveryApplicationsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
   const { data: providers = [] } = useProviders()
+  const { mutateAsync: deleteApplication, isPending: isDeleting } = useDeleteRecoveryApplication()
 
   const handleEdit = (id: string): void => {
     const routeId = toRecoveryApplicationFileName(id)
     void navigate(`/recovery-plans/recovery-applications/${encodeURIComponent(routeId)}/edit`)
+  }
+
+  const handleDelete = (app: RecoveryApplicationListItem) => {
+    return deleteApplication(app)
   }
 
   if (isLoading) {
@@ -76,6 +83,8 @@ export function RecoveryApplicationsListPage() {
               applications={applications ?? []}
               providers={providers}
               onEdit={handleEdit}
+              onDelete={handleDelete}
+              isDeleting={isDeleting}
               error={error instanceof Error ? error : null}
               isRetrying={isFetching}
               onRetry={() => { void refetch() }}

@@ -20,7 +20,23 @@
       "Bash(npx vitest *)",
       "Bash(npx eslint *)",
       "Bash(npm exec *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(xargs grep -l \"vi.mock\")",
+      "WebSearch",
+      "Read(//c/Users/polnikr/.claude/skills/brainstorming/**)",
+      "Bash(ls \"C:\\\\Users\\\\polnikr\\\\.claude\\\\skills\\\\brainstorming\\\\scripts\\\\\")",
+      "Bash(ls 'C:\\\\Users\\\\polnikr\\\\.claude\\\\skills\\\\brainstorming\\\\scripts')",
+      "Read(//c/Users/polnikr/.claude/skills/brainstorming/scripts/**)",
+      "Bash(bash 'C:\\\\Users\\\\polnikr\\\\.claude\\\\skills\\\\brainstorming\\\\scripts\\\\start-server.sh' --project-dir 'C:\\\\Users\\\\polnikr\\\\source\\\\ABCO\\\\Aricoma_busines_comunity_management' --open)",
+      "Bash(grep -i mermaid 'C:\\\\Users\\\\polnikr\\\\.claude\\\\skills\\\\brainstorming\\\\scripts\\\\frame-template.html' 'C:\\\\Users\\\\polnikr\\\\.claude\\\\skills\\\\brainstorming\\\\scripts\\\\helper.js')",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('src/locales/en.json','utf8'\\)\\); JSON.parse\\(require\\('fs'\\).readFileSync\\('src/locales/sk.json','utf8'\\)\\); JSON.parse\\(require\\('fs'\\).readFileSync\\('src/locales/cs.json','utf8'\\)\\); console.log\\('all valid'\\)\")",
+      "Bash(python3 -c ' *)",
+      "Bash(git mv *)",
+      "Bash(python3 -m json.tool src/locales/sk.json)",
+      "Bash(python3)",
+      "Bash(python3 -m json.tool)",
+      "Bash(xargs basename -a)",
+      "Bash(xargs grep -l \"PlatformProvider\\\\|platform.*provider\")"
     ]
   }
 }
