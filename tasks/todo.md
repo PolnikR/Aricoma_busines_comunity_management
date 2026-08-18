@@ -1,40 +1,51 @@
-# Hide Empty Resource Tabs - Task Checklist
+# Inline Response Body in Connection Test Dialog - Task Checklist
 
-## Phase 1: Core Logic
+## Phase 1: Dialog markup
 
-### Task 1: Update ResourceRolePage.tsx
-- [x] Open `src/features/discovery-inventory/resources/pages/ResourceRolePage.tsx`
-- [x] Add `visibleRoleTabs`: `providersSuccess ? roleTabs.filter(tab => tab.providerId !== null) : roleTabs`
-- [x] Add `effectiveActiveTab`: redirects to `visibleRoleTabs[0]` when `providersSuccess` is true, `activeRoleTab.providerId` is `null`, and `visibleRoleTabs.length > 0`; otherwise equals `activeRoleTab`
-- [x] Update the redirect `useEffect` to compare against `effectiveActiveTab` instead of `activeRoleTab` (keep the hook call unconditional, before any early return)
-- [x] After the effect (all hooks called), add early return: if `providersSuccess && visibleRoleTabs.length === 0`, render a `TableToolbar` (same eyebrow/title/description pattern as `VmwareResourcesPage`, role-conditional) + `EmptyState` using `resources.common.noProviderTitle` / `resources.common.noProviderDescription` — no tab strip
-- [x] Change `tabs` JSX to use `items={visibleRoleTabs}` and `value={effectiveActiveTab?.value ?? 'vmware:none'}`
-- [x] Change `rolePageProps.providerId` to `effectiveActiveTab?.providerId ?? null`
-- [x] Change `switch (resourceTab)` to `switch (effectiveActiveTab?.resourceTab ?? resourceTab)`
-- [x] Change the sub-page `key` prop from `activeRoleTab?.value` to `effectiveActiveTab?.value`
-- [x] Import `TableToolbar` from `@/shared/components/table/TableToolbar` and `EmptyState` from `@/shared/components/empty-state/EmptyState`
+### Task 1: Remove the nested JsonViewerModal
+- [x] Open `src/features/providers-connectors/providers/components/ProviderConnectionTestDialog.tsx`
+- [x] Remove the `JsonViewerModal` import and its render, remove the "View" `Button` + `showJson` state
+- [x] Drop the `<>...</>` fragment wrapper, back to a single `<Modal>` root
 
-## Phase 2: Test Updates
+### Task 2: Add providerRole prop
+- [x] Add `providerRole?: ProviderRole` (default `'source'`) to `ProviderConnectionTestDialogProps`
 
-### Task 2: Update ResourcesPage.test.tsx
-- [x] Open `src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx`
-- [x] In "renders metrics, toolbar, and empty inventory state": replace the two `getByRole('tab', { name: 'FlashSystem Volumes' / 'IBM Power Partitions' })` assertions with `queryByRole(...)).not.toBeInTheDocument()` (only the VMware provider exists in this test's data)
-- [x] In "renders a terminal no-provider state without a loading skeleton": add `expect(screen.queryByRole('tablist')).not.toBeInTheDocument()`
+### Task 3: Identity badges + pass-count chip
+- [x] Import `Badge` from `@/shared/components/badge/Badge` and `providerTypeLabel` from `../helpers/providerTypeLabel`
+- [x] Next to the identity block, render `<Badge color="info">{providerTypeLabel(result.providerType)}</Badge>` and `<Badge color={providerRole === 'source' ? 'success' : 'warning'}>{t(\`forms.role.${providerRole}\`)}</Badge>` (only when `result` exists)
+- [x] In the success banner, add a chip showing `${okCount} / ${total} passed` computed from `result.checks`
 
-### Task 3: Update ResourcesIsePage.test.tsx
-- [x] Open `src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx`
-- [x] Apply the same two changes as Task 2 (empty-tab assertions + tablist absence) to this file's equivalent tests
-- [x] Rewrite "excludes source-role providers from target tabs": add a second provider `flashTargetProvider` (already defined in this file, role `target`) alongside `vmwareSourceProvider` in `providersQuery.data`
-- [x] Replace the assertion body with: `expect(screen.queryByRole('tab', { name: /VMware VMs/ })).not.toBeInTheDocument()` and `expect(screen.getByRole('tab', { name: 'FlashSystem Volumes' })).toBeInTheDocument()`
+### Task 4: Inline Response body section
+- [x] Add a `<details>` element below the checks list (only when `result` exists) with a `<summary>Response body</summary>`
+- [x] Inside: a caption noting it matches `ProviderTestResponse`, a Copy button (feature-detect `navigator.clipboard`), and a `<pre>` showing `JSON.stringify(toProviderConnectionTestJson(result), null, 2)`
+- [x] Style the `<pre>` with a fixed max-height, `overflow-y-auto`, and `overflow-x-auto`
+
+## Phase 2: Call site + translations
+
+### Task 5: Pass providerRole from the table
+- [x] Open `src/features/providers-connectors/providers/components/ProvidersCatalogueTable.tsx`
+- [x] Add `providerRole={selected?.role ?? 'source'}` to the `<ProviderConnectionTestDialog>` call
+
+### Task 6: Translation keys (en/sk/cs)
+- [x] Replace `providers.connectionTest.jsonTitle` with `providers.connectionTest.responseBody` = "Response body" (and localized equivalents)
+- [x] Add `providers.connectionTest.copy` = "Copy", `providers.connectionTest.copied` = "Copied"
+- [x] Add `providers.connectionTest.passedCount` = "{ok} / {total} passed" (localized), using the existing `.replace('{x}', ...)` substitution convention
+
+## Phase 3: Tests
+
+### Task 7: Update ProviderConnectionTestDialog.test.tsx
+- [x] Replace the "opens the raw JSON response" test: expand the `<details>` (fireEvent.click on the summary) and assert the JSON text appears in the same `dialog` (not a second one)
+- [x] Add/adjust a Copy button test if practical in jsdom (feature-detect may no-op — assert the button exists and is clickable without throwing)
+
+### Task 8: Badge + count chip test
+- [x] Assert the type badge, role badge, and "`2 / 2 passed`"-style chip render for a passing result
 
 ## Verification Steps
-- [x] Run: `npx vitest run src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx` — 15 passed
-- [x] Run: `npm run typecheck` — no errors
-- [x] Manual trace: confirm no other test file renders `ResourceRolePage` and would be affected (checked: only these two page test files cover it)
-- [x] Lint: `npx eslint` on changed files — clean
+- [x] Run: `npx vitest run src/features/providers-connectors/providers/components/ProviderConnectionTestDialog.test.tsx src/features/providers-connectors/providers/components/ProvidersCatalogueTable.test.tsx`
+- [x] Run: `npm run typecheck`
+- [x] Run: `npx eslint` on all changed files
+- [x] Manual trace: confirm no nested modal, no untranslated key, JSON scrolls instead of growing the dialog
 
 ## Explicitly Out of Scope
-- No changes to `buildResourceTabsByRole` / `buildResourceSourceTabs.test.ts`
-- No changes to `VmwareResourcesPage.tsx`, `FlashSystemResourcesPage.tsx`, or `IbmPowerResourcesPage.tsx`
-- No route or folder restructuring (`resources` staying under `discovery-inventory` — separate topic, not part of this fix)
-- No new translation keys
+- The `JsonViewerModal` component and its 8 existing table usages stay unchanged
+- No copy/download affordance added to `JsonViewerModal` itself (still out of scope per the original design doc)

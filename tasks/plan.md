@@ -1,40 +1,51 @@
-# Implementation Plan: Hide Empty Resource Tabs in ResourceRolePage
+# Implementation Plan: Inline Response Body in the Connection Test Dialog
 
 ## Overview
-`ResourceRolePage` (shared by the Resources page, role="source", and Resources ISE page, role="target") currently always renders a tab for every resource type (VMware, FlashSystem, IBM Power) even when no provider of that type exists for the current role. This produces confusing empty tabs. This fix hides tabs with no matching provider once the provider list has loaded, redirects the active tab to a populated one if the current selection has none, and shows a single page-level empty state if literally no providers exist for the role — all without touching the pure tab-building helper (`buildResourceTabsByRole`) or the per-type sub-pages.
+The previous change made "View JSON" open a second `JsonViewerModal` on top of `ProviderConnectionTestDialog`, matching the table convention. In practice this produced a stacked-modal look with two "Close" buttons visible at once, and the dialog title showed the raw, un-interpolated translation key instead of its resolved text. The user rejected this and asked to go back to the originally-approved artifact design instead: an inline, collapsible "Response body" section inside the same dialog — no second modal.
+
+This reverses the table-convention choice for this one dialog only. The distinction: table rows show their JSON via a button because the row itself is the "rendered summary" living outside any modal — clicking View has nowhere else to put the JSON but a new modal. This dialog already **is** a modal with its own rendered summary (checks list) inside it, so nesting a second modal duplicates chrome (title bar, footer, Close button) for no reason. An inline `<details>` section avoids that entirely. The shared `JsonViewerModal` and its use in the 8 tables are untouched.
 
 ## Architecture Decisions
-- Keep `buildResourceTabsByRole` unchanged. It still returns a placeholder `":none"` tab per type — this is still needed while providers are loading (so the currently-selected tab doesn't disappear mid-fetch) and it's already covered by existing tests.
-- Do the visibility filtering in `ResourceRolePage` itself, gated on `providersSuccess`:
-  - Before success (loading/error): show all tabs as today (unchanged behavior, existing tests already lock this in).
-  - After success: only tabs with a real `providerId` are shown (`visibleRoleTabs`).
-- If the currently active tab has no provider but another visible tab exists, redirect to the first visible tab (`effectiveActiveTab`) — both the tab strip and the rendered sub-page follow this resolved tab, not the raw URL param, avoiding a one-frame mismatch where a provider ID from one resource type gets passed to a different type's page.
-- If `providersSuccess` is true and there are zero visible tabs (no provider at all for this role), render one page-level `EmptyState` (reusing the existing `resources.common.noProviderTitle/Description` copy) instead of falling through to whichever sub-page defaults to the `vmware` tab. No new translation keys needed.
+- Remove the `JsonViewerModal` usage and the "View" button from `ProviderConnectionTestDialog`. Keep `toProviderConnectionTestJson` (the payload mapper) — it's still needed to build the inline JSON text.
+- Add an inline `<details>` "Response body" disclosure (matches native semantics used elsewhere for progressive disclosure; no extra JS needed to open/close), containing:
+  - a small caption noting it matches the generated `ProviderTestResponse` type
+  - a Copy-to-clipboard button (feature-detected, no-op if unavailable)
+  - a `<pre>` block, capped height + `overflow-y-auto` (vertical) and `overflow-x-auto` (horizontal) so a large response scrolls instead of growing the dialog — same requirement as before, just enforced inline this time instead of relying on `JsonViewerModal`'s existing cap.
+- Add provider type/role badges next to the identity row, reusing the existing `Badge` component and the same `success`/`warning` role-color convention already used in `ProvidersCatalogueTable`. Role isn't currently passed to the dialog, so add an optional `providerRole` prop (default `'source'`) and pass `selected?.role` from the call site.
+- Add a pass-count chip ("2 / 3 passed") next to the existing success/failure banner, computed from `checks.filter(isCheckOk).length` vs `checks.length` — encodes the same information the artifact showed, without inventing new data.
+- Translation: repurpose the `providers.connectionTest.jsonTitle` key (no longer used as a modal title) into `providers.connectionTest.responseBody` = "Response body"; add `providers.connectionTest.copy` / `.copied` for the button; add `providers.connectionTest.passedCount` as a `{ok}/{total}` template string, resolved the same way `providers.credentials.unavailable` already does its `{id}` substitution.
 
 ## Task List
 
-### Phase 1: Core Logic
-- [ ] Task 1: Update `ResourceRolePage.tsx` — add `visibleRoleTabs`, `effectiveActiveTab`, update the redirect effect, branch the switch on the resolved tab, and add the page-level empty-state early return.
+### Phase 1: Dialog markup
+- [ ] Task 1: Remove `JsonViewerModal` import/usage and the "View" button from `ProviderConnectionTestDialog.tsx`; drop the `<>...</>` wrapper fragment since there's only one root element again.
+- [ ] Task 2: Add `providerRole` prop (optional, default `'source'`) to `ProviderConnectionTestDialogProps`.
+- [ ] Task 3: Add the type/role `Badge` pair next to the identity block, and the pass-count chip next to the success/failure banner.
+- [ ] Task 4: Add the inline `<details>` "Response body" section with the capped/scrollable `<pre>` and the Copy button.
 
-### Checkpoint: Core Logic
+### Checkpoint: Dialog markup
 - [ ] Component compiles with no type errors
-- [ ] Manual trace confirms: loading state still shows all tabs; post-success state hides empty ones; all-empty state shows one unified empty view with no tab strip
+- [ ] Manual trace: opening the dialog no longer shows a nested modal or an untranslated key anywhere
 
-### Phase 2: Test Updates
-- [ ] Task 2: Update `ResourcesPage.test.tsx` — the "renders metrics, toolbar, and empty inventory state" test must assert FlashSystem/IBM Power tabs are absent (only one provider exists); the "terminal no-provider state" test gets an added assertion that no tablist renders.
-- [ ] Task 3: Update `ResourcesIsePage.test.tsx` — same two changes as Task 2, plus rewrite "excludes source-role providers from target tabs" to add a second, genuinely-target-role provider of a different type, so the assertion proves exclusion via tab absence rather than relying on the old placeholder-tab fallback.
+### Phase 2: Call site + translations
+- [ ] Task 5: Update `ProvidersCatalogueTable.tsx` to pass `providerRole={selected?.role ?? 'source'}` into `ProviderConnectionTestDialog`.
+- [ ] Task 6: Update `en.json`/`sk.json`/`cs.json` — replace `jsonTitle` with `responseBody`, add `copy`, `copied`, `passedCount`.
+
+### Phase 3: Tests
+- [ ] Task 7: Replace the "opens the raw JSON response" test (which asserted a second dialog) with a test that expands the inline `<details>` and asserts the JSON text is present in the same dialog, plus a Copy-button test.
+- [ ] Task 8: Add a test asserting the type/role badges and the pass-count chip render with the real sample data.
 
 ### Checkpoint: Complete
-- [ ] Focused tests pass: `ResourcesPage.test.tsx`, `ResourcesIsePage.test.tsx`
-- [ ] Typecheck passes for changed files
+- [ ] Focused tests pass: `ProviderConnectionTestDialog.test.tsx`, `ProvidersCatalogueTable.test.tsx`
+- [ ] Typecheck and lint clean on all changed files
 - [ ] All acceptance criteria met
 
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Redirecting to a different resource type could pass the wrong `providerId` into the wrong sub-page for one render | Medium — data mismatch, wrong inventory query fired | Switch statement branches on `effectiveActiveTab.resourceTab`, not the raw URL param, so the rendered sub-page and its `providerId` always agree |
-| Filtering during the loading phase could hide the tab the user is currently on before providers resolve | Medium — flicker / lost selection | Filtering only applies once `providersSuccess` is true; pre-success renders keep today's full tab list |
-| Page-level empty state title/description not perfectly generic (reuses the VMware-flavored `pages.virtualMachines.title` for the source role, matching existing per-tab behavior) | Low — cosmetic only | Out of scope for this bug fix; flagged here, not solved now |
+| A very long response makes the `<pre>` push the dialog past the viewport | Medium — same bug class as before | Fixed `max-height` + `overflow-y-auto` on the `<pre>`, independent of `JsonViewerModal` |
+| `providerRole` not passed from some other call site (if one exists) silently defaults wrong | Low | Default to `'source'`, the more common case; only one call site exists today (`ProvidersCatalogueTable`) |
+| `<details>` default-open/closed state not obvious to screen readers | Low | Native `<details>/<summary>` already carries correct ARIA semantics with no extra markup needed |
 
 ## Open Questions
-None — scope confirmed with user: tab-visibility bug fix only, no route/folder restructuring.
+None — scope confirmed: revert this dialog to the inline design, leave the table `JsonViewerModal` convention untouched elsewhere.

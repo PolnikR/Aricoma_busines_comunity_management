@@ -376,6 +376,7 @@ export function ProvidersCatalogueTable({
         open={isConnectionTestOpen && selected !== null}
         providerName={selected?.name ?? ''}
         providerId={selected?.id ?? ''}
+        providerRole={selected?.role ?? 'source'}
         isPending={testConnection.isPending}
         result={testConnection.data ?? null}
         error={testConnection.error instanceof Error ? testConnection.error : null}
