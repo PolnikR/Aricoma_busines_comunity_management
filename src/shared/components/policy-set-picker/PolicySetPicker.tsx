@@ -39,8 +39,8 @@ export function PolicySetPicker({
   )
 
   return (
-    <div className="flex h-full min-h-[480px] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm lg:flex-row">
-      <div className="min-h-64 w-full shrink-0 overflow-hidden lg:h-full lg:min-h-0 lg:w-96">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm lg:flex-row">
+      <div className="min-h-0 w-full flex-1 overflow-hidden lg:h-full lg:w-96 lg:flex-none">
         <PolicySetPickerList
           policySets={policySets}
           selectedPolicySetId={selectedPolicySetId}
