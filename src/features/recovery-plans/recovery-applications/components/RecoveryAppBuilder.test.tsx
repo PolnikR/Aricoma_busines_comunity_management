@@ -102,15 +102,15 @@ vi.mock('./TierCanvas', () => ({
   }) => (
     <div>
       <span>Tier count: {Object.keys(tiers).length}</span>
-      <span>Database VMs: {tiers['database']?.recovery_group?.vms.length ?? 0}</span>
+      <span>Database VMs: {tiers['tier_id']?.recovery_group?.vms.length ?? 0}</span>
       <span>Database options: {recoveryGroupVmOptions?.['database_group']?.length ?? 0}</span>
-      <button type="button" onClick={() => { onRecoveryGroupAdded?.('database', 'database_group') }}>
+      <button type="button" onClick={() => { onRecoveryGroupAdded?.('tier_id', 'database_group') }}>
         Add test group
       </button>
-      <button type="button" onClick={() => { onRecoveryGroupRemoved?.('database') }}>
+      <button type="button" onClick={() => { onRecoveryGroupRemoved?.('tier_id') }}>
         Remove test group
       </button>
-      <button type="button" onClick={() => { onRecoveryVmSelectionChange?.('database', 'DB-01', false) }}>
+      <button type="button" onClick={() => { onRecoveryVmSelectionChange?.('tier_id', 'DB-01', false) }}>
         Exclude DB-01
       </button>
       <button

@@ -31,7 +31,7 @@ interface RecoveryAppBuilderProps {
 }
 
 const DEFAULT_TIERS: Record<string, RecoveryTier> = {
-  database: { order: 1, description: 'Database server group' },
+  tier_id: { order: 1, description: 'tier_description' },
 }
 
 function createInitialFormState(initialData?: RecoveryApplicationFormState): RecoveryApplicationFormState {
