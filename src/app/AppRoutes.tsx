@@ -49,7 +49,7 @@ const PolicySetsPage = lazy(async () => {
 })
 
 const RecoveryRunsPage = lazy(async () => {
-  const page = await import('@/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage')
+  const page = await import('@/features/storage-orchestration/pages/RecoveryRunsPage')
   return { default: page.RecoveryRunsPage }
 })
 
