@@ -19,7 +19,7 @@ export function RecoveryGroupPolicySetStep({
   const { t } = useTranslation()
 
   return (
-    <div>
+    <div className="flex h-full min-h-0 flex-col">
       <div>
         <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryGroupBuilder.policySet.title')}</h2>
         <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryGroupBuilder.policySet.description')}</p>
@@ -35,11 +35,13 @@ export function RecoveryGroupPolicySetStep({
           />
         </div>
       ) : (
-        <PolicySetPicker
-          policySets={policySets}
-          selectedPolicySetId={selectedPolicySetId}
-          onSelect={onSelect}
-        />
+        <div className="mt-5 min-h-0 flex-1">
+          <PolicySetPicker
+            policySets={policySets}
+            selectedPolicySetId={selectedPolicySetId}
+            onSelect={onSelect}
+          />
+        </div>
       )}
     </div>
   )

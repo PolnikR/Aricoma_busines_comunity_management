@@ -280,7 +280,7 @@ export function RecoveryAppBuilder({
           />
         </aside>
         <div className="flex min-h-0 flex-col">
-          <div className={`custom-scrollbar min-h-0 flex-1 p-5 sm:p-6 ${step === 2 ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+          <div className={`custom-scrollbar min-h-0 flex-1 p-5 sm:p-6 ${step === 2 || step === 3 ? 'overflow-hidden' : 'overflow-y-auto'}`}>
             {step === 1 ? (
               <div className="grid max-w-5xl gap-5">
                 <div>
@@ -344,7 +344,7 @@ export function RecoveryAppBuilder({
             ) : null}
 
             {step === 3 ? (
-              <div>
+              <div className="flex h-full min-h-0 flex-col">
                 <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.policySet.title')}</h2>
                 <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.policySet.description')}</p>
                 {policySetsQuery.isLoading ? (
@@ -365,11 +365,13 @@ export function RecoveryAppBuilder({
                         {t('pages.recoveryBuilder.policySet.unavailable')}
                       </p>
                     ) : null}
-                    <PolicySetPicker
-                      policySets={policySetsQuery.data}
-                      selectedPolicySetId={formState.policySetId}
-                      onSelect={(policySetId) => { updateFormState({ policySetId }) }}
-                    />
+                    <div className="mt-5 min-h-0 flex-1">
+                      <PolicySetPicker
+                        policySets={policySetsQuery.data}
+                        selectedPolicySetId={formState.policySetId}
+                        onSelect={(policySetId) => { updateFormState({ policySetId }) }}
+                      />
+                    </div>
                   </>
                 ) : (
                   <div className="mt-5 max-w-4xl">

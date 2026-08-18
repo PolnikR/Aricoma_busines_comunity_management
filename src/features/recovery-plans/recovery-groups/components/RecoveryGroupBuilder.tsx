@@ -230,7 +230,7 @@ export function RecoveryGroupBuilder({
         </aside>
         <div className="flex min-h-0 flex-col">
           <div className={`custom-scrollbar min-h-0 flex-1 p-5 sm:p-6 ${
-            step === resourcesStepIndex || step === relatedStorageStepIndex ? 'overflow-hidden' : 'overflow-y-auto'
+            step === resourcesStepIndex || step === relatedStorageStepIndex || step === policySetStepIndex ? 'overflow-hidden' : 'overflow-y-auto'
           }`}>
             {step === 1 ? (
               <RecoveryGroupDetailsStep

@@ -1,55 +1,38 @@
-# Implementation Plan: Shared Policy Set Picker
+# Implementation Plan: Fill-Height Policy Set Picker
 
 ## Overview
-`RecoveryGroupPolicySetCatalogue` + `RecoveryGroupPolicySetList` + `RecoveryGroupPolicySetDetails` (used by the recovery-group wizard's "Policy set" step) already implement a fully generic search-list-plus-detail-pane picker over `PolicySet` records — nothing in their logic is actually recovery-group-specific, only their names and one translation namespace are. The recovery-applications wizard's own "Policy set" step (step 3) never got this treatment; it's a plain `SelectableCard` grid with no search and no detail pane. This moves the three components to `src/shared/components/policy-set-picker/`, renames them, generalizes the one recovery-group-flavored translation namespace they use, and swaps the recovery-applications step 3 grid for the same shared picker — so both wizards show an identical experience.
+`PolicySetPicker` currently sizes itself with a hardcoded `lg:h-96` (384px) box, `lg:w-96`/`min-h-96` on the list pane, and `max-h-96` on the details pane. On the recovery-applications wizard's Policy set step this leaves a large empty gap between the box and the footer buttons (visible in the screenshot). The fix is to make the picker fill whatever height its parent gives it (`h-full`, flex-based) instead of a fixed rem value — but since `PolicySetPicker` is shared with the recovery-groups wizard, and both wizards currently render this step inside a normal, page-scrolling container (not a height-constrained one), simply removing the fixed height would collapse the picker to near-zero height in both places. Both call sites' step containers need to switch to the same "flex-fill + overflow-hidden parent, internal scroll" pattern already used by each wizard's own tier/resource step (`TierCanvas` in recovery-applications, the resources/related-storage steps in recovery-groups) — this pattern already exists in the codebase, it's just not applied to the policy-set step yet.
 
 ## Architecture Decisions
-- Move (not duplicate) `RecoveryGroupPolicySetCatalogue/List/Details` to `src/shared/components/policy-set-picker/PolicySetPicker(/List/Details).tsx`. Props (`policySets`, `selectedPolicySetId`, `onSelect`) are unchanged — this is a rename + relocation, not a redesign.
-- The only genuinely recovery-group-flavored thing inside the moved components is the `pages.recoveryGroupBuilder.policySet.details.*` translation namespace used by the details pane. Rename it to a generic `policySets.picker.details.*` (same English/Slovak/Czech text, just a feature-neutral key) so the shared component doesn't depend on a `recoveryGroupBuilder`-namespaced string. The `policySets.searchLabel`/`.searchPlaceholder`/`.noMatches`/`.form.*` keys the list/details already use are already generically named — no change needed there.
-- The step-level wrapper (title, description, loading text, empty state, error handling) stays bespoke per feature — `RecoveryGroupPolicySetStep.tsx` keeps its own text and now imports the shared picker instead of its local one; the recovery-applications step 3 block gets the same treatment inline in `RecoveryAppBuilder.tsx`. These wrappers already differ slightly today (recovery-apps additionally surfaces a fetch error via `FetchErrorAlert`, which recovery-groups doesn't), so unifying them into one shared "step" component isn't in scope — only the proven-reusable picker itself is shared.
-- While touching recovery-apps' step 3 block: it currently borrows `pages.recoveryGroupBuilder.policySet.loading` and `.empty.title/.description` (recovery-*group*-flavored empty-state text — "assigning it to a recovery group" — shown on the recovery-*application* wizard, which is wrong copy). It already has its own, correct `pages.recoveryBuilder.policySet.empty.title/.description` keys defined but unused, plus no dedicated `.loading` key. Fix this as part of the swap: use its own keys, add the missing `.loading` key.
-- Preserve the existing "stored policy set no longer returned by the backend" notice (currently a disabled `SelectableCard` when `formState.policySetId` doesn't match any fetched policy set) as a small bespoke element in `RecoveryAppBuilder.tsx`, rendered above the shared picker — this behavior isn't part of the reusable picker (recovery-groups' reference implementation doesn't have it either), so it stays feature-specific rather than being pushed into the shared component.
-- Test coverage: the deep behavioral tests currently in `RecoveryGroupPolicySetStep.test.tsx` (search filtering, selection, detail resolution, loading/error states, icon count) test the picker's actual behavior, not the step wrapper's. Move them to a new `PolicySetPicker.test.tsx` next to the shared component. Slim `RecoveryGroupPolicySetStep.test.tsx` down to step-wrapper-only assertions (title/description text, loading-before-fetch, empty state) plus one smoke test confirming the picker still renders when wired up.
+- `PolicySetPicker.tsx`: outer wrapper becomes `flex h-full min-h-[480px] flex-col overflow-hidden ... lg:flex-row` (drop `mt-5` and `lg:h-96` — spacing/height become the caller's job). List pane wrapper becomes `min-h-64 w-full shrink-0 overflow-hidden lg:h-full lg:min-h-0 lg:w-96` (drop the fixed `min-h-96`, keep the `lg:w-96` fixed rail width — a fixed-width list column is a deliberate, common master-detail pattern, not the bug being reported). Details pane wrapper becomes `min-h-0 min-w-0 flex-1 overflow-auto ...` (drop `max-h-96`/`lg:max-h-none`). `min-h-[480px]` mirrors the exact floor `TierCanvas`'s wrapper already uses, so short viewports don't collapse the picker.
+- `PolicySetPickerList.tsx` and `PolicySetPickerDetails.tsx` need no changes — the list already uses `h-full min-h-0 flex-col overflow-hidden` internally and will size correctly once its parent has a real height; the details pane's own `max-w-6xl` is a readability cap on fact-grid width, unrelated to this height fix, and stays.
+- Both call sites' step containers switch from "normal page scroll" to "fill height, overflow-hidden, internal scroll" for the policy-set step specifically — the same treatment `step === 2` (tiers) already gets in `RecoveryAppBuilder.tsx` and `resourcesStepIndex`/`relatedStorageStepIndex` already get in `RecoveryGroupBuilder.tsx`. Concretely: add the policy-set step to each file's `overflow-hidden` condition, and wrap each step's title/description/picker block in a `flex h-full min-h-0 flex-col` container so the picker (in a `min-h-0 flex-1` slot below the fixed-height title/description) receives real height to fill.
+- Loading/error/empty branches for the policy-set step don't need the fill treatment — they're short, non-scrolling content — only the actual `<PolicySetPicker>` render path gets wrapped in the flex-1 slot.
 
 ## Task List
 
-### Phase 1: Move and generalize the shared component
-- [ ] Task 1: Create `src/shared/components/policy-set-picker/PolicySetPickerList.tsx` (moved from `RecoveryGroupPolicySetList.tsx`, same logic, renamed).
-- [ ] Task 2: Create `src/shared/components/policy-set-picker/PolicySetPickerDetails.tsx` (moved from `RecoveryGroupPolicySetDetails.tsx`), updating its translation keys from `pages.recoveryGroupBuilder.policySet.details.*` to `policySets.picker.details.*`.
-- [ ] Task 3: Create `src/shared/components/policy-set-picker/PolicySetPicker.tsx` (moved from `RecoveryGroupPolicySetCatalogue.tsx`), importing the two components above.
-- [ ] Task 4: Rename the six `pages.recoveryGroupBuilder.policySet.details.*` keys to `policySets.picker.details.*` in `en.json`/`sk.json`/`cs.json` (values unchanged).
-- [ ] Task 5: Delete the three original `RecoveryGroupPolicySet{Catalogue,List,Details}.tsx` files.
-- [ ] Task 6: Update `RecoveryGroupPolicySetStep.tsx` to import `PolicySetPicker` from the shared location instead of the local `RecoveryGroupPolicySetCatalogue`.
+### Phase 1: Shared component
+- [ ] Task 1: Update `PolicySetPicker.tsx`'s three wrapper `className`s per the Architecture Decisions above (drop hardcoded height/width bounds, add `h-full`/`flex-1`/`min-h-0` fill chain).
 
-### Checkpoint: Move complete
-- [ ] Typecheck clean (catches any straggler import of the deleted files)
-- [ ] `grep` confirms no remaining references to `pages.recoveryGroupBuilder.policySet.details.*` or the deleted component names
+### Checkpoint: Component alone
+- [ ] `PolicySetPicker.test.tsx` still passes unmodified (no prop/behavior change, only layout classes)
+- [ ] Typecheck clean
 
-### Phase 2: New shared test file + slim the old one
-- [ ] Task 7: Create `src/shared/components/policy-set-picker/PolicySetPicker.test.tsx`, moving the deep behavioral test cases from `RecoveryGroupPolicySetStep.test.tsx` (search filtering, selection reporting, detail resolution, loading/error states, icon count, responsive layout) to render `PolicySetPicker` directly.
-- [ ] Task 8: Slim `RecoveryGroupPolicySetStep.test.tsx` to: title/description render, loading-before-fetch text, empty state, and one smoke test with real data confirming the picker renders and a click reports a selection.
-
-### Checkpoint: Tests migrated
-- [ ] `PolicySetPicker.test.tsx` passes standalone
-- [ ] `RecoveryGroupPolicySetStep.test.tsx` passes (slimmed)
-
-### Phase 3: Wire into recovery-applications
-- [ ] Task 9: In `RecoveryAppBuilder.tsx`, replace the step-3 `SelectableCard` grid with `<PolicySetPicker policySets={policySetsQuery.data} selectedPolicySetId={formState.policySetId} onSelect={...} />`, keeping the existing loading/error (`FetchErrorAlert`)/empty-state branches around it, switched to recovery-apps' own `pages.recoveryBuilder.policySet.loading`/`.empty.title`/`.empty.description` keys.
-- [ ] Task 10: Add the missing `pages.recoveryBuilder.policySet.loading` key (en/sk/cs, same text as the existing `pages.recoveryGroupBuilder.policySet.loading` value).
-- [ ] Task 11: Keep the "stored policy set unavailable" notice as a small bespoke element (reusing the existing `pages.recoveryBuilder.policySet.unavailable` key) rendered above the picker when `formState.policySetId` isn't in `policySetsQuery.data`.
-- [ ] Task 12: Update `RecoveryAppBuilder.test.tsx` to mock `useSnapshotPolicies`/`useRecoveryAppPolicies`/`useCleanRoomPolicies` (the shared picker's detail pane now calls these; the test file doesn't mock them today because the old grid never did) — mirror the mocking pattern from `RecoveryGroupPolicySetStep.test.tsx`.
+### Phase 2: Wire the fill chain into both wizards
+- [ ] Task 2: In `RecoveryAppBuilder.tsx`, add `step === 3` to the body wrapper's `overflow-hidden` condition (currently `step === 2 ? 'overflow-hidden' : 'overflow-y-auto'`); wrap the step-3 block's title/description/picker in `flex h-full min-h-0 flex-col`, and wrap the `<PolicySetPicker>` render itself in a `mt-5 min-h-0 flex-1` div (loading/error/empty branches stay outside this slot).
+- [ ] Task 3: In `RecoveryGroupBuilder.tsx`, add `step === policySetStepIndex` to the equivalent `overflow-hidden` condition; apply the same `flex h-full min-h-0 flex-col` restructuring inside `RecoveryGroupPolicySetStep.tsx` (title/description stay fixed-height, the picker render gets the `min-h-0 flex-1` slot).
 
 ### Checkpoint: Complete
-- [ ] Full focused test run across all touched files
+- [ ] Full focused test run across `PolicySetPicker.test.tsx`, `RecoveryGroupPolicySetStep.test.tsx`, `RecoveryAppBuilder.test.tsx`, `RecoveryGroupBuilder.test.tsx`
 - [ ] Typecheck and lint clean
-- [ ] Manual trace: recovery-applications step 3 now shows the search box + list + detail pane, matching the recovery-groups wizard's policy-set step
+- [ ] Manual trace: on both wizards, the policy set step's box now fills the available vertical space down to the footer, with the list/detail panes scrolling internally instead of the page
 
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| `RecoveryAppBuilder.test.tsx` doesn't currently mock the three policy-detail hooks; introducing the shared picker would make real (unmocked) hook calls fail in tests | High — would break every existing test that reaches step 3 | Task 12 adds the same three hook mocks `RecoveryGroupPolicySetStep.test.tsx` already uses, before wiring in the picker |
-| Renaming translation keys could leave orphaned old keys or dangling references | Medium | Task 4 renames in all three locale files together; checkpoint greps for leftover references before moving on |
-| Losing the "stored policy set unavailable" notice would be a silent behavior regression (no existing test currently locks it in, so it could slip through unnoticed) | Medium | Task 11 explicitly preserves it as a bespoke element; called out here so it isn't dropped during the swap |
+| Removing the fixed height without also fixing both step containers would collapse the picker to near-zero height | High | Both call sites are updated in the same change (Tasks 2-3), not just the shared component |
+| Mobile (below `lg`) stacking of list+details inside a flex-fill parent could squeeze one pane if not given its own floor | Medium | List pane keeps a `min-h-64` floor on mobile; details pane takes remaining space via `flex-1 min-h-0` with its own scroll |
+| Existing tests assert on specific class names for layout (e.g. `RecoveryGroupPolicySetStep.test.tsx`'s "keeps the policy detail panel visible below the lg breakpoint" test, now moved to `PolicySetPicker.test.tsx`) | Medium | That test only checks for absence of `hidden` and presence of `flex-col`, both still true after this change — verified at the checkpoint, updated if it doesn't hold |
 
 ## Open Questions
-None — scope and behavior-preservation decisions made above; flag if any assumption here doesn't match what you had in mind before implementation starts.
+None — scope is the height-fill fix for the shared picker plus both call sites; no visual/behavioral change beyond filling available space.

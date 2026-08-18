@@ -39,8 +39,8 @@ export function PolicySetPicker({
   )
 
   return (
-    <div className="mt-5 flex flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm lg:h-96 lg:flex-row">
-      <div className="w-full min-h-96 lg:w-96 lg:min-h-0 shrink-0">
+    <div className="flex h-full min-h-[480px] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm lg:flex-row">
+      <div className="min-h-64 w-full shrink-0 overflow-hidden lg:h-full lg:min-h-0 lg:w-96">
         <PolicySetPickerList
           policySets={policySets}
           selectedPolicySetId={selectedPolicySetId}
@@ -50,7 +50,7 @@ export function PolicySetPicker({
       </div>
 
       {selectedSet ? (
-        <div className="max-h-96 min-w-0 overflow-auto border-t border-border lg:max-h-none lg:flex-1 lg:border-l lg:border-t-0">
+        <div className="min-h-0 min-w-0 flex-1 overflow-auto border-t border-border lg:border-l lg:border-t-0">
           <PolicySetPickerDetails
             policySet={selectedSet}
             snapshotPolicy={snapshotPoliciesById.get(selectedSet.snapshotPolicyId)}
