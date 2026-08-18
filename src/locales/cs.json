@@ -786,7 +786,7 @@
   "recovery.builder.discardDialog.title": "Zahodit neuložené změny?",
   "recovery.builder.discardDialog.message": "Pokud budete pokračovat, všechna neuložená data budou ztracena.",
   "recovery.builder.discardDialog.cancel": "Zrušit",
-  "recovery.builder.discardDialog.confirm": "Pokračovat",
+  "recovery.builder.discardDialog.confirm": "Zahodit",
   "recoveryGroups.orchestratorSuccessModal.ariaLabel": "Běh orchestrátoru zahájen",
   "recoveryGroups.orchestratorSuccessModal.title": "Běh orchestrátoru zahájen",
   "recoveryGroups.orchestratorSuccessModal.description": "{groupName} je nyní pod kontrolou orchestrátoru.",

@@ -786,7 +786,7 @@
   "recovery.builder.discardDialog.title": "Discard unsaved changes?",
   "recovery.builder.discardDialog.message": "If you continue, all unsaved data will be lost.",
   "recovery.builder.discardDialog.cancel": "Cancel",
-  "recovery.builder.discardDialog.confirm": "Continue",
+  "recovery.builder.discardDialog.confirm": "Discard",
   "recoveryGroups.orchestratorSuccessModal.ariaLabel": "Orchestrator run started",
   "recoveryGroups.orchestratorSuccessModal.title": "Orchestrator run started",
   "recoveryGroups.orchestratorSuccessModal.description": "{groupName} is now under orchestrator control.",
