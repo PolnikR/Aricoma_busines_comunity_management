@@ -14,7 +14,7 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
-import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
+import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import { toSnapshotPolicySubmitPayload } from '../api/snapshotPoliciesApi'
 import { useDeleteSnapshotPolicy } from '../hooks/useDeleteSnapshotPolicy'
@@ -287,13 +287,53 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
         }}
       />
 
-      <JsonViewerModal
-        open={jsonViewed !== null}
-        title={t('snapshotPolicies.jsonViewer.title')}
-        data={jsonViewed ? toSnapshotPolicySubmitPayload(jsonViewed) : null}
-        closeLabel={t('buttons.close')}
-        onClose={() => { setJsonViewId(null) }}
-      />
+      {jsonViewed ? (
+        <ChecklistResultDialog
+          open={jsonViewed !== null}
+          title={t('snapshotPolicies.jsonViewer.title')}
+          primaryName={jsonViewed.name}
+          subtitle={jsonViewed.id}
+          badges={[
+            { label: jsonViewed.enabled ? 'Active' : 'Inactive', color: jsonViewed.enabled ? 'success' : 'warning' },
+          ]}
+          statusBar={{
+            title: t('snapshotPolicies.policyLoaded'),
+            status: 'success',
+            passedCount: 5,
+            totalCount: 5,
+          }}
+          checks={[
+            {
+              name: t('snapshotPolicies.policyId'),
+              detail: jsonViewed.id,
+              status: 'ok',
+            },
+            {
+              name: t('snapshotPolicies.policyName'),
+              detail: jsonViewed.name,
+              status: 'ok',
+            },
+            {
+              name: t('snapshotPolicies.description'),
+              detail: jsonViewed.description || '—',
+              status: 'ok',
+            },
+            {
+              name: t('snapshotPolicies.level'),
+              detail: jsonViewed.level,
+              status: 'ok',
+            },
+            {
+              name: t('snapshotPolicies.frequency'),
+              detail: `${jsonViewed.frequencyValue} ${jsonViewed.frequencyUnit}`,
+              status: 'ok',
+            },
+          ]}
+          responseData={toSnapshotPolicySubmitPayload(jsonViewed)}
+          responseSchemaType="SnapshotPolicy"
+          onClose={() => { setJsonViewId(null) }}
+        />
+      ) : null}
     </div>
   )
 }
