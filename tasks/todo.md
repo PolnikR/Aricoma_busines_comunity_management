@@ -1,44 +1,48 @@
-# Shared Response Body Viewer - Task Checklist
+# Full Response-Body Panel in Shared Component - Task Checklist
 
 ## Phase 1: Shared component
 
-### Task 1: Create ResponseBodyViewer
-- [x] Create `src/shared/components/response-body/ResponseBodyViewer.tsx`
-- [x] Props: `{ data: unknown }`
-- [x] Internal `copyText` helper (try/catch around `navigator.clipboard.writeText`, rejects on failure)
-- [x] Copy `Button` (size `xs`, variant `outline`) toggling label via `useState` + `setTimeout` (~1400ms), same UX as the dialog's original
-- [x] `<pre>` with `max-h-64 overflow-y-auto overflow-x-auto rounded-md bg-surface-subtle p-3 font-mono text-xs text-text-secondary`, content `JSON.stringify(data, null, 2)`
-- [x] Add `"common.copy": "Copy"` and `"common.copied": "Copied"` to `src/locales/en.json`, `sk.json`, `cs.json`
+### Task 1: Rewrite ResponseBodyViewer
+- [x] Open `src/shared/components/response-body/ResponseBodyViewer.tsx`
+- [x] Component root becomes `<details className="group rounded-lg border border-border" open={defaultOpen}>`
+- [x] `<summary>` = header bar (bg-surface-muted, rounded, px-3 py-2) with `t('common.responseBody')` + `ChevronDownIcon` (`transition-transform group-open:rotate-180`)
+- [x] Body (`border-t border-border px-3 py-3`): one row (`flex items-center justify-between gap-2 mb-2`) with either the schema caption (`t('common.matchesSchema')` + `<code>{schemaTypeName}</code>`) or an empty spacer on the left, and the Copy button on the right
+- [x] `<pre>` unchanged (`max-h-64 overflow-y-auto overflow-x-auto rounded-md bg-surface-subtle p-3 font-mono text-xs text-text-secondary`)
+- [x] Props: `{ data: unknown; schemaTypeName?: string; defaultOpen?: boolean }`, `defaultOpen` defaults to `false`
 
-### Task 2: Test ResponseBodyViewer
-- [x] Create `src/shared/components/response-body/ResponseBodyViewer.test.tsx`
-- [x] Test: renders `JSON.stringify(data, null, 2)` content
-- [x] Test: clicking Copy calls `navigator.clipboard.writeText` with the formatted JSON and shows "Copied" (mock `navigator.clipboard`)
-- [x] Test: clicking Copy without a mocked clipboard does not throw (fallback path)
+### Task 2: Translation keys
+- [x] Add `"common.responseBody": "Response body"` and `"common.matchesSchema": "Matches"` to en/sk/cs.json
+- [x] Remove `"providers.connectionTest.responseBody"` and `"providers.connectionTest.schemaNote"` from en/sk/cs.json
+
+### Task 3: Rewrite ResponseBodyViewer.test.tsx
+- [x] Test: renders the "Response body" header label
+- [x] Test: clicking the summary reveals the JSON (when `defaultOpen` omitted/false)
+- [x] Test: `defaultOpen` renders the JSON immediately, no click needed
+- [x] Test: `schemaTypeName` prop renders "Matches ProviderTestResponse"; omitted prop renders no such text
+- [x] Test: copy button copies formatted JSON and shows "Copied" briefly
+- [x] Test: copy button doesn't throw when clipboard is unavailable
 
 ## Phase 2: Wire into existing surfaces
 
-### Task 3: Refactor JsonViewerModal
+### Task 4: Update JsonViewerModal
 - [x] Open `src/shared/components/modal/JsonViewerModal.tsx`
-- [x] Replace the manual `<pre>{JSON.stringify(data, null, 2)}</pre>` block with `<ResponseBodyViewer data={data} />`
-- [x] Drop the now-redundant `className="flex max-h-96 flex-col overflow-hidden"` on `Modal` and the manual `overflow-y-auto` wrapper div (the shared component owns its own scroll box)
+- [x] `<ResponseBodyViewer data={data} defaultOpen />`
 
-### Task 4: Refactor ProviderConnectionTestDialog
+### Task 5: Update ProviderConnectionTestDialog
 - [x] Open `src/features/providers-connectors/providers/components/ProviderConnectionTestDialog.tsx`
-- [x] Remove the local `copyText` function, `justCopied` state, and the inline Copy `Button` + `<pre>` block
-- [x] Replace with `<ResponseBodyViewer data={toProviderConnectionTestJson(result)} />` inside the existing `<details>` (keep the `<summary>`, schema-note caption)
-- [x] Remove the now-unused `useState` import if nothing else in the file needs it
+- [x] Remove the local `<details>`/`<summary>`/schema-note `<p>` markup
+- [x] Replace with `<ResponseBodyViewer data={toProviderConnectionTestJson(result)} schemaTypeName="ProviderTestResponse" />`
+- [x] Remove the now-unused `ChevronDownIcon` import
 
-### Task 5: Remove superseded translation keys
-- [x] Remove `"providers.connectionTest.copy"` and `"providers.connectionTest.copied"` from en/sk/cs.json (replaced by the shared `common.copy`/`.copied`)
+### Task 6: Verify ProviderConnectionTestDialog.test.tsx
+- [x] Re-run; adjust only if a specific assertion actually breaks (label text and click target should be unchanged)
 
 ## Verification Steps
 - [x] Run: `npx vitest run src/shared/components/response-body/ResponseBodyViewer.test.tsx src/shared/components/modal/JsonViewerModal.test.tsx src/features/providers-connectors/providers/components/ProviderConnectionTestDialog.test.tsx src/features/providers-connectors/providers/components/ProvidersCatalogueTable.test.tsx`
 - [x] Run: `npm run typecheck`
-- [x] Run: `npx eslint` on all changed/created files
-- [x] Confirm no leftover references to the removed `providers.connectionTest.copy`/`.copied` keys (grep)
+- [x] Run: `npx eslint` on all changed files
+- [x] Grep for leftover references to the removed `providers.connectionTest.responseBody`/`.schemaNote` keys
 
 ## Explicitly Out of Scope
-- The 8 table files that call `JsonViewerModal` (`RecoveryGroupsTable`, `RecoveryApplicationsTable`, `PolicySetsTable`, `ProvidersCatalogueTable`, `PlatformProvidersTable`, `SnapshotPoliciesTable`, `CleanRoomPoliciesTable`, `RecoveryAppPoliciesTable`) — zero changes needed, confirmed with user
-- No configurable max-height prop on `ResponseBodyViewer` (YAGNI — one fixed height everywhere)
-- No download affordance (still out of scope per the original JSON-viewer design doc)
+- The 8 table files calling `JsonViewerModal` — no changes, no schema-type-name captions added there
+- No changes to the connection-test dialog's default-closed behavior (only the JSON-only modal case defaults open)

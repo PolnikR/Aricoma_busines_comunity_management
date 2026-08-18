@@ -1,45 +1,46 @@
-# Implementation Plan: Shared Response Body Viewer
+# Implementation Plan: Move the Full Response-Body Panel into the Shared Component
 
 ## Overview
-Extract the "copy + scrollable JSON" piece built for the connection-test dialog into a shared component (`ResponseBodyViewer`), then reuse it everywhere a raw JSON response is shown: the 8 existing table `JsonViewerModal` usages, and `ProviderConnectionTestDialog`'s inline "Response body" section. Confirmed with the user: the table "View" button keeps opening a modal (there's no other content to embed JSON into there) — only `JsonViewerModal`'s internals change, so none of the 8 table files need touching. The connection-test dialog keeps its `<details>` wrapper (it already shows other content, so JSON stays packed behind a disclosure) but delegates the actual rendering to the same shared piece.
+`ResponseBodyViewer` currently only extracted the "copy button + pre" core. The bordered panel chrome around it — the header bar with a label and chevron, the optional "Matches &lt;Type&gt;" schema caption, the collapse/expand behavior — still lives locally inside `ProviderConnectionTestDialog`, so `JsonViewerModal` (used by all 8 table "View JSON" buttons) never got that chrome and looks like a stripped-down version. This moves the whole panel (header bar, chevron, optional schema caption, copy button, scrollable JSON) into `ResponseBodyViewer` itself, so every place that shows a JSON response looks identical. Confirmed with the user: in the JSON-only modal case it should default open (no click needed) but remain collapsible; the connection-test dialog's existing closed-by-default behavior is unaffected since that wasn't the complaint.
 
 ## Architecture Decisions
-- New component `src/shared/components/response-body/ResponseBodyViewer.tsx`: takes `data: unknown`, renders a Copy button (feature-detected clipboard, "Copy" → "Copied" for ~1.4s) and a `<pre>` capped at a fixed height with both-axis scroll. It owns its own translation (`common.copy` / `common.copied`, added as generic keys) so no caller needs to pass label props through.
-- `JsonViewerModal` renders `<ResponseBodyViewer data={data} />` instead of its own raw `<pre>`. Its outer `max-h-96`/`overflow-hidden` scaffolding is removed since the new component self-limits its own height — this actually simplifies the modal. No changes needed in any of the 8 files that call `JsonViewerModal`.
-- `ProviderConnectionTestDialog` drops its local `copyText` helper, `justCopied` state, and inline Copy `<Button>` + `<pre>` — replaced by `<ResponseBodyViewer data={toProviderConnectionTestJson(result)} />` inside the existing `<details>`. The dialog keeps its own `responseBody`/`schemaNote` copy (that framing is specific to this dialog), but the now-duplicate `providers.connectionTest.copy` / `.copied` keys are removed in favor of the shared component's generic ones.
-- No prop for configurable max-height — one fixed, sensible height (`max-h-64`) everywhere. Add it later only if a real case needs it (YAGNI).
+- `ResponseBodyViewer` becomes the `<details>` element itself (header `<summary>` with a generic "Response body" label + chevron, body with an optional schema-caption/copy-button row, then the capped scrollable `<pre>`). Callers no longer build any of that markup themselves.
+- New props: `schemaTypeName?: string` (renders "Matches `<code>{schemaTypeName}</code>`" when provided, omitted otherwise — this is the one piece that's genuinely dialog-specific) and `defaultOpen?: boolean` (default `false`, matching today's connection-test behavior; `JsonViewerModal` passes `true`).
+- The label text ("Response body") and the "Matches" caption prefix become generic `common.*` translation keys, reused everywhere, replacing the `providers.connectionTest.responseBody` / `.schemaNote` keys.
+- `JsonViewerModal` passes only `data` and `defaultOpen`, no `schemaTypeName` — none of the 8 table call sites have a schema type name to give it, and adding one would mean touching those 8 files, which stays out of scope (confirmed previously, unchanged here).
+- Schema caption and Copy button share one row (`justify-between`), matching the screenshot — an empty spacer keeps the Copy button right-aligned even when there's no caption, so the row looks the same shape in both contexts.
 
 ## Task List
 
 ### Phase 1: Shared component
-- [ ] Task 1: Create `ResponseBodyViewer.tsx` (copy button + scrollable `<pre>`), add generic `common.copy`/`common.copied` translation keys (en/sk/cs).
-- [ ] Task 2: Create `ResponseBodyViewer.test.tsx` — renders formatted JSON, copy button copies to clipboard and shows "Copied" briefly, falls back gracefully when `navigator.clipboard` is unavailable.
+- [ ] Task 1: Rewrite `ResponseBodyViewer.tsx` to own the full `<details>` panel (header bar, chevron, optional schema caption + copy button row, scrollable pre). Add `schemaTypeName?` and `defaultOpen?` props.
+- [ ] Task 2: Add `common.responseBody` / `common.matchesSchema` translation keys (en/sk/cs); remove the now-superseded `providers.connectionTest.responseBody` / `.schemaNote` keys.
+- [ ] Task 3: Rewrite `ResponseBodyViewer.test.tsx` for the new shape: renders the header label, expands on summary click, shows/hides the schema caption based on the prop, copy still works, `defaultOpen` renders already expanded.
 
 ### Checkpoint: Shared component
 - [ ] `ResponseBodyViewer.test.tsx` passes standalone
 - [ ] Typecheck clean
 
 ### Phase 2: Wire into existing surfaces
-- [ ] Task 3: Refactor `JsonViewerModal.tsx` to render `ResponseBodyViewer` internally; simplify its now-redundant height/scroll wrapper classes.
-- [ ] Task 4: Refactor `ProviderConnectionTestDialog.tsx` to use `ResponseBodyViewer` inside its existing `<details>`; remove the now-dead local copy logic.
-- [ ] Task 5: Remove the now-unused `providers.connectionTest.copy` / `.copied` keys from en/sk/cs.json (superseded by the shared `common.copy`/`.copied`).
+- [ ] Task 4: Update `JsonViewerModal.tsx` — pass `defaultOpen` to `ResponseBodyViewer`, no other changes (still zero changes to the 8 table files).
+- [ ] Task 5: Update `ProviderConnectionTestDialog.tsx` — remove its local `<details>`/`<summary>`/schema-note markup and the now-unused `ChevronDownIcon` import; render `<ResponseBodyViewer data={...} schemaTypeName="ProviderTestResponse" />` directly.
+- [ ] Task 6: Update `ProviderConnectionTestDialog.test.tsx` if the "Response body" label text or click target changed shape (verify, adjust only if a real assertion breaks).
 
 ### Checkpoint: Wired in
-- [ ] `JsonViewerModal.test.tsx` still passes (existing assertions on formatted JSON text are whitespace-insensitive, unaffected by the internal refactor)
-- [ ] `ProviderConnectionTestDialog.test.tsx` still passes (same visible "Copy"/"Copied" text, now sourced from the shared component)
-- [ ] One representative table (`ProvidersCatalogueTable.test.tsx`) still passes untouched, proving the 8 table call sites needed zero changes
+- [ ] `JsonViewerModal.test.tsx` still passes unmodified (its assertions don't depend on the panel chrome, and `defaultOpen` makes the JSON immediately present, same as before)
+- [ ] `ProviderConnectionTestDialog.test.tsx` passes
+- [ ] One representative table test (`ProvidersCatalogueTable.test.tsx`) still passes untouched
 
 ### Checkpoint: Complete
 - [ ] Full focused test run across all touched + representative files
 - [ ] Typecheck and lint clean
-- [ ] All acceptance criteria met
+- [ ] Manual trace: JsonViewerModal now shows a header bar + chevron + already-expanded JSON; connection-test dialog looks the same as before (still closed by default)
 
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Removing `JsonViewerModal`'s outer height cap changes visible dialog size for all 8 tables at once | Medium — visual change across many screens | The new `ResponseBodyViewer`'s own `max-h-64` scroll box replaces the old `max-h-96` modal cap with an equivalent (slightly smaller, more predictable) constraint; verified visually is out of scope for this pass but flagged here |
-| Two different Copy-labeled buttons (old provider-specific, new generic) briefly coexist mid-refactor if done out of order | Low | Do Task 1 fully before Task 3/4 touch the call sites, so nothing references the old keys after Task 5 |
-| `navigator.clipboard` absent in some real deployment context (non-HTTPS, older browser) | Low | Already handled via try/catch + no-op fallback, unchanged from the original dialog-local implementation |
+| React re-rendering `<details open={defaultOpen}>` could fight a user's manual toggle if `defaultOpen`'s value ever changed across renders | Low | `defaultOpen` is a static prop passed once per mount in both call sites; it never changes value during a component's lifetime, so React's prop-diffing never re-touches the `open` attribute after mount |
+| Removing the schema caption for the 8 table modals could look like a regression (no "Matches X" line where the connection-test dialog has one) | Low | Intentional — those 8 tables never had this caption; adding it is out of scope and would require touching each one, which the user already confirmed against |
 
 ## Open Questions
-None — table-modal scope confirmed with the user (keep as modal, refactor internals only).
+None — confirmed: default open + collapsible for the JSON-only case, same component everywhere else.

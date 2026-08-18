@@ -26,7 +26,7 @@ export function JsonViewerModal({
       footer={<Button onClick={onClose} size="sm" fullWidth>{closeLabel}</Button>}
     >
       <div className="px-6 py-4">
-        <ResponseBodyViewer data={data} />
+        <ResponseBodyViewer data={data} defaultOpen />
       </div>
     </Modal>
   )

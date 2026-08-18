@@ -766,6 +766,8 @@
   "common.logout": "Logout",
   "common.copy": "Copy",
   "common.copied": "Copied",
+  "common.responseBody": "Response body",
+  "common.matchesSchema": "Matches",
 
   "recovery.sidebar.availableVms": "Available VMs",
   "recovery.sidebar.searchPlaceholder": "Search VMs...",
@@ -887,8 +889,6 @@
   "providers.connectionTest.button": "Test connection",
   "providers.jsonViewer.title": "Provider JSON",
   "providers.connectionTest.title": "Test provider connection",
-  "providers.connectionTest.responseBody": "Response body",
-  "providers.connectionTest.schemaNote": "Matches",
   "providers.connectionTest.passedCount": "{ok} / {total} passed",
   "providers.connectionTest.ariaLabel": "Test provider connection",
   "providers.connectionTest.credentialRequired": "A valid credential is required to test this provider.",

@@ -764,6 +764,8 @@
   "common.noResults": "Nebyly nalezeny žádné výsledky",
   "common.settings": "Nastavení",
   "common.copy": "Kopírovat",
+  "common.responseBody": "Tělo odpovědi",
+  "common.matchesSchema": "Odpovídá",
   "common.copied": "Zkopírováno",
   "common.logout": "Odhlásit se",
 
@@ -887,8 +889,6 @@
   "providers.connectionTest.button": "Otestovat připojení",
   "providers.jsonViewer.title": "JSON poskytovatele",
   "providers.connectionTest.title": "Test připojení poskytovatele",
-  "providers.connectionTest.responseBody": "Tělo odpovědi",
-  "providers.connectionTest.schemaNote": "Odpovídá",
   "providers.connectionTest.passedCount": "{ok} / {total} úspěšných",
   "providers.connectionTest.ariaLabel": "Test připojení poskytovatele",
   "providers.connectionTest.credentialRequired": "K otestování poskytovatele jsou nutné platné přihlašovací údaje.",

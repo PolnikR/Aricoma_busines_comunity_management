@@ -2,7 +2,7 @@ import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { Modal } from '@/shared/components/modal/Modal'
 import { ResponseBodyViewer } from '@/shared/components/response-body/ResponseBodyViewer'
-import { CheckIcon, ChevronDownIcon, PlugIcon } from '@/shared/icons/Icons'
+import { CheckIcon, PlugIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
 import { toProviderConnectionTestJson } from '../helpers/providerConnectionTestJson'
@@ -129,18 +129,7 @@ export function ProviderConnectionTestDialog({
         ) : null}
 
         {result ? (
-          <details className="group rounded-lg border border-border">
-            <summary className="flex cursor-pointer select-none items-center justify-between gap-2 rounded-lg bg-surface-muted px-3 py-2 text-sm font-medium text-text-secondary">
-              {t('providers.connectionTest.responseBody')}
-              <ChevronDownIcon className="size-3.5 text-text-muted transition-transform group-open:rotate-180" />
-            </summary>
-            <div className="border-t border-border px-3 py-3">
-              <p className="mb-2 text-xs text-text-subtle">
-                {t('providers.connectionTest.schemaNote')} <code className="rounded bg-surface-muted px-1 py-0.5 font-mono">ProviderTestResponse</code>
-              </p>
-              <ResponseBodyViewer data={toProviderConnectionTestJson(result)} />
-            </div>
-          </details>
+          <ResponseBodyViewer data={toProviderConnectionTestJson(result)} schemaTypeName="ProviderTestResponse" />
         ) : null}
       </div>
     </Modal>
