@@ -1,169 +1,82 @@
-# Implementation Plan: Policy Set Details in Recovery Group Wizard (Variant A)
+# Implementation Plan: Recovery Group Policy Detail — Responsive Layout
 
 ## Overview
 
-V kroku `Policy set` pri vytváraní alebo úprave Recovery Group zostanú existujúce výberové karty. Každá karta navyše zobrazí názvy troch politík, ktoré Policy Set skutočne združuje: Snapshot policy, Recovery application policy a Clean Room policy. Po výbere sa pod kartami zobrazí responzívny detail troch politík s ich rozhodujúcimi parametrami. Zmena je iba frontendová a používa existujúce TanStack Query hooky a backend endpointy.
+The policy-set catalogue inside the recovery-group builder's Policy Set step shows a list of policy sets alongside a detail panel with the resolved snapshot/recovery/clean-room facts (Template D layout). The detail panel is currently only visible at the `lg` breakpoint and above; below that it doesn't render at all, so a user on a tablet or narrow laptop can select a policy set but never see its resolved policy facts before submitting. This plan makes the detail panel visible at every viewport width, stacked below the list on small screens and side-by-side at `lg` and above, matching the "stacked layout on small screens" intent the feature originally shipped with.
+
+## Root Cause
+
+`RecoveryGroupPolicySetCatalogue.tsx:38` wraps the list and detail panel in a plain `flex` container (row direction by default, only switching to a fixed height at `lg:h-96`) with no `flex-col` for narrow viewports. The detail panel itself is `hidden min-w-0 flex-1 overflow-auto lg:block` (line 49) — `hidden` unconditionally removes it from the layout until the `lg:block` override takes effect. Below `lg`, the panel is never shown, regardless of whether a policy set is selected.
 
 ## Architecture Decisions
 
-- `RecoveryGroupBuilder` naďalej vlastní iba zoznam Policy Setov a vybrané `policySetId`; jeho draft ani submit payload sa nemenia.
-- Dátové hooky `useSnapshotPolicies`, `useRecoveryAppPolicies` a `useCleanRoomPolicies` sa zavolajú v internom katalógu kroku, ktorý sa renderuje iba vtedy, keď existuje aspoň jeden Policy Set. Prázdny stav preto nespustí tri nepotrebné policy requesty.
-- Existujúci shared `SelectableCard` dostane voliteľný generický obsahový slot. Doterajšie použitia zostanú bez zmeny a policy špecifický layout nevznikne v shared vrstve.
-- Existujúce preklady intervalov, selection mode a yes/no sa znovu použijú, aby boli údaje zhodné s Recovery Policy tabuľkami.
-- Načítavanie alebo chyba detailov nesmie blokovať výber Policy Setu ani pokračovanie vo wizardovi. Pri chýbajúcej alebo nenačítanej referencii sa zobrazí pôvodné policy ID a upozornenie.
-- Detail sa aktualizuje pri zmene výberu, pri editácii sa zobrazí pre predvybraný Policy Set a bude oznámený cez `aria-live="polite"`.
-- Nepridáva sa nový shared policy komponent, kým nebude rovnaký detail reálne potrebný na druhom mieste.
+- Fix stays local to `RecoveryGroupPolicySetCatalogue.tsx`; no changes to `RecoveryGroupPolicySetList.tsx` or `RecoveryGroupPolicySetDetails.tsx` internals.
+- Container becomes `flex-col lg:h-96 lg:flex-row` so list and detail stack vertically by default and sit side-by-side from `lg`.
+- Remove `hidden`/`lg:block` from the detail panel; give it its own bounded height on small screens (e.g. `max-h-96 overflow-auto` or similar) so a long detail doesn't push the page layout awkwardly, while keeping `lg:min-w-0 lg:flex-1 lg:overflow-auto` for the side-by-side view.
+- List panel's existing `w-full min-h-96 lg:w-96 lg:min-h-0 shrink-0` stays as-is — it already accounts for both layouts correctly.
+- No change to data fetching (`useSnapshotPolicies`/`useRecoveryAppPolicies`/`useCleanRoomPolicies`) or to loading/error handling in the details component.
 
 ## Dependency Graph
 
 ```text
-SelectableCard optional content slot
-    -> policy datasets and ID-to-record resolution
-        -> card summaries and selected Policy Set detail
-            -> builder regression coverage
-                -> focused verification and commit
+Catalogue container becomes flex-col (mobile) / flex-row (lg+)
+    -> detail panel renders unconditionally when a policy set is selected
+        -> stacked layout below lg, side-by-side at lg+
+            -> regression test covers both breakpoints
 ```
 
-## Task 1: Rozšíriť shared SelectableCard o voliteľný obsah
+## Task 1: Capture the layout regression
 
-**Description:** Pridať do existujúceho shared komponentu voliteľný `content` slot renderovaný medzi opisom a spodným meta riadkom. Slot bude všeobecný `ReactNode`, bez znalosti Policy Setov, a nesmie zmeniť správanie existujúcich kariet.
+**Description:** Add a focused test (or extend an existing one) asserting the detail panel is present in the DOM whenever a policy set is selected, regardless of viewport, and that the container uses `flex-col`/`lg:flex-row` rather than a permanently-hidden detail panel.
 
 **Acceptance criteria:**
-
-- [ ] Nový slot sa zobrazí v rámci klikateľnej karty a zdedí jej selected, disabled a focus správanie.
-- [ ] Karta bez slotu má rovnaký význam, štýl a rozloženie ako pred zmenou.
-- [ ] Keyboard activation, `aria-pressed` a disabled stav zostanú funkčné.
+- [ ] A test fails against the current code by asserting the detail panel element is not gated behind a `hidden`/viewport-only class when a policy set is selected.
+- [ ] The test lives alongside existing coverage for this step (`RecoveryGroupPolicySetStep.test.tsx`) or a new `RecoveryGroupPolicySetCatalogue.test.tsx` if none exists yet for this component directly.
 
 **Verification:**
-
-- [ ] `npm run test -- src/shared/components/selectable-card/SelectableCard.test.tsx`
-- [ ] `npm exec eslint -- src/shared/components/selectable-card/SelectableCard.tsx src/shared/components/selectable-card/SelectableCard.test.tsx`
+- [ ] RED: `npm run test -- src/features/recovery-plans/recovery-groups/components/RecoveryGroupPolicySetStep.test.tsx --run`
 
 **Dependencies:** None
 
 **Files likely touched:**
+- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupPolicySetStep.test.tsx`
 
-- `src/shared/components/selectable-card/SelectableCard.tsx`
-- `src/shared/components/selectable-card/SelectableCard.test.tsx`
+**Estimated scope:** Small: 1 file
 
-**Estimated scope:** Small (2 files)
+## Task 2: Fix the responsive layout
 
-## Task 2: Zobraziť resolved politiky a detail vybraného Policy Setu
-
-**Description:** Doplniť variant A do `RecoveryGroupPolicySetStep`. Interný katalóg načíta tri policy datasety, vytvorí lookup mapy podľa ID, zobrazí tri názvy na každej karte a pre vybraný Policy Set vykreslí detailný trojstĺpcový panel. Na mobile sa panel aj karty zložia pod seba.
+**Description:** Change the catalogue container to stack vertically below `lg` and switch to a row layout at `lg` and above; make the detail panel always render (no `hidden`) once a policy set is selected.
 
 **Acceptance criteria:**
-
-- [ ] Každá karta zobrazuje Snapshot, Recovery application a Clean Room policy s názvom vyriešeným z referenčného ID.
-- [ ] Vybraná karta zobrazí pod zoznamom detail všetkých troch politík a detail sa po kliknutí prepne na nový set.
-- [ ] Snapshot detail obsahuje frekvenciu, retenciu a stav.
-- [ ] Recovery detail obsahuje frekvenciu, selection mode, retenciu a boot verification.
-- [ ] Clean Room detail obsahuje opis a stav.
-- [ ] Policy Set loading a empty state zostanú nezmenené a bez Policy Setov sa detailné policy hooky nespustia.
-- [ ] Pri loading stave sa nezobrazia zavádzajúce údaje; pri chybe alebo chýbajúcej referencii zostane viditeľné pôvodné ID, ale karta sa dá vybrať.
-- [ ] Text `1 policy` sa odstráni a opis kroku správne vysvetlí tri druhy politík.
-- [ ] EN, SK a CS obsahujú všetky nové texty a nepoužívaný `policiesCount` kľúč sa odstráni.
-- [ ] Layout používa existujúce Tailwind tokeny a responzívne prejde z troch stĺpcov na jeden.
+- [ ] Below `lg`, selecting a policy set shows the detail panel stacked directly beneath the list, without breaking the list's own layout or scroll.
+- [ ] At `lg` and above, the layout is unchanged from today (list on the left, detail panel filling the remaining width on the right).
+- [ ] No policy set selected → no detail panel rendered, at any width (unchanged behavior).
 
 **Verification:**
-
-- [ ] `npm run test -- src/features/recovery-plans/recovery-groups/components/RecoveryGroupPolicySetStep.test.tsx`
-- [ ] Test pokrýva resolved názvy, detail predvybraného setu, prepnutie výberu, loading, empty state a fallback na chýbajúce ID.
-- [ ] Spustiť ESLint iba nad zmeneným komponentom a testom.
-- [ ] Manuálne skontrolovať variant A v create aj edit Recovery Group flow.
+- [ ] GREEN: `npm run test -- src/features/recovery-plans/recovery-groups/components/RecoveryGroupPolicySetStep.test.tsx --run`
+- [ ] `npm exec eslint -- src/features/recovery-plans/recovery-groups/components/RecoveryGroupPolicySetCatalogue.tsx`
 
 **Dependencies:** Task 1
 
 **Files likely touched:**
+- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupPolicySetCatalogue.tsx`
 
-- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupPolicySetStep.tsx`
-- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupPolicySetStep.test.tsx`
-- `src/locales/en.json`
-- `src/locales/sk.json`
-- `src/locales/cs.json`
+**Estimated scope:** Small: 1 file
 
-**Estimated scope:** Medium (5 files)
+## Checkpoint: Complete
 
-## Checkpoint: Variant A funguje izolovane
-
-- [ ] Existujúci výber Policy Setu stále mení `policySetId`.
-- [ ] Karty aj detail používajú reálne dáta z existujúcich policy hookov.
-- [ ] Chyba doplnkových dát nezablokuje wizard.
-- [ ] Focused testy Tasks 1–2 prechádzajú.
-
-## Task 3: Aktualizovať integračné testy RecoveryGroupBuildera
-
-**Description:** Doplniť do existujúceho builder test harnessu mocky troch nových policy hookov a overiť, že pri prechode na Policy Set krok používateľ vidí resolved policy informácie bez zmeny draftu alebo submit payloadu.
-
-**Acceptance criteria:**
-
-- [ ] Builder testy neposielajú reálne requesty a používajú deterministické Snapshot, Recovery application a Clean Room fixtures.
-- [ ] Integračný scenár potvrdí zobrazenie resolved informácií a zachovanie výberu `tier2-apps`.
-- [ ] Existujúce create/edit a orchestration scenáre zostanú bez zmeny produkčného kontraktu.
-
-**Verification:**
-
-- [ ] `npm run test -- src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx`
-- [ ] `npm exec eslint -- src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx`
-
-**Dependencies:** Task 2
-
-**Files likely touched:**
-
-- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx`
-
-**Estimated scope:** Extra small (1 file)
-
-## Task 4: Finálne cielené overenie a commit
-
-**Description:** Overiť iba zasiahnutú shared kartu a Recovery Group policy výber. Keďže sa mení shared TypeScript rozhranie, spustiť aj typecheck; kompletný test suite ani produkčný build sa bez novej potreby nespúšťa.
-
-**Acceptance criteria:**
-
-- [ ] Všetky dotknuté testy, focused lint a typecheck prejdú.
-- [ ] Manuálne je overený create aj edit flow, desktop aj úzky viewport a loading/error fallback.
-- [ ] Finálny diff obsahuje iba variant A, jeho testy, lokalizácie a plánované shared rozšírenie.
-- [ ] Implementácia je uložená v jednom atomickom feature commite.
-
-**Verification:**
-
-- [ ] `npm run test -- src/shared/components/selectable-card/SelectableCard.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupPolicySetStep.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx`
-- [ ] `npm exec eslint -- src/shared/components/selectable-card/SelectableCard.tsx src/shared/components/selectable-card/SelectableCard.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupPolicySetStep.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupPolicySetStep.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx`
-- [ ] `npm run typecheck`
-- [ ] `git diff --check`
-- [ ] `git status --short` a kontrola presného staging scope.
-- [ ] Commit: `feat: show policy details in recovery group selection`
-
-**Dependencies:** Tasks 1–3
-
-**Files likely touched:** Only files listed in Tasks 1–3, unless verification identifies a directly related defect.
-
-**Estimated scope:** Small (verification and one commit)
-
-## Final Checkpoint
-
-- [ ] Používateľ pred potvrdením výberu pozná všetky tri účinné politiky Policy Setu.
-- [ ] UI zodpovedá variantu A: súhrn na kartách a detail vybraného setu pod nimi.
-- [ ] Backend API, Recovery Group payload a uložené `policySetId` zostávajú nezmenené.
-- [ ] Affected tests, focused lint a typecheck sú úspešné.
-- [ ] Kompletný test suite ani full build sa nespúšťa, pretože zmena má presne určený focused rozsah.
+- [ ] Focused tests pass.
+- [ ] Focused lint passes.
+- [ ] Manual browser check at a narrow width (e.g. 768px) and at `lg`+ (e.g. 1280px) confirms the detail panel is visible and readable in both.
+- [ ] Commit contains only files related to this fix.
 
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Policy Set odkazuje na zmazanú politiku | Vysoký | Zobraziť pôvodné ID a upozornenie. |
-| Jedna z troch policy queries zlyhá | Stredný | Ostatné oblasti zobraziť a výber neblokovať. |
-| Nový obsah zmení ostatné SelectableCard použitia | Stredný | Slot ponechať voliteľný, pokryť shared testom a typecheckom. |
-| Dlhé názvy zväčšia krok mimo viewportu | Stredný | Kompaktné riadky, bezpečné zalamovanie a responzívny detail. |
-| Tri requesty sa vykonajú zbytočne | Nízky | Hooky mountnúť iba pri neprázdnom zozname a využiť TanStack cache. |
-| Intervaly budú odlišné od policy tabuliek | Stredný | Použiť rovnaké existujúce prekladové kľúče. |
+| Stacked detail panel pushes the list out of view on very small screens | Medium | Give the detail panel a bounded `max-h`/`overflow-auto` below `lg` rather than letting it grow unbounded |
+| Removing `hidden` regresses the `lg`+ layout | Medium | Keep `lg:flex-1 lg:min-w-0 lg:overflow-auto` on the detail panel so the side-by-side behavior is preserved by the same classes that already work today |
 
-## Out of Scope
+## Open Questions
 
-- Zmena backend endpointov alebo Policy Set schémy.
-- Zmena Recovery Group submit payloadu alebo validácie uloženého `policySetId`.
-- Editovanie politík priamo z wizardu.
-- Rovnaký redizajn Policy Set kroku v Recovery Application builderi.
-- Refaktor existujúcich formatterov v Recovery Policy tabuľkách.
-- Kompletný test suite alebo full build bez zistenia cross-cutting problému.
+None — the desired end state (visible detail panel at every width, stacked below `lg`) was confirmed by the user.
