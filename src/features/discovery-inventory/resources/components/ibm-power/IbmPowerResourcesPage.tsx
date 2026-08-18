@@ -93,7 +93,7 @@ export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow={t('pages.virtualMachines.eyebrow')}
+        eyebrow={t(role === 'target' ? 'pages.resourcesIse.eyebrow' : 'pages.virtualMachines.eyebrow')}
         title={t('resources.power.title')}
         description={t('resources.power.description')}
         isFetching={providersFetching || sourceQuery.isFetching}

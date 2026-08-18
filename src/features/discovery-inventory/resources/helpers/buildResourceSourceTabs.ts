@@ -23,7 +23,7 @@ function compareProviders(left: ProviderRecord, right: ProviderRecord) {
     || left.id.localeCompare(right.id, undefined, { numeric: true, sensitivity: 'base' })
 }
 
-function buildResourceTabsByRole(
+export function buildResourceTabsByRole(
   providers: readonly ProviderRecord[],
   labels: ResourceSourceTabLabels,
   role: ProviderRole,

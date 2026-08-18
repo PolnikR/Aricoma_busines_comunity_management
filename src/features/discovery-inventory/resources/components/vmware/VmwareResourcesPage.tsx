@@ -184,7 +184,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow={t('pages.virtualMachines.eyebrow')}
+        eyebrow={t(role === 'target' ? 'pages.resourcesIse.eyebrow' : 'pages.virtualMachines.eyebrow')}
         title={t('pages.virtualMachines.title')}
         description={t('pages.virtualMachines.description')}
         isFetching={providersFetching || isFetching}

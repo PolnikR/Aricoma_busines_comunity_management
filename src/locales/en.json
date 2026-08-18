@@ -116,7 +116,7 @@
   "pages.virtualMachines.detail.yes": "Yes",
   "pages.virtualMachines.detail.no": "No",
 
-  "pages.resourcesIse.eyebrow": "Discovery & Inventory",
+  "pages.resourcesIse.eyebrow": "Discovery & Inventory · Target",
   "pages.resourcesIse.title": "Resources ISE",
   "pages.resourcesIse.description": "Target role resource inventory overview.",
 

@@ -99,7 +99,7 @@ export function FlashSystemResourcesPage(props: SourceResourcesPageProps) {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow={t('pages.virtualMachines.eyebrow')}
+        eyebrow={t(role === 'target' ? 'pages.resourcesIse.eyebrow' : 'pages.virtualMachines.eyebrow')}
         title={t('resources.flash.title')}
         description={t('resources.flash.description')}
         isFetching={providersFetching || sourceQuery.isFetching}
