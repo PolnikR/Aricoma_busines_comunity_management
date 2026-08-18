@@ -66,7 +66,7 @@ export function ProviderConnectionTestDialog({
       responseData={result ? toProviderConnectionTestJson(result) : null}
       responseSchemaType="ProviderTestResponse"
       onClose={onClose}
-      onRetry={isFailed ? onRetry : undefined}
+      {...(isFailed ? { onRetry } : {})}
       isPending={isPending}
     />
   )

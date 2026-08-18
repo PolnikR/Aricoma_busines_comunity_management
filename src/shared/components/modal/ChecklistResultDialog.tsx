@@ -154,7 +154,7 @@ export function ChecklistResultDialog({
 
         {/* Response Tab */}
         {responseData ? (
-          <ResponseBodyViewer data={responseData} schemaTypeName={responseSchemaType} />
+          <ResponseBodyViewer data={responseData} {...(responseSchemaType ? { schemaTypeName: responseSchemaType } : {})} />
         ) : null}
       </div>
     </Modal>
