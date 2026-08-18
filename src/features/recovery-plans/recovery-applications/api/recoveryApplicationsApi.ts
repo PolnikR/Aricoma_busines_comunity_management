@@ -1,4 +1,5 @@
 import {
+  deleteRecoveryAppRouteDeleteRecoveryAppDelete,
   getRecoveryAppsGetRecoveryAppsGet,
   submitRecoveryDagSubmitRecoveryDagPost,
 } from '@/generated/api/client.gen'
@@ -99,5 +100,58 @@ function requireOrchestratorPush(
     dag: push.dag,
     json: push.json,
     dag_id: push.dag_id,
+  }
+}
+
+export type DeleteRecoveryApplicationRequest =
+  | {
+      recoveryAppId: string
+      rollbackFromOrchestrator?: false
+      rollbackOrphans?: false
+      providerId?: string
+      computeProviderId?: string
+    }
+  | {
+      recoveryAppId: string
+      rollbackFromOrchestrator: true
+      rollbackOrphans?: false
+      providerId: string
+      computeProviderId?: string
+    }
+  | {
+      recoveryAppId: string
+      rollbackFromOrchestrator: true
+      rollbackOrphans: true
+      providerId: string
+      computeProviderId?: string
+    }
+
+export async function deleteRecoveryApplication(
+  request: DeleteRecoveryApplicationRequest,
+): Promise<RecoveryApplicationListItem[]> {
+  const params = {
+    recovery_app_id: request.recoveryAppId,
+    rollback_from_orchestrator: request.rollbackFromOrchestrator ?? false,
+    ...(request.rollbackOrphans !== undefined && { rollback_orphans: request.rollbackOrphans }),
+    ...(request.providerId !== undefined && { provider_id: request.providerId }),
+    ...(request.computeProviderId !== undefined && {
+      compute_provider_id: request.computeProviderId,
+    }),
+  }
+
+  try {
+    const payload = await deleteRecoveryAppRouteDeleteRecoveryAppDelete(params)
+    const parsed = parseGeneratedResponse(
+      RecoveryAppsResponse,
+      payload,
+      'DELETE /delete_recovery_app',
+    )
+    return mapRecoveryApplications(parsed)
+  } catch (error) {
+    if (error instanceof OrvalApiError) {
+      const reason = error.statusText || String(error.status)
+      throw new Error(`Failed to delete recovery application: ${reason}`, { cause: error })
+    }
+    throw error
   }
 }

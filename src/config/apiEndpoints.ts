@@ -47,6 +47,7 @@ export const API_ENDPOINTS = {
   recoveryApplications: {
     list: '/api/get_recovery_apps',
     submitDag: '/api/submit_recovery_dag',
+    delete: '/api/delete_recovery_app',
   },
   recoveryGroups: {
     list: '/api/get_recovery_groups',
