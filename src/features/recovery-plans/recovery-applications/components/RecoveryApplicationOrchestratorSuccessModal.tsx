@@ -1,6 +1,5 @@
+import { ChecklistResultDialog, type CheckItem } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
-import { buildAirflowDagUrl } from '@/config/externalServices'
-import { OrchestratorResultModal } from '@/shared/components/modal/OrchestratorResultModal'
 import type { OrchestratorPush } from '../model/recoveryApplicationTypes'
 
 interface RecoveryApplicationOrchestratorSuccessModalProps {
@@ -18,23 +17,35 @@ export function RecoveryApplicationOrchestratorSuccessModal({
 }: RecoveryApplicationOrchestratorSuccessModalProps) {
   const { t } = useTranslation()
 
+  const checks: CheckItem[] = [
+    {
+      name: t('recovery.application.orchestratorModal.status'),
+      detail: orchestratorPush.status,
+      status: 'ok',
+    },
+    {
+      name: t('recovery.application.orchestratorModal.dag'),
+      detail: orchestratorPush.dag.substring(0, 100) + (orchestratorPush.dag.length > 100 ? '...' : ''),
+      status: 'ok',
+    },
+  ]
+
   return (
-    <OrchestratorResultModal
+    <ChecklistResultDialog
       open={open}
-      onClose={onClose}
       title={t('recovery.application.orchestratorModal.title')}
-      ariaLabel={t('recovery.application.orchestratorModal.ariaLabel')}
-      description={t('recovery.application.orchestratorModal.description').replace('{applicationName}', applicationName)}
-      statusLabel={t('recovery.application.orchestratorModal.status')}
-      status={orchestratorPush.status}
-      closeLabel={t('buttons.close')}
-      externalActionLabel={t('recovery.application.orchestratorModal.viewInAirflow')}
-      onExternalAction={() => { window.open(buildAirflowDagUrl(orchestratorPush.dag_id), '_blank', 'noopener,noreferrer') }}
-      details={[
-        { label: t('recovery.application.orchestratorModal.dag'), value: orchestratorPush.dag, mono: true },
-        { label: t('recovery.application.orchestratorModal.json'), value: orchestratorPush.json, mono: true },
-        { label: t('recovery.application.orchestratorModal.dagId'), value: orchestratorPush.dag_id, mono: true },
-      ]}
+      primaryName={applicationName}
+      subtitle={orchestratorPush.dag_id}
+      statusBar={{
+        title: t('recovery.application.orchestratorModal.title'),
+        status: 'success',
+        passedCount: 2,
+        totalCount: 2,
+      }}
+      checks={checks}
+      responseData={orchestratorPush}
+      responseSchemaType="OrchestratorPush"
+      onClose={onClose}
     />
   )
 }
