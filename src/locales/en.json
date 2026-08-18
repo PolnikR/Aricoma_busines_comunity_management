@@ -190,6 +190,8 @@
   "pages.recoveryBuilder.steps.orchestration": "Orchestration",
   "pages.recoveryBuilder.details.title": "Application details",
   "pages.recoveryBuilder.details.description": "Enter the application metadata and source provider.",
+  "pages.recoveryBuilder.tiers.title": "Recovery groups & tiers",
+  "pages.recoveryBuilder.tiers.description": "Organize VMs into tiers and assign recovery groups to each one.",
   "pages.recoveryBuilder.policySet.title": "Policy set",
   "pages.recoveryBuilder.policySet.description": "Select the policy set used by this application.",
   "pages.recoveryBuilder.policySet.empty.title": "No policy sets available",

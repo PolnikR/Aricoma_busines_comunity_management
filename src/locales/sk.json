@@ -183,6 +183,8 @@
   "pages.recoveryBuilder.steps.orchestration": "Orchestrácia",
   "pages.recoveryBuilder.details.title": "Údaje o aplikácii",
   "pages.recoveryBuilder.details.description": "Zadajte metadáta aplikácie a zdrojového providera.",
+  "pages.recoveryBuilder.tiers.title": "Recovery groups a tieri",
+  "pages.recoveryBuilder.tiers.description": "Zorganizujte virtuálne stroje do tierov a priraďte ku každému z nich recovery group.",
   "pages.recoveryBuilder.policySet.title": "Policy set",
   "pages.recoveryBuilder.policySet.description": "Vyberte policy set použitý pre túto aplikáciu.",
   "pages.recoveryBuilder.policySet.empty.title": "Nie sú dostupné žiadne policy sety",

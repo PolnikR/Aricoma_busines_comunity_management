@@ -306,39 +306,45 @@ export function RecoveryAppBuilder({
             ) : null}
 
             {step === 2 ? (
-              <div className="grid h-full min-h-[480px] grid-cols-1 overflow-hidden rounded-lg border border-border lg:grid-cols-[280px_minmax(0,1fr)]">
-                <div className="custom-scrollbar overflow-y-auto border-b border-border lg:border-b-0 lg:border-r">
-                  <ResourceSidebar
-                    items={sidebarItems}
-                    itemLabels={groupLabels}
-                    title={t('recovery.sidebar.availableGroups')}
-                    searchPlaceholder={t('recovery.sidebar.searchGroupsPlaceholder')}
-                    loadingLabel={t('recovery.sidebar.loadingGroups')}
-                    noItemsLabel={t('recovery.sidebar.noGroupsAvailable')}
-                    noMatchesLabel={t('recovery.sidebar.noMatchingGroups')}
-                    dragDataKey="recovery-group-id"
-                    isLoading={areGroupsLoading}
-                    isRetrying={areGroupsFetching}
-                    error={groupsError}
-                    errorTitle={t('recovery.sidebar.groupsError')}
-                    staleErrorTitle={t('recovery.sidebar.groupsError')}
-                    staleErrorDescription={t('recovery.sidebar.groupsError')}
-                    retryLabel={t('buttons.retry')}
-                    onRetry={() => { void refreshGroups() }}
-                  />
+              <div className="flex h-full min-h-[480px] flex-col gap-4">
+                <div>
+                  <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.tiers.title')}</h2>
+                  <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.tiers.description')}</p>
                 </div>
-                <div className="custom-scrollbar overflow-y-auto p-4">
-                  <TierCanvas
-                    tiers={tierCanvasTiers}
-                    recoveryGroupVmOptions={recoveryGroupVmOptions}
-                    onRecoveryGroupAdded={handleRecoveryGroupAdded}
-                    onRecoveryGroupRemoved={handleRecoveryGroupRemoved}
-                    onRecoveryVmSelectionChange={handleRecoveryVmSelectionChange}
-                    onTierEdit={handleTierEdit}
-                    onTierAdd={handleTierAdd}
-                    onTierDelete={handleTierDelete}
-                    onTierReorder={handleTierReorder}
-                  />
+                <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-lg border border-border lg:grid-cols-[280px_minmax(0,1fr)]">
+                  <div className="custom-scrollbar overflow-y-auto border-b border-border lg:border-b-0 lg:border-r">
+                    <ResourceSidebar
+                      items={sidebarItems}
+                      itemLabels={groupLabels}
+                      title={t('recovery.sidebar.availableGroups')}
+                      searchPlaceholder={t('recovery.sidebar.searchGroupsPlaceholder')}
+                      loadingLabel={t('recovery.sidebar.loadingGroups')}
+                      noItemsLabel={t('recovery.sidebar.noGroupsAvailable')}
+                      noMatchesLabel={t('recovery.sidebar.noMatchingGroups')}
+                      dragDataKey="recovery-group-id"
+                      isLoading={areGroupsLoading}
+                      isRetrying={areGroupsFetching}
+                      error={groupsError}
+                      errorTitle={t('recovery.sidebar.groupsError')}
+                      staleErrorTitle={t('recovery.sidebar.groupsError')}
+                      staleErrorDescription={t('recovery.sidebar.groupsError')}
+                      retryLabel={t('buttons.retry')}
+                      onRetry={() => { void refreshGroups() }}
+                    />
+                  </div>
+                  <div className="custom-scrollbar overflow-y-auto p-4">
+                    <TierCanvas
+                      tiers={tierCanvasTiers}
+                      recoveryGroupVmOptions={recoveryGroupVmOptions}
+                      onRecoveryGroupAdded={handleRecoveryGroupAdded}
+                      onRecoveryGroupRemoved={handleRecoveryGroupRemoved}
+                      onRecoveryVmSelectionChange={handleRecoveryVmSelectionChange}
+                      onTierEdit={handleTierEdit}
+                      onTierAdd={handleTierAdd}
+                      onTierDelete={handleTierDelete}
+                      onTierReorder={handleTierReorder}
+                    />
+                  </div>
                 </div>
               </div>
             ) : null}

@@ -190,6 +190,8 @@
   "pages.recoveryBuilder.steps.orchestration": "Orchestrace",
   "pages.recoveryBuilder.details.title": "Podrobnosti aplikace",
   "pages.recoveryBuilder.details.description": "Zadejte metadata aplikace a zdrojového poskytovatele.",
+  "pages.recoveryBuilder.tiers.title": "Skupiny obnovy a vrstvy",
+  "pages.recoveryBuilder.tiers.description": "Organizujte virtuální stroje do vrstev a přiřaďte ke každé z nich skupinu obnovy.",
   "pages.recoveryBuilder.policySet.title": "Sada zásad",
   "pages.recoveryBuilder.policySet.description": "Vyberte sadu zásad použitou pro tuto aplikaci.",
   "pages.recoveryBuilder.policySet.empty.title": "Nejsou dostupné žádné sady zásad",
