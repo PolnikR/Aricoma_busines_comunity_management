@@ -754,7 +754,7 @@
   "recovery.builder.discardDialog.title": "Zahodiť neuložené zmeny?",
   "recovery.builder.discardDialog.message": "Ak budete pokračovať, všetky neuložené údaje budú stratené.",
   "recovery.builder.discardDialog.cancel": "Zrušiť",
-  "recovery.builder.discardDialog.confirm": "Zahodiť",
+  "recovery.builder.discardDialog.confirm": "Zahodiť zmeny",
   "recoveryGroups.orchestratorSuccessModal.ariaLabel": "Beh orchestrátora spustený",
   "recoveryGroups.orchestratorSuccessModal.title": "Beh orchestrátora spustený",
   "recoveryGroups.orchestratorSuccessModal.description": "{groupName} je teraz pod kontrolou orchestrátora.",
