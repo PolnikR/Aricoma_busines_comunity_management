@@ -763,6 +763,8 @@
   "common.error": "Chyba",
   "common.noResults": "Nebyly nalezeny žádné výsledky",
   "common.settings": "Nastavení",
+  "common.copy": "Kopírovat",
+  "common.copied": "Zkopírováno",
   "common.logout": "Odhlásit se",
 
   "recovery.sidebar.availableVms": "Dostupné VMs",
@@ -887,8 +889,6 @@
   "providers.connectionTest.title": "Test připojení poskytovatele",
   "providers.connectionTest.responseBody": "Tělo odpovědi",
   "providers.connectionTest.schemaNote": "Odpovídá",
-  "providers.connectionTest.copy": "Kopírovat",
-  "providers.connectionTest.copied": "Zkopírováno",
   "providers.connectionTest.passedCount": "{ok} / {total} úspěšných",
   "providers.connectionTest.ariaLabel": "Test připojení poskytovatele",
   "providers.connectionTest.credentialRequired": "K otestování poskytovatele jsou nutné platné přihlašovací údaje.",

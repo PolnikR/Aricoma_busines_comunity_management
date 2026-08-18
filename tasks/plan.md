@@ -1,51 +1,45 @@
-# Implementation Plan: Inline Response Body in the Connection Test Dialog
+# Implementation Plan: Shared Response Body Viewer
 
 ## Overview
-The previous change made "View JSON" open a second `JsonViewerModal` on top of `ProviderConnectionTestDialog`, matching the table convention. In practice this produced a stacked-modal look with two "Close" buttons visible at once, and the dialog title showed the raw, un-interpolated translation key instead of its resolved text. The user rejected this and asked to go back to the originally-approved artifact design instead: an inline, collapsible "Response body" section inside the same dialog — no second modal.
-
-This reverses the table-convention choice for this one dialog only. The distinction: table rows show their JSON via a button because the row itself is the "rendered summary" living outside any modal — clicking View has nowhere else to put the JSON but a new modal. This dialog already **is** a modal with its own rendered summary (checks list) inside it, so nesting a second modal duplicates chrome (title bar, footer, Close button) for no reason. An inline `<details>` section avoids that entirely. The shared `JsonViewerModal` and its use in the 8 tables are untouched.
+Extract the "copy + scrollable JSON" piece built for the connection-test dialog into a shared component (`ResponseBodyViewer`), then reuse it everywhere a raw JSON response is shown: the 8 existing table `JsonViewerModal` usages, and `ProviderConnectionTestDialog`'s inline "Response body" section. Confirmed with the user: the table "View" button keeps opening a modal (there's no other content to embed JSON into there) — only `JsonViewerModal`'s internals change, so none of the 8 table files need touching. The connection-test dialog keeps its `<details>` wrapper (it already shows other content, so JSON stays packed behind a disclosure) but delegates the actual rendering to the same shared piece.
 
 ## Architecture Decisions
-- Remove the `JsonViewerModal` usage and the "View" button from `ProviderConnectionTestDialog`. Keep `toProviderConnectionTestJson` (the payload mapper) — it's still needed to build the inline JSON text.
-- Add an inline `<details>` "Response body" disclosure (matches native semantics used elsewhere for progressive disclosure; no extra JS needed to open/close), containing:
-  - a small caption noting it matches the generated `ProviderTestResponse` type
-  - a Copy-to-clipboard button (feature-detected, no-op if unavailable)
-  - a `<pre>` block, capped height + `overflow-y-auto` (vertical) and `overflow-x-auto` (horizontal) so a large response scrolls instead of growing the dialog — same requirement as before, just enforced inline this time instead of relying on `JsonViewerModal`'s existing cap.
-- Add provider type/role badges next to the identity row, reusing the existing `Badge` component and the same `success`/`warning` role-color convention already used in `ProvidersCatalogueTable`. Role isn't currently passed to the dialog, so add an optional `providerRole` prop (default `'source'`) and pass `selected?.role` from the call site.
-- Add a pass-count chip ("2 / 3 passed") next to the existing success/failure banner, computed from `checks.filter(isCheckOk).length` vs `checks.length` — encodes the same information the artifact showed, without inventing new data.
-- Translation: repurpose the `providers.connectionTest.jsonTitle` key (no longer used as a modal title) into `providers.connectionTest.responseBody` = "Response body"; add `providers.connectionTest.copy` / `.copied` for the button; add `providers.connectionTest.passedCount` as a `{ok}/{total}` template string, resolved the same way `providers.credentials.unavailable` already does its `{id}` substitution.
+- New component `src/shared/components/response-body/ResponseBodyViewer.tsx`: takes `data: unknown`, renders a Copy button (feature-detected clipboard, "Copy" → "Copied" for ~1.4s) and a `<pre>` capped at a fixed height with both-axis scroll. It owns its own translation (`common.copy` / `common.copied`, added as generic keys) so no caller needs to pass label props through.
+- `JsonViewerModal` renders `<ResponseBodyViewer data={data} />` instead of its own raw `<pre>`. Its outer `max-h-96`/`overflow-hidden` scaffolding is removed since the new component self-limits its own height — this actually simplifies the modal. No changes needed in any of the 8 files that call `JsonViewerModal`.
+- `ProviderConnectionTestDialog` drops its local `copyText` helper, `justCopied` state, and inline Copy `<Button>` + `<pre>` — replaced by `<ResponseBodyViewer data={toProviderConnectionTestJson(result)} />` inside the existing `<details>`. The dialog keeps its own `responseBody`/`schemaNote` copy (that framing is specific to this dialog), but the now-duplicate `providers.connectionTest.copy` / `.copied` keys are removed in favor of the shared component's generic ones.
+- No prop for configurable max-height — one fixed, sensible height (`max-h-64`) everywhere. Add it later only if a real case needs it (YAGNI).
 
 ## Task List
 
-### Phase 1: Dialog markup
-- [ ] Task 1: Remove `JsonViewerModal` import/usage and the "View" button from `ProviderConnectionTestDialog.tsx`; drop the `<>...</>` wrapper fragment since there's only one root element again.
-- [ ] Task 2: Add `providerRole` prop (optional, default `'source'`) to `ProviderConnectionTestDialogProps`.
-- [ ] Task 3: Add the type/role `Badge` pair next to the identity block, and the pass-count chip next to the success/failure banner.
-- [ ] Task 4: Add the inline `<details>` "Response body" section with the capped/scrollable `<pre>` and the Copy button.
+### Phase 1: Shared component
+- [ ] Task 1: Create `ResponseBodyViewer.tsx` (copy button + scrollable `<pre>`), add generic `common.copy`/`common.copied` translation keys (en/sk/cs).
+- [ ] Task 2: Create `ResponseBodyViewer.test.tsx` — renders formatted JSON, copy button copies to clipboard and shows "Copied" briefly, falls back gracefully when `navigator.clipboard` is unavailable.
 
-### Checkpoint: Dialog markup
-- [ ] Component compiles with no type errors
-- [ ] Manual trace: opening the dialog no longer shows a nested modal or an untranslated key anywhere
+### Checkpoint: Shared component
+- [ ] `ResponseBodyViewer.test.tsx` passes standalone
+- [ ] Typecheck clean
 
-### Phase 2: Call site + translations
-- [ ] Task 5: Update `ProvidersCatalogueTable.tsx` to pass `providerRole={selected?.role ?? 'source'}` into `ProviderConnectionTestDialog`.
-- [ ] Task 6: Update `en.json`/`sk.json`/`cs.json` — replace `jsonTitle` with `responseBody`, add `copy`, `copied`, `passedCount`.
+### Phase 2: Wire into existing surfaces
+- [ ] Task 3: Refactor `JsonViewerModal.tsx` to render `ResponseBodyViewer` internally; simplify its now-redundant height/scroll wrapper classes.
+- [ ] Task 4: Refactor `ProviderConnectionTestDialog.tsx` to use `ResponseBodyViewer` inside its existing `<details>`; remove the now-dead local copy logic.
+- [ ] Task 5: Remove the now-unused `providers.connectionTest.copy` / `.copied` keys from en/sk/cs.json (superseded by the shared `common.copy`/`.copied`).
 
-### Phase 3: Tests
-- [ ] Task 7: Replace the "opens the raw JSON response" test (which asserted a second dialog) with a test that expands the inline `<details>` and asserts the JSON text is present in the same dialog, plus a Copy-button test.
-- [ ] Task 8: Add a test asserting the type/role badges and the pass-count chip render with the real sample data.
+### Checkpoint: Wired in
+- [ ] `JsonViewerModal.test.tsx` still passes (existing assertions on formatted JSON text are whitespace-insensitive, unaffected by the internal refactor)
+- [ ] `ProviderConnectionTestDialog.test.tsx` still passes (same visible "Copy"/"Copied" text, now sourced from the shared component)
+- [ ] One representative table (`ProvidersCatalogueTable.test.tsx`) still passes untouched, proving the 8 table call sites needed zero changes
 
 ### Checkpoint: Complete
-- [ ] Focused tests pass: `ProviderConnectionTestDialog.test.tsx`, `ProvidersCatalogueTable.test.tsx`
-- [ ] Typecheck and lint clean on all changed files
+- [ ] Full focused test run across all touched + representative files
+- [ ] Typecheck and lint clean
 - [ ] All acceptance criteria met
 
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| A very long response makes the `<pre>` push the dialog past the viewport | Medium — same bug class as before | Fixed `max-height` + `overflow-y-auto` on the `<pre>`, independent of `JsonViewerModal` |
-| `providerRole` not passed from some other call site (if one exists) silently defaults wrong | Low | Default to `'source'`, the more common case; only one call site exists today (`ProvidersCatalogueTable`) |
-| `<details>` default-open/closed state not obvious to screen readers | Low | Native `<details>/<summary>` already carries correct ARIA semantics with no extra markup needed |
+| Removing `JsonViewerModal`'s outer height cap changes visible dialog size for all 8 tables at once | Medium — visual change across many screens | The new `ResponseBodyViewer`'s own `max-h-64` scroll box replaces the old `max-h-96` modal cap with an equivalent (slightly smaller, more predictable) constraint; verified visually is out of scope for this pass but flagged here |
+| Two different Copy-labeled buttons (old provider-specific, new generic) briefly coexist mid-refactor if done out of order | Low | Do Task 1 fully before Task 3/4 touch the call sites, so nothing references the old keys after Task 5 |
+| `navigator.clipboard` absent in some real deployment context (non-HTTPS, older browser) | Low | Already handled via try/catch + no-op fallback, unchanged from the original dialog-local implementation |
 
 ## Open Questions
-None — scope confirmed: revert this dialog to the inline design, leave the table `JsonViewerModal` convention untouched elsewhere.
+None — table-modal scope confirmed with the user (keep as modal, refactor internals only).

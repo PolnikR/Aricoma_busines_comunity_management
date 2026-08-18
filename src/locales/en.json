@@ -764,6 +764,8 @@
   "common.noResults": "No results found",
   "common.settings": "Settings",
   "common.logout": "Logout",
+  "common.copy": "Copy",
+  "common.copied": "Copied",
 
   "recovery.sidebar.availableVms": "Available VMs",
   "recovery.sidebar.searchPlaceholder": "Search VMs...",
@@ -887,8 +889,6 @@
   "providers.connectionTest.title": "Test provider connection",
   "providers.connectionTest.responseBody": "Response body",
   "providers.connectionTest.schemaNote": "Matches",
-  "providers.connectionTest.copy": "Copy",
-  "providers.connectionTest.copied": "Copied",
   "providers.connectionTest.passedCount": "{ok} / {total} passed",
   "providers.connectionTest.ariaLabel": "Test provider connection",
   "providers.connectionTest.credentialRequired": "A valid credential is required to test this provider.",

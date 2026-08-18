@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { JsonViewerModal } from './JsonViewerModal'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
 afterEach(cleanup)
 
 describe('JsonViewerModal', () => {

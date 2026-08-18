@@ -1,7 +1,7 @@
-import { useState } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { Modal } from '@/shared/components/modal/Modal'
+import { ResponseBodyViewer } from '@/shared/components/response-body/ResponseBodyViewer'
 import { CheckIcon, ChevronDownIcon, PlugIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
@@ -30,14 +30,6 @@ function CheckStatusIcon({ status }: { status: string }) {
   return <span aria-hidden="true">!</span>
 }
 
-function copyText(text: string): Promise<void> {
-  try {
-    return navigator.clipboard.writeText(text)
-  } catch {
-    return Promise.reject(new Error('Clipboard unavailable'))
-  }
-}
-
 export function ProviderConnectionTestDialog({
   open,
   providerName,
@@ -52,7 +44,6 @@ export function ProviderConnectionTestDialog({
   const { t } = useTranslation()
   const isFailed = Boolean(error) || (result !== null && !result.ok)
   const okCount = result ? result.checks.filter(check => isCheckOk(check.status)).length : 0
-  const [justCopied, setJustCopied] = useState(false)
 
   return (
     <Modal
@@ -144,28 +135,10 @@ export function ProviderConnectionTestDialog({
               <ChevronDownIcon className="size-3.5 text-text-muted transition-transform group-open:rotate-180" />
             </summary>
             <div className="border-t border-border px-3 py-3">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <span className="text-xs text-text-subtle">
-                  {t('providers.connectionTest.schemaNote')} <code className="rounded bg-surface-muted px-1 py-0.5 font-mono">ProviderTestResponse</code>
-                </span>
-                <Button
-                  size="xs"
-                  variant="outline"
-                  onClick={() => {
-                    copyText(JSON.stringify(toProviderConnectionTestJson(result), null, 2))
-                      .then(() => {
-                        setJustCopied(true)
-                        setTimeout(() => { setJustCopied(false) }, 1400)
-                      })
-                      .catch(() => { /* clipboard unavailable, no-op */ })
-                  }}
-                >
-                  {t(justCopied ? 'providers.connectionTest.copied' : 'providers.connectionTest.copy')}
-                </Button>
-              </div>
-              <pre className="max-h-56 overflow-y-auto overflow-x-auto rounded-md bg-surface-subtle p-3 font-mono text-xs text-text-secondary">
-                {JSON.stringify(toProviderConnectionTestJson(result), null, 2)}
-              </pre>
+              <p className="mb-2 text-xs text-text-subtle">
+                {t('providers.connectionTest.schemaNote')} <code className="rounded bg-surface-muted px-1 py-0.5 font-mono">ProviderTestResponse</code>
+              </p>
+              <ResponseBodyViewer data={toProviderConnectionTestJson(result)} />
             </div>
           </details>
         ) : null}
