@@ -165,8 +165,8 @@ describe('ResourcesIsePage', () => {
       'after:inset-x-4',
       'after:h-0.5',
     )
-    expect(screen.getByRole('tab', { name: 'FlashSystem Volumes' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'IBM Power Partitions' })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'FlashSystem Volumes' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'IBM Power Partitions' })).not.toBeInTheDocument()
     expect(screen.getByText('No virtual machines found')).toBeInTheDocument()
   })
 
@@ -202,15 +202,13 @@ describe('ResourcesIsePage', () => {
     }
     providersQuery = {
       ...providersQuery,
-      data: [vmwareSourceProvider],
+      data: [vmwareSourceProvider, flashTargetProvider],
     }
 
     render(<ResourcesIsePage />)
 
-    const vmwareTabs = screen.getAllByRole('tab').filter(tab => tab.textContent.startsWith('VMware VMs'))
-    expect(vmwareTabs).toHaveLength(1)
-    expect(vmwareTabs[0]).toHaveTextContent('VMware VMs')
-    expect(vmwareTabs[0]).not.toHaveTextContent('VMware Source 01')
+    expect(screen.queryByRole('tab', { name: /VMware VMs/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'FlashSystem Volumes' })).toBeInTheDocument()
   })
 
   it('waits for providers before activating a target inventory query', () => {
@@ -273,6 +271,7 @@ describe('ResourcesIsePage', () => {
 
     expect(screen.getByText('No provider configured')).toBeInTheDocument()
     expect(screen.queryByText('Metrics skeleton')).not.toBeInTheDocument()
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
   })
 
   it('does not expose target-provider error details', () => {

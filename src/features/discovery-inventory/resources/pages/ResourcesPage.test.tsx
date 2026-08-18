@@ -165,8 +165,8 @@ describe('ResourcesPage', () => {
       'after:inset-x-4',
       'after:h-0.5',
     )
-    expect(screen.getByRole('tab', { name: 'FlashSystem Volumes' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'IBM Power Partitions' })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'FlashSystem Volumes' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'IBM Power Partitions' })).not.toBeInTheDocument()
     expect(screen.getByText('No virtual machines found')).toBeInTheDocument()
   })
 
@@ -253,6 +253,7 @@ describe('ResourcesPage', () => {
 
     expect(screen.getByText('No provider configured')).toBeInTheDocument()
     expect(screen.queryByText('Metrics skeleton')).not.toBeInTheDocument()
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
   })
 
   it('does not expose source-provider error details', () => {

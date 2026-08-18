@@ -1,5 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { Tabs } from '@/shared/components/tabs/Tabs'
+import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
 import type { ProviderRole } from '@/features/providers-connectors/providers/model/providerTypes'
@@ -37,22 +39,45 @@ export function ResourceRolePage({ role }: ResourceRolePageProps) {
     tab => tab.resourceTab === resourceTab && tab.providerId === providerId,
   ) ?? roleTabs.find(tab => tab.resourceTab === resourceTab) ?? roleTabs[0]
 
+  const visibleRoleTabs = providersSuccess ? roleTabs.filter(tab => tab.providerId !== null) : roleTabs
+  const effectiveActiveTab = providersSuccess && activeRoleTab?.providerId === null && visibleRoleTabs.length > 0
+    ? visibleRoleTabs[0]
+    : activeRoleTab
+
   useEffect(() => {
-    if (!providersSuccess || !activeRoleTab) return
-    if (activeRoleTab.resourceTab !== resourceTab || activeRoleTab.providerId !== providerId) {
+    if (!providersSuccess || !effectiveActiveTab) return
+    if (effectiveActiveTab.resourceTab !== resourceTab || effectiveActiveTab.providerId !== providerId) {
       setResourceSource({
-        resourceTab: activeRoleTab.resourceTab,
-        providerId: activeRoleTab.providerId,
+        resourceTab: effectiveActiveTab.resourceTab,
+        providerId: effectiveActiveTab.providerId,
       })
     }
-  }, [activeRoleTab, providerId, providersSuccess, resourceTab, setResourceSource])
+  }, [effectiveActiveTab, providerId, providersSuccess, resourceTab, setResourceSource])
+
+  if (providersSuccess && visibleRoleTabs.length === 0) {
+    return (
+      <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+        <TableToolbar
+          eyebrow={t(role === 'target' ? 'pages.resourcesIse.eyebrow' : 'pages.virtualMachines.eyebrow')}
+          title={t('pages.virtualMachines.title')}
+          description={t('pages.virtualMachines.description')}
+          isFetching={providersFetching}
+          onRefresh={() => { void refetchProviders() }}
+        />
+        <EmptyState
+          title={t('resources.common.noProviderTitle')}
+          description={t('resources.common.noProviderDescription')}
+        />
+      </div>
+    )
+  }
 
   const tabs = (
     <Tabs
-      items={roleTabs}
-      value={activeRoleTab?.value ?? 'vmware:none'}
+      items={visibleRoleTabs}
+      value={effectiveActiveTab?.value ?? 'vmware:none'}
       onChange={(value) => {
-        const nextTab = roleTabs.find(tab => tab.value === value)
+        const nextTab = visibleRoleTabs.find(tab => tab.value === value)
         if (nextTab) {
           setResourceSource({ resourceTab: nextTab.resourceTab, providerId: nextTab.providerId })
         }
@@ -73,18 +98,18 @@ export function ResourceRolePage({ role }: ResourceRolePageProps) {
     providersFetching,
     providersError: providersError instanceof Error ? providersError : null,
     onRefetchProviders: () => { void refetchProviders() },
-    providerId: activeRoleTab?.providerId ?? null,
+    providerId: effectiveActiveTab?.providerId ?? null,
     tabs,
     t,
     role,
   }
 
-  switch (resourceTab) {
+  switch (effectiveActiveTab?.resourceTab ?? resourceTab) {
     case 'flashsystem':
-      return <FlashSystemResourcesPage key={activeRoleTab?.value} {...rolePageProps} />
+      return <FlashSystemResourcesPage key={effectiveActiveTab?.value} {...rolePageProps} />
     case 'ibm-power':
-      return <IbmPowerResourcesPage key={activeRoleTab?.value} {...rolePageProps} />
+      return <IbmPowerResourcesPage key={effectiveActiveTab?.value} {...rolePageProps} />
     case 'vmware':
-      return <VmwareResourcesPage key={activeRoleTab?.value} {...rolePageProps} />
+      return <VmwareResourcesPage key={effectiveActiveTab?.value} {...rolePageProps} />
   }
 }
