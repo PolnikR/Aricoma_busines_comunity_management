@@ -24,7 +24,7 @@ interface PolicyDetailSection {
   isUnavailable: boolean
 }
 
-interface RecoveryGroupPolicySetDetailsProps {
+interface PolicySetPickerDetailsProps {
   policySet: PolicySet
   snapshotPolicy: SnapshotPolicy | undefined
   recoveryPolicy: RecoveryAppPolicy | undefined
@@ -138,38 +138,38 @@ function PolicyDetailCard({ section, unavailableText }: {
   )
 }
 
-export function RecoveryGroupPolicySetDetails({
+export function PolicySetPickerDetails({
   policySet,
   snapshotPolicy,
   recoveryPolicy,
   cleanRoomPolicy,
   isLoading,
   hasQueryError,
-}: RecoveryGroupPolicySetDetailsProps) {
+}: PolicySetPickerDetailsProps) {
   const { t } = useTranslation()
   const missingDetails = !snapshotPolicy || !recoveryPolicy || !cleanRoomPolicy
   const detailsUnavailable = hasQueryError || (!isLoading && missingDetails)
   const unavailableText = isLoading
-    ? t('pages.recoveryGroupBuilder.policySet.details.loading')
-    : t('pages.recoveryGroupBuilder.policySet.details.unavailable')
+    ? t('policySets.picker.details.loading')
+    : t('policySets.picker.details.unavailable')
   const badgeColor = isLoading ? 'light' : detailsUnavailable ? 'warning' : 'success'
   const badgeLabel = isLoading
-    ? t('pages.recoveryGroupBuilder.policySet.details.loading')
+    ? t('policySets.picker.details.loading')
     : t(detailsUnavailable
-      ? 'pages.recoveryGroupBuilder.policySet.details.incomplete'
-      : 'pages.recoveryGroupBuilder.policySet.details.resolved')
+      ? 'policySets.picker.details.incomplete'
+      : 'policySets.picker.details.resolved')
 
   const sections = buildSections(policySet, snapshotPolicy, recoveryPolicy, cleanRoomPolicy, t)
 
   return (
     <section
-      aria-label={t('pages.recoveryGroupBuilder.policySet.details.title')}
+      aria-label={t('policySets.picker.details.title')}
       aria-live="polite"
       className="mt-5 max-w-6xl rounded-xl border border-border bg-surface px-4 py-4 shadow-sm sm:px-5"
     >
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-4">
         <div>
-          <h3 className="text-sm font-semibold text-text-primary">{t('pages.recoveryGroupBuilder.policySet.details.title')}</h3>
+          <h3 className="text-sm font-semibold text-text-primary">{t('policySets.picker.details.title')}</h3>
           <p className="mt-1 text-sm text-text-muted">{policySet.name}</p>
         </div>
         <Badge color={badgeColor} size="sm">{badgeLabel}</Badge>
@@ -178,7 +178,7 @@ export function RecoveryGroupPolicySetDetails({
       {isLoading ? <p className="mt-3 text-xs text-text-muted" role="status">{unavailableText}</p> : null}
       {detailsUnavailable ? (
         <p className="mt-3 text-xs text-warning-700 dark:text-warning-400" role="alert">
-          {t('pages.recoveryGroupBuilder.policySet.details.loadFailed')}
+          {t('policySets.picker.details.loadFailed')}
         </p>
       ) : null}
 

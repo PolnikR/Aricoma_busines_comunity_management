@@ -3,20 +3,24 @@ import { useSnapshotPolicies } from '@/features/recovery-plans/recovery-policies
 import { useRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies'
 import { useCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies'
 import type { PolicySet } from '@/features/recovery-plans/policy-sets/model/policySetTypes'
-import { RecoveryGroupPolicySetList } from './RecoveryGroupPolicySetList'
-import { RecoveryGroupPolicySetDetails } from './RecoveryGroupPolicySetDetails'
+import { PolicySetPickerList } from './PolicySetPickerList'
+import { PolicySetPickerDetails } from './PolicySetPickerDetails'
 
-interface RecoveryGroupPolicySetCatalogueProps {
+interface PolicySetPickerProps {
   policySets: PolicySet[]
   selectedPolicySetId: string | null
   onSelect: (policySetId: string) => void
 }
 
-export function RecoveryGroupPolicySetCatalogue({
+// Shared search-list-plus-detail picker over PolicySet records, reused by any
+// wizard step that needs to attach a policy set (recovery groups, recovery
+// applications, ...). Resolves the selected set's snapshot/recovery/clean-room
+// policies itself so callers only need to pass the list and selection state.
+export function PolicySetPicker({
   policySets,
   selectedPolicySetId,
   onSelect,
-}: RecoveryGroupPolicySetCatalogueProps) {
+}: PolicySetPickerProps) {
   const snapshotQuery = useSnapshotPolicies()
   const recoveryQuery = useRecoveryAppPolicies()
   const cleanRoomQuery = useCleanRoomPolicies()
@@ -37,7 +41,7 @@ export function RecoveryGroupPolicySetCatalogue({
   return (
     <div className="mt-5 flex flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm lg:h-96 lg:flex-row">
       <div className="w-full min-h-96 lg:w-96 lg:min-h-0 shrink-0">
-        <RecoveryGroupPolicySetList
+        <PolicySetPickerList
           policySets={policySets}
           selectedPolicySetId={selectedPolicySetId}
           recoveryPoliciesById={recoveryPoliciesById}
@@ -47,7 +51,7 @@ export function RecoveryGroupPolicySetCatalogue({
 
       {selectedSet ? (
         <div className="max-h-96 min-w-0 overflow-auto border-t border-border lg:max-h-none lg:flex-1 lg:border-l lg:border-t-0">
-          <RecoveryGroupPolicySetDetails
+          <PolicySetPickerDetails
             policySet={selectedSet}
             snapshotPolicy={snapshotPoliciesById.get(selectedSet.snapshotPolicyId)}
             recoveryPolicy={recoveryPoliciesById.get(selectedSet.recoveryAppPolicyId)}

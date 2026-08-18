@@ -4,8 +4,8 @@ import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { Field, Select } from '@/shared/components/form/FormControls'
+import { PolicySetPicker } from '@/shared/components/policy-set-picker/PolicySetPicker'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
-import { SelectableCard } from '@/shared/components/selectable-card/SelectableCard'
 import { Spinner } from '@/shared/components/spinner/Spinner'
 import { Toggle } from '@/shared/components/toggle/Toggle'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
@@ -348,7 +348,7 @@ export function RecoveryAppBuilder({
                 <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.policySet.title')}</h2>
                 <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.policySet.description')}</p>
                 {policySetsQuery.isLoading ? (
-                  <p className="mt-5 text-sm text-text-muted" role="status">{t('pages.recoveryGroupBuilder.policySet.loading')}</p>
+                  <p className="mt-5 text-sm text-text-muted" role="status">{t('pages.recoveryBuilder.policySet.loading')}</p>
                 ) : policySetsQuery.error ? (
                   <div className="mt-5 max-w-4xl">
                     <FetchErrorAlert
@@ -359,32 +359,23 @@ export function RecoveryAppBuilder({
                     />
                   </div>
                 ) : policySetsQuery.data?.length ? (
-                  <div className="mt-5 grid max-w-5xl gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  <>
                     {formState.policySetId && !policySetsQuery.data.some(policySet => policySet.id === formState.policySetId) ? (
-                      <SelectableCard
-                        selected
-                        disabled
-                        title={formState.policySetId}
-                        description={t('pages.recoveryBuilder.policySet.unavailable')}
-                        meta={formState.policySetId}
-                      />
+                      <p className="mt-5 text-sm text-warning-700 dark:text-warning-400" role="alert">
+                        {t('pages.recoveryBuilder.policySet.unavailable')}
+                      </p>
                     ) : null}
-                    {policySetsQuery.data.map(policySet => (
-                      <SelectableCard
-                        key={policySet.id}
-                        selected={policySet.id === formState.policySetId}
-                        title={policySet.name}
-                        description={policySet.description}
-                        meta={policySet.id}
-                        onClick={() => { updateFormState({ policySetId: policySet.id }) }}
-                      />
-                    ))}
-                  </div>
+                    <PolicySetPicker
+                      policySets={policySetsQuery.data}
+                      selectedPolicySetId={formState.policySetId}
+                      onSelect={(policySetId) => { updateFormState({ policySetId }) }}
+                    />
+                  </>
                 ) : (
                   <div className="mt-5 max-w-4xl">
                     <EmptyState
-                      title={t('pages.recoveryGroupBuilder.policySet.empty.title')}
-                      description={t('pages.recoveryGroupBuilder.policySet.empty.description')}
+                      title={t('pages.recoveryBuilder.policySet.empty.title')}
+                      description={t('pages.recoveryBuilder.policySet.empty.description')}
                     />
                   </div>
                 )}

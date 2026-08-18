@@ -3,19 +3,19 @@ import { Input } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { PolicySet } from '@/features/recovery-plans/policy-sets/model/policySetTypes'
 
-interface RecoveryGroupPolicySetListProps {
+interface PolicySetPickerListProps {
   policySets: PolicySet[]
   selectedPolicySetId: string | null
   recoveryPoliciesById: Map<string, { name: string }>
   onSelect: (policySetId: string) => void
 }
 
-export function RecoveryGroupPolicySetList({
+export function PolicySetPickerList({
   policySets,
   selectedPolicySetId,
   recoveryPoliciesById,
   onSelect,
-}: RecoveryGroupPolicySetListProps) {
+}: PolicySetPickerListProps) {
   const { t } = useTranslation()
   const [search, setSearch] = useState('')
 

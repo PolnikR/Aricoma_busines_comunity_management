@@ -77,6 +77,15 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
 vi.mock('../../recovery-groups/hooks/useRecoveryGroups', () => ({
   useRecoveryGroups: () => recoveryGroupsQuery.current,
 }))
+vi.mock('@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies', () => ({
+  useSnapshotPolicies: () => ({ data: [], isLoading: false, error: null }),
+}))
+vi.mock('@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies', () => ({
+  useRecoveryAppPolicies: () => ({ data: [], isLoading: false, error: null }),
+}))
+vi.mock('@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies', () => ({
+  useCleanRoomPolicies: () => ({ data: [], isLoading: false, error: null }),
+}))
 vi.mock('./TierCanvas', () => ({
   TierCanvas: ({
     tiers,

@@ -1,7 +1,7 @@
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { PolicySetPicker } from '@/shared/components/policy-set-picker/PolicySetPicker'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { PolicySet } from '@/features/recovery-plans/policy-sets/model/policySetTypes'
-import { RecoveryGroupPolicySetCatalogue } from './RecoveryGroupPolicySetCatalogue'
 
 interface RecoveryGroupPolicySetStepProps {
   policySets: PolicySet[]
@@ -35,7 +35,7 @@ export function RecoveryGroupPolicySetStep({
           />
         </div>
       ) : (
-        <RecoveryGroupPolicySetCatalogue
+        <PolicySetPicker
           policySets={policySets}
           selectedPolicySetId={selectedPolicySetId}
           onSelect={onSelect}
