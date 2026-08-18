@@ -14,7 +14,7 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
-import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
+import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import { toRecoveryAppPolicyReadPayload } from '../api/recoveryAppPoliciesApi'
 import { useDeleteRecoveryAppPolicy } from '../hooks/useDeleteRecoveryAppPolicy'
@@ -251,13 +251,48 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
         }}
       />
 
-      <JsonViewerModal
-        open={jsonViewed !== null}
-        title={t('recoveryAppPolicies.jsonViewer.title')}
-        data={jsonViewed ? toRecoveryAppPolicyReadPayload(jsonViewed) : null}
-        closeLabel={t('buttons.close')}
-        onClose={() => { setJsonViewId(null) }}
-      />
+      {jsonViewed ? (
+        <ChecklistResultDialog
+          open={jsonViewed !== null}
+          title={t('recoveryAppPolicies.jsonViewer.title')}
+          primaryName={jsonViewed.name}
+          subtitle={jsonViewed.id}
+          badges={[
+            { label: jsonViewed.enabled ? 'Active' : 'Inactive', color: jsonViewed.enabled ? 'success' : 'warning' },
+          ]}
+          statusBar={{
+            title: t('recoveryAppPolicies.policyLoaded'),
+            status: 'success',
+            passedCount: 4,
+            totalCount: 4,
+          }}
+          checks={[
+            {
+              name: t('recoveryAppPolicies.policyId'),
+              detail: jsonViewed.id,
+              status: 'ok',
+            },
+            {
+              name: t('recoveryAppPolicies.policyName'),
+              detail: jsonViewed.name,
+              status: 'ok',
+            },
+            {
+              name: t('recoveryAppPolicies.description'),
+              detail: jsonViewed.description || '—',
+              status: 'ok',
+            },
+            {
+              name: t('recoveryAppPolicies.level'),
+              detail: jsonViewed.level,
+              status: 'ok',
+            },
+          ]}
+          responseData={toRecoveryAppPolicyReadPayload(jsonViewed)}
+          responseSchemaType="RecoveryAppPolicy"
+          onClose={() => { setJsonViewId(null) }}
+        />
+      ) : null}
     </div>
   )
 }
