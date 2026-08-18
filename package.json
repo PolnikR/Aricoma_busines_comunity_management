@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc -b",
-    "build": "npm run lint && npm run typecheck && npm run test && vite build",
+    "build": "npm run lint && npm run typecheck && npm run test && npm run api:check && vite build",
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run",
     "test:watch": "vitest",
