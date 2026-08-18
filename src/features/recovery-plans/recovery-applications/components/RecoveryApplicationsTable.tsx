@@ -14,7 +14,7 @@ import {
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
-import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
+import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 import type { RollbackReport } from '../api/schemas/recoveryApplicationsSchema'
 import { toRecoveryApplicationJson } from '../helpers/mapRecoveryApplications'
@@ -335,13 +335,44 @@ export function RecoveryApplicationsTable({
         ) : null}
       </DetailDrawer>
 
-      <JsonViewerModal
-        open={jsonViewed !== null}
-        title={t('recovery.modal.jsonViewer.title')}
-        data={jsonViewed ? toRecoveryApplicationJson(jsonViewed) : null}
-        closeLabel={t('buttons.close')}
-        onClose={() => { setJsonViewId(null) }}
-      />
+      {jsonViewed ? (
+        <ChecklistResultDialog
+          open={jsonViewed !== null}
+          title={t('recovery.modal.jsonViewer.title')}
+          primaryName={jsonViewed.data.application.name}
+          subtitle={jsonViewed.id}
+          badges={[
+            { label: jsonViewed.data.application.environment, color: 'info' },
+            { label: jsonViewed.data.application.platform, color: 'warning' },
+          ]}
+          statusBar={{
+            title: t('recovery.application.loaded'),
+            status: 'success',
+            passedCount: 3,
+            totalCount: 3,
+          }}
+          checks={[
+            {
+              name: t('recovery.modal.applicationId'),
+              detail: jsonViewed.id,
+              status: 'ok',
+            },
+            ...(jsonViewed.airflowRunId ? [{
+              name: t('recovery.modal.airflowRunId'),
+              detail: jsonViewed.airflowRunId,
+              status: 'ok',
+            }] : []),
+            {
+              name: t('recovery.modal.pushToOrchestrator'),
+              detail: jsonViewed.pushToOrchestrator ? 'Yes' : 'No',
+              status: 'ok',
+            },
+          ]}
+          responseData={toRecoveryApplicationJson(jsonViewed)}
+          responseSchemaType="RecoveryApplicationRecord"
+          onClose={() => { setJsonViewId(null) }}
+        />
+      ) : null}
 
       <ConfirmDialog
         open={deleteTarget !== null}
