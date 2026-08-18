@@ -152,6 +152,24 @@ describe('RecoveryGroupPolicySetStep', () => {
     expect(detail).toHaveTextContent('Remove conflicting target resources before recovery.')
   })
 
+  it('keeps the policy detail panel visible below the lg breakpoint', () => {
+    render(
+      <RecoveryGroupPolicySetStep
+        policySets={policySets}
+        isLoading={false}
+        selectedPolicySetId="tier2-apps"
+        onSelect={vi.fn()}
+      />,
+    )
+
+    const detail = screen.getByRole('region', { name: 'Selected policy set details' })
+    const detailWrapper = detail.parentElement
+    const catalogueContainer = detailWrapper?.parentElement
+
+    expect(detailWrapper).not.toHaveClass('hidden')
+    expect(catalogueContainer).toHaveClass('flex-col')
+  })
+
   it('renders one icon per policy type in the detail panel', () => {
     render(
       <RecoveryGroupPolicySetStep

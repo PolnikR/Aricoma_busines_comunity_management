@@ -35,7 +35,7 @@ export function RecoveryGroupPolicySetCatalogue({
   )
 
   return (
-    <div className="mt-5 flex overflow-hidden rounded-xl border border-border bg-surface shadow-sm lg:h-96">
+    <div className="mt-5 flex flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm lg:h-96 lg:flex-row">
       <div className="w-full min-h-96 lg:w-96 lg:min-h-0 shrink-0">
         <RecoveryGroupPolicySetList
           policySets={policySets}
@@ -46,7 +46,7 @@ export function RecoveryGroupPolicySetCatalogue({
       </div>
 
       {selectedSet ? (
-        <div className="hidden min-w-0 flex-1 overflow-auto lg:block">
+        <div className="max-h-96 min-w-0 overflow-auto border-t border-border lg:max-h-none lg:flex-1 lg:border-l lg:border-t-0">
           <RecoveryGroupPolicySetDetails
             policySet={selectedSet}
             snapshotPolicy={snapshotPoliciesById.get(selectedSet.snapshotPolicyId)}
