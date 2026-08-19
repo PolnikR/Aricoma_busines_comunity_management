@@ -15,7 +15,7 @@ export interface EntityLatestRun {
 // One cheap (limit=1) query per orchestrated entity, reading providerId off
 // each entity instead of a single shared value — Recovery Groups carry their
 // own orchestrationProviderId, Applications currently share one (see
-// useOrchestratedApps). Generalized version of useOrchestratedAppRuns.
+// useOrchestratedApps).
 export function useOrchestratedEntityRuns(entities: OrchestratedEntity[]): EntityLatestRun[] {
   const results = useQueries({
     queries: entities.map(entity => ({

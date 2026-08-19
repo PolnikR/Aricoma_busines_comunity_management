@@ -10,16 +10,18 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '../helpers/formatRecoveryRun'
-import type { OrchestratorRun } from '../model/recoveryRunTypes'
+import type { OrchestratedEntity, OrchestratorRun } from '../model/recoveryRunTypes'
 
 export interface RecoveryRunRow {
   id: string
   name: string
+  entityType: OrchestratedEntity['entityType']
+  dagId: string
   latestRun: OrchestratorRun | null
 }
 
-function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<RecoveryRunRow>[] {
-  return [
+function getColumns(t: ReturnType<typeof useTranslation>['t'], showEntityType: boolean): ColumnDef<RecoveryRunRow>[] {
+  const columns: ColumnDef<RecoveryRunRow>[] = [
     {
       id: 'app',
       header: t('recoveryRuns.table.application'),
@@ -30,6 +32,21 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Recove
         </>
       ),
     },
+  ]
+
+  if (showEntityType) {
+    columns.push({
+      id: 'entityType',
+      header: t('recoveryRuns.table.type'),
+      cell: row => (
+        <Badge color="light" size="sm">
+          {t(row.entityType === 'group' ? 'recoveryRuns.table.typeGroup' : 'recoveryRuns.table.typeApplication')}
+        </Badge>
+      ),
+    })
+  }
+
+  columns.push(
     {
       id: 'status',
       header: t('recoveryRuns.table.latestRun'),
@@ -50,33 +67,37 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Recove
       align: 'right',
       cell: row => <span className="font-mono text-xs tabular-nums">{formatRunDuration(row.latestRun?.durationSeconds ?? null)}</span>,
     },
-  ]
+  )
+
+  return columns
 }
 
 interface RecoveryRunsTableProps {
   rows: RecoveryRunRow[]
+  showEntityType: boolean
   isLoading: boolean
   error: Error | null
   isRetrying: boolean
   onRetry: () => void
-  onSelectApp: (appId: string) => void
-  selectedAppId: string | null
+  onSelectEntity: (entityId: string) => void
+  selectedEntityId: string | null
 }
 
 export function RecoveryRunsTable({
   rows,
+  showEntityType,
   isLoading,
   error,
   isRetrying,
   onRetry,
-  onSelectApp,
-  selectedAppId,
+  onSelectEntity,
+  selectedEntityId,
 }: RecoveryRunsTableProps) {
   const { t } = useTranslation()
   const table = useTableState(rows, { searchFields: ['name', 'id'] })
 
   if (isLoading) {
-    return <DataTableSkeleton columnCount={4} ariaLabel={t('recoveryRuns.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
+    return <DataTableSkeleton columnCount={showEntityType ? 5 : 4} ariaLabel={t('recoveryRuns.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
   }
 
   return (
@@ -98,13 +119,13 @@ export function RecoveryRunsTable({
           } : null}
         >
           <DataTable
-            columns={getColumns(t)}
+            columns={getColumns(t, showEntityType)}
             rows={table.pageItems}
             rowKey={row => row.id}
             ariaLabel={t('recoveryRuns.tableLabel')}
             rowAriaLabel={row => row.name}
-            onRowClick={row => { onSelectApp(row.id) }}
-            selectedRowKey={selectedAppId}
+            onRowClick={row => { onSelectEntity(row.id) }}
+            selectedRowKey={selectedEntityId}
             emptyContent={rows.length > 0 ? t('recoveryRuns.noMatches') : t('recoveryRuns.empty')}
           />
         </DataTableRequestState>
