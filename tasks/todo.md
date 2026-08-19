@@ -16,9 +16,9 @@ See `tasks/plan.md` for full detail, acceptance criteria, and file lists.
 - [x] Checkpoint: 9 test files / 31 tests passing, `tsc --noEmit` and eslint clean; entityId deep-link confirmed to filter + auto-open the history drawer
 
 ## Phase 4: Detail panels + navigation
-- [ ] Task 4: Recovery Application detail drawer — DAG ID / latest status / last executed / duration / "View recovery runs" (only when `pushToOrchestrator`; provider id sourced via the interim eligible-provider lookup until Task 2b lands)
-- [ ] Task 5: Recovery Group detail drawer — same additions alongside existing orchestration rows
-- [ ] Checkpoint: "View recovery runs" from either entity lands pre-filtered on the correct tab; page still usable standalone
+- [x] Task 4: Recovery Application detail drawer — DAG ID / latest status / last executed / duration / "View recovery runs" (only when `pushToOrchestrator`; provider id sourced via the interim eligible-provider lookup until Task 2b lands)
+- [x] Task 5: Recovery Group detail drawer — same additions alongside existing orchestration rows (providerId read directly, no interim needed)
+- [x] Checkpoint: "View recovery runs" from either entity navigates to the correct pre-filtered tab (verified via navigate() assertions); page still usable standalone. Note: one pre-existing unrelated test failure in RecoveryGroupsTable.test.tsx confirmed via git stash to predate this work.
 
 ## Phase 5: Polish
 - [ ] Task 6: Locale keys (en/cs/sk); grep-clean of old `storage-orchestration` import paths; full focused test + `tsc --noEmit` pass
