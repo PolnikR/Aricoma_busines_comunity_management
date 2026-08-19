@@ -10,7 +10,6 @@ import { RecoveryApplicationOrchestratorSuccessModal } from '../components/Recov
 import { useSubmitRecoveryApplication } from '../hooks/useRecoveryApplications'
 import { toRecoveryApplicationData } from '../utils/recoveryApplicationFormMapper'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
-import { useOrchestratedApps } from '@/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps'
 import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
 import type { OrchestratorPush, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
@@ -21,14 +20,9 @@ export function RecoveryApplicationBuilderPage() {
   const [isDirty, setIsDirty] = useState(false)
   const [orchestratorPush, setOrchestratorPush] = useState<OrchestratorPush | null>(null)
   const [orchestratedApplicationName, setOrchestratedApplicationName] = useState('')
+  const [orchestratorProviderUrl, setOrchestratorProviderUrl] = useState<string | undefined>(undefined)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
-  // Interim: applications don't return their own orchestration provider id yet
-  // (tasks/plan.md Task 2b) — same eligible-provider lookup used elsewhere.
-  const { providerId: orchestratorProviderId } = useOrchestratedApps()
   const { data: platformProviders = [] } = usePlatformProviders()
-  const orchestratorProviderUrl = platformProviders.find(
-    provider => provider.id === orchestratorProviderId,
-  )?.url
 
   const handleSave = (appState: RecoveryApplicationFormState): void => {
     submitApplication.mutate({
@@ -40,6 +34,9 @@ export function RecoveryApplicationBuilderPage() {
         setIsDirty(false)
         if (appState.pushToOrchestrator && 'orchestrator_push' in response) {
           setOrchestratedApplicationName(appState.name)
+          setOrchestratorProviderUrl(platformProviders.find(
+            provider => provider.id === appState.orchestrationProviderId,
+          )?.url)
           setOrchestratorPush(response.orchestrator_push)
           return
         }

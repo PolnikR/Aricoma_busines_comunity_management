@@ -25,9 +25,9 @@ describe('mapRecoveryApplications', () => {
       applications: [buildRecord({ orchestration_provider_id: 'airflow-01' })],
     }
 
-    const [application] = mapRecoveryApplications(payload)
+    const applications = mapRecoveryApplications(payload)
 
-    expect(application.orchestrationProviderId).toBe('airflow-01')
+    expect(applications[0]?.orchestrationProviderId).toBe('airflow-01')
   })
 
   it('omits orchestrationProviderId when the record has no orchestration_provider_id', () => {
@@ -35,9 +35,9 @@ describe('mapRecoveryApplications', () => {
       applications: [buildRecord()],
     }
 
-    const [application] = mapRecoveryApplications(payload)
+    const applications = mapRecoveryApplications(payload)
 
-    expect(application.orchestrationProviderId).toBeUndefined()
+    expect(applications[0]?.orchestrationProviderId).toBeUndefined()
   })
 })
 

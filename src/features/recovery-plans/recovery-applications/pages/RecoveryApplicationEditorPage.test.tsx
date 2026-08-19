@@ -19,6 +19,7 @@ const refetch = vi.fn()
 const application: RecoveryApplicationListItem = {
   id: 'finance_app.json',
   policySetId: 'test_1_hour_ps',
+  orchestrationProviderId: 'airflow-01',
   data: {
     application: {
       name: 'Finance App',
@@ -70,10 +71,6 @@ vi.mock('../hooks/useRecoveryApplications', () => ({
     error: null,
     isPending: false,
   }),
-}))
-
-vi.mock('@/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps', () => ({
-  useOrchestratedApps: () => ({ apps: [], providerId: 'airflow-01', isLoading: false, isFetching: false, error: null, refetch: vi.fn() }),
 }))
 
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
@@ -143,7 +140,7 @@ describe('RecoveryApplicationEditorPage', () => {
 
     const [submission, options] = call
     expect(submission.data.id).toBe('finance_app')
-    expect(submission.providerId).toBe('')
+    expect(submission.providerId).toBe('airflow-01')
     expect(submission.data.application.name).toBe('Finance App')
     expect(options.onSuccess).toBeTypeOf('function')
     expect(screen.getByText('Filename disabled')).toBeInTheDocument()

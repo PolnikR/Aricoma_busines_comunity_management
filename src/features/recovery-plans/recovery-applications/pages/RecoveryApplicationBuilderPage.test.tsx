@@ -29,10 +29,6 @@ vi.mock('../hooks/useRecoveryApplications', () => ({
   }),
 }))
 
-vi.mock('@/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps', () => ({
-  useOrchestratedApps: () => ({ apps: [], providerId: 'airflow-01', isLoading: false, isFetching: false, error: null, refetch: vi.fn() }),
-}))
-
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
   usePlatformProviders: () => ({
     data: [{ id: 'airflow-01', name: 'Dynamic Airflow', url: 'https://airflow.dynamic.test:8443' }],
