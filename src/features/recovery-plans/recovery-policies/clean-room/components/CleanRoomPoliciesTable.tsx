@@ -196,27 +196,27 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
             passedCount: 4,
             totalCount: 4,
           }}
-          checks={[
-            {
-              name: t('cleanRoomPolicies.policyId'),
-              detail: jsonViewed.id,
-              status: 'ok',
-            },
-            {
-              name: t('cleanRoomPolicies.policyName'),
-              detail: jsonViewed.name,
-              status: 'ok',
-            },
-            {
-              name: t('cleanRoomPolicies.description'),
-              detail: jsonViewed.description || '—',
-              status: 'ok',
-            },
-            {
-              name: t('cleanRoomPolicies.enabled'),
-              detail: jsonViewed.enabled ? 'Yes' : 'No',
-              status: 'ok',
-            },
+           checks={[
+          //   {
+          //     name: t('cleanRoomPolicies.policyId'),
+          //     detail: jsonViewed.id,
+          //     status: 'ok',
+          //   },
+          //   {
+          //     name: t('cleanRoomPolicies.policyName'),
+          //     detail: jsonViewed.name,
+          //     status: 'ok',
+          //   },
+          //   {
+          //     name: t('cleanRoomPolicies.description'),
+          //     detail: jsonViewed.description || '—',
+          //     status: 'ok',
+          //   },
+          //   {
+          //     name: t('cleanRoomPolicies.enabled'),
+          //     detail: jsonViewed.enabled ? 'Yes' : 'No',
+          //     status: 'ok',
+          //   },
           ]}
           responseData={toCleanRoomPolicySubmitPayload(jsonViewed)}
           responseSchemaType="CleanRoomPolicy"

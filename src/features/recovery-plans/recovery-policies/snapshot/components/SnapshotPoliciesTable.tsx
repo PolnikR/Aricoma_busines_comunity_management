@@ -303,31 +303,31 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
             totalCount: 5,
           }}
           checks={[
-            {
-              name: t('snapshotPolicies.policyId'),
-              detail: jsonViewed.id,
-              status: 'ok',
-            },
-            {
-              name: t('snapshotPolicies.policyName'),
-              detail: jsonViewed.name,
-              status: 'ok',
-            },
-            {
-              name: t('snapshotPolicies.description'),
-              detail: jsonViewed.description || '—',
-              status: 'ok',
-            },
-            {
-              name: t('snapshotPolicies.level'),
-              detail: jsonViewed.level,
-              status: 'ok',
-            },
-            {
-              name: t('snapshotPolicies.frequency'),
-              detail: `${jsonViewed.frequencyValue} ${jsonViewed.frequencyUnit}`,
-              status: 'ok',
-            },
+            // {
+            //   name: t('snapshotPolicies.policyId'),
+            //   detail: jsonViewed.id,
+            //   status: 'ok',
+            // },
+            // {
+            //   name: t('snapshotPolicies.policyName'),
+            //   detail: jsonViewed.name,
+            //   status: 'ok',
+            // },
+            // {
+            //   name: t('snapshotPolicies.description'),
+            //   detail: jsonViewed.description || '—',
+            //   status: 'ok',
+            // },
+            // {
+            //   name: t('snapshotPolicies.level'),
+            //   detail: jsonViewed.level,
+            //   status: 'ok',
+            // },
+            // {
+            //   name: t('snapshotPolicies.frequency'),
+            //   detail: `${jsonViewed.frequencyValue} ${jsonViewed.frequencyUnit}`,
+            //   status: 'ok',
+            // },
           ]}
           responseData={toSnapshotPolicySubmitPayload(jsonViewed)}
           responseSchemaType="SnapshotPolicy"

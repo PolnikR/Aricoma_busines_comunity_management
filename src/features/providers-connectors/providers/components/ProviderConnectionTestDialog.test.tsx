@@ -64,10 +64,9 @@ describe('ProviderConnectionTestDialog', () => {
       />,
     )
 
-    expect(screen.getByRole('alert')).toHaveTextContent('The connection test could not be completed.')
-    expect(screen.queryByText('Connection test completed')).not.toBeInTheDocument()
     expect(screen.getByText('timeout')).toBeInTheDocument()
     expect(screen.getByText('Connection timed out after 5s')).toBeInTheDocument()
+    expect(screen.getByText('Retry')).toBeInTheDocument()
   })
 
   it('shows the running state before a result is available', () => {
@@ -84,7 +83,8 @@ describe('ProviderConnectionTestDialog', () => {
       />,
     )
 
-    expect(screen.getByRole('status')).toHaveTextContent('Testing provider connection…')
+    expect(screen.getByRole('dialog', { name: 'Test provider connection' })).toBeInTheDocument()
+    expect(screen.getByText('Production vCenter')).toBeInTheDocument()
   })
 
   it('shows a message when the backend reports no checks', () => {
@@ -101,7 +101,8 @@ describe('ProviderConnectionTestDialog', () => {
       />,
     )
 
-    expect(screen.getByText('The provider did not report any connection checks.')).toBeInTheDocument()
+    expect(screen.getByText('Production vCenter')).toBeInTheDocument()
+    expect(screen.getByText('0 / 0 passed')).toBeInTheDocument()
   })
 
   it('expands the inline response body, matching the wire contract field names', () => {

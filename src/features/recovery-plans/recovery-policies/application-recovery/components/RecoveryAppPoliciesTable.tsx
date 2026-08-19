@@ -267,26 +267,26 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
             totalCount: 4,
           }}
           checks={[
-            {
-              name: t('recoveryAppPolicies.policyId'),
-              detail: jsonViewed.id,
-              status: 'ok',
-            },
-            {
-              name: t('recoveryAppPolicies.policyName'),
-              detail: jsonViewed.name,
-              status: 'ok',
-            },
-            {
-              name: t('recoveryAppPolicies.description'),
-              detail: jsonViewed.description || '—',
-              status: 'ok',
-            },
-            {
-              name: t('recoveryAppPolicies.level'),
-              detail: jsonViewed.level,
-              status: 'ok',
-            },
+            // {
+            //   name: t('recoveryAppPolicies.policyId'),
+            //   detail: jsonViewed.id,
+            //   status: 'ok',
+            // },
+            // {
+            //   name: t('recoveryAppPolicies.policyName'),
+            //   detail: jsonViewed.name,
+            //   status: 'ok',
+            // },
+            // {
+            //   name: t('recoveryAppPolicies.description'),
+            //   detail: jsonViewed.description || '—',
+            //   status: 'ok',
+            // },
+            // {
+            //   name: t('recoveryAppPolicies.level'),
+            //   detail: jsonViewed.level,
+            //   status: 'ok',
+            // },
           ]}
           responseData={toRecoveryAppPolicyReadPayload(jsonViewed)}
           responseSchemaType="RecoveryAppPolicy"

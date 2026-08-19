@@ -22,7 +22,7 @@ function copyText(text: string): Promise<void> {
 // header bar, an optional schema caption, a copy button, and a scrollable
 // JSON block. `defaultOpen` lets a JSON-only surface start expanded while
 // staying collapsible; dialogs with other content default to collapsed.
-export function ResponseBodyViewer({ data, schemaTypeName, defaultOpen = false }: ResponseBodyViewerProps) {
+export function ResponseBodyViewer({ data, schemaTypeName, defaultOpen = true }: ResponseBodyViewerProps) {
   const { t } = useTranslation()
   const [justCopied, setJustCopied] = useState(false)
   const json = JSON.stringify(data, null, 2)
