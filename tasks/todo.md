@@ -21,11 +21,11 @@ See `tasks/plan.md` for full detail, acceptance criteria, and file lists.
 - [x] Checkpoint: "View recovery runs" from either entity navigates to the correct pre-filtered tab (verified via navigate() assertions); page still usable standalone. Note: one pre-existing unrelated test failure in RecoveryGroupsTable.test.tsx confirmed via git stash to predate this work.
 
 ## Phase 5: Polish
-- [ ] Task 6: Locale keys (en/cs/sk); grep-clean of old `storage-orchestration` import paths; full focused test + `tsc --noEmit` pass
+- [x] Task 6: Locale keys (en/cs/sk, added incrementally across Tasks 3-5); grep-clean of old `storage-orchestration` import paths (only the intentional `routes.storageOrchestration` placeholder constant remains); added AppSidebar regression test for the Recovery Runs nav entry; full focused test + `tsc --noEmit` pass
 
 ## Final Definition of Done
-- [ ] All acceptance criteria in `tasks/plan.md` met
-- [ ] `npx tsc --noEmit` clean
-- [ ] All focused tests listed per task pass
-- [ ] No unrelated files touched
-- [ ] Changes committed (per task or per phase, per CLAUDE.md atomic-commit guidance)
+- [x] All acceptance criteria in `tasks/plan.md` met (Tasks 1, 2a, 3, 4, 5, 6 — Task 2b remains explicitly BLOCKED on the backend, see plan Open Questions)
+- [x] `npx tsc --noEmit` clean
+- [x] All focused tests listed per task pass (59/60 — 1 pre-existing unrelated failure confirmed via `git stash`, predates this plan)
+- [x] No unrelated files touched (concurrent uncommitted edits by the user in InventoryShell.tsx/RecoveryPolicyPageShell.tsx/SnapshotPoliciesPage.tsx were left alone throughout)
+- [x] Changes committed per task, atomically
