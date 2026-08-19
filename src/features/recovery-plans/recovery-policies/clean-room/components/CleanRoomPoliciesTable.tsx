@@ -183,7 +183,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
 
       {jsonViewed ? (
         <ChecklistResultDialog
-          open={jsonViewed !== null}
+          open={true}
           title={t('cleanRoomPolicies.jsonViewer.title')}
           primaryName={jsonViewed.name}
           subtitle={jsonViewed.id}

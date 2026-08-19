@@ -289,7 +289,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
 
       {jsonViewed ? (
         <ChecklistResultDialog
-          open={jsonViewed !== null}
+          open={true}
           title={t('snapshotPolicies.jsonViewer.title')}
           primaryName={jsonViewed.name}
           subtitle={jsonViewed.id}

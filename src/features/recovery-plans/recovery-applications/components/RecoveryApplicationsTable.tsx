@@ -355,7 +355,7 @@ export function RecoveryApplicationsTable({
         ]
         return (
         <ChecklistResultDialog
-          open={jsonViewed !== null}
+          open={true}
           title={t('recovery.modal.jsonViewer.title')}
           primaryName={jsonViewed.data.application.name}
           subtitle={jsonViewed.id}
