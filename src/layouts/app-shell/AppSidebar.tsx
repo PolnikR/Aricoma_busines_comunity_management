@@ -66,6 +66,7 @@ const navItems: NavItem[] = [
       { name: 'Recovery Groups', path: routes.recoveryGroups },
       { name: 'Recovery Policies', path: routes.recoveryPolicies },
       { name: 'Policy Sets', path: routes.policySets },
+      { name: 'Recovery Runs', path: routes.recoveryRuns },
     ],
   },
   {

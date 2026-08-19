@@ -1,152 +1,291 @@
-# Implementation Plan: Fix Remaining Fake/Fragile Data in Checklist Dialogs
+# Implementation Plan: Move Recovery Runs into Recovery Plans + Group Support
 
 ## Overview
 
-Following the earlier fix to the three recovery-policy JSON dialogs, a full codebase audit
-checked every other JSON-viewer / checklist-style dialog for the same bug class: a status bar
-whose "N / N passed" count doesn't match what's actually rendered below it. Most dialogs
-(`JsonViewerModal` usages, `ProviderConnectionTestDialog`, `RecoveryGroupRollbackResultModal`)
-were already correct. Three issues remain, of two different severities:
+Relocate the Recovery Runs feature from the flat "Storage Orchestration" nav
+item to a "Recovery Runs" sub-item under "Recovery Plans", and extend it so
+it covers Recovery Groups in addition to Recovery Applications. Add
+All/Applications/Recovery Groups tabs driven by URL query params (so the page
+stays independently usable and also deep-linkable), surface live orchestrator
+status on both entities' detail panels, and wire a "View recovery runs" action
+that navigates to the Recovery Runs page pre-filtered to that entity.
 
-1. A **real, currently-reproducible bug** in `RecoveryApplicationsTable.tsx`: `totalCount` is
-   hardcoded to `3`, but the `checks` array conditionally drops to 2 items when
-   `jsonViewed.airflowRunId` is absent — so the bar can show "3/3 passed" while only 2 rows render.
-2. A **real mislabeling bug** in `RecoveryApplicationRollbackResultModal.tsx`: the `report.status`
-   check reuses the `resultAirflowSection` ("Airflow") translation key, which is also used for the
-   separate `report.airflow` check — so two different checks can show the identical label.
-3. A **missing-translation bug** in the shared `ChecklistResultDialog.tsx` itself: the footer
-   "Retry"/"Close" buttons are hardcoded English literals, even though `buttons.retry` and
-   `buttons.close` already exist as translation keys — meaning every dialog built on this shared
-   component has never shown a translated Retry/Close button in Czech or Slovak.
+## Confirmed decisions (from user)
 
-Additionally, as defensive cleanup (not a live bug today, but the same pattern that caused issue
-#1), four other call sites hardcode `passedCount`/`totalCount` next to a checks array whose length
-happens to match today: `RecoveryApplicationOrchestratorSuccessModal.tsx` and the three
-already-fixed policy tables (`RecoveryAppPoliciesTable.tsx`, `SnapshotPoliciesTable.tsx`,
-`CleanRoomPoliciesTable.tsx`). These get switched to `checks.length` so a future edit to a checks
-array can't silently desync the count again.
+- **Tabs are query-param driven** (`?tab=all|applications|groups&entityId=...`
+  on a single route), not separate routes per tab — this is what lets detail
+  panels deep-link into a pre-filtered tab.
+- **"Storage Orchestration" nav item stays**, but becomes empty again: once the
+  `RecoveryRunsPage` route override is removed, the route falls back to the
+  existing generic placeholder page config for `routes.storageOrchestration`
+  in `src/app/modulePageConfigs.ts` (already defined, currently just filtered
+  out of rendering — see Task 1).
+- **Backend update (confirmed 2026-08-19): Recovery Applications will now
+  return `orchestration_provider_id` on the record, the same field name and
+  shape Recovery Groups already return.** This removes the provider-id
+  asymmetry — Applications and Recovery Groups both resolve `providerId`
+  directly from their own record instead of Applications falling back to
+  "first eligible platform provider" (`getEligiblePlatformProviders`). That
+  fallback logic and the `usePlatformProviders` dependency in
+  `useOrchestratedApps` are removed as part of Task 2.
 
-## Architecture Decisions
+## Architecture decisions
 
-- **No structural changes to `ChecklistResultDialog`'s props/contract** — only its two hardcoded
-  button labels change to `t(...)` calls, using translation keys that already exist app-wide.
-- **`passedCount`/`totalCount` are always derived, never hardcoded**, going forward — this is the
-  one rule that would have prevented every issue found in the audit (the original bug and this
-  round). Every touched call site is being brought in line with this rule.
-- **`RecoveryApplicationRollbackResultModal`'s mislabel needs one new translation key** since no
-  existing key distinctly describes the top-level `report.status` field (as opposed to the
-  `report.airflow` sub-section). New key: `recovery.application.rollback.resultStatusSection`,
-  added to `en.json`/`cs.json`/`sk.json` following the existing pattern for that file.
-- **`RecoveryApplicationsTable`'s Yes/No fix reuses `common.yes`/`common.no`**, matching the
-  pattern already used correctly in the just-fixed `CleanRoomPoliciesTable.tsx` — no new keys
-  needed there.
+- **Relocate, don't rebuild.** All the orchestrator-runs plumbing (API client,
+  query keys, mapper, formatting helpers) already exists under
+  `src/features/storage-orchestration/`. It moves to
+  `src/features/recovery-plans/recovery-runs/` with import-path updates only
+  — no behavioral change to the API layer itself.
+- **Unify apps and groups behind one `OrchestratedEntity` type** rather than
+  keeping two parallel per-type models all the way through. `useOrchestratedApps`
+  and a new `useOrchestratedGroups` both normalize to
+  `{ entityType: 'application' | 'group', id, name, dagId, providerId }`, and a
+  new `useOrchestratedEntities()` merges them. This keeps `RecoveryRunsTable`,
+  the runs-fetching hook, and the history drawer entity-type-agnostic — they
+  only care about `dagId` + `providerId`, never about which domain object it
+  came from.
+- **Per-entity `providerId` in the runs-fetching hook.** Today
+  `useOrchestratedAppRuns(apps, providerId)` takes one shared `providerId` for
+  every app. Since groups carry their own `orchestrationProviderId`, the
+  generalized hook takes `providerId` per entity instead
+  (`useOrchestratedEntityRuns(entities: OrchestratedEntity[])`). Applications
+  still all resolve to the same shared eligible-provider id under the hood —
+  this is purely a signature generalization, not a behavior change for apps.
+- **New small `useLatestOrchestratorRun(providerId, dagId)` hook** (single
+  `useQuery`, no list) for detail-panel use, so opening an app/group detail
+  drawer doesn't have to fetch every other entity's latest run just to show
+  one row's status.
 
 ## Task List
 
-### Phase 1: Real bugs (user-visible incorrect behavior today)
+### Phase 1: Move the feature, no behavior change
 
-- [ ] Task 1: Fix `RecoveryApplicationsTable.tsx` count mismatch and hardcoded Yes/No
-- [ ] Task 2: Fix `RecoveryApplicationRollbackResultModal.tsx` mislabeled status check
+- [ ] **Task 1: Relocate Recovery Runs feature folder + routing + nav**
+- [ ] **Task 1 checkpoint**: page loads at the new URL, old URL shows the placeholder, nothing else regresses
 
-### Checkpoint: Real bugs fixed
-- [ ] Both dialogs show a status bar count that always matches the rendered checks list
-- [ ] The two `report.status` / `report.airflow` rows in the rollback modal show distinct labels
+### Phase 2: Data layer for both entity types
 
-### Phase 2: Shared component i18n gap
+- [ ] **Task 2: Generalize the data hooks to support Applications + Recovery Groups**
+- [ ] **Task 2 checkpoint**: hook unit tests green for apps, groups, and merged entities
 
-- [ ] Task 3: Translate `ChecklistResultDialog.tsx`'s Retry/Close footer buttons
+### Phase 3: Page UX
 
-### Checkpoint: Shared dialog fully translated
-- [ ] Switching the app language to Czech or Slovak shows translated Retry/Close text in every
-      dialog built on `ChecklistResultDialog` (spot-check 2-3 call sites)
+- [ ] **Task 3: Add All / Applications / Recovery Groups tabs (query-param driven)**
+- [ ] **Task 3 checkpoint**: manual check — switching tabs filters correctly, `?tab=` in URL updates, reload preserves tab
 
-### Phase 3: Defensive hardening (no active bug, same risk pattern)
+### Phase 4: Detail panels + cross-navigation
 
-- [ ] Task 4: Derive `passedCount`/`totalCount` from `checks.length` in the four remaining
-      hardcoded call sites (`RecoveryApplicationOrchestratorSuccessModal.tsx`,
-      `RecoveryAppPoliciesTable.tsx`, `SnapshotPoliciesTable.tsx`, `CleanRoomPoliciesTable.tsx`)
+- [ ] **Task 4: Recovery Application detail drawer — orchestrator status + "View recovery runs"**
+- [ ] **Task 5: Recovery Group detail drawer — orchestrator status + "View recovery runs"**
+- [ ] **Task 5 checkpoint**: clicking "View recovery runs" from either entity lands on the right tab, pre-filtered, and the page is still usable standalone
 
-### Checkpoint: All checklist dialogs hardened
-- [ ] `grep` for `passedCount: [0-9]` / `totalCount: [0-9]` across `src/` returns no matches
-- [ ] Focused tests pass; commit created
+### Phase 5: Polish
+
+- [ ] **Task 6: Locale entries, dead-code cleanup, full focused verification**
+
+---
+
+## Task 1: Relocate Recovery Runs feature folder + routing + nav
+
+**Description:** Move `src/features/storage-orchestration/` to
+`src/features/recovery-plans/recovery-runs/` (folder rename, import paths
+updated, no logic changes). Wire the route under
+`/recovery-plans/recovery-runs` instead of `/storage-orchestration`. Add
+"Recovery Runs" as a Recovery Plans sidebar sub-item. Let `/storage-orchestration`
+fall back to its existing placeholder page.
+
+**Acceptance criteria:**
+- [ ] `RecoveryRunsPage` and all its supporting files live under
+      `src/features/recovery-plans/recovery-runs/` with no import breakage
+      (`npx tsc --noEmit` clean).
+- [ ] Visiting `/recovery-plans/recovery-runs` renders the Recovery Runs page;
+      visiting `/storage-orchestration` renders the existing generic
+      placeholder (EP-04) instead.
+- [ ] Sidebar "Recovery Plans" menu shows a "Recovery Runs" sub-item (reusing
+      the existing unused `nav.recovery.runs` translation key / `navKeyMap`
+      entry — no new key needed) that highlights correctly when active.
+- [ ] "Storage Orchestration" remains a top-level sidebar item pointing at
+      `/storage-orchestration` (now the placeholder).
+
+**Verification:**
+- [ ] `npx tsc --noEmit`
+- [ ] `npm exec vitest run src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx`
+- [ ] Manual: click through sidebar Recovery Plans > Recovery Runs; confirm old `/storage-orchestration` shows the placeholder card.
+
+**Dependencies:** None
+
+**Files likely touched:**
+- `src/features/storage-orchestration/**` → moved to `src/features/recovery-plans/recovery-runs/**` (all 18 files from the earlier glob: page, table, drawer, hooks, api, model, helpers, and their tests)
+- `src/app/routes.ts` — remove `storageOrchestration` usage for this page (keep the constant, it now points at the placeholder), reuse existing `recoveryRuns: '/recovery-plans/recovery-runs'` constant (already defined)
+- `src/app/AppRoutes.tsx` — replace the `recovery-runs` redirect (lines 290-293) with the real `RecoveryRunsPage` route; remove the `storage-orchestration` route override (lines 384-391); remove `routes.storageOrchestration` from the `remainingEpicPages` filter exclusion (line 381-383) so the placeholder renders again
+- `src/layouts/app-shell/AppSidebar.tsx` — add `{ name: 'Recovery Runs', path: routes.recoveryRuns }` to the `Recovery Plans` `subItems` array (lines 61-70); `navKeyMap` entry already exists (line 99)
+
+**Estimated scope:** Medium (mechanical move across ~18 files + 3 wiring files)
+
+---
+
+## Task 2: Generalize the data hooks to support Applications + Recovery Groups
+
+**Description:** Add the new `orchestration_provider_id` field to the Recovery
+Application schema/mapper (mirroring how Recovery Groups already model it),
+introduce a unified `OrchestratedEntity` shape, build the Recovery Groups
+equivalent of the existing Applications orchestration hook, then generalize
+the runs-fetching hook to work over a mixed list of entities that each carry
+their own provider id.
+
+**Acceptance criteria:**
+- [ ] `RecoveryApplicationApiRecord` and `RecoveryApplicationListItem` in `recoveryApplicationTypes.ts` gain `orchestration_provider_id?` / `orchestrationProviderId?` fields, matching the shape already used on `RecoveryGroupReadRecord.orchestration_provider_id` / `RecoveryGroup.orchestrationProviderId`.
+- [ ] `mapRecoveryApplications.ts` maps `record.orchestration_provider_id` → `orchestrationProviderId` (and `toRecoveryApplicationJson` round-trips it back), following the same optional-field pattern already used there for `airflow_run_id`/`push_to_orchestrator`.
+- [ ] `OrchestratedEntity { entityType: 'application' | 'group', id, name, dagId, providerId }` added to `recoveryRunTypes.ts` (alongside existing `OrchestratorRun`/`OrchestratorRunsPage`; `OrchestratedApp` folded into this).
+- [ ] `useOrchestratedApps` maps to `OrchestratedEntity[]` with `entityType: 'application'`, filtering to entries where `airflowRunId` **and** `orchestrationProviderId` are both truthy, `providerId = record.orchestrationProviderId` — **no longer** depends on `usePlatformProviders`/`getEligiblePlatformProviders` (that fallback is removed now that Applications return their own provider id, same as Groups).
+- [ ] New `useOrchestratedGroups` hook mirrors it for Recovery Groups: sources `useRecoveryGroups()`, filters to `pushToOrchestrator && airflowRunId && orchestrationProviderId` all truthy, `dagId = \`dag_${airflowRunId}\``, `providerId = group.orchestrationProviderId`.
+- [ ] New `useOrchestratedEntities()` combines both hooks: merged `entities` array, aggregated `isLoading`/`isFetching`/`error`/`refetch`.
+- [ ] `useOrchestratedAppRuns(apps, providerId)` becomes `useOrchestratedEntityRuns(entities: OrchestratedEntity[])`, reading `providerId` off each entity instead of a single shared param; query key becomes `recoveryRunsKeys.latest(entity.providerId, entity.dagId)`.
+- [ ] New `useLatestOrchestratorRun(providerId: string | null, dagId: string | null)` — single `useQuery` wrapping `fetchOrchestratorRuns(..., { limit: 1, orderBy: '-logical_date' })`, for single-entity detail-panel use (Tasks 4/5).
+- [ ] `useAppRunHistory` (paginated history) needs no signature change — it already takes plain `providerId`/`dagId` strings, so it works unmodified for both entity types. Consider renaming to `useOrchestratorRunHistory` for clarity since it's no longer app-specific (rename is optional, judgment call at implementation time).
+
+**Verification:**
+- [ ] `npm exec vitest run src/features/recovery-plans/recovery-applications/helpers/mapRecoveryApplications.test.ts src/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps.test.tsx src/features/recovery-plans/recovery-runs/hooks/useOrchestratedGroups.test.tsx src/features/recovery-plans/recovery-runs/hooks/useOrchestratedAppRuns.test.tsx`
+- [ ] `npx tsc --noEmit`
+
+**Dependencies:** Task 1 (files must already be at their new location); backend must actually be returning `orchestration_provider_id` on `GET /get_recovery_apps` — confirm with a real/staging response before wiring the mapper, since the generated Zod schema (`RecoveryAppRecordOutput`) will also need the field added on the backend/OpenAPI-spec side for it to survive validation (see Risks below)
+
+**Files likely touched:**
+- `src/features/recovery-plans/recovery-applications/model/recoveryApplicationTypes.ts`
+- `src/features/recovery-plans/recovery-applications/helpers/mapRecoveryApplications.ts` (+ test)
+- `src/features/recovery-plans/recovery-runs/model/recoveryRunTypes.ts`
+- `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps.ts` (+ test)
+- `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedGroups.ts` (new, + test)
+- `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedEntities.ts` (new)
+- `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedAppRuns.ts` → generalize (+ test)
+- `src/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun.ts` (new)
+- `src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroups.ts` (read-only consumption, no change expected)
+- Possibly `src/generated/api/zod.gen.ts` / OpenAPI spec regeneration if `orchestration_provider_id` isn't yet in the generated `RecoveryAppRecordOutput` schema (generated file — regenerate from the updated spec rather than hand-editing)
+
+**Estimated scope:** Medium (5-7 files, mostly new + one generalization + one schema addition)
+
+---
+
+## Task 3: Add All / Applications / Recovery Groups tabs (query-param driven)
+
+**Description:** Rebuild `RecoveryRunsPage` on top of `useOrchestratedEntities()`
+/ `useOrchestratedEntityRuns()`, add a query-param-driven tab state (modeled on
+`useResourceTabSearchParam`), and render tabs via the existing shared `Tabs`
+component inside `InventoryShell` (which already accepts a `tabs` prop, currently
+passed `null`).
+
+**Acceptance criteria:**
+- [ ] New `useRecoveryRunsTabSearchParam()` hook: reads/writes `tab` (`all` | `applications` | `groups`, default `all`) and `entityId` (optional) query params, resets to page 1 on tab change.
+- [ ] `RecoveryRunsTable` row type extended with `entityType` and `dagId`; an entity-type badge/column is shown when the active tab is "All" (hidden on single-type tabs, since it's redundant there).
+- [ ] `RecoveryRunsPage` renders `<Tabs>` with 3 items; switching tabs filters `entities` by `entityType` client-side (no extra network calls — same merged list, just filtered).
+- [ ] When `entityId` is present in the URL, the table is further filtered to just that one entity (this is the pre-filter behavior Tasks 4/5 rely on) — but the page still renders normally with no `entityId` present (standalone usability).
+- [ ] `RecoveryRunHistoryDrawer` accepts a generic `{ id, name, dagId }` + `providerId` instead of specifically `OrchestratedApp` (trivial widening, since it already only reads those three fields).
+
+**Verification:**
+- [ ] `npm exec vitest run src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.test.tsx`
+- [ ] `npx tsc --noEmit`
+- [ ] Manual: `/recovery-plans/recovery-runs`, `?tab=applications`, `?tab=groups`, `?tab=applications&entityId=<id>` all behave as expected; browser back/forward preserves tab.
+
+**Dependencies:** Task 2
+
+**Files likely touched:**
+- `src/features/recovery-plans/recovery-runs/hooks/useRecoveryRunsTabSearchParam.ts` (new)
+- `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx` (+ test)
+- `src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.tsx` (+ test)
+- `src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDrawer.tsx` (+ test)
+
+**Estimated scope:** Medium (3-5 files)
+
+---
+
+## Task 4: Recovery Application detail drawer — orchestrator status + "View recovery runs"
+
+**Description:** When a selected application has `pushToOrchestrator === true`,
+show Airflow DAG ID, latest run status, last executed, duration, and a "View
+recovery runs" action in the existing `DetailDrawer` in
+`RecoveryApplicationsTable.tsx` (currently at lines 313-334, no orchestration
+info shown at all today).
+
+**Acceptance criteria:**
+- [ ] New `DetailRow`s appear only when `selected.pushToOrchestrator && selected.airflowRunId && selected.orchestrationProviderId` are all truthy: DAG ID (`dag_${airflowRunId}`), latest run status badge, last-executed timestamp, duration — sourced from `useLatestOrchestratorRun(selected.orchestrationProviderId, dagId)`.
+- [ ] "View recovery runs" button/link navigates to `${routes.recoveryRuns}?tab=applications&entityId=${selected.id}`.
+- [ ] Nothing renders (no broken empty rows) when the application isn't orchestrated.
+
+**Verification:**
+- [ ] `npm exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx`
+- [ ] `npx tsc --noEmit`
+
+**Dependencies:** Task 3 (needs the `?tab=&entityId=` contract to exist)
+
+**Files likely touched:**
+- `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx` (+ test)
+
+**Estimated scope:** Small (1-2 files)
+
+---
+
+## Task 5: Recovery Group detail drawer — orchestrator status + "View recovery runs"
+
+**Description:** Extend the existing orchestration section in
+`RecoveryGroupsTable.tsx`'s `DetailDrawer` (lines 386-411 already show a
+push-to-orchestrator badge and an external Airflow link) with latest run
+status, last executed, duration, and a "View recovery runs" action.
+
+**Acceptance criteria:**
+- [ ] New `DetailRow`s (status/last-executed/duration) appear alongside the
+      existing orchestration/airflow-link rows, sourced from
+      `useLatestOrchestratorRun(selected.orchestrationProviderId, \`dag_${selected.airflowRunId}\`)`.
+- [ ] "View recovery runs" action navigates to `${routes.recoveryRuns}?tab=groups&entityId=${selected.id}`.
+- [ ] Existing airflow-link `DetailRow` and rollback button behavior are untouched.
+
+**Verification:**
+- [ ] `npm exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.test.tsx`
+- [ ] `npx tsc --noEmit`
+
+**Dependencies:** Task 3
+
+**Files likely touched:**
+- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.tsx` (+ test)
+
+**Estimated scope:** Small (1-2 files)
+
+---
+
+## Task 6: Locale entries, dead-code cleanup, full focused verification
+
+**Description:** Add missing translation keys (en/cs/sk) for the new tabs,
+type column, and detail-panel labels; confirm no leftover dead imports/routes
+from the move; run the full set of touched focused tests plus a type check.
+
+**Acceptance criteria:**
+- [ ] New keys added to all three locale files: tab labels (`recoveryRuns.tabs.all/applications/groups`), type column header, `details.airflowDagId`, `details.latestRunStatus`, `details.lastExecuted`, `details.duration` (reuse if equivalents already exist — check first), `buttons.viewRecoveryRuns`.
+- [ ] No remaining references to `src/features/storage-orchestration/*` anywhere in `src/` (grep clean).
+- [ ] `routes.storageOrchestration` and `routes.recoveryRuns` both still resolve correctly (placeholder vs. real page respectively).
+
+**Verification:**
+- [ ] `npx tsc --noEmit`
+- [ ] `npm exec vitest run` on every test file touched across Tasks 1-5 (list explicitly, do not run the full suite)
+- [ ] `git diff --check` (no leftover conflict markers/whitespace issues in locale JSON)
+
+**Dependencies:** Tasks 1-5
+
+**Files likely touched:**
+- `src/locales/en.json`, `src/locales/cs.json`, `src/locales/sk.json`
+
+**Estimated scope:** Small (3-4 files)
+
+---
 
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| New translation key added for Task 2 must go in all three locale files or the app's en/cs/sk symmetry breaks | Medium | Add to all three in the same task, verify with grep before commit |
-| Task 1's Yes/No fix changes visible English text only in the sense of routing through i18n; if `common.yes`/`common.no` values ever differ from literal "Yes"/"No" the English rendering doesn't change (both are "Yes"/"No" today) | Low | Verified existing `common.yes`/`common.no` values equal "Yes"/"No" in en.json before relying on them |
-| Task 4 touches 4 files with no functional bug present — risk of introducing a regression for zero user-visible benefit | Low | Change is mechanical (`checks.length` / `checks.filter(...).length` in place of a literal); keep as its own commit so it can be reverted independently of Phase 1/2 if desired |
+| `orchestrationProviderId` might be stale/unresolved for some apps or groups (provider deleted, etc.) | Medium — an entity could show `pushToOrchestrator: true` but have no usable provider to query runs with | Both `useOrchestratedApps` and `useOrchestratedGroups` require `orchestrationProviderId` truthy as part of the orchestrated-entity filter; entities failing this are simply excluded from the list rather than erroring |
+| Backend ships `orchestration_provider_id` on the raw API response before the generated Zod schema (`RecoveryAppRecordOutput`) is regenerated to include it | High — the field would be silently stripped by Zod validation (`parseGeneratedResponse`), and `orchestrationProviderId` would always be `undefined` even though the backend is sending it | Confirm the OpenAPI spec / generated client has been regenerated to include `orchestration_provider_id` on the recovery-app schema *before* starting Task 2's mapper work; verify with an actual API response, not just backend team's word |
+| Renaming `useOrchestratedAppRuns` → `useOrchestratedEntityRuns` touches a query key shape other code might rely on | Low — only `RecoveryRunsPage`/`RecoveryRunHistoryDrawer` consume `recoveryRunsKeys`, confirmed via grep | Grep for `recoveryRunsKeys` usage before removing the old hook to confirm no other consumers |
+| Folder move (Task 1) could silently break a lazy-loaded route if an import path is missed | Medium — blank page at runtime, not always caught by `tsc` if a dynamic import string is wrong | `tsc --noEmit` catches static import breaks; manually visit both old and new URLs as part of Task 1 verification |
 
 ## Open Questions
 
-- None. All three real/near-bugs and the four hardening sites were identified precisely in the
-  audit, with exact file and line references confirmed by direct file reads.
-
----
-
-## Addendum: Cap Modal Height to Desktop Viewport
-
-### Overview
-
-The shared `Modal.tsx` (`src/shared/components/modal/Modal.tsx`) has no viewport-height
-constraint today — the dialog is centered via `fixed left-1/2 top-1/2 ... -translate-x-1/2
--translate-y-1/2` with only a `max-w-2xl`/`max-w-md` width cap, and its content (title + children
-+ footer) can grow taller than the visible desktop window. This is visible in the Application
-Recovery Policy JSON dialog: with 4 checks plus the response-body JSON viewer, the modal can
-exceed a shorter desktop browser window, pushing the footer or content out of view with no way to
-scroll to it.
-
-Fix: cap the dialog's total height to a fraction of the viewport (`max-h-[90vh]`) and make the
-middle content region scroll internally, while the title bar and footer stay pinned in place —
-the standard "sticky header/footer, scrollable body" modal pattern.
-
-### Architecture Decisions
-
-- **Change lives entirely in `Modal.tsx`**, the single shared shell — no changes needed in
-  `ChecklistResultDialog` or any of the 10 components that use `Modal` directly (see below), since
-  none of them currently set their own height/overflow handling that would conflict.
-- **`max-h-[90vh]` on the outer dialog `div`**, with `flex flex-col` so title/children/footer stack
-  vertically and the height cap can be distributed between them.
-- **Only the `children` region scrolls** (`overflow-y-auto` on a wrapping div, `flex-1 min-h-0` so
-  it shrinks correctly inside the flex column) — the title bar and footer are never clipped or
-  scrolled away, matching the existing visual pattern where they're visually pinned by borders
-  (`border-b`, `border-t`).
-- **10 existing consumers of `Modal`** are affected by this shared change:
-  `ChecklistResultDialog`, `ProvidersCreateModal`, `RecoveryGroupRollbackSuccessModal`,
-  `SnapshotPolicyModal`, `CleanRoomPolicyModal`, `RecoveryAppPolicyModal`, `PolicySetModal`,
-  `PlatformProvidersModal`, `DataTableToolbar`, `CredentialCreateModal`. None were found to render
-  their own dropdown/popover content that depends on the modal body overflowing visibly (checked
-  `ProvidersCreateModal` as a representative form modal — no absolute-positioned dropdown found),
-  but this needs a manual spot-check per Task 6 below since `overflow-y-auto` can clip a
-  non-portaled dropdown menu if one exists in a form modal.
-- **No new "automated" sizing logic (JS-measured viewport, ResizeObserver, etc.)** — a CSS
-  `vh`-based max-height is the standard, zero-JS way to keep a fixed-position modal within the
-  desktop viewport, and matches the complexity level of the rest of `Modal.tsx` (no existing
-  runtime size calculations to extend).
-
-### Task List
-
-- [ ] Task 6: Cap `Modal.tsx` height to viewport with internal scroll, spot-check all 10 consumers
-
-### Checkpoint: Modal fits desktop viewport
-- [ ] The Application Recovery Policy JSON dialog (and Snapshot/Clean Room equivalents) never
-      exceeds the visible browser window at common desktop sizes (1366x768 through 1920x1080),
-      with the checks list and JSON response scrolling internally instead
-- [ ] Title bar and footer buttons (Retry/Close, Save/Cancel, etc.) remain visible and unscrolled
-      in every one of the 10 `Modal` consumers
-- [ ] No dropdown, select, or popover in any form modal (`ProvidersCreateModal`,
-      `PlatformProvidersModal`, `CredentialCreateModal`, the three policy modals, `PolicySetModal`)
-      gets visually clipped by the new `overflow-y-auto` region
-
-### Risks and Mitigations (addendum)
-
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| A form modal renders a dropdown/combobox that isn't portaled outside the scroll container | Medium — dropdown options could be visually clipped/cut off when opened near the modal's bottom edge | Manually open every dropdown/select in each of the 6 form-style modals after the change and confirm nothing is clipped; if one is found, that field's dropdown needs a portal (out of scope to fix here — flag and report instead of silently patching) |
-| `90vh` is too aggressive on very short windows (e.g. laptop with browser chrome taking significant vertical space) and clips content awkwardly | Low | `90vh` leaves 10% margin top+bottom, consistent with common modal UX conventions; can be tuned to `85vh` if manual testing shows it's too tight |
-
-## Open Questions (addendum)
-
-- None — scope confirmed with user as "cap modal height to viewport, scroll inside" (option
-  selected over "also scale width" or a custom breakpoint scheme).
+None outstanding — all three ambiguous points (tab pattern, old nav item fate,
+provider-id asymmetry) were resolved with the user before this plan was written.

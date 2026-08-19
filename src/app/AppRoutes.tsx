@@ -49,7 +49,7 @@ const PolicySetsPage = lazy(async () => {
 })
 
 const RecoveryRunsPage = lazy(async () => {
-  const page = await import('@/features/storage-orchestration/pages/RecoveryRunsPage')
+  const page = await import('@/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage')
   return { default: page.RecoveryRunsPage }
 })
 
@@ -289,7 +289,11 @@ export function AppRoutes() {
           </Route>
           <Route
             path="recovery-runs"
-            element={<Navigate to={routes.storageOrchestration} replace />}
+            element={(
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <RecoveryRunsPage />
+              </Suspense>
+            )}
           />
           <Route path="recovery-policies">
             <Route index element={<Navigate to={routes.recoveryPolicySnapshot} replace />} />
@@ -379,16 +383,8 @@ export function AppRoutes() {
         />
         {renderModulePageRoutes(discoveryInventoryPlaceholderPages)}
         {renderModulePageRoutes(remainingEpicPages.filter((page) => (
-          page.path !== routes.recoveryPlans && page.path !== routes.storageOrchestration
+          page.path !== routes.recoveryPlans
         )))}
-        <Route
-          path="storage-orchestration"
-          element={(
-            <Suspense fallback={<RouteLoadingSkeleton />}>
-              <RecoveryRunsPage />
-            </Suspense>
-          )}
-        />
         <Route path="*" element={<Navigate to={routes.resources} replace />} />
     </Route>
   )
