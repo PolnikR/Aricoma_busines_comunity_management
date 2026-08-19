@@ -15,7 +15,7 @@ if (typeof crypto.randomUUID !== 'function') {
 }
 
 export const keycloak = new Keycloak({
-  url: 'http://10.99.99.53:8081',
-  realm: 'aricoma',
-  clientId: 'abcm-fe',
+  url: import.meta.env.VITE_KEYCLOAK_URL,
+  realm: import.meta.env.VITE_KEYCLOAK_REALM,
+  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID,
 })
