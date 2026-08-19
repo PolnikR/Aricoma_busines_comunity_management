@@ -15,8 +15,8 @@ interface RecoveryPolicyPageShellProps {
   isFetching?: boolean
   onRefresh?: () => void
   actions?: ReactNode
-  inventoryTitle: string
-  inventoryDescription: string
+  inventoryTitle?: string
+  inventoryDescription?: string
   tabsAriaLabel: string
   children: ReactNode
 }

@@ -37,8 +37,6 @@ export function SnapshotPoliciesPage() {
             {t('pages.snapshotPolicies.addButton')}
           </Button>
         )}
-        inventoryTitle={t('pages.snapshotPolicies.inventoryTitle')}
-        inventoryDescription={t('pages.snapshotPolicies.inventoryDescription')}
       >
         <SnapshotPoliciesTable
           policies={policies}
