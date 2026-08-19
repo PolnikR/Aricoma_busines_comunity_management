@@ -8,7 +8,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 export interface CheckItem {
   name: string
   detail?: string
-  status: 'ok' | 'warning' | 'error' | string
+  status: string
 }
 
 export interface BadgeConfig {

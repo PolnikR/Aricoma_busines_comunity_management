@@ -44,7 +44,7 @@ export function RecoveryGroupRollbackResultModal({
     const errorCount = report.ibm.errors?.length ?? 0
     checks.push({
       name: t('recoveryGroups.rollback.resultIbmSection'),
-      detail: `${report.ibm.status}${errorCount > 0 ? ` - ${errorCount} errors` : ''}`,
+      detail: `${report.ibm.status}${errorCount > 0 ? ` - ${String(errorCount)} errors` : ''}`,
       status: report.ibm.status === 'ok' ? 'ok' : 'warning',
     })
   }
