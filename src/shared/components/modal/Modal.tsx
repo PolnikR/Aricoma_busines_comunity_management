@@ -89,7 +89,7 @@ export function Modal({
         ref={dialogRef}
         tabIndex={-1}
         className={cn(
-          'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-surface shadow-lg',
+          'fixed left-1/2 top-1/2 z-50 w-full max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-surface shadow-lg flex flex-col',
           size === 'lg' ? 'max-w-2xl' : 'max-w-md',
           className,
         )}
@@ -103,7 +103,9 @@ export function Modal({
             <h2 className="text-base font-semibold text-text-primary">{title}</h2>
           </div>
         ) : null}
-        {children}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {children}
+        </div>
         {footer ? <div className="flex gap-3 border-t border-border px-6 py-4">{footer}</div> : null}
       </div>
     </>
