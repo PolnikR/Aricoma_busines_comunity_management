@@ -1,10 +1,29 @@
+import type { ReactElement } from 'react'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { RecoveryApplicationsTable } from './RecoveryApplicationsTable'
+import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 
+const navigate = vi.fn()
+
+vi.mock('react-router', async (importOriginal) => ({
+  ...await importOriginal<typeof import('react-router')>(),
+  useNavigate: () => navigate,
+}))
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+vi.mock('@/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps', () => ({
+  useOrchestratedApps: () => ({ apps: [], providerId: 'airflow-01', isLoading: false, isFetching: false, error: null, refetch: vi.fn() }),
+}))
+vi.mock('@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun', () => ({
+  useLatestOrchestratorRun: vi.fn(() => ({ latestRun: null, isLoading: false, error: null })),
+}))
+
+function renderTable(ui: ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>)
+}
 
 const application: RecoveryApplicationListItem = {
   id: 'finance-app',
@@ -52,7 +71,7 @@ const developmentApplication: RecoveryApplicationListItem = {
 
 describe('RecoveryApplicationsTable', () => {
   it('shows generated response contract diagnostics in the request error state', () => {
-    render(
+    renderTable(
       <RecoveryApplicationsTable
         applications={[]}
         error={new Error('GET /get_recovery_apps response does not match OpenAPI: applications: expected array')}
@@ -65,7 +84,7 @@ describe('RecoveryApplicationsTable', () => {
   it('opens backend application details and dispatches Edit without Delete', async () => {
     const user = userEvent.setup()
     const onEdit = vi.fn()
-    render(<RecoveryApplicationsTable applications={[application]} onEdit={onEdit} />)
+    renderTable(<RecoveryApplicationsTable applications={[application]} onEdit={onEdit} />)
 
     await user.click(screen.getByText('Finance Recovery'))
     const drawer = screen.getByRole('dialog', { name: 'Application detail' })
@@ -96,7 +115,7 @@ describe('RecoveryApplicationsTable', () => {
         push_to_orchestrator: true,
       },
     }
-    render(<RecoveryApplicationsTable applications={[applicationWithRawRecord]} />)
+    renderTable(<RecoveryApplicationsTable applications={[applicationWithRawRecord]} />)
 
     await user.click(screen.getByRole('button', { name: 'View' }))
     const modal = screen.getByRole('dialog', { name: 'Application JSON' })
@@ -112,7 +131,7 @@ describe('RecoveryApplicationsTable', () => {
 
   it('falls back to the mapped application when no raw GET record is available', async () => {
     const user = userEvent.setup()
-    render(<RecoveryApplicationsTable applications={[developmentApplication]} />)
+    renderTable(<RecoveryApplicationsTable applications={[developmentApplication]} />)
 
     await user.click(screen.getByRole('button', { name: 'View' }))
 
@@ -124,7 +143,7 @@ describe('RecoveryApplicationsTable', () => {
 
   it('filters applications by environment and platform and reports the active count', async () => {
     const user = userEvent.setup()
-    render(<RecoveryApplicationsTable applications={[application, developmentApplication]} />)
+    renderTable(<RecoveryApplicationsTable applications={[application, developmentApplication]} />)
 
     await user.click(screen.getByRole('button', { name: 'Filters' }))
     const modal = screen.getByRole('dialog', { name: 'Filter recovery applications' })
@@ -145,7 +164,7 @@ describe('RecoveryApplicationsTable', () => {
 
   it('does not apply pending filter changes when the modal is cancelled', async () => {
     const user = userEvent.setup()
-    render(<RecoveryApplicationsTable applications={[application, developmentApplication]} />)
+    renderTable(<RecoveryApplicationsTable applications={[application, developmentApplication]} />)
 
     await user.click(screen.getByRole('button', { name: 'Filters' }))
     const modal = screen.getByRole('dialog', { name: 'Filter recovery applications' })
@@ -154,5 +173,35 @@ describe('RecoveryApplicationsTable', () => {
 
     expect(screen.getByText('Finance Recovery')).toBeInTheDocument()
     expect(screen.getByText('Development Recovery')).toBeInTheDocument()
+  })
+
+  it('shows orchestrator status and navigates to Recovery Runs when the app is orchestrated', async () => {
+    vi.mocked(useLatestOrchestratorRun).mockReturnValue({
+      latestRun: { runId: 'r1', status: 'success', startedAt: '2026-08-19T08:51:00Z', endedAt: '2026-08-19T08:51:07Z', durationSeconds: 7.45 },
+      isLoading: false,
+      error: null,
+    })
+    const user = userEvent.setup()
+    renderTable(<RecoveryApplicationsTable applications={[application]} />)
+
+    await user.click(screen.getByText('Finance Recovery'))
+    const drawer = screen.getByRole('dialog', { name: 'Application detail' })
+
+    expect(within(drawer).getByText('dag_260811133132_fbffbefb')).toBeInTheDocument()
+    expect(within(drawer).getByText('success')).toBeInTheDocument()
+
+    await user.click(within(drawer).getByRole('button', { name: 'View recovery runs →' }))
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-runs?tab=applications&entityId=finance-app')
+  })
+
+  it('shows no orchestrator status when the app was never pushed to orchestration', async () => {
+    const user = userEvent.setup()
+    renderTable(<RecoveryApplicationsTable applications={[developmentApplication]} />)
+
+    await user.click(screen.getByText('Development Recovery'))
+    const drawer = screen.getByRole('dialog', { name: 'Application detail' })
+
+    expect(within(drawer).queryByText('Airflow DAG ID')).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole('button', { name: 'View recovery runs →' })).not.toBeInTheDocument()
   })
 })

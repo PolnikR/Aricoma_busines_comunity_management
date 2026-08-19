@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { routes } from '@/app/routes'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
@@ -15,6 +17,9 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
+import { useOrchestratedApps } from '@/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps'
+import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
+import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/features/recovery-plans/recovery-runs/helpers/formatRecoveryRun'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 import type { RollbackReport } from '../api/schemas/recoveryApplicationsSchema'
 import { toRecoveryApplicationJson } from '../helpers/mapRecoveryApplications'
@@ -143,6 +148,19 @@ export function RecoveryApplicationsTable({
   const selected = rows.find((app) => app.id === selectedId) ?? null
   const jsonViewed = rows.find((app) => app.id === jsonViewId) ?? null
   const activeFilterCount = Number(Boolean(filters.environment)) + Number(Boolean(filters.platform))
+
+  const navigate = useNavigate()
+  // Interim: Applications don't have their own orchestration provider id yet
+  // (Recovery Groups do) — share the same eligible-provider lookup used by
+  // the Recovery Runs page until the backend ships one (tasks/plan.md Task 2b).
+  const { providerId: orchestratorProviderId } = useOrchestratedApps()
+  const selectedAirflowRunId = selected?.pushToOrchestrator ? selected.airflowRunId : null
+  const isSelectedOrchestrated = Boolean(selectedAirflowRunId)
+  const selectedDagId = selectedAirflowRunId ? `dag_${selectedAirflowRunId}` : null
+  const { latestRun } = useLatestOrchestratorRun(
+    isSelectedOrchestrated ? orchestratorProviderId : null,
+    selectedDagId,
+  )
 
   const columns = useMemo(() => [
     ...getBaseColumns(t, providers),
@@ -331,6 +349,31 @@ export function RecoveryApplicationsTable({
                 }
               />
             )}
+            {isSelectedOrchestrated ? (
+              <>
+                <DetailRow label={t('details.airflowDagId')} value={<span className="font-mono text-xs">{selectedDagId}</span>} />
+                <DetailRow
+                  label={t('details.latestRunStatus')}
+                  value={latestRun ? (
+                    <Badge color={runStatusBadgeColor(latestRun.status)} size="sm">{latestRun.status}</Badge>
+                  ) : (
+                    <span className="text-text-subtle">{t('recoveryRuns.table.noRuns')}</span>
+                  )}
+                />
+                <DetailRow label={t('details.lastExecuted')} value={formatRunTimestamp(latestRun?.startedAt ?? null)} />
+                <DetailRow label={t('details.duration')} value={formatRunDuration(latestRun?.durationSeconds ?? null)} />
+                <Button
+                  size="sm"
+                  variant="soft"
+                  className="w-full"
+                  onClick={() => {
+                    void navigate(`${routes.recoveryRuns}?tab=applications&entityId=${selected.id}`)
+                  }}
+                >
+                  {t('buttons.viewRecoveryRuns')}
+                </Button>
+              </>
+            ) : null}
           </dl>
         ) : null}
       </DetailDrawer>
