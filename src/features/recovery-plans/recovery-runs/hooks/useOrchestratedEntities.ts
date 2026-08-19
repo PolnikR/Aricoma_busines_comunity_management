@@ -12,28 +12,16 @@ interface UseOrchestratedEntitiesResult {
 }
 
 // Merges orchestrated Applications and Recovery Groups into one normalized
-// list. Applications currently resolve providerId via a single shared
-// eligible-provider lookup (useOrchestratedApps); Recovery Groups resolve it
-// per-record (useOrchestratedGroups) — both are folded into OrchestratedEntity
-// here so downstream consumers (tabs, runs-fetching, detail panels) never
-// need to know about that asymmetry.
+// list. Both resolve their own providerId per-record (useOrchestratedApps,
+// useOrchestratedGroups), so this is a flat concatenation.
 export function useOrchestratedEntities(): UseOrchestratedEntitiesResult {
   const appsResult = useOrchestratedApps()
   const groupsResult = useOrchestratedGroups()
 
-  const { apps, providerId } = appsResult
-
-  const entities = useMemo<OrchestratedEntity[]>(() => {
-    if (!providerId) return groupsResult.entities
-    const appEntities: OrchestratedEntity[] = apps.map(app => ({
-      entityType: 'application' as const,
-      id: app.id,
-      name: app.name,
-      dagId: app.dagId,
-      providerId,
-    }))
-    return [...appEntities, ...groupsResult.entities]
-  }, [apps, providerId, groupsResult.entities])
+  const entities = useMemo<OrchestratedEntity[]>(
+    () => [...appsResult.entities, ...groupsResult.entities],
+    [appsResult.entities, groupsResult.entities],
+  )
 
   return {
     entities,

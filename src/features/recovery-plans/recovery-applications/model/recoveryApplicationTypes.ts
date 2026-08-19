@@ -86,6 +86,7 @@ export interface RecoveryApplicationApiRecord {
   application: RecoveryApplicationData['application']
   airflow_run_id?: string | null | undefined
   push_to_orchestrator?: boolean | null | undefined
+  orchestration_provider_id?: string | null | undefined
 }
 
 export interface RecoveryApplicationListItem {
@@ -106,6 +107,7 @@ export interface RecoveryApplicationListItem {
   }
   airflowRunId?: string | null | undefined
   pushToOrchestrator?: boolean | undefined
+  orchestrationProviderId?: string | null | undefined
   submission?: ApplicationSubmission
   /** Validated GET record before UI mapping; unknown API fields are removed by Zod. */
   rawRecord?: RecoveryAppRecordOutput | undefined

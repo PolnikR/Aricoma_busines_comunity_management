@@ -39,6 +39,9 @@ export function mapRecoveryApplications(
     ...(record.push_to_orchestrator != null
       ? { pushToOrchestrator: record.push_to_orchestrator }
       : {}),
+    ...(record.orchestration_provider_id !== undefined
+      ? { orchestrationProviderId: record.orchestration_provider_id }
+      : {}),
   }))
 }
 
@@ -54,6 +57,9 @@ export function toRecoveryApplicationJson(
     ...(application.airflowRunId !== undefined ? { airflow_run_id: application.airflowRunId } : {}),
     ...(application.pushToOrchestrator !== undefined
       ? { push_to_orchestrator: application.pushToOrchestrator }
+      : {}),
+    ...(application.orchestrationProviderId !== undefined
+      ? { orchestration_provider_id: application.orchestrationProviderId }
       : {}),
   }
 }

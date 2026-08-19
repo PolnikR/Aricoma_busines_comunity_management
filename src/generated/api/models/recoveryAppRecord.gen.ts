@@ -16,5 +16,6 @@ export interface RecoveryAppRecord {
   policy_set_id?: string | null;
   airflow_run_id?: string | null;
   push_to_orchestrator?: boolean | null;
+  orchestration_provider_id?: string | null;
   [key: string]: unknown;
  }

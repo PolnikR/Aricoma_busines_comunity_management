@@ -1,12 +1,9 @@
 import { useMemo } from 'react'
 import { useRecoveryApplications } from '@/features/recovery-plans/recovery-applications/hooks/useRecoveryApplications'
-import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
-import { getEligiblePlatformProviders } from '@/features/recovery-plans/recovery-applications/utils/eligibleProviders'
-import type { OrchestratedApp } from '../model/recoveryRunTypes'
+import type { OrchestratedEntity } from '../model/recoveryRunTypes'
 
 interface UseOrchestratedAppsResult {
-  apps: OrchestratedApp[]
-  providerId: string | null
+  entities: OrchestratedEntity[]
   isLoading: boolean
   isFetching: boolean
   error: Error | null
@@ -19,43 +16,35 @@ interface UseOrchestratedAppsResult {
 // partway). The DAG id itself is `dag_${airflow_run_id}`, not the app's own
 // id (confirmed against the OpenAPI spec's description text for the
 // rollback endpoints, which reference the same "dag_<run_id>" convention).
+// Applications now carry their own orchestrationProviderId per record, same
+// as Recovery Groups (see useOrchestratedGroups), so an app is only queryable
+// once it has both a real airflowRunId and a resolved orchestrationProviderId.
 export function useOrchestratedApps(): UseOrchestratedAppsResult {
   const applicationsQuery = useRecoveryApplications()
-  const platformProvidersQuery = usePlatformProviders()
 
-  const apps = useMemo(() => {
+  const entities = useMemo(() => {
     const records = applicationsQuery.data ?? []
-    const orchestrated: OrchestratedApp[] = []
+    const orchestrated: OrchestratedEntity[] = []
     for (const record of records) {
       const runId = record.airflowRunId
-      if (!runId) continue
+      const providerId = record.orchestrationProviderId
+      if (!runId || !providerId) continue
       orchestrated.push({
+        entityType: 'application',
         id: record.id,
         name: record.data.application.name,
         dagId: `dag_${runId}`,
+        providerId,
       })
     }
     return orchestrated
   }, [applicationsQuery.data])
 
-  const providerId = useMemo(() => {
-    const eligible = getEligiblePlatformProviders(platformProvidersQuery.data ?? [])
-    return eligible[0]?.id ?? null
-  }, [platformProvidersQuery.data])
-
   return {
-    apps,
-    providerId,
-    isLoading: applicationsQuery.isLoading || platformProvidersQuery.isLoading,
-    isFetching: applicationsQuery.isFetching || platformProvidersQuery.isFetching,
-    error: applicationsQuery.error instanceof Error
-      ? applicationsQuery.error
-      : platformProvidersQuery.error instanceof Error
-        ? platformProvidersQuery.error
-        : null,
-    refetch: () => {
-      void applicationsQuery.refetch()
-      void platformProvidersQuery.refetch()
-    },
+    entities,
+    isLoading: applicationsQuery.isLoading,
+    isFetching: applicationsQuery.isFetching,
+    error: applicationsQuery.error instanceof Error ? applicationsQuery.error : null,
+    refetch: () => { void applicationsQuery.refetch() },
   }
 }

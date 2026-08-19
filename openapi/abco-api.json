@@ -4010,6 +4010,17 @@
               }
             ],
             "title": "Push To Orchestrator"
+          },
+          "orchestration_provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Orchestration Provider Id"
           }
         },
         "additionalProperties": true,

@@ -397,7 +397,8 @@ export const RecoveryAppRecord = zod.object({
   "application": RecoveryApplication,
   "policy_set_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "airflow_run_id": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "push_to_orchestrator": zod.union([zod.boolean(),zod.null()]).exactOptional()
+  "push_to_orchestrator": zod.union([zod.boolean(),zod.null()]).exactOptional(),
+  "orchestration_provider_id": zod.union([zod.string(),zod.null()]).exactOptional()
 }).describe('\'application\' shape mirrors what apache_airflow\/dags\/recovery_app_template.py\naccesses unconditionally - see recovery.recovery.RecoveryApplication.');
 
 export type RecoveryAppRecord = zod.input<typeof RecoveryAppRecord>;
