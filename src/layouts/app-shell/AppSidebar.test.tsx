@@ -27,6 +27,22 @@ describe('AppSidebar', () => {
     )
   })
 
+  it('shows Recovery Runs in the Recovery Plans section', async () => {
+    render(
+      <MemoryRouter initialEntries={['/recovery-plans/recovery-runs']}>
+        <LanguageProvider>
+          <SidebarProvider>
+            <AppSidebar />
+          </SidebarProvider>
+        </LanguageProvider>
+      </MemoryRouter>,
+    )
+
+    const link = await screen.findByRole('link', { name: 'Recovery Runs' }, { timeout: 5000 })
+    expect(link).toHaveAttribute('href', '/recovery-plans/recovery-runs')
+    expect(link).toHaveClass('bg-accent-soft', 'text-accent')
+  })
+
   it('links Recovery Policies from the Recovery Plans section', async () => {
     render(
       <MemoryRouter initialEntries={['/recovery-plans/recovery-policies/snapshot']}>
