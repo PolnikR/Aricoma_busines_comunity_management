@@ -3,8 +3,8 @@
 See `tasks/plan.md` for full detail, acceptance criteria, and file lists.
 
 ## Phase 1: Move (no behavior change)
-- [ ] Task 1: Relocate `src/features/storage-orchestration/` → `src/features/recovery-plans/recovery-runs/`; update `routes.ts` / `AppRoutes.tsx` / `AppSidebar.tsx`
-- [ ] Checkpoint: `/recovery-plans/recovery-runs` works, `/storage-orchestration` shows placeholder, `tsc --noEmit` clean
+- [x] Task 1: Relocate `src/features/storage-orchestration/` → `src/features/recovery-plans/recovery-runs/`; update `routes.ts` / `AppRoutes.tsx` / `AppSidebar.tsx`
+- [x] Checkpoint: `/recovery-plans/recovery-runs` works, `/storage-orchestration` shows placeholder, `tsc --noEmit` clean (verified: tsc clean, 7 test files / 20 tests pass unchanged, eslint clean)
 
 ## Phase 2: Data layer
 - [ ] Task 2: Add `orchestration_provider_id`/`orchestrationProviderId` to Recovery Application schema + mapper (backend now returns it, same as groups); add `OrchestratedEntity` type; add `useOrchestratedGroups`; add `useOrchestratedEntities`; generalize `useOrchestratedAppRuns` → `useOrchestratedEntityRuns` (drop `usePlatformProviders`/`getEligiblePlatformProviders` fallback); add `useLatestOrchestratorRun`
