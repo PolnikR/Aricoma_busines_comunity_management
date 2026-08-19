@@ -1541,8 +1541,6 @@
   "tables.policySet.name": "Name",
   "tables.policySet.description": "Description",
   "tables.policySet.policies": "Policies",
-  "tables.policySet.snapshotPolicies": "Snapshot policies",
-  "tables.policySet.recoveryAppPolicy": "Recovery app policy",
   "pages.policySets.eyebrow": "Recovery Plans",
   "pages.policySets.title": "Policy Sets",
   "pages.policySets.description": "Group snapshot policies into reusable sets that recovery groups can reference.",

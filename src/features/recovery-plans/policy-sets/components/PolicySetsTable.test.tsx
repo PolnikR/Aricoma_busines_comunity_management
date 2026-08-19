@@ -33,6 +33,15 @@ const policySet: PolicySet = {
   cleanRoomPolicyId: 'enforce-clean-target',
 }
 
+const partialPolicySet: PolicySet = {
+  id: 'tier3-apps',
+  name: 'Tier 3 applications',
+  description: 'Policy set with only a snapshot policy assigned.',
+  snapshotPolicyId: 'medium-6h',
+  recoveryAppPolicyId: '',
+  cleanRoomPolicyId: '',
+}
+
 describe('PolicySetsTable', () => {
   it('keeps pagination outside a desktop-only table scroll region', () => {
     const { container } = render(
@@ -66,7 +75,7 @@ describe('PolicySetsTable', () => {
     )
 
     expect(screen.getByRole('searchbox', { name: 'Search policy sets' })).toBeInTheDocument()
-    expect(screen.getByText('1')).toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('Tier 2 applications'))
     const detail = screen.getByRole('dialog', { name: 'Policy set detail' })
@@ -98,6 +107,20 @@ describe('PolicySetsTable', () => {
     expect(dialog).toHaveTextContent('"clean_room_policy_id": "enforce-clean-target"')
     expect(dialog).not.toHaveTextContent('"snapshotPolicyId"')
     expect(screen.queryByRole('dialog', { name: 'Policy set detail' })).not.toBeInTheDocument()
+  })
+
+  it('shows a partial policies count when only some policy types are assigned', () => {
+    render(
+      <PolicySetsTable
+        policySets={[partialPolicySet]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('1')).toBeInTheDocument()
   })
 
   it('keeps table controls available while showing a shared request error', () => {

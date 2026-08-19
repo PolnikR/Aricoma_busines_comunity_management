@@ -22,9 +22,13 @@ import { useDeletePolicySet } from '../hooks/useDeletePolicySet'
 import type { PolicySet } from '../model/policySetTypes'
 import { PolicySetModal } from './PolicySetModal'
 
+function countPolicies(policySet: PolicySet): number {
+  return [policySet.snapshotPolicyId, policySet.recoveryAppPolicyId, policySet.cleanRoomPolicyId]
+    .filter(Boolean).length
+}
+
 function getColumns(
   t: ReturnType<typeof useTranslation>['t'],
-  recoveryAppPolicyName: (policyId: string) => string,
   onViewJson: (policySetId: string) => void,
 ): ColumnDef<PolicySet>[] {
   return [
@@ -44,15 +48,10 @@ function getColumns(
       cell: policySet => <span className="block max-w-md truncate" title={policySet.description}>{policySet.description || '-'}</span>,
     },
     {
-      id: 'snapshotPolicies',
-      header: t('tables.policySet.snapshotPolicies'),
+      id: 'policies',
+      header: t('tables.policySet.policies'),
       align: 'right',
-      cell: policySet => policySet.snapshotPolicyId ? '1' : '0',
-    },
-    {
-      id: 'recoveryAppPolicy',
-      header: t('tables.policySet.recoveryAppPolicy'),
-      cell: policySet => recoveryAppPolicyName(policySet.recoveryAppPolicyId),
+      cell: policySet => String(countPolicies(policySet)),
     },
     {
       id: 'json',
@@ -100,7 +99,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
   const cleanRoomPolicyName = (policyId: string) => availableCleanRoomPolicies.find(policy => policy.id === policyId)?.name ?? policyId
 
   if (isLoading) {
-    return <DataTableSkeleton columnCount={5} ariaLabel={t('policySets.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
+    return <DataTableSkeleton columnCount={4} ariaLabel={t('policySets.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
   }
 
   return (
@@ -124,7 +123,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
           } : null}
         >
           <DataTable
-            columns={getColumns(t, recoveryAppPolicyName, setJsonViewId)}
+            columns={getColumns(t, setJsonViewId)}
             rows={table.pageItems}
             rowKey={policySet => policySet.id}
             density={table.density}

@@ -1504,8 +1504,6 @@
   "tables.policySet.name": "Názov",
   "tables.policySet.description": "Popis",
   "tables.policySet.policies": "Politiky",
-  "tables.policySet.snapshotPolicies": "Politiky snímok",
-  "tables.policySet.recoveryAppPolicy": "Politika obnovy aplikácie",
   "pages.policySets.eyebrow": "Plány obnovy",
   "pages.policySets.title": "Sady politík",
   "pages.policySets.description": "Zoskupte politiky snímok do opakovane použiteľných sád, na ktoré sa môžu odkazovať skupiny obnovy.",

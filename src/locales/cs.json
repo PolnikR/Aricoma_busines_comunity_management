@@ -1504,8 +1504,6 @@
   "tables.policySet.name": "Název",
   "tables.policySet.description": "Popis",
   "tables.policySet.policies": "Zásady",
-  "tables.policySet.snapshotPolicies": "Zásady snímků",
-  "tables.policySet.recoveryAppPolicy": "Zásada obnovy aplikace",
   "pages.policySets.eyebrow": "Plány obnovy",
   "pages.policySets.title": "Sady zásad",
   "pages.policySets.description": "Seskupte zásady snímků do opakovaně použitelných sad, na které mohou odkazovat skupiny obnovy.",
