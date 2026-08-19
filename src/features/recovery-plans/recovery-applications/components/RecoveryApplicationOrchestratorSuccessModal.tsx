@@ -1,5 +1,6 @@
 import { ChecklistResultDialog, type CheckItem } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
+import { buildAirflowDagUrl } from '@/config/externalServices'
 import type { OrchestratorPush } from '../model/recoveryApplicationTypes'
 
 interface RecoveryApplicationOrchestratorSuccessModalProps {
@@ -7,6 +8,7 @@ interface RecoveryApplicationOrchestratorSuccessModalProps {
   onClose: () => void
   applicationName: string
   orchestratorPush: OrchestratorPush
+  providerUrl?: string | undefined
 }
 
 export function RecoveryApplicationOrchestratorSuccessModal({
@@ -14,6 +16,7 @@ export function RecoveryApplicationOrchestratorSuccessModal({
   onClose,
   applicationName,
   orchestratorPush,
+  providerUrl,
 }: RecoveryApplicationOrchestratorSuccessModalProps) {
   const { t } = useTranslation()
 
@@ -46,6 +49,10 @@ export function RecoveryApplicationOrchestratorSuccessModal({
       responseData={orchestratorPush}
       responseSchemaType="OrchestratorPush"
       onClose={onClose}
+      externalActionLabel={t('recovery.application.orchestratorModal.viewInAirflow')}
+      onExternalAction={() => {
+        window.open(buildAirflowDagUrl(orchestratorPush.dag_id, providerUrl), '_blank', 'noopener,noreferrer')
+      }}
     />
   )
 }

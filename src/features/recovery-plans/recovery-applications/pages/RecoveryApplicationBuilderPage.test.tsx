@@ -29,6 +29,16 @@ vi.mock('../hooks/useRecoveryApplications', () => ({
   }),
 }))
 
+vi.mock('@/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps', () => ({
+  useOrchestratedApps: () => ({ apps: [], providerId: 'airflow-01', isLoading: false, isFetching: false, error: null, refetch: vi.fn() }),
+}))
+
+vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
+  usePlatformProviders: () => ({
+    data: [{ id: 'airflow-01', name: 'Dynamic Airflow', url: 'https://airflow.dynamic.test:8443' }],
+  }),
+}))
+
 vi.mock('../components/RecoveryAppBuilder', () => ({
   RecoveryAppBuilder: ({
     onSave,
@@ -144,6 +154,15 @@ describe('RecoveryApplicationBuilderPage', () => {
     expect(screen.getAllByText(/\/home\/airflow\/dags\/finance\.py/).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/dag_finance/).length).toBeGreaterThan(0)
     expect(navigate).not.toHaveBeenCalled()
+
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    await user.click(screen.getByRole('button', { name: 'View in Airflow' }))
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://airflow.dynamic.test:8443/dags/dag_finance',
+      '_blank',
+      'noopener,noreferrer',
+    )
+    openSpy.mockRestore()
 
     await user.click(screen.getByRole('button', { name: 'Close' }))
     expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')

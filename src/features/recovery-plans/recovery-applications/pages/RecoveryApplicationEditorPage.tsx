@@ -19,6 +19,8 @@ import {
 import type { OrchestratorPush, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
+import { useOrchestratedApps } from '@/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps'
+import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
 
 export function RecoveryApplicationEditorPage() {
   const { t } = useTranslation()
@@ -30,6 +32,13 @@ export function RecoveryApplicationEditorPage() {
   const [orchestratorPush, setOrchestratorPush] = useState<OrchestratorPush | null>(null)
   const [orchestratedApplicationName, setOrchestratedApplicationName] = useState('')
   const navigationGuard = useUnsavedChangesGuard(isDirty)
+  // Interim: applications don't return their own orchestration provider id yet
+  // (tasks/plan.md Task 2b) — same eligible-provider lookup used elsewhere.
+  const { providerId: orchestratorProviderId } = useOrchestratedApps()
+  const { data: platformProviders = [] } = usePlatformProviders()
+  const orchestratorProviderUrl = platformProviders.find(
+    provider => provider.id === orchestratorProviderId,
+  )?.url
   const application = applications?.find(
     (item) => toRecoveryApplicationFileName(item.id) === id,
   )
@@ -155,6 +164,7 @@ export function RecoveryApplicationEditorPage() {
           }}
           applicationName={orchestratedApplicationName}
           orchestratorPush={orchestratorPush}
+          providerUrl={orchestratorProviderUrl}
         />
       ) : null}
     </div>

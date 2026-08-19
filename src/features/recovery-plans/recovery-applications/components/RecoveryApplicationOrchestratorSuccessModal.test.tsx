@@ -37,6 +37,30 @@ describe('RecoveryApplicationOrchestratorSuccessModal', () => {
     expect(onClose).toHaveBeenCalledOnce()
   })
 
+  it('opens the exact DAG using the provider URL when "View in Airflow" is clicked', async () => {
+    const user = userEvent.setup()
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+    render(
+      <RecoveryApplicationOrchestratorSuccessModal
+        open
+        onClose={vi.fn()}
+        applicationName="Finance App"
+        orchestratorPush={push}
+        providerUrl="https://airflow.dynamic.test:8443"
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'View in Airflow' }))
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://airflow.dynamic.test:8443/dags/dag_recovery',
+      '_blank',
+      'noopener,noreferrer',
+    )
+
+    openSpy.mockRestore()
+  })
+
   it('shows the full orchestrator response body for inspection', () => {
     render(
       <RecoveryApplicationOrchestratorSuccessModal

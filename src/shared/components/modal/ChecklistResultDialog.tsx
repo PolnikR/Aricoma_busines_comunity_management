@@ -37,6 +37,8 @@ export interface ChecklistResultDialogProps {
   onClose: () => void
   onRetry?: () => void
   isPending?: boolean
+  externalActionLabel?: string
+  onExternalAction?: () => void
 }
 
 function isCheckOk(status: string): boolean {
@@ -61,6 +63,8 @@ export function ChecklistResultDialog({
   onClose,
   onRetry,
   isPending = false,
+  externalActionLabel,
+  onExternalAction,
 }: ChecklistResultDialogProps) {
   const { t } = useTranslation()
   const isFailed = statusBar.status === 'error' || !isPending && statusBar.status === 'warning'
@@ -83,6 +87,11 @@ export function ChecklistResultDialog({
           {isFailed && onRetry ? (
             <Button size="sm" variant="outline" onClick={onRetry} disabled={isPending} fullWidth>
               {t('buttons.retry')}
+            </Button>
+          ) : null}
+          {externalActionLabel && onExternalAction ? (
+            <Button size="sm" variant="outline" onClick={onExternalAction} disabled={isPending} fullWidth>
+              {externalActionLabel}
             </Button>
           ) : null}
           <Button size="sm" variant="primary" onClick={onClose} disabled={isPending} fullWidth>

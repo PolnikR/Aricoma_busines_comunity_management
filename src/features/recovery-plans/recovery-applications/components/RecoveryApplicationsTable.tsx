@@ -21,6 +21,9 @@ import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useOrchestratedApps } from '@/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps'
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
 import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/features/recovery-plans/recovery-runs/helpers/formatRecoveryRun'
+import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
+import { buildAirflowDagUrl } from '@/config/externalServices'
+import { ExternalLinkIcon } from '@/shared/icons/Icons'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 import type { RollbackReport } from '../api/schemas/recoveryApplicationsSchema'
 import { toRecoveryApplicationJson } from '../helpers/mapRecoveryApplications'
@@ -156,6 +159,10 @@ export function RecoveryApplicationsTable({
   // (Recovery Groups do) — share the same eligible-provider lookup used by
   // the Recovery Runs page until the backend ships one (tasks/plan.md Task 2b).
   const { providerId: orchestratorProviderId } = useOrchestratedApps()
+  const { data: platformProviders = [] } = usePlatformProviders()
+  const selectedOrchestrationProviderUrl = platformProviders.find(
+    provider => provider.id === orchestratorProviderId,
+  )?.url
   const selectedAirflowRunId = selected?.pushToOrchestrator ? selected.airflowRunId : null
   const isSelectedOrchestrated = Boolean(selectedAirflowRunId)
   const selectedDagId = selectedAirflowRunId ? `dag_${selectedAirflowRunId}` : null
@@ -308,11 +315,12 @@ export function RecoveryApplicationsTable({
         ariaLabel={t('drawer.applicationDetail')}
         closeLabel={t('drawer.closeApplication')}
         footer={selected ? (
-          <div className="flex gap-2">
+          <>
             {onDelete ? (
               <Button
                 size="sm"
                 variant="danger"
+                className="flex-1"
                 onClick={() => { setDeleteTarget(selected) }}
               >
                 {t('buttons.delete')}
@@ -321,13 +329,13 @@ export function RecoveryApplicationsTable({
             {onEdit ? (
               <Button
                 size="sm"
-                onClick={() => { onEdit(selected.id); setSelectedId(null) }}
                 className="flex-1"
+                onClick={() => { onEdit(selected.id); setSelectedId(null) }}
               >
                 {t('buttons.edit')}
               </Button>
             ) : null}
-          </div>
+          </>
         ) : null}
       >
         {selected ? (
@@ -377,7 +385,24 @@ export function RecoveryApplicationsTable({
                 />
                 {isSelectedOrchestrated ? (
                   <>
-                    <DetailRow label={t('details.airflowDagId')} value={<span className="font-mono text-xs">{selectedDagId}</span>} />
+                    <DetailRow
+                      label={t('details.airflowDagId')}
+                      value={
+                        selectedAirflowRunId ? (
+                          <a
+                            href={buildAirflowDagUrl(selectedAirflowRunId, selectedOrchestrationProviderUrl)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-mono text-xs text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
+                          >
+                            {selectedDagId}
+                            <ExternalLinkIcon className="size-3.5 shrink-0" />
+                          </a>
+                        ) : (
+                          <span className="font-mono text-xs">{selectedDagId}</span>
+                        )
+                      }
+                    />
                     <DetailRow
                       label={t('details.latestRunStatus')}
                       value={latestRun ? (

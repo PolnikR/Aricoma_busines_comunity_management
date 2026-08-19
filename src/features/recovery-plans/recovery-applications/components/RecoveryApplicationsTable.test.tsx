@@ -20,6 +20,11 @@ vi.mock('@/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps', () 
 vi.mock('@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun', () => ({
   useLatestOrchestratorRun: vi.fn(() => ({ latestRun: null, isLoading: false, error: null })),
 }))
+vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
+  usePlatformProviders: () => ({
+    data: [{ id: 'airflow-01', name: 'Dynamic Airflow', url: 'https://airflow.dynamic.test:8443' }],
+  }),
+}))
 
 function renderTable(ui: ReactElement) {
   return render(<MemoryRouter>{ui}</MemoryRouter>)
@@ -189,7 +194,10 @@ describe('RecoveryApplicationsTable', () => {
     const drawer = screen.getByRole('dialog', { name: 'Application detail' })
     await user.click(within(drawer).getByRole('tab', { name: 'Orchestration' }))
 
-    expect(within(drawer).getByText('dag_260811133132_fbffbefb')).toBeInTheDocument()
+    expect(within(drawer).getByRole('link', { name: /dag_260811133132_fbffbefb/ })).toHaveAttribute(
+      'href',
+      'https://airflow.dynamic.test:8443/dags/dag_260811133132_fbffbefb',
+    )
     expect(within(drawer).getByText('success')).toBeInTheDocument()
 
     await user.click(within(drawer).getByRole('button', { name: 'View recovery runs →' }))
