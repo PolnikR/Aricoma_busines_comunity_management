@@ -22,4 +22,7 @@ export const discoveryInventoryKeys = {
   volumeTree: (providerId?: string, view?: string) => (
     [...discoveryInventoryKeys.all, 'volume-tree', providerId ?? null, view ?? null] as const
   ),
+  vmsByName: (prefix?: string, providerId?: string) => (
+    [...discoveryInventoryKeys.all, 'vms-by-name', prefix ?? null, providerId ?? null] as const
+  ),
 }
