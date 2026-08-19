@@ -1,16 +1,16 @@
-import type { RecoveryTier } from '../model/recoveryApplicationTypes'
+import type { DraftRecoveryTier } from '../model/recoveryApplicationTypes'
 
 interface SortedTier {
   id: string
-  tier: RecoveryTier
+  tier: DraftRecoveryTier
 }
 
 export function calculateTierReorder(
-  tiers: Record<string, RecoveryTier>,
+  tiers: Record<string, DraftRecoveryTier>,
   sortedTiers: SortedTier[],
   draggedId: string,
   targetId: string,
-): Record<string, RecoveryTier> {
+): Record<string, DraftRecoveryTier> {
   const draggedIndex = sortedTiers.findIndex(t => t.id === draggedId)
   const targetIndex = sortedTiers.findIndex(t => t.id === targetId)
 

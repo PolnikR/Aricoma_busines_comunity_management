@@ -12,17 +12,30 @@ export interface RecoveryVM {
 }
 
 export interface RecoveryGroup {
+  id: string
   name: string
   description?: string | undefined
   vms: RecoveryVM[]
   volumes?: { name: string }[] | undefined
 }
 
-export interface RecoveryTier {
+// A tier being edited in the builder, before a recovery group has necessarily
+// been attached. Only `DraftRecoveryTier` allows an absent `recovery_group` —
+// every other tier type below requires one, matching the backend contract.
+export interface DraftRecoveryTier {
   order: number
   description: string
   vms?: RecoveryVM[] | undefined
   recovery_group?: RecoveryGroup | undefined
+}
+
+// A tier ready for (or read from) the backend: submit_recovery_dag and
+// get_recovery_apps both require every tier to carry a recovery group.
+export interface RecoveryTier {
+  order: number
+  description: string
+  vms?: RecoveryVM[] | undefined
+  recovery_group: RecoveryGroup
 }
 
 export interface RecoveryApplicationData {
@@ -30,11 +43,11 @@ export interface RecoveryApplicationData {
   policy_set_id: string
   application: {
     name: string
-    description?: string | undefined
+    description: string
     environment: string
     platform: string
-    source_connection?: string | undefined
-    target_connection?: string | undefined
+    source_connection: string
+    target_connection: string
     tiers: Record<string, RecoveryTier>
   }
 }
@@ -86,7 +99,7 @@ export interface RecoveryApplicationListItem {
       platform: string
       source_connection?: string | undefined
       target_connection?: string | undefined
-      tiers: Record<string, RecoveryTier>
+      tiers: Record<string, DraftRecoveryTier>
       airflow_run_id?: string | null | undefined
       push_to_orchestrator?: boolean | undefined
     }
@@ -109,5 +122,5 @@ export interface RecoveryApplicationFormState {
   orchestrationProviderId: string
   sourceConnection: string
   targetConnection: string
-  tiers: Map<string, RecoveryTier>
+  tiers: Map<string, DraftRecoveryTier>
 }

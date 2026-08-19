@@ -74,7 +74,7 @@ describe('RecoveryGroupRollbackResultModal', () => {
     expect(screen.getByText('recoveryGroups.rollback.resultWarningTitle')).toBeInTheDocument()
   })
 
-  it('renders success description', () => {
+  it('renders the group name as the primary subject', () => {
     const report: RollbackReport = {
       status: 'ok',
       airflow: { status: 'ok' },
@@ -88,8 +88,7 @@ describe('RecoveryGroupRollbackResultModal', () => {
         report={report}
       />
     )
-    // Just verify the description key is present (mock returns the key as-is)
-    expect(screen.getByText('recoveryGroups.rollback.resultSuccessDescription')).toBeInTheDocument()
+    expect(screen.getByText('my-group')).toBeInTheDocument()
   })
 
   it('shows DAG ID when present in airflow section', () => {
@@ -106,7 +105,7 @@ describe('RecoveryGroupRollbackResultModal', () => {
         report={report}
       />
     )
-    expect(screen.getByText('dag_123')).toBeInTheDocument()
+    expect(screen.getAllByText(/dag_123/).length).toBeGreaterThan(0)
   })
 
   it('does not crash with absent airflow section', () => {

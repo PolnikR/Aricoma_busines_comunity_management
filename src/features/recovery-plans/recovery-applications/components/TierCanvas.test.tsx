@@ -2,15 +2,16 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { TierCanvas } from './TierCanvas'
-import type { RecoveryTier } from '../model/recoveryApplicationTypes'
+import type { DraftRecoveryTier } from '../model/recoveryApplicationTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
-const mockTiers: Record<string, RecoveryTier> = {
+const mockTiers: Record<string, DraftRecoveryTier> = {
   database: {
     order: 1,
     description: 'Database tier',
     recovery_group: {
+      id: 'database_group',
       name: 'Database',
       description: 'Database recovery group',
       vms: [{ name: 'DB-01' }],
@@ -20,6 +21,7 @@ const mockTiers: Record<string, RecoveryTier> = {
     order: 2,
     description: 'App tier',
     recovery_group: {
+      id: 'application_group',
       name: 'Application',
       description: 'Application recovery group',
       vms: [{ name: 'APP-01' }],
@@ -29,6 +31,7 @@ const mockTiers: Record<string, RecoveryTier> = {
     order: 3,
     description: 'Web tier',
     recovery_group: {
+      id: 'web_group',
       name: 'Web',
       description: 'Web recovery group',
       vms: [{ name: 'WEB-01' }],
@@ -140,7 +143,7 @@ describe('TierCanvas', () => {
   it('disables Delete button on last remaining tier', () => {
     const database = mockTiers['database']
     expect(database).toBeDefined()
-    const singleTier: Record<string, RecoveryTier> = {
+    const singleTier: Record<string, DraftRecoveryTier> = {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       database: database!,
     }

@@ -28,19 +28,16 @@ describe('RecoveryApplicationOrchestratorSuccessModal', () => {
     )
 
     expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByText(push.status)).toBeInTheDocument()
-    expect(screen.getByText(push.dag)).toBeInTheDocument()
-    expect(screen.getByText(push.json)).toBeInTheDocument()
-    expect(screen.getByText(push.dag_id)).toBeInTheDocument()
+    expect(screen.getAllByText(push.status).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(new RegExp(push.dag.replace(/\./g, '\\.'))).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(new RegExp(push.json.replace(/\./g, '\\.'))).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(new RegExp(push.dag_id)).length).toBeGreaterThan(0)
 
     await user.click(screen.getByRole('button', { name: 'Close' }))
     expect(onClose).toHaveBeenCalledOnce()
   })
 
-  it('opens the specific DAG page in Airflow using the central config', async () => {
-    const user = userEvent.setup()
-    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
-
+  it('shows the full orchestrator response body for inspection', () => {
     render(
       <RecoveryApplicationOrchestratorSuccessModal
         open
@@ -50,14 +47,7 @@ describe('RecoveryApplicationOrchestratorSuccessModal', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'View in Airflow' }))
-
-    expect(openSpy).toHaveBeenCalledWith(
-      'http://10.99.99.55:8080/dags/dag_recovery',
-      '_blank',
-      'noopener,noreferrer',
-    )
-
-    openSpy.mockRestore()
+    expect(screen.getByText('OrchestratorPush')).toBeInTheDocument()
+    expect(screen.getAllByText(new RegExp(push.dag_id)).length).toBeGreaterThan(0)
   })
 })

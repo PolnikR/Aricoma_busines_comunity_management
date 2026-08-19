@@ -49,8 +49,8 @@ export function RecoveryPolicyPageShell({
 
       <div className="flex-1 overflow-hidden p-3 lg:min-h-0">
         <InventoryShell
-          inventoryTitle={inventoryTitle}
-          inventoryDescription={inventoryDescription}
+          {...(inventoryTitle !== undefined ? { inventoryTitle } : {})}
+          {...(inventoryDescription !== undefined ? { inventoryDescription } : {})}
           tabs={(
             <Tabs
               items={tabs}

@@ -2,14 +2,15 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { TierCard } from './TierCard'
-import type { RecoveryTier } from '../model/recoveryApplicationTypes'
+import type { DraftRecoveryTier } from '../model/recoveryApplicationTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
-const mockTier: RecoveryTier = {
+const mockTier: DraftRecoveryTier = {
   order: 1,
   description: 'Database server group',
   recovery_group: {
+    id: 'database_group',
     name: 'Database',
     description: 'Database recovery group',
     vms: [],
@@ -221,6 +222,7 @@ describe('TierCard', () => {
         tier={{
           ...mockTier,
           recovery_group: {
+            id: 'database_group',
             name: 'Database',
             description: 'Database recovery group',
             vms: Array.from({ length: 10 }, (_, index) => ({ name: `DB-${String(index + 1)}` })),
@@ -247,6 +249,7 @@ describe('TierCard', () => {
         tier={{
           ...mockTier,
           recovery_group: {
+            id: 'database_group',
             name: 'Database',
             description: 'Database recovery group',
             vms: [{ name: 'DB-01' }],

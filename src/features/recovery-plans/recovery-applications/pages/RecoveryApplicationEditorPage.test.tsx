@@ -32,6 +32,7 @@ const application: RecoveryApplicationListItem = {
           order: 1,
           description: 'Database tier',
           recovery_group: {
+            id: 'database_group',
             name: 'database_group',
             description: 'Database recovery group',
             vms: [{ name: 'db-01' }],

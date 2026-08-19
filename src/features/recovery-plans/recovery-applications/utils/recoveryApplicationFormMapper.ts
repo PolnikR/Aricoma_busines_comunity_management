@@ -1,4 +1,5 @@
 import type {
+  DraftRecoveryTier,
   RecoveryApplicationData,
   RecoveryApplicationFormState,
   RecoveryApplicationListItem,
@@ -10,7 +11,7 @@ function toFormEnvironment(environment: string): string {
   return environment
 }
 
-export function cloneTier(tier: RecoveryTier): RecoveryTier {
+export function cloneTier(tier: DraftRecoveryTier): DraftRecoveryTier {
   if (!tier.recovery_group) {
     return { ...tier }
   }
@@ -25,6 +26,17 @@ export function cloneTier(tier: RecoveryTier): RecoveryTier {
         : {}),
     },
   }
+}
+
+// Submission tiers must carry a recovery group. The builder's Save button is
+// already gated on every tier having one (see RecoveryAppBuilder's
+// canSaveApplication check), so a missing group here means that gate was
+// bypassed — fail loudly rather than send an invalid payload.
+function toSubmittableTier(id: string, tier: DraftRecoveryTier): RecoveryTier {
+  if (!tier.recovery_group) {
+    throw new Error(`Tier "${id}" has no recovery group attached`)
+  }
+  return { ...cloneTier(tier), recovery_group: tier.recovery_group }
 }
 
 export function toRecoveryApplicationFormState(
@@ -63,7 +75,7 @@ export function toRecoveryApplicationData(
       source_connection: formState.sourceConnection,
       target_connection: formState.targetConnection,
       tiers: Object.fromEntries(
-        Array.from(formState.tiers.entries()).map(([id, tier]) => [id, cloneTier(tier)]),
+        Array.from(formState.tiers.entries()).map(([id, tier]) => [id, toSubmittableTier(id, tier)]),
       ),
     },
   }

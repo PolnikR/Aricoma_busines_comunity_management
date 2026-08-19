@@ -21,6 +21,7 @@ const application: RecoveryApplicationListItem = {
           order: 1,
           description: 'Database server tier',
           recovery_group: {
+            id: 'database_group',
             name: 'database_group',
             description: 'Database recovery group',
             vms: [{ name: 'db-01' }],
@@ -76,7 +77,7 @@ describe('recoveryApplicationFormMapper', () => {
     })
   })
 
-  it('preserves a tier without recovery_group', () => {
+  it('preserves a tier without recovery_group in form state, but refuses to submit it', () => {
     const applicationWithoutGroup: RecoveryApplicationListItem = {
       ...application,
       data: {
@@ -97,10 +98,9 @@ describe('recoveryApplicationFormMapper', () => {
       order: 1,
       description: 'Database server tier',
     })
-    expect(toRecoveryApplicationData(formState).application.tiers['database']).toEqual({
-      order: 1,
-      description: 'Database server tier',
-    })
+    expect(() => toRecoveryApplicationData(formState)).toThrow(
+      'Tier "database" has no recovery group attached',
+    )
   })
 
   it('preserves an environment value introduced by the backend', () => {

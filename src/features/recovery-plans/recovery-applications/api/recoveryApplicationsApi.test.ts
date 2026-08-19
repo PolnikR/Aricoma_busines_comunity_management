@@ -35,6 +35,7 @@ const listPayload = {
           order: 1,
           description: 'Database server tier',
           recovery_group: {
+            id: 'database_group',
             name: 'database_group',
             vms: [{ name: 'db-01' }],
           },
@@ -67,6 +68,7 @@ describe('recoveryApplicationsApi', () => {
               order: 1,
               description: 'Database server tier',
               recovery_group: {
+                id: 'database_group',
                 name: 'database_group',
                 vms: [{ name: 'TEST-DB01' }],
               },
@@ -144,6 +146,7 @@ describe('recoveryApplicationsApi', () => {
               order: 1,
               description: 'Database server tier',
               recovery_group: {
+                id: 'database_group',
                 name: 'database_group',
               },
             },
@@ -237,6 +240,7 @@ describe('recoveryApplicationsApi', () => {
               order: 1,
               description: 'Database server tier',
               recovery_group: {
+                id: 'database_group',
                 name: 'database_group',
                 description: 'Recovery group containing the database tier VMs',
                 vms: [{ name: 'TEST-DB01' }, { name: 'TEST-DB02' }],
@@ -257,6 +261,7 @@ describe('recoveryApplicationsApi', () => {
       order: 1,
       description: 'Database server tier',
       recovery_group: {
+        id: 'database_group',
         name: 'database_group',
         vms: [{ name: 'TEST-DB01' }, { name: 'TEST-DB02' }],
       },

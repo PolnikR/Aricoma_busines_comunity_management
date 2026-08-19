@@ -19,7 +19,7 @@ import { cloneTier } from '../utils/recoveryApplicationFormMapper'
 import { getEligiblePlatformProviders, getEligibleSourceProviders } from '../utils/eligibleProviders'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
 import { validateRecoveryApplication } from '../utils/validateRecoveryApplication'
-import type { RecoveryTier, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import type { DraftRecoveryTier, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface RecoveryAppBuilderProps {
   onSave?: (appState: RecoveryApplicationFormState) => void
@@ -30,7 +30,7 @@ interface RecoveryAppBuilderProps {
   disableFileName?: boolean
 }
 
-const DEFAULT_TIERS: Record<string, RecoveryTier> = {
+const DEFAULT_TIERS: Record<string, DraftRecoveryTier> = {
   tier_id: { order: 1, description: 'tier_description' },
 }
 
@@ -39,7 +39,7 @@ function createInitialFormState(initialData?: RecoveryApplicationFormState): Rec
     return {
       ...initialData,
       tiers: new Map(
-        Array.from(initialData.tiers, ([id, tier]): [string, RecoveryTier] => [id, cloneTier(tier)]),
+        Array.from(initialData.tiers, ([id, tier]): [string, DraftRecoveryTier] => [id, cloneTier(tier)]),
       ),
     }
   }
@@ -57,7 +57,7 @@ function createInitialFormState(initialData?: RecoveryApplicationFormState): Rec
     targetConnection: 'vcenter_default_destination',
     tiers: new Map(
       Object.entries(DEFAULT_TIERS).map(
-        ([id, tier]): [string, RecoveryTier] => [id, cloneTier(tier)],
+        ([id, tier]): [string, DraftRecoveryTier] => [id, cloneTier(tier)],
       ),
     ),
   }
@@ -138,7 +138,8 @@ export function RecoveryAppBuilder({
       newTiers.set(tierId, {
         ...tier,
         recovery_group: {
-          name: selectedGroup.id,
+          id: selectedGroup.id,
+          name: selectedGroup.name,
           description: selectedGroup.description,
           vms: selectedGroup.resources.map((name, index) => ({
             name,
@@ -172,7 +173,7 @@ export function RecoveryAppBuilder({
       const alreadySelected = tier.recovery_group.vms.some(vm => vm.name === vmName)
       if (alreadySelected === selected) return prev
 
-      const selectedGroup = availableGroups.find(group => group.id === tier.recovery_group?.name)
+      const selectedGroup = availableGroups.find(group => group.id === tier.recovery_group?.id)
       const nextVms = selected
         ? [...tier.recovery_group.vms, { name: vmName, ...selectedGroup?.vmMetadataByName?.[vmName] }]
         : tier.recovery_group.vms.filter(vm => vm.name !== vmName)
@@ -202,7 +203,7 @@ export function RecoveryAppBuilder({
     onDirtyChange?.(true)
   }, [onDirtyChange])
 
-  const handleTierAdd = useCallback((tierId: string, tier: RecoveryTier) => {
+  const handleTierAdd = useCallback((tierId: string, tier: DraftRecoveryTier) => {
     setFormState(prev => ({ ...prev, tiers: new Map(prev.tiers).set(tierId, tier) }))
     onDirtyChange?.(true)
   }, [onDirtyChange])
@@ -216,7 +217,7 @@ export function RecoveryAppBuilder({
     onDirtyChange?.(true)
   }, [onDirtyChange])
 
-  const handleTierReorder = useCallback((reorderedTiers: Record<string, RecoveryTier>) => {
+  const handleTierReorder = useCallback((reorderedTiers: Record<string, DraftRecoveryTier>) => {
     setFormState(prev => ({ ...prev, tiers: new Map(Object.entries(reorderedTiers)) }))
     onDirtyChange?.(true)
   }, [onDirtyChange])

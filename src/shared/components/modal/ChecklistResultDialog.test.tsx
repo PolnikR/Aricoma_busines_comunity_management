@@ -84,7 +84,7 @@ describe('ChecklistResultDialog', () => {
     expect(screen.getByText('Badge 2')).toBeInTheDocument()
   })
 
-  it('shows retry button when onRetry provided and status is error', () => {
+  it('shows retry button when onRetry provided and status is error', async () => {
     const onRetry = vi.fn()
     renderWithProviders(
       <ChecklistResultDialog
@@ -93,14 +93,15 @@ describe('ChecklistResultDialog', () => {
         onRetry={onRetry}
       />
     )
-    const retryButton = screen.getByText('Retry')
+    const retryButton = await screen.findByText('Retry')
     expect(retryButton).toBeInTheDocument()
   })
 
-  it('calls onClose when close button clicked', () => {
+  it('calls onClose when close button clicked', async () => {
     const onClose = vi.fn()
     renderWithProviders(<ChecklistResultDialog {...baseProps} onClose={onClose} />)
-    screen.getByText('Close').click()
+    const closeButton = await screen.findByText('Close')
+    closeButton.click()
     expect(onClose).toHaveBeenCalled()
   })
 })

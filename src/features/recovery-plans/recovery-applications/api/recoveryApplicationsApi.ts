@@ -55,10 +55,7 @@ export async function submitRecoveryApplicationDag(
     const params = normalizedProviderId
       ? { provider_id: normalizedProviderId, push_to_orchestrator: pushToOrchestrator }
       : { push_to_orchestrator: pushToOrchestrator }
-    payload = await submitRecoveryDagSubmitRecoveryDagPost(
-      data as Parameters<typeof submitRecoveryDagSubmitRecoveryDagPost>[0],
-      params,
-    )
+    payload = await submitRecoveryDagSubmitRecoveryDagPost(data, params)
   } catch (error) {
     if (error instanceof OrvalApiError) {
       const body = typeof error.body === 'string' ? ` — ${error.body}` : ''

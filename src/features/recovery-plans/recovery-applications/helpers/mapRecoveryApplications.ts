@@ -13,6 +13,7 @@ function mapRecoveryTier(tier: RecoveryTierOutput): RecoveryTier {
     order: tier.order,
     description: tier.description,
     recovery_group: {
+      id: tier.recovery_group.id,
       name: tier.recovery_group.name,
       vms: tier.recovery_group.vms,
     },

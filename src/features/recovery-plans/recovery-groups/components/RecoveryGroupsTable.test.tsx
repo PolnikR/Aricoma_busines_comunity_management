@@ -195,7 +195,7 @@ describe('RecoveryGroupsTable', () => {
 
     expect(onDelete).toHaveBeenCalledWith(orchestratedGroup)
     expect(await screen.findByText('Orchestration rolled back')).toBeInTheDocument()
-    expect(screen.getByText('dag_123')).toBeInTheDocument()
+    expect(screen.getAllByText(/dag_123/).length).toBeGreaterThan(0)
   })
 
   it('does not show a rollback report after a regular delete', async () => {

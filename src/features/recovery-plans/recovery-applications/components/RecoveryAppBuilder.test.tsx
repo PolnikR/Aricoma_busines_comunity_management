@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryAppBuilder } from './RecoveryAppBuilder'
-import type { RecoveryTier } from '../model/recoveryApplicationTypes'
+import type { DraftRecoveryTier } from '../model/recoveryApplicationTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
@@ -94,7 +94,7 @@ vi.mock('./TierCanvas', () => ({
     onRecoveryGroupRemoved,
     onRecoveryVmSelectionChange,
   }: {
-    tiers: Record<string, RecoveryTier>
+    tiers: Record<string, DraftRecoveryTier>
     recoveryGroupVmOptions?: Record<string, string[]>
     onRecoveryGroupAdded?: (tierId: string, groupId: string) => void
     onRecoveryGroupRemoved?: (tierId: string) => void
@@ -103,6 +103,8 @@ vi.mock('./TierCanvas', () => ({
     <div>
       <span>Tier count: {Object.keys(tiers).length}</span>
       <span>Database VMs: {tiers['tier_id']?.recovery_group?.vms.length ?? 0}</span>
+      <span>Group id: {tiers['tier_id']?.recovery_group?.id ?? 'none'}</span>
+      <span>Group name: {tiers['tier_id']?.recovery_group?.name ?? 'none'}</span>
       <span>Database options: {recoveryGroupVmOptions?.['database_group']?.length ?? 0}</span>
       <button type="button" onClick={() => { onRecoveryGroupAdded?.('tier_id', 'database_group') }}>
         Add test group
@@ -251,5 +253,14 @@ describe('RecoveryAppBuilder', () => {
     await openTiers()
     await user.click(screen.getByRole('button', { name: 'Add test group' }))
     expect(screen.getByText('Database VMs: 2')).toBeInTheDocument()
+  })
+
+  it('attaches both the group id and display name when a recovery group is added to a tier', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryAppBuilder />)
+    await openTiers()
+    await user.click(screen.getByRole('button', { name: 'Add test group' }))
+    expect(screen.getByText('Group id: database_group')).toBeInTheDocument()
+    expect(screen.getByText('Group name: Database Group')).toBeInTheDocument()
   })
 })

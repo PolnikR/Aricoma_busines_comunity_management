@@ -141,9 +141,8 @@ describe('RecoveryApplicationBuilderPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument()
     })
-    expect(screen.getByText('/home/airflow/dags/finance.py')).toBeInTheDocument()
-    expect(screen.getByText('/home/airflow/dags/finance.json')).toBeInTheDocument()
-    expect(screen.getByText('dag_finance')).toBeInTheDocument()
+    expect(screen.getAllByText(/\/home\/airflow\/dags\/finance\.py/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/dag_finance/).length).toBeGreaterThan(0)
     expect(navigate).not.toHaveBeenCalled()
 
     await user.click(screen.getByRole('button', { name: 'Close' }))

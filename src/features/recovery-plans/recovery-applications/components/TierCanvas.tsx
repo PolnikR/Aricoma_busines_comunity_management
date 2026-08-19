@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { TierCard } from './TierCard'
 import { AddTierCard } from './AddTierCard'
-import type { RecoveryTier } from '../model/recoveryApplicationTypes'
+import type { DraftRecoveryTier } from '../model/recoveryApplicationTypes'
 import { calculateTierReorder } from '../utils/calculateTierReorder'
 
 interface TierCanvasProps {
-  tiers: Record<string, RecoveryTier>
+  tiers: Record<string, DraftRecoveryTier>
   recoveryGroupVmOptions?: Readonly<Record<string, readonly string[]>>
   onRecoveryGroupAdded?: (tierId: string, groupId: string) => void
   onRecoveryGroupRemoved?: (tierId: string) => void
@@ -13,9 +13,9 @@ interface TierCanvasProps {
   onTierEdit?: (tierId: string, newTierId: string, updates: {
     tierDescription: string
   }) => void
-  onTierAdd?: (tierId: string, tier: RecoveryTier) => void
+  onTierAdd?: (tierId: string, tier: DraftRecoveryTier) => void
   onTierDelete?: (tierId: string) => void
-  onTierReorder?: (reorderedTiers: Record<string, RecoveryTier>) => void
+  onTierReorder?: (reorderedTiers: Record<string, DraftRecoveryTier>) => void
 }
 
 export function TierCanvas({

@@ -3,10 +3,10 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Input, Textarea } from '@/shared/components/form/FormControls'
 import { isTierIdAvailable, slugify } from '../utils/tierUtils'
-import type { RecoveryTier } from '../model/recoveryApplicationTypes'
+import type { DraftRecoveryTier } from '../model/recoveryApplicationTypes'
 
 interface AddTierCardProps {
-  onAdd?: (id: string, tier: RecoveryTier) => void
+  onAdd?: (id: string, tier: DraftRecoveryTier) => void
   maxOrder: number
   existingIds: string[]
 }
@@ -27,7 +27,7 @@ export function AddTierCard({ onAdd, maxOrder, existingIds }: AddTierCardProps) 
   const handleCreate = () => {
     if (!canCreate) return
 
-    const newTier: RecoveryTier = {
+    const newTier: DraftRecoveryTier = {
       description: tierDescription.trim(),
       order: maxOrder + 1,
     }
