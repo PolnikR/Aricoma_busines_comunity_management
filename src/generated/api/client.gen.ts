@@ -50,6 +50,7 @@ import type {
   TestProviderTestProviderGetParams,
   VdisksByVmResponse,
   VdisksByVmVdisksByVmGetParams,
+  VmsByNameVmsByNameGetParams,
   VmsByTagVmsByTagGetParams,
   VmsInFolderVmsInFolderGetParams,
   VmsResponse,
@@ -441,6 +442,37 @@ export const getVmsByTagVmsByTagGetUrl = (params?: VmsByTagVmsByTagGetParams,) =
 export const vmsByTagVmsByTagGet = async (params?: VmsByTagVmsByTagGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<VmsResponse> => {
 
   return orvalMutator<VmsResponse>(getVmsByTagVmsByTagGetUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export const getVmsByNameVmsByNameGetUrl = (params?: VmsByNameVmsByNameGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/vms_by_name?${stringifiedParams}` : `/vms_by_name`
+}
+
+/**
+ * @summary Vms By Name
+ */
+export const vmsByNameVmsByNameGet = async (params?: VmsByNameVmsByNameGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<VmsResponse> => {
+
+  return orvalMutator<VmsResponse>(getVmsByNameVmsByNameGetUrl(params),
   {
     ...options,
     method: 'GET'

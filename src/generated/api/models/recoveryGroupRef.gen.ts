@@ -7,6 +7,7 @@
 import type { RecoveryVM } from './recoveryVM.gen';
 
 export interface RecoveryGroupRef {
+  id: string;
   name: string;
   vms?: RecoveryVM[];
 }

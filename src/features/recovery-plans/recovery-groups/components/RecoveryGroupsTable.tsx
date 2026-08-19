@@ -16,6 +16,7 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
+import { Tabs } from '@/shared/components/tabs/Tabs'
 import { ExternalLinkIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { buildAirflowDagUrl } from '@/config/externalServices'
@@ -80,6 +81,7 @@ export function RecoveryGroupsTable({
   const [rollbackSuccessGroupName, setRollbackSuccessGroupName] = useState<string | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [isRollingBack, setIsRollingBack] = useState(false)
+  const [detailTab, setDetailTab] = useState<'overview' | 'orchestration'>('overview')
 
   const filterOptions = useMemo(() => ({
     workloadTypes: Array.from(new Set(groups.map(group => group.workloadType ?? 'unresolved'))).sort(),
@@ -284,7 +286,7 @@ export function RecoveryGroupsTable({
           density={table.density}
           minWidthClassName="min-w-200"
           ariaLabel={t('pages.recoveryGroups.tableAriaLabel')}
-          onRowClick={group => { setSelectedId(group.id) }}
+          onRowClick={group => { setSelectedId(group.id); setDetailTab('overview') }}
           selectedRowKey={selectedId}
           emptyContent={t('pages.recoveryGroups.empty.noGroups')}
         />
@@ -375,85 +377,103 @@ export function RecoveryGroupsTable({
         ) : null}
       >
         {selected ? (
-          <dl className="space-y-3 px-5 py-2">
-            <DetailRow label={t('details.description')} value={selected.description || '—'} />
-            <DetailRow label={t('details.providerId')} value={<span className="font-mono">{selected.providerId ?? '—'}</span>} />
-            <DetailRow
-              label={t('tables.recoveryGroups.sourceCategory')}
-              value={t(getSourceCategoryLabelKey(selected.sourceCategory))}
+          <>
+            <Tabs
+              items={[
+                { value: 'overview' as const, label: t('details.tabs.overview') },
+                { value: 'orchestration' as const, label: t('details.tabs.orchestration') },
+              ]}
+              value={detailTab}
+              onChange={setDetailTab}
+              ariaLabel={t('drawer.recoveryGroupDetail')}
+              indicator="inset"
+              className="px-5"
             />
-            <DetailRow
-              label={t('tables.recoveryGroups.workloadType')}
-              value={t(getWorkloadTypeLabelKey(selected.workloadType))}
-            />
-            <DetailRow
-              label={t('tables.recoveryGroups.resourceType')}
-              value={t(getResourceTypeLabelKey(selected.resourceType))}
-            />
-            <DetailRow
-              label={t('tables.recoveryGroups.policySet')}
-              value={policySetName(selected.policySetId)}
-            />
-            <DetailRow label={t('tables.recoveryGroups.resources')} value={String(selected.resourceCount)} />
-            <DetailRow
-              label={t('tables.recoveryGroups.orchestration')}
-              value={
-                <Badge color={selected.pushToOrchestrator ? 'success' : 'light'} size="sm">
-                  {t(selected.pushToOrchestrator ? 'common.yes' : 'common.no')}
-                </Badge>
-              }
-            />
-            <DetailRow
-              label={t('tables.recoveryGroups.airflowRunId')}
-              value={
-                selected.airflowRunId ? (
-                  <a
-                    href={buildAirflowDagUrl(selected.airflowRunId, selectedOrchestrationProviderUrl)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
-                  >
-                    {selected.airflowRunId}
-                    <ExternalLinkIcon className="size-3.5 shrink-0" />
-                  </a>
-                ) : (
-                  '—'
-                )
-              }
-            />
-            <DetailRow
-              label={t('tables.recoveryGroups.status')}
-              value={
-                <Badge color={selected.status === 'Active' ? 'success' : 'warning'} size="sm">
-                  {t(selected.status === 'Active' ? 'tables.recoveryGroups.active' : 'tables.recoveryGroups.draft')}
-                </Badge>
-              }
-            />
-            {isSelectedOrchestrated ? (
-              <>
+            {detailTab === 'overview' ? (
+              <dl className="space-y-3 px-5 py-4">
+                <DetailRow label={t('details.description')} value={selected.description || '—'} />
+                <DetailRow label={t('details.providerId')} value={<span className="font-mono">{selected.providerId ?? '—'}</span>} />
                 <DetailRow
-                  label={t('details.latestRunStatus')}
-                  value={latestRun ? (
-                    <Badge color={runStatusBadgeColor(latestRun.status)} size="sm">{latestRun.status}</Badge>
-                  ) : (
-                    <span className="text-text-subtle">{t('recoveryRuns.table.noRuns')}</span>
-                  )}
+                  label={t('tables.recoveryGroups.sourceCategory')}
+                  value={t(getSourceCategoryLabelKey(selected.sourceCategory))}
                 />
-                <DetailRow label={t('details.lastExecuted')} value={formatRunTimestamp(latestRun?.startedAt ?? null)} />
-                <DetailRow label={t('details.duration')} value={formatRunDuration(latestRun?.durationSeconds ?? null)} />
-                <Button
-                  size="sm"
-                  variant="soft"
-                  className="w-full"
-                  onClick={() => {
-                    void navigate(`${routes.recoveryRuns}?tab=groups&entityId=${selected.id}`)
-                  }}
-                >
-                  {t('buttons.viewRecoveryRuns')}
-                </Button>
-              </>
-            ) : null}
-          </dl>
+                <DetailRow
+                  label={t('tables.recoveryGroups.workloadType')}
+                  value={t(getWorkloadTypeLabelKey(selected.workloadType))}
+                />
+                <DetailRow
+                  label={t('tables.recoveryGroups.resourceType')}
+                  value={t(getResourceTypeLabelKey(selected.resourceType))}
+                />
+                <DetailRow
+                  label={t('tables.recoveryGroups.policySet')}
+                  value={policySetName(selected.policySetId)}
+                />
+                <DetailRow label={t('tables.recoveryGroups.resources')} value={String(selected.resourceCount)} />
+                <DetailRow
+                  label={t('tables.recoveryGroups.status')}
+                  value={
+                    <Badge color={selected.status === 'Active' ? 'success' : 'warning'} size="sm">
+                      {t(selected.status === 'Active' ? 'tables.recoveryGroups.active' : 'tables.recoveryGroups.draft')}
+                    </Badge>
+                  }
+                />
+              </dl>
+            ) : (
+              <dl className="space-y-3 px-5 py-4">
+                <DetailRow
+                  label={t('tables.recoveryGroups.orchestration')}
+                  value={
+                    <Badge color={selected.pushToOrchestrator ? 'success' : 'light'} size="sm">
+                      {t(selected.pushToOrchestrator ? 'common.yes' : 'common.no')}
+                    </Badge>
+                  }
+                />
+                <DetailRow
+                  label={t('tables.recoveryGroups.airflowRunId')}
+                  value={
+                    selected.airflowRunId ? (
+                      <a
+                        href={buildAirflowDagUrl(selected.airflowRunId, selectedOrchestrationProviderUrl)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
+                      >
+                        {selected.airflowRunId}
+                        <ExternalLinkIcon className="size-3.5 shrink-0" />
+                      </a>
+                    ) : (
+                      '—'
+                    )
+                  }
+                />
+                {isSelectedOrchestrated ? (
+                  <>
+                    <DetailRow
+                      label={t('details.latestRunStatus')}
+                      value={latestRun ? (
+                        <Badge color={runStatusBadgeColor(latestRun.status)} size="sm">{latestRun.status}</Badge>
+                      ) : (
+                        <span className="text-text-subtle">{t('recoveryRuns.table.noRuns')}</span>
+                      )}
+                    />
+                    <DetailRow label={t('details.lastExecuted')} value={formatRunTimestamp(latestRun?.startedAt ?? null)} />
+                    <DetailRow label={t('details.duration')} value={formatRunDuration(latestRun?.durationSeconds ?? null)} />
+                    <Button
+                      size="sm"
+                      variant="soft"
+                      className="w-full"
+                      onClick={() => {
+                        void navigate(`${routes.recoveryRuns}?tab=groups&entityId=${selected.id}`)
+                      }}
+                    >
+                      {t('buttons.viewRecoveryRuns')}
+                    </Button>
+                  </>
+                ) : null}
+              </dl>
+            )}
+          </>
         ) : null}
       </DetailDrawer>
 

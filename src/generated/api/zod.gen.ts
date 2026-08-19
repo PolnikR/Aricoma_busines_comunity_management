@@ -362,6 +362,7 @@ export type RecoveryVMOutput = zod.output<typeof RecoveryVM>;
 export const recoveryGroupRefVmsDefault = [];
 
 export const RecoveryGroupRef = zod.object({
+  "id": zod.string(),
   "name": zod.string(),
   "vms": zod.array(RecoveryVM).default(recoveryGroupRefVmsDefault)
 });
@@ -931,6 +932,26 @@ export const VmsByTagVmsByTagGetHeader = zod.object({
 })
 
 export const VmsByTagVmsByTagGetResponse = VmsResponse
+
+
+/**
+ * @summary Vms By Name
+ */
+export const vmsByNameVmsByNameGetQueryPrefixDefault = `WEB`;
+export const vmsByNameVmsByNameGetQueryProviderIdDefault = `vmware-vcenter-01`;
+
+export const VmsByNameVmsByNameGetQueryParams = zod.object({
+  "prefix": zod.string().default(vmsByNameVmsByNameGetQueryPrefixDefault).describe('Case-sensitive prefix to match against VM name (vm.name.startswith(prefix))'),
+  "provider_id": zod.string().default(vmsByNameVmsByNameGetQueryProviderIdDefault).describe('id of the vCenter provider to use')
+})
+
+export const vmsByNameVmsByNameGetHeaderXUserDefault = `admin`;
+
+export const VmsByNameVmsByNameGetHeader = zod.object({
+  "X-User": zod.union([zod.string(),zod.null()]).default(vmsByNameVmsByNameGetHeaderXUserDefault)
+})
+
+export const VmsByNameVmsByNameGetResponse = VmsResponse
 
 
 /**

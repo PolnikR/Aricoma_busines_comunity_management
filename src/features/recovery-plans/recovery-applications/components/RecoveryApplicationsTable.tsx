@@ -17,6 +17,7 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
+import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useOrchestratedApps } from '@/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps'
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
 import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/features/recovery-plans/recovery-runs/helpers/formatRecoveryRun'
@@ -128,6 +129,7 @@ export function RecoveryApplicationsTable({
   const [pendingFilters, setPendingFilters] = useState<RecoveryApplicationFilters>(EMPTY_FILTERS)
   const [deleteTarget, setDeleteTarget] = useState<RecoveryApplicationListItem | null>(null)
   const [rollbackResult, setRollbackResult] = useState<{ appName: string; report: RollbackReport } | null>(null)
+  const [detailTab, setDetailTab] = useState<'overview' | 'orchestration'>('overview')
 
   const filterOptions = useMemo(() => ({
     environments: Array.from(new Set(
@@ -281,7 +283,7 @@ export function RecoveryApplicationsTable({
           density={table.density}
           minWidthClassName="min-w-250"
           ariaLabel={t('pages.recovery.tableAriaLabel')}
-          onRowClick={(app) => { setSelectedId(app.id) }}
+          onRowClick={(app) => { setSelectedId(app.id); setDetailTab('overview') }}
           selectedRowKey={selectedId}
           emptyContent={applications.length > 0 ? t('messages.noResults') : t('pages.recovery.empty.noApplications')}
         />
@@ -329,52 +331,80 @@ export function RecoveryApplicationsTable({
         ) : null}
       >
         {selected ? (
-          <dl className="px-5 py-2 space-y-3">
-            <DetailRow label={t('details.description')} value={selected.data.application.description ?? '-'} />
-            <DetailRow label={t('details.environment')} value={selected.data.application.environment} />
-            <DetailRow label={t('details.platform')} value={getProviderLabel(selected.data.application.platform)} />
-            <DetailRow label={t('details.tiers')} value={String(Object.keys(selected.data.application.tiers).length)} />
-            <DetailRow
-              label={t('details.status')}
-              value={<Badge color={getStatusBadgeColor(getApplicationStatus(selected))} size="sm">{t(getApplicationStatus(selected) === 'Active' ? 'details.statusActive' : 'details.statusDraft')}</Badge>}
+          <>
+            <Tabs
+              items={[
+                { value: 'overview' as const, label: t('details.tabs.overview') },
+                { value: 'orchestration' as const, label: t('details.tabs.orchestration') },
+              ]}
+              value={detailTab}
+              onChange={setDetailTab}
+              ariaLabel={t('drawer.applicationDetail')}
+              indicator="inset"
+              className="px-5"
             />
-            {selected.submission && (
-              <DetailRow
-                label={t('details.submission')}
-                value={
-                  <>
-                    <Badge color={getSubmissionBadgeColor(selected.submission.status)} size="sm">{selected.submission.status}</Badge>
-                    <span className="mt-1 block font-mono text-[11px] text-text-subtle">{selected.submission.remotePath}</span>
-                  </>
-                }
-              />
-            )}
-            {isSelectedOrchestrated ? (
-              <>
-                <DetailRow label={t('details.airflowDagId')} value={<span className="font-mono text-xs">{selectedDagId}</span>} />
+            {detailTab === 'overview' ? (
+              <dl className="px-5 py-4 space-y-3">
+                <DetailRow label={t('details.description')} value={selected.data.application.description ?? '-'} />
+                <DetailRow label={t('details.environment')} value={selected.data.application.environment} />
+                <DetailRow label={t('details.platform')} value={getProviderLabel(selected.data.application.platform)} />
+                <DetailRow label={t('details.tiers')} value={String(Object.keys(selected.data.application.tiers).length)} />
                 <DetailRow
-                  label={t('details.latestRunStatus')}
-                  value={latestRun ? (
-                    <Badge color={runStatusBadgeColor(latestRun.status)} size="sm">{latestRun.status}</Badge>
-                  ) : (
-                    <span className="text-text-subtle">{t('recoveryRuns.table.noRuns')}</span>
-                  )}
+                  label={t('details.status')}
+                  value={<Badge color={getStatusBadgeColor(getApplicationStatus(selected))} size="sm">{t(getApplicationStatus(selected) === 'Active' ? 'details.statusActive' : 'details.statusDraft')}</Badge>}
                 />
-                <DetailRow label={t('details.lastExecuted')} value={formatRunTimestamp(latestRun?.startedAt ?? null)} />
-                <DetailRow label={t('details.duration')} value={formatRunDuration(latestRun?.durationSeconds ?? null)} />
-                <Button
-                  size="sm"
-                  variant="soft"
-                  className="w-full"
-                  onClick={() => {
-                    void navigate(`${routes.recoveryRuns}?tab=applications&entityId=${selected.id}`)
-                  }}
-                >
-                  {t('buttons.viewRecoveryRuns')}
-                </Button>
-              </>
-            ) : null}
-          </dl>
+                {selected.submission && (
+                  <DetailRow
+                    label={t('details.submission')}
+                    value={
+                      <>
+                        <Badge color={getSubmissionBadgeColor(selected.submission.status)} size="sm">{selected.submission.status}</Badge>
+                        <span className="mt-1 block font-mono text-[11px] text-text-subtle">{selected.submission.remotePath}</span>
+                      </>
+                    }
+                  />
+                )}
+              </dl>
+            ) : (
+              <dl className="px-5 py-4 space-y-3">
+                <DetailRow
+                  label={t('details.orchestration')}
+                  value={
+                    <Badge color={selected.pushToOrchestrator ? 'success' : 'light'} size="sm">
+                      {t(selected.pushToOrchestrator ? 'common.yes' : 'common.no')}
+                    </Badge>
+                  }
+                />
+                {isSelectedOrchestrated ? (
+                  <>
+                    <DetailRow label={t('details.airflowDagId')} value={<span className="font-mono text-xs">{selectedDagId}</span>} />
+                    <DetailRow
+                      label={t('details.latestRunStatus')}
+                      value={latestRun ? (
+                        <Badge color={runStatusBadgeColor(latestRun.status)} size="sm">{latestRun.status}</Badge>
+                      ) : (
+                        <span className="text-text-subtle">{t('recoveryRuns.table.noRuns')}</span>
+                      )}
+                    />
+                    <DetailRow label={t('details.lastExecuted')} value={formatRunTimestamp(latestRun?.startedAt ?? null)} />
+                    <DetailRow label={t('details.duration')} value={formatRunDuration(latestRun?.durationSeconds ?? null)} />
+                    <Button
+                      size="sm"
+                      variant="soft"
+                      className="w-full"
+                      onClick={() => {
+                        void navigate(`${routes.recoveryRuns}?tab=applications&entityId=${selected.id}`)
+                      }}
+                    >
+                      {t('buttons.viewRecoveryRuns')}
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-xs text-text-subtle">{t('details.notOrchestrated')}</p>
+                )}
+              </dl>
+            )}
+          </>
         ) : null}
       </DetailDrawer>
 

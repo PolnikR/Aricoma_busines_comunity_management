@@ -101,6 +101,7 @@ export * from './vdisksByVmResponseVdisks.gen';
 export * from './vdisksByVmVdisksByVmGetParams.gen';
 export * from './vmDisk.gen';
 export * from './vmRecord.gen';
+export * from './vmsByNameVmsByNameGetParams.gen';
 export * from './vmsByTagVmsByTagGetParams.gen';
 export * from './vmsInFolderVmsInFolderGetParams.gen';
 export * from './vmsResponse.gen';

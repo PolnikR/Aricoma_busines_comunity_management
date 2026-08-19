@@ -851,6 +851,80 @@
         }
       }
     },
+    "/vms_by_name": {
+      "get": {
+        "tags": [
+          "vCenter Inventory"
+        ],
+        "summary": "Vms By Name",
+        "operationId": "vms_by_name_vms_by_name_get",
+        "parameters": [
+          {
+            "name": "prefix",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Case-sensitive prefix to match against VM name (vm.name.startswith(prefix))",
+              "default": "WEB",
+              "title": "Prefix"
+            },
+            "description": "Case-sensitive prefix to match against VM name (vm.name.startswith(prefix))"
+          },
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "id of the vCenter provider to use",
+              "default": "vmware-vcenter-01",
+              "title": "Provider Id"
+            },
+            "description": "id of the vCenter provider to use"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VmsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/tags": {
       "get": {
         "tags": [
@@ -4268,6 +4342,10 @@
       },
       "RecoveryGroupRef": {
         "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
           "name": {
             "type": "string",
             "title": "Name"
@@ -4283,6 +4361,7 @@
         },
         "type": "object",
         "required": [
+          "id",
           "name"
         ],
         "title": "RecoveryGroupRef"

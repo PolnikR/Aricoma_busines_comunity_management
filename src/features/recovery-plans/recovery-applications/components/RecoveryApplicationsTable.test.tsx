@@ -186,6 +186,7 @@ describe('RecoveryApplicationsTable', () => {
 
     await user.click(screen.getByText('Finance Recovery'))
     const drawer = screen.getByRole('dialog', { name: 'Application detail' })
+    await user.click(within(drawer).getByRole('tab', { name: 'Orchestration' }))
 
     expect(within(drawer).getByText('dag_260811133132_fbffbefb')).toBeInTheDocument()
     expect(within(drawer).getByText('success')).toBeInTheDocument()
@@ -200,6 +201,7 @@ describe('RecoveryApplicationsTable', () => {
 
     await user.click(screen.getByText('Development Recovery'))
     const drawer = screen.getByRole('dialog', { name: 'Application detail' })
+    await user.click(within(drawer).getByRole('tab', { name: 'Orchestration' }))
 
     expect(within(drawer).queryByText('Airflow DAG ID')).not.toBeInTheDocument()
     expect(within(drawer).queryByRole('button', { name: 'View recovery runs →' })).not.toBeInTheDocument()

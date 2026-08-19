@@ -278,6 +278,7 @@ describe('RecoveryGroupsTable', () => {
     await user.click(screen.getByText('Database group'))
 
     const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+    await user.click(within(detail).getByRole('tab', { name: 'Orchestration' }))
     expect(within(detail).getByRole('link', { name: /260812103627_4c06f9c8/ })).toHaveAttribute(
       'href',
       'https://airflow.dynamic.test:8443/dags/dag_260812103627_4c06f9c8',
@@ -299,6 +300,7 @@ describe('RecoveryGroupsTable', () => {
     await user.click(screen.getByText('Database group'))
 
     const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+    await user.click(within(detail).getByRole('tab', { name: 'Orchestration' }))
     expect(within(detail).getByRole('link', { name: /run-123/ })).toHaveAttribute(
       'href',
       'http://10.99.99.55:8080/dags/dag_run-123',
@@ -314,6 +316,7 @@ describe('RecoveryGroupsTable', () => {
     await user.click(screen.getByText('Database group'))
 
     const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+    await user.click(within(detail).getByRole('tab', { name: 'Orchestration' }))
     expect(within(detail).queryByRole('link')).not.toBeInTheDocument()
   })
 
@@ -336,6 +339,7 @@ describe('RecoveryGroupsTable', () => {
 
     await user.click(screen.getByText('Database group'))
     const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+    await user.click(within(detail).getByRole('tab', { name: 'Orchestration' }))
 
     expect(within(detail).getByText('success')).toBeInTheDocument()
 
@@ -351,6 +355,7 @@ describe('RecoveryGroupsTable', () => {
 
     await user.click(screen.getByText('Database group'))
     const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+    await user.click(within(detail).getByRole('tab', { name: 'Orchestration' }))
 
     expect(within(detail).queryByRole('button', { name: 'View recovery runs →' })).not.toBeInTheDocument()
   })
