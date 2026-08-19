@@ -1,99 +1,171 @@
-# Recovery Runs - Task Checklist
+# Task List: Fix Remaining Fake/Fragile Data in Checklist Dialogs
 
-## Phase 1: Foundation
+## Task 1: Fix RecoveryApplicationsTable count mismatch and hardcoded Yes/No
 
-### Task 1: Model types
-- [x] Create `src/features/recovery-plans/recovery-runs/model/recoveryRunTypes.ts`
-- [x] `OrchestratedApp { id: string; name: string; dagId: string }` — `dagId` is `` `dag_${airflow_run_id}` ``, NOT `id`
-- [x] `OrchestratorRun { runId: string; status: string; startedAt: string | null; endedAt: string | null; durationSeconds: number | null }`
-- [x] `OrchestratorRunsPage { runs: OrchestratorRun[]; total: number }`
+**Description:** In `RecoveryApplicationsTable.tsx` (lines 338-374), the `ChecklistResultDialog`'s
+`statusBar.totalCount` is hardcoded to `3`, but the `checks` array conditionally includes an
+`airflowRunId` row only when `jsonViewed.airflowRunId` is truthy (line 360-364) — meaning the
+array can actually be length 2. Fix by deriving both `passedCount` and `totalCount` from the real
+`checks` array length, and replace hardcoded `'Yes'`/`'No'` (line 367) with `t('common.yes')`/
+`t('common.no')`.
 
-### Task 2: Response mapper
-- [x] Create `src/features/recovery-plans/recovery-runs/helpers/mapOrchestratorRuns.ts`
-- [x] Parse `response.dag_runs` (array) using confirmed real field names: `dag_run_id` → runId, `state` → status, `start_date` → startedAt (fallback `logical_date`), `end_date` → endedAt, `duration` → durationSeconds
-- [x] Parse `response.total_entries` → total
-- [x] Return `{ runs: [], total: 0 }` if `dag_runs` is missing or not an array (don't throw)
+**Acceptance criteria:**
+- [ ] `checks` array is built as a local variable/const before being passed to `statusBar` and `checks`, so both can reference its real length
+- [ ] `statusBar.totalCount` equals `checks.length` in all cases (2 when `airflowRunId` is absent, 3 when present)
+- [ ] `statusBar.passedCount` equals `checks.length` as well, since every check here is unconditionally `status: 'ok'`
+- [ ] `pushToOrchestrator` detail uses `t('common.yes')` / `t('common.no')` instead of literal `'Yes'`/`'No'`
 
-### Task 3: API wrapper
-- [x] Create `src/features/recovery-plans/recovery-runs/api/recoveryRunsApi.ts`
-- [x] `fetchOrchestratorRuns(providerId: string, dagId: string, opts?: { limit?: number; offset?: number; orderBy?: string })`
-- [x] Calls generated `getOrchestratorRunsGetOrchestratorRunsGet`; wraps errors via `OrvalApiError` message pattern (mirror `recoveryApplicationsApi.ts:21-37`)
-- [x] Passes the raw response through `mapOrchestratorRuns`
+**Verification:**
+- [ ] `npm exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx` (if it exists; otherwise note its absence)
+- [ ] Manual check: open the Application JSON dialog for a record without an `airflowRunId` and confirm the bar reads "2 / 2 passed" with exactly 2 rows listed
 
-### Task 4: Query keys
-- [x] Create `src/features/recovery-plans/recovery-runs/api/recoveryRunsQueryKeys.ts`
-- [x] `recoveryRunsKeys.latest(providerId, dagId)`
-- [x] `recoveryRunsKeys.history(providerId, dagId, page, pageSize)`
+**Dependencies:** None
 
-### Checkpoint
-- [x] `npm run typecheck`
-- [x] `npx vitest run src/features/recovery-plans/recovery-runs/helpers/mapOrchestratorRuns.test.ts`
+**Files likely touched:**
+- `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx`
 
-## Phase 2: Hooks
+**Estimated scope:** Small (1 file)
 
-### Task 5: useOrchestratedApps
-- [x] Create `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps.ts`
-- [x] Combine `useRecoveryApplications()` + `usePlatformProviders()`
-- [x] Filter apps to `Boolean(record.airflow_run_id)` — NOT `push_to_orchestrator` (intent flag; run id is the actual proof a DAG exists)
-- [x] Map each to `{ id: record.id, name: record.application.name, dagId: `dag_${record.airflow_run_id}` }`
-- [x] Resolve the single AIRFLOW provider id via `getEligiblePlatformProviders`
-- [x] Return `{ apps, providerId, isLoading, error }`
+---
 
-### Task 6: useOrchestratedAppRuns
-- [x] Create `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedAppRuns.ts`
-- [x] `useQueries` over `apps`, one `fetchOrchestratorRuns(providerId, app.dagId, { limit: 1 })` per app — use `app.dagId`, not `app.id`
-- [x] Mirror `useRecoveryGroupRelatedVolumes.ts`'s per-item `enabled`/`staleTime`/`gcTime`/`retry: 1` shape
-- [x] Return one `{ app, latestRun: OrchestratorRun | null, isLoading }` per input app
+## Task 2: Fix RecoveryApplicationRollbackResultModal mislabeled status check
 
-### Task 7: useAppRunHistory
-- [x] Create `src/features/recovery-plans/recovery-runs/hooks/useAppRunHistory.ts`
-- [x] Plain `useQuery`, `enabled: Boolean(dagId) && Boolean(providerId)`
-- [x] Accepts `page`/`pageSize`, maps to `offset`/`limit` for `fetchOrchestratorRuns(providerId, dagId, ...)`
-- [x] Returns `{ runs, total }`
+**Description:** In `RecoveryApplicationRollbackResultModal.tsx` (lines 27-33), the `report.status`
+check reuses the `recovery.application.rollback.resultAirflowSection` translation key ("Airflow"),
+which is also used for the separate `report.airflow` check a few lines below (line 37) — so if both
+`report.status` and `report.airflow` are present, two different checks display the identical label
+"Airflow". Add a new, distinct translation key for the top-level status row.
 
-### Checkpoint
-- [x] `npx vitest run src/features/recovery-plans/recovery-runs/hooks/*.test.ts`
+**Acceptance criteria:**
+- [ ] New key `recovery.application.rollback.resultStatusSection` added to `en.json`, `cs.json`, `sk.json` with a value describing the overall/top-level status (e.g. "Status" / "Stav" / "Stav")
+- [ ] Line 29 of `RecoveryApplicationRollbackResultModal.tsx` uses the new key instead of `resultAirflowSection`
+- [ ] The `report.airflow` check (line 37) is untouched and still uses `resultAirflowSection`
 
-## Phase 3: UI
+**Verification:**
+- [ ] `node -e "JSON.parse(require('fs').readFileSync('src/locales/en.json'))"` (repeat for cs.json, sk.json) confirms valid JSON
+- [ ] Manual check: trigger a rollback where both `report.status` and `report.airflow` are present, confirm the two checks show different labels
 
-### Task 8: RecoveryRunsTable
-- [x] Create `src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.tsx`
-- [x] `DataTable` + `DataTableToolbar` (search app name/id) + `DataTableSkeleton`/`DataTableRequestState`
-- [x] Columns: app name+id, status `Badge` (success/info/error/light mapping), started, duration
-- [x] Row click → `onSelectApp(appId)`
+**Dependencies:** None
 
-### Task 9: RecoveryRunHistoryDrawer
-- [x] Create `src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDrawer.tsx`
-- [x] `DetailDrawer` (eyebrow "Run history", title = app name, subtitle = app id)
-- [x] Run-row list from `useAppRunHistory`, `DataTablePagination` in footer
+**Files likely touched:**
+- `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationRollbackResultModal.tsx`
+- `src/locales/en.json`
+- `src/locales/cs.json`
+- `src/locales/sk.json`
 
-### Task 10: RecoveryRunsPage
-- [x] Create `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx`
-- [x] `TableToolbar` + `InventoryShell`, mirroring `PolicySetsPage.tsx`
-- [x] Wires `useOrchestratedApps` → `useOrchestratedAppRuns` → `RecoveryRunsTable` + `RecoveryRunHistoryDrawer`
+**Estimated scope:** Small (4 files, small edits)
 
-### Checkpoint
-- [x] `npx vitest run src/features/recovery-plans/recovery-runs/components/*.test.tsx src/features/recovery-plans/recovery-runs/pages/*.test.tsx`
+---
 
-## Phase 4: Wiring
+## Task 3: Translate ChecklistResultDialog's Retry/Close footer buttons
 
-### Task 11: Route
-- [x] `src/app/AppRoutes.tsx` — replace the `recovery-runs` `<Navigate>` stub with lazy `RecoveryRunsPage` + `Suspense`/`RouteLoadingSkeleton`
+**Description:** In `src/shared/components/modal/ChecklistResultDialog.tsx`, the footer buttons
+hardcode `"Retry"` (line 83) and `"Close"` (line 87) in English. Translation keys `buttons.retry`
+and `buttons.close` already exist in all three locale files with correct Czech/Slovak values.
+Since this is the shared base component, this single fix corrects every consumer app-wide
+(`ProviderConnectionTestDialog`, `RecoveryGroupRollbackResultModal`,
+`RecoveryApplicationRollbackResultModal`, `RecoveryApplicationOrchestratorSuccessModal`, and the
+three policy tables).
 
-### Task 12: Sidebar nav
-- [x] `src/layouts/app-shell/AppSidebar.tsx` — add `{ name: 'Recovery Runs', path: routes.recoveryRuns }` under "Recovery Plans"
-- [x] Add `'Recovery Runs': 'nav.recovery.runs'` to the translation-key map
+**Acceptance criteria:**
+- [ ] `ChecklistResultDialog` imports and uses `useTranslation` (or receives `t` some other way consistent with how other shared components in this codebase access translations)
+- [ ] Line 83's `"Retry"` literal replaced with `t('buttons.retry')`
+- [ ] Line 87's `"Close"` literal replaced with `t('buttons.close')`
+- [ ] No other visible text in the component changes
 
-### Task 13: Translations (en/sk/cs)
-- [x] Reuse existing `pages.recoveryRuns.title`/`.description`
-- [x] Add `recoveryRuns.table.*` (columns), `recoveryRuns.status.*` (success/running/failed/queued labels), `recoveryRuns.search.*`, `recoveryRuns.drawer.*`, `nav.recovery.runs`
+**Verification:**
+- [ ] `npm exec vitest run src/shared/components/modal/ChecklistResultDialog.test.tsx` (if it exists; otherwise note its absence, and check whether any consumer's test snapshot needs updating)
+- [ ] Manual check: switch app language to Czech, open any `ChecklistResultDialog`-based dialog, confirm Retry/Close buttons show Czech text
 
-## Verification Steps
-- [x] Run: `npx vitest run src/features/recovery-plans/recovery-runs`
-- [x] Run: `npm run typecheck`
-- [x] Run: `npx eslint` on all created/changed files
-- [x] Manual note: no browser in this environment — flag visual verification as not done, don't claim it
+**Dependencies:** None
 
-## Explicitly Out of Scope
-- Backend change enabling bulk/multi-DAG runs queries (separate request, flagged in brainstorming)
-- Any change to `RecoveryActionHistory` (the current redirect target) — stays as its own separate feature
+**Files likely touched:**
+- `src/shared/components/modal/ChecklistResultDialog.tsx`
+
+**Estimated scope:** Small (1 file)
+
+---
+
+## Task 4: Derive passedCount/totalCount from checks.length in remaining hardcoded call sites
+
+**Description:** Four call sites hardcode `passedCount`/`totalCount` next to a `checks` array
+whose length currently happens to match, the same risky pattern that caused Task 1's bug. Replace
+the literals with derived values in each: `RecoveryApplicationOrchestratorSuccessModal.tsx`
+(hardcoded `2, 2`, static 2-item array), `RecoveryAppPoliciesTable.tsx` (hardcoded `4, 4`),
+`SnapshotPoliciesTable.tsx` (hardcoded `5, 5`), `CleanRoomPoliciesTable.tsx` (hardcoded `4, 4`) —
+each of the latter three has a static, unconditional checks array of that exact length.
+
+**Acceptance criteria:**
+- [ ] All four files compute `passedCount`/`totalCount` from the real `checks` array (`checks.length` since every check in these four is unconditionally `status: 'ok'`)
+- [ ] No behavior change in the currently-rendered UI (numbers stay the same today, just computed instead of literal)
+- [ ] `grep -rn "passedCount: [0-9]" src/` and `grep -rn "totalCount: [0-9]" src/` return no matches anywhere in the codebase after this task
+
+**Verification:**
+- [ ] `npm exec tsc --noEmit` — no new type errors
+- [ ] Manual check: open one dialog from each of the four affected components, confirm the status bar still reads the same count as before this change
+
+**Dependencies:** None (independent of Tasks 1-3, can be done in parallel)
+
+**Files likely touched:**
+- `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationOrchestratorSuccessModal.tsx`
+- `src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPoliciesTable.tsx`
+- `src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.tsx`
+- `src/features/recovery-plans/recovery-policies/clean-room/components/CleanRoomPoliciesTable.tsx`
+
+**Estimated scope:** Small (4 files, mechanical one-line-per-file changes)
+
+---
+
+## Task 5: Verification and commit
+
+**Description:** Run focused verification across all changed files, then commit. Given the
+distinct nature of the fixes (real bugs vs. pure defensive cleanup), split into two commits so
+Task 4's zero-behavior-change cleanup can be reverted independently of the Task 1-3 bug fixes if
+ever needed.
+
+**Acceptance criteria:**
+- [ ] Commit 1 contains Tasks 1-3 (the real bug fixes + shared i18n fix)
+- [ ] Commit 2 contains Task 4 (defensive hardening, no behavior change)
+- [ ] All focused test/verification commands from Tasks 1-4 pass, or their absence is explicitly noted
+- [ ] `git status` before each commit shows only the intended files staged
+
+**Verification:**
+- [ ] `npm exec tsc --noEmit`
+- [ ] `git diff --check` on all changed locale files
+- [ ] `grep -rn "passedCount: [0-9]" src/` and `grep -rn "totalCount: [0-9]" src/` both empty
+
+**Dependencies:** Tasks 1-4
+
+**Files likely touched:** None new (verification only)
+
+**Estimated scope:** N/A (verification task)
+
+---
+
+## Task 6: Cap Modal height to desktop viewport with internal scroll
+
+**Description:** In `src/shared/components/modal/Modal.tsx`, the dialog `div` (lines 88-100) has
+no height constraint — only `max-w-2xl`/`max-w-md` for width — so content (title + children +
+footer) can grow taller than the visible desktop browser window, as seen in the Application
+Recovery Policy JSON dialog with 4 checks plus the JSON response body. Add `max-h-[90vh] flex
+flex-col` to the outer dialog div, and wrap the `children` render in a `flex-1 min-h-0
+overflow-y-auto` div so only the middle content region scrolls — the title bar and footer stay
+pinned and always visible.
+
+**Acceptance criteria:**
+- [ ] Outer dialog `div` gains `max-h-[90vh]` and `flex flex-col` classes (in addition to its existing `fixed ... rounded-2xl ...` classes)
+- [ ] `children` is wrapped in a new div with `flex-1 min-h-0 overflow-y-auto` so it's the only scrollable region
+- [ ] Title block (`border-b`) and footer block (`border-t`) are NOT inside the scrollable wrapper — they stay visually fixed at top/bottom of the modal
+- [ ] No other visual change to `Modal.tsx` (width caps, borders, backdrop, focus-trap behavior all unchanged)
+
+**Verification:**
+- [ ] `npm exec tsc --noEmit` — no new type errors
+- [ ] Manual check: open the Application Recovery Policy JSON dialog at a desktop window size where content previously overflowed (e.g. resize browser to ~700px tall), confirm the modal itself never exceeds the window and the checks/JSON scroll internally while title and Close button stay visible
+- [ ] Manual spot-check: open each of the other 9 `Modal` consumers (`ProvidersCreateModal`, `RecoveryGroupRollbackSuccessModal`, `SnapshotPolicyModal`, `CleanRoomPolicyModal`, `RecoveryAppPolicyModal`, `PolicySetModal`, `PlatformProvidersModal`, `DataTableToolbar`, `CredentialCreateModal`) and confirm no visual regression, and specifically that any dropdown/select field is not clipped when opened near the modal's bottom edge
+
+**Dependencies:** None (independent of Tasks 1-5)
+
+**Files likely touched:**
+- `src/shared/components/modal/Modal.tsx`
+
+**Estimated scope:** Small (1 file, plus manual verification across 10 consumers)

@@ -335,7 +335,25 @@ export function RecoveryApplicationsTable({
         ) : null}
       </DetailDrawer>
 
-      {jsonViewed ? (
+      {jsonViewed ? (() => {
+        const checks = [
+          {
+            name: t('recovery.modal.applicationId'),
+            detail: jsonViewed.id,
+            status: 'ok' as const,
+          },
+          ...(jsonViewed.airflowRunId ? [{
+            name: t('recovery.modal.airflowRunId'),
+            detail: jsonViewed.airflowRunId,
+            status: 'ok' as const,
+          }] : []),
+          {
+            name: t('recovery.modal.pushToOrchestrator'),
+            detail: jsonViewed.pushToOrchestrator ? t('common.yes') : t('common.no'),
+            status: 'ok' as const,
+          },
+        ]
+        return (
         <ChecklistResultDialog
           open={jsonViewed !== null}
           title={t('recovery.modal.jsonViewer.title')}
@@ -348,31 +366,16 @@ export function RecoveryApplicationsTable({
           statusBar={{
             title: t('recovery.application.loaded'),
             status: 'success',
-            passedCount: 3,
-            totalCount: 3,
+            passedCount: checks.length,
+            totalCount: checks.length,
           }}
-          checks={[
-            {
-              name: t('recovery.modal.applicationId'),
-              detail: jsonViewed.id,
-              status: 'ok',
-            },
-            ...(jsonViewed.airflowRunId ? [{
-              name: t('recovery.modal.airflowRunId'),
-              detail: jsonViewed.airflowRunId,
-              status: 'ok',
-            }] : []),
-            {
-              name: t('recovery.modal.pushToOrchestrator'),
-              detail: jsonViewed.pushToOrchestrator ? 'Yes' : 'No',
-              status: 'ok',
-            },
-          ]}
+          checks={checks}
           responseData={toRecoveryApplicationJson(jsonViewed)}
           responseSchemaType="RecoveryApplicationRecord"
           onClose={() => { setJsonViewId(null) }}
         />
-      ) : null}
+        )
+      })() : null}
 
       <ConfirmDialog
         open={deleteTarget !== null}

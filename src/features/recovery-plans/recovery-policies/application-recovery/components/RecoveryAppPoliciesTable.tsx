@@ -251,9 +251,32 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
         }}
       />
 
-      {jsonViewed ? (
+      {jsonViewed ? (() => {
+        const checks = [
+          {
+            name: t('recoveryAppPolicies.policyId'),
+            detail: jsonViewed.id,
+            status: 'ok' as const,
+          },
+          {
+            name: t('recoveryAppPolicies.policyName'),
+            detail: jsonViewed.name,
+            status: 'ok' as const,
+          },
+          {
+            name: t('recoveryAppPolicies.description'),
+            detail: jsonViewed.description || '—',
+            status: 'ok' as const,
+          },
+          {
+            name: t('recoveryAppPolicies.level'),
+            detail: jsonViewed.level,
+            status: 'ok' as const,
+          },
+        ]
+        return (
         <ChecklistResultDialog
-          open={jsonViewed !== null}
+          open={true}
           title={t('recoveryAppPolicies.jsonViewer.title')}
           primaryName={jsonViewed.name}
           subtitle={jsonViewed.id}
@@ -263,39 +286,16 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
           statusBar={{
             title: t('recoveryAppPolicies.policyLoaded'),
             status: 'success',
-            passedCount: 4,
-            totalCount: 4,
+            passedCount: checks.length,
+            totalCount: checks.length,
           }}
-          checks={(() => {
-            const items = [
-              {
-                name: t('recoveryAppPolicies.policyId'),
-                detail: jsonViewed.id,
-                status: 'ok' as const,
-              },
-              {
-                name: t('recoveryAppPolicies.policyName'),
-                detail: jsonViewed.name,
-                status: 'ok' as const,
-              },
-              {
-                name: t('recoveryAppPolicies.description'),
-                detail: jsonViewed.description || '—',
-                status: 'ok' as const,
-              },
-              {
-                name: t('recoveryAppPolicies.level'),
-                detail: jsonViewed.level,
-                status: 'ok' as const,
-              },
-            ]
-            return items
-          })()}
+          checks={checks}
           responseData={toRecoveryAppPolicyReadPayload(jsonViewed)}
           responseSchemaType="RecoveryAppPolicy"
           onClose={() => { setJsonViewId(null) }}
         />
-      ) : null}
+        )
+      })() : null}
     </div>
   )
 }

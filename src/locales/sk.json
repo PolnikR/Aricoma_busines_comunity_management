@@ -817,6 +817,7 @@
   "recovery.application.rollback.resultSuccessDescription": "Aplikácia obnovy {applicationName} a všetky jej zdroje orchestrátora boli odstránené.",
   "recovery.application.rollback.resultWarningDescription": "Niektoré operácie čistenia neboli dokončené. Pozrite si podrobnosti nižšie.",
   "recovery.application.rollback.resultDagId": "ID DAG",
+  "recovery.application.rollback.resultStatusSection": "Stav",
   "recovery.application.rollback.resultAirflowSection": "Airflow",
   "recovery.application.rollback.resultIbmSection": "IBM",
   "recovery.application.rollback.resultErrors": "Chyby",

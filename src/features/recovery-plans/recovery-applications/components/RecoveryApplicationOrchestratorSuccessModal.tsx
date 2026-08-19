@@ -39,8 +39,8 @@ export function RecoveryApplicationOrchestratorSuccessModal({
       statusBar={{
         title: t('recovery.application.orchestratorModal.title'),
         status: 'success',
-        passedCount: 2,
-        totalCount: 2,
+        passedCount: checks.length,
+        totalCount: checks.length,
       }}
       checks={checks}
       responseData={orchestratorPush}

@@ -1,82 +1,152 @@
-# Implementation Plan: Recovery Runs
+# Implementation Plan: Fix Remaining Fake/Fragile Data in Checklist Dialogs
 
 ## Overview
-Build the real `RecoveryRunsPage` feature designed in brainstorming: an overview table showing only the *latest* orchestrator run per recovery application that has actually been pushed to orchestration (bounded set, cheap `limit=1` calls), and a detail drawer with the full paginated run history for one app, fetched only on demand. `/recovery-plans/recovery-runs` currently redirects to `recovery-actions/history` as a stub — this replaces that stub with the real page. Reuses `DataTable`, `TableToolbar`, `InventoryShell`, `DetailDrawer`, `DataTablePagination`, and `Badge` throughout rather than building new list/detail chrome.
+
+Following the earlier fix to the three recovery-policy JSON dialogs, a full codebase audit
+checked every other JSON-viewer / checklist-style dialog for the same bug class: a status bar
+whose "N / N passed" count doesn't match what's actually rendered below it. Most dialogs
+(`JsonViewerModal` usages, `ProviderConnectionTestDialog`, `RecoveryGroupRollbackResultModal`)
+were already correct. Three issues remain, of two different severities:
+
+1. A **real, currently-reproducible bug** in `RecoveryApplicationsTable.tsx`: `totalCount` is
+   hardcoded to `3`, but the `checks` array conditionally drops to 2 items when
+   `jsonViewed.airflowRunId` is absent — so the bar can show "3/3 passed" while only 2 rows render.
+2. A **real mislabeling bug** in `RecoveryApplicationRollbackResultModal.tsx`: the `report.status`
+   check reuses the `resultAirflowSection` ("Airflow") translation key, which is also used for the
+   separate `report.airflow` check — so two different checks can show the identical label.
+3. A **missing-translation bug** in the shared `ChecklistResultDialog.tsx` itself: the footer
+   "Retry"/"Close" buttons are hardcoded English literals, even though `buttons.retry` and
+   `buttons.close` already exist as translation keys — meaning every dialog built on this shared
+   component has never shown a translated Retry/Close button in Czech or Slovak.
+
+Additionally, as defensive cleanup (not a live bug today, but the same pattern that caused issue
+#1), four other call sites hardcode `passedCount`/`totalCount` next to a checks array whose length
+happens to match today: `RecoveryApplicationOrchestratorSuccessModal.tsx` and the three
+already-fixed policy tables (`RecoveryAppPoliciesTable.tsx`, `SnapshotPoliciesTable.tsx`,
+`CleanRoomPoliciesTable.tsx`). These get switched to `checks.length` so a future edit to a checks
+array can't silently desync the count again.
 
 ## Architecture Decisions
-- `GET /get_orchestrator_runs` requires `provider_id` + `dag_id` per call, with no bulk/multi-DAG mode (confirmed against `openapi/abco-api.json:1207-1270`). The response (`OrchestratorRunsResponse`) is deliberately permissive (`{ provider_id, dag_id, [key: string]: unknown }`) — it's Airflow's own `dagRuns` payload passed through, not validated by this backend's schema. A local mapper parses the `dag_runs` array using field names confirmed against a real captured response (below) instead of relying on `parseGeneratedResponse`/Zod (there's no generated Zod schema for this response, unlike other endpoints in this codebase).
-- Bound the app set client-side: only `RecoveryAppRecord`s with a non-null `airflow_run_id` actually have a queryable Airflow DAG — `push_to_orchestrator === true` alone is just intent and doesn't guarantee a run id was ever received (a submission could fail partway). `useRecoveryApplications()` (existing) is filtered on `Boolean(airflow_run_id)` before any run is ever fetched.
-- The Airflow DAG id is **not** the recovery app's own `id`. It's constructed as `` `dag_${airflow_run_id}` `` — confirmed directly from the OpenAPI spec's own description text on two other endpoints (`openapi/abco-api.json:1486,1826`: *"tear down the leftover Airflow DAG (`dag_<run_id>`)"*). `dag_id` for `/get_orchestrator_runs` must be built this way, not passed as the app's `id`.
-- Single orchestration provider assumption (confirmed): find the one AIRFLOW-type provider via the existing `usePlatformProviders()`/`getEligiblePlatformProviders` helper already used in `RecoveryAppBuilder.tsx`'s orchestration step — no per-provider fan-out.
-- Two distinct query shapes, matching the two-tier design: the overview fans out with `useQueries` (`limit: 1` per app — same pattern `useRecoveryGroupRelatedVolumes.ts` already establishes for "one query per item in a list"), while the drawer uses one plain `useQuery` per opened app, paginated via the endpoint's existing `limit`/`offset`/`order_by` params.
-- Status → `Badge` color mapping: `success` → `success`, `running` → `info`, `failed` → `error`, anything else (`queued`, `scheduled`, unknown) → `light`. No new badge/pill component — `Badge` already supports this.
+
+- **No structural changes to `ChecklistResultDialog`'s props/contract** — only its two hardcoded
+  button labels change to `t(...)` calls, using translation keys that already exist app-wide.
+- **`passedCount`/`totalCount` are always derived, never hardcoded**, going forward — this is the
+  one rule that would have prevented every issue found in the audit (the original bug and this
+  round). Every touched call site is being brought in line with this rule.
+- **`RecoveryApplicationRollbackResultModal`'s mislabel needs one new translation key** since no
+  existing key distinctly describes the top-level `report.status` field (as opposed to the
+  `report.airflow` sub-section). New key: `recovery.application.rollback.resultStatusSection`,
+  added to `en.json`/`cs.json`/`sk.json` following the existing pattern for that file.
+- **`RecoveryApplicationsTable`'s Yes/No fix reuses `common.yes`/`common.no`**, matching the
+  pattern already used correctly in the just-fixed `CleanRoomPoliciesTable.tsx` — no new keys
+  needed there.
 
 ## Task List
 
-### Phase 1: Foundation (models, API, query keys)
-- [ ] Task 1: Create `src/features/recovery-plans/recovery-runs/model/recoveryRunTypes.ts` — `OrchestratedApp { id, name, dagId }` (`dagId` precomputed as `` `dag_${airflow_run_id}` `` — see Architecture Decisions), `OrchestratorRun { runId, status, startedAt, endedAt, durationSeconds }`, `OrchestratorRunsPage { runs: OrchestratorRun[], total: number }`.
-- [ ] Task 2: Create `src/features/recovery-plans/recovery-runs/helpers/mapOrchestratorRuns.ts` — parses the raw `OrchestratorRunsResponse`'s `dag_runs` array using confirmed real Airflow field names (captured from an actual response, see below): `dag_run_id` → runId, `state` → status, `start_date` → startedAt (fallback `logical_date` while still queued/no start yet), `end_date` → endedAt, `duration` → durationSeconds (Airflow already computes this — don't derive it from start/end), `total_entries` → total. Still defensive (optional chaining, no throwing) since fields can be legitimately absent per run state (e.g. `end_date`/`duration` null while running).
+### Phase 1: Real bugs (user-visible incorrect behavior today)
 
-**Confirmed real response shape** (captured from the actual backend):
-```json
-{
-  "provider_id": "airflow-01",
-  "dag_id": "dag_260818094526_2918dccb",
-  "dag_runs": [
-    {
-      "dag_run_id": "scheduled__2026-08-18T00:00:00+00:00",
-      "logical_date": "2026-08-18T00:00:00Z",
-      "start_date": "2026-08-18T09:46:40.607667Z",
-      "end_date": "2026-08-18T09:46:50.636064Z",
-      "duration": 10.028397,
-      "state": "failed"
-    }
-  ],
-  "total_entries": 1,
-  "next_cursor": null,
-  "previous_cursor": null
-}
-```
-(trimmed to the fields the mapper uses; the real payload also carries `queued_at`, `run_type`, `dag_versions`, etc., which the mapper ignores)
-- [ ] Task 3: Create `src/features/recovery-plans/recovery-runs/api/recoveryRunsApi.ts` — `fetchOrchestratorRuns(providerId, dagId, { limit, offset, orderBy })` calling the generated `getOrchestratorRunsGetOrchestratorRunsGet`, following the try/catch + `OrvalApiError` message pattern in `recoveryApplicationsApi.ts`.
-- [ ] Task 4: Create `src/features/recovery-plans/recovery-runs/api/recoveryRunsQueryKeys.ts` (pattern: `discoveryInventoryKeys`) — `recoveryRunsKeys.latest(providerId, dagId)`, `.history(providerId, dagId, page, pageSize)`.
+- [ ] Task 1: Fix `RecoveryApplicationsTable.tsx` count mismatch and hardcoded Yes/No
+- [ ] Task 2: Fix `RecoveryApplicationRollbackResultModal.tsx` mislabeled status check
 
-### Checkpoint: Foundation
-- [ ] `npm run typecheck` clean
-- [ ] Unit test for `mapOrchestratorRuns.ts` covering a realistic Airflow payload and a malformed/missing-field one
+### Checkpoint: Real bugs fixed
+- [ ] Both dialogs show a status bar count that always matches the rendered checks list
+- [ ] The two `report.status` / `report.airflow` rows in the rollback modal show distinct labels
 
-### Phase 2: Hooks
-- [ ] Task 5: Create `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps.ts` — combines `useRecoveryApplications()` + `usePlatformProviders()`, filters to `Boolean(record.airflow_run_id)` (not `push_to_orchestrator` — see Architecture Decisions), maps each to `{ id, name, dagId: `dag_${airflow_run_id}` }`, finds the single AIRFLOW provider id (reuse `getEligiblePlatformProviders`), returns `{ apps: OrchestratedApp[], providerId: string | null, isLoading, error }`.
-- [ ] Task 6: Create `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedAppRuns.ts` — `useQueries` fan-out over `apps`, one `fetchOrchestratorRuns(providerId, app.dagId, { limit: 1 })` per app (note: `app.dagId`, not `app.id`), same shape as `useRecoveryGroupRelatedVolumes.ts` (per-item `enabled`, `staleTime`/`gcTime`, `retry: 1`). Returns one summary row per app (latest run or `null`).
-- [ ] Task 7: Create `src/features/recovery-plans/recovery-runs/hooks/useAppRunHistory.ts` — plain `useQuery` keyed on `app.dagId`, enabled only while a drawer is open for one app, paginated (`limit`/`offset` from page/pageSize), returns `{ runs, total }`.
+### Phase 2: Shared component i18n gap
 
-### Checkpoint: Hooks
-- [ ] Hook tests: `useOrchestratedApps` filters out records with no `airflow_run_id` (regardless of `push_to_orchestrator`) and computes `dagId` correctly; `useOrchestratedAppRuns` only queries the filtered set, passes `limit: 1`, and calls with `dagId` (not the app's own `id`); `useAppRunHistory` stays disabled until given a `dagId`
+- [ ] Task 3: Translate `ChecklistResultDialog.tsx`'s Retry/Close footer buttons
 
-### Phase 3: UI (reusing shared components)
-- [ ] Task 8: Create `src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.tsx` — `DataTable` + `DataTableToolbar` (search by app name/id) + `DataTableSkeleton`/`DataTableRequestState` for loading/error, `Badge` for the status pill (mapping above), row click sets the selected app id.
-- [ ] Task 9: Create `src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDrawer.tsx` — `DetailDrawer` (eyebrow "Run history", title = app name, subtitle = the app's own business `id`, shown to the human — the drawer's data fetch underneath uses `dagId`, not this subtitle value) with a run-row list built from `useAppRunHistory`, `DataTablePagination` in the footer.
-- [ ] Task 10: Create `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx` — `TableToolbar` + `InventoryShell`, matching `PolicySetsPage.tsx`'s structure exactly; composes `useOrchestratedApps` → `useOrchestratedAppRuns` → `RecoveryRunsTable`, plus `RecoveryRunHistoryDrawer` for the selected app.
+### Checkpoint: Shared dialog fully translated
+- [ ] Switching the app language to Czech or Slovak shows translated Retry/Close text in every
+      dialog built on `ChecklistResultDialog` (spot-check 2-3 call sites)
 
-### Checkpoint: UI
-- [ ] Component tests: table renders one row per orchestrated app with the right status color; clicking a row opens the drawer for that app; drawer pagination requests the next page
+### Phase 3: Defensive hardening (no active bug, same risk pattern)
 
-### Phase 4: Wire up routing, nav, translations
-- [ ] Task 11: `src/app/AppRoutes.tsx` — replace the `recovery-runs` route's `<Navigate to={routes.recoveryActionHistory} />` with the lazy-loaded `RecoveryRunsPage` (same `Suspense`/`RouteLoadingSkeleton` pattern as sibling routes).
-- [ ] Task 12: `src/layouts/app-shell/AppSidebar.tsx` — add a "Recovery Runs" sub-item under "Recovery Plans" (`path: routes.recoveryRuns`), add its `nav.recovery.runs` translation mapping.
-- [ ] Task 13: Translations (en/sk/cs) — reuse existing `pages.recoveryRuns.title`/`.description`; add `recoveryRuns.*` keys for table columns, status labels, search placeholder/label, drawer eyebrow/note, and `nav.recovery.runs`.
+- [ ] Task 4: Derive `passedCount`/`totalCount` from `checks.length` in the four remaining
+      hardcoded call sites (`RecoveryApplicationOrchestratorSuccessModal.tsx`,
+      `RecoveryAppPoliciesTable.tsx`, `SnapshotPoliciesTable.tsx`, `CleanRoomPoliciesTable.tsx`)
 
-### Checkpoint: Complete
-- [ ] Full focused test run across every file created/touched in Phases 1-4
-- [ ] `npm run typecheck` and `eslint` clean
-- [ ] Manual note: no browser available in this environment to visually confirm the route renders — flagged, not silently skipped
+### Checkpoint: All checklist dialogs hardened
+- [ ] `grep` for `passedCount: [0-9]` / `totalCount: [0-9]` across `src/` returns no matches
+- [ ] Focused tests pass; commit created
 
 ## Risks and Mitigations
+
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| A run's fields can legitimately be absent depending on state (`end_date`/`duration` null while running, `start_date` null while still queued) | Medium — naive parsing could show wrong/blank data | Mapper handles each field's known-absent cases explicitly (fallbacks and nulls), not just generic optional chaining; unit test covers a "queued, not yet started" run alongside the full/completed one |
-| No orchestration provider configured at all (e.g. fresh install) | Low | `useOrchestratedApps` returns `providerId: null`; the page shows the existing empty-state pattern, no queries fire |
-| A recovery app is deleted after being orchestrated, but Airflow still has its DAG runs | Low | Out of scope — the overview is driven by the current recovery-apps list, matching how the rest of this app already treats deleted-but-still-referenced ids (e.g. policy set "unavailable" notices) |
+| New translation key added for Task 2 must go in all three locale files or the app's en/cs/sk symmetry breaks | Medium | Add to all three in the same task, verify with grep before commit |
+| Task 1's Yes/No fix changes visible English text only in the sense of routing through i18n; if `common.yes`/`common.no` values ever differ from literal "Yes"/"No" the English rendering doesn't change (both are "Yes"/"No" today) | Low | Verified existing `common.yes`/`common.no` values equal "Yes"/"No" in en.json before relying on them |
+| Task 4 touches 4 files with no functional bug present — risk of introducing a regression for zero user-visible benefit | Low | Change is mechanical (`checks.length` / `checks.filter(...).length` in place of a literal); keep as its own commit so it can be reverted independently of Phase 1/2 if desired |
 
 ## Open Questions
-None — data flow, provider-count assumption, and status→color mapping were all settled during brainstorming.
+
+- None. All three real/near-bugs and the four hardening sites were identified precisely in the
+  audit, with exact file and line references confirmed by direct file reads.
+
+---
+
+## Addendum: Cap Modal Height to Desktop Viewport
+
+### Overview
+
+The shared `Modal.tsx` (`src/shared/components/modal/Modal.tsx`) has no viewport-height
+constraint today — the dialog is centered via `fixed left-1/2 top-1/2 ... -translate-x-1/2
+-translate-y-1/2` with only a `max-w-2xl`/`max-w-md` width cap, and its content (title + children
++ footer) can grow taller than the visible desktop window. This is visible in the Application
+Recovery Policy JSON dialog: with 4 checks plus the response-body JSON viewer, the modal can
+exceed a shorter desktop browser window, pushing the footer or content out of view with no way to
+scroll to it.
+
+Fix: cap the dialog's total height to a fraction of the viewport (`max-h-[90vh]`) and make the
+middle content region scroll internally, while the title bar and footer stay pinned in place —
+the standard "sticky header/footer, scrollable body" modal pattern.
+
+### Architecture Decisions
+
+- **Change lives entirely in `Modal.tsx`**, the single shared shell — no changes needed in
+  `ChecklistResultDialog` or any of the 10 components that use `Modal` directly (see below), since
+  none of them currently set their own height/overflow handling that would conflict.
+- **`max-h-[90vh]` on the outer dialog `div`**, with `flex flex-col` so title/children/footer stack
+  vertically and the height cap can be distributed between them.
+- **Only the `children` region scrolls** (`overflow-y-auto` on a wrapping div, `flex-1 min-h-0` so
+  it shrinks correctly inside the flex column) — the title bar and footer are never clipped or
+  scrolled away, matching the existing visual pattern where they're visually pinned by borders
+  (`border-b`, `border-t`).
+- **10 existing consumers of `Modal`** are affected by this shared change:
+  `ChecklistResultDialog`, `ProvidersCreateModal`, `RecoveryGroupRollbackSuccessModal`,
+  `SnapshotPolicyModal`, `CleanRoomPolicyModal`, `RecoveryAppPolicyModal`, `PolicySetModal`,
+  `PlatformProvidersModal`, `DataTableToolbar`, `CredentialCreateModal`. None were found to render
+  their own dropdown/popover content that depends on the modal body overflowing visibly (checked
+  `ProvidersCreateModal` as a representative form modal — no absolute-positioned dropdown found),
+  but this needs a manual spot-check per Task 6 below since `overflow-y-auto` can clip a
+  non-portaled dropdown menu if one exists in a form modal.
+- **No new "automated" sizing logic (JS-measured viewport, ResizeObserver, etc.)** — a CSS
+  `vh`-based max-height is the standard, zero-JS way to keep a fixed-position modal within the
+  desktop viewport, and matches the complexity level of the rest of `Modal.tsx` (no existing
+  runtime size calculations to extend).
+
+### Task List
+
+- [ ] Task 6: Cap `Modal.tsx` height to viewport with internal scroll, spot-check all 10 consumers
+
+### Checkpoint: Modal fits desktop viewport
+- [ ] The Application Recovery Policy JSON dialog (and Snapshot/Clean Room equivalents) never
+      exceeds the visible browser window at common desktop sizes (1366x768 through 1920x1080),
+      with the checks list and JSON response scrolling internally instead
+- [ ] Title bar and footer buttons (Retry/Close, Save/Cancel, etc.) remain visible and unscrolled
+      in every one of the 10 `Modal` consumers
+- [ ] No dropdown, select, or popover in any form modal (`ProvidersCreateModal`,
+      `PlatformProvidersModal`, `CredentialCreateModal`, the three policy modals, `PolicySetModal`)
+      gets visually clipped by the new `overflow-y-auto` region
+
+### Risks and Mitigations (addendum)
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| A form modal renders a dropdown/combobox that isn't portaled outside the scroll container | Medium — dropdown options could be visually clipped/cut off when opened near the modal's bottom edge | Manually open every dropdown/select in each of the 6 form-style modals after the change and confirm nothing is clipped; if one is found, that field's dropdown needs a portal (out of scope to fix here — flag and report instead of silently patching) |
+| `90vh` is too aggressive on very short windows (e.g. laptop with browser chrome taking significant vertical space) and clips content awkwardly | Low | `90vh` leaves 10% margin top+bottom, consistent with common modal UX conventions; can be tuned to `85vh` if manual testing shows it's too tight |
+
+## Open Questions (addendum)
+
+- None — scope confirmed with user as "cap modal height to viewport, scroll inside" (option
+  selected over "also scale width" or a custom breakpoint scheme).

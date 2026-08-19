@@ -851,6 +851,7 @@
   "recovery.application.rollback.resultSuccessDescription": "The recovery application {applicationName} and all its orchestrator resources have been removed.",
   "recovery.application.rollback.resultWarningDescription": "Some cleanup operations did not complete. See details below.",
   "recovery.application.rollback.resultDagId": "DAG ID",
+  "recovery.application.rollback.resultStatusSection": "Status",
   "recovery.application.rollback.resultAirflowSection": "Airflow",
   "recovery.application.rollback.resultIbmSection": "IBM",
   "recovery.application.rollback.resultErrors": "Errors",

@@ -3,6 +3,7 @@ import { Button } from '@/shared/components/button/Button'
 import { Modal } from '@/shared/components/modal/Modal'
 import { ResponseBodyViewer } from '@/shared/components/response-body/ResponseBodyViewer'
 import { CheckIcon } from '@/shared/icons/Icons'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export interface CheckItem {
   name: string
@@ -61,6 +62,7 @@ export function ChecklistResultDialog({
   onRetry,
   isPending = false,
 }: ChecklistResultDialogProps) {
+  const { t } = useTranslation()
   const isFailed = statusBar.status === 'error' || !isPending && statusBar.status === 'warning'
 
   const statusBgColor = {
@@ -80,11 +82,11 @@ export function ChecklistResultDialog({
         <>
           {isFailed && onRetry ? (
             <Button size="sm" variant="outline" onClick={onRetry} disabled={isPending} fullWidth>
-              Retry
+              {t('buttons.retry')}
             </Button>
           ) : null}
           <Button size="sm" variant="primary" onClick={onClose} disabled={isPending} fullWidth>
-            Close
+            {t('buttons.close')}
           </Button>
         </>
       )}

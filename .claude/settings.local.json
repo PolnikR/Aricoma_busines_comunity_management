@@ -36,7 +36,14 @@
       "Bash(python3)",
       "Bash(python3 -m json.tool)",
       "Bash(xargs basename -a)",
-      "Bash(xargs grep -l \"PlatformProvider\\\\|platform.*provider\")"
+      "Bash(xargs grep -l \"PlatformProvider\\\\|platform.*provider\")",
+      "Bash(mkdir -p \"c:/Users/polnikr/source/ABCO/Aricoma_busines_comunity_management/tasks\")",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('src/locales/en.json'\\)\\)\")",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('src/locales/cs.json'\\)\\)\")",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('src/locales/sk.json'\\)\\)\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\polnikr\\source\\ABCO\\Aricoma_busines_comunity_management\\tasks"
     ]
   }
 }

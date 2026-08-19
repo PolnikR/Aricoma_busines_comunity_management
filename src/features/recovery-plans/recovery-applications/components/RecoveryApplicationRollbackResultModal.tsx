@@ -26,7 +26,7 @@ export function RecoveryApplicationRollbackResultModal({
 
   if (report.status) {
     checks.push({
-      name: t('recovery.application.rollback.resultAirflowSection'),
+      name: t('recovery.application.rollback.resultStatusSection'),
       detail: report.status,
       status: isClean ? 'ok' : 'warning',
     })
