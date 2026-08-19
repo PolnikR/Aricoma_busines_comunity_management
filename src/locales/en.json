@@ -238,6 +238,7 @@
   "recoveryRuns.drawer.label": "Run history detail",
   "recoveryRuns.drawer.close": "Close run history",
   "recoveryRuns.drawer.note": "Fetched only now — the overview showed just this entity's latest run. This paginated history is one on-demand call for this entity alone.",
+  "recoveryRuns.drawer.viewInAirflow": "View in Airflow",
 
   "metrics.discoveredVMs": "Discovered VMs",
   "metrics.discoveredVMs.helper": "Validated inventory",

@@ -8,6 +8,11 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 vi.mock('../hooks/useAppRunHistory', () => ({
   useAppRunHistory: vi.fn(),
 }))
+vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
+  usePlatformProviders: () => ({
+    data: [{ id: 'airflow-01', name: 'Dynamic Airflow', url: 'https://airflow.dynamic.test:8443' }],
+  }),
+}))
 
 afterEach(cleanup)
 
@@ -42,5 +47,10 @@ describe('RecoveryRunHistoryDrawer', () => {
     expect(screen.getByText('success')).toBeInTheDocument()
     expect(screen.getByText('failed')).toBeInTheDocument()
     expect(useAppRunHistory).toHaveBeenCalledWith({ providerId: 'airflow-01', dagId: 'dag_260818094526_2918dccb', page: 1, pageSize: 10 })
+
+    expect(screen.getByRole('link', { name: /View in Airflow/ })).toHaveAttribute(
+      'href',
+      'https://airflow.dynamic.test:8443/dags/dag_260818094526_2918dccb',
+    )
   })
 })

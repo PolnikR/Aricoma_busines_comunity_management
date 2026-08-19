@@ -227,6 +227,7 @@
   "recoveryRuns.drawer.label": "Detail histórie spustení",
   "recoveryRuns.drawer.close": "Zavrieť históriu spustení",
   "recoveryRuns.drawer.note": "Načítané až teraz — prehľad zobrazoval len posledné spustenie tejto entity. Táto stránkovaná história je jedno vyžiadanie len pre túto entitu.",
+  "recoveryRuns.drawer.viewInAirflow": "Zobraziť v Airflow",
   "metrics.discoveredVMs": "Zistené virtuálne stroje",
   "metrics.discoveredVMs.helper": "Overené záznamy inventára",
   "metrics.poweredOn": "Zapnuté",

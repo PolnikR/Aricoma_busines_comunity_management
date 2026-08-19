@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Badge } from '@/shared/components/badge/Badge'
 import { DataTablePagination, DetailDrawer } from '@/shared/components/data-table'
+import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
+import { buildAirflowDagUrl } from '@/config/externalServices'
+import { ExternalLinkIcon } from '@/shared/icons/Icons'
 import { useAppRunHistory } from '../hooks/useAppRunHistory'
 import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '../helpers/formatRecoveryRun'
 
@@ -31,6 +34,10 @@ export function RecoveryRunHistoryDrawer({ entity, onClose }: RecoveryRunHistory
     page,
     pageSize: PAGE_SIZE,
   })
+  const { data: platformProviders = [] } = usePlatformProviders()
+  const providerUrl = platformProviders.find(
+    provider => provider.id === entity?.providerId,
+  )?.url
 
   return (
     <DetailDrawer
@@ -41,6 +48,17 @@ export function RecoveryRunHistoryDrawer({ entity, onClose }: RecoveryRunHistory
       subtitle={<span className="font-mono">{entity?.id}</span>}
       ariaLabel={t('recoveryRuns.drawer.label')}
       closeLabel={t('recoveryRuns.drawer.close')}
+      headerExtra={entity ? (
+        <a
+          href={buildAirflowDagUrl(entity.dagId, providerUrl)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
+        >
+          {t('recoveryRuns.drawer.viewInAirflow')}
+          <ExternalLinkIcon className="size-3.5 shrink-0" />
+        </a>
+      ) : null}
     >
       <div className="px-5 py-3">
         <p className="rounded-lg bg-surface-muted px-3 py-2 text-xs text-text-subtle">
