@@ -18,7 +18,6 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { Tabs } from '@/shared/components/tabs/Tabs'
-import { useOrchestratedApps } from '@/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps'
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
 import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/features/recovery-plans/recovery-runs/helpers/formatRecoveryRun'
 import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
@@ -155,19 +154,17 @@ export function RecoveryApplicationsTable({
   const activeFilterCount = Number(Boolean(filters.environment)) + Number(Boolean(filters.platform))
 
   const navigate = useNavigate()
-  // Interim: Applications don't have their own orchestration provider id yet
-  // (Recovery Groups do) — share the same eligible-provider lookup used by
-  // the Recovery Runs page until the backend ships one (tasks/plan.md Task 2b).
-  const { providerId: orchestratorProviderId } = useOrchestratedApps()
   const { data: platformProviders = [] } = usePlatformProviders()
   const selectedOrchestrationProviderUrl = platformProviders.find(
-    provider => provider.id === orchestratorProviderId,
+    provider => provider.id === selected?.orchestrationProviderId,
   )?.url
   const selectedAirflowRunId = selected?.pushToOrchestrator ? selected.airflowRunId : null
-  const isSelectedOrchestrated = Boolean(selectedAirflowRunId)
+  const isSelectedOrchestrated = Boolean(
+    selectedAirflowRunId && selected?.orchestrationProviderId,
+  )
   const selectedDagId = selectedAirflowRunId ? `dag_${selectedAirflowRunId}` : null
   const { latestRun } = useLatestOrchestratorRun(
-    isSelectedOrchestrated ? orchestratorProviderId : null,
+    isSelectedOrchestrated ? (selected?.orchestrationProviderId ?? null) : null,
     selectedDagId,
   )
 

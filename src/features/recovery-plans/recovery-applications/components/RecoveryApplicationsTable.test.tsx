@@ -14,9 +14,6 @@ vi.mock('react-router', async (importOriginal) => ({
   useNavigate: () => navigate,
 }))
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps', () => ({
-  useOrchestratedApps: () => ({ apps: [], providerId: 'airflow-01', isLoading: false, isFetching: false, error: null, refetch: vi.fn() }),
-}))
 vi.mock('@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun', () => ({
   useLatestOrchestratorRun: vi.fn(() => ({ latestRun: null, isLoading: false, error: null })),
 }))
@@ -35,6 +32,7 @@ const application: RecoveryApplicationListItem = {
   policySetId: 'critical-daily-latest',
   airflowRunId: '260811133132_fbffbefb',
   pushToOrchestrator: true,
+  orchestrationProviderId: 'airflow-01',
   data: {
     application: {
       name: 'Finance Recovery',
