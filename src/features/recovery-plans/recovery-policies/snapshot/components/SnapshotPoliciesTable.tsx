@@ -294,7 +294,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
           primaryName={jsonViewed.name}
           subtitle={jsonViewed.id}
           badges={[
-            { label: jsonViewed.enabled ? 'Active' : 'Inactive', color: jsonViewed.enabled ? 'success' : 'warning' },
+            { label: jsonViewed.enabled ? t('checklistDialog.active') : t('checklistDialog.inactive'), color: jsonViewed.enabled ? 'success' : 'warning' },
           ]}
           statusBar={{
             title: t('snapshotPolicies.policyLoaded'),
@@ -302,33 +302,36 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
             passedCount: 5,
             totalCount: 5,
           }}
-          checks={[
-            // {
-            //   name: t('snapshotPolicies.policyId'),
-            //   detail: jsonViewed.id,
-            //   status: 'ok',
-            // },
-            // {
-            //   name: t('snapshotPolicies.policyName'),
-            //   detail: jsonViewed.name,
-            //   status: 'ok',
-            // },
-            // {
-            //   name: t('snapshotPolicies.description'),
-            //   detail: jsonViewed.description || '—',
-            //   status: 'ok',
-            // },
-            // {
-            //   name: t('snapshotPolicies.level'),
-            //   detail: jsonViewed.level,
-            //   status: 'ok',
-            // },
-            // {
-            //   name: t('snapshotPolicies.frequency'),
-            //   detail: `${jsonViewed.frequencyValue} ${jsonViewed.frequencyUnit}`,
-            //   status: 'ok',
-            // },
-          ]}
+          checks={(() => {
+            const items = [
+              {
+                name: t('snapshotPolicies.policyId'),
+                detail: jsonViewed.id,
+                status: 'ok' as const,
+              },
+              {
+                name: t('snapshotPolicies.policyName'),
+                detail: jsonViewed.name,
+                status: 'ok' as const,
+              },
+              {
+                name: t('snapshotPolicies.description'),
+                detail: jsonViewed.description || '—',
+                status: 'ok' as const,
+              },
+              {
+                name: t('snapshotPolicies.level'),
+                detail: jsonViewed.level,
+                status: 'ok' as const,
+              },
+              {
+                name: t('snapshotPolicies.frequency'),
+                detail: String(jsonViewed.frequencyValue) + ' ' + jsonViewed.frequencyUnit,
+                status: 'ok' as const,
+              },
+            ]
+            return items
+          })()}
           responseData={toSnapshotPolicySubmitPayload(jsonViewed)}
           responseSchemaType="SnapshotPolicy"
           onClose={() => { setJsonViewId(null) }}

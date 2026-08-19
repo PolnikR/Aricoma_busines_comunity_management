@@ -188,7 +188,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
           primaryName={jsonViewed.name}
           subtitle={jsonViewed.id}
           badges={[
-            { label: jsonViewed.enabled ? 'Active' : 'Inactive', color: jsonViewed.enabled ? 'success' : 'warning' },
+            { label: jsonViewed.enabled ? t('checklistDialog.active') : t('checklistDialog.inactive'), color: jsonViewed.enabled ? 'success' : 'warning' },
           ]}
           statusBar={{
             title: t('cleanRoomPolicies.policyLoaded'),
@@ -196,28 +196,31 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
             passedCount: 4,
             totalCount: 4,
           }}
-           checks={[
-          //   {
-          //     name: t('cleanRoomPolicies.policyId'),
-          //     detail: jsonViewed.id,
-          //     status: 'ok',
-          //   },
-          //   {
-          //     name: t('cleanRoomPolicies.policyName'),
-          //     detail: jsonViewed.name,
-          //     status: 'ok',
-          //   },
-          //   {
-          //     name: t('cleanRoomPolicies.description'),
-          //     detail: jsonViewed.description || '—',
-          //     status: 'ok',
-          //   },
-          //   {
-          //     name: t('cleanRoomPolicies.enabled'),
-          //     detail: jsonViewed.enabled ? 'Yes' : 'No',
-          //     status: 'ok',
-          //   },
-          ]}
+          checks={(() => {
+            const items = [
+              {
+                name: t('cleanRoomPolicies.policyId'),
+                detail: jsonViewed.id,
+                status: 'ok' as const,
+              },
+              {
+                name: t('cleanRoomPolicies.policyName'),
+                detail: jsonViewed.name,
+                status: 'ok' as const,
+              },
+              {
+                name: t('cleanRoomPolicies.description'),
+                detail: jsonViewed.description || '—',
+                status: 'ok' as const,
+              },
+              {
+                name: t('cleanRoomPolicies.enabled'),
+                detail: jsonViewed.enabled ? t('common.yes') : t('common.no'),
+                status: 'ok' as const,
+              },
+            ]
+            return items
+          })()}
           responseData={toCleanRoomPolicySubmitPayload(jsonViewed)}
           responseSchemaType="CleanRoomPolicy"
           onClose={() => { setJsonViewId(null) }}
