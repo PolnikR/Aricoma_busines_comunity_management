@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { routes } from '@/app/routes'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
@@ -19,6 +21,8 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { buildAirflowDagUrl } from '@/config/externalServices'
 import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
 import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
+import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
+import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/features/recovery-plans/recovery-runs/helpers/formatRecoveryRun'
 import { toRecoveryGroupJson } from '../helpers/mapRecoveryGroups'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupRollbackResultModal } from './RecoveryGroupRollbackResultModal'
@@ -98,6 +102,14 @@ export function RecoveryGroupsTable({
   )?.url
   const jsonViewed = rows.find(group => group.id === jsonViewId) ?? null
   const activeFilterCount = Number(Boolean(filters.workloadType)) + Number(Boolean(filters.resourceType))
+
+  const navigate = useNavigate()
+  const isSelectedOrchestrated = Boolean(selected?.pushToOrchestrator && selected.airflowRunId && selected.orchestrationProviderId)
+  const selectedDagId = isSelectedOrchestrated && selected?.airflowRunId ? `dag_${selected.airflowRunId}` : null
+  const { latestRun } = useLatestOrchestratorRun(
+    isSelectedOrchestrated ? (selected?.orchestrationProviderId ?? null) : null,
+    selectedDagId,
+  )
   const policySetName = (policySetId: string) => (
     policySets.find(policySet => policySet.id === policySetId)?.name ?? policySetId
   )
@@ -417,6 +429,30 @@ export function RecoveryGroupsTable({
                 </Badge>
               }
             />
+            {isSelectedOrchestrated ? (
+              <>
+                <DetailRow
+                  label={t('details.latestRunStatus')}
+                  value={latestRun ? (
+                    <Badge color={runStatusBadgeColor(latestRun.status)} size="sm">{latestRun.status}</Badge>
+                  ) : (
+                    <span className="text-text-subtle">{t('recoveryRuns.table.noRuns')}</span>
+                  )}
+                />
+                <DetailRow label={t('details.lastExecuted')} value={formatRunTimestamp(latestRun?.startedAt ?? null)} />
+                <DetailRow label={t('details.duration')} value={formatRunDuration(latestRun?.durationSeconds ?? null)} />
+                <Button
+                  size="sm"
+                  variant="soft"
+                  className="w-full"
+                  onClick={() => {
+                    void navigate(`${routes.recoveryRuns}?tab=groups&entityId=${selected.id}`)
+                  }}
+                >
+                  {t('buttons.viewRecoveryRuns')}
+                </Button>
+              </>
+            ) : null}
           </dl>
         ) : null}
       </DetailDrawer>

@@ -1,10 +1,26 @@
+import type { ReactElement } from 'react'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsTable } from './RecoveryGroupsTable'
+import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
 
+const navigate = vi.fn()
+
+vi.mock('react-router', async (importOriginal) => ({
+  ...await importOriginal<typeof import('react-router')>(),
+  useNavigate: () => navigate,
+}))
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+vi.mock('@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun', () => ({
+  useLatestOrchestratorRun: vi.fn(() => ({ latestRun: null, isLoading: false, error: null })),
+}))
+
+function renderTable(ui: ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>)
+}
 vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
   usePolicySets: () => ({
     data: [
@@ -88,7 +104,7 @@ function getDatabaseGroup(): RecoveryGroup {
 describe('RecoveryGroupsTable', () => {
   it('renders group columns and opens the group detail drawer', async () => {
     const user = userEvent.setup()
-    render(
+    renderTable(
       <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
     )
 
@@ -104,7 +120,7 @@ describe('RecoveryGroupsTable', () => {
 
   it('filters groups by search text', async () => {
     const user = userEvent.setup()
-    render(
+    renderTable(
       <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
     )
 
@@ -115,7 +131,7 @@ describe('RecoveryGroupsTable', () => {
   })
 
   it('renders the IBM Power workload label', () => {
-    render(
+    renderTable(
       <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
     )
 
@@ -128,7 +144,7 @@ describe('RecoveryGroupsTable', () => {
     const onDelete = vi.fn()
     const databaseGroup = groups.find(group => group.id === 'database-group')
     if (!databaseGroup) throw new Error('Expected database group fixture')
-    render(
+    renderTable(
       <RecoveryGroupsTable groups={groups} onEdit={onEdit} onDelete={onDelete} onRollback={vi.fn()} />,
     )
 
@@ -160,7 +176,7 @@ describe('RecoveryGroupsTable', () => {
       ibm: { status: 'ok', errors: [] },
     }
     const onDelete = vi.fn().mockResolvedValue(report)
-    render(
+    renderTable(
       <RecoveryGroupsTable
         groups={[orchestratedGroup]}
         onEdit={vi.fn()}
@@ -187,7 +203,7 @@ describe('RecoveryGroupsTable', () => {
     const onDelete = vi.fn().mockResolvedValue(null)
     const databaseGroup = groups.find(group => group.id === 'database-group')
     if (!databaseGroup) throw new Error('Expected database group fixture')
-    render(
+    renderTable(
       <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={onDelete} onRollback={vi.fn()} />,
     )
 
@@ -214,7 +230,7 @@ describe('RecoveryGroupsTable', () => {
       orchestrationProviderId: 'airflow-01',
     }
     const onRollback = vi.fn().mockResolvedValue(undefined)
-    render(
+    renderTable(
       <RecoveryGroupsTable
         groups={[orchestratedGroup]}
         onEdit={vi.fn()}
@@ -237,7 +253,7 @@ describe('RecoveryGroupsTable', () => {
 
   it('shows the resolved policy set name in the detail drawer', async () => {
     const user = userEvent.setup()
-    render(
+    renderTable(
       <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
     )
 
@@ -255,7 +271,7 @@ describe('RecoveryGroupsTable', () => {
       orchestrationProviderId: 'airflow-01',
       pushToOrchestrator: true,
     }
-    render(
+    renderTable(
       <RecoveryGroupsTable groups={[orchestratedGroup]} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
     )
 
@@ -276,7 +292,7 @@ describe('RecoveryGroupsTable', () => {
       orchestrationProviderId: 'airflow-without-url',
       pushToOrchestrator: true,
     }
-    render(
+    renderTable(
       <RecoveryGroupsTable groups={[orchestratedGroup]} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
     )
 
@@ -291,7 +307,7 @@ describe('RecoveryGroupsTable', () => {
 
   it('does not render an Airflow link when the group has no run id', async () => {
     const user = userEvent.setup()
-    render(
+    renderTable(
       <RecoveryGroupsTable groups={[getDatabaseGroup()]} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
     )
 
@@ -301,9 +317,47 @@ describe('RecoveryGroupsTable', () => {
     expect(within(detail).queryByRole('link')).not.toBeInTheDocument()
   })
 
+  it('shows orchestrator status and navigates to Recovery Runs when the group is orchestrated', async () => {
+    vi.mocked(useLatestOrchestratorRun).mockReturnValue({
+      latestRun: { runId: 'r1', status: 'success', startedAt: '2026-08-19T08:51:00Z', endedAt: '2026-08-19T08:51:07Z', durationSeconds: 7.45 },
+      isLoading: false,
+      error: null,
+    })
+    const user = userEvent.setup()
+    const orchestratedGroup: RecoveryGroup = {
+      ...getDatabaseGroup(),
+      airflowRunId: '260812103627_4c06f9c8',
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: true,
+    }
+    renderTable(
+      <RecoveryGroupsTable groups={[orchestratedGroup]} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
+    )
+
+    await user.click(screen.getByText('Database group'))
+    const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+
+    expect(within(detail).getByText('success')).toBeInTheDocument()
+
+    await user.click(within(detail).getByRole('button', { name: 'View recovery runs →' }))
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-runs?tab=groups&entityId=database-group')
+  })
+
+  it('shows no orchestrator status when the group has no run id', async () => {
+    const user = userEvent.setup()
+    renderTable(
+      <RecoveryGroupsTable groups={[getDatabaseGroup()]} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
+    )
+
+    await user.click(screen.getByText('Database group'))
+    const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+
+    expect(within(detail).queryByRole('button', { name: 'View recovery runs →' })).not.toBeInTheDocument()
+  })
+
   it('opens a JSON viewer showing the recovery group submit payload', async () => {
     const user = userEvent.setup()
-    render(
+    renderTable(
       <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
     )
 
@@ -321,7 +375,7 @@ describe('RecoveryGroupsTable', () => {
   it('keeps unresolved groups visible and disables only unsafe editing', async () => {
     const user = userEvent.setup()
     const onEdit = vi.fn()
-    render(
+    renderTable(
       <RecoveryGroupsTable
         groups={[unresolvedGroup]}
         onEdit={onEdit}
