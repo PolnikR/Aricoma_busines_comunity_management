@@ -10,6 +10,9 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 vi.mock('../hooks/useOrchestratedEntities', () => ({ useOrchestratedEntities: vi.fn() }))
 vi.mock('../hooks/useOrchestratedEntityRuns', () => ({ useOrchestratedEntityRuns: vi.fn() }))
 vi.mock('../hooks/useAppRunHistory', () => ({ useAppRunHistory: vi.fn() }))
+vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
+  usePlatformProviders: () => ({ data: [] }),
+}))
 
 afterEach(cleanup)
 
