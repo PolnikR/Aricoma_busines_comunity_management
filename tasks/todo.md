@@ -7,8 +7,8 @@ See `tasks/plan.md` for full detail, acceptance criteria, and file lists.
 - [x] Checkpoint: `/recovery-plans/recovery-runs` works, `/storage-orchestration` shows placeholder, `tsc --noEmit` clean (verified: tsc clean, 7 test files / 20 tests pass unchanged, eslint clean)
 
 ## Phase 2: Data layer
-- [ ] Task 2a: Add `OrchestratedEntity` type; add `useOrchestratedGroups` (uses Recovery Groups' existing `orchestrationProviderId`, no backend dependency); add `useOrchestratedEntities`; generalize `useOrchestratedAppRuns` → `useOrchestratedEntityRuns`; add `useLatestOrchestratorRun`. Applications KEEP the existing `usePlatformProviders`/`getEligiblePlatformProviders` fallback for now.
-- [ ] Checkpoint: hook tests green (apps, groups, merged, entity-runs)
+- [x] Task 2a: Add `OrchestratedEntity` type; add `useOrchestratedGroups` (uses Recovery Groups' existing `orchestrationProviderId`, no backend dependency); add `useOrchestratedEntities`; add `useOrchestratedEntityRuns` (new, generalized — `useOrchestratedAppRuns` kept as-is, still used by the current unmodified page until Task 3); add `useLatestOrchestratorRun`. Applications KEEP the existing `usePlatformProviders`/`getEligiblePlatformProviders` fallback for now.
+- [x] Checkpoint: hook tests green (9 test files / 24 tests across the feature, all passing; `tsc --noEmit` and eslint clean)
 - [ ] **Task 2b — BLOCKED, do not start:** confirmed 2026-08-19 via `npm run api:pull` that `orchestration_provider_id` is NOT yet on `RecoveryAppRecord`. Re-check with `api:pull` before starting; then `api:generate`; then add the field to `recoveryApplicationTypes.ts` + `mapRecoveryApplications.ts`; then drop the eligible-provider fallback in `useOrchestratedApps`; then fix the one-line follow-up flagged in Task 4.
 
 ## Phase 3: Page UX
