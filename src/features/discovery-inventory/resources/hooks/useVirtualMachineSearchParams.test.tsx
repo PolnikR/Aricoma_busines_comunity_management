@@ -5,6 +5,70 @@ import { describe, expect, it } from 'vitest'
 import { useVirtualMachineSearchParams } from './useVirtualMachineSearchParams'
 
 describe('useVirtualMachineSearchParams', () => {
+  it('initializes trimmed provider defaults and exposes only the first URL tag', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={['/']}>
+        {children}
+      </MemoryRouter>
+    )
+    const { result } = renderHook(
+      () => useVirtualMachineSearchParams({ id: 'provider-1', vmPrefix: ' prod- ', vmTags: ['prod', 'db'] }),
+      { wrapper },
+    )
+
+    expect(result.current.query.search).toBe('prod-')
+    expect(result.current.query.tags).toEqual(['prod'])
+  })
+
+  it('preserves explicit URL filters over provider defaults', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={['/?search=url-&tags=url-tag,other']}>
+        {children}
+      </MemoryRouter>
+    )
+    const { result } = renderHook(
+      () => useVirtualMachineSearchParams({ id: 'provider-1', vmPrefix: ' provider- ', vmTags: ['provider-tag'] }),
+      { wrapper },
+    )
+
+    expect(result.current.query.search).toBe('url-')
+    expect(result.current.query.tags).toEqual(['url-tag'])
+  })
+
+  it('does not restore cleared defaults and initializes defaults for a new provider', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={['/']}>
+        {children}
+      </MemoryRouter>
+    )
+    const { result, rerender } = renderHook(
+      ({ providerId }: { providerId: string }) => useVirtualMachineSearchParams({
+        id: providerId,
+        vmPrefix: `${providerId}-prefix`,
+        vmTags: [`${providerId}-tag`],
+      }),
+      { wrapper, initialProps: { providerId: 'provider-1' } },
+    )
+
+    act(() => {
+      result.current.updateFilters({
+        search: '',
+        powerState: '',
+        connectionState: '',
+        cluster: '',
+        tags: [],
+        untagged: false,
+      })
+    })
+    expect(result.current.query.search).toBe('')
+    expect(result.current.query.tags).toEqual([])
+
+    rerender({ providerId: 'provider-2' })
+
+    expect(result.current.query.search).toBe('provider-2-prefix')
+    expect(result.current.query.tags).toEqual(['provider-2-tag'])
+  })
+
   it('parses valid values and falls back for invalid pagination', () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <MemoryRouter initialEntries={['/?page=-2&pageSize=99&tags=prod,db&untagged=true&providerId=null']}>
@@ -16,7 +80,7 @@ describe('useVirtualMachineSearchParams', () => {
     expect(result.current.query).toMatchObject({
       page: 1,
       pageSize: 10,
-      tags: ['prod', 'db'],
+      tags: ['prod'],
       untagged: true,
     })
   })
