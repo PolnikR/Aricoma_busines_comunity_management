@@ -1,110 +1,257 @@
-# Implementation Plan: VMware Provider Default Inventory Filters
-
-Issue: https://github.com/PolnikR/Aricoma_busines_comunity_management/issues/4
+# Implementation Plan: Stable Provider-Scoped Resource Filters
 
 ## Overview
 
-Use each selected VMware provider's `vmPrefix` and first `vmTags` value as
-editable initial filters in Resources and Resources ISE. Keep URL/default state
-and remote inventory loading in two deep modules. The URL-filter module applies
-provider defaults once and then preserves user changes. The VMware inventory
-module hides endpoint selection, debounce, cache identity, response
-normalization, and the client-side prefix filter required for tag-plus-name.
+Repair the resource inventory regressions by giving every provider its own
+filter state, keeping the active provider state shareable in the URL, and
+preserving inactive provider states in `sessionStorage`. VMware search must
+remain mounted and focused while its debounced request changes, cached data
+must remain visible during refetches, and a configured target tag must not be
+silently deleted when the tags endpoint does not currently return it.
+
+The scope covers Resources (`source`) and Resources ISE (`target`) and all
+provider tabs. VMware receives the additional default/search/tag behavior;
+FlashSystem and IBM Power only gain provider-scoped restoration of their
+existing filters. No backend or OpenAPI change is required.
+
+## Confirmed Root Causes
+
+1. `useResourceTabSearchParam` deletes the union of resource filter parameters
+   whenever the active provider changes. A single URL state therefore cannot
+   restore the previous state of multiple providers.
+2. Name-only search creates a new query without data during its 300 ms
+   debounce. The page treats that legitimate pending state as an error and
+   later replaces the complete inventory panel with a loading skeleton,
+   unmounting the focused search input.
+3. VMware queries do not retain previous data across remote query-key changes,
+   so provider/search transitions visibly discard otherwise usable results.
+4. `VmwareResourcesPage` removes a selected tag when `/tags` does not include
+   it. This silently changes tag-plus-name mode into name-only mode in
+   Resources ISE.
 
 ## Architecture Decisions
 
-- Keep `useVirtualMachineSearchParams` as the URL-state seam and extend its
-  interface with a provider scope plus optional initial search and tag values.
-- Add one unified VMware inventory hook instead of branching between query
-  hooks in `VmwareResourcesPage`.
-- Keep Resources single-tag. Normalize URL state to at most one tag and use
-  only trimmed `provider.vmTags?.[0]` as the provider default.
-- Treat the VMware search value as a case-sensitive VM-name prefix. It no
-  longer performs broad substring matching over hostname, IP, guest OS, host,
-  and VM name.
-- Select exactly one remote operation from the active filters:
-  - no name, no tag -> `/vms`
-  - name only -> debounced `/vms_by_name`
-  - tag only -> `/vms_by_tag`
-  - tag and name -> `/vms_by_tag`, then client-side `name.startsWith(prefix)`
-- Reuse the existing API wrappers, generated clients, response schema, mapper,
-  and query-key factories. Do not add a transport abstraction or dependency.
-- Keep query cache entries keyed only by remote request inputs. In tag mode,
-  the client-only name prefix must not alter or overwrite the cached tag data.
-- Use the existing VMware cache policy: 15-minute stale time, 60-minute garbage
-  collection, one retry, and no window-focus refetch.
-- Do not silently fall back to `/vms` after a filtered request fails.
+- Use a versioned session key derived from
+  `role:resourceTab:providerId`; source and target providers can never share
+  state accidentally.
+- Store a discriminated snapshot for each resource type. Empty values are
+  valid saved state, so clearing filters never re-applies provider defaults.
+- Resolve initial state in this order:
+  1. explicit active-provider filters already present in the URL;
+  2. saved provider snapshot, including an explicitly empty snapshot;
+  3. VMware `vmPrefix` plus only `vmTags[0]`;
+  4. the resource type's empty defaults.
+- Keep only the active provider's filters in the URL. On provider selection,
+  clear the previous provider's URL filter parameters; the newly mounted
+  resource hook restores the target snapshot/default while inventory queries
+  remain gated by initialization readiness.
+- Persist snapshots whenever committed filters change. Page and pagination
+  fields are not provider filters; page resets to 1 on provider/filter change.
+- Keep VMware's toolbar and prior inventory mounted during debounce/refetch.
+  Expose query lifecycle explicitly (`isDebouncing`, initial pending,
+  background fetching) and never infer an error from missing data alone.
+- Use React Query cache identity only for remote inputs. Returning to a fresh
+  cached provider/filter combination must not issue a request.
+- Preserve a configured/selected VMware tag even when the tags endpoint omits
+  it. Include the selected tag as a fallback dropdown option and let the
+  inventory endpoint return an empty result when no VM matches.
+
+## Provider Snapshot Contracts
+
+```ts
+type ProviderFilterScope = {
+  role: 'source' | 'target'
+  resourceTab: 'vmware' | 'flashsystem' | 'ibm-power'
+  providerId: string
+}
+
+type ProviderFilterSnapshot =
+  | { resourceTab: 'vmware'; initialized: true; filters: VirtualMachineFilters }
+  | { resourceTab: 'flashsystem'; initialized: true; filters: FlashSystemFilters }
+  | { resourceTab: 'ibm-power'; initialized: true; filters: PowerFilters }
+```
+
+Storage parsing must reject malformed, mismatched, or unknown-version data and
+fall back safely without throwing during SSR/tests or blocked storage access.
 
 ## Dependency Graph
 
 ```text
-Provider-scoped URL defaults
-        |
-        +----------------------------+
-                                     v
-Existing VMware API wrappers --> Unified VMware inventory hook
-                                     |
-Legacy post-inventory search removal -+
-                                     v
-                         VmwareResourcesPage integration
-                                     |
-                                     v
-                    Resources + Resources ISE verification
+Provider filter session store + pure tests
+                 |
+                 v
+Resource-type URL hooks + provider switch cleanup
+                 |
+                 +-----------------------+
+                 |                       |
+                 v                       v
+Stable VMware query lifecycle       Flash/Power restoration
+                 |
+                 v
+VMware page + toolbar + ISE tag behavior
+                 |
+                 v
+Focused integration/browser verification
 ```
 
-## Task 1: Add provider-scoped defaults to the URL-filter module
+## Task 1: Add the versioned provider-filter session module
 
-**Description:** Extend the VMware URL-filter hook so a selected provider can
-initialize search and one tag exactly once. Explicit URL filters win, user
-clears remain cleared during the current provider activation, and old URLs
-containing multiple tags normalize to their first tag.
+**Description:** Create a small pure module that builds provider-scoped keys,
+validates resource-specific snapshots, and safely reads, writes, and clears
+snapshots in `sessionStorage`. The module must preserve explicitly empty
+filters and isolate source from target.
 
 **Acceptance criteria:**
 
-- [ ] A provider scope can initialize trimmed `vmPrefix` and trimmed
-      `vmTags[0]` when the corresponding URL filters are absent.
-- [ ] Explicit URL values are preserved, only one active tag is exposed, and
-      clearing a default does not cause it to reappear on rerender.
-- [ ] Changing provider scope permits the new provider defaults to initialize
-      after the existing tab flow clears the previous provider filters.
+- [ ] Keys include schema version, role, resource type, and provider ID.
+- [ ] Round trips preserve each resource type's filters, including empty
+      VMware `search` and `tags` values.
+- [ ] Invalid JSON, wrong resource type/version, and unavailable storage return
+      no snapshot without throwing.
 
 **Verification:**
 
-- [ ] `C:\Users\polnikr\nodejs\npm.cmd exec vitest run src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx`
-- [ ] Focused lint for the hook and its test.
+- [ ] Focused unit test for key isolation, validation, empty state, and storage
+      failures.
+- [ ] Focused ESLint for the module and its test.
 
 **Dependencies:** None
 
 **Files likely touched:**
 
-- `src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.ts`
-- `src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx`
+- `src/features/discovery-inventory/resources/state/providerFilterSession.ts`
+- `src/features/discovery-inventory/resources/state/providerFilterSession.test.ts`
 
 **Estimated scope:** Small (2 files)
 
-## Task 2: Build the unified VMware inventory module
+## Task 2: Restore and persist VMware state per provider
 
-**Description:** Add one deep query hook that accepts provider ID, current name
-prefix, current tag, and enabled state. It selects one endpoint, debounces only
-name-only requests, normalizes every response to `DiscoveryInventory`, and
-applies the client-only prefix in tag-plus-name mode without polluting cache.
+**Description:** Extend the VMware URL-filter hook with role-aware provider
+scope and the session module. Explicit URL values remain authoritative, saved
+snapshots restore on return, and provider defaults apply only when neither URL
+nor a snapshot exists. Keep initialization readiness so no transient
+unfiltered request can run.
 
 **Acceptance criteria:**
 
-- [ ] The four filter combinations select exactly the operation specified by
-      the endpoint matrix and never issue concurrent name and tag requests.
-- [ ] Name-only requests wait approximately 300 ms; tag-plus-name search
-      changes reuse the same tag request and filter the canonical result.
-- [ ] Query keys contain only remote inputs, all modes share the established
-      cache policy, disabled/missing-provider states do not fetch, and refetch
-      repeats only the current operation.
+- [ ] Provider A custom/empty state survives A -> B -> A switching, while B
+      receives B's snapshot or defaults.
+- [ ] Source and target providers with the same ID remain isolated.
+- [ ] Direct URL filters win over storage; clearing filters saves an empty
+      initialized snapshot and does not restore defaults on remount/refresh.
 
 **Verification:**
 
-- [ ] `C:\Users\polnikr\nodejs\npm.cmd exec vitest run src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
-- [ ] Focused lint for the new hook and test.
+- [ ] Focused hook tests use real `MemoryRouter` and `sessionStorage` for first
+      activation, explicit URL, switch, keyed remount, refresh, and clear.
+- [ ] No inventory request is enabled before URL restoration completes.
+- [ ] Focused ESLint for changed hook files/tests.
 
-**Dependencies:** None; uses existing API/query modules
+**Dependencies:** Task 1
+
+**Files likely touched:**
+
+- `src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.ts`
+- `src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx`
+- `src/features/discovery-inventory/resources/hooks/vmwareSearchParamKeys.ts`
+
+**Estimated scope:** Medium (3 files)
+
+## Task 3: Make provider switching preserve scoped state
+
+**Description:** Change resource source selection so it removes only the
+outgoing provider's active URL filter representation and never destroys its
+saved snapshot. Keep provider/resource/page updates atomic and prevent old
+type-specific parameters from leaking into the next tab.
+
+**Acceptance criteria:**
+
+- [ ] Switching provider or resource type leaves the outgoing snapshot intact
+      and clears its active filter parameters from the URL.
+- [ ] The target page initializes from its own snapshot/default before fetch.
+- [ ] Re-selecting the already active tab does not clear state or navigate.
+
+**Verification:**
+
+- [ ] Hook tests cover VMware A -> VMware B -> A and VMware -> FlashSystem ->
+      VMware transitions with search and type-specific filters.
+- [ ] ResourceRolePage test proves source selection is changed once without a
+      transient unfiltered query.
+- [ ] Focused ESLint for changed files/tests.
+
+**Dependencies:** Tasks 1-2
+
+**Files likely touched:**
+
+- `src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.ts`
+- `src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx`
+- `src/features/discovery-inventory/resources/pages/ResourceRolePage.test.tsx`
+
+**Estimated scope:** Medium (3 files)
+
+## Checkpoint: Provider state contract
+
+- [ ] Tasks 1-3 focused tests pass together.
+- [ ] URL, snapshot, defaults, and empty-state precedence is explicit in tests.
+- [ ] No test relies on mocked search-param hooks for the switching contract.
+- [ ] Typecheck and focused lint pass.
+
+## Task 4: Preserve FlashSystem and IBM Power provider filters
+
+**Description:** Apply the same provider-snapshot contract to the existing
+FlashSystem and IBM Power URL hooks. Do not change their filtering or API
+semantics; only restore their own state after provider/tab navigation.
+
+**Acceptance criteria:**
+
+- [ ] Each FlashSystem and IBM Power provider restores its own search and
+      type-specific filters.
+- [ ] Empty/reset state persists and source/target scopes remain isolated.
+- [ ] Existing API query behavior and filter semantics are unchanged.
+
+**Verification:**
+
+- [ ] Focused tests for both search-param hooks cover switch-away/return and
+      refresh restoration.
+- [ ] Existing FlashSystem and IBM Power page tests remain green.
+- [ ] Focused ESLint for changed files/tests.
+
+**Dependencies:** Tasks 1 and 3
+
+**Files likely touched:**
+
+- `src/features/discovery-inventory/resources/hooks/useFlashSystemSearchParams.ts`
+- `src/features/discovery-inventory/resources/hooks/useFlashSystemSearchParams.test.tsx`
+- `src/features/discovery-inventory/resources/hooks/usePowerSearchParams.ts`
+- `src/features/discovery-inventory/resources/hooks/usePowerSearchParams.test.tsx`
+
+**Estimated scope:** Medium (4 files)
+
+## Task 5: Stabilize the VMware name-search query lifecycle
+
+**Description:** Keep the current query/data active during the 300 ms
+name-only debounce and while the next remote query fetches. Distinguish
+debouncing, initial loading, background fetching, real error, and empty success
+so typing never creates a false error state.
+
+**Acceptance criteria:**
+
+- [ ] Typing multiple characters issues no request before 300 ms and exactly
+      one `/vms_by_name` request for the settled prefix.
+- [ ] Previous data remains available during debounce/refetch; a disabled
+      debounce query is never surfaced as an error.
+- [ ] Tag+name still reuses one `/vms_by_tag` response and filters by
+      case-sensitive `name.startsWith(prefix)` without another request.
+
+**Verification:**
+
+- [ ] Focused hook tests cover debounce replacement, previous data, cache
+      return, real HTTP failure, retry, and empty success.
+- [ ] Returning to a provider with a fresh matching cache key makes zero new
+      network requests.
+- [ ] Focused ESLint for the hook and tests.
+
+**Dependencies:** Task 2
 
 **Files likely touched:**
 
@@ -113,161 +260,148 @@ applies the client-only prefix in tag-plus-name mode without polluting cache.
 
 **Estimated scope:** Small (2 files)
 
-## Checkpoint: Deep-module contracts
+## Task 6: Keep the VMware toolbar mounted and focused
 
-- [ ] Run Task 1 and Task 2 focused tests together.
-- [ ] Confirm tests exercise the public hook interfaces rather than private
-      request-plan details.
-- [ ] Run focused lint for all Task 1-2 files.
-- [ ] Review the two interfaces before integrating the page.
-
-## Task 3: Remove legacy search from post-inventory filtering
-
-**Description:** Remove the old broad search predicate from the post-inventory
-filter/pagination helper because name-prefix behavior now belongs behind the
-unified inventory seam. Preserve all remaining client filters, pagination
-clamping, and the single-tag/untagged behavior.
+**Description:** Render the inventory panel and toolbar continuously after the
+provider is initialized. Use the stable query lifecycle for inline initial,
+background, error, and empty states instead of replacing the whole panel.
+Search remains controlled and updates the URL/snapshot immediately while the
+remote request stays debounced.
 
 **Acceptance criteria:**
 
-- [ ] The post-inventory helper no longer performs VM name, hostname, IP,
-      guest OS, or host search; remote/client prefix handling occurs only in
-      the unified inventory module.
-- [ ] Case-sensitive `vm.name.startsWith(prefix)` behavior is covered at the
-      inventory hook interface for tag-plus-name mode.
-- [ ] Existing power, connection, cluster, tag, untagged, and pagination
-      behavior remains unchanged.
+- [ ] A focused search input remains the same DOM element and retains focus
+      while typing, debouncing, fetching, succeeding empty, or failing.
+- [ ] A real request error appears only after the request fails; cached/previous
+      data remains visible with a non-blocking notice when available.
+- [ ] Metrics, filters, pagination, detail panel, retry, refresh, and density
+      controls remain functional.
 
 **Verification:**
 
-- [ ] `C:\Users\polnikr\nodejs\npm.cmd exec vitest run src/features/discovery-inventory/resources/helpers/filterVirtualMachines.test.ts src/features/discovery-inventory/resources/helpers/virtualMachinesHelpers.test.ts`
-- [ ] Focused lint for the helper and affected tests.
+- [ ] Component test types `sdf` with fake timers and asserts focus after each
+      lifecycle transition, one settled request, and no premature error.
+- [ ] Component tests cover real failure and empty success as distinct states.
+- [ ] Focused ESLint for changed files/tests.
 
-**Dependencies:** Task 2 defines the prefix behavior; must complete before Task 4
-
-**Files likely touched:**
-
-- `src/features/discovery-inventory/resources/helpers/filterVirtualMachines.ts`
-- `src/features/discovery-inventory/resources/helpers/filterVirtualMachines.test.ts`
-- `src/features/discovery-inventory/resources/helpers/virtualMachinesHelpers.test.ts`
-
-**Estimated scope:** Medium (3 files)
-
-## Task 4: Integrate both deep modules into VMware Resources
-
-**Description:** Resolve the selected VMware provider record, pass its defaults
-to the URL-filter module, and load inventory through the unified hook. Keep
-provider-specific tag options, page state correction, metrics, errors, retry,
-detail panels, and toolbar behavior intact. Remove the old page-only inventory
-hook if the integration makes it orphaned.
-
-**Acceptance criteria:**
-
-- [ ] Resources and Resources ISE initialize `search` and the single tag from
-      the selected provider, while explicit URL filters and subsequent user
-      changes remain authoritative.
-- [ ] The page consumes one normalized inventory result and contains no
-      endpoint-selection, debounce, or query-key logic.
-- [ ] Existing loading, previous-data notice, empty, error, retry, refresh,
-      pagination, table, metrics, and detail-panel behavior remains covered.
-
-**Verification:**
-
-- [ ] `C:\Users\polnikr\nodejs\npm.cmd exec vitest run src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.test.tsx`
-- [ ] Focused lint for the VMware page and affected page/component tests.
-
-**Dependencies:** Tasks 1-3
+**Dependencies:** Task 5
 
 **Files likely touched:**
 
 - `src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.tsx`
+- `src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.test.tsx`
 - `src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx`
-- `src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx`
-- `src/features/discovery-inventory/resources/hooks/useVmwareInventory.ts`
-- `src/features/discovery-inventory/resources/hooks/useVmwareInventory.test.tsx`
 
-**Estimated scope:** Medium (up to 5 files)
+**Estimated scope:** Medium (3 files)
 
-## Checkpoint: Integrated VMware flow
+## Task 7: Preserve missing configured tags in Resources ISE
 
-- [ ] Run all Task 1-4 focused tests together.
-- [ ] Verify all four endpoint combinations through the unified inventory seam.
-- [ ] Verify source and target provider defaults through the shared VMware page.
-- [ ] Confirm IBM Power, FlashSystem, provider forms, and recovery-plan
-      inventory consumers are unchanged.
-
-## Task 5: Complete focused verification and cleanup
-
-**Description:** Verify the integrated feature at the smallest scope that
-proves the changed contracts, remove only newly orphaned code, and record any
-manual/browser limitation without running the full suite or production build
-by default.
+**Description:** Stop deleting an active tag merely because the provider's
+tags endpoint does not return it. Merge the selected tag into dropdown options,
+keep `DR-` plus `recovery` visible, and let `/vms_by_tag` produce the real empty
+or error result.
 
 **Acceptance criteria:**
 
-- [ ] Every issue #4 acceptance path is covered by a focused automated test.
-- [ ] No duplicate VMware inventory request path remains in the Resources page,
-      and no unrelated module is refactored.
-- [ ] The worktree contains only issue #4 implementation and test changes.
+- [ ] Target provider defaults `vmPrefix: "DR-"` and `vmTags: ["recovery"]`
+      remain visible when `/tags` returns other tags or an empty list.
+- [ ] The inventory uses `/vms_by_tag?tag=recovery&provider_id=...`; `DR-` is
+      applied client-side to that canonical response.
+- [ ] The user may clear/change the tag, after which the normal endpoint matrix
+      applies; tags endpoint failures do not clear the active filter.
 
 **Verification:**
 
-- [ ] Run the complete focused Vitest set from Tasks 1-4 plus
-      `src/features/discovery-inventory/resources/api/vmsByNameApi.test.ts` and
-      `src/features/discovery-inventory/resources/api/resourceInventoryApi.test.ts`.
-- [ ] `C:\Users\polnikr\nodejs\npm.cmd run typecheck`
-- [ ] Run ESLint only for changed TypeScript/TSX files.
-- [ ] `git diff --check`
-- [ ] Review `git diff --stat` and `git status --short` before staging.
+- [ ] Resources ISE integration test uses the real VMware search-param and
+      inventory seams with a missing `recovery` tag.
+- [ ] Toolbar test shows the selected fallback tag option.
+- [ ] Source Resources regression test remains green.
 
-**Dependencies:** Tasks 1-4
+**Dependencies:** Tasks 2, 5, and 6
 
-**Files likely touched:** None beyond focused cleanup caused by Tasks 1-4
+**Files likely touched:**
+
+- `src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.tsx`
+- `src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.tsx`
+- `src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.test.tsx`
+- `src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx`
+
+**Estimated scope:** Medium (4 files)
+
+## Checkpoint: Stable end-to-end VMware flow
+
+- [ ] Focused Tasks 4-7 tests pass together.
+- [ ] Source and target use independent provider snapshots.
+- [ ] Tab return uses fresh React Query cache without a request.
+- [ ] Search focus survives debounce, fetch, error, and empty success.
+- [ ] Missing ISE tag stays selected and does not silently change endpoint.
+- [ ] Typecheck and changed-file ESLint pass.
+
+## Task 8: Browser/network verification and final cleanup
+
+**Description:** Verify the real interaction and network sequence in a browser,
+then run the complete focused contract set. Remove only code made obsolete by
+this repair and commit only in-scope files.
+
+**Acceptance criteria:**
+
+- [ ] Manual flow: customize provider A, switch to B, return to A, and observe
+      exact state restoration with no fresh request while cache is valid.
+- [ ] Manual flow: type `sdf`; focus remains, no premature error appears, and
+      network shows one debounced `/vms_by_name` request.
+- [ ] Manual Resources ISE flow shows `DR-` and `recovery` even when recovery is
+      absent from `/tags`, with the expected `/vms_by_tag` request.
+
+**Verification:**
+
+- [ ] Run all focused state, hook, toolbar, Resources, Resources ISE,
+      FlashSystem, IBM Power, and relevant API tests.
+- [ ] `node_modules/.bin/tsc.cmd -b`
+- [ ] Run ESLint only for changed TypeScript/TSX files with zero warnings.
+- [ ] `git diff --check`, `git diff --stat`, and `git status --short`.
+- [ ] Record whether full suite/build was run; do not hide environment limits.
+
+**Dependencies:** Tasks 1-7
+
+**Files likely touched:** No new production files beyond focused cleanup
 
 **Estimated scope:** Small (verification)
 
 ## Final Checkpoint
 
-- [ ] Provider defaults are applied once and remain editable.
-- [ ] Resources supports one active tag and uses only `vmTags[0]` as default.
-- [ ] Endpoint selection matches the four-row matrix with one remote request.
-- [ ] Name-only requests are debounced and tag-plus-name changes reuse cache.
-- [ ] VMware search follows case-sensitive VM-name prefix semantics.
-- [ ] Focused tests, typecheck, focused lint, and diff checks pass.
-- [ ] Full-suite/build and browser-verification status is reported explicitly.
-- [ ] Only in-scope files are committed atomically.
+- [ ] Every provider has independent source/target filter state.
+- [ ] Explicit URL > saved snapshot > provider defaults > empty defaults.
+- [ ] Empty user state is preserved and defaults do not reappear.
+- [ ] Returning to a fresh cached provider state performs no request.
+- [ ] VMware typing performs one debounced request and never loses focus.
+- [ ] Pending debounce is not displayed as an error.
+- [ ] Missing configured ISE tags remain visible and active.
+- [ ] Focused tests, typecheck, focused lint, browser checks, and diff checks pass.
+- [ ] Only in-scope changes are committed.
 
 ## Parallelization Opportunities
 
-- Tasks 1 and 2 touch independent files and may be implemented in parallel.
-- Task 3 follows Task 2 because the unified inventory seam must own prefix
-  behavior before the downstream broad search is removed.
-- Task 4 is sequential because it integrates the outputs of Tasks 1-3 in the
-  shared VMware page.
-- Task 5 is sequential because it verifies the integrated result and cleanup.
+- Task 1 is foundational and sequential.
+- After Task 3, Task 4 (Flash/Power) and Task 5 (VMware query lifecycle) may run
+  in parallel because their write sets are disjoint.
+- Tasks 6 and 7 share VMware page/toolbar files and must be sequential.
+- Task 8 is sequential final verification.
 
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
-| --- | --- | --- |
-| Defaults reappear after a user clears them | High | Track provider-scoped initialization and test clear/rerender behavior. |
-| An unfiltered request fires before defaults initialize | High | Expose initialization readiness and keep inventory disabled until ready. |
-| Tag-plus-name creates two requests or cache fragmentation | High | Give tag remote priority and exclude client-only name from the tag query key. |
-| Debounced name state races with tag changes | High | Test transitions with fake timers and derive one request mode per render. |
-| Name response leaks a generated shape | Medium | Normalize all paths to `DiscoveryInventory` inside the unified hook. |
-| Search behavior changes unexpectedly | Medium | Lock case-sensitive prefix behavior at the inventory seam and assert that the downstream helper no longer searches other fields. |
-| Target/source behavior diverges | Medium | Integrate once in the shared VMware page and test both wrappers. |
-| Existing recovery inventory cache changes | Medium | Preserve existing query-key factories and avoid modifying direct recovery consumers. |
+|---|---|---|
+| URL/session feedback loop | High | Pure precedence function, initialization readiness, and keyed-remount tests |
+| Empty state mistaken for missing state | High | Persist explicit `initialized: true` snapshots and test clear/remount |
+| Cross-role/provider contamination | High | Versioned key includes role, resource type, and provider ID |
+| Search input remount regression | High | DOM identity/focus tests across debounce and fetch transitions |
+| Extra or stale network requests | High | Remote-only query keys, fake-timer request counts, browser network audit |
+| Missing tag silently changes operation | High | Never validate active selection by destructive deletion; fallback option test |
+| Storage blocked/corrupt | Medium | Safe adapter with validation and no-throw fallback |
+| Scope expands into backend work | Low | Keep endpoint matrix unchanged; record backend failures separately |
 
 ## Open Questions
 
-- None. Issue #4 defines the endpoint precedence, single-tag scope, provider
-  default behavior, search semantics, cache policy, and out-of-scope work.
-
-## Definition of Done
-
-- [ ] Each task's acceptance criteria and focused verification pass.
-- [ ] Tests observe behavior through the two deep-module interfaces.
-- [ ] Existing API contracts and provider schemas remain unchanged.
-- [ ] No full-suite or build claim is made unless those commands were run.
-- [ ] The final atomic commit excludes unrelated worktree changes.
+None. The approved persistence scope is the current browser session:
+`sessionStorage` survives tab switching and refresh, while explicit active URL
+filters remain shareable and authoritative.

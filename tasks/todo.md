@@ -1,36 +1,46 @@
-# Todo: VMware Provider Default Inventory Filters
+# Todo: Stable Provider-Scoped Resource Filters
 
-Spec: https://github.com/PolnikR/Aricoma_busines_comunity_management/issues/4
+## Phase 1: Provider state foundation
 
-## Phase 1: Deep-module foundations
+- [ ] Task 1: Add the versioned provider-filter session module.
+- [ ] Task 2: Restore and persist VMware state per provider.
+- [ ] Task 3: Preserve snapshots across provider/resource switching.
 
-- [ ] Task 1: Add provider-scoped, one-time defaults to the VMware URL-filter hook.
-- [ ] Task 2: Add the unified VMware inventory hook with endpoint selection,
-      debounce, cache isolation, and canonical output.
+## Checkpoint: Provider state contract
 
-## Checkpoint: Deep-module contracts
+- [ ] Run Tasks 1-3 focused tests together.
+- [ ] Verify explicit URL > snapshot > defaults > empty precedence.
+- [ ] Verify source/target and provider isolation.
+- [ ] Run typecheck and focused lint.
 
-- [ ] Run the two focused hook test files together.
-- [ ] Run focused lint for the Task 1-2 files.
-- [ ] Confirm URL/default state and remote inventory strategy remain separate.
+## Phase 2: Remaining providers and VMware query lifecycle
 
-## Phase 2: Post-inventory filtering
+- [ ] Task 4: Preserve FlashSystem and IBM Power provider filters.
+- [ ] Task 5: Stabilize VMware debounce, previous data, cache, and errors.
 
-- [ ] Task 3: Remove legacy broad search from post-inventory filtering.
-- [ ] Run focused filter/helper tests and lint.
+## Checkpoint: Data lifecycle
 
-## Phase 3: Shared page integration
+- [ ] Verify provider return uses fresh cache without a request.
+- [ ] Verify one settled `/vms_by_name` request after 300 ms.
+- [ ] Verify tag+name performs no extra remote request.
 
-- [ ] Task 4: Wire both deep modules into the shared VMware Resources page.
-- [ ] Verify provider defaults and endpoint behavior in Resources.
-- [ ] Verify the same behavior in Resources ISE.
-- [ ] Remove only inventory hook code made obsolete by this integration.
+## Phase 3: VMware UI and Resources ISE
+
+- [ ] Task 6: Keep the VMware toolbar mounted and focused.
+- [ ] Task 7: Preserve configured tags missing from `/tags` in Resources ISE.
+
+## Checkpoint: User-visible regressions
+
+- [ ] Provider A -> B -> A restores exact filters.
+- [ ] Search keeps focus through debounce, fetch, error, and empty success.
+- [ ] Pending debounce never shows an error.
+- [ ] `DR-` and `recovery` remain visible and active in Resources ISE.
 
 ## Phase 4: Final verification
 
-- [ ] Task 5: Run all affected hook, helper, page, toolbar, and API tests.
-- [ ] Run `C:\Users\polnikr\nodejs\npm.cmd run typecheck`.
-- [ ] Run ESLint only for changed TypeScript/TSX files.
-- [ ] Run `git diff --check` and review the final diff/status.
-- [ ] Report full-suite/build and browser-verification status explicitly.
-- [ ] Commit only issue #4 files atomically.
+- [ ] Task 8: Run browser/network verification and final cleanup.
+- [ ] Run the complete focused test set.
+- [ ] Run `node_modules/.bin/tsc.cmd -b`.
+- [ ] Run changed-file ESLint with zero warnings.
+- [ ] Run `git diff --check` and inspect diff/status.
+- [ ] Commit only in-scope files and preserve unrelated user files.
