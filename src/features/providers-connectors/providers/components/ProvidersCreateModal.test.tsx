@@ -75,6 +75,9 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByLabelText('Port')).toHaveValue(22)
     expect(screen.getByLabelText('Credentials')).toBeInTheDocument()
     expect(useTagsMock).toHaveBeenCalledWith(null, false)
+
+    const dialog = screen.getByRole('dialog')
+    expect(dialog.querySelector('[class~="md:overflow-visible"]')).not.toBeNull()
   })
 
   it('loads VMware tags only for an edited provider and submits VM settings', async () => {
