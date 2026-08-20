@@ -17,6 +17,8 @@ const data = {
   credentialId: 'vcenter-admin',
   defaultFlashcopyProviderId: '',
   orchestratorConnId: '',
+  vmPrefix: 'prod-',
+  vmTags: ['saved-tag'],
 }
 
 const credentials = [{
@@ -40,6 +42,7 @@ describe('ProviderCreateForm', () => {
         credentialsLoading={false}
         credentialsError={false}
         onRetryCredentials={vi.fn()}
+        onTagsChange={vi.fn()}
         onChange={onChange}
         onSubmit={onSubmit}
       />,
@@ -63,11 +66,44 @@ describe('ProviderCreateForm', () => {
         credentialsError={false}
         onRetryCredentials={vi.fn()}
         idDisabled
+        onTagsChange={vi.fn()}
         onChange={vi.fn()}
         onSubmit={vi.fn()}
       />,
     )
     expect(screen.getByDisplayValue('provider-1')).toBeDisabled()
     expect(screen.getByText('ID error')).toBeInTheDocument()
+  })
+
+  it('renders VM settings and reports tag changes', async () => {
+    const user = userEvent.setup()
+    const onTagsChange = vi.fn()
+
+    render(
+      <ProviderCreateForm
+        data={data}
+        errors={{}}
+        isSubmitting={false}
+        credentials={credentials}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        tags={['available-tag']}
+        tagsLoading={false}
+        tagsError={false}
+        tagsDisabled={false}
+        onRetryTags={vi.fn()}
+        onTagsChange={onTagsChange}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByLabelText('VM prefix')).toHaveValue('prod-')
+    expect(screen.getByText('saved-tag')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Remove saved-tag' }))
+
+    expect(onTagsChange).toHaveBeenCalledWith([])
   })
 })

@@ -5,6 +5,10 @@ import { ProvidersCreateModal } from './ProvidersCreateModal'
 import type { ProviderRecord } from '../model/providerTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+const { useTagsMock } = vi.hoisted(() => ({ useTagsMock: vi.fn() }))
+vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareTags', () => ({
+  useTags: useTagsMock,
+}))
 vi.mock('react-router', async (importOriginal) => ({
   ...await importOriginal<typeof import('react-router')>(),
   useBlocker: () => ({ state: 'unblocked' as const }),
@@ -53,6 +57,7 @@ function fillValidForm() {
 describe('ProvidersCreateModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    useTagsMock.mockReturnValue({ data: [], isLoading: false, error: null, refetch: vi.fn() })
   })
 
   afterEach(cleanup)
@@ -69,6 +74,49 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByLabelText('URL')).toBeInTheDocument()
     expect(screen.getByLabelText('Port')).toHaveValue(22)
     expect(screen.getByLabelText('Credentials')).toBeInTheDocument()
+    expect(useTagsMock).toHaveBeenCalledWith(null, false)
+  })
+
+  it('loads VMware tags only for an edited provider and submits VM settings', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({}), { status: 200 }),
+    )
+    vi.stubGlobal('fetch', mockFetch)
+    const editedProvider: ProviderRecord = {
+      ...mockProviderA,
+      vmPrefix: 'prod-',
+      vmTags: ['saved-tag'],
+    }
+    useTagsMock.mockReturnValue({
+      data: ['available-tag'],
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    })
+    const onClose = vi.fn()
+
+    renderWithQueryClient(
+      <ProvidersCreateModal
+        open
+        onClose={onClose}
+        existingProviders={[editedProvider]}
+        provider={editedProvider}
+      />,
+    )
+
+    expect(useTagsMock).toHaveBeenCalledWith('vmware-vcenter-01', true)
+    expect(screen.getByLabelText('VM prefix')).toHaveValue('prod-')
+    expect(screen.getByText('saved-tag')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
+
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    const init = mockFetch.mock.calls[0]?.[1] as RequestInit
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      vmPrefix: 'prod-',
+      vmTags: ['saved-tag'],
+    })
+    vi.unstubAllGlobals()
   })
 
   it('preserves an edited provider port without sending it to the backend', async () => {

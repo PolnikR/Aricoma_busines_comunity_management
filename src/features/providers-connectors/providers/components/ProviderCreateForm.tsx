@@ -1,5 +1,6 @@
 import type { ChangeEvent } from 'react'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
+import { MultiSelectDropdown } from '@/shared/components/form/MultiSelectDropdown'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PROVIDER_ROLES, PROVIDER_TYPES } from '../model/providerTypes'
 import type { ProviderRecord } from '../model/providerTypes'
@@ -17,6 +18,8 @@ export interface ProviderCreateFormData {
   credentialId: string
   defaultFlashcopyProviderId: string
   orchestratorConnId: string
+  vmPrefix: string
+  vmTags: string[]
 }
 
 interface ProviderCreateFormProps {
@@ -30,8 +33,14 @@ interface ProviderCreateFormProps {
   credentialsLoading: boolean
   credentialsError: boolean
   onRetryCredentials: () => void
+  tags?: string[]
+  tagsLoading?: boolean
+  tagsError?: boolean
+  tagsDisabled?: boolean
+  onRetryTags?: () => void
   flashcopyProviders?: ProviderRecord[]
   onChange: (field: keyof ProviderCreateFormData, value: string) => void
+  onTagsChange: (tags: string[]) => void
   onIdBlur?: () => void
   onSubmit: () => void
 }
@@ -46,8 +55,14 @@ export function ProviderCreateForm({
   credentialsLoading,
   credentialsError,
   onRetryCredentials,
+  tags = [],
+  tagsLoading = false,
+  tagsError = false,
+  tagsDisabled = false,
+  onRetryTags,
   flashcopyProviders = [],
   onChange,
+  onTagsChange,
   onIdBlur,
   onSubmit,
 }: ProviderCreateFormProps) {
@@ -173,18 +188,43 @@ export function ProviderCreateForm({
         </Field>
       </div>
 
-      <Field label={t('forms.url')} htmlFor="create-url">
-        <Input
-          id="create-url"
-          type="url"
-          value={data.url}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('url', event.target.value) }}
-          onKeyDown={handleKeyDown}
-          disabled={isSubmitting}
-          aria-invalid={Boolean(errors.url)}
-        />
-        {errors.url ? <p className="mt-1 text-xs text-red-600">{errors.url}</p> : null}
-      </Field>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Field label={t('forms.vmPrefix')} htmlFor="create-vmPrefix">
+          <Input
+            id="create-vmPrefix"
+            type="text"
+            value={data.vmPrefix}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('vmPrefix', event.target.value) }}
+            onKeyDown={handleKeyDown}
+            disabled={isSubmitting}
+            aria-invalid={Boolean(errors.vmPrefix)}
+          />
+          {errors.vmPrefix ? <p className="mt-1 text-xs text-red-600">{errors.vmPrefix}</p> : null}
+        </Field>
+
+        <Field label={t('forms.vmTags')} htmlFor="create-vmTags">
+          <MultiSelectDropdown
+            id="create-vmTags"
+            ariaLabel={t('forms.vmTags')}
+            placeholder={t('forms.vmTagsSelect')}
+            options={tags}
+            selected={data.vmTags}
+            onChange={onTagsChange}
+            disabled={isSubmitting || tagsDisabled}
+          />
+          {tagsLoading ? <p className="mt-1 text-xs text-text-muted" role="status">{t('providers.tags.loading')}</p> : null}
+          {tagsError ? (
+            <p className="mt-1 text-xs text-red-600" role="alert">
+              {t('providers.tags.loadFailed')}{' '}
+              {onRetryTags ? (
+                <button type="button" className="font-semibold underline" onClick={onRetryTags}>
+                  {t('buttons.retry')}
+                </button>
+              ) : null}
+            </p>
+          ) : null}
+        </Field>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label={t('forms.credentials')} htmlFor="create-credentials">
@@ -236,17 +276,32 @@ export function ProviderCreateForm({
         </Field>
       </div>
 
-      <Field label={t('forms.orchestratorConnId')} htmlFor="create-orchestratorConnId">
-        <Input
-          id="create-orchestratorConnId"
-          type="text"
-          placeholder={t('forms.orchestratorConnIdExample')}
-          value={data.orchestratorConnId}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('orchestratorConnId', event.target.value) }}
-          onKeyDown={handleKeyDown}
-          disabled={isSubmitting}
-        />
-      </Field>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Field label={t('forms.url')} htmlFor="create-url">
+          <Input
+            id="create-url"
+            type="url"
+            value={data.url}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('url', event.target.value) }}
+            onKeyDown={handleKeyDown}
+            disabled={isSubmitting}
+            aria-invalid={Boolean(errors.url)}
+          />
+          {errors.url ? <p className="mt-1 text-xs text-red-600">{errors.url}</p> : null}
+        </Field>
+
+        <Field label={t('forms.orchestratorConnId')} htmlFor="create-orchestratorConnId">
+          <Input
+            id="create-orchestratorConnId"
+            type="text"
+            placeholder={t('forms.orchestratorConnIdExample')}
+            value={data.orchestratorConnId}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('orchestratorConnId', event.target.value) }}
+            onKeyDown={handleKeyDown}
+            disabled={isSubmitting}
+          />
+        </Field>
+      </div>
     </div>
   )
 }
