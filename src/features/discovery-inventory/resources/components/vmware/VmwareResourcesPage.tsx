@@ -57,8 +57,10 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   const {
     data: inventory,
     error,
-    isLoading: isPending,
+    isInitialLoading,
     isFetching,
+    isError,
+    isEmpty,
     refetch,
   } = useVmwareResourceInventory(
     selectedProvider?.id,
@@ -98,13 +100,13 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     tags: query.tags,
     untagged: query.untagged,
   }
-  const vmwareLoading = providersSuccess && vmwareProviders.length > 0 && isPending
+  const vmwareLoading = providersSuccess && vmwareProviders.length > 0 && isInitialLoading
   const metrics = providersPending || vmwareLoading
     ? <MetricsSkeleton />
     : data && !providersError
       ? <VirtualMachineMetrics metrics={data.metrics} />
       : null
-  const notice = error && data ? (
+  const notice = isError && data ? (
     <FetchErrorAlert
       title={t('pages.virtualMachines.error.latestFailed')}
       description={t('pages.virtualMachines.error.showingPrevious')}
@@ -150,7 +152,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
           density={density}
           onDensityChange={setDensity}
         />}
-        error={!data ? {
+        error={isError && !data ? {
           title: t('pages.virtualMachines.error.title'),
           description: t('pages.virtualMachines.error.unknown'),
           retryLabel: t('pages.virtualMachines.error.retryButton'),
@@ -175,7 +177,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
               setDrawerOpen(true)
             }}
           />
-        ) : (
+        ) : isEmpty ? (
           <div className="p-4">
             <EmptyState
               title={t('pages.virtualMachines.empty.title')}
@@ -183,7 +185,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
               action={<Button size="sm" variant="outline" onClick={() => { updateFilters(defaultFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>}
             />
           </div>
-        )}
+        ) : null}
       </ResourceInventoryPanel>
     )
   }

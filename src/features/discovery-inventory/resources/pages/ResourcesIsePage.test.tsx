@@ -49,7 +49,11 @@ let resourceInventoryQuery: {
 let inventoryQuery: {
   data: DiscoveryInventory | undefined
   error: Error | null
-  isLoading: boolean
+  isInitialLoading: boolean
+  isDebouncing: boolean
+  isBackgroundFetching: boolean
+  isError: boolean
+  isEmpty: boolean
   isFetching: boolean
   refetch: typeof refetch
 }
@@ -147,7 +151,11 @@ beforeEach(() => {
   inventoryQuery = {
     data: { reportedCount: 0, virtualMachines: [] },
     error: null,
-    isLoading: false,
+    isInitialLoading: false,
+    isDebouncing: false,
+    isBackgroundFetching: false,
+    isError: false,
+    isEmpty: true,
     isFetching: false,
     refetch,
   }
@@ -188,14 +196,15 @@ describe('ResourcesIsePage', () => {
   })
 
   it('renders loading and initial error states with target providers', () => {
-    inventoryQuery = { ...inventoryQuery, data: undefined, isLoading: true }
+    inventoryQuery = { ...inventoryQuery, data: undefined, isInitialLoading: true, isEmpty: false }
     const view = render(<ResourcesIsePage />)
     expect(screen.getByLabelText('Loading module')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'VMware VMs' })).toBeInTheDocument()
     inventoryQuery = {
       ...inventoryQuery,
-      isLoading: false,
+      isInitialLoading: false,
       error: new Error('inventory offline'),
+      isError: true,
     }
     view.rerender(<ResourcesIsePage />)
     expect(screen.getByRole('alert')).toHaveTextContent('Unknown discovery error.')
