@@ -55,9 +55,12 @@ function query(overrides: Partial<VirtualMachinesQuery> = {}): VirtualMachinesQu
 }
 
 describe('applyFiltersAndPagination', () => {
-  it('combines search and tag filters', () => {
+  it('ignores the legacy search term after inventory retrieval', () => {
     const result = applyFiltersAndPagination(data, query({ search: 'db', tags: ['prod'] }))
     expect(result.items.map(item => item.name)).toEqual(['DB-01'])
+
+    const unfiltered = applyFiltersAndPagination(data, query({ search: 'db' }))
+    expect(unfiltered.items.map(item => item.name)).toEqual(['DB-01', 'WEB-01', 'DB-02'])
   })
 
   it('filters untagged VMs and clamps pages', () => {
