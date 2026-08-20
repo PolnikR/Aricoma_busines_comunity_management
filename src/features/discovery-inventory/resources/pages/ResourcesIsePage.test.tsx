@@ -83,7 +83,7 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
 vi.mock('../hooks/useVirtualMachineSearchParams', () => ({
   useVirtualMachineSearchParams: (...args: unknown[]) => {
     virtualMachineSearchParamsSpy(...args)
-    return { query: virtualMachineQuery, updateQuery, updateFilters }
+    return { query: virtualMachineQuery, updateQuery, updateFilters, isInitialized: true }
   },
 }))
 vi.mock('../hooks/useFlashSystemSearchParams', () => ({

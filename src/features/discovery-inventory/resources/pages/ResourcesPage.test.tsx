@@ -16,6 +16,7 @@ const virtualMachineSearchParamsSpy = vi.fn()
 const vmwareTagsSpy = vi.fn()
 let resourceTab: 'vmware' | 'flashsystem' | 'ibm-power' = 'vmware'
 let selectedProviderId: string | null = null
+let virtualMachineSearchParamsInitialized = true
 const vmwareProvider: ProviderRecord = {
   id: 'vmware-01', name: 'VMware 01', description: '', type: 'VMWARE',
   ipAddress: '10.0.0.1', port: 22, credentialId: null, credentialStatus: 'none',
@@ -83,7 +84,7 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
 vi.mock('../hooks/useVirtualMachineSearchParams', () => ({
   useVirtualMachineSearchParams: (...args: unknown[]) => {
     virtualMachineSearchParamsSpy(...args)
-    return { query: virtualMachineQuery, updateQuery, updateFilters }
+    return { query: virtualMachineQuery, updateQuery, updateFilters, isInitialized: virtualMachineSearchParamsInitialized }
   },
 }))
 vi.mock('../hooks/useFlashSystemSearchParams', () => ({
@@ -121,6 +122,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   resourceTab = 'vmware'
   selectedProviderId = null
+  virtualMachineSearchParamsInitialized = true
   virtualMachineQuery = {
     page: 1, pageSize: 10, search: '', powerState: '', connectionState: '',
     cluster: '', tags: [], untagged: false,
@@ -154,6 +156,23 @@ beforeEach(() => {
 })
 
 describe('ResourcesPage', () => {
+  it('waits for provider defaults before activating the intended inventory mode', () => {
+    virtualMachineSearchParamsInitialized = false
+    const view = render(<ResourcesPage />)
+
+    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith('vmware-01', '', undefined, false)
+
+    virtualMachineQuery = {
+      ...virtualMachineQuery,
+      search: 'DEFAULT-',
+      tags: ['default-tag'],
+    }
+    virtualMachineSearchParamsInitialized = true
+    view.rerender(<ResourcesPage />)
+
+    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith('vmware-01', 'DEFAULT-', 'default-tag', true)
+  })
+
   it('scopes provider defaults, URL filters, tags, and inventory to the selected source VMware provider', () => {
     const selectedVmwareProvider: ProviderRecord = {
       ...vmwareProvider,

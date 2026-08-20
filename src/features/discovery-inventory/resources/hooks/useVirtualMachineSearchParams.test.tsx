@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { act, fireEvent, render, renderHook, screen } from '@testing-library/react'
+import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, useLocation } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { type VirtualMachineProviderScope, useVirtualMachineSearchParams } from './useVirtualMachineSearchParams'
@@ -27,6 +27,29 @@ function VirtualMachineSearchParamsState({ provider }: { provider: VirtualMachin
 }
 
 describe('useVirtualMachineSearchParams', () => {
+  it('reports initialization readiness before provider defaults can activate inventory', async () => {
+    const readiness: boolean[] = []
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={['/']}>
+        {children}
+      </MemoryRouter>
+    )
+    function Observer() {
+      const { isInitialized } = useVirtualMachineSearchParams({
+        id: 'provider-1',
+        vmPrefix: ' prod- ',
+        vmTags: ['prod'],
+      })
+      readiness.push(isInitialized)
+      return null
+    }
+
+    render(<Observer />, { wrapper })
+
+    expect(readiness[0]).toBe(false)
+    await waitFor(() => { expect(readiness.at(-1)).toBe(true) })
+  })
+
   it('initializes trimmed provider defaults and exposes only the first URL tag', () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <MemoryRouter initialEntries={['/']}>

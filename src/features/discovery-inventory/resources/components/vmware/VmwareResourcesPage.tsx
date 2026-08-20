@@ -51,8 +51,8 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     ...(selectedProvider.vmPrefix !== undefined ? { vmPrefix: selectedProvider.vmPrefix } : {}),
     ...(selectedProvider.vmTags !== undefined ? { vmTags: selectedProvider.vmTags } : {}),
   } : null
-  const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams(vmwareProviderScope)
-  const inventoryEnabled = providersSuccess && selectedProvider !== null
+  const { query, updateQuery, updateFilters, isInitialized } = useVirtualMachineSearchParams(vmwareProviderScope)
+  const inventoryEnabled = providersSuccess && selectedProvider !== null && isInitialized
   const {
     data: inventory,
     error,

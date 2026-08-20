@@ -47,14 +47,24 @@ export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderS
   })
   const initializedProviderId = useRef<string | undefined>(undefined)
 
+  const vmPrefix = provider?.vmPrefix?.trim()
+  const vmTag = provider?.vmTags?.[0]?.trim()
+  const currentSearch = searchParams.get('search')
+  const currentTag = parseTags(searchParams.get('tags'))[0]
+  const inheritedSearch = matchesAppliedDefault(searchParams, VMWARE_DEFAULT_SEARCH_PARAM, currentSearch)
+  const inheritedTag = matchesAppliedDefault(searchParams, VMWARE_DEFAULT_TAG_PARAM, currentTag)
+  const isInitialized = !provider || (
+    (!vmPrefix || (searchParams.has('search') && (!inheritedSearch || currentSearch === vmPrefix)))
+    && (!vmTag || (searchParams.has('tags') && (!inheritedTag || currentTag === vmTag)))
+  )
+
   useEffect(() => {
-    if (!provider || initializedProviderId.current === provider.id) return
+    if (!provider) return
+    if (initializedProviderId.current === provider.id) return
 
     const changes: VirtualMachineSearchParamChanges = {}
-    const vmPrefix = provider.vmPrefix?.trim()
-    const vmTag = provider.vmTags?.[0]?.trim()
-    const inheritedSearch = matchesAppliedDefault(searchParams, VMWARE_DEFAULT_SEARCH_PARAM, searchParams.get('search'))
-    const inheritedTag = matchesAppliedDefault(searchParams, VMWARE_DEFAULT_TAG_PARAM, parseTags(searchParams.get('tags'))[0])
+    const inheritedSearch = matchesAppliedDefault(searchParams, VMWARE_DEFAULT_SEARCH_PARAM, currentSearch)
+    const inheritedTag = matchesAppliedDefault(searchParams, VMWARE_DEFAULT_TAG_PARAM, currentTag)
 
     if (!searchParams.has('search') || inheritedSearch) {
       if (vmPrefix) {
@@ -81,7 +91,7 @@ export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderS
 
     initializedProviderId.current = provider.id
     if (Object.keys(changes).length > 0) updateQuery(changes)
-  }, [provider, searchParams, updateQuery])
+  }, [currentSearch, currentTag, provider, searchParams, updateQuery, vmPrefix, vmTag])
 
   const updateFilters = (filters: VirtualMachineFilters) => {
     updateQuery({
@@ -91,5 +101,10 @@ export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderS
     }, true)
   }
 
-  return { query, updateQuery, updateFilters }
+  return {
+    query,
+    updateQuery,
+    updateFilters,
+    isInitialized,
+  }
 }
