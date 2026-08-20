@@ -30,3 +30,21 @@ All commands succeeded with Node `22.23.1` at `C:\Users\polnikr\AppData\Roaming\
 
 - `npm` is not available on PATH in this shell. The repository tools ran successfully through the installed nvm Node executable instead.
 - Pre-existing unrelated changes remain unstaged: `.superpowers/sdd/plan/task-1-report.md`, `tasks/vm-tag-single-select-plan.md`, and `tasks/vm-tag-single-select-todo.md`.
+
+## Review follow-up — Resources ISE `/tags` regression coverage
+
+Added to `src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx`:
+
+- Covers `/tags` returning HTTP 500 and an empty tag list.
+- In both cases, verifies configured `recovery` remains selected and visible as the tag-filter fallback.
+- Verifies inventory still requests `/api/vms_by_tag?tag=recovery&provider_id=vmware-target-01` and renders the returned VM.
+
+## Review follow-up verification
+
+- `node_modules\\.bin\\vitest.cmd run src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx` — 12 passed.
+- `node_modules\\.bin\\vitest.cmd run src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx` — 23 passed.
+- `node_modules\\.bin\\eslint.cmd src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx --max-warnings 0` — exit 0.
+- `C:\\Users\\polnikr\\AppData\\Roaming\\nvm\\v22.23.1\\node.exe node_modules\\typescript\\bin\\tsc -b --pretty false` — exit 0.
+- `git diff --check` — clean.
+
+Production code remains unchanged; only the ISE regression test and this report were added/updated.

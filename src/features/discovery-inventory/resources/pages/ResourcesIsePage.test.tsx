@@ -259,6 +259,52 @@ describe('ResourcesIsePage', () => {
     expect(screen.getByRole('option', { name: 'server-tag' })).toBeInTheDocument()
   })
 
+  it.each(['failure', 'empty'] as const)('keeps configured recovery selected when the target /tags response is %s', async (tagsResponse) => {
+    useRealVmwareResourceInventory = true
+    useRealVirtualMachineSearchParams = true
+    useRealVmwareTags = true
+    useRealVmwareToolbar = true
+    useRealVmwareTable = true
+    providersQuery = {
+      ...providersQuery,
+      data: [{ ...vmwareTargetProvider, vmPrefix: 'DR-', vmTags: ['recovery'] }],
+    }
+    const fetchMock = vi.fn((url: string) => {
+      if (url === '/api/tags?provider_id=vmware-target-01') {
+        return tagsResponse === 'failure'
+          ? Promise.resolve(new Response('tags unavailable', { status: 500 }))
+          : Promise.resolve(new Response(JSON.stringify({ count: 0, tags: [] }), { status: 200 }))
+      }
+      if (url === '/api/vms_by_tag?tag=recovery&provider_id=vmware-target-01') {
+        return Promise.resolve(new Response(JSON.stringify({
+          count: 1,
+          vms: [{ name: 'DR-recovery-01', tags: ['recovery'] }],
+        }), { status: 200 }))
+      }
+      return Promise.reject(new Error(`Unexpected request: ${url}`))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+    render(
+      <MemoryRouter initialEntries={['/resources-ise']}>
+        <QueryClientProvider client={queryClient}><ResourcesIsePage /></QueryClientProvider>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/vms_by_tag?tag=recovery&provider_id=vmware-target-01',
+        expect.any(Object),
+      )
+      expect(screen.getByText('DR-recovery-01')).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /^Filters/ }))
+    expect(screen.getByLabelText('Tag')).toHaveValue('recovery')
+    expect(screen.getByRole('option', { name: 'recovery' })).toBeInTheDocument()
+  })
+
   it('scopes provider defaults, URL filters, tags, and inventory to the selected target VMware provider', () => {
     const selectedVmwareProvider: ProviderRecord = {
       ...vmwareTargetProvider,
