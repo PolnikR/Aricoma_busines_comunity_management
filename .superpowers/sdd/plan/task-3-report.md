@@ -1,20 +1,25 @@
-# Task 3 Report
+# Task 3 implementation report
 
-## Implemented
+## Changed files
 
-- Removed the post-inventory VM broad-search predicate for name, hostname, IP, guest OS, and host.
-- Preserved power, connection, cluster, tag, untagged, and pagination filtering behavior.
-- Updated the focused helper tests to assert that legacy search is ignored after inventory retrieval.
-- Preserved the existing unified inventory hook coverage for case-sensitive tag-plus-name prefix filtering.
+- `src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.ts`
+- `src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx`
+- `src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx`
+- `src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.tsx`
+- `src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx`
+- `src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx`
+
+## Commit
+
+- `854a92d` — `fix: restore VMware filters across resource switches`
 
 ## Verification
 
-- `node_modules/.bin/vitest.cmd run src/features/discovery-inventory/resources/helpers/filterVirtualMachines.test.ts src/features/discovery-inventory/resources/helpers/virtualMachinesHelpers.test.ts` — passed: 2 files, 12 tests.
-- `node_modules/.bin/eslint.cmd src/features/discovery-inventory/resources/helpers/filterVirtualMachines.ts src/features/discovery-inventory/resources/helpers/filterVirtualMachines.test.ts src/features/discovery-inventory/resources/helpers/virtualMachinesHelpers.test.ts` — passed.
-- `git diff --check` — passed.
+- `node_modules/.bin/vitest.cmd run src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx` — 4 test files and 36 tests passed.
+- `node_modules/.bin/eslint.cmd src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.ts src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx --max-warnings 0` — passed with zero errors and warnings.
+- `git diff --check` and `git diff --cached --check` — passed.
 
-The requested `C:\Users\polnikr\nodejs\npm.cmd` launcher was blocked by the environment with `EPERM`; the repository-local Vitest and ESLint executables were used instead.
+## Concerns
 
-## Scope
-
-Changed only the Task 3 helper, its two focused test files, and this report. The page was not integrated, and `tasks/plan.md` and `tasks/todo.md` were not modified.
+- The full test suite, typecheck, and production build were not run; verification was limited to the task's focused tests and ESLint.
+- Existing unrelated changes in `.superpowers/sdd/plan/task-1-report.md` and untracked `tasks/vm-tag-single-select-*` files were preserved and excluded from the implementation commit.
