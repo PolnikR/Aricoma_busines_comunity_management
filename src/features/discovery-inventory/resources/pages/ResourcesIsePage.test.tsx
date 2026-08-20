@@ -1,4 +1,6 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ResourcesIsePage } from './ResourcesIsePage'
 import type { DiscoveryInventory } from '../model/discoveryTypes'
@@ -14,6 +16,11 @@ const refetchResourceInventory = vi.fn()
 const vmwareResourceInventorySpy = vi.fn()
 const virtualMachineSearchParamsSpy = vi.fn()
 const vmwareTagsSpy = vi.fn()
+let useRealVmwareResourceInventory = false
+let useRealVirtualMachineSearchParams = false
+let useRealVmwareTags = false
+let useRealVmwareToolbar = false
+let useRealVmwareTable = false
 let resourceTab: 'vmware' | 'flashsystem' | 'ibm-power' = 'vmware'
 let selectedProviderId: string | null = null
 const vmwareTargetProvider: ProviderRecord = {
@@ -63,33 +70,52 @@ let virtualMachineQuery = {
 }
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory', () => ({
-  useVmwareResourceInventory: (...args: unknown[]) => {
-    vmwareResourceInventorySpy(...args)
-    return inventoryQuery
-  },
-}))
+vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory')>()
+
+  return {
+    ...actual,
+    useVmwareResourceInventory: (...args: Parameters<typeof actual.useVmwareResourceInventory>) => {
+      vmwareResourceInventorySpy(...args)
+      return useRealVmwareResourceInventory
+        ? actual.useVmwareResourceInventory(...args)
+        : inventoryQuery
+    },
+  }
+})
 vi.mock('@/features/discovery-inventory/resources/hooks/useResourceInventoryQueries', () => ({
   useResourceInventoryQueries: (...args: unknown[]) => {
     resourceInventoryQuerySpy(...args)
     return resourceInventoryQuery
   },
 }))
-vi.mock('../hooks/useVmwareTags', () => ({
-  useTags: (...args: unknown[]) => {
-    vmwareTagsSpy(...args)
-    return { data: [] }
-  },
-}))
+vi.mock('../hooks/useVmwareTags', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../hooks/useVmwareTags')>()
+
+  return {
+    ...actual,
+    useTags: (...args: Parameters<typeof actual.useTags>) => {
+      vmwareTagsSpy(...args)
+      return useRealVmwareTags ? actual.useTags(...args) : { data: [] }
+    },
+  }
+})
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
   useProviders: () => providersQuery,
 }))
-vi.mock('../hooks/useVirtualMachineSearchParams', () => ({
-  useVirtualMachineSearchParams: (...args: unknown[]) => {
-    virtualMachineSearchParamsSpy(...args)
-    return { query: virtualMachineQuery, updateQuery, updateFilters, isInitialized: true }
-  },
-}))
+vi.mock('../hooks/useVirtualMachineSearchParams', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../hooks/useVirtualMachineSearchParams')>()
+
+  return {
+    ...actual,
+    useVirtualMachineSearchParams: (...args: Parameters<typeof actual.useVirtualMachineSearchParams>) => {
+      virtualMachineSearchParamsSpy(...args)
+      return useRealVirtualMachineSearchParams
+        ? actual.useVirtualMachineSearchParams(...args)
+        : { query: virtualMachineQuery, updateQuery, updateFilters, isInitialized: true }
+    },
+  }
+})
 vi.mock('../hooks/useFlashSystemSearchParams', () => ({
   useFlashSystemSearchParams: () => ({
     query: { page: 1, pageSize: 25, search: '', poolId: '', hostId: '', status: '' },
@@ -103,12 +129,26 @@ vi.mock('../hooks/useResourceTabSearchParam', () => ({
 vi.mock('../components/vmware/VirtualMachineMetrics', () => ({
   VirtualMachineMetrics: () => <div>VM metrics</div>,
 }))
-vi.mock('../components/vmware/VirtualMachinesToolbar', () => ({
-  VirtualMachinesToolbar: () => <div>VM toolbar</div>,
-}))
-vi.mock('../components/vmware/VirtualMachinesTable', () => ({
-  VirtualMachinesTable: () => <div>VM table</div>,
-}))
+vi.mock('../components/vmware/VirtualMachinesToolbar', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../components/vmware/VirtualMachinesToolbar')>()
+
+  return {
+    ...actual,
+    VirtualMachinesToolbar: (props: Parameters<typeof actual.VirtualMachinesToolbar>[0]) => useRealVmwareToolbar
+      ? <actual.VirtualMachinesToolbar {...props} />
+      : <div>VM toolbar</div>,
+  }
+})
+vi.mock('../components/vmware/VirtualMachinesTable', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../components/vmware/VirtualMachinesTable')>()
+
+  return {
+    ...actual,
+    VirtualMachinesTable: (props: Parameters<typeof actual.VirtualMachinesTable>[0]) => useRealVmwareTable
+      ? <actual.VirtualMachinesTable {...props} />
+      : <div>VM table</div>,
+  }
+})
 vi.mock('../components/vmware/VirtualMachineDetailPanel', () => ({
   VirtualMachineDetailPanel: () => <div>VM detail</div>,
 }))
@@ -123,6 +163,11 @@ vi.mock('@/shared/components/stat-card/StatCard', async (importOriginal) => {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  useRealVmwareResourceInventory = false
+  useRealVirtualMachineSearchParams = false
+  useRealVmwareTags = false
+  useRealVmwareToolbar = false
+  useRealVmwareTable = false
   resourceTab = 'vmware'
   selectedProviderId = null
   virtualMachineQuery = {
@@ -162,6 +207,58 @@ beforeEach(() => {
 })
 
 describe('ResourcesIsePage', () => {
+  it('keeps a configured tag missing from the target tags endpoint selected for canonical tag inventory', async () => {
+    useRealVmwareResourceInventory = true
+    useRealVirtualMachineSearchParams = true
+    useRealVmwareTags = true
+    useRealVmwareToolbar = true
+    useRealVmwareTable = true
+    providersQuery = {
+      ...providersQuery,
+      data: [{ ...vmwareTargetProvider, vmPrefix: 'DR-', vmTags: ['recovery'] }],
+    }
+    const fetchMock = vi.fn((url: string) => {
+      if (url === '/api/tags?provider_id=vmware-target-01') {
+        return Promise.resolve(new Response(JSON.stringify({
+          count: 1,
+          tags: [{ id: 'server-tag', name: 'server-tag' }],
+        }), { status: 200 }))
+      }
+      if (url === '/api/vms_by_tag?tag=recovery&provider_id=vmware-target-01') {
+        return Promise.resolve(new Response(JSON.stringify({
+          count: 2,
+          vms: [
+            { name: 'DR-recovery-01', tags: ['recovery'] },
+            { name: 'OTHER-01', tags: ['recovery'] },
+          ],
+        }), { status: 200 }))
+      }
+      return Promise.reject(new Error(`Unexpected request: ${url}`))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+    render(
+      <MemoryRouter initialEntries={['/resources-ise']}>
+        <QueryClientProvider client={queryClient}><ResourcesIsePage /></QueryClientProvider>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/vms_by_tag?tag=recovery&provider_id=vmware-target-01',
+        expect.any(Object),
+      )
+    })
+    await waitFor(() => { expect(screen.getByText('DR-recovery-01')).toBeInTheDocument() })
+
+    expect(screen.queryByText('OTHER-01')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /^Filters/ }))
+    expect(screen.getByLabelText('Tag')).toHaveValue('recovery')
+    expect(screen.getByRole('option', { name: 'recovery' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'server-tag' })).toBeInTheDocument()
+  })
+
   it('scopes provider defaults, URL filters, tags, and inventory to the selected target VMware provider', () => {
     const selectedVmwareProvider: ProviderRecord = {
       ...vmwareTargetProvider,

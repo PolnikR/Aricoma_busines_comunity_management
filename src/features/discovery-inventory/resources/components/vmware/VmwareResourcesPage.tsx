@@ -67,7 +67,11 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     getServerSideTagFilter(query.tags),
     inventoryEnabled,
   )
-  const { data: availableTags = [] } = useTags(selectedProvider?.id, inventoryEnabled)
+  const { data: serverTags = [] } = useTags(selectedProvider?.id, inventoryEnabled)
+  const availableTags = useMemo(
+    () => [...new Set([...serverTags, ...query.tags])],
+    [query.tags, serverTags],
+  )
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [density, setDensity] = useState<TableDensity>('compact')
@@ -82,13 +86,6 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   useEffect(() => {
     if (!isFetching && data && data.page !== query.page) updateQuery({ page: data.page })
   }, [data, isFetching, query.page, updateQuery])
-
-  useEffect(() => {
-    if (availableTags.length > 0 && query.tags.length > 0) {
-      const validTags = query.tags.filter((tag) => availableTags.includes(tag))
-      if (validTags.length !== query.tags.length) updateQuery({ tags: validTags }, true)
-    }
-  }, [availableTags, query.tags, updateQuery])
 
   const selectedVirtualMachine = data?.items.find((vm) => vm.id === selectedId) ?? null
   const filters: VirtualMachineFilters = {
