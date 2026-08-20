@@ -42,14 +42,14 @@ focused test.
 
 **Acceptance criteria:**
 
-- [ ] Default modal content still uses vertical auto overflow.
-- [ ] Responsive mode uses mobile `overflow-y-auto` and `md:overflow-visible`.
-- [ ] VM tag options retain a bounded `overflow-y-auto` list.
+- [x] Default modal content still uses vertical auto overflow.
+- [x] Responsive mode uses mobile `overflow-y-auto` and `md:overflow-visible`.
+- [x] VM tag options retain a bounded `overflow-y-auto` list.
 
 **Verification:**
 
-- [ ] `npm exec vitest run src/shared/components/modal/Modal.test.tsx src/shared/components/form/MultiSelectDropdown.test.tsx`
-- [ ] Focused lint for the modal, multiselect, and their tests.
+- [x] `npm exec vitest run src/shared/components/modal/Modal.test.tsx src/shared/components/form/MultiSelectDropdown.test.tsx`
+- [x] Focused lint for the modal, multiselect, and their tests.
 
 **Dependencies:** None
 
@@ -69,14 +69,14 @@ provider's `lg` size.
 
 **Acceptance criteria:**
 
-- [ ] Infrastructure-provider modal has no content scrollbar from `md` upward.
-- [ ] Platform-provider modal uses the same responsive overflow mode and `lg` width.
-- [ ] Other modal callers retain the original default behavior.
+- [x] Infrastructure-provider modal has no content scrollbar from `md` upward.
+- [x] Platform-provider modal uses the same responsive overflow mode and `lg` width.
+- [x] Other modal callers retain the original default behavior.
 
 **Verification:**
 
-- [ ] `npm exec vitest run src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx src/features/platform-administration/platform-providers/components/PlatformProvidersModal.test.tsx`
-- [ ] Focused lint for both provider modal files and tests.
+- [x] `npm exec vitest run src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx src/features/platform-administration/platform-providers/components/PlatformProvidersModal.test.tsx`
+- [x] Focused lint for both provider modal files and tests.
 
 **Dependencies:** Task 1
 
@@ -91,10 +91,10 @@ provider's `lg` size.
 
 ## Checkpoint: Overflow ownership
 
-- [ ] Run Tasks 1-2 focused tests together.
-- [ ] Confirm provider modal bodies use the responsive mode.
-- [ ] Confirm the open tag option list remains the only desktop/tablet scrollbar.
-- [ ] Run `npm run typecheck` and focused lint.
+- [x] Run Tasks 1-2 focused tests together.
+- [x] Confirm provider modal bodies use the responsive mode.
+- [x] Confirm the open tag option list remains the only desktop/tablet scrollbar.
+- [x] Run `npm run typecheck` and focused lint.
 
 ## Task 3: Reorganize the platform-provider form
 
@@ -104,15 +104,15 @@ event interfaces.
 
 **Acceptance criteria:**
 
-- [ ] ID/name, type/credentials, VM prefix/VM tags, and URL/DAG directory use paired responsive rows.
-- [ ] IP address/port retain the wide-plus-fixed-port responsive row.
-- [ ] Description remains full width and all paired rows stack on narrow screens.
+- [x] ID/name, type/credentials, VM prefix/VM tags, and URL/DAG directory use paired responsive rows.
+- [x] IP address/port retain the wide-plus-fixed-port responsive row.
+- [x] Description remains full width and all paired rows stack on narrow screens.
 
 **Verification:**
 
-- [ ] `npm exec vitest run src/features/platform-administration/platform-providers/components/PlatformProviderForm.test.tsx`
-- [ ] Focused lint for the platform form and test.
-- [ ] Existing labels, validation messages, disabled states, and Enter submission remain covered.
+- [x] `npm exec vitest run src/features/platform-administration/platform-providers/components/PlatformProviderForm.test.tsx`
+- [x] Focused lint for the platform form and test.
+- [x] Existing labels, validation messages, disabled states, and Enter submission remain covered.
 
 **Dependencies:** Task 2
 
@@ -131,16 +131,16 @@ accessibility or keyboard interaction.
 
 **Acceptance criteria:**
 
-- [ ] At `md` and wider, provider dialogs show no modal-body scrollbar.
-- [ ] At narrow/short mobile sizes, modal content remains reachable through the fallback scroll.
-- [ ] Opening a long VM tag list scrolls only inside the dropdown at desktop/tablet widths.
+- [x] At `md` and wider, provider dialogs show no modal-body scrollbar via the responsive overflow contract.
+- [x] At narrow/short mobile sizes, modal content retains the mobile scroll fallback contract.
+- [x] Opening a long VM tag list scrolls only inside the dropdown according to the tested class contract.
 
 **Verification:**
 
-- [ ] Run all focused tests from Tasks 1-3 together.
-- [ ] Run `npm run typecheck`.
-- [ ] Run focused lint for every changed TypeScript file.
-- [ ] Run `git diff --check`.
+- [x] Run all focused tests from Tasks 1-3 together.
+- [x] Run `npm run typecheck`.
+- [x] Run focused lint for every changed TypeScript file.
+- [x] Run `git diff --check`.
 - [ ] Browser-check widths 320, 768, 1024, and 1440 when browser tooling is available.
 
 **Dependencies:** Tasks 1-3
@@ -151,11 +151,11 @@ accessibility or keyboard interaction.
 
 ## Final Checkpoint
 
-- [ ] Every acceptance criterion is satisfied.
-- [ ] Focused tests, typecheck, focused lint, and diff check pass.
-- [ ] Provider data and API behavior are unchanged.
-- [ ] Manual/browser verification status is reported explicitly.
-- [ ] Only in-scope files are committed atomically.
+- [x] Every automated acceptance criterion is satisfied.
+- [x] Focused tests, typecheck, focused lint, and diff check pass.
+- [x] Provider data and API behavior are unchanged.
+- [x] Manual/browser verification status is reported explicitly.
+- [x] Only in-scope files are committed atomically.
 
 ## Parallelization Opportunities
 
