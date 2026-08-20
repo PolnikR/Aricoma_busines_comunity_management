@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   DISCOVERY_INVENTORY_GC_TIME_MS,
   DISCOVERY_INVENTORY_STALE_TIME_MS,
@@ -36,7 +36,7 @@ export function useVmwareResourceInventory(
     : discoveryInventoryKeys.inventory(providerId, hasTag ? tag : undefined)
   const canFetch = enabled && Boolean(providerId) && (!isNameOnly || debouncedNamePrefix === namePrefix)
 
-  return useQuery<DiscoveryInventory>({
+  const query = useQuery<DiscoveryInventory>({
     queryKey,
     queryFn: async () => {
       if (isNameOnly) {
@@ -54,6 +54,7 @@ export function useVmwareResourceInventory(
     gcTime: DISCOVERY_INVENTORY_GC_TIME_MS,
     retry: 1,
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
     select: (inventory) => hasTag && hasNamePrefix
       ? {
           ...inventory,
@@ -61,4 +62,15 @@ export function useVmwareResourceInventory(
         }
       : inventory,
   })
+
+  const isDebouncing = isNameOnly && debouncedNamePrefix !== namePrefix
+
+  return {
+    ...query,
+    isDebouncing,
+    isInitialLoading: canFetch && query.isPending && !isDebouncing,
+    isBackgroundFetching: query.isFetching && Boolean(query.data),
+    isError: query.isError && !isDebouncing,
+    isEmpty: query.isSuccess && query.data.virtualMachines.length === 0,
+  }
 }
