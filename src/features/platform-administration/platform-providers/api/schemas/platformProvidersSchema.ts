@@ -14,4 +14,6 @@ export const platformProviderSubmitSchema = z.object({
   dagDir: z.string().min(1),
   credentialId: z.string().min(1),
   url: z.url().optional(),
+  vmPrefix: z.string().nullable().optional(),
+  vmTags: z.array(z.string()).optional(),
 })
