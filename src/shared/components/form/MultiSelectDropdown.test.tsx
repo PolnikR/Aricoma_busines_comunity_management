@@ -44,4 +44,20 @@ describe('MultiSelectDropdown', () => {
     expect(screen.queryByText('available-tag')).not.toBeInTheDocument()
     expect(onChange).not.toHaveBeenCalled()
   })
+
+  it('keeps the option list as the bounded scroll container', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MultiSelectDropdown
+        options={['available-tag']}
+        selected={[]}
+        onChange={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Select tags' }))
+
+    expect(screen.getByRole('listbox')).toHaveClass('max-h-60', 'overflow-y-auto')
+  })
 })
