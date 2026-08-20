@@ -3,6 +3,7 @@ import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-li
 import { MemoryRouter, useLocation } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { readProviderFilterSnapshot, writeProviderFilterSnapshot } from '../state/providerFilterSession'
+import { useResourceTabSearchParam } from './useResourceTabSearchParam'
 import { type VirtualMachineProviderScope, useVirtualMachineSearchParams } from './useVirtualMachineSearchParams'
 
 const sourceProvider: VirtualMachineProviderScope = {
@@ -48,11 +49,54 @@ function VirtualMachineSearchParamsState({ provider, observations }: {
   )
 }
 
+function ResourceSourceSwitchingState() {
+  const { resourceTab, providerId, setResourceSource } = useResourceTabSearchParam()
+  const location = useLocation()
+  const provider = providerId === 'provider-2'
+    ? { id: 'provider-2', role: 'source' as const, vmPrefix: 'provider-b-', vmTags: ['provider-b-tag'] }
+    : sourceProvider
+
+  return (
+    <>
+      <button onClick={() => { setResourceSource({ resourceTab: 'vmware', providerId: 'provider-1' }) }}>Select provider A</button>
+      <button onClick={() => { setResourceSource({ resourceTab: 'vmware', providerId: 'provider-2' }) }}>Select provider B</button>
+      <button onClick={() => { setResourceSource({ resourceTab: 'flashsystem', providerId: 'flash-1' }) }}>Select FlashSystem</button>
+      <output data-testid="resource-location">{location.search}</output>
+      {resourceTab === 'vmware' && <VirtualMachineSearchParamsState key={provider.id} provider={provider} />}
+    </>
+  )
+}
+
 afterEach(() => {
   sessionStorage.clear()
 })
 
 describe('useVirtualMachineSearchParams', () => {
+  it('restores VMware snapshots after provider and resource switches', async () => {
+    render(<ResourceSourceSwitchingState />, { wrapper: wrapperFor('/?providerId=provider-1') })
+
+    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-prefix-:provider-tag:1') })
+    fireEvent.click(screen.getByRole('button', { name: 'Use custom filters' }))
+    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('custom-prefix-:custom-tag:1') })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select provider B' }))
+    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-b-:provider-b-tag:1') })
+    fireEvent.click(screen.getByRole('button', { name: 'Select provider A' }))
+    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('custom-prefix-:custom-tag:1') })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select provider B' }))
+    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-b-:provider-b-tag:1') })
+    fireEvent.click(screen.getByRole('button', { name: 'Use custom filters' }))
+    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('custom-prefix-:custom-tag:1') })
+    fireEvent.click(screen.getByRole('button', { name: 'Select FlashSystem' }))
+
+    await waitFor(() => { expect(screen.getByTestId('resource-location')).not.toHaveTextContent('search=custom-prefix-') })
+    expect(screen.getByTestId('resource-location')).not.toHaveTextContent('vmwareActiveProvider')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select provider B' }))
+    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('custom-prefix-:custom-tag:1') })
+  })
+
   it('applies provider defaults before reporting readiness, without a transient unfiltered state', async () => {
     const observations: { isInitialized: boolean; query: string }[] = []
     render(<VirtualMachineSearchParamsState provider={sourceProvider} observations={observations} />, { wrapper: wrapperFor() })

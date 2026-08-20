@@ -174,6 +174,7 @@ describe('ResourcesIsePage', () => {
 
     expect(virtualMachineSearchParamsSpy).toHaveBeenLastCalledWith({
       id: 'vmware-target-02',
+      role: 'target',
       vmPrefix: 'TARGET-SELECTED-',
       vmTags: ['target-selected-tag'],
     })

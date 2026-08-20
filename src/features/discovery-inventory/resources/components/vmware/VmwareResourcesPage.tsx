@@ -48,6 +48,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   const selectedProvider = vmwareProviders.find((provider) => provider.id === providerId) ?? vmwareProviders[0] ?? null
   const vmwareProviderScope = selectedProvider ? {
     id: selectedProvider.id,
+    role,
     ...(selectedProvider.vmPrefix !== undefined ? { vmPrefix: selectedProvider.vmPrefix } : {}),
     ...(selectedProvider.vmTags !== undefined ? { vmTags: selectedProvider.vmTags } : {}),
   } : null

@@ -156,7 +156,7 @@ beforeEach(() => {
 })
 
 describe('ResourcesPage', () => {
-  it('waits for provider defaults before activating the intended inventory mode', () => {
+  it('waits for provider defaults before activating inventory without a transient unfiltered query', () => {
     virtualMachineSearchParamsInitialized = false
     const view = render(<ResourcesPage />)
 
@@ -171,15 +171,7 @@ describe('ResourcesPage', () => {
     view.rerender(<ResourcesPage />)
 
     expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith('vmware-01', 'DEFAULT-', 'default-tag', true)
-
-    virtualMachineQuery = {
-      ...virtualMachineQuery,
-      search: '',
-      tags: [],
-    }
-    view.rerender(<ResourcesPage />)
-
-    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith('vmware-01', '', undefined, true)
+    expect(vmwareResourceInventorySpy).not.toHaveBeenCalledWith('vmware-01', '', undefined, true)
   })
 
   it('scopes provider defaults, URL filters, tags, and inventory to the selected source VMware provider', () => {
@@ -202,6 +194,7 @@ describe('ResourcesPage', () => {
 
     expect(virtualMachineSearchParamsSpy).toHaveBeenLastCalledWith({
       id: 'vmware-02',
+      role: 'source',
       vmPrefix: 'SELECTED-',
       vmTags: ['selected-tag'],
     })
@@ -257,6 +250,7 @@ describe('ResourcesPage', () => {
     }
 
     render(<ResourcesPage />)
+    setResourceSource.mockClear()
 
     const sourceTabList = screen.getByRole('tablist', { name: 'Inventory source' })
     const vmwareTabs = within(sourceTabList)
@@ -266,7 +260,8 @@ describe('ResourcesPage', () => {
     expect(screen.getAllByRole('tablist')).toHaveLength(1)
 
     fireEvent.click(screen.getByRole('tab', { name: 'VMware VMs · vCenter 10' }))
-    expect(setResourceSource).toHaveBeenLastCalledWith({ resourceTab: 'vmware', providerId: 'vmware-10' })
+    expect(setResourceSource).toHaveBeenCalledTimes(1)
+    expect(setResourceSource).toHaveBeenCalledWith({ resourceTab: 'vmware', providerId: 'vmware-10' })
   })
 
   it('waits for providers before activating a source inventory query', () => {

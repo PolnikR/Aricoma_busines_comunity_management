@@ -15,7 +15,7 @@ describe('useResourceTabSearchParam', () => {
     expect(result.current.providerId).toBe('flash-01')
   })
 
-  it('updates resource and provider together while preserving unrelated search params', () => {
+  it('updates resource and provider together while clearing outgoing resource filters', () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <MemoryRouter initialEntries={['/?resource=flashsystem&providerId=flash-01&search=db&page=4&pageSize=25&poolId=pool-1&status=online']}>{children}</MemoryRouter>
     )
@@ -26,7 +26,7 @@ describe('useResourceTabSearchParam', () => {
     const searchParams = new URLSearchParams(result.current.location.search)
     expect(searchParams.get('resource')).toBe('ibm-power')
     expect(searchParams.get('providerId')).toBe('power-01')
-    expect(searchParams.get('search')).toBe('db')
+    expect(searchParams.has('search')).toBe(false)
     expect(searchParams.get('page')).toBe('1')
     expect(searchParams.get('pageSize')).toBe('25')
     expect(searchParams.has('poolId')).toBe(false)
@@ -68,7 +68,7 @@ describe('useResourceTabSearchParam', () => {
     expect(searchParams.has('vmwareDefaultTag')).toBe(false)
   })
 
-  it('preserves an unmarked VMware search when switching VMware providers', () => {
+  it('clears an unmarked VMware search when switching VMware providers', () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <MemoryRouter initialEntries={['/?providerId=vmware-a&search=user-prefix-']}>
         {children}
@@ -80,6 +80,37 @@ describe('useResourceTabSearchParam', () => {
 
     const searchParams = new URLSearchParams(result.current.location.search)
     expect(searchParams.get('providerId')).toBe('vmware-b')
-    expect(searchParams.get('search')).toBe('user-prefix-')
+    expect(searchParams.has('search')).toBe(false)
+  })
+
+  it('clears the outgoing VMware URL representation while preserving unrelated parameters', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={['/?providerId=vmware-a&search=custom-&powerState=poweredOn&connectionState=connected&cluster=cluster-a&tags=tag-a&untagged=true&vmwareActiveProvider=source%3Avmware-a&keep=visible']}>{children}</MemoryRouter>
+    )
+    const { result } = renderHook(() => ({ ...useResourceTabSearchParam(), location: useLocation() }), { wrapper })
+
+    act(() => { result.current.setResourceSource({ resourceTab: 'vmware', providerId: 'vmware-b' }) })
+
+    const searchParams = new URLSearchParams(result.current.location.search)
+    expect(searchParams.get('providerId')).toBe('vmware-b')
+    expect(searchParams.get('keep')).toBe('visible')
+    expect(searchParams.has('search')).toBe(false)
+    expect(searchParams.has('powerState')).toBe(false)
+    expect(searchParams.has('connectionState')).toBe(false)
+    expect(searchParams.has('cluster')).toBe(false)
+    expect(searchParams.has('tags')).toBe(false)
+    expect(searchParams.has('untagged')).toBe(false)
+    expect(searchParams.has('vmwareActiveProvider')).toBe(false)
+  })
+
+  it('does not navigate or clear filters when re-selecting the active source', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={['/?providerId=vmware-a&search=custom-&powerState=poweredOn&page=3&pageSize=25']}>{children}</MemoryRouter>
+    )
+    const { result } = renderHook(() => ({ ...useResourceTabSearchParam(), location: useLocation() }), { wrapper })
+
+    act(() => { result.current.setResourceSource({ resourceTab: 'vmware', providerId: 'vmware-a' }) })
+
+    expect(result.current.location.search).toBe('?providerId=vmware-a&search=custom-&powerState=poweredOn&page=3&pageSize=25')
   })
 })

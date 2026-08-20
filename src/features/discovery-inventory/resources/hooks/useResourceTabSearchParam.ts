@@ -1,6 +1,10 @@
 import { useSearchParams } from 'react-router'
 import { RESOURCE_INVENTORY_PAGE_SIZES } from './useResourceInventorySearchParams'
-import { VMWARE_DEFAULT_SEARCH_PARAM, VMWARE_DEFAULT_TAG_PARAM } from './vmwareSearchParamKeys'
+import {
+  VMWARE_ACTIVE_PROVIDER_PARAM,
+  VMWARE_DEFAULT_SEARCH_PARAM,
+  VMWARE_DEFAULT_TAG_PARAM,
+} from './vmwareSearchParamKeys'
 
 export const RESOURCE_TABS = ['vmware', 'flashsystem', 'ibm-power'] as const
 export type ResourceTab = (typeof RESOURCE_TABS)[number]
@@ -27,6 +31,7 @@ function clearInheritedVmwareDefaults(searchParams: URLSearchParams) {
   }
   searchParams.delete(VMWARE_DEFAULT_SEARCH_PARAM)
   searchParams.delete(VMWARE_DEFAULT_TAG_PARAM)
+  searchParams.delete(VMWARE_ACTIVE_PROVIDER_PARAM)
 }
 
 export function useResourceTabSearchParam() {
@@ -39,11 +44,14 @@ export function useResourceTabSearchParam() {
   const setResourceSource = ({ resourceTab: tab, providerId: nextProviderId }: ResourceSourceSelection) => {
     const next = new URLSearchParams(searchParams)
     const sourceChanged = resourceTab !== tab || providerId !== nextProviderId
+    if (!sourceChanged) return
+
     if (sourceChanged && (resourceTab === 'vmware' || tab === 'vmware')) {
       clearInheritedVmwareDefaults(next)
     }
     const resourceFilterKeys = new Set(Object.values(RESOURCE_FILTER_PARAMS).flat())
     resourceFilterKeys.forEach((key) => { next.delete(key) })
+    next.delete('search')
     if (tab === 'vmware') next.delete('resource')
     else next.set('resource', tab)
     if (nextProviderId) next.set('providerId', nextProviderId)
