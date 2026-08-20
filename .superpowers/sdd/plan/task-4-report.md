@@ -38,3 +38,15 @@ Only VMware resource integration and its page tests changed. IBM Power, FlashSys
 - `node_modules/.bin/vitest.cmd run src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.test.tsx` — passed: 4 files, 26 tests.
 - `node_modules/.bin/eslint.cmd src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.ts src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx` — passed.
 - `git diff --check` — passed.
+
+## Keyed lifecycle follow-up
+
+- Replaced child-only default tracking with VMware-private URL provenance for auto-applied search and tag defaults, so the provenance survives the provider-keyed page remount.
+- `setResourceSource` now synchronously removes only a marked inherited VMware search and its provenance before the provider key changes. This prevents the new page's first inventory render from using the previous provider's prefix; unmarked direct-URL and user-edited searches remain intact.
+- Added coverage for both the keyed hook remount and the source-tab transition that precedes it.
+
+## Keyed lifecycle verification
+
+- `node_modules/.bin/vitest.cmd run src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.test.tsx` — passed: 5 files, 32 tests.
+- `node_modules/.bin/eslint.cmd src/features/discovery-inventory/resources/hooks/vmwareSearchParamKeys.ts src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.ts src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.ts src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx` — passed.
+- `git diff --check` — passed.

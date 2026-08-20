@@ -49,4 +49,37 @@ describe('useResourceTabSearchParam', () => {
     expect(searchParams.has('providerId')).toBe(false)
     expect(searchParams.get('page')).toBe('1')
   })
+
+  it('clears only inherited VMware defaults before switching VMware providers', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={['/?providerId=vmware-a&search=provider-a-&tags=provider-a-tag&vmwareDefaultSearch=provider-a-&vmwareDefaultTag=provider-a-tag']}>
+        {children}
+      </MemoryRouter>
+    )
+    const { result } = renderHook(() => ({ ...useResourceTabSearchParam(), location: useLocation() }), { wrapper })
+
+    act(() => { result.current.setResourceSource({ resourceTab: 'vmware', providerId: 'vmware-b' }) })
+
+    const searchParams = new URLSearchParams(result.current.location.search)
+    expect(searchParams.get('providerId')).toBe('vmware-b')
+    expect(searchParams.has('search')).toBe(false)
+    expect(searchParams.has('tags')).toBe(false)
+    expect(searchParams.has('vmwareDefaultSearch')).toBe(false)
+    expect(searchParams.has('vmwareDefaultTag')).toBe(false)
+  })
+
+  it('preserves an unmarked VMware search when switching VMware providers', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={['/?providerId=vmware-a&search=user-prefix-']}>
+        {children}
+      </MemoryRouter>
+    )
+    const { result } = renderHook(() => ({ ...useResourceTabSearchParam(), location: useLocation() }), { wrapper })
+
+    act(() => { result.current.setResourceSource({ resourceTab: 'vmware', providerId: 'vmware-b' }) })
+
+    const searchParams = new URLSearchParams(result.current.location.search)
+    expect(searchParams.get('providerId')).toBe('vmware-b')
+    expect(searchParams.get('search')).toBe('user-prefix-')
+  })
 })

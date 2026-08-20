@@ -1,8 +1,30 @@
 import type { ReactNode } from 'react'
-import { act, renderHook } from '@testing-library/react'
+import { act, fireEvent, render, renderHook, screen } from '@testing-library/react'
 import { MemoryRouter, useLocation } from 'react-router'
 import { describe, expect, it } from 'vitest'
-import { useVirtualMachineSearchParams } from './useVirtualMachineSearchParams'
+import { type VirtualMachineProviderScope, useVirtualMachineSearchParams } from './useVirtualMachineSearchParams'
+
+function VirtualMachineSearchParamsState({ provider }: { provider: VirtualMachineProviderScope }) {
+  const { query, updateFilters } = useVirtualMachineSearchParams(provider)
+
+  return (
+    <>
+      <output data-testid="vmware-query">{`${query.search}:${query.tags.join(',')}`}</output>
+      <button onClick={() => {
+        updateFilters({
+          search: 'user-prefix-',
+          powerState: '',
+          connectionState: '',
+          cluster: '',
+          tags: ['user-tag'],
+          untagged: false,
+        })
+      }}>
+        Use custom filters
+      </button>
+    </>
+  )
+}
 
 describe('useVirtualMachineSearchParams', () => {
   it('initializes trimmed provider defaults and exposes only the first URL tag', () => {
@@ -73,6 +95,44 @@ describe('useVirtualMachineSearchParams', () => {
 
     expect(result.current.query.search).toBe('user-prefix-')
     expect(result.current.query.tags).toEqual(['user-tag'])
+  })
+
+  it('replaces inherited defaults but preserves user filters across keyed provider remounts', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={['/']}>
+        {children}
+      </MemoryRouter>
+    )
+    const view = render(
+      <VirtualMachineSearchParamsState
+        key="provider-a"
+        provider={{ id: 'provider-a', vmPrefix: 'provider-a-', vmTags: ['provider-a-tag'] }}
+      />,
+      { wrapper },
+    )
+
+    expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-a-:provider-a-tag')
+
+    view.rerender(
+      <VirtualMachineSearchParamsState
+        key="provider-b"
+        provider={{ id: 'provider-b', vmPrefix: 'provider-b-', vmTags: ['provider-b-tag'] }}
+      />,
+    )
+
+    expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-b-:provider-b-tag')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use custom filters' }))
+    expect(screen.getByTestId('vmware-query')).toHaveTextContent('user-prefix-:user-tag')
+
+    view.rerender(
+      <VirtualMachineSearchParamsState
+        key="provider-c"
+        provider={{ id: 'provider-c', vmPrefix: 'provider-c-', vmTags: ['provider-c-tag'] }}
+      />,
+    )
+
+    expect(screen.getByTestId('vmware-query')).toHaveTextContent('user-prefix-:user-tag')
   })
 
   it('does not restore cleared defaults and initializes defaults for a new provider', () => {
