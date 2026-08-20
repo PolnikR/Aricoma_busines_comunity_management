@@ -26,7 +26,7 @@ describe('useTags', () => {
     expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe('/api/tags?provider_id=vmware-vcenter-01')
   })
 
-  it('does not fetch tags without a provider ID', async () => {
+  it('does not fetch tags without a provider ID', () => {
     const mock = vi.fn()
     vi.stubGlobal('fetch', mock)
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })

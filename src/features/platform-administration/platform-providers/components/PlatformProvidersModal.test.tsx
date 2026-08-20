@@ -98,8 +98,9 @@ describe('PlatformProvidersModal', () => {
     fireEvent.change(screen.getByLabelText('VM prefix'), { target: { value: '' } })
     fireEvent.click(screen.getByRole('button', { name: /Edit platform provider/i }))
 
-    expect(mutate).toHaveBeenCalledWith(expect.objectContaining({
-      provider: expect.objectContaining({ vmPrefix: null, vmTags: ['saved-platform-tag'] }),
-    }), expect.any(Object))
+    const submitted = mutate.mock.calls[0]?.[0] as unknown as {
+      provider?: { vmPrefix?: string | null, vmTags?: string[] }
+    } | undefined
+    expect(submitted?.provider).toMatchObject({ vmPrefix: null, vmTags: ['saved-platform-tag'] })
   })
 })
