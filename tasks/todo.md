@@ -1,31 +1,44 @@
-# Todo: Move Recovery Runs into Recovery Plans + Group Support
+# Todo: Provider VM Prefix and Provider-Scoped VM Tags
 
-See `tasks/plan.md` for full detail, acceptance criteria, and file lists.
+Specification: GitHub issue #3. See `tasks/plan.md` for full acceptance
+criteria, dependencies, risks, likely files, and verification commands.
 
-## Phase 1: Move (no behavior change)
-- [x] Task 1: Relocate `src/features/storage-orchestration/` → `src/features/recovery-plans/recovery-runs/`; update `routes.ts` / `AppRoutes.tsx` / `AppSidebar.tsx`
-- [x] Checkpoint: `/recovery-plans/recovery-runs` works, `/storage-orchestration` shows placeholder, `tsc --noEmit` clean (verified: tsc clean, 7 test files / 20 tests pass unchanged, eslint clean)
+## Phase 1: Data foundation
 
-## Phase 2: Data layer
-- [x] Task 2a: Add `OrchestratedEntity` type; add `useOrchestratedGroups` (uses Recovery Groups' existing `orchestrationProviderId`, no backend dependency); add `useOrchestratedEntities`; add `useOrchestratedEntityRuns` (new, generalized — `useOrchestratedAppRuns` kept as-is, still used by the current unmodified page until Task 3); add `useLatestOrchestratorRun`. Applications KEEP the existing `usePlatformProviders`/`getEligiblePlatformProviders` fallback for now.
-- [x] Checkpoint: hook tests green (9 test files / 24 tests across the feature, all passing; `tsc --noEmit` and eslint clean)
-- [ ] **Task 2b — BLOCKED, do not start:** confirmed 2026-08-19 via `npm run api:pull` that `orchestration_provider_id` is NOT yet on `RecoveryAppRecord`. Re-check with `api:pull` before starting; then `api:generate`; then add the field to `recoveryApplicationTypes.ts` + `mapRecoveryApplications.ts`; then drop the eligible-provider fallback in `useOrchestratedApps`; then fix the one-line follow-up flagged in Task 4.
+- [ ] Task 1: Preserve VM settings in the infrastructure-provider API boundary.
+- [ ] Task 2: Make the tags API require an explicit provider ID.
+- [ ] Task 3: Scope the VMware tag query cache by provider and update Resources.
 
-## Phase 3: Page UX
-- [x] Task 3: Add `useRecoveryRunsTabSearchParam`; add All/Applications/Recovery Groups tabs to `RecoveryRunsPage`; extend `RecoveryRunsTable` with entity-type column; widen `RecoveryRunHistoryDrawer` to generic entity; removed now-dead `useOrchestratedAppRuns`
-- [x] Checkpoint: 9 test files / 31 tests passing, `tsc --noEmit` and eslint clean; entityId deep-link confirmed to filter + auto-open the history drawer
+## Checkpoint: Data foundation
 
-## Phase 4: Detail panels + navigation
-- [x] Task 4: Recovery Application detail drawer — DAG ID / latest status / last executed / duration / "View recovery runs" (only when `pushToOrchestrator`; provider id sourced via the interim eligible-provider lookup until Task 2b lands)
-- [x] Task 5: Recovery Group detail drawer — same additions alongside existing orchestration rows (providerId read directly, no interim needed)
-- [x] Checkpoint: "View recovery runs" from either entity navigates to the correct pre-filtered tab (verified via navigate() assertions); page still usable standalone. Note: one pre-existing unrelated test failure in RecoveryGroupsTable.test.tsx confirmed via git stash to predate this work.
+- [ ] Run Tasks 1-3 focused tests together.
+- [ ] Run `npm run typecheck`.
+- [ ] Confirm no `/tags` request can occur without provider ID.
 
-## Phase 5: Polish
-- [x] Task 6: Locale keys (en/cs/sk, added incrementally across Tasks 3-5); grep-clean of old `storage-orchestration` import paths (only the intentional `routes.storageOrchestration` placeholder constant remains); added AppSidebar regression test for the Recovery Runs nav entry; full focused test + `tsc --noEmit` pass
+## Phase 2: Shared control and infrastructure UI
 
-## Final Definition of Done
-- [x] All acceptance criteria in `tasks/plan.md` met (Tasks 1, 2a, 3, 4, 5, 6 — Task 2b remains explicitly BLOCKED on the backend, see plan Open Questions)
-- [x] `npx tsc --noEmit` clean
-- [x] All focused tests listed per task pass (59/60 — 1 pre-existing unrelated failure confirmed via `git stash`, predates this plan)
-- [x] No unrelated files touched (concurrent uncommitted edits by the user in InventoryShell.tsx/RecoveryPolicyPageShell.tsx/SnapshotPoliciesPage.tsx were left alone throughout)
-- [x] Changes committed per task, atomically
+- [ ] Task 4: Harden `MultiSelectDropdown` for persisted/disabled values.
+- [ ] Task 5: Add VM controls and approved provider form layout.
+- [ ] Task 6: Wire edit-only provider-scoped tags through the provider modal.
+
+## Checkpoint: Infrastructure slice
+
+- [ ] Run Tasks 1-6 focused tests together.
+- [ ] Run typecheck and focused lint.
+- [ ] Browser-check create/edit flows at desktop and narrow widths.
+
+## Phase 3: Platform-provider slice
+
+- [ ] Task 7: Preserve VM settings in the platform-provider API boundary.
+- [ ] Task 8: Add VM controls and responsive platform form layout.
+- [ ] Task 9: Wire VM settings through the platform modal without tag fetching.
+
+## Final Checkpoint
+
+- [ ] Run all focused tests listed in `tasks/plan.md` together.
+- [ ] Run `npm run typecheck`.
+- [ ] Run focused lint for all changed files.
+- [ ] Run `npm run api:check` and `git diff --check`.
+- [ ] Browser-check both forms and keyboard multi-select behavior.
+- [ ] Report whether the full suite/build was run.
+- [ ] Review and commit only in-scope files atomically.
