@@ -1,5 +1,10 @@
 # Implementation Plan: Provider VM Prefix and Provider-Scoped VM Tags
 
+Status: Implemented and verified on the current branch. The focused suite
+passed (10 files, 74 tests), TypeScript validation, focused lint, OpenAPI
+generation checks, and `git diff --check` passed. Manual browser verification
+was not available in this agent session.
+
 ## Overview
 
 Implement GitHub issue #3 by preserving `vmPrefix` and `vmTags` through both
