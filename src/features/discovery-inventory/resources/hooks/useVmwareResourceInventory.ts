@@ -70,7 +70,12 @@ export function useVmwareResourceInventory(
     isDebouncing,
     isInitialLoading: canFetch && query.isPending && !isDebouncing,
     isBackgroundFetching: query.isFetching && Boolean(query.data),
+    error: isDebouncing ? null : query.error,
     isError: query.isError && !isDebouncing,
-    isEmpty: query.isSuccess && query.data.virtualMachines.length === 0,
+    isEmpty: query.isSuccess
+      && !query.isPlaceholderData
+      && !query.isFetching
+      && !isDebouncing
+      && query.data.virtualMachines.length === 0,
   }
 }

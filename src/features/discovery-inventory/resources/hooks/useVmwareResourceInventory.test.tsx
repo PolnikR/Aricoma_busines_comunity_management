@@ -129,6 +129,55 @@ describe('useVmwareResourceInventory', () => {
     act(() => { resolveNameResponse?.(inventoryResponse(['WEB-02'])) })
   })
 
+  it('does not expose retained empty data as an empty success during debounce or refetch', async () => {
+    let resolveNameResponse: ((response: Response) => void) | undefined
+    const nameResponse = new Promise<Response>((resolve) => { resolveNameResponse = resolve })
+    const fetchMock = vi.fn((url: string) => url.includes('/vms_by_tag')
+      ? Promise.resolve(inventoryResponse([]))
+      : nameResponse)
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { result, rerender } = renderHook(
+      ({ prefix, tag }: { prefix: string; tag: string }) => useVmwareResourceInventory('vcenter-01', prefix, tag, true),
+      { wrapper: createWrapper(createQueryClient()), initialProps: { prefix: '', tag: 'prod' } },
+    )
+
+    await waitFor(() => { expect(result.current.isEmpty).toBe(true) })
+    rerender({ prefix: 'WEB', tag: '' })
+
+    expect(result.current.isDebouncing).toBe(true)
+    expect(result.current.data?.virtualMachines).toEqual([])
+    expect(result.current.isEmpty).toBe(false)
+
+    await new Promise((resolve) => { setTimeout(resolve, 300) })
+    await waitFor(() => { expect(result.current.isBackgroundFetching).toBe(true) })
+
+    expect(result.current.data?.virtualMachines).toEqual([])
+    expect(result.current.isEmpty).toBe(false)
+
+    act(() => { resolveNameResponse?.(inventoryResponse(['WEB-01'])) })
+  })
+
+  it('suppresses an errored name query while the next name prefix debounces', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 500 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, retryDelay: 1 } },
+    })
+    const { result, rerender } = renderHook(
+      ({ prefix }: { prefix: string }) => useVmwareResourceInventory('vcenter-01', prefix, '', true),
+      { wrapper: createWrapper(queryClient), initialProps: { prefix: 'WEB' } },
+    )
+
+    await waitFor(() => { expect(result.current.isError).toBe(true) })
+    rerender({ prefix: 'WEB2' })
+
+    expect(result.current.isDebouncing).toBe(true)
+    expect(result.current.isError).toBe(false)
+    expect(result.current.error).toBeNull()
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
   it('filters tag inventory by a case-sensitive name prefix without adding the prefix to the cache key', async () => {
     const fetchMock = vi.fn().mockResolvedValue(inventoryResponse(['WEB-01', 'web-02', 'DB-01']))
     vi.stubGlobal('fetch', fetchMock)
