@@ -18,10 +18,25 @@ describe('useTags', () => {
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     )
 
-    const { result } = renderHook(() => useTags(), { wrapper })
+    const { result } = renderHook(() => useTags('vmware-vcenter-01'), { wrapper })
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
 
     expect(result.current.data).toEqual(['prod', 'db'])
-    expect(client.getQueryData(discoveryInventoryKeys.tags())).toEqual(['prod', 'db'])
+    expect(client.getQueryData(discoveryInventoryKeys.tags('vmware-vcenter-01'))).toEqual(['prod', 'db'])
+    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe('/api/tags?provider_id=vmware-vcenter-01')
+  })
+
+  it('does not fetch tags without a provider ID', async () => {
+    const mock = vi.fn()
+    vi.stubGlobal('fetch', mock)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+
+    const { result } = renderHook(() => useTags(null), { wrapper })
+
+    expect(result.current.fetchStatus).toBe('idle')
+    expect(mock).not.toHaveBeenCalled()
   })
 })

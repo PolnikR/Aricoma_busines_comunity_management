@@ -9,7 +9,7 @@ export const discoveryInventoryKeys = {
   inventory: (providerId?: string, tag?: string) => (
     [...discoveryInventoryKeys.all, 'inventory', providerId ?? null, tag ?? null] as const
   ),
-  tags: () => [...discoveryInventoryKeys.all, 'tags'] as const,
+  tags: (providerId?: string | null) => [...discoveryInventoryKeys.all, 'tags', providerId ?? null] as const,
   vdisksByVm: (vmName: string, providerId?: string, ibmProviderId?: string) => (
     [
       ...discoveryInventoryKeys.all,

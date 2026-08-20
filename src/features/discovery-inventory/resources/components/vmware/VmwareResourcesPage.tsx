@@ -59,7 +59,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     getServerSideTagFilter(query.tags),
     inventoryEnabled,
   )
-  const { data: availableTags = [] } = useTags(inventoryEnabled)
+  const { data: availableTags = [] } = useTags(selectedProviderId, inventoryEnabled)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [density, setDensity] = useState<TableDensity>('compact')
