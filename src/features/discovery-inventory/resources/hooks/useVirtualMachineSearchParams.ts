@@ -11,6 +11,11 @@ export interface VirtualMachineProviderScope {
   vmTags?: readonly string[]
 }
 
+interface AppliedProviderDefaults {
+  search?: string
+  tag?: string
+}
+
 function parseTags(value: string | null): string[] {
   if (!value) return []
   const firstTag = value.split(',').find(Boolean)
@@ -35,17 +40,40 @@ export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderS
     }
     },
   })
-  const initializedProviderId = useRef<string | null | undefined>(undefined)
+  const initializedProviderId = useRef<string | undefined>(undefined)
+  const appliedDefaults = useRef<AppliedProviderDefaults>({})
 
   useEffect(() => {
-    if (initializedProviderId.current === (provider?.id ?? null)) return
-    initializedProviderId.current = provider?.id ?? null
+    if (!provider || initializedProviderId.current === provider.id) return
 
     const changes: Partial<VirtualMachineFilters> = {}
-    const vmPrefix = provider?.vmPrefix?.trim()
-    const vmTag = provider?.vmTags?.[0]?.trim()
-    if (!searchParams.has('search') && vmPrefix) changes.search = vmPrefix
-    if (!searchParams.has('tags') && vmTag) changes.tags = [vmTag]
+    const nextDefaults: AppliedProviderDefaults = {}
+    const vmPrefix = provider.vmPrefix?.trim()
+    const vmTag = provider.vmTags?.[0]?.trim()
+    const inheritedSearch = appliedDefaults.current.search !== undefined
+      && searchParams.get('search') === appliedDefaults.current.search
+    const inheritedTag = appliedDefaults.current.tag !== undefined
+      && parseTags(searchParams.get('tags'))[0] === appliedDefaults.current.tag
+
+    if (!searchParams.has('search') || inheritedSearch) {
+      if (vmPrefix) {
+        changes.search = vmPrefix
+        nextDefaults.search = vmPrefix
+      } else if (inheritedSearch) {
+        changes.search = ''
+      }
+    }
+    if (!searchParams.has('tags') || inheritedTag) {
+      if (vmTag) {
+        changes.tags = [vmTag]
+        nextDefaults.tag = vmTag
+      } else if (inheritedTag) {
+        changes.tags = []
+      }
+    }
+
+    initializedProviderId.current = provider.id
+    appliedDefaults.current = nextDefaults
     if (Object.keys(changes).length > 0) updateQuery(changes)
   }, [provider, searchParams, updateQuery])
 

@@ -35,6 +35,46 @@ describe('useVirtualMachineSearchParams', () => {
     expect(result.current.query.tags).toEqual(['url-tag'])
   })
 
+  it('replaces inherited defaults but preserves user filters when providers switch', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={['/']}>
+        {children}
+      </MemoryRouter>
+    )
+    const { result, rerender } = renderHook(
+      ({ id, vmPrefix, vmTag }: { id: string; vmPrefix: string; vmTag: string }) => useVirtualMachineSearchParams({
+        id,
+        vmPrefix,
+        vmTags: [vmTag],
+      }),
+      { wrapper, initialProps: { id: 'provider-a', vmPrefix: 'provider-a-', vmTag: 'provider-a-tag' } },
+    )
+
+    expect(result.current.query.search).toBe('provider-a-')
+    expect(result.current.query.tags).toEqual(['provider-a-tag'])
+
+    rerender({ id: 'provider-b', vmPrefix: 'provider-b-', vmTag: 'provider-b-tag' })
+
+    expect(result.current.query.search).toBe('provider-b-')
+    expect(result.current.query.tags).toEqual(['provider-b-tag'])
+
+    act(() => {
+      result.current.updateFilters({
+        search: 'user-prefix-',
+        powerState: '',
+        connectionState: '',
+        cluster: '',
+        tags: ['user-tag'],
+        untagged: false,
+      })
+    })
+
+    rerender({ id: 'provider-c', vmPrefix: 'provider-c-', vmTag: 'provider-c-tag' })
+
+    expect(result.current.query.search).toBe('user-prefix-')
+    expect(result.current.query.tags).toEqual(['user-tag'])
+  })
+
   it('does not restore cleared defaults and initializes defaults for a new provider', () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <MemoryRouter initialEntries={['/']}>
