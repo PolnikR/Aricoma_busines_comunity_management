@@ -321,7 +321,8 @@ describe('ResourcesPage', () => {
     expect(search).toHaveFocus()
   })
 
-  it('keeps the VMware search input mounted and focused when the hook reports a real error', () => {
+  it('keeps the VMware search input mounted and focused when a new search debounces after a real error', () => {
+    useStatefulVirtualMachineSearchParams = true
     const view = render(<ResourcesPage />)
     const search = screen.getByRole('searchbox', { name: 'Search virtual machines' })
     search.focus()
@@ -349,6 +350,21 @@ describe('ResourcesPage', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBe(search)
     expect(search).toHaveFocus()
+
+    fireEvent.change(search, { target: { value: 'WEB2' } })
+    inventoryQuery = {
+      ...inventoryQuery,
+      error: null,
+      isDebouncing: true,
+      isError: false,
+    }
+    view.rerender(<ResourcesPage />)
+
+    expect(search).toHaveValue('WEB2')
+    expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBe(search)
+    expect(search).toHaveFocus()
+    expect(screen.queryByLabelText('Loading module')).not.toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('renders multiple provider sources in the single top resource tab list', () => {

@@ -178,6 +178,33 @@ describe('useVmwareResourceInventory', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
+  it('does not restart initial loading after an errored provider query when a new name search starts', async () => {
+    let requestCount = 0
+    const fetchMock = vi.fn(() => {
+      requestCount += 1
+      return requestCount < 3
+        ? Promise.resolve(new Response(null, { status: 500 }))
+        : new Promise<Response>(() => {})
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, retryDelay: 1 } },
+    })
+    const { result, rerender } = renderHook(
+      ({ prefix }: { prefix: string }) => useVmwareResourceInventory('vcenter-01', prefix, '', true),
+      { wrapper: createWrapper(queryClient), initialProps: { prefix: 'WEB' } },
+    )
+
+    await waitFor(() => { expect(result.current.isError).toBe(true) })
+    rerender({ prefix: 'WEB2' })
+
+    expect(result.current.isDebouncing).toBe(true)
+    await new Promise((resolve) => { setTimeout(resolve, 300) })
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledTimes(3) })
+
+    expect(result.current.isInitialLoading).toBe(false)
+  })
+
   it('filters tag inventory by a case-sensitive name prefix without adding the prefix to the cache key', async () => {
     const fetchMock = vi.fn().mockResolvedValue(inventoryResponse(['WEB-01', 'web-02', 'DB-01']))
     vi.stubGlobal('fetch', fetchMock)

@@ -22,6 +22,7 @@ export function useVmwareResourceInventory(
   const hasTag = Boolean(tag)
   const isNameOnly = hasNamePrefix && !hasTag
   const [debouncedNamePrefix, setDebouncedNamePrefix] = useState('')
+  const [settledProviderId, setSettledProviderId] = useState<string | undefined>()
 
   useEffect(() => {
     const timeout = setTimeout(
@@ -64,11 +65,16 @@ export function useVmwareResourceInventory(
   })
 
   const isDebouncing = isNameOnly && debouncedNamePrefix !== namePrefix
+  const hasSettledProviderQuery = settledProviderId === providerId
+
+  useEffect(() => {
+    if (canFetch && !query.isPending) setSettledProviderId(providerId)
+  }, [canFetch, providerId, query.isPending])
 
   return {
     ...query,
     isDebouncing,
-    isInitialLoading: canFetch && query.isPending && !isDebouncing,
+    isInitialLoading: canFetch && query.isPending && !isDebouncing && !hasSettledProviderQuery,
     isBackgroundFetching: query.isFetching && Boolean(query.data),
     error: isDebouncing ? null : query.error,
     isError: query.isError && !isDebouncing,
