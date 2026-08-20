@@ -131,6 +131,23 @@ describe('fetchProviders', () => {
     })
   })
 
+  it('preserves VM settings from the provider response', async () => {
+    stubFetch({
+      providers: [{
+        ...providerA,
+        vmPrefix: 'prod-',
+        vmTags: ['Production', 'Database'],
+      }],
+    })
+
+    const [provider] = await fetchProviders()
+
+    expect(provider).toMatchObject({
+      vmPrefix: 'prod-',
+      vmTags: ['Production', 'Database'],
+    })
+  })
+
   it('rejects a response that does not match the providers contract', async () => {
     stubFetch({ providers: 'invalid' })
     await expect(fetchProviders()).rejects.toBeInstanceOf(Error)
@@ -178,6 +195,26 @@ describe('submitProvider', () => {
     const headers = new Headers(init.headers)
     expect(headers.get('X-User')).toBe('admin')
     expect(headers.get('Content-Type')).toBe('application/json')
+  })
+
+  it('posts explicit empty VM settings when clearing them', async () => {
+    const mock = stubFetch({})
+    const provider: ProviderSubmitData = {
+      id: providerA.id,
+      name: providerA.name,
+      description: providerA.description,
+      type: providerA.type,
+      ipAddress: providerA.ipAddress,
+      credentialId: providerA.credentialId,
+      role: providerA.role ?? 'source',
+      vmPrefix: null,
+      vmTags: [],
+    }
+
+    await submitProvider(provider)
+
+    const [, init] = mock.mock.calls[0] as [string, RequestInit]
+    expect(init.body).toBe(JSON.stringify(provider))
   })
 
   it('throws on an HTTP failure', async () => {
