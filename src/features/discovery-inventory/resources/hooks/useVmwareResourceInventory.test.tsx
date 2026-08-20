@@ -184,7 +184,7 @@ describe('useVmwareResourceInventory', () => {
       requestCount += 1
       return requestCount < 3
         ? Promise.resolve(new Response(null, { status: 500 }))
-        : new Promise<Response>(() => {})
+        : new Promise<Response>((resolve) => { void resolve })
     })
     vi.stubGlobal('fetch', fetchMock)
     const queryClient = new QueryClient({

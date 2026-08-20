@@ -68,7 +68,14 @@ export function useVmwareResourceInventory(
   const hasSettledProviderQuery = settledProviderId === providerId
 
   useEffect(() => {
-    if (canFetch && !query.isPending) setSettledProviderId(providerId)
+    if (!canFetch || query.isPending) return
+
+    let cancelled = false
+    queueMicrotask(() => {
+      if (!cancelled) setSettledProviderId(providerId)
+    })
+
+    return () => { cancelled = true }
   }, [canFetch, providerId, query.isPending])
 
   return {

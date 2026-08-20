@@ -101,14 +101,14 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
 vi.mock('../hooks/useVirtualMachineSearchParams', () => ({
   useVirtualMachineSearchParams: (...args: unknown[]) => {
     virtualMachineSearchParamsSpy(...args)
+    const [statefulQuery, setStatefulQuery] = useState(virtualMachineQuery)
     if (useStatefulVirtualMachineSearchParams) {
-      const [query, setQuery] = useState(virtualMachineQuery)
       return {
-        query,
+        query: statefulQuery,
         updateQuery,
         updateFilters: (filters: typeof virtualMachineQuery) => {
           updateFilters(filters)
-          setQuery(current => ({ ...current, ...filters }))
+          setStatefulQuery(current => ({ ...current, ...filters }))
         },
         isInitialized: virtualMachineSearchParamsInitialized,
       }
