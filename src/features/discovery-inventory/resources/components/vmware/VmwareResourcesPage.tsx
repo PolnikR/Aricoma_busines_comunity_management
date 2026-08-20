@@ -56,7 +56,6 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   const inventoryEnabled = providersSuccess && selectedProvider !== null && isInitialized
   const {
     data: inventory,
-    error,
     isInitialLoading,
     isFetching,
     isError,
