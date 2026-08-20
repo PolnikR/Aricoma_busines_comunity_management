@@ -114,6 +114,8 @@ export const OrchestrationProvider = zod.object({
   "url": zod.union([zod.string(),zod.null()]).exactOptional(),
   "defaultFlashcopyProviderId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "vmTags": zod.array(zod.string()).exactOptional(),
   "port": zod.int().default(orchestrationProviderPortDefault),
   "dagDir": zod.string()
 });
@@ -135,6 +137,8 @@ export const OrchestrationProviderRecord = zod.object({
   "url": zod.union([zod.string(),zod.null()]).exactOptional(),
   "defaultFlashcopyProviderId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "vmTags": zod.array(zod.string()).exactOptional(),
   "port": zod.int().default(orchestrationProviderRecordPortDefault),
   "dagDir": zod.string(),
   "credentialStatus": zod.union([zod.string(),zod.null()]).exactOptional()
@@ -234,7 +238,9 @@ export const Provider = zod.object({
   "credentialId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "url": zod.union([zod.string(),zod.null()]).exactOptional(),
   "defaultFlashcopyProviderId": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional()
+  "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "vmTags": zod.array(zod.string()).exactOptional()
 });
 
 export type Provider = zod.input<typeof Provider>;
@@ -262,6 +268,8 @@ export const ProviderRecord = zod.object({
   "url": zod.union([zod.string(),zod.null()]).exactOptional(),
   "defaultFlashcopyProviderId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "vmTags": zod.array(zod.string()).exactOptional(),
   "credentialStatus": zod.union([zod.string(),zod.null()]).exactOptional()
 });
 

@@ -18,6 +18,8 @@ export interface OrchestrationProviderRecord {
   url?: string | null;
   defaultFlashcopyProviderId?: string | null;
   orchestratorConnId?: string | null;
+  vmPrefix?: string | null;
+  vmTags?: string[];
   port?: number;
   dagDir: string;
   credentialStatus?: string | null;

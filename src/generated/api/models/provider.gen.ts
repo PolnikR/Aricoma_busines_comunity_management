@@ -18,4 +18,6 @@ export interface Provider {
   url?: string | null;
   defaultFlashcopyProviderId?: string | null;
   orchestratorConnId?: string | null;
+  vmPrefix?: string | null;
+  vmTags?: string[];
 }
