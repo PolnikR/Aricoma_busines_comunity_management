@@ -5,7 +5,7 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { DataTablePagination } from '@/shared/components/data-table'
 import { MetricsSkeleton } from '@/shared/components/stat-card/StatCard'
-import { useDiscoveryInventory } from '@/features/discovery-inventory/resources/hooks/useVmwareInventory'
+import { useVmwareResourceInventory } from '@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory'
 import { useTags } from '../../hooks/useVmwareTags'
 import {
   applyFiltersAndPagination,
@@ -44,22 +44,28 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     providers, providersPending, providersSuccess, providersFetching,
     providersError, onRefetchProviders, providerId, tabs, t, role,
   } = props
-  const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
   const vmwareProviders = getProvidersByTypeAndRole(providers, 'VMWARE', role)
-  const selectedProviderId = providerId ?? vmwareProviders[0]?.id ?? null
-  const inventoryEnabled = providersSuccess && vmwareProviders.length > 0
+  const selectedProvider = vmwareProviders.find((provider) => provider.id === providerId) ?? vmwareProviders[0] ?? null
+  const vmwareProviderScope = selectedProvider ? {
+    id: selectedProvider.id,
+    vmPrefix: selectedProvider.vmPrefix,
+    vmTags: selectedProvider.vmTags,
+  } : null
+  const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams(vmwareProviderScope)
+  const inventoryEnabled = providersSuccess && selectedProvider !== null
   const {
     data: inventory,
     error,
     isLoading: isPending,
     isFetching,
     refetch,
-  } = useDiscoveryInventory(
-    selectedProviderId ?? undefined,
+  } = useVmwareResourceInventory(
+    selectedProvider?.id,
+    query.search,
     getServerSideTagFilter(query.tags),
     inventoryEnabled,
   )
-  const { data: availableTags = [] } = useTags(selectedProviderId, inventoryEnabled)
+  const { data: availableTags = [] } = useTags(selectedProvider?.id, inventoryEnabled)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [density, setDensity] = useState<TableDensity>('compact')

@@ -11,11 +11,15 @@ const refetchProviders = vi.fn()
 const setResourceSource = vi.fn()
 const resourceInventoryQuerySpy = vi.fn()
 const refetchResourceInventory = vi.fn()
+const vmwareResourceInventorySpy = vi.fn()
+const virtualMachineSearchParamsSpy = vi.fn()
+const vmwareTagsSpy = vi.fn()
 let resourceTab: 'vmware' | 'flashsystem' | 'ibm-power' = 'vmware'
 let selectedProviderId: string | null = null
 const vmwareProvider: ProviderRecord = {
   id: 'vmware-01', name: 'VMware 01', description: '', type: 'VMWARE',
   ipAddress: '10.0.0.1', port: 22, credentialId: null, credentialStatus: 'none',
+  vmPrefix: 'DEFAULT-', vmTags: ['default-tag'],
 }
 const flashProvider: ProviderRecord = {
   ...vmwareProvider,
@@ -49,10 +53,17 @@ let inventoryQuery: {
   isFetching: boolean
   refetch: typeof refetch
 }
+let virtualMachineQuery = {
+  page: 1, pageSize: 10 as const, search: '', powerState: '', connectionState: '',
+  cluster: '', tags: [] as string[], untagged: false,
+}
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareInventory', () => ({
-  useDiscoveryInventory: () => inventoryQuery,
+vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory', () => ({
+  useVmwareResourceInventory: (...args: unknown[]) => {
+    vmwareResourceInventorySpy(...args)
+    return inventoryQuery
+  },
 }))
 vi.mock('@/features/discovery-inventory/resources/hooks/useResourceInventoryQueries', () => ({
   useResourceInventoryQueries: (...args: unknown[]) => {
@@ -60,19 +71,20 @@ vi.mock('@/features/discovery-inventory/resources/hooks/useResourceInventoryQuer
     return resourceInventoryQuery
   },
 }))
-vi.mock('../hooks/useVmwareTags', () => ({ useTags: () => ({ data: [] }) }))
+vi.mock('../hooks/useVmwareTags', () => ({
+  useTags: (...args: unknown[]) => {
+    vmwareTagsSpy(...args)
+    return { data: [] }
+  },
+}))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
   useProviders: () => providersQuery,
 }))
 vi.mock('../hooks/useVirtualMachineSearchParams', () => ({
-  useVirtualMachineSearchParams: () => ({
-    query: {
-      page: 1, pageSize: 10, search: '', powerState: '', connectionState: '',
-      cluster: '', tags: [], untagged: false,
-    },
-    updateQuery,
-    updateFilters,
-  }),
+  useVirtualMachineSearchParams: (...args: unknown[]) => {
+    virtualMachineSearchParamsSpy(...args)
+    return { query: virtualMachineQuery, updateQuery, updateFilters }
+  },
 }))
 vi.mock('../hooks/useFlashSystemSearchParams', () => ({
   useFlashSystemSearchParams: () => ({
@@ -109,6 +121,10 @@ beforeEach(() => {
   vi.clearAllMocks()
   resourceTab = 'vmware'
   selectedProviderId = null
+  virtualMachineQuery = {
+    page: 1, pageSize: 10, search: '', powerState: '', connectionState: '',
+    cluster: '', tags: [], untagged: false,
+  }
   providersQuery = {
     data: [vmwareProvider],
     error: null,
@@ -138,6 +154,38 @@ beforeEach(() => {
 })
 
 describe('ResourcesPage', () => {
+  it('scopes provider defaults, URL filters, tags, and inventory to the selected source VMware provider', () => {
+    const selectedVmwareProvider: ProviderRecord = {
+      ...vmwareProvider,
+      id: 'vmware-02',
+      name: 'VMware 02',
+      vmPrefix: 'SELECTED-',
+      vmTags: ['selected-tag'],
+    }
+    selectedProviderId = selectedVmwareProvider.id
+    providersQuery = { ...providersQuery, data: [vmwareProvider, selectedVmwareProvider] }
+    virtualMachineQuery = {
+      ...virtualMachineQuery,
+      search: 'url-prefix',
+      tags: ['url-tag'],
+    }
+
+    render(<ResourcesPage />)
+
+    expect(virtualMachineSearchParamsSpy).toHaveBeenLastCalledWith({
+      id: 'vmware-02',
+      vmPrefix: 'SELECTED-',
+      vmTags: ['selected-tag'],
+    })
+    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith(
+      'vmware-02',
+      'url-prefix',
+      'url-tag',
+      true,
+    )
+    expect(vmwareTagsSpy).toHaveBeenLastCalledWith('vmware-02', true)
+  })
+
   it('renders loading and initial error states', () => {
     inventoryQuery = { ...inventoryQuery, data: undefined, isLoading: true }
     const view = render(<ResourcesPage />)

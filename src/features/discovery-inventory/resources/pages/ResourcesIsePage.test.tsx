@@ -11,11 +11,15 @@ const refetchProviders = vi.fn()
 const setResourceSource = vi.fn()
 const resourceInventoryQuerySpy = vi.fn()
 const refetchResourceInventory = vi.fn()
+const vmwareResourceInventorySpy = vi.fn()
+const virtualMachineSearchParamsSpy = vi.fn()
+const vmwareTagsSpy = vi.fn()
 let resourceTab: 'vmware' | 'flashsystem' | 'ibm-power' = 'vmware'
 let selectedProviderId: string | null = null
 const vmwareTargetProvider: ProviderRecord = {
   id: 'vmware-target-01', name: 'VMware Target 01', description: '', type: 'VMWARE',
   ipAddress: '10.0.0.1', port: 22, credentialId: null, credentialStatus: 'none', role: 'target',
+  vmPrefix: 'TARGET-', vmTags: ['target-tag'],
 }
 const flashTargetProvider: ProviderRecord = {
   ...vmwareTargetProvider,
@@ -49,10 +53,17 @@ let inventoryQuery: {
   isFetching: boolean
   refetch: typeof refetch
 }
+let virtualMachineQuery = {
+  page: 1, pageSize: 10 as const, search: '', powerState: '', connectionState: '',
+  cluster: '', tags: [] as string[], untagged: false,
+}
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareInventory', () => ({
-  useDiscoveryInventory: () => inventoryQuery,
+vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory', () => ({
+  useVmwareResourceInventory: (...args: unknown[]) => {
+    vmwareResourceInventorySpy(...args)
+    return inventoryQuery
+  },
 }))
 vi.mock('@/features/discovery-inventory/resources/hooks/useResourceInventoryQueries', () => ({
   useResourceInventoryQueries: (...args: unknown[]) => {
@@ -60,19 +71,20 @@ vi.mock('@/features/discovery-inventory/resources/hooks/useResourceInventoryQuer
     return resourceInventoryQuery
   },
 }))
-vi.mock('../hooks/useVmwareTags', () => ({ useTags: () => ({ data: [] }) }))
+vi.mock('../hooks/useVmwareTags', () => ({
+  useTags: (...args: unknown[]) => {
+    vmwareTagsSpy(...args)
+    return { data: [] }
+  },
+}))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
   useProviders: () => providersQuery,
 }))
 vi.mock('../hooks/useVirtualMachineSearchParams', () => ({
-  useVirtualMachineSearchParams: () => ({
-    query: {
-      page: 1, pageSize: 10, search: '', powerState: '', connectionState: '',
-      cluster: '', tags: [], untagged: false,
-    },
-    updateQuery,
-    updateFilters,
-  }),
+  useVirtualMachineSearchParams: (...args: unknown[]) => {
+    virtualMachineSearchParamsSpy(...args)
+    return { query: virtualMachineQuery, updateQuery, updateFilters }
+  },
 }))
 vi.mock('../hooks/useFlashSystemSearchParams', () => ({
   useFlashSystemSearchParams: () => ({
@@ -109,6 +121,10 @@ beforeEach(() => {
   vi.clearAllMocks()
   resourceTab = 'vmware'
   selectedProviderId = null
+  virtualMachineQuery = {
+    page: 1, pageSize: 10, search: '', powerState: '', connectionState: '',
+    cluster: '', tags: [], untagged: false,
+  }
   providersQuery = {
     data: [vmwareTargetProvider],
     error: null,
@@ -138,6 +154,38 @@ beforeEach(() => {
 })
 
 describe('ResourcesIsePage', () => {
+  it('scopes provider defaults, URL filters, tags, and inventory to the selected target VMware provider', () => {
+    const selectedVmwareProvider: ProviderRecord = {
+      ...vmwareTargetProvider,
+      id: 'vmware-target-02',
+      name: 'VMware Target 02',
+      vmPrefix: 'TARGET-SELECTED-',
+      vmTags: ['target-selected-tag'],
+    }
+    selectedProviderId = selectedVmwareProvider.id
+    providersQuery = { ...providersQuery, data: [vmwareTargetProvider, selectedVmwareProvider] }
+    virtualMachineQuery = {
+      ...virtualMachineQuery,
+      search: 'ise-url-prefix',
+      tags: ['ise-url-tag'],
+    }
+
+    render(<ResourcesIsePage />)
+
+    expect(virtualMachineSearchParamsSpy).toHaveBeenLastCalledWith({
+      id: 'vmware-target-02',
+      vmPrefix: 'TARGET-SELECTED-',
+      vmTags: ['target-selected-tag'],
+    })
+    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith(
+      'vmware-target-02',
+      'ise-url-prefix',
+      'ise-url-tag',
+      true,
+    )
+    expect(vmwareTagsSpy).toHaveBeenLastCalledWith('vmware-target-02', true)
+  })
+
   it('renders loading and initial error states with target providers', () => {
     inventoryQuery = { ...inventoryQuery, data: undefined, isLoading: true }
     const view = render(<ResourcesIsePage />)
