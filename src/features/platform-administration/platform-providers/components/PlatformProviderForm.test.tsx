@@ -73,4 +73,37 @@ describe('PlatformProviderForm', () => {
     expect(screen.getByLabelText('VM prefix')).toHaveValue('airflow-')
     expect(screen.getByText('saved-platform-tag')).toBeInTheDocument()
   })
+
+  it('uses the compact provider-style rows for platform fields', () => {
+    render(
+      <PlatformProviderForm
+        data={formData}
+        errors={{}}
+        isSubmitting={false}
+        credentials={[]}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        tags={[]}
+        tagsDisabled={false}
+        onTagsChange={vi.fn()}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    const idRow = screen.getByLabelText('ID').closest('label')?.parentElement
+    const nameRow = screen.getByLabelText('Provider name').closest('label')?.parentElement
+    const typeRow = screen.getByLabelText('Type').closest('label')?.parentElement
+    const credentialsRow = screen.getByLabelText('Credentials').closest('label')?.parentElement
+    const urlRow = screen.getByLabelText('URL').closest('label')?.parentElement
+    const dagDirRow = screen.getByLabelText('DAG directory').closest('label')?.parentElement
+
+    expect(idRow).toBe(nameRow)
+    expect(typeRow).toBe(credentialsRow)
+    expect(urlRow).toBe(dagDirRow)
+    expect(idRow).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-2')
+    expect(typeRow).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-2')
+    expect(urlRow).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-2')
+  })
 })
