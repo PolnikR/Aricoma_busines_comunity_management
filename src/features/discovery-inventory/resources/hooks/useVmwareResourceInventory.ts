@@ -40,7 +40,10 @@ export function useVmwareResourceInventory(
     queryKey,
     queryFn: async () => {
       if (isNameOnly) {
-        const response = await fetchVmsByName({ prefix: debouncedNamePrefix, providerId })
+        const response = await fetchVmsByName({
+          prefix: debouncedNamePrefix,
+          ...(providerId !== undefined ? { providerId } : {}),
+        })
         return mapVmwareInventory(response)
       }
 
