@@ -50,7 +50,7 @@ describe('provider filter session', () => {
       getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => { storage.set(key, value) },
       removeItem: (key: string) => { storage.delete(key) },
-    } as Storage
+    } as unknown as Storage
 
     writeProviderFilterSnapshot(scope, emptyVmwareSnapshot, sessionStorage)
 
@@ -63,7 +63,7 @@ describe('provider filter session', () => {
       getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => { storage.set(key, value) },
       removeItem: (key: string) => { storage.delete(key) },
-    } as Storage
+    } as unknown as Storage
 
     const flashsystemScope = { ...scope, resourceTab: 'flashsystem' as const }
     const powerScope = { ...scope, resourceTab: 'ibm-power' as const }
@@ -97,7 +97,7 @@ describe('provider filter session', () => {
       getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => storage.set(key, value),
       removeItem: (key: string) => storage.delete(key),
-    } as Storage
+    } as unknown as Storage
     const key = buildProviderFilterSessionKey(scope)
 
     storage.set(key, 'not valid json')
@@ -115,7 +115,7 @@ describe('provider filter session', () => {
       getItem: () => { throw new Error('blocked') },
       setItem: () => { throw new Error('blocked') },
       removeItem: () => { throw new Error('blocked') },
-    } as Storage
+    } as unknown as Storage
 
     expect(() => readProviderFilterSnapshot(scope, blockedStorage)).not.toThrow()
     expect(readProviderFilterSnapshot(scope, blockedStorage)).toBeUndefined()

@@ -52,9 +52,9 @@ function isVmwareFilters(value: unknown): value is VirtualMachineFilters {
     return false
   }
 
-  return Array.isArray(value.tags)
-    && value.tags.every((tag) => typeof tag === 'string')
-    && typeof value.untagged === 'boolean'
+  return Array.isArray(value['tags'])
+    && value['tags'].every((tag) => typeof tag === 'string')
+    && typeof value['untagged'] === 'boolean'
 }
 
 function isFlashSystemFilters(value: unknown): value is FlashSystemFilters {
@@ -75,13 +75,13 @@ function isProviderFilterSnapshot(
   scope: ProviderFilterScope,
   value: unknown,
 ): value is ProviderFilterSnapshot {
-  if (!isRecord(value) || value.resourceTab !== scope.resourceTab || value.initialized !== true) {
+  if (!isRecord(value) || value['resourceTab'] !== scope.resourceTab || value['initialized'] !== true) {
     return false
   }
 
-  if (value.resourceTab === 'vmware') return isVmwareFilters(value.filters)
-  if (value.resourceTab === 'flashsystem') return isFlashSystemFilters(value.filters)
-  return isPowerFilters(value.filters)
+  if (value['resourceTab'] === 'vmware') return isVmwareFilters(value['filters'])
+  if (value['resourceTab'] === 'flashsystem') return isFlashSystemFilters(value['filters'])
+  return isPowerFilters(value['filters'])
 }
 
 function isStoredProviderFilterSnapshot(
@@ -89,8 +89,8 @@ function isStoredProviderFilterSnapshot(
   value: unknown,
 ): value is StoredProviderFilterSnapshot {
   return isRecord(value)
-    && value.schemaVersion === PROVIDER_FILTER_SESSION_SCHEMA_VERSION
-    && isProviderFilterSnapshot(scope, value.snapshot)
+    && value['schemaVersion'] === PROVIDER_FILTER_SESSION_SCHEMA_VERSION
+    && isProviderFilterSnapshot(scope, value['snapshot'])
 }
 
 export function readProviderFilterSnapshot(
