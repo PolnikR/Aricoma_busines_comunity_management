@@ -46,7 +46,7 @@ export function useResourceTabSearchParam() {
     const sourceChanged = resourceTab !== tab || providerId !== nextProviderId
     if (!sourceChanged) return
 
-    if (sourceChanged && (resourceTab === 'vmware' || tab === 'vmware')) {
+    if (resourceTab === 'vmware' || tab === 'vmware') {
       clearInheritedVmwareDefaults(next)
     }
     const resourceFilterKeys = new Set(Object.values(RESOURCE_FILTER_PARAMS).flat())
