@@ -4,9 +4,9 @@ import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { mapTags } from '../helpers/mapTags'
 
-export async function fetchTags(): Promise<string[]> {
+export async function fetchTags(providerId: string): Promise<string[]> {
   try {
-    const payload = await tagsTagsGet()
+    const payload = await tagsTagsGet({ provider_id: providerId })
     return mapTags(parseGeneratedResponse(TagsResponse, payload, 'GET /tags'))
   } catch (error) {
     if (error instanceof OrvalApiError) {
