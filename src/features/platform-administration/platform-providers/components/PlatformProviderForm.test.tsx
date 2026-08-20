@@ -14,6 +14,8 @@ const formData: PlatformProviderFormData = {
   port: '22',
   dagDir: '/opt/airflow/dags',
   credentialId: 'credential-1',
+  vmPrefix: 'airflow-',
+  vmTags: ['saved-platform-tag'],
 }
 
 describe('PlatformProviderForm', () => {
@@ -27,6 +29,9 @@ describe('PlatformProviderForm', () => {
         credentialsLoading={false}
         credentialsError={false}
         onRetryCredentials={vi.fn()}
+        tags={[]}
+        tagsDisabled={false}
+        onTagsChange={vi.fn()}
         onChange={vi.fn()}
         onSubmit={vi.fn()}
       />,
@@ -45,5 +50,27 @@ describe('PlatformProviderForm', () => {
     expect(portInput).toHaveAttribute('min', '1')
     expect(portInput).toHaveAttribute('max', '65535')
     expect(portInput).toHaveAttribute('step', '1')
+  })
+
+  it('renders VM prefix and preserves saved platform tags', () => {
+    render(
+      <PlatformProviderForm
+        data={formData}
+        errors={{}}
+        isSubmitting={false}
+        credentials={[]}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        tags={[]}
+        tagsDisabled={false}
+        onTagsChange={vi.fn()}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByLabelText('VM prefix')).toHaveValue('airflow-')
+    expect(screen.getByText('saved-platform-tag')).toBeInTheDocument()
   })
 })

@@ -1,5 +1,6 @@
 import type { ChangeEvent } from 'react'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
+import { MultiSelectDropdown } from '@/shared/components/form/MultiSelectDropdown'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PLATFORM_PROVIDER_TYPES } from '../model/platformProviderTypes'
 import type { CredentialRecord } from '@/features/providers-connectors/credentials/model/credentialTypes'
@@ -14,6 +15,8 @@ export interface PlatformProviderFormData {
   port: string
   dagDir: string
   credentialId: string
+  vmPrefix: string
+  vmTags: string[]
 }
 
 interface PlatformProviderFormProps {
@@ -25,7 +28,10 @@ interface PlatformProviderFormProps {
   credentialsLoading: boolean
   credentialsError: boolean
   onRetryCredentials: () => void
+  tags?: string[]
+  tagsDisabled?: boolean
   onChange: (field: keyof PlatformProviderFormData, value: string) => void
+  onTagsChange: (tags: string[]) => void
   onSubmit: () => void
 }
 
@@ -38,7 +44,10 @@ export function PlatformProviderForm({
   credentialsLoading,
   credentialsError,
   onRetryCredentials,
+  tags = [],
+  tagsDisabled = false,
   onChange,
+  onTagsChange,
   onSubmit,
 }: PlatformProviderFormProps) {
   const { t } = useTranslation()
@@ -131,6 +140,33 @@ export function PlatformProviderForm({
             aria-invalid={Boolean(errors.port)}
           />
           {errors.port ? <p className="mt-1 text-xs text-red-600">{errors.port}</p> : null}
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Field label={t('forms.vmPrefix')} htmlFor="platform-provider-vm-prefix">
+          <Input
+            id="platform-provider-vm-prefix"
+            value={data.vmPrefix}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('vmPrefix', event.target.value) }}
+            onKeyDown={handleKeyDown}
+            disabled={isSubmitting}
+            aria-invalid={Boolean(errors.vmPrefix)}
+          />
+          {errors.vmPrefix ? <p className="mt-1 text-xs text-red-600">{errors.vmPrefix}</p> : null}
+        </Field>
+
+        <Field label={t('forms.vmTags')} htmlFor="platform-provider-vm-tags">
+          <MultiSelectDropdown
+            id="platform-provider-vm-tags"
+            ariaLabel={t('forms.vmTags')}
+            placeholder={t('forms.vmTagsSelect')}
+            options={tags}
+            selected={data.vmTags}
+            onChange={onTagsChange}
+            disabled={isSubmitting || tagsDisabled}
+          />
+          <p className="mt-1 text-xs text-text-muted">{t('providers.tags.platformHint')}</p>
         </Field>
       </div>
 

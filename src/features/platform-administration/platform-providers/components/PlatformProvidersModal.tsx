@@ -33,6 +33,8 @@ const EMPTY_PLATFORM_PROVIDER_FORM: PlatformProviderFormData = {
   port: '22',
   dagDir: '',
   credentialId: '',
+  vmPrefix: '',
+  vmTags: [],
 }
 
 function toPlatformProviderFormData(provider: PlatformProviderRecord): PlatformProviderFormData {
@@ -46,6 +48,8 @@ function toPlatformProviderFormData(provider: PlatformProviderRecord): PlatformP
     port: String(provider.port),
     dagDir: provider.dagDir,
     credentialId: provider.credentialId,
+    vmPrefix: provider.vmPrefix ?? '',
+    vmTags: [...(provider.vmTags ?? [])],
   }
 }
 
@@ -77,6 +81,9 @@ export function PlatformProvidersModal({
     || formData.port !== initialForm.port
     || formData.dagDir !== initialForm.dagDir
     || formData.credentialId !== initialForm.credentialId
+    || formData.vmPrefix !== initialForm.vmPrefix
+    || formData.vmTags.length !== initialForm.vmTags.length
+    || formData.vmTags.some((tag, index) => tag !== initialForm.vmTags[index])
   )
   const navigationGuard = useUnsavedChangesGuard(isDirty)
 
@@ -109,6 +116,11 @@ export function PlatformProvidersModal({
         return next
       })
     }
+    setErrorMessage('')
+  }
+
+  const handleTagsChange = (vmTags: string[]) => {
+    setFormData(prev => ({ ...prev, vmTags }))
     setErrorMessage('')
   }
 
@@ -148,6 +160,8 @@ export function PlatformProvidersModal({
       port: Number(formData.port),
       dagDir: formData.dagDir.trim(),
       credentialId: formData.credentialId.trim(),
+      vmPrefix: formData.vmPrefix.trim() || null,
+      vmTags: [...formData.vmTags],
     }
     const url = formData.url.trim()
     if (url) record.url = url
@@ -199,7 +213,10 @@ export function PlatformProvidersModal({
           credentialsLoading={credentialsQuery.isLoading}
           credentialsError={credentialsQuery.error !== null}
           onRetryCredentials={() => { void credentialsQuery.refetch() }}
+          tags={[]}
+          tagsDisabled={!isEdit}
           onChange={handleChange}
+          onTagsChange={handleTagsChange}
           onSubmit={handleSubmit}
         />
       </Modal>

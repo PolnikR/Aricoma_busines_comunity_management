@@ -892,6 +892,7 @@
   "providers.credentials.loadFailed": "Přihlašovací údaje se nepodařilo načíst.",
   "providers.tags.loading": "Načítají se tagy…",
   "providers.tags.loadFailed": "Tagy se nepodařilo načíst.",
+  "providers.tags.platformHint": "Tagy jsou dostupné, pokud je poskytovatel vrátí.",
   "providers.credentials.unavailable": "{id} (nedostupné)",
   "providers.credentials.status.ok": "Dostupné",
   "providers.credentials.status.missing": "Chybí",

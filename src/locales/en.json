@@ -929,6 +929,7 @@
   "providers.credentials.loadFailed": "Credentials could not be loaded.",
   "providers.tags.loading": "Loading tags…",
   "providers.tags.loadFailed": "Tags could not be loaded.",
+  "providers.tags.platformHint": "Tags are available when returned by the provider.",
   "providers.credentials.unavailable": "{id} (unavailable)",
   "providers.credentials.status.ok": "Available",
   "providers.credentials.status.missing": "Missing",
