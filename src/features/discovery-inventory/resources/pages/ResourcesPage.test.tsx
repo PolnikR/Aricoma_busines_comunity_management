@@ -171,6 +171,15 @@ describe('ResourcesPage', () => {
     view.rerender(<ResourcesPage />)
 
     expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith('vmware-01', 'DEFAULT-', 'default-tag', true)
+
+    virtualMachineQuery = {
+      ...virtualMachineQuery,
+      search: '',
+      tags: [],
+    }
+    view.rerender(<ResourcesPage />)
+
+    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith('vmware-01', '', undefined, true)
   })
 
   it('scopes provider defaults, URL filters, tags, and inventory to the selected source VMware provider', () => {

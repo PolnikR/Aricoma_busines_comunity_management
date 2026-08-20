@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useReducer } from 'react'
 import { useSearchParams } from 'react-router'
 import { useResourceInventorySearchParams } from './useResourceInventorySearchParams'
 import { VMWARE_DEFAULT_SEARCH_PARAM, VMWARE_DEFAULT_TAG_PARAM } from './vmwareSearchParamKeys'
@@ -45,7 +45,10 @@ export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderS
     }
     },
   })
-  const initializedProviderId = useRef<string | undefined>(undefined)
+  const [initializedProviderId, markProviderInitialized] = useReducer(
+    (_previous: string | undefined, providerId: string) => providerId,
+    undefined,
+  )
 
   const vmPrefix = provider?.vmPrefix?.trim()
   const vmTag = provider?.vmTags?.[0]?.trim()
@@ -53,14 +56,17 @@ export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderS
   const currentTag = parseTags(searchParams.get('tags'))[0]
   const inheritedSearch = matchesAppliedDefault(searchParams, VMWARE_DEFAULT_SEARCH_PARAM, currentSearch)
   const inheritedTag = matchesAppliedDefault(searchParams, VMWARE_DEFAULT_TAG_PARAM, currentTag)
-  const isInitialized = !provider || (
-    (!vmPrefix || (searchParams.has('search') && (!inheritedSearch || currentSearch === vmPrefix)))
-    && (!vmTag || (searchParams.has('tags') && (!inheritedTag || currentTag === vmTag)))
+  const hasPendingInitialization = Boolean(provider) && (
+    (!searchParams.has('search') && Boolean(vmPrefix))
+    || (inheritedSearch && currentSearch !== vmPrefix)
+    || (!searchParams.has('tags') && Boolean(vmTag))
+    || (inheritedTag && currentTag !== vmTag)
   )
+  const isInitialized = !provider || initializedProviderId === provider.id || !hasPendingInitialization
 
   useEffect(() => {
     if (!provider) return
-    if (initializedProviderId.current === provider.id) return
+    if (initializedProviderId === provider.id) return
 
     const changes: VirtualMachineSearchParamChanges = {}
     const inheritedSearch = matchesAppliedDefault(searchParams, VMWARE_DEFAULT_SEARCH_PARAM, currentSearch)
@@ -89,9 +95,9 @@ export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderS
       changes[VMWARE_DEFAULT_TAG_PARAM] = ''
     }
 
-    initializedProviderId.current = provider.id
     if (Object.keys(changes).length > 0) updateQuery(changes)
-  }, [currentSearch, currentTag, provider, searchParams, updateQuery, vmPrefix, vmTag])
+    markProviderInitialized(provider.id)
+  }, [currentSearch, currentTag, initializedProviderId, markProviderInitialized, provider, searchParams, updateQuery, vmPrefix, vmTag])
 
   const updateFilters = (filters: VirtualMachineFilters) => {
     updateQuery({

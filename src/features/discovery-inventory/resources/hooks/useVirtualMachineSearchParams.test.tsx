@@ -5,11 +5,12 @@ import { describe, expect, it } from 'vitest'
 import { type VirtualMachineProviderScope, useVirtualMachineSearchParams } from './useVirtualMachineSearchParams'
 
 function VirtualMachineSearchParamsState({ provider }: { provider: VirtualMachineProviderScope }) {
-  const { query, updateFilters } = useVirtualMachineSearchParams(provider)
+  const { query, updateFilters, isInitialized } = useVirtualMachineSearchParams(provider)
 
   return (
     <>
       <output data-testid="vmware-query">{`${query.search}:${query.tags.join(',')}`}</output>
+      <output data-testid="vmware-initialized">{String(isInitialized)}</output>
       <button onClick={() => {
         updateFilters({
           search: 'user-prefix-',
@@ -185,6 +186,7 @@ describe('useVirtualMachineSearchParams', () => {
     })
     expect(result.current.query.search).toBe('')
     expect(result.current.query.tags).toEqual([])
+    expect(result.current.isInitialized).toBe(true)
 
     rerender({ providerId: 'provider-2' })
 
