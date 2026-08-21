@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import {
@@ -136,6 +138,8 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
   const jsonViewed = rows.find(policy => policy.id === jsonViewId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'id', 'description', 'level'] })
   const activeFilterCount = Number(Boolean(filters.level)) + Number(Boolean(filters.status))
+  const loadErrorDetail = extractBackendErrorDetail(error)
+  const deleteErrorDetail = extractBackendErrorDetail(deletePolicy.error)
 
   const prepareFilters = () => {
     setPendingFilters(filters)
@@ -205,9 +209,12 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
         }
       />
 
+      {deletePolicy.error ? <Alert className="mx-4 mt-4" title={t('snapshotPolicies.delete.title')} {...(deleteErrorDetail ? { description: deleteErrorDetail } : {})} variant="error" /> : null}
+
       <DataTableRequestState
         error={error ? {
           title: t('snapshotPolicies.loadFailed'),
+          ...(loadErrorDetail ? { description: loadErrorDetail } : {}),
           retryLabel: t('buttons.retry'),
           isRetrying,
           onRetry,
@@ -283,6 +290,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
           if (!deleteTarget) return
           deletePolicy.mutate(deleteTarget.id, {
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
+            onError: () => { setDeleteTarget(null) },
           })
         }}
       />

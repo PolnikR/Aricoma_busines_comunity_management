@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { RecoveryAppPolicy } from '../model/recoveryAppPolicyTypes'
 import { RecoveryAppPoliciesTable } from './RecoveryAppPoliciesTable'
 
@@ -76,5 +77,10 @@ describe('RecoveryAppPoliciesTable', () => {
 
     expect(screen.getByText('Critical latest')).toBeInTheDocument()
     expect(screen.queryByText('Medium monthly')).not.toBeInTheDocument()
+  })
+
+  it('shows supported backend detail in the load error', () => {
+    render(<RecoveryAppPoliciesTable policies={[]} isLoading={false} error={new OrvalApiError(503, 'Unavailable', { detail: 'Recovery policy service unavailable.' })} isRetrying={false} onRetry={vi.fn()} />)
+    expect(screen.getByRole('alert')).toHaveTextContent('Recovery policy service unavailable.')
   })
 })

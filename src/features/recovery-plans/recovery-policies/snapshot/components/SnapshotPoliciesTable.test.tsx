@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { SnapshotPolicy } from '../model/snapshotPolicyTypes'
 import { SnapshotPoliciesTable } from './SnapshotPoliciesTable'
 
@@ -94,6 +95,11 @@ describe('SnapshotPoliciesTable', () => {
     expect(screen.getByRole('searchbox')).toBeInTheDocument()
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByRole('alert')).not.toHaveTextContent('private backend details')
+  })
+
+  it('shows supported backend detail in the load error', () => {
+    render(<SnapshotPoliciesTable policies={[]} isLoading={false} error={new OrvalApiError(503, 'Unavailable', { detail: 'Snapshot service unavailable.' })} isRetrying={false} onRetry={vi.fn()} />)
+    expect(screen.getByRole('alert')).toHaveTextContent('Snapshot service unavailable.')
   })
 
   it('shows a Filters button that opens a level and status filter panel', async () => {
