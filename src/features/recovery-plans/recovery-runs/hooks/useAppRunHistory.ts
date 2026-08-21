@@ -1,5 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
+import type { Query } from '@tanstack/react-query'
+import { ACTIVE_RUN_INTERVAL_MS, RECOVERY_RUNS_INTERVAL_MS } from '@/shared/query/cachePolicy'
 import { fetchOrchestratorRuns } from '../api/recoveryRunsApi'
+import { isNonTerminalRunStatus } from '../helpers/runStatus'
 import { recoveryRunsKeys } from '../api/recoveryRunsQueryKeys'
 import type { OrchestratorRunsPage } from '../model/recoveryRunTypes'
 
@@ -11,6 +14,13 @@ interface UseAppRunHistoryOptions {
 }
 
 const EMPTY_PAGE: OrchestratorRunsPage = { runs: [], total: 0 }
+
+function shouldFastPollHistory(query: Pick<Query<OrchestratorRunsPage>, 'state'>, page: number): boolean {
+  if (page !== 1) return false
+
+  const newestRun = query.state.data?.runs[0]
+  return Boolean(newestRun && isNonTerminalRunStatus(newestRun.status))
+}
 
 // Full paginated run history for exactly one app — only fetched once a
 // drawer is actually opened for that app, never upfront for every app.
@@ -25,8 +35,8 @@ export function useAppRunHistory({ providerId, dagId, page, pageSize }: UseAppRu
       orderBy: '-logical_date',
     }),
     enabled,
-    refetchOnWindowFocus: false,
-    retry: 1,
+    staleTime: query => shouldFastPollHistory(query, page) ? ACTIVE_RUN_INTERVAL_MS : RECOVERY_RUNS_INTERVAL_MS,
+    refetchInterval: query => shouldFastPollHistory(query, page) ? ACTIVE_RUN_INTERVAL_MS : RECOVERY_RUNS_INTERVAL_MS,
   })
 
   return {

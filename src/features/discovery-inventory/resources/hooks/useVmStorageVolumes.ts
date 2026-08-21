@@ -11,6 +11,5 @@ export function useVdisksByVm(
     queryKey: discoveryInventoryKeys.vdisksByVm(vmName, providerId, ibmProviderId),
     queryFn: () => fetchVdisksByVm(vmName, providerId, ibmProviderId),
     enabled: !!vmName && !!providerId && !!ibmProviderId,
-    refetchOnWindowFocus: false,
   })
 }

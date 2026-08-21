@@ -237,7 +237,7 @@
   "recoveryRuns.drawer.eyebrow": "Run history",
   "recoveryRuns.drawer.label": "Run history detail",
   "recoveryRuns.drawer.close": "Close run history",
-  "recoveryRuns.drawer.note": "Fetched only now — the overview showed just this entity's latest run. This paginated history is one on-demand call for this entity alone.",
+  "recoveryRuns.drawer.note": "Loaded on demand for this entity. Page 1 refreshes every 15 seconds while its newest run is active; terminal runs and older pages refresh every 5 minutes.",
   "recoveryRuns.drawer.viewInAirflow": "View in Airflow",
 
   "metrics.discoveredVMs": "Discovered VMs",
@@ -1089,6 +1089,7 @@
   "credentials.validation.passwordMismatch": "Passwords do not match.",
   "credentials.errors.load": "Credentials could not be loaded.",
   "credentials.errors.create": "Credential could not be created securely.",
+  "credentials.errors.edit": "Credential could not be updated securely.",
   "credentials.delete.title": "Delete credential",
   "credentials.delete.message": "Delete credential “{name}”? Providers using it must be remapped first.",
   "credentials.detail.eyebrow": "Selected credential",

@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import { ResourcesPage } from './ResourcesPage'
 import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
 import type { DiscoveryInventory } from '../model/discoveryTypes'
@@ -286,7 +287,9 @@ describe('ResourcesPage', () => {
       throw new Error(`Unexpected request: ${url}`)
     })
     vi.stubGlobal('fetch', fetchMock)
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, retryDelay: 1 } } })
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false, retryDelay: 1 } },
+    })
     queryClient.setQueryData(discoveryInventoryKeys.inventory('vmware-01'), { reportedCount: 0, virtualMachines: [] })
 
     render(<QueryClientProvider client={queryClient}><ResourcesPage /></QueryClientProvider>)

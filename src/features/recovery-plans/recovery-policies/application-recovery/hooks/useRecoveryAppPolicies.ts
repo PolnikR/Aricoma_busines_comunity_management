@@ -6,7 +6,5 @@ export function useRecoveryAppPolicies() {
   return useQuery({
     queryKey: recoveryAppPolicyKeys.list(),
     queryFn: fetchRecoveryAppPolicies,
-    refetchOnWindowFocus: false,
-    retry: 1,
   })
 }

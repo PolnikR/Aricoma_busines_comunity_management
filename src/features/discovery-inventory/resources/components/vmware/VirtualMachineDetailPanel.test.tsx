@@ -11,7 +11,16 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 const useVdisksByVmMock = vi.hoisted(() => vi.fn<() => {
   data: VmStorageVolumes | undefined
   isLoading: boolean
-}>(() => ({ data: undefined, isLoading: false })))
+  isError: boolean
+  isFetching: boolean
+  refetch: () => Promise<unknown>
+}>(() => ({
+  data: undefined,
+  isLoading: false,
+  isError: false,
+  isFetching: false,
+  refetch: vi.fn().mockResolvedValue(undefined),
+})))
 vi.mock('../../hooks/useVmStorageVolumes', () => ({ useVdisksByVm: useVdisksByVmMock }))
 
 const vmwareProvider = {
@@ -87,7 +96,13 @@ describe('VirtualMachineDetailPanel resize', () => {
   afterEach(() => {
     cleanup()
     useVdisksByVmMock.mockReset()
-    useVdisksByVmMock.mockReturnValue({ data: undefined, isLoading: false })
+    useVdisksByVmMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      isFetching: false,
+      refetch: vi.fn().mockResolvedValue(undefined),
+    })
   })
 
   it('loads related volumes with the VM and selected FlashSystem provider', () => {
@@ -130,7 +145,13 @@ describe('VirtualMachineDetailPanel resize', () => {
 
   it('shows the shared table skeleton while snapshots are loading', async () => {
     const user = userEvent.setup()
-    useVdisksByVmMock.mockReturnValue({ data: undefined, isLoading: true })
+    useVdisksByVmMock.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      isFetching: true,
+      refetch: vi.fn().mockResolvedValue(undefined),
+    })
 
     renderWithQueryClient(
       <VirtualMachineDetailPanel
@@ -146,10 +167,66 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(screen.getByRole('status', { name: 'Loading snapshots...' })).toBeInTheDocument()
   })
 
+  it('shows the shared snapshot error state and retries the same request', async () => {
+    const user = userEvent.setup()
+    const refetch = vi.fn().mockResolvedValue(undefined)
+    useVdisksByVmMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      isFetching: false,
+      refetch,
+    })
+
+    renderWithQueryClient(
+      <VirtualMachineDetailPanel
+        virtualMachine={vm}
+        providers={[vmwareProvider, flashProvider]}
+        open
+        onClose={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('tab', { name: 'Snapshots' }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Resource inventory could not be loaded')
+    expect(screen.queryByLabelText('Snapshot mappings table')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(refetch).toHaveBeenCalledOnce()
+  })
+
+  it('shows retrying state without falling through to the empty snapshot table', async () => {
+    const user = userEvent.setup()
+    useVdisksByVmMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      isFetching: true,
+      refetch: vi.fn().mockResolvedValue(undefined),
+    })
+
+    renderWithQueryClient(
+      <VirtualMachineDetailPanel
+        virtualMachine={vm}
+        providers={[vmwareProvider, flashProvider]}
+        open
+        onClose={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('tab', { name: 'Snapshots' }))
+
+    expect(screen.getByRole('button', { name: 'Retrying' })).toBeDisabled()
+    expect(screen.queryByLabelText('Snapshot mappings table')).not.toBeInTheDocument()
+  })
+
   it('renders snapshot mappings in an accessible shared data table', async () => {
     const user = userEvent.setup()
     useVdisksByVmMock.mockReturnValue({
       isLoading: false,
+      isError: false,
+      isFetching: false,
+      refetch: vi.fn().mockResolvedValue(undefined),
       data: {
         vmName: 'app-server-01',
         countVm: 1,

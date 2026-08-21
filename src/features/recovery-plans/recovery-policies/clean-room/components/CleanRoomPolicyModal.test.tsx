@@ -54,4 +54,14 @@ describe('CleanRoomPolicyModal', () => {
     expect(screen.getByLabelText('Policy ID')).toBeDisabled()
     expect(screen.getByLabelText('Policy name')).toHaveValue(policy.name)
   })
+
+  it('shows backend detail in the shared submit alert', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ detail: 'Clean room policy already exists.' }), { status: 409, headers: { 'Content-Type': 'application/json' } })))
+    renderModal()
+    fireEvent.change(screen.getByLabelText('Policy ID'), { target: { value: policy.id } })
+    fireEvent.change(screen.getByLabelText('Policy name'), { target: { value: policy.name } })
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: policy.description } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create clean room policy' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Clean room policy already exists.')
+  })
 })

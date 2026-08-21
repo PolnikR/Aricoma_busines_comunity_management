@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
@@ -108,6 +109,10 @@ export function RecoveryAppBuilder({
     () => Object.fromEntries(availableGroups.map(group => [group.id, group.resources])),
     [availableGroups],
   )
+  const groupsErrorDescription = resolveUserFacingErrorMessage(groupsError, '')
+  const displayedGroupsError = groupsError ? new Error(groupsErrorDescription) : null
+  const policySetsErrorDescription = resolveUserFacingErrorMessage(policySetsQuery.error, '')
+  const platformProvidersErrorDescription = resolveUserFacingErrorMessage(platformProvidersQuery.error, '')
   const tierCanvasTiers = useMemo(
     () => Object.fromEntries(formState.tiers),
     [formState.tiers],
@@ -325,10 +330,10 @@ export function RecoveryAppBuilder({
                       dragDataKey="recovery-group-id"
                       isLoading={areGroupsLoading}
                       isRetrying={areGroupsFetching}
-                      error={groupsError}
+                      error={displayedGroupsError}
                       errorTitle={t('recovery.sidebar.groupsError')}
                       staleErrorTitle={t('recovery.sidebar.groupsError')}
-                      staleErrorDescription={t('recovery.sidebar.groupsError')}
+                      staleErrorDescription={groupsErrorDescription || t('recovery.sidebar.groupsError')}
                       retryLabel={t('buttons.retry')}
                       onRetry={() => { void refreshGroups() }}
                     />
@@ -360,6 +365,7 @@ export function RecoveryAppBuilder({
                   <div className="mt-5 max-w-4xl">
                     <FetchErrorAlert
                       title={t('policySets.loadFailed')}
+                      {...(policySetsErrorDescription ? { description: policySetsErrorDescription } : {})}
                       retryLabel={t('buttons.retry')}
                       onRetry={() => { void policySetsQuery.refetch() }}
                       variant="full"
@@ -414,6 +420,7 @@ export function RecoveryAppBuilder({
                   <div className="mt-5 max-w-4xl">
                     <FetchErrorAlert
                       title={t('platformProviders.loadFailed')}
+                      {...(platformProvidersErrorDescription ? { description: platformProvidersErrorDescription } : {})}
                       retryLabel={t('buttons.retry')}
                       onRetry={() => { void platformProvidersQuery.refetch() }}
                       variant="full"

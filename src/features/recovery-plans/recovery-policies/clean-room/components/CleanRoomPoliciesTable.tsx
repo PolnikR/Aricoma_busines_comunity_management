@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import {
@@ -87,6 +89,8 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
   const selected = rows.find(policy => policy.id === selectedId) ?? null
   const jsonViewed = rows.find(policy => policy.id === jsonViewId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'id', 'description'] })
+  const loadErrorDetail = extractBackendErrorDetail(error)
+  const deleteErrorDetail = extractBackendErrorDetail(deletePolicy.error)
 
   if (isLoading) {
     return <DataTableSkeleton columnCount={4} ariaLabel={t('cleanRoomPolicies.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
@@ -103,9 +107,13 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
         onDensityChange={table.setDensity}
       />
 
+      {deletePolicy.error ? <Alert className="mx-4 mt-4" title={t('cleanRoomPolicies.delete.title')} {...(deleteErrorDetail ? { description: deleteErrorDetail } : {})} variant="error" /> : null}
+
       <DataTableRequestState
+        hasData={rows.length > 0}
         error={error ? {
           title: t('cleanRoomPolicies.loadFailed'),
+          ...(loadErrorDetail ? { description: loadErrorDetail } : {}),
           retryLabel: t('buttons.retry'),
           isRetrying,
           onRetry,
@@ -177,6 +185,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
           if (!deleteTarget) return
           deletePolicy.mutate(deleteTarget.id, {
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
+            onError: () => { setDeleteTarget(null) },
           })
         }}
       />

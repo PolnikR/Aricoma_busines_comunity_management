@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { RecoveryGroupEditorPage } from './RecoveryGroupEditorPage'
+import { RecoveryGroupsError } from '../api/recoveryGroupsErrors'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 
 const navigate = vi.fn()
 const update = vi.fn()
@@ -22,6 +24,14 @@ const group: RecoveryGroup = {
   resourceCount: 1,
   status: 'Active',
 }
+const recoveryGroupsState = {
+  groups: [group],
+  update,
+  isLoading: false,
+  isUpdating: false,
+  error: null as unknown,
+  refresh: vi.fn(),
+}
 
 vi.mock('react-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router')>()
@@ -36,7 +46,7 @@ vi.mock('react-router', async (importOriginal) => {
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 vi.mock('../hooks/useRecoveryGroups', () => ({
-  useRecoveryGroups: () => ({ groups: [group], update }),
+  useRecoveryGroups: () => recoveryGroupsState,
 }))
 
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
@@ -89,6 +99,7 @@ vi.mock('../components/RecoveryGroupBuilder', () => ({
 describe('RecoveryGroupEditorPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    recoveryGroupsState.error = null
   })
 
   it('prefills the builder and updates the existing recovery group', async () => {
@@ -126,5 +137,40 @@ describe('RecoveryGroupEditorPage', () => {
       'noopener,noreferrer',
     )
     openWindow.mockRestore()
+  })
+
+  it('shows nested backend detail when updating a recovery group fails', async () => {
+    const user = userEvent.setup()
+    update.mockRejectedValue(new Error('Submit recovery group request failed', {
+      cause: new OrvalApiError(409, 'Conflict', { detail: 'The recovery group is locked by an active run.' }),
+    }))
+    render(<RecoveryGroupEditorPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Submit edit' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('The recovery group is locked by an active run.')
+  })
+
+  it('keeps the localized domain error mapping when updating a recovery group fails validation', async () => {
+    const user = userEvent.setup()
+    update.mockRejectedValue(new RecoveryGroupsError('duplicate_id', 'internal validation detail'))
+    render(<RecoveryGroupEditorPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Submit edit' }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('A recovery group with this ID already exists.')
+    expect(alert).not.toHaveTextContent('internal validation detail')
+  })
+
+  it('shows backend detail in the editor load retry state', () => {
+    recoveryGroupsState.error = new Error('Get recovery groups request failed', {
+      cause: new OrvalApiError(503, 'Unavailable', { detail: 'The recovery groups service is unavailable.' }),
+    })
+    render(<RecoveryGroupEditorPage />)
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Recovery groups could not be loaded')
+    expect(alert).toHaveTextContent('The recovery groups service is unavailable.')
   })
 })

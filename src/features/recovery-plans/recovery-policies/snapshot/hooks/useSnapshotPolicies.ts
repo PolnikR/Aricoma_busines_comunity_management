@@ -6,7 +6,5 @@ export function useSnapshotPolicies() {
   return useQuery({
     queryKey: snapshotPolicyKeys.list(),
     queryFn: fetchSnapshotPolicies,
-    refetchOnWindowFocus: false,
-    retry: 1,
   })
 }

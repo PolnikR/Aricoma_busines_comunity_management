@@ -2,6 +2,7 @@ import type { PropsWithChildren } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import { fetchFlashSystemInventory } from '@/features/discovery-inventory/resources/api/flashSystemInventoryApi'
 import { fetchPowerInventory } from '@/features/discovery-inventory/resources/api/powerInventoryApi'
 import { fetchVmwareInventory } from '@/features/discovery-inventory/resources/api/vmwareInventoryApi'
@@ -23,9 +24,13 @@ vi.mock('@/features/discovery-inventory/resources/api/vmwareInventoryApi', () =>
   fetchVmwareInventory: vi.fn(),
 }))
 
-function createWrapper(queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  })) {
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false } },
+  })
+}
+
+function createWrapper(queryClient = createQueryClient()) {
 
   return function Wrapper({ children }: PropsWithChildren) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -203,7 +208,7 @@ describe('useRecoveryGroupResourceInventory', () => {
     inventory,
     expectedNames,
   ) => {
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const queryClient = createQueryClient()
     queryClient.setQueryData(queryKey, inventory)
 
     const { result } = renderHook(

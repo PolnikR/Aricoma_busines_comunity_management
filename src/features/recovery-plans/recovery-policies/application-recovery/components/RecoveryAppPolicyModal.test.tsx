@@ -165,4 +165,15 @@ describe('RecoveryAppPolicyModal', () => {
     expect(screen.getByLabelText('Policy ID')).toBeDisabled()
     expect(screen.getByLabelText('Snapshot selection')).toHaveValue('latest')
   })
+
+  it('shows backend detail in the shared submit alert', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ detail: 'Recovery policy already exists.' }), { status: 409, headers: { 'Content-Type': 'application/json' } })))
+    renderModal()
+    fireEvent.change(screen.getByLabelText('Policy ID'), { target: { value: 'duplicate' } })
+    fireEvent.change(screen.getByLabelText('Policy name'), { target: { value: 'Duplicate' } })
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Duplicate.' } })
+    fireEvent.change(screen.getByLabelText('Level'), { target: { value: 'high' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Recovery policy already exists.')
+  })
 })

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
 import { useVmwareResourceInventory } from './useVmwareResourceInventory'
 
@@ -11,8 +12,10 @@ function createWrapper(queryClient: QueryClient) {
   }
 }
 
-function createQueryClient() {
-  return new QueryClient({ defaultOptions: { queries: { retry: false } } })
+function createQueryClient(retry: false | number = false) {
+  return new QueryClient({
+    defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry, retryDelay: 1 } },
+  })
 }
 
 function inventoryResponse(names: string[]) {
@@ -161,9 +164,7 @@ describe('useVmwareResourceInventory', () => {
   it('suppresses an errored name query while the next name prefix debounces', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 500 }))
     vi.stubGlobal('fetch', fetchMock)
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false, retryDelay: 1 } },
-    })
+    const queryClient = createQueryClient(1)
     const { result, rerender } = renderHook(
       ({ prefix }: { prefix: string }) => useVmwareResourceInventory('vcenter-01', prefix, '', true),
       { wrapper: createWrapper(queryClient), initialProps: { prefix: 'WEB' } },
@@ -187,9 +188,7 @@ describe('useVmwareResourceInventory', () => {
         : new Promise<Response>((resolve) => { void resolve })
     })
     vi.stubGlobal('fetch', fetchMock)
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false, retryDelay: 1 } },
-    })
+    const queryClient = createQueryClient(1)
     const { result, rerender } = renderHook(
       ({ prefix }: { prefix: string }) => useVmwareResourceInventory('vcenter-01', prefix, '', true),
       { wrapper: createWrapper(queryClient), initialProps: { prefix: 'WEB' } },
@@ -274,9 +273,7 @@ describe('useVmwareResourceInventory', () => {
   it('exposes real HTTP errors after one retry', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 500 }))
     vi.stubGlobal('fetch', fetchMock)
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false, retryDelay: 1 } },
-    })
+    const queryClient = createQueryClient(1)
     const { result } = renderHook(
       () => useVmwareResourceInventory('vcenter-01', '', '', true),
       { wrapper: createWrapper(queryClient) },

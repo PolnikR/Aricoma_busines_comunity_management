@@ -37,10 +37,14 @@ describe('RecoveryRunsPage', () => {
       error: null,
       refetch: vi.fn(),
     })
-    vi.mocked(useOrchestratedEntityRuns).mockReturnValue([
-      { entity: financeApp, latestRun: { runId: 'r1', status: 'success', startedAt: null, endedAt: null, durationSeconds: null }, isLoading: false },
-      { entity: billingGroup, latestRun: null, isLoading: false },
-    ])
+    vi.mocked(useOrchestratedEntityRuns).mockReturnValue({
+      rows: [
+        { entity: financeApp, latestRun: { runId: 'r1', status: 'success', startedAt: null, endedAt: null, durationSeconds: null }, isLoading: false },
+        { entity: billingGroup, latestRun: null, isLoading: false },
+      ],
+      isFetching: false,
+      refetch: vi.fn(),
+    })
     vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
 
     renderPage()
@@ -58,9 +62,11 @@ describe('RecoveryRunsPage', () => {
       error: null,
       refetch: vi.fn(),
     })
-    vi.mocked(useOrchestratedEntityRuns).mockImplementation(passedEntities => (
-      passedEntities.map(entity => ({ entity, latestRun: null, isLoading: false }))
-    ))
+    vi.mocked(useOrchestratedEntityRuns).mockImplementation(passedEntities => ({
+      rows: passedEntities.map(entity => ({ entity, latestRun: null, isLoading: false })),
+      isFetching: false,
+      refetch: vi.fn(),
+    }))
     vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
 
     renderPage(['/?tab=applications'])
@@ -77,9 +83,11 @@ describe('RecoveryRunsPage', () => {
       error: null,
       refetch: vi.fn(),
     })
-    vi.mocked(useOrchestratedEntityRuns).mockImplementation(passedEntities => (
-      passedEntities.map(entity => ({ entity, latestRun: null, isLoading: false }))
-    ))
+    vi.mocked(useOrchestratedEntityRuns).mockImplementation(passedEntities => ({
+      rows: passedEntities.map(entity => ({ entity, latestRun: null, isLoading: false })),
+      isFetching: false,
+      refetch: vi.fn(),
+    }))
     vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
 
     renderPage(['/?tab=groups'])
@@ -96,9 +104,11 @@ describe('RecoveryRunsPage', () => {
       error: null,
       refetch: vi.fn(),
     })
-    vi.mocked(useOrchestratedEntityRuns).mockImplementation(passedEntities => (
-      passedEntities.map(entity => ({ entity, latestRun: null, isLoading: false }))
-    ))
+    vi.mocked(useOrchestratedEntityRuns).mockImplementation(passedEntities => ({
+      rows: passedEntities.map(entity => ({ entity, latestRun: null, isLoading: false })),
+      isFetching: false,
+      refetch: vi.fn(),
+    }))
     vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
 
     renderPage(['/?tab=groups&entityId=billing_group'])
@@ -116,9 +126,11 @@ describe('RecoveryRunsPage', () => {
       error: null,
       refetch: vi.fn(),
     })
-    vi.mocked(useOrchestratedEntityRuns).mockImplementation(passedEntities => (
-      passedEntities.map(entity => ({ entity, latestRun: null, isLoading: false }))
-    ))
+    vi.mocked(useOrchestratedEntityRuns).mockImplementation(passedEntities => ({
+      rows: passedEntities.map(entity => ({ entity, latestRun: null, isLoading: false })),
+      isFetching: false,
+      refetch: vi.fn(),
+    }))
     vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
 
     renderPage()
@@ -126,5 +138,93 @@ describe('RecoveryRunsPage', () => {
     fireEvent.click(screen.getByText('Finance Recovery'))
 
     expect(useAppRunHistory).toHaveBeenLastCalledWith({ providerId: 'airflow-01', dagId: 'dag_260818094526_2918dccb', page: 1, pageSize: 10 })
+  })
+
+  it('refreshes entity collections and visible latest runs from the toolbar', () => {
+    const entityRefetch = vi.fn()
+    const latestRunsRefetch = vi.fn()
+    vi.mocked(useOrchestratedEntities).mockReturnValue({
+      entities,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: entityRefetch,
+    })
+    vi.mocked(useOrchestratedEntityRuns).mockReturnValue({
+      rows: entities.map(entity => ({ entity, latestRun: null, isLoading: false })),
+      isFetching: false,
+      refetch: latestRunsRefetch,
+    })
+    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
+
+    renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+
+    expect(entityRefetch).toHaveBeenCalledTimes(1)
+    expect(latestRunsRefetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows Updating while overview data is fetching and keeps existing rows visible', () => {
+    vi.mocked(useOrchestratedEntities).mockReturnValue({
+      entities,
+      isLoading: false,
+      isFetching: true,
+      error: null,
+      refetch: vi.fn(),
+    })
+    vi.mocked(useOrchestratedEntityRuns).mockReturnValue({
+      rows: entities.map(entity => ({ entity, latestRun: null, isLoading: false })),
+      isFetching: false,
+      refetch: vi.fn(),
+    })
+    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
+
+    renderPage()
+
+    expect(screen.getByText('Updating')).toBeInTheDocument()
+    expect(screen.getByText('Finance Recovery')).toBeInTheDocument()
+    expect(screen.getByText('Billing Group')).toBeInTheDocument()
+  })
+
+  it('shows Updating for latest-run fetching', () => {
+    vi.mocked(useOrchestratedEntities).mockReturnValue({
+      entities,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    })
+    vi.mocked(useOrchestratedEntityRuns).mockReturnValue({
+      rows: entities.map(entity => ({ entity, latestRun: null, isLoading: false })),
+      isFetching: true,
+      refetch: vi.fn(),
+    })
+    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: true, error: null })
+
+    renderPage(['/?entityId=finance_recovery'])
+
+    expect(screen.getByText('Updating')).toBeInTheDocument()
+    expect(screen.getAllByText('Finance Recovery').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('does not show page-level Updating for history-only fetching', () => {
+    vi.mocked(useOrchestratedEntities).mockReturnValue({
+      entities,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    })
+    vi.mocked(useOrchestratedEntityRuns).mockReturnValue({
+      rows: entities.map(entity => ({ entity, latestRun: null, isLoading: false })),
+      isFetching: false,
+      refetch: vi.fn(),
+    })
+    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: true, error: null })
+
+    renderPage(['/?entityId=finance_recovery'])
+
+    expect(screen.queryByText('Updating')).not.toBeInTheDocument()
   })
 })

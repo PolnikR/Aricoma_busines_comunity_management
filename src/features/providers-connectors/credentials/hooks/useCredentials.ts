@@ -11,8 +11,5 @@ export function useCredentials({ enabled = true }: UseCredentialsOptions = {}) {
     queryKey: credentialKeys.list(),
     queryFn: fetchCredentials,
     enabled,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    retry: 1,
   })
 }

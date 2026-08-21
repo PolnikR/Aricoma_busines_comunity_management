@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
+import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
 import { Alert } from '@/shared/components/alert/Alert'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
@@ -23,6 +24,7 @@ export function RecoveryApplicationBuilderPage() {
   const [orchestratorProviderUrl, setOrchestratorProviderUrl] = useState<string | undefined>(undefined)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
   const { data: platformProviders = [] } = usePlatformProviders()
+  const submitErrorDescription = resolveUserFacingErrorMessage(submitApplication.error, '')
 
   const handleSave = (appState: RecoveryApplicationFormState): void => {
     submitApplication.mutate({
@@ -68,9 +70,8 @@ export function RecoveryApplicationBuilderPage() {
           <Alert
             variant="error"
             className="mx-4 mt-4"
-            title={submitApplication.error instanceof Error
-              ? submitApplication.error.message
-              : t('pages.recovery.submitFailed')}
+            title={t('pages.recovery.submitFailed')}
+            {...(submitErrorDescription ? { description: submitErrorDescription } : {})}
           />
         ) : null}
         <RecoveryAppBuilder

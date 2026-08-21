@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import {
@@ -17,6 +18,7 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { PlugIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { useDeleteProvider } from '../hooks/useDeleteProvider'
 import { useTestProviderConnection } from '../hooks/useTestProviderConnection'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
@@ -143,6 +145,8 @@ export function ProvidersCatalogueTable({
   const [deleteTarget, setDeleteTarget] = useState<ProviderRecord | null>(null)
   const [isConnectionTestOpen, setIsConnectionTestOpen] = useState(false)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
+  const loadErrorDescription = extractBackendErrorDetail(error)
+  const deleteErrorDescription = extractBackendErrorDetail(deleteProvider.error)
 
   const rows = useMemo(() => providers, [providers])
   const selected = rows.find((provider) => provider.id === selectedId) ?? null
@@ -205,6 +209,14 @@ export function ProvidersCatalogueTable({
 
   return (
     <div className="flex flex-col">
+      {deleteProvider.error ? (
+        <Alert
+          variant="error"
+          className="mx-4 mt-4"
+          title={t('dialogs.deleteProvider')}
+          {...(deleteErrorDescription ? { description: deleteErrorDescription } : {})}
+        />
+      ) : null}
       <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
@@ -241,8 +253,10 @@ export function ProvidersCatalogueTable({
       />
 
       <DataTableRequestState
+        hasData={rows.length > 0}
         error={error ? {
           title: t('providers.loadFailed'),
+          ...(loadErrorDescription ? { description: loadErrorDescription } : {}),
           retryLabel: t('buttons.retry'),
           isRetrying,
           onRetry,
@@ -409,6 +423,7 @@ export function ProvidersCatalogueTable({
           if (!deleteTarget) return
           deleteProvider.mutate(deleteTarget.id, {
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
+            onError: () => { setDeleteTarget(null) },
           })
         }}
       />

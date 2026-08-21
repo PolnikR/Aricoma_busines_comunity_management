@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { useRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies'
 import { useCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies'
 import type { PolicySet } from '../model/policySetTypes'
@@ -203,6 +204,44 @@ describe('PolicySetModal', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Recovery application policies could not be loaded.')
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(refetch).toHaveBeenCalledOnce()
+  })
+
+  it('shows backend detail for dependent policy lookup failures', () => {
+    mockUseRecoveryAppPolicies.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: new OrvalApiError(503, 'Unavailable', { detail: 'Recovery policy service is unavailable.' }),
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useRecoveryAppPolicies>)
+    mockUseCleanRoomPolicies.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: new OrvalApiError(503, 'Unavailable', { detail: 'Clean room policy service is unavailable.' }),
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useCleanRoomPolicies>)
+
+    renderModal()
+
+    expect(screen.getByText('Recovery policy service is unavailable.')).toBeInTheDocument()
+    expect(screen.getByText('Clean room policy service is unavailable.')).toBeInTheDocument()
+  })
+
+  it('shows backend detail in the shared submit alert', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      detail: 'Policy set name is already used.',
+    }), { status: 409, headers: { 'Content-Type': 'application/json' } })))
+    renderModal()
+
+    fireEvent.change(screen.getByLabelText('Policy set ID'), { target: { value: 'duplicate-set' } })
+    fireEvent.change(screen.getByLabelText('Policy set name'), { target: { value: 'Duplicate set' } })
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Duplicate.' } })
+    fireEvent.click(screen.getByRole('radio', { name: 'Medium — 6h (medium-6h)' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Critical — Daily DR Test (critical-daily-latest)' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Enforce Clean Target (enforce-clean-target)' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy set' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to save policy set')
+    expect(screen.getByRole('alert')).toHaveTextContent('Policy set name is already used.')
   })
 
   it('keeps an unavailable recovery policy reference visible while editing', () => {

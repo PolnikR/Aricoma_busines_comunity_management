@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsTable } from './RecoveryGroupsTable'
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 
 const navigate = vi.fn()
 
@@ -102,6 +103,34 @@ function getDatabaseGroup(): RecoveryGroup {
 }
 
 describe('RecoveryGroupsTable', () => {
+  it('shows nested backend detail in the localized retry state', () => {
+    const error = new Error('Get recovery groups request failed', {
+      cause: new OrvalApiError(503, 'Unavailable', { detail: 'The inventory service is unavailable.' }),
+    })
+    renderTable(
+      <RecoveryGroupsTable groups={[]} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} error={error} />,
+    )
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Recovery groups could not be loaded')
+    expect(alert).toHaveTextContent('The inventory service is unavailable.')
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeEnabled()
+  })
+
+  it('keeps the localized retry state without a synthetic description when an API error has no detail', () => {
+    const error = new Error('Get recovery groups request failed', {
+      cause: new OrvalApiError(503, 'Unavailable', { error: 'upstream internals' }),
+    })
+    renderTable(
+      <RecoveryGroupsTable groups={[]} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} error={error} />,
+    )
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Recovery groups could not be loaded')
+    expect(alert).not.toHaveTextContent('upstream internals')
+    expect(alert).not.toHaveTextContent('API request failed')
+  })
+
   it('renders group columns and opens the group detail drawer', async () => {
     const user = userEvent.setup()
     renderTable(

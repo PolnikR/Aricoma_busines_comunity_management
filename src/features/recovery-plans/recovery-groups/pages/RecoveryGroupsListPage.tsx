@@ -6,6 +6,7 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { routes } from '@/app/routes'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { RecoveryGroupsTable } from '../components/RecoveryGroupsTable'
 import { useRecoveryGroups } from '../hooks/useRecoveryGroups'
 import { getRecoveryGroupsErrorKey } from '../utils/recoveryGroupsErrorMessage'
@@ -36,7 +37,11 @@ export function RecoveryGroupsListPage() {
 
       <div className="flex flex-1 flex-col gap-4 overflow-hidden p-3 lg:min-h-0">
         {mutationError ? (
-          <Alert variant="error" title={t(getRecoveryGroupsErrorKey(mutationError))} />
+          <Alert
+            variant="error"
+            title={t(getRecoveryGroupsErrorKey(mutationError))}
+            description={extractBackendErrorDetail(mutationError)}
+          />
         ) : null}
         {isLoading ? (
           <DataTableSkeleton

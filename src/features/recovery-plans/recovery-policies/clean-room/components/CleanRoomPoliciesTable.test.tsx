@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { CleanRoomPolicy } from '../model/cleanRoomPolicyTypes'
 import { CleanRoomPoliciesTable } from './CleanRoomPoliciesTable'
 
@@ -71,5 +72,10 @@ describe('CleanRoomPoliciesTable', () => {
 
     expect(screen.getByRole('searchbox')).toBeInTheDocument()
     expect(screen.getByRole('alert')).not.toHaveTextContent('private backend details')
+  })
+
+  it('shows supported backend detail in the load error', () => {
+    render(<CleanRoomPoliciesTable policies={[]} isLoading={false} error={new OrvalApiError(503, 'Unavailable', { detail: 'Clean room service unavailable.' })} isRetrying={false} onRetry={vi.fn()} />)
+    expect(screen.getByRole('alert')).toHaveTextContent('Clean room service unavailable.')
   })
 })

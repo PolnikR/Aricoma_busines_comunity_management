@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import {
@@ -135,6 +137,8 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
   const jsonViewed = rows.find(policy => policy.id === jsonViewId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'id', 'description', 'level', 'snapshotSelectionMode'] })
   const activeFilterCount = Number(Boolean(filters.level)) + Number(Boolean(filters.status)) + Number(Boolean(filters.selectionMode))
+  const loadErrorDetail = extractBackendErrorDetail(error)
+  const deleteErrorDetail = extractBackendErrorDetail(deletePolicy.error)
 
   if (isLoading) {
     return <DataTableSkeleton columnCount={7} ariaLabel={t('recoveryAppPolicies.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
@@ -185,7 +189,9 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
         )}
       />
 
-      <DataTableRequestState error={error ? { title: t('recoveryAppPolicies.loadFailed'), retryLabel: t('buttons.retry'), isRetrying, onRetry } : null}>
+      {deletePolicy.error ? <Alert className="mx-4 mt-4" title={t('recoveryAppPolicies.delete.title')} {...(deleteErrorDetail ? { description: deleteErrorDetail } : {})} variant="error" /> : null}
+
+      <DataTableRequestState hasData={rows.length > 0} error={error ? { title: t('recoveryAppPolicies.loadFailed'), ...(loadErrorDetail ? { description: loadErrorDetail } : {}), retryLabel: t('buttons.retry'), isRetrying, onRetry } : null}>
         <DataTable
           columns={getColumns(t, setJsonViewId)}
           rows={table.pageItems}
@@ -247,7 +253,7 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
         onCancel={() => { setDeleteTarget(null) }}
         onConfirm={() => {
           if (!deleteTarget) return
-          deletePolicy.mutate(deleteTarget.id, { onSuccess: () => { setDeleteTarget(null); setSelectedId(null) } })
+          deletePolicy.mutate(deleteTarget.id, { onSuccess: () => { setDeleteTarget(null); setSelectedId(null) }, onError: () => { setDeleteTarget(null) } })
         }}
       />
 

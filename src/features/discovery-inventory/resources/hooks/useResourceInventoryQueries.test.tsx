@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { fetchFlashSystemInventory } from '../api/flashSystemInventoryApi'
 import { fetchPowerInventory } from '../api/powerInventoryApi'
@@ -34,6 +35,12 @@ const targetFlashProvider: ProviderRecord = {
   role: 'target',
 }
 
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false } },
+  })
+}
+
 describe('useResourceInventoryQueries', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -49,7 +56,7 @@ describe('useResourceInventoryQueries', () => {
   })
 
   it('fetches all resources without provider_id and uses the all-provider cache key', async () => {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = createQueryClient()
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     )
@@ -71,7 +78,7 @@ describe('useResourceInventoryQueries', () => {
   })
 
   it('runs no inventory request until an active source and fetched providers are supplied', () => {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = createQueryClient()
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     )
@@ -86,7 +93,7 @@ describe('useResourceInventoryQueries', () => {
   })
 
   it('fetches a selected provider server-side and reuses both cache scopes', async () => {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = createQueryClient()
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     )
@@ -116,7 +123,7 @@ describe('useResourceInventoryQueries', () => {
 
   it('reports an aggregate request failure for all providers of the active source', async () => {
     vi.mocked(fetchFlashSystemInventory).mockRejectedValue(new Error('inventory unavailable'))
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = createQueryClient()
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     )
@@ -132,7 +139,7 @@ describe('useResourceInventoryQueries', () => {
 
   it('attributes a provider-scoped request failure only to the selected provider', async () => {
     vi.mocked(fetchFlashSystemInventory).mockRejectedValue(new Error('provider unavailable'))
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = createQueryClient()
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     )
@@ -150,7 +157,7 @@ describe('useResourceInventoryQueries', () => {
   })
 
   it('excludes target-role providers when filtering by type — no providers available when only target exists', () => {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = createQueryClient()
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     )
@@ -165,7 +172,7 @@ describe('useResourceInventoryQueries', () => {
 
   it('restricts to target providers when role is "target"; restricts to source providers when role is "source" or omitted', async () => {
     // With role='target', only targets are available
-    const clientTarget = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const clientTarget = createQueryClient()
     const wrapperTarget = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={clientTarget}>{children}</QueryClientProvider>
     )
@@ -180,7 +187,7 @@ describe('useResourceInventoryQueries', () => {
     vi.clearAllMocks()
 
     // With role='source' (explicit), only sources are available
-    const clientSource = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const clientSource = createQueryClient()
     const wrapperSource = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={clientSource}>{children}</QueryClientProvider>
     )
@@ -195,7 +202,7 @@ describe('useResourceInventoryQueries', () => {
     vi.clearAllMocks()
 
     // With role omitted (default), only sources are available
-    const clientDefault = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const clientDefault = createQueryClient()
     const wrapperDefault = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={clientDefault}>{children}</QueryClientProvider>
     )

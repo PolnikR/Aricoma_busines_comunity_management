@@ -360,9 +360,9 @@ describe('ProvidersCreateModal', () => {
     expect(onClose).toHaveBeenCalledOnce()
   })
 
-  it('shows error message on submit failure', async () => {
+  it('shows backend detail below the localized submit failure title', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(
-      new Response(JSON.stringify({ error: 'Invalid provider' }), { status: 400 }),
+      new Response(JSON.stringify({ detail: 'A provider with this ID already exists.' }), { status: 400 }),
     )
     vi.stubGlobal('fetch', mockFetch)
 
@@ -374,8 +374,31 @@ describe('ProvidersCreateModal', () => {
     fireEvent.click(screen.getByRole('button', { name: /Create Provider/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/Failed to create provider/i)).toBeInTheDocument()
+      const alert = screen.getByRole('alert')
+      expect(alert).toHaveTextContent('Failed to create provider')
+      expect(alert).toHaveTextContent('A provider with this ID already exists.')
     })
+
+    vi.unstubAllGlobals()
+  })
+
+  it('does not show a synthetic request detail when the backend detail is unsupported', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'Internal provider error' }), { status: 500 }),
+    )
+    vi.stubGlobal('fetch', mockFetch)
+
+    renderWithQueryClient(
+      <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[]} />,
+    )
+
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: /Create Provider/i }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Failed to create provider')
+    expect(alert).not.toHaveTextContent('Submit provider request failed with status 500')
+    expect(alert).not.toHaveTextContent('Internal provider error')
 
     vi.unstubAllGlobals()
   })

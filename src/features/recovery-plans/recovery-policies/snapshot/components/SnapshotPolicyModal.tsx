@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import { Spinner } from '@/shared/components/spinner/Spinner'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
@@ -47,7 +49,8 @@ export function SnapshotPolicyModal({ open, onClose, existingPolicies, policy }:
   const isEdit = Boolean(policy)
   const [formData, setFormData] = useState<SnapshotPolicyFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof SnapshotPolicyFormData, string>>>({})
-  const [errorMessage, setErrorMessage] = useState('')
+  const [submitError, setSubmitError] = useState<unknown>(null)
+  const submitErrorDetail = extractBackendErrorDetail(submitError)
   const initial = initialForm(policy)
   const isDirty = open && JSON.stringify(formData) !== JSON.stringify(initial)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
@@ -57,13 +60,13 @@ export function SnapshotPolicyModal({ open, onClose, existingPolicies, policy }:
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData(initialForm(policy))
     setErrors({})
-    setErrorMessage('')
+    setSubmitError(null)
   }, [open, policy])
 
   const close = () => {
     setFormData(EMPTY_FORM)
     setErrors({})
-    setErrorMessage('')
+    setSubmitError(null)
     onClose()
   }
 
@@ -81,7 +84,7 @@ export function SnapshotPolicyModal({ open, onClose, existingPolicies, policy }:
         return next
       })
     }
-    setErrorMessage('')
+    setSubmitError(null)
   }
 
   const validate = () => {
@@ -117,10 +120,7 @@ export function SnapshotPolicyModal({ open, onClose, existingPolicies, policy }:
     }
     submitPolicy.mutate(record, {
       onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
-      onError: (error: unknown) => {
-        const detail = error instanceof Error ? error.message : ''
-        setErrorMessage(detail ? `${t('snapshotPolicies.submitFailed')}: ${detail}` : t('snapshotPolicies.submitFailed'))
-      },
+      onError: (error: unknown) => { setSubmitError(error) },
     })
   }
 
@@ -141,7 +141,7 @@ export function SnapshotPolicyModal({ open, onClose, existingPolicies, policy }:
           </>
         )}
       >
-        {errorMessage ? <div className="mx-6 mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">{errorMessage}</div> : null}
+        {submitError ? <Alert className="mx-6 mt-4" title={t('snapshotPolicies.submitFailed')} {...(submitErrorDetail ? { description: submitErrorDetail } : {})} variant="error" /> : null}
         <p className="mx-6 mt-4 text-sm text-text-muted">{t('snapshotPolicies.modal.description')}</p>
         <SnapshotPolicyForm data={formData} errors={errors} isSubmitting={submitPolicy.isPending} idDisabled={isEdit} onChange={handleChange} onSubmit={handleSubmit} />
       </Modal>

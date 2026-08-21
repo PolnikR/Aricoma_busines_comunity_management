@@ -8,12 +8,14 @@ import { ListSkeleton } from '@/shared/components/list-skeleton/ListSkeleton'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { routes } from '@/app/routes'
+import { extractBackendErrorDetail, resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
 import { RecoveryGroupBuilder } from '../components/RecoveryGroupBuilder'
 import { RecoveryGroupOrchestratorSuccessModal } from '../components/RecoveryGroupOrchestratorSuccessModal'
 import { useRecoveryGroups } from '../hooks/useRecoveryGroups'
 import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
+import { RecoveryGroupsError } from '../api/recoveryGroupsErrors'
 import { getRecoveryGroupsErrorKey } from '../utils/recoveryGroupsErrorMessage'
 
 interface OrchestratorRunInfo {
@@ -32,6 +34,7 @@ export function RecoveryGroupBuilderPage() {
   const [error, setError] = useState<string | null>(null)
   const [orchestratorRun, setOrchestratorRun] = useState<OrchestratorRunInfo | null>(null)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
+  const loadErrorDescription = extractBackendErrorDetail(loadError)
 
   const navigateToGroups = () => { void navigate(routes.recoveryGroups) }
   const requestBack = () => { navigationGuard.requestNavigation(navigateToGroups) }
@@ -52,7 +55,9 @@ export function RecoveryGroupBuilderPage() {
         navigationGuard.runWithoutBlocking(navigateToGroups)
       }
     } catch (cause) {
-      setError(t(getRecoveryGroupsErrorKey(cause)))
+      setError(cause instanceof RecoveryGroupsError
+        ? t(getRecoveryGroupsErrorKey(cause))
+        : resolveUserFacingErrorMessage(cause, t(getRecoveryGroupsErrorKey(cause))))
     }
   }
 
@@ -76,6 +81,7 @@ export function RecoveryGroupBuilderPage() {
         <div className="p-4">
           <FetchErrorAlert
             title={t('pages.recoveryGroups.errors.load')}
+            {...(loadErrorDescription ? { description: loadErrorDescription } : {})}
             onRetry={() => { void refresh() }}
             retryLabel={t('buttons.retry')}
             variant="full"

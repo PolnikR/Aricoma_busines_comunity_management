@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { useCredentials } from '@/features/providers-connectors/credentials/hooks/useCredentials'
 import { useUpsertPlatformProvider } from '../hooks/useUpsertPlatformProvider'
 import { PlatformProvidersModal } from './PlatformProvidersModal'
@@ -120,5 +121,69 @@ describe('PlatformProvidersModal', () => {
       provider?: { vmPrefix?: string | null, vmTags?: string[] }
     } | undefined
     expect(submitted?.provider).toMatchObject({ vmPrefix: null, vmTags: ['saved-platform-tag'] })
+  })
+
+  it('shows the localized save failure title with supported backend detail', () => {
+    const mutate = vi.fn()
+    vi.mocked(useUpsertPlatformProvider).mockReturnValue({
+      isPending: false,
+      mutate,
+    } as unknown as ReturnType<typeof useUpsertPlatformProvider>)
+
+    render(
+      <PlatformProvidersModal
+        open
+        onClose={vi.fn()}
+        existingProviders={[]}
+        provider={editedProvider}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit platform provider' }))
+    const mutationOptions = mutate.mock.calls[0]?.[1] as { onError?: (error: unknown) => void } | undefined
+    if (!mutationOptions?.onError) throw new Error('Mutation error handler was not passed')
+
+    act(() => {
+      mutationOptions.onError?.(new Error('Save platform provider request failed with status 409', {
+        cause: new OrvalApiError(409, 'Conflict', { detail: 'Platform provider ID is already in use.' }),
+      }))
+    })
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Failed to save platform provider')
+    expect(alert).toHaveTextContent('Platform provider ID is already in use.')
+    expect(alert).not.toHaveTextContent('status 409')
+  })
+
+  it('does not add an unsupported API payload as a save failure description', () => {
+    const mutate = vi.fn()
+    vi.mocked(useUpsertPlatformProvider).mockReturnValue({
+      isPending: false,
+      mutate,
+    } as unknown as ReturnType<typeof useUpsertPlatformProvider>)
+
+    render(
+      <PlatformProvidersModal
+        open
+        onClose={vi.fn()}
+        existingProviders={[]}
+        provider={editedProvider}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit platform provider' }))
+    const mutationOptions = mutate.mock.calls[0]?.[1] as { onError?: (error: unknown) => void } | undefined
+    if (!mutationOptions?.onError) throw new Error('Mutation error handler was not passed')
+
+    act(() => {
+      mutationOptions.onError?.(new Error('Save platform provider request failed with status 500', {
+        cause: new OrvalApiError(500, 'Internal Server Error', { message: 'Unexpected platform provider failure.' }),
+      }))
+    })
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Failed to save platform provider')
+    expect(alert).not.toHaveTextContent('status 500')
+    expect(alert).not.toHaveTextContent('Unexpected platform provider failure.')
   })
 })

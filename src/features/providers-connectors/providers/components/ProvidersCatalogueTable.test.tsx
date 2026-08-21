@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvidersCatalogueTable } from './ProvidersCatalogueTable'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { ProviderRecord, ProviderRoleFilter } from '../model/providerTypes'
 import { useProviders } from '../hooks/useProviders'
 
@@ -152,6 +153,33 @@ describe('ProvidersCatalogueTable', () => {
     expect(alert).not.toHaveTextContent('provider service internals')
   })
 
+  it('shows nested backend detail below the localized provider load title', () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const error = new Error('Get providers request failed with status 503', {
+      cause: new OrvalApiError(503, 'Service Unavailable', { detail: 'The provider inventory is unavailable.' }),
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProvidersCatalogueTable
+          providers={[]}
+          allProviders={[]}
+          roleFilter="all"
+          onRoleFilterChange={vi.fn()}
+          isLoading={false}
+          error={error}
+          isRetrying={false}
+          onRetry={vi.fn()}
+        />
+      </QueryClientProvider>,
+    )
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Failed to load providers.')
+    expect(alert).toHaveTextContent('The provider inventory is unavailable.')
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+  })
+
   it('requests a role from the server only after filters are applied', async () => {
     renderTable()
     await screen.findByText('Production vCenter')
@@ -277,5 +305,31 @@ describe('ProvidersCatalogueTable', () => {
     })
     const fetchMock = vi.mocked(fetch)
     expect(fetchMock.mock.calls.some(([input]) => typeof input === 'string' && input.includes('delete_provider'))).toBe(true)
+  })
+
+  it('shows backend detail in a table-context alert when deletion fails', async () => {
+    vi.stubGlobal('fetch', vi.fn((input: string | URL) => {
+      const url = String(input)
+      if (url.includes('get_providers')) {
+        return Promise.resolve(new Response(JSON.stringify({ providers: [providerA, providerB, providerC] }), { status: 200 }))
+      }
+      if (url.includes('delete_provider')) {
+        return Promise.resolve(new Response(JSON.stringify({ detail: 'This provider is still referenced by a recovery group.' }), { status: 409 }))
+      }
+      return Promise.reject(new Error(`unexpected fetch: ${url}`))
+    }))
+
+    renderTable()
+    fireEvent.click(await screen.findByText('Production vCenter'))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    const dialog = screen.getByText(/Are you sure you want to delete/i).closest('[role="dialog"]')
+    expect(dialog).not.toBeNull()
+    fireEvent.click(within(dialog as HTMLElement).getByRole('button', { name: 'Delete' }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Delete provider')
+    expect(alert).toHaveTextContent('This provider is still referenced by a recovery group.')
+    expect(screen.queryByRole('dialog', { name: 'Delete provider' })).not.toBeInTheDocument()
   })
 })

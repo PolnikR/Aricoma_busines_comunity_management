@@ -1,6 +1,3 @@
-export const DISCOVERY_INVENTORY_STALE_TIME_MS = 15 * 60 * 1000
-export const DISCOVERY_INVENTORY_GC_TIME_MS = 60 * 60 * 1000
-
 export const discoveryInventoryKeys = {
   all: ['discovery-inventory'] as const,
   resourceInventory: (providerType: string, providerId?: string) => (
@@ -24,5 +21,8 @@ export const discoveryInventoryKeys = {
   ),
   vmsByName: (prefix?: string, providerId?: string) => (
     [...discoveryInventoryKeys.all, 'vms-by-name', prefix ?? null, providerId ?? null] as const
+  ),
+  rawVmsByName: (prefix?: string, providerId?: string) => (
+    [...discoveryInventoryKeys.all, 'raw-vms-by-name', prefix ?? null, providerId ?? null] as const
   ),
 }

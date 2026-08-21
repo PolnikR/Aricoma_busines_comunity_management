@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ProviderConnectionTestDialog } from './ProviderConnectionTestDialog'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { ProviderConnectionTestResult } from '../model/providerConnectionTestTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -66,6 +67,27 @@ describe('ProviderConnectionTestDialog', () => {
 
     expect(screen.getByText('timeout')).toBeInTheDocument()
     expect(screen.getByText('Connection timed out after 5s')).toBeInTheDocument()
+    expect(screen.getByText('Retry')).toBeInTheDocument()
+  })
+
+  it('shows resolved backend detail for a transport failure', () => {
+    render(
+      <ProviderConnectionTestDialog
+        open
+        providerName="Production vCenter"
+        providerId="vmware-vcenter-01"
+        isPending={false}
+        result={null}
+        error={new Error('Test provider connection request failed with status 502', {
+          cause: new OrvalApiError(502, 'Bad Gateway', { detail: 'vCenter is unreachable.' }),
+        })}
+        onClose={() => undefined}
+        onRetry={() => undefined}
+      />,
+    )
+
+    expect(screen.getByText('vCenter is unreachable.')).toBeInTheDocument()
+    expect(screen.queryByText('Connection test completed')).not.toBeInTheDocument()
     expect(screen.getByText('Retry')).toBeInTheDocument()
   })
 

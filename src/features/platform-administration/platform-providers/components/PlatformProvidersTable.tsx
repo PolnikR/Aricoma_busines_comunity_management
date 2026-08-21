@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { ExternalLinkIcon } from '@/shared/icons/Icons'
@@ -114,6 +116,8 @@ export function PlatformProvidersTable({
   const [editing, setEditing] = useState<PlatformProviderRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<PlatformProviderRecord | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
+  const loadErrorDescription = extractBackendErrorDetail(error)
+  const deleteErrorDescription = extractBackendErrorDetail(deleteProvider.error)
   const rows = useMemo(() => providers, [providers])
   const selected = rows.find(provider => provider.id === selectedId) ?? null
   const jsonViewed = rows.find(provider => provider.id === jsonViewId) ?? null
@@ -132,6 +136,14 @@ export function PlatformProvidersTable({
 
   return (
     <div className="flex flex-col">
+      {deleteProvider.error ? (
+        <Alert
+          className="mx-4 mt-4"
+          title={t('platformProviders.dialogs.delete')}
+          {...(deleteErrorDescription ? { description: deleteErrorDescription } : {})}
+          variant="error"
+        />
+      ) : null}
       <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
@@ -142,8 +154,10 @@ export function PlatformProvidersTable({
       />
 
       <DataTableRequestState
+        hasData={rows.length > 0}
         error={error ? {
           title: t('platformProviders.loadFailed'),
+          ...(loadErrorDescription ? { description: loadErrorDescription } : {}),
           retryLabel: t('buttons.retry'),
           isRetrying,
           onRetry,
@@ -249,6 +263,7 @@ export function PlatformProvidersTable({
           if (!deleteTarget) return
           deleteProvider.mutate(deleteTarget.id, {
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
+            onError: () => { setDeleteTarget(null) },
           })
         }}
       />

@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import { Spinner } from '@/shared/components/spinner/Spinner'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
@@ -53,7 +55,8 @@ export function PolicySetModal({ open, onClose, existingPolicySets, policySet }:
   const isEdit = Boolean(policySet)
   const [formData, setFormData] = useState<PolicySetFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof PolicySetFormData, string>>>({})
-  const [errorMessage, setErrorMessage] = useState('')
+  const [submitError, setSubmitError] = useState<unknown>(null)
+  const submitErrorDetail = extractBackendErrorDetail(submitError)
   const initial = initialForm(policySet)
   const isDirty = open && JSON.stringify(formData) !== JSON.stringify(initial)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
@@ -63,13 +66,13 @@ export function PolicySetModal({ open, onClose, existingPolicySets, policySet }:
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData(initialForm(policySet))
     setErrors({})
-    setErrorMessage('')
+    setSubmitError(null)
   }, [open, policySet])
 
   const close = () => {
     setFormData(EMPTY_FORM)
     setErrors({})
-    setErrorMessage('')
+    setSubmitError(null)
     onClose()
   }
 
@@ -87,7 +90,7 @@ export function PolicySetModal({ open, onClose, existingPolicySets, policySet }:
         return next
       })
     }
-    setErrorMessage('')
+    setSubmitError(null)
   }
 
   const validate = () => {
@@ -116,8 +119,7 @@ export function PolicySetModal({ open, onClose, existingPolicySets, policySet }:
     submitPolicySet.mutate(record, {
       onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
       onError: (error: unknown) => {
-        const detail = error instanceof Error ? error.message : ''
-        setErrorMessage(detail ? `${t('policySets.submitFailed')}: ${detail}` : t('policySets.submitFailed'))
+        setSubmitError(error)
       },
     })
   }
@@ -139,7 +141,14 @@ export function PolicySetModal({ open, onClose, existingPolicySets, policySet }:
           </>
         )}
       >
-        {errorMessage ? <div className="mx-6 mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">{errorMessage}</div> : null}
+        {submitError ? (
+          <Alert
+            className="mx-6 mt-4"
+            title={t('policySets.submitFailed')}
+            {...(submitErrorDetail ? { description: submitErrorDetail } : {})}
+            variant="error"
+          />
+        ) : null}
         <PolicySetForm
           data={formData}
           errors={errors}

@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
@@ -69,7 +71,8 @@ export function PlatformProvidersModal({
   const isEdit = Boolean(provider)
   const [formData, setFormData] = useState<PlatformProviderFormData>(EMPTY_PLATFORM_PROVIDER_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof PlatformProviderFormData, string>>>({})
-  const [errorMessage, setErrorMessage] = useState('')
+  const [submitError, setSubmitError] = useState<unknown>(null)
+  const submitErrorDescription = extractBackendErrorDetail(submitError)
   const initialForm = createInitialForm(provider)
   const isDirty = open && (
     formData.id !== initialForm.id
@@ -92,13 +95,13 @@ export function PlatformProvidersModal({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData(createInitialForm(provider))
     setErrors({})
-    setErrorMessage('')
+    setSubmitError(null)
   }, [open, provider])
 
   const close = () => {
     setFormData(EMPTY_PLATFORM_PROVIDER_FORM)
     setErrors({})
-    setErrorMessage('')
+    setSubmitError(null)
     onClose()
   }
 
@@ -116,12 +119,12 @@ export function PlatformProvidersModal({
         return next
       })
     }
-    setErrorMessage('')
+    setSubmitError(null)
   }
 
   const handleTagsChange = (vmTags: string[]) => {
     setFormData(prev => ({ ...prev, vmTags }))
-    setErrorMessage('')
+    setSubmitError(null)
   }
 
   const validate = (): boolean => {
@@ -171,8 +174,7 @@ export function PlatformProvidersModal({
       {
         onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
         onError: (error: unknown) => {
-          const detail = error instanceof Error ? error.message : ''
-          setErrorMessage(detail ? `${t('platformProviders.submitFailed')}: ${detail}` : t('platformProviders.submitFailed'))
+          setSubmitError(error)
         },
       },
     )
@@ -199,10 +201,13 @@ export function PlatformProvidersModal({
           </>
         )}
       >
-        {errorMessage ? (
-          <div className="mx-6 mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-            {errorMessage}
-          </div>
+        {submitError ? (
+          <Alert
+            className="mx-6 mt-4"
+            title={t('platformProviders.submitFailed')}
+            {...(submitErrorDescription ? { description: submitErrorDescription } : {})}
+            variant="error"
+          />
         ) : null}
 
         <PlatformProviderForm

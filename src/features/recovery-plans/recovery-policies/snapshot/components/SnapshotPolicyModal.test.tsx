@@ -106,4 +106,12 @@ describe('SnapshotPolicyModal', () => {
     expect(screen.getByLabelText('Policy name')).toHaveValue('Critical — 15 min')
     expect(screen.getByLabelText('Maximum snapshots')).toHaveValue(null)
   })
+
+  it('shows backend detail in the shared submit alert', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ detail: 'Snapshot policy already exists.' }), { status: 409, headers: { 'Content-Type': 'application/json' } })))
+    renderModal()
+    fillCreateForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Snapshot policy already exists.')
+  })
 })

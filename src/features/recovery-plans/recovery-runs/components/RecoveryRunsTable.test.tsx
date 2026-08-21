@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { RecoveryRunsTable } from './RecoveryRunsTable'
 import type { RecoveryRunRow } from './RecoveryRunsTable'
 
@@ -128,5 +129,14 @@ describe('RecoveryRunsTable', () => {
     )
 
     expect(screen.getByText('No orchestrated entities yet.')).toBeInTheDocument()
+  })
+
+  it('shows supported backend detail in the retryable load state', () => {
+    const error = new Error('Fetch runs request failed with status 503', {
+      cause: new OrvalApiError(503, 'Unavailable', { detail: 'Orchestrator is unavailable.' }),
+    })
+    render(<RecoveryRunsTable rows={[]} showEntityType={false} isLoading={false} error={error} isRetrying={false} onRetry={vi.fn()} onSelectEntity={vi.fn()} selectedEntityId={null} />)
+    expect(screen.getByRole('alert')).toHaveTextContent('Orchestrator is unavailable.')
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 })

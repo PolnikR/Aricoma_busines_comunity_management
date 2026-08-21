@@ -1,4 +1,5 @@
 import { API_ENDPOINTS } from '@/config/apiEndpoints'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 
 let cachedPublicKey: Promise<CryptoKey> | null = null
 
@@ -30,12 +31,25 @@ function pemToBuffer(pem: string): ArrayBuffer {
   }
 }
 
+async function readJsonErrorBody(response: Response): Promise<unknown> {
+  const mediaType = response.headers.get('content-type')?.split(';', 1)[0]?.trim().toLowerCase()
+  if (mediaType !== 'application/json' && !/^application\/[^/]+\+json$/.test(mediaType ?? '')) {
+    return undefined
+  }
+
+  try {
+    return await response.json() as unknown
+  } catch {
+    return undefined
+  }
+}
+
 async function fetchPublicKey(): Promise<CryptoKey> {
   const response = await fetch(API_ENDPOINTS.credentials.publicKey, {
     headers: { Accept: 'application/x-pem-file' },
   })
   if (!response.ok) {
-    throw new Error(`Credential public key request failed with status ${String(response.status)}`)
+    throw new OrvalApiError(response.status, response.statusText, await readJsonErrorBody(response))
   }
 
   return getSubtleCrypto().importKey(

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
+import { Alert } from '@/shared/components/alert/Alert'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { isProgrammaticIdAvailable, toProgrammaticId } from '@/shared/utils/programmaticId'
 import { useTags } from '@/features/discovery-inventory/resources/hooks/useVmwareTags'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { useUpsertProvider } from '../hooks/useUpsertProvider'
 import { useCredentials } from '../../credentials/hooks/useCredentials'
 import { ProviderCreateForm } from './ProviderCreateForm'
@@ -67,7 +69,8 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
   const tagsQuery = useTags(provider?.id ?? null, tagsEnabled)
   const [formData, setFormData] = useState<ProviderCreateFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof ProviderCreateFormData, string>>>({})
-  const [errorMessage, setErrorMessage] = useState('')
+  const [submitError, setSubmitError] = useState<unknown>(null)
+  const submitErrorDescription = extractBackendErrorDetail(submitError)
   const initialForm = createInitialForm(provider)
   const isDirty = open && (
     formData.id !== initialForm.id
@@ -93,13 +96,13 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData(createInitialForm(provider))
     setErrors({})
-    setErrorMessage('')
+    setSubmitError(null)
   }, [open, provider])
 
   const close = () => {
     setFormData(EMPTY_FORM)
     setErrors({})
-    setErrorMessage('')
+    setSubmitError(null)
     onClose()
   }
 
@@ -130,7 +133,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
         return newErrors
       })
     }
-    setErrorMessage('')
+    setSubmitError(null)
   }
 
   const handleIdBlur = () => {
@@ -140,7 +143,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
 
   const handleTagsChange = (vmTags: string[]) => {
     setFormData((prev) => ({ ...prev, vmTags }))
-    setErrorMessage('')
+    setSubmitError(null)
   }
 
   const validate = (): boolean => {
@@ -170,7 +173,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
   const handleSubmit = () => {
     if (!validate()) return
 
-    setErrorMessage('')
+    setSubmitError(null)
 
     const record: ProviderSubmitData = {
       id: isEdit ? formData.id.trim() : toProgrammaticId(formData.id),
@@ -195,8 +198,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
       {
         onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
         onError: (err: unknown) => {
-          const detail = err instanceof Error ? err.message : ''
-          setErrorMessage(detail ? `${t('providers.submitFailed')}: ${detail}` : t('providers.submitFailed'))
+          setSubmitError(err)
         },
       },
     )
@@ -234,10 +236,13 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
           </>
         )}
       >
-        {errorMessage ? (
-          <div className="mx-6 mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-            {errorMessage}
-          </div>
+        {submitError ? (
+          <Alert
+            variant="error"
+            className="mx-6 mt-4"
+            title={t('providers.submitFailed')}
+            {...(submitErrorDescription ? { description: submitErrorDescription } : {})}
+          />
         ) : null}
 
         <ProviderCreateForm

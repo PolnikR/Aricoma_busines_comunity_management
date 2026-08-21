@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { RecoveryApplicationBuilderPage } from './RecoveryApplicationBuilderPage'
 import type {
   RecoveryApplicationFormState,
@@ -9,6 +10,11 @@ import type {
 
 const navigate = vi.fn()
 const mutate = vi.fn()
+const submitMutation = {
+  mutate,
+  error: null as Error | null,
+  isPending: false,
+}
 
 vi.mock('react-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router')>()
@@ -22,11 +28,7 @@ vi.mock('react-router', async (importOriginal) => {
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 vi.mock('../hooks/useRecoveryApplications', () => ({
-  useSubmitRecoveryApplication: () => ({
-    mutate,
-    error: null,
-    isPending: false,
-  }),
+  useSubmitRecoveryApplication: () => submitMutation,
 }))
 
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
@@ -93,9 +95,22 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  submitMutation.error = null
 })
 
 describe('RecoveryApplicationBuilderPage', () => {
+  it('keeps the localized submit title and shows nested backend detail', () => {
+    submitMutation.error = new Error('Submit recovery application request failed with status 409', {
+      cause: new OrvalApiError(409, 'Conflict', { detail: 'An application with this ID already exists.' }),
+    })
+    render(<RecoveryApplicationBuilderPage />)
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Failed to submit recovery application.')
+    expect(alert).toHaveTextContent('An application with this ID already exists.')
+    expect(alert).not.toHaveTextContent('status 409')
+  })
+
   it('submits the selected platform provider ID', async () => {
     const user = userEvent.setup()
     render(<RecoveryApplicationBuilderPage />)

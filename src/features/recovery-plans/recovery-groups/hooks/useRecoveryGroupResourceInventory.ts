@@ -3,11 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchFlashSystemInventory } from '@/features/discovery-inventory/resources/api/flashSystemInventoryApi'
 import { fetchPowerInventory } from '@/features/discovery-inventory/resources/api/powerInventoryApi'
 import { fetchVmwareInventory } from '@/features/discovery-inventory/resources/api/vmwareInventoryApi'
-import {
-  DISCOVERY_INVENTORY_GC_TIME_MS,
-  DISCOVERY_INVENTORY_STALE_TIME_MS,
-  discoveryInventoryKeys,
-} from '@/features/discovery-inventory/resources/api/resourceInventoryQueryKeys'
+import { discoveryInventoryKeys } from '@/features/discovery-inventory/resources/api/resourceInventoryQueryKeys'
 import type {
   DiscoveredVirtualMachine,
   DiscoveryInventory,
@@ -125,9 +121,5 @@ export function useRecoveryGroupResourceInventory(
     },
     select: selectFn,
     enabled: enabled && definition !== null,
-    staleTime: DISCOVERY_INVENTORY_STALE_TIME_MS,
-    gcTime: DISCOVERY_INVENTORY_GC_TIME_MS,
-    refetchOnWindowFocus: false,
-    retry: 1,
   })
 }

@@ -3,6 +3,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { RecoveryApplicationsTable } from './RecoveryApplicationsTable'
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
@@ -74,6 +75,20 @@ const developmentApplication: RecoveryApplicationListItem = {
 }
 
 describe('RecoveryApplicationsTable', () => {
+  it('shows nested backend detail in the localized retry state', () => {
+    const error = new Error('Get recovery applications request failed with status 503', {
+      cause: new OrvalApiError(503, 'Unavailable', { detail: 'The recovery applications service is unavailable.' }),
+    })
+    renderTable(
+      <RecoveryApplicationsTable applications={[]} error={error} />,
+    )
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Recovery applications could not be loaded')
+    expect(alert).toHaveTextContent('The recovery applications service is unavailable.')
+    expect(screen.getByRole('button', { name: /Retry/ })).toBeEnabled()
+  })
+
   it('shows generated response contract diagnostics in the request error state', () => {
     renderTable(
       <RecoveryApplicationsTable

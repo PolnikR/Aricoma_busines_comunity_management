@@ -1,4 +1,5 @@
 import { ChecklistResultDialog, type CheckItem } from '@/shared/components/modal/ChecklistResultDialog'
+import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { useTranslation } from '@/hooks/useTranslation'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
 import { toProviderConnectionTestJson } from '../helpers/providerConnectionTestJson'
@@ -57,7 +58,9 @@ export function ProviderConnectionTestDialog({
       subtitle={providerId}
       badges={badges}
       statusBar={{
-        title: t('providers.connectionTest.success'),
+        title: error
+          ? resolveUserFacingErrorMessage(error, t('providers.connectionTest.failed'))
+          : t('providers.connectionTest.success'),
         status: statusBarStatus,
         passedCount: okCount,
         totalCount: result?.checks.length ?? 0,

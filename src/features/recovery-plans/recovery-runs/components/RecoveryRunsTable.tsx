@@ -1,4 +1,5 @@
 import { useTranslation } from '@/hooks/useTranslation'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Badge } from '@/shared/components/badge/Badge'
 import {
   DataTable,
@@ -95,6 +96,7 @@ export function RecoveryRunsTable({
 }: RecoveryRunsTableProps) {
   const { t } = useTranslation()
   const table = useTableState(rows, { searchFields: ['name', 'id'] })
+  const errorDetail = extractBackendErrorDetail(error)
 
   if (isLoading) {
     return <DataTableSkeleton columnCount={showEntityType ? 5 : 4} ariaLabel={t('recoveryRuns.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
@@ -111,8 +113,10 @@ export function RecoveryRunsTable({
 
       <div className="custom-scrollbar flex min-h-0 flex-1 flex-col lg:overflow-y-auto">
         <DataTableRequestState
+          hasData={rows.length > 0}
           error={error ? {
             title: t('recoveryRuns.loadFailed'),
+            ...(errorDetail ? { description: errorDetail } : {}),
             retryLabel: t('buttons.retry'),
             isRetrying,
             onRetry,

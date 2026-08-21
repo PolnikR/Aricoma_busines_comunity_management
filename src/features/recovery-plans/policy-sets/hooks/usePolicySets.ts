@@ -6,7 +6,5 @@ export function usePolicySets() {
   return useQuery({
     queryKey: policySetKeys.list(),
     queryFn: fetchPolicySets,
-    refetchOnWindowFocus: false,
-    retry: 1,
   })
 }
