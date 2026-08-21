@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { routes } from '@/app/routes'
+import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
@@ -132,6 +133,7 @@ export function RecoveryApplicationsTable({
   const [deleteTarget, setDeleteTarget] = useState<RecoveryApplicationListItem | null>(null)
   const [rollbackResult, setRollbackResult] = useState<{ appName: string; report: RollbackReport } | null>(null)
   const [detailTab, setDetailTab] = useState<'overview' | 'orchestration'>('overview')
+  const errorDescription = resolveUserFacingErrorMessage(error, '')
 
   const filterOptions = useMemo(() => ({
     environments: Array.from(new Set(
@@ -274,7 +276,7 @@ export function RecoveryApplicationsTable({
       <DataTableRequestState
         error={error ? {
           title: t('pages.recovery.error.title'),
-          description: error.message,
+          ...(errorDescription ? { description: errorDescription } : {}),
           retryLabel: t('pages.recovery.error.retryButton'),
           isRetrying,
           onRetry,

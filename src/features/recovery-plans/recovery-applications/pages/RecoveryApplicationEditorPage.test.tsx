@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { RecoveryApplicationEditorPage } from './RecoveryApplicationEditorPage'
 import type {
   RecoveryApplicationFormState,
@@ -15,6 +16,11 @@ const mutate = vi.fn<(
   options: { onSuccess: (response: SubmitDagResponse) => void },
 ) => void>()
 const refetch = vi.fn()
+const submitMutation = {
+  mutate,
+  error: null as Error | null,
+  isPending: false,
+}
 
 const application: RecoveryApplicationListItem = {
   id: 'finance_app.json',
@@ -66,11 +72,7 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 
 vi.mock('../hooks/useRecoveryApplications', () => ({
   useRecoveryApplications: () => recoveryQuery,
-  useSubmitRecoveryApplication: () => ({
-    mutate,
-    error: null,
-    isPending: false,
-  }),
+  useSubmitRecoveryApplication: () => submitMutation,
 }))
 
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
@@ -117,6 +119,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  submitMutation.error = null
   recoveryQuery = {
     data: [application],
     isLoading: false,
@@ -127,6 +130,18 @@ beforeEach(() => {
 })
 
 describe('RecoveryApplicationEditorPage', () => {
+  it('keeps the localized submit title and shows nested backend detail', () => {
+    submitMutation.error = new Error('Submit recovery application request failed with status 409', {
+      cause: new OrvalApiError(409, 'Conflict', { detail: 'The recovery application is locked by an active run.' }),
+    })
+    render(<RecoveryApplicationEditorPage />)
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Failed to submit recovery application.')
+    expect(alert).toHaveTextContent('The recovery application is locked by an active run.')
+    expect(alert).not.toHaveTextContent('status 409')
+  })
+
   it('prefills backend data and submits an unchanged filename', async () => {
     const user = userEvent.setup()
     render(<RecoveryApplicationEditorPage />)
@@ -226,10 +241,12 @@ describe('RecoveryApplicationEditorPage', () => {
     recoveryQuery = {
       ...recoveryQuery,
       isLoading: false,
-      error: new Error('Backend unavailable'),
+      error: new Error('Get recovery applications request failed with status 503', {
+        cause: new OrvalApiError(503, 'Unavailable', { detail: 'Recovery applications are unavailable.' }),
+      }),
     }
     rerender(<RecoveryApplicationEditorPage />)
-    expect(screen.getByRole('alert')).toHaveTextContent('Backend unavailable')
+    expect(screen.getByRole('alert')).toHaveTextContent('Recovery applications are unavailable.')
 
     recoveryQuery = { ...recoveryQuery, data: [], error: null }
     rerender(<RecoveryApplicationEditorPage />)

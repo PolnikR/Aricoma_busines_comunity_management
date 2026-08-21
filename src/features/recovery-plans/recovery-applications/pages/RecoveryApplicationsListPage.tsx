@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router'
+import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
@@ -16,7 +18,8 @@ export function RecoveryApplicationsListPage() {
   const navigate = useNavigate()
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
   const { data: providers = [] } = useProviders()
-  const { mutateAsync: deleteApplication, isPending: isDeleting } = useDeleteRecoveryApplication()
+  const { mutateAsync: deleteApplication, isPending: isDeleting, error: deleteError } = useDeleteRecoveryApplication()
+  const deleteErrorDescription = resolveUserFacingErrorMessage(deleteError, '')
 
   const handleEdit = (id: string): void => {
     const routeId = toRecoveryApplicationFileName(id)
@@ -67,6 +70,13 @@ export function RecoveryApplicationsListPage() {
       />
 
       <div className="flex-1 flex flex-col gap-4 lg:min-h-0 overflow-hidden p-3">
+        {deleteError ? (
+          <Alert
+            variant="error"
+            title={t('dialogs.deleteRecoveryApplication')}
+            {...(deleteErrorDescription ? { description: deleteErrorDescription } : {})}
+          />
+        ) : null}
         {!error && (!applications || applications.length === 0) ? (
           <EmptyState
             title={t('pages.recovery.empty.title')}

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { RecoveryAppBuilder } from './RecoveryAppBuilder'
 import type { DraftRecoveryTier } from '../model/recoveryApplicationTypes'
 
@@ -234,14 +235,47 @@ describe('RecoveryAppBuilder', () => {
     })
   })
 
-  it('retries a recovery-group load error in its own step', async () => {
+  it('shows backend detail while retrying a recovery-group lookup in its own step', async () => {
     const user = userEvent.setup()
-    recoveryGroupsQuery.current.error = new Error('Groups unavailable')
+    recoveryGroupsQuery.current.error = new Error('Get recovery groups request failed with status 503', {
+      cause: new OrvalApiError(503, 'Unavailable', { detail: 'Recovery groups are unavailable.' }),
+    })
     render(<RecoveryAppBuilder />)
     await openTiers()
-    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('Recovery groups are unavailable.')
     await user.click(screen.getByRole('button', { name: 'Retry' }))
     expect(recoveryGroupsQuery.current.refresh).toHaveBeenCalledOnce()
+  })
+
+  it('shows backend detail while retrying a policy-set lookup', async () => {
+    const user = userEvent.setup()
+    policySetsQuery.current.error = new Error('Get policy sets request failed with status 503', {
+      cause: new OrvalApiError(503, 'Unavailable', { detail: 'Policy sets are unavailable.' }),
+    })
+    render(<RecoveryAppBuilder />)
+
+    await openPolicy()
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Policy sets are unavailable.')
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(policySetsQuery.current.refetch).toHaveBeenCalledOnce()
+  })
+
+  it('shows backend detail while retrying an orchestration-provider lookup', async () => {
+    const user = userEvent.setup()
+    platformProvidersQuery.current.error = new Error('Get platform providers request failed with status 503', {
+      cause: new OrvalApiError(503, 'Unavailable', { detail: 'Orchestration providers are unavailable.' }),
+    })
+    render(<RecoveryAppBuilder />)
+
+    await openPolicy()
+    await user.click(screen.getByRole('button', { name: /Critical - Daily DR Test/ }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(screen.getByRole('switch', { name: 'Push to orchestrator' }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Orchestration providers are unavailable.')
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(platformProvidersQuery.current.refetch).toHaveBeenCalledOnce()
   })
 
   it('reports metadata and tier changes as dirty', async () => {

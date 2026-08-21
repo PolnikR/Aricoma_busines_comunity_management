@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
+import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
 import { Alert } from '@/shared/components/alert/Alert'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
@@ -33,6 +34,8 @@ export function RecoveryApplicationEditorPage() {
   const [orchestratorProviderUrl, setOrchestratorProviderUrl] = useState<string | undefined>(undefined)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
   const { data: platformProviders = [] } = usePlatformProviders()
+  const loadErrorDescription = resolveUserFacingErrorMessage(error, t('pages.recoveryEditor.requestFailed'))
+  const submitErrorDescription = resolveUserFacingErrorMessage(submitApplication.error, '')
   const application = applications?.find(
     (item) => toRecoveryApplicationFileName(item.id) === id,
   )
@@ -90,7 +93,7 @@ export function RecoveryApplicationEditorPage() {
         <div className="p-6">
           <FetchErrorAlert
             title={t('pages.recoveryEditor.error.failed')}
-            description={error instanceof Error ? error.message : t('pages.recoveryEditor.requestFailed')}
+            description={loadErrorDescription}
             retryLabel={t('pages.providers.detail.retry')}
             isRetrying={isFetching}
             variant="full"
@@ -127,9 +130,8 @@ export function RecoveryApplicationEditorPage() {
           <Alert
             variant="error"
             className="mx-4 mt-4"
-            title={submitApplication.error instanceof Error
-              ? submitApplication.error.message
-              : t('pages.recovery.submitFailed')}
+            title={t('pages.recovery.submitFailed')}
+            {...(submitErrorDescription ? { description: submitErrorDescription } : {})}
           />
         ) : null}
         <RecoveryAppBuilder
