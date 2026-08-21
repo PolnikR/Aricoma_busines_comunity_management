@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { EXTERNAL_SERVICES } from '@/config/externalServices'
@@ -79,13 +79,8 @@ describe('PlatformProvidersTable', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 
-  it('shows delete backend detail in the table context', () => {
-    deleteMutation.error = new Error('Delete platform provider request failed with status 409', {
-      cause: new OrvalApiError(409, 'Conflict', {
-        detail: 'The platform provider is referenced by a recovery policy.',
-      }),
-    })
-
+  it('closes failed delete confirmation and shows backend detail in the table context', async () => {
+    const user = userEvent.setup()
     render(
       <PlatformProvidersTable
         providers={[baseProvider]}
@@ -96,6 +91,25 @@ describe('PlatformProvidersTable', () => {
       />,
     )
 
+    await user.click(screen.getByText('Primary Airflow'))
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+
+    const confirmation = screen.getByRole('dialog', { name: 'Delete platform provider' })
+    await user.click(within(confirmation).getByRole('button', { name: 'Delete' }))
+
+    const mutationOptions = deleteMutation.mutate.mock.calls[0]?.[1] as { onError?: () => void } | undefined
+    if (!mutationOptions?.onError) throw new Error('Delete mutation error handler was not passed')
+
+    deleteMutation.error = new Error('Delete platform provider request failed with status 409', {
+      cause: new OrvalApiError(409, 'Conflict', {
+        detail: 'The platform provider is referenced by a recovery policy.',
+      }),
+    })
+    act(() => {
+      mutationOptions.onError?.()
+    })
+
+    expect(screen.queryByRole('dialog', { name: 'Delete platform provider' })).not.toBeInTheDocument()
     const alert = screen.getByRole('alert')
     expect(alert).toHaveTextContent('Delete platform provider')
     expect(alert).toHaveTextContent('The platform provider is referenced by a recovery policy.')

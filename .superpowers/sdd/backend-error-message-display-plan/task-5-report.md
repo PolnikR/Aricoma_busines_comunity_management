@@ -53,3 +53,23 @@ The complete test suite and production build were not run; the brief required fo
 - Scoped changes only to Platform Providers and the required report; Resources, Resources ISE, generated clients, and unrelated layouts were not changed.
 - Preserved modal placement and create/edit/delete success behavior, plus existing layout, provider-type, and single-tag test coverage.
 - Assertions cover localized fallback titles, supported backend details, suppression of unsupported API payloads/status text, list Retry, and delete table context.
+
+## Fix round 1
+
+Replaced the pre-seeded delete-error test with the real table interaction: open the provider drawer, choose Delete, confirm deletion, capture and invoke the specific mutation double's `onError`, then assert that the confirmation dialog is closed and the table-context Alert contains the localized title and supported backend detail. This regression fails if the mutation error callback is absent or stops closing the confirmation dialog. Production code already satisfied that behavior, so it was not changed.
+
+Verification:
+
+```powershell
+& 'C:\Users\polnikr\nodejs\npm.cmd' exec vitest run src/features/platform-administration/platform-providers/components/PlatformProvidersTable.test.tsx
+# PASS: 1 file, 6 tests
+
+& 'C:\Users\polnikr\nodejs\npm.cmd' exec eslint src/features/platform-administration/platform-providers/components/PlatformProvidersTable.test.tsx
+# PASS
+
+& 'C:\Users\polnikr\nodejs\npm.cmd' run typecheck
+# PASS: tsc -b
+
+git diff --check
+# PASS
+```
