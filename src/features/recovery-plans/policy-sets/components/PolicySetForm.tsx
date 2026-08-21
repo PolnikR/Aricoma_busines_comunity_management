@@ -1,4 +1,5 @@
 import type { ChangeEvent, KeyboardEvent } from 'react'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Input, RadioField, Textarea } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -51,6 +52,8 @@ export function PolicySetForm({
   onSubmit,
 }: PolicySetFormProps) {
   const { t } = useTranslation()
+  const recoveryAppPoliciesErrorDetail = extractBackendErrorDetail(recoveryAppPoliciesError)
+  const cleanRoomPoliciesErrorDetail = extractBackendErrorDetail(cleanRoomPoliciesError)
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' && !isSubmitting) {
       event.preventDefault()
@@ -115,6 +118,7 @@ export function PolicySetForm({
         ) : recoveryAppPoliciesError ? (
           <div className="space-y-2" role="alert">
             <p className="text-xs text-red-600">{t('policySets.form.recoveryAppPoliciesLoadFailed')}</p>
+            {recoveryAppPoliciesErrorDetail ? <p className="text-xs text-red-600">{recoveryAppPoliciesErrorDetail}</p> : null}
             <Button type="button" size="xs" variant="outline" onClick={onRetryRecoveryAppPolicies} disabled={isSubmitting}>
               {t('buttons.retry')}
             </Button>
@@ -152,6 +156,7 @@ export function PolicySetForm({
         ) : cleanRoomPoliciesError ? (
           <div className="space-y-2" role="alert">
             <p className="text-xs text-red-600">{t('policySets.form.cleanRoomPoliciesLoadFailed')}</p>
+            {cleanRoomPoliciesErrorDetail ? <p className="text-xs text-red-600">{cleanRoomPoliciesErrorDetail}</p> : null}
             <Button type="button" size="xs" variant="outline" onClick={onRetryCleanRoomPolicies} disabled={isSubmitting}>
               {t('buttons.retry')}
             </Button>

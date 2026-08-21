@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import {
   DataTable,
@@ -97,6 +99,8 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
   const policyName = (policyId: string) => availablePolicies.find(policy => policy.id === policyId)?.name ?? policyId
   const recoveryAppPolicyName = (policyId: string) => availableRecoveryAppPolicies.find(policy => policy.id === policyId)?.name ?? policyId
   const cleanRoomPolicyName = (policyId: string) => availableCleanRoomPolicies.find(policy => policy.id === policyId)?.name ?? policyId
+  const deleteErrorDetail = extractBackendErrorDetail(deletePolicySet.error)
+  const loadErrorDetail = extractBackendErrorDetail(error)
 
   if (isLoading) {
     return <DataTableSkeleton columnCount={4} ariaLabel={t('policySets.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
@@ -113,10 +117,20 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         onDensityChange={table.setDensity}
       />
 
+      {deletePolicySet.error ? (
+        <Alert
+          className="mx-4 mt-4"
+          title={t('policySets.delete.title')}
+          {...(deleteErrorDetail ? { description: deleteErrorDetail } : {})}
+          variant="error"
+        />
+      ) : null}
+
       <div className="custom-scrollbar flex min-h-0 flex-1 flex-col lg:overflow-y-auto">
         <DataTableRequestState
           error={error ? {
             title: t('policySets.loadFailed'),
+            ...(loadErrorDetail ? { description: loadErrorDetail } : {}),
             retryLabel: t('buttons.retry'),
             isRetrying,
             onRetry,
@@ -190,6 +204,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
           if (!deleteTarget) return
           deletePolicySet.mutate(deleteTarget.id, {
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
+            onError: () => { setDeleteTarget(null) },
           })
         }}
       />

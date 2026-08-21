@@ -1,13 +1,15 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { PolicySet } from '../model/policySetTypes'
 import { PolicySetsTable } from './PolicySetsTable'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../hooks/useDeletePolicySet', () => ({
-  useDeletePolicySet: () => ({ mutate: vi.fn(), isPending: false }),
+const { deleteMutation } = vi.hoisted(() => ({
+  deleteMutation: { mutate: vi.fn(), isPending: false, error: null as Error | null },
 }))
+vi.mock('../hooks/useDeletePolicySet', () => ({ useDeletePolicySet: () => deleteMutation }))
 vi.mock('@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies', () => ({
   useSnapshotPolicies: () => ({
     data: [{ id: 'medium-6h', name: 'Medium — 6h' }],
@@ -137,5 +139,59 @@ describe('PolicySetsTable', () => {
     expect(screen.getByRole('searchbox')).toBeInTheDocument()
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByRole('alert')).not.toHaveTextContent('private backend details')
+  })
+
+  it('shows supported backend detail in the retryable load state', () => {
+    const apiError = new OrvalApiError(503, 'Unavailable', { detail: 'Policy service is unavailable.' })
+
+    render(
+      <PolicySetsTable
+        policySets={[]}
+        isLoading={false}
+        error={new Error('Policy set request failed with status 503', { cause: apiError })}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Policy service is unavailable.')
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+  })
+
+  it('closes the confirmation and shows backend detail when delete fails', async () => {
+    const user = userEvent.setup()
+    deleteMutation.error = null
+    deleteMutation.mutate.mockImplementation((_id: string, options: { onError?: (error: Error) => void }) => {
+      const apiError = new OrvalApiError(409, 'Conflict', { detail: 'Policy set is still in use.' })
+      const error = new Error('Delete policy set request failed with status 409', { cause: apiError })
+      deleteMutation.error = error
+      options.onError?.(error)
+    })
+
+    const view = render(
+      <PolicySetsTable
+        policySets={[policySet]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByText('Tier 2 applications'))
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    await user.click(within(screen.getByRole('dialog', { name: 'Delete policy set' })).getByRole('button', { name: 'Delete' }))
+    view.rerender(
+      <PolicySetsTable
+        policySets={[policySet]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await waitFor(() => { expect(screen.queryByRole('dialog', { name: 'Delete policy set' })).not.toBeInTheDocument() })
+    expect(screen.getByRole('alert')).toHaveTextContent('Policy set is still in use.')
   })
 })
