@@ -107,6 +107,7 @@ describe('credentialsCrypto', () => {
   it.each([
     ['an HTML response', '<html>proxy failure</html>', 'text/html'],
     ['a plain-text response', 'upstream timeout', 'text/plain'],
+    ['a JSON-looking unsupported media type', JSON.stringify({ detail: 'Proxy diagnostics must stay private.' }), 'application/not-json'],
     ['invalid JSON', '{not valid json}', 'application/json'],
     ['unsupported JSON', JSON.stringify({ error: 'internal details' }), 'application/json'],
   ])('uses the localized fallback for %s', async (_caseName, body, contentType) => {

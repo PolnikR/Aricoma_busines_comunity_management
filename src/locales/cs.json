@@ -1052,6 +1052,7 @@
   "credentials.validation.passwordMismatch": "Hesla se neshodují.",
   "credentials.errors.load": "Přihlašovací údaje se nepodařilo načíst.",
   "credentials.errors.create": "Přihlašovací údaje se nepodařilo bezpečně vytvořit.",
+  "credentials.errors.edit": "Přihlašovací údaje se nepodařilo bezpečně aktualizovat.",
   "credentials.delete.title": "Odstranit přihlašovací údaje",
   "credentials.delete.message": "Odstranit přihlašovací údaje „{name}“? Poskytovatele je nutné nejprve odpojit.",
   "credentials.detail.eyebrow": "Vybrané přihlašovací údaje",

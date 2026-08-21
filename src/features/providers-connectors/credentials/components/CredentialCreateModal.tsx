@@ -159,7 +159,7 @@ export function CredentialCreateModal({
         {submitError ? (
           <Alert
             className="mx-6 mt-4"
-            title={t('credentials.errors.create')}
+            title={t(isEdit ? 'credentials.errors.edit' : 'credentials.errors.create')}
             {...(submitErrorDescription ? { description: submitErrorDescription } : {})}
             variant="error"
           />

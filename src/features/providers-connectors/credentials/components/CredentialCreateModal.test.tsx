@@ -167,6 +167,44 @@ describe('CredentialCreateModal', () => {
     expect(screen.getByRole('alert')).not.toHaveTextContent('status 422')
   })
 
+  it('uses the localized edit failure title with supported backend detail', async () => {
+    const user = userEvent.setup()
+    render(
+      <CredentialCreateModal
+        open
+        credential={{
+          id: 'vcenter-admin',
+          name: 'vCenter admin',
+          description: 'Production account',
+          username: 'administrator',
+        }}
+        existingCredentials={[]}
+        onClose={vi.fn()}
+      />,
+    )
+
+    const password = document.querySelector<HTMLInputElement>('#credential-password')
+    const confirmation = document.querySelector<HTMLInputElement>('#credential-confirmPassword')
+    if (!password || !confirmation) throw new Error('Password inputs were not rendered')
+    await user.type(password, 'secret')
+    await user.type(confirmation, 'secret')
+    await user.click(screen.getByRole('button', { name: 'Save credential' }))
+
+    await waitFor(() => { expect(mutate).toHaveBeenCalledOnce() })
+    const mutationOptions = mutate.mock.calls[0]?.[1] as { onError?: (error: unknown) => void } | undefined
+    if (!mutationOptions?.onError) throw new Error('Mutation error handler was not passed')
+
+    act(() => {
+      mutationOptions.onError?.(new Error('Submit credential request failed with status 409', {
+        cause: new OrvalApiError(409, 'Conflict', { detail: 'Credential is still referenced by a provider.' }),
+      }))
+    })
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Credential could not be updated securely.')
+    expect(screen.getByRole('alert')).toHaveTextContent('Credential is still referenced by a provider.')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Credential could not be created securely.')
+  })
+
   it('prefills metadata, locks the id and requires a new password when editing', async () => {
     const user = userEvent.setup()
     render(

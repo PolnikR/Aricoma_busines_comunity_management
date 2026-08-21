@@ -32,8 +32,10 @@ function pemToBuffer(pem: string): ArrayBuffer {
 }
 
 async function readJsonErrorBody(response: Response): Promise<unknown> {
-  const contentType = response.headers.get('content-type')?.toLowerCase() ?? ''
-  if (!contentType.includes('json')) return undefined
+  const mediaType = response.headers.get('content-type')?.split(';', 1)[0]?.trim().toLowerCase()
+  if (mediaType !== 'application/json' && !/^application\/[^/]+\+json$/.test(mediaType ?? '')) {
+    return undefined
+  }
 
   try {
     return await response.json() as unknown
