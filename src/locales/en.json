@@ -237,7 +237,7 @@
   "recoveryRuns.drawer.eyebrow": "Run history",
   "recoveryRuns.drawer.label": "Run history detail",
   "recoveryRuns.drawer.close": "Close run history",
-  "recoveryRuns.drawer.note": "Fetched only now — the overview showed just this entity's latest run. This paginated history is one on-demand call for this entity alone.",
+  "recoveryRuns.drawer.note": "Loaded on demand for this entity. Page 1 refreshes every 15 seconds while its newest run is active; terminal runs and older pages refresh every 5 minutes.",
   "recoveryRuns.drawer.viewInAirflow": "View in Airflow",
 
   "metrics.discoveredVMs": "Discovered VMs",

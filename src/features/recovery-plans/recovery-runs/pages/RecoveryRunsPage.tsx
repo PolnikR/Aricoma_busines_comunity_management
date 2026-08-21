@@ -27,17 +27,21 @@ export function RecoveryRunsPage() {
     entityId ? tabFilteredEntities.filter(entity => entity.id === entityId) : tabFilteredEntities
   ), [tabFilteredEntities, entityId])
 
-  const latestRuns = useOrchestratedEntityRuns(visibleEntities)
+  const {
+    rows: latestRunRows,
+    isFetching: latestRunsFetching,
+    refetch: refetchLatestRuns,
+  } = useOrchestratedEntityRuns(visibleEntities)
 
   const rows = useMemo<RecoveryRunRow[]>(
-    () => latestRuns.map(({ entity, latestRun }) => ({
+    () => latestRunRows.map(({ entity, latestRun }) => ({
       id: entity.id,
       name: entity.name,
       entityType: entity.entityType,
       dagId: entity.dagId,
       latestRun,
     })),
-    [latestRuns],
+    [latestRunRows],
   )
 
   const selectedEntity: OrchestratedEntity | null = entities.find(entity => entity.id === entityId) ?? null
@@ -54,6 +58,11 @@ export function RecoveryRunsPage() {
         eyebrow={t('nav.recovery')}
         title={t('pages.recoveryRuns.title')}
         description={t('pages.recoveryRuns.description')}
+        isFetching={isFetching || latestRunsFetching}
+        onRefresh={() => {
+          refetch()
+          void refetchLatestRuns()
+        }}
       />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden p-3">

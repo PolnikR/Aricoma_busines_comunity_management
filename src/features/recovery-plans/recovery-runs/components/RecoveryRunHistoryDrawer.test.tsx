@@ -27,7 +27,7 @@ describe('RecoveryRunHistoryDrawer', () => {
     expect(screen.getByRole('dialog', { hidden: true })).toHaveAttribute('aria-hidden', 'true')
   })
 
-  it('shows the full run history for the selected entity, one call for this entity alone', () => {
+  it('shows the full run history and explains its refresh policy for the selected entity', () => {
     vi.mocked(useAppRunHistory).mockReturnValue({
       data: {
         runs: [
@@ -46,6 +46,7 @@ describe('RecoveryRunHistoryDrawer', () => {
     expect(screen.getByText('finance_recovery')).toBeInTheDocument()
     expect(screen.getByText('success')).toBeInTheDocument()
     expect(screen.getByText('failed')).toBeInTheDocument()
+    expect(screen.getByText("Loaded on demand for this entity. Page 1 refreshes every 15 seconds while its newest run is active; terminal runs and older pages refresh every 5 minutes.")).toBeInTheDocument()
     expect(useAppRunHistory).toHaveBeenCalledWith({ providerId: 'airflow-01', dagId: 'dag_260818094526_2918dccb', page: 1, pageSize: 10 })
 
     expect(screen.getByRole('link', { name: /View in Airflow/ })).toHaveAttribute(
