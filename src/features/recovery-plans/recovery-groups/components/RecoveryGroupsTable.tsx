@@ -20,6 +20,7 @@ import { Tabs } from '@/shared/components/tabs/Tabs'
 import { ExternalLinkIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { buildAirflowDagUrl } from '@/config/externalServices'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
 import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
@@ -104,6 +105,7 @@ export function RecoveryGroupsTable({
   )?.url
   const jsonViewed = rows.find(group => group.id === jsonViewId) ?? null
   const activeFilterCount = Number(Boolean(filters.workloadType)) + Number(Boolean(filters.resourceType))
+  const errorDescription = extractBackendErrorDetail(error)
 
   const navigate = useNavigate()
   const isSelectedOrchestrated = Boolean(selected?.pushToOrchestrator && selected.airflowRunId && selected.orchestrationProviderId)
@@ -274,6 +276,7 @@ export function RecoveryGroupsTable({
       <DataTableRequestState
         error={error ? {
           title: t('pages.recoveryGroups.errors.load'),
+          ...(errorDescription ? { description: errorDescription } : {}),
           retryLabel: t('buttons.retry'),
           isRetrying,
           onRetry,

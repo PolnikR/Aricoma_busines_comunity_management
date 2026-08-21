@@ -3,10 +3,20 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryGroupBuilderPage } from './RecoveryGroupBuilderPage'
 import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
+import { RecoveryGroupsError } from '../api/recoveryGroupsErrors'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 
 const navigate = vi.fn()
 const create = vi.fn()
 const airflowProviderUrl = 'https://airflow.dynamic.test:8443'
+const recoveryGroupsState = {
+  groups: [],
+  isLoading: false,
+  error: null as unknown,
+  refresh: vi.fn(),
+  create,
+  isCreating: false,
+}
 
 vi.mock('react-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router')>()
@@ -20,14 +30,7 @@ vi.mock('react-router', async (importOriginal) => {
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 vi.mock('../hooks/useRecoveryGroups', () => ({
-  useRecoveryGroups: () => ({
-    groups: [],
-    isLoading: false,
-    error: null,
-    refresh: vi.fn(),
-    create,
-    isCreating: false,
-  }),
+  useRecoveryGroups: () => recoveryGroupsState,
 }))
 
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
@@ -73,6 +76,7 @@ vi.mock('../components/RecoveryGroupBuilder', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  recoveryGroupsState.error = null
 })
 
 describe('RecoveryGroupBuilderPage', () => {
@@ -117,5 +121,40 @@ describe('RecoveryGroupBuilderPage', () => {
 
     expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-groups')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('shows nested backend detail when creating a recovery group fails', async () => {
+    const user = userEvent.setup()
+    create.mockRejectedValue(new Error('Submit recovery group request failed', {
+      cause: new OrvalApiError(409, 'Conflict', { detail: 'A recovery group with this name already exists.' }),
+    }))
+    render(<RecoveryGroupBuilderPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Create without orchestration' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('A recovery group with this name already exists.')
+  })
+
+  it('keeps the localized domain error mapping when creating a recovery group fails validation', async () => {
+    const user = userEvent.setup()
+    create.mockRejectedValue(new RecoveryGroupsError('invalid_draft', 'internal validation detail'))
+    render(<RecoveryGroupBuilderPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Create without orchestration' }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Complete all required recovery group fields.')
+    expect(alert).not.toHaveTextContent('internal validation detail')
+  })
+
+  it('shows backend detail in the builder load retry state', () => {
+    recoveryGroupsState.error = new Error('Get recovery groups request failed', {
+      cause: new OrvalApiError(503, 'Unavailable', { detail: 'The recovery groups service is unavailable.' }),
+    })
+    render(<RecoveryGroupBuilderPage />)
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Recovery groups could not be loaded')
+    expect(alert).toHaveTextContent('The recovery groups service is unavailable.')
   })
 })
