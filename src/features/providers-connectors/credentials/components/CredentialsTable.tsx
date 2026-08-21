@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import {
   DataTable,
@@ -74,9 +75,12 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {deleteCredential.error ? (
-        <div className="mx-4 mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">
-          {deleteCredential.error.message}
-        </div>
+        <Alert
+          className="mx-4 mt-4"
+          title={t('credentials.delete.title')}
+          description={deleteCredential.error.message}
+          variant="error"
+        />
       ) : null}
       <DataTableToolbar
         searchValue={table.search}
