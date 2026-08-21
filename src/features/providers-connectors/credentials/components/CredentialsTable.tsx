@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import {
@@ -32,6 +33,8 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<CredentialRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<CredentialRecord | null>(null)
+  const loadErrorDescription = extractBackendErrorDetail(error)
+  const deleteErrorDescription = extractBackendErrorDetail(deleteCredential.error)
   const rows = useMemo(() => credentials, [credentials])
   const selected = rows.find(credential => credential.id === selectedId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'username'] })
@@ -78,7 +81,7 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
         <Alert
           className="mx-4 mt-4"
           title={t('credentials.delete.title')}
-          description={deleteCredential.error.message}
+          {...(deleteErrorDescription ? { description: deleteErrorDescription } : {})}
           variant="error"
         />
       ) : null}
@@ -93,6 +96,7 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
       <DataTableRequestState
         error={error ? {
           title: t('credentials.errors.load'),
+          ...(loadErrorDescription ? { description: loadErrorDescription } : {}),
           retryLabel: t('buttons.retry'),
           isRetrying,
           onRetry,
