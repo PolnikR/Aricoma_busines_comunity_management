@@ -75,7 +75,7 @@ describe('ProviderCreateForm', () => {
     expect(screen.getByText('ID error')).toBeInTheDocument()
   })
 
-  it('renders VM settings and reports tag changes', async () => {
+  it('renders VM settings and reports a single selected tag', async () => {
     const user = userEvent.setup()
     const onTagsChange = vi.fn()
 
@@ -88,7 +88,7 @@ describe('ProviderCreateForm', () => {
         credentialsLoading={false}
         credentialsError={false}
         onRetryCredentials={vi.fn()}
-        tags={['available-tag']}
+        tags={['available-tag', 'replacement-tag']}
         tagsLoading={false}
         tagsError={false}
         tagsDisabled={false}
@@ -100,10 +100,12 @@ describe('ProviderCreateForm', () => {
     )
 
     expect(screen.getByLabelText('VM prefix')).toHaveValue('prod-')
-    expect(screen.getByText('saved-tag')).toBeInTheDocument()
+    expect(screen.getByLabelText('VM tags')).toHaveValue('saved-tag')
 
-    await user.click(screen.getByRole('button', { name: 'Remove saved-tag' }))
+    await user.selectOptions(screen.getByLabelText('VM tags'), 'replacement-tag')
+    expect(onTagsChange).toHaveBeenLastCalledWith(['replacement-tag'])
 
-    expect(onTagsChange).toHaveBeenCalledWith([])
+    await user.selectOptions(screen.getByLabelText('VM tags'), '')
+    expect(onTagsChange).toHaveBeenLastCalledWith([])
   })
 })

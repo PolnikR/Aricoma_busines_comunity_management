@@ -109,7 +109,7 @@ describe('ProvidersCreateModal', () => {
 
     expect(useTagsMock).toHaveBeenCalledWith('vmware-vcenter-01', true)
     expect(screen.getByLabelText('VM prefix')).toHaveValue('prod-')
-    expect(screen.getByText('saved-tag')).toBeInTheDocument()
+    expect(screen.getByLabelText('VM tags')).toHaveValue('saved-tag')
 
     fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
 
@@ -120,6 +120,30 @@ describe('ProvidersCreateModal', () => {
       vmTags: ['saved-tag'],
     })
     vi.unstubAllGlobals()
+  })
+
+  it('normalizes legacy provider VM tags to the first saved tag', () => {
+    const editedProvider: ProviderRecord = {
+      ...mockProviderA,
+      vmTags: ['first-tag', 'second-tag'],
+    }
+    useTagsMock.mockReturnValue({
+      data: ['first-tag', 'second-tag'],
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    })
+
+    renderWithQueryClient(
+      <ProvidersCreateModal
+        open
+        onClose={vi.fn()}
+        existingProviders={[editedProvider]}
+        provider={editedProvider}
+      />,
+    )
+
+    expect(screen.getByLabelText('VM tags')).toHaveValue('first-tag')
   })
 
   it('preserves an edited provider port without sending it to the backend', async () => {

@@ -1,6 +1,5 @@
 import type { ChangeEvent } from 'react'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
-import { MultiSelectDropdown } from '@/shared/components/form/MultiSelectDropdown'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PROVIDER_ROLES, PROVIDER_TYPES } from '../model/providerTypes'
 import type { ProviderRecord } from '../model/providerTypes'
@@ -70,6 +69,10 @@ export function ProviderCreateForm({
   const selectedCredentialIsMissing = Boolean(
     data.credentialId && !credentials.some(credential => credential.id === data.credentialId),
   )
+  const selectedVmTag = data.vmTags[0] ?? ''
+  const vmTagOptions = selectedVmTag && !tags.includes(selectedVmTag)
+    ? [selectedVmTag, ...tags]
+    : tags
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' && !isSubmitting) {
       event.preventDefault()
@@ -203,15 +206,17 @@ export function ProviderCreateForm({
         </Field>
 
         <Field label={t('forms.vmTags')} htmlFor="create-vmTags">
-          <MultiSelectDropdown
+          <Select
             id="create-vmTags"
-            ariaLabel={t('forms.vmTags')}
-            placeholder={t('forms.vmTagsSelect')}
-            options={tags}
-            selected={data.vmTags}
-            onChange={onTagsChange}
+            value={selectedVmTag}
+            onChange={(event: ChangeEvent<HTMLSelectElement>) => {
+              onTagsChange(event.target.value ? [event.target.value] : [])
+            }}
             disabled={isSubmitting || tagsDisabled}
-          />
+          >
+            <option value="">{t('forms.vmTagsSelect')}</option>
+            {vmTagOptions.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+          </Select>
           {tagsLoading ? <p className="mt-1 text-xs text-text-muted" role="status">{t('providers.tags.loading')}</p> : null}
           {tagsError ? (
             <p className="mt-1 text-xs text-red-600" role="alert">

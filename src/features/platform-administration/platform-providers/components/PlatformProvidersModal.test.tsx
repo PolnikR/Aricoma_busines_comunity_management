@@ -79,7 +79,21 @@ describe('PlatformProvidersModal', () => {
     expect(await screen.findByLabelText('Port')).toHaveValue(8443)
     expect(screen.getByLabelText('URL')).toHaveValue('https://airflow.example.test')
     expect(screen.getByLabelText('VM prefix')).toHaveValue('airflow-')
-    expect(screen.getByText('saved-platform-tag')).toBeInTheDocument()
+    expect(document.querySelector('#platform-provider-vm-tags')).toHaveValue('saved-platform-tag')
+  })
+
+  it('normalizes legacy platform provider VM tags to the first saved tag', async () => {
+    render(
+      <PlatformProvidersModal
+        open
+        onClose={vi.fn()}
+        existingProviders={[]}
+        provider={{ ...editedProvider, vmTags: ['first-tag', 'second-tag'] }}
+      />,
+    )
+
+    await screen.findByLabelText('Port')
+    expect(document.querySelector('#platform-provider-vm-tags')).toHaveValue('first-tag')
   })
 
   it('submits platform VM settings and sends explicit empty values when cleared', () => {

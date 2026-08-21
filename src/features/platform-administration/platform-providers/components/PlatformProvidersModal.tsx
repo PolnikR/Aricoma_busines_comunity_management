@@ -49,7 +49,7 @@ function toPlatformProviderFormData(provider: PlatformProviderRecord): PlatformP
     dagDir: provider.dagDir,
     credentialId: provider.credentialId,
     vmPrefix: provider.vmPrefix ?? '',
-    vmTags: [...(provider.vmTags ?? [])],
+    vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
   }
 }
 

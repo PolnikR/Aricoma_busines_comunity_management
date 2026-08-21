@@ -52,7 +52,7 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         defaultFlashcopyProviderId: provider.defaultFlashcopyProviderId ?? '',
         orchestratorConnId: provider.orchestratorConnId ?? '',
         vmPrefix: provider.vmPrefix ?? '',
-        vmTags: [...(provider.vmTags ?? [])],
+        vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
       }
     : EMPTY_FORM
 }

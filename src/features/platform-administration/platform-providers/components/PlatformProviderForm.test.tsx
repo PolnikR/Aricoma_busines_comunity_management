@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { PlatformProviderForm, type PlatformProviderFormData } from './PlatformProviderForm'
 
@@ -52,7 +53,9 @@ describe('PlatformProviderForm', () => {
     expect(portInput).toHaveAttribute('step', '1')
   })
 
-  it('renders VM prefix and preserves saved platform tags', () => {
+  it('renders VM prefix and reports a single selected platform tag', async () => {
+    const user = userEvent.setup()
+    const onTagsChange = vi.fn()
     render(
       <PlatformProviderForm
         data={formData}
@@ -62,16 +65,24 @@ describe('PlatformProviderForm', () => {
         credentialsLoading={false}
         credentialsError={false}
         onRetryCredentials={vi.fn()}
-        tags={[]}
+        tags={['replacement-platform-tag']}
         tagsDisabled={false}
-        onTagsChange={vi.fn()}
+        onTagsChange={onTagsChange}
         onChange={vi.fn()}
         onSubmit={vi.fn()}
       />,
     )
 
     expect(screen.getByLabelText('VM prefix')).toHaveValue('airflow-')
-    expect(screen.getByText('saved-platform-tag')).toBeInTheDocument()
+    const vmTagsSelect = document.querySelector<HTMLSelectElement>('#platform-provider-vm-tags')
+    if (!vmTagsSelect) throw new Error('VM tags select not found')
+    expect(vmTagsSelect).toHaveValue('saved-platform-tag')
+
+    await user.selectOptions(vmTagsSelect, 'replacement-platform-tag')
+    expect(onTagsChange).toHaveBeenLastCalledWith(['replacement-platform-tag'])
+
+    await user.selectOptions(vmTagsSelect, '')
+    expect(onTagsChange).toHaveBeenLastCalledWith([])
   })
 
   it('uses the compact provider-style rows for platform fields', () => {
