@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { useInfrastructureInventory } from '../hooks/useInfrastructureInventory'
@@ -129,6 +130,30 @@ describe('InfrastructurePage', () => {
     expect(screen.getByText('offline')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Retry loading' }))
     expect(refetch).toHaveBeenCalledOnce()
+  })
+
+  it('shows nested backend detail for provider and topology request failures', () => {
+    providerQueryOverrides = {
+      data: undefined,
+      isLoading: false,
+      isSuccess: false,
+      error: new Error('Providers request failed with status 503', {
+        cause: new OrvalApiError(503, 'Unavailable', { detail: 'Provider registry is unavailable.' }),
+      }),
+    }
+    const { unmount } = renderPage()
+    expect(screen.getByText('Provider registry is unavailable.')).toBeInTheDocument()
+    unmount()
+
+    providerQueryOverrides = {}
+    inventoryQueryOverrides = {
+      data: undefined,
+      error: new Error('Inventory request failed with status 503', {
+        cause: new OrvalApiError(503, 'Unavailable', { detail: 'Topology inventory is unavailable.' }),
+      }),
+    }
+    renderPage()
+    expect(screen.getByText('Topology inventory is unavailable.')).toBeInTheDocument()
   })
 
   it('maps VMware inventory to topology and refreshes it', async () => {

@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
+import { extractBackendErrorDetail, resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
@@ -98,6 +99,8 @@ export function InfrastructurePage() {
   const handleProvidersRefetch = () => { void providersQuery.refetch() }
   const isLoading = providersQuery.isLoading
     || Boolean(selectedProvider && activeQuery.isLoading)
+  const providersErrorDetail = extractBackendErrorDetail(providersQuery.error)
+  const activeErrorDetail = extractBackendErrorDetail(activeQuery.error)
 
   return (
     <div className="flex flex-1 min-h-full w-full min-w-0 max-w-full flex-col overflow-x-hidden lg:h-full lg:min-h-0">
@@ -131,9 +134,7 @@ export function InfrastructurePage() {
       {!isLoading && providersQuery.error && !providersQuery.data ? (
         <FetchErrorAlert
           title={t('pages.infrastructure.providersError.title')}
-          description={providersQuery.error instanceof Error
-            ? providersQuery.error.message
-            : t('messages.unknownError')}
+          description={resolveUserFacingErrorMessage(providersQuery.error, t('messages.unknownError'))}
           retryLabel={t('pages.infrastructure.error.retryButton')}
           variant="full"
           isRetrying={providersQuery.isFetching}
@@ -145,7 +146,9 @@ export function InfrastructurePage() {
         <FetchErrorAlert
           className="mb-4"
           title={t('pages.infrastructure.providersError.title')}
-          description={t('pages.infrastructure.providersError.showingPrevious')}
+          description={providersErrorDetail
+            ? `${t('pages.infrastructure.providersError.showingPrevious')} ${providersErrorDetail}`
+            : t('pages.infrastructure.providersError.showingPrevious')}
           isRetrying={providersQuery.isFetching}
           onRetry={handleProvidersRefetch}
         />
@@ -161,9 +164,7 @@ export function InfrastructurePage() {
       {!isLoading && selectedProvider && !topology ? (
         <FetchErrorAlert
           title={t('pages.infrastructure.error.title')}
-          description={activeQuery.error instanceof Error
-            ? activeQuery.error.message
-            : t('messages.unknownError')}
+          description={resolveUserFacingErrorMessage(activeQuery.error, t('messages.unknownError'))}
           retryLabel={t('pages.infrastructure.error.retryButton')}
           variant="full"
           isRetrying={activeQuery.isFetching}
@@ -177,7 +178,9 @@ export function InfrastructurePage() {
             <FetchErrorAlert
               className="mb-4"
               title={t('pages.infrastructure.latestRequestFailed')}
-              description={t('pages.infrastructure.showingPrevious')}
+              description={activeErrorDetail
+                ? `${t('pages.infrastructure.showingPrevious')} ${activeErrorDetail}`
+                : t('pages.infrastructure.showingPrevious')}
               isRetrying={activeQuery.isFetching}
               onRetry={handleInventoryRefetch}
             />
