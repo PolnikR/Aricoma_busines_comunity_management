@@ -1,16 +1,15 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { EXTERNAL_SERVICES } from '@/config/externalServices'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
+import { useDeletePlatformProvider } from '../hooks/useDeletePlatformProvider'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { PlatformProvidersTable } from './PlatformProvidersTable'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('../hooks/useDeletePlatformProvider', () => ({
-  useDeletePlatformProvider: () => ({
-    mutate: vi.fn(),
-    isPending: false,
-  }),
+  useDeletePlatformProvider: vi.fn(),
 }))
 
 const baseProvider: PlatformProviderRecord = {
@@ -24,6 +23,20 @@ const baseProvider: PlatformProviderRecord = {
   credentialId: 'airflow-ssh',
   credentialStatus: 'ok',
 }
+
+const deleteMutation = {
+  mutate: vi.fn(),
+  isPending: false,
+  error: null as unknown,
+}
+
+beforeEach(() => {
+  deleteMutation.mutate.mockReset()
+  deleteMutation.error = null
+  vi.mocked(useDeletePlatformProvider).mockReturnValue(
+    deleteMutation as unknown as ReturnType<typeof useDeletePlatformProvider>,
+  )
+})
 
 describe('PlatformProvidersTable', () => {
   it('keeps search available without exposing platform-provider API errors', () => {
@@ -40,6 +53,53 @@ describe('PlatformProvidersTable', () => {
     expect(screen.getByRole('searchbox')).toBeInTheDocument()
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByRole('alert')).not.toHaveTextContent('platform provider internals')
+  })
+
+  it('shows backend detail while retaining the platform-provider retry state', () => {
+    const error = new Error('Get platform providers request failed with status 503', {
+      cause: new OrvalApiError(503, 'Service Unavailable', {
+        detail: 'The platform provider inventory is unavailable.',
+      }),
+    })
+
+    render(
+      <PlatformProvidersTable
+        providers={[]}
+        isLoading={false}
+        error={error}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Failed to load platform providers.')
+    expect(alert).toHaveTextContent('The platform provider inventory is unavailable.')
+    expect(alert).not.toHaveTextContent('status 503')
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+  })
+
+  it('shows delete backend detail in the table context', () => {
+    deleteMutation.error = new Error('Delete platform provider request failed with status 409', {
+      cause: new OrvalApiError(409, 'Conflict', {
+        detail: 'The platform provider is referenced by a recovery policy.',
+      }),
+    })
+
+    render(
+      <PlatformProvidersTable
+        providers={[baseProvider]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Delete platform provider')
+    expect(alert).toHaveTextContent('The platform provider is referenced by a recovery policy.')
+    expect(alert).not.toHaveTextContent('status 409')
   })
 
   it('shows a link to the provider url in the detail drawer when one is present', async () => {
