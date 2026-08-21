@@ -5,6 +5,7 @@ import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { isProgrammaticIdAvailable, toProgrammaticId } from '@/shared/utils/programmaticId'
+import { useTags } from '@/features/discovery-inventory/resources/hooks/useVmwareTags'
 import { useUpsertProvider } from '../hooks/useUpsertProvider'
 import { useCredentials } from '../../credentials/hooks/useCredentials'
 import { ProviderCreateForm } from './ProviderCreateForm'
@@ -32,6 +33,8 @@ const EMPTY_FORM: ProviderCreateFormData = {
   credentialId: '',
   defaultFlashcopyProviderId: '',
   orchestratorConnId: '',
+  vmPrefix: '',
+  vmTags: [],
 }
 
 function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
@@ -48,6 +51,8 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         credentialId: provider.credentialId ?? '',
         defaultFlashcopyProviderId: provider.defaultFlashcopyProviderId ?? '',
         orchestratorConnId: provider.orchestratorConnId ?? '',
+        vmPrefix: provider.vmPrefix ?? '',
+        vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
       }
     : EMPTY_FORM
 }
@@ -58,6 +63,8 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
   const upsert = useUpsertProvider()
   const credentialsQuery = useCredentials({ enabled: open })
   const isEdit = Boolean(provider)
+  const tagsEnabled = open && isEdit && provider?.type === 'VMWARE'
+  const tagsQuery = useTags(provider?.id ?? null, tagsEnabled)
   const [formData, setFormData] = useState<ProviderCreateFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof ProviderCreateFormData, string>>>({})
   const [errorMessage, setErrorMessage] = useState('')
@@ -74,6 +81,9 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     || formData.credentialId !== initialForm.credentialId
     || formData.defaultFlashcopyProviderId !== initialForm.defaultFlashcopyProviderId
     || formData.orchestratorConnId !== initialForm.orchestratorConnId
+    || formData.vmPrefix !== initialForm.vmPrefix
+    || formData.vmTags.length !== initialForm.vmTags.length
+    || formData.vmTags.some((tag, index) => tag !== initialForm.vmTags[index])
   )
   const navigationGuard = useUnsavedChangesGuard(isDirty)
 
@@ -128,6 +138,11 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     setFormData((prev) => ({ ...prev, id: toProgrammaticId(prev.id) }))
   }
 
+  const handleTagsChange = (vmTags: string[]) => {
+    setFormData((prev) => ({ ...prev, vmTags }))
+    setErrorMessage('')
+  }
+
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof ProviderCreateFormData, string>> = {}
     const normalizedId = toProgrammaticId(formData.id)
@@ -172,6 +187,8 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     const orchestratorConnId = formData.orchestratorConnId.trim()
     if (defaultFlashcopyProviderId) record.defaultFlashcopyProviderId = defaultFlashcopyProviderId
     if (orchestratorConnId) record.orchestratorConnId = orchestratorConnId
+    record.vmPrefix = formData.vmPrefix.trim() || null
+    record.vmTags = [...formData.vmTags]
 
     upsert.mutate(
       { provider: record },
@@ -228,12 +245,19 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
           errors={errors}
           isSubmitting={upsert.isPending}
           idDisabled={isEdit}
+          typeDisabled={isEdit}
           credentials={credentialsQuery.data ?? []}
           credentialsLoading={credentialsQuery.isLoading}
           credentialsError={credentialsQuery.error !== null}
           onRetryCredentials={() => { void credentialsQuery.refetch() }}
+          tags={tagsQuery.data ?? []}
+          tagsLoading={tagsQuery.isLoading}
+          tagsError={tagsQuery.error !== null}
+          tagsDisabled={!isEdit}
+          onRetryTags={() => { void tagsQuery.refetch() }}
           flashcopyProviders={existingProviders.filter(provider => provider.type === 'FLASHCOPY' && provider.role !== 'target')}
           onChange={handleChange}
+          onTagsChange={handleTagsChange}
           onIdBlur={handleIdBlur}
           onSubmit={handleSubmit}
         />

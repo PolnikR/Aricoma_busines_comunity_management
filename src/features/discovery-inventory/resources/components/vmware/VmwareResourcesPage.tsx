@@ -5,7 +5,7 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { DataTablePagination } from '@/shared/components/data-table'
 import { MetricsSkeleton } from '@/shared/components/stat-card/StatCard'
-import { useDiscoveryInventory } from '@/features/discovery-inventory/resources/hooks/useVmwareInventory'
+import { useVmwareResourceInventory } from '@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory'
 import { useTags } from '../../hooks/useVmwareTags'
 import {
   applyFiltersAndPagination,
@@ -44,22 +44,34 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     providers, providersPending, providersSuccess, providersFetching,
     providersError, onRefetchProviders, providerId, tabs, t, role,
   } = props
-  const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
   const vmwareProviders = getProvidersByTypeAndRole(providers, 'VMWARE', role)
-  const selectedProviderId = providerId ?? vmwareProviders[0]?.id ?? null
-  const inventoryEnabled = providersSuccess && vmwareProviders.length > 0
+  const selectedProvider = vmwareProviders.find((provider) => provider.id === providerId) ?? vmwareProviders[0] ?? null
+  const vmwareProviderScope = selectedProvider ? {
+    id: selectedProvider.id,
+    role,
+    ...(selectedProvider.vmPrefix !== undefined ? { vmPrefix: selectedProvider.vmPrefix } : {}),
+    ...(selectedProvider.vmTags !== undefined ? { vmTags: selectedProvider.vmTags } : {}),
+  } : null
+  const { query, updateQuery, updateFilters, isInitialized } = useVirtualMachineSearchParams(vmwareProviderScope)
+  const inventoryEnabled = providersSuccess && selectedProvider !== null && isInitialized
   const {
     data: inventory,
-    error,
-    isLoading: isPending,
+    isInitialLoading,
     isFetching,
+    isError,
+    isEmpty,
     refetch,
-  } = useDiscoveryInventory(
-    selectedProviderId ?? undefined,
+  } = useVmwareResourceInventory(
+    selectedProvider?.id,
+    query.search,
     getServerSideTagFilter(query.tags),
     inventoryEnabled,
   )
-  const { data: availableTags = [] } = useTags(inventoryEnabled)
+  const { data: serverTags = [] } = useTags(selectedProvider?.id, inventoryEnabled)
+  const availableTags = useMemo(
+    () => [...new Set([...serverTags, ...query.tags])],
+    [query.tags, serverTags],
+  )
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [density, setDensity] = useState<TableDensity>('compact')
@@ -75,13 +87,6 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     if (!isFetching && data && data.page !== query.page) updateQuery({ page: data.page })
   }, [data, isFetching, query.page, updateQuery])
 
-  useEffect(() => {
-    if (availableTags.length > 0 && query.tags.length > 0) {
-      const validTags = query.tags.filter((tag) => availableTags.includes(tag))
-      if (validTags.length !== query.tags.length) updateQuery({ tags: validTags }, true)
-    }
-  }, [availableTags, query.tags, updateQuery])
-
   const selectedVirtualMachine = data?.items.find((vm) => vm.id === selectedId) ?? null
   const filters: VirtualMachineFilters = {
     search: query.search,
@@ -91,13 +96,13 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     tags: query.tags,
     untagged: query.untagged,
   }
-  const vmwareLoading = providersSuccess && vmwareProviders.length > 0 && isPending
+  const vmwareLoading = providersSuccess && vmwareProviders.length > 0 && isInitialLoading
   const metrics = providersPending || vmwareLoading
     ? <MetricsSkeleton />
     : data && !providersError
       ? <VirtualMachineMetrics metrics={data.metrics} />
       : null
-  const notice = error && data ? (
+  const notice = isError && data ? (
     <FetchErrorAlert
       title={t('pages.virtualMachines.error.latestFailed')}
       description={t('pages.virtualMachines.error.showingPrevious')}
@@ -143,7 +148,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
           density={density}
           onDensityChange={setDensity}
         />}
-        error={!data ? {
+        error={isError && !data ? {
           title: t('pages.virtualMachines.error.title'),
           description: t('pages.virtualMachines.error.unknown'),
           retryLabel: t('pages.virtualMachines.error.retryButton'),
@@ -168,7 +173,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
               setDrawerOpen(true)
             }}
           />
-        ) : (
+        ) : isEmpty ? (
           <div className="p-4">
             <EmptyState
               title={t('pages.virtualMachines.empty.title')}
@@ -176,7 +181,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
               action={<Button size="sm" variant="outline" onClick={() => { updateFilters(defaultFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>}
             />
           </div>
-        )}
+        ) : null}
       </ResourceInventoryPanel>
     )
   }

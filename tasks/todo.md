@@ -1,31 +1,46 @@
-# Todo: Move Recovery Runs into Recovery Plans + Group Support
+# Todo: Stable Provider-Scoped Resource Filters
 
-See `tasks/plan.md` for full detail, acceptance criteria, and file lists.
+## Phase 1: Provider state foundation
 
-## Phase 1: Move (no behavior change)
-- [x] Task 1: Relocate `src/features/storage-orchestration/` → `src/features/recovery-plans/recovery-runs/`; update `routes.ts` / `AppRoutes.tsx` / `AppSidebar.tsx`
-- [x] Checkpoint: `/recovery-plans/recovery-runs` works, `/storage-orchestration` shows placeholder, `tsc --noEmit` clean (verified: tsc clean, 7 test files / 20 tests pass unchanged, eslint clean)
+- [ ] Task 1: Add the versioned provider-filter session module.
+- [ ] Task 2: Restore and persist VMware state per provider.
+- [ ] Task 3: Preserve snapshots across provider/resource switching.
 
-## Phase 2: Data layer
-- [x] Task 2a: Add `OrchestratedEntity` type; add `useOrchestratedGroups` (uses Recovery Groups' existing `orchestrationProviderId`, no backend dependency); add `useOrchestratedEntities`; add `useOrchestratedEntityRuns` (new, generalized — `useOrchestratedAppRuns` kept as-is, still used by the current unmodified page until Task 3); add `useLatestOrchestratorRun`. Applications KEEP the existing `usePlatformProviders`/`getEligiblePlatformProviders` fallback for now.
-- [x] Checkpoint: hook tests green (9 test files / 24 tests across the feature, all passing; `tsc --noEmit` and eslint clean)
-- [ ] **Task 2b — BLOCKED, do not start:** confirmed 2026-08-19 via `npm run api:pull` that `orchestration_provider_id` is NOT yet on `RecoveryAppRecord`. Re-check with `api:pull` before starting; then `api:generate`; then add the field to `recoveryApplicationTypes.ts` + `mapRecoveryApplications.ts`; then drop the eligible-provider fallback in `useOrchestratedApps`; then fix the one-line follow-up flagged in Task 4.
+## Checkpoint: Provider state contract
 
-## Phase 3: Page UX
-- [x] Task 3: Add `useRecoveryRunsTabSearchParam`; add All/Applications/Recovery Groups tabs to `RecoveryRunsPage`; extend `RecoveryRunsTable` with entity-type column; widen `RecoveryRunHistoryDrawer` to generic entity; removed now-dead `useOrchestratedAppRuns`
-- [x] Checkpoint: 9 test files / 31 tests passing, `tsc --noEmit` and eslint clean; entityId deep-link confirmed to filter + auto-open the history drawer
+- [ ] Run Tasks 1-3 focused tests together.
+- [ ] Verify explicit URL > snapshot > defaults > empty precedence.
+- [ ] Verify source/target and provider isolation.
+- [ ] Run typecheck and focused lint.
 
-## Phase 4: Detail panels + navigation
-- [x] Task 4: Recovery Application detail drawer — DAG ID / latest status / last executed / duration / "View recovery runs" (only when `pushToOrchestrator`; provider id sourced via the interim eligible-provider lookup until Task 2b lands)
-- [x] Task 5: Recovery Group detail drawer — same additions alongside existing orchestration rows (providerId read directly, no interim needed)
-- [x] Checkpoint: "View recovery runs" from either entity navigates to the correct pre-filtered tab (verified via navigate() assertions); page still usable standalone. Note: one pre-existing unrelated test failure in RecoveryGroupsTable.test.tsx confirmed via git stash to predate this work.
+## Phase 2: Remaining providers and VMware query lifecycle
 
-## Phase 5: Polish
-- [x] Task 6: Locale keys (en/cs/sk, added incrementally across Tasks 3-5); grep-clean of old `storage-orchestration` import paths (only the intentional `routes.storageOrchestration` placeholder constant remains); added AppSidebar regression test for the Recovery Runs nav entry; full focused test + `tsc --noEmit` pass
+- [ ] Task 4: Preserve FlashSystem and IBM Power provider filters.
+- [ ] Task 5: Stabilize VMware debounce, previous data, cache, and errors.
 
-## Final Definition of Done
-- [x] All acceptance criteria in `tasks/plan.md` met (Tasks 1, 2a, 3, 4, 5, 6 — Task 2b remains explicitly BLOCKED on the backend, see plan Open Questions)
-- [x] `npx tsc --noEmit` clean
-- [x] All focused tests listed per task pass (59/60 — 1 pre-existing unrelated failure confirmed via `git stash`, predates this plan)
-- [x] No unrelated files touched (concurrent uncommitted edits by the user in InventoryShell.tsx/RecoveryPolicyPageShell.tsx/SnapshotPoliciesPage.tsx were left alone throughout)
-- [x] Changes committed per task, atomically
+## Checkpoint: Data lifecycle
+
+- [ ] Verify provider return uses fresh cache without a request.
+- [ ] Verify one settled `/vms_by_name` request after 300 ms.
+- [ ] Verify tag+name performs no extra remote request.
+
+## Phase 3: VMware UI and Resources ISE
+
+- [ ] Task 6: Keep the VMware toolbar mounted and focused.
+- [ ] Task 7: Preserve configured tags missing from `/tags` in Resources ISE.
+
+## Checkpoint: User-visible regressions
+
+- [ ] Provider A -> B -> A restores exact filters.
+- [ ] Search keeps focus through debounce, fetch, error, and empty success.
+- [ ] Pending debounce never shows an error.
+- [ ] `DR-` and `recovery` remain visible and active in Resources ISE.
+
+## Phase 4: Final verification
+
+- [ ] Task 8: Run browser/network verification and final cleanup.
+- [ ] Run the complete focused test set.
+- [ ] Run `node_modules/.bin/tsc.cmd -b`.
+- [ ] Run changed-file ESLint with zero warnings.
+- [ ] Run `git diff --check` and inspect diff/status.
+- [ ] Commit only in-scope files and preserve unrelated user files.

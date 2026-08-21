@@ -27,6 +27,8 @@ export interface ProviderRecord {
   role?: ProviderRole | undefined
   defaultFlashcopyProviderId?: string | null | undefined
   orchestratorConnId?: string | null | undefined
+  vmPrefix?: string | null | undefined
+  vmTags?: string[] | undefined
   credentialStatus: ProviderCredentialStatus
   /** Validated GET record before UI normalization; unknown API fields are removed by Zod. */
   rawRecord?: ProviderRecordOutput | undefined
@@ -44,5 +46,7 @@ export interface ProviderSubmitData {
   role: ProviderRole
   defaultFlashcopyProviderId?: string | null | undefined
   orchestratorConnId?: string | null | undefined
+  vmPrefix?: string | null | undefined
+  vmTags?: string[] | undefined
 }
 import type { ProviderRecordOutput } from '@/generated/api/zod.gen'

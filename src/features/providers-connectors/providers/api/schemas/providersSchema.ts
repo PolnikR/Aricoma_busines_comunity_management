@@ -15,4 +15,6 @@ export const providerSubmitSchema = z.object({
   role: z.enum(PROVIDER_ROLES),
   defaultFlashcopyProviderId: z.string().min(1).nullable().optional(),
   orchestratorConnId: z.string().min(1).nullable().optional(),
+  vmPrefix: z.string().nullable().optional(),
+  vmTags: z.array(z.string()).optional(),
 })

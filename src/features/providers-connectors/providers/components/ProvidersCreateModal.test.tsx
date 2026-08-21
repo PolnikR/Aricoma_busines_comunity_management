@@ -5,6 +5,10 @@ import { ProvidersCreateModal } from './ProvidersCreateModal'
 import type { ProviderRecord } from '../model/providerTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+const { useTagsMock } = vi.hoisted(() => ({ useTagsMock: vi.fn() }))
+vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareTags', () => ({
+  useTags: useTagsMock,
+}))
 vi.mock('react-router', async (importOriginal) => ({
   ...await importOriginal<typeof import('react-router')>(),
   useBlocker: () => ({ state: 'unblocked' as const }),
@@ -53,6 +57,7 @@ function fillValidForm() {
 describe('ProvidersCreateModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    useTagsMock.mockReturnValue({ data: [], isLoading: false, error: null, refetch: vi.fn() })
   })
 
   afterEach(cleanup)
@@ -69,6 +74,77 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByLabelText('URL')).toBeInTheDocument()
     expect(screen.getByLabelText('Port')).toHaveValue(22)
     expect(screen.getByLabelText('Credentials')).toBeInTheDocument()
+    expect(useTagsMock).toHaveBeenCalledWith(null, false)
+
+    const dialog = screen.getByRole('dialog')
+    expect(dialog.querySelector('[class~="overflow-y-auto"]')).not.toBeNull()
+    expect(dialog.querySelector('[class~="md:overflow-visible"]')).toBeNull()
+  })
+
+  it('loads VMware tags only for an edited provider and submits VM settings', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({}), { status: 200 }),
+    )
+    vi.stubGlobal('fetch', mockFetch)
+    const editedProvider: ProviderRecord = {
+      ...mockProviderA,
+      vmPrefix: 'prod-',
+      vmTags: ['saved-tag'],
+    }
+    useTagsMock.mockReturnValue({
+      data: ['available-tag'],
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    })
+    const onClose = vi.fn()
+
+    renderWithQueryClient(
+      <ProvidersCreateModal
+        open
+        onClose={onClose}
+        existingProviders={[editedProvider]}
+        provider={editedProvider}
+      />,
+    )
+
+    expect(useTagsMock).toHaveBeenCalledWith('vmware-vcenter-01', true)
+    expect(screen.getByLabelText('VM prefix')).toHaveValue('prod-')
+    expect(screen.getByLabelText('VM tags')).toHaveValue('saved-tag')
+
+    fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
+
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    const init = mockFetch.mock.calls[0]?.[1] as RequestInit
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      vmPrefix: 'prod-',
+      vmTags: ['saved-tag'],
+    })
+    vi.unstubAllGlobals()
+  })
+
+  it('normalizes legacy provider VM tags to the first saved tag', () => {
+    const editedProvider: ProviderRecord = {
+      ...mockProviderA,
+      vmTags: ['first-tag', 'second-tag'],
+    }
+    useTagsMock.mockReturnValue({
+      data: ['first-tag', 'second-tag'],
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    })
+
+    renderWithQueryClient(
+      <ProvidersCreateModal
+        open
+        onClose={vi.fn()}
+        existingProviders={[editedProvider]}
+        provider={editedProvider}
+      />,
+    )
+
+    expect(screen.getByLabelText('VM tags')).toHaveValue('first-tag')
   })
 
   it('preserves an edited provider port without sending it to the backend', async () => {
@@ -304,15 +380,18 @@ describe('ProvidersCreateModal', () => {
     vi.unstubAllGlobals()
   })
 
-  it('prefills fields and locks the id in edit mode', () => {
+  it('prefills fields and locks the id and type in edit mode', () => {
     renderWithQueryClient(
       <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[mockProviderA]} provider={mockProviderA} />,
     )
     expect(screen.getByRole('heading', { name: 'Edit provider' })).toBeInTheDocument()
     const idInput = screen.getByLabelText('ID')
+    const typeSelect = screen.getByLabelText('Type')
     const nameInput = screen.getByLabelText('Provider name')
     expect((idInput as HTMLInputElement).value).toBe('vmware-vcenter-01')
     expect(idInput).toBeDisabled()
+    expect(typeSelect).toHaveValue('VMWARE')
+    expect(typeSelect).toBeDisabled()
     expect((nameInput as HTMLInputElement).value).toBe('Production vCenter')
     expect(screen.getByLabelText('Credentials')).toHaveValue('vcenter-admin')
   })

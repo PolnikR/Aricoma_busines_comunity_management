@@ -19,6 +19,8 @@ const airflowProvider: PlatformProviderRecord = {
   dagDir: '/home/airflow/dags',
   credentialId: 'airflow-ssh',
   credentialStatus: 'ok',
+  vmPrefix: 'platform-',
+  vmTags: ['platform-tag'],
 }
 
 const platformProviderSubmitData: PlatformProviderSubmitData = {
@@ -31,6 +33,8 @@ const platformProviderSubmitData: PlatformProviderSubmitData = {
   dagDir: '/opt/airflow/dags',
   credentialId: 'airflow-ssh',
   url: 'http://10.99.99.56:8080/',
+  vmPrefix: null,
+  vmTags: [],
 }
 
 function stubFetch(payload: unknown, status = 200) {

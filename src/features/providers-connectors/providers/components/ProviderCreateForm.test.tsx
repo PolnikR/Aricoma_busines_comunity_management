@@ -17,6 +17,8 @@ const data = {
   credentialId: 'vcenter-admin',
   defaultFlashcopyProviderId: '',
   orchestratorConnId: '',
+  vmPrefix: 'prod-',
+  vmTags: ['saved-tag'],
 }
 
 const credentials = [{
@@ -40,6 +42,7 @@ describe('ProviderCreateForm', () => {
         credentialsLoading={false}
         credentialsError={false}
         onRetryCredentials={vi.fn()}
+        onTagsChange={vi.fn()}
         onChange={onChange}
         onSubmit={onSubmit}
       />,
@@ -52,7 +55,7 @@ describe('ProviderCreateForm', () => {
     expect(screen.getByLabelText('URL')).toHaveValue('https://vcenter.example.test')
   })
 
-  it('locks ID in edit mode and renders validation errors', () => {
+  it('locks ID and provider type in edit mode and renders validation errors', () => {
     render(
       <ProviderCreateForm
         data={data}
@@ -63,11 +66,48 @@ describe('ProviderCreateForm', () => {
         credentialsError={false}
         onRetryCredentials={vi.fn()}
         idDisabled
+        typeDisabled
+        onTagsChange={vi.fn()}
         onChange={vi.fn()}
         onSubmit={vi.fn()}
       />,
     )
     expect(screen.getByDisplayValue('provider-1')).toBeDisabled()
+    expect(screen.getByLabelText('Type')).toBeDisabled()
     expect(screen.getByText('ID error')).toBeInTheDocument()
+  })
+
+  it('renders VM settings and reports a single selected tag', async () => {
+    const user = userEvent.setup()
+    const onTagsChange = vi.fn()
+
+    render(
+      <ProviderCreateForm
+        data={data}
+        errors={{}}
+        isSubmitting={false}
+        credentials={credentials}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        tags={['available-tag', 'replacement-tag']}
+        tagsLoading={false}
+        tagsError={false}
+        tagsDisabled={false}
+        onRetryTags={vi.fn()}
+        onTagsChange={onTagsChange}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByLabelText('VM prefix')).toHaveValue('prod-')
+    expect(screen.getByLabelText('VM tags')).toHaveValue('saved-tag')
+
+    await user.selectOptions(screen.getByLabelText('VM tags'), 'replacement-tag')
+    expect(onTagsChange).toHaveBeenLastCalledWith(['replacement-tag'])
+
+    await user.selectOptions(screen.getByLabelText('VM tags'), '')
+    expect(onTagsChange).toHaveBeenLastCalledWith([])
   })
 })

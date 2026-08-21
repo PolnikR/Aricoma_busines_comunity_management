@@ -21,9 +21,13 @@ export interface PlatformProviderSubmitData {
   dagDir: string
   credentialId: string
   url?: string | undefined
+  vmPrefix?: string | null | undefined
+  vmTags?: string[] | undefined
 }
 
-export interface PlatformProviderRecord extends PlatformProviderSubmitData {
+export interface PlatformProviderRecord extends Omit<PlatformProviderSubmitData, 'vmPrefix' | 'vmTags'> {
+  vmPrefix?: string | null
+  vmTags?: string[]
   credentialStatus: PlatformProviderCredentialStatus
   /** Validated GET record before UI normalization; unknown API fields are removed by Zod. */
   rawRecord?: OrchestrationProviderRecordOutput | undefined

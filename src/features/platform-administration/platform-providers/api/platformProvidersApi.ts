@@ -43,7 +43,7 @@ function mapPlatformProvider(
     throw new Error(`Unsupported platform provider credential status: ${provider.credentialStatus}`)
   }
 
-  const validated = platformProviderSubmitSchema.parse({
+  const parsed = platformProviderSubmitSchema.parse({
     id: provider.id,
     name: provider.name,
     description: provider.description ?? '',
@@ -53,7 +53,15 @@ function mapPlatformProvider(
     dagDir: provider.dagDir,
     credentialId: provider.credentialId ?? '',
     ...(provider.url != null ? { url: provider.url } : {}),
+    ...(provider.vmPrefix !== undefined ? { vmPrefix: provider.vmPrefix } : {}),
+    ...(provider.vmTags !== undefined ? { vmTags: provider.vmTags } : {}),
   })
+  const { vmPrefix, vmTags, ...validatedBase } = parsed
+  const validated = {
+    ...validatedBase,
+    ...(vmPrefix !== undefined ? { vmPrefix } : {}),
+    ...(vmTags !== undefined ? { vmTags } : {}),
+  }
   const credentialStatus = provider.credentialStatus ?? (requireCredentialStatus ? 'none' : undefined)
   return {
     ...validated,
@@ -82,17 +90,32 @@ export async function fetchPlatformProviders(): Promise<PlatformProviderRecord[]
 export function toPlatformProviderSubmitPayload(
   provider: PlatformProviderSubmitData,
 ): PlatformProviderSubmitData {
-  return platformProviderSubmitSchema.parse(provider)
+  const parsed = platformProviderSubmitSchema.parse(provider)
+  const { vmPrefix, vmTags, ...validatedBase } = parsed
+  return {
+    ...validatedBase,
+    ...(vmPrefix !== undefined ? { vmPrefix } : {}),
+    ...(vmTags !== undefined ? { vmTags } : {}),
+  }
 }
 
 export async function submitPlatformProvider(
   provider: PlatformProviderSubmitData,
 ): Promise<PlatformProviderWriteRecord[]> {
   const validatedProvider = toPlatformProviderSubmitPayload(provider)
-  const { url, ...providerWithoutUrl } = validatedProvider
-  const generatedProvider = url === undefined
-    ? providerWithoutUrl
-    : { ...providerWithoutUrl, url }
+  const generatedProvider = {
+    id: validatedProvider.id,
+    name: validatedProvider.name,
+    description: validatedProvider.description,
+    type: validatedProvider.type,
+    ipAddress: validatedProvider.ipAddress,
+    port: validatedProvider.port,
+    dagDir: validatedProvider.dagDir,
+    credentialId: validatedProvider.credentialId,
+    ...(validatedProvider.url !== undefined ? { url: validatedProvider.url } : {}),
+    ...(validatedProvider.vmPrefix !== undefined ? { vmPrefix: validatedProvider.vmPrefix } : {}),
+    ...(validatedProvider.vmTags !== undefined ? { vmTags: validatedProvider.vmTags } : {}),
+  }
   try {
     const payload = await submitPlatformProviderSubmitPlatformProviderPost(generatedProvider)
     return parsePlatformProviders(payload, 'POST /submit_platform_provider')

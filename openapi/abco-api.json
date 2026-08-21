@@ -2957,6 +2957,24 @@
             ],
             "title": "Orchestratorconnid"
           },
+          "vmPrefix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vmprefix"
+          },
+          "vmTags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Vmtags"
+          },
           "port": {
             "type": "integer",
             "title": "Port",
@@ -3063,6 +3081,24 @@
               }
             ],
             "title": "Orchestratorconnid"
+          },
+          "vmPrefix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vmprefix"
+          },
+          "vmTags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Vmtags"
           },
           "port": {
             "type": "integer",
@@ -3491,6 +3527,24 @@
               }
             ],
             "title": "Orchestratorconnid"
+          },
+          "vmPrefix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vmprefix"
+          },
+          "vmTags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Vmtags"
           }
         },
         "type": "object",
@@ -3611,6 +3665,24 @@
               }
             ],
             "title": "Orchestratorconnid"
+          },
+          "vmPrefix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vmprefix"
+          },
+          "vmTags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Vmtags"
           },
           "credentialStatus": {
             "anyOf": [

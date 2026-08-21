@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useCredentials } from '@/features/providers-connectors/credentials/hooks/useCredentials'
 import { useUpsertPlatformProvider } from '../hooks/useUpsertPlatformProvider'
@@ -27,6 +27,21 @@ const emptyCredentialsQuery = {
   refetch: vi.fn(),
 }
 
+const editedProvider = {
+  id: 'airflow-1',
+  name: 'Production Airflow',
+  description: 'Production orchestration',
+  type: 'AIRFLOW' as const,
+  ipAddress: '10.99.99.40',
+  url: 'https://airflow.example.test',
+  port: 8443,
+  dagDir: '/opt/airflow/dags',
+  credentialId: 'credential-1',
+  credentialStatus: 'ok' as const,
+  vmPrefix: 'airflow-',
+  vmTags: ['saved-platform-tag'],
+}
+
 beforeEach(() => {
   vi.mocked(useCredentials).mockReturnValue(emptyCredentialsQuery as unknown as ReturnType<typeof useCredentials>)
   vi.mocked(useUpsertPlatformProvider).mockReturnValue({
@@ -46,6 +61,10 @@ describe('PlatformProvidersModal', () => {
     )
 
     expect(await screen.findByLabelText('Port')).toHaveValue(22)
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toHaveClass('max-w-2xl')
+    expect(dialog.querySelector('[class~="overflow-y-auto"]')).not.toBeNull()
+    expect(dialog.querySelector('[class~="md:overflow-visible"]')).toBeNull()
   })
 
   it('keeps the saved port when editing a provider', async () => {
@@ -54,22 +73,52 @@ describe('PlatformProvidersModal', () => {
         open
         onClose={vi.fn()}
         existingProviders={[]}
-        provider={{
-          id: 'airflow-1',
-          name: 'Production Airflow',
-          description: 'Production orchestration',
-          type: 'AIRFLOW',
-          ipAddress: '10.99.99.40',
-          url: 'https://airflow.example.test',
-          port: 8443,
-          dagDir: '/opt/airflow/dags',
-          credentialId: 'credential-1',
-          credentialStatus: 'ok',
-        }}
+        provider={editedProvider}
       />,
     )
 
     expect(await screen.findByLabelText('Port')).toHaveValue(8443)
     expect(screen.getByLabelText('URL')).toHaveValue('https://airflow.example.test')
+    expect(screen.getByLabelText('VM prefix')).toHaveValue('airflow-')
+    expect(document.querySelector('#platform-provider-vm-tags')).toHaveValue('saved-platform-tag')
+  })
+
+  it('normalizes legacy platform provider VM tags to the first saved tag', async () => {
+    render(
+      <PlatformProvidersModal
+        open
+        onClose={vi.fn()}
+        existingProviders={[]}
+        provider={{ ...editedProvider, vmTags: ['first-tag', 'second-tag'] }}
+      />,
+    )
+
+    await screen.findByLabelText('Port')
+    expect(document.querySelector('#platform-provider-vm-tags')).toHaveValue('first-tag')
+  })
+
+  it('submits platform VM settings and sends explicit empty values when cleared', () => {
+    const mutate = vi.fn()
+    vi.mocked(useUpsertPlatformProvider).mockReturnValue({
+      isPending: false,
+      mutate,
+    } as unknown as ReturnType<typeof useUpsertPlatformProvider>)
+
+    render(
+      <PlatformProvidersModal
+        open
+        onClose={vi.fn()}
+        existingProviders={[]}
+        provider={editedProvider}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('VM prefix'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: /Edit platform provider/i }))
+
+    const submitted = mutate.mock.calls[0]?.[0] as unknown as {
+      provider?: { vmPrefix?: string | null, vmTags?: string[] }
+    } | undefined
+    expect(submitted?.provider).toMatchObject({ vmPrefix: null, vmTags: ['saved-platform-tag'] })
   })
 })

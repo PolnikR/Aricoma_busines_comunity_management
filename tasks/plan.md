@@ -1,336 +1,407 @@
-# Implementation Plan: Move Recovery Runs into Recovery Plans + Group Support
+# Implementation Plan: Stable Provider-Scoped Resource Filters
 
 ## Overview
 
-Relocate the Recovery Runs feature from the flat "Storage Orchestration" nav
-item to a "Recovery Runs" sub-item under "Recovery Plans", and extend it so
-it covers Recovery Groups in addition to Recovery Applications. Add
-All/Applications/Recovery Groups tabs driven by URL query params (so the page
-stays independently usable and also deep-linkable), surface live orchestrator
-status on both entities' detail panels, and wire a "View recovery runs" action
-that navigates to the Recovery Runs page pre-filtered to that entity.
+Repair the resource inventory regressions by giving every provider its own
+filter state, keeping the active provider state shareable in the URL, and
+preserving inactive provider states in `sessionStorage`. VMware search must
+remain mounted and focused while its debounced request changes, cached data
+must remain visible during refetches, and a configured target tag must not be
+silently deleted when the tags endpoint does not currently return it.
 
-## Confirmed decisions (from user)
+The scope covers Resources (`source`) and Resources ISE (`target`) and all
+provider tabs. VMware receives the additional default/search/tag behavior;
+FlashSystem and IBM Power only gain provider-scoped restoration of their
+existing filters. No backend or OpenAPI change is required.
 
-- **Tabs are query-param driven** (`?tab=all|applications|groups&entityId=...`
-  on a single route), not separate routes per tab — this is what lets detail
-  panels deep-link into a pre-filtered tab.
-- **"Storage Orchestration" nav item stays**, but becomes empty again: once the
-  `RecoveryRunsPage` route override is removed, the route falls back to the
-  existing generic placeholder page config for `routes.storageOrchestration`
-  in `src/app/modulePageConfigs.ts` (already defined, currently just filtered
-  out of rendering — see Task 1).
-- **Backend update (requested 2026-08-19, NOT YET LIVE — checked 2026-08-19
-  against the real spec via `npm run api:pull`, confirmed absent): Recovery
-  Applications are expected to eventually return `orchestration_provider_id`
-  on the record, the same field name and shape Recovery Groups already
-  return.** Once shipped, this removes the provider-id asymmetry entirely.
-  Until then, `useOrchestratedApps` keeps its current "first eligible platform
-  provider" fallback (`getEligiblePlatformProviders` /
-  `usePlatformProviders`) — see Task 2 split into 2a (buildable now) / 2b
-  (deferred until the field ships).
+## Confirmed Root Causes
 
-## Architecture decisions
+1. `useResourceTabSearchParam` deletes the union of resource filter parameters
+   whenever the active provider changes. A single URL state therefore cannot
+   restore the previous state of multiple providers.
+2. Name-only search creates a new query without data during its 300 ms
+   debounce. The page treats that legitimate pending state as an error and
+   later replaces the complete inventory panel with a loading skeleton,
+   unmounting the focused search input.
+3. VMware queries do not retain previous data across remote query-key changes,
+   so provider/search transitions visibly discard otherwise usable results.
+4. `VmwareResourcesPage` removes a selected tag when `/tags` does not include
+   it. This silently changes tag-plus-name mode into name-only mode in
+   Resources ISE.
 
-- **Relocate, don't rebuild.** All the orchestrator-runs plumbing (API client,
-  query keys, mapper, formatting helpers) already exists under
-  `src/features/storage-orchestration/`. It moves to
-  `src/features/recovery-plans/recovery-runs/` with import-path updates only
-  — no behavioral change to the API layer itself.
-- **Unify apps and groups behind one `OrchestratedEntity` type** rather than
-  keeping two parallel per-type models all the way through. `useOrchestratedApps`
-  and a new `useOrchestratedGroups` both normalize to
-  `{ entityType: 'application' | 'group', id, name, dagId, providerId }`, and a
-  new `useOrchestratedEntities()` merges them. This keeps `RecoveryRunsTable`,
-  the runs-fetching hook, and the history drawer entity-type-agnostic — they
-  only care about `dagId` + `providerId`, never about which domain object it
-  came from.
-- **Per-entity `providerId` in the runs-fetching hook.** Today
-  `useOrchestratedAppRuns(apps, providerId)` takes one shared `providerId` for
-  every app. Since groups carry their own `orchestrationProviderId`, the
-  generalized hook takes `providerId` per entity instead
-  (`useOrchestratedEntityRuns(entities: OrchestratedEntity[])`). Applications
-  still all resolve to the same shared eligible-provider id under the hood —
-  this is purely a signature generalization, not a behavior change for apps.
-- **New small `useLatestOrchestratorRun(providerId, dagId)` hook** (single
-  `useQuery`, no list) for detail-panel use, so opening an app/group detail
-  drawer doesn't have to fetch every other entity's latest run just to show
-  one row's status.
+## Architecture Decisions
 
-## Task List
+- Use a versioned session key derived from
+  `role:resourceTab:providerId`; source and target providers can never share
+  state accidentally.
+- Store a discriminated snapshot for each resource type. Empty values are
+  valid saved state, so clearing filters never re-applies provider defaults.
+- Resolve initial state in this order:
+  1. explicit active-provider filters already present in the URL;
+  2. saved provider snapshot, including an explicitly empty snapshot;
+  3. VMware `vmPrefix` plus only `vmTags[0]`;
+  4. the resource type's empty defaults.
+- Keep only the active provider's filters in the URL. On provider selection,
+  clear the previous provider's URL filter parameters; the newly mounted
+  resource hook restores the target snapshot/default while inventory queries
+  remain gated by initialization readiness.
+- Persist snapshots whenever committed filters change. Page and pagination
+  fields are not provider filters; page resets to 1 on provider/filter change.
+- Keep VMware's toolbar and prior inventory mounted during debounce/refetch.
+  Expose query lifecycle explicitly (`isDebouncing`, initial pending,
+  background fetching) and never infer an error from missing data alone.
+- Use React Query cache identity only for remote inputs. Returning to a fresh
+  cached provider/filter combination must not issue a request.
+- Preserve a configured/selected VMware tag even when the tags endpoint omits
+  it. Include the selected tag as a fallback dropdown option and let the
+  inventory endpoint return an empty result when no VM matches.
 
-### Phase 1: Move the feature, no behavior change
+## Provider Snapshot Contracts
 
-- [ ] **Task 1: Relocate Recovery Runs feature folder + routing + nav**
-- [ ] **Task 1 checkpoint**: page loads at the new URL, old URL shows the placeholder, nothing else regresses
+```ts
+type ProviderFilterScope = {
+  role: 'source' | 'target'
+  resourceTab: 'vmware' | 'flashsystem' | 'ibm-power'
+  providerId: string
+}
 
-### Phase 2: Data layer for both entity types
+type ProviderFilterSnapshot =
+  | { resourceTab: 'vmware'; initialized: true; filters: VirtualMachineFilters }
+  | { resourceTab: 'flashsystem'; initialized: true; filters: FlashSystemFilters }
+  | { resourceTab: 'ibm-power'; initialized: true; filters: PowerFilters }
+```
 
-- [ ] **Task 2a: Generalize the data hooks to support Applications + Recovery Groups (buildable now)**
-- [ ] **Task 2a checkpoint**: hook unit tests green for apps, groups, and merged entities
-- [ ] **Task 2b (BLOCKED): Switch Applications to their own `orchestration_provider_id`** — do not start until backend confirmed live
+Storage parsing must reject malformed, mismatched, or unknown-version data and
+fall back safely without throwing during SSR/tests or blocked storage access.
 
-### Phase 3: Page UX
+## Dependency Graph
 
-- [ ] **Task 3: Add All / Applications / Recovery Groups tabs (query-param driven)**
-- [ ] **Task 3 checkpoint**: manual check — switching tabs filters correctly, `?tab=` in URL updates, reload preserves tab
+```text
+Provider filter session store + pure tests
+                 |
+                 v
+Resource-type URL hooks + provider switch cleanup
+                 |
+                 +-----------------------+
+                 |                       |
+                 v                       v
+Stable VMware query lifecycle       Flash/Power restoration
+                 |
+                 v
+VMware page + toolbar + ISE tag behavior
+                 |
+                 v
+Focused integration/browser verification
+```
 
-### Phase 4: Detail panels + cross-navigation
+## Task 1: Add the versioned provider-filter session module
 
-- [ ] **Task 4: Recovery Application detail drawer — orchestrator status + "View recovery runs"**
-- [ ] **Task 5: Recovery Group detail drawer — orchestrator status + "View recovery runs"**
-- [ ] **Task 5 checkpoint**: clicking "View recovery runs" from either entity lands on the right tab, pre-filtered, and the page is still usable standalone
-
-### Phase 5: Polish
-
-- [ ] **Task 6: Locale entries, dead-code cleanup, full focused verification**
-
----
-
-## Task 1: Relocate Recovery Runs feature folder + routing + nav
-
-**Description:** Move `src/features/storage-orchestration/` to
-`src/features/recovery-plans/recovery-runs/` (folder rename, import paths
-updated, no logic changes). Wire the route under
-`/recovery-plans/recovery-runs` instead of `/storage-orchestration`. Add
-"Recovery Runs" as a Recovery Plans sidebar sub-item. Let `/storage-orchestration`
-fall back to its existing placeholder page.
+**Description:** Create a small pure module that builds provider-scoped keys,
+validates resource-specific snapshots, and safely reads, writes, and clears
+snapshots in `sessionStorage`. The module must preserve explicitly empty
+filters and isolate source from target.
 
 **Acceptance criteria:**
-- [ ] `RecoveryRunsPage` and all its supporting files live under
-      `src/features/recovery-plans/recovery-runs/` with no import breakage
-      (`npx tsc --noEmit` clean).
-- [ ] Visiting `/recovery-plans/recovery-runs` renders the Recovery Runs page;
-      visiting `/storage-orchestration` renders the existing generic
-      placeholder (EP-04) instead.
-- [ ] Sidebar "Recovery Plans" menu shows a "Recovery Runs" sub-item (reusing
-      the existing unused `nav.recovery.runs` translation key / `navKeyMap`
-      entry — no new key needed) that highlights correctly when active.
-- [ ] "Storage Orchestration" remains a top-level sidebar item pointing at
-      `/storage-orchestration` (now the placeholder).
+
+- [ ] Keys include schema version, role, resource type, and provider ID.
+- [ ] Round trips preserve each resource type's filters, including empty
+      VMware `search` and `tags` values.
+- [ ] Invalid JSON, wrong resource type/version, and unavailable storage return
+      no snapshot without throwing.
 
 **Verification:**
-- [ ] `npx tsc --noEmit`
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx`
-- [ ] Manual: click through sidebar Recovery Plans > Recovery Runs; confirm old `/storage-orchestration` shows the placeholder card.
+
+- [ ] Focused unit test for key isolation, validation, empty state, and storage
+      failures.
+- [ ] Focused ESLint for the module and its test.
 
 **Dependencies:** None
 
 **Files likely touched:**
-- `src/features/storage-orchestration/**` → moved to `src/features/recovery-plans/recovery-runs/**` (all 18 files from the earlier glob: page, table, drawer, hooks, api, model, helpers, and their tests)
-- `src/app/routes.ts` — remove `storageOrchestration` usage for this page (keep the constant, it now points at the placeholder), reuse existing `recoveryRuns: '/recovery-plans/recovery-runs'` constant (already defined)
-- `src/app/AppRoutes.tsx` — replace the `recovery-runs` redirect (lines 290-293) with the real `RecoveryRunsPage` route; remove the `storage-orchestration` route override (lines 384-391); remove `routes.storageOrchestration` from the `remainingEpicPages` filter exclusion (line 381-383) so the placeholder renders again
-- `src/layouts/app-shell/AppSidebar.tsx` — add `{ name: 'Recovery Runs', path: routes.recoveryRuns }` to the `Recovery Plans` `subItems` array (lines 61-70); `navKeyMap` entry already exists (line 99)
 
-**Estimated scope:** Medium (mechanical move across ~18 files + 3 wiring files)
+- `src/features/discovery-inventory/resources/state/providerFilterSession.ts`
+- `src/features/discovery-inventory/resources/state/providerFilterSession.test.ts`
 
----
+**Estimated scope:** Small (2 files)
 
-## Task 2a: Generalize the data hooks to support Applications + Recovery Groups (buildable now)
+## Task 2: Restore and persist VMware state per provider
 
-**Description:** Introduce a unified `OrchestratedEntity` shape, build the
-Recovery Groups equivalent of the existing Applications orchestration hook,
-and generalize the runs-fetching hook to work over a mixed list of entities
-that each carry their own provider id. Applications keep their **current**
-"first eligible platform provider" fallback for now (see Task 2b) — checked
-2026-08-19 against the live backend spec via `npm run api:pull` and confirmed
-`RecoveryAppRecord` does not yet have `orchestration_provider_id` (Recovery
-Groups' schema already does). Building the unified entity abstraction now,
-with apps still on the old fallback internally, means Task 3 (tabs) isn't
-blocked on the backend at all — only the narrow swap in Task 2b is.
+**Description:** Extend the VMware URL-filter hook with role-aware provider
+scope and the session module. Explicit URL values remain authoritative, saved
+snapshots restore on return, and provider defaults apply only when neither URL
+nor a snapshot exists. Keep initialization readiness so no transient
+unfiltered request can run.
 
 **Acceptance criteria:**
-- [ ] `OrchestratedEntity { entityType: 'application' | 'group', id, name, dagId, providerId }` added to `recoveryRunTypes.ts` (alongside existing `OrchestratorRun`/`OrchestratorRunsPage`; `OrchestratedApp` folded into this).
-- [ ] `useOrchestratedApps` maps to `OrchestratedEntity[]` with `entityType: 'application'`, still filtering on a real `airflowRunId` and resolving `providerId` via `getEligiblePlatformProviders`/`usePlatformProviders` (unchanged logic, new output shape — this is the piece Task 2b later swaps).
-- [ ] New `useOrchestratedGroups` hook mirrors it for Recovery Groups: sources `useRecoveryGroups()`, filters to `pushToOrchestrator && airflowRunId && orchestrationProviderId` all truthy, `dagId = \`dag_${airflowRunId}\``, `providerId = group.orchestrationProviderId` (this field already exists and works today, no backend dependency).
-- [ ] New `useOrchestratedEntities()` combines both hooks: merged `entities` array, aggregated `isLoading`/`isFetching`/`error`/`refetch`.
-- [ ] `useOrchestratedAppRuns(apps, providerId)` becomes `useOrchestratedEntityRuns(entities: OrchestratedEntity[])`, reading `providerId` off each entity instead of a single shared param; query key becomes `recoveryRunsKeys.latest(entity.providerId, entity.dagId)`.
-- [ ] New `useLatestOrchestratorRun(providerId: string | null, dagId: string | null)` — single `useQuery` wrapping `fetchOrchestratorRuns(..., { limit: 1, orderBy: '-logical_date' })`, for single-entity detail-panel use (Tasks 4/5).
-- [ ] `useAppRunHistory` (paginated history) needs no signature change — it already takes plain `providerId`/`dagId` strings, so it works unmodified for both entity types. Consider renaming to `useOrchestratorRunHistory` for clarity since it's no longer app-specific (rename is optional, judgment call at implementation time).
+
+- [ ] Provider A custom/empty state survives A -> B -> A switching, while B
+      receives B's snapshot or defaults.
+- [ ] Source and target providers with the same ID remain isolated.
+- [ ] Direct URL filters win over storage; clearing filters saves an empty
+      initialized snapshot and does not restore defaults on remount/refresh.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps.test.tsx src/features/recovery-plans/recovery-runs/hooks/useOrchestratedGroups.test.tsx src/features/recovery-plans/recovery-runs/hooks/useOrchestratedAppRuns.test.tsx`
-- [ ] `npx tsc --noEmit`
 
-**Dependencies:** Task 1 (files must already be at their new location)
+- [ ] Focused hook tests use real `MemoryRouter` and `sessionStorage` for first
+      activation, explicit URL, switch, keyed remount, refresh, and clear.
+- [ ] No inventory request is enabled before URL restoration completes.
+- [ ] Focused ESLint for changed hook files/tests.
+
+**Dependencies:** Task 1
 
 **Files likely touched:**
-- `src/features/recovery-plans/recovery-runs/model/recoveryRunTypes.ts`
-- `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps.ts` (+ test)
-- `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedGroups.ts` (new, + test)
-- `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedEntities.ts` (new)
-- `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedAppRuns.ts` → generalize (+ test)
-- `src/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun.ts` (new)
-- `src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroups.ts` (read-only consumption, no change expected)
 
-**Estimated scope:** Medium (5-7 files, mostly new + one generalization)
+- `src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.ts`
+- `src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx`
+- `src/features/discovery-inventory/resources/hooks/vmwareSearchParamKeys.ts`
 
----
+**Estimated scope:** Medium (3 files)
 
-## Task 2b (BLOCKED — deferred): Switch Applications to their own `orchestration_provider_id`
+## Task 3: Make provider switching preserve scoped state
 
-**Description:** Once the backend actually ships `orchestration_provider_id`
-on `GET /get_recovery_apps` responses (confirmed absent as of 2026-08-19),
-add the field through the schema/mapper layer and drop Applications' "first
-eligible platform provider" fallback in favor of reading the id directly off
-each record — bringing Applications to full parity with how Recovery Groups
-already work.
+**Description:** Change resource source selection so it removes only the
+outgoing provider's active URL filter representation and never destroys its
+saved snapshot. Keep provider/resource/page updates atomic and prevent old
+type-specific parameters from leaking into the next tab.
 
 **Acceptance criteria:**
-- [ ] Re-run `npm run api:pull` and confirm `RecoveryAppRecord` in the refreshed `openapi/abco-api.json` now includes `orchestration_provider_id`; run `npm run api:generate` so the generated Zod schema (`RecoveryAppRecordOutput`) picks it up (generated files — never hand-edit `zod.gen.ts` directly).
-- [ ] `RecoveryApplicationApiRecord` and `RecoveryApplicationListItem` in `recoveryApplicationTypes.ts` gain `orchestration_provider_id?` / `orchestrationProviderId?` fields, matching the shape already used on `RecoveryGroupReadRecord.orchestration_provider_id` / `RecoveryGroup.orchestrationProviderId`.
-- [ ] `mapRecoveryApplications.ts` maps `record.orchestration_provider_id` → `orchestrationProviderId` (and `toRecoveryApplicationJson` round-trips it back), following the same optional-field pattern already used there for `airflow_run_id`/`push_to_orchestrator`.
-- [ ] `useOrchestratedApps` filters to entries where `airflowRunId` **and** `orchestrationProviderId` are both truthy, `providerId = record.orchestrationProviderId` — **no longer** depends on `usePlatformProviders`/`getEligiblePlatformProviders`, which is deleted from this hook.
-- [ ] Task 4's Application detail drawer switches from whatever interim provider source it used to `selected.orchestrationProviderId` directly (see Task 4 note).
+
+- [ ] Switching provider or resource type leaves the outgoing snapshot intact
+      and clears its active filter parameters from the URL.
+- [ ] The target page initializes from its own snapshot/default before fetch.
+- [ ] Re-selecting the already active tab does not clear state or navigate.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-applications/helpers/mapRecoveryApplications.test.ts src/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps.test.tsx`
-- [ ] `npx tsc --noEmit`
 
-**Dependencies:** Backend must ship the field first — **do not start this task until re-confirmed live**, not just "requested"
+- [ ] Hook tests cover VMware A -> VMware B -> A and VMware -> FlashSystem ->
+      VMware transitions with search and type-specific filters.
+- [ ] ResourceRolePage test proves source selection is changed once without a
+      transient unfiltered query.
+- [ ] Focused ESLint for changed files/tests.
+
+**Dependencies:** Tasks 1-2
 
 **Files likely touched:**
-- `src/features/recovery-plans/recovery-applications/model/recoveryApplicationTypes.ts`
-- `src/features/recovery-plans/recovery-applications/helpers/mapRecoveryApplications.ts` (+ test)
-- `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedApps.ts` (+ test)
-- `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx` (provider source swap, from Task 4)
-- `openapi/abco-api.json`, `src/generated/api/**` (regenerated, not hand-edited)
 
-**Estimated scope:** Small (3-4 files, once unblocked)
+- `src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.ts`
+- `src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx`
+- `src/features/discovery-inventory/resources/pages/ResourceRolePage.test.tsx`
 
----
+**Estimated scope:** Medium (3 files)
 
-## Task 3: Add All / Applications / Recovery Groups tabs (query-param driven)
+## Checkpoint: Provider state contract
 
-**Description:** Rebuild `RecoveryRunsPage` on top of `useOrchestratedEntities()`
-/ `useOrchestratedEntityRuns()`, add a query-param-driven tab state (modeled on
-`useResourceTabSearchParam`), and render tabs via the existing shared `Tabs`
-component inside `InventoryShell` (which already accepts a `tabs` prop, currently
-passed `null`).
+- [ ] Tasks 1-3 focused tests pass together.
+- [ ] URL, snapshot, defaults, and empty-state precedence is explicit in tests.
+- [ ] No test relies on mocked search-param hooks for the switching contract.
+- [ ] Typecheck and focused lint pass.
+
+## Task 4: Preserve FlashSystem and IBM Power provider filters
+
+**Description:** Apply the same provider-snapshot contract to the existing
+FlashSystem and IBM Power URL hooks. Do not change their filtering or API
+semantics; only restore their own state after provider/tab navigation.
 
 **Acceptance criteria:**
-- [ ] New `useRecoveryRunsTabSearchParam()` hook: reads/writes `tab` (`all` | `applications` | `groups`, default `all`) and `entityId` (optional) query params, resets to page 1 on tab change.
-- [ ] `RecoveryRunsTable` row type extended with `entityType` and `dagId`; an entity-type badge/column is shown when the active tab is "All" (hidden on single-type tabs, since it's redundant there).
-- [ ] `RecoveryRunsPage` renders `<Tabs>` with 3 items; switching tabs filters `entities` by `entityType` client-side (no extra network calls — same merged list, just filtered).
-- [ ] When `entityId` is present in the URL, the table is further filtered to just that one entity (this is the pre-filter behavior Tasks 4/5 rely on) — but the page still renders normally with no `entityId` present (standalone usability).
-- [ ] `RecoveryRunHistoryDrawer` accepts a generic `{ id, name, dagId }` + `providerId` instead of specifically `OrchestratedApp` (trivial widening, since it already only reads those three fields).
+
+- [ ] Each FlashSystem and IBM Power provider restores its own search and
+      type-specific filters.
+- [ ] Empty/reset state persists and source/target scopes remain isolated.
+- [ ] Existing API query behavior and filter semantics are unchanged.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.test.tsx`
-- [ ] `npx tsc --noEmit`
-- [ ] Manual: `/recovery-plans/recovery-runs`, `?tab=applications`, `?tab=groups`, `?tab=applications&entityId=<id>` all behave as expected; browser back/forward preserves tab.
 
-**Dependencies:** Task 2a (does NOT depend on Task 2b — works fine with Applications still on the interim provider fallback)
+- [ ] Focused tests for both search-param hooks cover switch-away/return and
+      refresh restoration.
+- [ ] Existing FlashSystem and IBM Power page tests remain green.
+- [ ] Focused ESLint for changed files/tests.
+
+**Dependencies:** Tasks 1 and 3
 
 **Files likely touched:**
-- `src/features/recovery-plans/recovery-runs/hooks/useRecoveryRunsTabSearchParam.ts` (new)
-- `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx` (+ test)
-- `src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.tsx` (+ test)
-- `src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDrawer.tsx` (+ test)
 
-**Estimated scope:** Medium (3-5 files)
+- `src/features/discovery-inventory/resources/hooks/useFlashSystemSearchParams.ts`
+- `src/features/discovery-inventory/resources/hooks/useFlashSystemSearchParams.test.tsx`
+- `src/features/discovery-inventory/resources/hooks/usePowerSearchParams.ts`
+- `src/features/discovery-inventory/resources/hooks/usePowerSearchParams.test.tsx`
 
----
+**Estimated scope:** Medium (4 files)
 
-## Task 4: Recovery Application detail drawer — orchestrator status + "View recovery runs"
+## Task 5: Stabilize the VMware name-search query lifecycle
 
-**Description:** When a selected application has `pushToOrchestrator === true`,
-show Airflow DAG ID, latest run status, last executed, duration, and a "View
-recovery runs" action in the existing `DetailDrawer` in
-`RecoveryApplicationsTable.tsx` (currently at lines 313-334, no orchestration
-info shown at all today).
-
-**Note (interim, until Task 2b unblocks):** Applications don't have their own
-`orchestrationProviderId` yet. Source the provider id the same way
-`useOrchestratedApps` does in Task 2a — via `getEligiblePlatformProviders`
-(e.g. by consuming `useOrchestratedEntities()` and looking up this app's own
-entry, or a tiny local call to the same eligible-provider helper). When Task
-2b lands, swap this one line to `selected.orchestrationProviderId` — tracked
-explicitly in Task 2b's acceptance criteria so it isn't forgotten.
+**Description:** Keep the current query/data active during the 300 ms
+name-only debounce and while the next remote query fetches. Distinguish
+debouncing, initial loading, background fetching, real error, and empty success
+so typing never creates a false error state.
 
 **Acceptance criteria:**
-- [ ] New `DetailRow`s appear only when `selected.pushToOrchestrator && selected.airflowRunId` are both truthy (provider truthiness is implicit via the interim lookup): DAG ID (`dag_${airflowRunId}`), latest run status badge, last-executed timestamp, duration — sourced from `useLatestOrchestratorRun(providerId, dagId)`.
-- [ ] "View recovery runs" button/link navigates to `${routes.recoveryRuns}?tab=applications&entityId=${selected.id}`.
-- [ ] Nothing renders (no broken empty rows) when the application isn't orchestrated.
+
+- [ ] Typing multiple characters issues no request before 300 ms and exactly
+      one `/vms_by_name` request for the settled prefix.
+- [ ] Previous data remains available during debounce/refetch; a disabled
+      debounce query is never surfaced as an error.
+- [ ] Tag+name still reuses one `/vms_by_tag` response and filters by
+      case-sensitive `name.startsWith(prefix)` without another request.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx`
-- [ ] `npx tsc --noEmit`
 
-**Dependencies:** Task 3 (needs the `?tab=&entityId=` contract to exist); does NOT wait on Task 2b, but will need a one-line follow-up once 2b lands
+- [ ] Focused hook tests cover debounce replacement, previous data, cache
+      return, real HTTP failure, retry, and empty success.
+- [ ] Returning to a provider with a fresh matching cache key makes zero new
+      network requests.
+- [ ] Focused ESLint for the hook and tests.
+
+**Dependencies:** Task 2
 
 **Files likely touched:**
-- `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx` (+ test)
 
-**Estimated scope:** Small (1-2 files)
+- `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts`
+- `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
 
----
+**Estimated scope:** Small (2 files)
 
-## Task 5: Recovery Group detail drawer — orchestrator status + "View recovery runs"
+## Task 6: Keep the VMware toolbar mounted and focused
 
-**Description:** Extend the existing orchestration section in
-`RecoveryGroupsTable.tsx`'s `DetailDrawer` (lines 386-411 already show a
-push-to-orchestrator badge and an external Airflow link) with latest run
-status, last executed, duration, and a "View recovery runs" action.
+**Description:** Render the inventory panel and toolbar continuously after the
+provider is initialized. Use the stable query lifecycle for inline initial,
+background, error, and empty states instead of replacing the whole panel.
+Search remains controlled and updates the URL/snapshot immediately while the
+remote request stays debounced.
 
 **Acceptance criteria:**
-- [ ] New `DetailRow`s (status/last-executed/duration) appear alongside the
-      existing orchestration/airflow-link rows, sourced from
-      `useLatestOrchestratorRun(selected.orchestrationProviderId, \`dag_${selected.airflowRunId}\`)`.
-- [ ] "View recovery runs" action navigates to `${routes.recoveryRuns}?tab=groups&entityId=${selected.id}`.
-- [ ] Existing airflow-link `DetailRow` and rollback button behavior are untouched.
+
+- [ ] A focused search input remains the same DOM element and retains focus
+      while typing, debouncing, fetching, succeeding empty, or failing.
+- [ ] A real request error appears only after the request fails; cached/previous
+      data remains visible with a non-blocking notice when available.
+- [ ] Metrics, filters, pagination, detail panel, retry, refresh, and density
+      controls remain functional.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.test.tsx`
-- [ ] `npx tsc --noEmit`
 
-**Dependencies:** Task 3
+- [ ] Component test types `sdf` with fake timers and asserts focus after each
+      lifecycle transition, one settled request, and no premature error.
+- [ ] Component tests cover real failure and empty success as distinct states.
+- [ ] Focused ESLint for changed files/tests.
+
+**Dependencies:** Task 5
 
 **Files likely touched:**
-- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.tsx` (+ test)
 
-**Estimated scope:** Small (1-2 files)
+- `src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.tsx`
+- `src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.test.tsx`
+- `src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx`
 
----
+**Estimated scope:** Medium (3 files)
 
-## Task 6: Locale entries, dead-code cleanup, full focused verification
+## Task 7: Preserve missing configured tags in Resources ISE
 
-**Description:** Add missing translation keys (en/cs/sk) for the new tabs,
-type column, and detail-panel labels; confirm no leftover dead imports/routes
-from the move; run the full set of touched focused tests plus a type check.
+**Description:** Stop deleting an active tag merely because the provider's
+tags endpoint does not return it. Merge the selected tag into dropdown options,
+keep `DR-` plus `recovery` visible, and let `/vms_by_tag` produce the real empty
+or error result.
 
 **Acceptance criteria:**
-- [ ] New keys added to all three locale files: tab labels (`recoveryRuns.tabs.all/applications/groups`), type column header, `details.airflowDagId`, `details.latestRunStatus`, `details.lastExecuted`, `details.duration` (reuse if equivalents already exist — check first), `buttons.viewRecoveryRuns`.
-- [ ] No remaining references to `src/features/storage-orchestration/*` anywhere in `src/` (grep clean).
-- [ ] `routes.storageOrchestration` and `routes.recoveryRuns` both still resolve correctly (placeholder vs. real page respectively).
+
+- [ ] Target provider defaults `vmPrefix: "DR-"` and `vmTags: ["recovery"]`
+      remain visible when `/tags` returns other tags or an empty list.
+- [ ] The inventory uses `/vms_by_tag?tag=recovery&provider_id=...`; `DR-` is
+      applied client-side to that canonical response.
+- [ ] The user may clear/change the tag, after which the normal endpoint matrix
+      applies; tags endpoint failures do not clear the active filter.
 
 **Verification:**
-- [ ] `npx tsc --noEmit`
-- [ ] `npm exec vitest run` on every test file touched across Tasks 1-5 (list explicitly, do not run the full suite)
-- [ ] `git diff --check` (no leftover conflict markers/whitespace issues in locale JSON)
 
-**Dependencies:** Tasks 1-5
+- [ ] Resources ISE integration test uses the real VMware search-param and
+      inventory seams with a missing `recovery` tag.
+- [ ] Toolbar test shows the selected fallback tag option.
+- [ ] Source Resources regression test remains green.
+
+**Dependencies:** Tasks 2, 5, and 6
 
 **Files likely touched:**
-- `src/locales/en.json`, `src/locales/cs.json`, `src/locales/sk.json`
 
-**Estimated scope:** Small (3-4 files)
+- `src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.tsx`
+- `src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.tsx`
+- `src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.test.tsx`
+- `src/features/discovery-inventory/resources/pages/ResourcesIsePage.test.tsx`
 
----
+**Estimated scope:** Medium (4 files)
+
+## Checkpoint: Stable end-to-end VMware flow
+
+- [ ] Focused Tasks 4-7 tests pass together.
+- [ ] Source and target use independent provider snapshots.
+- [ ] Tab return uses fresh React Query cache without a request.
+- [ ] Search focus survives debounce, fetch, error, and empty success.
+- [ ] Missing ISE tag stays selected and does not silently change endpoint.
+- [ ] Typecheck and changed-file ESLint pass.
+
+## Task 8: Browser/network verification and final cleanup
+
+**Description:** Verify the real interaction and network sequence in a browser,
+then run the complete focused contract set. Remove only code made obsolete by
+this repair and commit only in-scope files.
+
+**Acceptance criteria:**
+
+- [ ] Manual flow: customize provider A, switch to B, return to A, and observe
+      exact state restoration with no fresh request while cache is valid.
+- [ ] Manual flow: type `sdf`; focus remains, no premature error appears, and
+      network shows one debounced `/vms_by_name` request.
+- [ ] Manual Resources ISE flow shows `DR-` and `recovery` even when recovery is
+      absent from `/tags`, with the expected `/vms_by_tag` request.
+
+**Verification:**
+
+- [ ] Run all focused state, hook, toolbar, Resources, Resources ISE,
+      FlashSystem, IBM Power, and relevant API tests.
+- [ ] `node_modules/.bin/tsc.cmd -b`
+- [ ] Run ESLint only for changed TypeScript/TSX files with zero warnings.
+- [ ] `git diff --check`, `git diff --stat`, and `git status --short`.
+- [ ] Record whether full suite/build was run; do not hide environment limits.
+
+**Dependencies:** Tasks 1-7
+
+**Files likely touched:** No new production files beyond focused cleanup
+
+**Estimated scope:** Small (verification)
+
+## Final Checkpoint
+
+- [ ] Every provider has independent source/target filter state.
+- [ ] Explicit URL > saved snapshot > provider defaults > empty defaults.
+- [ ] Empty user state is preserved and defaults do not reappear.
+- [ ] Returning to a fresh cached provider state performs no request.
+- [ ] VMware typing performs one debounced request and never loses focus.
+- [ ] Pending debounce is not displayed as an error.
+- [ ] Missing configured ISE tags remain visible and active.
+- [ ] Focused tests, typecheck, focused lint, browser checks, and diff checks pass.
+- [ ] Only in-scope changes are committed.
+
+## Parallelization Opportunities
+
+- Task 1 is foundational and sequential.
+- After Task 3, Task 4 (Flash/Power) and Task 5 (VMware query lifecycle) may run
+  in parallel because their write sets are disjoint.
+- Tasks 6 and 7 share VMware page/toolbar files and must be sequential.
+- Task 8 is sequential final verification.
 
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
-|------|--------|------------|
-| `orchestrationProviderId` might be stale/unresolved for some apps or groups (provider deleted, etc.) | Medium — an entity could show `pushToOrchestrator: true` but have no usable provider to query runs with | Both `useOrchestratedApps` and `useOrchestratedGroups` require `orchestrationProviderId` truthy as part of the orchestrated-entity filter; entities failing this are simply excluded from the list rather than erroring |
-| Backend ships `orchestration_provider_id` on the raw API response before the generated Zod schema (`RecoveryAppRecordOutput`) is regenerated to include it | High — the field would be silently stripped by Zod validation (`parseGeneratedResponse`), and `orchestrationProviderId` would always be `undefined` even though the backend is sending it | Materialized: checked 2026-08-19 via `npm run api:pull` and confirmed the field is genuinely absent from `RecoveryAppRecord`. Task 2 was split into 2a (buildable now, apps keep the old provider fallback) / 2b (blocked — do not start until `api:pull` shows the field live, then `api:generate` to regenerate the Zod schema before touching the mapper) |
-| Renaming `useOrchestratedAppRuns` → `useOrchestratedEntityRuns` touches a query key shape other code might rely on | Low — only `RecoveryRunsPage`/`RecoveryRunHistoryDrawer` consume `recoveryRunsKeys`, confirmed via grep | Grep for `recoveryRunsKeys` usage before removing the old hook to confirm no other consumers |
-| Folder move (Task 1) could silently break a lazy-loaded route if an import path is missed | Medium — blank page at runtime, not always caught by `tsc` if a dynamic import string is wrong | `tsc --noEmit` catches static import breaks; manually visit both old and new URLs as part of Task 1 verification |
+|---|---|---|
+| URL/session feedback loop | High | Pure precedence function, initialization readiness, and keyed-remount tests |
+| Empty state mistaken for missing state | High | Persist explicit `initialized: true` snapshots and test clear/remount |
+| Cross-role/provider contamination | High | Versioned key includes role, resource type, and provider ID |
+| Search input remount regression | High | DOM identity/focus tests across debounce and fetch transitions |
+| Extra or stale network requests | High | Remote-only query keys, fake-timer request counts, browser network audit |
+| Missing tag silently changes operation | High | Never validate active selection by destructive deletion; fallback option test |
+| Storage blocked/corrupt | Medium | Safe adapter with validation and no-throw fallback |
+| Scope expands into backend work | Low | Keep endpoint matrix unchanged; record backend failures separately |
 
 ## Open Questions
 
-- **Task 2b is blocked on the backend.** `orchestration_provider_id` was
-  requested for Recovery Applications but is not live yet (confirmed absent
-  2026-08-19). Task 2a/3/4/5 proceed without it (Applications keep the
-  existing eligible-provider fallback); Task 2b and the one-line follow-up it
-  requires in Task 4 stay open until the backend ships the field.
+None. The approved persistence scope is the current browser session:
+`sessionStorage` survives tab switching and refresh, while explicit active URL
+filters remain shareable and authoritative.
