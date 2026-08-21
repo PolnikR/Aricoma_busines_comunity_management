@@ -16,11 +16,12 @@ function renderListPage() {
 
 const navigate = vi.fn()
 const refetch = vi.fn()
-const deleteMutation = {
-  mutateAsync: vi.fn(),
+const deleteMutation = vi.hoisted(() => ({
+  mutateAsync: vi.fn<
+    (application: RecoveryApplicationListItem) => Promise<{ applications: RecoveryApplicationListItem[]; rollback: null }>
+  >(),
   isPending: false,
-  error: null as Error | null,
-}
+}))
 let query: {
   data: RecoveryApplicationListItem[] | undefined
   isLoading: boolean
@@ -45,12 +46,34 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
     isFetching: false,
   }),
 }))
-vi.mock('../hooks/useDeleteRecoveryApplication', () => ({
-  useDeleteRecoveryApplication: () => deleteMutation,
-}))
+vi.mock('../hooks/useDeleteRecoveryApplication', async () => {
+  const { useState } = await import('react')
+
+  return {
+    useDeleteRecoveryApplication: () => {
+      const [error, setError] = useState<Error | null>(null)
+
+      return {
+        ...deleteMutation,
+        error,
+        mutateAsync: async (application: RecoveryApplicationListItem) => {
+          setError(null)
+          try {
+            return await deleteMutation.mutateAsync(application)
+          } catch (cause) {
+            const mutationError = cause instanceof Error
+              ? cause
+              : new Error('Delete recovery application failed')
+            setError(mutationError)
+            throw mutationError
+          }
+        },
+      }
+    },
+  }
+})
 beforeEach(() => {
   vi.clearAllMocks()
-  deleteMutation.error = null
   query = {
     data: [],
     isLoading: false,
@@ -78,7 +101,7 @@ describe('RecoveryApplicationsListPage', () => {
         },
       }],
     }
-    const view = renderListPage()
+    renderListPage()
 
     await user.click(screen.getByText('Finance'))
     await user.click(screen.getByRole('button', { name: 'Delete' }))
@@ -88,18 +111,39 @@ describe('RecoveryApplicationsListPage', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: 'Delete recovery application' })).not.toBeInTheDocument()
     })
-    deleteMutation.error = new Error('Delete recovery application request failed with status 409', {
-      cause: new OrvalApiError(409, 'Conflict', { detail: 'The recovery application is still referenced by a policy.' }),
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Delete recovery application')
     })
-    view.rerender(
-      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-        <RecoveryApplicationsListPage />
-      </QueryClientProvider>,
-    )
-
     const alert = screen.getByRole('alert')
-    expect(alert).toHaveTextContent('Delete recovery application')
     expect(alert).toHaveTextContent('The recovery application is still referenced by a policy.')
+  })
+
+  it('closes the delete dialog without an alert when the mutation succeeds', async () => {
+    const user = userEvent.setup()
+    deleteMutation.mutateAsync.mockResolvedValueOnce({ applications: [], rollback: null })
+    query = {
+      ...query,
+      data: [{
+        id: 'finance-app',
+        data: {
+          application: {
+            name: 'Finance', description: '', environment: 'prod', platform: 'VMware',
+            source_connection: '', target_connection: '', tiers: {},
+          },
+        },
+      }],
+    }
+    renderListPage()
+
+    await user.click(screen.getByText('Finance'))
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    const confirmation = screen.getByRole('dialog', { name: 'Delete recovery application' })
+    await user.click(within(confirmation).getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Delete recovery application' })).not.toBeInTheDocument()
+    })
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('renders loading, error, and empty states', () => {
