@@ -209,7 +209,6 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
         onClose={requestClose}
         closeOnBackdrop={false}
         size="lg"
-        contentOverflow="responsive"
         title={t(isEdit ? 'providers.modal.editTitle' : 'providers.modal.createTitle')}
         footer={(
           <>
@@ -246,6 +245,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
           errors={errors}
           isSubmitting={upsert.isPending}
           idDisabled={isEdit}
+          typeDisabled={isEdit}
           credentials={credentialsQuery.data ?? []}
           credentialsLoading={credentialsQuery.isLoading}
           credentialsError={credentialsQuery.error !== null}

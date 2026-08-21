@@ -77,7 +77,8 @@ describe('ProvidersCreateModal', () => {
     expect(useTagsMock).toHaveBeenCalledWith(null, false)
 
     const dialog = screen.getByRole('dialog')
-    expect(dialog.querySelector('[class~="md:overflow-visible"]')).not.toBeNull()
+    expect(dialog.querySelector('[class~="overflow-y-auto"]')).not.toBeNull()
+    expect(dialog.querySelector('[class~="md:overflow-visible"]')).toBeNull()
   })
 
   it('loads VMware tags only for an edited provider and submits VM settings', async () => {
@@ -379,15 +380,18 @@ describe('ProvidersCreateModal', () => {
     vi.unstubAllGlobals()
   })
 
-  it('prefills fields and locks the id in edit mode', () => {
+  it('prefills fields and locks the id and type in edit mode', () => {
     renderWithQueryClient(
       <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[mockProviderA]} provider={mockProviderA} />,
     )
     expect(screen.getByRole('heading', { name: 'Edit provider' })).toBeInTheDocument()
     const idInput = screen.getByLabelText('ID')
+    const typeSelect = screen.getByLabelText('Type')
     const nameInput = screen.getByLabelText('Provider name')
     expect((idInput as HTMLInputElement).value).toBe('vmware-vcenter-01')
     expect(idInput).toBeDisabled()
+    expect(typeSelect).toHaveValue('VMWARE')
+    expect(typeSelect).toBeDisabled()
     expect((nameInput as HTMLInputElement).value).toBe('Production vCenter')
     expect(screen.getByLabelText('Credentials')).toHaveValue('vcenter-admin')
   })

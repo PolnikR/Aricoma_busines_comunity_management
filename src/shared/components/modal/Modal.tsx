@@ -11,7 +11,6 @@ interface ModalProps {
   ariaLabel?: string
   className?: string
   size?: 'md' | 'lg'
-  contentOverflow?: 'auto' | 'responsive'
   closeOnBackdrop?: boolean
 }
 
@@ -27,7 +26,6 @@ export function Modal({
   ariaLabel,
   className,
   size = 'md',
-  contentOverflow = 'auto',
   closeOnBackdrop = true,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
@@ -105,10 +103,7 @@ export function Modal({
             <h2 className="text-base font-semibold text-text-primary">{title}</h2>
           </div>
         ) : null}
-        <div className={cn(
-          'flex-1 min-h-0',
-          contentOverflow === 'responsive' ? 'overflow-y-auto md:overflow-visible' : 'overflow-y-auto',
-        )}>
+        <div className="flex-1 min-h-0 overflow-y-auto">
           {children}
         </div>
         {footer ? <div className="flex gap-3 border-t border-border px-6 py-4">{footer}</div> : null}

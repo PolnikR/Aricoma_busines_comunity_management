@@ -55,7 +55,7 @@ describe('ProviderCreateForm', () => {
     expect(screen.getByLabelText('URL')).toHaveValue('https://vcenter.example.test')
   })
 
-  it('locks ID in edit mode and renders validation errors', () => {
+  it('locks ID and provider type in edit mode and renders validation errors', () => {
     render(
       <ProviderCreateForm
         data={data}
@@ -66,12 +66,14 @@ describe('ProviderCreateForm', () => {
         credentialsError={false}
         onRetryCredentials={vi.fn()}
         idDisabled
+        typeDisabled
         onTagsChange={vi.fn()}
         onChange={vi.fn()}
         onSubmit={vi.fn()}
       />,
     )
     expect(screen.getByDisplayValue('provider-1')).toBeDisabled()
+    expect(screen.getByLabelText('Type')).toBeDisabled()
     expect(screen.getByText('ID error')).toBeInTheDocument()
   })
 

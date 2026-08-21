@@ -28,6 +28,7 @@ interface ProviderCreateFormProps {
   // Locks the ID field (edit mode): changing an existing id would create a new
   // provider rather than update the current one.
   idDisabled?: boolean
+  typeDisabled?: boolean
   credentials: CredentialRecord[]
   credentialsLoading: boolean
   credentialsError: boolean
@@ -50,6 +51,7 @@ export function ProviderCreateForm({
   errors,
   isSubmitting,
   idDisabled = false,
+  typeDisabled = false,
   credentials,
   credentialsLoading,
   credentialsError,
@@ -133,7 +135,7 @@ export function ProviderCreateForm({
             id="create-type"
             value={data.type}
             onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('type', event.target.value) }}
-            disabled={isSubmitting}
+            disabled={isSubmitting || typeDisabled}
             aria-invalid={Boolean(errors.type)}
           >
             <option value="">{t('forms.typeSelect')}</option>

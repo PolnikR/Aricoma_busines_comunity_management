@@ -63,7 +63,8 @@ describe('PlatformProvidersModal', () => {
     expect(await screen.findByLabelText('Port')).toHaveValue(22)
     const dialog = screen.getByRole('dialog')
     expect(dialog).toHaveClass('max-w-2xl')
-    expect(dialog.querySelector('[class~="md:overflow-visible"]')).not.toBeNull()
+    expect(dialog.querySelector('[class~="overflow-y-auto"]')).not.toBeNull()
+    expect(dialog.querySelector('[class~="md:overflow-visible"]')).toBeNull()
   })
 
   it('keeps the saved port when editing a provider', async () => {

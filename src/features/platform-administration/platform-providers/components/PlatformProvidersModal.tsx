@@ -185,7 +185,6 @@ export function PlatformProvidersModal({
         onClose={requestClose}
         closeOnBackdrop={false}
         size="lg"
-        contentOverflow="responsive"
         title={t(isEdit ? 'platformProviders.modal.editTitle' : 'platformProviders.modal.createTitle')}
         footer={(
           <>

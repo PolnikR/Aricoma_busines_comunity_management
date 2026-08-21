@@ -23,17 +23,11 @@ afterEach(cleanup)
     expect(screen.getByRole('dialog')).toHaveClass('border', 'border-border')
   })
 
-  it('supports responsive content overflow for compact provider dialogs', () => {
-    render(
-      <Modal open title="Responsive modal" onClose={vi.fn()} contentOverflow="responsive">
-        <p>Body content</p>
-      </Modal>,
-    )
+  it('keeps modal content vertically scrollable', () => {
+    render(<Modal open title="Scrollable modal" onClose={vi.fn()}><p>Body content</p></Modal>)
 
-    expect(screen.getByText('Body content').parentElement).toHaveClass(
-      'overflow-y-auto',
-      'md:overflow-visible',
-    )
+    expect(screen.getByText('Body content').parentElement).toHaveClass('overflow-y-auto')
+    expect(screen.getByText('Body content').parentElement).not.toHaveClass('md:overflow-visible')
   })
 
   it('renders nothing when closed', () => {
