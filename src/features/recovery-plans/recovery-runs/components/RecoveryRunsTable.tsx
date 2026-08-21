@@ -113,6 +113,7 @@ export function RecoveryRunsTable({
 
       <div className="custom-scrollbar flex min-h-0 flex-1 flex-col lg:overflow-y-auto">
         <DataTableRequestState
+          hasData={rows.length > 0}
           error={error ? {
             title: t('recoveryRuns.loadFailed'),
             ...(errorDetail ? { description: errorDetail } : {}),

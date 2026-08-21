@@ -24,7 +24,6 @@ export function useRecoveryGroups() {
     queryFn: () => fetchRecoveryGroups(providers),
     enabled: providerQuery.isSuccess,
     retry: false,
-    refetchOnWindowFocus: false,
   })
 
   const createMutation = useMutation({

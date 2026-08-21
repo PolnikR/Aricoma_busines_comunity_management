@@ -6,7 +6,5 @@ export function useCleanRoomPolicies() {
   return useQuery({
     queryKey: cleanRoomPolicyKeys.list(),
     queryFn: fetchCleanRoomPolicies,
-    refetchOnWindowFocus: false,
-    retry: 1,
   })
 }

@@ -1,10 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import {
-  DISCOVERY_INVENTORY_GC_TIME_MS,
-  DISCOVERY_INVENTORY_STALE_TIME_MS,
-  discoveryInventoryKeys,
-} from '../../resources/api/resourceInventoryQueryKeys'
+import { discoveryInventoryKeys } from '../../resources/api/resourceInventoryQueryKeys'
 import { fetchPowerInventory } from '../../resources/api/powerInventoryApi'
 import { fetchVmwareInventory } from '../../resources/api/vmwareInventoryApi'
 import type { DiscoveryInventory, PowerInventory } from '../../resources/model/discoveryTypes'
@@ -27,9 +23,5 @@ export function useInfrastructureInventory(provider: ProviderRecord | null) {
       throw new Error('A supported infrastructure provider is required.')
     },
     enabled: isSupported,
-    refetchOnWindowFocus: false,
-    retry: 1,
-    staleTime: DISCOVERY_INVENTORY_STALE_TIME_MS,
-    gcTime: DISCOVERY_INVENTORY_GC_TIME_MS,
   })
 }

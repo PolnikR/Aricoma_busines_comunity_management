@@ -94,6 +94,7 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
         onDensityChange={table.setDensity}
       />
       <DataTableRequestState
+        hasData={rows.length > 0}
         error={error ? {
           title: t('credentials.errors.load'),
           ...(loadErrorDescription ? { description: loadErrorDescription } : {}),

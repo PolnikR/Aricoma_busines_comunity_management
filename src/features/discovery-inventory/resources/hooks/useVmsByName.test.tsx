@@ -23,7 +23,7 @@ describe('useVmsByName', () => {
 
     expect(result.current.data?.count).toBe(1)
     expect(result.current.data?.vms.map(vm => vm.name)).toEqual(['WEB-01'])
-    expect(client.getQueryData(discoveryInventoryKeys.vmsByName('WEB', 'vmware-vcenter-01')))
+    expect(client.getQueryData(discoveryInventoryKeys.rawVmsByName('WEB', 'vmware-vcenter-01')))
       .toEqual(result.current.data)
   })
 

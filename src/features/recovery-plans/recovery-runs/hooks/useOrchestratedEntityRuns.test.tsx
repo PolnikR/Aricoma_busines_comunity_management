@@ -1,10 +1,11 @@
 import type { PropsWithChildren } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchOrchestratorRuns } from '../api/recoveryRunsApi'
 import { useOrchestratedEntityRuns } from './useOrchestratedEntityRuns'
 import type { OrchestratedEntity } from '../model/recoveryRunTypes'
+import { ACTIVE_RUN_INTERVAL_MS } from '@/shared/query/cachePolicy'
 
 vi.mock('../api/recoveryRunsApi', () => ({
   fetchOrchestratorRuns: vi.fn(),
@@ -27,6 +28,10 @@ describe('useOrchestratedEntityRuns', () => {
     vi.clearAllMocks()
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('queries each entity using its own providerId, one call each with limit 1', async () => {
     vi.mocked(fetchOrchestratorRuns).mockResolvedValue({
       runs: [{ runId: 'r1', status: 'success', startedAt: '2026-08-18T00:00:00Z', endedAt: '2026-08-18T00:01:00Z', durationSeconds: 60 }],
@@ -47,5 +52,29 @@ describe('useOrchestratedEntityRuns', () => {
     renderHook(() => useOrchestratedEntityRuns([]), { wrapper: createWrapper() })
 
     expect(fetchOrchestratorRuns).not.toHaveBeenCalled()
+  })
+
+  it('polls an active run and returns to the standard interval after it becomes terminal', async () => {
+    vi.useFakeTimers()
+    vi.mocked(fetchOrchestratorRuns)
+      .mockResolvedValueOnce({
+        runs: [{ runId: 'r1', status: 'running', startedAt: null, endedAt: null, durationSeconds: null }],
+        total: 1,
+      })
+      .mockResolvedValueOnce({
+        runs: [{ runId: 'r1', status: 'success', startedAt: null, endedAt: null, durationSeconds: 1 }],
+        total: 1,
+      })
+
+    renderHook(() => useOrchestratedEntityRuns(entities.slice(0, 1)), { wrapper: createWrapper() })
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(1)
+
+    await vi.advanceTimersByTimeAsync(ACTIVE_RUN_INTERVAL_MS)
+    expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(2)
+
+    await vi.advanceTimersByTimeAsync(ACTIVE_RUN_INTERVAL_MS)
+    expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(2)
   })
 })

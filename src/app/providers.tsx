@@ -1,12 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { SidebarProvider } from '@/layouts/app-shell/SidebarContext'
+import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 15 * 60 * 1000,
-      retry: 1,
+      ...STANDARD_QUERY_OPTIONS,
     },
   },
 })

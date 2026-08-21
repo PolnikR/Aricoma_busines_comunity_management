@@ -4,13 +4,11 @@ import { fetchVmsByName } from '../api/vmsByNameApi'
 
 export function useVmsByName(prefix?: string, providerId?: string, enabled = true) {
   return useQuery({
-    queryKey: discoveryInventoryKeys.vmsByName(prefix, providerId),
+    queryKey: discoveryInventoryKeys.rawVmsByName(prefix, providerId),
     queryFn: () => fetchVmsByName({
       ...(prefix !== undefined ? { prefix } : {}),
       ...(providerId !== undefined ? { providerId } : {}),
     }),
-    refetchOnWindowFocus: false,
-    retry: 1,
     enabled,
   })
 }

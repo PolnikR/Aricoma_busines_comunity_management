@@ -7,7 +7,5 @@ export function useProviders(role: ProviderRoleFilter = 'all') {
   return useQuery({
     queryKey: providerKeys.list(role),
     queryFn: () => fetchProviders(role),
-    refetchOnWindowFocus: false,
-    retry: 1,
   })
 }

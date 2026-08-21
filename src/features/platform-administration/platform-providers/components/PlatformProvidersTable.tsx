@@ -154,6 +154,7 @@ export function PlatformProvidersTable({
       />
 
       <DataTableRequestState
+        hasData={rows.length > 0}
         error={error ? {
           title: t('platformProviders.loadFailed'),
           ...(loadErrorDescription ? { description: loadErrorDescription } : {}),

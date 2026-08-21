@@ -25,8 +25,6 @@ export function useAppRunHistory({ providerId, dagId, page, pageSize }: UseAppRu
       orderBy: '-logical_date',
     }),
     enabled,
-    refetchOnWindowFocus: false,
-    retry: 1,
   })
 
   return {

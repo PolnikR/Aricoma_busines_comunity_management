@@ -12,10 +12,27 @@ export interface DataTableRequestError {
 interface DataTableRequestStateProps {
   children: ReactNode
   error?: DataTableRequestError | null
+  hasData?: boolean
 }
 
-export function DataTableRequestState({ children, error }: DataTableRequestStateProps) {
+export function DataTableRequestState({ children, error, hasData = false }: DataTableRequestStateProps) {
   if (!error) return children
+
+  if (hasData) {
+    return (
+      <div className="flex min-h-0 flex-col gap-3">
+        <FetchErrorAlert
+          title={error.title}
+          {...(error.description ? { description: error.description } : {})}
+          retryLabel={error.retryLabel}
+          isRetrying={error.isRetrying}
+          onRetry={error.onRetry}
+          variant="compact"
+        />
+        {children}
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-72 flex-1 items-center justify-center p-4">

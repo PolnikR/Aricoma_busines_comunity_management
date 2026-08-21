@@ -128,6 +128,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
 
       <div className="custom-scrollbar flex min-h-0 flex-1 flex-col lg:overflow-y-auto">
         <DataTableRequestState
+          hasData={rows.length > 0}
           error={error ? {
             title: t('policySets.loadFailed'),
             ...(loadErrorDetail ? { description: loadErrorDetail } : {}),

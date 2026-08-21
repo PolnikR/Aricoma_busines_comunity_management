@@ -6,7 +6,5 @@ export function usePlatformProviders() {
   return useQuery({
     queryKey: platformProviderKeys.list(),
     queryFn: fetchPlatformProviders,
-    refetchOnWindowFocus: false,
-    retry: 1,
   })
 }

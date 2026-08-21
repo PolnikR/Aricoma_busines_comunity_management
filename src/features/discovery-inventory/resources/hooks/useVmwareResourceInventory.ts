@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import {
-  DISCOVERY_INVENTORY_GC_TIME_MS,
-  DISCOVERY_INVENTORY_STALE_TIME_MS,
-  discoveryInventoryKeys,
-} from '../api/resourceInventoryQueryKeys'
+import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
 import { fetchVmwareInventory } from '../api/vmwareInventoryApi'
 import { fetchVmsByName } from '../api/vmsByNameApi'
 import { mapVmwareInventory } from '../helpers/mapVmwareInventory'
@@ -51,10 +47,6 @@ export function useVmwareResourceInventory(
       return fetchVmwareInventory(providerId, hasTag ? tag : undefined)
     },
     enabled: canFetch,
-    staleTime: DISCOVERY_INVENTORY_STALE_TIME_MS,
-    gcTime: DISCOVERY_INVENTORY_GC_TIME_MS,
-    retry: 1,
-    refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
     select: (inventory) => hasTag && hasNamePrefix
       ? {
