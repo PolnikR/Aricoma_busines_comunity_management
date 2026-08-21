@@ -3,6 +3,7 @@ import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { Card } from '@/shared/components/card/Card'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '../hooks/useProviders'
@@ -25,6 +26,7 @@ export function ProviderDetailPage() {
   const { providerId } = useParams<{ providerId: string }>()
   const { data: providers, isLoading, error, refetch } = useProviders()
   const provider = providers?.find((item) => item.id === providerId)
+  const loadErrorDescription = extractBackendErrorDetail(error)
 
   const goBack = () => { void navigate('/providers-connectors/providers') }
 
@@ -48,7 +50,7 @@ export function ProviderDetailPage() {
         <div className="p-6">
           <FetchErrorAlert
             title={t('pages.providers.detail.loadError')}
-            description={error instanceof Error ? error.message : t('pages.providers.detail.requestFailed')}
+            {...(loadErrorDescription ? { description: loadErrorDescription } : {})}
             retryLabel={t('pages.providers.detail.retry')}
             variant="full"
             onRetry={() => { void refetch() }}

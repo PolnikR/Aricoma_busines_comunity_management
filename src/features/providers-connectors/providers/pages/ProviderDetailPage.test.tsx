@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProviderDetailPage } from './ProviderDetailPage'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 
 const navigate = vi.fn()
 let query: {
@@ -74,9 +75,26 @@ describe('ProviderDetailPage', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Loading provider')
     query = { ...query, isLoading: false, error: new Error('offline') }
     view.rerender(<ProviderDetailPage />)
-    expect(screen.getByRole('alert')).toHaveTextContent('offline')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('offline')
     query = { ...query, error: null, data: [] }
     view.rerender(<ProviderDetailPage />)
     expect(screen.getByText('Provider not found')).toBeInTheDocument()
+  })
+
+  it('shows nested backend detail below the localized provider detail load title', () => {
+    query = {
+      ...query,
+      data: undefined,
+      error: new Error('Get providers request failed with status 503', {
+        cause: new OrvalApiError(503, 'Service Unavailable', { detail: 'The provider detail service is unavailable.' }),
+      }),
+    }
+
+    render(<ProviderDetailPage />)
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Failed to load provider')
+    expect(alert).toHaveTextContent('The provider detail service is unavailable.')
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 })
