@@ -15,9 +15,10 @@ import { Field, Input } from '@/shared/components/form/FormControls'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useOrganizations } from '../hooks/useOrganizations'
 import { useRoles } from '../hooks/useRoles'
+import { useSessions } from '../hooks/useSessions'
 import { useUsers } from '../hooks/useUsers'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
-import type { Role, User } from '../models/identityTypes'
+import type { Role, Session, User } from '../models/identityTypes'
 import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection } from './IdentityResourceLayout'
 
 const USER_SEARCH_FIELDS: (keyof User)[] = ['name', 'email']
@@ -40,6 +41,12 @@ const statusColor: Record<User['status'], 'success' | 'light' | 'error'> = {
   locked: 'error',
 }
 
+const sessionStatusColor: Record<Session['status'], 'success' | 'light' | 'error'> = {
+  active: 'success',
+  expired: 'light',
+  terminated: 'error',
+}
+
 interface UsersSectionProps {
   entityId: string | null
   tabId: IdentityAccessTabId | null
@@ -55,9 +62,10 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
   const { data: users = [], isLoading, error, refetch } = useUsers()
   const { data: roles = [] } = useRoles()
   const { data: organizations = [] } = useOrganizations()
+  const selectedUser = users.find(user => user.id === entityId) ?? null
+  const { data: userSessions = [] } = useSessions(selectedUser ? { userId: selectedUser.id } : undefined)
   const [isAddOpen, setIsAddOpen] = useState(false)
   const table = useTableState(users, { searchFields: USER_SEARCH_FIELDS })
-  const selectedUser = users.find(user => user.id === entityId) ?? null
 
   const getRoleName = (roleId: string) => roles.find(role => role.id === roleId)?.name ?? roleId
   const getOrganizationName = (organizationId: string) => organizations.find(org => org.id === organizationId)?.name ?? organizationId
@@ -82,6 +90,13 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
   const roleColumns = useMemo<ColumnDef<Role>[]>(() => [
     { id: 'name', header: 'Role name', cell: role => <span className="font-semibold text-text-primary">{role.name}</span> },
     { id: 'description', header: 'Description', cell: role => role.description || '—' },
+  ], [])
+
+  const sessionColumns = useMemo<ColumnDef<Session>[]>(() => [
+    { id: 'login', header: 'Login time', cell: session => new Date(session.loginTime).toLocaleString() },
+    { id: 'activity', header: 'Last activity', cell: session => new Date(session.lastActivityTime).toLocaleString() },
+    { id: 'ip', header: 'IP address', cell: session => <span className="font-mono text-xs">{session.ipAddress}</span> },
+    { id: 'status', header: 'Status', cell: session => <Badge color={sessionStatusColor[session.status]} size="sm">{session.status}</Badge> },
   ], [])
 
   if (entityId) {
@@ -112,6 +127,10 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
       detailContent = assignedRoles.length > 0
         ? <DataTable columns={roleColumns} rows={assignedRoles} rowKey={role => role.id} ariaLabel="User role mappings" />
         : <div className="p-4"><EmptyState title="No role mappings" description="This user has no role mappings in the current Identity & Access data." /></div>
+    } else if (activeTab === 'sessions') {
+      detailContent = userSessions.length > 0
+        ? <DataTable columns={sessionColumns} rows={userSessions} rowKey={session => session.id} ariaLabel="User sessions" />
+        : <div className="p-4"><EmptyState title="No user sessions" description="No sessions are available for this user in the current Identity & Access data." /></div>
     } else {
       const label = USER_TABS.find(tab => tab.value === activeTab)?.label ?? activeTab
       detailContent = <div className="p-4"><EmptyState title={label} description={`Keycloak ${label.toLowerCase()} data is not connected yet.`} /></div>

@@ -5,12 +5,14 @@ import { UsersSection } from './UsersSection'
 import { useUsers } from '../hooks/useUsers'
 import { useRoles } from '../hooks/useRoles'
 import { useOrganizations } from '../hooks/useOrganizations'
+import { useSessions } from '../hooks/useSessions'
 import type { User } from '../models/identityTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('../hooks/useUsers', () => ({ useUsers: vi.fn() }))
 vi.mock('../hooks/useRoles', () => ({ useRoles: vi.fn() }))
 vi.mock('../hooks/useOrganizations', () => ({ useOrganizations: vi.fn() }))
+vi.mock('../hooks/useSessions', () => ({ useSessions: vi.fn() }))
 
 const user: User = {
   id: 'user-1', email: 'alice@example.com', name: 'Alice Smith', organizationId: 'org-1', roleIds: ['role-admin'], status: 'active',
@@ -21,6 +23,7 @@ function mockLoadedUsers(users: User[] = [user]) {
   vi.mocked(useUsers).mockReturnValue({ data: users, isLoading: false, error: null, refetch: vi.fn() })
   vi.mocked(useRoles).mockReturnValue({ data: [{ id: 'role-admin', name: 'Administrator', description: 'Admin', permissionIds: [], organizationId: 'org-1', createdAt: new Date(), updatedAt: new Date() }], isLoading: false, error: null, refetch: vi.fn() })
   vi.mocked(useOrganizations).mockReturnValue({ data: [{ id: 'org-1', name: 'Engineering', description: 'Engineering', status: 'active', createdAt: new Date(), updatedAt: new Date() }], isLoading: false, error: null, refetch: vi.fn() })
+  vi.mocked(useSessions).mockReturnValue({ data: [{ id: 'session-1', userId: 'user-1', organizationId: 'org-1', ipAddress: '192.168.1.100', userAgent: 'Browser', loginTime: new Date('2026-08-23T08:00:00Z'), lastActivityTime: new Date('2026-08-23T08:30:00Z'), expiresAt: new Date('2026-08-24T08:00:00Z'), status: 'active' }], isLoading: false, error: null, refetch: vi.fn() })
 }
 
 function renderSection(overrides?: Partial<Parameters<typeof UsersSection>[0]>) {
@@ -65,6 +68,15 @@ describe('UsersSection', () => {
 
     rerender(<UsersSection entityId="user-1" tabId="credentials" onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
     expect(screen.getByText('Keycloak credentials data is not connected yet.')).toBeInTheDocument()
+  })
+
+  it('shows current per-user sessions in the user Sessions tab', () => {
+    mockLoadedUsers()
+    render(<UsersSection entityId="user-1" tabId="sessions" onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
+
+    expect(screen.getByLabelText('User sessions')).toBeInTheDocument()
+    expect(screen.getByText('192.168.1.100')).toBeInTheDocument()
+    expect(screen.getByText('active')).toBeInTheDocument()
   })
 
   it('opens the add-user design workflow but keeps persistence gated', async () => {
