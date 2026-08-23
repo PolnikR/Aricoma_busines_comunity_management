@@ -5,6 +5,7 @@ import { GroupsSection } from '../components/GroupsSection'
 import { ClientsSection } from '../components/ClientsSection'
 import { ClientScopesSection } from '../components/ClientScopesSection'
 import { RealmSettingsSection } from '../components/RealmSettingsSection'
+import { AuthenticationSection } from '../components/AuthenticationSection'
 import { PermissionsSection } from '../components/PermissionsSection'
 import { OrganizationsSection } from '../components/OrganizationsSection'
 import { SessionsSection } from '../components/SessionsSection'
@@ -32,6 +33,7 @@ function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChan
   if (sectionId === 'clients') return <ClientsSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'client-scopes') return <ClientScopesSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'realm-settings') return <RealmSettingsSection tabId={tabId} onTabChange={onTabChange} />
+  if (sectionId === 'authentication') return <AuthenticationSection tabId={tabId} onTabChange={onTabChange} />
   if (sectionId === 'permissions') return <PermissionsSection />
   if (sectionId === 'organizations') return <OrganizationsSection />
   if (sectionId === 'sessions') return <SessionsSection />
