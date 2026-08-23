@@ -39,6 +39,7 @@ function mockLoadedUsers(users: User[] = [user]) {
     data: [{ id: 'org-1', name: 'Engineering', description: 'Engineering', status: 'active', createdAt: new Date(), updatedAt: new Date() }],
     isLoading: false,
     error: null,
+    refetch: vi.fn(),
   })
 }
 
@@ -86,7 +87,7 @@ describe('UsersSection', () => {
     const refetch = vi.fn()
     vi.mocked(useUsers).mockReturnValue({ data: undefined, isLoading: false, error: new Error('users unavailable'), refetch })
     vi.mocked(useRoles).mockReturnValue({ data: [], isLoading: false, error: null, refetch: vi.fn() })
-    vi.mocked(useOrganizations).mockReturnValue({ data: [], isLoading: false, error: null })
+    vi.mocked(useOrganizations).mockReturnValue({ data: [], isLoading: false, error: null, refetch: vi.fn() })
 
     render(<UsersSection />)
 

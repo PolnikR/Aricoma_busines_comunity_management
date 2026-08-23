@@ -31,6 +31,7 @@ function mockLoadedRoles(roles: Role[] = [role]) {
     ],
     isLoading: false,
     error: null,
+    refetch: vi.fn(),
   })
   vi.mocked(useUsers).mockReturnValue({
     data: [{
@@ -39,6 +40,7 @@ function mockLoadedRoles(roles: Role[] = [role]) {
     }],
     isLoading: false,
     error: null,
+    refetch: vi.fn(),
   })
 }
 
@@ -85,8 +87,8 @@ describe('RealmRolesSection', () => {
   it('shows a retryable shared request error', async () => {
     const refetch = vi.fn()
     vi.mocked(useRoles).mockReturnValue({ data: undefined, isLoading: false, error: new Error('roles unavailable'), refetch })
-    vi.mocked(usePermissions).mockReturnValue({ data: [], isLoading: false, error: null })
-    vi.mocked(useUsers).mockReturnValue({ data: [], isLoading: false, error: null })
+    vi.mocked(usePermissions).mockReturnValue({ data: [], isLoading: false, error: null, refetch: vi.fn() })
+    vi.mocked(useUsers).mockReturnValue({ data: [], isLoading: false, error: null, refetch: vi.fn() })
 
     render(<RealmRolesSection />)
 

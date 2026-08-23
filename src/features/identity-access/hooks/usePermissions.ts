@@ -10,6 +10,7 @@ export function usePermissions(options?: usePermissionsOptions) {
   const [data, setData] = useState<Permission[] | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const [requestVersion, setRequestVersion] = useState(0)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -27,8 +28,13 @@ export function usePermissions(options?: usePermissionsOptions) {
       }
     }, 200)
 
-    return () => { clearTimeout(timer); }
-  }, [options?.category])
+    return () => { clearTimeout(timer) }
+  }, [options?.category, requestVersion])
 
-  return { data, isLoading, error }
+  const refetch = () => {
+    setIsLoading(true)
+    setRequestVersion(current => current + 1)
+  }
+
+  return { data, isLoading, error, refetch }
 }

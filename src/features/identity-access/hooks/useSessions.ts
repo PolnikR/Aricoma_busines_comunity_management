@@ -11,6 +11,7 @@ export function useSessions(options?: useSessionsOptions) {
   const [data, setData] = useState<Session[] | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const [requestVersion, setRequestVersion] = useState(0)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -31,8 +32,13 @@ export function useSessions(options?: useSessionsOptions) {
       }
     }, 200)
 
-    return () => { clearTimeout(timer); }
-  }, [options?.userId, options?.organizationId])
+    return () => { clearTimeout(timer) }
+  }, [options?.userId, options?.organizationId, requestVersion])
 
-  return { data, isLoading, error }
+  const refetch = () => {
+    setIsLoading(true)
+    setRequestVersion(current => current + 1)
+  }
+
+  return { data, isLoading, error, refetch }
 }

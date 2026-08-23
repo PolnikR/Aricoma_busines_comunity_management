@@ -1,9 +1,9 @@
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { UsersSection } from '../components/UsersSection'
 import { RealmRolesSection } from '../components/RealmRolesSection'
-import { PermissionsTab } from '../components/PermissionsTab'
+import { PermissionsSection } from '../components/PermissionsSection'
 import { OrganizationsSection } from '../components/OrganizationsSection'
-import { SessionsTab } from '../components/SessionsTab'
+import { SessionsSection } from '../components/SessionsSection'
 import { IdentityAccessNavigation } from '../components/IdentityAccessNavigation'
 import { useIdentityAccessSection } from '../hooks/useIdentityAccessSection'
 import { identityAccessSectionGroups, type IdentityAccessSectionId } from '../models/identityAccessSections'
@@ -15,9 +15,9 @@ const sectionLabels = new Map<IdentityAccessSectionId, string>(
 function IdentityAccessSectionContent({ sectionId }: { sectionId: IdentityAccessSectionId }) {
   if (sectionId === 'users') return <UsersSection />
   if (sectionId === 'realm-roles') return <RealmRolesSection />
-  if (sectionId === 'permissions') return <PermissionsTab />
+  if (sectionId === 'permissions') return <PermissionsSection />
   if (sectionId === 'organizations') return <OrganizationsSection />
-  if (sectionId === 'sessions') return <SessionsTab />
+  if (sectionId === 'sessions') return <SessionsSection />
 
   return (
     <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">

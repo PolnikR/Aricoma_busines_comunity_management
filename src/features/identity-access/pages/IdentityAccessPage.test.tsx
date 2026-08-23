@@ -6,9 +6,9 @@ import { IdentityAccessPage } from './IdentityAccessPage'
 
 vi.mock('../components/UsersSection', () => ({ UsersSection: () => <div>Users content</div> }))
 vi.mock('../components/RealmRolesSection', () => ({ RealmRolesSection: () => <div>Realm roles content</div> }))
-vi.mock('../components/PermissionsTab', () => ({ PermissionsTab: () => <div>Permissions content</div> }))
+vi.mock('../components/PermissionsSection', () => ({ PermissionsSection: () => <div>Permissions content</div> }))
 vi.mock('../components/OrganizationsSection', () => ({ OrganizationsSection: () => <div>Organizations content</div> }))
-vi.mock('../components/SessionsTab', () => ({ SessionsTab: () => <div>Sessions content</div> }))
+vi.mock('../components/SessionsSection', () => ({ SessionsSection: () => <div>Sessions content</div> }))
 
 function LocationProbe() {
   const location = useLocation()
