@@ -24,7 +24,7 @@ function IdentityAccessSectionContent({ sectionId }: { sectionId: IdentityAccess
 }
 
 export function IdentityAccessPage() {
-  const { sectionId, setSectionId } = useIdentityAccessSection()
+  const { sectionId, groupId, setSectionId, setGroupId } = useIdentityAccessSection()
 
   return (
     <div className="flex min-h-full min-w-0 flex-col gap-4 overflow-x-hidden">
@@ -35,7 +35,12 @@ export function IdentityAccessPage() {
       />
 
       <div className="grid min-h-[38rem] min-w-0 overflow-hidden rounded-xl border border-border bg-surface shadow-sm md:grid-cols-[220px_minmax(0,1fr)]">
-        <IdentityAccessNavigation sectionId={sectionId} onSectionChange={setSectionId} />
+        <IdentityAccessNavigation
+          groupId={groupId}
+          sectionId={sectionId}
+          onGroupChange={setGroupId}
+          onSectionChange={setSectionId}
+        />
         <section className="min-w-0 overflow-hidden bg-surface p-4" aria-live="polite">
           <IdentityAccessSectionContent sectionId={sectionId} />
         </section>

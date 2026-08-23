@@ -1,53 +1,68 @@
-import { identityAccessSectionGroups, type IdentityAccessSectionId } from '../models/identityAccessSections'
+import { Tabs } from '@/shared/components/tabs/Tabs'
+import {
+  getIdentityAccessGroup,
+  identityAccessSectionGroups,
+  type IdentityAccessSectionGroupId,
+  type IdentityAccessSectionId,
+} from '../models/identityAccessSections'
 
 interface IdentityAccessNavigationProps {
+  groupId: IdentityAccessSectionGroupId
   sectionId: IdentityAccessSectionId
+  onGroupChange: (groupId: IdentityAccessSectionGroupId) => void
   onSectionChange: (sectionId: IdentityAccessSectionId) => void
 }
 
-export function IdentityAccessNavigation({ sectionId, onSectionChange }: IdentityAccessNavigationProps) {
+export function IdentityAccessNavigation({
+  groupId,
+  sectionId,
+  onGroupChange,
+  onSectionChange,
+}: IdentityAccessNavigationProps) {
+  const activeGroup = getIdentityAccessGroup(groupId)
+
   return (
-    <aside className="min-w-0 border-b border-border bg-surface-subtle md:border-b-0 md:border-r">
-      <div className="border-b border-border px-3 py-3">
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-subtle">Realm</p>
-        <div className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-xs font-semibold text-text-primary shadow-sm">
-          ABCO
+    <nav aria-label="Keycloak realm navigation" className="min-w-0 border-b border-border bg-surface">
+      <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div
+          role="group"
+          aria-label="Keycloak navigation groups"
+          className="flex h-10 w-fit max-w-full overflow-x-auto rounded-xl bg-surface-muted p-0.5"
+        >
+          {identityAccessSectionGroups.map(group => {
+            const isActive = group.id === groupId
+            return (
+              <button
+                key={group.id}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => { onGroupChange(group.id) }}
+                className={`shrink-0 rounded-[10px] px-4 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15 ${
+                  isActive
+                    ? 'bg-surface text-accent shadow-sm'
+                    : 'text-text-muted hover:text-text-secondary'
+                }`}
+              >
+                {group.label}
+              </button>
+            )
+          })}
         </div>
-        <p className="mt-2 text-[10px] text-text-muted">Keycloak realm administration</p>
+        <span className="text-xs text-text-muted">Keycloak administration</span>
       </div>
 
-      <nav aria-label="Keycloak realm navigation" className="space-y-4 p-2.5">
-        {identityAccessSectionGroups.map(group => (
-          <section key={group.id} aria-labelledby={`identity-access-${group.id}`}>
-            <h2
-              id={`identity-access-${group.id}`}
-              className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-subtle"
-            >
-              {group.label}
-            </h2>
-            <div className="space-y-0.5">
-              {group.sections.map(section => {
-                const isActive = section.id === sectionId
-                return (
-                  <button
-                    key={section.id}
-                    type="button"
-                    aria-current={isActive ? 'page' : undefined}
-                    onClick={() => { onSectionChange(section.id) }}
-                    className={`flex min-h-8 w-full items-center rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15 ${
-                      isActive
-                        ? 'bg-accent-soft text-accent shadow-[inset_3px_0_0_var(--color-accent)]'
-                        : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
-                    }`}
-                  >
-                    {section.label}
-                  </button>
-                )
-              })}
-            </div>
-          </section>
-        ))}
-      </nav>
-    </aside>
+      <Tabs
+        items={activeGroup.sections.map(section => ({ value: section.id, label: section.label }))}
+        value={sectionId}
+        onChange={onSectionChange}
+        ariaLabel={`${activeGroup.label} sections`}
+        indicator="inset"
+        className="px-2 sm:px-3"
+        scrollControls={{
+          previousLabel: `Scroll ${activeGroup.label} sections left`,
+          nextLabel: `Scroll ${activeGroup.label} sections right`,
+        }}
+      />
+    </nav>
   )
 }

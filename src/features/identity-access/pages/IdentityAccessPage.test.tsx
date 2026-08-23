@@ -30,19 +30,18 @@ describe('IdentityAccessPage', () => {
 
     expect(screen.getByRole('heading', { name: 'Identity & Access', level: 1 })).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Keycloak realm navigation' })).toBeInTheDocument()
-    expect(screen.getByText('Manage')).toBeInTheDocument()
-    expect(screen.getByText('Configure')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Users' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('button', { name: 'Manage' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Configure' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Users content')).toBeInTheDocument()
-    expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
   })
 
   it('changes the active section through the URL-backed navigation', async () => {
     renderPage('/platform-administration/identity-access?keep=visible')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Realm roles' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Realm roles' }))
 
-    expect(screen.getByRole('button', { name: 'Realm roles' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('tab', { name: 'Realm roles' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Realm roles content')).toBeInTheDocument()
     expect(screen.getByTestId('location-search')).toHaveAttribute('data-search', '?keep=visible&section=realm-roles')
   })
