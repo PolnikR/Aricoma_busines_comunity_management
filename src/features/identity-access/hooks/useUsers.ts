@@ -10,6 +10,7 @@ export function useUsers(options?: UseUsersOptions) {
   const [data, setData] = useState<User[] | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const [requestVersion, setRequestVersion] = useState(0)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -27,8 +28,13 @@ export function useUsers(options?: UseUsersOptions) {
       }
     }, 200)
 
-    return () => { clearTimeout(timer); }
-  }, [options?.organizationId])
+    return () => { clearTimeout(timer) }
+  }, [options?.organizationId, requestVersion])
 
-  return { data, isLoading, error }
+  const refetch = () => {
+    setIsLoading(true)
+    setRequestVersion(current => current + 1)
+  }
+
+  return { data, isLoading, error, refetch }
 }
