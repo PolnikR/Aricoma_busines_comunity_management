@@ -65,8 +65,6 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
   const [isAddOpen, setIsAddOpen] = useState(false)
   const table = useTableState(users, { searchFields: USER_SEARCH_FIELDS })
 
-  const getRoleName = (roleId: string) => roles.find(role => role.id === roleId)?.name ?? roleId
-
   const columns = useMemo<ColumnDef<User>[]>(() => [
     {
       id: 'name',
@@ -78,7 +76,7 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
         </>
       ),
     },
-    { id: 'roles', header: 'Roles', cell: user => user.roleIds.length > 0 ? user.roleIds.map(getRoleName).join(', ') : '—' },
+    { id: 'roles', header: 'Roles', cell: user => user.roleIds.length > 0 ? user.roleIds.map(roleId => roles.find(role => role.id === roleId)?.name ?? roleId).join(', ') : '—' },
     { id: 'status', header: 'Status', cell: user => <Badge color={statusColor[user.status]} size="sm">{user.status}</Badge> },
     { id: 'lastLogin', header: 'Last login', cell: user => user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never' },
   ], [roles])

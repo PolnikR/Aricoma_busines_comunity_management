@@ -45,7 +45,6 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
   const { data: users = [] } = useUsers()
   const table = useTableState(roles, { searchFields: ROLE_SEARCH_FIELDS })
   const selectedRole = roles.find(role => role.id === entityId) ?? null
-  const memberCount = (roleId: string) => users.filter(user => user.roleIds.includes(roleId)).length
 
   const columns = useMemo<ColumnDef<Role>[]>(() => [
     {
@@ -59,7 +58,7 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
       ),
     },
     { id: 'description', header: 'Description', cell: role => role.description || '—' },
-    { id: 'members', header: 'Users in role', align: 'right', cell: role => String(memberCount(role.id)) },
+    { id: 'members', header: 'Users in role', align: 'right', cell: role => String(users.filter(user => user.roleIds.includes(role.id)).length) },
   ], [users])
 
   const userColumns = useMemo<ColumnDef<User>[]>(() => [
