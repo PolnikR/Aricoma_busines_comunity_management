@@ -3,12 +3,27 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { IdentityAccessPage } from './IdentityAccessPage'
+import { identityAccessSectionGroups, type IdentityAccessSectionId } from '../models/identityAccessSections'
 
 vi.mock('../components/UsersSection', () => ({ UsersSection: () => <div>Users content</div> }))
 vi.mock('../components/RealmRolesSection', () => ({ RealmRolesSection: () => <div>Realm roles content</div> }))
 vi.mock('../components/PermissionsSection', () => ({ PermissionsSection: () => <div>Permissions content</div> }))
 vi.mock('../components/OrganizationsSection', () => ({ OrganizationsSection: () => <div>Organizations content</div> }))
 vi.mock('../components/SessionsSection', () => ({ SessionsSection: () => <div>Sessions content</div> }))
+
+const dataBackedContent: Partial<Record<IdentityAccessSectionId, string>> = {
+  users: 'Users content',
+  'realm-roles': 'Realm roles content',
+  organizations: 'Organizations content',
+  sessions: 'Sessions content',
+  permissions: 'Permissions content',
+}
+
+const registeredSections = identityAccessSectionGroups.flatMap(group => group.sections.map(section => ({
+  groupLabel: group.label,
+  sectionId: section.id,
+  sectionLabel: section.label,
+})))
 
 function LocationProbe() {
   const location = useLocation()
@@ -49,32 +64,19 @@ describe('IdentityAccessPage', () => {
     expect(screen.getByTestId('location-search')).toHaveAttribute('data-search', '?keep=visible&section=realm-roles')
   })
 
-  it.each([
-    ['users', 'Users content'],
-    ['realm-roles', 'Realm roles content'],
-    ['organizations', 'Organizations content'],
-    ['sessions', 'Sessions content'],
-    ['permissions', 'Permissions content'],
-  ])('renders the data-backed %s section', (sectionId, content) => {
+  it.each(registeredSections)('renders the registered $sectionId section in its $groupLabel group', ({ groupLabel, sectionId, sectionLabel }) => {
     renderPage(`/platform-administration/identity-access?section=${sectionId}`)
 
-    expect(screen.getByText(content)).toBeInTheDocument()
-  })
+    expect(screen.getByRole('tab', { name: groupLabel })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: sectionLabel })).toHaveAttribute('aria-selected', 'true')
 
-  it.each([
-    ['clients', 'Clients'],
-    ['client-scopes', 'Client scopes'],
-    ['groups', 'Groups'],
-    ['events', 'Events'],
-    ['realm-settings', 'Realm settings'],
-    ['authentication', 'Authentication'],
-    ['identity-providers', 'Identity providers'],
-    ['user-federation', 'User federation'],
-    ['workflows', 'Workflows'],
-  ])('renders a truthful shared placeholder for %s', (sectionId, label) => {
-    renderPage(`/platform-administration/identity-access?section=${sectionId}`)
+    const content = dataBackedContent[sectionId]
+    if (content) {
+      expect(screen.getByText(content)).toBeInTheDocument()
+      return
+    }
 
-    expect(screen.getByRole('heading', { name: label, level: 2 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: sectionLabel, level: 2 })).toBeInTheDocument()
     expect(screen.getByText('Keycloak integration for this administration area is not connected yet.')).toBeInTheDocument()
   })
 })
