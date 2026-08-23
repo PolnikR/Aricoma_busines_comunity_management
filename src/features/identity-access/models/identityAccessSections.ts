@@ -2,6 +2,7 @@ export const identityAccessSectionGroups = [
   {
     id: 'manage',
     label: 'Manage',
+    defaultSectionId: 'users',
     sections: [
       { id: 'organizations', label: 'Organizations' },
       { id: 'clients', label: 'Clients' },
@@ -16,6 +17,7 @@ export const identityAccessSectionGroups = [
   {
     id: 'configure',
     label: 'Configure',
+    defaultSectionId: 'realm-settings',
     sections: [
       { id: 'realm-settings', label: 'Realm settings' },
       { id: 'authentication', label: 'Authentication' },
@@ -28,6 +30,7 @@ export const identityAccessSectionGroups = [
 ] as const
 
 export type IdentityAccessSectionGroup = (typeof identityAccessSectionGroups)[number]
+export type IdentityAccessSectionGroupId = IdentityAccessSectionGroup['id']
 export type IdentityAccessSection = IdentityAccessSectionGroup['sections'][number]
 export type IdentityAccessSectionId = IdentityAccessSection['id']
 
@@ -41,4 +44,17 @@ export function parseIdentityAccessSection(value: string | null): IdentityAccess
   return value && identityAccessSectionIds.has(value as IdentityAccessSectionId)
     ? value as IdentityAccessSectionId
     : DEFAULT_IDENTITY_ACCESS_SECTION
+}
+
+export function getIdentityAccessGroup(groupId: IdentityAccessSectionGroupId): IdentityAccessSectionGroup {
+  return identityAccessSectionGroups.find(group => group.id === groupId) ?? identityAccessSectionGroups[0]
+}
+
+export function getIdentityAccessGroupForSection(sectionId: IdentityAccessSectionId): IdentityAccessSectionGroup {
+  return identityAccessSectionGroups.find(group => group.sections.some(section => section.id === sectionId))
+    ?? identityAccessSectionGroups[0]
+}
+
+export function getIdentityAccessDefaultSectionForGroup(groupId: IdentityAccessSectionGroupId): IdentityAccessSectionId {
+  return getIdentityAccessGroup(groupId).defaultSectionId
 }

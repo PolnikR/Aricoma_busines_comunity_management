@@ -2,7 +2,11 @@ import { act, renderHook } from '@testing-library/react'
 import { MemoryRouter, useLocation, useNavigate } from 'react-router'
 import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
-import { identityAccessSectionGroups } from '../models/identityAccessSections'
+import {
+  getIdentityAccessDefaultSectionForGroup,
+  getIdentityAccessGroupForSection,
+  identityAccessSectionGroups,
+} from '../models/identityAccessSections'
 import { useIdentityAccessSection } from './useIdentityAccessSection'
 
 function wrapperFor(entry: string) {
@@ -24,6 +28,7 @@ describe('useIdentityAccessSection', () => {
       {
         id: 'manage',
         label: 'Manage',
+        defaultSectionId: 'users',
         sections: [
           { id: 'organizations', label: 'Organizations' },
           { id: 'clients', label: 'Clients' },
@@ -38,6 +43,7 @@ describe('useIdentityAccessSection', () => {
       {
         id: 'configure',
         label: 'Configure',
+        defaultSectionId: 'realm-settings',
         sections: [
           { id: 'realm-settings', label: 'Realm settings' },
           { id: 'authentication', label: 'Authentication' },
@@ -48,6 +54,17 @@ describe('useIdentityAccessSection', () => {
         ],
       },
     ])
+  })
+
+  it('resolves each section to exactly one group and exposes deterministic group defaults', () => {
+    const sectionIds = identityAccessSectionGroups.flatMap(group => group.sections.map(section => section.id))
+
+    expect(new Set(sectionIds).size).toBe(sectionIds.length)
+    expect(sectionIds.every(sectionId => getIdentityAccessGroupForSection(sectionId).sections.some(section => section.id === sectionId))).toBe(true)
+    expect(getIdentityAccessGroupForSection('users').id).toBe('manage')
+    expect(getIdentityAccessGroupForSection('permissions').id).toBe('configure')
+    expect(getIdentityAccessDefaultSectionForGroup('manage')).toBe('users')
+    expect(getIdentityAccessDefaultSectionForGroup('configure')).toBe('realm-settings')
   })
 
   it('defaults missing and invalid section values to users', () => {
