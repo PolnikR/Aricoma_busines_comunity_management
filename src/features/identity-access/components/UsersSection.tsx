@@ -13,7 +13,6 @@ import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { Field, Input } from '@/shared/components/form/FormControls'
 import { Modal } from '@/shared/components/modal/Modal'
-import { useOrganizations } from '../hooks/useOrganizations'
 import { useRoles } from '../hooks/useRoles'
 import { useSessions } from '../hooks/useSessions'
 import { useUsers } from '../hooks/useUsers'
@@ -61,14 +60,12 @@ function isUserTab(tabId: IdentityAccessTabId | null): tabId is UserTabId {
 export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: UsersSectionProps) {
   const { data: users = [], isLoading, error, refetch } = useUsers()
   const { data: roles = [] } = useRoles()
-  const { data: organizations = [] } = useOrganizations()
   const selectedUser = users.find(user => user.id === entityId) ?? null
   const { data: userSessions = [] } = useSessions(selectedUser ? { userId: selectedUser.id } : undefined)
   const [isAddOpen, setIsAddOpen] = useState(false)
   const table = useTableState(users, { searchFields: USER_SEARCH_FIELDS })
 
   const getRoleName = (roleId: string) => roles.find(role => role.id === roleId)?.name ?? roleId
-  const getOrganizationName = (organizationId: string) => organizations.find(org => org.id === organizationId)?.name ?? organizationId
 
   const columns = useMemo<ColumnDef<User>[]>(() => [
     {
@@ -81,11 +78,10 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
         </>
       ),
     },
-    { id: 'organization', header: 'Organization', cell: user => getOrganizationName(user.organizationId) },
     { id: 'roles', header: 'Roles', cell: user => user.roleIds.length > 0 ? user.roleIds.map(getRoleName).join(', ') : '—' },
     { id: 'status', header: 'Status', cell: user => <Badge color={statusColor[user.status]} size="sm">{user.status}</Badge> },
     { id: 'lastLogin', header: 'Last login', cell: user => user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never' },
-  ], [organizations, roles])
+  ], [roles])
 
   const roleColumns = useMemo<ColumnDef<Role>[]>(() => [
     { id: 'name', header: 'Role name', cell: role => <span className="font-semibold text-text-primary">{role.name}</span> },
@@ -118,7 +114,6 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Name" htmlFor="identity-user-name"><Input id="identity-user-name" value={selectedUser.name} readOnly /></Field>
             <Field label="Email" htmlFor="identity-user-email"><Input id="identity-user-email" value={selectedUser.email} readOnly /></Field>
-            <Field label="Organization" htmlFor="identity-user-organization"><Input id="identity-user-organization" value={getOrganizationName(selectedUser.organizationId)} readOnly /></Field>
             <div><span className="mb-1.5 block text-xs font-medium text-text-secondary">Status</span><Badge color={statusColor[selectedUser.status]}>{selectedUser.status}</Badge></div>
           </div>
         </IdentitySettingsSection>
@@ -164,7 +159,7 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
       />
 
       {isLoading ? (
-        <DataTableSkeleton columnCount={5} rowCount={5} className="rounded-none border-0 shadow-none" />
+        <DataTableSkeleton columnCount={4} rowCount={5} className="rounded-none border-0 shadow-none" />
       ) : (
         <>
           <DataTableToolbar
@@ -184,7 +179,7 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
               rows={table.pageItems}
               rowKey={user => user.id}
               density={table.density}
-              minWidthClassName="min-w-220"
+              minWidthClassName="min-w-180"
               ariaLabel="Users"
               rowAriaLabel={user => `Open user ${user.name}`}
               onRowClick={user => { onEntityChange(user.id) }}

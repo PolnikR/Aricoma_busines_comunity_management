@@ -4,14 +4,12 @@ import { describe, expect, it, vi } from 'vitest'
 import { UsersSection } from './UsersSection'
 import { useUsers } from '../hooks/useUsers'
 import { useRoles } from '../hooks/useRoles'
-import { useOrganizations } from '../hooks/useOrganizations'
 import { useSessions } from '../hooks/useSessions'
 import type { User } from '../models/identityTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('../hooks/useUsers', () => ({ useUsers: vi.fn() }))
 vi.mock('../hooks/useRoles', () => ({ useRoles: vi.fn() }))
-vi.mock('../hooks/useOrganizations', () => ({ useOrganizations: vi.fn() }))
 vi.mock('../hooks/useSessions', () => ({ useSessions: vi.fn() }))
 
 const user: User = {
@@ -22,7 +20,6 @@ const user: User = {
 function mockLoadedUsers(users: User[] = [user]) {
   vi.mocked(useUsers).mockReturnValue({ data: users, isLoading: false, error: null, refetch: vi.fn() })
   vi.mocked(useRoles).mockReturnValue({ data: [{ id: 'role-admin', name: 'Administrator', description: 'Admin', permissionIds: [], organizationId: 'org-1', createdAt: new Date(), updatedAt: new Date() }], isLoading: false, error: null, refetch: vi.fn() })
-  vi.mocked(useOrganizations).mockReturnValue({ data: [{ id: 'org-1', name: 'Engineering', description: 'Engineering', status: 'active', createdAt: new Date(), updatedAt: new Date() }], isLoading: false, error: null, refetch: vi.fn() })
   vi.mocked(useSessions).mockReturnValue({ data: [{ id: 'session-1', userId: 'user-1', organizationId: 'org-1', ipAddress: '192.168.1.100', userAgent: 'Browser', loginTime: new Date('2026-08-23T08:00:00Z'), lastActivityTime: new Date('2026-08-23T08:30:00Z'), expiresAt: new Date('2026-08-24T08:00:00Z'), status: 'active' }], isLoading: false, error: null, refetch: vi.fn() })
 }
 
@@ -51,7 +48,7 @@ describe('UsersSection', () => {
     expect(screen.getByRole('heading', { name: 'Alice Smith' })).toBeInTheDocument()
     expect(screen.getByRole('tablist', { name: 'User management sections' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Details' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByDisplayValue('Engineering')).toBeInTheDocument()
+    expect(screen.queryByText('Engineering')).not.toBeInTheDocument()
     expect(screen.getByText('active')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('tab', { name: 'Credentials' }))
