@@ -3,6 +3,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { Tabs } from '@/shared/components/tabs/Tabs'
+import { useTableState } from '@/shared/components/data-table'
 import { useOrchestratedEntities } from '../hooks/useOrchestratedEntities'
 import { useOrchestratedEntityRuns } from '../hooks/useOrchestratedEntityRuns'
 import { useRecoveryRunsTabSearchParam } from '../hooks/useRecoveryRunsTabSearchParam'
@@ -14,7 +15,7 @@ import type { OrchestratedEntity } from '../model/recoveryRunTypes'
 
 export function RecoveryRunsPage() {
   const { t } = useTranslation()
-  const { tab, entityId, setTab, setEntityId } = useRecoveryRunsTabSearchParam()
+  const { tab, entityType, entityId, setTab, setEntity } = useRecoveryRunsTabSearchParam()
   const { entities, isLoading, isFetching, error, refetch } = useOrchestratedEntities()
 
   const tabFilteredEntities = useMemo(() => {
@@ -24,27 +25,34 @@ export function RecoveryRunsPage() {
   }, [entities, tab])
 
   const visibleEntities = useMemo(() => (
-    entityId ? tabFilteredEntities.filter(entity => entity.id === entityId) : tabFilteredEntities
-  ), [tabFilteredEntities, entityId])
+    entityId && entityType
+      ? tabFilteredEntities.filter(entity => entity.id === entityId && entity.entityType === entityType)
+      : tabFilteredEntities
+  ), [tabFilteredEntities, entityId, entityType])
+
+  const table = useTableState(visibleEntities, { searchFields: ['name', 'id'] })
 
   const {
     rows: latestRunRows,
     isFetching: latestRunsFetching,
     refetch: refetchLatestRuns,
-  } = useOrchestratedEntityRuns(visibleEntities)
+  } = useOrchestratedEntityRuns(table.pageItems)
 
   const rows = useMemo<RecoveryRunRow[]>(
-    () => latestRunRows.map(({ entity, latestRun }) => ({
+    () => latestRunRows.map(({ entity, latestRunState }) => ({
       id: entity.id,
       name: entity.name,
       entityType: entity.entityType,
       dagId: entity.dagId,
-      latestRun,
+      latestRunState,
     })),
     [latestRunRows],
   )
 
-  const selectedEntity: OrchestratedEntity | null = entities.find(entity => entity.id === entityId) ?? null
+  const selectedEntity: OrchestratedEntity | null = entities.find(
+    entity => entity.id === entityId && entity.entityType === entityType,
+  ) ?? null
+  const selectedEntityKey = entityId && entityType ? `${entityType}:${entityId}` : null
 
   const tabItems = [
     { value: 'all' as const, label: t('recoveryRuns.tabs.all') },
@@ -87,13 +95,20 @@ export function RecoveryRunsPage() {
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
             <RecoveryRunsTable
               rows={rows}
+              search={table.search}
+              onSearchChange={table.setSearch}
+              page={table.page}
+              pageSize={table.pageSize}
+              total={table.total}
+              onPageChange={table.setPage}
+              onPageSizeChange={table.setPageSize}
               showEntityType={tab === 'all'}
               isLoading={isLoading}
               error={error}
               isRetrying={isFetching}
               onRetry={refetch}
-              onSelectEntity={setEntityId}
-              selectedEntityId={entityId}
+              onSelectEntity={(nextEntityType, nextEntityId) => { setEntity(nextEntityType, nextEntityId) }}
+              selectedEntityKey={selectedEntityKey}
             />
           </div>
         </InventoryShell>
@@ -101,7 +116,7 @@ export function RecoveryRunsPage() {
 
       <RecoveryRunHistoryDrawer
         entity={selectedEntity}
-        onClose={() => { setEntityId(null) }}
+        onClose={() => { setEntity(null) }}
       />
     </div>
   )

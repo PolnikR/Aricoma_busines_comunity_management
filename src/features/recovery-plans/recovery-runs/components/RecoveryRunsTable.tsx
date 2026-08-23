@@ -7,21 +7,24 @@ import {
   DataTableRequestState,
   DataTableSkeleton,
   DataTableToolbar,
-  useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '../helpers/formatRecoveryRun'
-import type { OrchestratedEntity, OrchestratorRun } from '../model/recoveryRunTypes'
+import type { LatestRunRequestState, OrchestratedEntity } from '../model/recoveryRunTypes'
 
 export interface RecoveryRunRow {
   id: string
   name: string
   entityType: OrchestratedEntity['entityType']
   dagId: string
-  latestRun: OrchestratorRun | null
+  latestRunState: LatestRunRequestState
 }
 
-function getColumns(t: ReturnType<typeof useTranslation>['t'], showEntityType: boolean): ColumnDef<RecoveryRunRow>[] {
+function getColumns(
+  t: ReturnType<typeof useTranslation>['t'],
+  showEntityType: boolean,
+  onRetry: () => void,
+): ColumnDef<RecoveryRunRow>[] {
   const columns: ColumnDef<RecoveryRunRow>[] = [
     {
       id: 'app',
@@ -51,22 +54,51 @@ function getColumns(t: ReturnType<typeof useTranslation>['t'], showEntityType: b
     {
       id: 'status',
       header: t('recoveryRuns.table.latestRun'),
-      cell: row => row.latestRun ? (
-        <Badge color={runStatusBadgeColor(row.latestRun.status)} size="sm">{row.latestRun.status}</Badge>
-      ) : (
-        <span className="text-text-subtle">{t('recoveryRuns.table.noRuns')}</span>
-      ),
+      cell: row => {
+        const state = row.latestRunState
+        if (state.status === 'loading') {
+          return <span className="text-text-muted" role="status">{t('recoveryRuns.table.runLoading')}</span>
+        }
+        if (state.status === 'error') {
+          return (
+            <span className="flex items-center gap-2 text-danger">
+              {t('recoveryRuns.table.runLoadFailed')}
+              <button
+                type="button"
+                className="text-xs font-semibold underline"
+                onClick={(event) => { event.stopPropagation(); onRetry() }}
+              >
+                {t('buttons.retry')}
+              </button>
+            </span>
+          )
+        }
+        if (state.status === 'empty') {
+          return (
+            <span className="text-text-subtle">
+              {t('recoveryRuns.table.noRuns')}
+              {state.refreshError ? <span className="ml-2 text-danger">{t('recoveryRuns.table.runRefreshFailed')}</span> : null}
+            </span>
+          )
+        }
+        return (
+          <span className="flex items-center gap-2">
+            <Badge color={runStatusBadgeColor(state.run.status)} size="sm">{state.run.status}</Badge>
+            {state.refreshError ? <span className="text-xs text-danger">{t('recoveryRuns.table.runRefreshFailed')}</span> : null}
+          </span>
+        )
+      },
     },
     {
       id: 'started',
       header: t('recoveryRuns.table.started'),
-      cell: row => <span className="font-mono text-xs">{formatRunTimestamp(row.latestRun?.startedAt ?? null)}</span>,
+      cell: row => <span className="font-mono text-xs">{formatRunTimestamp(row.latestRunState.status === 'data' ? row.latestRunState.run.startedAt : null)}</span>,
     },
     {
       id: 'duration',
       header: t('recoveryRuns.table.duration'),
       align: 'right',
-      cell: row => <span className="font-mono text-xs tabular-nums">{formatRunDuration(row.latestRun?.durationSeconds ?? null)}</span>,
+      cell: row => <span className="font-mono text-xs tabular-nums">{formatRunDuration(row.latestRunState.status === 'data' ? row.latestRunState.run.durationSeconds : null)}</span>,
     },
   )
 
@@ -75,27 +107,40 @@ function getColumns(t: ReturnType<typeof useTranslation>['t'], showEntityType: b
 
 interface RecoveryRunsTableProps {
   rows: RecoveryRunRow[]
+  search: string
+  onSearchChange: (search: string) => void
+  page: number
+  pageSize: number
+  total: number
+  onPageChange: (page: number) => void
+  onPageSizeChange: (pageSize: number) => void
   showEntityType: boolean
   isLoading: boolean
   error: Error | null
   isRetrying: boolean
   onRetry: () => void
-  onSelectEntity: (entityId: string) => void
-  selectedEntityId: string | null
+  onSelectEntity: (entityType: RecoveryRunRow['entityType'], entityId: string) => void
+  selectedEntityKey: string | null
 }
 
 export function RecoveryRunsTable({
   rows,
+  search,
+  onSearchChange,
+  page,
+  pageSize,
+  total,
+  onPageChange,
+  onPageSizeChange,
   showEntityType,
   isLoading,
   error,
   isRetrying,
   onRetry,
   onSelectEntity,
-  selectedEntityId,
+  selectedEntityKey,
 }: RecoveryRunsTableProps) {
   const { t } = useTranslation()
-  const table = useTableState(rows, { searchFields: ['name', 'id'] })
   const errorDetail = extractBackendErrorDetail(error)
 
   if (isLoading) {
@@ -105,8 +150,8 @@ export function RecoveryRunsTable({
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <DataTableToolbar
-        searchValue={table.search}
-        onSearchChange={table.setSearch}
+        searchValue={search}
+        onSearchChange={onSearchChange}
         searchPlaceholder={t('recoveryRuns.search.placeholder')}
         searchLabel={t('recoveryRuns.search.label')}
       />
@@ -123,25 +168,25 @@ export function RecoveryRunsTable({
           } : null}
         >
           <DataTable
-            columns={getColumns(t, showEntityType)}
-            rows={table.pageItems}
-            rowKey={row => row.id}
+            columns={getColumns(t, showEntityType, onRetry)}
+            rows={rows}
+            rowKey={row => `${row.entityType}:${row.id}`}
             ariaLabel={t('recoveryRuns.tableLabel')}
             rowAriaLabel={row => row.name}
-            onRowClick={row => { onSelectEntity(row.id) }}
-            selectedRowKey={selectedEntityId}
-            emptyContent={rows.length > 0 ? t('recoveryRuns.noMatches') : t('recoveryRuns.empty')}
+            onRowClick={row => { onSelectEntity(row.entityType, row.id) }}
+            selectedRowKey={selectedEntityKey}
+            emptyContent={search.trim() ? t('recoveryRuns.noMatches') : t('recoveryRuns.empty')}
           />
         </DataTableRequestState>
       </div>
 
       {!error ? (
         <DataTablePagination
-          page={table.page}
-          pageSize={table.pageSize}
-          total={table.total}
-          onPageChange={table.setPage}
-          onPageSizeChange={table.setPageSize}
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
         />
       ) : null}
     </div>

@@ -373,7 +373,7 @@ describe('RecoveryGroupsTable', () => {
     expect(within(detail).getByText('success')).toBeInTheDocument()
 
     await user.click(within(detail).getByRole('button', { name: 'View recovery runs →' }))
-    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-runs?tab=groups&entityId=database-group')
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-runs?tab=groups&entityType=group&entityId=database-group')
   })
 
   it('shows no orchestrator status when the group has no run id', async () => {
