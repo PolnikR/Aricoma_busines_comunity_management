@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ResourcesIsePage } from './ResourcesIsePage'
-import type { DiscoveryInventory } from '../model/discoveryTypes'
+import type { DiscoveryInventory } from '@/features/discovery-inventory/resources/model/discoveryTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
 const refetch = vi.fn()
@@ -89,8 +89,8 @@ vi.mock('@/features/discovery-inventory/resources/hooks/useResourceInventoryQuer
     return resourceInventoryQuery
   },
 }))
-vi.mock('../hooks/useVmwareTags', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../hooks/useVmwareTags')>()
+vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareTags', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/discovery-inventory/resources/hooks/useVmwareTags')>()
 
   return {
     ...actual,
@@ -103,8 +103,8 @@ vi.mock('../hooks/useVmwareTags', async (importOriginal) => {
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
   useProviders: () => providersQuery,
 }))
-vi.mock('../hooks/useVirtualMachineSearchParams', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../hooks/useVirtualMachineSearchParams')>()
+vi.mock('@/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams')>()
 
   return {
     ...actual,
@@ -116,21 +116,21 @@ vi.mock('../hooks/useVirtualMachineSearchParams', async (importOriginal) => {
     },
   }
 })
-vi.mock('../hooks/useFlashSystemSearchParams', () => ({
+vi.mock('@/features/discovery-inventory/resources/hooks/useFlashSystemSearchParams', () => ({
   useFlashSystemSearchParams: () => ({
     query: { page: 1, pageSize: 25, search: '', poolId: '', hostId: '', status: '' },
     updateQuery: vi.fn(),
     updateFilters: vi.fn(),
   }),
 }))
-vi.mock('../hooks/useResourceTabSearchParam', () => ({
+vi.mock('@/features/discovery-inventory/resources/hooks/useResourceTabSearchParam', () => ({
   useResourceTabSearchParam: () => ({ resourceTab, providerId: selectedProviderId, setResourceSource }),
 }))
-vi.mock('../components/vmware/VirtualMachineMetrics', () => ({
+vi.mock('@/features/discovery-inventory/resources/components/vmware/VirtualMachineMetrics', () => ({
   VirtualMachineMetrics: () => <div>VM metrics</div>,
 }))
-vi.mock('../components/vmware/VirtualMachinesToolbar', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../components/vmware/VirtualMachinesToolbar')>()
+vi.mock('@/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar')>()
 
   return {
     ...actual,
@@ -139,8 +139,8 @@ vi.mock('../components/vmware/VirtualMachinesToolbar', async (importOriginal) =>
       : <div>VM toolbar</div>,
   }
 })
-vi.mock('../components/vmware/VirtualMachinesTable', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../components/vmware/VirtualMachinesTable')>()
+vi.mock('@/features/discovery-inventory/resources/components/vmware/VirtualMachinesTable', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/discovery-inventory/resources/components/vmware/VirtualMachinesTable')>()
 
   return {
     ...actual,
@@ -149,7 +149,7 @@ vi.mock('../components/vmware/VirtualMachinesTable', async (importOriginal) => {
       : <div>VM table</div>,
   }
 })
-vi.mock('../components/vmware/VirtualMachineDetailPanel', () => ({
+vi.mock('@/features/discovery-inventory/resources/components/vmware/VirtualMachineDetailPanel', () => ({
   VirtualMachineDetailPanel: () => <div>VM detail</div>,
 }))
 vi.mock('@/shared/components/stat-card/StatCard', async (importOriginal) => {

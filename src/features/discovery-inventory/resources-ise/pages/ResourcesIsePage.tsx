@@ -4,14 +4,14 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
-import { FlashSystemResourcesPage } from '../components/flash-system/FlashSystemResourcesPage'
-import { IbmPowerResourcesPage } from '../components/ibm-power/IbmPowerResourcesPage'
-import type { SourceResourcesPageProps } from '../components/SourceResourcesPageProps'
-import { buildResourceSourceTabs } from '../helpers/buildResourceSourceTabs'
-import { VmwareResourcesPage } from '../components/vmware/VmwareResourcesPage'
-import { useResourceTabSearchParam } from '../hooks/useResourceTabSearchParam'
+import { FlashSystemResourcesPage } from '@/features/discovery-inventory/resources/components/flash-system/FlashSystemResourcesPage'
+import { IbmPowerResourcesPage } from '@/features/discovery-inventory/resources/components/ibm-power/IbmPowerResourcesPage'
+import type { SourceResourcesPageProps } from '@/features/discovery-inventory/resources/components/SourceResourcesPageProps'
+import { buildResourceTargetTabs } from '@/features/discovery-inventory/resources/helpers/buildResourceSourceTabs'
+import { VmwareResourcesPage } from '@/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage'
+import { useResourceTabSearchParam } from '@/features/discovery-inventory/resources/hooks/useResourceTabSearchParam'
 
-export function ResourcesPage() {
+export function ResourcesIsePage() {
   const { t } = useTranslation()
   const { resourceTab, providerId, setResourceSource } = useResourceTabSearchParam()
   const {
@@ -23,7 +23,7 @@ export function ResourcesPage() {
     refetch: refetchProviders,
   } = useProviders()
   const roleTabs = useMemo(
-    () => buildResourceSourceTabs(providers, {
+    () => buildResourceTargetTabs(providers, {
       vmware: t('pages.virtualMachines.tabs.vmware'),
       flashsystem: t('pages.virtualMachines.tabs.flashSystem'),
       'ibm-power': t('pages.virtualMachines.tabs.ibmPower'),
@@ -42,7 +42,7 @@ export function ResourcesPage() {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <TableToolbar
-          eyebrow={t('pages.virtualMachines.eyebrow')}
+          eyebrow={t('pages.resourcesIse.eyebrow')}
           title={t('pages.virtualMachines.title')}
           description={t('pages.virtualMachines.description')}
           isFetching={providersFetching}
@@ -85,7 +85,7 @@ export function ResourcesPage() {
     providerId: effectiveActiveTab?.providerId ?? null,
     tabs,
     t,
-    role: 'source',
+    role: 'target',
   }
 
   switch (effectiveActiveTab?.resourceTab ?? resourceTab) {
