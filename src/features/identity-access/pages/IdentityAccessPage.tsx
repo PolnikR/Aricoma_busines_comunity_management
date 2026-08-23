@@ -42,7 +42,7 @@ function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChan
   if (sectionId === 'user-federation') return <UserFederationSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'events') return <EventsSection tabId={tabId} onTabChange={onTabChange} onOpenSettings={onOpenEventSettings} />
   if (sectionId === 'permissions') return <PermissionsSection />
-  if (sectionId === 'organizations') return <OrganizationsSection />
+  if (sectionId === 'organizations') return <OrganizationsSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'sessions') return <SessionsSection />
 
   return <KeycloakPlaceholderSection title={sectionLabels.get(sectionId) ?? sectionId} />

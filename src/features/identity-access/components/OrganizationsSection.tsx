@@ -1,131 +1,100 @@
-import { useMemo, useState } from 'react'
-import { Badge } from '@/shared/components/badge/Badge'
+import { useMemo } from 'react'
 import { Button } from '@/shared/components/button/Button'
-import {
-  DataTable,
-  DataTablePagination,
-  DataTableRequestState,
-  DataTableSkeleton,
-  DataTableToolbar,
-  DetailDrawer,
-  DetailRow,
-  useTableState,
-} from '@/shared/components/data-table'
+import { DataTable, DataTableToolbar, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
-import { useOrganizations } from '../hooks/useOrganizations'
-import { useRoles } from '../hooks/useRoles'
-import { useUsers } from '../hooks/useUsers'
-import type { Organization } from '../models/identityTypes'
+import type { IdentityAccessTabId } from '../models/identityAccessSections'
+import { IdentityResourceDetailPage, IdentityResourceHeader } from './IdentityResourceLayout'
 
-const ORGANIZATION_SEARCH_FIELDS: (keyof Organization)[] = ['name', 'description']
+interface KeycloakOrganizationListItem {
+  id: string
+  name: string
+  domains: string[]
+  memberCount: number
+  enabled: boolean
+}
 
-export function OrganizationsSection() {
-  const { data: organizations = [], isLoading, error, refetch } = useOrganizations()
-  const { data: users = [] } = useUsers()
-  const { data: roles = [] } = useRoles()
-  const [selectedOrganizationId, setSelectedOrganizationId] = useState<string | null>(null)
-  const table = useTableState(organizations, { searchFields: ORGANIZATION_SEARCH_FIELDS })
-  const selectedOrganization = organizations.find(org => org.id === selectedOrganizationId) ?? null
+const ORGANIZATION_TABS = [
+  { value: 'details', label: 'Details' },
+  { value: 'domains', label: 'Domains' },
+  { value: 'members', label: 'Members' },
+  { value: 'groups', label: 'Groups' },
+  { value: 'identity-providers', label: 'Identity providers' },
+] as const
 
-  const organizationUsers = (organizationId: string) => users.filter(user => user.organizationId === organizationId)
-  const organizationRoles = (organizationId: string) => roles.filter(role => role.organizationId === organizationId)
+type OrganizationTabId = (typeof ORGANIZATION_TABS)[number]['value']
 
-  const columns = useMemo<ColumnDef<Organization>[]>(() => [
-    {
-      id: 'name',
-      header: 'Organization',
-      cell: org => <span className="font-semibold text-text-primary">{org.name}</span>,
-    },
-    { id: 'description', header: 'Description', cell: org => org.description || '—' },
-    { id: 'members', header: 'Members', align: 'right', cell: org => String(organizationUsers(org.id).length) },
-    { id: 'roles', header: 'Roles', align: 'right', cell: org => String(organizationRoles(org.id).length) },
-    {
-      id: 'status',
-      header: 'Status',
-      cell: org => <Badge color={org.status === 'active' ? 'success' : 'light'} size="sm">{org.status}</Badge>,
-    },
-  ], [roles, users])
+interface OrganizationsSectionProps {
+  entityId: string | null
+  tabId: IdentityAccessTabId | null
+  onEntityChange: (entityId: string | null) => void
+  onTabChange: (tabId: IdentityAccessTabId) => void
+}
+
+function isOrganizationTab(tabId: IdentityAccessTabId | null): tabId is OrganizationTabId {
+  return ORGANIZATION_TABS.some(tab => tab.value === tabId)
+}
+
+export function OrganizationsSection({ entityId, tabId, onEntityChange, onTabChange }: OrganizationsSectionProps) {
+  const organizations: KeycloakOrganizationListItem[] = []
+  const table = useTableState(organizations, { searchFields: ['name'] })
+  const columns = useMemo<ColumnDef<KeycloakOrganizationListItem>[]>(() => [
+    { id: 'name', header: 'Organization', cell: organization => <span className="font-semibold text-text-primary">{organization.name}</span> },
+    { id: 'domains', header: 'Domains', cell: organization => organization.domains.length > 0 ? organization.domains.join(', ') : '—' },
+    { id: 'members', header: 'Members', align: 'right', cell: organization => String(organization.memberCount) },
+    { id: 'status', header: 'Status', cell: organization => organization.enabled ? 'Enabled' : 'Disabled' },
+  ], [])
+
+  if (entityId) {
+    const activeTab: OrganizationTabId = isOrganizationTab(tabId) ? tabId : 'details'
+    return (
+      <IdentityResourceDetailPage
+        eyebrow="Manage"
+        title={entityId}
+        description="Keycloak organization"
+        backLabel="Organizations"
+        onBack={() => { onEntityChange(null) }}
+        tabs={ORGANIZATION_TABS}
+        tabId={activeTab}
+        onTabChange={nextTab => { onTabChange(nextTab) }}
+        tabAriaLabel="Organization sections"
+      >
+        <div className="p-4">
+          <EmptyState
+            title={ORGANIZATION_TABS.find(tab => tab.value === activeTab)?.label ?? activeTab}
+            description="The Keycloak organization backend contract is not connected yet, so organization details are intentionally not inferred from the generic ABCO organization mock."
+          />
+        </div>
+      </IdentityResourceDetailPage>
+    )
+  }
 
   return (
     <div className="flex min-w-0 flex-col">
-      <div className="flex items-start justify-between gap-4 border-b border-border px-4 pb-3 pt-1">
-        <div>
-          <h2 className="text-base font-semibold text-text-primary">Organizations</h2>
-          <p className="mt-1 text-xs text-text-muted">Manage organizations currently represented by the Identity & Access mock data.</p>
-        </div>
-        <Button size="sm" disabled title="Available after Keycloak integration">Add organization</Button>
-      </div>
-
-      {isLoading ? (
-        <DataTableSkeleton columnCount={5} rowCount={5} className="rounded-none border-0 shadow-none" />
-      ) : (
-        <>
-          <DataTableToolbar
-            searchValue={table.search}
-            onSearchChange={table.setSearch}
-            searchPlaceholder="Search organizations"
-            searchLabel="Search organizations"
-            density={table.density}
-            onDensityChange={table.setDensity}
-          />
-
-          <DataTableRequestState
-            hasData={organizations.length > 0}
-            error={error ? {
-              title: 'Organizations could not be loaded',
-              description: error.message,
-              retryLabel: 'Retry',
-              isRetrying: false,
-              onRetry: refetch,
-            } : null}
-          >
-            <DataTable
-              columns={columns}
-              rows={table.pageItems}
-              rowKey={organization => organization.id}
-              density={table.density}
-              minWidthClassName="min-w-200"
-              ariaLabel="Organizations"
-              rowAriaLabel={organization => `Show details for ${organization.name}`}
-              onRowClick={organization => { setSelectedOrganizationId(organization.id) }}
-              selectedRowKey={selectedOrganizationId}
-              emptyContent={organizations.length > 0
-                ? 'No organizations match your search.'
-                : <EmptyState title="No organizations found" description="No organizations are available in the current Identity & Access data." />}
-            />
-          </DataTableRequestState>
-
-          {!error ? (
-            <DataTablePagination
-              page={table.page}
-              pageSize={table.pageSize}
-              total={table.total}
-              onPageChange={table.setPage}
-              onPageSizeChange={table.setPageSize}
-            />
-          ) : null}
-        </>
-      )}
-
-      <DetailDrawer
-        open={selectedOrganization !== null}
-        onClose={() => { setSelectedOrganizationId(null) }}
-        eyebrow="Organization"
-        title={selectedOrganization?.name ?? ''}
-        ariaLabel="Organization detail"
-        closeLabel="Close organization detail"
-      >
-        {selectedOrganization ? (
-          <dl className="px-5 py-3">
-            <DetailRow label="Description" value={selectedOrganization.description || '—'} />
-            <DetailRow label="Status" value={<Badge color={selectedOrganization.status === 'active' ? 'success' : 'light'} size="sm">{selectedOrganization.status}</Badge>} />
-            <DetailRow label="Members" value={organizationUsers(selectedOrganization.id).length > 0 ? organizationUsers(selectedOrganization.id).map(user => user.name).join(', ') : '—'} />
-            <DetailRow label="Roles" value={organizationRoles(selectedOrganization.id).length > 0 ? organizationRoles(selectedOrganization.id).map(role => role.name).join(', ') : '—'} />
-            <DetailRow label="Created" value={new Date(selectedOrganization.createdAt).toLocaleString()} />
-          </dl>
-        ) : null}
-      </DetailDrawer>
+      <IdentityResourceHeader
+        eyebrow="Manage"
+        title="Organizations"
+        description="Keycloak organizations, domains, members, groups, and linked identity providers. Generic ABCO organizations are not used as this contract."
+        actions={<Button size="sm" disabled title="Requires a Keycloak organization backend contract">Create organization</Button>}
+      />
+      <DataTableToolbar
+        searchValue={table.search}
+        onSearchChange={table.setSearch}
+        searchPlaceholder="Search organizations"
+        searchLabel="Search organizations"
+        density={table.density}
+        onDensityChange={table.setDensity}
+      />
+      <DataTable
+        columns={columns}
+        rows={table.pageItems}
+        rowKey={organization => organization.id}
+        density={table.density}
+        ariaLabel="Keycloak organizations"
+        onRowClick={organization => { onEntityChange(organization.id) }}
+        rowAriaLabel={organization => `Open organization ${organization.name}`}
+        emptyContent={<EmptyState title="Keycloak organizations not connected" description="No Keycloak organization records are available from the current backend contract." />}
+      />
     </div>
   )
 }
