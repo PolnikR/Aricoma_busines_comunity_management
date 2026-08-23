@@ -1,54 +1,48 @@
-import { useState } from 'react'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { UsersTab } from '../components/UsersTab'
 import { RolesTab } from '../components/RolesTab'
 import { PermissionsTab } from '../components/PermissionsTab'
 import { OrganizationsTab } from '../components/OrganizationsTab'
 import { SessionsTab } from '../components/SessionsTab'
+import { IdentityAccessNavigation } from '../components/IdentityAccessNavigation'
+import { useIdentityAccessSection } from '../hooks/useIdentityAccessSection'
+import { identityAccessSectionGroups, type IdentityAccessSectionId } from '../models/identityAccessSections'
 
-type TabId = 'users' | 'roles' | 'permissions' | 'organizations' | 'sessions'
+const sectionLabels = new Map<IdentityAccessSectionId, string>(
+  identityAccessSectionGroups.flatMap(group => group.sections.map(section => [section.id, section.label] as const)),
+)
 
-const tabs: { id: TabId; label: string }[] = [
-  { id: 'users', label: 'Users' },
-  { id: 'roles', label: 'Roles' },
-  { id: 'permissions', label: 'Permissions' },
-  { id: 'organizations', label: 'Organizations' },
-  { id: 'sessions', label: 'Sessions' },
-]
-
-export function IdentityAccessPage() {
-  const [activeTab, setActiveTab] = useState<TabId>('users')
+function IdentityAccessSectionContent({ sectionId }: { sectionId: IdentityAccessSectionId }) {
+  if (sectionId === 'users') return <UsersTab />
+  if (sectionId === 'realm-roles') return <RolesTab />
+  if (sectionId === 'permissions') return <PermissionsTab />
+  if (sectionId === 'organizations') return <OrganizationsTab />
+  if (sectionId === 'sessions') return <SessionsTab />
 
   return (
-    <div className="flex flex-col gap-4">
-      <PageHeader title="Identity & Access Management" description="Manage users, roles, permissions, and organizations." />
+    <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
+      <h2 className="text-base font-semibold text-text-primary">{sectionLabels.get(sectionId)}</h2>
+      <p className="mt-2 max-w-md text-sm text-text-muted">Keycloak integration for this section is not connected yet.</p>
+    </div>
+  )
+}
 
-      <div className="rounded-xl border border-border bg-surface shadow-sm">
-        <div className="border-b border-border">
-          <div className="flex gap-0 px-4">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => { setActiveTab(tab.id); }}
-                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-accent text-accent'
-                    : 'border-transparent text-text-muted hover:text-text-secondary'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
+export function IdentityAccessPage() {
+  const { sectionId, setSectionId } = useIdentityAccessSection()
 
-        <div className="p-4">
-          {activeTab === 'users' && <UsersTab />}
-          {activeTab === 'roles' && <RolesTab />}
-          {activeTab === 'permissions' && <PermissionsTab />}
-          {activeTab === 'organizations' && <OrganizationsTab />}
-          {activeTab === 'sessions' && <SessionsTab />}
-        </div>
+  return (
+    <div className="flex min-h-full min-w-0 flex-col gap-4 overflow-x-hidden">
+      <PageHeader
+        eyebrow="Platform administration"
+        title="Identity & Access"
+        description="Manage Keycloak identities, applications, access policies, sessions, authentication, and realm configuration."
+      />
+
+      <div className="grid min-h-[38rem] min-w-0 overflow-hidden rounded-xl border border-border bg-surface shadow-sm md:grid-cols-[220px_minmax(0,1fr)]">
+        <IdentityAccessNavigation sectionId={sectionId} onSectionChange={setSectionId} />
+        <section className="min-w-0 overflow-hidden bg-surface p-4" aria-live="polite">
+          <IdentityAccessSectionContent sectionId={sectionId} />
+        </section>
       </div>
     </div>
   )
