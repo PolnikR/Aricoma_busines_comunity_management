@@ -69,6 +69,7 @@ export function UserFederationSection({ entityId, tabId, onEntityChange, onTabCh
       />
       <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder="Search federation providers" searchLabel="Search federation providers" density={table.density} onDensityChange={table.setDensity} />
       <DataTable
+        layout="fit"
         columns={columns}
         rows={table.pageItems}
         rowKey={provider => provider.id}

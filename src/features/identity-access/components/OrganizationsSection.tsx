@@ -86,6 +86,7 @@ export function OrganizationsSection({ entityId, tabId, onEntityChange, onTabCha
         onDensityChange={table.setDensity}
       />
       <DataTable
+        layout="fit"
         columns={columns}
         rows={table.pageItems}
         rowKey={organization => organization.id}

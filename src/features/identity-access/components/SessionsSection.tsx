@@ -32,6 +32,7 @@ export function SessionsSection() {
         }
       />
       <DataTable
+        layout="fit"
         columns={columns}
         rows={clientSessions}
         rowKey={row => row.clientId}

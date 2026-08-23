@@ -102,7 +102,7 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
       )
     } else if (activeTab === 'users-in-role') {
       detailContent = usersInRole.length > 0
-        ? <DataTable columns={userColumns} rows={usersInRole} rowKey={user => user.id} ariaLabel="Users in realm role" />
+        ? <DataTable layout="fit" columns={userColumns} rows={usersInRole} rowKey={user => user.id} ariaLabel="Users in realm role" />
         : <div className="p-4"><EmptyState title="No users in role" description="No users are assigned to this role in the current Identity & Access data." /></div>
     } else if (activeTab === 'permissions') {
       detailContent = (
@@ -146,7 +146,7 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
       />
 
       {isLoading ? (
-        <DataTableSkeleton columnCount={3} rowCount={5} className="rounded-none border-0 shadow-none" />
+        <DataTableSkeleton columnCount={3} rowCount={5} layout="fit" className="rounded-none border-0 shadow-none" />
       ) : (
         <>
           <DataTableToolbar
@@ -162,11 +162,11 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
             error={error ? { title: 'Roles could not be loaded', description: error.message, retryLabel: 'Retry', isRetrying: false, onRetry: refetch } : null}
           >
             <DataTable
+              layout="fit"
               columns={columns}
               rows={table.pageItems}
               rowKey={role => role.id}
               density={table.density}
-              minWidthClassName="min-w-160"
               ariaLabel="Realm roles"
               rowAriaLabel={role => `Open realm role ${role.name}`}
               onRowClick={role => { onEntityChange(role.id) }}

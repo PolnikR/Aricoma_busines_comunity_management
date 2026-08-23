@@ -7,6 +7,7 @@ interface DataTableSkeletonProps {
   ariaLabel?: string
   showToolbar?: boolean
   showPagination?: boolean
+  layout?: 'scroll' | 'fit'
   className?: string
 }
 
@@ -22,6 +23,7 @@ export function DataTableSkeleton({
   ariaLabel = 'Loading table data',
   showToolbar = true,
   showPagination = true,
+  layout = 'scroll',
   className,
 }: DataTableSkeletonProps) {
   const columns = Array.from({ length: Math.max(1, columnCount) })
@@ -47,17 +49,19 @@ export function DataTableSkeleton({
       ) : null}
 
       <div
-        className="custom-scrollbar w-full min-w-0 flex-1 touch-pan-x overflow-x-auto overscroll-x-contain"
+        className={layout === 'fit'
+          ? 'w-full min-w-0 flex-1 overflow-x-hidden'
+          : 'custom-scrollbar w-full min-w-0 flex-1 touch-pan-x overflow-x-auto overscroll-x-contain'}
         aria-hidden="true"
       >
-        <Table className="min-w-190">
+        <Table className={layout === 'fit' ? 'w-full table-fixed' : 'min-w-190'}>
           <TableHeader className="border-b border-border bg-surface-subtle">
             <TableRow>
               {columns.map((_, columnIndex) => (
                 <TableCell
                   key={columnIndex}
                   isHeader
-                  className="whitespace-nowrap px-4 py-2.5 text-left"
+                  className={layout === 'fit' ? 'whitespace-normal px-3 py-2.5 text-left' : 'whitespace-nowrap px-4 py-2.5 text-left'}
                 >
                   <SkeletonBlock className={cn('h-3', widths[columnIndex % widths.length])} />
                 </TableCell>
@@ -68,7 +72,7 @@ export function DataTableSkeleton({
             {rows.map((_, rowIndex) => (
               <TableRow key={rowIndex} className="bg-surface">
                 {columns.map((__, columnIndex) => (
-                  <TableCell key={columnIndex} className="px-4 py-3 align-middle">
+                  <TableCell key={columnIndex} className={layout === 'fit' ? 'min-w-0 px-3 py-3 align-middle' : 'px-4 py-3 align-middle'}>
                     <div className="space-y-2">
                       <SkeletonBlock className={cn('h-3.5', widths[(rowIndex + columnIndex) % widths.length])} />
                       {columnIndex === 0 ? (

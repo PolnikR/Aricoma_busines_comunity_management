@@ -44,6 +44,7 @@ export function AuthenticationSection({ tabId, onTabChange }: AuthenticationSect
       <>
         <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder="Search flows" searchLabel="Search authentication flows" density={table.density} onDensityChange={table.setDensity} />
         <DataTable
+          layout="fit"
           columns={flowColumns}
           rows={table.pageItems}
           rowKey={flow => flow.id}

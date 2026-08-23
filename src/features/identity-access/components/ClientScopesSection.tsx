@@ -75,6 +75,7 @@ export function ClientScopesSection({ entityId, tabId, onEntityChange, onTabChan
       />
       <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder="Search client scopes" searchLabel="Search client scopes" density={table.density} onDensityChange={table.setDensity} />
       <DataTable
+        layout="fit"
         columns={columns}
         rows={table.pageItems}
         rowKey={scope => scope.id}

@@ -71,6 +71,7 @@ export function EventsSection({ tabId, onTabChange, onOpenSettings }: EventsSect
         onDensityChange={table.setDensity}
       />
       <DataTable
+        layout="fit"
         columns={columns}
         rows={table.pageItems}
         rowKey={event => event.id}

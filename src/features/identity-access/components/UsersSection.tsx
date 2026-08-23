@@ -118,11 +118,11 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
       )
     } else if (activeTab === 'role-mappings') {
       detailContent = assignedRoles.length > 0
-        ? <DataTable columns={roleColumns} rows={assignedRoles} rowKey={role => role.id} ariaLabel="User role mappings" />
+        ? <DataTable layout="fit" columns={roleColumns} rows={assignedRoles} rowKey={role => role.id} ariaLabel="User role mappings" />
         : <div className="p-4"><EmptyState title="No role mappings" description="This user has no role mappings in the current Identity & Access data." /></div>
     } else if (activeTab === 'sessions') {
       detailContent = userSessions.length > 0
-        ? <DataTable columns={sessionColumns} rows={userSessions} rowKey={session => session.id} ariaLabel="User sessions" />
+        ? <DataTable layout="fit" columns={sessionColumns} rows={userSessions} rowKey={session => session.id} ariaLabel="User sessions" />
         : <div className="p-4"><EmptyState title="No user sessions" description="No sessions are available for this user in the current Identity & Access data." /></div>
     } else {
       const label = USER_TABS.find(tab => tab.value === activeTab)?.label ?? activeTab
@@ -157,7 +157,7 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
       />
 
       {isLoading ? (
-        <DataTableSkeleton columnCount={4} rowCount={5} className="rounded-none border-0 shadow-none" />
+        <DataTableSkeleton columnCount={4} rowCount={5} layout="fit" className="rounded-none border-0 shadow-none" />
       ) : (
         <>
           <DataTableToolbar
@@ -173,11 +173,11 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
             error={error ? { title: 'Users could not be loaded', description: error.message, retryLabel: 'Retry', isRetrying: false, onRetry: refetch } : null}
           >
             <DataTable
+              layout="fit"
               columns={columns}
               rows={table.pageItems}
               rowKey={user => user.id}
               density={table.density}
-              minWidthClassName="min-w-180"
               ariaLabel="Users"
               rowAriaLabel={user => `Open user ${user.name}`}
               onRowClick={user => { onEntityChange(user.id) }}

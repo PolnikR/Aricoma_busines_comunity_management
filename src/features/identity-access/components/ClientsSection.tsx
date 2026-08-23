@@ -83,6 +83,7 @@ export function ClientsSection({ entityId, tabId, onEntityChange, onTabChange }:
       />
       <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder="Search clients" searchLabel="Search clients" density={table.density} onDensityChange={table.setDensity} />
       <DataTable
+        layout="fit"
         columns={columns}
         rows={table.pageItems}
         rowKey={client => client.id}
