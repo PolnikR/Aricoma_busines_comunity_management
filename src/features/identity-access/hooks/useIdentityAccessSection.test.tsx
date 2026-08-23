@@ -104,6 +104,68 @@ describe('useIdentityAccessSection', () => {
     expect(result.current.groupId).toBe('configure')
   })
 
+  it('validates entity and nested tab state against the active section', () => {
+    const userDetail = renderHook(() => useSectionState(), {
+      wrapper: wrapperFor('/identity-access?section=users&entity=user-1&tab=credentials&keep=visible'),
+    })
+    expect(userDetail.result.current.entityId).toBe('user-1')
+    expect(userDetail.result.current.tabId).toBe('credentials')
+    userDetail.unmount()
+
+    const invalidUserTab = renderHook(() => useSectionState(), {
+      wrapper: wrapperFor('/identity-access?section=users&entity=user-1&tab=unknown'),
+    })
+    expect(invalidUserTab.result.current.tabId).toBe('details')
+    invalidUserTab.unmount()
+
+    const userList = renderHook(() => useSectionState(), {
+      wrapper: wrapperFor('/identity-access?section=users&tab=credentials'),
+    })
+    expect(userList.result.current.entityId).toBeNull()
+    expect(userList.result.current.tabId).toBeNull()
+    userList.unmount()
+
+    const realmSettings = renderHook(() => useSectionState(), {
+      wrapper: wrapperFor('/identity-access?section=realm-settings&tab=events'),
+    })
+    expect(realmSettings.result.current.entityId).toBeNull()
+    expect(realmSettings.result.current.tabId).toBe('events')
+  })
+
+  it('updates detail and tab state while preserving unrelated query parameters and history', () => {
+    const { result } = renderHook(() => useSectionState(), {
+      wrapper: wrapperFor('/identity-access?section=users&keep=visible'),
+    })
+
+    act(() => { result.current.setEntityId('user-1') })
+    expect(result.current.entityId).toBe('user-1')
+    expect(result.current.tabId).toBe('details')
+    expect(new URLSearchParams(result.current.location.search).get('keep')).toBe('visible')
+
+    act(() => { result.current.setTabId('credentials') })
+    expect(result.current.tabId).toBe('credentials')
+
+    act(() => { void result.current.navigate(-1) })
+    expect(result.current.entityId).toBe('user-1')
+    expect(result.current.tabId).toBe('details')
+  })
+
+  it('clears incompatible entity and tab state when the top-level section changes', () => {
+    const { result } = renderHook(() => useSectionState(), {
+      wrapper: wrapperFor('/identity-access?section=users&entity=user-1&tab=credentials&keep=visible'),
+    })
+
+    act(() => { result.current.setSectionId('sessions') })
+
+    expect(result.current.sectionId).toBe('sessions')
+    expect(result.current.entityId).toBeNull()
+    expect(result.current.tabId).toBeNull()
+    const params = new URLSearchParams(result.current.location.search)
+    expect(params.get('entity')).toBeNull()
+    expect(params.get('tab')).toBeNull()
+    expect(params.get('keep')).toBe('visible')
+  })
+
   it('changes only the section search parameter and supports browser history', () => {
     const { result } = renderHook(() => useSectionState(), {
       wrapper: wrapperFor('/identity-access?section=users&keep=visible'),

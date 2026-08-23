@@ -34,6 +34,30 @@ export type IdentityAccessSectionGroupId = IdentityAccessSectionGroup['id']
 export type IdentityAccessSection = IdentityAccessSectionGroup['sections'][number]
 export type IdentityAccessSectionId = IdentityAccessSection['id']
 
+const identityAccessSectionNavigationDefinitions = {
+  users: { entity: true, defaultTab: 'details', tabs: ['details', 'attributes', 'credentials', 'role-mappings', 'groups', 'consents', 'sessions', 'identity-provider-links'] },
+  clients: { entity: true, defaultTab: 'settings', tabs: ['settings', 'keys', 'credentials', 'roles', 'client-scopes', 'authorization', 'service-accounts-roles', 'sessions', 'permissions'] },
+  'client-scopes': { entity: true, defaultTab: 'settings', tabs: ['settings', 'mappers', 'scope'] },
+  'realm-roles': { entity: true, defaultTab: 'details', tabs: ['details', 'associated-roles', 'attributes', 'users-in-role', 'permissions'] },
+  groups: { entity: true, defaultTab: 'members', tabs: ['members', 'role-mappings', 'attributes', 'child-groups'] },
+  organizations: { entity: true, defaultTab: 'details', tabs: ['details', 'domains', 'members', 'groups', 'identity-providers'] },
+  'realm-settings': { entity: false, defaultTab: 'general', tabs: ['general', 'login', 'email', 'themes', 'keys', 'events', 'localization', 'security-defenses', 'sessions', 'tokens'] },
+  authentication: { entity: false, defaultTab: 'flows', tabs: ['flows', 'required-actions', 'policies'] },
+  events: { entity: false, defaultTab: 'user-events', tabs: ['user-events', 'admin-events'] },
+  'identity-providers': { entity: true, defaultTab: 'settings', tabs: ['settings', 'mappers'] },
+  'user-federation': { entity: true, defaultTab: 'settings', tabs: ['settings', 'mappers'] },
+} as const
+
+export type IdentityAccessTabId = (typeof identityAccessSectionNavigationDefinitions)[keyof typeof identityAccessSectionNavigationDefinitions]['tabs'][number]
+
+interface IdentityAccessSectionNavigation {
+  entity: boolean
+  defaultTab: IdentityAccessTabId
+  tabs: readonly IdentityAccessTabId[]
+}
+
+export const identityAccessSectionNavigation: Partial<Record<IdentityAccessSectionId, IdentityAccessSectionNavigation>> = identityAccessSectionNavigationDefinitions
+
 const identityAccessSectionIds = new Set<IdentityAccessSectionId>(
   identityAccessSectionGroups.flatMap(group => group.sections.map(section => section.id)),
 )
@@ -57,4 +81,25 @@ export function getIdentityAccessGroupForSection(sectionId: IdentityAccessSectio
 
 export function getIdentityAccessDefaultSectionForGroup(groupId: IdentityAccessSectionGroupId): IdentityAccessSectionId {
   return getIdentityAccessGroup(groupId).defaultSectionId
+}
+
+export function sectionSupportsEntity(sectionId: IdentityAccessSectionId): boolean {
+  return identityAccessSectionNavigation[sectionId]?.entity ?? false
+}
+
+export function parseIdentityAccessEntity(sectionId: IdentityAccessSectionId, value: string | null): string | null {
+  const entityId = value?.trim()
+  return sectionSupportsEntity(sectionId) && entityId ? entityId : null
+}
+
+export function parseIdentityAccessTab(
+  sectionId: IdentityAccessSectionId,
+  entityId: string | null,
+  value: string | null,
+): IdentityAccessTabId | null {
+  const navigation = identityAccessSectionNavigation[sectionId]
+  if (!navigation || (navigation.entity && !entityId)) return null
+
+  if (value && navigation.tabs.includes(value as IdentityAccessTabId)) return value as IdentityAccessTabId
+  return navigation.defaultTab
 }
