@@ -23,7 +23,7 @@ export function IdentityAccessNavigation({
 
   return (
     <nav aria-label="Keycloak realm navigation" className="min-w-0 border-b border-border bg-surface">
-      <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="px-4 py-3">
         <div
           role="group"
           aria-label="Keycloak navigation groups"
@@ -48,7 +48,6 @@ export function IdentityAccessNavigation({
             )
           })}
         </div>
-        <span className="text-xs text-text-muted">Keycloak administration</span>
       </div>
 
       <Tabs

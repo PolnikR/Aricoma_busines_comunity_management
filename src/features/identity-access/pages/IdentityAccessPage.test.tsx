@@ -29,6 +29,9 @@ describe('IdentityAccessPage', () => {
     renderPage()
 
     expect(screen.getByRole('heading', { name: 'Identity & Access', level: 1 })).toBeInTheDocument()
+    expect(screen.getByTestId('identity-access-realm-context')).toHaveTextContent('Realm')
+    expect(screen.getByTestId('identity-access-realm-context')).toHaveTextContent('ABCO')
+    expect(screen.getByTestId('identity-access-realm-context')).toHaveTextContent('Keycloak realm administration')
     expect(screen.getByRole('navigation', { name: 'Keycloak realm navigation' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Manage' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'Configure' })).toHaveAttribute('aria-pressed', 'false')

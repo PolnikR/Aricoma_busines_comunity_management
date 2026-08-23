@@ -34,14 +34,25 @@ export function IdentityAccessPage() {
         description="Manage Keycloak identities, applications, access policies, sessions, authentication, and realm configuration."
       />
 
-      <div className="grid min-h-[38rem] min-w-0 overflow-hidden rounded-xl border border-border bg-surface shadow-sm md:grid-cols-[220px_minmax(0,1fr)]">
+      <div className="flex min-h-[38rem] min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+        <div
+          data-testid="identity-access-realm-context"
+          className="flex flex-col gap-1 border-b border-border bg-surface-subtle px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-subtle">Realm</span>
+            <span className="text-sm font-semibold text-text-primary">ABCO</span>
+          </div>
+          <span className="text-xs text-text-muted">Keycloak realm administration</span>
+        </div>
+
         <IdentityAccessNavigation
           groupId={groupId}
           sectionId={sectionId}
           onGroupChange={setGroupId}
           onSectionChange={setSectionId}
         />
-        <section className="min-w-0 overflow-hidden bg-surface p-4" aria-live="polite">
+        <section className="min-w-0 flex-1 overflow-hidden bg-surface" aria-live="polite">
           <IdentityAccessSectionContent sectionId={sectionId} />
         </section>
       </div>
