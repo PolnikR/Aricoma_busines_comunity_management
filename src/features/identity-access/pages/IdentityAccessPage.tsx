@@ -2,6 +2,8 @@ import { PageHeader } from '@/shared/components/page/PageHeader'
 import { UsersSection } from '../components/UsersSection'
 import { RealmRolesSection } from '../components/RealmRolesSection'
 import { GroupsSection } from '../components/GroupsSection'
+import { ClientsSection } from '../components/ClientsSection'
+import { ClientScopesSection } from '../components/ClientScopesSection'
 import { PermissionsSection } from '../components/PermissionsSection'
 import { OrganizationsSection } from '../components/OrganizationsSection'
 import { SessionsSection } from '../components/SessionsSection'
@@ -26,6 +28,8 @@ function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChan
   if (sectionId === 'users') return <UsersSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'realm-roles') return <RealmRolesSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'groups') return <GroupsSection />
+  if (sectionId === 'clients') return <ClientsSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
+  if (sectionId === 'client-scopes') return <ClientScopesSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'permissions') return <PermissionsSection />
   if (sectionId === 'organizations') return <OrganizationsSection />
   if (sectionId === 'sessions') return <SessionsSection />
