@@ -50,6 +50,12 @@ export function PowerInventoryView({
   useEffect(() => {
     if (safePage !== query.page) updateQuery({ page: safePage })
   }, [query.page, safePage, updateQuery])
+
+  useEffect(() => {
+    if (selected && !resources.some((resource) => resource.id === selected.id)) {
+      queueMicrotask(() => { setSelected(null) })
+    }
+  }, [resources, selected])
   const labels = {
     partition: t('resources.power.table.partition'),
     status: t('resources.power.table.status'),

@@ -106,10 +106,10 @@ export function ResourceRolePage({ role }: ResourceRolePageProps) {
 
   switch (effectiveActiveTab?.resourceTab ?? resourceTab) {
     case 'flashsystem':
-      return <FlashSystemResourcesPage key={effectiveActiveTab?.value} {...rolePageProps} />
+      return <FlashSystemResourcesPage {...rolePageProps} />
     case 'ibm-power':
-      return <IbmPowerResourcesPage key={effectiveActiveTab?.value} {...rolePageProps} />
+      return <IbmPowerResourcesPage {...rolePageProps} />
     case 'vmware':
-      return <VmwareResourcesPage key={effectiveActiveTab?.value} {...rolePageProps} />
+      return <VmwareResourcesPage {...rolePageProps} />
   }
 }

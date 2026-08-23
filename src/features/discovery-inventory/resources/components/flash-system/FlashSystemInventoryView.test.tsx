@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
@@ -127,5 +127,31 @@ describe('FlashSystemInventoryView', () => {
     fireEvent.click(screen.getByRole('button', { name: /Filters/ }))
     expect(screen.queryByLabelText('Provider')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Pool')).toBeInTheDocument()
+  })
+
+  it('closes the detail drawer when the selected volume is no longer in the provider dataset', async () => {
+    const { t } = useTranslation()
+    const inventory = mapFlashSystemInventory(flashSystemInventoryResponseSchema.parse({
+      count: 1,
+      volumes: [{
+        id: '0',
+        name: 'V5000_Volume1',
+        status: 'online',
+        capacity: '3 TB',
+        type: 'striped',
+        vdisk_UID: 'uid-1',
+      }],
+      pools: {},
+      hosts: {},
+      clusters: {},
+    }), provider.id)
+    const view = render(<MemoryRouter><FlashSystemInventoryView resources={inventory.resources} providers={[provider]} t={t} /></MemoryRouter>)
+
+    fireEvent.click(screen.getByRole('row', { name: 'Show details for V5000_Volume1' }))
+    expect(screen.getByRole('dialog', { name: 'FlashSystem volume detail' })).toBeInTheDocument()
+
+    view.rerender(<MemoryRouter><FlashSystemInventoryView resources={[]} providers={[provider]} t={t} /></MemoryRouter>)
+
+    await waitFor(() => { expect(screen.queryByRole('dialog', { name: 'FlashSystem volume detail' })).not.toBeInTheDocument() })
   })
 })

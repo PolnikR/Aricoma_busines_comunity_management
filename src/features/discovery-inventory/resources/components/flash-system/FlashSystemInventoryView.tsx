@@ -61,6 +61,12 @@ export function FlashSystemInventoryView({
   useEffect(() => {
     if (safePage !== query.page) updateQuery({ page: safePage })
   }, [query.page, safePage, updateQuery])
+
+  useEffect(() => {
+    if (selected && !resources.some((resource) => resource.resourceId === selected.resourceId)) {
+      queueMicrotask(() => { setSelected(null) })
+    }
+  }, [resources, selected])
   const labels = {
     name: t('resources.flash.table.name'),
     status: t('resources.flash.table.status'),
