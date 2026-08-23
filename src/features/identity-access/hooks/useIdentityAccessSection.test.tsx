@@ -76,12 +76,32 @@ describe('useIdentityAccessSection', () => {
     expect(invalid.result.current.sectionId).toBe('users')
   })
 
-  it('reads a valid section from the URL', () => {
+  it('reads a valid section from the URL and derives its group', () => {
     const { result } = renderHook(() => useSectionState(), {
       wrapper: wrapperFor('/identity-access?section=realm-roles'),
     })
 
     expect(result.current.sectionId).toBe('realm-roles')
+    expect(result.current.groupId).toBe('manage')
+  })
+
+  it('switches groups through deterministic section defaults without adding parallel state', () => {
+    const { result } = renderHook(() => useSectionState(), {
+      wrapper: wrapperFor('/identity-access?section=sessions&keep=visible'),
+    })
+
+    act(() => { result.current.setGroupId('configure') })
+    expect(result.current.sectionId).toBe('realm-settings')
+    expect(result.current.groupId).toBe('configure')
+    expect(new URLSearchParams(result.current.location.search).get('keep')).toBe('visible')
+
+    act(() => { result.current.setGroupId('manage') })
+    expect(result.current.sectionId).toBe('users')
+    expect(result.current.groupId).toBe('manage')
+
+    act(() => { void result.current.navigate(-1) })
+    expect(result.current.sectionId).toBe('realm-settings')
+    expect(result.current.groupId).toBe('configure')
   })
 
   it('changes only the section search parameter and supports browser history', () => {
