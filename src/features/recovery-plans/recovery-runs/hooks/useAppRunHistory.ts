@@ -43,6 +43,8 @@ export function useAppRunHistory({ providerId, dagId, page, pageSize }: UseAppRu
   return {
     data: query.data ?? EMPTY_PAGE,
     isLoading: enabled && query.isLoading,
+    isFetching: enabled && query.isFetching,
     error: query.error instanceof Error ? query.error : null,
+    refetch: query.refetch,
   }
 }

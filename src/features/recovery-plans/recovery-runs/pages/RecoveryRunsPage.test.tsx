@@ -20,6 +20,16 @@ const financeApp = { entityType: 'application' as const, id: 'finance_recovery',
 const billingGroup = { entityType: 'group' as const, id: 'billing_group', name: 'Billing Group', dagId: 'dag_260817113000_aa11bb', providerId: 'airflow-02' }
 const entities = [financeApp, billingGroup]
 
+function historyResult(isLoading = false) {
+  return {
+    data: { runs: [], total: 0 },
+    isLoading,
+    isFetching: isLoading,
+    error: null,
+    refetch: vi.fn(),
+  }
+}
+
 function renderPage(initialEntries: string[] = ['/']) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
@@ -45,7 +55,7 @@ describe('RecoveryRunsPage', () => {
       isFetching: false,
       refetch: vi.fn(),
     })
-    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
+    vi.mocked(useAppRunHistory).mockReturnValue(historyResult())
 
     renderPage()
 
@@ -67,7 +77,7 @@ describe('RecoveryRunsPage', () => {
       isFetching: false,
       refetch: vi.fn(),
     }))
-    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
+    vi.mocked(useAppRunHistory).mockReturnValue(historyResult())
 
     renderPage(['/?tab=applications'])
 
@@ -88,7 +98,7 @@ describe('RecoveryRunsPage', () => {
       isFetching: false,
       refetch: vi.fn(),
     }))
-    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
+    vi.mocked(useAppRunHistory).mockReturnValue(historyResult())
 
     renderPage(['/?tab=groups'])
 
@@ -109,7 +119,7 @@ describe('RecoveryRunsPage', () => {
       isFetching: false,
       refetch: vi.fn(),
     }))
-    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
+    vi.mocked(useAppRunHistory).mockReturnValue(historyResult())
 
     renderPage(['/?tab=groups&entityType=group&entityId=billing_group'])
 
@@ -138,7 +148,7 @@ describe('RecoveryRunsPage', () => {
       isFetching: false,
       refetch: vi.fn(),
     }))
-    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
+    vi.mocked(useAppRunHistory).mockReturnValue(historyResult())
 
     renderPage()
 
@@ -164,7 +174,7 @@ describe('RecoveryRunsPage', () => {
       isFetching: false,
       refetch: vi.fn(),
     }))
-    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
+    vi.mocked(useAppRunHistory).mockReturnValue(historyResult())
 
     renderPage(['/?entityType=group&entityId=shared-id'])
 
@@ -186,7 +196,7 @@ describe('RecoveryRunsPage', () => {
       isFetching: false,
       refetch: vi.fn(),
     }))
-    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
+    vi.mocked(useAppRunHistory).mockReturnValue(historyResult())
 
     renderPage()
 
@@ -210,7 +220,7 @@ describe('RecoveryRunsPage', () => {
       isFetching: false,
       refetch: latestRunsRefetch,
     })
-    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
+    vi.mocked(useAppRunHistory).mockReturnValue(historyResult())
 
     renderPage()
 
@@ -233,7 +243,7 @@ describe('RecoveryRunsPage', () => {
       isFetching: false,
       refetch: vi.fn(),
     })
-    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, error: null })
+    vi.mocked(useAppRunHistory).mockReturnValue(historyResult())
 
     renderPage()
 
@@ -255,7 +265,7 @@ describe('RecoveryRunsPage', () => {
       isFetching: true,
       refetch: vi.fn(),
     })
-    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: true, error: null })
+    vi.mocked(useAppRunHistory).mockReturnValue(historyResult(true))
 
     renderPage(['/?entityType=application&entityId=finance_recovery'])
 
@@ -276,7 +286,7 @@ describe('RecoveryRunsPage', () => {
       isFetching: false,
       refetch: vi.fn(),
     })
-    vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: true, error: null })
+    vi.mocked(useAppRunHistory).mockReturnValue(historyResult(true))
 
     renderPage(['/?entityType=application&entityId=finance_recovery'])
 
