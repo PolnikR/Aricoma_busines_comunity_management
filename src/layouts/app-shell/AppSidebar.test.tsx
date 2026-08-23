@@ -77,9 +77,9 @@ describe('AppSidebar', () => {
     )
   })
 
-  it('links Resources to the consolidated inventory page', async () => {
+  it('links Resources to the canonical source inventory page', async () => {
     render(
-      <MemoryRouter initialEntries={['/discovery-inventory/resources']}>
+      <MemoryRouter initialEntries={['/discovery-inventory/resources/source']}>
         <LanguageProvider>
           <SidebarProvider>
             <AppSidebar />
@@ -90,8 +90,24 @@ describe('AppSidebar', () => {
 
     expect(await screen.findByRole('link', { name: 'Resources' }, { timeout: 5000 })).toHaveAttribute(
       'href',
-      '/discovery-inventory/resources',
+      '/discovery-inventory/resources/source',
     )
+  })
+
+  it('keeps Resources ISE as a separate active target entry', async () => {
+    render(
+      <MemoryRouter initialEntries={['/discovery-inventory/resources/target']}>
+        <LanguageProvider>
+          <SidebarProvider>
+            <AppSidebar />
+          </SidebarProvider>
+        </LanguageProvider>
+      </MemoryRouter>,
+    )
+
+    const link = await screen.findByRole('link', { name: 'Resources ISE' }, { timeout: 5000 })
+    expect(link).toHaveAttribute('href', '/discovery-inventory/resources/target')
+    expect(link).toHaveClass('bg-accent-soft', 'text-accent')
   })
 
   it('links Platform Providers from Platform Administration', async () => {
