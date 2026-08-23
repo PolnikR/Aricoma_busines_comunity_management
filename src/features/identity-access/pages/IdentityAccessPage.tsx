@@ -1,6 +1,6 @@
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { UsersTab } from '../components/UsersTab'
-import { RolesTab } from '../components/RolesTab'
+import { RealmRolesSection } from '../components/RealmRolesSection'
 import { PermissionsTab } from '../components/PermissionsTab'
 import { OrganizationsTab } from '../components/OrganizationsTab'
 import { SessionsTab } from '../components/SessionsTab'
@@ -14,7 +14,7 @@ const sectionLabels = new Map<IdentityAccessSectionId, string>(
 
 function IdentityAccessSectionContent({ sectionId }: { sectionId: IdentityAccessSectionId }) {
   if (sectionId === 'users') return <UsersTab />
-  if (sectionId === 'realm-roles') return <RolesTab />
+  if (sectionId === 'realm-roles') return <RealmRolesSection />
   if (sectionId === 'permissions') return <PermissionsTab />
   if (sectionId === 'organizations') return <OrganizationsTab />
   if (sectionId === 'sessions') return <SessionsTab />

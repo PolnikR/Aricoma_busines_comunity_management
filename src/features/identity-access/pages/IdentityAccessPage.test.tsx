@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { IdentityAccessPage } from './IdentityAccessPage'
 
 vi.mock('../components/UsersTab', () => ({ UsersTab: () => <div>Users content</div> }))
-vi.mock('../components/RolesTab', () => ({ RolesTab: () => <div>Realm roles content</div> }))
+vi.mock('../components/RealmRolesSection', () => ({ RealmRolesSection: () => <div>Realm roles content</div> }))
 vi.mock('../components/PermissionsTab', () => ({ PermissionsTab: () => <div>Permissions content</div> }))
 vi.mock('../components/OrganizationsTab', () => ({ OrganizationsTab: () => <div>Organizations content</div> }))
 vi.mock('../components/SessionsTab', () => ({ SessionsTab: () => <div>Sessions content</div> }))
