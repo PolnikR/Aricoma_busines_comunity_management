@@ -148,7 +148,7 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
   }
 
   return (
-    <div className="flex min-w-0 flex-col">
+    <div className="flex min-w-0 flex-col lg:min-h-0 lg:flex-1">
       <IdentityResourceHeader
         eyebrow="Manage"
         title="Users"
@@ -168,22 +168,24 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
             density={table.density}
             onDensityChange={table.setDensity}
           />
-          <DataTableRequestState
-            hasData={users.length > 0}
-            error={error ? { title: 'Users could not be loaded', description: error.message, retryLabel: 'Retry', isRetrying: false, onRetry: refetch } : null}
-          >
-            <DataTable
-              layout="fit"
-              columns={columns}
-              rows={table.pageItems}
-              rowKey={user => user.id}
-              density={table.density}
-              ariaLabel="Users"
-              rowAriaLabel={user => `Open user ${user.name}`}
-              onRowClick={user => { onEntityChange(user.id) }}
-              emptyContent={users.length > 0 ? 'No users match your search.' : <EmptyState title="No users found" description="No users are available in the current Identity & Access data." />}
-            />
-          </DataTableRequestState>
+          <div className="custom-scrollbar min-h-0 flex-1 lg:overflow-y-auto">
+            <DataTableRequestState
+              hasData={users.length > 0}
+              error={error ? { title: 'Users could not be loaded', description: error.message, retryLabel: 'Retry', isRetrying: false, onRetry: refetch } : null}
+            >
+              <DataTable
+                layout="fit"
+                columns={columns}
+                rows={table.pageItems}
+                rowKey={user => user.id}
+                density={table.density}
+                ariaLabel="Users"
+                rowAriaLabel={user => `Open user ${user.name}`}
+                onRowClick={user => { onEntityChange(user.id) }}
+                emptyContent={users.length > 0 ? 'No users match your search.' : <EmptyState title="No users found" description="No users are available in the current Identity & Access data." />}
+              />
+            </DataTableRequestState>
+          </div>
           {!error ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
         </>
       )}

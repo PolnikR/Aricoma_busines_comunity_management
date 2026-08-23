@@ -34,7 +34,11 @@ describe('UsersSection', () => {
     mockLoadedUsers([user, { ...user, id: 'user-2', name: 'Bob Jones', email: 'bob@example.com', status: 'inactive', roleIds: [] }])
     const props = renderSection()
 
-    expect(screen.getByLabelText('Users')).toBeInTheDocument()
+    const usersTable = screen.getByLabelText('Users')
+    const scrollRegion = usersTable.parentElement
+    expect(usersTable).toBeInTheDocument()
+    expect(scrollRegion).toHaveClass('min-h-0', 'flex-1', 'lg:overflow-y-auto')
+    expect(scrollRegion).not.toContainElement(screen.getByLabelText('Rows per page'))
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search users' }), 'bob@')
     expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('row', { name: 'Open user Bob Jones' }))

@@ -137,7 +137,7 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
   }
 
   return (
-    <div className="flex min-w-0 flex-col">
+    <div className="flex min-w-0 flex-col lg:min-h-0 lg:flex-1">
       <IdentityResourceHeader
         eyebrow="Manage"
         title="Realm roles"
@@ -157,22 +157,24 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
             density={table.density}
             onDensityChange={table.setDensity}
           />
-          <DataTableRequestState
-            hasData={roles.length > 0}
-            error={error ? { title: 'Roles could not be loaded', description: error.message, retryLabel: 'Retry', isRetrying: false, onRetry: refetch } : null}
-          >
-            <DataTable
-              layout="fit"
-              columns={columns}
-              rows={table.pageItems}
-              rowKey={role => role.id}
-              density={table.density}
-              ariaLabel="Realm roles"
-              rowAriaLabel={role => `Open realm role ${role.name}`}
-              onRowClick={role => { onEntityChange(role.id) }}
-              emptyContent={roles.length > 0 ? 'No roles match your search.' : <EmptyState title="No roles found" description="No realm roles are available in the current Identity & Access data." />}
-            />
-          </DataTableRequestState>
+          <div className="custom-scrollbar min-h-0 flex-1 lg:overflow-y-auto">
+            <DataTableRequestState
+              hasData={roles.length > 0}
+              error={error ? { title: 'Roles could not be loaded', description: error.message, retryLabel: 'Retry', isRetrying: false, onRetry: refetch } : null}
+            >
+              <DataTable
+                layout="fit"
+                columns={columns}
+                rows={table.pageItems}
+                rowKey={role => role.id}
+                density={table.density}
+                ariaLabel="Realm roles"
+                rowAriaLabel={role => `Open realm role ${role.name}`}
+                onRowClick={role => { onEntityChange(role.id) }}
+                emptyContent={roles.length > 0 ? 'No roles match your search.' : <EmptyState title="No roles found" description="No realm roles are available in the current Identity & Access data." />}
+              />
+            </DataTableRequestState>
+          </div>
           {!error ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
         </>
       )}

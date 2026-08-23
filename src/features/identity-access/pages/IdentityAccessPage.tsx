@@ -52,14 +52,14 @@ export function IdentityAccessPage() {
   const { sectionId, groupId, entityId, tabId, setSectionId, setSectionTab, setGroupId, setEntityId, setTabId } = useIdentityAccessSection()
 
   return (
-    <div className="flex min-h-full min-w-0 flex-col gap-4 overflow-x-hidden">
+    <div className="flex min-h-full min-w-0 flex-col gap-4 overflow-x-hidden lg:h-full lg:min-h-0">
       <PageHeader
         eyebrow="Platform administration"
         title="Identity & Access"
         description="Manage Keycloak identities, applications, access policies, sessions, authentication, and realm configuration."
       />
 
-      <div className="flex min-h-[38rem] min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+      <div className="flex min-h-[38rem] min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm lg:min-h-0 lg:flex-1">
         <div
           data-testid="identity-access-realm-context"
           className="flex flex-col gap-1 border-b border-border bg-surface-subtle px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
@@ -77,7 +77,7 @@ export function IdentityAccessPage() {
           onGroupChange={setGroupId}
           onSectionChange={setSectionId}
         />
-        <section className="min-w-0 flex-1 overflow-hidden bg-surface" aria-live="polite">
+        <section className="flex min-w-0 flex-1 flex-col overflow-hidden bg-surface lg:min-h-0" aria-live="polite">
           <IdentityAccessSectionContent sectionId={sectionId} entityId={entityId} tabId={tabId} onEntityChange={setEntityId} onTabChange={setTabId} onOpenEventSettings={() => { setSectionTab('realm-settings', 'events') }} />
         </section>
       </div>
