@@ -1,6 +1,7 @@
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { UsersSection } from '../components/UsersSection'
 import { RealmRolesSection } from '../components/RealmRolesSection'
+import { GroupsSection } from '../components/GroupsSection'
 import { PermissionsSection } from '../components/PermissionsSection'
 import { OrganizationsSection } from '../components/OrganizationsSection'
 import { SessionsSection } from '../components/SessionsSection'
@@ -23,7 +24,8 @@ interface IdentityAccessSectionContentProps {
 
 function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChange, onTabChange }: IdentityAccessSectionContentProps) {
   if (sectionId === 'users') return <UsersSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
-  if (sectionId === 'realm-roles') return <RealmRolesSection />
+  if (sectionId === 'realm-roles') return <RealmRolesSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
+  if (sectionId === 'groups') return <GroupsSection />
   if (sectionId === 'permissions') return <PermissionsSection />
   if (sectionId === 'organizations') return <OrganizationsSection />
   if (sectionId === 'sessions') return <SessionsSection />

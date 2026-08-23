@@ -7,6 +7,7 @@ import { identityAccessSectionGroups, type IdentityAccessSectionId } from '../mo
 
 vi.mock('../components/UsersSection', () => ({ UsersSection: () => <div>Users content</div> }))
 vi.mock('../components/RealmRolesSection', () => ({ RealmRolesSection: () => <div>Realm roles content</div> }))
+vi.mock('../components/GroupsSection', () => ({ GroupsSection: () => <div>Groups content</div> }))
 vi.mock('../components/PermissionsSection', () => ({ PermissionsSection: () => <div>Permissions content</div> }))
 vi.mock('../components/OrganizationsSection', () => ({ OrganizationsSection: () => <div>Organizations content</div> }))
 vi.mock('../components/SessionsSection', () => ({ SessionsSection: () => <div>Sessions content</div> }))
@@ -14,6 +15,7 @@ vi.mock('../components/SessionsSection', () => ({ SessionsSection: () => <div>Se
 const dataBackedContent: Partial<Record<IdentityAccessSectionId, string>> = {
   users: 'Users content',
   'realm-roles': 'Realm roles content',
+  groups: 'Groups content',
   organizations: 'Organizations content',
   sessions: 'Sessions content',
   permissions: 'Permissions content',
