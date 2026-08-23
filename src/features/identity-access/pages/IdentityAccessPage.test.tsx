@@ -10,6 +10,7 @@ vi.mock('../components/RealmRolesSection', () => ({ RealmRolesSection: () => <di
 vi.mock('../components/GroupsSection', () => ({ GroupsSection: () => <div>Groups content</div> }))
 vi.mock('../components/ClientsSection', () => ({ ClientsSection: () => <div>Clients content</div> }))
 vi.mock('../components/ClientScopesSection', () => ({ ClientScopesSection: () => <div>Client scopes content</div> }))
+vi.mock('../components/RealmSettingsSection', () => ({ RealmSettingsSection: () => <div>Realm settings content</div> }))
 vi.mock('../components/PermissionsSection', () => ({ PermissionsSection: () => <div>Permissions content</div> }))
 vi.mock('../components/OrganizationsSection', () => ({ OrganizationsSection: () => <div>Organizations content</div> }))
 vi.mock('../components/SessionsSection', () => ({ SessionsSection: () => <div>Sessions content</div> }))
@@ -20,6 +21,7 @@ const dataBackedContent: Partial<Record<IdentityAccessSectionId, string>> = {
   groups: 'Groups content',
   clients: 'Clients content',
   'client-scopes': 'Client scopes content',
+  'realm-settings': 'Realm settings content',
   organizations: 'Organizations content',
   sessions: 'Sessions content',
   permissions: 'Permissions content',
