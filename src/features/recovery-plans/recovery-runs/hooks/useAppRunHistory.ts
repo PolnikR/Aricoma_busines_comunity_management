@@ -36,7 +36,8 @@ export function useAppRunHistory({ providerId, dagId, page, pageSize }: UseAppRu
     }),
     enabled,
     staleTime: query => shouldFastPollHistory(query, page) ? ACTIVE_RUN_INTERVAL_MS : RECOVERY_RUNS_INTERVAL_MS,
-    refetchInterval: query => shouldFastPollHistory(query, page) ? ACTIVE_RUN_INTERVAL_MS : RECOVERY_RUNS_INTERVAL_MS,
+    refetchInterval: query => shouldFastPollHistory(query, page) ? ACTIVE_RUN_INTERVAL_MS : false,
+    refetchIntervalInBackground: false,
   })
 
   return {

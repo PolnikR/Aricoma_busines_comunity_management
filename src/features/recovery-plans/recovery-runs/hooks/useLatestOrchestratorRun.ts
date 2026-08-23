@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { ACTIVE_RUN_INTERVAL_MS, STANDARD_REFETCH_INTERVAL_MS, STANDARD_STALE_TIME_MS } from '@/shared/query/cachePolicy'
+import { ACTIVE_RUN_INTERVAL_MS, STANDARD_STALE_TIME_MS } from '@/shared/query/cachePolicy'
 import { fetchOrchestratorRuns } from '../api/recoveryRunsApi'
 import { isNonTerminalRunStatus } from '../helpers/runStatus'
 import { recoveryRunsKeys } from '../api/recoveryRunsQueryKeys'
@@ -26,8 +26,9 @@ export function useLatestOrchestratorRun(providerId: string | null, dagId: strin
       const latestRun = query.state.data?.runs[0]
       return latestRun && isNonTerminalRunStatus(latestRun.status)
         ? ACTIVE_RUN_INTERVAL_MS
-        : STANDARD_REFETCH_INTERVAL_MS
+        : false
     },
+    refetchIntervalInBackground: false,
   })
 
   const latestRun: OrchestratorRun | null = query.data?.runs[0] ?? null

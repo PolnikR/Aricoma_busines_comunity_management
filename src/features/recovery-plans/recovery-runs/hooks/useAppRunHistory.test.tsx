@@ -75,11 +75,11 @@ describe('useAppRunHistory', () => {
     await vi.advanceTimersByTimeAsync(ACTIVE_RUN_INTERVAL_MS)
     expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(2)
 
-    await vi.advanceTimersByTimeAsync(RECOVERY_RUNS_INTERVAL_MS - ACTIVE_RUN_INTERVAL_MS)
-    expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(3)
+    await vi.advanceTimersByTimeAsync(RECOVERY_RUNS_INTERVAL_MS)
+    expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(2)
   })
 
-  it('uses the five-minute interval for terminal page 1 and historical pages', async () => {
+  it('does not poll terminal page 1 or historical pages', async () => {
     vi.useFakeTimers()
     vi.mocked(fetchOrchestratorRuns).mockResolvedValue({
       runs: [{ runId: 'r1', status: 'success', startedAt: null, endedAt: null, durationSeconds: 1 }],
@@ -96,13 +96,13 @@ describe('useAppRunHistory', () => {
     expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(1)
 
     await vi.advanceTimersByTimeAsync(RECOVERY_RUNS_INTERVAL_MS - ACTIVE_RUN_INTERVAL_MS)
-    expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(2)
+    expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(1)
 
     rerender({ page: 2 })
     await vi.advanceTimersByTimeAsync(0)
-    expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(3)
+    expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(2)
     await vi.advanceTimersByTimeAsync(RECOVERY_RUNS_INTERVAL_MS)
-    expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(4)
+    expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(2)
   })
 
   it('stops polling when the selected entity is cleared', async () => {
