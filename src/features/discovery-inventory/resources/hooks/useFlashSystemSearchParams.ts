@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import { readProviderFilterSnapshot, writeProviderFilterSnapshot, type ProviderFilterScope } from '../state/providerFilterSession'
 import { useResourceInventorySearchParams } from './useResourceInventorySearchParams'
@@ -37,33 +37,26 @@ function getScopeId(scope: ProviderFilterScope): string {
 
 export function useFlashSystemSearchParams(provider?: FlashSystemProviderScope | null) {
   const [searchParams] = useSearchParams()
-  const { query, updateQuery } = useResourceInventorySearchParams<FlashSystemUrlFilters>({
+  const { query: urlQuery, updateQuery } = useResourceInventorySearchParams<FlashSystemUrlFilters>({
     parseFilters: (params) => getFilters(params),
   })
-  const [initializedScopeId, markScopeInitialized] = useReducer(
-    (_previous: string | undefined, scopeId: string) => scopeId,
-    undefined,
-  )
   const scope = provider ? getScope(provider) : undefined
   const scopeId = scope ? getScopeId(scope) : undefined
   const activeScopeId = searchParams.get(FLASH_SYSTEM_ACTIVE_PROVIDER_PARAM)
-  const isInitialized = !provider || (initializedScopeId === scopeId && activeScopeId === scopeId)
+  const query = useMemo(() => {
+    if (!scope || !scopeId) return urlQuery
 
-  useEffect(() => {
-    if (!scope || !scopeId) return
-    if (initializedScopeId === scopeId && activeScopeId === scopeId) return
-
-    const urlFiltersAreActive = hasUrlFilters(searchParams)
-      && (activeScopeId === scopeId || activeScopeId === null)
+    const urlFiltersAreActive = activeScopeId === scopeId
+      || (activeScopeId === null && hasUrlFilters(searchParams))
     const savedSnapshot = urlFiltersAreActive ? undefined : readProviderFilterSnapshot(scope)
-    const filters = urlFiltersAreActive ? getFilters(searchParams) : savedSnapshot?.filters ?? getFilters(new URLSearchParams())
+    const filters = urlFiltersAreActive
+      ? getFilters(searchParams)
+      : savedSnapshot?.filters ?? getFilters(new URLSearchParams())
 
-    updateQuery({ ...filters, [FLASH_SYSTEM_ACTIVE_PROVIDER_PARAM]: scopeId })
-    markScopeInitialized(scopeId)
-  }, [activeScopeId, initializedScopeId, scope, scopeId, searchParams, updateQuery])
-
+    return { ...urlQuery, ...filters }
+  }, [activeScopeId, scope, scopeId, searchParams, urlQuery])
   useEffect(() => {
-    if (!scope || !isInitialized) return
+    if (!scope) return
 
     writeProviderFilterSnapshot(scope, {
       resourceTab: 'flashsystem',
@@ -75,11 +68,11 @@ export function useFlashSystemSearchParams(provider?: FlashSystemProviderScope |
         status: query.status,
       },
     })
-  }, [isInitialized, query.hostId, query.poolId, query.search, query.status, scope])
+  }, [query.hostId, query.poolId, query.search, query.status, scope])
 
   const updateFilters = (filters: Partial<FlashSystemFilters>) => {
     updateQuery({ ...filters, [FLASH_SYSTEM_ACTIVE_PROVIDER_PARAM]: scopeId ?? '' }, true)
   }
 
-  return { query, updateQuery, updateFilters, isInitialized }
+  return { query, updateQuery, updateFilters, isInitialized: true }
 }

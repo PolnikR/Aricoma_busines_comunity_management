@@ -26,12 +26,14 @@ function VirtualMachineSearchParamsState({ provider, observations }: {
   observations?: { isInitialized: boolean; query: string }[]
 }) {
   const { query, updateFilters, updateQuery, isInitialized } = useVirtualMachineSearchParams(provider)
+  const location = useLocation()
   observations?.push({ isInitialized, query: `${query.search}:${query.tags.join(',')}` })
 
   return (
     <>
       <output data-testid="vmware-query">{`${query.search}:${query.tags.join(',')}:${String(query.page)}`}</output>
       <output data-testid="vmware-initialized">{String(isInitialized)}</output>
+      <output data-testid="vmware-location">{location.search}</output>
       <button onClick={() => {
         updateFilters({
           search: 'custom-prefix-', powerState: 'poweredOn', connectionState: '', cluster: '', tags: ['custom-tag'], untagged: false,
@@ -97,18 +99,14 @@ describe('useVirtualMachineSearchParams', () => {
     await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('custom-prefix-:custom-tag:1') })
   })
 
-  it('applies provider defaults before reporting readiness, without a transient unfiltered state', async () => {
+  it('applies provider defaults synchronously without changing location', () => {
     const observations: { isInitialized: boolean; query: string }[] = []
     render(<VirtualMachineSearchParamsState provider={sourceProvider} observations={observations} />, { wrapper: wrapperFor() })
 
-    expect(observations[0]?.isInitialized).toBe(false)
-    await waitFor(() => { expect(screen.getByTestId('vmware-initialized')).toHaveTextContent('true') })
-
+    expect(observations[0]).toEqual({ isInitialized: true, query: 'provider-prefix-:provider-tag' })
+    expect(screen.getByTestId('vmware-initialized')).toHaveTextContent('true')
     expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-prefix-:provider-tag:1')
-    expect(observations.filter(({ isInitialized }) => isInitialized)).toEqual(
-      expect.arrayContaining([{ isInitialized: true, query: 'provider-prefix-:provider-tag' }]),
-    )
-    expect(observations.some(({ isInitialized, query }) => isInitialized && query === ':')).toBe(false)
+    expect(screen.getByTestId('vmware-location')).toBeEmptyDOMElement()
   })
 
   it('prefers explicit URL filters over a saved provider snapshot', async () => {
