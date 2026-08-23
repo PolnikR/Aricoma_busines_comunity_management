@@ -7,18 +7,32 @@ import {
   DataTableRequestState,
   DataTableSkeleton,
   DataTableToolbar,
-  DetailDrawer,
-  DetailRow,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { Field, Input } from '@/shared/components/form/FormControls'
+import { Modal } from '@/shared/components/modal/Modal'
 import { useOrganizations } from '../hooks/useOrganizations'
 import { useRoles } from '../hooks/useRoles'
 import { useUsers } from '../hooks/useUsers'
-import type { User } from '../models/identityTypes'
+import type { IdentityAccessTabId } from '../models/identityAccessSections'
+import type { Role, User } from '../models/identityTypes'
+import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection } from './IdentityResourceLayout'
 
 const USER_SEARCH_FIELDS: (keyof User)[] = ['name', 'email']
+const USER_TABS = [
+  { value: 'details', label: 'Details' },
+  { value: 'attributes', label: 'Attributes' },
+  { value: 'credentials', label: 'Credentials' },
+  { value: 'role-mappings', label: 'Role mappings' },
+  { value: 'groups', label: 'Groups' },
+  { value: 'consents', label: 'Consents' },
+  { value: 'sessions', label: 'Sessions' },
+  { value: 'identity-provider-links', label: 'Identity provider links' },
+] as const
+
+type UserTabId = (typeof USER_TABS)[number]['value']
 
 const statusColor: Record<User['status'], 'success' | 'light' | 'error'> = {
   active: 'success',
@@ -26,13 +40,24 @@ const statusColor: Record<User['status'], 'success' | 'light' | 'error'> = {
   locked: 'error',
 }
 
-export function UsersSection() {
+interface UsersSectionProps {
+  entityId: string | null
+  tabId: IdentityAccessTabId | null
+  onEntityChange: (entityId: string | null) => void
+  onTabChange: (tabId: IdentityAccessTabId) => void
+}
+
+function isUserTab(tabId: IdentityAccessTabId | null): tabId is UserTabId {
+  return USER_TABS.some(tab => tab.value === tabId)
+}
+
+export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: UsersSectionProps) {
   const { data: users = [], isLoading, error, refetch } = useUsers()
   const { data: roles = [] } = useRoles()
   const { data: organizations = [] } = useOrganizations()
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [isAddOpen, setIsAddOpen] = useState(false)
   const table = useTableState(users, { searchFields: USER_SEARCH_FIELDS })
-  const selectedUser = users.find(user => user.id === selectedUserId) ?? null
+  const selectedUser = users.find(user => user.id === entityId) ?? null
 
   const getRoleName = (roleId: string) => roles.find(role => role.id === roleId)?.name ?? roleId
   const getOrganizationName = (organizationId: string) => organizations.find(org => org.id === organizationId)?.name ?? organizationId
@@ -50,27 +75,74 @@ export function UsersSection() {
     },
     { id: 'organization', header: 'Organization', cell: user => getOrganizationName(user.organizationId) },
     { id: 'roles', header: 'Roles', cell: user => user.roleIds.length > 0 ? user.roleIds.map(getRoleName).join(', ') : '—' },
-    {
-      id: 'status',
-      header: 'Status',
-      cell: user => <Badge color={statusColor[user.status]} size="sm">{user.status}</Badge>,
-    },
-    {
-      id: 'lastLogin',
-      header: 'Last login',
-      cell: user => user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never',
-    },
+    { id: 'status', header: 'Status', cell: user => <Badge color={statusColor[user.status]} size="sm">{user.status}</Badge> },
+    { id: 'lastLogin', header: 'Last login', cell: user => user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never' },
   ], [organizations, roles])
+
+  const roleColumns = useMemo<ColumnDef<Role>[]>(() => [
+    { id: 'name', header: 'Role name', cell: role => <span className="font-semibold text-text-primary">{role.name}</span> },
+    { id: 'description', header: 'Description', cell: role => role.description || '—' },
+  ], [])
+
+  if (entityId) {
+    if (!selectedUser) {
+      return (
+        <div>
+          <IdentityResourceHeader title="User not found" backLabel="Users" onBack={() => { onEntityChange(null) }} />
+          <div className="p-4"><EmptyState title="User not found" description="The selected user is not available in the current Identity & Access data." /></div>
+        </div>
+      )
+    }
+
+    const activeTab: UserTabId = isUserTab(tabId) ? tabId : 'details'
+    const assignedRoles = roles.filter(role => selectedUser.roleIds.includes(role.id))
+    let detailContent
+    if (activeTab === 'details') {
+      detailContent = (
+        <IdentitySettingsSection title="User details" description="Fields currently available from the Identity & Access user contract.">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Name" htmlFor="identity-user-name"><Input id="identity-user-name" value={selectedUser.name} readOnly /></Field>
+            <Field label="Email" htmlFor="identity-user-email"><Input id="identity-user-email" value={selectedUser.email} readOnly /></Field>
+            <Field label="Organization" htmlFor="identity-user-organization"><Input id="identity-user-organization" value={getOrganizationName(selectedUser.organizationId)} readOnly /></Field>
+            <div><span className="mb-1.5 block text-xs font-medium text-text-secondary">Status</span><Badge color={statusColor[selectedUser.status]}>{selectedUser.status}</Badge></div>
+          </div>
+        </IdentitySettingsSection>
+      )
+    } else if (activeTab === 'role-mappings') {
+      detailContent = assignedRoles.length > 0
+        ? <DataTable columns={roleColumns} rows={assignedRoles} rowKey={role => role.id} ariaLabel="User role mappings" />
+        : <div className="p-4"><EmptyState title="No role mappings" description="This user has no role mappings in the current Identity & Access data." /></div>
+    } else {
+      const label = USER_TABS.find(tab => tab.value === activeTab)?.label ?? activeTab
+      detailContent = <div className="p-4"><EmptyState title={label} description={`Keycloak ${label.toLowerCase()} data is not connected yet.`} /></div>
+    }
+
+    return (
+      <IdentityResourceDetailPage
+        eyebrow="Manage"
+        title={selectedUser.name}
+        description={selectedUser.email}
+        backLabel="Users"
+        onBack={() => { onEntityChange(null) }}
+        tabs={USER_TABS}
+        tabId={activeTab}
+        onTabChange={nextTab => { onTabChange(nextTab) }}
+        tabAriaLabel="User management sections"
+        actions={<Button size="sm" variant="outline" disabled title="Available after Keycloak integration">Actions</Button>}
+      >
+        {detailContent}
+      </IdentityResourceDetailPage>
+    )
+  }
 
   return (
     <div className="flex min-w-0 flex-col">
-      <div className="flex items-start justify-between gap-4 border-b border-border px-4 pb-3 pt-1">
-        <div>
-          <h2 className="text-base font-semibold text-text-primary">Users</h2>
-          <p className="mt-1 text-xs text-text-muted">Manage users currently represented by the Identity & Access mock data.</p>
-        </div>
-        <Button size="sm" disabled title="Available after Keycloak integration">Add user</Button>
-      </div>
+      <IdentityResourceHeader
+        eyebrow="Manage"
+        title="Users"
+        description="Search and manage users in the ABCO realm. Keycloak-specific profile areas open in the full user workspace."
+        actions={<Button size="sm" onClick={() => { setIsAddOpen(true) }}>Add user</Button>}
+      />
 
       {isLoading ? (
         <DataTableSkeleton columnCount={5} rowCount={5} className="rounded-none border-0 shadow-none" />
@@ -84,16 +156,9 @@ export function UsersSection() {
             density={table.density}
             onDensityChange={table.setDensity}
           />
-
           <DataTableRequestState
             hasData={users.length > 0}
-            error={error ? {
-              title: 'Users could not be loaded',
-              description: error.message,
-              retryLabel: 'Retry',
-              isRetrying: false,
-              onRetry: refetch,
-            } : null}
+            error={error ? { title: 'Users could not be loaded', description: error.message, retryLabel: 'Retry', isRetrying: false, onRetry: refetch } : null}
           >
             <DataTable
               columns={columns}
@@ -102,47 +167,27 @@ export function UsersSection() {
               density={table.density}
               minWidthClassName="min-w-220"
               ariaLabel="Users"
-              rowAriaLabel={user => `Show details for ${user.name}`}
-              onRowClick={user => { setSelectedUserId(user.id) }}
-              selectedRowKey={selectedUserId}
-              emptyContent={users.length > 0
-                ? 'No users match your search.'
-                : <EmptyState title="No users found" description="No users are available in the current Identity & Access data." />}
+              rowAriaLabel={user => `Open user ${user.name}`}
+              onRowClick={user => { onEntityChange(user.id) }}
+              emptyContent={users.length > 0 ? 'No users match your search.' : <EmptyState title="No users found" description="No users are available in the current Identity & Access data." />}
             />
           </DataTableRequestState>
-
-          {!error ? (
-            <DataTablePagination
-              page={table.page}
-              pageSize={table.pageSize}
-              total={table.total}
-              onPageChange={table.setPage}
-              onPageSizeChange={table.setPageSize}
-            />
-          ) : null}
+          {!error ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
         </>
       )}
 
-      <DetailDrawer
-        open={selectedUser !== null}
-        onClose={() => { setSelectedUserId(null) }}
-        eyebrow="User"
-        title={selectedUser?.name ?? ''}
-        subtitle={selectedUser?.email}
-        ariaLabel="User detail"
-        closeLabel="Close user detail"
+      <Modal
+        open={isAddOpen}
+        onClose={() => { setIsAddOpen(false) }}
+        title="Add user"
+        footer={<><Button size="sm" variant="ghost" onClick={() => { setIsAddOpen(false) }}>Cancel</Button><Button size="sm" disabled title="Requires Keycloak integration">Create user</Button></>}
       >
-        {selectedUser ? (
-          <dl className="px-5 py-3">
-            <DetailRow label="Email" value={selectedUser.email} />
-            <DetailRow label="Organization" value={getOrganizationName(selectedUser.organizationId)} />
-            <DetailRow label="Roles" value={selectedUser.roleIds.length > 0 ? selectedUser.roleIds.map(getRoleName).join(', ') : '—'} />
-            <DetailRow label="Status" value={<Badge color={statusColor[selectedUser.status]} size="sm">{selectedUser.status}</Badge>} />
-            <DetailRow label="Last login" value={selectedUser.lastLogin ? new Date(selectedUser.lastLogin).toLocaleString() : 'Never'} />
-            <DetailRow label="Created" value={new Date(selectedUser.createdAt).toLocaleString()} />
-          </dl>
-        ) : null}
-      </DetailDrawer>
+        <div className="space-y-4 px-6 py-4">
+          <p className="text-xs text-text-muted">The form establishes the Keycloak user-creation surface; persistence is disabled until the Keycloak contract is connected.</p>
+          <Field label="Name" htmlFor="new-user-name"><Input id="new-user-name" /></Field>
+          <Field label="Email" htmlFor="new-user-email"><Input id="new-user-email" type="email" /></Field>
+        </div>
+      </Modal>
     </div>
   )
 }

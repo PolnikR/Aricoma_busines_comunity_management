@@ -13,8 +13,16 @@ const sectionLabels = new Map<IdentityAccessSectionId, string>(
   identityAccessSectionGroups.flatMap(group => group.sections.map(section => [section.id, section.label] as const)),
 )
 
-function IdentityAccessSectionContent({ sectionId }: { sectionId: IdentityAccessSectionId }) {
-  if (sectionId === 'users') return <UsersSection />
+interface IdentityAccessSectionContentProps {
+  sectionId: IdentityAccessSectionId
+  entityId: string | null
+  tabId: import('../models/identityAccessSections').IdentityAccessTabId | null
+  onEntityChange: (entityId: string | null) => void
+  onTabChange: (tabId: import('../models/identityAccessSections').IdentityAccessTabId) => void
+}
+
+function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChange, onTabChange }: IdentityAccessSectionContentProps) {
+  if (sectionId === 'users') return <UsersSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'realm-roles') return <RealmRolesSection />
   if (sectionId === 'permissions') return <PermissionsSection />
   if (sectionId === 'organizations') return <OrganizationsSection />
@@ -24,7 +32,7 @@ function IdentityAccessSectionContent({ sectionId }: { sectionId: IdentityAccess
 }
 
 export function IdentityAccessPage() {
-  const { sectionId, groupId, setSectionId, setGroupId } = useIdentityAccessSection()
+  const { sectionId, groupId, entityId, tabId, setSectionId, setGroupId, setEntityId, setTabId } = useIdentityAccessSection()
 
   return (
     <div className="flex min-h-full min-w-0 flex-col gap-4 overflow-x-hidden">
@@ -53,7 +61,7 @@ export function IdentityAccessPage() {
           onSectionChange={setSectionId}
         />
         <section className="min-w-0 flex-1 overflow-hidden bg-surface" aria-live="polite">
-          <IdentityAccessSectionContent sectionId={sectionId} />
+          <IdentityAccessSectionContent sectionId={sectionId} entityId={entityId} tabId={tabId} onEntityChange={setEntityId} onTabChange={setTabId} />
         </section>
       </div>
     </div>
