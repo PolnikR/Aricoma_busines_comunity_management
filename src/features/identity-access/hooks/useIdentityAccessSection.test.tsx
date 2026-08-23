@@ -150,6 +150,21 @@ describe('useIdentityAccessSection', () => {
     expect(result.current.tabId).toBe('details')
   })
 
+  it('navigates to a top-level section and nested tab atomically', () => {
+    const { result } = renderHook(() => useSectionState(), {
+      wrapper: wrapperFor('/identity-access?section=events&tab=admin-events&keep=visible'),
+    })
+
+    act(() => { result.current.setSectionTab('realm-settings', 'events') })
+
+    expect(result.current.sectionId).toBe('realm-settings')
+    expect(result.current.tabId).toBe('events')
+    const params = new URLSearchParams(result.current.location.search)
+    expect(params.get('section')).toBe('realm-settings')
+    expect(params.get('tab')).toBe('events')
+    expect(params.get('keep')).toBe('visible')
+  })
+
   it('clears incompatible entity and tab state when the top-level section changes', () => {
     const { result } = renderHook(() => useSectionState(), {
       wrapper: wrapperFor('/identity-access?section=users&entity=user-1&tab=credentials&keep=visible'),

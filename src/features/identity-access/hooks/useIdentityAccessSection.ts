@@ -40,6 +40,16 @@ export function useIdentityAccessSection() {
     setSectionId(getIdentityAccessDefaultSectionForGroup(nextGroupId))
   }
 
+  const setSectionTab = (nextSectionId: IdentityAccessSectionId, nextTabId: IdentityAccessTabId) => {
+    updateParams(nextParams => {
+      nextParams.set(SECTION_PARAM, nextSectionId)
+      nextParams.delete(ENTITY_PARAM)
+      const validatedTab = parseIdentityAccessTab(nextSectionId, null, nextTabId)
+      if (validatedTab) nextParams.set(TAB_PARAM, validatedTab)
+      else nextParams.delete(TAB_PARAM)
+    })
+  }
+
   const setEntityId = (nextEntityId: string | null) => {
     updateParams(nextParams => {
       if (!sectionSupportsEntity(sectionId) || !nextEntityId?.trim()) {
@@ -60,5 +70,5 @@ export function useIdentityAccessSection() {
     })
   }
 
-  return { sectionId, groupId, entityId, tabId, setSectionId, setGroupId, setEntityId, setTabId }
+  return { sectionId, groupId, entityId, tabId, setSectionId, setSectionTab, setGroupId, setEntityId, setTabId }
 }

@@ -8,6 +8,7 @@ import { RealmSettingsSection } from '../components/RealmSettingsSection'
 import { AuthenticationSection } from '../components/AuthenticationSection'
 import { IdentityProvidersSection } from '../components/IdentityProvidersSection'
 import { UserFederationSection } from '../components/UserFederationSection'
+import { EventsSection } from '../components/EventsSection'
 import { PermissionsSection } from '../components/PermissionsSection'
 import { OrganizationsSection } from '../components/OrganizationsSection'
 import { SessionsSection } from '../components/SessionsSection'
@@ -26,9 +27,10 @@ interface IdentityAccessSectionContentProps {
   tabId: import('../models/identityAccessSections').IdentityAccessTabId | null
   onEntityChange: (entityId: string | null) => void
   onTabChange: (tabId: import('../models/identityAccessSections').IdentityAccessTabId) => void
+  onOpenEventSettings: () => void
 }
 
-function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChange, onTabChange }: IdentityAccessSectionContentProps) {
+function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChange, onTabChange, onOpenEventSettings }: IdentityAccessSectionContentProps) {
   if (sectionId === 'users') return <UsersSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'realm-roles') return <RealmRolesSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'groups') return <GroupsSection />
@@ -38,6 +40,7 @@ function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChan
   if (sectionId === 'authentication') return <AuthenticationSection tabId={tabId} onTabChange={onTabChange} />
   if (sectionId === 'identity-providers') return <IdentityProvidersSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'user-federation') return <UserFederationSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
+  if (sectionId === 'events') return <EventsSection tabId={tabId} onTabChange={onTabChange} onOpenSettings={onOpenEventSettings} />
   if (sectionId === 'permissions') return <PermissionsSection />
   if (sectionId === 'organizations') return <OrganizationsSection />
   if (sectionId === 'sessions') return <SessionsSection />
@@ -46,7 +49,7 @@ function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChan
 }
 
 export function IdentityAccessPage() {
-  const { sectionId, groupId, entityId, tabId, setSectionId, setGroupId, setEntityId, setTabId } = useIdentityAccessSection()
+  const { sectionId, groupId, entityId, tabId, setSectionId, setSectionTab, setGroupId, setEntityId, setTabId } = useIdentityAccessSection()
 
   return (
     <div className="flex min-h-full min-w-0 flex-col gap-4 overflow-x-hidden">
@@ -75,7 +78,7 @@ export function IdentityAccessPage() {
           onSectionChange={setSectionId}
         />
         <section className="min-w-0 flex-1 overflow-hidden bg-surface" aria-live="polite">
-          <IdentityAccessSectionContent sectionId={sectionId} entityId={entityId} tabId={tabId} onEntityChange={setEntityId} onTabChange={setTabId} />
+          <IdentityAccessSectionContent sectionId={sectionId} entityId={entityId} tabId={tabId} onEntityChange={setEntityId} onTabChange={setTabId} onOpenEventSettings={() => { setSectionTab('realm-settings', 'events') }} />
         </section>
       </div>
     </div>

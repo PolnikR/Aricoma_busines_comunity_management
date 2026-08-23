@@ -14,6 +14,7 @@ vi.mock('../components/RealmSettingsSection', () => ({ RealmSettingsSection: () 
 vi.mock('../components/AuthenticationSection', () => ({ AuthenticationSection: () => <div>Authentication content</div> }))
 vi.mock('../components/IdentityProvidersSection', () => ({ IdentityProvidersSection: () => <div>Identity providers content</div> }))
 vi.mock('../components/UserFederationSection', () => ({ UserFederationSection: () => <div>User federation content</div> }))
+vi.mock('../components/EventsSection', () => ({ EventsSection: ({ onOpenSettings }: { onOpenSettings: () => void }) => <button onClick={onOpenSettings}>Open event settings</button> }))
 vi.mock('../components/PermissionsSection', () => ({ PermissionsSection: () => <div>Permissions content</div> }))
 vi.mock('../components/OrganizationsSection', () => ({ OrganizationsSection: () => <div>Organizations content</div> }))
 vi.mock('../components/SessionsSection', () => ({ SessionsSection: () => <div>Sessions content</div> }))
@@ -28,6 +29,7 @@ const dataBackedContent: Partial<Record<IdentityAccessSectionId, string>> = {
   authentication: 'Authentication content',
   'identity-providers': 'Identity providers content',
   'user-federation': 'User federation content',
+  events: 'Open event settings',
   organizations: 'Organizations content',
   sessions: 'Sessions content',
   permissions: 'Permissions content',
@@ -76,6 +78,17 @@ describe('IdentityAccessPage', () => {
     expect(screen.getByRole('tab', { name: 'Realm roles' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Realm roles content')).toBeInTheDocument()
     expect(screen.getByTestId('location-search')).toHaveAttribute('data-search', '?keep=visible&section=realm-roles')
+  })
+
+  it('navigates from Events to Realm settings > Events atomically', async () => {
+    renderPage('/platform-administration/identity-access?section=events&tab=admin-events&keep=visible')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Open event settings' }))
+
+    const params = new URLSearchParams(screen.getByTestId('location-search').getAttribute('data-search') ?? '')
+    expect(params.get('section')).toBe('realm-settings')
+    expect(params.get('tab')).toBe('events')
+    expect(params.get('keep')).toBe('visible')
   })
 
   it.each(registeredSections)('renders the registered $sectionId section in its $groupLabel group', ({ groupLabel, sectionId, sectionLabel }) => {
