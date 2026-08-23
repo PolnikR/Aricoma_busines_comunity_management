@@ -47,13 +47,32 @@ describe('IdentityAccessPage', () => {
     expect(screen.getByTestId('location-search')).toHaveAttribute('data-search', '?keep=visible&section=realm-roles')
   })
 
-  it('renders an integration-pending seam for sections without current mock content', async () => {
-    renderPage()
+  it.each([
+    ['users', 'Users content'],
+    ['realm-roles', 'Realm roles content'],
+    ['organizations', 'Organizations content'],
+    ['sessions', 'Sessions content'],
+    ['permissions', 'Permissions content'],
+  ])('renders the data-backed %s section', (sectionId, content) => {
+    renderPage(`/platform-administration/identity-access?section=${sectionId}`)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Clients' }))
+    expect(screen.getByText(content)).toBeInTheDocument()
+  })
 
-    expect(screen.getByRole('button', { name: 'Clients' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('heading', { name: 'Clients', level: 2 })).toBeInTheDocument()
-    expect(screen.getByText('Keycloak integration for this section is not connected yet.')).toBeInTheDocument()
+  it.each([
+    ['clients', 'Clients'],
+    ['client-scopes', 'Client scopes'],
+    ['groups', 'Groups'],
+    ['events', 'Events'],
+    ['realm-settings', 'Realm settings'],
+    ['authentication', 'Authentication'],
+    ['identity-providers', 'Identity providers'],
+    ['user-federation', 'User federation'],
+    ['workflows', 'Workflows'],
+  ])('renders a truthful shared placeholder for %s', (sectionId, label) => {
+    renderPage(`/platform-administration/identity-access?section=${sectionId}`)
+
+    expect(screen.getByRole('heading', { name: label, level: 2 })).toBeInTheDocument()
+    expect(screen.getByText('Keycloak integration for this administration area is not connected yet.')).toBeInTheDocument()
   })
 })

@@ -5,6 +5,7 @@ import { PermissionsSection } from '../components/PermissionsSection'
 import { OrganizationsSection } from '../components/OrganizationsSection'
 import { SessionsSection } from '../components/SessionsSection'
 import { IdentityAccessNavigation } from '../components/IdentityAccessNavigation'
+import { KeycloakPlaceholderSection } from '../components/KeycloakPlaceholderSection'
 import { useIdentityAccessSection } from '../hooks/useIdentityAccessSection'
 import { identityAccessSectionGroups, type IdentityAccessSectionId } from '../models/identityAccessSections'
 
@@ -19,12 +20,7 @@ function IdentityAccessSectionContent({ sectionId }: { sectionId: IdentityAccess
   if (sectionId === 'organizations') return <OrganizationsSection />
   if (sectionId === 'sessions') return <SessionsSection />
 
-  return (
-    <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
-      <h2 className="text-base font-semibold text-text-primary">{sectionLabels.get(sectionId)}</h2>
-      <p className="mt-2 max-w-md text-sm text-text-muted">Keycloak integration for this section is not connected yet.</p>
-    </div>
-  )
+  return <KeycloakPlaceholderSection title={sectionLabels.get(sectionId) ?? sectionId} />
 }
 
 export function IdentityAccessPage() {
