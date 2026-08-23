@@ -1,3 +1,4 @@
+import { FilterTabs } from '@/shared/components/filters/FilterTabs'
 import { Tabs } from '@/shared/components/tabs/Tabs'
 import {
   getIdentityAccessGroup,
@@ -24,29 +25,13 @@ export function IdentityAccessNavigation({
   return (
     <nav aria-label="Keycloak realm navigation" className="min-w-0 border-b border-border bg-surface">
       <div className="px-4 py-3">
-        <div
-          role="group"
-          aria-label="Keycloak navigation groups"
-          className="flex h-10 w-fit max-w-full overflow-x-auto rounded-xl bg-surface-muted p-0.5"
-        >
-          {identityAccessSectionGroups.map(group => {
-            const isActive = group.id === groupId
-            return (
-              <button
-                key={group.id}
-                type="button"
-                aria-pressed={isActive}
-                onClick={() => { onGroupChange(group.id) }}
-                className={`shrink-0 rounded-[10px] px-4 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15 ${
-                  isActive
-                    ? 'bg-surface text-accent shadow-sm'
-                    : 'text-text-muted hover:text-text-secondary'
-                }`}
-              >
-                {group.label}
-              </button>
-            )
-          })}
+        <div className="w-fit max-w-full">
+          <FilterTabs
+            ariaLabel="Keycloak navigation groups"
+            tabs={identityAccessSectionGroups.map(group => ({ value: group.id, label: group.label }))}
+            value={groupId}
+            onChange={(nextGroupId) => { onGroupChange(nextGroupId as IdentityAccessSectionGroupId) }}
+          />
         </div>
       </div>
 

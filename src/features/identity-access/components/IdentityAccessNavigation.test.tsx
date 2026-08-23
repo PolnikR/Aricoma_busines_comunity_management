@@ -20,8 +20,8 @@ describe('IdentityAccessNavigation', () => {
   it('renders only sections from the active group using shared tab semantics', () => {
     renderNavigation()
 
-    expect(screen.getByRole('button', { name: 'Manage' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'Configure' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('tab', { name: 'Manage' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Configure' })).toHaveAttribute('aria-selected', 'false')
     expect(screen.getByRole('tablist', { name: 'Manage sections' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Organizations' })).toBeInTheDocument()
@@ -31,7 +31,7 @@ describe('IdentityAccessNavigation', () => {
   it('delegates group switching to the URL-backed selection contract', async () => {
     const props = renderNavigation()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Configure' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Configure' }))
 
     expect(props.onGroupChange).toHaveBeenCalledWith('configure')
   })
