@@ -2,7 +2,7 @@ import { PageHeader } from '@/shared/components/page/PageHeader'
 import { UsersSection } from '../components/UsersSection'
 import { RealmRolesSection } from '../components/RealmRolesSection'
 import { PermissionsTab } from '../components/PermissionsTab'
-import { OrganizationsTab } from '../components/OrganizationsTab'
+import { OrganizationsSection } from '../components/OrganizationsSection'
 import { SessionsTab } from '../components/SessionsTab'
 import { IdentityAccessNavigation } from '../components/IdentityAccessNavigation'
 import { useIdentityAccessSection } from '../hooks/useIdentityAccessSection'
@@ -16,7 +16,7 @@ function IdentityAccessSectionContent({ sectionId }: { sectionId: IdentityAccess
   if (sectionId === 'users') return <UsersSection />
   if (sectionId === 'realm-roles') return <RealmRolesSection />
   if (sectionId === 'permissions') return <PermissionsTab />
-  if (sectionId === 'organizations') return <OrganizationsTab />
+  if (sectionId === 'organizations') return <OrganizationsSection />
   if (sectionId === 'sessions') return <SessionsTab />
 
   return (
