@@ -61,41 +61,41 @@ Regresný transition contract
 
 ### Fáza 1: Regresný kontrakt a priame route
 
-- [ ] Úloha 1: Zachytiť prebliknutie ako route/location regresný kontrakt.
-- [ ] Úloha 2: Obnoviť priame kanonické route a kompatibilné redirecty.
+- [x] Úloha 1: Zachytiť prebliknutie ako route/location regresný kontrakt.
+- [x] Úloha 2: Obnoviť priame kanonické route a kompatibilné redirecty.
 
 ### Checkpoint: Route hranice
 
-- [ ] Sidebar obsahuje dve samostatné položky s presnými aktívnymi stavmi.
-- [ ] Každá priama route renderuje iný feature entrypoint pod rovnakým `AppShell`.
-- [ ] Staré parametrizované URL vykonajú najviac jeden redirect.
+- [x] Sidebar obsahuje dve samostatné položky s presnými aktívnymi stavmi.
+- [x] Každá priama route renderuje iný feature entrypoint pod rovnakým `AppShell`.
+- [x] Staré parametrizované URL vykonajú najviac jeden redirect.
 
 ### Fáza 2: Samostatné feature controllery
 
-- [ ] Úloha 3: Premeniť `ResourcesPage` na source-only page controller.
-- [ ] Úloha 4: Vytvoriť samostatnú target feature `resources-ise`.
+- [x] Úloha 3: Premeniť `ResourcesPage` na source-only page controller.
+- [x] Úloha 4: Vytvoriť samostatnú target feature `resources-ise`.
 
 ### Checkpoint: Feature izolácia
 
-- [ ] Source controller počas svojho lifecycle nikdy nemení rolu na target.
-- [ ] Target controller počas svojho lifecycle nikdy nemení rolu na source.
-- [ ] Spoločné tabuľky/API nie sú skopírované.
+- [x] Source controller počas svojho lifecycle nikdy nemení rolu na target.
+- [x] Target controller počas svojho lifecycle nikdy nemení rolu na source.
+- [x] Spoločné tabuľky/API nie sú skopírované.
 
 ### Fáza 3: Jednofázová inicializácia scope
 
-- [ ] Úloha 5: Odstrániť mount-time synchronizáciu resource/provider selection do URL.
-- [ ] Úloha 6: Inicializovať VMware filter scope bez následnej navigácie.
-- [ ] Úloha 7: Inicializovať FlashSystem a IBM Power filter scope bez následnej navigácie.
+- [x] Úloha 5: Odstrániť mount-time synchronizáciu resource/provider selection do URL.
+- [x] Úloha 6: Inicializovať VMware filter scope bez následnej navigácie.
+- [x] Úloha 7: Inicializovať FlashSystem a IBM Power filter scope bez následnej navigácie.
 
 ### Checkpoint: Stabilný prvý render
 
-- [ ] Pri route vstupe nevznikne opravná search-param navigácia.
-- [ ] Obnovené filtre sú role/provider scoped už v prvom použiteľnom renderi.
-- [ ] Pri dostupnej cache sa nezobrazí full-page loading alebo prázdny medzistav.
+- [x] Pri route vstupe nevznikne opravná search-param navigácia.
+- [x] Obnovené filtre sú role/provider scoped už v prvom použiteľnom renderi.
+- [x] Pri dostupnej cache sa nezobrazí full-page loading alebo prázdny medzistav.
 
 ### Fáza 4: Cleanup a overenie
 
-- [ ] Úloha 8: Odstrániť generický role route/page a aktualizovať regresné testy.
+- [x] Úloha 8: Odstrániť generický role route/page a aktualizovať regresné testy.
 - [ ] Úloha 9: Vykonať fokusované automatizované a reálne browser overenie.
 
 ### Checkpoint: Hotovo
@@ -112,12 +112,12 @@ Regresný transition contract
 **Popis:** Doplniť test pre prechod medzi oboma sidebar položkami cez reálny router. Test nebude merať pixely; zachytí technické podmienky, ktoré prebliknutie spôsobujú: počet location zmien, prítomnosť destination shellu a absenciu prázdneho alebo route-loading medzistavu po kliknutí.
 
 **Akceptačné kritériá:**
-- [ ] Test začína na Resources ISE a naviguje na Resources cez rovnaký link contract ako sidebar.
-- [ ] Po kliknutí vznikne iba cieľová pathname/location zmena bez následnej inicializačnej navigácie.
-- [ ] `AppShell` zostane mountnutý a cieľová feature má renderovateľný shell v prvom stabilnom stave.
+- [x] Test začína na Resources ISE a naviguje na Resources cez rovnaký link contract ako sidebar.
+- [x] Po kliknutí vznikne iba cieľová pathname/location zmena bez následnej inicializačnej navigácie.
+- [x] `AppShell` zostane mountnutý a cieľová feature má renderovateľný shell v prvom stabilnom stave.
 
 **Overenie:**
-- [ ] `npm exec vitest run src/app/router.test.tsx src/features/discovery-inventory/resources/pages/ResourcesRouteTransition.test.tsx`
+- [x] `npm exec vitest run src/app/router.test.tsx src/features/discovery-inventory/resources/pages/ResourcesRouteTransition.test.tsx`
 
 **Závislosti:** Žiadne
 
@@ -132,12 +132,12 @@ Regresný transition contract
 **Popis:** Nastaviť priame kanonické URL pre obe feature, priradiť im samostatné route elementy a zachovať kompatibilitu s aktuálnymi `/source` a `/target` bookmarkmi.
 
 **Akceptačné kritériá:**
-- [ ] `/discovery-inventory/resources` renderuje source feature priamo.
-- [ ] `/discovery-inventory/resources-ise` renderuje target feature priamo.
-- [ ] `/resources/source` a `/resources/target` redirectujú s `replace` na zodpovedajúcu priamu route.
+- [x] `/discovery-inventory/resources` renderuje source feature priamo.
+- [x] `/discovery-inventory/resources-ise` renderuje target feature priamo.
+- [x] `/resources/source` a `/resources/target` redirectujú s `replace` na zodpovedajúcu priamu route.
 
 **Overenie:**
-- [ ] `npm exec vitest run src/app/router.test.tsx src/layouts/app-shell/AppSidebar.test.tsx`
+- [x] `npm exec vitest run src/app/router.test.tsx src/layouts/app-shell/AppSidebar.test.tsx`
 
 **Závislosti:** Úloha 1
 
@@ -154,13 +154,13 @@ Regresný transition contract
 **Popis:** Presunúť source kompozíciu zo spoločného `ResourceRolePage` späť do `ResourcesPage`. Controller bude používať iba source tab builder a source rolu. Pri route vstupe odvodí platný aktívny tab bez efektu, ktorý opravuje URL.
 
 **Akceptačné kritériá:**
-- [ ] `ResourcesPage` neberie `role` prop a nevie prepnúť na target scope.
-- [ ] Source provider selection sa odvodí deterministicky aj pri chýbajúcom/neplatnom `providerId`.
-- [ ] VMware, FlashSystem a IBM Power dispatchujú existujúce zdieľané subpages s pevnou source rolou.
+- [x] `ResourcesPage` neberie `role` prop a nevie prepnúť na target scope.
+- [x] Source provider selection sa odvodí deterministicky aj pri chýbajúcom/neplatnom `providerId`.
+- [x] VMware, FlashSystem a IBM Power dispatchujú existujúce zdieľané subpages s pevnou source rolou.
 
 **Overenie:**
-- [ ] `npm exec vitest run src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx`
-- [ ] Fokusovaný ESLint pre controller a test.
+- [x] `npm exec vitest run src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx`
+- [x] Fokusovaný ESLint pre controller a test.
 
 **Závislosti:** Úloha 2
 
@@ -176,13 +176,13 @@ Regresný transition contract
 **Popis:** Vytvoriť target route feature v samostatnom adresári. Target controller bude malý composition root s pevnou rolou a bude importovať zdieľané resource subpages a role-neutral dátové vrstvy namiesto ich kopírovania.
 
 **Akceptačné kritériá:**
-- [ ] Target page sa nachádza pod `src/features/discovery-inventory/resources-ise/`.
-- [ ] Controller neberie dynamický `role` prop a pracuje iba s target providermi.
-- [ ] Resource tabuľky, API klienti, query keys a detailné komponenty nevzniknú v druhej kópii.
+- [x] Target page sa nachádza pod `src/features/discovery-inventory/resources-ise/`.
+- [x] Controller neberie dynamický `role` prop a pracuje iba s target providermi.
+- [x] Resource tabuľky, API klienti, query keys a detailné komponenty nevzniknú v druhej kópii.
 
 **Overenie:**
-- [ ] `npm exec vitest run src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx`
-- [ ] Fokusovaný ESLint pre novú feature.
+- [x] `npm exec vitest run src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx`
+- [x] Fokusovaný ESLint pre novú feature.
 
 **Závislosti:** Úloha 2
 
@@ -198,12 +198,12 @@ Regresný transition contract
 **Popis:** Upraviť resource-tab selection contract tak, aby missing/invalid provider alebo tab mal in-memory fallback. Inicializácia controllera nesmie volať `setSearchParams`; URL sa aktualizuje až pri explicitnej zmene tabu/provideru používateľom.
 
 **Akceptačné kritériá:**
-- [ ] Prvý render bez `providerId` používa prvý platný provider bez location replace.
-- [ ] Neplatný provider sa nezobrazí, ale nespôsobí druhú navigáciu.
-- [ ] Kliknutie na iný resource/provider tab naďalej zapíše URL a resetuje stránkovanie/nesúvisiace filtre.
+- [x] Prvý render bez `providerId` používa prvý platný provider bez location replace.
+- [x] Neplatný provider sa nezobrazí, ale nespôsobí druhú navigáciu.
+- [x] Kliknutie na iný resource/provider tab naďalej zapíše URL a resetuje stránkovanie/nesúvisiace filtre.
 
 **Overenie:**
-- [ ] `npm exec vitest run src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx`
+- [x] `npm exec vitest run src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx`
 
 **Závislosti:** Úlohy 3 a 4
 
@@ -219,12 +219,12 @@ Regresný transition contract
 **Popis:** Odstrániť dvojfázové `isInitialized` správanie pri mountnutí VMware scope. Explicitné URL filtre majú prioritu; inak sa synchronne použije role/provider snapshot alebo provider default. Samotná hydratácia nesmie volať `setSearchParams`.
 
 **Akceptačné kritériá:**
-- [ ] VMware query môže začať s cieľovým providerom a správnymi filtrami bez prechodného disabled stavu.
-- [ ] Source snapshot sa nikdy nepoužije pre target scope a opačne.
-- [ ] Používateľská zmena filtra sa naďalej zapisuje do URL a session snapshotu.
+- [x] VMware query môže začať s cieľovým providerom a správnymi filtrami bez prechodného disabled stavu.
+- [x] Source snapshot sa nikdy nepoužije pre target scope a opačne.
+- [x] Používateľská zmena filtra sa naďalej zapisuje do URL a session snapshotu.
 
 **Overenie:**
-- [ ] `npm exec vitest run src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
+- [x] `npm exec vitest run src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
 
 **Závislosti:** Úloha 5
 
@@ -241,12 +241,12 @@ Regresný transition contract
 **Popis:** Aplikovať rovnaký inicializačný kontrakt na FlashSystem a IBM Power, aby plynulosť nezávisela od aktuálne zvoleného resource typu.
 
 **Akceptačné kritériá:**
-- [ ] Oba hooky odvodia URL/snapshot/default filtre bez mount-time location replace.
-- [ ] Role/provider scope zostane súčasťou session identity.
-- [ ] Explicitné zmeny filtrov a stránkovania zachovajú existujúce URL správanie.
+- [x] Oba hooky odvodia URL/snapshot/default filtre bez mount-time location replace.
+- [x] Role/provider scope zostane súčasťou session identity.
+- [x] Explicitné zmeny filtrov a stránkovania zachovajú existujúce URL správanie.
 
 **Overenie:**
-- [ ] `npm exec vitest run src/features/discovery-inventory/resources/hooks/useFlashSystemSearchParams.test.tsx src/features/discovery-inventory/resources/hooks/usePowerSearchParams.test.tsx`
+- [x] `npm exec vitest run src/features/discovery-inventory/resources/hooks/useFlashSystemSearchParams.test.tsx src/features/discovery-inventory/resources/hooks/usePowerSearchParams.test.tsx`
 
 **Závislosti:** Úloha 6
 
@@ -263,14 +263,14 @@ Regresný transition contract
 **Popis:** Po prepojení oboch priamych feature odstrániť nepoužívaný `ResourceRoleRoutePage`, `ResourceRolePage` a starý Resources ISE wrapper v source feature. Upraviť importy a testy tak, aby sa role-switching controller nemohol náhodne vrátiť.
 
 **Akceptačné kritériá:**
-- [ ] Produkčný routing nepoužíva `:role` route ani dynamický role page controller.
-- [ ] Source a target route importujú svoje vlastné feature entrypointy.
-- [ ] Nezostanú orphan importy alebo duplicitný target wrapper.
+- [x] Produkčný routing nepoužíva `:role` route ani dynamický role page controller.
+- [x] Source a target route importujú svoje vlastné feature entrypointy.
+- [x] Nezostanú orphan importy alebo duplicitný target wrapper.
 
 **Overenie:**
-- [ ] `rg "ResourceRole(Route)?Page|resources/:role" src` nevráti produkčné použitie.
-- [ ] `npm run typecheck`
-- [ ] Fokusovaný ESLint pre dotknuté route/page súbory.
+- [x] `rg "ResourceRole(Route)?Page|resources/:role" src` nevráti produkčné použitie.
+- [x] `npm run typecheck`
+- [x] Fokusovaný ESLint pre dotknuté route/page súbory.
 
 **Závislosti:** Úlohy 3 až 7
 
@@ -287,16 +287,18 @@ Regresný transition contract
 
 **Popis:** Spustiť celý dotknutý testovací rozsah a potom reálny browser check presne podľa dodaného videa: opakovať ISE → Resources aj opačný smer na desktop a narrow viewport, sledovať DOM, console a network.
 
+> Automatizovaná časť je dokončená. Reálny browser check je v tejto relácii blokovaný, pretože browser runtime neponúka žiadny pripojený browser; lokálna aplikácia na `http://localhost:5173` je dostupná.
+
 **Akceptačné kritériá:**
 - [ ] V oboch smeroch nie je viditeľné prebliknutie cieľovej feature.
 - [ ] Jeden klik nevytvorí následné inicializačné location replace alebo duplicitné inventory requesty.
 - [ ] Source/target obsah, filtre, cache a aktívne sidebar položky zostanú správne oddelené.
 
 **Overenie:**
-- [ ] Jedna fokusovaná Vitest invokácia pre route, sidebar, oba controllery, tri filter hooky a inventory query hooky.
-- [ ] Fokusovaný ESLint pre všetky dotknuté TypeScript súbory.
-- [ ] `npm run typecheck`.
-- [ ] `git diff --check`.
+- [x] Jedna fokusovaná Vitest invokácia pre route, sidebar, oba controllery, tri filter hooky a inventory query hooky.
+- [x] Fokusovaný ESLint pre všetky dotknuté TypeScript súbory.
+- [x] `npm run typecheck`.
+- [x] `git diff --check`.
 - [ ] Reálny browser: desktop a narrow viewport, minimálne päť prechodov v každom smere, kontrola console/network.
 
 **Závislosti:** Úloha 8
