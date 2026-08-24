@@ -114,6 +114,23 @@ describe('RecoveryApplicationsTable', () => {
     expect(onEdit).toHaveBeenCalledWith('finance-app')
   })
 
+  it('renders a clickable Airflow DAG ID without opening the row detail', async () => {
+    const user = userEvent.setup()
+    renderTable(<RecoveryApplicationsTable applications={[application, developmentApplication]} />)
+
+    expect(screen.getByText('Airflow DAG ID')).toBeInTheDocument()
+    const dagLink = screen.getByRole('link', { name: /dag_260811133132_fbffbefb/ })
+    expect(dagLink).toHaveAttribute(
+      'href',
+      'https://airflow.dynamic.test:8443/dags/dag_260811133132_fbffbefb',
+    )
+    expect(dagLink).toHaveAttribute('target', '_blank')
+    expect(dagLink).toHaveAttribute('rel', 'noopener noreferrer')
+
+    await user.click(dagLink)
+    expect(screen.queryByRole('dialog', { name: 'Application detail' })).not.toBeInTheDocument()
+  })
+
   it('opens and closes the JSON viewer without selecting the row', async () => {
     const user = userEvent.setup()
     const applicationWithRawRecord = {

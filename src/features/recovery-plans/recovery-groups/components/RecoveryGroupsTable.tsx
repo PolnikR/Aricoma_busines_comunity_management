@@ -157,6 +157,33 @@ export function RecoveryGroupsTable({
       ),
     },
     {
+      id: 'airflowDagId',
+      header: t('details.airflowDagId'),
+      cell: group => {
+        if (!group.airflowRunId) return <span className="text-text-subtle">—</span>
+
+        const providerUrl = platformProviders.find(
+          provider => provider.id === group.orchestrationProviderId,
+        )?.url
+        const dagId = group.airflowRunId.startsWith('dag_')
+          ? group.airflowRunId
+          : `dag_${group.airflowRunId}`
+
+        return (
+          <a
+            href={buildAirflowDagUrl(group.airflowRunId, providerUrl)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 font-mono text-xs text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
+            onClick={(event) => { event.stopPropagation() }}
+          >
+            {dagId}
+            <ExternalLinkIcon className="size-3.5 shrink-0" />
+          </a>
+        )
+      },
+    },
+    {
       id: 'json',
       header: t('tables.recoveryGroups.json'),
       cell: group => (
@@ -189,7 +216,7 @@ export function RecoveryGroupsTable({
         </Button>
       ),
     },
-  ], [t, openMenuId])
+  ], [t, openMenuId, platformProviders])
 
   const prepareFilters = () => {
     setPendingFilters(filters)

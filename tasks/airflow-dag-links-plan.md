@@ -1,8 +1,10 @@
-# Implementation Plan: Dynamic Airflow DAG Links for Recovery Groups
+# Implementation Plan: Dynamic Airflow DAG Links for Recovery Applications and Groups
 
 ## Overview
 
-Recovery Group submission and detail views will open the exact Airflow DAG instead of the generic `/dags` page. The link will be derived from the API-provided `airflow_run_id` using the backend convention `dag_<airflow_run_id>`. The selected orchestration provider's `url` is the primary runtime base URL; the only frontend fallback address and all Airflow path rules remain centralized in `src/config/externalServices.ts`.
+Recovery Application and Recovery Group orchestration UI will open the exact Airflow DAG instead of the generic `/dags` page. The link is derived from the API-provided `airflow_run_id` using the backend convention `dag_<airflow_run_id>`. The selected entity's `orchestration_provider_id` resolves the matching platform provider and its `url`, which is the primary runtime base URL; the only frontend fallback address and all Airflow path rules remain centralized in `src/config/externalServices.ts`.
+
+This plan also adds an **Airflow DAG ID** column to both Recovery Applications and Recovery Groups tables. The column displays the derived `dag_<airflow_run_id>` value and opens the same exact Airflow DAG detail used by the existing detail drawer when clicked.
 
 ## Confirmed Behaviour
 
@@ -12,6 +14,10 @@ Recovery Group submission and detail views will open the exact Airflow DAG inste
 - The selected `orchestrationProviderId` resolves the matching platform provider dynamically.
 - The selected provider's `url` wins over the frontend fallback.
 - Feature components contain no Airflow host/IP literals and do not concatenate Airflow paths themselves.
+- `RecoveryAppRecord.airflow_run_id` and `RecoveryGroupRecord.airflow_run_id` are the source fields from OpenAPI; neither list record contains a stored `dag_id`.
+- The displayed DAG ID is derived as `dag_<airflow_run_id>` using the same normalization already implemented by `buildAirflowDagUrl()`.
+- Table links resolve the provider URL per row through that row's `orchestrationProviderId`; they must not reuse a selected-detail provider URL.
+- Clicking the DAG ID link opens Airflow in a new tab and stops row-click propagation so it does not also open the entity detail drawer.
 
 ## Architecture Decisions
 
@@ -120,7 +126,43 @@ submit success modal       recovery-group detail drawer
 
 **Estimated scope:** Small (2 files).
 
-## Task 4: Focused Regression Verification
+## Task 4: Add Clickable Airflow DAG ID Columns to Recovery Applications and Recovery Groups
+
+**Description:** Add one `Airflow DAG ID` data column to both list tables. Use each row's existing normalized `airflowRunId` and `orchestrationProviderId`; do not change the API contract or data models. When `airflowRunId` exists, display the canonical DAG ID (`dag_<airflow_run_id>`) as an external link produced by `buildAirflowDagUrl(airflowRunId, providerUrl)`. Resolve `providerUrl` from the already available platform-provider collection using the row's `orchestrationProviderId`. When the run ID is absent, display `—` and no link.
+
+The table link must use the same safe external-link behavior as the detail drawer (`target="_blank"`, `rel="noopener noreferrer"`, `ExternalLinkIcon`) and call `event.stopPropagation()` so clicking it does not also trigger the table row's detail action.
+
+**Acceptance criteria:**
+
+- [ ] Recovery Applications table has an `Airflow DAG ID` column.
+- [ ] Recovery Groups table has an `Airflow DAG ID` column.
+- [ ] A row with `airflow_run_id = 260812103627_4c06f9c8` displays `dag_260812103627_4c06f9c8`.
+- [ ] The link URL is generated only by `buildAirflowDagUrl()`; table components do not concatenate `/dags` or `dag_` into a URL.
+- [ ] The row's `orchestrationProviderId` resolves its own platform-provider URL; different rows may point at different Airflow providers.
+- [ ] If the resolved provider URL is absent, the existing central Airflow fallback is used by `buildAirflowDagUrl()`.
+- [ ] A missing/null `airflowRunId` displays `—` and is not clickable.
+- [ ] Clicking the DAG ID opens Airflow in a new tab and does not open/select the row detail drawer.
+- [ ] Existing table filtering and pagination behavior is unchanged.
+
+**Verification:**
+
+- [ ] `npm exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.test.tsx src/config/externalServices.test.ts`
+- [ ] App table test covers a row-specific provider URL, canonical visible DAG ID, `target="_blank"`, safe `rel`, click propagation, and missing run ID.
+- [ ] Group table test covers the same behavior and proves a second provider can generate a different Airflow base URL.
+
+**Dependencies:** Task 1. Existing detail-link behavior from Task 3 is the reference implementation.
+
+**Files likely touched:**
+
+- `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx`
+- `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx`
+- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.tsx`
+- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.test.tsx`
+- translation files only if the existing `details.airflowDagId` key cannot be reused cleanly as the table header
+
+**Estimated scope:** Small (4 production/test files, translations only if required).
+
+## Task 5: Focused Regression Verification
 
 **Description:** Verify only the URL builder and affected Recovery Group UI paths, then inspect the final diff for accidental edits to generated contracts or unrelated features.
 
@@ -139,15 +181,15 @@ submit success modal       recovery-group detail drawer
 - [ ] `git diff --check`
 - [ ] Manual check: submit an orchestrated group and open the same exact DAG from both the success modal and the list detail drawer.
 
-**Dependencies:** Tasks 2 and 3.
+**Dependencies:** Tasks 2, 3, and 4.
 
-**Files likely touched:** Only files listed in Tasks 1–3 unless verification exposes a directly related defect.
+**Files likely touched:** Only files listed in Tasks 1–4 unless verification exposes a directly related defect.
 
 **Estimated scope:** Small verification task.
 
 ## Final Checkpoint
 
-- [ ] Modal and detail drawer resolve the same exact DAG URL.
+- [ ] Modal, detail drawer, and both list-table DAG ID links resolve the same exact DAG URL for the same entity.
 - [ ] The provider URL is selected dynamically using `orchestrationProviderId`.
 - [ ] Airflow fallback address and path conventions have one source of truth.
 - [ ] Focused tests and type checking pass.
@@ -167,7 +209,7 @@ submit success modal       recovery-group detail drawer
 
 - Changing the Recovery Group backend response or OpenAPI contract.
 - Changing Airflow authentication or routing configuration.
-- Updating Recovery Application or rollback-result links unless requested separately.
+- Changing rollback-result links or unrelated Recovery Application navigation.
 - Centralizing IP addresses used only as isolated test fixtures or translated input examples.
 
 ## Open Questions
