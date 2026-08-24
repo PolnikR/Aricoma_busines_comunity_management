@@ -132,6 +132,25 @@ describe('useIdentityAccessSection', () => {
     expect(realmSettings.result.current.tabId).toBe('events')
   })
 
+  it('adds user profile canonically and defaults Authentication to required actions while retaining hidden deep links', () => {
+    const userProfile = renderHook(() => useSectionState(), {
+      wrapper: wrapperFor('/identity-access?section=realm-settings&tab=user-profile'),
+    })
+    expect(userProfile.result.current.tabId).toBe('user-profile')
+    userProfile.unmount()
+
+    const authenticationDefault = renderHook(() => useSectionState(), {
+      wrapper: wrapperFor('/identity-access?section=authentication'),
+    })
+    expect(authenticationDefault.result.current.tabId).toBe('required-actions')
+    authenticationDefault.unmount()
+
+    const hiddenFlow = renderHook(() => useSectionState(), {
+      wrapper: wrapperFor('/identity-access?section=authentication&tab=flows'),
+    })
+    expect(hiddenFlow.result.current.tabId).toBe('flows')
+  })
+
   it('updates detail and tab state while preserving unrelated query parameters and history', () => {
     const { result } = renderHook(() => useSectionState(), {
       wrapper: wrapperFor('/identity-access?section=users&keep=visible'),

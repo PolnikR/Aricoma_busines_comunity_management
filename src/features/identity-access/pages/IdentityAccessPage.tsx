@@ -40,8 +40,6 @@ function getSectionAction({ sectionId, entityId, tabId, onSetAddUserOpen, onOpen
       return <Button size="sm" onClick={() => { onSetAddUserOpen(true) }}>Add user</Button>
     case 'realm-roles':
       return <Button size="sm" disabled title="Available after Keycloak integration">Create role</Button>
-    case 'clients':
-      return <Button size="sm" disabled title="Requires Keycloak client integration">Create client</Button>
     case 'client-scopes':
       return <Button size="sm" disabled title="Requires Keycloak client-scope integration">Create client scope</Button>
     case 'organizations':
@@ -52,8 +50,6 @@ function getSectionAction({ sectionId, entityId, tabId, onSetAddUserOpen, onOpen
       return <Button size="sm" variant="danger" disabled title="Requires Keycloak realm-session integration">Sign out all active sessions</Button>
     case 'events':
       return <Button size="sm" variant="outline" onClick={onOpenEventSettings}>Event settings</Button>
-    case 'realm-settings':
-      return <Button size="sm" disabled title="Requires Keycloak realm settings integration">Save</Button>
     case 'authentication':
       return tabId === 'flows' ? <Button size="sm" disabled title="Requires Keycloak authentication integration">Create flow</Button> : null
     case 'user-federation':
