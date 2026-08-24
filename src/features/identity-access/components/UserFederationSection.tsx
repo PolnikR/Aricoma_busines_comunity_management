@@ -1,10 +1,9 @@
 import { useMemo } from 'react'
-import { Button } from '@/shared/components/button/Button'
 import { DataTable, DataTableToolbar, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
-import { IdentityResourceDetailPage, IdentityResourceHeader } from './IdentityResourceLayout'
+import { IdentityContentPanel, IdentityResourceDetailPage } from './IdentityResourceLayout'
 
 interface FederationProviderSummary {
   id: string
@@ -60,13 +59,7 @@ export function UserFederationSection({ entityId, tabId, onEntityChange, onTabCh
   }
 
   return (
-    <div className="flex min-w-0 flex-col">
-      <IdentityResourceHeader
-        eyebrow="Configure"
-        title="User federation"
-        description="Connect Keycloak to external user stores such as LDAP, Active Directory, and Kerberos."
-        actions={<div className="flex gap-2"><Button size="sm" variant="outline" disabled title="Requires Keycloak federation integration">Add LDAP</Button><Button size="sm" variant="outline" disabled title="Requires Keycloak federation integration">Add Kerberos</Button></div>}
-      />
+    <IdentityContentPanel>
       <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder="Search federation providers" searchLabel="Search federation providers" density={table.density} onDensityChange={table.setDensity} />
       <DataTable
         layout="fit"
@@ -79,6 +72,6 @@ export function UserFederationSection({ entityId, tabId, onEntityChange, onTabCh
         rowAriaLabel={provider => `Open federation provider ${provider.name}`}
         emptyContent={<EmptyState title="No federation providers connected" description="Configured Keycloak federation providers are not available from the current frontend contract." />}
       />
-    </div>
+    </IdentityContentPanel>
   )
 }

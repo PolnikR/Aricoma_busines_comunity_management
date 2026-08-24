@@ -1,10 +1,9 @@
 import { useMemo } from 'react'
-import { Button } from '@/shared/components/button/Button'
 import { DataTable, DataTableToolbar, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
-import { IdentityResourceDetailPage, IdentityResourceHeader } from './IdentityResourceLayout'
+import { IdentityContentPanel, IdentityResourceDetailPage } from './IdentityResourceLayout'
 
 interface ClientScopeSummary {
   id: string
@@ -66,13 +65,7 @@ export function ClientScopesSection({ entityId, tabId, onEntityChange, onTabChan
   }
 
   return (
-    <div className="flex min-w-0 flex-col">
-      <IdentityResourceHeader
-        eyebrow="Manage"
-        title="Client scopes"
-        description="Manage reusable protocol mappers and role-scope mappings shared by Keycloak clients."
-        actions={<Button size="sm" disabled title="Requires Keycloak client-scope integration">Create client scope</Button>}
-      />
+    <IdentityContentPanel>
       <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder="Search client scopes" searchLabel="Search client scopes" density={table.density} onDensityChange={table.setDensity} />
       <DataTable
         layout="fit"
@@ -85,6 +78,6 @@ export function ClientScopesSection({ entityId, tabId, onEntityChange, onTabChan
         rowAriaLabel={scope => `Open client scope ${scope.name}`}
         emptyContent={<EmptyState title="No client scopes connected" description="The Keycloak client-scopes endpoint is not connected yet." />}
       />
-    </div>
+    </IdentityContentPanel>
   )
 }

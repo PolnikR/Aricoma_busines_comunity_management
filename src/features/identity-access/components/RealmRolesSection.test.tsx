@@ -36,7 +36,7 @@ describe('RealmRolesSection', () => {
     expect(rolesTable).toBeInTheDocument()
     expect(scrollRegion).toHaveClass('min-h-0', 'flex-1', 'lg:overflow-y-auto')
     expect(scrollRegion).not.toContainElement(screen.getByLabelText('Rows per page'))
-    expect(screen.queryByText('Permissions')).not.toBeInTheDocument()
+    expect(screen.queryByText('Manage realm-level roles')).not.toBeInTheDocument()
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search roles' }), 'viewer')
     expect(screen.queryByText('Administrator')).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('row', { name: 'Open realm role Viewer' }))

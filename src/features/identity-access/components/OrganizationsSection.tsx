@@ -1,10 +1,9 @@
 import { useMemo } from 'react'
-import { Button } from '@/shared/components/button/Button'
 import { DataTable, DataTableToolbar, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
-import { IdentityResourceDetailPage, IdentityResourceHeader } from './IdentityResourceLayout'
+import { IdentityContentPanel, IdentityResourceDetailPage } from './IdentityResourceLayout'
 
 interface KeycloakOrganizationListItem {
   id: string
@@ -70,13 +69,7 @@ export function OrganizationsSection({ entityId, tabId, onEntityChange, onTabCha
   }
 
   return (
-    <div className="flex min-w-0 flex-col">
-      <IdentityResourceHeader
-        eyebrow="Manage"
-        title="Organizations"
-        description="Keycloak organizations, domains, members, groups, and linked identity providers. Generic ABCO organizations are not used as this contract."
-        actions={<Button size="sm" disabled title="Requires a Keycloak organization backend contract">Create organization</Button>}
-      />
+    <IdentityContentPanel>
       <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
@@ -96,6 +89,6 @@ export function OrganizationsSection({ entityId, tabId, onEntityChange, onTabCha
         rowAriaLabel={organization => `Open organization ${organization.name}`}
         emptyContent={<EmptyState title="Keycloak organizations not connected" description="No Keycloak organization records are available from the current backend contract." />}
       />
-    </div>
+    </IdentityContentPanel>
   )
 }

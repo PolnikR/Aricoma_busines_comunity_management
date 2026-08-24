@@ -24,7 +24,7 @@ function mockLoadedUsers(users: User[] = [user]) {
 }
 
 function renderSection(overrides?: Partial<Parameters<typeof UsersSection>[0]>) {
-  const props: Parameters<typeof UsersSection>[0] = { entityId: null, tabId: null, onEntityChange: vi.fn(), onTabChange: vi.fn(), ...overrides }
+  const props: Parameters<typeof UsersSection>[0] = { entityId: null, tabId: null, onEntityChange: vi.fn(), onTabChange: vi.fn(), isAddUserOpen: false, onSetAddUserOpen: vi.fn(), ...overrides }
   render(<UsersSection {...props} />)
   return props
 }
@@ -39,6 +39,7 @@ describe('UsersSection', () => {
     expect(usersTable).toBeInTheDocument()
     expect(scrollRegion).toHaveClass('min-h-0', 'flex-1', 'lg:overflow-y-auto')
     expect(scrollRegion).not.toContainElement(screen.getByLabelText('Rows per page'))
+    expect(screen.queryByText('Search and manage users')).not.toBeInTheDocument()
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search users' }), 'bob@')
     expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('row', { name: 'Open user Bob Jones' }))
@@ -63,17 +64,17 @@ describe('UsersSection', () => {
 
   it('shows available role mappings and truthful empty states for unsupported user areas', () => {
     mockLoadedUsers()
-    const { rerender } = render(<UsersSection entityId="user-1" tabId="role-mappings" onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
+    const { rerender } = render(<UsersSection entityId="user-1" tabId="role-mappings" onEntityChange={vi.fn()} onTabChange={vi.fn()} isAddUserOpen={false} onSetAddUserOpen={vi.fn()} />)
     expect(screen.getByLabelText('User role mappings')).toBeInTheDocument()
     expect(screen.getByText('Administrator')).toBeInTheDocument()
 
-    rerender(<UsersSection entityId="user-1" tabId="credentials" onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
+    rerender(<UsersSection entityId="user-1" tabId="credentials" onEntityChange={vi.fn()} onTabChange={vi.fn()} isAddUserOpen={false} onSetAddUserOpen={vi.fn()} />)
     expect(screen.getByText('Keycloak credentials data is not connected yet.')).toBeInTheDocument()
   })
 
   it('shows current per-user sessions in the user Sessions tab', () => {
     mockLoadedUsers()
-    render(<UsersSection entityId="user-1" tabId="sessions" onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
+    render(<UsersSection entityId="user-1" tabId="sessions" onEntityChange={vi.fn()} onTabChange={vi.fn()} isAddUserOpen={false} onSetAddUserOpen={vi.fn()} />)
 
     expect(screen.getByLabelText('User sessions')).toBeInTheDocument()
     expect(screen.getByText('192.168.1.100')).toBeInTheDocument()
@@ -82,20 +83,22 @@ describe('UsersSection', () => {
 
   it('opens the add-user design workflow but keeps persistence gated', async () => {
     mockLoadedUsers()
-    renderSection()
-    await userEvent.click(screen.getByRole('button', { name: 'Add user' }))
+    const onSetAddUserOpen = vi.fn()
+    renderSection({ isAddUserOpen: true, onSetAddUserOpen })
     expect(screen.getByRole('dialog', { name: 'Add user' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Create user' })).toBeDisabled()
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onSetAddUserOpen).toHaveBeenCalledWith(false)
   })
 
   it('shows shared empty and retryable error states', async () => {
     mockLoadedUsers([])
-    const { rerender } = render(<UsersSection entityId={null} tabId={null} onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
+    const { rerender } = render(<UsersSection entityId={null} tabId={null} onEntityChange={vi.fn()} onTabChange={vi.fn()} isAddUserOpen={false} onSetAddUserOpen={vi.fn()} />)
     expect(screen.getByText('No users found')).toBeInTheDocument()
 
     const refetch = vi.fn()
     vi.mocked(useUsers).mockReturnValue({ data: undefined, isLoading: false, error: new Error('users unavailable'), refetch })
-    rerender(<UsersSection entityId={null} tabId={null} onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
+    rerender(<UsersSection entityId={null} tabId={null} onEntityChange={vi.fn()} onTabChange={vi.fn()} isAddUserOpen={false} onSetAddUserOpen={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(refetch).toHaveBeenCalledOnce()
   })

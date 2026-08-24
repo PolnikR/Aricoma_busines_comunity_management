@@ -2,6 +2,18 @@ import type { ReactNode } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { Tabs, type TabItem } from '@/shared/components/tabs/Tabs'
 
+interface IdentityContentPanelProps {
+  children: ReactNode
+}
+
+export function IdentityContentPanel({ children }: IdentityContentPanelProps) {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+      {children}
+    </div>
+  )
+}
+
 interface IdentityResourceHeaderProps {
   eyebrow?: string
   title: string
@@ -53,7 +65,7 @@ export function IdentityResourceDetailPage<T extends string>({
   ...headerProps
 }: IdentityResourceDetailPageProps<T>) {
   return (
-    <div className="flex min-w-0 flex-col">
+    <IdentityContentPanel>
       <IdentityResourceHeader {...headerProps} />
       <Tabs
         items={tabs}
@@ -64,7 +76,7 @@ export function IdentityResourceDetailPage<T extends string>({
         scrollControls={{ previousLabel: `Scroll ${tabAriaLabel} left`, nextLabel: `Scroll ${tabAriaLabel} right` }}
       />
       <div className="min-w-0">{children}</div>
-    </div>
+    </IdentityContentPanel>
   )
 }
 

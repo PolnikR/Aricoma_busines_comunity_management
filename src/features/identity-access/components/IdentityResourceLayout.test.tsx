@@ -25,7 +25,7 @@ describe('IdentityResourceLayout', () => {
     expect(onBack).toHaveBeenCalledOnce()
   })
 
-  it('composes the shared Tabs component for resource detail pages', async () => {
+  it('composes the shared Tabs component within a providers-style content panel', async () => {
     const onTabChange = vi.fn()
     render(
       <IdentityResourceDetailPage

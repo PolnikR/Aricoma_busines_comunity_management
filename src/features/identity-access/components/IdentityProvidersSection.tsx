@@ -2,7 +2,7 @@ import { Button } from '@/shared/components/button/Button'
 import { Card, CardDescription, CardTitle } from '@/shared/components/card/Card'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
-import { IdentityResourceDetailPage, IdentityResourceHeader } from './IdentityResourceLayout'
+import { IdentityContentPanel, IdentityResourceDetailPage } from './IdentityResourceLayout'
 
 const PROVIDER_TABS = [
   { value: 'settings', label: 'Settings' },
@@ -55,8 +55,7 @@ export function IdentityProvidersSection({ entityId, tabId, onEntityChange, onTa
   }
 
   return (
-    <div className="flex min-w-0 flex-col">
-      <IdentityResourceHeader eyebrow="Configure" title="Identity providers" description="Broker authentication to external protocol-based and social identity providers." />
+    <IdentityContentPanel>
       <div className="space-y-6 p-4">
         <section>
           <h3 className="mb-3 text-sm font-semibold text-text-primary">User-defined and protocol providers</h3>
@@ -74,6 +73,6 @@ export function IdentityProvidersSection({ entityId, tabId, onEntityChange, onTa
         </section>
         <EmptyState title="No configured identity providers" description="Configured Keycloak identity providers are not available from the current frontend contract." />
       </div>
-    </div>
+    </IdentityContentPanel>
   )
 }

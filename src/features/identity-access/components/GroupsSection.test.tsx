@@ -9,9 +9,7 @@ describe('GroupsSection', () => {
   it('renders a distinct hierarchical Keycloak group workspace without fabricated group records', async () => {
     render(<GroupsSection />)
 
-    expect(screen.getByRole('heading', { name: 'Groups' })).toBeInTheDocument()
     expect(screen.getByRole('complementary', { name: 'Group hierarchy' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Create group' })).toBeDisabled()
     expect(screen.getByText('No groups connected')).toBeInTheDocument()
     expect(screen.getByText('No group selected')).toBeInTheDocument()
 

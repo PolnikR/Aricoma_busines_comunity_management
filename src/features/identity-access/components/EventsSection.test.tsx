@@ -6,7 +6,7 @@ import { EventsSection } from './EventsSection'
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 describe('EventsSection', () => {
-  it('renders user and admin audit views with shared table/search controls', async () => {
+  it('renders user and admin audit tabs without redundant header', () => {
     const onTabChange = vi.fn()
     render(<EventsSection tabId="user-events" onTabChange={onTabChange} onOpenSettings={vi.fn()} />)
 
@@ -15,16 +15,22 @@ describe('EventsSection', () => {
     expect(screen.getByRole('searchbox', { name: 'Search user events' })).toBeInTheDocument()
     expect(screen.getByText('No user events connected')).toBeInTheDocument()
 
+    expect(screen.queryByRole('heading', { name: 'Events' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Review Keycloak user activity/)).not.toBeInTheDocument()
+  })
+
+  it('delegates audit tab navigation', async () => {
+    const onTabChange = vi.fn()
+    render(<EventsSection tabId="user-events" onTabChange={onTabChange} onOpenSettings={vi.fn()} />)
+
     await userEvent.click(screen.getByRole('tab', { name: 'Admin events' }))
     expect(onTabChange).toHaveBeenCalledWith('admin-events')
   })
 
-  it('links audit views to realm event persistence settings', async () => {
+  it('preserves onOpenSettings callback for page-level action handling', () => {
     const onOpenSettings = vi.fn()
     render(<EventsSection tabId="admin-events" onTabChange={vi.fn()} onOpenSettings={onOpenSettings} />)
 
     expect(screen.getByLabelText('Admin events')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Event settings' }))
-    expect(onOpenSettings).toHaveBeenCalledOnce()
   })
 })

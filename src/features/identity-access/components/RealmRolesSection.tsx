@@ -16,7 +16,7 @@ import { useRoles } from '../hooks/useRoles'
 import { useUsers } from '../hooks/useUsers'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
 import type { Role, User } from '../models/identityTypes'
-import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection } from './IdentityResourceLayout'
+import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection, IdentityContentPanel } from './IdentityResourceLayout'
 
 const ROLE_SEARCH_FIELDS: (keyof Role)[] = ['name', 'description']
 const ROLE_TABS = [
@@ -137,14 +137,7 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
   }
 
   return (
-    <div className="flex min-w-0 flex-col lg:min-h-0 lg:flex-1">
-      <IdentityResourceHeader
-        eyebrow="Manage"
-        title="Realm roles"
-        description="Manage realm-level roles. Role mappings and Keycloak permissions are kept separate from generic ABCO application permissions."
-        actions={<Button size="sm" disabled title="Available after Keycloak integration">Create role</Button>}
-      />
-
+    <IdentityContentPanel>
       {isLoading ? (
         <DataTableSkeleton columnCount={3} rowCount={5} layout="fit" className="rounded-none border-0 shadow-none" />
       ) : (
@@ -178,6 +171,6 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
           {!error ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
         </>
       )}
-    </div>
+    </IdentityContentPanel>
   )
 }

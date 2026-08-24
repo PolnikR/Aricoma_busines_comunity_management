@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -60,18 +60,13 @@ describe('IdentityAccessPage', () => {
     renderPage()
 
     expect(screen.getByRole('heading', { name: 'Identity & Access', level: 1 })).toBeInTheDocument()
-    const realmContext = screen.getByTestId('identity-access-realm-context')
-    expect(realmContext).toHaveTextContent('Realm')
-    expect(realmContext).toHaveTextContent('ABCO')
-    expect(realmContext).toHaveTextContent('Keycloak realm administration')
-    expect(realmContext.parentElement).toHaveClass('lg:min-h-0', 'lg:flex-1')
-    expect(realmContext.parentElement?.parentElement).toHaveClass('lg:h-full', 'lg:min-h-0')
-    expect(realmContext.parentElement?.querySelector('section[aria-live="polite"]')).toHaveClass('flex', 'lg:min-h-0')
+    expect(screen.queryByTestId('identity-access-realm-context')).not.toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Keycloak realm navigation' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Manage' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Configure' })).toHaveAttribute('aria-selected', 'false')
     expect(screen.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Users content')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add user' })).toBeInTheDocument()
   })
 
   it('changes the active section through the URL-backed navigation', async () => {
@@ -82,6 +77,7 @@ describe('IdentityAccessPage', () => {
     expect(screen.getByRole('tab', { name: 'Realm roles' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Realm roles content')).toBeInTheDocument()
     expect(screen.getByTestId('location-search')).toHaveAttribute('data-search', '?keep=visible&section=realm-roles')
+    expect(screen.getByRole('button', { name: 'Create role' })).toBeInTheDocument()
   })
 
   it('navigates from Events to Realm settings > Events atomically', async () => {
@@ -109,5 +105,48 @@ describe('IdentityAccessPage', () => {
 
     expect(screen.getByRole('heading', { name: sectionLabel, level: 2 })).toBeInTheDocument()
     expect(screen.getByText('Keycloak integration for this administration area is not connected yet.')).toBeInTheDocument()
+  })
+
+  it('shows Create client action for Clients section', () => {
+    renderPage('/platform-administration/identity-access?section=clients')
+    expect(screen.getByRole('button', { name: 'Create client' })).toBeInTheDocument()
+  })
+
+  it('shows Create client scope action for Client scopes section', () => {
+    renderPage('/platform-administration/identity-access?section=client-scopes')
+    expect(screen.getByRole('button', { name: 'Create client scope' })).toBeInTheDocument()
+  })
+
+  it('shows Add LDAP and Add Kerberos for User federation', () => {
+    renderPage('/platform-administration/identity-access?section=user-federation')
+    expect(screen.getByRole('button', { name: 'Add LDAP' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add Kerberos' })).toBeInTheDocument()
+  })
+
+  it('shows disabled danger Sign out action for Sessions', () => {
+    renderPage('/platform-administration/identity-access?section=sessions')
+    const btn = screen.getByRole('button', { name: 'Sign out all active sessions' })
+    expect(btn).toBeDisabled()
+  })
+
+  it('shows Save on Realm settings', () => {
+    renderPage('/platform-administration/identity-access?section=realm-settings')
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument()
+  })
+
+  it('shows Create flow only on flows tab (tab defaults to flows)', () => {
+    // default tab for authentication is 'flows' so button should be present when only section param provided
+    renderPage('/platform-administration/identity-access?section=authentication')
+    expect(screen.getByRole('button', { name: 'Create flow' })).toBeInTheDocument()
+
+    // explicit non-flows tab should hide the action
+    cleanup()
+    renderPage('/platform-administration/identity-access?section=authentication&tab=required-actions')
+    expect(screen.queryByRole('button', { name: 'Create flow' })).not.toBeInTheDocument()
+
+    // explicit flows tab shows it as well
+    cleanup()
+    renderPage('/platform-administration/identity-access?section=authentication&tab=flows')
+    expect(screen.getByRole('button', { name: 'Create flow' })).toBeInTheDocument()
   })
 })

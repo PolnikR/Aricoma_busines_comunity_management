@@ -11,7 +11,6 @@ describe('ClientsSection', () => {
     expect(screen.getByRole('searchbox', { name: 'Search clients' })).toBeInTheDocument()
     expect(screen.getByLabelText('Clients')).toBeInTheDocument()
     expect(screen.getByText('No clients connected')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Create client' })).toBeDisabled()
   })
 
   it('renders the full client workspace and delegates nested tab navigation', async () => {

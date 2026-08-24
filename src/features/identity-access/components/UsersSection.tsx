@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import {
@@ -18,7 +18,7 @@ import { useSessions } from '../hooks/useSessions'
 import { useUsers } from '../hooks/useUsers'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
 import type { Role, Session, User } from '../models/identityTypes'
-import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection } from './IdentityResourceLayout'
+import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection, IdentityContentPanel } from './IdentityResourceLayout'
 
 const USER_SEARCH_FIELDS: (keyof User)[] = ['name', 'email']
 const USER_TABS = [
@@ -51,18 +51,19 @@ interface UsersSectionProps {
   tabId: IdentityAccessTabId | null
   onEntityChange: (entityId: string | null) => void
   onTabChange: (tabId: IdentityAccessTabId) => void
+  isAddUserOpen: boolean
+  onSetAddUserOpen: (open: boolean) => void
 }
 
 function isUserTab(tabId: IdentityAccessTabId | null): tabId is UserTabId {
   return USER_TABS.some(tab => tab.value === tabId)
 }
 
-export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: UsersSectionProps) {
+export function UsersSection({ entityId, tabId, onEntityChange, onTabChange, isAddUserOpen, onSetAddUserOpen }: UsersSectionProps) {
   const { data: users = [], isLoading, error, refetch } = useUsers()
   const { data: roles = [] } = useRoles()
   const selectedUser = users.find(user => user.id === entityId) ?? null
   const { data: userSessions = [] } = useSessions(selectedUser ? { userId: selectedUser.id } : undefined)
-  const [isAddOpen, setIsAddOpen] = useState(false)
   const table = useTableState(users, { searchFields: USER_SEARCH_FIELDS })
 
   const columns = useMemo<ColumnDef<User>[]>(() => [
@@ -148,14 +149,7 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
   }
 
   return (
-    <div className="flex min-w-0 flex-col lg:min-h-0 lg:flex-1">
-      <IdentityResourceHeader
-        eyebrow="Manage"
-        title="Users"
-        description="Search and manage users in the ABCO realm. Keycloak-specific profile areas open in the full user workspace."
-        actions={<Button size="sm" onClick={() => { setIsAddOpen(true) }}>Add user</Button>}
-      />
-
+    <IdentityContentPanel>
       {isLoading ? (
         <DataTableSkeleton columnCount={4} rowCount={5} layout="fit" className="rounded-none border-0 shadow-none" />
       ) : (
@@ -191,10 +185,10 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
       )}
 
       <Modal
-        open={isAddOpen}
-        onClose={() => { setIsAddOpen(false) }}
+        open={isAddUserOpen}
+        onClose={() => { onSetAddUserOpen(false) }}
         title="Add user"
-        footer={<><Button size="sm" variant="ghost" onClick={() => { setIsAddOpen(false) }}>Cancel</Button><Button size="sm" disabled title="Requires Keycloak integration">Create user</Button></>}
+        footer={<><Button size="sm" variant="ghost" onClick={() => { onSetAddUserOpen(false) }}>Cancel</Button><Button size="sm" disabled title="Requires Keycloak integration">Create user</Button></>}
       >
         <div className="space-y-4 px-6 py-4">
           <p className="text-xs text-text-muted">The form establishes the Keycloak user-creation surface; persistence is disabled until the Keycloak contract is connected.</p>
@@ -202,6 +196,6 @@ export function UsersSection({ entityId, tabId, onEntityChange, onTabChange }: U
           <Field label="Email" htmlFor="new-user-email"><Input id="new-user-email" type="email" /></Field>
         </div>
       </Modal>
-    </div>
+    </IdentityContentPanel>
   )
 }

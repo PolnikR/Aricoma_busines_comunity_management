@@ -1,8 +1,7 @@
-import { Button } from '@/shared/components/button/Button'
 import { DataTable } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
-import { IdentityResourceHeader } from './IdentityResourceLayout'
+import { IdentityContentPanel } from './IdentityResourceLayout'
 
 interface ClientSessionSummary {
   clientId: string
@@ -20,17 +19,7 @@ export function SessionsSection() {
   const clientSessions: ClientSessionSummary[] = []
 
   return (
-    <div className="flex min-w-0 flex-col">
-      <IdentityResourceHeader
-        eyebrow="Manage"
-        title="Sessions"
-        description="Review realm-level client sessions. Individual user sessions remain available from each user's Sessions tab."
-        actions={
-          <Button size="sm" variant="danger" disabled title="Requires Keycloak realm-session integration">
-            Sign out all active sessions
-          </Button>
-        }
-      />
+    <IdentityContentPanel>
       <DataTable
         layout="fit"
         columns={columns}
@@ -44,6 +33,6 @@ export function SessionsSection() {
           />
         }
       />
-    </div>
+    </IdentityContentPanel>
   )
 }

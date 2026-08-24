@@ -11,9 +11,7 @@ describe('OrganizationsSection', () => {
 
     expect(screen.getByLabelText('Keycloak organizations')).toBeInTheDocument()
     expect(screen.getByText('Keycloak organizations not connected')).toBeInTheDocument()
-    expect(screen.getByText(/Generic ABCO organizations are not used as this contract/i)).toBeInTheDocument()
     expect(screen.queryByText('Engineering')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Create organization' })).toBeDisabled()
   })
 
   it('keeps Keycloak organization detail hierarchy integration-gated', async () => {

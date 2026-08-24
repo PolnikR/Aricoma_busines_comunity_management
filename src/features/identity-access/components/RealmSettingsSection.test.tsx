@@ -6,13 +6,15 @@ import { RealmSettingsSection } from './RealmSettingsSection'
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 describe('RealmSettingsSection', () => {
-  it('renders the documented settings hierarchy with current realm context', () => {
+  it('renders settings hierarchy tabs without redundant header', () => {
     render(<RealmSettingsSection tabId="general" onTabChange={vi.fn()} />)
     expect(screen.getByRole('tablist', { name: 'Realm settings sections' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'General' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Security defenses' })).toBeInTheDocument()
     expect(screen.getByDisplayValue('ABCO')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
+
+    expect(screen.queryByRole('heading', { name: 'Realm settings' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Configure realm-wide Keycloak behavior/)).not.toBeInTheDocument()
   })
 
   it('separates user and admin event persistence settings', () => {

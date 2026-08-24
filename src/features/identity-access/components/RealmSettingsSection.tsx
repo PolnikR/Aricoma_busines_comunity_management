@@ -1,8 +1,8 @@
-import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { Field, Input } from '@/shared/components/form/FormControls'
+import { Tabs } from '@/shared/components/tabs/Tabs'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
-import { IdentityResourceDetailPage, IdentitySettingsSection } from './IdentityResourceLayout'
+import { IdentityContentPanel, IdentitySettingsSection } from './IdentityResourceLayout'
 
 const REALM_SETTING_TABS = [
   { value: 'general', label: 'General' },
@@ -58,17 +58,18 @@ export function RealmSettingsSection({ tabId, onTabChange }: RealmSettingsSectio
   }
 
   return (
-    <IdentityResourceDetailPage
-      eyebrow="Configure"
-      title="Realm settings"
-      description="Configure realm-wide Keycloak behavior while keeping settings grouped by their native administration area."
-      tabs={REALM_SETTING_TABS}
-      tabId={activeTab}
-      onTabChange={nextTab => { onTabChange(nextTab) }}
-      tabAriaLabel="Realm settings sections"
-      actions={<Button size="sm" disabled title="Requires Keycloak realm settings integration">Save</Button>}
-    >
-      {content}
-    </IdentityResourceDetailPage>
+    <IdentityContentPanel>
+      <Tabs
+        items={REALM_SETTING_TABS}
+        value={activeTab}
+        onChange={onTabChange}
+        ariaLabel="Realm settings sections"
+        indicator="inset"
+        scrollControls={{ previousLabel: 'Scroll Realm settings sections left', nextLabel: 'Scroll Realm settings sections right' }}
+      />
+      <div className="min-w-0">
+        {content}
+      </div>
+    </IdentityContentPanel>
   )
 }

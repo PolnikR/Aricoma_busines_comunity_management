@@ -4,7 +4,7 @@ import { DataTable, DataTableToolbar, useTableState } from '@/shared/components/
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
-import { IdentityResourceDetailPage, IdentityResourceHeader } from './IdentityResourceLayout'
+import { IdentityContentPanel, IdentityResourceDetailPage } from './IdentityResourceLayout'
 
 interface ClientSummary {
   id: string
@@ -74,13 +74,7 @@ export function ClientsSection({ entityId, tabId, onEntityChange, onTabChange }:
   }
 
   return (
-    <div className="flex min-w-0 flex-col">
-      <IdentityResourceHeader
-        eyebrow="Manage"
-        title="Clients"
-        description="Manage OpenID Connect and SAML clients registered in the ABCO realm."
-        actions={<Button size="sm" disabled title="Requires Keycloak client integration">Create client</Button>}
-      />
+    <IdentityContentPanel>
       <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder="Search clients" searchLabel="Search clients" density={table.density} onDensityChange={table.setDensity} />
       <DataTable
         layout="fit"
@@ -93,6 +87,6 @@ export function ClientsSection({ entityId, tabId, onEntityChange, onTabChange }:
         rowAriaLabel={client => `Open client ${client.id}`}
         emptyContent={<EmptyState title="No clients connected" description="The Keycloak clients endpoint is not connected yet." />}
       />
-    </div>
+    </IdentityContentPanel>
   )
 }

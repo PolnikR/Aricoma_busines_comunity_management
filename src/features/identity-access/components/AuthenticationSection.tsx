@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
-import { Button } from '@/shared/components/button/Button'
 import { DataTable, DataTableToolbar, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { Tabs } from '@/shared/components/tabs/Tabs'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
-import { IdentityResourceDetailPage } from './IdentityResourceLayout'
+import { IdentityContentPanel } from './IdentityResourceLayout'
 
 const AUTH_TABS = [
   { value: 'flows', label: 'Flows' },
@@ -60,17 +60,18 @@ export function AuthenticationSection({ tabId, onTabChange }: AuthenticationSect
   }
 
   return (
-    <IdentityResourceDetailPage
-      eyebrow="Configure"
-      title="Authentication"
-      description="Configure Keycloak authentication flows, required actions, and authentication policies."
-      tabs={AUTH_TABS}
-      tabId={activeTab}
-      onTabChange={nextTab => { onTabChange(nextTab) }}
-      tabAriaLabel="Authentication sections"
-      actions={activeTab === 'flows' ? <Button size="sm" disabled title="Requires Keycloak authentication integration">Create flow</Button> : undefined}
-    >
-      {content}
-    </IdentityResourceDetailPage>
+    <IdentityContentPanel>
+      <Tabs
+        items={AUTH_TABS}
+        value={activeTab}
+        onChange={onTabChange}
+        ariaLabel="Authentication sections"
+        indicator="inset"
+        scrollControls={{ previousLabel: 'Scroll Authentication sections left', nextLabel: 'Scroll Authentication sections right' }}
+      />
+      <div className="min-w-0">
+        {content}
+      </div>
+    </IdentityContentPanel>
   )
 }
