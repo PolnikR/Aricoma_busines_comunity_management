@@ -35,8 +35,8 @@ export type IdentityAccessSection = IdentityAccessSectionGroup['sections'][numbe
 export type IdentityAccessSectionId = IdentityAccessSection['id']
 
 export const identityAccessVisibleSectionIds = {
-  manage: ['users', 'clients'],
-  configure: ['realm-settings', 'authentication'],
+  manage: ['users', 'clients', 'realm-roles'],
+  configure: ['realm-settings', 'authentication', 'permissions'],
 } as const satisfies Record<IdentityAccessSectionGroupId, readonly IdentityAccessSectionId[]>
 
 const identityAccessSectionNavigationDefinitions = {

@@ -12,13 +12,14 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { Field, Input } from '@/shared/components/form/FormControls'
-import { useRoles } from '../hooks/useRoles'
+import { useRolesPermissions } from '../hooks/useRolesPermissions'
 import { useUsers } from '../hooks/useUsers'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
-import type { Role, User } from '../models/identityTypes'
+import type { User } from '../models/identityTypes'
+import type { IdentityRoleRecord } from '../model/rolesPermissionsTypes'
 import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection, IdentityContentPanel } from './IdentityResourceLayout'
 
-const ROLE_SEARCH_FIELDS: (keyof Role)[] = ['name', 'description']
+const ROLE_SEARCH_FIELDS: (keyof IdentityRoleRecord)[] = ['name', 'permissions']
 const ROLE_TABS = [
   { value: 'details', label: 'Details' },
   { value: 'associated-roles', label: 'Associated roles' },
@@ -41,12 +42,13 @@ function isRoleTab(tabId: IdentityAccessTabId | null): tabId is RoleTabId {
 }
 
 export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange }: RealmRolesSectionProps) {
-  const { data: roles = [], isLoading, error, refetch } = useRoles()
+  const { data, isLoading, error, refetch } = useRolesPermissions()
+  const roles = data?.roles ?? []
   const { data: users = [] } = useUsers()
   const table = useTableState(roles, { searchFields: ROLE_SEARCH_FIELDS })
   const selectedRole = roles.find(role => role.id === entityId) ?? null
 
-  const columns = useMemo<ColumnDef<Role>[]>(() => [
+  const columns = useMemo<ColumnDef<IdentityRoleRecord>[]>(() => [
     {
       id: 'name',
       header: 'Role name',
@@ -57,7 +59,7 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
         </>
       ),
     },
-    { id: 'description', header: 'Description', cell: role => role.description || '—' },
+    { id: 'permissions', header: 'Permissions', cell: role => role.permissions.join(', ') || '—' },
     { id: 'members', header: 'Users in role', align: 'right', cell: role => String(users.filter(user => user.roleIds.includes(role.id)).length) },
   ], [users])
 
@@ -94,10 +96,9 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
         <IdentitySettingsSection title="Role details" description="Only fields present in the current realm-role contract are shown.">
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Role name" htmlFor="realm-role-name"><Input id="realm-role-name" value={selectedRole.name} readOnly /></Field>
-            <Field label="Organization ID" htmlFor="realm-role-organization"><Input id="realm-role-organization" value={selectedRole.organizationId} readOnly /></Field>
-            <Field label="Description" htmlFor="realm-role-description" className="md:col-span-2"><Input id="realm-role-description" value={selectedRole.description} readOnly /></Field>
+            <Field label="Permissions" htmlFor="realm-role-permissions" className="md:col-span-2"><Input id="realm-role-permissions" value={selectedRole.permissions.join(', ')} readOnly /></Field>
           </div>
-          <p className="mt-4 text-xs text-text-muted">Composite-role metadata is not available in the current frontend contract.</p>
+          <p className="mt-4 text-xs text-text-muted">Role permissions are loaded from the current user permissions contract.</p>
         </IdentitySettingsSection>
       )
     } else if (activeTab === 'users-in-role') {
@@ -107,10 +108,7 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
     } else if (activeTab === 'permissions') {
       detailContent = (
         <div className="p-4">
-          <EmptyState
-            title="Permissions"
-            description="Keycloak role-permission data is not connected yet. The existing ABCO application permission mock is intentionally not used as a Keycloak role-permission contract."
-          />
+          <EmptyState title="Permissions" description="Role permissions are shown in the role details loaded from the current API contract." />
         </div>
       )
     } else {
@@ -153,7 +151,7 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
           <div className="custom-scrollbar min-h-0 flex-1 lg:overflow-y-auto">
             <DataTableRequestState
               hasData={roles.length > 0}
-              error={error ? { title: 'Roles could not be loaded', description: error.message, retryLabel: 'Retry', isRetrying: false, onRetry: refetch } : null}
+              error={error ? { title: 'Roles could not be loaded', description: error.message, retryLabel: 'Retry', isRetrying: false, onRetry: () => { void refetch() } } : null}
             >
               <DataTable
                 layout="fit"

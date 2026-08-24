@@ -1,18 +1,26 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { PermissionsSection } from './PermissionsSection'
 
+const useRolesPermissionsMock = vi.hoisted(() => ({ useRolesPermissions: vi.fn() }))
+vi.mock('../hooks/useRolesPermissions', () => useRolesPermissionsMock)
+
 describe('PermissionsSection', () => {
-  it('keeps Keycloak fine-grained admin permissions integration-gated instead of reusing ABCO permission mocks', () => {
+  it('renders API permissions and roles without reusing ABCO permission mocks', () => {
+    useRolesPermissionsMock.useRolesPermissions.mockReturnValue({
+      data: { roles: [{ id: 'platform-admin', name: 'platform-admin', permissions: ['providers.read'] }], permissions: ['providers.read'] },
+      isLoading: false, error: null, refetch: vi.fn(),
+    })
     render(<PermissionsSection />)
 
-    expect(screen.getByText('Fine-grained admin permissions not connected')).toBeInTheDocument()
-    expect(screen.getByText(/generic ABCO Permission mock is an application authorization model/i)).toBeInTheDocument()
+    expect(screen.getByText('providers.read')).toBeInTheDocument()
+    expect(screen.getByText('platform-admin')).toBeInTheDocument()
     expect(screen.queryByText('Manage Users')).not.toBeInTheDocument()
     expect(screen.queryByText('Execute Recovery')).not.toBeInTheDocument()
   })
 
   it('does not render redundant top-level section header', () => {
+    useRolesPermissionsMock.useRolesPermissions.mockReturnValue({ data: { roles: [], permissions: [] }, isLoading: false, error: null, refetch: vi.fn() })
     render(<PermissionsSection />)
     expect(screen.queryByRole('heading', { name: 'Permissions' })).not.toBeInTheDocument()
   })

@@ -2,21 +2,18 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { RealmRolesSection } from './RealmRolesSection'
-import { useRoles } from '../hooks/useRoles'
+import { useRolesPermissions } from '../hooks/useRolesPermissions'
 import { useUsers } from '../hooks/useUsers'
-import type { Role } from '../models/identityTypes'
+import type { IdentityRoleRecord } from '../model/rolesPermissionsTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../hooks/useRoles', () => ({ useRoles: vi.fn() }))
+vi.mock('../hooks/useRolesPermissions', () => ({ useRolesPermissions: vi.fn() }))
 vi.mock('../hooks/useUsers', () => ({ useUsers: vi.fn() }))
 
-const role: Role = {
-  id: 'role-admin', name: 'Administrator', description: 'Full system access', permissionIds: ['perm-users'], organizationId: 'org-1',
-  createdAt: new Date('2026-08-20T10:00:00Z'), updatedAt: new Date('2026-08-20T10:00:00Z'),
-}
+const role: IdentityRoleRecord = { id: 'role-admin', name: 'Administrator', permissions: ['providers.read'] }
 
-function mockLoadedRoles(roles: Role[] = [role]) {
-  vi.mocked(useRoles).mockReturnValue({ data: roles, isLoading: false, error: null, refetch: vi.fn() })
+function mockLoadedRoles(roles: IdentityRoleRecord[] = [role]) {
+  vi.mocked(useRolesPermissions).mockReturnValue({ data: { roles, permissions: ['providers.read'] }, isLoading: false, error: null, refetch: vi.fn() } as never)
   vi.mocked(useUsers).mockReturnValue({ data: [{ id: 'user-1', email: 'admin@example.com', name: 'Admin User', organizationId: 'org-1', roleIds: ['role-admin'], status: 'active', createdAt: new Date(), updatedAt: new Date() }], isLoading: false, error: null, refetch: vi.fn() })
 }
 
@@ -28,7 +25,7 @@ function renderSection(overrides?: Partial<Parameters<typeof RealmRolesSection>[
 
 describe('RealmRolesSection', () => {
   it('uses the shared list/search pattern without generic permission counts', async () => {
-    mockLoadedRoles([role, { ...role, id: 'role-viewer', name: 'Viewer', description: 'Read-only access', permissionIds: [] }])
+    mockLoadedRoles([role, { ...role, id: 'role-viewer', name: 'Viewer', permissions: [] }])
     const props = renderSection()
 
     const rolesTable = screen.getByLabelText('Realm roles')
@@ -49,8 +46,8 @@ describe('RealmRolesSection', () => {
 
     expect(screen.getByRole('heading', { name: 'Administrator' })).toBeInTheDocument()
     expect(screen.getByRole('tablist', { name: 'Realm role sections' })).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Full system access')).toBeInTheDocument()
-    expect(screen.getByText('Composite-role metadata is not available in the current frontend contract.')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Administrator')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('providers.read')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('tab', { name: 'Users in role' }))
     expect(props.onTabChange).toHaveBeenCalledWith('users-in-role')
@@ -63,7 +60,7 @@ describe('RealmRolesSection', () => {
     expect(screen.getByText('Admin User')).toBeInTheDocument()
 
     rerender(<RealmRolesSection entityId="role-admin" tabId="permissions" onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
-    expect(screen.getByText(/existing ABCO application permission mock is intentionally not used/i)).toBeInTheDocument()
+    expect(screen.getByText(/role permissions are shown in the role details/i)).toBeInTheDocument()
     expect(screen.queryByText('Manage Users')).not.toBeInTheDocument()
   })
 
@@ -73,7 +70,7 @@ describe('RealmRolesSection', () => {
     expect(screen.getByText('No roles found')).toBeInTheDocument()
 
     const refetch = vi.fn()
-    vi.mocked(useRoles).mockReturnValue({ data: undefined, isLoading: false, error: new Error('roles unavailable'), refetch })
+    vi.mocked(useRolesPermissions).mockReturnValue({ data: undefined, isLoading: false, error: new Error('roles unavailable'), refetch } as never)
     rerender(<RealmRolesSection entityId={null} tabId={null} onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(refetch).toHaveBeenCalledOnce()
