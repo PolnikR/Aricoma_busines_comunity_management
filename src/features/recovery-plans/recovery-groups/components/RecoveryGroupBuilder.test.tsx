@@ -19,7 +19,19 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
         ipAddress: '10.99.99.40',
         port: 22,
         credentialId: 'vcenter-admin',
+        role: 'source',
         defaultFlashcopyProviderId: 'ibm-flashsystem-01',
+        credentialStatus: 'ok',
+      },
+      {
+        id: 'vmware-vcenter-target-01',
+        name: 'Recovery vCenter',
+        description: 'Target VMware provider',
+        type: 'VMWARE',
+        ipAddress: '10.99.99.41',
+        port: 22,
+        credentialId: 'vcenter-target-admin',
+        role: 'target',
         credentialStatus: 'ok',
       },
       {
@@ -30,6 +42,7 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
         ipAddress: '10.99.99.50',
         port: 22,
         credentialId: 'ibm-power-admin',
+        role: 'source',
         credentialStatus: 'ok',
       },
       {
@@ -40,6 +53,7 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
         ipAddress: '10.99.99.246',
         port: 22,
         credentialId: 'ibm-admin',
+        role: 'source',
         credentialStatus: 'ok',
       },
     ],
@@ -495,5 +509,25 @@ describe('RecoveryGroupBuilder', () => {
     await user.click(screen.getByRole('button', { name: /Production vCenter/i }))
 
     expect(resourcesStep).toBeEnabled()
+  })
+
+  it('offers only source providers while creating a recovery group', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <RecoveryGroupBuilder
+        onCreate={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await user.type(screen.getByLabelText('Group name *'), 'Database group')
+    await user.type(screen.getByLabelText('Description *'), 'Production databases')
+    await user.click(screen.getByRole('button', { name: 'Resource type' }))
+    await user.click(screen.getByRole('button', { name: /VMware virtual machines/i }))
+    await user.click(screen.getByRole('button', { name: 'Provider' }))
+
+    expect(screen.getByRole('button', { name: /Production vCenter/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Recovery vCenter/i })).not.toBeInTheDocument()
   })
 })

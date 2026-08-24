@@ -57,7 +57,10 @@ export function RecoveryGroupBuilder({
 }: RecoveryGroupBuilderProps) {
   const { t } = useTranslation()
   const providerQuery = useProviders()
-  const providers = providerQuery.data ?? []
+  const allProviders = providerQuery.data ?? []
+  const providers = initialData
+    ? allProviders
+    : allProviders.filter(provider => provider.role === 'source')
   const [step, setStep] = useState(1)
   const [draftState, setDraft] = useState<RecoveryGroupDraft>(() => initialData
     ? {
