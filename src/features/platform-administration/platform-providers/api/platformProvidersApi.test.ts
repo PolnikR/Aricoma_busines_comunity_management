@@ -78,6 +78,18 @@ describe('fetchPlatformProviders', () => {
     expect(providers[0]?.credentialStatus).toBe('none')
   })
 
+  it.each([
+    ['null', null],
+    ['omitted', undefined],
+  ])('accepts an orchestration provider with a %s DAG directory', async (_case, dagDir) => {
+    stubFetch({ providers: [{ ...airflowProvider, dagDir }] })
+
+    await expect(fetchPlatformProviders()).resolves.toMatchObject([{
+      id: airflowProvider.id,
+      dagDir: '',
+    }])
+  })
+
   it('preserves the validated GET record before applying UI fallbacks', async () => {
     const backendProvider = {
       ...airflowProvider,

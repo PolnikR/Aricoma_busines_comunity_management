@@ -18,3 +18,7 @@ export const platformProviderSubmitSchema = z.object({
   vmTags: z.array(z.string()).optional(),
   notificationEmail: z.string().trim().pipe(z.email()).nullable().optional(),
 })
+
+export const platformProviderRecordSchema = platformProviderSubmitSchema.extend({
+  dagDir: z.string().nullable().optional(),
+})

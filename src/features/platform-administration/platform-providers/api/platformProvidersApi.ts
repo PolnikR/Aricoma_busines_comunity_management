@@ -17,6 +17,7 @@ import type {
 } from '../model/platformProviderTypes'
 import { PLATFORM_PROVIDER_CREDENTIAL_STATUSES } from '../model/platformProviderTypes'
 import {
+  platformProviderRecordSchema,
   platformProviderSubmitSchema,
 } from './schemas/platformProvidersSchema'
 
@@ -43,7 +44,7 @@ function mapPlatformProvider(
     throw new Error(`Unsupported platform provider credential status: ${provider.credentialStatus}`)
   }
 
-  const parsed = platformProviderSubmitSchema.parse({
+  const parsed = platformProviderRecordSchema.parse({
     id: provider.id,
     name: provider.name,
     description: provider.description ?? '',
@@ -57,9 +58,10 @@ function mapPlatformProvider(
     ...(provider.vmTags !== undefined ? { vmTags: provider.vmTags } : {}),
     ...(provider.notificationEmail !== undefined ? { notificationEmail: provider.notificationEmail } : {}),
   })
-  const { vmPrefix, vmTags, ...validatedBase } = parsed
+  const { dagDir, vmPrefix, vmTags, ...validatedBase } = parsed
   const validated = {
     ...validatedBase,
+    dagDir: dagDir ?? '',
     ...(vmPrefix !== undefined ? { vmPrefix } : {}),
     ...(vmTags !== undefined ? { vmTags } : {}),
   }
