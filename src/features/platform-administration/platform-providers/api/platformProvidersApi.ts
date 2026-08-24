@@ -82,7 +82,7 @@ function parsePlatformProviders(
 
 export async function fetchPlatformProviders(): Promise<PlatformProviderRecord[]> {
   try {
-    const payload = await getPlatformProvidersGetPlatformProvidersGet()
+    const payload = await getPlatformProvidersGetPlatformProvidersGet({ type: 'AIRFLOW' })
     return parsePlatformProviders(payload, 'GET /get_platform_providers')
       .map(provider => mapPlatformProvider(provider, true))
   } catch (error) {

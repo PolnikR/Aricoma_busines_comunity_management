@@ -57,7 +57,7 @@ describe('fetchPlatformProviders', () => {
     await expect(fetchPlatformProviders()).resolves.toMatchObject([airflowProvider])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/get_platform_providers')
+    expect(url).toBe('/api/get_platform_providers?type=AIRFLOW')
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
