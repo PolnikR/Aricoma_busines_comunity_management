@@ -1,15 +1,16 @@
 import { useState } from 'react'
-import type { VirtualMachine } from '../../types'
+import type { VirtualMachine } from '../../types/virtualMachineTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
 import { formatStartTime } from '@/shared/utils/dateFormat'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useVdisksByVm } from '../../hooks/useVdisksByVm'
-import type { StorageVolumeMapping } from '../../model/vdisksTypes'
+import { useVdisksByVm } from '../../hooks/useVmStorageVolumes'
+import type { StorageVolumeMapping } from '../../model/vmStorageVolumesTypes'
 import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
 import {
   DataTable,
+  DataTableRequestState,
   DataTableSkeleton,
   DetailDrawer,
   DetailRow,
@@ -53,7 +54,13 @@ export function VirtualMachineDetailPanel({
     && provider.type === 'FLASHCOPY'
     && provider.credentialStatus === 'ok'
   ))?.id
-  const { data: vdisks, isLoading: vdisksLoading } = useVdisksByVm(
+  const {
+    data: vdisks,
+    isLoading: vdisksLoading,
+    isError: vdisksError,
+    isFetching: vdisksFetching,
+    refetch: refetchVdisks,
+  } = useVdisksByVm(
     virtualMachine?.name ?? '',
     virtualMachine?.providerId,
     flashSystemProviderId,
@@ -235,28 +242,37 @@ export function VirtualMachineDetailPanel({
                       className="rounded-none border-0 shadow-none"
                     />
                   ) : (
-                    <>
-                      <div className="border-b border-border px-4 py-3">
-                        <div className="flex gap-2">
-                          <span className="inline-flex items-center rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
-                            {snapshotCounts.source} {t('details.sourceMappings')}
-                          </span>
-                          <span className="inline-flex items-center rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
-                            {snapshotCounts.target} {t('details.targetMappings')}
-                          </span>
+                    <DataTableRequestState
+                      error={vdisksError ? {
+                        title: t('resources.common.loadFailed'),
+                        retryLabel: t('buttons.retry'),
+                        isRetrying: vdisksFetching,
+                        onRetry: () => { void refetchVdisks() },
+                      } : null}
+                    >
+                      <>
+                        <div className="border-b border-border px-4 py-3">
+                          <div className="flex gap-2">
+                            <span className="inline-flex items-center rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
+                              {snapshotCounts.source} {t('details.sourceMappings')}
+                            </span>
+                            <span className="inline-flex items-center rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
+                              {snapshotCounts.target} {t('details.targetMappings')}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <DataTable<StorageVolumeMapping>
-                        columns={snapshotColumns}
-                        rows={snapshotMappings}
-                        rowKey={(mapping, index) => `${mapping.id}-${String(index)}`}
-                        minWidthClassName="min-w-180"
-                        emptyContent={t('pages.virtualMachines.detail.noSnapshots')}
-                        ariaLabel={t('pages.virtualMachines.detail.snapshotsTable')}
-                        headerCellClassName={headerCell}
-                        cellClassName={cell}
-                      />
-                    </>
+                        <DataTable<StorageVolumeMapping>
+                          columns={snapshotColumns}
+                          rows={snapshotMappings}
+                          rowKey={(mapping, index) => `${mapping.id}-${String(index)}`}
+                          minWidthClassName="min-w-180"
+                          emptyContent={t('pages.virtualMachines.detail.noSnapshots')}
+                          ariaLabel={t('pages.virtualMachines.detail.snapshotsTable')}
+                          headerCellClassName={headerCell}
+                          cellClassName={cell}
+                        />
+                      </>
+                    </DataTableRequestState>
                   )}
                 </div>
               )}

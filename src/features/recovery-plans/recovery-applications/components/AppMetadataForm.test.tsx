@@ -22,17 +22,6 @@ describe('AppMetadataForm', () => {
             environment: 'dev',
             platform: 'airflow-01',
           }}
-          platformProviders={[{
-            id: 'airflow-01',
-            name: 'Primary Airflow',
-            description: 'DAG orchestration',
-            type: 'AIRFLOW',
-            ipAddress: '10.99.99.55',
-            port: 22,
-            dagDir: '/opt/airflow/dags',
-            credentialId: 'airflow-ssh',
-            credentialStatus: 'ok',
-          }]}
           onMetadataChange={onMetadataChange}
         />
       </LanguageProvider>
@@ -46,6 +35,20 @@ describe('AppMetadataForm', () => {
     expect(name).toHaveValue('Billing')
     expect(onMetadataChange).toHaveBeenLastCalledWith({ environment: 'prod' })
     expect(onMetadataChange).toHaveBeenCalledWith({ name: 'Billing' })
+  })
+
+  it('flags an application name containing a space as invalid', async () => {
+    const user = userEvent.setup()
+    render(
+      <LanguageProvider>
+        <AppMetadataForm />
+      </LanguageProvider>
+    )
+
+    const name = await screen.findByLabelText('Application Name *')
+    await user.type(name, 'init_test app')
+
+    expect(screen.getByText('Use letters, numbers, dashes, dots, and underscores only; no spaces.')).toBeInTheDocument()
   })
 
   it('disables filename in Edit mode', async () => {
@@ -64,7 +67,7 @@ describe('AppMetadataForm', () => {
       </LanguageProvider>
     )
 
-    expect(await screen.findByLabelText('File name *')).toBeDisabled()
+    expect(await screen.findByLabelText('ID *')).toBeDisabled()
   })
 
   it('marks filename as required', async () => {
@@ -74,7 +77,7 @@ describe('AppMetadataForm', () => {
       </LanguageProvider>
     )
 
-    expect(await screen.findByLabelText('File name *')).toBeRequired()
+    expect(await screen.findByLabelText('ID *')).toBeRequired()
   })
 
   it('disables browser autocomplete for application metadata fields', async () => {
@@ -84,7 +87,7 @@ describe('AppMetadataForm', () => {
       </LanguageProvider>
     )
 
-    const fileName = await screen.findByLabelText('File name *')
+    const fileName = await screen.findByLabelText('ID *')
     const applicationName = screen.getByLabelText('Application Name *')
     const description = screen.getByLabelText('Description *')
 
@@ -94,54 +97,36 @@ describe('AppMetadataForm', () => {
     expect(description).toHaveAttribute('autocomplete', 'off')
   })
 
-  it('reports platform provider selection', async () => {
-    const user = userEvent.setup()
-    const onMetadataChange = vi.fn()
+  it('keeps policy and orchestration controls outside the metadata form', () => {
     render(
       <LanguageProvider>
-        <AppMetadataForm
-          onMetadataChange={onMetadataChange}
-          platformProviders={[{
-            id: 'airflow-01',
-            name: 'Primary Airflow',
-            description: 'DAG orchestration',
-            type: 'AIRFLOW',
-            ipAddress: '10.99.99.55',
-            port: 22,
-            dagDir: '/opt/airflow/dags',
-            credentialId: 'airflow-ssh',
-            credentialStatus: 'ok',
-          }]}
-        />
-      </LanguageProvider>
+        <AppMetadataForm />
+      </LanguageProvider>,
     )
 
-    await user.selectOptions(await screen.findByLabelText('Platform provider *'), 'airflow-01')
-
-    expect(onMetadataChange).toHaveBeenCalledWith({ platform: 'airflow-01' })
+    expect(screen.queryByLabelText('Policy set *')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Airflow platform provider *')).not.toBeInTheDocument()
+    expect(screen.queryByText('Push to orchestrator')).not.toBeInTheDocument()
   })
 
-  it('offers only providers with valid credentials', async () => {
+  it('keeps an unknown backend environment selectable during edit', async () => {
     render(
       <LanguageProvider>
         <AppMetadataForm
-          platformProviders={[
-            {
-              id: 'airflow-01', name: 'Primary Airflow', description: '', type: 'AIRFLOW',
-              ipAddress: '10.0.0.1', port: 22, dagDir: '/dags', credentialId: 'cred-1',
-              credentialStatus: 'ok',
-            },
-            {
-              id: 'airflow-02', name: 'Broken Airflow', description: '', type: 'AIRFLOW',
-              ipAddress: '10.0.0.2', port: 22, dagDir: '/dags', credentialId: 'cred-2',
-              credentialStatus: 'missing',
-            },
-          ]}
+          initialValues={{
+            fileName: 'finance_app',
+            name: 'Finance',
+            description: 'Primary',
+      environment: 'production',
+            platform: 'airflow-01',
+          }}
         />
       </LanguageProvider>,
     )
 
-    expect(await screen.findByRole('option', { name: 'Primary Airflow - AIRFLOW' })).toBeInTheDocument()
-    expect(screen.queryByRole('option', { name: 'Broken Airflow - AIRFLOW' })).not.toBeInTheDocument()
+    const environment = await screen.findByLabelText('Environment *')
+    expect(environment).toHaveValue('production')
+    expect(screen.getByRole('option', { name: 'production' })).toBeInTheDocument()
   })
+
 })

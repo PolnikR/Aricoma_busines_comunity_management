@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { TierCard } from './TierCard'
 import { AddTierCard } from './AddTierCard'
-import type { RecoveryTier } from '../model/recoveryApplicationTypes'
+import type { DraftRecoveryTier } from '../model/recoveryApplicationTypes'
+import { calculateTierReorder } from '../utils/calculateTierReorder'
 
 interface TierCanvasProps {
-  tiers: Record<string, RecoveryTier>
+  tiers: Record<string, DraftRecoveryTier>
   recoveryGroupVmOptions?: Readonly<Record<string, readonly string[]>>
   onRecoveryGroupAdded?: (tierId: string, groupId: string) => void
   onRecoveryGroupRemoved?: (tierId: string) => void
@@ -12,9 +13,9 @@ interface TierCanvasProps {
   onTierEdit?: (tierId: string, newTierId: string, updates: {
     tierDescription: string
   }) => void
-  onTierAdd?: (tierId: string, tier: RecoveryTier) => void
+  onTierAdd?: (tierId: string, tier: DraftRecoveryTier) => void
   onTierDelete?: (tierId: string) => void
-  onTierReorder?: (reorderedTiers: Record<string, RecoveryTier>) => void
+  onTierReorder?: (reorderedTiers: Record<string, DraftRecoveryTier>) => void
 }
 
 export function TierCanvas({
@@ -82,31 +83,7 @@ export function TierCanvas({
       return
     }
 
-    const draggedIndex = sortedTiers.findIndex(t => t.id === draggedId)
-    const targetIndex = sortedTiers.findIndex(t => t.id === targetId)
-
-    if (draggedIndex === -1 || targetIndex === -1) {
-      setDraggedId(null)
-      return
-    }
-
-    const newTiers = { ...tiers }
-    const newOrder = sortedTiers.map((_t, i) => {
-      if (i === targetIndex) return draggedIndex < targetIndex ? i : i + 1
-      if (i === draggedIndex) return targetIndex < draggedIndex ? targetIndex : targetIndex - 1
-      if (draggedIndex < targetIndex && i > draggedIndex && i <= targetIndex) return i - 1
-      if (draggedIndex > targetIndex && i >= targetIndex && i < draggedIndex) return i + 1
-      return i
-    })
-
-    sortedTiers.forEach((t, i) => {
-      const orderValue = newOrder[i] ?? i
-      const oldTier = newTiers[t.id]
-      if (oldTier) {
-        newTiers[t.id] = { ...oldTier, order: orderValue + 1 }
-      }
-    })
-
+    const newTiers = calculateTierReorder(tiers, sortedTiers, draggedId, targetId)
     onTierReorder?.(newTiers)
     setDraggedId(null)
   }

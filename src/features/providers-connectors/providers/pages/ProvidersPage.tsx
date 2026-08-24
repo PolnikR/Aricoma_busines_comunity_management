@@ -6,17 +6,16 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { ProvidersCatalogueTable } from '../components/ProvidersCatalogueTable'
 import { ProvidersCreateModal } from '../components/ProvidersCreateModal'
 import { useProviders } from '../hooks/useProviders'
+import type { ProviderRoleFilter } from '../model/providerTypes'
 
 export function ProvidersPage() {
   const { t } = useTranslation()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const {
-    data: providers = [],
-    isLoading,
-    isFetching,
-    error,
-    refetch,
-  } = useProviders()
+  const [roleFilter, setRoleFilter] = useState<ProviderRoleFilter>('all')
+  const allProvidersQuery = useProviders('all')
+  const visibleProvidersQuery = useProviders(roleFilter)
+  const providers = visibleProvidersQuery.data ?? []
+  const allProviders = allProvidersQuery.data ?? []
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
@@ -24,8 +23,8 @@ export function ProvidersPage() {
         eyebrow={t('pages.providers.eyebrow')}
         title={t('pages.providers.title')}
         description={t('pages.providers.description')}
-        isFetching={isFetching}
-        onRefresh={() => { void refetch() }}
+        isFetching={visibleProvidersQuery.isFetching}
+        onRefresh={() => { void visibleProvidersQuery.refetch() }}
         actions={(
           <Button size="sm" variant="outline" onClick={() => { setIsCreateModalOpen(true) }}>
             {t('pages.providers.addButton')}
@@ -41,10 +40,13 @@ export function ProvidersPage() {
           <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm lg:min-h-0">
             <ProvidersCatalogueTable
               providers={providers}
-              isLoading={isLoading}
-              error={error instanceof Error ? error : null}
-              isRetrying={isFetching}
-              onRetry={() => { void refetch() }}
+              allProviders={allProviders}
+              roleFilter={roleFilter}
+              onRoleFilterChange={setRoleFilter}
+              isLoading={visibleProvidersQuery.isLoading}
+              error={visibleProvidersQuery.error instanceof Error ? visibleProvidersQuery.error : null}
+              isRetrying={visibleProvidersQuery.isFetching}
+              onRetry={() => { void visibleProvidersQuery.refetch() }}
             />
           </div>
         </InventoryShell>
@@ -53,7 +55,7 @@ export function ProvidersPage() {
       <ProvidersCreateModal
         open={isCreateModalOpen}
         onClose={() => { setIsCreateModalOpen(false) }}
-        existingProviders={providers}
+        existingProviders={allProviders}
       />
     </div>
   )

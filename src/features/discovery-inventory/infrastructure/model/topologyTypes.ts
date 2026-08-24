@@ -5,10 +5,14 @@ export type InfrastructureTopologyNodeKind =
   | 'datastore'
   | 'powerSystem'
   | 'powerPartition'
+  | 'pool'
+  | 'volume'
+  | 'fcmap'
+  | 'consistencyGroup'
 
-export type InfrastructureTopologyPlatform = 'vmware' | 'ibm-power'
+export type InfrastructureTopologyPlatform = 'vmware' | 'ibm-power' | 'flashsystem'
 
-export type InfrastructureTopologyEdgeKind = 'contains' | 'runs' | 'uses'
+export type InfrastructureTopologyEdgeKind = 'contains' | 'runs' | 'uses' | 'copies'
 
 interface InfrastructureTopologyNodeBase {
   id: string
@@ -65,6 +69,50 @@ export interface PowerPartitionTopologyNode extends InfrastructureTopologyNodeBa
   volumeState: string
 }
 
+export interface PoolTopologyNode extends InfrastructureTopologyNodeBase {
+  kind: 'pool'
+  poolId: string
+  status: string
+  capacity: string
+  freeCapacity: string
+  volumeCount: number
+  encrypt: string
+  easyTier: string
+}
+
+export interface FlashVolumeTopologyNode extends InfrastructureTopologyNodeBase {
+  kind: 'volume'
+  volumeId: string
+  status: string
+  capacity: string
+  role: 'source' | 'target' | null
+  isSnapshotTarget: boolean
+  hasSnapshots: boolean
+  snapshotCount: number
+  mdiskGroupName: string
+}
+
+export interface FlashCopyMapTopologyNode extends InfrastructureTopologyNodeBase {
+  kind: 'fcmap'
+  fcmapId: string
+  status: string
+  progress: string
+  copyRate: string
+  sourceVolumeId: string
+  targetVolumeId: string
+  sourceVolumeName: string
+  targetVolumeName: string
+}
+
+export interface ConsistencyGroupTopologyNode extends InfrastructureTopologyNodeBase {
+  kind: 'consistencyGroup'
+  groupId: string
+  status: string
+  fcMappingCount: number
+  spansPools: boolean
+  poolCount: number
+}
+
 export type InfrastructureTopologyNode =
   | ClusterTopologyNode
   | HostTopologyNode
@@ -72,6 +120,10 @@ export type InfrastructureTopologyNode =
   | DatastoreTopologyNode
   | PowerSystemTopologyNode
   | PowerPartitionTopologyNode
+  | PoolTopologyNode
+  | FlashVolumeTopologyNode
+  | FlashCopyMapTopologyNode
+  | ConsistencyGroupTopologyNode
 
 export interface InfrastructureTopologyEdge {
   id: string

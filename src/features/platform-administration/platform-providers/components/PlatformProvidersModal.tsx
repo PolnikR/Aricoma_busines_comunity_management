@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
@@ -29,9 +31,13 @@ const EMPTY_PLATFORM_PROVIDER_FORM: PlatformProviderFormData = {
   description: '',
   type: '',
   ipAddress: '',
+  url: '',
   port: '22',
   dagDir: '',
   credentialId: '',
+  vmPrefix: '',
+  vmTags: [],
+  notificationEmail: '',
 }
 
 function toPlatformProviderFormData(provider: PlatformProviderRecord): PlatformProviderFormData {
@@ -41,9 +47,13 @@ function toPlatformProviderFormData(provider: PlatformProviderRecord): PlatformP
     description: provider.description,
     type: provider.type,
     ipAddress: provider.ipAddress,
+    url: provider.url ?? '',
     port: String(provider.port),
     dagDir: provider.dagDir,
     credentialId: provider.credentialId,
+    vmPrefix: provider.vmPrefix ?? '',
+    vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
+    notificationEmail: provider.notificationEmail ?? '',
   }
 }
 
@@ -63,7 +73,8 @@ export function PlatformProvidersModal({
   const isEdit = Boolean(provider)
   const [formData, setFormData] = useState<PlatformProviderFormData>(EMPTY_PLATFORM_PROVIDER_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof PlatformProviderFormData, string>>>({})
-  const [errorMessage, setErrorMessage] = useState('')
+  const [submitError, setSubmitError] = useState<unknown>(null)
+  const submitErrorDescription = extractBackendErrorDetail(submitError)
   const initialForm = createInitialForm(provider)
   const isDirty = open && (
     formData.id !== initialForm.id
@@ -71,9 +82,14 @@ export function PlatformProvidersModal({
     || formData.description !== initialForm.description
     || formData.type !== initialForm.type
     || formData.ipAddress !== initialForm.ipAddress
+    || formData.url !== initialForm.url
     || formData.port !== initialForm.port
     || formData.dagDir !== initialForm.dagDir
     || formData.credentialId !== initialForm.credentialId
+    || formData.notificationEmail !== initialForm.notificationEmail
+    || formData.vmPrefix !== initialForm.vmPrefix
+    || formData.vmTags.length !== initialForm.vmTags.length
+    || formData.vmTags.some((tag, index) => tag !== initialForm.vmTags[index])
   )
   const navigationGuard = useUnsavedChangesGuard(isDirty)
 
@@ -82,13 +98,13 @@ export function PlatformProvidersModal({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData(createInitialForm(provider))
     setErrors({})
-    setErrorMessage('')
+    setSubmitError(null)
   }, [open, provider])
 
   const close = () => {
     setFormData(EMPTY_PLATFORM_PROVIDER_FORM)
     setErrors({})
-    setErrorMessage('')
+    setSubmitError(null)
     onClose()
   }
 
@@ -106,7 +122,12 @@ export function PlatformProvidersModal({
         return next
       })
     }
-    setErrorMessage('')
+    setSubmitError(null)
+  }
+
+  const handleTagsChange = (vmTags: string[]) => {
+    setFormData(prev => ({ ...prev, vmTags }))
+    setSubmitError(null)
   }
 
   const validate = (): boolean => {
@@ -120,9 +141,19 @@ export function PlatformProvidersModal({
     if (!formData.description.trim()) nextErrors.description = t('forms.descriptionRequired')
     if (!formData.type) nextErrors.type = t('forms.typeRequired')
     if (!formData.ipAddress.trim()) nextErrors.ipAddress = t('forms.ipRequired')
-    if (!Number.isInteger(port) || port < 1 || port > 65535) nextErrors.port = t('forms.portRequired')
+    if (
+      !Number.isInteger(port)
+      || port < 1
+      || port > 65535
+    ) {
+      nextErrors.port = t('forms.portRequired')
+    }
     if (!formData.dagDir.trim()) nextErrors.dagDir = t('forms.dagDirRequired')
     if (!formData.credentialId.trim()) nextErrors.credentialId = t('forms.credentialsRequired')
+    const notificationEmail = formData.notificationEmail.trim()
+    if (notificationEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notificationEmail)) {
+      nextErrors.notificationEmail = t('forms.notificationEmailInvalid')
+    }
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
   }
@@ -139,15 +170,19 @@ export function PlatformProvidersModal({
       port: Number(formData.port),
       dagDir: formData.dagDir.trim(),
       credentialId: formData.credentialId.trim(),
+      vmPrefix: formData.vmPrefix.trim() || null,
+      vmTags: [...formData.vmTags],
+      notificationEmail: formData.notificationEmail.trim() || null,
     }
+    const url = formData.url.trim()
+    if (url) record.url = url
 
     upsert.mutate(
       { provider: record },
       {
         onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
         onError: (error: unknown) => {
-          const detail = error instanceof Error ? error.message : ''
-          setErrorMessage(detail ? `${t('platformProviders.submitFailed')}: ${detail}` : t('platformProviders.submitFailed'))
+          setSubmitError(error)
         },
       },
     )
@@ -159,6 +194,7 @@ export function PlatformProvidersModal({
         open={open}
         onClose={requestClose}
         closeOnBackdrop={false}
+        size="lg"
         title={t(isEdit ? 'platformProviders.modal.editTitle' : 'platformProviders.modal.createTitle')}
         footer={(
           <>
@@ -173,10 +209,13 @@ export function PlatformProvidersModal({
           </>
         )}
       >
-        {errorMessage ? (
-          <div className="mx-6 mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-            {errorMessage}
-          </div>
+        {submitError ? (
+          <Alert
+            className="mx-6 mt-4"
+            title={t('platformProviders.submitFailed')}
+            {...(submitErrorDescription ? { description: submitErrorDescription } : {})}
+            variant="error"
+          />
         ) : null}
 
         <PlatformProviderForm
@@ -188,7 +227,10 @@ export function PlatformProvidersModal({
           credentialsLoading={credentialsQuery.isLoading}
           credentialsError={credentialsQuery.error !== null}
           onRetryCredentials={() => { void credentialsQuery.refetch() }}
+          tags={[]}
+          tagsDisabled={!isEdit}
           onChange={handleChange}
+          onTagsChange={handleTagsChange}
           onSubmit={handleSubmit}
         />
       </Modal>

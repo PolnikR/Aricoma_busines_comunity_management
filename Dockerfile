@@ -6,7 +6,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
-RUN npm run build
+RUN npm run lint && npm run typecheck && npm run test && npx vite build
 
 FROM nginx:1.27.5-alpine AS runtime
 

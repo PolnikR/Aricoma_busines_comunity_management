@@ -1,5 +1,11 @@
-import { apiFetch } from '@/shared/api/apiClient'
-import { API_ENDPOINTS } from '@/config/apiEndpoints'
+import {
+  deleteCredentialRouteDeleteCredentialDelete,
+  getCredentialsRouteGetCredentialsGet,
+  submitCredentialSubmitCredentialPost,
+} from '@/generated/api/client.gen'
+import { CredentialsResponse } from '@/generated/api/zod.gen'
+import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type {
   CredentialFormData,
   CredentialRecord,
@@ -8,25 +14,33 @@ import type {
 import { encryptCredentialPassword } from './credentialsCrypto'
 import {
   apiErrorResponseSchema,
-  credentialsResponseSchema,
 } from './schemas/credentialsSchema'
 
-async function responseError(response: Response, fallback: string): Promise<Error> {
-  const payload: unknown = await response.json().catch(() => null)
-  const parsed = apiErrorResponseSchema.safeParse(payload)
-  return new Error(parsed.success ? parsed.data.detail : fallback)
+function parseCredentials(payload: unknown, operation: string): CredentialRecord[] {
+  return parseGeneratedResponse(CredentialsResponse, payload, operation).credentials
+    .map(credential => ({
+      id: credential.id,
+      name: credential.name,
+      description: credential.description ?? '',
+      username: credential.username,
+    }))
+}
+
+function credentialError(error: unknown, fallback: string): Error {
+  if (error instanceof OrvalApiError) {
+    const parsed = apiErrorResponseSchema.safeParse(error.body)
+    return new Error(parsed.success ? parsed.data.detail : fallback, { cause: error })
+  }
+  return error instanceof Error ? error : new Error(fallback)
 }
 
 export async function fetchCredentials(): Promise<CredentialRecord[]> {
-  const response = await apiFetch(API_ENDPOINTS.credentials.list)
-  if (!response.ok) {
-    throw await responseError(
-      response,
-      `Get credentials request failed with status ${String(response.status)}`,
-    )
+  try {
+    const payload = await getCredentialsRouteGetCredentialsGet()
+    return parseCredentials(payload, 'GET /get_credentials')
+  } catch (error) {
+    throw credentialError(error, `Get credentials request failed with status ${String(error instanceof OrvalApiError ? error.status : 0)}`)
   }
-  const payload: unknown = await response.json()
-  return credentialsResponseSchema.parse(payload).credentials
 }
 
 export async function createEncryptedCredentialPayload(
@@ -45,32 +59,19 @@ export async function createEncryptedCredentialPayload(
 export async function submitCredential(
   payload: CredentialSubmitPayload,
 ): Promise<CredentialRecord[]> {
-  const response = await apiFetch(API_ENDPOINTS.credentials.submit, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  if (!response.ok) {
-    throw await responseError(
-      response,
-      `Submit credential request failed with status ${String(response.status)}`,
-    )
+  try {
+    const result = await submitCredentialSubmitCredentialPost(payload)
+    return parseCredentials(result, 'POST /submit_credential')
+  } catch (error) {
+    throw credentialError(error, `Submit credential request failed with status ${String(error instanceof OrvalApiError ? error.status : 0)}`)
   }
-  const result: unknown = await response.json()
-  return credentialsResponseSchema.parse(result).credentials
 }
 
 export async function deleteCredential(credentialId: string): Promise<CredentialRecord[]> {
-  const response = await apiFetch(
-    `${API_ENDPOINTS.credentials.delete}?credential_id=${encodeURIComponent(credentialId)}`,
-    { method: 'DELETE' },
-  )
-  if (!response.ok) {
-    throw await responseError(
-      response,
-      `Delete credential request failed with status ${String(response.status)}`,
-    )
+  try {
+    const payload = await deleteCredentialRouteDeleteCredentialDelete({ credential_id: credentialId })
+    return parseCredentials(payload, 'DELETE /delete_credential')
+  } catch (error) {
+    throw credentialError(error, `Delete credential request failed with status ${String(error instanceof OrvalApiError ? error.status : 0)}`)
   }
-  const payload: unknown = await response.json()
-  return credentialsResponseSchema.parse(payload).credentials
 }

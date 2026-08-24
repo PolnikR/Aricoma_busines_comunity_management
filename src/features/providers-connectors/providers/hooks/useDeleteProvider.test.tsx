@@ -15,7 +15,9 @@ describe('useDeleteProvider', () => {
       description: '',
       type: 'VMWARE',
       ipAddress: '10.0.0.2',
+      port: 22,
       credentialId: null,
+      role: 'source',
       credentialStatus: 'none',
     }]
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
@@ -28,10 +30,16 @@ describe('useDeleteProvider', () => {
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     )
     const { result } = renderHook(() => useDeleteProvider(), { wrapper })
+    const targetProvider = { ...remaining[0], id: 'provider-target', role: 'target' as const }
+    client.setQueryData(providerKeys.list('all'), [...remaining, targetProvider])
+    client.setQueryData(providerKeys.list('source'), remaining)
+    client.setQueryData(providerKeys.list('target'), [targetProvider])
 
     result.current.mutate('provider-1')
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
 
-    expect(client.getQueryData(providerKeys.list())).toEqual(remaining)
+    expect(client.getQueryState(providerKeys.list('all'))?.isInvalidated).toBe(true)
+    expect(client.getQueryState(providerKeys.list('source'))?.isInvalidated).toBe(true)
+    expect(client.getQueryState(providerKeys.list('target'))?.isInvalidated).toBe(true)
   })
 })

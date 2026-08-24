@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import {
@@ -14,11 +15,17 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
+import { PlugIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { useDeleteProvider } from '../hooks/useDeleteProvider'
+import { useTestProviderConnection } from '../hooks/useTestProviderConnection'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
+import { ProviderConnectionTestDialog } from './ProviderConnectionTestDialog'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
-import type { ProviderRecord } from '../model/providerTypes'
+import { toProviderJson } from '../helpers/providerJson'
+import type { ProviderRecord, ProviderRoleFilter } from '../model/providerTypes'
 
 function credentialStatusLabel(
   status: ProviderRecord['credentialStatus'],
@@ -33,7 +40,14 @@ function credentialStatusColor(status: ProviderRecord['credentialStatus']) {
   return 'light' as const
 }
 
-function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<ProviderRecord>[] {
+function roleColor(role: ProviderRecord['role']) {
+  return role === 'source' ? 'success' as const : 'warning' as const
+}
+
+function getColumns(
+  t: ReturnType<typeof useTranslation>['t'],
+  onViewJson: (providerId: string) => void,
+): ColumnDef<ProviderRecord>[] {
   return [
     {
       id: 'name',
@@ -56,6 +70,14 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Provid
       cell: (provider) => <Badge color="info" size="sm">{providerTypeLabel(provider.type)}</Badge>,
     },
     {
+      id: 'role',
+      header: t('tables.provider.role'),
+      cell: (provider) => {
+        const role = provider.role ?? 'source'
+        return <Badge color={roleColor(role)} size="sm">{t(`forms.role.${role}`)}</Badge>
+      },
+    },
+    {
       id: 'ipAddress',
       header: t('tables.provider.ip'),
       cell: (provider) => <span className="font-mono text-[12px] text-text-secondary">{provider.ipAddress || '-'}</span>,
@@ -72,11 +94,30 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Provid
         </div>
       ),
     },
+    {
+      id: 'json',
+      header: t('tables.common.json'),
+      cell: provider => (
+        <Button
+          size="xs"
+          variant="soft"
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation()
+            onViewJson(provider.id)
+          }}
+        >
+          {t('buttons.viewJson')}
+        </Button>
+      ),
+    },
   ]
 }
 
 interface ProvidersCatalogueTableProps {
   providers: ProviderRecord[]
+  allProviders: ProviderRecord[]
+  roleFilter: ProviderRoleFilter
+  onRoleFilterChange: (role: ProviderRoleFilter) => void
   isLoading: boolean
   error: Error | null
   isRetrying: boolean
@@ -85,25 +126,35 @@ interface ProvidersCatalogueTableProps {
 
 export function ProvidersCatalogueTable({
   providers,
+  allProviders,
+  roleFilter,
+  onRoleFilterChange,
   isLoading,
   error,
   isRetrying,
   onRetry,
 }: ProvidersCatalogueTableProps) {
   const { t } = useTranslation()
-  const columns = getColumns(t)
   const deleteProvider = useDeleteProvider()
+  const testConnection = useTestProviderConnection()
   const [typeFilter, setTypeFilter] = useState('')
   const [pendingType, setPendingType] = useState('')
+  const [pendingRole, setPendingRole] = useState<ProviderRoleFilter>(roleFilter)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<ProviderRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ProviderRecord | null>(null)
+  const [isConnectionTestOpen, setIsConnectionTestOpen] = useState(false)
+  const [jsonViewId, setJsonViewId] = useState<string | null>(null)
+  const loadErrorDescription = extractBackendErrorDetail(error)
+  const deleteErrorDescription = extractBackendErrorDetail(deleteProvider.error)
 
   const rows = useMemo(() => providers, [providers])
   const selected = rows.find((provider) => provider.id === selectedId) ?? null
+  const jsonViewed = rows.find(provider => provider.id === jsonViewId) ?? null
+  const columns = getColumns(t, setJsonViewId)
   const types = useMemo(
-    () => [...new Set(rows.map((provider) => provider.type).filter(Boolean))].sort(),
-    [rows],
+    () => [...new Set(allProviders.map((provider) => provider.type).filter(Boolean))].sort(),
+    [allProviders],
   )
 
   const table = useTableState(rows, {
@@ -111,12 +162,45 @@ export function ProvidersCatalogueTable({
     predicate: (provider) => !typeFilter || provider.type === typeFilter,
   })
 
-  const changeType = (value: string) => { setTypeFilter(value); setPendingType(value); table.setPage(1) }
+  const openFilters = () => {
+    setPendingType(typeFilter)
+    setPendingRole(roleFilter)
+  }
+
+  const applyFilters = () => {
+    setTypeFilter(pendingType)
+    onRoleFilterChange(pendingRole)
+    table.setPage(1)
+    setSelectedId(null)
+  }
+
+  const clearFilters = () => {
+    setPendingType('')
+    setPendingRole('all')
+    setTypeFilter('')
+    onRoleFilterChange('all')
+    table.setPage(1)
+    setSelectedId(null)
+  }
+
+  const activeFilterCount = Number(Boolean(typeFilter)) + Number(roleFilter !== 'all')
+
+  const openConnectionTest = () => {
+    if (selected?.credentialStatus !== 'ok') return
+    testConnection.reset()
+    setIsConnectionTestOpen(true)
+    testConnection.mutate(selected)
+  }
+
+  const closeConnectionTest = () => {
+    setIsConnectionTestOpen(false)
+    testConnection.reset()
+  }
 
   if (isLoading) {
     return (
       <DataTableSkeleton
-        columnCount={5}
+        columnCount={7}
         ariaLabel={t('providers.loading')}
         className="flex-1 rounded-none border-0 shadow-none lg:min-h-0"
       />
@@ -125,6 +209,14 @@ export function ProvidersCatalogueTable({
 
   return (
     <div className="flex flex-col">
+      {deleteProvider.error ? (
+        <Alert
+          variant="error"
+          className="mx-4 mt-4"
+          title={t('dialogs.deleteProvider')}
+          {...(deleteErrorDescription ? { description: deleteErrorDescription } : {})}
+        />
+      ) : null}
       <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
@@ -133,22 +225,38 @@ export function ProvidersCatalogueTable({
         density={table.density}
         onDensityChange={table.setDensity}
         filterTitle={t('providers.filterTitle')}
-        activeFilterCount={typeFilter ? 1 : 0}
-        onApplyFilters={() => { changeType(pendingType) }}
-        onClearFilters={() => { setPendingType(''); changeType('') }}
+        activeFilterCount={activeFilterCount}
+        onFilterOpen={openFilters}
+        onApplyFilters={applyFilters}
+        onClearFilters={clearFilters}
         filterPanel={
-          <Field label={t('details.type')} htmlFor="provider-type-filter">
-            <Select id="provider-type-filter" value={pendingType} onChange={(event) => { setPendingType(event.target.value) }}>
-              <option value="">{t('providers.allTypes')}</option>
-              {types.map((type) => <option key={type} value={type}>{providerTypeLabel(type)}</option>)}
-            </Select>
-          </Field>
+          <>
+            <Field label={t('details.type')} htmlFor="provider-type-filter">
+              <Select id="provider-type-filter" value={pendingType} onChange={(event) => { setPendingType(event.target.value) }}>
+                <option value="">{t('providers.allTypes')}</option>
+                {types.map((type) => <option key={type} value={type}>{providerTypeLabel(type)}</option>)}
+              </Select>
+            </Field>
+            <Field label={t('forms.role')} htmlFor="provider-role-filter">
+              <Select
+                id="provider-role-filter"
+                value={pendingRole}
+                onChange={(event) => { setPendingRole(event.target.value as ProviderRoleFilter) }}
+              >
+                <option value="all">{t('providers.allRoles')}</option>
+                <option value="source">{t('forms.role.source')}</option>
+                <option value="target">{t('forms.role.target')}</option>
+              </Select>
+            </Field>
+          </>
         }
       />
 
       <DataTableRequestState
+        hasData={rows.length > 0}
         error={error ? {
           title: t('providers.loadFailed'),
+          ...(loadErrorDescription ? { description: loadErrorDescription } : {}),
           retryLabel: t('buttons.retry'),
           isRetrying,
           onRetry,
@@ -178,13 +286,34 @@ export function ProvidersCatalogueTable({
       ) : null}
 
       <DetailDrawer
-        open={selected !== null}
+        open={selected !== null && !isConnectionTestOpen}
         onClose={() => { setSelectedId(null) }}
         resizable
         eyebrow={t('drawer.selectedProvider')}
         title={selected?.name ?? ''}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerExtra={selected ? <Badge color="info" size="sm">{providerTypeLabel(selected.type)}</Badge> : null}
+        headerExtra={selected ? (
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <Badge color="info" size="sm">{providerTypeLabel(selected.type)}</Badge>
+            <div className="flex min-w-0 flex-col items-end gap-1">
+              <Button
+                size="xs"
+                variant="soft"
+                className="border border-accent/30 bg-accent-soft text-accent shadow-none hover:border-accent hover:bg-accent-soft hover:text-accent"
+                startIcon={<PlugIcon className="size-3.5" />}
+                onClick={openConnectionTest}
+                disabled={selected.credentialStatus !== 'ok'}
+                aria-describedby={selected.credentialStatus !== 'ok' ? 'provider-test-credential-hint' : undefined}
+                title={selected.credentialStatus !== 'ok' ? t('providers.connectionTest.credentialRequired') : undefined}
+              >
+                {t('providers.connectionTest.button')}
+              </Button>
+              {selected.credentialStatus !== 'ok' ? (
+                <span id="provider-test-credential-hint" className="sr-only">{t('providers.connectionTest.credentialRequired')}</span>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
         ariaLabel={t('drawer.providerDetail')}
         closeLabel={t('drawer.closeProvider')}
         footer={selected ? (
@@ -211,7 +340,39 @@ export function ProvidersCatalogueTable({
           <dl className="px-5 py-2">
             <DetailRow label={t('details.providerId')} value={<span className="font-mono">{selected.id}</span>} />
             <DetailRow label={t('details.type')} value={providerTypeLabel(selected.type)} />
+            <DetailRow
+              label={t('details.role')}
+              value={(() => {
+                const role = selected.role ?? 'source'
+                return <Badge color={roleColor(role)} size="sm">{t(`forms.role.${role}`)}</Badge>
+              })()}
+            />
             <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{selected.ipAddress || '-'}</span>} />
+            <DetailRow
+              label={t('details.url')}
+              value={selected.url ? (
+                <a
+                  href={selected.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="wrap-break-word text-accent underline hover:text-accent/80"
+                >
+                  {selected.url}
+                </a>
+              ) : '-'}
+            />
+            <DetailRow
+              label={t('details.notificationEmail')}
+              value={selected.notificationEmail ?? '-'}
+            />
+            <DetailRow
+              label={t('details.defaultFlashcopyProviderId')}
+              value={<span className="font-mono">{selected.defaultFlashcopyProviderId ?? '-'}</span>}
+            />
+            <DetailRow
+              label={t('details.orchestratorConnId')}
+              value={<span className="font-mono">{selected.orchestratorConnId ?? '-'}</span>}
+            />
             <DetailRow
               label={t('details.credential')}
               value={<span className="font-mono">{selected.credentialId ?? '-'}</span>}
@@ -229,11 +390,25 @@ export function ProvidersCatalogueTable({
         ) : null}
       </DetailDrawer>
 
+      <ProviderConnectionTestDialog
+        open={isConnectionTestOpen && selected !== null}
+        providerName={selected?.name ?? ''}
+        providerId={selected?.id ?? ''}
+        providerRole={selected?.role ?? 'source'}
+        isPending={testConnection.isPending}
+        result={testConnection.data ?? null}
+        error={testConnection.error instanceof Error ? testConnection.error : null}
+        onClose={closeConnectionTest}
+        onRetry={() => {
+          if (selected) testConnection.mutate(selected)
+        }}
+      />
+
       {editing ? (
         <ProvidersCreateModal
           open
           onClose={() => { setEditing(null) }}
-          existingProviders={rows}
+          existingProviders={allProviders}
           provider={editing}
         />
       ) : null}
@@ -252,8 +427,17 @@ export function ProvidersCatalogueTable({
           if (!deleteTarget) return
           deleteProvider.mutate(deleteTarget.id, {
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
+            onError: () => { setDeleteTarget(null) },
           })
         }}
+      />
+
+      <JsonViewerModal
+        open={jsonViewed !== null}
+        title={t('providers.jsonViewer.title')}
+        data={jsonViewed ? toProviderJson(jsonViewed) : null}
+        closeLabel={t('buttons.close')}
+        onClose={() => { setJsonViewId(null) }}
       />
     </div>
   )

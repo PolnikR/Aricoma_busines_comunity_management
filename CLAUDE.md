@@ -60,6 +60,42 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## 5. Focused Verification
+
+**Run the smallest verification scope that proves the agent's changes.**
+
+- Identify the changed features, modules, and contracts before selecting test commands.
+- Run only the unit, component, hook, API, or integration test files that directly cover the changed behavior.
+- Prefer explicit test-file paths, for example `npm exec vitest run <affected-test-files>`.
+- Do not run the complete test suite, `npm test`, the complete workspace test suite, or a full production build by default.
+- Run a broader or complete suite only when the user explicitly requests it, the change is cross-cutting, or a reliable focused scope cannot be determined.
+- Use focused linting for changed files when the tooling supports it. Run full type checking or a production build only when required by the affected scope or explicitly requested.
+- In the final response, list the verification commands that were run and clearly state when the complete suite or build was not run.
+
+## 6. Verify and Commit Every Change
+
+**A completed change must be verified and committed before it is handed back.**
+
+- Always run the focused tests or validations relevant to the files changed by the agent.
+- For documentation or configuration changes without an automated test, run the closest applicable validation, such as a parser, linter, content assertion, or `git diff --check`.
+- Create an atomic Git commit after verification succeeds, using a descriptive commit message.
+- Stage only files that belong to the current task. Never include unrelated or pre-existing worktree changes.
+- Do not report the task as complete until the commit succeeds. If repository permissions block the commit, report the blocker explicitly and request the required permission.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as GitHub Issues in `PolnikR/Aricoma_busines_comunity_management`, using the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Standard 5-role vocabulary, label strings equal to role names (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout — root `CONTEXT.md` + `docs/adr/`. See `docs/agents/domain.md`.

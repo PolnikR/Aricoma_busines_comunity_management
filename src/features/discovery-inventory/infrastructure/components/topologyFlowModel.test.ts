@@ -114,4 +114,51 @@ describe('mapTopologyToFlowElements', () => {
       },
     })
   })
+
+  it('renders FlashCopy "copies" relationships as distinctly colored dashed edges', () => {
+    const copiesTopology: PositionedInfrastructureTopology = {
+      nodes: [
+        {
+          node: {
+            id: 'volume:0', kind: 'volume', label: 'Volume0', volumeId: '0', status: 'online',
+            capacity: '1.00TB', role: null, isSnapshotTarget: false, hasSnapshots: true,
+            snapshotCount: 1, mdiskGroupName: 'Pool0',
+          },
+          position: { x: 0, y: 0 },
+          size: { width: 240, height: 112 },
+        },
+        {
+          node: {
+            id: 'volume:1', kind: 'volume', label: 'Volume1', volumeId: '1', status: 'online',
+            capacity: '1.00TB', role: 'target', isSnapshotTarget: true, hasSnapshots: false,
+            snapshotCount: 0, mdiskGroupName: 'Pool0',
+          },
+          position: { x: 300, y: 0 },
+          size: { width: 240, height: 112 },
+        },
+      ],
+      edges: [
+        {
+          id: 'edge:copies:volume:0:volume:1',
+          kind: 'copies',
+          source: 'volume:0',
+          target: 'volume:1',
+          capacityGb: null,
+        },
+      ],
+      size: { width: 700, height: 212 },
+    }
+
+    const result = mapTopologyToFlowElements(copiesTopology)
+
+    expect(result.nodes[0]).toMatchObject({ type: 'volume', draggable: true })
+    expect(result.edges[0]).toMatchObject({
+      type: 'smoothstep',
+      selectable: false,
+      style: {
+        stroke: '#c47fd6',
+        strokeDasharray: '5 4',
+      },
+    })
+  })
 })

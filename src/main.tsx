@@ -1,7 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './app/App'
-import { AuthProvider } from '@/contexts/AuthProvider'
 import { LanguageProvider } from '@/contexts/LanguageProvider'
 import { ThemeProvider } from '@/contexts/ThemeProvider'
 import { UserProvider } from '@/contexts/UserProvider'
@@ -18,11 +17,9 @@ function startApp() {
     <StrictMode>
       <ThemeProvider>
         <LanguageProvider>
-          <AuthProvider>
-            <UserProvider>
-              <App />
-            </UserProvider>
-          </AuthProvider>
+          <UserProvider>
+            <App />
+          </UserProvider>
         </LanguageProvider>
       </ThemeProvider>
     </StrictMode>,

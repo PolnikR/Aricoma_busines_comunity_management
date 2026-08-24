@@ -1,4 +1,3 @@
-import type ELKInstance from 'elkjs-runtime'
 import type {
   InfrastructureTopology,
   InfrastructureTopologyNode,
@@ -25,7 +24,7 @@ export interface PositionedInfrastructureTopology {
   size: TopologyNodeSize
 }
 
-let elkInstance: ELKInstance | null = null
+let elkInstance: unknown = null
 
 const nodeSizes: Record<InfrastructureTopologyNodeKind, TopologyNodeSize> = {
   cluster: { width: 220, height: 96 },
@@ -34,13 +33,18 @@ const nodeSizes: Record<InfrastructureTopologyNodeKind, TopologyNodeSize> = {
   datastore: { width: 220, height: 104 },
   powerSystem: { width: 240, height: 112 },
   powerPartition: { width: 260, height: 132 },
+  pool: { width: 220, height: 96 },
+  volume: { width: 240, height: 112 },
+  fcmap: { width: 220, height: 104 },
+  consistencyGroup: { width: 240, height: 104 },
 }
 
 async function getElkInstance() {
   if (elkInstance) return elkInstance
 
-  const { default: ELK } = await import('elkjs-runtime')
-  elkInstance = new ELK()
+  const { default: ELK } = await import('elkjs')
+  const workerUrl = new URL('elkjs/lib/elk-worker.js', import.meta.url).href
+  elkInstance = new ELK({ workerUrl })
   return elkInstance
 }
 
@@ -55,7 +59,7 @@ export async function layoutInfrastructureTopology(
     }
   }
 
-  const elk = await getElkInstance()
+  const elk = await getElkInstance() as { layout: (config: unknown) => Promise<{ children?: { id: string; x?: number; y?: number }[]; width?: number; height?: number }> }
   const layout = await elk.layout({
     id: 'infrastructure-topology',
     layoutOptions: {
@@ -76,14 +80,14 @@ export async function layoutInfrastructureTopology(
     })),
   })
 
-  const positions = new Map(
-    layout.children?.map((node) => [
+  const positions = new Map<string, { x: number; y: number }>(
+    layout.children?.map((node: { id: string; x?: number; y?: number }) => [
       node.id,
       {
         x: node.x ?? 0,
         y: node.y ?? 0,
       },
-    ]),
+    ]) ?? [],
   )
 
   return {

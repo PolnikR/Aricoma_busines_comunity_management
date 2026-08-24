@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import {
   DataTable,
@@ -31,6 +33,8 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<CredentialRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<CredentialRecord | null>(null)
+  const loadErrorDescription = extractBackendErrorDetail(error)
+  const deleteErrorDescription = extractBackendErrorDetail(deleteCredential.error)
   const rows = useMemo(() => credentials, [credentials])
   const selected = rows.find(credential => credential.id === selectedId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'username'] })
@@ -74,9 +78,12 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {deleteCredential.error ? (
-        <div className="mx-4 mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">
-          {deleteCredential.error.message}
-        </div>
+        <Alert
+          className="mx-4 mt-4"
+          title={t('credentials.delete.title')}
+          {...(deleteErrorDescription ? { description: deleteErrorDescription } : {})}
+          variant="error"
+        />
       ) : null}
       <DataTableToolbar
         searchValue={table.search}
@@ -87,8 +94,10 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
         onDensityChange={table.setDensity}
       />
       <DataTableRequestState
+        hasData={rows.length > 0}
         error={error ? {
           title: t('credentials.errors.load'),
+          ...(loadErrorDescription ? { description: loadErrorDescription } : {}),
           retryLabel: t('buttons.retry'),
           isRetrying,
           onRetry,

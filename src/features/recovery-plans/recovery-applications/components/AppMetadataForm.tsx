@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
-import { Field, Input, Select } from '@/shared/components/form/FormControls'
-import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
-import { isValidRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
+import { Field, Input, Select, Textarea } from '@/shared/components/form/FormControls'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
+import { getEligibleSourceProviders } from '../utils/eligibleProviders'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface AppMetadataFormProps {
@@ -11,38 +12,36 @@ interface AppMetadataFormProps {
     fileName: string
     name: string
     description: string
-    environment: 'dev' | 'staging' | 'prod'
+    environment: string
     platform: string
   }
-  platformProviders?: PlatformProviderRecord[]
-  platformProvidersLoading?: boolean
-  platformProvidersError?: Error | null
-  onRetryPlatformProviders?: () => void
+  providers?: ProviderRecord[]
+  providersLoading?: boolean
+  providersError?: Error | null
+  onRetryProviders?: () => void
   disableFileName?: boolean
 }
 
 export function AppMetadataForm({
   onMetadataChange,
   initialValues,
-  platformProviders = [],
-  platformProvidersLoading = false,
-  platformProvidersError = null,
-  onRetryPlatformProviders,
+  providers = [],
+  providersLoading = false,
+  providersError = null,
+  onRetryProviders,
   disableFileName = false,
 }: AppMetadataFormProps) {
   const { t } = useTranslation()
   const [fileName, setFileName] = useState(initialValues?.fileName ?? '')
   const [name, setName] = useState(initialValues?.name ?? '')
   const [description, setDescription] = useState(initialValues?.description ?? '')
-  const [environment, setEnvironment] = useState<'dev' | 'staging' | 'prod'>(
+  const [environment, setEnvironment] = useState<string>(
     initialValues?.environment ?? 'dev'
   )
   const [platform, setPlatform] = useState(initialValues?.platform ?? '')
-  const eligiblePlatformProviders = platformProviders.filter(
-    provider => provider.credentialStatus === 'ok',
-  )
+  const eligibleProviders = getEligibleSourceProviders(providers)
   const selectedPlatformIsMissing = Boolean(
-    platform && !eligiblePlatformProviders.some(provider => provider.id === platform),
+    platform && !eligibleProviders.some(provider => provider.id === platform),
   )
 
   const handleChange = (field: string, value: string) => {
@@ -60,8 +59,8 @@ export function AppMetadataForm({
         onMetadataChange?.({ description: value })
         break
       case 'environment':
-        setEnvironment(value as 'dev' | 'staging' | 'prod')
-        onMetadataChange?.({ environment: value as 'dev' | 'staging' | 'prod' })
+        setEnvironment(value)
+        onMetadataChange?.({ environment: value })
         break
       case 'platform':
         setPlatform(value)
@@ -73,7 +72,7 @@ export function AppMetadataForm({
   return (
     <form
       autoComplete="off"
-      className="grid grid-cols-1 gap-4 items-end sm:grid-cols-2 xl:grid-cols-5"
+      className="grid max-w-3xl grid-cols-1 gap-4 md:grid-cols-2"
     >
       <Field label={t('recovery.application.form.fileName')} htmlFor="application-file-name">
         <Input
@@ -102,20 +101,14 @@ export function AppMetadataForm({
           value={name}
           onChange={e => { handleChange('name', e.target.value); }}
           placeholder={t('forms.applicationNameExample')}
+          invalid={Boolean(name) && !isValidRecoveryApplicationName(name)}
           required
         />
-      </Field>
-
-      <Field label={t('forms.applicationDescription')} htmlFor="application-description">
-        <Input
-          id="application-description"
-          type="text"
-          autoComplete="off"
-          value={description}
-          onChange={e => { handleChange('description', e.target.value); }}
-          placeholder={t('forms.applicationDescriptionExample')}
-          required
-        />
+        {name && !isValidRecoveryApplicationName(name) ? (
+          <p className="mt-1 text-xs text-red-600">
+            {t('recovery.application.validation.nameInvalid')}
+          </p>
+        ) : null}
       </Field>
 
       <Field label={t('forms.environment')} htmlFor="application-environment">
@@ -128,40 +121,56 @@ export function AppMetadataForm({
           <option value="dev">{t('forms.environmentDev')}</option>
           <option value="staging">{t('forms.environmentStaging')}</option>
           <option value="prod">{t('forms.environmentProd')}</option>
+          {environment && !['dev', 'staging', 'prod'].includes(environment) ? (
+            <option value={environment}>{environment}</option>
+          ) : null}
         </Select>
       </Field>
 
-      <Field label={t('forms.platformProvider')} htmlFor="application-platform-provider">
+      <Field label={t('forms.providerId')} htmlFor="application-platform">
         <Select
-          id="application-platform-provider"
+          id="application-platform"
           value={platform}
           onChange={e => { handleChange('platform', e.target.value); }}
-          disabled={platformProvidersLoading || platformProvidersError !== null}
+          disabled={providersLoading || providersError !== null}
           required
         >
           <option value="">
-            {platformProvidersLoading ? t('providers.platform.loading') : t('forms.platformProviderSelect')}
+            {providersLoading ? t('platformProviders.loading') : t('forms.providerIdSelect')}
           </option>
           {selectedPlatformIsMissing ? (
             <option value={platform}>{t('providers.credentials.unavailable').replace('{id}', platform)}</option>
           ) : null}
-          {eligiblePlatformProviders.map(provider => (
+          {eligibleProviders.map(provider => (
             <option key={provider.id} value={provider.id}>
               {provider.name} - {provider.type}
             </option>
           ))}
         </Select>
-        {platformProvidersError ? (
+        {providersError ? (
           <p className="mt-1 text-xs text-red-600" role="alert">
-            {t('providers.platform.loadFailed')}{' '}
-            {onRetryPlatformProviders ? (
-              <button type="button" className="font-semibold underline" onClick={onRetryPlatformProviders}>
+            {t('platformProviders.loadFailed')}{' '}
+            {onRetryProviders ? (
+              <button type="button" className="font-semibold underline" onClick={onRetryProviders}>
                 {t('buttons.retry')}
               </button>
             ) : null}
           </p>
         ) : null}
       </Field>
+
+      <Field label={t('forms.applicationDescription')} htmlFor="application-description">
+        <Textarea
+          id="application-description"
+          autoComplete="off"
+          value={description}
+          onChange={e => { handleChange('description', e.target.value); }}
+          placeholder={t('forms.applicationDescriptionExample')}
+          rows={3}
+          required
+        />
+      </Field>
+
     </form>
   )
 }

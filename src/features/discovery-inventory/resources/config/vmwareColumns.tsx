@@ -1,7 +1,7 @@
 import { StateCell } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import type { useTranslation } from '@/hooks/useTranslation'
-import type { VirtualMachine } from '../types'
+import type { VirtualMachine } from '../types/virtualMachineTypes'
 
 type Translate = ReturnType<typeof useTranslation>['t']
 
@@ -97,12 +97,6 @@ export function createVmwareColumns(t: Translate, showDetail: boolean): ColumnDe
       id: 'power',
       header: t('tables.vm.power'),
       cell: (vm) => <StateCell {...powerState(vm.powerState, t)} title={vm.powerState} />,
-    },
-    {
-      id: 'snapshots',
-      header: t('tables.vm.snapshots'),
-      align: 'right',
-      cell: (vm) => <span className={vm.snapshotCount === 0 ? 'text-text-subtle' : undefined}>{vm.snapshotCount}</span>,
     },
   ]
 }

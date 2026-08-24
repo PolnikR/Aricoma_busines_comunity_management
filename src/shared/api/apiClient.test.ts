@@ -49,7 +49,7 @@ describe('apiFetch', () => {
     expect(headers.get('Content-Type')).toBe('application/json')
   })
 
-  it('locks X-User to "admin" regardless of the current bridge identity', async () => {
+  it('locks X-User to the current bridge identity', async () => {
     setCurrentUser({ username: 'operator', role: 'operator' })
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
     vi.stubGlobal('fetch', fetchMock)
@@ -59,7 +59,7 @@ describe('apiFetch', () => {
     })
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(new Headers(init.headers).get('X-User')).toBe('admin')
+    expect(new Headers(init.headers).get('X-User')).toBe('operator')
   })
 
   it('propagates fetch failures', async () => {

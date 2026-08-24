@@ -1,77 +1,78 @@
 import { z } from 'zod'
-import { API_ENDPOINTS } from '@/config/apiEndpoints'
-import { apiFetch } from '@/shared/api/apiClient'
+import {
+  deletePolicySetRouteDeletePolicySetDelete,
+  getPolicySetsGetPolicySetsGet,
+  submitPolicySetSubmitPolicySetPost,
+} from '@/generated/api/client.gen'
+import {
+  PolicySetsResponse,
+  type PolicySetRecordOutput,
+} from '@/generated/api/zod.gen'
+import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
+import { toOrvalRequestError } from '@/shared/api/orvalMutator'
 import type { PolicySet, PolicySetSubmitData } from '../model/policySetTypes'
 import {
-  policySetsResponseSchema,
   policySetSubmitSchema,
   type PolicySetWire,
 } from './schemas/policySetsSchema'
 
 const policySetIdSchema = z.string().min(1)
 
-function requireSuccessfulResponse(response: Response, operation: string): Response {
-  if (!response.ok) {
-    throw new Error(`${operation} request failed with status ${String(response.status)}`)
-  }
-  return response
-}
-
-function fromWire(policySet: PolicySetWire): PolicySet {
-  return {
+function fromWire(policySet: PolicySetRecordOutput): PolicySet {
+  return policySetSubmitSchema.parse({
     id: policySet.id,
     name: policySet.name,
-    description: policySet.description,
-    policyIds: policySet.policy_ids,
-  }
+    description: policySet.description ?? '',
+    snapshotPolicyId: policySet.snapshot_policy_id ?? '',
+    recoveryAppPolicyId: policySet.recovery_app_policy_id ?? '',
+    cleanRoomPolicyId: policySet.clean_room_policy_id ?? '',
+  })
 }
 
-function toWire(policySet: PolicySetSubmitData): PolicySetWire {
+export function toPolicySetSubmitPayload(policySet: PolicySetSubmitData): PolicySetWire {
   const validated = policySetSubmitSchema.parse(policySet)
   return {
     id: validated.id,
     name: validated.name,
     description: validated.description,
-    policy_ids: validated.policyIds,
+    snapshot_policy_id: validated.snapshotPolicyId,
+    recovery_app_policy_id: validated.recoveryAppPolicyId,
+    clean_room_policy_id: validated.cleanRoomPolicyId,
   }
 }
 
-async function parsePolicySets(response: Response): Promise<PolicySet[]> {
-  const payload: unknown = await response.json()
-  return policySetsResponseSchema.parse(payload).policy_sets.map(fromWire)
+function parsePolicySets(payload: unknown): PolicySet[] {
+  return parseGeneratedResponse(
+    PolicySetsResponse,
+    payload,
+    'Policy sets response',
+  ).policy_sets.map(fromWire)
 }
 
 export async function fetchPolicySets(): Promise<PolicySet[]> {
-  const response = requireSuccessfulResponse(
-    await apiFetch(API_ENDPOINTS.policySets.list),
-    'Get policy sets',
-  )
-  return parsePolicySets(response)
+  try {
+    return parsePolicySets(await getPolicySetsGetPolicySetsGet())
+  } catch (error) {
+    throw toOrvalRequestError(error, 'Get policy sets')
+  }
 }
 
 export async function submitPolicySet(
   policySet: PolicySetSubmitData,
 ): Promise<PolicySet[]> {
-  const wirePolicySet = toWire(policySet)
-  const response = requireSuccessfulResponse(
-    await apiFetch(API_ENDPOINTS.policySets.submit, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(wirePolicySet),
-    }),
-    'Submit policy set',
-  )
-  return parsePolicySets(response)
+  const wirePolicySet = toPolicySetSubmitPayload(policySet)
+  try {
+    return parsePolicySets(await submitPolicySetSubmitPolicySetPost(wirePolicySet))
+  } catch (error) {
+    throw toOrvalRequestError(error, 'Submit policy set')
+  }
 }
 
 export async function deletePolicySet(policySetId: string): Promise<PolicySet[]> {
   const validatedPolicySetId = policySetIdSchema.parse(policySetId)
-  const response = requireSuccessfulResponse(
-    await apiFetch(
-      `${API_ENDPOINTS.policySets.delete}?policy_set_id=${encodeURIComponent(validatedPolicySetId)}`,
-      { method: 'DELETE' },
-    ),
-    'Delete policy set',
-  )
-  return parsePolicySets(response)
+  try {
+    return parsePolicySets(await deletePolicySetRouteDeletePolicySetDelete({ policy_set_id: validatedPolicySetId }))
+  } catch (error) {
+    throw toOrvalRequestError(error, 'Delete policy set')
+  }
 }

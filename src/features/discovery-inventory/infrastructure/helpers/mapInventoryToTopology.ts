@@ -1,4 +1,4 @@
-import type { DiscoveryInventory } from '../../model/discoveryTypes'
+import type { DiscoveryInventory } from '../../resources/model/discoveryTypes'
 import type {
   DatastoreTopologyNode,
   HostTopologyNode,
@@ -18,6 +18,10 @@ const nodeKindOrder: Record<InfrastructureTopologyNodeKind, number> = {
   datastore: 3,
   powerSystem: 4,
   powerPartition: 5,
+  pool: 6,
+  volume: 7,
+  fcmap: 8,
+  consistencyGroup: 9,
 }
 
 function isKnownTopologyValue(value: string) {
@@ -31,7 +35,7 @@ export function createTopologyNodeId(
   return `${kind}:${encodeURIComponent(sourceId.trim())}`
 }
 
-function createTopologyEdgeId(
+export function createTopologyEdgeId(
   kind: InfrastructureTopologyEdgeKind,
   source: string,
   target: string,
@@ -39,12 +43,30 @@ function createTopologyEdgeId(
   return `edge:${kind}:${source}:${target}`
 }
 
-function compareNodes(first: InfrastructureTopologyNode, second: InfrastructureTopologyNode) {
+const edgeKindOrder: Record<InfrastructureTopologyEdgeKind, number> = {
+  contains: 0,
+  runs: 1,
+  uses: 2,
+  copies: 3,
+}
+
+export function compareNodes(first: InfrastructureTopologyNode, second: InfrastructureTopologyNode) {
   const kindDifference = nodeKindOrder[first.kind] - nodeKindOrder[second.kind]
   if (kindDifference !== 0) return kindDifference
 
   const labelDifference = first.label.localeCompare(second.label)
   return labelDifference !== 0 ? labelDifference : first.id.localeCompare(second.id)
+}
+
+export function compareEdges(first: InfrastructureTopologyEdge, second: InfrastructureTopologyEdge) {
+  const kindDifference = edgeKindOrder[first.kind] - edgeKindOrder[second.kind]
+  if (kindDifference !== 0) return kindDifference
+
+  const sourceDifference = first.source.localeCompare(second.source)
+  if (sourceDifference !== 0) return sourceDifference
+
+  const targetDifference = first.target.localeCompare(second.target)
+  return targetDifference !== 0 ? targetDifference : first.id.localeCompare(second.id)
 }
 
 export function mapInventoryToTopology(
@@ -206,6 +228,6 @@ export function mapInventoryToTopology(
 
   return {
     nodes: Array.from(nodes.values()).sort(compareNodes),
-    edges: Array.from(edges.values()).sort((first, second) => first.id.localeCompare(second.id)),
+    edges: Array.from(edges.values()).sort(compareEdges),
   }
 }

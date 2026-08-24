@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { ProviderCreateForm } from './ProviderCreateForm'
@@ -10,8 +10,16 @@ const data = {
   name: 'Primary',
   description: 'Production provider',
   type: 'VMWARE',
+  role: 'source',
   ipAddress: '10.0.0.1',
+  url: 'https://vcenter.example.test',
+  port: '22',
   credentialId: 'vcenter-admin',
+  defaultFlashcopyProviderId: '',
+  orchestratorConnId: '',
+  vmPrefix: 'prod-',
+  vmTags: ['saved-tag'],
+  notificationEmail: 'provider-alerts@example.test',
 }
 
 const credentials = [{
@@ -35,6 +43,7 @@ describe('ProviderCreateForm', () => {
         credentialsLoading={false}
         credentialsError={false}
         onRetryCredentials={vi.fn()}
+        onTagsChange={vi.fn()}
         onChange={onChange}
         onSubmit={onSubmit}
       />,
@@ -44,9 +53,10 @@ describe('ProviderCreateForm', () => {
     await user.type(screen.getByLabelText('IP address'), '{Enter}')
     expect(onChange).toHaveBeenCalled()
     expect(onSubmit).toHaveBeenCalledOnce()
+    expect(screen.getByLabelText('URL')).toHaveValue('https://vcenter.example.test')
   })
 
-  it('locks ID in edit mode and renders validation errors', () => {
+  it('locks ID and provider type in edit mode and renders validation errors', () => {
     render(
       <ProviderCreateForm
         data={data}
@@ -57,11 +67,72 @@ describe('ProviderCreateForm', () => {
         credentialsError={false}
         onRetryCredentials={vi.fn()}
         idDisabled
+        typeDisabled
+        onTagsChange={vi.fn()}
         onChange={vi.fn()}
         onSubmit={vi.fn()}
       />,
     )
-    expect(screen.getByRole('textbox', { name: /ID/ })).toBeDisabled()
+    expect(screen.getByDisplayValue('provider-1')).toBeDisabled()
+    expect(screen.getByLabelText('Type')).toBeDisabled()
     expect(screen.getByText('ID error')).toBeInTheDocument()
+  })
+
+  it('renders and reports notification email changes', () => {
+    const onChange = vi.fn()
+
+    render(
+      <ProviderCreateForm
+        data={data}
+        errors={{}}
+        isSubmitting={false}
+        credentials={credentials}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        onTagsChange={vi.fn()}
+        onChange={onChange}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    const input = screen.getByLabelText('Notification email')
+    expect(input).toHaveValue('provider-alerts@example.test')
+    fireEvent.change(input, { target: { value: 'new-alerts@example.test' } })
+    expect(onChange).toHaveBeenCalledWith('notificationEmail', 'new-alerts@example.test')
+  })
+
+  it('renders VM settings and reports a single selected tag', async () => {
+    const user = userEvent.setup()
+    const onTagsChange = vi.fn()
+
+    render(
+      <ProviderCreateForm
+        data={data}
+        errors={{}}
+        isSubmitting={false}
+        credentials={credentials}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        tags={['available-tag', 'replacement-tag']}
+        tagsLoading={false}
+        tagsError={false}
+        tagsDisabled={false}
+        onRetryTags={vi.fn()}
+        onTagsChange={onTagsChange}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByLabelText('VM prefix')).toHaveValue('prod-')
+    expect(screen.getByLabelText('VM tags')).toHaveValue('saved-tag')
+
+    await user.selectOptions(screen.getByLabelText('VM tags'), 'replacement-tag')
+    expect(onTagsChange).toHaveBeenLastCalledWith(['replacement-tag'])
+
+    await user.selectOptions(screen.getByLabelText('VM tags'), '')
+    expect(onTagsChange).toHaveBeenLastCalledWith([])
   })
 })

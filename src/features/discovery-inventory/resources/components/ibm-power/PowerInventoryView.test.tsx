@@ -1,26 +1,15 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import type { ReactNode } from 'react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { useTranslation } from '@/test-utils/mockUseTranslation'
-import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import type { PowerPartitionResource } from '../../../model/discoveryTypes'
+import type { PowerPartitionResource } from '../../model/discoveryTypes'
 import { PowerInventoryView } from './PowerInventoryView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
-const provider: ProviderRecord = {
-  id: 'power-01',
-  name: 'Power 01',
-  description: '',
-  type: 'IBM_POWER',
-  ipAddress: '10.0.0.2',
-  credentialId: null,
-  credentialStatus: 'none',
-}
-
-const secondProvider: ProviderRecord = {
-  ...provider,
-  id: 'power-02',
-  name: 'Power 02',
+function renderInRouter(ui: ReactNode) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>)
 }
 
 const partition: PowerPartitionResource = {
@@ -87,12 +76,9 @@ const partition: PowerPartitionResource = {
 describe('PowerInventoryView', () => {
   it('shows a compact operational column set', () => {
     const { t } = useTranslation()
-    render(
+    renderInRouter(
       <PowerInventoryView
         resources={[partition]}
-        providers={[]}
-        providerId=""
-        onProviderIdChange={vi.fn()}
         t={t}
       />,
     )
@@ -113,12 +99,9 @@ describe('PowerInventoryView', () => {
 
   it('renders only the curated detail sections and combines related values', () => {
     const { t } = useTranslation()
-    render(
+    renderInRouter(
       <PowerInventoryView
         resources={[partition]}
-        providers={[]}
-        providerId=""
-        onProviderIdChange={vi.fn()}
         t={t}
       />,
     )
@@ -140,38 +123,28 @@ describe('PowerInventoryView', () => {
     expect(within(dialog).queryByText('Partition state')).not.toBeInTheDocument()
   })
 
-  it('filters loaded data and requests provider-scoped data when applied', () => {
+  it('does not render a duplicate provider filter for the selected source tab', () => {
     const { t } = useTranslation()
-    const onProviderIdChange = vi.fn()
 
-    render(
+    renderInRouter(
       <PowerInventoryView
         resources={[partition]}
-        providers={[provider, secondProvider]}
-        providerId=""
-        onProviderIdChange={onProviderIdChange}
         t={t}
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
-    fireEvent.change(screen.getByLabelText('Provider'), { target: { value: 'power-02' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
-
-    expect(onProviderIdChange).toHaveBeenCalledWith('power-02')
-    expect(screen.queryByText('vios1')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Filters/ }))
+    expect(screen.queryByLabelText('Provider')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Partition kind')).toBeInTheDocument()
   })
 
   it('keeps provider filters available when the inventory request fails', () => {
     const { t } = useTranslation()
     const onRetry = vi.fn()
 
-    render(
+    renderInRouter(
       <PowerInventoryView
         resources={[]}
-        providers={[provider, secondProvider]}
-        providerId=""
-        onProviderIdChange={vi.fn()}
         error={{
           title: 'Resource inventory could not be loaded',
           description: 'Resource inventory could not be loaded',
@@ -189,5 +162,17 @@ describe('PowerInventoryView', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry loading' }))
     expect(onRetry).toHaveBeenCalledOnce()
+  })
+
+  it('closes the detail drawer when the selected partition is no longer in the provider dataset', async () => {
+    const { t } = useTranslation()
+    const view = renderInRouter(<PowerInventoryView resources={[partition]} t={t} />)
+
+    fireEvent.click(screen.getByText('vios1'))
+    expect(screen.getByRole('dialog', { name: 'IBM Power partition detail' })).toBeInTheDocument()
+
+    view.rerender(<MemoryRouter><PowerInventoryView resources={[]} t={t} /></MemoryRouter>)
+
+    await waitFor(() => { expect(screen.queryByRole('dialog', { name: 'IBM Power partition detail' })).not.toBeInTheDocument() })
   })
 })

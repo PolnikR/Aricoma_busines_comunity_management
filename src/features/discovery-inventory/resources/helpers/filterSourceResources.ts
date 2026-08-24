@@ -1,7 +1,7 @@
 import type {
   FlashSystemVolumeResource,
   PowerPartitionResource,
-} from '../../model/discoveryTypes'
+} from '../model/discoveryTypes'
 import type {
   FlashSystemFilterOptions,
   FlashSystemFilters,
@@ -66,7 +66,6 @@ export function filterFlashSystemResources(
       ...resource.resolvedHostMaps.map((host) => host.hostName),
     ].some((value) => value.toLocaleLowerCase().includes(search))
     return matchesSearch
-      && (!filters.providerId || resource.providerId === filters.providerId)
       && matchesScopedFilter(filters.poolId, resource.providerId, resource.mdisk_grp_id)
       && (!filters.hostId || resource.host_maps.some(
         (host) => matchesScopedFilter(filters.hostId, resource.providerId, host.host_id),
@@ -102,7 +101,6 @@ export function filterPowerResources(
       resource.volumeName,
     ].some((value) => value.toLocaleLowerCase().includes(search))
     return matchesSearch
-      && (!filters.providerId || resource.providerId === filters.providerId)
       && (!filters.partitionKind || resource.partitionKind === filters.partitionKind)
       && (!filters.partitionState || resource.partitionState === filters.partitionState)
       && (!filters.operatingSystemType || resource.operatingSystemType === filters.operatingSystemType)

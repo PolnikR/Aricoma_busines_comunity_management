@@ -1,3 +1,5 @@
+import type { OrchestrationProviderRecordOutput } from '@/generated/api/zod.gen'
+
 export const PLATFORM_PROVIDER_TYPES = [
   'AIRFLOW',
 ] as const
@@ -18,10 +20,19 @@ export interface PlatformProviderSubmitData {
   port: number
   dagDir: string
   credentialId: string
+  url?: string | undefined
+  vmPrefix?: string | null | undefined
+  vmTags?: string[] | undefined
+  notificationEmail?: string | null | undefined
 }
 
-export interface PlatformProviderRecord extends PlatformProviderSubmitData {
+export interface PlatformProviderRecord extends Omit<PlatformProviderSubmitData, 'vmPrefix' | 'vmTags'> {
+  vmPrefix?: string | null
+  vmTags?: string[]
+  notificationEmail?: string | null
   credentialStatus: PlatformProviderCredentialStatus
+  /** Validated GET record before UI normalization; unknown API fields are removed by Zod. */
+  rawRecord?: OrchestrationProviderRecordOutput | undefined
 }
 
 export interface PlatformProviderWriteRecord extends PlatformProviderSubmitData {

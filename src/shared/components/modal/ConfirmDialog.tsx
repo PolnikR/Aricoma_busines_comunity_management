@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Spinner } from '../spinner/Spinner'
 import { Modal } from './Modal'
 
 interface ConfirmDialogProps {
@@ -50,8 +51,9 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${confirmClassName}`}
+            className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${confirmClassName}`}
           >
+            {isLoading && <Spinner />}
             {isLoading ? loadingLabel : confirmLabel}
           </button>
         </>

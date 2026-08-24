@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
@@ -49,8 +51,9 @@ export function CredentialCreateModal({
   const createCredential = useCreateCredential()
   const [form, setForm] = useState<CredentialCreateFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof CredentialCreateFormData, string>>>({})
-  const [submitError, setSubmitError] = useState('')
+  const [submitError, setSubmitError] = useState<unknown>(null)
   const [isEncrypting, setIsEncrypting] = useState(false)
+  const submitErrorDescription = extractBackendErrorDetail(submitError)
   const isSubmitting = createCredential.isPending || isEncrypting
   const isEdit = Boolean(credential)
   const initialForm = createInitialForm(credential)
@@ -69,13 +72,13 @@ export function CredentialCreateModal({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm(createInitialForm(credential))
     setErrors({})
-    setSubmitError('')
+    setSubmitError(null)
   }, [credential, open])
 
   const close = () => {
     setForm(EMPTY_FORM)
     setErrors({})
-    setSubmitError('')
+    setSubmitError(null)
     onClose()
   }
   const requestClose = () => {
@@ -85,7 +88,7 @@ export function CredentialCreateModal({
   const change = (field: keyof CredentialCreateFormData, value: string) => {
     setForm(current => ({ ...current, [field]: value }))
     setErrors(current => ({ ...current, [field]: undefined }))
-    setSubmitError('')
+    setSubmitError(null)
   }
 
   const validate = () => {
@@ -110,7 +113,7 @@ export function CredentialCreateModal({
   const submit = async () => {
     if (!validate()) return
     setIsEncrypting(true)
-    setSubmitError('')
+    setSubmitError(null)
     try {
       const credential: CredentialFormData = {
         id: form.id,
@@ -123,11 +126,11 @@ export function CredentialCreateModal({
       createCredential.mutate(payload, {
         onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
         onError: (error: unknown) => {
-          setSubmitError(error instanceof Error ? error.message : t('credentials.errors.create'))
+          setSubmitError(error)
         },
       })
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : t('credentials.errors.create'))
+      setSubmitError(error)
     } finally {
       setIsEncrypting(false)
     }
@@ -154,9 +157,12 @@ export function CredentialCreateModal({
         )}
       >
         {submitError ? (
-          <div className="mx-6 mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">
-            {submitError}
-          </div>
+          <Alert
+            className="mx-6 mt-4"
+            title={t(isEdit ? 'credentials.errors.edit' : 'credentials.errors.create')}
+            {...(submitErrorDescription ? { description: submitErrorDescription } : {})}
+            variant="error"
+          />
         ) : null}
         <CredentialCreateForm
           data={form}

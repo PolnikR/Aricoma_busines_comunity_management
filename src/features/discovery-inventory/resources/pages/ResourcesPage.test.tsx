@@ -1,19 +1,32 @@
-import { render, screen, within } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useState } from 'react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import { ResourcesPage } from './ResourcesPage'
-import type { DiscoveryInventory } from '../../model/discoveryTypes'
+import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
+import type { DiscoveryInventory } from '../model/discoveryTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
 const refetch = vi.fn()
 const updateQuery = vi.fn()
 const updateFilters = vi.fn()
 const refetchProviders = vi.fn()
+const setResourceSource = vi.fn()
 const resourceInventoryQuerySpy = vi.fn()
 const refetchResourceInventory = vi.fn()
+const vmwareResourceInventorySpy = vi.fn()
+const virtualMachineSearchParamsSpy = vi.fn()
+const vmwareTagsSpy = vi.fn()
 let resourceTab: 'vmware' | 'flashsystem' | 'ibm-power' = 'vmware'
+let selectedProviderId: string | null = null
+let virtualMachineSearchParamsInitialized = true
+let useStatefulVirtualMachineSearchParams = false
+let useRealVmwareResourceInventory = false
 const vmwareProvider: ProviderRecord = {
   id: 'vmware-01', name: 'VMware 01', description: '', type: 'VMWARE',
-  ipAddress: '10.0.0.1', credentialId: null, credentialStatus: 'none',
+  ipAddress: '10.0.0.1', port: 22, credentialId: null, credentialStatus: 'none',
+  vmPrefix: 'DEFAULT-', vmTags: ['default-tag'],
 }
 const flashProvider: ProviderRecord = {
   ...vmwareProvider,
@@ -43,43 +56,79 @@ let resourceInventoryQuery: {
 let inventoryQuery: {
   data: DiscoveryInventory | undefined
   error: Error | null
-  isLoading: boolean
+  isInitialLoading: boolean
+  isDebouncing: boolean
+  isBackgroundFetching: boolean
+  isError: boolean
+  isEmpty: boolean
   isFetching: boolean
   refetch: typeof refetch
 }
+let virtualMachineQuery = {
+  page: 1, pageSize: 10 as const, search: '', powerState: '', connectionState: '',
+  cluster: '', tags: [] as string[], untagged: false,
+}
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/discovery-inventory/hooks/useDiscoveryInventory', () => ({
-  useDiscoveryInventory: () => inventoryQuery,
-}))
-vi.mock('@/features/discovery-inventory/hooks/useResourceInventoryQueries', () => ({
+vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory')>()
+
+  return {
+    ...actual,
+  useVmwareResourceInventory: (...args: unknown[]) => {
+    vmwareResourceInventorySpy(...args)
+    if (useRealVmwareResourceInventory) {
+      return actual.useVmwareResourceInventory(...args as Parameters<typeof actual.useVmwareResourceInventory>)
+    }
+    return inventoryQuery
+  },
+  }
+})
+vi.mock('@/features/discovery-inventory/resources/hooks/useResourceInventoryQueries', () => ({
   useResourceInventoryQueries: (...args: unknown[]) => {
     resourceInventoryQuerySpy(...args)
     return resourceInventoryQuery
   },
 }))
-vi.mock('../../hooks/useTags', () => ({ useTags: () => ({ data: [] }) }))
+vi.mock('../hooks/useVmwareTags', () => ({
+  useTags: (...args: unknown[]) => {
+    vmwareTagsSpy(...args)
+    return { data: [] }
+  },
+}))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
   useProviders: () => providersQuery,
 }))
 vi.mock('../hooks/useVirtualMachineSearchParams', () => ({
-  useVirtualMachineSearchParams: () => ({
-    query: {
-      page: 1, pageSize: 10, search: '', powerState: '', connectionState: '',
-      cluster: '', providerId: null, tags: [], untagged: false,
-    },
-    updateQuery,
-    updateFilters,
+  useVirtualMachineSearchParams: (...args: unknown[]) => {
+    virtualMachineSearchParamsSpy(...args)
+    const [statefulQuery, setStatefulQuery] = useState(virtualMachineQuery)
+    if (useStatefulVirtualMachineSearchParams) {
+      return {
+        query: statefulQuery,
+        updateQuery,
+        updateFilters: (filters: typeof virtualMachineQuery) => {
+          updateFilters(filters)
+          setStatefulQuery(current => ({ ...current, ...filters }))
+        },
+        isInitialized: virtualMachineSearchParamsInitialized,
+      }
+    }
+    return { query: virtualMachineQuery, updateQuery, updateFilters, isInitialized: virtualMachineSearchParamsInitialized }
+  },
+}))
+vi.mock('../hooks/useFlashSystemSearchParams', () => ({
+  useFlashSystemSearchParams: () => ({
+    query: { page: 1, pageSize: 25, search: '', poolId: '', hostId: '', status: '' },
+    updateQuery: vi.fn(),
+    updateFilters: vi.fn(),
   }),
 }))
 vi.mock('../hooks/useResourceTabSearchParam', () => ({
-  useResourceTabSearchParam: () => ({ resourceTab, setResourceTab: vi.fn() }),
+  useResourceTabSearchParam: () => ({ resourceTab, providerId: selectedProviderId, setResourceSource }),
 }))
 vi.mock('../components/vmware/VirtualMachineMetrics', () => ({
   VirtualMachineMetrics: () => <div>VM metrics</div>,
-}))
-vi.mock('../components/vmware/VirtualMachinesToolbar', () => ({
-  VirtualMachinesToolbar: () => <div>VM toolbar</div>,
 }))
 vi.mock('../components/vmware/VirtualMachinesTable', () => ({
   VirtualMachinesTable: () => <div>VM table</div>,
@@ -87,13 +136,26 @@ vi.mock('../components/vmware/VirtualMachinesTable', () => ({
 vi.mock('../components/vmware/VirtualMachineDetailPanel', () => ({
   VirtualMachineDetailPanel: () => <div>VM detail</div>,
 }))
-vi.mock('../skeletons', () => ({
-  MetricsSkeleton: () => <div>Metrics skeleton</div>,
-}))
+vi.mock('@/shared/components/stat-card/StatCard', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/components/stat-card/StatCard')>()
+
+  return {
+    ...actual,
+    MetricsSkeleton: () => <div>Metrics skeleton</div>,
+  }
+})
 
 beforeEach(() => {
   vi.clearAllMocks()
   resourceTab = 'vmware'
+  selectedProviderId = null
+  virtualMachineSearchParamsInitialized = true
+  useStatefulVirtualMachineSearchParams = false
+  useRealVmwareResourceInventory = false
+  virtualMachineQuery = {
+    page: 1, pageSize: 10, search: '', powerState: '', connectionState: '',
+    cluster: '', tags: [], untagged: false,
+  }
   providersQuery = {
     data: [vmwareProvider],
     error: null,
@@ -116,38 +178,221 @@ beforeEach(() => {
   inventoryQuery = {
     data: { reportedCount: 0, virtualMachines: [] },
     error: null,
-    isLoading: false,
+    isInitialLoading: false,
+    isDebouncing: false,
+    isBackgroundFetching: false,
+    isError: false,
+    isEmpty: true,
     isFetching: false,
     refetch,
   }
 })
 
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.useRealTimers()
+})
+
 describe('ResourcesPage', () => {
+  it('waits for provider defaults before activating inventory without a transient unfiltered query', () => {
+    virtualMachineSearchParamsInitialized = false
+    const view = render(<ResourcesPage />)
+
+    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith('vmware-01', '', undefined, false)
+
+    virtualMachineQuery = {
+      ...virtualMachineQuery,
+      search: 'DEFAULT-',
+      tags: ['default-tag'],
+    }
+    virtualMachineSearchParamsInitialized = true
+    view.rerender(<ResourcesPage />)
+
+    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith('vmware-01', 'DEFAULT-', 'default-tag', true)
+    expect(vmwareResourceInventorySpy).not.toHaveBeenCalledWith('vmware-01', '', undefined, true)
+  })
+
+  it('scopes provider defaults, URL filters, tags, and inventory to the selected source VMware provider', () => {
+    const selectedVmwareProvider: ProviderRecord = {
+      ...vmwareProvider,
+      id: 'vmware-02',
+      name: 'VMware 02',
+      vmPrefix: 'SELECTED-',
+      vmTags: ['selected-tag'],
+    }
+    selectedProviderId = selectedVmwareProvider.id
+    providersQuery = { ...providersQuery, data: [vmwareProvider, selectedVmwareProvider] }
+    virtualMachineQuery = {
+      ...virtualMachineQuery,
+      search: 'url-prefix',
+      tags: ['url-tag'],
+    }
+
+    render(<ResourcesPage />)
+
+    expect(virtualMachineSearchParamsSpy).toHaveBeenLastCalledWith({
+      id: 'vmware-02',
+      role: 'source',
+      vmPrefix: 'SELECTED-',
+      vmTags: ['selected-tag'],
+    })
+    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith(
+      'vmware-02',
+      'url-prefix',
+      'url-tag',
+      true,
+    )
+    expect(vmwareTagsSpy).toHaveBeenLastCalledWith('vmware-02', true)
+  })
+
   it('renders loading and initial error states', () => {
-    inventoryQuery = { ...inventoryQuery, data: undefined, isLoading: true }
+    inventoryQuery = { ...inventoryQuery, data: undefined, isInitialLoading: true, isEmpty: false }
     const view = render(<ResourcesPage />)
     expect(screen.getByLabelText('Loading module')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'VMware VMs' })).toBeInTheDocument()
     inventoryQuery = {
       ...inventoryQuery,
-      isLoading: false,
+      isInitialLoading: false,
       error: new Error('inventory offline'),
+      isError: true,
     }
     view.rerender(<ResourcesPage />)
     expect(screen.getByRole('alert')).toHaveTextContent('Unknown discovery error.')
     expect(screen.getByRole('alert')).not.toHaveTextContent('inventory offline')
-    expect(screen.getByText('VM toolbar')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBeInTheDocument()
     expect(screen.queryByText('Metrics skeleton')).not.toBeInTheDocument()
   })
 
   it('renders metrics, toolbar, and empty inventory state', () => {
     render(<ResourcesPage />)
     expect(screen.getByText('VM metrics')).toBeInTheDocument()
-    expect(screen.getByText('VM toolbar')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'VMware VMs' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('tab', { name: 'FlashSystem Volumes' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'IBM Power Partitions' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'VMware VMs' })).toHaveClass(
+      'after:bottom-1.5',
+      'after:inset-x-4',
+      'after:h-0.5',
+    )
+    expect(screen.queryByRole('tab', { name: 'FlashSystem Volumes' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'IBM Power Partitions' })).not.toBeInTheDocument()
     expect(screen.getByText('No virtual machines found')).toBeInTheDocument()
+  })
+
+  it('keeps the VMware search input mounted and focused through debounce, fetch, and empty success', async () => {
+    vi.useFakeTimers()
+    useStatefulVirtualMachineSearchParams = true
+    useRealVmwareResourceInventory = true
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes('prefix=sdf')) return Promise.resolve(new Response(JSON.stringify({ count: 0, vms: [] }), { status: 200 }))
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false, retryDelay: 1 } },
+    })
+    queryClient.setQueryData(discoveryInventoryKeys.inventory('vmware-01'), { reportedCount: 0, virtualMachines: [] })
+
+    render(<QueryClientProvider client={queryClient}><ResourcesPage /></QueryClientProvider>)
+
+    const search = screen.getByRole('searchbox', { name: 'Search virtual machines' })
+    search.focus()
+    fireEvent.change(search, { target: { value: 's' } })
+    fireEvent.change(search, { target: { value: 'sd' } })
+    fireEvent.change(search, { target: { value: 'sdf' } })
+
+    expect(search).toHaveValue('sdf')
+    expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBe(search)
+    expect(search).toHaveFocus()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalled()
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(299) })
+    expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBe(search)
+    expect(search).toHaveFocus()
+    expect(fetchMock).not.toHaveBeenCalled()
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(1) })
+    expect(fetchMock).toHaveBeenCalledOnce()
+    expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBe(search)
+    expect(search).toHaveFocus()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(fetchMock.mock.calls.filter(([url]) => url.includes('prefix=sdf&')).length).toBe(1)
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(1) })
+    expect(screen.getByText('No virtual machines found')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBe(search)
+    expect(search).toHaveFocus()
+  })
+
+  it('keeps the VMware search input mounted and focused when a new search debounces after a real error', () => {
+    useStatefulVirtualMachineSearchParams = true
+    const view = render(<ResourcesPage />)
+    const search = screen.getByRole('searchbox', { name: 'Search virtual machines' })
+    search.focus()
+
+    inventoryQuery = {
+      ...inventoryQuery,
+      data: undefined,
+      isEmpty: false,
+    }
+    view.rerender(<ResourcesPage />)
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBe(search)
+    expect(search).toHaveFocus()
+
+    inventoryQuery = {
+      ...inventoryQuery,
+      data: undefined,
+      error: new Error('inventory offline'),
+      isError: true,
+      isEmpty: false,
+    }
+    view.rerender(<ResourcesPage />)
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBe(search)
+    expect(search).toHaveFocus()
+
+    fireEvent.change(search, { target: { value: 'WEB2' } })
+    inventoryQuery = {
+      ...inventoryQuery,
+      error: null,
+      isDebouncing: true,
+      isError: false,
+    }
+    view.rerender(<ResourcesPage />)
+
+    expect(search).toHaveValue('WEB2')
+    expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBe(search)
+    expect(search).toHaveFocus()
+    expect(screen.queryByLabelText('Loading module')).not.toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('renders multiple provider sources in the single top resource tab list', () => {
+    providersQuery = {
+      ...providersQuery,
+      data: Array.from({ length: 10 }, (_, index) => ({
+        ...vmwareProvider,
+        id: `vmware-${String(index + 1).padStart(2, '0')}`,
+        name: `vCenter ${String(index + 1).padStart(2, '0')}`,
+      })),
+    }
+
+    render(<ResourcesPage />)
+    setResourceSource.mockClear()
+
+    const sourceTabList = screen.getByRole('tablist', { name: 'Inventory source' })
+    const vmwareTabs = within(sourceTabList)
+      .getAllByRole('tab')
+      .filter(tab => tab.textContent.startsWith('VMware VMs'))
+    expect(vmwareTabs).toHaveLength(10)
+    expect(screen.getAllByRole('tablist')).toHaveLength(1)
+
+    fireEvent.click(screen.getByRole('tab', { name: 'VMware VMs · vCenter 10' }))
+    expect(setResourceSource).toHaveBeenCalledTimes(1)
+    expect(setResourceSource).toHaveBeenCalledWith({ resourceTab: 'vmware', providerId: 'vmware-10' })
   })
 
   it('waits for providers before activating a source inventory query', () => {
@@ -161,7 +406,7 @@ describe('ResourcesPage', () => {
 
     const view = render(<ResourcesPage />)
 
-    expect(resourceInventoryQuerySpy).toHaveBeenCalledWith(null, [], undefined)
+    expect(resourceInventoryQuerySpy).toHaveBeenCalledWith(null, [], undefined, 'source')
     const inventoryRegion = screen.getByRole('region', { name: 'Inventory records' })
     expect(within(inventoryRegion).getByRole('tab', { name: 'FlashSystem Volumes' })).toHaveAttribute('aria-selected', 'true')
     expect(inventoryRegion).toContainElement(screen.getByLabelText('Loading providers'))
@@ -176,7 +421,8 @@ describe('ResourcesPage', () => {
     expect(resourceInventoryQuerySpy).toHaveBeenLastCalledWith(
       'flashsystem',
       [flashProvider],
-      undefined,
+      'flash-01',
+      'source',
     )
   })
 
@@ -191,7 +437,7 @@ describe('ResourcesPage', () => {
 
     render(<ResourcesPage />)
 
-    expect(resourceInventoryQuerySpy).toHaveBeenCalledWith(null, [], undefined)
+    expect(resourceInventoryQuerySpy).toHaveBeenCalledWith(null, [], undefined, 'source')
     expect(screen.getByRole('alert')).toHaveTextContent('Failed to load providers.')
     expect(screen.getByRole('alert')).not.toHaveTextContent('provider service offline')
     expect(screen.queryByText('Metrics skeleton')).not.toBeInTheDocument()
@@ -209,6 +455,7 @@ describe('ResourcesPage', () => {
 
     expect(screen.getByText('No provider configured')).toBeInTheDocument()
     expect(screen.queryByText('Metrics skeleton')).not.toBeInTheDocument()
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
   })
 
   it('does not expose source-provider error details', () => {

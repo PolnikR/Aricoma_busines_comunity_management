@@ -7,12 +7,15 @@ import type { InfrastructureTopologyPlatform } from './topologyTypes'
 const providerTypeByPlatform: Record<InfrastructureTopologyPlatform, ProviderType> = {
   vmware: 'VMWARE',
   'ibm-power': 'IBM_POWER',
+  flashsystem: 'FLASHCOPY',
 }
 
 export function parseInfrastructurePlatform(
   value: string | null,
 ): InfrastructureTopologyPlatform {
-  return value === 'ibm-power' ? 'ibm-power' : 'vmware'
+  if (value === 'ibm-power') return 'ibm-power'
+  if (value === 'flashsystem') return 'flashsystem'
+  return 'vmware'
 }
 
 export function getProviderTypeForPlatform(
@@ -26,7 +29,7 @@ export function getInfrastructureProviders(
   platform: InfrastructureTopologyPlatform,
 ): ProviderRecord[] {
   const providerType = getProviderTypeForPlatform(platform)
-  return providers.filter(({ type }) => type === providerType)
+  return providers.filter(({ type, role }) => type === providerType && role !== 'target')
 }
 
 export function resolveInfrastructureProvider(

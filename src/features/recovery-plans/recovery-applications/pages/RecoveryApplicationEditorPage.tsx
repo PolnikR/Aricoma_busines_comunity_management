@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
+import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
+import { Alert } from '@/shared/components/alert/Alert'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
+import { RecoveryApplicationOrchestratorSuccessModal } from '../components/RecoveryApplicationOrchestratorSuccessModal'
 import {
   useRecoveryApplications,
   useSubmitRecoveryApplication,
@@ -14,9 +17,10 @@ import {
   toRecoveryApplicationData,
   toRecoveryApplicationFormState,
 } from '../utils/recoveryApplicationFormMapper'
-import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import type { OrchestratorPush, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
+import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
 
 export function RecoveryApplicationEditorPage() {
   const { t } = useTranslation()
@@ -25,7 +29,13 @@ export function RecoveryApplicationEditorPage() {
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
   const submitApplication = useSubmitRecoveryApplication()
   const [isDirty, setIsDirty] = useState(false)
+  const [orchestratorPush, setOrchestratorPush] = useState<OrchestratorPush | null>(null)
+  const [orchestratedApplicationName, setOrchestratedApplicationName] = useState('')
+  const [orchestratorProviderUrl, setOrchestratorProviderUrl] = useState<string | undefined>(undefined)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
+  const { data: platformProviders = [] } = usePlatformProviders()
+  const loadErrorDescription = resolveUserFacingErrorMessage(error, t('pages.recoveryEditor.requestFailed'))
+  const submitErrorDescription = resolveUserFacingErrorMessage(submitApplication.error, '')
   const application = applications?.find(
     (item) => toRecoveryApplicationFileName(item.id) === id,
   )
@@ -44,12 +54,20 @@ export function RecoveryApplicationEditorPage() {
 
   const handleSave = (formState: RecoveryApplicationFormState): void => {
     submitApplication.mutate({
-      fileName: formState.fileName,
-      providerId: formState.platform,
+      providerId: formState.orchestrationProviderId,
       data: toRecoveryApplicationData(formState),
+      pushToOrchestrator: formState.pushToOrchestrator,
     }, {
-      onSuccess: () => {
+      onSuccess: (response) => {
         setIsDirty(false)
+        if (formState.pushToOrchestrator && 'orchestrator_push' in response) {
+          setOrchestratedApplicationName(formState.name)
+          setOrchestratorProviderUrl(platformProviders.find(
+            provider => provider.id === formState.orchestrationProviderId,
+          )?.url)
+          setOrchestratorPush(response.orchestrator_push)
+          return
+        }
         navigationGuard.runWithoutBlocking(navigateToApplications)
       },
     })
@@ -75,7 +93,7 @@ export function RecoveryApplicationEditorPage() {
         <div className="p-6">
           <FetchErrorAlert
             title={t('pages.recoveryEditor.error.failed')}
-            description={error instanceof Error ? error.message : t('pages.recoveryEditor.requestFailed')}
+            description={loadErrorDescription}
             retryLabel={t('pages.providers.detail.retry')}
             isRetrying={isFetching}
             variant="full"
@@ -109,13 +127,15 @@ export function RecoveryApplicationEditorPage() {
       />
       <div className="flex flex-1 flex-col lg:min-h-0">
         {submitApplication.error ? (
-          <div className="mx-4 mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert">
-            {submitApplication.error instanceof Error
-              ? submitApplication.error.message
-              : t('pages.recovery.submitFailed')}
-          </div>
+          <Alert
+            variant="error"
+            className="mx-4 mt-4"
+            title={t('pages.recovery.submitFailed')}
+            {...(submitErrorDescription ? { description: submitErrorDescription } : {})}
+          />
         ) : null}
         <RecoveryAppBuilder
+          onCancel={goBack}
           initialData={initialData}
           onSave={handleSave}
           onDirtyChange={setIsDirty}
@@ -133,6 +153,19 @@ export function RecoveryApplicationEditorPage() {
         onCancel={navigationGuard.cancelNavigation}
         onConfirm={navigationGuard.confirmNavigation}
       />
+      {orchestratorPush ? (
+        <RecoveryApplicationOrchestratorSuccessModal
+          open
+          onClose={() => {
+            setOrchestratorPush(null)
+            setOrchestratedApplicationName('')
+            navigationGuard.runWithoutBlocking(navigateToApplications)
+          }}
+          applicationName={orchestratedApplicationName}
+          orchestratorPush={orchestratorPush}
+          providerUrl={orchestratorProviderUrl}
+        />
+      ) : null}
     </div>
   )
 }

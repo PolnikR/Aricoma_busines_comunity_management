@@ -2,11 +2,13 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { useInfrastructureInventory } from '../hooks/useInfrastructureInventory'
+import { useFlashSystemVolumeTree } from '../hooks/useFlashSystemVolumeTree'
 import { InfrastructurePage } from './InfrastructurePage'
-import type { DiscoveryInventory, PowerInventory } from '../../model/discoveryTypes'
+import type { DiscoveryInventory, PowerInventory } from '../../resources/model/discoveryTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
@@ -14,6 +16,9 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
 }))
 vi.mock('../hooks/useInfrastructureInventory', () => ({
   useInfrastructureInventory: vi.fn(),
+}))
+vi.mock('../hooks/useFlashSystemVolumeTree', () => ({
+  useFlashSystemVolumeTree: vi.fn(),
 }))
 vi.mock('../components/InfrastructureTopologySkeleton', () => ({
   InfrastructureTopologySkeleton: () => <div>Topology loading</div>,
@@ -28,8 +33,9 @@ vi.mock('../components/InfrastructureTopologyWorkspace', () => ({
 }))
 
 const providers: ProviderRecord[] = [
-  { id: 'vcenter-01', name: 'vCenter', description: '', type: 'VMWARE', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
-  { id: 'power-01', name: 'Power', description: '', type: 'IBM_POWER', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
+  { id: 'vcenter-01', name: 'vCenter', description: '', type: 'VMWARE', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
+  { id: 'power-01', name: 'Power', description: '', type: 'IBM_POWER', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
+  { id: 'flash-01', name: 'Flash', description: '', type: 'FLASHCOPY', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
 ]
 
 const vmwareInventory: DiscoveryInventory = {
@@ -93,6 +99,13 @@ beforeEach(() => {
     refetch: vi.fn(),
     ...inventoryQueryOverrides,
   }) as unknown as ReturnType<typeof useInfrastructureInventory>)
+  vi.mocked(useFlashSystemVolumeTree).mockReturnValue({
+    data: undefined,
+    error: null,
+    isLoading: false,
+    isFetching: false,
+    refetch: vi.fn(),
+  } as unknown as ReturnType<typeof useFlashSystemVolumeTree>)
 })
 
 describe('InfrastructurePage', () => {
@@ -117,6 +130,30 @@ describe('InfrastructurePage', () => {
     expect(screen.getByText('offline')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Retry loading' }))
     expect(refetch).toHaveBeenCalledOnce()
+  })
+
+  it('shows nested backend detail for provider and topology request failures', () => {
+    providerQueryOverrides = {
+      data: undefined,
+      isLoading: false,
+      isSuccess: false,
+      error: new Error('Providers request failed with status 503', {
+        cause: new OrvalApiError(503, 'Unavailable', { detail: 'Provider registry is unavailable.' }),
+      }),
+    }
+    const { unmount } = renderPage()
+    expect(screen.getByText('Provider registry is unavailable.')).toBeInTheDocument()
+    unmount()
+
+    providerQueryOverrides = {}
+    inventoryQueryOverrides = {
+      data: undefined,
+      error: new Error('Inventory request failed with status 503', {
+        cause: new OrvalApiError(503, 'Unavailable', { detail: 'Topology inventory is unavailable.' }),
+      }),
+    }
+    renderPage()
+    expect(screen.getByText('Topology inventory is unavailable.')).toBeInTheDocument()
   })
 
   it('maps VMware inventory to topology and refreshes it', async () => {
@@ -161,5 +198,38 @@ describe('InfrastructurePage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('location')).toHaveTextContent('providerId=power-01')
     })
+  })
+
+  it('maps a FlashSystem volume tree to topology using useFlashSystemVolumeTree, not useInfrastructureInventory', async () => {
+    vi.mocked(useFlashSystemVolumeTree).mockReturnValue({
+      data: {
+        counts: { pools: 1, volumes: 1, fcmaps: 0, consistency_groups: 0 },
+        nodes: [{
+          kind: 'pool', id: '0', name: 'Pool0', key: 'pool:0',
+          detail: {
+            id: '0', name: 'Pool0', status: 'online', mdisk_count: '1', vdisk_count: '1', capacity: '1.00TB',
+            extent_size: '0', free_capacity: '0', virtual_capacity: '0', used_capacity: '0', real_capacity: '0',
+            overallocation: '0', warning: '0', easy_tier: 'on', easy_tier_status: 'active', compression_active: 'no',
+            compression_virtual_capacity: '0', compression_compressed_capacity: '0', compression_uncompressed_capacity: '0',
+            parent_mdisk_grp_id: '', parent_mdisk_grp_name: '', child_mdisk_grp_count: '0', child_mdisk_grp_capacity: '0',
+            type: 'parent', encrypt: 'no', owner_type: 'none', site_id: '', site_name: '', data_reduction: 'no',
+            used_capacity_before_reduction: '0', used_capacity_after_reduction: '0', overhead_capacity: '0',
+            deduplication_capacity_saving: '0', reclaimable_capacity: '0', easy_tier_fcm_over_allocation_max: '0',
+            volume_count: 1,
+          },
+          children: [],
+        }],
+      },
+      error: null,
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useFlashSystemVolumeTree>)
+
+    renderPage('/discovery-inventory/infrastructure?platform=flashsystem&providerId=flash-01')
+
+    expect(await screen.findByText('Topology flashsystem: 1 nodes')).toBeInTheDocument()
+    expect(useFlashSystemVolumeTree).toHaveBeenCalledWith('flash-01', 'flat')
+    expect(useInfrastructureInventory).toHaveBeenCalledWith(null)
   })
 })

@@ -1,4 +1,5 @@
 import type {
+  DraftRecoveryTier,
   RecoveryApplicationData,
   RecoveryApplicationFormState,
   RecoveryApplicationListItem,
@@ -6,16 +7,36 @@ import type {
 } from '../model/recoveryApplicationTypes'
 import { toRecoveryApplicationFileName } from './recoveryApplicationFileName'
 
-function cloneTier(tier: RecoveryTier): RecoveryTier {
+function toFormEnvironment(environment: string): string {
+  return environment
+}
+
+export function cloneTier(tier: DraftRecoveryTier): DraftRecoveryTier {
+  if (!tier.recovery_group) {
+    return { ...tier }
+  }
+
   return {
     ...tier,
-    ...(tier.recovery_group ? {
-      recovery_group: {
-        ...tier.recovery_group,
-        vms: tier.recovery_group.vms.map((vm) => ({ ...vm })),
-      },
-    } : {}),
+    recovery_group: {
+      ...tier.recovery_group,
+      vms: tier.recovery_group.vms.map((vm) => ({ ...vm })),
+      ...(tier.recovery_group.volumes
+        ? { volumes: tier.recovery_group.volumes.map((vol) => ({ ...vol })) }
+        : {}),
+    },
   }
+}
+
+// Submission tiers must carry a recovery group. The builder's Save button is
+// already gated on every tier having one (see RecoveryAppBuilder's
+// canSaveApplication check), so a missing group here means that gate was
+// bypassed — fail loudly rather than send an invalid payload.
+function toSubmittableTier(id: string, tier: DraftRecoveryTier): RecoveryTier {
+  if (!tier.recovery_group) {
+    throw new Error(`Tier "${id}" has no recovery group attached`)
+  }
+  return { ...cloneTier(tier), recovery_group: tier.recovery_group }
 }
 
 export function toRecoveryApplicationFormState(
@@ -25,12 +46,15 @@ export function toRecoveryApplicationFormState(
 
   return {
     fileName: toRecoveryApplicationFileName(application.id),
+    policySetId: application.policySetId ?? '',
+    pushToOrchestrator: application.pushToOrchestrator ?? false,
     name: data.name,
-    description: data.description,
-    environment: data.environment,
+    description: data.description ?? '',
+    environment: toFormEnvironment(data.environment),
     platform: data.platform,
-    sourceConnection: data.source_connection,
-    targetConnection: data.target_connection,
+    orchestrationProviderId: application.orchestrationProviderId ?? '',
+    sourceConnection: data.source_connection ?? '',
+    targetConnection: data.target_connection ?? '',
     tiers: new Map(
       Object.entries(data.tiers).map(([id, tier]) => [id, cloneTier(tier)]),
     ),
@@ -41,6 +65,8 @@ export function toRecoveryApplicationData(
   formState: RecoveryApplicationFormState,
 ): RecoveryApplicationData {
   return {
+    id: formState.fileName,
+    policy_set_id: formState.policySetId,
     application: {
       name: formState.name,
       description: formState.description,
@@ -49,7 +75,7 @@ export function toRecoveryApplicationData(
       source_connection: formState.sourceConnection,
       target_connection: formState.targetConnection,
       tiers: Object.fromEntries(
-        Array.from(formState.tiers.entries()).map(([id, tier]) => [id, cloneTier(tier)]),
+        Array.from(formState.tiers.entries()).map(([id, tier]) => [id, toSubmittableTier(id, tier)]),
       ),
     },
   }

@@ -1,12 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import {
-  DISCOVERY_INVENTORY_GC_TIME_MS,
-  DISCOVERY_INVENTORY_STALE_TIME_MS,
-  discoveryInventoryKeys,
-} from '../../api/discoveryInventoryQueryKeys'
-import { fetchPowerInventory, fetchVmwareInventory } from '../../api/discoveryInventoryApi'
-import type { DiscoveryInventory, PowerInventory } from '../../model/discoveryTypes'
+import { discoveryInventoryKeys } from '../../resources/api/resourceInventoryQueryKeys'
+import { fetchPowerInventory } from '../../resources/api/powerInventoryApi'
+import { fetchVmwareInventory } from '../../resources/api/vmwareInventoryApi'
+import type { DiscoveryInventory, PowerInventory } from '../../resources/model/discoveryTypes'
 
 export type InfrastructureInventory = DiscoveryInventory | PowerInventory
 
@@ -15,7 +12,7 @@ export function useInfrastructureInventory(provider: ProviderRecord | null) {
   const queryKey = provider?.type === 'IBM_POWER'
     ? discoveryInventoryKeys.resourceInventory('IBM_POWER', provider.id)
     : provider?.type === 'VMWARE'
-      ? discoveryInventoryKeys.inventory(provider.id)
+      ? discoveryInventoryKeys.resourceInventory('VMWARE', provider.id)
       : ['infrastructure-topology', 'inactive'] as const
 
   return useQuery<InfrastructureInventory>({
@@ -26,9 +23,5 @@ export function useInfrastructureInventory(provider: ProviderRecord | null) {
       throw new Error('A supported infrastructure provider is required.')
     },
     enabled: isSupported,
-    refetchOnWindowFocus: false,
-    retry: 1,
-    staleTime: DISCOVERY_INVENTORY_STALE_TIME_MS,
-    gcTime: DISCOVERY_INVENTORY_GC_TIME_MS,
   })
 }

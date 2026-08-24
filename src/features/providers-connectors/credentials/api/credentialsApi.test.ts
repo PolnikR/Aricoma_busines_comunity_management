@@ -7,11 +7,10 @@ import {
 } from './credentialsApi'
 
 const mocks = vi.hoisted(() => ({
-  apiFetch: vi.fn(),
+  fetch: vi.fn(),
   encryptCredentialPassword: vi.fn(),
 }))
 
-vi.mock('@/shared/api/apiClient', () => ({ apiFetch: mocks.apiFetch }))
 vi.mock('./credentialsCrypto', () => ({
   encryptCredentialPassword: mocks.encryptCredentialPassword,
 }))
@@ -27,9 +26,11 @@ const responseBody = {
 
 describe('credentialsApi', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    mocks.fetch.mockReset()
+    mocks.encryptCredentialPassword.mockReset()
+    vi.stubGlobal('fetch', mocks.fetch)
     mocks.encryptCredentialPassword.mockResolvedValue('encrypted-password')
-    mocks.apiFetch.mockResolvedValue(new Response(JSON.stringify(responseBody), {
+    mocks.fetch.mockResolvedValue(new Response(JSON.stringify(responseBody), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     }))
@@ -37,7 +38,21 @@ describe('credentialsApi', () => {
 
   it('loads credential metadata without a password field', async () => {
     await expect(fetchCredentials()).resolves.toEqual(responseBody.credentials)
-    expect(mocks.apiFetch).toHaveBeenCalledWith('/api/get_credentials')
+    expect(mocks.fetch).toHaveBeenCalledWith('/api/get_credentials', expect.objectContaining({ method: 'GET' }))
+  })
+
+  it('normalizes a nullable generated description for the credential UI', async () => {
+    mocks.fetch.mockResolvedValue(new Response(JSON.stringify({
+      credentials: [{
+        ...responseBody.credentials[0],
+        description: null,
+      }],
+    }), { status: 200 }))
+
+    await expect(fetchCredentials()).resolves.toEqual([{
+      ...responseBody.credentials[0],
+      description: '',
+    }])
   })
 
   it('encrypts the password before submitting and marks the payload encrypted', async () => {
@@ -51,7 +66,7 @@ describe('credentialsApi', () => {
     await submitCredential(payload)
 
     expect(mocks.encryptCredentialPassword).toHaveBeenCalledWith('plaintext-secret')
-    const [, init] = mocks.apiFetch.mock.calls[0] as [string, RequestInit]
+    const [, init] = mocks.fetch.mock.calls[0] as [string, RequestInit]
     if (typeof init.body !== 'string') throw new Error('Expected a JSON request body')
     expect(JSON.parse(init.body)).toEqual({
       id: 'vcenter-admin',
@@ -62,13 +77,14 @@ describe('credentialsApi', () => {
       password_encrypted: true,
     })
     expect(init.body).not.toContain('plaintext-secret')
+    expect(init.method).toBe('POST')
   })
 
   it('deletes a credential using an encoded id', async () => {
     await deleteCredential('credential/admin')
-    expect(mocks.apiFetch).toHaveBeenCalledWith(
+    expect(mocks.fetch).toHaveBeenCalledWith(
       '/api/delete_credential?credential_id=credential%2Fadmin',
-      { method: 'DELETE' },
+      expect.objectContaining({ method: 'DELETE' }),
     )
   })
 })

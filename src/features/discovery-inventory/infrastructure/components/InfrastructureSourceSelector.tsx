@@ -37,6 +37,7 @@ export function InfrastructureSourceSelector({
         >
           <option value="vmware">{t('topology.source.vmware')}</option>
           <option value="ibm-power">{t('topology.source.ibmPower')}</option>
+          <option value="flashsystem">{t('topology.source.flashsystem')}</option>
         </Select>
       </Field>
 

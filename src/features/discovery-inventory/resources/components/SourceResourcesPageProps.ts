@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import type { ProviderRecord, ProviderRole } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { useTranslation } from '@/hooks/useTranslation'
 
 export interface SourceResourcesPageProps {
@@ -9,6 +9,8 @@ export interface SourceResourcesPageProps {
   providersFetching: boolean
   providersError: Error | null
   onRefetchProviders: () => void
+  providerId: string | null
   tabs: ReactNode
   t: ReturnType<typeof useTranslation>['t']
+  role: ProviderRole
 }

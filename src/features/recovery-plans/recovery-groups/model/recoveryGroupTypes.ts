@@ -5,6 +5,7 @@ export type RecoveryGroupWorkloadType =
   | 'ibm_flashsystem'
 export type RecoveryGroupResourceType = 'vm' | 'volume'
 export type RecoveryGroupStatus = 'Draft' | 'Active'
+export type RecoveryGroupProviderResolution = 'resolved' | 'unresolved'
 
 export type RecoveryGroupResourceConfiguration =
   | {
@@ -18,10 +19,25 @@ export type RecoveryGroupResourceConfiguration =
       resourceType: 'vm'
     }
   | {
+      sourceCategory: 'backup_system_workload'
+      workloadType: null
+      resourceType: 'vm'
+    }
+  | {
       sourceCategory: 'storage_system'
       workloadType: 'ibm_flashsystem'
       resourceType: 'volume'
     }
+
+export interface RecoveryGroupVmMetadata {
+  order?: number | undefined
+  hostname?: string | undefined
+  ip_address?: string | undefined
+  os?: string | undefined
+  cpu?: number | undefined
+  memory_gb?: number | undefined
+  storage_gb?: number | undefined
+}
 
 interface RecoveryGroupBase {
   id: string
@@ -31,6 +47,7 @@ interface RecoveryGroupBase {
   policySetId: string
   resourceCount: number
   status: RecoveryGroupStatus
+  providerResolution?: RecoveryGroupProviderResolution
 }
 
 export type RecoveryGroupListItem = RecoveryGroupBase & RecoveryGroupResourceConfiguration
@@ -39,6 +56,28 @@ export type RecoveryGroup = RecoveryGroupListItem & {
   resources: string[]
   relatedVolumeProviderId: string | null
   relatedVolumes: string[]
+  vmMetadataByName?: Record<string, RecoveryGroupVmMetadata> | undefined
+  // Server-assigned DAG run id from the last orchestrator push. Read-only:
+  // this is a run identifier, not the orchestration provider's id.
+  airflowRunId?: string | null | undefined
+  pushToOrchestrator?: boolean | undefined
+  // Platform provider (AIRFLOW) this group is/was orchestrated to. Read-only.
+  orchestrationProviderId?: string | null | undefined
+  rawRecord?: RecoveryGroupReadRecord | undefined
+}
+
+export interface RecoveryGroupReadRecord {
+  id: string
+  name: string
+  description: string
+  provider_id_vm: string
+  provider_id_volume: string
+  policy_set_id: string
+  vms: ({ name: string } & RecoveryGroupVmMetadata)[]
+  volumes: { name: string }[]
+  airflow_run_id?: string | null | undefined
+  push_to_orchestrator?: boolean | undefined
+  orchestration_provider_id?: string | undefined
 }
 
 export interface RecoveryGroupDraft {
@@ -53,4 +92,7 @@ export interface RecoveryGroupDraft {
   resources: string[]
   relatedVolumeProviderId?: string | null
   relatedVolumes?: string[]
+  vmMetadataByName?: Record<string, RecoveryGroupVmMetadata> | undefined
+  orchestrationProviderId: string | null
+  pushToOrchestrator: boolean
 }

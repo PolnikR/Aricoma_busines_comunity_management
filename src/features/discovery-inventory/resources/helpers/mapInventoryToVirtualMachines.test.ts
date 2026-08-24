@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mapInventoryToVirtualMachines } from './mapInventoryToVirtualMachines'
-import type { DiscoveryInventory } from '../../model/discoveryTypes'
+import type { DiscoveryInventory } from '../model/discoveryTypes'
 
 describe('mapInventoryToVirtualMachines', () => {
   it('maps disks, metrics, and sorted unique filter options', () => {

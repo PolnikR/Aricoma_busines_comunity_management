@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router'
 import { Button } from '@/shared/components/button/Button'
+import { Alert } from '@/shared/components/alert/Alert'
 import { DataTableSkeleton } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { routes } from '@/app/routes'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { RecoveryGroupsTable } from '../components/RecoveryGroupsTable'
 import { useRecoveryGroups } from '../hooks/useRecoveryGroups'
 import { getRecoveryGroupsErrorKey } from '../utils/recoveryGroupsErrorMessage'
@@ -12,7 +14,7 @@ import { getRecoveryGroupsErrorKey } from '../utils/recoveryGroupsErrorMessage'
 export function RecoveryGroupsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { groups, remove, isLoading, isFetching, error, refresh, mutationError } = useRecoveryGroups()
+  const { groups, remove, rollback, isLoading, isFetching, isDeleting, error, refresh, mutationError } = useRecoveryGroups()
   const navigateToCreate = () => { void navigate(`${routes.recoveryGroups}/create`) }
   const navigateToEdit = (id: string) => {
     void navigate(`${routes.recoveryGroups}/${encodeURIComponent(id)}/edit`)
@@ -24,6 +26,8 @@ export function RecoveryGroupsListPage() {
         eyebrow={t('pages.recoveryGroups.eyebrow')}
         title={t('pages.recoveryGroups.title')}
         description={t('pages.recoveryGroups.description')}
+        isFetching={isFetching}
+        onRefresh={() => { void refresh() }}
         actions={
           <Button size="sm" variant="outline" onClick={navigateToCreate}>
             {t('pages.recoveryGroups.createButton')}
@@ -33,9 +37,11 @@ export function RecoveryGroupsListPage() {
 
       <div className="flex flex-1 flex-col gap-4 overflow-hidden p-3 lg:min-h-0">
         {mutationError ? (
-          <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert">
-            {t(getRecoveryGroupsErrorKey(mutationError))}
-          </div>
+          <Alert
+            variant="error"
+            title={t(getRecoveryGroupsErrorKey(mutationError))}
+            description={extractBackendErrorDetail(mutationError)}
+          />
         ) : null}
         {isLoading ? (
           <DataTableSkeleton
@@ -59,8 +65,10 @@ export function RecoveryGroupsListPage() {
               groups={groups}
               onEdit={navigateToEdit}
               onDelete={remove}
+              onRollback={rollback}
               error={error instanceof Error ? error : null}
               isRetrying={isFetching}
+              isDeleting={isDeleting}
               onRetry={() => { void refresh() }}
             />
           </div>

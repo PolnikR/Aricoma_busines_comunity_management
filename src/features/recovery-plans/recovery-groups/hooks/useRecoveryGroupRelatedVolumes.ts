@@ -1,10 +1,6 @@
 import { useQueries } from '@tanstack/react-query'
-import {
-  DISCOVERY_INVENTORY_GC_TIME_MS,
-  DISCOVERY_INVENTORY_STALE_TIME_MS,
-  discoveryInventoryKeys,
-} from '@/features/discovery-inventory/api/discoveryInventoryQueryKeys'
-import { fetchVdisksByVm } from '@/features/discovery-inventory/resources/api/vdisksApi'
+import { discoveryInventoryKeys } from '@/features/discovery-inventory/resources/api/resourceInventoryQueryKeys'
+import { fetchVdisksByVm } from '@/features/discovery-inventory/resources/api/vmStorageVolumesApi'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
 export function resolveDefaultFlashcopyProviderId(
@@ -44,10 +40,6 @@ export function useRecoveryGroupRelatedVolumes(
       ),
       queryFn: () => fetchVdisksByVm(vmName, vmProviderId ?? undefined, flashcopyProviderId ?? undefined),
       enabled: queryEnabled,
-      staleTime: DISCOVERY_INVENTORY_STALE_TIME_MS,
-      gcTime: DISCOVERY_INVENTORY_GC_TIME_MS,
-      refetchOnWindowFocus: false,
-      retry: 1,
     })),
   })
 

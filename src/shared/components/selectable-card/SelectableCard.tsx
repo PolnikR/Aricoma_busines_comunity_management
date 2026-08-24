@@ -8,6 +8,7 @@ interface SelectableCardProps extends Omit<ButtonHTMLAttributes<HTMLButtonElemen
   description: string
   icon?: ReactNode
   meta?: ReactNode
+  supportingContent?: ReactNode
 }
 
 export function SelectableCard({
@@ -16,6 +17,7 @@ export function SelectableCard({
   description,
   icon,
   meta,
+  supportingContent,
   className,
   ...props
 }: SelectableCardProps) {
@@ -51,22 +53,25 @@ export function SelectableCard({
         ) : null}
       </span>
       <span className="mt-1.5 max-w-[90%] text-xs leading-5 text-text-muted">{description}</span>
-      <span className="mt-auto flex min-h-7 items-end justify-between gap-3 pt-3">
-        {meta ? (
-          <span className="rounded-md border border-border bg-surface/80 px-2.5 py-1 text-[11px] font-semibold text-text-secondary shadow-sm">
-            {meta}
-          </span>
-        ) : <span />}
-        {icon ? (
-          <span
-            aria-hidden="true"
-            data-testid="selectable-card-logo"
-            className="ml-auto shrink-0 text-text-secondary opacity-80 transition group-[:enabled:hover]:opacity-100"
-          >
-            {icon}
-          </span>
-        ) : null}
-      </span>
+      {supportingContent ? <span className="mt-3 block w-full">{supportingContent}</span> : null}
+      {meta || icon || !supportingContent ? (
+        <span className="mt-auto flex min-h-7 items-end justify-between gap-3 pt-3">
+          {meta ? (
+            <span className="rounded-md border border-border bg-surface/80 px-2.5 py-1 text-[11px] font-semibold text-text-secondary shadow-sm">
+              {meta}
+            </span>
+          ) : <span />}
+          {icon ? (
+            <span
+              aria-hidden="true"
+              data-testid="selectable-card-logo"
+              className="ml-auto shrink-0 text-text-secondary opacity-80 transition group-[:enabled:hover]:opacity-100"
+            >
+              {icon}
+            </span>
+          ) : null}
+        </span>
+      ) : null}
     </button>
   )
 }

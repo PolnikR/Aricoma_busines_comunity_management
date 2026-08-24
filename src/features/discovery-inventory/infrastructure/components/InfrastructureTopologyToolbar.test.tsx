@@ -84,4 +84,28 @@ describe('InfrastructureTopologyToolbar', () => {
     expect(screen.queryByLabelText('Datastores')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Filter topology by host')).not.toBeInTheDocument()
   })
+
+  it('shows the FlashSystem view switch and dispatches view changes', async () => {
+    const user = userEvent.setup()
+    const onFlashSystemViewChange = vi.fn()
+    render(
+      <InfrastructureTopologyToolbar
+        platform="flashsystem"
+        filters={filters}
+        options={options}
+        isLayouting={false}
+        flashSystemView="flat"
+        onFiltersChange={vi.fn()}
+        onFlashSystemViewChange={onFlashSystemViewChange}
+        onAutoLayout={vi.fn()}
+        onResetPositions={vi.fn()}
+        onFitView={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByLabelText('Filter topology by host')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Datastores')).not.toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Filter topology by view'), 'snapshot')
+    expect(onFlashSystemViewChange).toHaveBeenCalledWith('snapshot')
+  })
 })

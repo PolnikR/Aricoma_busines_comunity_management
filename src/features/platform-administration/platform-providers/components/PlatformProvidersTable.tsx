@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
+import { ExternalLinkIcon } from '@/shared/icons/Icons'
 import {
   DataTable,
   DataTablePagination,
@@ -13,8 +16,10 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
+import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useDeletePlatformProvider } from '../hooks/useDeletePlatformProvider'
+import { toPlatformProviderJson } from '../helpers/platformProviderJson'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { PlatformProvidersModal } from './PlatformProvidersModal'
 
@@ -24,7 +29,10 @@ function credentialStatusColor(status: PlatformProviderRecord['credentialStatus'
   return 'light' as const
 }
 
-function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<PlatformProviderRecord>[] {
+function getColumns(
+  t: ReturnType<typeof useTranslation>['t'],
+  onViewJson: (providerId: string) => void,
+): ColumnDef<PlatformProviderRecord>[] {
   return [
     {
       id: 'name',
@@ -68,6 +76,22 @@ function getColumns(t: ReturnType<typeof useTranslation>['t']): ColumnDef<Platfo
         </div>
       ),
     },
+    {
+      id: 'json',
+      header: t('tables.common.json'),
+      cell: provider => (
+        <Button
+          size="xs"
+          variant="soft"
+          onClick={(event: React.MouseEvent) => {
+            event.stopPropagation()
+            onViewJson(provider.id)
+          }}
+        >
+          {t('buttons.viewJson')}
+        </Button>
+      ),
+    },
   ]
 }
 
@@ -87,19 +111,23 @@ export function PlatformProvidersTable({
   onRetry,
 }: PlatformProvidersTableProps) {
   const { t } = useTranslation()
-  const columns = getColumns(t)
   const deleteProvider = useDeletePlatformProvider()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<PlatformProviderRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<PlatformProviderRecord | null>(null)
+  const [jsonViewId, setJsonViewId] = useState<string | null>(null)
+  const loadErrorDescription = extractBackendErrorDetail(error)
+  const deleteErrorDescription = extractBackendErrorDetail(deleteProvider.error)
   const rows = useMemo(() => providers, [providers])
   const selected = rows.find(provider => provider.id === selectedId) ?? null
+  const jsonViewed = rows.find(provider => provider.id === jsonViewId) ?? null
+  const columns = getColumns(t, setJsonViewId)
   const table = useTableState(rows, { searchFields: ['name', 'id', 'ipAddress'] })
 
   if (isLoading) {
     return (
       <DataTableSkeleton
-        columnCount={6}
+        columnCount={7}
         ariaLabel={t('platformProviders.loading')}
         className="flex-1 rounded-none border-0 shadow-none lg:min-h-0"
       />
@@ -108,6 +136,14 @@ export function PlatformProvidersTable({
 
   return (
     <div className="flex flex-col">
+      {deleteProvider.error ? (
+        <Alert
+          className="mx-4 mt-4"
+          title={t('platformProviders.dialogs.delete')}
+          {...(deleteErrorDescription ? { description: deleteErrorDescription } : {})}
+          variant="error"
+        />
+      ) : null}
       <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
@@ -118,8 +154,10 @@ export function PlatformProvidersTable({
       />
 
       <DataTableRequestState
+        hasData={rows.length > 0}
         error={error ? {
           title: t('platformProviders.loadFailed'),
+          ...(loadErrorDescription ? { description: loadErrorDescription } : {}),
           retryLabel: t('buttons.retry'),
           isRetrying,
           onRetry,
@@ -176,6 +214,26 @@ export function PlatformProvidersTable({
             <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{selected.ipAddress}</span>} />
             <DetailRow label={t('details.port')} value={<span className="font-mono">{selected.port}</span>} />
             <DetailRow label={t('details.dagDir')} value={<span className="font-mono">{selected.dagDir}</span>} />
+            {selected.url ? (
+              <DetailRow
+                label={t('details.url')}
+                value={(
+                  <a
+                    href={selected.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
+                  >
+                    {selected.url}
+                    <ExternalLinkIcon className="size-3.5 shrink-0" />
+                  </a>
+                )}
+              />
+            ) : null}
+            <DetailRow
+              label={t('details.notificationEmail')}
+              value={selected.notificationEmail ?? '-'}
+            />
             <DetailRow label={t('details.credential')} value={<span className="font-mono">{selected.credentialId}</span>} />
             <DetailRow
               label={t('details.credentialStatus')}
@@ -209,8 +267,17 @@ export function PlatformProvidersTable({
           if (!deleteTarget) return
           deleteProvider.mutate(deleteTarget.id, {
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
+            onError: () => { setDeleteTarget(null) },
           })
         }}
+      />
+
+      <JsonViewerModal
+        open={jsonViewed !== null}
+        title={t('platformProviders.jsonViewer.title')}
+        data={jsonViewed ? toPlatformProviderJson(jsonViewed) : null}
+        closeLabel={t('buttons.close')}
+        onClose={() => { setJsonViewId(null) }}
       />
     </div>
   )

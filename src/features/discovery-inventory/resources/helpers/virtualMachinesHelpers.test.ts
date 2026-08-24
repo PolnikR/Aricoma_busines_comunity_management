@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fetchVmwareInventory } from '../../api/discoveryInventoryApi'
-import type { VirtualMachinesQuery } from '../types'
+import { fetchVmwareInventory } from '../api/vmwareInventoryApi'
+import type { VirtualMachinesQuery } from '../types/virtualMachineTypes'
 import { applyFiltersAndPagination } from './filterVirtualMachines'
 import { mapInventoryToVirtualMachines } from './mapInventoryToVirtualMachines'
 
@@ -45,7 +45,6 @@ function createQuery(overrides: Partial<VirtualMachinesQuery> = {}): VirtualMach
     powerState: '',
     connectionState: '',
     cluster: '',
-    providerId: '',
     tags: [],
     untagged: false,
     page: 1,
@@ -122,7 +121,7 @@ describe('applyFiltersAndPagination', () => {
     expect(filtered.filterOptions).toEqual(allData.filterOptions)
   })
 
-  it('filters by search term', async () => {
+  it('ignores the legacy search term after inventory retrieval', async () => {
     const virtualMachines = [createVirtualMachine(1), createVirtualMachine(2), createVirtualMachine(3)]
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ count: 3, vms: virtualMachines }), { status: 200 }),
@@ -135,8 +134,12 @@ describe('applyFiltersAndPagination', () => {
       pageSize: 10,
     }))
 
-    expect(filtered.total).toBe(1)
-    expect(filtered.items[0]?.id).toBe('vmware-vcenter-01:vm-2')
+    expect(filtered.total).toBe(3)
+    expect(filtered.items.map((vm) => vm.id)).toEqual([
+      'vmware-vcenter-01:vm-1',
+      'vmware-vcenter-01:vm-2',
+      'vmware-vcenter-01:vm-3',
+    ])
   })
 
   it('filters by power state', async () => {
@@ -187,15 +190,15 @@ describe('applyFiltersAndPagination', () => {
 
     const allData = await loadVirtualMachines()
     const filtered = applyFiltersAndPagination(allData, createQuery({
-      search: 'application-02',
       powerState: 'poweredOn',
       cluster: 'cluster-01',
       page: 1,
       pageSize: 10,
     }))
 
-    expect(filtered.total).toBe(1)
-    expect(filtered.items[0]?.id).toBe('vmware-vcenter-01:vm-2')
+    expect(filtered.total).toBe(2)
+    expect(filtered.items.every((vm) => vm.powerState === 'poweredOn')).toBe(true)
+    expect(filtered.items.every((vm) => vm.cluster === 'cluster-01')).toBe(true)
   })
 
   it('handles pagination at boundaries', async () => {

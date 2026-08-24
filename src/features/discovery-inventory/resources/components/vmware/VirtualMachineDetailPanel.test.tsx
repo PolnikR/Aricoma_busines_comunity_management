@@ -3,16 +3,25 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
-import type { VirtualMachine } from '../../types'
-import type { VmStorageVolumes } from '../../model/vdisksTypes'
+import type { VirtualMachine } from '../../types/virtualMachineTypes'
+import type { VmStorageVolumes } from '../../model/vmStorageVolumesTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 const useVdisksByVmMock = vi.hoisted(() => vi.fn<() => {
   data: VmStorageVolumes | undefined
   isLoading: boolean
-}>(() => ({ data: undefined, isLoading: false })))
-vi.mock('../../hooks/useVdisksByVm', () => ({ useVdisksByVm: useVdisksByVmMock }))
+  isError: boolean
+  isFetching: boolean
+  refetch: () => Promise<unknown>
+}>(() => ({
+  data: undefined,
+  isLoading: false,
+  isError: false,
+  isFetching: false,
+  refetch: vi.fn().mockResolvedValue(undefined),
+})))
+vi.mock('../../hooks/useVmStorageVolumes', () => ({ useVdisksByVm: useVdisksByVmMock }))
 
 const vmwareProvider = {
   id: 'vmware-vcenter-01',
@@ -20,6 +29,7 @@ const vmwareProvider = {
   description: '',
   type: 'VMWARE',
   ipAddress: '10.0.0.10',
+  port: 22,
   credentialId: 'vcenter-admin',
   credentialStatus: 'ok',
   defaultFlashcopyProviderId: 'ibm-flashsystem-01',
@@ -31,6 +41,7 @@ const flashProvider: ProviderRecord = {
   description: '',
   type: 'FLASHCOPY',
   ipAddress: '10.0.0.20',
+  port: 22,
   credentialId: 'flash-admin',
   credentialStatus: 'ok',
 }
@@ -85,7 +96,13 @@ describe('VirtualMachineDetailPanel resize', () => {
   afterEach(() => {
     cleanup()
     useVdisksByVmMock.mockReset()
-    useVdisksByVmMock.mockReturnValue({ data: undefined, isLoading: false })
+    useVdisksByVmMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      isFetching: false,
+      refetch: vi.fn().mockResolvedValue(undefined),
+    })
   })
 
   it('loads related volumes with the VM and selected FlashSystem provider', () => {
@@ -128,7 +145,13 @@ describe('VirtualMachineDetailPanel resize', () => {
 
   it('shows the shared table skeleton while snapshots are loading', async () => {
     const user = userEvent.setup()
-    useVdisksByVmMock.mockReturnValue({ data: undefined, isLoading: true })
+    useVdisksByVmMock.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      isFetching: true,
+      refetch: vi.fn().mockResolvedValue(undefined),
+    })
 
     renderWithQueryClient(
       <VirtualMachineDetailPanel
@@ -144,10 +167,66 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(screen.getByRole('status', { name: 'Loading snapshots...' })).toBeInTheDocument()
   })
 
+  it('shows the shared snapshot error state and retries the same request', async () => {
+    const user = userEvent.setup()
+    const refetch = vi.fn().mockResolvedValue(undefined)
+    useVdisksByVmMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      isFetching: false,
+      refetch,
+    })
+
+    renderWithQueryClient(
+      <VirtualMachineDetailPanel
+        virtualMachine={vm}
+        providers={[vmwareProvider, flashProvider]}
+        open
+        onClose={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('tab', { name: 'Snapshots' }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Resource inventory could not be loaded')
+    expect(screen.queryByLabelText('Snapshot mappings table')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(refetch).toHaveBeenCalledOnce()
+  })
+
+  it('shows retrying state without falling through to the empty snapshot table', async () => {
+    const user = userEvent.setup()
+    useVdisksByVmMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      isFetching: true,
+      refetch: vi.fn().mockResolvedValue(undefined),
+    })
+
+    renderWithQueryClient(
+      <VirtualMachineDetailPanel
+        virtualMachine={vm}
+        providers={[vmwareProvider, flashProvider]}
+        open
+        onClose={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('tab', { name: 'Snapshots' }))
+
+    expect(screen.getByRole('button', { name: 'Retrying' })).toBeDisabled()
+    expect(screen.queryByLabelText('Snapshot mappings table')).not.toBeInTheDocument()
+  })
+
   it('renders snapshot mappings in an accessible shared data table', async () => {
     const user = userEvent.setup()
     useVdisksByVmMock.mockReturnValue({
       isLoading: false,
+      isError: false,
+      isFetching: false,
+      refetch: vi.fn().mockResolvedValue(undefined),
       data: {
         vmName: 'app-server-01',
         countVm: 1,

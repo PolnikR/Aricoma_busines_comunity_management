@@ -4,11 +4,11 @@ import { Button } from '@/shared/components/button/Button'
 import { Field, Input, Textarea } from '@/shared/components/form/FormControls'
 import { ResourceSelectionCard } from '@/shared/components/resource-selection/ResourceSelectionCard'
 import { isTierIdAvailable, slugify } from '../utils/tierUtils'
-import type { RecoveryTier } from '../model/recoveryApplicationTypes'
+import type { DraftRecoveryTier } from '../model/recoveryApplicationTypes'
 
 interface TierCardProps {
   id: string
-  tier: RecoveryTier
+  tier: DraftRecoveryTier
   isEditing?: boolean
   onEditToggle?: (id: string) => void
   onSave?: (id: string, newId: string, updates: {

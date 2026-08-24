@@ -12,7 +12,9 @@ const providerA: ProviderRecord = {
   description: 'Primary vCenter',
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
+  port: 22,
   credentialId: 'vcenter-admin',
+  role: 'source',
   credentialStatus: 'ok',
 }
 
@@ -50,18 +52,29 @@ describe('useUpsertProvider', () => {
       type: 'FLASHCOPY',
       ipAddress: '10.0.0.2',
       credentialId: 'ibm-admin',
+      role: 'source',
     }
     const { mockFetch, queryClient, result } = setup([
       providerA,
       { ...newProvider, credentialStatus: 'ok' },
     ])
 
-    queryClient.setQueryData(providerKeys.list(), [providerA])
+    const targetProvider: ProviderRecord = {
+      ...providerA,
+      id: 'vmware-vcenter-target',
+      name: 'Target vCenter',
+      role: 'target',
+    }
+    queryClient.setQueryData(providerKeys.list('all'), [providerA, targetProvider])
+    queryClient.setQueryData(providerKeys.list('source'), [providerA])
+    queryClient.setQueryData(providerKeys.list('target'), [targetProvider])
     result.current.mutate({ provider: newProvider })
 
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
     expect(submittedProvider(mockFetch)).toEqual(newProvider)
-    expect(queryClient.getQueryState(providerKeys.list())?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryState(providerKeys.list('all'))?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryState(providerKeys.list('source'))?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryState(providerKeys.list('target'))?.isInvalidated).toBe(true)
   })
 
   it('posts an edited provider without sending backend-owned credentialStatus', async () => {
@@ -72,6 +85,7 @@ describe('useUpsertProvider', () => {
       type: providerA.type,
       ipAddress: providerA.ipAddress,
       credentialId: providerA.credentialId,
+      role: providerA.role ?? 'source',
     }
     const edited: ProviderSubmitData = { ...providerSubmitData, name: 'Renamed vCenter' }
     const { mockFetch, queryClient, result } = setup([{ ...providerA, name: edited.name }])
@@ -93,6 +107,7 @@ describe('useUpsertProvider', () => {
       type: 'FLASHCOPY',
       ipAddress: '10.0.0.2',
       credentialId: 'ibm-admin',
+      role: 'source',
     }
     const concurrentProvider: ProviderRecord = {
       id: 'powervm-01',
@@ -100,6 +115,7 @@ describe('useUpsertProvider', () => {
       description: '',
       type: 'IBM_POWER',
       ipAddress: '10.0.0.3',
+      port: 22,
       credentialId: null,
       credentialStatus: 'none',
     }

@@ -34,6 +34,15 @@ describe('PolicySetsPage', () => {
     expect(screen.queryByRole('tab')).not.toBeInTheDocument()
   })
 
+  it('constrains the inventory shell inside the available page space', () => {
+    render(<PolicySetsPage />)
+
+    const inventorySection = screen.getByRole('region', { name: 'Policy set records' })
+    const inventoryHost = inventorySection.parentElement?.parentElement
+
+    expect(inventoryHost).toHaveClass('flex', 'min-h-0', 'min-w-0', 'flex-1', 'flex-col', 'overflow-hidden')
+  })
+
   it('opens the create modal with cached policy sets', async () => {
     render(<PolicySetsPage />)
 

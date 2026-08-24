@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
+import { Alert } from '@/shared/components/alert/Alert'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
+import { isProgrammaticIdAvailable, toProgrammaticId } from '@/shared/utils/programmaticId'
+import { useTags } from '@/features/discovery-inventory/resources/hooks/useVmwareTags'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { useUpsertProvider } from '../hooks/useUpsertProvider'
 import { useCredentials } from '../../credentials/hooks/useCredentials'
 import { ProviderCreateForm } from './ProviderCreateForm'
-import type { ProviderRecord, ProviderSubmitData, ProviderType } from '../model/providerTypes'
+import type { ProviderRecord, ProviderRole, ProviderSubmitData, ProviderType } from '../model/providerTypes'
 import type { ProviderCreateFormData } from './ProviderCreateForm'
 
 interface ProvidersCreateModalProps {
@@ -24,8 +28,16 @@ const EMPTY_FORM: ProviderCreateFormData = {
   name: '',
   description: '',
   type: '',
+  role: '',
   ipAddress: '',
+  url: '',
+  port: '22',
   credentialId: '',
+  defaultFlashcopyProviderId: '',
+  orchestratorConnId: '',
+  vmPrefix: '',
+  vmTags: [],
+  notificationEmail: '',
 }
 
 function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
@@ -35,8 +47,16 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         name: provider.name,
         description: provider.description,
         type: provider.type,
+        role: provider.role ?? 'source',
         ipAddress: provider.ipAddress,
+        url: provider.url ?? '',
+        port: String(provider.port ?? 22),
         credentialId: provider.credentialId ?? '',
+        defaultFlashcopyProviderId: provider.defaultFlashcopyProviderId ?? '',
+        orchestratorConnId: provider.orchestratorConnId ?? '',
+        vmPrefix: provider.vmPrefix ?? '',
+        vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
+        notificationEmail: provider.notificationEmail ?? '',
       }
     : EMPTY_FORM
 }
@@ -47,17 +67,29 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
   const upsert = useUpsertProvider()
   const credentialsQuery = useCredentials({ enabled: open })
   const isEdit = Boolean(provider)
+  const tagsEnabled = open && isEdit && provider?.type === 'VMWARE'
+  const tagsQuery = useTags(provider?.id ?? null, tagsEnabled)
   const [formData, setFormData] = useState<ProviderCreateFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof ProviderCreateFormData, string>>>({})
-  const [errorMessage, setErrorMessage] = useState('')
+  const [submitError, setSubmitError] = useState<unknown>(null)
+  const submitErrorDescription = extractBackendErrorDetail(submitError)
   const initialForm = createInitialForm(provider)
   const isDirty = open && (
     formData.id !== initialForm.id
     || formData.name !== initialForm.name
     || formData.description !== initialForm.description
     || formData.type !== initialForm.type
+    || formData.role !== initialForm.role
     || formData.ipAddress !== initialForm.ipAddress
+    || formData.url !== initialForm.url
+    || formData.port !== initialForm.port
     || formData.credentialId !== initialForm.credentialId
+    || formData.defaultFlashcopyProviderId !== initialForm.defaultFlashcopyProviderId
+    || formData.orchestratorConnId !== initialForm.orchestratorConnId
+    || formData.notificationEmail !== initialForm.notificationEmail
+    || formData.vmPrefix !== initialForm.vmPrefix
+    || formData.vmTags.length !== initialForm.vmTags.length
+    || formData.vmTags.some((tag, index) => tag !== initialForm.vmTags[index])
   )
   const navigationGuard = useUnsavedChangesGuard(isDirty)
 
@@ -67,13 +99,13 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData(createInitialForm(provider))
     setErrors({})
-    setErrorMessage('')
+    setSubmitError(null)
   }, [open, provider])
 
   const close = () => {
     setFormData(EMPTY_FORM)
     setErrors({})
-    setErrorMessage('')
+    setSubmitError(null)
     onClose()
   }
 
@@ -82,7 +114,20 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
   }
 
   const handleChange = (field: keyof ProviderCreateFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    setFormData((prev) => {
+      if (field === 'name' && !isEdit) {
+        const previousDerivedId = toProgrammaticId(prev.name)
+        if (!prev.id || prev.id === previousDerivedId) {
+          return {
+            ...prev,
+            name: value,
+            id: toProgrammaticId(value),
+          }
+        }
+      }
+
+      return { ...prev, [field]: value }
+    })
     if (field in errors && errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev }
@@ -91,19 +136,43 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
         return newErrors
       })
     }
-    setErrorMessage('')
+    setSubmitError(null)
+  }
+
+  const handleIdBlur = () => {
+    if (isEdit) return
+    setFormData((prev) => ({ ...prev, id: toProgrammaticId(prev.id) }))
+  }
+
+  const handleTagsChange = (vmTags: string[]) => {
+    setFormData((prev) => ({ ...prev, vmTags }))
+    setSubmitError(null)
   }
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof ProviderCreateFormData, string>> = {}
-    if (!formData.id.trim()) newErrors.id = t('forms.idRequired')
-    else if (!isEdit && existingProviders.some((entry) => entry.id === formData.id.trim())) {
+    const normalizedId = toProgrammaticId(formData.id)
+    if (!normalizedId) newErrors.id = t('forms.idRequired')
+    else if (!isProgrammaticIdAvailable(
+      normalizedId,
+      existingProviders.map(entry => toProgrammaticId(entry.id)),
+      isEdit ? toProgrammaticId(provider?.id ?? '') : undefined,
+    )) {
       newErrors.id = t('providers.validation.idExists')
     }
     if (!formData.name.trim()) newErrors.name = t('forms.nameRequired')
     if (!formData.description.trim()) newErrors.description = t('forms.descriptionRequired')
     if (!formData.type) newErrors.type = t('forms.typeRequired')
+    if (!formData.role) newErrors.role = t('forms.roleRequired')
     if (!formData.ipAddress.trim()) newErrors.ipAddress = t('forms.ipRequired')
+    const notificationEmail = formData.notificationEmail.trim()
+    if (notificationEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notificationEmail)) {
+      newErrors.notificationEmail = t('forms.notificationEmailInvalid')
+    }
+    const port = Number(formData.port)
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      newErrors.port = t('forms.portRequired')
+    }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -111,24 +180,33 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
   const handleSubmit = () => {
     if (!validate()) return
 
-    setErrorMessage('')
+    setSubmitError(null)
 
     const record: ProviderSubmitData = {
-      id: formData.id.trim(),
+      id: isEdit ? formData.id.trim() : toProgrammaticId(formData.id),
       name: formData.name.trim(),
       description: formData.description.trim(),
       type: formData.type as ProviderType,
       ipAddress: formData.ipAddress.trim(),
       credentialId: formData.credentialId || null,
+      role: formData.role as ProviderRole,
     }
+    const url = formData.url.trim()
+    if (url) record.url = url
+    const defaultFlashcopyProviderId = formData.defaultFlashcopyProviderId.trim()
+    const orchestratorConnId = formData.orchestratorConnId.trim()
+    if (defaultFlashcopyProviderId) record.defaultFlashcopyProviderId = defaultFlashcopyProviderId
+    if (orchestratorConnId) record.orchestratorConnId = orchestratorConnId
+    record.vmPrefix = formData.vmPrefix.trim() || null
+    record.vmTags = [...formData.vmTags]
+    record.notificationEmail = formData.notificationEmail.trim() || null
 
     upsert.mutate(
       { provider: record },
       {
         onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
         onError: (err: unknown) => {
-          const detail = err instanceof Error ? err.message : ''
-          setErrorMessage(detail ? `${t('providers.submitFailed')}: ${detail}` : t('providers.submitFailed'))
+          setSubmitError(err)
         },
       },
     )
@@ -140,6 +218,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
         open={open}
         onClose={requestClose}
         closeOnBackdrop={false}
+        size="lg"
         title={t(isEdit ? 'providers.modal.editTitle' : 'providers.modal.createTitle')}
         footer={(
           <>
@@ -165,10 +244,13 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
           </>
         )}
       >
-        {errorMessage ? (
-          <div className="mx-6 mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-            {errorMessage}
-          </div>
+        {submitError ? (
+          <Alert
+            variant="error"
+            className="mx-6 mt-4"
+            title={t('providers.submitFailed')}
+            {...(submitErrorDescription ? { description: submitErrorDescription } : {})}
+          />
         ) : null}
 
         <ProviderCreateForm
@@ -176,11 +258,20 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
           errors={errors}
           isSubmitting={upsert.isPending}
           idDisabled={isEdit}
+          typeDisabled={isEdit}
           credentials={credentialsQuery.data ?? []}
           credentialsLoading={credentialsQuery.isLoading}
           credentialsError={credentialsQuery.error !== null}
           onRetryCredentials={() => { void credentialsQuery.refetch() }}
+          tags={tagsQuery.data ?? []}
+          tagsLoading={tagsQuery.isLoading}
+          tagsError={tagsQuery.error !== null}
+          tagsDisabled={!isEdit}
+          onRetryTags={() => { void tagsQuery.refetch() }}
+          flashcopyProviders={existingProviders.filter(provider => provider.type === 'FLASHCOPY' && provider.role !== 'target')}
           onChange={handleChange}
+          onTagsChange={handleTagsChange}
+          onIdBlur={handleIdBlur}
           onSubmit={handleSubmit}
         />
       </Modal>

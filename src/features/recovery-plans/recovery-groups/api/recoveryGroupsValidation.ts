@@ -2,6 +2,7 @@ import { z } from 'zod'
 import type {
   RecoveryGroupDraft,
   RecoveryGroupResourceConfiguration,
+  RecoveryGroupVmMetadata,
 } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsError } from './recoveryGroupsErrors'
 
@@ -33,6 +34,9 @@ export interface ValidatedRecoveryGroupDraft {
   relatedVolumeProviderId: string | null
   relatedVolumes: string[]
   configuration: RecoveryGroupResourceConfiguration
+  vmMetadataByName?: Record<string, RecoveryGroupVmMetadata> | undefined
+  orchestrationProviderId: string
+  pushToOrchestrator: boolean
 }
 
 export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): ValidatedRecoveryGroupDraft {
@@ -46,6 +50,7 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     ? normalizedRelatedVolumeProviderId
     : null
   const relatedVolumes = (draft.relatedVolumes ?? []).map(resource => resource.trim())
+  const orchestrationProviderId = draft.orchestrationProviderId?.trim() ?? ''
   const configuration = recoveryGroupConfigurationSchema.safeParse({
     sourceCategory: draft.sourceCategory,
     workloadType: draft.workloadType,
@@ -65,6 +70,7 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     || new Set(relatedVolumes).size !== relatedVolumes.length
     || (relatedVolumes.length > 0 && !relatedVolumeProviderId)
     || !configuration.success
+    || !orchestrationProviderId
   ) {
     throw new RecoveryGroupsError('invalid_draft', 'Recovery group data is invalid')
   }
@@ -79,5 +85,8 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     relatedVolumeProviderId,
     relatedVolumes,
     configuration: configuration.data,
+    vmMetadataByName: draft.vmMetadataByName,
+    orchestrationProviderId,
+    pushToOrchestrator: draft.pushToOrchestrator,
   }
 }

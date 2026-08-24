@@ -4,16 +4,17 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { DataTablePagination } from '@/shared/components/data-table'
-import { useDiscoveryInventory } from '@/features/discovery-inventory/hooks/useDiscoveryInventory'
-import { useTags } from '../../../hooks/useTags'
+import { MetricsSkeleton } from '@/shared/components/stat-card/StatCard'
+import { useVmwareResourceInventory } from '@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory'
+import { useTags } from '../../hooks/useVmwareTags'
 import {
   applyFiltersAndPagination,
   getServerSideTagFilter,
 } from '../../helpers/filterVirtualMachines'
 import { mapInventoryToVirtualMachines } from '../../helpers/mapInventoryToVirtualMachines'
 import { useVirtualMachineSearchParams } from '../../hooks/useVirtualMachineSearchParams'
-import type { VirtualMachineFilterOptions, VirtualMachineFilters, VirtualMachinePageSize } from '../../types'
-import { MetricsSkeleton } from '../../skeletons'
+import type { VirtualMachineFilterOptions, VirtualMachineFilters, VirtualMachinePageSize } from '../../types/virtualMachineTypes'
+import { getProvidersByTypeAndRole } from '@/features/providers-connectors/providers/utils/providerFilters'
 import { ResourceInventoryPanel } from '../ResourceInventoryPanel'
 import { ResourceInventoryShell } from '../ResourceInventoryShell'
 import { ResourceInventoryLoading, ResourceInventoryState } from '../ResourceInventoryStates'
@@ -28,7 +29,6 @@ const defaultFilters: VirtualMachineFilters = {
   powerState: '',
   connectionState: '',
   cluster: '',
-  providerId: '',
   tags: [],
   untagged: false,
 }
@@ -42,23 +42,37 @@ const emptyFilterOptions: VirtualMachineFilterOptions = {
 export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   const {
     providers, providersPending, providersSuccess, providersFetching,
-    providersError, onRefetchProviders, tabs, t,
+    providersError, onRefetchProviders, providerId, tabs, t, role,
   } = props
-  const { query, updateQuery, updateFilters } = useVirtualMachineSearchParams()
-  const vmwareProviders = providers.filter((provider) => provider.type === 'VMWARE')
-  const inventoryEnabled = providersSuccess && vmwareProviders.length > 0
+  const vmwareProviders = getProvidersByTypeAndRole(providers, 'VMWARE', role)
+  const selectedProvider = vmwareProviders.find((provider) => provider.id === providerId) ?? vmwareProviders[0] ?? null
+  const vmwareProviderScope = selectedProvider ? {
+    id: selectedProvider.id,
+    role,
+    ...(selectedProvider.vmPrefix !== undefined ? { vmPrefix: selectedProvider.vmPrefix } : {}),
+    ...(selectedProvider.vmTags !== undefined ? { vmTags: selectedProvider.vmTags } : {}),
+  } : null
+  const { query, updateQuery, updateFilters, isInitialized } = useVirtualMachineSearchParams(vmwareProviderScope)
+  const inventoryEnabled = providersSuccess && selectedProvider !== null && isInitialized
   const {
     data: inventory,
-    error,
-    isLoading: isPending,
+    isInitialLoading,
     isFetching,
+    isBackgroundFetching,
+    isError,
+    isEmpty,
     refetch,
-  } = useDiscoveryInventory(
-    query.providerId ?? undefined,
+  } = useVmwareResourceInventory(
+    selectedProvider?.id,
+    query.search,
     getServerSideTagFilter(query.tags),
     inventoryEnabled,
   )
-  const { data: availableTags = [] } = useTags(inventoryEnabled)
+  const { data: serverTags = [] } = useTags(selectedProvider?.id, inventoryEnabled)
+  const availableTags = useMemo(
+    () => [...new Set([...serverTags, ...query.tags])],
+    [query.tags, serverTags],
+  )
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [density, setDensity] = useState<TableDensity>('compact')
@@ -75,11 +89,13 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   }, [data, isFetching, query.page, updateQuery])
 
   useEffect(() => {
-    if (availableTags.length > 0 && query.tags.length > 0) {
-      const validTags = query.tags.filter((tag) => availableTags.includes(tag))
-      if (validTags.length !== query.tags.length) updateQuery({ tags: validTags }, true)
+    if (selectedId && !data?.items.some((vm) => vm.id === selectedId)) {
+      queueMicrotask(() => {
+        setSelectedId(null)
+        setDrawerOpen(false)
+      })
     }
-  }, [availableTags, query.tags, updateQuery])
+  }, [data, selectedId])
 
   const selectedVirtualMachine = data?.items.find((vm) => vm.id === selectedId) ?? null
   const filters: VirtualMachineFilters = {
@@ -87,17 +103,16 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     powerState: query.powerState,
     connectionState: query.connectionState,
     cluster: query.cluster,
-    providerId: query.providerId,
     tags: query.tags,
     untagged: query.untagged,
   }
-  const vmwareLoading = providersSuccess && vmwareProviders.length > 0 && isPending
+  const vmwareLoading = providersSuccess && vmwareProviders.length > 0 && isInitialLoading
   const metrics = providersPending || vmwareLoading
     ? <MetricsSkeleton />
     : data && !providersError
       ? <VirtualMachineMetrics metrics={data.metrics} />
       : null
-  const notice = error && data ? (
+  const notice = isError && data ? (
     <FetchErrorAlert
       title={t('pages.virtualMachines.error.latestFailed')}
       description={t('pages.virtualMachines.error.showingPrevious')}
@@ -138,14 +153,12 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
           filters={filters}
           options={data?.filterOptions ?? emptyFilterOptions}
           availableTags={availableTags}
-          providers={vmwareProviders}
-          providersLoading={false}
           onFiltersChange={updateFilters}
           onReset={() => { updateFilters(defaultFilters) }}
           density={density}
           onDensityChange={setDensity}
         />}
-        error={!data ? {
+        error={isError && !data ? {
           title: t('pages.virtualMachines.error.title'),
           description: t('pages.virtualMachines.error.unknown'),
           retryLabel: t('pages.virtualMachines.error.retryButton'),
@@ -160,17 +173,18 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
           onPageSizeChange={(pageSize) => { updateQuery({ pageSize: pageSize as VirtualMachinePageSize }, true) }}
         /> : null}
       >
-        {data?.items.length ? (
+        {isBackgroundFetching || data?.items.length ? (
           <VirtualMachinesTable
-            virtualMachines={data.items}
+            virtualMachines={data?.items ?? []}
             selectedId={selectedId}
             density={density}
+            isLoading={isBackgroundFetching}
             onSelect={(virtualMachine) => {
               setSelectedId(virtualMachine.id)
               setDrawerOpen(true)
             }}
           />
-        ) : (
+        ) : isEmpty ? (
           <div className="p-4">
             <EmptyState
               title={t('pages.virtualMachines.empty.title')}
@@ -178,7 +192,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
               action={<Button size="sm" variant="outline" onClick={() => { updateFilters(defaultFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>}
             />
           </div>
-        )}
+        ) : null}
       </ResourceInventoryPanel>
     )
   }
@@ -186,7 +200,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow={t('pages.virtualMachines.eyebrow')}
+        eyebrow={t(role === 'target' ? 'pages.resourcesIse.eyebrow' : 'pages.virtualMachines.eyebrow')}
         title={t('pages.virtualMachines.title')}
         description={t('pages.virtualMachines.description')}
         isFetching={providersFetching || isFetching}

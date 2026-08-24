@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import { flashSystemInventoryResponseSchema } from '../../api/schemas/flashSystemInventorySchema'
-import { mapFlashSystemInventory } from '../../helpers/mapFlashSystemInventory'
+import { flashSystemInventoryResponseSchema } from '../api/schemas/flashSystemInventorySchema'
+import { mapFlashSystemInventory } from '../helpers/mapFlashSystemInventory'
 import { FlashSystemMetrics } from './SourceInventoryMetrics'
 
 function provider(id: string): ProviderRecord {
@@ -12,6 +12,7 @@ function provider(id: string): ProviderRecord {
     description: '',
     type: 'FLASHCOPY',
     ipAddress: '10.0.0.1',
+    port: 22,
     credentialId: null,
     credentialStatus: 'none',
   }

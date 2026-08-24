@@ -13,6 +13,6 @@ export function useUpsertProvider() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ provider }: UpsertProviderVars) => submitProvider(provider),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: providerKeys.list() }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: providerKeys.all }),
   })
 }

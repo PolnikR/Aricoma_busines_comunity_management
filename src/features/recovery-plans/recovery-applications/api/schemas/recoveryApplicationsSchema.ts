@@ -1,35 +1,26 @@
 import { z } from 'zod'
 
-export const recoveryTierSchema = z.object({
-  order: z.number(),
-  description: z.string(),
-  recovery_group: z.object({
-    name: z.string(),
-    description: z.string(),
-    vms: z.array(z.object({
-      name: z.string(),
-    })),
-  }).optional(),
-})
-
-export const recoveryApplicationListResponseSchema = z.object({
-  applications: z.array(z.object({
-    name: z.string(),
-    description: z.string(),
-    environment: z.enum(['dev', 'staging', 'prod']),
-    platform: z.string(),
-    source_connection: z.string(),
-    target_connection: z.string(),
-    tiers: z.record(z.string(), recoveryTierSchema),
-    file: z.string(),
-  })),
-})
-
-export const submitDagResponseSchema = z.object({
+const rollbackAirflowSchema = z.looseObject({
   status: z.string(),
-  filename: z.string(),
-  local: z.string(),
+  dag_id: z.string().optional(),
+  paused: z.string().optional(),
+  failed_runs: z.array(z.unknown()).optional(),
+  dag_file: z.string().optional(),
+  dag_record: z.string().optional(),
 })
 
-export type RecoveryApplicationListPayload = z.infer<typeof recoveryApplicationListResponseSchema>
-export type RecoveryTierPayload = z.infer<typeof recoveryTierSchema>
+const rollbackIbmSchema = z.looseObject({
+  status: z.string(),
+  consistency_groups: z.array(z.unknown()).optional(),
+  fcmaps: z.array(z.unknown()).optional(),
+  volumes: z.array(z.unknown()).optional(),
+  errors: z.array(z.unknown()).optional(),
+})
+
+export const rollbackReportSchema = z.looseObject({
+  status: z.string(),
+  airflow: rollbackAirflowSchema.optional(),
+  ibm: rollbackIbmSchema.optional(),
+})
+
+export type RollbackReport = z.infer<typeof rollbackReportSchema>

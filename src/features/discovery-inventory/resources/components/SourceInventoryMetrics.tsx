@@ -6,7 +6,7 @@ import type {
   FlashSystemInventory,
   FlashSystemVolumeResource,
   PowerPartitionResource,
-} from '../../model/discoveryTypes'
+} from '../model/discoveryTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
 interface MetricLabels {

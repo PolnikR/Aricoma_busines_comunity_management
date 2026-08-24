@@ -19,6 +19,9 @@ const airflowProvider: PlatformProviderRecord = {
   dagDir: '/home/airflow/dags',
   credentialId: 'airflow-ssh',
   credentialStatus: 'ok',
+  notificationEmail: 'platform-alerts@example.test',
+  vmPrefix: 'platform-',
+  vmTags: ['platform-tag'],
 }
 
 const platformProviderSubmitData: PlatformProviderSubmitData = {
@@ -30,6 +33,9 @@ const platformProviderSubmitData: PlatformProviderSubmitData = {
   port: 22,
   dagDir: '/opt/airflow/dags',
   credentialId: 'airflow-ssh',
+  url: 'http://10.99.99.56:8080/',
+  vmPrefix: null,
+  vmTags: [],
 }
 
 function stubFetch(payload: unknown, status = 200) {
@@ -48,18 +54,54 @@ describe('fetchPlatformProviders', () => {
   it('loads and validates platform providers independently from infrastructure providers', async () => {
     const fetchMock = stubFetch({ providers: [airflowProvider] })
 
-    await expect(fetchPlatformProviders()).resolves.toEqual([airflowProvider])
+    await expect(fetchPlatformProviders()).resolves.toMatchObject([airflowProvider])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/get_platform_providers')
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
+  it('applies the generated SSH port default when the response omits port', async () => {
+    const backendProvider = { ...airflowProvider, port: undefined }
+    stubFetch({ providers: [backendProvider] })
+
+    const providers = await fetchPlatformProviders()
+
+    expect(providers[0]?.port).toBe(22)
+  })
+
+  it('uses the safe unavailable status when the generated response omits credential status', async () => {
+    stubFetch({ providers: [{ ...airflowProvider, credentialStatus: undefined }] })
+
+    const providers = await fetchPlatformProviders()
+
+    expect(providers[0]?.credentialStatus).toBe('none')
+  })
+
+  it('preserves the validated GET record before applying UI fallbacks', async () => {
+    const backendProvider = {
+      ...airflowProvider,
+      description: null,
+      url: null,
+      credentialStatus: null,
+    }
+    stubFetch({ providers: [backendProvider] })
+
+    const [provider] = await fetchPlatformProviders()
+
+    expect(provider).toMatchObject({
+      description: '',
+      credentialStatus: 'none',
+      notificationEmail: 'platform-alerts@example.test',
+    })
+    expect(provider?.rawRecord).toEqual({ ...backendProvider, role: 'source' })
+  })
+
   it.each([
-    ['missing credential status', { ...airflowProvider, credentialStatus: undefined }],
     ['invalid port', { ...airflowProvider, port: 70000 }],
     ['infrastructure type', { ...airflowProvider, type: 'VMWARE' }],
     ['unknown type', { ...airflowProvider, type: 'UNKNOWN' }],
+    ['invalid notification email', { ...airflowProvider, notificationEmail: 'invalid-email' }],
   ])('rejects a platform provider with %s', async (_case, provider) => {
     stubFetch({ providers: [provider] })
     await expect(fetchPlatformProviders()).rejects.toBeInstanceOf(Error)
@@ -96,6 +138,19 @@ describe('submitPlatformProvider', () => {
     )
   })
 
+  it('posts null notificationEmail when clearing an existing value', async () => {
+    const fetchMock = stubFetch({ providers: [] })
+    const provider: PlatformProviderSubmitData = {
+      ...platformProviderSubmitData,
+      notificationEmail: null,
+    }
+
+    await submitPlatformProvider(provider)
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toMatchObject({ notificationEmail: null })
+  })
+
   it('rejects an invalid provider before sending it to the backend', async () => {
     const fetchMock = stubFetch({ providers: [] })
 
@@ -117,7 +172,7 @@ describe('deletePlatformProvider', () => {
     ])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/delete_platform_provider?provider_id=airflow%2Fmain%2001')
+    expect(url).toBe('/api/delete_platform_provider?provider_id=airflow%2Fmain+01')
     expect(init.method).toBe('DELETE')
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })

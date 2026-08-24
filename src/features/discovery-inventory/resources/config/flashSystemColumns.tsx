@@ -1,6 +1,6 @@
 import { StateCell } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
-import type { FlashSystemVolumeResource } from '../../model/discoveryTypes'
+import type { FlashSystemVolumeResource } from '../model/discoveryTypes'
 import { FlashSystemHostsCell } from '../components/flash-system/FlashSystemHostsCell'
 import type { FlashSystemHostTooltipLabels } from '../components/flash-system/FlashSystemHostBadge'
 import type { FlashSystemHostSummary } from '../helpers/buildFlashSystemHostSummaries'

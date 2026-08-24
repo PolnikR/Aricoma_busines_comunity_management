@@ -22,6 +22,7 @@ interface DataTableProps<T> {
   onRowClick?: (row: T) => void
   selectedRowKey?: string | null
   minWidthClassName?: string
+  layout?: 'scroll' | 'fit'
   emptyContent?: ReactNode
   ariaLabel?: string
   headerCellClassName?: string
@@ -38,6 +39,7 @@ export function DataTable<T>({
   onRowClick,
   selectedRowKey = null,
   minWidthClassName = 'min-w-full',
+  layout = 'scroll',
   emptyContent,
   ariaLabel = 'Data table',
   headerCellClassName,
@@ -45,13 +47,24 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const visibleColumns = columns.filter((column) => !(density === 'compact' && column.hideInCompact))
   const rowPad = density === 'compact' ? 'py-1.5' : 'py-2.5'
-  const headerCell = headerCellClassName ?? 'whitespace-nowrap px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle'
-  const bodyCell = cellClassName ?? `px-4 ${rowPad} text-[13px] text-text-secondary align-middle`
+  const isFitLayout = layout === 'fit'
+  const headerCell = headerCellClassName ?? (isFitLayout
+    ? 'whitespace-normal break-words px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle'
+    : 'whitespace-nowrap px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle')
+  const bodyCell = cellClassName ?? (isFitLayout
+    ? `whitespace-normal break-words px-3 ${rowPad} text-[13px] text-text-secondary align-middle`
+    : `px-4 ${rowPad} text-[13px] text-text-secondary align-middle`)
   const isInteractive = Boolean(onRowClick)
 
   return (
-    <div className="custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain" tabIndex={0} aria-label={ariaLabel}>
-      <Table className={minWidthClassName}>
+    <div
+      className={isFitLayout
+        ? 'w-full min-w-0 overflow-x-hidden'
+        : 'custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain'}
+      tabIndex={isFitLayout ? undefined : 0}
+      aria-label={ariaLabel}
+    >
+      <Table className={isFitLayout ? 'w-full table-fixed' : minWidthClassName}>
         <TableHeader className="sticky top-0 z-10 border-b border-border bg-surface-subtle">
           <TableRow>
             {visibleColumns.map((column) => (

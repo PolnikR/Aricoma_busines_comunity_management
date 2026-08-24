@@ -5,6 +5,7 @@ import {
 } from 'react-router'
 import { AppShell } from '@/layouts/app-shell/AppShell'
 import { ResourcesPage } from '@/features/discovery-inventory/resources/pages/ResourcesPage'
+import { ResourcesIsePage } from '@/features/discovery-inventory/resources-ise/pages/ResourcesIsePage'
 import { ProvidersPage } from '@/features/providers-connectors/providers/pages/ProvidersPage'
 import { ModuleWorkQueuePage } from '@/features/module-placeholder/pages/ModuleWorkQueuePage'
 import { InfrastructureTopologySkeleton } from '@/features/discovery-inventory/infrastructure/components/InfrastructureTopologySkeleton'
@@ -38,13 +39,18 @@ const RecoveryGroupsListPage = lazy(async () => {
 })
 
 const SnapshotPoliciesPage = lazy(async () => {
-  const page = await import('@/features/recovery-plans/snapshot-policies/pages/SnapshotPoliciesPage')
+  const page = await import('@/features/recovery-plans/recovery-policies/snapshot/pages/SnapshotPoliciesPage')
   return { default: page.SnapshotPoliciesPage }
 })
 
 const PolicySetsPage = lazy(async () => {
   const page = await import('@/features/recovery-plans/policy-sets/pages/PolicySetsPage')
   return { default: page.PolicySetsPage }
+})
+
+const RecoveryRunsPage = lazy(async () => {
+  const page = await import('@/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage')
+  return { default: page.RecoveryRunsPage }
 })
 
 const RecoveryGroupBuilderPage = lazy(async () => {
@@ -72,6 +78,41 @@ const CredentialsPage = lazy(async () => {
   return { default: page.CredentialsPage }
 })
 
+const RecoveryAppPoliciesPage = lazy(async () => {
+  const page = await import('@/features/recovery-plans/recovery-policies/application-recovery/pages/RecoveryAppPoliciesPage')
+  return { default: page.RecoveryAppPoliciesPage }
+})
+
+const CleanRoomPoliciesPage = lazy(async () => {
+  const page = await import('@/features/recovery-plans/recovery-policies/clean-room/pages/CleanRoomPoliciesPage')
+  return { default: page.CleanRoomPoliciesPage }
+})
+
+const DiscoverySettingsPage = lazy(async () => {
+  const page = await import('@/features/providers-connectors/discovery-settings/pages/DiscoverySettingsPage')
+  return { default: page.DiscoverySettingsPage }
+})
+
+const RecoveryActionsValidatePage = lazy(async () => {
+  const page = await import('@/features/recovery-actions/pages/RecoveryActionsValidatePage')
+  return { default: page.RecoveryActionsValidatePage }
+})
+
+const RecoveryActionsExecutePage = lazy(async () => {
+  const page = await import('@/features/recovery-actions/pages/RecoveryActionsExecutePage')
+  return { default: page.RecoveryActionsExecutePage }
+})
+
+const RecoveryActionsSchedulePage = lazy(async () => {
+  const page = await import('@/features/recovery-actions/pages/RecoveryActionsSchedulePage')
+  return { default: page.RecoveryActionsSchedulePage }
+})
+
+const RecoveryActionsHistoryPage = lazy(async () => {
+  const page = await import('@/features/recovery-actions/pages/RecoveryActionsHistoryPage')
+  return { default: page.RecoveryActionsHistoryPage }
+})
+
 const PlatformProvidersPage = lazy(async () => {
   const page = await import('@/features/platform-administration/platform-providers/pages/PlatformProvidersPage')
   return { default: page.PlatformProvidersPage }
@@ -80,6 +121,11 @@ const PlatformProvidersPage = lazy(async () => {
 const ConfigurationPage = lazy(async () => {
   const page = await import('@/features/platform-administration/configuration/pages/ConfigurationPage')
   return { default: page.ConfigurationPage }
+})
+
+const IdentityAccessPage = lazy(async () => {
+  const page = await import('@/features/platform-administration/identity-access/pages/IdentityAccessPage')
+  return { default: page.IdentityAccessPage }
 })
 
 function toRoutePath(path: string) {
@@ -120,6 +166,19 @@ function renderProvidersConnectorsRoutes(pages: typeof providersConnectorsPages)
         />
       )
     }
+    if (page.path === routes.providerDiscoverySettings) {
+      return (
+        <Route
+          key={page.path}
+          path={toRoutePath(page.path)}
+          element={(
+            <Suspense fallback={<RouteLoadingSkeleton />}>
+              <DiscoverySettingsPage />
+            </Suspense>
+          )}
+        />
+      )
+    }
     return (
       <Route
         key={page.path}
@@ -136,7 +195,9 @@ export function AppRoutes() {
         <Route index element={<Navigate to={routes.resources} replace />} />
         <Route path="platform-administration" element={<Navigate to={routes.platformProviders} replace />} />
         {renderModulePageRoutes(platformAdministrationPages.filter(
-          page => page.path !== routes.platformProviders && page.path !== routes.platformConfiguration,
+          page => page.path !== routes.platformProviders
+            && page.path !== routes.platformConfiguration
+            && page.path !== routes.platformIdentityAccess,
         ))}
         <Route
           path={toRoutePath(routes.platformProviders)}
@@ -151,6 +212,14 @@ export function AppRoutes() {
           element={(
             <Suspense fallback={<RouteLoadingSkeleton />}>
               <ConfigurationPage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path={toRoutePath(routes.platformIdentityAccess)}
+          element={(
+            <Suspense fallback={<RouteLoadingSkeleton />}>
+              <IdentityAccessPage />
             </Suspense>
           )}
         />
@@ -221,24 +290,40 @@ export function AppRoutes() {
           <Route
             path="recovery-runs"
             element={(
-              <ModuleWorkQueuePage
-                eyebrow="Recovery Plans"
-                title="Recovery Runs"
-                description="Execution history and status of recovery runs."
-                excelSource="EP-07 Recovery Plans"
-                apiBoundary="Pending backend API contract for recovery runs"
-                workflowItems={['Run history', 'Active runs', 'Run results']}
-              />
-            )}
-          />
-          <Route
-            path="snapshot-policies"
-            element={(
               <Suspense fallback={<RouteLoadingSkeleton />}>
-                <SnapshotPoliciesPage />
+                <RecoveryRunsPage />
               </Suspense>
             )}
           />
+          <Route path="recovery-policies">
+            <Route index element={<Navigate to={routes.recoveryPolicySnapshot} replace />} />
+            <Route
+              path="snapshot"
+              element={(
+                <Suspense fallback={<RouteLoadingSkeleton />}>
+                  <SnapshotPoliciesPage />
+                </Suspense>
+              )}
+            />
+            <Route
+              path="application-recovery"
+              element={(
+                <Suspense fallback={<RouteLoadingSkeleton />}>
+                  <RecoveryAppPoliciesPage />
+                </Suspense>
+              )}
+            />
+            <Route
+              path="clean-room"
+              element={(
+                <Suspense fallback={<RouteLoadingSkeleton />}>
+                  <CleanRoomPoliciesPage />
+                </Suspense>
+              )}
+            />
+          </Route>
+          <Route path="snapshot-policies" element={<Navigate to={routes.recoveryPolicySnapshot} replace />} />
+          <Route path="recovery-app-policies" element={<Navigate to={routes.recoveryPolicyApplicationRecovery} replace />} />
           <Route
             path="policy-sets"
             element={(
@@ -248,8 +333,47 @@ export function AppRoutes() {
             )}
           />
         </Route>
+        <Route path="recovery-actions">
+          <Route index element={<Navigate to={routes.recoveryActionValidate} replace />} />
+          <Route
+            path="validate"
+            element={(
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <RecoveryActionsValidatePage />
+              </Suspense>
+            )}
+          />
+          <Route
+            path="execute"
+            element={(
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <RecoveryActionsExecutePage />
+              </Suspense>
+            )}
+          />
+          <Route
+            path="schedule"
+            element={(
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <RecoveryActionsSchedulePage />
+              </Suspense>
+            )}
+          />
+          <Route
+            path="history"
+            element={(
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <RecoveryActionsHistoryPage />
+              </Suspense>
+            )}
+          />
+          <Route path="*" element={<Navigate to={routes.recoveryActionValidate} replace />} />
+        </Route>
         <Route path="discovery-inventory" element={<Navigate to={routes.resources} replace />} />
-        <Route path="discovery-inventory/resources" element={<ResourcesPage />} />
+        <Route path={toRoutePath(routes.resources)} element={<ResourcesPage />} />
+        <Route path={toRoutePath(routes.resourcesIse)} element={<ResourcesIsePage />} />
+        <Route path={toRoutePath(routes.resourcesRoleSourceLegacy)} element={<Navigate to={routes.resources} replace />} />
+        <Route path={toRoutePath(routes.resourcesRoleTargetLegacy)} element={<Navigate to={routes.resourcesIse} replace />} />
         <Route path="discovery-inventory/virtual-machines" element={<Navigate to={routes.resources} replace />} />
         <Route
           path="discovery-inventory/infrastructure"
@@ -260,7 +384,9 @@ export function AppRoutes() {
           )}
         />
         {renderModulePageRoutes(discoveryInventoryPlaceholderPages)}
-        {renderModulePageRoutes(remainingEpicPages.filter((page) => page.path !== routes.recoveryPlans))}
+        {renderModulePageRoutes(remainingEpicPages.filter((page) => (
+          page.path !== routes.recoveryPlans
+        )))}
         <Route path="*" element={<Navigate to={routes.resources} replace />} />
     </Route>
   )

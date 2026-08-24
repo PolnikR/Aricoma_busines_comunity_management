@@ -1,4 +1,4 @@
-import type { FlashSystemVolumeResource } from '../../model/discoveryTypes'
+import type { FlashSystemVolumeResource } from '../model/discoveryTypes'
 
 export interface FlashSystemMappedVolumeSummary {
   resourceId: string

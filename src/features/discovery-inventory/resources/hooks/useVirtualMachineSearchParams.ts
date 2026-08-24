@@ -1,60 +1,123 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
-import type { VirtualMachineFilters, VirtualMachinePageSize, VirtualMachinesQuery } from '../types'
+import { readProviderFilterSnapshot, writeProviderFilterSnapshot, type ProviderFilterScope } from '../state/providerFilterSession'
+import { useResourceInventorySearchParams } from './useResourceInventorySearchParams'
+import {
+  VMWARE_ACTIVE_PROVIDER_PARAM,
+  VMWARE_DEFAULT_SEARCH_PARAM,
+  VMWARE_DEFAULT_TAG_PARAM,
+} from './vmwareSearchParamKeys'
+import type { VirtualMachineFilters } from '../types/virtualMachineTypes'
 
-const pageSizes: VirtualMachinePageSize[] = [10, 25, 50]
+type VirtualMachineUrlFilters = Omit<VirtualMachineFilters, 'search'>
 
-function parsePositiveInteger(value: string | null, fallback: number) {
-  const parsed = Number(value)
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
+export interface VirtualMachineProviderScope {
+  id: string
+  role?: ProviderFilterScope['role']
+  vmPrefix?: string | null
+  vmTags?: readonly string[]
 }
 
-function parsePageSize(value: string | null): VirtualMachinePageSize {
-  const parsed = Number(value)
-  return pageSizes.includes(parsed as VirtualMachinePageSize) ? parsed as VirtualMachinePageSize : 10
-}
+const VMWARE_FILTER_PARAMS = ['search', 'powerState', 'connectionState', 'cluster', 'tags', 'untagged']
 
 function parseTags(value: string | null): string[] {
   if (!value) return []
-  return value.split(',').filter(Boolean)
+  const firstTag = value.split(',').find(Boolean)
+  return firstTag ? [firstTag] : []
 }
 
 function parseBoolean(value: string | null): boolean {
   return value === 'true'
 }
 
+function hasUrlFilters(searchParams: URLSearchParams): boolean {
+  return VMWARE_FILTER_PARAMS.some((key) => searchParams.has(key))
+}
 
-export function useVirtualMachineSearchParams() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const query = useMemo<VirtualMachinesQuery>(() => {
-    const providerIdValue = searchParams.get('providerId')
-    return {
-      page: parsePositiveInteger(searchParams.get('page'), 1),
-      pageSize: parsePageSize(searchParams.get('pageSize')),
-      search: searchParams.get('search') ?? '',
-      powerState: searchParams.get('powerState') ?? '',
-      connectionState: searchParams.get('connectionState') ?? '',
-      cluster: searchParams.get('cluster') ?? '',
-      providerId: providerIdValue && providerIdValue !== 'null' ? providerIdValue : null,
-      tags: parseTags(searchParams.get('tags')),
-      untagged: parseBoolean(searchParams.get('untagged')),
-    }
-  }, [searchParams])
+function getFilters(searchParams: URLSearchParams): VirtualMachineFilters {
+  return {
+    search: searchParams.get('search') ?? '',
+    powerState: searchParams.get('powerState') ?? '',
+    connectionState: searchParams.get('connectionState') ?? '',
+    cluster: searchParams.get('cluster') ?? '',
+    tags: parseTags(searchParams.get('tags')),
+    untagged: parseBoolean(searchParams.get('untagged')),
+  }
+}
 
-  const updateQuery = (changes: Partial<VirtualMachinesQuery>, resetPage = false) => {
-    const next = new URLSearchParams(searchParams)
-    const values = resetPage ? { ...changes, page: 1 } : changes
+function getScope(provider: VirtualMachineProviderScope): ProviderFilterScope {
+  return {
+    role: provider.role ?? 'source',
+    resourceTab: 'vmware',
+    providerId: provider.id,
+  }
+}
 
-    Object.entries(values).forEach(([key, value]) => {
-      const normalized = Array.isArray(value) ? value.join(',') : (typeof value === 'boolean' ? (value ? 'true' : '') : String(value))
-      if (!normalized || (key === 'page' && normalized === '1') || (key === 'pageSize' && normalized === '10')) next.delete(key)
-      else next.set(key, normalized)
+function getScopeId(scope: ProviderFilterScope): string {
+  return `${scope.role}:${encodeURIComponent(scope.providerId)}`
+}
+
+function getProviderDefaults(provider: VirtualMachineProviderScope): VirtualMachineFilters {
+  return {
+    search: provider.vmPrefix?.trim() ?? '',
+    powerState: '',
+    connectionState: '',
+    cluster: '',
+    tags: provider.vmTags?.[0]?.trim() ? [provider.vmTags[0].trim()] : [],
+    untagged: false,
+  }
+}
+
+export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderScope | null) {
+  const [searchParams] = useSearchParams()
+  const { query: urlQuery, updateQuery } = useResourceInventorySearchParams<VirtualMachineUrlFilters>({
+    parseFilters: getFilters,
+  })
+  const scope = provider ? getScope(provider) : undefined
+  const scopeId = scope ? getScopeId(scope) : undefined
+  const activeScopeId = searchParams.get(VMWARE_ACTIVE_PROVIDER_PARAM)
+  const query = useMemo(() => {
+    if (!provider || !scope || !scopeId) return urlQuery
+
+    const urlFiltersAreActive = activeScopeId === scopeId
+      || (activeScopeId === null && hasUrlFilters(searchParams))
+    const savedSnapshot = urlFiltersAreActive ? undefined : readProviderFilterSnapshot(scope)
+    const filters = urlFiltersAreActive
+      ? getFilters(searchParams)
+      : savedSnapshot?.filters ?? getProviderDefaults(provider)
+
+    return { ...urlQuery, ...filters }
+  }, [activeScopeId, provider, scope, scopeId, searchParams, urlQuery])
+  useEffect(() => {
+    if (!scope) return
+
+    writeProviderFilterSnapshot(scope, {
+      resourceTab: 'vmware',
+      initialized: true,
+      filters: {
+        search: query.search,
+        powerState: query.powerState,
+        connectionState: query.connectionState,
+        cluster: query.cluster,
+        tags: query.tags,
+        untagged: query.untagged,
+      },
     })
+  }, [query.cluster, query.connectionState, query.powerState, query.search, query.tags, query.untagged, scope])
 
-    setSearchParams(next, { replace: true })
+  const updateFilters = (filters: VirtualMachineFilters) => {
+    updateQuery({
+      ...filters,
+      [VMWARE_ACTIVE_PROVIDER_PARAM]: scopeId ?? '',
+      [VMWARE_DEFAULT_SEARCH_PARAM]: '',
+      [VMWARE_DEFAULT_TAG_PARAM]: '',
+    }, true)
   }
 
-  const updateFilters = (filters: VirtualMachineFilters) => { updateQuery(filters, true) }
-
-  return { query, updateQuery, updateFilters }
+  return {
+    query,
+    updateQuery,
+    updateFilters,
+    isInitialized: true,
+  }
 }

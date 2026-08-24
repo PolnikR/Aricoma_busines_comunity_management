@@ -2,28 +2,35 @@ import type { PropsWithChildren } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  fetchFlashSystemInventory,
-  fetchPowerInventory,
-  fetchVmwareInventory,
-} from '@/features/discovery-inventory/api/discoveryInventoryApi'
-import { discoveryInventoryKeys } from '@/features/discovery-inventory/api/discoveryInventoryQueryKeys'
+import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
+import { fetchFlashSystemInventory } from '@/features/discovery-inventory/resources/api/flashSystemInventoryApi'
+import { fetchPowerInventory } from '@/features/discovery-inventory/resources/api/powerInventoryApi'
+import { fetchVmwareInventory } from '@/features/discovery-inventory/resources/api/vmwareInventoryApi'
+import { discoveryInventoryKeys } from '@/features/discovery-inventory/resources/api/resourceInventoryQueryKeys'
 import type {
   DiscoveredVirtualMachine,
   FlashSystemVolumeResource,
   PowerPartitionResource,
-} from '@/features/discovery-inventory/model/discoveryTypes'
+} from '@/features/discovery-inventory/resources/model/discoveryTypes'
 import { useRecoveryGroupResourceInventory } from './useRecoveryGroupResourceInventory'
 
-vi.mock('@/features/discovery-inventory/api/discoveryInventoryApi', () => ({
-  fetchVmwareInventory: vi.fn(),
-  fetchPowerInventory: vi.fn(),
+vi.mock('@/features/discovery-inventory/resources/api/flashSystemInventoryApi', () => ({
   fetchFlashSystemInventory: vi.fn(),
 }))
+vi.mock('@/features/discovery-inventory/resources/api/powerInventoryApi', () => ({
+  fetchPowerInventory: vi.fn(),
+}))
+vi.mock('@/features/discovery-inventory/resources/api/vmwareInventoryApi', () => ({
+  fetchVmwareInventory: vi.fn(),
+}))
 
-function createWrapper(queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  })) {
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false } },
+  })
+}
+
+function createWrapper(queryClient = createQueryClient()) {
 
   return function Wrapper({ children }: PropsWithChildren) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -82,6 +89,69 @@ describe('useRecoveryGroupResourceInventory', () => {
     }
   })
 
+  it('extracts VM metadata for vmware and IBM Power workloads', async () => {
+    vi.mocked(fetchVmwareInventory).mockResolvedValue({
+      reportedCount: 1,
+      virtualMachines: [{
+        name: 'db-vm-01',
+        hostname: 'db01.sampleapp.local',
+        ipAddress: '192.168.10.11',
+        guestOs: 'Ubuntu 22.04',
+        vcpu: 4,
+        memoryGb: 16,
+        disks: [
+          { id: '1', label: 'Hard disk 1', capacityGb: 150, datastore: 'ds1', filePath: 'x', thinProvisioned: true },
+          { id: '2', label: 'Hard disk 2', capacityGb: 50, datastore: 'ds1', filePath: 'y', thinProvisioned: true },
+        ],
+      } as DiscoveredVirtualMachine],
+    })
+
+    const { result } = renderHook(
+      () => useRecoveryGroupResourceInventory('vmware_virtual_machines', 'vmware-1'),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+    expect(result.current.data?.vmMetadataByName['db-vm-01']).toEqual({
+      hostname: 'db01.sampleapp.local',
+      ip_address: '192.168.10.11',
+      os: 'Ubuntu 22.04',
+      cpu: 4,
+      memory_gb: 16,
+      storage_gb: 200,
+    })
+
+    vi.mocked(fetchPowerInventory).mockResolvedValue({
+      reportedCount: 1,
+      countsByType: { LogicalPartition: 1, VirtualIOServer: 0 },
+      virtualMachines: [],
+      partitions: [
+        { partitionName: 'LPAR-01', operatingSystemType: 'AIX' } as PowerPartitionResource,
+        { partitionName: 'LPAR-02', operatingSystemType: '' } as PowerPartitionResource,
+      ],
+    })
+
+    const { result: powerResult } = renderHook(
+      () => useRecoveryGroupResourceInventory('ibm_power_virtual_machines', 'power-1'),
+      { wrapper: createWrapper() },
+    )
+    await waitFor(() => { expect(powerResult.current.isSuccess).toBe(true) })
+    expect(powerResult.current.data?.vmMetadataByName).toEqual({
+      'LPAR-01': { os: 'AIX' },
+      'LPAR-02': {},
+    })
+  })
+
+  it('does not extract VM metadata for ibm_flashsystem', async () => {
+    const { result } = renderHook(
+      () => useRecoveryGroupResourceInventory('ibm_flashsystem', 'flash-1'),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+    expect(result.current.data?.vmMetadataByName).toEqual({})
+  })
+
   it('does not request inventory until a provider is selected', () => {
     const { result } = renderHook(
       () => useRecoveryGroupResourceInventory('vmware_virtual_machines', null),
@@ -138,7 +208,7 @@ describe('useRecoveryGroupResourceInventory', () => {
     inventory,
     expectedNames,
   ) => {
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const queryClient = createQueryClient()
     queryClient.setQueryData(queryKey, inventory)
 
     const { result } = renderHook(

@@ -153,12 +153,39 @@ export function CheckIcon(props: IconProps) {
   )
 }
 
+export function ExternalLinkIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="M8.333 5H5a1.667 1.667 0 0 0-1.667 1.667v8.333A1.667 1.667 0 0 0 5 16.667h8.333A1.667 1.667 0 0 0 15 15v-3.333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11.667 3.333H16.667V8.333M16.667 3.333 9.167 10.833" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export function SignOutIcon(props: IconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" {...props}>
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" strokeLinecap="round" strokeLinejoin="round" />
       <polyline points="16 17 21 12 16 7" strokeLinecap="round" strokeLinejoin="round" />
       <line x1="21" y1="12" x2="9" y2="12" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function RefreshIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="M17.5 8.333A6.667 6.667 0 0 0 5.417 4.167M2.5 11.667a6.667 6.667 0 0 0 12.083 4.166" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M17.5 6.667v1.666h-1.667M2.5 13.333v-1.666h1.667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function ShieldIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="M10 1.667 3.75 4.5v4.167c0 4.583 6.25 8.333 6.25 8.333s6.25-3.75 6.25-8.333V4.5L10 1.667Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="m7.5 10 1.667 1.667 3.333-3.334" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }

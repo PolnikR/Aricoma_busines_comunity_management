@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type {
   CredentialFormData,
   CredentialSubmitPayload,
@@ -126,6 +127,82 @@ describe('CredentialCreateModal', () => {
       },
       expect.objectContaining({}),
     )
+  })
+
+  it('shows a contextual alert with nested backend validation detail after submission fails', async () => {
+    const user = userEvent.setup()
+    render(
+      <CredentialCreateModal
+        open
+        existingCredentials={[]}
+        onClose={vi.fn()}
+      />,
+    )
+
+    await user.type(screen.getByLabelText('Credential ID *'), 'vcenter-admin')
+    await user.type(screen.getByLabelText('Name *'), 'vCenter admin')
+    await user.type(screen.getByLabelText('Description *'), 'Production account')
+    await user.type(screen.getByLabelText('Username *'), 'administrator')
+    const password = document.querySelector<HTMLInputElement>('#credential-password')
+    const confirmation = document.querySelector<HTMLInputElement>('#credential-confirmPassword')
+    if (!password || !confirmation) throw new Error('Password inputs were not rendered')
+    await user.type(password, 'secret')
+    await user.type(confirmation, 'secret')
+    await user.click(screen.getByRole('button', { name: 'Create credential' }))
+
+    await waitFor(() => { expect(mutate).toHaveBeenCalledOnce() })
+    const mutationOptions = mutate.mock.calls[0]?.[1] as { onError?: (error: unknown) => void } | undefined
+    if (!mutationOptions?.onError) throw new Error('Mutation error handler was not passed')
+
+    act(() => {
+      mutationOptions.onError?.(new Error('Submit credential request failed with status 422', {
+        cause: new OrvalApiError(422, 'Unprocessable Entity', {
+          detail: [{ loc: ['body', 'id'], msg: 'Credential ID already exists.' }],
+        }),
+      }))
+    })
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Credential could not be created securely.')
+    expect(screen.getByRole('alert')).toHaveTextContent('Credential ID already exists.')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('status 422')
+  })
+
+  it('uses the localized edit failure title with supported backend detail', async () => {
+    const user = userEvent.setup()
+    render(
+      <CredentialCreateModal
+        open
+        credential={{
+          id: 'vcenter-admin',
+          name: 'vCenter admin',
+          description: 'Production account',
+          username: 'administrator',
+        }}
+        existingCredentials={[]}
+        onClose={vi.fn()}
+      />,
+    )
+
+    const password = document.querySelector<HTMLInputElement>('#credential-password')
+    const confirmation = document.querySelector<HTMLInputElement>('#credential-confirmPassword')
+    if (!password || !confirmation) throw new Error('Password inputs were not rendered')
+    await user.type(password, 'secret')
+    await user.type(confirmation, 'secret')
+    await user.click(screen.getByRole('button', { name: 'Save credential' }))
+
+    await waitFor(() => { expect(mutate).toHaveBeenCalledOnce() })
+    const mutationOptions = mutate.mock.calls[0]?.[1] as { onError?: (error: unknown) => void } | undefined
+    if (!mutationOptions?.onError) throw new Error('Mutation error handler was not passed')
+
+    act(() => {
+      mutationOptions.onError?.(new Error('Submit credential request failed with status 409', {
+        cause: new OrvalApiError(409, 'Conflict', { detail: 'Credential is still referenced by a provider.' }),
+      }))
+    })
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Credential could not be updated securely.')
+    expect(screen.getByRole('alert')).toHaveTextContent('Credential is still referenced by a provider.')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Credential could not be created securely.')
   })
 
   it('prefills metadata, locks the id and requires a new password when editing', async () => {

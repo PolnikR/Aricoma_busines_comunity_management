@@ -20,6 +20,9 @@ const draggableNodeKinds = new Set<InfrastructureTopologyNodeKind>([
   'virtualMachine',
   'datastore',
   'powerPartition',
+  'volume',
+  'fcmap',
+  'consistencyGroup',
 ])
 
 export function mapTopologyToFlowElements(
@@ -29,7 +32,7 @@ export function mapTopologyToFlowElements(
     nodes: topology.nodes.map(({ node, position, size }) => ({
       id: node.id,
       type: node.kind,
-      data: { ...node },
+      data: node as InfrastructureTopologyNode & Record<string, unknown>,
       position,
       width: size.width,
       height: size.height,
@@ -50,7 +53,9 @@ export function mapTopologyToFlowElements(
       animated: false,
       style: edge.kind === 'uses'
         ? { stroke: '#9aa8bc', strokeDasharray: '5 4', strokeWidth: 1.25 }
-        : { stroke: '#8bb9d8', strokeWidth: 1.5 },
+        : edge.kind === 'copies'
+          ? { stroke: '#c47fd6', strokeDasharray: '5 4', strokeWidth: 1.25 }
+          : { stroke: '#8bb9d8', strokeWidth: 1.5 },
     })),
   }
 }

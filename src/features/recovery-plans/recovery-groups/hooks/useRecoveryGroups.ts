@@ -4,10 +4,12 @@ import {
   createRecoveryGroup,
   deleteRecoveryGroup,
   fetchRecoveryGroups,
+  rollbackRecoveryGroupOrchestration,
   updateRecoveryGroup,
 } from '../api/recoveryGroupsApi'
 import { recoveryGroupKeys } from '../api/recoveryGroupQueryKeys'
-import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
+import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
+import { RecoveryGroupsError } from '../api/recoveryGroupsErrors'
 
 export function useRecoveryGroups() {
   const queryClient = useQueryClient()
@@ -22,7 +24,6 @@ export function useRecoveryGroups() {
     queryFn: () => fetchRecoveryGroups(providers),
     enabled: providerQuery.isSuccess,
     retry: false,
-    refetchOnWindowFocus: false,
   })
 
   const createMutation = useMutation({
@@ -36,7 +37,32 @@ export function useRecoveryGroups() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() }),
   })
   const deleteMutation = useMutation({
-    mutationFn: deleteRecoveryGroup,
+    mutationFn: (group: RecoveryGroup) => {
+      if (group.pushToOrchestrator) {
+        const providerId = group.orchestrationProviderId?.trim()
+        if (!providerId) {
+          throw new RecoveryGroupsError(
+            'missing_orchestration_provider',
+            'An orchestration provider is required to roll back this recovery group',
+          )
+        }
+        return deleteRecoveryGroup({
+          recoveryGroupId: group.id,
+          rollbackFromOrchestrator: true,
+          providerId,
+        })
+      }
+      return deleteRecoveryGroup({
+        recoveryGroupId: group.id,
+        rollbackFromOrchestrator: false,
+      })
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() }),
+  })
+  const rollbackMutation = useMutation({
+    mutationFn: ({ groupId, providerId }: { groupId: string; providerId: string }) => (
+      rollbackRecoveryGroupOrchestration(groupId, providerId)
+    ),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() }),
   })
 
@@ -48,10 +74,14 @@ export function useRecoveryGroups() {
     refresh: providerQuery.isSuccess ? query.refetch : providerQuery.refetch,
     create: createMutation.mutateAsync,
     update: (id: string, draft: RecoveryGroupDraft) => updateMutation.mutateAsync({ id, draft }),
-    remove: deleteMutation.mutate,
+    remove: (group: RecoveryGroup) => deleteMutation.mutateAsync(group),
+    rollback: (groupId: string, providerId: string): Promise<void> => (
+      rollbackMutation.mutateAsync({ groupId, providerId })
+    ),
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
-    mutationError: createMutation.error ?? updateMutation.error ?? deleteMutation.error,
+    isRollingBack: rollbackMutation.isPending,
+    mutationError: createMutation.error ?? updateMutation.error ?? deleteMutation.error ?? rollbackMutation.error,
   }
 }

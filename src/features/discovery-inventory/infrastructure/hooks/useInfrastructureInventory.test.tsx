@@ -3,16 +3,19 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import { fetchPowerInventory, fetchVmwareInventory } from '../../api/discoveryInventoryApi'
+import { fetchPowerInventory } from '../../resources/api/powerInventoryApi'
+import { fetchVmwareInventory } from '../../resources/api/vmwareInventoryApi'
 import { useInfrastructureInventory } from './useInfrastructureInventory'
 
-vi.mock('../../api/discoveryInventoryApi', () => ({
+vi.mock('../../resources/api/powerInventoryApi', () => ({
   fetchPowerInventory: vi.fn(),
+}))
+vi.mock('../../resources/api/vmwareInventoryApi', () => ({
   fetchVmwareInventory: vi.fn(),
 }))
 
 function provider(type: ProviderRecord['type'], id: string): ProviderRecord {
-  return { id, type, name: id, description: '', ipAddress: '', credentialId: null, credentialStatus: 'ok' }
+  return { id, type, name: id, description: '', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' }
 }
 
 function wrapper({ children }: { children: ReactNode }) {

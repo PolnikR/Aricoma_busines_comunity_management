@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { applyFiltersAndPagination, getServerSideTagFilter } from './filterVirtualMachines'
 import type { AllVirtualMachinesData } from './mapInventoryToVirtualMachines'
-import type { VirtualMachine, VirtualMachinesQuery } from '../types'
+import type { VirtualMachine, VirtualMachinesQuery } from '../types/virtualMachineTypes'
 
 function vm(name: string, tags: string[] = []): VirtualMachine {
   return {
@@ -48,7 +48,6 @@ function query(overrides: Partial<VirtualMachinesQuery> = {}): VirtualMachinesQu
     powerState: '',
     connectionState: '',
     cluster: '',
-    providerId: null,
     tags: [],
     untagged: false,
     ...overrides,
@@ -56,9 +55,12 @@ function query(overrides: Partial<VirtualMachinesQuery> = {}): VirtualMachinesQu
 }
 
 describe('applyFiltersAndPagination', () => {
-  it('combines search and tag filters', () => {
+  it('ignores the legacy search term after inventory retrieval', () => {
     const result = applyFiltersAndPagination(data, query({ search: 'db', tags: ['prod'] }))
     expect(result.items.map(item => item.name)).toEqual(['DB-01'])
+
+    const unfiltered = applyFiltersAndPagination(data, query({ search: 'db' }))
+    expect(unfiltered.items.map(item => item.name)).toEqual(['DB-01', 'WEB-01', 'DB-02'])
   })
 
   it('filters untagged VMs and clamps pages', () => {

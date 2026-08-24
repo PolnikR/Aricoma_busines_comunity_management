@@ -1,0 +1,5478 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ABCo API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_roles_permissions": {
+      "get": {
+        "tags": [
+          "Identity & Access"
+        ],
+        "summary": "Get Roles Permissions",
+        "operationId": "get_roles_permissions_get_roles_permissions_get",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RolesPermissionsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_providers": {
+      "get": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Get Providers",
+        "operationId": "get_providers_get_providers_get",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "source",
+                "target",
+                "all"
+              ],
+              "type": "string",
+              "description": "filter providers by role; 'all' returns both",
+              "default": "all",
+              "title": "Role"
+            },
+            "description": "filter providers by role; 'all' returns both"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvidersResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/submit_provider": {
+      "post": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Submit Provider",
+        "operationId": "submit_provider_submit_provider_post",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Provider"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvidersResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/test_provider": {
+      "get": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Test Provider",
+        "operationId": "test_provider_test_provider_get",
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the provider to test connectivity for",
+              "title": "Provider Id"
+            },
+            "description": "id of the provider to test connectivity for"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderTestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/delete_provider": {
+      "delete": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Delete Provider Route",
+        "operationId": "delete_provider_route_delete_provider_delete",
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the provider to delete",
+              "title": "Provider Id"
+            },
+            "description": "id of the provider to delete"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvidersResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_platform_providers": {
+      "get": {
+        "tags": [
+          "Platform Providers"
+        ],
+        "summary": "Get Platform Providers",
+        "operationId": "get_platform_providers_get_platform_providers_get",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformProvidersResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/submit_platform_provider": {
+      "post": {
+        "tags": [
+          "Platform Providers"
+        ],
+        "summary": "Submit Platform Provider",
+        "operationId": "submit_platform_provider_submit_platform_provider_post",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrchestrationProvider"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformProvidersResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/delete_platform_provider": {
+      "delete": {
+        "tags": [
+          "Platform Providers"
+        ],
+        "summary": "Delete Platform Provider",
+        "operationId": "delete_platform_provider_delete_platform_provider_delete",
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the orchestration provider to delete",
+              "title": "Provider Id"
+            },
+            "description": "id of the orchestration provider to delete"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformProvidersResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_credentials": {
+      "get": {
+        "tags": [
+          "Credentials"
+        ],
+        "summary": "Get Credentials Route",
+        "operationId": "get_credentials_route_get_credentials_get",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/submit_credential": {
+      "post": {
+        "tags": [
+          "Credentials"
+        ],
+        "summary": "Submit Credential",
+        "operationId": "submit_credential_submit_credential_post",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Credential"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/delete_credential": {
+      "delete": {
+        "tags": [
+          "Credentials"
+        ],
+        "summary": "Delete Credential Route",
+        "operationId": "delete_credential_route_delete_credential_delete",
+        "parameters": [
+          {
+            "name": "credential_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the credential to delete",
+              "title": "Credential Id"
+            },
+            "description": "id of the credential to delete"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/credentials/pubkey": {
+      "get": {
+        "tags": [
+          "Credentials"
+        ],
+        "summary": "Credentials Pubkey",
+        "operationId": "credentials_pubkey_credentials_pubkey_get",
+        "responses": {
+          "200": {
+            "description": "RSA public key, PEM-encoded",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vms_in_folder": {
+      "get": {
+        "tags": [
+          "vCenter Inventory"
+        ],
+        "summary": "Vms In Folder",
+        "operationId": "vms_in_folder_vms_in_folder_get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "vCenter folder name",
+              "default": "_TEST masiny",
+              "title": "Name"
+            },
+            "description": "vCenter folder name"
+          },
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "id of the vCenter provider to use",
+              "default": "vmware-vcenter-01",
+              "title": "Provider Id"
+            },
+            "description": "id of the vCenter provider to use"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VmsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vms": {
+      "get": {
+        "tags": [
+          "vCenter Inventory"
+        ],
+        "summary": "Vms",
+        "operationId": "vms_vms_get",
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "id of the vCenter provider to use",
+              "default": "vmware-vcenter-01",
+              "title": "Provider Id"
+            },
+            "description": "id of the vCenter provider to use"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VmsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vms_by_tag": {
+      "get": {
+        "tags": [
+          "vCenter Inventory"
+        ],
+        "summary": "Vms By Tag",
+        "operationId": "vms_by_tag_vms_by_tag_get",
+        "parameters": [
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "vCenter tag for VM",
+              "default": "WEB",
+              "title": "Tag"
+            },
+            "description": "vCenter tag for VM"
+          },
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "id of the vCenter provider to use",
+              "default": "vmware-vcenter-01",
+              "title": "Provider Id"
+            },
+            "description": "id of the vCenter provider to use"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VmsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vms_by_name": {
+      "get": {
+        "tags": [
+          "vCenter Inventory"
+        ],
+        "summary": "Vms By Name",
+        "operationId": "vms_by_name_vms_by_name_get",
+        "parameters": [
+          {
+            "name": "prefix",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Case-sensitive prefix to match against VM name (vm.name.startswith(prefix))",
+              "default": "WEB",
+              "title": "Prefix"
+            },
+            "description": "Case-sensitive prefix to match against VM name (vm.name.startswith(prefix))"
+          },
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "id of the vCenter provider to use",
+              "default": "vmware-vcenter-01",
+              "title": "Provider Id"
+            },
+            "description": "id of the vCenter provider to use"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VmsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tags": {
+      "get": {
+        "tags": [
+          "vCenter Inventory"
+        ],
+        "summary": "Tags",
+        "operationId": "tags_tags_get",
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "id of the vCenter provider to use",
+              "default": "vmware-vcenter-01",
+              "title": "Provider Id"
+            },
+            "description": "id of the vCenter provider to use"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vdisks_by_vm": {
+      "get": {
+        "tags": [
+          "Discovery"
+        ],
+        "summary": "Vdisks By Vm",
+        "operationId": "vdisks_by_vm_vdisks_by_vm_get",
+        "parameters": [
+          {
+            "name": "vm_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "name of VM",
+              "default": "TEST-WEB02",
+              "title": "Vm Name"
+            },
+            "description": "name of VM"
+          },
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "id of the vCenter provider to use",
+              "default": "vmware-vcenter-01",
+              "title": "Provider Id"
+            },
+            "description": "id of the vCenter provider to use"
+          },
+          {
+            "name": "ibm_provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "id of the IBM FlashSystem provider to use",
+              "default": "ibm-flashsystem-01",
+              "title": "Ibm Provider Id"
+            },
+            "description": "id of the IBM FlashSystem provider to use"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VdisksByVmResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_volumes": {
+      "get": {
+        "tags": [
+          "Storage Volumes"
+        ],
+        "summary": "Get Volumes Route",
+        "operationId": "get_volumes_route_get_volumes_get",
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "id of the IBM FlashSystem provider to use",
+              "default": "ibm-flashsystem-01",
+              "title": "Provider Id"
+            },
+            "description": "id of the IBM FlashSystem provider to use"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VolumesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_volume_tree": {
+      "get": {
+        "tags": [
+          "Storage Volumes"
+        ],
+        "summary": "Get Volume Tree Route",
+        "description": "Pool-rooted trees of volumes, FlashCopy mappings and consistency groups,\npre-nested for the frontend. See docs/frontend-volume-tree.md.",
+        "operationId": "get_volume_tree_route_get_volume_tree_get",
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "id of the IBM FlashSystem provider to use",
+              "default": "ibm-flashsystem-01",
+              "title": "Provider Id"
+            },
+            "description": "id of the IBM FlashSystem provider to use"
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "snapshot",
+                "consistency_group",
+                "flat"
+              ],
+              "type": "string",
+              "description": "which tree(s) to build; 'all' returns all three",
+              "default": "all",
+              "title": "View"
+            },
+            "description": "which tree(s) to build; 'all' returns all three"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VolumeTreeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_power_vm": {
+      "get": {
+        "tags": [
+          "IBM Power"
+        ],
+        "summary": "Get Power Vm",
+        "operationId": "get_power_vm_get_power_vm_get",
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "id of the IBM Power provider to use",
+              "default": "ibm-power-01",
+              "title": "Provider Id"
+            },
+            "description": "id of the IBM Power provider to use"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PowerVmsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_orchestrator_runs": {
+      "get": {
+        "tags": [
+          "Operations"
+        ],
+        "summary": "Get Orchestrator Runs",
+        "operationId": "get_orchestrator_runs_get_orchestrator_runs_get",
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "orchestration (AIRFLOW) provider",
+              "title": "Provider Id"
+            },
+            "description": "orchestration (AIRFLOW) provider"
+          },
+          {
+            "name": "dag_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Airflow DAG id, e.g. a recovery app's name",
+              "title": "Dag Id"
+            },
+            "description": "Airflow DAG id, e.g. a recovery app's name"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "max dag runs to return",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "max dag runs to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "pagination offset",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "pagination offset"
+          },
+          {
+            "name": "order_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Airflow order_by field, e.g. -logical_date",
+              "default": "-logical_date",
+              "title": "Order By"
+            },
+            "description": "Airflow order_by field, e.g. -logical_date"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrchestratorRunsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_recovery_apps": {
+      "get": {
+        "tags": [
+          "Recovery Apps"
+        ],
+        "summary": "Get Recovery Apps",
+        "operationId": "get_recovery_apps_get_recovery_apps_get",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryAppsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/submit_recovery_dag": {
+      "post": {
+        "tags": [
+          "Recovery Apps"
+        ],
+        "summary": "Submit Recovery Dag",
+        "operationId": "submit_recovery_dag_submit_recovery_dag_post",
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "orchestration (AIRFLOW) provider to deploy to when push_to_orchestrator",
+              "default": "airflow-01",
+              "title": "Provider Id"
+            },
+            "description": "orchestration (AIRFLOW) provider to deploy to when push_to_orchestrator"
+          },
+          {
+            "name": "push_to_orchestrator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "if true, also push the DAG to the Airflow target",
+              "default": false,
+              "title": "Push To Orchestrator"
+            },
+            "description": "if true, also push the DAG to the Airflow target"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryAppSubmission"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryAppSubmitResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/delete_recovery_app": {
+      "delete": {
+        "tags": [
+          "Recovery Apps"
+        ],
+        "summary": "Delete Recovery App Route",
+        "operationId": "delete_recovery_app_route_delete_recovery_app_delete",
+        "parameters": [
+          {
+            "name": "recovery_app_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the recovery app to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed).",
+              "title": "Recovery App Id"
+            },
+            "description": "id of the recovery app to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed)."
+          },
+          {
+            "name": "rollback_from_orchestrator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "if true, tear down the app's Airflow DAG, then unmap (unpresent) its IBM target volumes from their host. Does not delete the FlashCopy mapping or the volume itself.",
+              "default": false,
+              "title": "Rollback From Orchestrator"
+            },
+            "description": "if true, tear down the app's Airflow DAG, then unmap (unpresent) its IBM target volumes from their host. Does not delete the FlashCopy mapping or the volume itself."
+          },
+          {
+            "name": "rollback_orphans",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "if true, recovery_app_id is read as an airflow_run_id: skip the recovery_applications.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_PLAN.",
+              "default": false,
+              "title": "Rollback Orphans"
+            },
+            "description": "if true, recovery_app_id is read as an airflow_run_id: skip the recovery_applications.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_PLAN."
+          },
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "orchestration (AIRFLOW) provider - required when rollback_from_orchestrator",
+              "default": "airflow-01",
+              "title": "Provider Id"
+            },
+            "description": "orchestration (AIRFLOW) provider - required when rollback_from_orchestrator"
+          },
+          {
+            "name": "compute_provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped; its own defaultFlashcopyProviderId supplies the IBM FlashSystem provider for that unmap step.",
+              "default": "vmware-vcenter-02",
+              "title": "Compute Provider Id"
+            },
+            "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped; its own defaultFlashcopyProviderId supplies the IBM FlashSystem provider for that unmap step."
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryAppsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_recovery_groups": {
+      "get": {
+        "tags": [
+          "Recovery Groups"
+        ],
+        "summary": "Get Recovery Groups",
+        "operationId": "get_recovery_groups_get_recovery_groups_get",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryGroupsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/submit_recovery_group": {
+      "post": {
+        "tags": [
+          "Recovery Groups"
+        ],
+        "summary": "Submit Recovery Group",
+        "operationId": "submit_recovery_group_submit_recovery_group_post",
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "orchestration (AIRFLOW) provider to deploy to when push_to_orchestrator",
+              "default": "airflow-01",
+              "title": "Provider Id"
+            },
+            "description": "orchestration (AIRFLOW) provider to deploy to when push_to_orchestrator"
+          },
+          {
+            "name": "push_to_orchestrator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "if true, also push the group's policy-enforcement DAG",
+              "default": false,
+              "title": "Push To Orchestrator"
+            },
+            "description": "if true, also push the group's policy-enforcement DAG"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryGroup"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryGroupsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rollback_group_from_orchestrator": {
+      "post": {
+        "tags": [
+          "Recovery Groups"
+        ],
+        "summary": "Rollback Group From Orchestrator",
+        "description": "Delete the group's Airflow DAG (file, record, every run and task instance)\nand every IBM FlashCopy object it created. The group record itself is kept —\nonly push_to_orchestrator flips to false.",
+        "operationId": "rollback_group_from_orchestrator_rollback_group_from_orchestrator_post",
+        "parameters": [
+          {
+            "name": "recovery_group_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the recovery group to roll back",
+              "title": "Recovery Group Id"
+            },
+            "description": "id of the recovery group to roll back"
+          },
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "orchestration (AIRFLOW) provider the group was pushed to",
+              "title": "Provider Id"
+            },
+            "description": "orchestration (AIRFLOW) provider the group was pushed to"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryGroupsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/delete_recovery_group": {
+      "delete": {
+        "tags": [
+          "Recovery Groups"
+        ],
+        "summary": "Delete Recovery Group Route",
+        "operationId": "delete_recovery_group_route_delete_recovery_group_delete",
+        "parameters": [
+          {
+            "name": "recovery_group_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the recovery group to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed).",
+              "title": "Recovery Group Id"
+            },
+            "description": "id of the recovery group to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed).",
+            "examples": {
+              "group": {
+                "summary": "recovery group id",
+                "value": "db_test1"
+              },
+              "orphan": {
+                "summary": "airflow_run_id — use with rollback_orphans=true",
+                "value": "260812061013_d33676c5"
+              }
+            }
+          },
+          {
+            "name": "rollback_from_orchestrator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "if true, tear down the group's Airflow DAG + IBM FlashCopy objects first",
+              "default": false,
+              "title": "Rollback From Orchestrator"
+            },
+            "description": "if true, tear down the group's Airflow DAG + IBM FlashCopy objects first"
+          },
+          {
+            "name": "rollback_orphans",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "if true, recovery_group_id is read as an airflow_run_id: skip the recovery_groups.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) and IBM FlashCopy objects (g|m|t <run_id[-8:]>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_GROUP.",
+              "default": false,
+              "title": "Rollback Orphans"
+            },
+            "description": "if true, recovery_group_id is read as an airflow_run_id: skip the recovery_groups.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) and IBM FlashCopy objects (g|m|t <run_id[-8:]>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_GROUP."
+          },
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "orchestration (AIRFLOW) provider — required when rollback_from_orchestrator",
+              "default": "airflow-01",
+              "title": "Provider Id"
+            },
+            "description": "orchestration (AIRFLOW) provider — required when rollback_from_orchestrator"
+          },
+          {
+            "name": "volume_provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "FLASHCOPY provider holding the orphaned objects — only used with rollback_orphans",
+              "default": "ibm-flashsystem-01",
+              "title": "Volume Provider Id"
+            },
+            "description": "FLASHCOPY provider holding the orphaned objects — only used with rollback_orphans"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryGroupsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_policies": {
+      "get": {
+        "tags": [
+          "Snapshot Policies"
+        ],
+        "summary": "Get Policies",
+        "operationId": "get_policies_get_policies_get",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotPoliciesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/submit_policy": {
+      "post": {
+        "tags": [
+          "Snapshot Policies"
+        ],
+        "summary": "Submit Policy",
+        "operationId": "submit_policy_submit_policy_post",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotPolicy"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotPoliciesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/delete_policy": {
+      "delete": {
+        "tags": [
+          "Snapshot Policies"
+        ],
+        "summary": "Delete Policy",
+        "operationId": "delete_policy_delete_policy_delete",
+        "parameters": [
+          {
+            "name": "policy_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the snapshot policy to delete",
+              "title": "Policy Id"
+            },
+            "description": "id of the snapshot policy to delete"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotPoliciesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_policy_sets": {
+      "get": {
+        "tags": [
+          "Policy Sets"
+        ],
+        "summary": "Get Policy Sets",
+        "operationId": "get_policy_sets_get_policy_sets_get",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicySetsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/submit_policy_set": {
+      "post": {
+        "tags": [
+          "Policy Sets"
+        ],
+        "summary": "Submit Policy Set",
+        "operationId": "submit_policy_set_submit_policy_set_post",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicySet"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicySetsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/delete_policy_set": {
+      "delete": {
+        "tags": [
+          "Policy Sets"
+        ],
+        "summary": "Delete Policy Set Route",
+        "operationId": "delete_policy_set_route_delete_policy_set_delete",
+        "parameters": [
+          {
+            "name": "policy_set_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the policy set to delete",
+              "title": "Policy Set Id"
+            },
+            "description": "id of the policy set to delete"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicySetsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_recovery_app_policies": {
+      "get": {
+        "tags": [
+          "Recovery App Policies"
+        ],
+        "summary": "Get Recovery App Policies",
+        "operationId": "get_recovery_app_policies_get_recovery_app_policies_get",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryAppPoliciesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/submit_recovery_app_policy": {
+      "post": {
+        "tags": [
+          "Recovery App Policies"
+        ],
+        "summary": "Submit Recovery App Policy",
+        "operationId": "submit_recovery_app_policy_submit_recovery_app_policy_post",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryAppPolicy"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryAppPoliciesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/delete_recovery_app_policy": {
+      "delete": {
+        "tags": [
+          "Recovery App Policies"
+        ],
+        "summary": "Delete Recovery App Policy Route",
+        "operationId": "delete_recovery_app_policy_route_delete_recovery_app_policy_delete",
+        "parameters": [
+          {
+            "name": "policy_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the recovery app policy to delete",
+              "title": "Policy Id"
+            },
+            "description": "id of the recovery app policy to delete"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryAppPoliciesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_clean_room_policies": {
+      "get": {
+        "tags": [
+          "Clean Room Policies"
+        ],
+        "summary": "Get Clean Room Policies",
+        "operationId": "get_clean_room_policies_get_clean_room_policies_get",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CleanRoomPoliciesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/submit_clean_room_policy": {
+      "post": {
+        "tags": [
+          "Clean Room Policies"
+        ],
+        "summary": "Submit Clean Room Policy",
+        "operationId": "submit_clean_room_policy_submit_clean_room_policy_post",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CleanRoomPolicy"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CleanRoomPoliciesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/delete_clean_room_policy": {
+      "delete": {
+        "tags": [
+          "Clean Room Policies"
+        ],
+        "summary": "Delete Clean Room Policy Route",
+        "operationId": "delete_clean_room_policy_route_delete_clean_room_policy_delete",
+        "parameters": [
+          {
+            "name": "policy_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the clean room policy to delete",
+              "title": "Policy Id"
+            },
+            "description": "id of the clean room policy to delete"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CleanRoomPoliciesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CleanRoomPoliciesResponse": {
+        "properties": {
+          "clean_room_policies": {
+            "items": {
+              "$ref": "#/components/schemas/CleanRoomPolicyRecord"
+            },
+            "type": "array",
+            "title": "Clean Room Policies"
+          }
+        },
+        "type": "object",
+        "required": [
+          "clean_room_policies"
+        ],
+        "title": "CleanRoomPoliciesResponse"
+      },
+      "CleanRoomPolicy": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "CleanRoomPolicy"
+      },
+      "CleanRoomPolicyRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "CleanRoomPolicyRecord"
+      },
+      "Credential": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "password_encrypted": {
+            "type": "boolean",
+            "title": "Password Encrypted",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "username",
+          "password"
+        ],
+        "title": "Credential"
+      },
+      "CredentialRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "username"
+        ],
+        "title": "CredentialRecord"
+      },
+      "CredentialsResponse": {
+        "properties": {
+          "credentials": {
+            "items": {
+              "$ref": "#/components/schemas/CredentialRecord"
+            },
+            "type": "array",
+            "title": "Credentials"
+          }
+        },
+        "type": "object",
+        "required": [
+          "credentials"
+        ],
+        "title": "CredentialsResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "HealthResponse"
+      },
+      "OrchestrationProvider": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ProviderType"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "source",
+              "target"
+            ],
+            "title": "Role",
+            "default": "source"
+          },
+          "ipAddress": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ipaddress"
+          },
+          "credentialId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credentialid"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "defaultFlashcopyProviderId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Defaultflashcopyproviderid"
+          },
+          "orchestratorConnId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Orchestratorconnid"
+          },
+          "vmPrefix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vmprefix"
+          },
+          "vmTags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Vmtags"
+          },
+          "notificationEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notificationemail"
+          },
+          "port": {
+            "type": "integer",
+            "title": "Port",
+            "default": 22
+          },
+          "dagDir": {
+            "type": "string",
+            "title": "Dagdir"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type",
+          "dagDir"
+        ],
+        "title": "OrchestrationProvider"
+      },
+      "OrchestrationProviderRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ProviderType"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "source",
+              "target"
+            ],
+            "title": "Role",
+            "default": "source"
+          },
+          "ipAddress": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ipaddress"
+          },
+          "credentialId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credentialid"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "defaultFlashcopyProviderId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Defaultflashcopyproviderid"
+          },
+          "orchestratorConnId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Orchestratorconnid"
+          },
+          "vmPrefix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vmprefix"
+          },
+          "vmTags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Vmtags"
+          },
+          "notificationEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notificationemail"
+          },
+          "port": {
+            "type": "integer",
+            "title": "Port",
+            "default": 22
+          },
+          "dagDir": {
+            "type": "string",
+            "title": "Dagdir"
+          },
+          "credentialStatus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credentialstatus"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type",
+          "dagDir"
+        ],
+        "title": "OrchestrationProviderRecord"
+      },
+      "OrchestratorPush": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pushed",
+              "skipped"
+            ],
+            "title": "Status"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "dag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dag"
+          },
+          "dag_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dag Id"
+          },
+          "json": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Json"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "OrchestratorPush"
+      },
+      "OrchestratorRunsResponse": {
+        "properties": {
+          "provider_id": {
+            "type": "string",
+            "title": "Provider Id"
+          },
+          "dag_id": {
+            "type": "string",
+            "title": "Dag Id"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "provider_id",
+          "dag_id"
+        ],
+        "title": "OrchestratorRunsResponse",
+        "description": "Airflow's own GET /dagRuns response, merged with provider_id/dag_id.\nLeft permissive (extra=\"allow\") since the run/task fields are Airflow's\nschema, not this API's."
+      },
+      "PlatformProvidersResponse": {
+        "properties": {
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/OrchestrationProviderRecord"
+            },
+            "type": "array",
+            "title": "Providers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "providers"
+        ],
+        "title": "PlatformProvidersResponse"
+      },
+      "PolicySet": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "snapshot_policy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Policy Id"
+          },
+          "recovery_app_policy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recovery App Policy Id"
+          },
+          "clean_room_policy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clean Room Policy Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "PolicySet"
+      },
+      "PolicySetRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "snapshot_policy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Policy Id"
+          },
+          "recovery_app_policy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recovery App Policy Id"
+          },
+          "clean_room_policy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clean Room Policy Id"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "PolicySetRecord"
+      },
+      "PolicySetsResponse": {
+        "properties": {
+          "policy_sets": {
+            "items": {
+              "$ref": "#/components/schemas/PolicySetRecord"
+            },
+            "type": "array",
+            "title": "Policy Sets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "policy_sets"
+        ],
+        "title": "PolicySetsResponse"
+      },
+      "PowerVmRecord": {
+        "properties": {
+          "lpar": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Lpar",
+            "default": {}
+          },
+          "vios": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Vios",
+            "default": {}
+          },
+          "provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Id"
+          },
+          "provider_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Type"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "PowerVmRecord"
+      },
+      "PowerVmsResponse": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "counts_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts By Type"
+          },
+          "vms": {
+            "items": {
+              "$ref": "#/components/schemas/PowerVmRecord"
+            },
+            "type": "array",
+            "title": "Vms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "counts_by_type",
+          "vms"
+        ],
+        "title": "PowerVmsResponse"
+      },
+      "Provider": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ProviderType"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "source",
+              "target"
+            ],
+            "title": "Role",
+            "default": "source"
+          },
+          "ipAddress": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ipaddress"
+          },
+          "credentialId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credentialid"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "defaultFlashcopyProviderId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Defaultflashcopyproviderid"
+          },
+          "orchestratorConnId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Orchestratorconnid"
+          },
+          "vmPrefix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vmprefix"
+          },
+          "vmTags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Vmtags"
+          },
+          "notificationEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notificationemail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type"
+        ],
+        "title": "Provider"
+      },
+      "ProviderCheck": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "status",
+          "detail"
+        ],
+        "title": "ProviderCheck"
+      },
+      "ProviderRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ProviderType"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "source",
+              "target"
+            ],
+            "title": "Role",
+            "default": "source"
+          },
+          "ipAddress": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ipaddress"
+          },
+          "credentialId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credentialid"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "defaultFlashcopyProviderId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Defaultflashcopyproviderid"
+          },
+          "orchestratorConnId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Orchestratorconnid"
+          },
+          "vmPrefix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vmprefix"
+          },
+          "vmTags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Vmtags"
+          },
+          "notificationEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notificationemail"
+          },
+          "credentialStatus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credentialstatus"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type"
+        ],
+        "title": "ProviderRecord"
+      },
+      "ProviderTestResponse": {
+        "properties": {
+          "provider_id": {
+            "type": "string",
+            "title": "Provider Id"
+          },
+          "provider_type": {
+            "type": "string",
+            "title": "Provider Type"
+          },
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/ProviderCheck"
+            },
+            "type": "array",
+            "title": "Checks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider_id",
+          "provider_type",
+          "ok",
+          "checks"
+        ],
+        "title": "ProviderTestResponse"
+      },
+      "ProviderType": {
+        "type": "string",
+        "enum": [
+          "VMWARE",
+          "FLASHCOPY",
+          "IBM_POWER",
+          "AIRFLOW"
+        ],
+        "title": "ProviderType"
+      },
+      "ProvidersResponse": {
+        "properties": {
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/ProviderRecord"
+            },
+            "type": "array",
+            "title": "Providers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "providers"
+        ],
+        "title": "ProvidersResponse"
+      },
+      "RecoveryAppPoliciesResponse": {
+        "properties": {
+          "recovery_app_policies": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveryAppPolicyRecord"
+            },
+            "type": "array",
+            "title": "Recovery App Policies"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recovery_app_policies"
+        ],
+        "title": "RecoveryAppPoliciesResponse"
+      },
+      "RecoveryAppPolicy": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "frequency_value": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Frequency Value"
+          },
+          "frequency_unit": {
+            "type": "string",
+            "enum": [
+              "minutes",
+              "hours",
+              "days"
+            ],
+            "title": "Frequency Unit"
+          },
+          "retention_value": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Retention Value"
+          },
+          "retention_unit": {
+            "type": "string",
+            "enum": [
+              "minutes",
+              "hours",
+              "days"
+            ],
+            "title": "Retention Unit"
+          },
+          "boot_verify": {
+            "type": "boolean",
+            "title": "Boot Verify",
+            "default": false
+          },
+          "snapshot_selection_mode": {
+            "type": "string",
+            "enum": [
+              "latest",
+              "time_range",
+              "exact_time"
+            ],
+            "title": "Snapshot Selection Mode",
+            "default": "latest"
+          },
+          "snapshot_max_age_value": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Max Age Value"
+          },
+          "snapshot_max_age_unit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "minutes",
+                  "hours",
+                  "days"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Max Age Unit"
+          },
+          "snapshot_target_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Target Time"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "frequency_value",
+          "frequency_unit",
+          "retention_value",
+          "retention_unit"
+        ],
+        "title": "RecoveryAppPolicy"
+      },
+      "RecoveryAppPolicyRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "frequency_value": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Frequency Value"
+          },
+          "frequency_unit": {
+            "type": "string",
+            "enum": [
+              "minutes",
+              "hours",
+              "days"
+            ],
+            "title": "Frequency Unit"
+          },
+          "retention_value": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Retention Value"
+          },
+          "retention_unit": {
+            "type": "string",
+            "enum": [
+              "minutes",
+              "hours",
+              "days"
+            ],
+            "title": "Retention Unit"
+          },
+          "boot_verify": {
+            "type": "boolean",
+            "title": "Boot Verify",
+            "default": false
+          },
+          "snapshot_selection_mode": {
+            "type": "string",
+            "enum": [
+              "latest",
+              "time_range",
+              "exact_time"
+            ],
+            "title": "Snapshot Selection Mode",
+            "default": "latest"
+          },
+          "snapshot_max_age_value": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Max Age Value"
+          },
+          "snapshot_max_age_unit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "minutes",
+                  "hours",
+                  "days"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Max Age Unit"
+          },
+          "snapshot_target_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Target Time"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "frequency_value",
+          "frequency_unit",
+          "retention_value",
+          "retention_unit"
+        ],
+        "title": "RecoveryAppPolicyRecord"
+      },
+      "RecoveryAppRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "application": {
+            "$ref": "#/components/schemas/RecoveryApplication"
+          },
+          "policy_set_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Set Id"
+          },
+          "airflow_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Airflow Run Id"
+          },
+          "push_to_orchestrator": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Push To Orchestrator"
+          },
+          "orchestration_provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Orchestration Provider Id"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "application"
+        ],
+        "title": "RecoveryAppRecord",
+        "description": "'application' shape mirrors what apache_airflow/dags/recovery_app_template.py\naccesses unconditionally - see recovery.recovery.RecoveryApplication."
+      },
+      "RecoveryAppSubmission": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "application": {
+            "$ref": "#/components/schemas/RecoveryApplication"
+          },
+          "policy_set_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Set Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "application"
+        ],
+        "title": "RecoveryAppSubmission",
+        "description": "POST /submit_recovery_dag request body."
+      },
+      "RecoveryAppSubmitResponse": {
+        "properties": {
+          "applications": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveryAppRecord"
+            },
+            "type": "array",
+            "title": "Applications"
+          },
+          "orchestrator_push": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrchestratorPush"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "applications"
+        ],
+        "title": "RecoveryAppSubmitResponse",
+        "description": "Same 'applications' envelope key as /get_recovery_apps - the router\nre-keys upsert_recovery_app's own 'recovery_applications' result to match."
+      },
+      "RecoveryApplication": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "source_connection": {
+            "type": "string",
+            "title": "Source Connection"
+          },
+          "target_connection": {
+            "type": "string",
+            "title": "Target Connection"
+          },
+          "tiers": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/RecoveryTier"
+            },
+            "type": "object",
+            "title": "Tiers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "environment",
+          "platform",
+          "source_connection",
+          "target_connection",
+          "tiers"
+        ],
+        "title": "RecoveryApplication",
+        "description": "Shape accessed unconditionally by apache_airflow/dags/recovery_app_template.py\nat Airflow DAG-parse time - keep fields in sync with that module."
+      },
+      "RecoveryAppsResponse": {
+        "properties": {
+          "applications": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveryAppRecord"
+            },
+            "type": "array",
+            "title": "Applications"
+          },
+          "rollback": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RollbackReport"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "applications"
+        ],
+        "title": "RecoveryAppsResponse"
+      },
+      "RecoveryGroup": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "provider_id_vm": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Id Vm"
+          },
+          "provider_id_volume": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Id Volume"
+          },
+          "policy_set_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Set Id"
+          },
+          "vms": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveryVM"
+            },
+            "type": "array",
+            "title": "Vms",
+            "default": []
+          },
+          "volumes": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveryVolume"
+            },
+            "type": "array",
+            "title": "Volumes",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "RecoveryGroup"
+      },
+      "RecoveryGroupRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "provider_id_vm": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Id Vm"
+          },
+          "provider_id_volume": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Id Volume"
+          },
+          "policy_set_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Set Id"
+          },
+          "vms": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveryVM"
+            },
+            "type": "array",
+            "title": "Vms",
+            "default": []
+          },
+          "volumes": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveryVolume"
+            },
+            "type": "array",
+            "title": "Volumes",
+            "default": []
+          },
+          "airflow_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Airflow Run Id"
+          },
+          "push_to_orchestrator": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Push To Orchestrator"
+          },
+          "orchestration_provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Orchestration Provider Id"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "RecoveryGroupRecord"
+      },
+      "RecoveryGroupRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "vms": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveryVM"
+            },
+            "type": "array",
+            "title": "Vms",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "RecoveryGroupRef"
+      },
+      "RecoveryGroupsResponse": {
+        "properties": {
+          "recovery_groups": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveryGroupRecord"
+            },
+            "type": "array",
+            "title": "Recovery Groups"
+          },
+          "orchestrator_push": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrchestratorPush"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rollback": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RollbackReport"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "recovery_groups"
+        ],
+        "title": "RecoveryGroupsResponse"
+      },
+      "RecoveryTier": {
+        "properties": {
+          "order": {
+            "type": "integer",
+            "title": "Order"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "recovery_group": {
+            "$ref": "#/components/schemas/RecoveryGroupRef"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order",
+          "description",
+          "recovery_group"
+        ],
+        "title": "RecoveryTier"
+      },
+      "RecoveryVM": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "RecoveryVM"
+      },
+      "RecoveryVolume": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "RecoveryVolume"
+      },
+      "RoleRecord": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "permissions"
+        ],
+        "title": "RoleRecord"
+      },
+      "RolesPermissionsResponse": {
+        "properties": {
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions"
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/RoleRecord"
+            },
+            "type": "array",
+            "title": "Roles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "permissions",
+          "roles"
+        ],
+        "title": "RolesPermissionsResponse"
+      },
+      "RollbackReport": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "partial",
+              "failed",
+              "skipped"
+            ],
+            "title": "Status"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "RollbackReport",
+        "description": "recovery/rollback.py's report: shape varies a lot by status (see\nrollback_recovery_group's docstring), so only `status` is pinned down."
+      },
+      "SnapshotPoliciesResponse": {
+        "properties": {
+          "snapshot_policies": {
+            "items": {
+              "$ref": "#/components/schemas/SnapshotPolicyRecord"
+            },
+            "type": "array",
+            "title": "Snapshot Policies"
+          }
+        },
+        "type": "object",
+        "required": [
+          "snapshot_policies"
+        ],
+        "title": "SnapshotPoliciesResponse"
+      },
+      "SnapshotPolicy": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "frequency_value": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Frequency Value"
+          },
+          "frequency_unit": {
+            "type": "string",
+            "enum": [
+              "minutes",
+              "hours",
+              "days"
+            ],
+            "title": "Frequency Unit"
+          },
+          "retention_value": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Retention Value"
+          },
+          "retention_unit": {
+            "type": "string",
+            "enum": [
+              "minutes",
+              "hours",
+              "days"
+            ],
+            "title": "Retention Unit"
+          },
+          "max_snapshots": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Snapshots"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "frequency_value",
+          "frequency_unit",
+          "retention_value",
+          "retention_unit"
+        ],
+        "title": "SnapshotPolicy"
+      },
+      "SnapshotPolicyRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "frequency_value": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Frequency Value"
+          },
+          "frequency_unit": {
+            "type": "string",
+            "enum": [
+              "minutes",
+              "hours",
+              "days"
+            ],
+            "title": "Frequency Unit"
+          },
+          "retention_value": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Retention Value"
+          },
+          "retention_unit": {
+            "type": "string",
+            "enum": [
+              "minutes",
+              "hours",
+              "days"
+            ],
+            "title": "Retention Unit"
+          },
+          "max_snapshots": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Snapshots"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "frequency_value",
+          "frequency_unit",
+          "retention_value",
+          "retention_unit"
+        ],
+        "title": "SnapshotPolicyRecord"
+      },
+      "TagRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Id"
+          },
+          "provider_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Type"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "TagRecord"
+      },
+      "TagsResponse": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/TagRecord"
+            },
+            "type": "array",
+            "title": "Tags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "tags"
+        ],
+        "title": "TagsResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VdisksByVmResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "count_vm": {
+            "type": "integer",
+            "title": "Count Vm"
+          },
+          "count_ibm": {
+            "type": "integer",
+            "title": "Count Ibm"
+          },
+          "vdisks": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Vdisks"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "name",
+          "count_vm",
+          "count_ibm",
+          "vdisks"
+        ],
+        "title": "VdisksByVmResponse"
+      },
+      "VmDisk": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "capacity_gb": {
+            "type": "number",
+            "title": "Capacity Gb"
+          },
+          "file": {
+            "type": "string",
+            "title": "File"
+          },
+          "datastore": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Datastore"
+          },
+          "thin_provisioned": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thin Provisioned"
+          },
+          "uuid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uuid"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "label",
+          "capacity_gb",
+          "file"
+        ],
+        "title": "VmDisk"
+      },
+      "VmRecord": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": ""
+          },
+          "moId": {
+            "type": "string",
+            "title": "Moid",
+            "default": ""
+          },
+          "uuid": {
+            "type": "string",
+            "title": "Uuid",
+            "default": ""
+          },
+          "instance_uuid": {
+            "type": "string",
+            "title": "Instance Uuid",
+            "default": ""
+          },
+          "bios_uuid": {
+            "type": "string",
+            "title": "Bios Uuid",
+            "default": ""
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "default": []
+          },
+          "power_state": {
+            "type": "string",
+            "title": "Power State",
+            "default": ""
+          },
+          "connection_state": {
+            "type": "string",
+            "title": "Connection State",
+            "default": ""
+          },
+          "boot_time": {
+            "type": "string",
+            "title": "Boot Time",
+            "default": ""
+          },
+          "guest_os": {
+            "type": "string",
+            "title": "Guest Os",
+            "default": ""
+          },
+          "guest_id": {
+            "type": "string",
+            "title": "Guest Id",
+            "default": ""
+          },
+          "guest_hostname": {
+            "type": "string",
+            "title": "Guest Hostname",
+            "default": ""
+          },
+          "ip_address": {
+            "type": "string",
+            "title": "Ip Address",
+            "default": ""
+          },
+          "vcpu": {
+            "type": "integer",
+            "title": "Vcpu",
+            "default": 0
+          },
+          "cpu": {
+            "type": "integer",
+            "title": "Cpu",
+            "default": 0
+          },
+          "memory_mb": {
+            "type": "integer",
+            "title": "Memory Mb",
+            "default": 0
+          },
+          "memory_gb": {
+            "type": "number",
+            "title": "Memory Gb",
+            "default": 0
+          },
+          "vmware_tools_status": {
+            "type": "string",
+            "title": "Vmware Tools Status",
+            "default": ""
+          },
+          "vmware_tools_running_status": {
+            "type": "string",
+            "title": "Vmware Tools Running Status",
+            "default": ""
+          },
+          "vmware_tools_version": {
+            "type": "string",
+            "title": "Vmware Tools Version",
+            "default": ""
+          },
+          "vmware_tools_version_status": {
+            "type": "string",
+            "title": "Vmware Tools Version Status",
+            "default": ""
+          },
+          "esxi_host": {
+            "type": "string",
+            "title": "Esxi Host",
+            "default": ""
+          },
+          "host": {
+            "type": "string",
+            "title": "Host",
+            "default": ""
+          },
+          "cluster": {
+            "type": "string",
+            "title": "Cluster",
+            "default": ""
+          },
+          "folder": {
+            "type": "string",
+            "title": "Folder",
+            "default": ""
+          },
+          "datastore": {
+            "type": "string",
+            "title": "Datastore",
+            "default": ""
+          },
+          "vdisks": {
+            "items": {
+              "$ref": "#/components/schemas/VmDisk"
+            },
+            "type": "array",
+            "title": "Vdisks",
+            "default": []
+          },
+          "snapshot_count": {
+            "type": "integer",
+            "title": "Snapshot Count",
+            "default": 0
+          },
+          "annotation": {
+            "type": "string",
+            "title": "Annotation",
+            "default": ""
+          },
+          "template": {
+            "type": "string",
+            "title": "Template",
+            "default": ""
+          },
+          "vm_path": {
+            "type": "string",
+            "title": "Vm Path",
+            "default": ""
+          },
+          "hw_version": {
+            "type": "string",
+            "title": "Hw Version",
+            "default": ""
+          },
+          "provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Id"
+          },
+          "provider_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Type"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "VmRecord"
+      },
+      "VmsResponse": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "vms": {
+            "items": {
+              "$ref": "#/components/schemas/VmRecord"
+            },
+            "type": "array",
+            "title": "Vms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "vms"
+        ],
+        "title": "VmsResponse"
+      },
+      "VolumeTreeCounts": {
+        "properties": {
+          "pools": {
+            "type": "integer",
+            "title": "Pools"
+          },
+          "volumes": {
+            "type": "integer",
+            "title": "Volumes"
+          },
+          "fcmaps": {
+            "type": "integer",
+            "title": "Fcmaps"
+          },
+          "consistency_groups": {
+            "type": "integer",
+            "title": "Consistency Groups"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pools",
+          "volumes",
+          "fcmaps",
+          "consistency_groups"
+        ],
+        "title": "VolumeTreeCounts"
+      },
+      "VolumeTreeNode": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Detail",
+            "default": {}
+          },
+          "children": {
+            "items": {
+              "$ref": "#/components/schemas/VolumeTreeNode"
+            },
+            "type": "array",
+            "title": "Children",
+            "default": []
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "kind",
+          "key"
+        ],
+        "title": "VolumeTreeNode"
+      },
+      "VolumeTreeResponse": {
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/VolumeTreeCounts"
+          },
+          "views": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/VolumeTreeNode"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Views"
+          },
+          "provider_id": {
+            "type": "string",
+            "title": "Provider Id"
+          },
+          "provider_type": {
+            "type": "string",
+            "title": "Provider Type"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "counts",
+          "views",
+          "provider_id",
+          "provider_type"
+        ],
+        "title": "VolumeTreeResponse"
+      },
+      "VolumesResponse": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "volumes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Volumes"
+          },
+          "pools": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Pools"
+          },
+          "hosts": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Hosts"
+          },
+          "clusters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Clusters"
+          },
+          "provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Id"
+          },
+          "provider_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Type"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "count",
+          "volumes",
+          "pools",
+          "hosts",
+          "clusters"
+        ],
+        "title": "VolumesResponse"
+      }
+    }
+  }
+}

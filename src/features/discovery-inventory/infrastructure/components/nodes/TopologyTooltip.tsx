@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode, RefObject } from 'react'
 import { createPortal } from 'react-dom'
+import { calculateTooltipPosition, type TooltipPosition } from '../../helpers/calculateTooltipPosition'
 
 interface TopologyTooltipProps {
   nodeRef: RefObject<HTMLElement | null>
@@ -13,39 +14,12 @@ interface TopologyTooltipFieldProps {
   value: string
 }
 
-interface Position {
-  top: number
-  left: number
-}
-
-const TOOLTIP_WIDTH = 260
-const VIEWPORT_GAP = 8
-
-function calculateTooltipPosition(node: HTMLElement, estimatedHeight: number): Position {
-  const rect = node.getBoundingClientRect()
-  let top = rect.top
-  let left = rect.right + VIEWPORT_GAP
-
-  if (left + TOOLTIP_WIDTH > window.innerWidth) {
-    left = rect.left - TOOLTIP_WIDTH - VIEWPORT_GAP
-  }
-
-  if (top + estimatedHeight > window.innerHeight) {
-    top = rect.top - estimatedHeight - VIEWPORT_GAP
-  }
-
-  return {
-    top: Math.max(VIEWPORT_GAP, top),
-    left: Math.max(VIEWPORT_GAP, left),
-  }
-}
-
 export function TopologyTooltip({
   nodeRef,
   estimatedHeight,
   children,
 }: TopologyTooltipProps) {
-  const [position, setPosition] = useState<Position>({ top: 0, left: 0 })
+  const [position, setPosition] = useState<TooltipPosition>({ top: 0, left: 0 })
 
   useEffect(() => {
     const node = nodeRef.current

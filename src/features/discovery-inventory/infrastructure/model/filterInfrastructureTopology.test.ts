@@ -181,4 +181,60 @@ describe('filterInfrastructureTopology', () => {
       edges: [powerTopology.edges[1]],
     })
   })
+
+  it('keeps FlashSystem pool/volume/fcmap/consistencyGroup nodes with an empty search', () => {
+    const flashTopology: InfrastructureTopology = {
+      nodes: [
+        {
+          id: 'pool:0', kind: 'pool', label: 'Pool0', poolId: '0', status: 'online',
+          capacity: '10.00TB', freeCapacity: '5.00TB', volumeCount: 1, encrypt: 'no', easyTier: 'on',
+        },
+        {
+          id: 'volume:0', kind: 'volume', label: 'Volume0', volumeId: '0', status: 'online',
+          capacity: '1.00TB', role: null, isSnapshotTarget: false, hasSnapshots: false,
+          snapshotCount: 0, mdiskGroupName: 'Pool0',
+        },
+      ],
+      edges: [
+        { id: 'contains-vol', kind: 'contains', source: 'pool:0', target: 'volume:0', capacityGb: null },
+      ],
+    }
+
+    const result = filterInfrastructureTopology(flashTopology, defaultInfrastructureTopologyFilters)
+
+    expect(result.nodes.map((node) => node.id)).toEqual(['pool:0', 'volume:0'])
+    expect(result.edges.map((edge) => edge.id)).toEqual(['contains-vol'])
+  })
+
+  it('searches FlashSystem nodes by their kind-specific fields', () => {
+    const flashTopology: InfrastructureTopology = {
+      nodes: [
+        {
+          id: 'pool:0', kind: 'pool', label: 'Pool0', poolId: '0', status: 'online',
+          capacity: '10.00TB', freeCapacity: '5.00TB', volumeCount: 2, encrypt: 'no', easyTier: 'on',
+        },
+        {
+          id: 'volume:0', kind: 'volume', label: 'Volume0', volumeId: '0', status: 'online',
+          capacity: '1.00TB', role: null, isSnapshotTarget: false, hasSnapshots: false,
+          snapshotCount: 0, mdiskGroupName: 'Pool0',
+        },
+        {
+          id: 'volume:1', kind: 'volume', label: 'Volume1', volumeId: '1', status: 'offline',
+          capacity: '1.00TB', role: null, isSnapshotTarget: false, hasSnapshots: false,
+          snapshotCount: 0, mdiskGroupName: 'Pool0',
+        },
+      ],
+      edges: [
+        { id: 'contains-vol0', kind: 'contains', source: 'pool:0', target: 'volume:0', capacityGb: null },
+        { id: 'contains-vol1', kind: 'contains', source: 'pool:0', target: 'volume:1', capacityGb: null },
+      ],
+    }
+
+    const result = filterInfrastructureTopology(flashTopology, {
+      ...defaultInfrastructureTopologyFilters,
+      search: 'offline',
+    })
+
+    expect(result.nodes.map((node) => node.id)).toEqual(['pool:0', 'volume:1'])
+  })
 })

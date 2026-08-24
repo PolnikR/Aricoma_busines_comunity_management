@@ -9,13 +9,16 @@ import type {
   InfrastructureTopologyFilters,
 } from '../model/filterInfrastructureTopology'
 import type { InfrastructureTopologyPlatform } from '../model/topologyTypes'
+import type { FlashSystemVolumeTreeView } from '../model/flashSystemVolumeTreeTypes'
 
 interface InfrastructureTopologyToolbarProps {
   platform: InfrastructureTopologyPlatform
   filters: InfrastructureTopologyFilters
   options: InfrastructureTopologyFilterOptions
   isLayouting: boolean
+  flashSystemView?: FlashSystemVolumeTreeView | undefined
   onFiltersChange: (filters: InfrastructureTopologyFilters) => void
+  onFlashSystemViewChange?: ((view: FlashSystemVolumeTreeView) => void) | undefined
   onAutoLayout: () => void
   onResetPositions: () => void
   onFitView: () => void
@@ -26,7 +29,9 @@ export function InfrastructureTopologyToolbar({
   filters,
   options,
   isLayouting,
+  flashSystemView,
   onFiltersChange,
+  onFlashSystemViewChange,
   onAutoLayout,
   onResetPositions,
   onFitView,
@@ -55,6 +60,7 @@ export function InfrastructureTopologyToolbar({
     onFiltersChange({ ...filters, partitionState: event.target.value })
   }
   const isPower = platform === 'ibm-power'
+  const isFlashSystem = platform === 'flashsystem'
 
   return (
     <div className="flex flex-col gap-3 border-b border-border bg-surface p-3.5 xl:flex-row xl:items-center xl:justify-between">
@@ -67,7 +73,19 @@ export function InfrastructureTopologyToolbar({
           placeholder={t(isPower ? 'topology.power.searchPlaceholder' : 'topology.searchPlaceholder')}
           leadingIcon={<SearchIcon className="size-4" />}
         />
-        {isPower ? (
+        {isFlashSystem ? (
+          <Select
+            aria-label={t('topology.flashsystem.viewFilterLabel')}
+            value={flashSystemView ?? 'flat'}
+            onChange={(event) => {
+              onFlashSystemViewChange?.(event.target.value as FlashSystemVolumeTreeView)
+            }}
+          >
+            <option value="flat">{t('topology.flashsystem.viewFlat')}</option>
+            <option value="snapshot">{t('topology.flashsystem.viewSnapshot')}</option>
+            <option value="consistency_group">{t('topology.flashsystem.viewConsistencyGroup')}</option>
+          </Select>
+        ) : isPower ? (
           <Select aria-label={t('topology.power.systemFilterLabel')} value={filters.system} onChange={handleSystem}>
             <option value="">{t('topology.power.allSystems')}</option>
             {options.systems.map((system) => <option key={system} value={system}>{system}</option>)}
@@ -81,7 +99,7 @@ export function InfrastructureTopologyToolbar({
       </div>
 
       <div className="flex min-w-0 flex-wrap items-center gap-2.5">
-        {isPower ? (
+        {isFlashSystem ? null : isPower ? (
           <>
             <Select
               aria-label={t('topology.power.partitionStateFilterLabel')}

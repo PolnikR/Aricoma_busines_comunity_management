@@ -1,8 +1,5 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Card } from '@/shared/components/card/Card'
-import { applyTopologyNodePositionOverrides } from '../layout/applyNodePositionOverrides'
-import { layoutInfrastructureTopology } from '../layout/layoutInfrastructureTopology'
-import type { PositionedInfrastructureTopology } from '../layout/layoutInfrastructureTopology'
 import {
   defaultInfrastructureTopologyFilters,
   filterInfrastructureTopology,
@@ -10,7 +7,9 @@ import {
 } from '../model/filterInfrastructureTopology'
 import type { InfrastructureTopologyFilters } from '../model/filterInfrastructureTopology'
 import type { InfrastructureTopology, InfrastructureTopologyPlatform } from '../model/topologyTypes'
+import type { FlashSystemVolumeTreeView } from '../model/flashSystemVolumeTreeTypes'
 import { useTopologyNodePositionOverrides } from '../hooks/useTopologyNodePositionOverrides'
+import { useTopologyLayout } from '../hooks/useTopologyLayout'
 import { InfrastructureTopologyCanvas } from './InfrastructureTopologyCanvas'
 import { InfrastructureTopologyLegend } from './InfrastructureTopologyLegend'
 import { InfrastructureTopologyToolbar } from './InfrastructureTopologyToolbar'
@@ -20,121 +19,85 @@ interface InfrastructureTopologyWorkspaceProps {
   topology: InfrastructureTopology
   platform: InfrastructureTopologyPlatform
   positionScope?: string
-}
-
-interface LayoutResult {
-  source: InfrastructureTopology
-  topology: PositionedInfrastructureTopology
-}
-
-interface LayoutError {
-  source: InfrastructureTopology
-  message: string
+  flashSystemView?: FlashSystemVolumeTreeView | undefined
+  onFlashSystemViewChange?: (view: FlashSystemVolumeTreeView) => void
 }
 
 export function InfrastructureTopologyWorkspace({
   topology,
   platform,
   positionScope,
+  flashSystemView,
+  onFlashSystemViewChange,
 }: InfrastructureTopologyWorkspaceProps) {
   const { t } = useTranslation()
   const [filters, setFilters] = useState(defaultInfrastructureTopologyFilters)
-  const deferredSearch = useDeferredValue(filters.search)
-  const [layoutResult, setLayoutResult] = useState<LayoutResult | null>(null)
-  const [layoutError, setLayoutError] = useState<LayoutError | null>(null)
-  const [isManualLayouting, setIsManualLayouting] = useState(false)
+  const [debouncedSearch, setDebouncedSearch] = useState(filters.search)
   const [fitViewRequest, setFitViewRequest] = useState(0)
-  const layoutRequestId = useRef(0)
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { overrides, setOverride, clearOverrides } = useTopologyNodePositionOverrides(positionScope)
   const overridesRef = useRef(overrides)
 
   useEffect(() => {
     overridesRef.current = overrides
   }, [overrides])
+
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearch(filters.search)
+    }, 250)
+
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    }
+  }, [filters.search])
   const filterOptions = useMemo(
     () => getInfrastructureTopologyFilterOptions(topology),
     [topology],
   )
   const effectiveFilters = useMemo<InfrastructureTopologyFilters>(() => ({
-    ...filters,
-    search: deferredSearch,
-  }), [deferredSearch, filters])
+    search: debouncedSearch,
+    powerState: filters.powerState,
+    host: filters.host,
+    showDatastores: filters.showDatastores,
+    system: filters.system,
+    partitionKind: filters.partitionKind,
+    partitionState: filters.partitionState,
+  }), [
+    debouncedSearch,
+    filters.powerState,
+    filters.host,
+    filters.showDatastores,
+    filters.system,
+    filters.partitionKind,
+    filters.partitionState,
+  ])
   const filteredTopology = useMemo(
     () => filterInfrastructureTopology(topology, effectiveFilters),
     [effectiveFilters, topology],
   )
+
+  const { layoutResult, layoutError, isLayouting, handleAutoLayout, clearOverrides: clearLayoutOverrides } = useTopologyLayout(
+    filteredTopology,
+  )
+
   const positionedTopology = layoutResult?.topology ?? null
-  const isLayouting = isManualLayouting || layoutResult?.source !== filteredTopology
   const visibleLayoutError = layoutError?.source === filteredTopology
     ? layoutError.message
     : null
 
-  useEffect(() => {
-    const requestId = layoutRequestId.current + 1
-    layoutRequestId.current = requestId
-
-    void layoutInfrastructureTopology(filteredTopology).then(
-      (nextTopology) => {
-        if (layoutRequestId.current !== requestId) return
-
-        setLayoutResult({
-          source: filteredTopology,
-          topology: applyTopologyNodePositionOverrides(nextTopology, overridesRef.current),
-        })
-        setLayoutError(null)
-      },
-      (error: unknown) => {
-        if (layoutRequestId.current !== requestId) return
-
-        setLayoutError({
-          source: filteredTopology,
-          message: error instanceof Error ? error.message : t('topology.layoutFailed'),
-        })
-      },
-    )
-  }, [filteredTopology, t])
-
-  const handleAutoLayout = () => {
-    const requestId = layoutRequestId.current + 1
-    layoutRequestId.current = requestId
+  const handleAutoLayoutClick = () => {
     overridesRef.current = {}
     clearOverrides()
-    setIsManualLayouting(true)
-    void layoutInfrastructureTopology(filteredTopology)
-      .then(
-        (nextTopology) => {
-          if (layoutRequestId.current !== requestId) return
-
-          setLayoutResult({
-            source: filteredTopology,
-            topology: applyTopologyNodePositionOverrides(nextTopology, overridesRef.current),
-          })
-          setLayoutError(null)
-        },
-        (error: unknown) => {
-          if (layoutRequestId.current !== requestId) return
-
-          setLayoutError({
-            source: filteredTopology,
-            message: error instanceof Error ? error.message : t('topology.layoutFailed'),
-          })
-        },
-      )
-      .finally(() => {
-        setIsManualLayouting(false)
-      })
+    void handleAutoLayout()
   }
 
   const handleResetPositions = () => {
     overridesRef.current = {}
     clearOverrides()
-    if (layoutResult?.source === filteredTopology) {
-      setLayoutResult({
-        source: filteredTopology,
-        topology: applyTopologyNodePositionOverrides(layoutResult.topology, {}),
-      })
-      setFitViewRequest((value) => value + 1)
-    }
+    clearLayoutOverrides()
+    setFitViewRequest((value) => value + 1)
   }
 
   return (
@@ -144,8 +107,10 @@ export function InfrastructureTopologyWorkspace({
         filters={filters}
         options={filterOptions}
         isLayouting={isLayouting}
+        flashSystemView={flashSystemView}
         onFiltersChange={setFilters}
-        onAutoLayout={handleAutoLayout}
+        onFlashSystemViewChange={onFlashSystemViewChange}
+        onAutoLayout={handleAutoLayoutClick}
         onResetPositions={handleResetPositions}
         onFitView={() => { setFitViewRequest((value) => value + 1) }}
       />

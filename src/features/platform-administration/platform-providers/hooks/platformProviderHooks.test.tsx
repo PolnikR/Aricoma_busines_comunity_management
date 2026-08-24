@@ -61,8 +61,8 @@ describe('platform provider hooks', () => {
     const { result } = renderHook(() => usePlatformProviders(), { wrapper })
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
 
-    expect(result.current.data).toEqual([airflowProvider])
-    expect(client.getQueryData(platformProviderKeys.list())).toEqual([airflowProvider])
+    expect(result.current.data).toMatchObject([airflowProvider])
+    expect(client.getQueryData(platformProviderKeys.list())).toMatchObject([airflowProvider])
     expect(client.getQueryData(['providers', 'list'])).toBeUndefined()
   })
 

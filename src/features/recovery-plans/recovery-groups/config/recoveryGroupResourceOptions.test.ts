@@ -17,6 +17,7 @@ function provider(
     description: `${id} description`,
     type,
     ipAddress: '10.0.0.1',
+    port: 22,
     credentialId: credentialStatus === 'ok' ? `${id}-credential` : null,
     credentialStatus,
   }

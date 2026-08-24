@@ -10,14 +10,18 @@ const policySet: PolicySet = {
   id: 'tier2-apps',
   name: 'Tier 2 applications',
   description: 'Policy set using the medium-tier, 6-hour cadence.',
-  policyIds: ['medium-6h'],
+  snapshotPolicyId: 'medium-6h',
+  recoveryAppPolicyId: 'critical-daily-latest',
+  cleanRoomPolicyId: 'enforce-clean-target',
 }
 
 const wirePolicySet = {
   id: policySet.id,
   name: policySet.name,
   description: policySet.description,
-  policy_ids: policySet.policyIds,
+  snapshot_policy_id: policySet.snapshotPolicyId,
+  recovery_app_policy_id: policySet.recoveryAppPolicyId,
+  clean_room_policy_id: policySet.cleanRoomPolicyId,
 }
 
 function stubFetch(payload: unknown, status = 200) {
@@ -35,12 +39,12 @@ afterEach(() => {
 describe('fetchPolicySets', () => {
   it('loads, validates and normalizes policy sets', async () => {
     const fetchMock = stubFetch({
-      policy_sets: [wirePolicySet, { ...wirePolicySet, id: 'archive', policy_ids: ['low-24h'] }],
+      policy_sets: [wirePolicySet, { ...wirePolicySet, id: 'archive', snapshot_policy_id: 'low-24h' }],
     })
 
     await expect(fetchPolicySets()).resolves.toEqual([
       policySet,
-      { ...policySet, id: 'archive', policyIds: ['low-24h'] },
+      { ...policySet, id: 'archive', snapshotPolicyId: 'low-24h' },
     ])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
@@ -50,7 +54,9 @@ describe('fetchPolicySets', () => {
 
   it.each([
     ['missing policy set list', {}],
-    ['empty policy ids', { policy_sets: [{ ...wirePolicySet, policy_ids: [] }] }],
+    ['missing snapshot policy id', { policy_sets: [{ ...wirePolicySet, snapshot_policy_id: '' }] }],
+    ['missing recovery app policy id', { policy_sets: [{ ...wirePolicySet, recovery_app_policy_id: '' }] }],
+    ['missing clean room policy id', { policy_sets: [{ ...wirePolicySet, clean_room_policy_id: '' }] }],
   ])('rejects malformed responses: %s', async (_case, payload) => {
     stubFetch(payload)
     await expect(fetchPolicySets()).rejects.toBeInstanceOf(Error)
@@ -83,7 +89,9 @@ describe('submitPolicySet', () => {
   it('rejects invalid input before calling the backend', async () => {
     const fetchMock = stubFetch({ policy_sets: [] })
 
-    await expect(submitPolicySet({ ...policySet, policyIds: [] })).rejects.toBeInstanceOf(Error)
+    await expect(submitPolicySet({ ...policySet, snapshotPolicyId: '' })).rejects.toBeInstanceOf(Error)
+    await expect(submitPolicySet({ ...policySet, recoveryAppPolicyId: '' })).rejects.toBeInstanceOf(Error)
+    await expect(submitPolicySet({ ...policySet, cleanRoomPolicyId: '' })).rejects.toBeInstanceOf(Error)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })
@@ -95,7 +103,7 @@ describe('deletePolicySet', () => {
     await expect(deletePolicySet('tier2/main apps')).resolves.toEqual([])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/delete_policy_set?policy_set_id=tier2%2Fmain%20apps')
+    expect(url).toBe('/api/delete_policy_set?policy_set_id=tier2%2Fmain+apps')
     expect(init.method).toBe('DELETE')
   })
 

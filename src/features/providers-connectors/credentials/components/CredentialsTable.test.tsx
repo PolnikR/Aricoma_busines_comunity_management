@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { CredentialsTable } from './CredentialsTable'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -36,6 +37,28 @@ describe('CredentialsTable', () => {
     expect(screen.getByRole('alert')).not.toHaveTextContent('credential service internals')
     await user.click(screen.getByRole('button', { name: 'Retry' }))
     expect(onRetry).toHaveBeenCalledOnce()
+  })
+
+  it('shows nested backend detail while retaining the credentials retry state', () => {
+    const error = new Error('Get credentials request failed with status 422', {
+      cause: new OrvalApiError(422, 'Unprocessable Entity', {
+        detail: [{ loc: ['query', 'scope'], msg: 'Credential scope is invalid.' }],
+      }),
+    })
+    render(
+      <CredentialsTable
+        credentials={[]}
+        isLoading={false}
+        error={error}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Credentials could not be loaded.')
+    expect(screen.getByRole('alert')).toHaveTextContent('Credential scope is invalid.')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('status 422')
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 
   it('opens a shared detail drawer and starts editing from its action', async () => {
