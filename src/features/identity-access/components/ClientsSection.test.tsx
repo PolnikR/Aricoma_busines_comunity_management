@@ -10,13 +10,13 @@ describe('ClientsSection', () => {
     render(<ClientsSection entityId={null} tabId={null} onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
     expect(screen.getByRole('searchbox', { name: 'Search clients' })).toBeInTheDocument()
     expect(screen.getByLabelText('Clients')).toBeInTheDocument()
-    expect(await screen.findByText('abco-frontend')).toBeInTheDocument()
+    expect(await screen.findByText('abcm-fe')).toBeInTheDocument()
     expect(screen.getByText('Preview only')).toBeInTheDocument()
   })
 
   it('shows only Settings and Roles while retaining canonical hidden client tabs', async () => {
     const onTabChange = vi.fn()
-    render(<ClientsSection entityId="abco-frontend" tabId="settings" onEntityChange={vi.fn()} onTabChange={onTabChange} />)
+    render(<ClientsSection entityId="abcm-fe" tabId="settings" onEntityChange={vi.fn()} onTabChange={onTabChange} />)
     expect(await screen.findByRole('heading', { name: 'ABCO frontend' })).toBeInTheDocument()
     const tabs = within(screen.getByRole('tablist', { name: 'Client sections' }))
     expect(tabs.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Settings', 'Roles'])
@@ -29,7 +29,7 @@ describe('ClientsSection', () => {
   })
 
   it('shows ABCO roles and their preview capability summaries', async () => {
-    render(<ClientsSection entityId="abco-frontend" tabId="roles" onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
+    render(<ClientsSection entityId="abcm-fe" tabId="roles" onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
     expect(await screen.findByText('Administrator')).toBeInTheDocument()
     expect(screen.getByText('Recovery Manager')).toBeInTheDocument()
     expect(screen.getByText('Viewer')).toBeInTheDocument()

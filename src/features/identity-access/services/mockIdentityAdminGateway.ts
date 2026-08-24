@@ -24,7 +24,7 @@ const initialPreview: IdentityAdminPreview = {
   ],
   clients: [
     {
-      id: 'abco-frontend', clientId: 'abco-frontend', displayName: 'ABCO frontend', protocol: 'openid-connect',
+      id: 'abcm-fe', clientId: 'abcm-fe', displayName: 'ABCO frontend', protocol: 'openid-connect',
       rootUrl: 'https://app.example.invalid', homeUrl: 'https://app.example.invalid/', enabled: true,
       isPublicClient: true, isPreview: true,
       roles: [
@@ -35,7 +35,7 @@ const initialPreview: IdentityAdminPreview = {
     },
   ],
   realm: {
-    realmName: 'abco', displayName: 'ABCO',
+    realmName: 'aricoma', displayName: 'ABCO',
     login: { isUserRegistrationEnabled: false, isEmailLoginEnabled: true, isRememberMeEnabled: true, isEmailVerificationRequired: true },
     userProfile: [
       { id: 'username', label: 'Username', isRequired: true, editability: 'administrator' },

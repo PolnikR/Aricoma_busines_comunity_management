@@ -11,7 +11,7 @@ describe('RealmSettingsSection', () => {
     const tabs = within(screen.getByRole('tablist', { name: 'Realm settings sections' }))
     expect(tabs.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['General', 'Login', 'User profile', 'Email', 'Themes'])
     expect(screen.getByRole('tab', { name: 'General' })).toHaveAttribute('aria-selected', 'true')
-    expect(await screen.findByDisplayValue('abco')).toBeInTheDocument()
+    expect(await screen.findByDisplayValue('aricoma')).toBeInTheDocument()
     expect(screen.getByDisplayValue('ABCO')).toBeInTheDocument()
     expect(screen.getByText(/Preview only/)).toBeInTheDocument()
   })
