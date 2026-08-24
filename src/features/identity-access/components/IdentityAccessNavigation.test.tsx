@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { IdentityAccessNavigation } from './IdentityAccessNavigation'
@@ -17,15 +17,14 @@ function renderNavigation(overrides?: Partial<Parameters<typeof IdentityAccessNa
 }
 
 describe('IdentityAccessNavigation', () => {
-  it('renders only sections from the active group using shared tab semantics', () => {
+  it('renders only visible Manage sections using shared tab semantics', () => {
     renderNavigation()
 
     expect(screen.getByRole('tab', { name: 'Manage' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Configure' })).toHaveAttribute('aria-selected', 'false')
-    expect(screen.getByRole('tablist', { name: 'Manage sections' })).toBeInTheDocument()
+    const sectionTabs = within(screen.getByRole('tablist', { name: 'Manage sections' }))
+    expect(sectionTabs.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Users', 'Clients'])
     expect(screen.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('tab', { name: 'Organizations' })).toBeInTheDocument()
-    expect(screen.queryByRole('tab', { name: 'Permissions' })).not.toBeInTheDocument()
   })
 
   it('delegates group switching to the URL-backed selection contract', async () => {
@@ -36,15 +35,16 @@ describe('IdentityAccessNavigation', () => {
     expect(props.onGroupChange).toHaveBeenCalledWith('configure')
   })
 
-  it('delegates section selection from the active horizontal tab row', async () => {
+  it('renders only visible Configure sections and delegates their selection', async () => {
     const props = renderNavigation({ groupId: 'configure', sectionId: 'realm-settings' })
 
-    expect(screen.getByRole('tablist', { name: 'Configure sections' })).toBeInTheDocument()
+    const sectionTabs = within(screen.getByRole('tablist', { name: 'Configure sections' }))
+    expect(sectionTabs.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Realm settings', 'Authentication'])
     expect(screen.getByRole('tab', { name: 'Realm settings' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.queryByRole('tab', { name: 'Users' })).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('tab', { name: 'Permissions' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Authentication' }))
 
-    expect(props.onSectionChange).toHaveBeenCalledWith('permissions')
+    expect(props.onSectionChange).toHaveBeenCalledWith('authentication')
   })
 })

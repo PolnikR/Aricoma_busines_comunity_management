@@ -34,6 +34,11 @@ export type IdentityAccessSectionGroupId = IdentityAccessSectionGroup['id']
 export type IdentityAccessSection = IdentityAccessSectionGroup['sections'][number]
 export type IdentityAccessSectionId = IdentityAccessSection['id']
 
+export const identityAccessVisibleSectionIds = {
+  manage: ['users', 'clients'],
+  configure: ['realm-settings', 'authentication'],
+} as const satisfies Record<IdentityAccessSectionGroupId, readonly IdentityAccessSectionId[]>
+
 const identityAccessSectionNavigationDefinitions = {
   users: { entity: true, defaultTab: 'details', tabs: ['details', 'attributes', 'credentials', 'role-mappings', 'groups', 'consents', 'sessions', 'identity-provider-links'] },
   clients: { entity: true, defaultTab: 'settings', tabs: ['settings', 'keys', 'credentials', 'roles', 'client-scopes', 'authorization', 'service-accounts-roles', 'sessions', 'permissions'] },
@@ -72,6 +77,13 @@ export function parseIdentityAccessSection(value: string | null): IdentityAccess
 
 export function getIdentityAccessGroup(groupId: IdentityAccessSectionGroupId): IdentityAccessSectionGroup {
   return identityAccessSectionGroups.find(group => group.id === groupId) ?? identityAccessSectionGroups[0]
+}
+
+export function getVisibleIdentityAccessSections(groupId: IdentityAccessSectionGroupId): IdentityAccessSection[] {
+  const group = getIdentityAccessGroup(groupId)
+  return identityAccessVisibleSectionIds[groupId].flatMap(sectionId => (
+    group.sections.filter(section => section.id === sectionId)
+  ))
 }
 
 export function getIdentityAccessGroupForSection(sectionId: IdentityAccessSectionId): IdentityAccessSectionGroup {

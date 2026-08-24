@@ -2,6 +2,7 @@ import { FilterTabs } from '@/shared/components/filters/FilterTabs'
 import { Tabs } from '@/shared/components/tabs/Tabs'
 import {
   getIdentityAccessGroup,
+  getVisibleIdentityAccessSections,
   identityAccessSectionGroups,
   type IdentityAccessSectionGroupId,
   type IdentityAccessSectionId,
@@ -21,6 +22,7 @@ export function IdentityAccessNavigation({
   onSectionChange,
 }: IdentityAccessNavigationProps) {
   const activeGroup = getIdentityAccessGroup(groupId)
+  const visibleSections = getVisibleIdentityAccessSections(groupId)
 
   return (
     <nav aria-label="Keycloak realm navigation" className="min-w-0 border-b border-border bg-surface">
@@ -36,7 +38,7 @@ export function IdentityAccessNavigation({
       </div>
 
       <Tabs
-        items={activeGroup.sections.map(section => ({ value: section.id, label: section.label }))}
+        items={visibleSections.map(section => ({ value: section.id, label: section.label }))}
         value={sectionId}
         onChange={onSectionChange}
         ariaLabel={`${activeGroup.label} sections`}

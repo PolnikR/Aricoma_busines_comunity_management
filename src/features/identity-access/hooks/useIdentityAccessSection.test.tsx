@@ -76,7 +76,7 @@ describe('useIdentityAccessSection', () => {
     expect(invalid.result.current.sectionId).toBe('users')
   })
 
-  it('reads a valid section from the URL and derives its group', () => {
+  it('keeps a hidden section deep link parseable and derives its group', () => {
     const { result } = renderHook(() => useSectionState(), {
       wrapper: wrapperFor('/identity-access?section=realm-roles'),
     })
