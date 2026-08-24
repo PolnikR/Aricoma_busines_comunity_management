@@ -18,7 +18,7 @@ describe('useRolesPermissions', () => {
     const first = renderHook(() => useRolesPermissions(), { wrapper })
     await waitFor(() => { expect(first.result.current.isSuccess).toBe(true) })
     const second = renderHook(() => useRolesPermissions(), { wrapper })
-    expect(second.result.current.data?.roles[0].id).toBe('platform-admin')
+    expect(second.result.current.data?.roles[0]?.id).toBe('platform-admin')
     expect(client.getQueryData(rolesPermissionsKeys.detail())).toEqual({
       roles: [{ id: 'platform-admin', name: 'platform-admin', permissions: ['providers.read'] }],
       permissions: ['providers.read'],
