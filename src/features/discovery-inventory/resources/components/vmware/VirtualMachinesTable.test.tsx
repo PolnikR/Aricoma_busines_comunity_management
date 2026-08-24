@@ -50,11 +50,13 @@ const vm: VirtualMachine = {
 describe('VirtualMachinesTable', () => {
   afterEach(cleanup)
 
-  it('renders the nine column headers including Tags and Provider', () => {
+  it('renders the inventory columns without Snapshots', () => {
     render(<VirtualMachinesTable virtualMachines={[vm]} selectedId={null} density="comfortable" onSelect={vi.fn()} />)
-    for (const header of ['Virtual machine', 'Operating system', 'Placement', 'Provider', 'Tags', 'Compute', 'Connection', 'Power', 'Snapshots']) {
+    for (const header of ['Virtual machine', 'Operating system', 'Placement', 'Provider', 'Tags', 'Compute', 'Connection', 'Power']) {
       expect(screen.getByRole('columnheader', { name: header })).toBeInTheDocument()
     }
+    expect(screen.queryByRole('columnheader', { name: 'Snapshots' })).not.toBeInTheDocument()
+    expect(screen.queryByText(String(vm.snapshotCount))).not.toBeInTheDocument()
   })
 
   it('renders cell content for a row, with Connection and Power separate', () => {
@@ -67,7 +69,7 @@ describe('VirtualMachinesTable', () => {
     expect(screen.getByText('prod-cluster')).toBeInTheDocument()
     expect(screen.getByText('prod')).toBeInTheDocument()
     expect(screen.getByText('linux')).toBeInTheDocument()
-    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(screen.queryByText(String(vm.snapshotCount))).not.toBeInTheDocument()
   })
 
   it('hides secondary detail in compact density', () => {
