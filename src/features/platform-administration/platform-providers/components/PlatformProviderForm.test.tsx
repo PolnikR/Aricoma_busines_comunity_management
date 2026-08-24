@@ -18,6 +18,9 @@ const formData: PlatformProviderFormData = {
   vmPrefix: 'airflow-',
   vmTags: ['saved-platform-tag'],
   notificationEmail: 'platform-alerts@example.test',
+  fromEmail: '',
+  disableSsl: null,
+  disableTls: null,
 }
 
 describe('PlatformProviderForm', () => {
@@ -109,6 +112,32 @@ describe('PlatformProviderForm', () => {
     expect(input).toHaveValue('platform-alerts@example.test')
     fireEvent.change(input, { target: { value: 'new-alerts@example.test' } })
     expect(onChange).toHaveBeenCalledWith('notificationEmail', 'new-alerts@example.test')
+  })
+
+  it('renders and reports the optional SMTP fields', () => {
+    const onChange = vi.fn()
+    render(
+      <PlatformProviderForm
+        data={{ ...formData, fromEmail: 'airflow@example.com', disableSsl: true, disableTls: false }}
+        errors={{}}
+        isSubmitting={false}
+        credentials={[]}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        tags={[]}
+        tagsDisabled={false}
+        onTagsChange={vi.fn()}
+        onChange={onChange}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByLabelText('From email')).toHaveValue('airflow@example.com')
+    expect(screen.getByRole('checkbox', { name: 'Disable SSL' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Disable TLS' })).not.toBeChecked()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Disable SSL' }))
+    expect(onChange).toHaveBeenCalledWith('disableSsl', false)
   })
 
   it('uses the compact provider-style rows for platform fields', () => {

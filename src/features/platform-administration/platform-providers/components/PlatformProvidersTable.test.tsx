@@ -25,6 +25,21 @@ const baseProvider: PlatformProviderRecord = {
   notificationEmail: 'platform-alerts@example.test',
 }
 
+const smtpProvider: PlatformProviderRecord = {
+  id: 'smtp-01',
+  name: 'Test SMTP',
+  description: 'Local test SMTP relay.',
+  type: 'SMTP',
+  ipAddress: '10.99.99.53',
+  port: 1025,
+  dagDir: '',
+  credentialId: '',
+  credentialStatus: 'none',
+  fromEmail: 'airflow@example.com',
+  disableSsl: true,
+  disableTls: true,
+}
+
 const deleteMutation = {
   mutate: vi.fn(),
   isPending: false,
@@ -40,6 +55,26 @@ beforeEach(() => {
 })
 
 describe('PlatformProvidersTable', () => {
+  it('displays an SMTP provider and its OpenAPI fields', async () => {
+    const user = userEvent.setup()
+    render(
+      <PlatformProvidersTable
+        providers={[smtpProvider]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('SMTP')).toBeInTheDocument()
+    await user.click(screen.getByText('Test SMTP'))
+
+    expect(screen.getByText('airflow@example.com')).toBeInTheDocument()
+    expect(screen.getAllByText('true')).toHaveLength(2)
+    expect(screen.getAllByText('-').length).toBeGreaterThan(0)
+  })
+
   it('keeps search available without exposing platform-provider API errors', () => {
     render(
       <PlatformProvidersTable

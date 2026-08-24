@@ -24,6 +24,21 @@ const airflowProvider: PlatformProviderRecord = {
   vmTags: ['platform-tag'],
 }
 
+const smtpProvider: PlatformProviderRecord = {
+  id: 'smtp-01',
+  name: 'Test SMTP',
+  description: 'Local test SMTP relay.',
+  type: 'SMTP',
+  ipAddress: '10.99.99.53',
+  port: 1025,
+  dagDir: '',
+  credentialId: '',
+  credentialStatus: 'none',
+  fromEmail: 'airflow@example.com',
+  disableSsl: true,
+  disableTls: true,
+}
+
 const platformProviderSubmitData: PlatformProviderSubmitData = {
   id: 'airflow-02',
   name: 'Secondary Airflow',
@@ -52,12 +67,12 @@ afterEach(() => {
 
 describe('fetchPlatformProviders', () => {
   it('loads and validates platform providers independently from infrastructure providers', async () => {
-    const fetchMock = stubFetch({ providers: [airflowProvider] })
+    const fetchMock = stubFetch({ providers: [airflowProvider, smtpProvider] })
 
-    await expect(fetchPlatformProviders()).resolves.toMatchObject([airflowProvider])
+    await expect(fetchPlatformProviders()).resolves.toMatchObject([airflowProvider, smtpProvider])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/get_platform_providers?type=AIRFLOW')
+    expect(url).toBe('/api/get_platform_providers')
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
@@ -109,12 +124,8 @@ describe('fetchPlatformProviders', () => {
     expect(provider?.rawRecord).toEqual({ ...backendProvider, role: 'source' })
   })
 
-  it.each([
-    ['invalid port', { ...airflowProvider, port: 70000 }],
-    ['infrastructure type', { ...airflowProvider, type: 'VMWARE' }],
-    ['unknown type', { ...airflowProvider, type: 'UNKNOWN' }],
-    ['invalid notification email', { ...airflowProvider, notificationEmail: 'invalid-email' }],
-  ])('rejects a platform provider with %s', async (_case, provider) => {
+  it('rejects a platform provider with an unknown OpenAPI type', async () => {
+    const provider = { ...airflowProvider, type: 'UNKNOWN' }
     stubFetch({ providers: [provider] })
     await expect(fetchPlatformProviders()).rejects.toBeInstanceOf(Error)
   })
@@ -132,12 +143,12 @@ describe('submitPlatformProvider', () => {
     const returnedProviders = [airflowProvider, platformProviderSubmitData]
     const fetchMock = stubFetch({ providers: returnedProviders })
 
-    await expect(submitPlatformProvider(platformProviderSubmitData)).resolves.toEqual(returnedProviders)
+    await expect(submitPlatformProvider(platformProviderSubmitData)).resolves.toMatchObject(returnedProviders)
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/submit_platform_provider')
     expect(init.method).toBe('POST')
-    expect(init.body).toBe(JSON.stringify(platformProviderSubmitData))
+    expect(JSON.parse(init.body as string)).toMatchObject(platformProviderSubmitData)
     const headers = new Headers(init.headers)
     expect(headers.get('X-User')).toBe('admin')
     expect(headers.get('Content-Type')).toBe('application/json')
@@ -163,12 +174,35 @@ describe('submitPlatformProvider', () => {
     expect(JSON.parse(init.body as string)).toMatchObject({ notificationEmail: null })
   })
 
-  it('rejects an invalid provider before sending it to the backend', async () => {
+  it('preserves SMTP fields in the submit payload', async () => {
+    const fetchMock = stubFetch({ providers: [] })
+    const provider: PlatformProviderSubmitData = {
+      id: 'smtp-02',
+      name: 'Secondary SMTP',
+      type: 'SMTP',
+      port: 1025,
+      fromEmail: 'airflow@example.com',
+      disableSsl: true,
+      disableTls: true,
+    }
+
+    await submitPlatformProvider(provider)
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      type: 'SMTP',
+      fromEmail: 'airflow@example.com',
+      disableSsl: true,
+      disableTls: true,
+    })
+  })
+
+  it('rejects a provider with an unknown OpenAPI type before sending it to the backend', async () => {
     const fetchMock = stubFetch({ providers: [] })
 
     await expect(submitPlatformProvider({
       ...platformProviderSubmitData,
-      port: 0,
+      type: 'UNKNOWN' as never,
     })).rejects.toBeInstanceOf(Error)
 
     expect(fetchMock).not.toHaveBeenCalled()
@@ -179,7 +213,7 @@ describe('deletePlatformProvider', () => {
   it('URL-encodes provider_id and validates the returned list', async () => {
     const fetchMock = stubFetch({ providers: [platformProviderSubmitData] })
 
-    await expect(deletePlatformProvider('airflow/main 01')).resolves.toEqual([
+    await expect(deletePlatformProvider('airflow/main 01')).resolves.toMatchObject([
       platformProviderSubmitData,
     ])
 

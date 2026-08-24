@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react'
-import { Field, Input, Select } from '@/shared/components/form/FormControls'
+import { CheckboxField, Field, Input, Select } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PLATFORM_PROVIDER_TYPES } from '../model/platformProviderTypes'
 import type { CredentialRecord } from '@/features/providers-connectors/credentials/model/credentialTypes'
@@ -17,6 +17,9 @@ export interface PlatformProviderFormData {
   vmPrefix: string
   vmTags: string[]
   notificationEmail: string
+  fromEmail: string
+  disableSsl: boolean | null
+  disableTls: boolean | null
 }
 
 interface PlatformProviderFormProps {
@@ -30,7 +33,7 @@ interface PlatformProviderFormProps {
   onRetryCredentials: () => void
   tags?: string[]
   tagsDisabled?: boolean
-  onChange: (field: keyof PlatformProviderFormData, value: string) => void
+  onChange: (field: keyof PlatformProviderFormData, value: string | boolean) => void
   onTagsChange: (tags: string[]) => void
   onSubmit: () => void
 }
@@ -252,6 +255,38 @@ export function PlatformProviderForm({
         />
         {errors.notificationEmail ? <p className="mt-1 text-xs text-red-600">{errors.notificationEmail}</p> : null}
       </Field>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Field label={t('forms.fromEmail')} htmlFor="platform-provider-from-email">
+          <Input
+            id="platform-provider-from-email"
+            type="email"
+            value={data.fromEmail}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('fromEmail', event.target.value) }}
+            onKeyDown={handleKeyDown}
+            disabled={isSubmitting}
+          />
+        </Field>
+
+        <div className="flex items-end gap-3 pb-0.5">
+          <CheckboxField
+            id="platform-provider-disable-ssl"
+            label={t('forms.disableSsl')}
+            checked={data.disableSsl === true}
+            disabled={isSubmitting}
+            variant="bordered"
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('disableSsl', event.target.checked) }}
+          />
+          <CheckboxField
+            id="platform-provider-disable-tls"
+            label={t('forms.disableTls')}
+            checked={data.disableTls === true}
+            disabled={isSubmitting}
+            variant="bordered"
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('disableTls', event.target.checked) }}
+          />
+        </div>
+      </div>
     </div>
   )
 }

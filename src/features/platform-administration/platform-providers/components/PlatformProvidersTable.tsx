@@ -62,14 +62,14 @@ function getColumns(
     {
       id: 'dagDir',
       header: t('tables.provider.dagDir'),
-      cell: (provider) => <span className="block max-w-56 truncate font-mono text-[12px]" title={provider.dagDir}>{provider.dagDir}</span>,
+      cell: (provider) => <span className="block max-w-56 truncate font-mono text-[12px]" title={provider.dagDir}>{provider.dagDir || '-'}</span>,
     },
     {
       id: 'credential',
       header: t('tables.provider.credential'),
       cell: (provider) => (
         <div className="flex flex-col items-start gap-1">
-          <span className="font-mono text-[12px] text-text-secondary">{provider.credentialId}</span>
+          <span className="font-mono text-[12px] text-text-secondary">{provider.credentialId || '-'}</span>
           <Badge color={credentialStatusColor(provider.credentialStatus)} size="sm">
             {t(`providers.credentials.status.${provider.credentialStatus}`)}
           </Badge>
@@ -213,7 +213,7 @@ export function PlatformProvidersTable({
             <DetailRow label={t('details.type')} value={selected.type} />
             <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{selected.ipAddress}</span>} />
             <DetailRow label={t('details.port')} value={<span className="font-mono">{selected.port}</span>} />
-            <DetailRow label={t('details.dagDir')} value={<span className="font-mono">{selected.dagDir}</span>} />
+            <DetailRow label={t('details.dagDir')} value={<span className="font-mono">{selected.dagDir || '-'}</span>} />
             {selected.url ? (
               <DetailRow
                 label={t('details.url')}
@@ -234,7 +234,19 @@ export function PlatformProvidersTable({
               label={t('details.notificationEmail')}
               value={selected.notificationEmail ?? '-'}
             />
-            <DetailRow label={t('details.credential')} value={<span className="font-mono">{selected.credentialId}</span>} />
+            <DetailRow
+              label={t('details.fromEmail')}
+              value={selected.fromEmail ?? '-'}
+            />
+            <DetailRow
+              label={t('details.disableSsl')}
+              value={selected.disableSsl == null ? '-' : String(selected.disableSsl)}
+            />
+            <DetailRow
+              label={t('details.disableTls')}
+              value={selected.disableTls == null ? '-' : String(selected.disableTls)}
+            />
+            <DetailRow label={t('details.credential')} value={<span className="font-mono">{selected.credentialId || '-'}</span>} />
             <DetailRow
               label={t('details.credentialStatus')}
               value={<Badge color={credentialStatusColor(selected.credentialStatus)} size="sm">{t(`providers.credentials.status.${selected.credentialStatus}`)}</Badge>}
