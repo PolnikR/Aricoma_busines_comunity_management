@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VirtualMachinesTable } from './VirtualMachinesTable'
 import type { VirtualMachine } from '../../types/virtualMachineTypes'
@@ -49,6 +49,16 @@ const vm: VirtualMachine = {
 
 describe('VirtualMachinesTable', () => {
   afterEach(cleanup)
+
+  it('shows a table-only skeleton while refreshed data is loading', () => {
+    render(<VirtualMachinesTable virtualMachines={[vm]} selectedId={null} density="compact" onSelect={vi.fn()} isLoading />)
+
+    const loadingTable = screen.getByRole('status', { name: 'Loading virtual machines' })
+    expect(loadingTable).toHaveAttribute('aria-busy', 'true')
+    expect(within(loadingTable).getByRole('table', { hidden: true })).toBeInTheDocument()
+    expect(within(loadingTable).queryByRole('textbox')).not.toBeInTheDocument()
+    expect(screen.queryByText(vm.name)).not.toBeInTheDocument()
+  })
 
   it('renders the inventory columns without Snapshots', () => {
     render(<VirtualMachinesTable virtualMachines={[vm]} selectedId={null} density="comfortable" onSelect={vi.fn()} />)

@@ -58,6 +58,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     data: inventory,
     isInitialLoading,
     isFetching,
+    isBackgroundFetching,
     isError,
     isEmpty,
     refetch,
@@ -172,11 +173,12 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
           onPageSizeChange={(pageSize) => { updateQuery({ pageSize: pageSize as VirtualMachinePageSize }, true) }}
         /> : null}
       >
-        {data?.items.length ? (
+        {isBackgroundFetching || data?.items.length ? (
           <VirtualMachinesTable
-            virtualMachines={data.items}
+            virtualMachines={data?.items ?? []}
             selectedId={selectedId}
             density={density}
+            isLoading={isBackgroundFetching}
             onSelect={(virtualMachine) => {
               setSelectedId(virtualMachine.id)
               setDrawerOpen(true)

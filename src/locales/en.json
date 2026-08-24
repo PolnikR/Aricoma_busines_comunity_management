@@ -72,6 +72,7 @@
 
   "pages.virtualMachines.title": "Virtual machines",
   "pages.virtualMachines.description": "VMware inventory, health and placement overview.",
+  "pages.virtualMachines.loading": "Loading virtual machines",
   "pages.virtualMachines.tabs.label": "Inventory source",
   "pages.virtualMachines.tabs.previous": "Previous source tabs",
   "pages.virtualMachines.tabs.next": "Next source tabs",
