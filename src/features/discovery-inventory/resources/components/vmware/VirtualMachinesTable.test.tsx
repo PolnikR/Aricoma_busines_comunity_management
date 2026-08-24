@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VirtualMachinesTable } from './VirtualMachinesTable'
 import type { VirtualMachine } from '../../types/virtualMachineTypes'
@@ -50,11 +50,23 @@ const vm: VirtualMachine = {
 describe('VirtualMachinesTable', () => {
   afterEach(cleanup)
 
-  it('renders the nine column headers including Tags and Provider', () => {
+  it('shows a table-only skeleton while refreshed data is loading', () => {
+    render(<VirtualMachinesTable virtualMachines={[vm]} selectedId={null} density="compact" onSelect={vi.fn()} isLoading />)
+
+    const loadingTable = screen.getByRole('status', { name: 'Loading virtual machines' })
+    expect(loadingTable).toHaveAttribute('aria-busy', 'true')
+    expect(within(loadingTable).getByRole('table', { hidden: true })).toBeInTheDocument()
+    expect(within(loadingTable).queryByRole('textbox')).not.toBeInTheDocument()
+    expect(screen.queryByText(vm.name)).not.toBeInTheDocument()
+  })
+
+  it('renders the inventory columns without Snapshots', () => {
     render(<VirtualMachinesTable virtualMachines={[vm]} selectedId={null} density="comfortable" onSelect={vi.fn()} />)
-    for (const header of ['Virtual machine', 'Operating system', 'Placement', 'Provider', 'Tags', 'Compute', 'Connection', 'Power', 'Snapshots']) {
+    for (const header of ['Virtual machine', 'Operating system', 'Placement', 'Provider', 'Tags', 'Compute', 'Connection', 'Power']) {
       expect(screen.getByRole('columnheader', { name: header })).toBeInTheDocument()
     }
+    expect(screen.queryByRole('columnheader', { name: 'Snapshots' })).not.toBeInTheDocument()
+    expect(screen.queryByText(String(vm.snapshotCount))).not.toBeInTheDocument()
   })
 
   it('renders cell content for a row, with Connection and Power separate', () => {
@@ -67,7 +79,7 @@ describe('VirtualMachinesTable', () => {
     expect(screen.getByText('prod-cluster')).toBeInTheDocument()
     expect(screen.getByText('prod')).toBeInTheDocument()
     expect(screen.getByText('linux')).toBeInTheDocument()
-    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(screen.queryByText(String(vm.snapshotCount))).not.toBeInTheDocument()
   })
 
   it('hides secondary detail in compact density', () => {

@@ -18,6 +18,7 @@ const vm: VirtualMachine = {
 }
 
 let inventory: { reportedCount: number; virtualMachines: VirtualMachine[] }
+let inventoryBackgroundFetching = false
 
 vi.mock('../../hooks/useVirtualMachineSearchParams', () => ({
   useVirtualMachineSearchParams: () => ({
@@ -30,12 +31,14 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
 }))
 vi.mock('../../hooks/useVmwareResourceInventory', () => ({
   useVmwareResourceInventory: () => ({
-    data: inventory, isInitialLoading: false, isFetching: false, isError: false, isEmpty: inventory.virtualMachines.length === 0, refetch: vi.fn(),
+    data: inventory, isInitialLoading: false, isFetching: inventoryBackgroundFetching, isBackgroundFetching: inventoryBackgroundFetching,
+    isError: false, isEmpty: inventory.virtualMachines.length === 0, refetch: vi.fn(),
   }),
 }))
 vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory', () => ({
   useVmwareResourceInventory: () => ({
-    data: inventory, isInitialLoading: false, isFetching: false, isError: false, isEmpty: inventory.virtualMachines.length === 0, refetch: vi.fn(),
+    data: inventory, isInitialLoading: false, isFetching: inventoryBackgroundFetching, isBackgroundFetching: inventoryBackgroundFetching,
+    isError: false, isEmpty: inventory.virtualMachines.length === 0, refetch: vi.fn(),
   }),
 }))
 vi.mock('../../hooks/useVmwareTags', () => ({ useTags: () => ({ data: [] }) }))
@@ -52,8 +55,10 @@ vi.mock('../../helpers/mapInventoryToVirtualMachines', () => ({
   }),
 }))
 vi.mock('./VirtualMachinesTable', () => ({
-  VirtualMachinesTable: ({ virtualMachines, onSelect }: { virtualMachines: VirtualMachine[]; onSelect: (vm: VirtualMachine) => void }) => (
-    <div>{virtualMachines.map((item) => <button key={item.id} type="button" onClick={() => { onSelect(item) }}>Select {item.id}</button>)}</div>
+  VirtualMachinesTable: ({ virtualMachines, onSelect, isLoading }: { virtualMachines: VirtualMachine[]; onSelect: (vm: VirtualMachine) => void; isLoading?: boolean }) => (
+    <div data-testid="vm-table" data-loading={String(isLoading ?? false)}>
+      {virtualMachines.map((item) => <button key={item.id} type="button" onClick={() => { onSelect(item) }}>Select {item.id}</button>)}
+    </div>
   ),
 }))
 vi.mock('./VirtualMachineDetailPanel', () => ({
@@ -70,10 +75,21 @@ const props = {
 
 beforeEach(() => {
   inventory = { reportedCount: 1, virtualMachines: [vm] }
+  inventoryBackgroundFetching = false
 })
 afterEach(() => { vi.clearAllMocks() })
 
 describe('VmwareResourcesPage', () => {
+  it('passes background fetching to the table without replacing the inventory shell', () => {
+    inventoryBackgroundFetching = true
+
+    render(<VmwareResourcesPage {...props} />)
+
+    expect(screen.getByTestId('vm-table')).toHaveAttribute('data-loading', 'true')
+    expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'pages.virtualMachines.inventory.title' })).toBeInTheDocument()
+  })
+
   it('closes the detail drawer when the selected VM disappears from the provider dataset', () => {
     const view = render(<VmwareResourcesPage {...props} />)
 

@@ -98,11 +98,5 @@ export function createVmwareColumns(t: Translate, showDetail: boolean): ColumnDe
       header: t('tables.vm.power'),
       cell: (vm) => <StateCell {...powerState(vm.powerState, t)} title={vm.powerState} />,
     },
-    {
-      id: 'snapshots',
-      header: t('tables.vm.snapshots'),
-      align: 'right',
-      cell: (vm) => <span className={vm.snapshotCount === 0 ? 'text-text-subtle' : undefined}>{vm.snapshotCount}</span>,
-    },
   ]
 }

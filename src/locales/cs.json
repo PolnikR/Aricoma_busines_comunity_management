@@ -68,6 +68,7 @@
   "nav.menu": "Menu",
   "pages.virtualMachines.title": "Virtuální stroje",
   "pages.virtualMachines.description": "Přehled inventáře, stavu a umístění VMware.",
+  "pages.virtualMachines.loading": "Načítání virtuálních strojů",
   "pages.virtualMachines.tabs.label": "Zdroj inventáře",
   "pages.virtualMachines.tabs.previous": "Předchozí zdroje",
   "pages.virtualMachines.tabs.next": "Následující zdroje",

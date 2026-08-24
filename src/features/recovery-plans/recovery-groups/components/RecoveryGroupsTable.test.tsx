@@ -147,6 +147,36 @@ describe('RecoveryGroupsTable', () => {
     expect(screen.getByRole('heading', { name: 'Database group' })).toBeInTheDocument()
   })
 
+  it('renders a clickable Airflow DAG ID without opening the row detail', async () => {
+    const user = userEvent.setup()
+    const orchestratedGroup: RecoveryGroup = {
+      ...getDatabaseGroup(),
+      airflowRunId: '260812103627_4c06f9c8',
+      pushToOrchestrator: true,
+      orchestrationProviderId: 'airflow-01',
+    }
+    renderTable(
+      <RecoveryGroupsTable
+        groups={[orchestratedGroup]}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onRollback={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Airflow DAG ID')).toBeInTheDocument()
+    const dagLink = screen.getByRole('link', { name: /dag_260812103627_4c06f9c8/ })
+    expect(dagLink).toHaveAttribute(
+      'href',
+      'https://airflow.dynamic.test:8443/dags/dag_260812103627_4c06f9c8',
+    )
+    expect(dagLink).toHaveAttribute('target', '_blank')
+    expect(dagLink).toHaveAttribute('rel', 'noopener noreferrer')
+
+    await user.click(dagLink)
+    expect(screen.queryByRole('dialog', { name: 'Recovery group detail' })).not.toBeInTheDocument()
+  })
+
   it('filters groups by search text', async () => {
     const user = userEvent.setup()
     renderTable(
