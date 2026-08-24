@@ -230,6 +230,10 @@ export function PlatformProvidersTable({
                 )}
               />
             ) : null}
+            <DetailRow
+              label={t('details.notificationEmail')}
+              value={selected.notificationEmail ?? '-'}
+            />
             <DetailRow label={t('details.credential')} value={<span className="font-mono">{selected.credentialId}</span>} />
             <DetailRow
               label={t('details.credentialStatus')}

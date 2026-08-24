@@ -19,6 +19,7 @@ const airflowProvider: PlatformProviderRecord = {
   dagDir: '/home/airflow/dags',
   credentialId: 'airflow-ssh',
   credentialStatus: 'ok',
+  notificationEmail: 'platform-alerts@example.test',
   vmPrefix: 'platform-',
   vmTags: ['platform-tag'],
 }
@@ -91,6 +92,7 @@ describe('fetchPlatformProviders', () => {
     expect(provider).toMatchObject({
       description: '',
       credentialStatus: 'none',
+      notificationEmail: 'platform-alerts@example.test',
     })
     expect(provider?.rawRecord).toEqual({ ...backendProvider, role: 'source' })
   })
@@ -99,6 +101,7 @@ describe('fetchPlatformProviders', () => {
     ['invalid port', { ...airflowProvider, port: 70000 }],
     ['infrastructure type', { ...airflowProvider, type: 'VMWARE' }],
     ['unknown type', { ...airflowProvider, type: 'UNKNOWN' }],
+    ['invalid notification email', { ...airflowProvider, notificationEmail: 'invalid-email' }],
   ])('rejects a platform provider with %s', async (_case, provider) => {
     stubFetch({ providers: [provider] })
     await expect(fetchPlatformProviders()).rejects.toBeInstanceOf(Error)
@@ -133,6 +136,19 @@ describe('submitPlatformProvider', () => {
     await expect(submitPlatformProvider(platformProviderSubmitData)).rejects.toThrow(
       'Submit platform provider request failed with status 400',
     )
+  })
+
+  it('posts null notificationEmail when clearing an existing value', async () => {
+    const fetchMock = stubFetch({ providers: [] })
+    const provider: PlatformProviderSubmitData = {
+      ...platformProviderSubmitData,
+      notificationEmail: null,
+    }
+
+    await submitPlatformProvider(provider)
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toMatchObject({ notificationEmail: null })
   })
 
   it('rejects an invalid provider before sending it to the backend', async () => {

@@ -41,6 +41,7 @@ const editedProvider = {
   credentialStatus: 'ok' as const,
   vmPrefix: 'airflow-',
   vmTags: ['saved-platform-tag'],
+  notificationEmail: 'platform-alerts@example.test',
 }
 
 beforeEach(() => {
@@ -80,6 +81,7 @@ describe('PlatformProvidersModal', () => {
 
     expect(await screen.findByLabelText('Port')).toHaveValue(8443)
     expect(screen.getByLabelText('URL')).toHaveValue('https://airflow.example.test')
+    expect(screen.getByLabelText('Notification email')).toHaveValue('platform-alerts@example.test')
     expect(screen.getByLabelText('VM prefix')).toHaveValue('airflow-')
     expect(document.querySelector('#platform-provider-vm-tags')).toHaveValue('saved-platform-tag')
   })
@@ -121,6 +123,30 @@ describe('PlatformProvidersModal', () => {
       provider?: { vmPrefix?: string | null, vmTags?: string[] }
     } | undefined
     expect(submitted?.provider).toMatchObject({ vmPrefix: null, vmTags: ['saved-platform-tag'] })
+    expect(submitted?.provider).toMatchObject({ notificationEmail: 'platform-alerts@example.test' })
+  })
+
+  it('submits null when notification email is cleared', () => {
+    const mutate = vi.fn()
+    vi.mocked(useUpsertPlatformProvider).mockReturnValue({
+      isPending: false,
+      mutate,
+    } as unknown as ReturnType<typeof useUpsertPlatformProvider>)
+
+    render(
+      <PlatformProvidersModal
+        open
+        onClose={vi.fn()}
+        existingProviders={[]}
+        provider={editedProvider}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Notification email'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: /Edit platform provider/i }))
+
+    const submitted = mutate.mock.calls[0]?.[0] as { provider?: { notificationEmail?: unknown } } | undefined
+    expect(submitted?.provider?.notificationEmail).toBeNull()
   })
 
   it('shows the localized save failure title with supported backend detail', () => {

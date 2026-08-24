@@ -16,4 +16,5 @@ export const platformProviderSubmitSchema = z.object({
   url: z.url().optional(),
   vmPrefix: z.string().nullable().optional(),
   vmTags: z.array(z.string()).optional(),
+  notificationEmail: z.string().trim().pipe(z.email()).nullable().optional(),
 })

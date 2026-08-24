@@ -23,11 +23,13 @@ export interface PlatformProviderSubmitData {
   url?: string | undefined
   vmPrefix?: string | null | undefined
   vmTags?: string[] | undefined
+  notificationEmail?: string | null | undefined
 }
 
 export interface PlatformProviderRecord extends Omit<PlatformProviderSubmitData, 'vmPrefix' | 'vmTags'> {
   vmPrefix?: string | null
   vmTags?: string[]
+  notificationEmail?: string | null
   credentialStatus: PlatformProviderCredentialStatus
   /** Validated GET record before UI normalization; unknown API fields are removed by Zod. */
   rawRecord?: OrchestrationProviderRecordOutput | undefined
