@@ -124,7 +124,7 @@ const ConfigurationPage = lazy(async () => {
 })
 
 const IdentityAccessPage = lazy(async () => {
-  const page = await import('@/features/identity-access/pages/IdentityAccessPage')
+  const page = await import('@/features/platform-administration/identity-access/pages/IdentityAccessPage')
   return { default: page.IdentityAccessPage }
 })
 

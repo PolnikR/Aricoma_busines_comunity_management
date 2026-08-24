@@ -23,7 +23,7 @@ describe('IdentityAccessNavigation', () => {
     expect(screen.getByRole('tab', { name: 'Manage' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Configure' })).toHaveAttribute('aria-selected', 'false')
     const sectionTabs = within(screen.getByRole('tablist', { name: 'Manage sections' }))
-    expect(sectionTabs.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Users', 'Clients'])
+    expect(sectionTabs.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Users', 'Clients', 'Realm roles'])
     expect(screen.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true')
   })
 
@@ -39,7 +39,7 @@ describe('IdentityAccessNavigation', () => {
     const props = renderNavigation({ groupId: 'configure', sectionId: 'realm-settings' })
 
     const sectionTabs = within(screen.getByRole('tablist', { name: 'Configure sections' }))
-    expect(sectionTabs.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Realm settings', 'Authentication'])
+    expect(sectionTabs.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Realm settings', 'Authentication', 'Permissions'])
     expect(screen.getByRole('tab', { name: 'Realm settings' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.queryByRole('tab', { name: 'Users' })).not.toBeInTheDocument()
 
