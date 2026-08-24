@@ -418,7 +418,7 @@ export function RecoveryApplicationsTable({
                       variant="soft"
                       className="w-full"
                       onClick={() => {
-                        void navigate(`${routes.recoveryRuns}?tab=applications&entityId=${selected.id}`)
+                        void navigate(`${routes.recoveryRuns}?tab=applications&entityType=application&entityId=${encodeURIComponent(selected.id)}`)
                       }}
                     >
                       {t('buttons.viewRecoveryRuns')}

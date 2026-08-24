@@ -2,12 +2,11 @@ import { useQueries } from '@tanstack/react-query'
 import { RECOVERY_RUNS_INTERVAL_MS } from '@/shared/query/cachePolicy'
 import { fetchOrchestratorRuns } from '../api/recoveryRunsApi'
 import { recoveryRunsKeys } from '../api/recoveryRunsQueryKeys'
-import type { OrchestratedEntity, OrchestratorRun } from '../model/recoveryRunTypes'
+import type { LatestRunRequestState, OrchestratedEntity } from '../model/recoveryRunTypes'
 
 export interface EntityLatestRun {
   entity: OrchestratedEntity
-  latestRun: OrchestratorRun | null
-  isLoading: boolean
+  latestRunState: LatestRunRequestState
 }
 
 export interface OrchestratedEntityRunsResult {
@@ -26,15 +25,25 @@ export function useOrchestratedEntityRuns(entities: OrchestratedEntity[]): Orche
       queryKey: recoveryRunsKeys.latest(entity.providerId, entity.dagId),
       queryFn: () => fetchOrchestratorRuns(entity.providerId, entity.dagId, { limit: 1, orderBy: '-logical_date' }),
       staleTime: RECOVERY_RUNS_INTERVAL_MS,
-      refetchInterval: RECOVERY_RUNS_INTERVAL_MS,
     })),
   })
+
+  const getLatestRunState = (index: number): LatestRunRequestState => {
+    const result = results[index]
+    if (!result || result.isLoading) return { status: 'loading' }
+
+    const error = result.error instanceof Error ? result.error : null
+    const latestRun = result.data?.runs[0]
+    if (latestRun) return { status: 'data', run: latestRun, refreshError: error }
+    if (result.data) return { status: 'empty', refreshError: error }
+    if (error) return { status: 'error', error }
+    return { status: 'empty', refreshError: null }
+  }
 
   return {
     rows: entities.map((entity, index) => ({
       entity,
-      latestRun: results[index]?.data?.runs[0] ?? null,
-      isLoading: results[index]?.isLoading ?? false,
+      latestRunState: getLatestRunState(index),
     })),
     isFetching: results.some(result => result.isFetching),
     refetch: () => Promise.all(results.map(result => result.refetch())),

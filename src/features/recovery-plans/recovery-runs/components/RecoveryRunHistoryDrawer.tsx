@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Badge } from '@/shared/components/badge/Badge'
 import { DataTablePagination, DetailDrawer } from '@/shared/components/data-table'
+import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
 import { buildAirflowDagUrl } from '@/config/externalServices'
 import { ExternalLinkIcon } from '@/shared/icons/Icons'
@@ -28,7 +29,7 @@ interface RecoveryRunHistoryDrawerProps {
 export function RecoveryRunHistoryDrawer({ entity, onClose }: RecoveryRunHistoryDrawerProps) {
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
-  const { data, isLoading } = useAppRunHistory({
+  const { data, isLoading, isFetching, error, refetch } = useAppRunHistory({
     providerId: entity?.providerId ?? null,
     dagId: entity?.dagId ?? null,
     page,
@@ -38,6 +39,7 @@ export function RecoveryRunHistoryDrawer({ entity, onClose }: RecoveryRunHistory
   const providerUrl = platformProviders.find(
     provider => provider.id === entity?.providerId,
   )?.url
+  const hasHistory = data.runs.length > 0
 
   return (
     <DetailDrawer
@@ -65,9 +67,19 @@ export function RecoveryRunHistoryDrawer({ entity, onClose }: RecoveryRunHistory
           {t('recoveryRuns.drawer.note')}
         </p>
 
+        {error ? (
+          <FetchErrorAlert
+            className="mt-4"
+            title={t(hasHistory ? 'recoveryRuns.drawer.refreshFailed' : 'recoveryRuns.drawer.loadFailed')}
+            retryLabel={t('buttons.retry')}
+            isRetrying={isFetching}
+            onRetry={() => { void refetch() }}
+          />
+        ) : null}
+
         {isLoading ? (
           <p className="mt-4 text-sm text-text-muted" role="status">{t('recoveryRuns.loading')}</p>
-        ) : (
+        ) : hasHistory ? (
           <ul className="mt-2 divide-y divide-border">
             {data.runs.map(run => (
               <li key={run.runId} className="flex items-center justify-between gap-3 py-3">
@@ -80,13 +92,16 @@ export function RecoveryRunHistoryDrawer({ entity, onClose }: RecoveryRunHistory
               </li>
             ))}
           </ul>
-        )}
+        ) : !error ? (
+          <p className="mt-4 text-sm text-text-muted">{t('recoveryRuns.table.noRuns')}</p>
+        ) : null}
       </div>
 
       <DataTablePagination
         page={page}
         pageSize={PAGE_SIZE}
         total={data.total}
+        pageSizeOptions={[PAGE_SIZE]}
         onPageChange={setPage}
         onPageSizeChange={() => { /* fixed page size for run history */ }}
       />

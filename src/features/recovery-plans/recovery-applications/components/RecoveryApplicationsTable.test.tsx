@@ -214,7 +214,7 @@ describe('RecoveryApplicationsTable', () => {
     expect(within(drawer).getByText('success')).toBeInTheDocument()
 
     await user.click(within(drawer).getByRole('button', { name: 'View recovery runs →' }))
-    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-runs?tab=applications&entityId=finance-app')
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-runs?tab=applications&entityType=application&entityId=finance-app')
   })
 
   it('shows no orchestrator status when the app was never pushed to orchestration', async () => {

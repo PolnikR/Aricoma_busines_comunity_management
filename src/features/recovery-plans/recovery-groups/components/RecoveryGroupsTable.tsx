@@ -468,7 +468,7 @@ export function RecoveryGroupsTable({
                       variant="soft"
                       className="w-full"
                       onClick={() => {
-                        void navigate(`${routes.recoveryRuns}?tab=groups&entityId=${selected.id}`)
+                        void navigate(`${routes.recoveryRuns}?tab=groups&entityType=group&entityId=${encodeURIComponent(selected.id)}`)
                       }}
                     >
                       {t('buttons.viewRecoveryRuns')}

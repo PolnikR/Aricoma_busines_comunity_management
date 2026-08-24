@@ -37,6 +37,7 @@ const mockProviderA: ProviderRecord = {
   port: 22,
   credentialId: 'vcenter-admin',
   role: 'source',
+  notificationEmail: 'provider-alerts@example.test',
   credentialStatus: 'ok',
 }
 
@@ -72,6 +73,7 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByLabelText('Type')).toBeInTheDocument()
     expect(screen.getByLabelText('IP address')).toBeInTheDocument()
     expect(screen.getByLabelText('URL')).toBeInTheDocument()
+    expect(screen.getByLabelText('Notification email')).toBeInTheDocument()
     expect(screen.getByLabelText('Port')).toHaveValue(22)
     expect(screen.getByLabelText('Credentials')).toBeInTheDocument()
     expect(useTagsMock).toHaveBeenCalledWith(null, false)
@@ -417,6 +419,7 @@ describe('ProvidersCreateModal', () => {
     expect(typeSelect).toBeDisabled()
     expect((nameInput as HTMLInputElement).value).toBe('Production vCenter')
     expect(screen.getByLabelText('Credentials')).toHaveValue('vcenter-admin')
+    expect(screen.getByLabelText('Notification email')).toHaveValue('provider-alerts@example.test')
   })
 
   it('posts a single edited provider object in edit mode', async () => {
@@ -437,6 +440,48 @@ describe('ProvidersCreateModal', () => {
     const init = mockFetch.mock.calls[0]?.[1] as RequestInit
     const body = JSON.parse(init.body as string) as ProviderRecord
     expect(body).toMatchObject({ id: 'vmware-vcenter-01', name: 'Renamed vCenter' })
+    expect(body.notificationEmail).toBe('provider-alerts@example.test')
+    vi.unstubAllGlobals()
+  })
+
+  it('blocks an invalid notification email before requesting', () => {
+    const mockFetch = vi.fn()
+    vi.stubGlobal('fetch', mockFetch)
+
+    renderWithQueryClient(
+      <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[]} />,
+    )
+
+    fillValidForm()
+    fireEvent.change(screen.getByLabelText('Notification email'), { target: { value: 'invalid-email' } })
+    fireEvent.click(screen.getByRole('button', { name: /Create provider/i }))
+
+    expect(screen.getByText('Enter a valid email address.')).toBeInTheDocument()
+    expect(mockFetch).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
+
+  it('submits null when an edited notification email is cleared', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }))
+    vi.stubGlobal('fetch', mockFetch)
+    const onClose = vi.fn()
+
+    renderWithQueryClient(
+      <ProvidersCreateModal
+        open
+        onClose={onClose}
+        existingProviders={[mockProviderA]}
+        provider={mockProviderA}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Notification email'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
+
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    const init = mockFetch.mock.calls[0]?.[1] as RequestInit
+    const body = JSON.parse(init.body as string) as { notificationEmail?: unknown }
+    expect(body.notificationEmail).toBeNull()
     vi.unstubAllGlobals()
   })
 

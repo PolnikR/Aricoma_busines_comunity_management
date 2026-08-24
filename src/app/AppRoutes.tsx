@@ -5,7 +5,7 @@ import {
 } from 'react-router'
 import { AppShell } from '@/layouts/app-shell/AppShell'
 import { ResourcesPage } from '@/features/discovery-inventory/resources/pages/ResourcesPage'
-import { ResourcesIsePage } from '@/features/discovery-inventory/resources/pages/ResourcesIsePage'
+import { ResourcesIsePage } from '@/features/discovery-inventory/resources-ise/pages/ResourcesIsePage'
 import { ProvidersPage } from '@/features/providers-connectors/providers/pages/ProvidersPage'
 import { ModuleWorkQueuePage } from '@/features/module-placeholder/pages/ModuleWorkQueuePage'
 import { InfrastructureTopologySkeleton } from '@/features/discovery-inventory/infrastructure/components/InfrastructureTopologySkeleton'
@@ -124,7 +124,7 @@ const ConfigurationPage = lazy(async () => {
 })
 
 const IdentityAccessPage = lazy(async () => {
-  const page = await import('@/features/identity-access/pages/IdentityAccessPage')
+  const page = await import('@/features/platform-administration/identity-access/pages/IdentityAccessPage')
   return { default: page.IdentityAccessPage }
 })
 
@@ -370,8 +370,10 @@ export function AppRoutes() {
           <Route path="*" element={<Navigate to={routes.recoveryActionValidate} replace />} />
         </Route>
         <Route path="discovery-inventory" element={<Navigate to={routes.resources} replace />} />
-        <Route path="discovery-inventory/resources" element={<ResourcesPage />} />
-        <Route path="discovery-inventory/resources-ise" element={<ResourcesIsePage />} />
+        <Route path={toRoutePath(routes.resources)} element={<ResourcesPage />} />
+        <Route path={toRoutePath(routes.resourcesIse)} element={<ResourcesIsePage />} />
+        <Route path={toRoutePath(routes.resourcesRoleSourceLegacy)} element={<Navigate to={routes.resources} replace />} />
+        <Route path={toRoutePath(routes.resourcesRoleTargetLegacy)} element={<Navigate to={routes.resourcesIse} replace />} />
         <Route path="discovery-inventory/virtual-machines" element={<Navigate to={routes.resources} replace />} />
         <Route
           path="discovery-inventory/infrastructure"

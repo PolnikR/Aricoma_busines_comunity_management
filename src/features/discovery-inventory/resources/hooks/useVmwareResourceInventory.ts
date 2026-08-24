@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
 import { fetchVmwareInventory } from '../api/vmwareInventoryApi'
 import { fetchVmsByName } from '../api/vmsByNameApi'
@@ -47,7 +47,15 @@ export function useVmwareResourceInventory(
       return fetchVmwareInventory(providerId, hasTag ? tag : undefined)
     },
     enabled: canFetch,
-    placeholderData: keepPreviousData,
+    placeholderData: (previousData, previousQuery) => {
+      const previousKey = previousQuery?.queryKey
+      const previousProviderId = previousKey?.[1] === 'inventory'
+        ? previousKey[2]
+        : previousKey?.[1] === 'vms-by-name'
+          ? previousKey[3]
+          : undefined
+      return previousProviderId === providerId ? previousData : undefined
+    },
     select: (inventory) => hasTag && hasNamePrefix
       ? {
           ...inventory,

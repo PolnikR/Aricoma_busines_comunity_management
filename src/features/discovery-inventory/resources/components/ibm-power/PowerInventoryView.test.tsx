@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { useTranslation } from '@/test-utils/mockUseTranslation'
@@ -162,5 +162,17 @@ describe('PowerInventoryView', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry loading' }))
     expect(onRetry).toHaveBeenCalledOnce()
+  })
+
+  it('closes the detail drawer when the selected partition is no longer in the provider dataset', async () => {
+    const { t } = useTranslation()
+    const view = renderInRouter(<PowerInventoryView resources={[partition]} t={t} />)
+
+    fireEvent.click(screen.getByText('vios1'))
+    expect(screen.getByRole('dialog', { name: 'IBM Power partition detail' })).toBeInTheDocument()
+
+    view.rerender(<MemoryRouter><PowerInventoryView resources={[]} t={t} /></MemoryRouter>)
+
+    await waitFor(() => { expect(screen.queryByRole('dialog', { name: 'IBM Power partition detail' })).not.toBeInTheDocument() })
   })
 })

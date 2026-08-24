@@ -20,6 +20,7 @@ export interface ProviderRecord {
   orchestratorConnId?: string | null;
   vmPrefix?: string | null;
   vmTags?: string[];
+  notificationEmail?: string | null;
   credentialStatus?: string | null;
   [key: string]: unknown;
  }

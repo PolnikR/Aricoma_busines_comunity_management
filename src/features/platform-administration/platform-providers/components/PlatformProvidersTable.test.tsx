@@ -22,6 +22,7 @@ const baseProvider: PlatformProviderRecord = {
   dagDir: '/home/airflow/dags',
   credentialId: 'airflow-ssh',
   credentialStatus: 'ok',
+  notificationEmail: 'platform-alerts@example.test',
 }
 
 const deleteMutation = {
@@ -134,6 +135,7 @@ describe('PlatformProvidersTable', () => {
     expect(link).toHaveAttribute('href', EXTERNAL_SERVICES.airflow.dagsUrl)
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
+    expect(screen.getByText('platform-alerts@example.test')).toBeInTheDocument()
   })
 
   it('omits the url row when the provider has no url', async () => {

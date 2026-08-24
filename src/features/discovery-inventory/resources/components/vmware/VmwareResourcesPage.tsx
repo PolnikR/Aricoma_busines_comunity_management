@@ -87,6 +87,15 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     if (!isFetching && data && data.page !== query.page) updateQuery({ page: data.page })
   }, [data, isFetching, query.page, updateQuery])
 
+  useEffect(() => {
+    if (selectedId && !data?.items.some((vm) => vm.id === selectedId)) {
+      queueMicrotask(() => {
+        setSelectedId(null)
+        setDrawerOpen(false)
+      })
+    }
+  }, [data, selectedId])
+
   const selectedVirtualMachine = data?.items.find((vm) => vm.id === selectedId) ?? null
   const filters: VirtualMachineFilters = {
     search: query.search,

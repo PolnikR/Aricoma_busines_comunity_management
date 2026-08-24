@@ -19,10 +19,12 @@ function providerScope(provider: PowerProviderScope) {
 
 function PowerSearchParamsState({ provider }: { provider: PowerProviderScope }) {
   const { query, updateFilters } = usePowerSearchParams(provider)
+  const location = useLocation()
 
   return (
     <>
       <output data-testid="power-query">{`${query.search}:${query.partitionKind}:${query.partitionState}:${query.operatingSystemType}:${query.volumeState}:${String(query.page)}`}</output>
+      <output data-testid="power-location">{location.search}</output>
       <button onClick={() => { updateFilters({ search: 'partition', partitionKind: 'LPAR', partitionState: 'running', operatingSystemType: 'AIX', volumeState: 'active' }) }}>Use custom filters</button>
       <button onClick={() => { updateFilters({ search: '', partitionKind: '', partitionState: '', operatingSystemType: '', volumeState: '' }) }}>Clear filters</button>
     </>
@@ -48,6 +50,15 @@ afterEach(() => {
 })
 
 describe('usePowerSearchParams', () => {
+  it('initializes the provider scope without changing location', () => {
+    render(<PowerSearchParamsState provider={sourceProvider} />, {
+      wrapper: ({ children }) => <MemoryRouter>{children}</MemoryRouter>,
+    })
+
+    expect(screen.getByTestId('power-query')).toHaveTextContent(':::::1')
+    expect(screen.getByTestId('power-location')).toBeEmptyDOMElement()
+  })
+
   it('restores a provider snapshot after provider and resource switches', async () => {
     render(<ResourceSourceSwitchingState />, {
       wrapper: ({ children }) => <MemoryRouter initialEntries={['/?resource=ibm-power&providerId=power-1']}>{children}</MemoryRouter>,

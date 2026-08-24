@@ -11,16 +11,18 @@ describe('useRecoveryRunsTabSearchParam', () => {
 
     expect(result.current.tab).toBe('all')
     expect(result.current.entityId).toBeNull()
+    expect(result.current.entityType).toBeNull()
   })
 
-  it('reads tab and entityId from the URL', () => {
+  it('reads the composite entity identity from the URL', () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <MemoryRouter initialEntries={['/?tab=applications&entityId=finance_recovery']}>{children}</MemoryRouter>
+      <MemoryRouter initialEntries={['/?tab=applications&entityType=application&entityId=finance_recovery']}>{children}</MemoryRouter>
     )
     const { result } = renderHook(() => useRecoveryRunsTabSearchParam(), { wrapper })
 
     expect(result.current.tab).toBe('applications')
     expect(result.current.entityId).toBe('finance_recovery')
+    expect(result.current.entityType).toBe('application')
   })
 
   it('falls back to "all" for an unknown tab value', () => {
@@ -34,7 +36,7 @@ describe('useRecoveryRunsTabSearchParam', () => {
 
   it('setTab updates the tab and clears any entity filter', () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <MemoryRouter initialEntries={['/?tab=applications&entityId=finance_recovery']}>{children}</MemoryRouter>
+      <MemoryRouter initialEntries={['/?tab=applications&entityType=application&entityId=finance_recovery']}>{children}</MemoryRouter>
     )
     const { result } = renderHook(() => ({ ...useRecoveryRunsTabSearchParam(), location: useLocation() }), { wrapper })
 
@@ -43,6 +45,7 @@ describe('useRecoveryRunsTabSearchParam', () => {
     const searchParams = new URLSearchParams(result.current.location.search)
     expect(searchParams.get('tab')).toBe('groups')
     expect(searchParams.has('entityId')).toBe(false)
+    expect(searchParams.has('entityType')).toBe(false)
   })
 
   it('setTab to "all" removes the tab param entirely', () => {
@@ -57,17 +60,29 @@ describe('useRecoveryRunsTabSearchParam', () => {
     expect(searchParams.has('tab')).toBe(false)
   })
 
-  it('setEntityId sets or clears the entity filter without touching the tab', () => {
+  it('sets or clears both parts of the entity identity without touching the tab', () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <MemoryRouter initialEntries={['/?tab=groups']}>{children}</MemoryRouter>
     )
     const { result } = renderHook(() => ({ ...useRecoveryRunsTabSearchParam(), location: useLocation() }), { wrapper })
 
-    act(() => { result.current.setEntityId('billing_group') })
+    act(() => { result.current.setEntity('group', 'billing_group') })
     expect(new URLSearchParams(result.current.location.search).get('entityId')).toBe('billing_group')
+    expect(new URLSearchParams(result.current.location.search).get('entityType')).toBe('group')
     expect(new URLSearchParams(result.current.location.search).get('tab')).toBe('groups')
 
-    act(() => { result.current.setEntityId(null) })
+    act(() => { result.current.setEntity(null) })
     expect(new URLSearchParams(result.current.location.search).has('entityId')).toBe(false)
+    expect(new URLSearchParams(result.current.location.search).has('entityType')).toBe(false)
+  })
+
+  it('rejects an incomplete entity identity', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={['/?entityId=shared-id']}>{children}</MemoryRouter>
+    )
+    const { result } = renderHook(() => useRecoveryRunsTabSearchParam(), { wrapper })
+
+    expect(result.current.entityId).toBeNull()
+    expect(result.current.entityType).toBeNull()
   })
 })

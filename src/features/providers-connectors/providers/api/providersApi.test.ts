@@ -12,6 +12,7 @@ const providerA: ProviderRecord = {
   port: 22,
   credentialId: 'vcenter-admin',
   role: 'source',
+  notificationEmail: 'provider-alerts@example.test',
   credentialStatus: 'ok',
 }
 
@@ -100,6 +101,7 @@ describe('fetchProviders', () => {
       ipAddress: providerA.ipAddress,
       credentialId: providerA.credentialId,
       url: providerA.url,
+      notificationEmail: providerA.notificationEmail,
       credentialStatus: null,
     })
   })
@@ -158,6 +160,7 @@ describe('fetchProviders', () => {
     ['empty id', { ...providerA, id: '' }],
     ['invalid type', { ...providerA, type: 'UNKNOWN' }],
     ['invalid credential status', { ...providerA, credentialStatus: 'unknown' }],
+    ['invalid notification email', { ...providerA, notificationEmail: 'not-an-email' }],
   ])('rejects a provider with %s', async (_label, provider) => {
     stubFetch({ providers: [provider] })
     await expect(fetchProviders()).rejects.toBeInstanceOf(Error)
@@ -215,6 +218,25 @@ describe('submitProvider', () => {
 
     const [, init] = mock.mock.calls[0] as [string, RequestInit]
     expect(init.body).toBe(JSON.stringify(provider))
+  })
+
+  it('posts null notificationEmail when clearing an existing value', async () => {
+    const mock = stubFetch({})
+    const provider: ProviderSubmitData = {
+      id: providerA.id,
+      name: providerA.name,
+      description: providerA.description,
+      type: providerA.type,
+      ipAddress: providerA.ipAddress,
+      credentialId: providerA.credentialId,
+      role: providerA.role ?? 'source',
+      notificationEmail: null,
+    }
+
+    await submitProvider(provider)
+
+    const [, init] = mock.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toMatchObject({ notificationEmail: null })
   })
 
   it('throws on an HTTP failure', async () => {

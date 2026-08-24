@@ -16,6 +16,7 @@ export interface PlatformProviderFormData {
   credentialId: string
   vmPrefix: string
   vmTags: string[]
+  notificationEmail: string
 }
 
 interface PlatformProviderFormProps {
@@ -238,6 +239,19 @@ export function PlatformProviderForm({
         {errors.dagDir ? <p className="mt-1 text-xs text-red-600">{errors.dagDir}</p> : null}
         </Field>
       </div>
+
+      <Field label={t('forms.notificationEmail')} htmlFor="platform-provider-notificationEmail">
+        <Input
+          id="platform-provider-notificationEmail"
+          type="email"
+          value={data.notificationEmail}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('notificationEmail', event.target.value) }}
+          onKeyDown={handleKeyDown}
+          disabled={isSubmitting}
+          aria-invalid={Boolean(errors.notificationEmail)}
+        />
+        {errors.notificationEmail ? <p className="mt-1 text-xs text-red-600">{errors.notificationEmail}</p> : null}
+      </Field>
     </div>
   )
 }

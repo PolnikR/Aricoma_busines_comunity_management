@@ -23,3 +23,9 @@ export interface OrchestratorRunsPage {
   runs: OrchestratorRun[]
   total: number
 }
+
+export type LatestRunRequestState =
+  | { status: 'loading' }
+  | { status: 'empty'; refreshError: Error | null }
+  | { status: 'error'; error: Error }
+  | { status: 'data'; run: OrchestratorRun; refreshError: Error | null }

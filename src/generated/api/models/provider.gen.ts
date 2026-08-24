@@ -20,4 +20,5 @@ export interface Provider {
   orchestratorConnId?: string | null;
   vmPrefix?: string | null;
   vmTags?: string[];
+  notificationEmail?: string | null;
 }

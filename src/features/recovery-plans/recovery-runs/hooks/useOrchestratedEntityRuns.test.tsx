@@ -40,13 +40,25 @@ describe('useOrchestratedEntityRuns', () => {
 
     const { result } = renderHook(() => useOrchestratedEntityRuns(entities), { wrapper: createWrapper() })
 
-    await waitFor(() => { expect(result.current.rows.every(row => !row.isLoading)).toBe(true) })
+    await waitFor(() => { expect(result.current.rows.every(row => row.latestRunState.status !== 'loading')).toBe(true) })
 
     expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(2)
     expect(fetchOrchestratorRuns).toHaveBeenCalledWith('airflow-01', 'dag_260818094526_2918dccb', { limit: 1, orderBy: '-logical_date' })
     expect(fetchOrchestratorRuns).toHaveBeenCalledWith('airflow-02', 'dag_260817113000_aa11bb', { limit: 1, orderBy: '-logical_date' })
-    expect(result.current.rows[0]?.latestRun?.status).toBe('success')
+    expect(result.current.rows[0]?.latestRunState).toMatchObject({ status: 'data', run: { status: 'success' } })
     expect(result.current.isFetching).toBe(false)
+  })
+
+  it('represents a failed lookup separately from an empty successful lookup', async () => {
+    vi.mocked(fetchOrchestratorRuns)
+      .mockRejectedValueOnce(new Error('Airflow unavailable'))
+      .mockResolvedValueOnce({ runs: [], total: 0 })
+
+    const { result } = renderHook(() => useOrchestratedEntityRuns(entities), { wrapper: createWrapper() })
+
+    await waitFor(() => { expect(result.current.rows.every(row => row.latestRunState.status !== 'loading')).toBe(true) })
+    expect(result.current.rows[0]?.latestRunState).toMatchObject({ status: 'error', error: new Error('Airflow unavailable') })
+    expect(result.current.rows[1]?.latestRunState).toEqual({ status: 'empty', refreshError: null })
   })
 
   it('makes zero calls when the entity list is empty', () => {
@@ -55,7 +67,7 @@ describe('useOrchestratedEntityRuns', () => {
     expect(fetchOrchestratorRuns).not.toHaveBeenCalled()
   })
 
-  it('polls an active run only at the five-minute Recovery Runs interval', async () => {
+  it('does not interval-poll overview snapshots, including active runs', async () => {
     vi.useFakeTimers()
     vi.mocked(fetchOrchestratorRuns)
       .mockResolvedValueOnce({
@@ -76,7 +88,7 @@ describe('useOrchestratedEntityRuns', () => {
     expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(1)
 
     await vi.advanceTimersByTimeAsync(RECOVERY_RUNS_INTERVAL_MS - 15 * 1000)
-    expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(2)
+    expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(1)
   })
 
   it('exposes aggregate fetching state and refetches each visible latest run', async () => {

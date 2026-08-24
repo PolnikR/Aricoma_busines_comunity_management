@@ -37,6 +37,7 @@ const EMPTY_PLATFORM_PROVIDER_FORM: PlatformProviderFormData = {
   credentialId: '',
   vmPrefix: '',
   vmTags: [],
+  notificationEmail: '',
 }
 
 function toPlatformProviderFormData(provider: PlatformProviderRecord): PlatformProviderFormData {
@@ -52,6 +53,7 @@ function toPlatformProviderFormData(provider: PlatformProviderRecord): PlatformP
     credentialId: provider.credentialId,
     vmPrefix: provider.vmPrefix ?? '',
     vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
+    notificationEmail: provider.notificationEmail ?? '',
   }
 }
 
@@ -84,6 +86,7 @@ export function PlatformProvidersModal({
     || formData.port !== initialForm.port
     || formData.dagDir !== initialForm.dagDir
     || formData.credentialId !== initialForm.credentialId
+    || formData.notificationEmail !== initialForm.notificationEmail
     || formData.vmPrefix !== initialForm.vmPrefix
     || formData.vmTags.length !== initialForm.vmTags.length
     || formData.vmTags.some((tag, index) => tag !== initialForm.vmTags[index])
@@ -147,6 +150,10 @@ export function PlatformProvidersModal({
     }
     if (!formData.dagDir.trim()) nextErrors.dagDir = t('forms.dagDirRequired')
     if (!formData.credentialId.trim()) nextErrors.credentialId = t('forms.credentialsRequired')
+    const notificationEmail = formData.notificationEmail.trim()
+    if (notificationEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notificationEmail)) {
+      nextErrors.notificationEmail = t('forms.notificationEmailInvalid')
+    }
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
   }
@@ -165,6 +172,7 @@ export function PlatformProvidersModal({
       credentialId: formData.credentialId.trim(),
       vmPrefix: formData.vmPrefix.trim() || null,
       vmTags: [...formData.vmTags],
+      notificationEmail: formData.notificationEmail.trim() || null,
     }
     const url = formData.url.trim()
     if (url) record.url = url

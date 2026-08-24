@@ -270,6 +270,29 @@ describe('useVmwareResourceInventory', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
+  it('does not present the previous provider inventory while a new provider scope is pending', async () => {
+    let resolveSecondResponse: ((response: Response) => void) | undefined
+    const secondResponse = new Promise<Response>((resolve) => { resolveSecondResponse = resolve })
+    const fetchMock = vi.fn((url: string) => url.includes('vcenter-01')
+      ? Promise.resolve(inventoryResponse(['VCenter-01']))
+      : secondResponse)
+    vi.stubGlobal('fetch', fetchMock)
+    const queryClient = createQueryClient()
+    const { result, rerender } = renderHook(
+      ({ providerId }: { providerId: string }) => useVmwareResourceInventory(providerId, '', 'prod', true),
+      { wrapper: createWrapper(queryClient), initialProps: { providerId: 'vcenter-01' } },
+    )
+
+    await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('VCenter-01') })
+    rerender({ providerId: 'vcenter-02' })
+
+    expect(result.current.data).toBeUndefined()
+    expect(result.current.isInitialLoading).toBe(true)
+
+    act(() => { resolveSecondResponse?.(inventoryResponse(['VCenter-02'])) })
+    await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('VCenter-02') })
+  })
+
   it('exposes real HTTP errors after one retry', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 500 }))
     vi.stubGlobal('fetch', fetchMock)

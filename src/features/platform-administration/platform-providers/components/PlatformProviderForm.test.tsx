@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { PlatformProviderForm, type PlatformProviderFormData } from './PlatformProviderForm'
@@ -17,6 +17,7 @@ const formData: PlatformProviderFormData = {
   credentialId: 'credential-1',
   vmPrefix: 'airflow-',
   vmTags: ['saved-platform-tag'],
+  notificationEmail: 'platform-alerts@example.test',
 }
 
 describe('PlatformProviderForm', () => {
@@ -83,6 +84,31 @@ describe('PlatformProviderForm', () => {
 
     await user.selectOptions(vmTagsSelect, '')
     expect(onTagsChange).toHaveBeenLastCalledWith([])
+  })
+
+  it('renders and reports notification email changes', () => {
+    const onChange = vi.fn()
+    render(
+      <PlatformProviderForm
+        data={formData}
+        errors={{}}
+        isSubmitting={false}
+        credentials={[]}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        tags={[]}
+        tagsDisabled={false}
+        onTagsChange={vi.fn()}
+        onChange={onChange}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    const input = screen.getByLabelText('Notification email')
+    expect(input).toHaveValue('platform-alerts@example.test')
+    fireEvent.change(input, { target: { value: 'new-alerts@example.test' } })
+    expect(onChange).toHaveBeenCalledWith('notificationEmail', 'new-alerts@example.test')
   })
 
   it('uses the compact provider-style rows for platform fields', () => {

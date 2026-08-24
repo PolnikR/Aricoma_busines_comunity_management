@@ -36,12 +36,15 @@ export function useAppRunHistory({ providerId, dagId, page, pageSize }: UseAppRu
     }),
     enabled,
     staleTime: query => shouldFastPollHistory(query, page) ? ACTIVE_RUN_INTERVAL_MS : RECOVERY_RUNS_INTERVAL_MS,
-    refetchInterval: query => shouldFastPollHistory(query, page) ? ACTIVE_RUN_INTERVAL_MS : RECOVERY_RUNS_INTERVAL_MS,
+    refetchInterval: query => shouldFastPollHistory(query, page) ? ACTIVE_RUN_INTERVAL_MS : false,
+    refetchIntervalInBackground: false,
   })
 
   return {
     data: query.data ?? EMPTY_PAGE,
     isLoading: enabled && query.isLoading,
+    isFetching: enabled && query.isFetching,
     error: query.error instanceof Error ? query.error : null,
+    refetch: query.refetch,
   }
 }

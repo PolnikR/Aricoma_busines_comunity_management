@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import { readProviderFilterSnapshot, writeProviderFilterSnapshot, type ProviderFilterScope } from '../state/providerFilterSession'
 import { useResourceInventorySearchParams } from './useResourceInventorySearchParams'
@@ -17,11 +17,6 @@ export interface VirtualMachineProviderScope {
   vmPrefix?: string | null
   vmTags?: readonly string[]
 }
-
-type VirtualMachineSearchParamChanges = Partial<VirtualMachineFilters> & Partial<Record<
-  typeof VMWARE_ACTIVE_PROVIDER_PARAM | typeof VMWARE_DEFAULT_SEARCH_PARAM | typeof VMWARE_DEFAULT_TAG_PARAM,
-  string
->>
 
 const VMWARE_FILTER_PARAMS = ['search', 'powerState', 'connectionState', 'cluster', 'tags', 'untagged']
 
@@ -75,21 +70,14 @@ function getProviderDefaults(provider: VirtualMachineProviderScope): VirtualMach
 
 export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderScope | null) {
   const [searchParams] = useSearchParams()
-  const { query, updateQuery } = useResourceInventorySearchParams<VirtualMachineUrlFilters>({
+  const { query: urlQuery, updateQuery } = useResourceInventorySearchParams<VirtualMachineUrlFilters>({
     parseFilters: getFilters,
   })
-  const [initializedScopeId, markScopeInitialized] = useReducer(
-    (_previous: string | undefined, scopeId: string) => scopeId,
-    undefined,
-  )
   const scope = provider ? getScope(provider) : undefined
   const scopeId = scope ? getScopeId(scope) : undefined
   const activeScopeId = searchParams.get(VMWARE_ACTIVE_PROVIDER_PARAM)
-  const isInitialized = !provider || (initializedScopeId === scopeId && activeScopeId === scopeId)
-
-  useEffect(() => {
-    if (!provider || !scope || !scopeId) return
-    if (initializedScopeId === scopeId && activeScopeId === scopeId) return
+  const query = useMemo(() => {
+    if (!provider || !scope || !scopeId) return urlQuery
 
     const urlFiltersAreActive = activeScopeId === scopeId
       || (activeScopeId === null && hasUrlFilters(searchParams))
@@ -97,19 +85,11 @@ export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderS
     const filters = urlFiltersAreActive
       ? getFilters(searchParams)
       : savedSnapshot?.filters ?? getProviderDefaults(provider)
-    const changes: VirtualMachineSearchParamChanges = {
-      ...filters,
-      [VMWARE_ACTIVE_PROVIDER_PARAM]: scopeId,
-      [VMWARE_DEFAULT_SEARCH_PARAM]: '',
-      [VMWARE_DEFAULT_TAG_PARAM]: '',
-    }
 
-    updateQuery(changes)
-    markScopeInitialized(scopeId)
-  }, [activeScopeId, initializedScopeId, provider, scope, scopeId, searchParams, updateQuery])
-
+    return { ...urlQuery, ...filters }
+  }, [activeScopeId, provider, scope, scopeId, searchParams, urlQuery])
   useEffect(() => {
-    if (!scope || !isInitialized) return
+    if (!scope) return
 
     writeProviderFilterSnapshot(scope, {
       resourceTab: 'vmware',
@@ -123,7 +103,7 @@ export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderS
         untagged: query.untagged,
       },
     })
-  }, [isInitialized, query.cluster, query.connectionState, query.powerState, query.search, query.tags, query.untagged, scope])
+  }, [query.cluster, query.connectionState, query.powerState, query.search, query.tags, query.untagged, scope])
 
   const updateFilters = (filters: VirtualMachineFilters) => {
     updateQuery({
@@ -138,6 +118,6 @@ export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderS
     query,
     updateQuery,
     updateFilters,
-    isInitialized,
+    isInitialized: true,
   }
 }

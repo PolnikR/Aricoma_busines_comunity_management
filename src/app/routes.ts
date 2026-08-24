@@ -24,6 +24,8 @@ export const routes = {
   recoveryActionHistory: '/recovery-actions/history',
   resources: '/discovery-inventory/resources',
   resourcesIse: '/discovery-inventory/resources-ise',
+  resourcesRoleSourceLegacy: '/discovery-inventory/resources/source',
+  resourcesRoleTargetLegacy: '/discovery-inventory/resources/target',
   infrastructure: '/discovery-inventory/infrastructure',
   discoveryJobs: '/discovery-inventory/discovery-jobs',
   storageOrchestration: '/storage-orchestration',

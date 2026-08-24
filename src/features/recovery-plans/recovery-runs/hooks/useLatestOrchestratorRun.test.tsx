@@ -2,7 +2,7 @@ import type { PropsWithChildren } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ACTIVE_RUN_INTERVAL_MS } from '@/shared/query/cachePolicy'
+import { ACTIVE_RUN_INTERVAL_MS, STANDARD_STALE_TIME_MS } from '@/shared/query/cachePolicy'
 import { fetchOrchestratorRuns } from '../api/recoveryRunsApi'
 import { useLatestOrchestratorRun } from './useLatestOrchestratorRun'
 
@@ -47,6 +47,9 @@ describe('useLatestOrchestratorRun', () => {
     expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(2)
 
     await vi.advanceTimersByTimeAsync(ACTIVE_RUN_INTERVAL_MS)
+    expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(2)
+
+    await vi.advanceTimersByTimeAsync(STANDARD_STALE_TIME_MS)
     expect(fetchOrchestratorRuns).toHaveBeenCalledTimes(2)
   })
 })

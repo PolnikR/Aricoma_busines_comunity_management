@@ -17,6 +17,15 @@ describe('DataTableSkeleton', () => {
     expect(within(table).getAllByRole('row', { hidden: true })).toHaveLength(4)
   })
 
+  it('can fit the skeleton table to its container without horizontal overflow', () => {
+    render(<DataTableSkeleton columnCount={4} layout="fit" showToolbar={false} showPagination={false} />)
+
+    const skeleton = screen.getByRole('status')
+    const table = within(skeleton).getByRole('table', { hidden: true })
+    expect(table).toHaveClass('w-full', 'table-fixed')
+    expect(table.parentElement).toHaveClass('overflow-x-hidden')
+  })
+
   it('can omit the toolbar and pagination', () => {
     render(
       <DataTableSkeleton

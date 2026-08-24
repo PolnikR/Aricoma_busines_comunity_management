@@ -55,6 +55,7 @@ function mapPlatformProvider(
     ...(provider.url != null ? { url: provider.url } : {}),
     ...(provider.vmPrefix !== undefined ? { vmPrefix: provider.vmPrefix } : {}),
     ...(provider.vmTags !== undefined ? { vmTags: provider.vmTags } : {}),
+    ...(provider.notificationEmail !== undefined ? { notificationEmail: provider.notificationEmail } : {}),
   })
   const { vmPrefix, vmTags, ...validatedBase } = parsed
   const validated = {
@@ -115,6 +116,9 @@ export async function submitPlatformProvider(
     ...(validatedProvider.url !== undefined ? { url: validatedProvider.url } : {}),
     ...(validatedProvider.vmPrefix !== undefined ? { vmPrefix: validatedProvider.vmPrefix } : {}),
     ...(validatedProvider.vmTags !== undefined ? { vmTags: validatedProvider.vmTags } : {}),
+    ...(validatedProvider.notificationEmail !== undefined
+      ? { notificationEmail: validatedProvider.notificationEmail }
+      : {}),
   }
   try {
     const payload = await submitPlatformProviderSubmitPlatformProviderPost(generatedProvider)

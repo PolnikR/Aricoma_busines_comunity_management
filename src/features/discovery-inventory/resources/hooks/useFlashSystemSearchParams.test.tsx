@@ -19,10 +19,12 @@ function providerScope(provider: FlashSystemProviderScope) {
 
 function FlashSystemSearchParamsState({ provider }: { provider: FlashSystemProviderScope }) {
   const { query, updateFilters } = useFlashSystemSearchParams(provider)
+  const location = useLocation()
 
   return (
     <>
       <output data-testid="flashsystem-query">{`${query.search}:${query.poolId}:${query.hostId}:${query.status}:${String(query.page)}`}</output>
+      <output data-testid="flashsystem-location">{location.search}</output>
       <button onClick={() => { updateFilters({ search: 'database', poolId: 'pool-1', hostId: 'host-1', status: 'online' }) }}>Use custom filters</button>
       <button onClick={() => { updateFilters({ search: '', poolId: '', hostId: '', status: '' }) }}>Clear filters</button>
     </>
@@ -48,6 +50,15 @@ afterEach(() => {
 })
 
 describe('useFlashSystemSearchParams', () => {
+  it('initializes the provider scope without changing location', () => {
+    render(<FlashSystemSearchParamsState provider={sourceProvider} />, {
+      wrapper: ({ children }) => <MemoryRouter>{children}</MemoryRouter>,
+    })
+
+    expect(screen.getByTestId('flashsystem-query')).toHaveTextContent('::::1')
+    expect(screen.getByTestId('flashsystem-location')).toBeEmptyDOMElement()
+  })
+
   it('restores a provider snapshot after provider and resource switches', async () => {
     render(<ResourceSourceSwitchingState />, {
       wrapper: ({ children }) => <MemoryRouter initialEntries={['/?resource=flashsystem&providerId=flash-1']}>{children}</MemoryRouter>,

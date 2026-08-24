@@ -20,6 +20,12 @@ const RESOURCE_FILTER_PARAMS: Record<ResourceTab, readonly string[]> = {
   'ibm-power': ['partitionKind', 'partitionState', 'operatingSystemType', 'volumeState'],
 }
 
+const RESOURCE_ACTIVE_PROVIDER_PARAMS = [
+  VMWARE_ACTIVE_PROVIDER_PARAM,
+  'flashSystemActiveProvider',
+  'powerActiveProvider',
+] as const
+
 function isResourceTab(value: string | null): value is ResourceTab {
   return RESOURCE_TABS.some((tab) => tab === value)
 }
@@ -51,6 +57,7 @@ export function useResourceTabSearchParam() {
     }
     const resourceFilterKeys = new Set(Object.values(RESOURCE_FILTER_PARAMS).flat())
     resourceFilterKeys.forEach((key) => { next.delete(key) })
+    RESOURCE_ACTIVE_PROVIDER_PARAMS.forEach((key) => { next.delete(key) })
     next.delete('search')
     if (tab === 'vmware') next.delete('resource')
     else next.set('resource', tab)

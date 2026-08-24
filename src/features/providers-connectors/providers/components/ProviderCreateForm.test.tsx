@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { ProviderCreateForm } from './ProviderCreateForm'
@@ -19,6 +19,7 @@ const data = {
   orchestratorConnId: '',
   vmPrefix: 'prod-',
   vmTags: ['saved-tag'],
+  notificationEmail: 'provider-alerts@example.test',
 }
 
 const credentials = [{
@@ -75,6 +76,30 @@ describe('ProviderCreateForm', () => {
     expect(screen.getByDisplayValue('provider-1')).toBeDisabled()
     expect(screen.getByLabelText('Type')).toBeDisabled()
     expect(screen.getByText('ID error')).toBeInTheDocument()
+  })
+
+  it('renders and reports notification email changes', () => {
+    const onChange = vi.fn()
+
+    render(
+      <ProviderCreateForm
+        data={data}
+        errors={{}}
+        isSubmitting={false}
+        credentials={credentials}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        onTagsChange={vi.fn()}
+        onChange={onChange}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    const input = screen.getByLabelText('Notification email')
+    expect(input).toHaveValue('provider-alerts@example.test')
+    fireEvent.change(input, { target: { value: 'new-alerts@example.test' } })
+    expect(onChange).toHaveBeenCalledWith('notificationEmail', 'new-alerts@example.test')
   })
 
   it('renders VM settings and reports a single selected tag', async () => {

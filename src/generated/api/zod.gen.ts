@@ -116,6 +116,7 @@ export const OrchestrationProvider = zod.object({
   "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmTags": zod.array(zod.string()).exactOptional(),
+  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
   "port": zod.int().default(orchestrationProviderPortDefault),
   "dagDir": zod.string()
 });
@@ -139,6 +140,7 @@ export const OrchestrationProviderRecord = zod.object({
   "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmTags": zod.array(zod.string()).exactOptional(),
+  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
   "port": zod.int().default(orchestrationProviderRecordPortDefault),
   "dagDir": zod.string(),
   "credentialStatus": zod.union([zod.string(),zod.null()]).exactOptional()
@@ -240,7 +242,8 @@ export const Provider = zod.object({
   "defaultFlashcopyProviderId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "vmTags": zod.array(zod.string()).exactOptional()
+  "vmTags": zod.array(zod.string()).exactOptional(),
+  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional()
 });
 
 export type Provider = zod.input<typeof Provider>;
@@ -270,6 +273,7 @@ export const ProviderRecord = zod.object({
   "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmTags": zod.array(zod.string()).exactOptional(),
+  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
   "credentialStatus": zod.union([zod.string(),zod.null()]).exactOptional()
 });
 
@@ -496,6 +500,22 @@ export const RecoveryGroupsResponse = zod.object({
 
 export type RecoveryGroupsResponse = zod.input<typeof RecoveryGroupsResponse>;
 export type RecoveryGroupsResponseOutput = zod.output<typeof RecoveryGroupsResponse>;
+
+export const RoleRecord = zod.object({
+  "name": zod.string(),
+  "permissions": zod.array(zod.string())
+});
+
+export type RoleRecord = zod.input<typeof RoleRecord>;
+export type RoleRecordOutput = zod.output<typeof RoleRecord>;
+
+export const RolesPermissionsResponse = zod.object({
+  "permissions": zod.array(zod.string()),
+  "roles": zod.array(RoleRecord)
+});
+
+export type RolesPermissionsResponse = zod.input<typeof RolesPermissionsResponse>;
+export type RolesPermissionsResponseOutput = zod.output<typeof RolesPermissionsResponse>;
 
 export const snapshotPolicyRecordFrequencyValueExclusiveMin = 0;
 
@@ -735,6 +755,18 @@ export type VolumesResponseOutput = zod.output<typeof VolumesResponse>;
  * @summary Health
  */
 export const HealthHealthGetResponse = HealthResponse
+
+
+/**
+ * @summary Get Roles Permissions
+ */
+export const getRolesPermissionsGetRolesPermissionsGetHeaderXUserDefault = `admin`;
+
+export const GetRolesPermissionsGetRolesPermissionsGetHeader = zod.object({
+  "X-User": zod.union([zod.string(),zod.null()]).default(getRolesPermissionsGetRolesPermissionsGetHeaderXUserDefault)
+})
+
+export const GetRolesPermissionsGetRolesPermissionsGetResponse = RolesPermissionsResponse
 
 
 /**

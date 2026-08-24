@@ -77,6 +77,8 @@ export * from './recoveryGroupsResponse.gen';
 export * from './recoveryTier.gen';
 export * from './recoveryVM.gen';
 export * from './recoveryVolume.gen';
+export * from './roleRecord.gen';
+export * from './rolesPermissionsResponse.gen';
 export * from './rollbackFromOrchestratorRollbackFromOrchestratorPostParams.gen';
 export * from './rollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostParams.gen';
 export * from './rollbackReport.gen';

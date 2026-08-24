@@ -56,6 +56,7 @@ function mapProviderRecord(provider: GeneratedProviderRecord): ProviderRecord {
       : {}),
     ...(provider.vmPrefix !== undefined ? { vmPrefix: provider.vmPrefix } : {}),
     ...(provider.vmTags !== undefined ? { vmTags: provider.vmTags } : {}),
+    ...(provider.notificationEmail !== undefined ? { notificationEmail: provider.notificationEmail } : {}),
   })
   return {
     ...validated,
@@ -107,6 +108,9 @@ export async function submitProvider(provider: ProviderSubmitData): Promise<void
       : {}),
     ...(validatedProvider.vmPrefix !== undefined ? { vmPrefix: validatedProvider.vmPrefix } : {}),
     ...(validatedProvider.vmTags !== undefined ? { vmTags: validatedProvider.vmTags } : {}),
+    ...(validatedProvider.notificationEmail !== undefined
+      ? { notificationEmail: validatedProvider.notificationEmail }
+      : {}),
   }
   try {
     await submitProviderSubmitProviderPost(generatedProvider)
