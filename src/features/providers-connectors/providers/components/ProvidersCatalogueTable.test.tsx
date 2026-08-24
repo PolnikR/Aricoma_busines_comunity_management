@@ -22,6 +22,7 @@ const providerA: ProviderRecord = {
   url: 'https://10.99.99.40/ui/',
   credentialId: 'vcenter-admin',
   role: 'source',
+  notificationEmail: 'provider-alerts@example.test',
   credentialStatus: 'ok',
 }
 const providerB: ProviderRecord = {
@@ -243,6 +244,7 @@ describe('ProvidersCatalogueTable', () => {
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Test connection' })).toHaveClass('bg-accent-soft', 'text-accent', 'border-accent/30')
     expect(screen.getByRole('link', { name: 'https://10.99.99.40/ui/' })).toHaveAttribute('target', '_blank')
+    expect(screen.getByText('provider-alerts@example.test')).toBeInTheDocument()
   })
 
   it('opens the connection test for the selected provider and shows the real result', async () => {

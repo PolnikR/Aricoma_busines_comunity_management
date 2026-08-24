@@ -17,4 +17,5 @@ export const providerSubmitSchema = z.object({
   orchestratorConnId: z.string().min(1).nullable().optional(),
   vmPrefix: z.string().nullable().optional(),
   vmTags: z.array(z.string()).optional(),
+  notificationEmail: z.string().trim().pipe(z.email()).nullable().optional(),
 })

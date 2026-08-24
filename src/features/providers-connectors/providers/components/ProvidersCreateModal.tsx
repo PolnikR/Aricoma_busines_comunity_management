@@ -37,6 +37,7 @@ const EMPTY_FORM: ProviderCreateFormData = {
   orchestratorConnId: '',
   vmPrefix: '',
   vmTags: [],
+  notificationEmail: '',
 }
 
 function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
@@ -55,6 +56,7 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         orchestratorConnId: provider.orchestratorConnId ?? '',
         vmPrefix: provider.vmPrefix ?? '',
         vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
+        notificationEmail: provider.notificationEmail ?? '',
       }
     : EMPTY_FORM
 }
@@ -84,6 +86,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     || formData.credentialId !== initialForm.credentialId
     || formData.defaultFlashcopyProviderId !== initialForm.defaultFlashcopyProviderId
     || formData.orchestratorConnId !== initialForm.orchestratorConnId
+    || formData.notificationEmail !== initialForm.notificationEmail
     || formData.vmPrefix !== initialForm.vmPrefix
     || formData.vmTags.length !== initialForm.vmTags.length
     || formData.vmTags.some((tag, index) => tag !== initialForm.vmTags[index])
@@ -162,6 +165,10 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     if (!formData.type) newErrors.type = t('forms.typeRequired')
     if (!formData.role) newErrors.role = t('forms.roleRequired')
     if (!formData.ipAddress.trim()) newErrors.ipAddress = t('forms.ipRequired')
+    const notificationEmail = formData.notificationEmail.trim()
+    if (notificationEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notificationEmail)) {
+      newErrors.notificationEmail = t('forms.notificationEmailInvalid')
+    }
     const port = Number(formData.port)
     if (!Number.isInteger(port) || port < 1 || port > 65535) {
       newErrors.port = t('forms.portRequired')
@@ -192,6 +199,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     if (orchestratorConnId) record.orchestratorConnId = orchestratorConnId
     record.vmPrefix = formData.vmPrefix.trim() || null
     record.vmTags = [...formData.vmTags]
+    record.notificationEmail = formData.notificationEmail.trim() || null
 
     upsert.mutate(
       { provider: record },

@@ -19,6 +19,7 @@ export interface ProviderCreateFormData {
   orchestratorConnId: string
   vmPrefix: string
   vmTags: string[]
+  notificationEmail: string
 }
 
 interface ProviderCreateFormProps {
@@ -309,6 +310,19 @@ export function ProviderCreateForm({
           />
         </Field>
       </div>
+
+      <Field label={t('forms.notificationEmail')} htmlFor="create-notificationEmail">
+        <Input
+          id="create-notificationEmail"
+          type="email"
+          value={data.notificationEmail}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('notificationEmail', event.target.value) }}
+          onKeyDown={handleKeyDown}
+          disabled={isSubmitting}
+          aria-invalid={Boolean(errors.notificationEmail)}
+        />
+        {errors.notificationEmail ? <p className="mt-1 text-xs text-red-600">{errors.notificationEmail}</p> : null}
+      </Field>
     </div>
   )
 }
