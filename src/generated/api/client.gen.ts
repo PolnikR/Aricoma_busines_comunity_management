@@ -40,6 +40,7 @@ import type {
   RecoveryAppsResponse,
   RecoveryGroup,
   RecoveryGroupsResponse,
+  RolesPermissionsResponse,
   RollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostParams,
   SnapshotPoliciesResponse,
   SnapshotPolicy,
@@ -74,6 +75,30 @@ export const getHealthHealthGetUrl = () => {
 export const healthHealthGet = async ( options?: Parameters<typeof orvalMutator>[1]): Promise<HealthResponse> => {
 
   return orvalMutator<HealthResponse>(getHealthHealthGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export const getGetRolesPermissionsGetRolesPermissionsGetUrl = () => {
+
+
+
+
+  return `/get_roles_permissions`
+}
+
+/**
+ * @summary Get Roles Permissions
+ */
+export const getRolesPermissionsGetRolesPermissionsGet = async ( options?: Parameters<typeof orvalMutator>[1]): Promise<RolesPermissionsResponse> => {
+
+  return orvalMutator<RolesPermissionsResponse>(getGetRolesPermissionsGetRolesPermissionsGetUrl(),
   {
     ...options,
     method: 'GET'

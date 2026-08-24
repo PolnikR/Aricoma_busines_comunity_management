@@ -26,6 +26,56 @@
         }
       }
     },
+    "/get_roles_permissions": {
+      "get": {
+        "tags": [
+          "Identity & Access"
+        ],
+        "summary": "Get Roles Permissions",
+        "operationId": "get_roles_permissions_get_roles_permissions_get",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RolesPermissionsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/get_providers": {
       "get": {
         "tags": [
@@ -2975,6 +3025,17 @@
             "type": "array",
             "title": "Vmtags"
           },
+          "notificationEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notificationemail"
+          },
           "port": {
             "type": "integer",
             "title": "Port",
@@ -3099,6 +3160,17 @@
             },
             "type": "array",
             "title": "Vmtags"
+          },
+          "notificationEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notificationemail"
           },
           "port": {
             "type": "integer",
@@ -3545,6 +3617,17 @@
             },
             "type": "array",
             "title": "Vmtags"
+          },
+          "notificationEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notificationemail"
           }
         },
         "type": "object",
@@ -3683,6 +3766,17 @@
             },
             "type": "array",
             "title": "Vmtags"
+          },
+          "notificationEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notificationemail"
           },
           "credentialStatus": {
             "anyOf": [
@@ -4532,6 +4626,51 @@
           "name"
         ],
         "title": "RecoveryVolume"
+      },
+      "RoleRecord": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "permissions"
+        ],
+        "title": "RoleRecord"
+      },
+      "RolesPermissionsResponse": {
+        "properties": {
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions"
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/RoleRecord"
+            },
+            "type": "array",
+            "title": "Roles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "permissions",
+          "roles"
+        ],
+        "title": "RolesPermissionsResponse"
       },
       "RollbackReport": {
         "properties": {

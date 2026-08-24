@@ -20,6 +20,7 @@ export interface OrchestrationProviderRecord {
   orchestratorConnId?: string | null;
   vmPrefix?: string | null;
   vmTags?: string[];
+  notificationEmail?: string | null;
   port?: number;
   dagDir: string;
   credentialStatus?: string | null;
