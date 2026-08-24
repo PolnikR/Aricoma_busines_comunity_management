@@ -22,7 +22,10 @@ export interface OrchestrationProviderRecord {
   vmTags?: string[];
   notificationEmail?: string | null;
   port?: number;
-  dagDir: string;
+  dagDir?: string | null;
+  fromEmail?: string | null;
+  disableSsl?: boolean | null;
+  disableTls?: boolean | null;
   credentialStatus?: string | null;
   [key: string]: unknown;
  }

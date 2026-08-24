@@ -95,7 +95,7 @@ export const HealthResponse = zod.object({
 export type HealthResponse = zod.input<typeof HealthResponse>;
 export type HealthResponseOutput = zod.output<typeof HealthResponse>;
 
-export const ProviderType = zod.enum(['VMWARE', 'FLASHCOPY', 'IBM_POWER', 'AIRFLOW']);
+export const ProviderType = zod.enum(['VMWARE', 'FLASHCOPY', 'IBM_POWER', 'AIRFLOW', 'SMTP']);
 
 export type ProviderType = zod.input<typeof ProviderType>;
 export type ProviderTypeOutput = zod.output<typeof ProviderType>;
@@ -118,7 +118,10 @@ export const OrchestrationProvider = zod.object({
   "vmTags": zod.array(zod.string()).exactOptional(),
   "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
   "port": zod.int().default(orchestrationProviderPortDefault),
-  "dagDir": zod.string()
+  "dagDir": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "fromEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "disableSsl": zod.union([zod.boolean(),zod.null()]).exactOptional(),
+  "disableTls": zod.union([zod.boolean(),zod.null()]).exactOptional()
 });
 
 export type OrchestrationProvider = zod.input<typeof OrchestrationProvider>;
@@ -142,7 +145,10 @@ export const OrchestrationProviderRecord = zod.object({
   "vmTags": zod.array(zod.string()).exactOptional(),
   "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
   "port": zod.int().default(orchestrationProviderRecordPortDefault),
-  "dagDir": zod.string(),
+  "dagDir": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "fromEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "disableSsl": zod.union([zod.boolean(),zod.null()]).exactOptional(),
+  "disableTls": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "credentialStatus": zod.union([zod.string(),zod.null()]).exactOptional()
 });
 
@@ -398,7 +404,8 @@ export const RecoveryApplication = zod.object({
   "platform": zod.string(),
   "source_connection": zod.string(),
   "target_connection": zod.string(),
-  "tiers": zod.record(zod.string(), RecoveryTier)
+  "tiers": zod.record(zod.string(), RecoveryTier),
+  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional()
 }).describe('Shape accessed unconditionally by apache_airflow\/dags\/recovery_app_template.py\nat Airflow DAG-parse time - keep fields in sync with that module.');
 
 export type RecoveryApplication = zod.input<typeof RecoveryApplication>;
@@ -466,7 +473,8 @@ export const RecoveryGroup = zod.object({
   "provider_id_volume": zod.union([zod.string(),zod.null()]).exactOptional(),
   "policy_set_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vms": zod.array(RecoveryVM).default(recoveryGroupVmsDefault),
-  "volumes": zod.array(RecoveryVolume).default(recoveryGroupVolumesDefault)
+  "volumes": zod.array(RecoveryVolume).default(recoveryGroupVolumesDefault),
+  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional()
 });
 
 export type RecoveryGroup = zod.input<typeof RecoveryGroup>;
@@ -484,6 +492,7 @@ export const RecoveryGroupRecord = zod.object({
   "policy_set_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vms": zod.array(RecoveryVM).default(recoveryGroupRecordVmsDefault),
   "volumes": zod.array(RecoveryVolume).default(recoveryGroupRecordVolumesDefault),
+  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
   "airflow_run_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "push_to_orchestrator": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "orchestration_provider_id": zod.union([zod.string(),zod.null()]).exactOptional()
@@ -836,6 +845,12 @@ export const DeleteProviderRouteDeleteProviderDeleteResponse = ProvidersResponse
 /**
  * @summary Get Platform Providers
  */
+export const getPlatformProvidersGetPlatformProvidersGetQueryTypeDefault = `all`;
+
+export const GetPlatformProvidersGetPlatformProvidersGetQueryParams = zod.object({
+  "type": zod.string().default(getPlatformProvidersGetPlatformProvidersGetQueryTypeDefault).describe('filter platform providers by type; \'all\' returns every type')
+})
+
 export const getPlatformProvidersGetPlatformProvidersGetHeaderXUserDefault = `admin`;
 
 export const GetPlatformProvidersGetPlatformProvidersGetHeader = zod.object({

@@ -16,4 +16,5 @@ export interface RecoveryGroup {
   policy_set_id?: string | null;
   vms?: RecoveryVM[];
   volumes?: RecoveryVolume[];
+  notificationEmail?: string | null;
 }

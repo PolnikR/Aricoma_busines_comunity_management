@@ -334,6 +334,18 @@
         "operationId": "get_platform_providers_get_platform_providers_get",
         "parameters": [
           {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "filter platform providers by type; 'all' returns every type",
+              "default": "all",
+              "title": "Type"
+            },
+            "description": "filter platform providers by type; 'all' returns every type"
+          },
+          {
             "name": "X-User",
             "in": "header",
             "required": false,
@@ -3042,16 +3054,55 @@
             "default": 22
           },
           "dagDir": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Dagdir"
+          },
+          "fromEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fromemail"
+          },
+          "disableSsl": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disablessl"
+          },
+          "disableTls": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disabletls"
           }
         },
         "type": "object",
         "required": [
           "id",
           "name",
-          "type",
-          "dagDir"
+          "type"
         ],
         "title": "OrchestrationProvider"
       },
@@ -3178,8 +3229,48 @@
             "default": 22
           },
           "dagDir": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Dagdir"
+          },
+          "fromEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fromemail"
+          },
+          "disableSsl": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disablessl"
+          },
+          "disableTls": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disabletls"
           },
           "credentialStatus": {
             "anyOf": [
@@ -3198,8 +3289,7 @@
         "required": [
           "id",
           "name",
-          "type",
-          "dagDir"
+          "type"
         ],
         "title": "OrchestrationProviderRecord"
       },
@@ -3836,7 +3926,8 @@
           "VMWARE",
           "FLASHCOPY",
           "IBM_POWER",
-          "AIRFLOW"
+          "AIRFLOW",
+          "SMTP"
         ],
         "title": "ProviderType"
       },
@@ -4286,6 +4377,17 @@
             },
             "type": "object",
             "title": "Tiers"
+          },
+          "notificationEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notificationemail"
           }
         },
         "type": "object",
@@ -4396,6 +4498,17 @@
             "type": "array",
             "title": "Volumes",
             "default": []
+          },
+          "notificationEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notificationemail"
           }
         },
         "type": "object",
@@ -4474,6 +4587,17 @@
             "type": "array",
             "title": "Volumes",
             "default": []
+          },
+          "notificationEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notificationemail"
           },
           "airflow_run_id": {
             "anyOf": [

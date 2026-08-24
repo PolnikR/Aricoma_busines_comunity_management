@@ -19,6 +19,7 @@ import type {
   DeleteRecoveryAppRouteDeleteRecoveryAppDeleteParams,
   DeleteRecoveryGroupRouteDeleteRecoveryGroupDeleteParams,
   GetOrchestratorRunsGetOrchestratorRunsGetParams,
+  GetPlatformProvidersGetPlatformProvidersGetParams,
   GetPowerVmGetPowerVmGetParams,
   GetProvidersGetProvidersGetParams,
   GetVolumeTreeRouteGetVolumeTreeGetParams,
@@ -226,20 +227,27 @@ export const deleteProviderRouteDeleteProviderDelete = async (params: DeleteProv
 
 
 
-export const getGetPlatformProvidersGetPlatformProvidersGetUrl = () => {
+export const getGetPlatformProvidersGetPlatformProvidersGetUrl = (params?: GetPlatformProvidersGetPlatformProvidersGetParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/get_platform_providers`
+  return stringifiedParams.length > 0 ? `/get_platform_providers?${stringifiedParams}` : `/get_platform_providers`
 }
 
 /**
  * @summary Get Platform Providers
  */
-export const getPlatformProvidersGetPlatformProvidersGet = async ( options?: Parameters<typeof orvalMutator>[1]): Promise<PlatformProvidersResponse> => {
+export const getPlatformProvidersGetPlatformProvidersGet = async (params?: GetPlatformProvidersGetPlatformProvidersGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<PlatformProvidersResponse> => {
 
-  return orvalMutator<PlatformProvidersResponse>(getGetPlatformProvidersGetPlatformProvidersGetUrl(),
+  return orvalMutator<PlatformProvidersResponse>(getGetPlatformProvidersGetPlatformProvidersGetUrl(params),
   {
     ...options,
     method: 'GET'

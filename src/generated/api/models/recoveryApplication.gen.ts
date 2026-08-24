@@ -18,4 +18,5 @@ export interface RecoveryApplication {
   source_connection: string;
   target_connection: string;
   tiers: RecoveryApplicationTiers;
+  notificationEmail?: string | null;
 }
