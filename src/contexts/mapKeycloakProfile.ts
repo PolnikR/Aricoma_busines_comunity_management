@@ -17,7 +17,8 @@ const FALLBACK_USER: AuthUser = {
 }
 
 function getInitials(value: string): string {
-  const parts = value.split(/[\s._-]+/u).filter(Boolean)
+  const localPart = value.split('@')[0] ?? value
+  const parts = localPart.split(/[\s._-]+/u).filter(Boolean)
 
   if (parts.length === 0) {
     return FALLBACK_USER.initials
