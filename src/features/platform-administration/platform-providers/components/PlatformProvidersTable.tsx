@@ -21,6 +21,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { useDeletePlatformProvider } from '../hooks/useDeletePlatformProvider'
 import { toPlatformProviderJson } from '../helpers/platformProviderJson'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
+import { SmtpProviderDetailsDialog } from './SmtpProviderDetailsDialog'
 import { PlatformProvidersModal } from './PlatformProvidersModal'
 
 function credentialStatusColor(status: PlatformProviderRecord['credentialStatus']) {
@@ -62,14 +63,14 @@ function getColumns(
     {
       id: 'dagDir',
       header: t('tables.provider.dagDir'),
-      cell: (provider) => <span className="block max-w-56 truncate font-mono text-[12px]" title={provider.dagDir}>{provider.dagDir}</span>,
+      cell: (provider) => <span className="block max-w-56 truncate font-mono text-[12px]" title={provider.dagDir}>{provider.dagDir || '-'}</span>,
     },
     {
       id: 'credential',
       header: t('tables.provider.credential'),
       cell: (provider) => (
         <div className="flex flex-col items-start gap-1">
-          <span className="font-mono text-[12px] text-text-secondary">{provider.credentialId}</span>
+          <span className="font-mono text-[12px] text-text-secondary">{provider.credentialId || '-'}</span>
           <Badge color={credentialStatusColor(provider.credentialStatus)} size="sm">
             {t(`providers.credentials.status.${provider.credentialStatus}`)}
           </Badge>
@@ -116,6 +117,7 @@ export function PlatformProvidersTable({
   const [editing, setEditing] = useState<PlatformProviderRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<PlatformProviderRecord | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
+  const [isSmtpDialogOpen, setIsSmtpDialogOpen] = useState(false)
   const loadErrorDescription = extractBackendErrorDetail(error)
   const deleteErrorDescription = extractBackendErrorDetail(deleteProvider.error)
   const rows = useMemo(() => providers, [providers])
@@ -187,13 +189,26 @@ export function PlatformProvidersTable({
       ) : null}
 
       <DetailDrawer
-        open={selected !== null}
+        open={selected !== null && !isSmtpDialogOpen}
         onClose={() => { setSelectedId(null) }}
         resizable
         eyebrow={t('drawer.selectedProvider')}
         title={selected?.name ?? ''}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerExtra={selected ? <Badge color="info" size="sm">{selected.type}</Badge> : null}
+        headerExtra={selected ? (
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <Badge color="info" size="sm">{selected.type}</Badge>
+            {selected.type === 'SMTP' ? (
+              <Button
+                size="xs"
+                variant="soft"
+                onClick={() => { setIsSmtpDialogOpen(true) }}
+              >
+                {t('platformProviders.smtpDialog.button')}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
         ariaLabel={t('drawer.providerDetail')}
         closeLabel={t('drawer.closeProvider')}
         footer={selected ? (
@@ -213,8 +228,23 @@ export function PlatformProvidersTable({
             <DetailRow label={t('details.type')} value={selected.type} />
             <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{selected.ipAddress}</span>} />
             <DetailRow label={t('details.port')} value={<span className="font-mono">{selected.port}</span>} />
-            <DetailRow label={t('details.dagDir')} value={<span className="font-mono">{selected.dagDir}</span>} />
-            {selected.url ? (
+            <DetailRow label={t('details.dagDir')} value={<span className="font-mono">{selected.dagDir || '-'}</span>} />
+            {selected.type === 'SMTP' ? (
+              <DetailRow
+                label={t('details.url')}
+                value={selected.url ? (
+                  <a
+                    href={selected.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
+                  >
+                    {selected.url}
+                    <ExternalLinkIcon className="size-3.5 shrink-0" />
+                  </a>
+                ) : '-'}
+              />
+            ) : selected.url ? (
               <DetailRow
                 label={t('details.url')}
                 value={(
@@ -234,15 +264,39 @@ export function PlatformProvidersTable({
               label={t('details.notificationEmail')}
               value={selected.notificationEmail ?? '-'}
             />
-            <DetailRow label={t('details.credential')} value={<span className="font-mono">{selected.credentialId}</span>} />
             <DetailRow
-              label={t('details.credentialStatus')}
-              value={<Badge color={credentialStatusColor(selected.credentialStatus)} size="sm">{t(`providers.credentials.status.${selected.credentialStatus}`)}</Badge>}
+              label={t('details.fromEmail')}
+              value={selected.fromEmail ?? '-'}
             />
-            <DetailRow label={t('details.description')} value={selected.description || '-'} />
+            {selected.type !== 'SMTP' ? (
+              <>
+                <DetailRow
+                  label={t('details.disableSsl')}
+                  value={selected.disableSsl == null ? '-' : String(selected.disableSsl)}
+                />
+                <DetailRow
+                  label={t('details.disableTls')}
+                  value={selected.disableTls == null ? '-' : String(selected.disableTls)}
+                />
+                <DetailRow label={t('details.credential')} value={<span className="font-mono">{selected.credentialId || '-'}</span>} />
+                <DetailRow
+                  label={t('details.credentialStatus')}
+                  value={<Badge color={credentialStatusColor(selected.credentialStatus)} size="sm">{t(`providers.credentials.status.${selected.credentialStatus}`)}</Badge>}
+                />
+                <DetailRow label={t('details.description')} value={selected.description || '-'} />
+              </>
+            ) : null}
           </dl>
         ) : null}
       </DetailDrawer>
+
+      {selected?.type === 'SMTP' ? (
+        <SmtpProviderDetailsDialog
+          open={isSmtpDialogOpen}
+          provider={selected}
+          onClose={() => { setIsSmtpDialogOpen(false) }}
+        />
+      ) : null}
 
       {editing ? (
         <PlatformProvidersModal

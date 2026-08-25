@@ -23,6 +23,8 @@ import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
 import { VirtualMachineMetrics } from './VirtualMachineMetrics'
 import { VirtualMachinesTable, type TableDensity } from './VirtualMachinesTable'
 import { VirtualMachinesToolbar } from './VirtualMachinesToolbar'
+import { VmwareProviderFilterSummary } from './VmwareProviderFilterSummary'
+import type { VmwareProviderFilter } from '../../helpers/vmwareProviderFilter'
 
 const defaultFilters: VirtualMachineFilters = {
   search: '',
@@ -52,7 +54,13 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     ...(selectedProvider.vmPrefix !== undefined ? { vmPrefix: selectedProvider.vmPrefix } : {}),
     ...(selectedProvider.vmTags !== undefined ? { vmTags: selectedProvider.vmTags } : {}),
   } : null
-  const { query, updateQuery, updateFilters, isInitialized } = useVirtualMachineSearchParams(vmwareProviderScope)
+  const virtualMachineSearchParams = useVirtualMachineSearchParams(vmwareProviderScope)
+  const { query, updateQuery, updateFilters, isInitialized } = virtualMachineSearchParams
+  const compatibilityState = virtualMachineSearchParams as unknown as { providerFilter?: VmwareProviderFilter; isFilterFixed?: boolean }
+  const providerFilter = compatibilityState.providerFilter
+  const isFilterFixed = compatibilityState.isFilterFixed
+  const resolvedProviderFilter: VmwareProviderFilter = providerFilter ?? { isFixed: false, prefix: '', tag: '', filters: { search: '', tags: [] } }
+  const resolvedIsFilterFixed = isFilterFixed ?? resolvedProviderFilter.isFixed
   const inventoryEnabled = providersSuccess && selectedProvider !== null && isInitialized
   const {
     data: inventory,
@@ -155,6 +163,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
           availableTags={availableTags}
           onFiltersChange={updateFilters}
           onReset={() => { updateFilters(defaultFilters) }}
+          isFilterFixed={resolvedIsFilterFixed}
           density={density}
           onDensityChange={setDensity}
         />}
@@ -189,7 +198,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
             <EmptyState
               title={t('pages.virtualMachines.empty.title')}
               description={t('pages.virtualMachines.empty.description')}
-              action={<Button size="sm" variant="outline" onClick={() => { updateFilters(defaultFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>}
+              action={<Button size="sm" variant="outline" disabled={resolvedIsFilterFixed} onClick={() => { updateFilters(defaultFilters) }}>{t('pages.virtualMachines.empty.clearFilters')}</Button>}
             />
           </div>
         ) : null}
@@ -212,7 +221,14 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
       <ResourceInventoryShell
         metrics={metrics}
         inventoryTitle={t('pages.virtualMachines.inventory.title')}
-        inventoryDescription={t('pages.virtualMachines.inventory.description')}
+        inventoryDescription={resolvedProviderFilter.isFixed ? (
+          <VmwareProviderFilterSummary
+            filter={resolvedProviderFilter}
+            label={t('pages.virtualMachines.inventory.providerFilter')}
+            nameLabel={t('pages.virtualMachines.inventory.vmName')}
+            tagLabel={t('pages.virtualMachines.inventory.vmTag')}
+          />
+        ) : t('pages.virtualMachines.inventory.description')}
         tabs={tabs}
         notice={notice}
       >

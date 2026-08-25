@@ -388,6 +388,7 @@ describe('ResourcesPage', () => {
       .getAllByRole('tab')
       .filter(tab => tab.textContent.startsWith('VMware VMs'))
     expect(vmwareTabs).toHaveLength(10)
+    expect(vmwareTabs[9]).toHaveTextContent('vmware-10')
     expect(screen.getAllByRole('tablist')).toHaveLength(1)
 
     fireEvent.click(screen.getByRole('tab', { name: 'VMware VMs · vCenter 10' }))

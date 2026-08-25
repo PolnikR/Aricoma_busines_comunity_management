@@ -3,8 +3,8 @@ import { PLATFORM_PROVIDER_TYPES } from './platformProviderTypes'
 import { platformProviderSubmitSchema } from '../api/schemas/platformProvidersSchema'
 
 describe('PLATFORM_PROVIDER_TYPES', () => {
-  it('contains only platform orchestration providers', () => {
-    expect(PLATFORM_PROVIDER_TYPES).toEqual(['AIRFLOW'])
+  it('is derived from the generated OpenAPI provider type schema', () => {
+    expect(PLATFORM_PROVIDER_TYPES).toEqual(['VMWARE', 'FLASHCOPY', 'IBM_POWER', 'AIRFLOW', 'SMTP'])
   })
 })
 
@@ -26,5 +26,22 @@ describe('platformProviderSubmitSchema notificationEmail', () => {
 
   it('rejects an invalid notificationEmail', () => {
     expect(() => platformProviderSubmitSchema.parse({ ...base, notificationEmail: 'invalid' })).toThrow()
+  })
+
+  it('accepts the optional SMTP fields from the OpenAPI schema', () => {
+    expect(platformProviderSubmitSchema.parse({
+      id: 'smtp-1',
+      name: 'SMTP',
+      type: 'SMTP',
+      port: 1025,
+      fromEmail: 'airflow@example.com',
+      disableSsl: true,
+      disableTls: true,
+    })).toMatchObject({
+      type: 'SMTP',
+      fromEmail: 'airflow@example.com',
+      disableSsl: true,
+      disableTls: true,
+    })
   })
 })

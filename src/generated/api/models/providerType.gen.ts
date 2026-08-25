@@ -13,4 +13,5 @@ export const ProviderType = {
   FLASHCOPY: 'FLASHCOPY',
   IBM_POWER: 'IBM_POWER',
   AIRFLOW: 'AIRFLOW',
+  SMTP: 'SMTP',
 } as const;

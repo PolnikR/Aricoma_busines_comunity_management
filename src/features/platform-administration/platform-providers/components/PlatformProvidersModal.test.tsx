@@ -42,6 +42,9 @@ const editedProvider = {
   vmPrefix: 'airflow-',
   vmTags: ['saved-platform-tag'],
   notificationEmail: 'platform-alerts@example.test',
+  fromEmail: null,
+  disableSsl: null,
+  disableTls: null,
 }
 
 beforeEach(() => {
@@ -82,8 +85,32 @@ describe('PlatformProvidersModal', () => {
     expect(await screen.findByLabelText('Port')).toHaveValue(8443)
     expect(screen.getByLabelText('URL')).toHaveValue('https://airflow.example.test')
     expect(screen.getByLabelText('Notification email')).toHaveValue('platform-alerts@example.test')
+    expect(screen.getByLabelText('From email')).toHaveValue('')
     expect(screen.getByLabelText('VM prefix')).toHaveValue('airflow-')
     expect(document.querySelector('#platform-provider-vm-tags')).toHaveValue('saved-platform-tag')
+  })
+
+  it('preserves SMTP fields when editing an SMTP provider', async () => {
+    render(
+      <PlatformProvidersModal
+        open
+        onClose={vi.fn()}
+        existingProviders={[]}
+        provider={{
+          ...editedProvider,
+          type: 'SMTP',
+          dagDir: '',
+          credentialId: '',
+          fromEmail: 'airflow@example.com',
+          disableSsl: true,
+          disableTls: true,
+        }}
+      />,
+    )
+
+    expect(await screen.findByLabelText('From email')).toHaveValue('airflow@example.com')
+    expect(screen.getByRole('checkbox', { name: 'Disable SSL' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Disable TLS' })).toBeChecked()
   })
 
   it('normalizes legacy platform provider VM tags to the first saved tag', async () => {

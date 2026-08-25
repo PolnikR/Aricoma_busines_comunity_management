@@ -6,7 +6,7 @@ import { MetricsSkeleton } from '@/shared/components/stat-card/StatCard'
 interface InventoryShellProps {
   metrics?: ReactNode
   inventoryTitle?: string
-  inventoryDescription?: string
+  inventoryDescription?: ReactNode
   tabs?: ReactNode
   notice?: ReactNode
   children: ReactNode
@@ -41,9 +41,9 @@ export function InventoryShell({
                 )}
 
                 {inventoryDescription && (
-                  <p className="text-xs text-text-muted">
+                  <div className="text-xs text-text-muted">
                     {inventoryDescription}
-                  </p>
+                  </div>
                 )}
               </div>
             )}

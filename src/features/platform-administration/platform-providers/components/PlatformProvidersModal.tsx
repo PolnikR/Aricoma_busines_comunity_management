@@ -38,6 +38,9 @@ const EMPTY_PLATFORM_PROVIDER_FORM: PlatformProviderFormData = {
   vmPrefix: '',
   vmTags: [],
   notificationEmail: '',
+  fromEmail: '',
+  disableSsl: null,
+  disableTls: null,
 }
 
 function toPlatformProviderFormData(provider: PlatformProviderRecord): PlatformProviderFormData {
@@ -54,6 +57,9 @@ function toPlatformProviderFormData(provider: PlatformProviderRecord): PlatformP
     vmPrefix: provider.vmPrefix ?? '',
     vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
     notificationEmail: provider.notificationEmail ?? '',
+    fromEmail: provider.fromEmail ?? '',
+    disableSsl: provider.disableSsl ?? null,
+    disableTls: provider.disableTls ?? null,
   }
 }
 
@@ -87,6 +93,9 @@ export function PlatformProvidersModal({
     || formData.dagDir !== initialForm.dagDir
     || formData.credentialId !== initialForm.credentialId
     || formData.notificationEmail !== initialForm.notificationEmail
+    || formData.fromEmail !== initialForm.fromEmail
+    || formData.disableSsl !== initialForm.disableSsl
+    || formData.disableTls !== initialForm.disableTls
     || formData.vmPrefix !== initialForm.vmPrefix
     || formData.vmTags.length !== initialForm.vmTags.length
     || formData.vmTags.some((tag, index) => tag !== initialForm.vmTags[index])
@@ -112,7 +121,7 @@ export function PlatformProvidersModal({
     if (!upsert.isPending) navigationGuard.requestNavigation(close)
   }
 
-  const handleChange = (field: keyof PlatformProviderFormData, value: string) => {
+  const handleChange = (field: keyof PlatformProviderFormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     if (field in errors && errors[field]) {
       setErrors(prev => {
@@ -138,18 +147,14 @@ export function PlatformProvidersModal({
       nextErrors.id = t('platformProviders.validation.idExists')
     }
     if (!formData.name.trim()) nextErrors.name = t('forms.nameRequired')
-    if (!formData.description.trim()) nextErrors.description = t('forms.descriptionRequired')
     if (!formData.type) nextErrors.type = t('forms.typeRequired')
-    if (!formData.ipAddress.trim()) nextErrors.ipAddress = t('forms.ipRequired')
-    if (
+    if (formData.port.trim() && (
       !Number.isInteger(port)
       || port < 1
       || port > 65535
-    ) {
+    )) {
       nextErrors.port = t('forms.portRequired')
     }
-    if (!formData.dagDir.trim()) nextErrors.dagDir = t('forms.dagDirRequired')
-    if (!formData.credentialId.trim()) nextErrors.credentialId = t('forms.credentialsRequired')
     const notificationEmail = formData.notificationEmail.trim()
     if (notificationEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notificationEmail)) {
       nextErrors.notificationEmail = t('forms.notificationEmailInvalid')
@@ -166,16 +171,18 @@ export function PlatformProvidersModal({
       name: formData.name.trim(),
       description: formData.description.trim(),
       type: formData.type as PlatformProviderType,
-      ipAddress: formData.ipAddress.trim(),
-      port: Number(formData.port),
-      dagDir: formData.dagDir.trim(),
-      credentialId: formData.credentialId.trim(),
+      ipAddress: formData.ipAddress.trim() || null,
+      ...(formData.port.trim() ? { port: Number(formData.port) } : {}),
+      dagDir: formData.dagDir.trim() || null,
+      credentialId: formData.credentialId.trim() || null,
+      url: formData.url.trim() || null,
       vmPrefix: formData.vmPrefix.trim() || null,
       vmTags: [...formData.vmTags],
       notificationEmail: formData.notificationEmail.trim() || null,
+      fromEmail: formData.fromEmail.trim() || null,
+      disableSsl: formData.disableSsl,
+      disableTls: formData.disableTls,
     }
-    const url = formData.url.trim()
-    if (url) record.url = url
 
     upsert.mutate(
       { provider: record },

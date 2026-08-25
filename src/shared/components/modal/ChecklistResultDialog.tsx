@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { Modal } from '@/shared/components/modal/Modal'
@@ -30,10 +31,11 @@ export interface ChecklistResultDialogProps {
   primaryName: string
   subtitle: string
   badges?: BadgeConfig[]
-  statusBar: StatusBar
+  statusBar?: StatusBar
   checks: CheckItem[]
   responseData: unknown
   responseSchemaType?: string
+  children?: ReactNode
   onClose: () => void
   onRetry?: () => void
   isPending?: boolean
@@ -60,6 +62,7 @@ export function ChecklistResultDialog({
   checks,
   responseData,
   responseSchemaType,
+  children,
   onClose,
   onRetry,
   isPending = false,
@@ -67,7 +70,9 @@ export function ChecklistResultDialog({
   onExternalAction,
 }: ChecklistResultDialogProps) {
   const { t } = useTranslation()
-  const isFailed = statusBar.status === 'error' || !isPending && statusBar.status === 'warning'
+  const isFailed = statusBar
+    ? statusBar.status === 'error' || !isPending && statusBar.status === 'warning'
+    : false
 
   const statusBgColor = {
     success: 'border-success-200 bg-success-50 text-success-700 dark:border-success-500/30 dark:bg-success-500/10 dark:text-success-300',
@@ -118,16 +123,20 @@ export function ChecklistResultDialog({
           ) : null}
         </div>
 
+        {children ? <div>{children}</div> : null}
+
         {/* Status Bar */}
-        <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm ${statusBgColor[statusBar.status]}`}>
-          <span className="inline-flex items-center gap-2">
-            <CheckIcon className="size-4" />
-            {statusBar.title}
-          </span>
-          <span className="shrink-0 rounded-full border border-current px-2 py-0.5 font-mono text-xs tabular-nums opacity-75">
-            {statusBar.passedCount} / {statusBar.totalCount} passed
-          </span>
-        </div>
+        {statusBar ? (
+          <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm ${statusBgColor[statusBar.status]}`}>
+            <span className="inline-flex items-center gap-2">
+              <CheckIcon className="size-4" />
+              {statusBar.title}
+            </span>
+            <span className="shrink-0 rounded-full border border-current px-2 py-0.5 font-mono text-xs tabular-nums opacity-75">
+              {statusBar.passedCount} / {statusBar.totalCount} passed
+            </span>
+          </div>
+        ) : null}
 
         {/* Checks List */}
         {checks.length > 0 ? (

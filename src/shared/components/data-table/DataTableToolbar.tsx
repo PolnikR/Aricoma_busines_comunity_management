@@ -17,6 +17,7 @@ interface DataTableToolbarProps {
   onSearchChange: (value: string) => void
   searchPlaceholder?: string
   searchLabel?: string
+  searchDisabled?: boolean
   segments?: Segment[]
   segmentValue?: string
   onSegmentChange?: (value: string) => void
@@ -25,6 +26,7 @@ interface DataTableToolbarProps {
   activeFilterCount?: number
   onApplyFilters?: () => void
   onClearFilters?: () => void
+  filterControlsDisabled?: boolean
   onFilterOpen?: () => void
   filterButtonLabel?: string
   cancelLabel?: string
@@ -39,6 +41,7 @@ export function DataTableToolbar({
   onSearchChange,
   searchPlaceholder = 'Search',
   searchLabel = 'Search',
+  searchDisabled = false,
   segments,
   segmentValue = '',
   onSegmentChange,
@@ -47,6 +50,7 @@ export function DataTableToolbar({
   activeFilterCount = 0,
   onApplyFilters,
   onClearFilters,
+  filterControlsDisabled = false,
   onFilterOpen,
   filterButtonLabel = 'Filters',
   cancelLabel = 'Cancel',
@@ -76,6 +80,7 @@ export function DataTableToolbar({
           value={searchValue}
           onChange={(event) => { onSearchChange(event.target.value) }}
           type="search"
+          disabled={searchDisabled}
           placeholder={searchPlaceholder}
           leadingIcon={<SearchIcon className="size-4" />}
         />
@@ -115,8 +120,8 @@ export function DataTableToolbar({
         footer={
           <>
             <Button size="sm" variant="ghost" onClick={() => { setIsModalOpen(false) }} className="flex-1">{cancelLabel}</Button>
-            <Button size="sm" variant="ghost" onClick={() => { onClearFilters?.() }} className="flex-1">{clearLabel}</Button>
-            <Button size="sm" onClick={applyFilters} className="flex-1">{applyLabel}</Button>
+            <Button size="sm" variant="ghost" onClick={() => { onClearFilters?.() }} disabled={filterControlsDisabled} className="flex-1">{clearLabel}</Button>
+            <Button size="sm" onClick={applyFilters} disabled={filterControlsDisabled} className="flex-1">{applyLabel}</Button>
           </>
         }
       >

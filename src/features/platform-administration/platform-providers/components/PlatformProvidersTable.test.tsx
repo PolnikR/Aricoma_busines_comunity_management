@@ -25,6 +25,22 @@ const baseProvider: PlatformProviderRecord = {
   notificationEmail: 'platform-alerts@example.test',
 }
 
+const smtpProvider: PlatformProviderRecord = {
+  id: 'smtp-01',
+  name: 'Test SMTP',
+  description: 'Local test SMTP relay.',
+  type: 'SMTP',
+  ipAddress: '10.99.99.53',
+  port: 1025,
+  url: 'http://10.99.99.53:8025/',
+  dagDir: '',
+  credentialId: '',
+  credentialStatus: 'none',
+  fromEmail: 'airflow@example.com',
+  disableSsl: true,
+  disableTls: true,
+}
+
 const deleteMutation = {
   mutate: vi.fn(),
   isPending: false,
@@ -40,6 +56,97 @@ beforeEach(() => {
 })
 
 describe('PlatformProvidersTable', () => {
+  it('shows the SMTP action only for a selected SMTP provider', async () => {
+    const user = userEvent.setup()
+    render(
+      <PlatformProvidersTable
+        providers={[smtpProvider]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByRole('button', { name: 'SMTP' })).not.toBeInTheDocument()
+    await user.click(screen.getByText('Test SMTP'))
+
+    expect(screen.getByRole('button', { name: 'SMTP' })).toBeInTheDocument()
+  })
+
+  it('opens SMTP details for the selected provider without a second modal', async () => {
+    const user = userEvent.setup()
+    render(
+      <PlatformProvidersTable
+        providers={[smtpProvider]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByText('Test SMTP'))
+    await user.click(screen.getByRole('button', { name: 'SMTP' }))
+    const smtpUrl = smtpProvider.url
+    if (!smtpUrl) throw new Error('SMTP fixture URL is required')
+
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+    expect(screen.getByRole('dialog', { name: 'SMTP provider details' })).toHaveTextContent('Test SMTP')
+    expect(screen.getByRole('link', { name: smtpUrl })).toHaveAttribute('href', smtpUrl)
+    expect(deleteMutation.mutate).not.toHaveBeenCalled()
+  })
+
+  it('returns to the selected provider drawer when SMTP details close', async () => {
+    const user = userEvent.setup()
+    render(
+      <PlatformProvidersTable
+        providers={[smtpProvider]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByText('Test SMTP'))
+    await user.click(screen.getByRole('button', { name: 'SMTP' }))
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    expect(screen.queryByRole('dialog', { name: 'SMTP provider details' })).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Provider detail' })).toBeInTheDocument()
+  })
+
+  it('displays an SMTP provider and its OpenAPI fields', async () => {
+    const user = userEvent.setup()
+    render(
+      <PlatformProvidersTable
+        providers={[smtpProvider]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('SMTP')).toBeInTheDocument()
+    await user.click(screen.getByText('Test SMTP'))
+
+    const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
+    const smtpUrl = smtpProvider.url
+    if (!smtpUrl) throw new Error('SMTP fixture URL is required')
+    for (const label of ['Provider ID', 'Type', 'IP address', 'Port', 'DAG directory', 'URL', 'Notification email', 'From email']) {
+      expect(within(drawer).getByText(label)).toBeInTheDocument()
+    }
+
+    expect(within(drawer).getByRole('link', { name: smtpUrl })).toHaveAttribute('href', smtpUrl)
+    expect(within(drawer).getByText('airflow@example.com')).toBeInTheDocument()
+    expect(within(drawer).queryByText('Description')).not.toBeInTheDocument()
+    expect(within(drawer).queryByText('Disable SSL')).not.toBeInTheDocument()
+    expect(within(drawer).queryByText('Disable TLS')).not.toBeInTheDocument()
+    expect(within(drawer).queryByText('Credential')).not.toBeInTheDocument()
+  })
+
   it('keeps search available without exposing platform-provider API errors', () => {
     render(
       <PlatformProvidersTable
