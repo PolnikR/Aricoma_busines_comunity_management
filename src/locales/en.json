@@ -988,6 +988,8 @@
   "platformProviders.noMatches": "No platform providers match your search.",
   "platformProviders.empty": "No platform providers were returned by the backend.",
   "platformProviders.dialogs.delete": "Delete platform provider",
+  "platformProviders.smtpDialog.button": "SMTP",
+  "platformProviders.smtpDialog.title": "SMTP provider details",
   "pages.recovery.submitFailed": "Failed to submit recovery application.",
   "pages.recoveryEditor.loadDescription": "Load the recovery application from the backend.",
   "pages.recoveryEditor.requestFailed": "The recovery application request failed.",
