@@ -22,13 +22,14 @@ export function ResourcesIsePage() {
     isFetching: providersFetching,
     refetch: refetchProviders,
   } = useProviders()
+  const resourceTabLabels = useMemo(() => ({
+    vmware: t('pages.virtualMachines.tabs.vmware'),
+    flashsystem: t('pages.virtualMachines.tabs.flashSystem'),
+    'ibm-power': t('pages.virtualMachines.tabs.ibmPower'),
+  }), [t])
   const roleTabs = useMemo(
-    () => buildResourceTargetTabs(providers, {
-      vmware: t('pages.virtualMachines.tabs.vmware'),
-      flashsystem: t('pages.virtualMachines.tabs.flashSystem'),
-      'ibm-power': t('pages.virtualMachines.tabs.ibmPower'),
-    }),
-    [providers, t],
+    () => buildResourceTargetTabs(providers, resourceTabLabels),
+    [providers, resourceTabLabels],
   )
   const activeRoleTab = roleTabs.find(
     tab => tab.resourceTab === resourceTab && tab.providerId === providerId,
@@ -58,7 +59,16 @@ export function ResourcesIsePage() {
 
   const tabs = (
     <Tabs
-      items={visibleRoleTabs}
+      items={visibleRoleTabs.map((tab) => ({
+        ...tab,
+        accessibleLabel: tab.label,
+        label: (
+          <span className="inline-flex items-center gap-2">
+            <span>{resourceTabLabels[tab.resourceTab]}</span>
+            {tab.providerId ? <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-[11px] text-text-muted">{tab.providerId}</span> : null}
+          </span>
+        ),
+      }))}
       value={effectiveActiveTab?.value ?? 'vmware:none'}
       onChange={(value) => {
         const nextTab = visibleRoleTabs.find(tab => tab.value === value)
@@ -68,6 +78,7 @@ export function ResourcesIsePage() {
       }}
       ariaLabel={t('pages.virtualMachines.tabs.label')}
       indicator="inset"
+      compact
       scrollControls={{
         previousLabel: t('pages.virtualMachines.tabs.previous'),
         nextLabel: t('pages.virtualMachines.tabs.next'),

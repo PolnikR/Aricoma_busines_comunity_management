@@ -27,4 +27,23 @@ describe('DataTableToolbar', () => {
     expect(onApplyFilters).toHaveBeenCalledOnce()
     expect(screen.queryByText('Filter content')).not.toBeInTheDocument()
   })
+
+  it('keeps the filter dialog launchable while disabling mutable controls', () => {
+    render(
+      <DataTableToolbar
+        searchValue="fixed-"
+        onSearchChange={vi.fn()}
+        searchDisabled
+        filterControlsDisabled
+        filterPanel={<input aria-label="Filter field" />}
+      />,
+    )
+
+    expect(screen.getByRole('searchbox')).toBeDisabled()
+    const filterButton = screen.getByRole('button', { name: 'Filters' })
+    expect(filterButton).not.toBeDisabled()
+    fireEvent.click(filterButton)
+    expect(screen.getByRole('button', { name: 'Clear all' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled()
+  })
 })

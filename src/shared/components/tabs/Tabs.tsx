@@ -6,6 +6,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@/shared/icons/Icons'
 export interface TabItem<T extends string> {
   value: T
   label: ReactNode
+  accessibleLabel?: string
 }
 
 interface TabsProps<T extends string> {
@@ -14,6 +15,7 @@ interface TabsProps<T extends string> {
   onChange: (value: T) => void
   ariaLabel: string
   indicator?: 'edge' | 'inset'
+  compact?: boolean
   className?: string
   scrollControls?: {
     previousLabel: string
@@ -27,6 +29,7 @@ export function Tabs<T extends string>({
   onChange,
   ariaLabel,
   indicator = 'edge',
+  compact = false,
   className,
   scrollControls,
 }: TabsProps<T>) {
@@ -119,12 +122,13 @@ export function Tabs<T extends string>({
             ref={(element) => { tabRefs.current[index] = element }}
             type="button"
             role="tab"
+            aria-label={item.accessibleLabel}
             aria-selected={isSelected}
             tabIndex={isSelected ? 0 : -1}
             onClick={() => { onChange(item.value) }}
             onKeyDown={(event) => { handleKeyDown(event, index) }}
             title={typeof item.label === 'string' ? item.label : undefined}
-            className={`max-w-64 shrink-0 overflow-hidden whitespace-nowrap border-b-2 px-4 py-3.5 text-ellipsis text-sm font-medium transition ${
+            className={`max-w-64 shrink-0 overflow-hidden whitespace-nowrap border-b-2 text-ellipsis font-medium transition ${compact ? 'px-3 py-2.5 text-xs' : 'px-4 py-3.5 text-sm'} ${
               isSelected
                 ? indicator === 'inset'
                   ? 'relative border-transparent text-accent after:absolute after:inset-x-4 after:bottom-1.5 after:h-0.5 after:rounded-full after:bg-accent after:content-[\'\']'

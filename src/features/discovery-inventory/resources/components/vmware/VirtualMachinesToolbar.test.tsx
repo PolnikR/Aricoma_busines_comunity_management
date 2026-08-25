@@ -44,4 +44,28 @@ describe('VirtualMachinesToolbar source filters', () => {
     expect(onFiltersChange).toHaveBeenCalledWith(expect.objectContaining({ tags: ['WEB'] }))
     expect(onFiltersChange.mock.calls[0]?.[0]).not.toHaveProperty('providerId')
   })
+
+  it('shows fixed filters without allowing edits', () => {
+    const onFiltersChange = vi.fn()
+    const onReset = vi.fn()
+    render(
+      <VirtualMachinesToolbar
+        filters={{ ...filters, search: 'prod-', tags: ['ABCO-managed'] }}
+        options={options}
+        availableTags={['ABCO-managed']}
+        isFilterFixed
+        onFiltersChange={onFiltersChange}
+        onReset={onReset}
+      />,
+    )
+
+    expect(screen.getByRole('searchbox')).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: /Filters/i }))
+    expect(screen.getByLabelText('Tag')).toBeDisabled()
+    expect(screen.getByLabelText(/without tags/i)).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Clear all' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled()
+    expect(onFiltersChange).not.toHaveBeenCalled()
+    expect(onReset).not.toHaveBeenCalled()
+  })
 })

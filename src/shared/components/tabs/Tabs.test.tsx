@@ -64,6 +64,22 @@ describe('Tabs', () => {
     )
   })
 
+  it('supports compact provider tabs with a separate accessible label', () => {
+    render(
+      <Tabs
+        items={[{ value: 'vmware', label: <><span>VMware VMs</span><span>vm-01</span></>, accessibleLabel: 'VMware VMs · Production vCenter' }]}
+        value="vmware"
+        onChange={vi.fn()}
+        ariaLabel="Inventory sources"
+        compact
+      />,
+    )
+
+    const tab = screen.getByRole('tab', { name: 'VMware VMs · Production vCenter' })
+    expect(tab).toHaveClass('text-xs', 'py-2.5')
+    expect(tab).toHaveTextContent('vm-01')
+  })
+
   it('shows scroll controls for an overflowing tab list and moves between boundaries', () => {
     const onChange = vi.fn()
     render(

@@ -13,6 +13,11 @@ const sourceProvider: VirtualMachineProviderScope = {
   vmTags: ['provider-tag', 'ignored-tag'],
 }
 
+const editableProvider: VirtualMachineProviderScope = {
+  id: 'provider-1',
+  role: 'source',
+}
+
 function providerScope(provider: VirtualMachineProviderScope) {
   return { role: provider.role ?? 'source', resourceTab: 'vmware' as const, providerId: provider.id }
 }
@@ -55,8 +60,8 @@ function ResourceSourceSwitchingState() {
   const { resourceTab, providerId, setResourceSource } = useResourceTabSearchParam()
   const location = useLocation()
   const provider = providerId === 'provider-2'
-    ? { id: 'provider-2', role: 'source' as const, vmPrefix: 'provider-b-', vmTags: ['provider-b-tag'] }
-    : sourceProvider
+    ? { id: 'provider-2', role: 'source' as const }
+    : editableProvider
 
   return (
     <>
@@ -77,17 +82,17 @@ describe('useVirtualMachineSearchParams', () => {
   it('restores VMware snapshots after provider and resource switches', async () => {
     render(<ResourceSourceSwitchingState />, { wrapper: wrapperFor('/?providerId=provider-1') })
 
-    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-prefix-:provider-tag:1') })
+    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('::1') })
     fireEvent.click(screen.getByRole('button', { name: 'Use custom filters' }))
     await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('custom-prefix-:custom-tag:1') })
 
     fireEvent.click(screen.getByRole('button', { name: 'Select provider B' }))
-    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-b-:provider-b-tag:1') })
+    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('::1') })
     fireEvent.click(screen.getByRole('button', { name: 'Select provider A' }))
     await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('custom-prefix-:custom-tag:1') })
 
     fireEvent.click(screen.getByRole('button', { name: 'Select provider B' }))
-    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-b-:provider-b-tag:1') })
+    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('::1') })
     fireEvent.click(screen.getByRole('button', { name: 'Use custom filters' }))
     await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('custom-prefix-:custom-tag:1') })
     fireEvent.click(screen.getByRole('button', { name: 'Select FlashSystem' }))
@@ -110,92 +115,117 @@ describe('useVirtualMachineSearchParams', () => {
   })
 
   it('prefers explicit URL filters over a saved provider snapshot', async () => {
-    writeProviderFilterSnapshot(providerScope(sourceProvider), {
+    writeProviderFilterSnapshot(providerScope(editableProvider), {
       resourceTab: 'vmware',
       initialized: true,
       filters: { search: 'saved-', powerState: '', connectionState: '', cluster: '', tags: ['saved-tag'], untagged: false },
     })
 
     render(
-      <VirtualMachineSearchParamsState provider={sourceProvider} />,
+      <VirtualMachineSearchParamsState provider={editableProvider} />,
       { wrapper: wrapperFor('/?search=url-&powerState=poweredOff&tags=url-tag,ignored&untagged=true') },
     )
 
     await waitFor(() => { expect(screen.getByTestId('vmware-initialized')).toHaveTextContent('true') })
     expect(screen.getByTestId('vmware-query')).toHaveTextContent('url-:url-tag:1')
-    expect(readProviderFilterSnapshot(providerScope(sourceProvider))?.filters).toMatchObject({
+    expect(readProviderFilterSnapshot(providerScope(editableProvider))?.filters).toMatchObject({
       search: 'url-', powerState: 'poweredOff', tags: ['url-tag'], untagged: true,
     })
   })
 
-  it('restores each provider snapshot when switching away and remounting', async () => {
-    const view = render(<VirtualMachineSearchParamsState key="provider-a" provider={sourceProvider} />, { wrapper: wrapperFor() })
+  it('keeps provider filters fixed when URL, session, and toolbar updates disagree', async () => {
+    writeProviderFilterSnapshot(providerScope(sourceProvider), {
+      resourceTab: 'vmware',
+      initialized: true,
+      filters: { search: 'saved-', powerState: 'poweredOff', connectionState: '', cluster: '', tags: ['saved-tag'], untagged: true },
+    })
+
+    render(
+      <VirtualMachineSearchParamsState provider={sourceProvider} />,
+      { wrapper: wrapperFor('/?search=url-&powerState=poweredOff&tags=url-tag&untagged=true') },
+    )
 
     await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-prefix-:provider-tag:1') })
+    await waitFor(() => {
+      expect(screen.getByTestId('vmware-location')).not.toHaveTextContent('search=url-')
+      expect(screen.getByTestId('vmware-location')).not.toHaveTextContent('tags=url-tag')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use custom filters' }))
+    expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-prefix-:provider-tag:1')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
+    expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-prefix-:provider-tag:1')
+  })
+
+  it('restores each provider snapshot when switching away and remounting', async () => {
+    const view = render(<VirtualMachineSearchParamsState key="provider-a" provider={editableProvider} />, { wrapper: wrapperFor() })
+
+    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('::1') })
     fireEvent.click(screen.getByRole('button', { name: 'Use custom filters' }))
     expect(screen.getByTestId('vmware-query')).toHaveTextContent('custom-prefix-:custom-tag:1')
 
     view.rerender(
       <VirtualMachineSearchParamsState
         key="provider-b"
-        provider={{ id: 'provider-2', role: 'source', vmPrefix: 'provider-b-', vmTags: ['provider-b-tag'] }}
+        provider={{ id: 'provider-2', role: 'source' }}
       />,
     )
-    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-b-:provider-b-tag:1') })
+    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('::1') })
 
-    view.rerender(<VirtualMachineSearchParamsState key="provider-a" provider={sourceProvider} />)
+    view.rerender(<VirtualMachineSearchParamsState key="provider-a" provider={editableProvider} />)
     await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('custom-prefix-:custom-tag:1') })
   })
 
   it('restores a saved snapshot after a refresh', async () => {
-    const firstView = render(<VirtualMachineSearchParamsState provider={sourceProvider} />, { wrapper: wrapperFor() })
+    const firstView = render(<VirtualMachineSearchParamsState provider={editableProvider} />, { wrapper: wrapperFor() })
     await waitFor(() => { expect(screen.getByTestId('vmware-initialized')).toHaveTextContent('true') })
     fireEvent.click(screen.getByRole('button', { name: 'Use custom filters' }))
     firstView.unmount()
 
-    render(<VirtualMachineSearchParamsState provider={sourceProvider} />, { wrapper: wrapperFor() })
+    render(<VirtualMachineSearchParamsState provider={editableProvider} />, { wrapper: wrapperFor() })
     await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('custom-prefix-:custom-tag:1') })
   })
 
   it('keeps an explicitly cleared snapshot empty after a remount', async () => {
-    const firstView = render(<VirtualMachineSearchParamsState provider={sourceProvider} />, { wrapper: wrapperFor() })
+    const firstView = render(<VirtualMachineSearchParamsState provider={editableProvider} />, { wrapper: wrapperFor() })
     await waitFor(() => { expect(screen.getByTestId('vmware-initialized')).toHaveTextContent('true') })
     fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
 
     await waitFor(() => {
-      expect(readProviderFilterSnapshot(providerScope(sourceProvider))?.filters).toEqual({
+      expect(readProviderFilterSnapshot(providerScope(editableProvider))?.filters).toEqual({
         search: '', powerState: '', connectionState: '', cluster: '', tags: [], untagged: false,
       })
     })
     firstView.unmount()
 
-    render(<VirtualMachineSearchParamsState provider={sourceProvider} />, { wrapper: wrapperFor() })
+    render(<VirtualMachineSearchParamsState provider={editableProvider} />, { wrapper: wrapperFor() })
     await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('::1') })
   })
 
   it('isolates source and target snapshots that share a provider ID', async () => {
-    const sourceView = render(<VirtualMachineSearchParamsState provider={sourceProvider} />, { wrapper: wrapperFor() })
+    const sourceView = render(<VirtualMachineSearchParamsState provider={editableProvider} />, { wrapper: wrapperFor() })
     await waitFor(() => { expect(screen.getByTestId('vmware-initialized')).toHaveTextContent('true') })
     fireEvent.click(screen.getByRole('button', { name: 'Use custom filters' }))
     sourceView.unmount()
 
-    const targetProvider = { ...sourceProvider, role: 'target' as const, vmPrefix: 'target-prefix-', vmTags: ['target-tag'] }
+    const targetProvider = { ...editableProvider, role: 'target' as const }
     const targetView = render(<VirtualMachineSearchParamsState provider={targetProvider} />, { wrapper: wrapperFor() })
-    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('target-prefix-:target-tag:1') })
+    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('::1') })
     targetView.unmount()
 
-    render(<VirtualMachineSearchParamsState provider={sourceProvider} />, { wrapper: wrapperFor() })
+    render(<VirtualMachineSearchParamsState provider={editableProvider} />, { wrapper: wrapperFor() })
     await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('custom-prefix-:custom-tag:1') })
   })
 
   it('persists filter changes but excludes pagination from the snapshot', async () => {
-    render(<VirtualMachineSearchParamsState provider={sourceProvider} />, { wrapper: wrapperFor() })
+    render(<VirtualMachineSearchParamsState provider={editableProvider} />, { wrapper: wrapperFor() })
     await waitFor(() => { expect(screen.getByTestId('vmware-initialized')).toHaveTextContent('true') })
     fireEvent.click(screen.getByRole('button', { name: 'Use custom filters' }))
     act(() => { fireEvent.click(screen.getByRole('button', { name: 'Go to page 3' })) })
 
     await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('custom-prefix-:custom-tag:3') })
-    expect(readProviderFilterSnapshot(providerScope(sourceProvider))?.filters).toEqual({
+    expect(readProviderFilterSnapshot(providerScope(editableProvider))?.filters).toEqual({
       search: 'custom-prefix-', powerState: 'poweredOn', connectionState: '', cluster: '', tags: ['custom-tag'], untagged: false,
     })
   })

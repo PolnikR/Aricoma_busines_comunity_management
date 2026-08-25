@@ -12,11 +12,12 @@ interface VirtualMachinesToolbarProps {
   availableTags?: string[]
   onFiltersChange: (filters: VirtualMachineFilters) => void
   onReset: () => void
+  isFilterFixed?: boolean
   density?: TableDensity
   onDensityChange?: (density: TableDensity) => void
 }
 
-export function VirtualMachinesToolbar({ filters, options, availableTags = [], onFiltersChange, onReset, density, onDensityChange }: VirtualMachinesToolbarProps) {
+export function VirtualMachinesToolbar({ filters, options, availableTags = [], onFiltersChange, onReset, isFilterFixed = false, density, onDensityChange }: VirtualMachinesToolbarProps) {
   const { t } = useTranslation()
   const [tempFilters, setTempFilters] = useState(filters)
 
@@ -61,6 +62,7 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
       onSearchChange={(search) => { onFiltersChange({ ...filters, search }) }}
       searchPlaceholder={t('pages.virtualMachines.toolbar.search')}
       searchLabel={t('pages.virtualMachines.toolbar.searchLabel')}
+      searchDisabled={isFilterFixed}
       filterTitle={t('pages.virtualMachines.toolbar.filterTitle')}
       filterButtonLabel={t('pages.virtualMachines.toolbar.filters')}
       cancelLabel={t('buttons.cancel')}
@@ -70,6 +72,7 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
       onFilterOpen={prepareFilters}
       onApplyFilters={handleApplyFilters}
       onClearFilters={handleResetFilters}
+      filterControlsDisabled={isFilterFixed}
       {...(density ? { density } : {})}
       {...(onDensityChange ? { onDensityChange } : {})}
       filterPanel={(
@@ -89,7 +92,7 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
           </Field>
 
           <Field label={t('pages.virtualMachines.filters.tag')} htmlFor="modal-tag-filter">
-            <Select id="modal-tag-filter" value={tempFilters.tags[0] ?? ''} onChange={updateTempTag}>
+            <Select id="modal-tag-filter" value={tempFilters.tags[0] ?? ''} onChange={updateTempTag} disabled={isFilterFixed}>
               <option value="">{t('pages.virtualMachines.filters.tagAll')}</option>
               {availableTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
             </Select>
@@ -99,6 +102,7 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
             label={t('pages.virtualMachines.filters.untaggedVMs')}
             checked={tempFilters.untagged}
             onChange={toggleTempUntagged}
+            disabled={isFilterFixed}
           />
         </>
       )}
