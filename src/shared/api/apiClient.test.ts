@@ -1,29 +1,59 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { apiFetch } from './apiClient'
-import { resetCurrentUser, setCurrentUser } from './currentUser'
+
+const keycloakMock = vi.hoisted(() => {
+  const token: string | undefined = 'initial-token'
+  return {
+    token,
+    updateToken: vi.fn(),
+    logout: vi.fn(),
+  }
+})
+
+vi.mock('@/config/keycloak', () => ({ keycloak: keycloakMock }))
 
 afterEach(() => {
-  resetCurrentUser()
   vi.unstubAllGlobals()
 })
 
 describe('apiFetch', () => {
-  it('adds the default headers and returns the original response', async () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.stubGlobal('window', { location: { origin: 'http://localhost' } })
+    keycloakMock.token = 'refreshed-token'
+    keycloakMock.updateToken.mockResolvedValue(true)
+    keycloakMock.logout.mockResolvedValue(undefined)
+  })
+
+  it('refreshes the token before fetch and sends locked auth headers', async () => {
     const response = new Response(JSON.stringify({ ok: true }), { status: 200 })
     const fetchMock = vi.fn().mockResolvedValue(response)
     vi.stubGlobal('fetch', fetchMock)
 
-    const result = await apiFetch('/api/example')
+    keycloakMock.updateToken.mockImplementation(() => {
+      expect(fetchMock).not.toHaveBeenCalled()
+      keycloakMock.token = 'new-access-token'
+      return Promise.resolve(true)
+    })
+
+    const result = await apiFetch('/api/example', {
+      headers: {
+        Authorization: 'Bearer caller-token',
+        'X-User': 'spoofed-user',
+      },
+    })
 
     expect(result).toBe(response)
+    expect(keycloakMock.updateToken).toHaveBeenCalledWith(30)
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/example')
     const headers = new Headers(init.headers)
     expect(headers.get('Accept')).toBe('application/json')
+    expect(headers.get('Authorization')).toBe('Bearer new-access-token')
     expect(headers.get('X-User')).toBe('admin')
   })
 
-  it('preserves request options and caller headers', async () => {
+  it('preserves request options and caller headers that are not locked', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
     vi.stubGlobal('fetch', fetchMock)
     const controller = new AbortController()
@@ -49,23 +79,34 @@ describe('apiFetch', () => {
     expect(headers.get('Content-Type')).toBe('application/json')
   })
 
-  it('locks X-User to the current bridge identity', async () => {
-    setCurrentUser({ username: 'operator', role: 'operator' })
-    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+  it('stops the request and logs out when token refresh fails', async () => {
+    const refreshError = new Error('refresh failed')
+    const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
+    keycloakMock.updateToken.mockRejectedValue(refreshError)
 
-    await apiFetch('/api/example', {
-      headers: { 'X-User': 'spoofed-user' },
-    })
+    await expect(apiFetch('/api/example')).rejects.toBe(refreshError)
 
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(new Headers(init.headers).get('X-User')).toBe('operator')
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(keycloakMock.logout).toHaveBeenCalledWith({ redirectUri: window.location.origin })
   })
 
-  it('propagates fetch failures', async () => {
+  it('stops the request and logs out when no access token is available', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    keycloakMock.token = undefined
+
+    await expect(apiFetch('/api/example')).rejects.toThrow('Keycloak access token is unavailable')
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(keycloakMock.logout).toHaveBeenCalledWith({ redirectUri: window.location.origin })
+  })
+
+  it('propagates fetch failures after successful token refresh', async () => {
     const error = new TypeError('Network unavailable')
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(error))
 
     await expect(apiFetch('/api/example')).rejects.toBe(error)
+    expect(keycloakMock.logout).not.toHaveBeenCalled()
   })
 })
