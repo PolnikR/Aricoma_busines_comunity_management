@@ -113,6 +113,13 @@ export type DeleteRecoveryApplicationRequest =
       computeProviderId: string
     }
 
+function parseRollbackReport(payload: unknown): RollbackReport {
+  if (!payload || typeof payload !== 'object') {
+    throw new Error('DELETE /delete_recovery_app response is missing rollback details')
+  }
+  return rollbackReportSchema.parse((payload as Record<string, unknown>)['rollback'])
+}
+
 export async function deleteRecoveryApplication(
   request: DeleteRecoveryApplicationRequest,
 ): Promise<{ applications: RecoveryApplicationListItem[]; rollback: RollbackReport | null }> {
@@ -136,7 +143,7 @@ export async function deleteRecoveryApplication(
     return {
       applications: mapRecoveryApplications(parsed),
       rollback: request.rollbackFromOrchestrator && parsed.rollback
-        ? rollbackReportSchema.parse((payload as Record<string, unknown>)['rollback'])
+        ? parseRollbackReport(payload)
         : null,
     }
   } catch (error) {
