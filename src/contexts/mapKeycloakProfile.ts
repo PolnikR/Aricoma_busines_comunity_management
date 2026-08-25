@@ -24,7 +24,8 @@ function getInitials(value: string): string {
   }
 
   if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase()
+    const first = parts[0] ?? ''
+    return first.slice(0, 2).toUpperCase()
   }
 
   const first = parts[0] ?? ''
