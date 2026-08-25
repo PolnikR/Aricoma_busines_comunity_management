@@ -95,6 +95,7 @@ export function RecoveryRunsPage() {
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
             <RecoveryRunsTable
               rows={rows}
+              hasCachedData={entities.length > 0}
               search={table.search}
               onSearchChange={table.setSearch}
               page={table.page}

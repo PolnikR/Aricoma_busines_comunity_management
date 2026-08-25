@@ -189,6 +189,26 @@ describe('RecoveryGroupsTable', () => {
     expect(screen.getByText('No recovery groups defined yet')).toBeInTheDocument()
   })
 
+  it('keeps cached group content mounted when a refresh fails after search filters all rows out', async () => {
+    const user = userEvent.setup()
+    const error = new Error('Background refresh failed')
+    renderTable(
+      <RecoveryGroupsTable
+        groups={groups}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onRollback={vi.fn()}
+        error={error}
+      />,
+    )
+
+    const search = await screen.findByRole('searchbox', { name: 'Search recovery groups' })
+    await user.type(search, 'missing')
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Recovery groups could not be loaded')
+    expect(screen.getByText('No recovery groups defined yet')).toBeInTheDocument()
+  })
+
   it('renders the IBM Power workload label', () => {
     renderTable(
       <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,

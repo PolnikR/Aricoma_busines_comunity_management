@@ -107,6 +107,7 @@ function getColumns(
 
 interface RecoveryRunsTableProps {
   rows: RecoveryRunRow[]
+  hasCachedData: boolean
   search: string
   onSearchChange: (search: string) => void
   page: number
@@ -125,6 +126,7 @@ interface RecoveryRunsTableProps {
 
 export function RecoveryRunsTable({
   rows,
+  hasCachedData,
   search,
   onSearchChange,
   page,
@@ -158,7 +160,7 @@ export function RecoveryRunsTable({
 
       <div className="custom-scrollbar flex min-h-0 flex-1 flex-col lg:overflow-y-auto">
         <DataTableRequestState
-          hasData={rows.length > 0}
+          hasCachedData={hasCachedData}
           error={error ? {
             title: t('recoveryRuns.loadFailed'),
             ...(errorDetail ? { description: errorDetail } : {}),

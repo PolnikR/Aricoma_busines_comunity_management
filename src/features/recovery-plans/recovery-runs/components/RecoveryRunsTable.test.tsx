@@ -26,6 +26,7 @@ const rows: [RecoveryRunRow, RecoveryRunRow] = [
 ]
 
 const tableStateProps = {
+  hasCachedData: true,
   search: '',
   onSearchChange: vi.fn(),
   page: 1,
@@ -180,5 +181,28 @@ describe('RecoveryRunsTable', () => {
     render(<RecoveryRunsTable {...tableStateProps} rows={[]} total={0} showEntityType={false} isLoading={false} error={error} isRetrying={false} onRetry={vi.fn()} onSelectEntity={vi.fn()} selectedEntityKey={null} />)
     expect(screen.getByRole('alert')).toHaveTextContent('Orchestrator is unavailable.')
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+  })
+
+  it('keeps the filtered-empty table mounted when cached entities exist and refresh fails', () => {
+    const error = new Error('Background refresh failed')
+    render(
+      <RecoveryRunsTable
+        {...tableStateProps}
+        rows={[]}
+        hasCachedData
+        search="missing"
+        total={0}
+        showEntityType={false}
+        isLoading={false}
+        error={error}
+        isRetrying={false}
+        onRetry={vi.fn()}
+        onSelectEntity={vi.fn()}
+        selectedEntityKey={null}
+      />,
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Recovery runs could not be loaded')
+    expect(screen.getByText('No entities match your search.')).toBeInTheDocument()
   })
 })

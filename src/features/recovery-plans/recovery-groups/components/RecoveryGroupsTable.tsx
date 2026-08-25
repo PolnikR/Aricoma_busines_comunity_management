@@ -301,7 +301,7 @@ export function RecoveryGroupsTable({
       />
 
       <DataTableRequestState
-        hasData={rows.length > 0}
+        hasCachedData={groups.length > 0}
         error={error ? {
           title: t('pages.recoveryGroups.errors.load'),
           ...(errorDescription ? { description: errorDescription } : {}),
