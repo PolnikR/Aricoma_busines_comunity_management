@@ -132,9 +132,19 @@ describe('PlatformProvidersTable', () => {
     expect(screen.getByText('SMTP')).toBeInTheDocument()
     await user.click(screen.getByText('Test SMTP'))
 
-    expect(screen.getByText('airflow@example.com')).toBeInTheDocument()
-    expect(screen.getAllByText('true')).toHaveLength(2)
-    expect(screen.getAllByText('-').length).toBeGreaterThan(0)
+    const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
+    const smtpUrl = smtpProvider.url
+    if (!smtpUrl) throw new Error('SMTP fixture URL is required')
+    for (const label of ['Provider ID', 'Type', 'IP address', 'Port', 'DAG directory', 'URL', 'Notification email', 'From email']) {
+      expect(within(drawer).getByText(label)).toBeInTheDocument()
+    }
+
+    expect(within(drawer).getByRole('link', { name: smtpUrl })).toHaveAttribute('href', smtpUrl)
+    expect(within(drawer).getByText('airflow@example.com')).toBeInTheDocument()
+    expect(within(drawer).queryByText('Description')).not.toBeInTheDocument()
+    expect(within(drawer).queryByText('Disable SSL')).not.toBeInTheDocument()
+    expect(within(drawer).queryByText('Disable TLS')).not.toBeInTheDocument()
+    expect(within(drawer).queryByText('Credential')).not.toBeInTheDocument()
   })
 
   it('keeps search available without exposing platform-provider API errors', () => {

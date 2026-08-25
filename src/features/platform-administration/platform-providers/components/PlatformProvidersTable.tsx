@@ -229,7 +229,22 @@ export function PlatformProvidersTable({
             <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{selected.ipAddress}</span>} />
             <DetailRow label={t('details.port')} value={<span className="font-mono">{selected.port}</span>} />
             <DetailRow label={t('details.dagDir')} value={<span className="font-mono">{selected.dagDir || '-'}</span>} />
-            {selected.url ? (
+            {selected.type === 'SMTP' ? (
+              <DetailRow
+                label={t('details.url')}
+                value={selected.url ? (
+                  <a
+                    href={selected.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
+                  >
+                    {selected.url}
+                    <ExternalLinkIcon className="size-3.5 shrink-0" />
+                  </a>
+                ) : '-'}
+              />
+            ) : selected.url ? (
               <DetailRow
                 label={t('details.url')}
                 value={(
@@ -253,20 +268,24 @@ export function PlatformProvidersTable({
               label={t('details.fromEmail')}
               value={selected.fromEmail ?? '-'}
             />
-            <DetailRow
-              label={t('details.disableSsl')}
-              value={selected.disableSsl == null ? '-' : String(selected.disableSsl)}
-            />
-            <DetailRow
-              label={t('details.disableTls')}
-              value={selected.disableTls == null ? '-' : String(selected.disableTls)}
-            />
-            <DetailRow label={t('details.credential')} value={<span className="font-mono">{selected.credentialId || '-'}</span>} />
-            <DetailRow
-              label={t('details.credentialStatus')}
-              value={<Badge color={credentialStatusColor(selected.credentialStatus)} size="sm">{t(`providers.credentials.status.${selected.credentialStatus}`)}</Badge>}
-            />
-            <DetailRow label={t('details.description')} value={selected.description || '-'} />
+            {selected.type !== 'SMTP' ? (
+              <>
+                <DetailRow
+                  label={t('details.disableSsl')}
+                  value={selected.disableSsl == null ? '-' : String(selected.disableSsl)}
+                />
+                <DetailRow
+                  label={t('details.disableTls')}
+                  value={selected.disableTls == null ? '-' : String(selected.disableTls)}
+                />
+                <DetailRow label={t('details.credential')} value={<span className="font-mono">{selected.credentialId || '-'}</span>} />
+                <DetailRow
+                  label={t('details.credentialStatus')}
+                  value={<Badge color={credentialStatusColor(selected.credentialStatus)} size="sm">{t(`providers.credentials.status.${selected.credentialStatus}`)}</Badge>}
+                />
+                <DetailRow label={t('details.description')} value={selected.description || '-'} />
+              </>
+            ) : null}
           </dl>
         ) : null}
       </DetailDrawer>
