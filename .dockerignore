@@ -10,3 +10,6 @@ coverage
 *.local
 .env
 .env.*
+# Vite inlines VITE_* at build time, so the production env file must reach the
+# build context. It holds no secrets (public Keycloak client config).
+!.env.production
