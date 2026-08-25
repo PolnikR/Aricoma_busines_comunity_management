@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useContext } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useLanguageContext } from '@/contexts/LanguageContext'
+import { AuthContext } from '@/contexts/AuthContext'
 import { keycloak } from '@/config/keycloak'
 import { ChevronDownIcon, SettingsIcon, SignOutIcon } from '@/shared/icons/Icons'
 import { ThemeSelector } from './ThemeSelector'
@@ -12,12 +13,16 @@ interface UserMenuProps {
 }
 
 export function UserMenu({
-  userName = 'ABCO operator',
-  userTitle = 'Administrator',
-  userInitials = 'AB',
+  userName,
+  userTitle,
+  userInitials,
 }: UserMenuProps) {
   const { t, language } = useTranslation()
   const { setLanguage } = useLanguageContext()
+  const auth = useContext(AuthContext)
+  const resolvedUserName = userName ?? auth?.user.displayName ?? 'ABCO operator'
+  const resolvedUserTitle = userTitle ?? auth?.user.email ?? auth?.user.username ?? 'Administrator'
+  const resolvedUserInitials = userInitials ?? auth?.user.initials ?? 'AB'
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -53,11 +58,11 @@ export function UserMenu({
         aria-expanded={isOpen}
       >
         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-text-primary text-xs font-semibold text-white">
-          {userInitials}
+          {resolvedUserInitials}
         </span>
         <div className="hidden text-left lg:block">
-          <p className="text-sm font-medium text-text-primary">{userName}</p>
-          <p className="text-xs text-text-muted">{userTitle}</p>
+          <p className="text-sm font-medium text-text-primary">{resolvedUserName}</p>
+          <p className="text-xs text-text-muted">{resolvedUserTitle}</p>
         </div>
         <ChevronDownIcon className={`hidden size-4 shrink-0 transition-transform lg:block ${isOpen ? 'rotate-180 text-accent' : 'text-text-muted group-hover:text-accent'}`} />
       </button>
