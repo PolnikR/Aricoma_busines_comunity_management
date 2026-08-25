@@ -42,6 +42,7 @@ export default defineConfig({
           exclude: domTypescriptTests,
           isolate: false,
           maxWorkers: 2,
+          setupFiles: ['./src/test-utils/setupUnit.ts'],
         },
       },
     ],

@@ -1,20 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { keycloakMock } from '@/test-utils/keycloakUnitMock'
 import { apiFetch } from './apiClient'
-
-const keycloakMock = vi.hoisted(() => {
-  const mock: {
-    token: string | undefined
-    updateToken: ReturnType<typeof vi.fn>
-    logout: ReturnType<typeof vi.fn>
-  } = {
-    token: 'initial-token',
-    updateToken: vi.fn(),
-    logout: vi.fn(),
-  }
-  return mock
-})
-
-vi.mock('@/config/keycloak', () => ({ keycloak: keycloakMock }))
 
 afterEach(() => {
   vi.unstubAllGlobals()
