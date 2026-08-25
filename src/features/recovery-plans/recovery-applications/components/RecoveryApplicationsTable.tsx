@@ -301,7 +301,7 @@ export function RecoveryApplicationsTable({
       />
 
       <DataTableRequestState
-        hasData={applications.length > 0}
+        hasCachedData={applications.length > 0}
         error={error ? {
           title: t('pages.recovery.error.title'),
           ...(errorDescription ? { description: errorDescription } : {}),

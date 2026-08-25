@@ -110,7 +110,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
       {deletePolicy.error ? <Alert className="mx-4 mt-4" title={t('cleanRoomPolicies.delete.title')} {...(deleteErrorDetail ? { description: deleteErrorDetail } : {})} variant="error" /> : null}
 
       <DataTableRequestState
-        hasData={rows.length > 0}
+        hasCachedData={policies.length > 0}
         error={error ? {
           title: t('cleanRoomPolicies.loadFailed'),
           ...(loadErrorDetail ? { description: loadErrorDetail } : {}),

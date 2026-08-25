@@ -191,7 +191,7 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
 
       {deletePolicy.error ? <Alert className="mx-4 mt-4" title={t('recoveryAppPolicies.delete.title')} {...(deleteErrorDetail ? { description: deleteErrorDetail } : {})} variant="error" /> : null}
 
-      <DataTableRequestState hasData={rows.length > 0} error={error ? { title: t('recoveryAppPolicies.loadFailed'), ...(loadErrorDetail ? { description: loadErrorDetail } : {}), retryLabel: t('buttons.retry'), isRetrying, onRetry } : null}>
+      <DataTableRequestState hasCachedData={policies.length > 0} error={error ? { title: t('recoveryAppPolicies.loadFailed'), ...(loadErrorDetail ? { description: loadErrorDetail } : {}), retryLabel: t('buttons.retry'), isRetrying, onRetry } : null}>
         <DataTable
           columns={getColumns(t, setJsonViewId)}
           rows={table.pageItems}

@@ -212,7 +212,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
       {deletePolicy.error ? <Alert className="mx-4 mt-4" title={t('snapshotPolicies.delete.title')} {...(deleteErrorDetail ? { description: deleteErrorDetail } : {})} variant="error" /> : null}
 
       <DataTableRequestState
-        hasData={rows.length > 0}
+        hasCachedData={policies.length > 0}
         error={error ? {
           title: t('snapshotPolicies.loadFailed'),
           ...(loadErrorDetail ? { description: loadErrorDetail } : {}),

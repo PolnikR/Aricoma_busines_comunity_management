@@ -97,6 +97,24 @@ describe('SnapshotPoliciesTable', () => {
     expect(screen.getByRole('alert')).not.toHaveTextContent('private backend details')
   })
 
+  it('keeps cached policies mounted when search has zero matches and refresh fails', async () => {
+    const user = userEvent.setup()
+    render(
+      <SnapshotPoliciesTable
+        policies={[policy]}
+        isLoading={false}
+        error={new Error('Background refresh failed')}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search snapshot policies' }), 'missing')
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByText('No snapshot policies match your search.')).toBeInTheDocument()
+  })
+
   it('shows supported backend detail in the load error', () => {
     render(<SnapshotPoliciesTable policies={[]} isLoading={false} error={new OrvalApiError(503, 'Unavailable', { detail: 'Snapshot service unavailable.' })} isRetrying={false} onRetry={vi.fn()} />)
     expect(screen.getByRole('alert')).toHaveTextContent('Snapshot service unavailable.')
