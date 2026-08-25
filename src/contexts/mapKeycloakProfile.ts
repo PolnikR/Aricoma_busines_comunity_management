@@ -37,17 +37,22 @@ export function mapKeycloakProfile(profile: KeycloakProfile): AuthUser {
   const firstName = profile.firstName?.trim() ?? ''
   const lastName = profile.lastName?.trim() ?? ''
   const email = profile.email?.trim() ?? ''
-  const displayName = [firstName, lastName].filter(Boolean).join(' ') || username || email
+  const namedDisplay = [firstName, lastName].filter(Boolean).join(' ')
+  const displayName = namedDisplay.length > 0 ? namedDisplay : username.length > 0 ? username : email
 
-  if (!displayName) {
+  if (displayName.length === 0) {
     return FALLBACK_USER
   }
 
+  const resolvedUsername = username.length > 0 ? username : email.length > 0 ? email : FALLBACK_USER.username
+  const profileId = profile.id?.trim() ?? ''
+  const resolvedId = profileId.length > 0 ? profileId : resolvedUsername
+
   return {
-    id: profile.id?.trim() || username || FALLBACK_USER.id,
-    username: username || email || FALLBACK_USER.username,
+    id: resolvedId,
+    username: resolvedUsername,
     displayName,
-    email: email || username,
+    email: email.length > 0 ? email : username,
     initials: getInitials(displayName),
   }
 }

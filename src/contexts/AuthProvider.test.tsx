@@ -61,7 +61,7 @@ describe('AuthProvider', () => {
   })
 
   it('keeps an authenticated app available when profile loading fails', async () => {
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     keycloakMock.loadUserProfile.mockRejectedValue(new Error('profile unavailable'))
 
     render(
