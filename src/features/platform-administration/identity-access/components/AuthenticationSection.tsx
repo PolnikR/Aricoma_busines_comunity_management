@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { Alert } from '@/shared/components/alert/Alert'
 import { DataTable } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
@@ -25,7 +26,7 @@ function isAuthenticationTab(tabId: IdentityAccessTabId | null): tabId is Authen
 
 export function AuthenticationSection({ tabId, onTabChange }: AuthenticationSectionProps) {
   const { t } = useTranslation()
-  const { data, error, gateway, mutate } = useIdentityAdminPreview()
+  const { data, error, isMutating, mutationError, gateway, mutate } = useIdentityAdminPreview()
   const activeTab: AuthenticationTabId = isAuthenticationTab(tabId) ? tabId : 'required-actions'
   const tabs = VISIBLE_AUTH_TABS.map(value => ({ value, label: t(`identity.authentication.tabs.${value}`) }))
 
@@ -34,7 +35,7 @@ export function AuthenticationSection({ tabId, onTabChange }: AuthenticationSect
     content = error
       ? <div className="p-4"><EmptyState title={t('identity.authentication.requiredActions.loadFailed')} description={error.message} /></div>
       : data
-        ? <RequiredActionsTable actions={data.requiredActions} onChange={(actionId, update) => mutate(() => gateway.updateRequiredAction(actionId, update))} />
+        ? <RequiredActionsTable actions={data.requiredActions} disabled={isMutating} onChange={(actionId, update) => mutate(() => gateway.updateRequiredAction(actionId, update))} />
         : <div className="p-4"><EmptyState title={t('identity.authentication.requiredActions.loading')} description={t('identity.common.adapterReading')} /></div>
   } else if (activeTab === 'flows') {
     const columns: ColumnDef<{ id: string; name: string; description: string }>[] = [
@@ -73,12 +74,20 @@ export function AuthenticationSection({ tabId, onTabChange }: AuthenticationSect
           nextLabel: t('identity.authentication.tabs.scrollNext'),
         }}
       />
+      {mutationError ? (
+        <Alert
+          className="m-4 mb-0"
+          variant="error"
+          title={t('identity.authentication.requiredActions.updateFailed')}
+          description={mutationError.message}
+        />
+      ) : null}
       <div className="min-w-0">{content}</div>
     </IdentityContentPanel>
   )
 }
 
-function RequiredActionsTable({ actions, onChange }: { actions: RequiredActionView[]; onChange: (actionId: string, update: Pick<RequiredActionView, 'isEnabled' | 'isDefault'>) => Promise<unknown> }) {
+function RequiredActionsTable({ actions, disabled, onChange }: { actions: RequiredActionView[]; disabled: boolean; onChange: (actionId: string, update: Pick<RequiredActionView, 'isEnabled' | 'isDefault'>) => Promise<unknown> }) {
   const { t } = useTranslation()
   const columns = useMemo<ColumnDef<RequiredActionView>[]>(() => [
     {
@@ -100,6 +109,7 @@ function RequiredActionsTable({ actions, onChange }: { actions: RequiredActionVi
           className="justify-center gap-0"
           label={<span className="sr-only">{t('identity.authentication.requiredActions.enableAria', { action: action.name })}</span>}
           checked={action.isEnabled}
+          disabled={disabled}
           onChange={event => { void onChange(action.id, { isEnabled: event.currentTarget.checked, isDefault: action.isDefault }) }}
         />
       ),
@@ -113,11 +123,12 @@ function RequiredActionsTable({ actions, onChange }: { actions: RequiredActionVi
           className="justify-center gap-0"
           label={<span className="sr-only">{t('identity.authentication.requiredActions.defaultAria', { action: action.name })}</span>}
           checked={action.isDefault}
+          disabled={disabled}
           onChange={event => { void onChange(action.id, { isEnabled: action.isEnabled, isDefault: event.currentTarget.checked }) }}
         />
       ),
     },
-  ], [onChange, t])
+  ], [disabled, onChange, t])
 
   return (
     <div>

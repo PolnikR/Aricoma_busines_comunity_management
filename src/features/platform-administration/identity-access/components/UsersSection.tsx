@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Alert } from '@/shared/components/alert/Alert'
 import { Badge } from '@/shared/components/badge/Badge'
@@ -39,7 +39,7 @@ function userDisplayName(user: IdentityUserView) {
 export function UsersSection(props: UsersSectionProps) {
   const { t } = useTranslation()
   const { entityId, tabId, onEntityChange, onTabChange, isAddUserOpen, onSetAddUserOpen } = props
-  const { data, error, isLoading, isMutating, mutationError, gateway, mutate, refresh } = useIdentityAdminPreview()
+  const { data, error, isLoading, isMutating, mutationError, clearMutationError, gateway, mutate, refresh } = useIdentityAdminPreview()
   const users = data?.users ?? []
   const roles = useMemo(() => data?.roles ?? [], [data?.roles])
   const selectedUser = users.find(user => user.id === entityId) ?? null
@@ -70,6 +70,10 @@ export function UsersSection(props: UsersSectionProps) {
     { id: 'lastLogin', header: t('identity.users.columns.lastLogin'), cell: user => user.lastLoginLabel },
   ], [roles, t])
   const tabs = VISIBLE_USER_TABS.map(value => ({ value, label: t(`identity.users.tabs.${value}`) }))
+
+  useEffect(() => {
+    if (isAddUserOpen) clearMutationError()
+  }, [clearMutationError, isAddUserOpen])
 
   if (entityId) {
     if (!selectedUser && !isLoading) {
@@ -219,7 +223,10 @@ export function UsersSection(props: UsersSectionProps) {
         open={isAddUserOpen}
         isCreating={isMutating}
         error={mutationError}
-        onClose={() => { onSetAddUserOpen(false) }}
+        onClose={() => {
+          clearMutationError()
+          onSetAddUserOpen(false)
+        }}
         onCreate={async input => {
           const created = await mutate(() => gateway.createUser(input))
           if (created) onSetAddUserOpen(false)

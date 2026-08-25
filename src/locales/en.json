@@ -1980,6 +1980,7 @@
   "identity.authentication.tabs.scrollPrevious": "Scroll Authentication sections left",
   "identity.authentication.tabs.scrollNext": "Scroll Authentication sections right",
   "identity.authentication.requiredActions.loadFailed": "Required actions could not be loaded",
+  "identity.authentication.requiredActions.updateFailed": "Required action could not be updated",
   "identity.authentication.requiredActions.loading": "Loading required actions",
   "identity.authentication.requiredActions.ariaLabel": "Required actions",
   "identity.authentication.requiredActions.columns.action": "Required action",

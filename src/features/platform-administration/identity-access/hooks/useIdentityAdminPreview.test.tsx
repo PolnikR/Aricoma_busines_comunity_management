@@ -27,6 +27,11 @@ describe('useIdentityAdminPreview', () => {
     expect(result.current.isMutating).toBe(false)
     expect(result.current.mutationError).toHaveProperty('message', 'Save failed')
 
+    act(() => {
+      result.current.clearMutationError()
+    })
+    expect(result.current.mutationError).toBeNull()
+
     await act(async () => {
       await result.current.mutate(() => Promise.resolve())
     })

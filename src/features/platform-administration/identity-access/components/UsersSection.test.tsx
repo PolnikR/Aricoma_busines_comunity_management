@@ -113,6 +113,35 @@ describe('UsersSection', () => {
     expect(onSetAddUserOpen).not.toHaveBeenCalledWith(false)
   })
 
+  it('clears a failed Add User mutation when the modal is closed and reopened', async () => {
+    const gateway = createMockIdentityAdminGateway()
+    gateway.createUser = vi.fn(() => Promise.reject(new Error('Identity gateway rejected the user')))
+
+    function Harness() {
+      const [open, setOpen] = useState(true)
+      return (
+        <IdentityAdminGatewayProvider gateway={gateway}>
+          <button type="button" onClick={() => { setOpen(true) }}>Open add user</button>
+          <UsersSection entityId={null} tabId={null} onEntityChange={vi.fn()} onTabChange={vi.fn()} isAddUserOpen={open} onSetAddUserOpen={setOpen} />
+        </IdentityAdminGatewayProvider>
+      )
+    }
+
+    render(<Harness />)
+    await userEvent.type(screen.getByLabelText('Username'), 'failed.user')
+    await userEvent.type(screen.getByLabelText('Email'), 'failed.user@example.com')
+    await userEvent.type(screen.getByLabelText('First name'), 'Failed')
+    await userEvent.type(screen.getByLabelText('Last name'), 'User')
+    await userEvent.click(screen.getByRole('button', { name: 'Create user' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Identity gateway rejected the user')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Open add user' }))
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Username')).toHaveValue('')
+  })
+
   it('blocks duplicate creation while pending and resets Add User after Cancel, Escape, and success', async () => {
     const gateway = createMockIdentityAdminGateway()
     const originalCreateUser = gateway.createUser.bind(gateway)

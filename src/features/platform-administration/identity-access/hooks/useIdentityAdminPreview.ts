@@ -56,12 +56,17 @@ export function useIdentityAdminPreview() {
     }
   }, [refresh])
 
+  const clearMutationError = useCallback(() => {
+    setMutationError(null)
+  }, [])
+
   return {
     data,
     error,
     isLoading: data === null && error === null,
     isMutating,
     mutationError,
+    clearMutationError,
     refresh,
     mutate,
     gateway,

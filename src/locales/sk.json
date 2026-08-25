@@ -1943,6 +1943,7 @@
   "identity.authentication.tabs.scrollPrevious": "Posunúť sekcie autentifikácie doľava",
   "identity.authentication.tabs.scrollNext": "Posunúť sekcie autentifikácie doprava",
   "identity.authentication.requiredActions.loadFailed": "Povinné akcie sa nepodarilo načítať",
+  "identity.authentication.requiredActions.updateFailed": "Povinnú akciu sa nepodarilo aktualizovať",
   "identity.authentication.requiredActions.loading": "Načítavajú sa povinné akcie",
   "identity.authentication.requiredActions.ariaLabel": "Povinné akcie",
   "identity.authentication.requiredActions.columns.action": "Povinná akcia",

@@ -1943,6 +1943,7 @@
   "identity.authentication.tabs.scrollPrevious": "Posunout sekce autentizace doleva",
   "identity.authentication.tabs.scrollNext": "Posunout sekce autentizace doprava",
   "identity.authentication.requiredActions.loadFailed": "Povinné akce se nepodařilo načíst",
+  "identity.authentication.requiredActions.updateFailed": "Povinnou akci se nepodařilo aktualizovat",
   "identity.authentication.requiredActions.loading": "Načítají se povinné akce",
   "identity.authentication.requiredActions.ariaLabel": "Povinné akce",
   "identity.authentication.requiredActions.columns.action": "Povinná akce",
