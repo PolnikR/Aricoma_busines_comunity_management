@@ -33,6 +33,7 @@ const smtpProvider: PlatformProviderRecord = {
   description: rawSmtpProvider.description,
   ipAddress: rawSmtpProvider.ipAddress,
   credentialId: '',
+  credentialStatus: 'none',
   dagDir: '',
   rawRecord: rawSmtpProvider,
 }
