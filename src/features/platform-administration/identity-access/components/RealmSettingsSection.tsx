@@ -1,11 +1,13 @@
 import { useTranslation } from '@/hooks/useTranslation'
 import { Alert } from '@/shared/components/alert/Alert'
+import { DataTable } from '@/shared/components/data-table'
+import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { CheckboxField, Field, Input, Select } from '@/shared/components/form/FormControls'
 import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useIdentityAdminPreview } from '../hooks/useIdentityAdminPreview'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
-import type { RealmLoginPreview } from '../services/identityAdminGateway'
+import type { RealmLoginPreview, UserProfileAttributeView } from '../services/identityAdminGateway'
 import { IdentityContentPanel, IdentitySettingsSection } from './IdentityResourceLayout'
 
 const CANONICAL_REALM_TABS = ['general', 'login', 'user-profile', 'email', 'themes', 'keys', 'events', 'localization', 'security-defenses', 'sessions', 'tokens'] as const
@@ -48,12 +50,7 @@ export function RealmSettingsSection({ tabId, onTabChange }: RealmSettingsSectio
   } else if (activeTab === 'user-profile') {
     content = (
       <IdentitySettingsSection title={t('identity.realm.tabs.user-profile')} description={t('identity.realm.userProfile.description')}>
-        <div className="max-w-full overflow-x-auto">
-          <table className="w-full min-w-[34rem] text-left text-sm" aria-label={t('identity.realm.userProfile.ariaLabel')}>
-            <thead><tr className="border-b border-border text-xs text-text-muted"><th className="p-3">{t('identity.realm.userProfile.columns.attribute')}</th><th className="p-3">{t('identity.realm.userProfile.columns.requirement')}</th><th className="p-3">{t('identity.realm.userProfile.columns.editability')}</th></tr></thead>
-            <tbody>{realm.userProfile.map(attribute => <tr key={attribute.id} className="border-b border-border last:border-0"><th className="p-3 font-semibold text-text-primary">{attribute.label}</th><td className="p-3">{attribute.isRequired ? t('identity.realm.userProfile.required') : t('identity.realm.userProfile.optional')}</td><td className="p-3">{attribute.editability === 'user' ? t('identity.realm.userProfile.userEditable') : t('identity.realm.userProfile.adminEditable')}</td></tr>)}</tbody>
-          </table>
-        </div>
+        <UserProfileTable attributes={realm.userProfile} />
       </IdentitySettingsSection>
     )
   } else if (activeTab === 'email') {
@@ -86,6 +83,37 @@ export function RealmSettingsSection({ tabId, onTabChange }: RealmSettingsSectio
       {mutationError ? <Alert className="m-4 mb-0" variant="error" title={t('identity.realm.mutationFailed')} description={mutationError.message} /> : null}
       <div className="min-w-0">{content}</div>
     </IdentityContentPanel>
+  )
+}
+
+function UserProfileTable({ attributes }: { attributes: UserProfileAttributeView[] }) {
+  const { t } = useTranslation()
+  const columns: ColumnDef<UserProfileAttributeView>[] = [
+    {
+      id: 'attribute',
+      header: t('identity.realm.userProfile.columns.attribute'),
+      cell: attribute => <span className="font-semibold text-text-primary">{attribute.label}</span>,
+    },
+    {
+      id: 'requirement',
+      header: t('identity.realm.userProfile.columns.requirement'),
+      cell: attribute => attribute.isRequired ? t('identity.realm.userProfile.required') : t('identity.realm.userProfile.optional'),
+    },
+    {
+      id: 'editability',
+      header: t('identity.realm.userProfile.columns.editability'),
+      cell: attribute => attribute.editability === 'user' ? t('identity.realm.userProfile.userEditable') : t('identity.realm.userProfile.adminEditable'),
+    },
+  ]
+
+  return (
+    <DataTable
+      columns={columns}
+      rows={attributes}
+      rowKey={attribute => attribute.id}
+      ariaLabel={t('identity.realm.userProfile.ariaLabel')}
+      minWidthClassName="min-w-[34rem]"
+    />
   )
 }
 
