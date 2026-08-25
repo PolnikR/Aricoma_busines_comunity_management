@@ -62,24 +62,65 @@ export function RealmSettingsSection({ tabId, onTabChange }: RealmSettingsSectio
           <Field label={t('identity.realm.email.from')} htmlFor="smtp-from"><Input id="smtp-from" value={realm.email.fromAddress} readOnly /></Field>
           <Field label={t('identity.realm.email.authMaterial')} htmlFor="smtp-auth"><Input id="smtp-auth" value={t('identity.realm.email.notExposed')} readOnly /></Field>
         </div>
-        <p className="mt-4 text-xs text-text-muted">{t('identity.realm.email.statusLine', { status: realm.email.status === 'preview-configured' ? t('identity.realm.email.previewConfigured') : t('identity.realm.email.notConfigured'), tls: realm.email.usesTls ? t('identity.realm.email.tlsEnabled') : t('identity.realm.email.tlsDisabled') })}</p>
+        <p className="mt-4 text-xs text-text-muted">
+          {t('identity.realm.email.statusLine', {
+            status: realm.email.status === 'preview-configured'
+              ? t('identity.realm.email.previewConfigured')
+              : t('identity.realm.email.notConfigured'),
+            tls: realm.email.usesTls
+              ? t('identity.realm.email.tlsEnabled')
+              : t('identity.realm.email.tlsDisabled'),
+          })}
+        </p>
       </IdentitySettingsSection>
     )
   } else if (activeTab === 'themes') {
     content = (
       <IdentitySettingsSection title={t('identity.realm.tabs.themes')} description={t('identity.realm.themes.description')}>
-        <div className="max-w-md"><Field label={t('identity.realm.themes.loginTheme')} htmlFor="login-theme"><Select id="login-theme" value={realm.loginTheme} disabled><option value="abco">abco</option><option value="keycloak">keycloak</option></Select></Field></div>
+        <div className="max-w-md">
+          <Field label={t('identity.realm.themes.loginTheme')} htmlFor="login-theme">
+            <Select id="login-theme" value={realm.loginTheme} disabled>
+              <option value="abco">abco</option>
+              <option value="keycloak">keycloak</option>
+            </Select>
+          </Field>
+        </div>
       </IdentitySettingsSection>
     )
   } else if (activeTab === 'events') {
-    content = <div><IdentitySettingsSection title={t('identity.realm.events.userTitle')} description={t('identity.realm.events.deepLink')}><EmptyState title={t('identity.realm.events.userEmpty')} description={t('identity.realm.events.userDescription')} /></IdentitySettingsSection><IdentitySettingsSection title={t('identity.realm.events.adminTitle')} description={t('identity.realm.events.deepLink')}><EmptyState title={t('identity.realm.events.adminEmpty')} description={t('identity.realm.events.adminDescription')} /></IdentitySettingsSection></div>
+    content = (
+      <div>
+        <IdentitySettingsSection title={t('identity.realm.events.userTitle')} description={t('identity.realm.events.deepLink')}>
+          <EmptyState
+            title={t('identity.realm.events.userEmpty')}
+            description={t('identity.realm.events.userDescription')}
+          />
+        </IdentitySettingsSection>
+        <IdentitySettingsSection title={t('identity.realm.events.adminTitle')} description={t('identity.realm.events.deepLink')}>
+          <EmptyState
+            title={t('identity.realm.events.adminEmpty')}
+            description={t('identity.realm.events.adminDescription')}
+          />
+        </IdentitySettingsSection>
+      </div>
+    )
   } else {
     content = <div className="p-4"><EmptyState title={t('identity.common.integration.title')} description={t('identity.common.integration.description', { tab: activeTab })} /></div>
   }
 
   return (
     <IdentityContentPanel>
-      <Tabs items={tabs} value={activeTab} onChange={onTabChange} ariaLabel={t('identity.realm.tabs.ariaLabel')} indicator="inset" scrollControls={{ previousLabel: t('identity.realm.tabs.scrollPrevious'), nextLabel: t('identity.realm.tabs.scrollNext') }} />
+      <Tabs
+        items={tabs}
+        value={activeTab}
+        onChange={onTabChange}
+        ariaLabel={t('identity.realm.tabs.ariaLabel')}
+        indicator="inset"
+        scrollControls={{
+          previousLabel: t('identity.realm.tabs.scrollPrevious'),
+          nextLabel: t('identity.realm.tabs.scrollNext'),
+        }}
+      />
       {mutationError ? <Alert className="m-4 mb-0" variant="error" title={t('identity.realm.mutationFailed')} description={mutationError.message} /> : null}
       <div className="min-w-0">{content}</div>
     </IdentityContentPanel>

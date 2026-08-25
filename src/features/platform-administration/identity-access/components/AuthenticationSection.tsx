@@ -41,14 +41,38 @@ export function AuthenticationSection({ tabId, onTabChange }: AuthenticationSect
       { id: 'name', header: t('identity.authentication.flows.columns.name'), cell: flow => flow.name },
       { id: 'description', header: t('identity.authentication.flows.columns.description'), cell: flow => flow.description },
     ]
-    content = <DataTable layout="fit" columns={columns} rows={[]} rowKey={flow => flow.id} ariaLabel={t('identity.authentication.flows.ariaLabel')} emptyContent={<EmptyState title={t('identity.authentication.flows.emptyTitle')} description={t('identity.authentication.flows.emptyDescription')} />} />
+    content = (
+      <DataTable
+        layout="fit"
+        columns={columns}
+        rows={[]}
+        rowKey={flow => flow.id}
+        ariaLabel={t('identity.authentication.flows.ariaLabel')}
+        emptyContent={(
+          <EmptyState
+            title={t('identity.authentication.flows.emptyTitle')}
+            description={t('identity.authentication.flows.emptyDescription')}
+          />
+        )}
+      />
+    )
   } else {
     content = <div className="p-4"><EmptyState title={t('identity.authentication.tabs.policies')} description={t('identity.authentication.policies.description')} /></div>
   }
 
   return (
     <IdentityContentPanel>
-      <Tabs items={tabs} value={activeTab} onChange={onTabChange} ariaLabel={t('identity.authentication.tabs.ariaLabel')} indicator="inset" scrollControls={{ previousLabel: t('identity.authentication.tabs.scrollPrevious'), nextLabel: t('identity.authentication.tabs.scrollNext') }} />
+      <Tabs
+        items={tabs}
+        value={activeTab}
+        onChange={onTabChange}
+        ariaLabel={t('identity.authentication.tabs.ariaLabel')}
+        indicator="inset"
+        scrollControls={{
+          previousLabel: t('identity.authentication.tabs.scrollPrevious'),
+          nextLabel: t('identity.authentication.tabs.scrollNext'),
+        }}
+      />
       <div className="min-w-0">{content}</div>
     </IdentityContentPanel>
   )

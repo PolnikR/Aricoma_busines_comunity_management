@@ -70,7 +70,19 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
         </>
       ),
     },
-    { id: 'status', header: t('identity.roles.userColumns.status'), cell: user => <Badge color={user.status === 'active' ? 'success' : user.status === 'locked' ? 'error' : 'light'} size="sm">{user.status === 'active' ? t('identity.common.status.active') : user.status === 'locked' ? t('identity.common.status.locked') : user.status}</Badge> },
+    {
+      id: 'status',
+      header: t('identity.roles.userColumns.status'),
+      cell: user => (
+        <Badge color={user.status === 'active' ? 'success' : user.status === 'locked' ? 'error' : 'light'} size="sm">
+          {user.status === 'active'
+            ? t('identity.common.status.active')
+            : user.status === 'locked'
+              ? t('identity.common.status.locked')
+              : user.status}
+        </Badge>
+      ),
+    },
   ], [t])
   const tabs = ROLE_TABS.map(value => ({ value, label: t(`identity.roles.tabs.${value}`) }))
 
@@ -92,8 +104,16 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
       detailContent = (
         <IdentitySettingsSection title={t('identity.roles.details.title')} description={t('identity.roles.details.description')}>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label={t('identity.roles.fields.name')} htmlFor="realm-role-name"><Input id="realm-role-name" value={selectedRole.name} readOnly /></Field>
-            <Field label={t('identity.roles.fields.permissions')} htmlFor="realm-role-permissions" className="md:col-span-2"><Input id="realm-role-permissions" value={selectedRole.permissions.join(', ')} readOnly /></Field>
+            <Field label={t('identity.roles.fields.name')} htmlFor="realm-role-name">
+              <Input id="realm-role-name" value={selectedRole.name} readOnly />
+            </Field>
+            <Field
+              label={t('identity.roles.fields.permissions')}
+              htmlFor="realm-role-permissions"
+              className="md:col-span-2"
+            >
+              <Input id="realm-role-permissions" value={selectedRole.permissions.join(', ')} readOnly />
+            </Field>
           </div>
           <p className="mt-4 text-xs text-text-muted">{t('identity.roles.details.permissionsNote')}</p>
         </IdentitySettingsSection>

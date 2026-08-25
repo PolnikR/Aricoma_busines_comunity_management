@@ -65,7 +65,14 @@ export function ClientScopesSection({ entityId, tabId, onEntityChange, onTabChan
 
   return (
     <IdentityContentPanel>
-      <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder={t('identity.clientScopes.search')} searchLabel={t('identity.clientScopes.search')} density={table.density} onDensityChange={table.setDensity} />
+      <DataTableToolbar
+        searchValue={table.search}
+        onSearchChange={table.setSearch}
+        searchPlaceholder={t('identity.clientScopes.search')}
+        searchLabel={t('identity.clientScopes.search')}
+        density={table.density}
+        onDensityChange={table.setDensity}
+      />
       <DataTable
         layout="fit"
         columns={columns}

@@ -34,7 +34,18 @@ export function ClientsSection({ entityId, tabId, onEntityChange, onTabChange }:
     { id: 'id', header: t('identity.clients.columns.clientId'), cell: client => <span className="font-semibold text-text-primary">{client.clientId}</span> },
     { id: 'name', header: t('identity.clients.columns.displayName'), cell: client => client.displayName },
     { id: 'protocol', header: t('identity.clients.columns.protocol'), cell: client => client.protocol },
-    { id: 'status', header: t('identity.clients.columns.status'), cell: client => <div className="flex flex-wrap gap-2"><Badge color={client.enabled ? 'success' : 'light'} size="sm">{client.enabled ? t('identity.common.status.enabled') : t('identity.common.status.disabled')}</Badge>{client.isPreview ? <Badge color="warning" size="sm">{t('identity.clients.status.previewOnly')}</Badge> : null}</div> },
+    {
+      id: 'status',
+      header: t('identity.clients.columns.status'),
+      cell: client => (
+        <div className="flex flex-wrap gap-2">
+          <Badge color={client.enabled ? 'success' : 'light'} size="sm">
+            {client.enabled ? t('identity.common.status.enabled') : t('identity.common.status.disabled')}
+          </Badge>
+          {client.isPreview ? <Badge color="warning" size="sm">{t('identity.clients.status.previewOnly')}</Badge> : null}
+        </div>
+      ),
+    },
   ], [t])
   const tabs = VISIBLE_CLIENT_TABS.map(value => ({ value, label: t(`identity.clients.tabs.${value}`) }))
 
@@ -64,7 +75,14 @@ export function ClientsSection({ entityId, tabId, onEntityChange, onTabChange }:
 
   return (
     <IdentityContentPanel>
-      <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder={t('identity.clients.search')} searchLabel={t('identity.clients.search')} density={table.density} onDensityChange={table.setDensity} />
+      <DataTableToolbar
+        searchValue={table.search}
+        onSearchChange={table.setSearch}
+        searchPlaceholder={t('identity.clients.search')}
+        searchLabel={t('identity.clients.search')}
+        density={table.density}
+        onDensityChange={table.setDensity}
+      />
       {error
         ? <div className="p-4"><EmptyState title={t('identity.clients.loadFailed')} description={error.message} /></div>
         : <DataTable
@@ -87,12 +105,30 @@ function ClientSettings({ client }: { client: IdentityClientView }) {
   return (
     <IdentitySettingsSection title={t('identity.clients.settings.title')} description={t('identity.clients.settings.description')}>
       <div className="grid min-w-0 gap-4 md:grid-cols-2">
-        <Field label={t('identity.clients.fields.clientId')} htmlFor="client-id"><Input id="client-id" value={client.clientId} readOnly /></Field>
-        <Field label={t('identity.clients.fields.displayName')} htmlFor="client-display-name"><Input id="client-display-name" value={client.displayName} readOnly /></Field>
-        <Field label={t('identity.clients.fields.protocol')} htmlFor="client-protocol"><Input id="client-protocol" value={client.protocol} readOnly /></Field>
-        <Field label={t('identity.clients.fields.rootUrl')} htmlFor="client-root-url"><Input id="client-root-url" value={client.rootUrl} readOnly /></Field>
-        <Field label={t('identity.clients.fields.homeUrl')} htmlFor="client-home-url"><Input id="client-home-url" value={client.homeUrl} readOnly /></Field>
-        <div className="flex min-w-0 flex-wrap items-end gap-2"><Badge color={client.enabled ? 'success' : 'light'}>{client.enabled ? t('identity.common.status.enabled') : t('identity.common.status.disabled')}</Badge><Badge color="info">{client.isPublicClient ? t('identity.clients.status.publicClient') : t('identity.clients.status.confidentialClient')}</Badge><Badge color="warning">{t('identity.clients.status.previewOnly')}</Badge></div>
+        <Field label={t('identity.clients.fields.clientId')} htmlFor="client-id">
+          <Input id="client-id" value={client.clientId} readOnly />
+        </Field>
+        <Field label={t('identity.clients.fields.displayName')} htmlFor="client-display-name">
+          <Input id="client-display-name" value={client.displayName} readOnly />
+        </Field>
+        <Field label={t('identity.clients.fields.protocol')} htmlFor="client-protocol">
+          <Input id="client-protocol" value={client.protocol} readOnly />
+        </Field>
+        <Field label={t('identity.clients.fields.rootUrl')} htmlFor="client-root-url">
+          <Input id="client-root-url" value={client.rootUrl} readOnly />
+        </Field>
+        <Field label={t('identity.clients.fields.homeUrl')} htmlFor="client-home-url">
+          <Input id="client-home-url" value={client.homeUrl} readOnly />
+        </Field>
+        <div className="flex min-w-0 flex-wrap items-end gap-2">
+          <Badge color={client.enabled ? 'success' : 'light'}>
+            {client.enabled ? t('identity.common.status.enabled') : t('identity.common.status.disabled')}
+          </Badge>
+          <Badge color="info">
+            {client.isPublicClient ? t('identity.clients.status.publicClient') : t('identity.clients.status.confidentialClient')}
+          </Badge>
+          <Badge color="warning">{t('identity.clients.status.previewOnly')}</Badge>
+        </div>
       </div>
     </IdentitySettingsSection>
   )
@@ -103,7 +139,14 @@ function ClientRoles({ roles, capabilities }: { roles: IdentityRoleView[]; capab
   const columns = useMemo<ColumnDef<IdentityRoleView>[]>(() => [
     { id: 'name', header: t('identity.clients.roles.columns.role'), cell: role => <span className="font-semibold text-text-primary">{role.name}</span> },
     { id: 'description', header: t('identity.clients.roles.columns.purpose'), cell: role => role.description },
-    { id: 'capabilities', header: t('identity.clients.roles.columns.capabilities'), cell: role => role.capabilityIds.map(id => capabilities.find(capability => capability.id === id)?.description).filter(Boolean).join(' ') },
+    {
+      id: 'capabilities',
+      header: t('identity.clients.roles.columns.capabilities'),
+      cell: role => role.capabilityIds
+        .map(id => capabilities.find(capability => capability.id === id)?.description)
+        .filter(Boolean)
+        .join(' '),
+    },
   ], [capabilities, t])
   return <DataTable layout="fit" columns={columns} rows={roles} rowKey={role => role.id} ariaLabel={t('identity.clients.roles.ariaLabel')} />
 }

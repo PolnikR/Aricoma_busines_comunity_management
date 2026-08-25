@@ -60,7 +60,14 @@ export function UserFederationSection({ entityId, tabId, onEntityChange, onTabCh
 
   return (
     <IdentityContentPanel>
-      <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder={t('identity.federation.search')} searchLabel={t('identity.federation.search')} density={table.density} onDensityChange={table.setDensity} />
+      <DataTableToolbar
+        searchValue={table.search}
+        onSearchChange={table.setSearch}
+        searchPlaceholder={t('identity.federation.search')}
+        searchLabel={t('identity.federation.search')}
+        density={table.density}
+        onDensityChange={table.setDensity}
+      />
       <DataTable
         layout="fit"
         columns={columns}
