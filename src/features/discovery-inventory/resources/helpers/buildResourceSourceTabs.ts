@@ -18,6 +18,17 @@ export interface ResourceSourceTab {
 
 export type ResourceSourceTabLabels = Record<ResourceSourceTabType, string>
 
+const RESOURCE_PROVIDER_BADGE_PREFIX: Record<ResourceSourceTabType, string> = {
+  vmware: 'vm',
+  flashsystem: 'flash',
+  'ibm-power': 'power',
+}
+
+export function formatResourceProviderId(resourceTab: ResourceSourceTabType, providerId: string): string {
+  const suffix = /(\d+)$/.exec(providerId)?.[1]
+  return suffix ? `${RESOURCE_PROVIDER_BADGE_PREFIX[resourceTab]}-${suffix}` : providerId
+}
+
 function compareProviders(left: ProviderRecord, right: ProviderRecord) {
   return left.name.localeCompare(right.name, undefined, { numeric: true, sensitivity: 'base' })
     || left.id.localeCompare(right.id, undefined, { numeric: true, sensitivity: 'base' })
