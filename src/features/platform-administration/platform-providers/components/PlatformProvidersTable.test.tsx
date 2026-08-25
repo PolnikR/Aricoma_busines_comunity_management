@@ -32,6 +32,7 @@ const smtpProvider: PlatformProviderRecord = {
   type: 'SMTP',
   ipAddress: '10.99.99.53',
   port: 1025,
+  url: 'http://10.99.99.53:8025/',
   dagDir: '',
   credentialId: '',
   credentialStatus: 'none',
@@ -55,6 +56,67 @@ beforeEach(() => {
 })
 
 describe('PlatformProvidersTable', () => {
+  it('shows the SMTP action only for a selected SMTP provider', async () => {
+    const user = userEvent.setup()
+    render(
+      <PlatformProvidersTable
+        providers={[smtpProvider]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByRole('button', { name: 'platformProviders.smtpDialog.button' })).not.toBeInTheDocument()
+    await user.click(screen.getByText('Test SMTP'))
+
+    expect(screen.getByRole('button', { name: 'platformProviders.smtpDialog.button' })).toBeInTheDocument()
+  })
+
+  it('opens SMTP details for the selected provider without a second modal', async () => {
+    const user = userEvent.setup()
+    render(
+      <PlatformProvidersTable
+        providers={[smtpProvider]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByText('Test SMTP'))
+    await user.click(screen.getByRole('button', { name: 'platformProviders.smtpDialog.button' }))
+    const smtpUrl = smtpProvider.url
+    if (!smtpUrl) throw new Error('SMTP fixture URL is required')
+
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+    expect(screen.getByRole('dialog', { name: 'platformProviders.smtpDialog.title' })).toHaveTextContent('Test SMTP')
+    expect(screen.getByRole('link', { name: smtpUrl })).toHaveAttribute('href', smtpUrl)
+    expect(deleteMutation.mutate).not.toHaveBeenCalled()
+  })
+
+  it('returns to the selected provider drawer when SMTP details close', async () => {
+    const user = userEvent.setup()
+    render(
+      <PlatformProvidersTable
+        providers={[smtpProvider]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByText('Test SMTP'))
+    await user.click(screen.getByRole('button', { name: 'platformProviders.smtpDialog.button' }))
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    expect(screen.queryByRole('dialog', { name: 'platformProviders.smtpDialog.title' })).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Provider detail' })).toBeInTheDocument()
+  })
+
   it('displays an SMTP provider and its OpenAPI fields', async () => {
     const user = userEvent.setup()
     render(

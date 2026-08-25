@@ -21,6 +21,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { useDeletePlatformProvider } from '../hooks/useDeletePlatformProvider'
 import { toPlatformProviderJson } from '../helpers/platformProviderJson'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
+import { SmtpProviderDetailsDialog } from './SmtpProviderDetailsDialog'
 import { PlatformProvidersModal } from './PlatformProvidersModal'
 
 function credentialStatusColor(status: PlatformProviderRecord['credentialStatus']) {
@@ -116,6 +117,7 @@ export function PlatformProvidersTable({
   const [editing, setEditing] = useState<PlatformProviderRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<PlatformProviderRecord | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
+  const [isSmtpDialogOpen, setIsSmtpDialogOpen] = useState(false)
   const loadErrorDescription = extractBackendErrorDetail(error)
   const deleteErrorDescription = extractBackendErrorDetail(deleteProvider.error)
   const rows = useMemo(() => providers, [providers])
@@ -187,13 +189,26 @@ export function PlatformProvidersTable({
       ) : null}
 
       <DetailDrawer
-        open={selected !== null}
+        open={selected !== null && !isSmtpDialogOpen}
         onClose={() => { setSelectedId(null) }}
         resizable
         eyebrow={t('drawer.selectedProvider')}
         title={selected?.name ?? ''}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerExtra={selected ? <Badge color="info" size="sm">{selected.type}</Badge> : null}
+        headerExtra={selected ? (
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <Badge color="info" size="sm">{selected.type}</Badge>
+            {selected.type === 'SMTP' ? (
+              <Button
+                size="xs"
+                variant="soft"
+                onClick={() => { setIsSmtpDialogOpen(true) }}
+              >
+                {t('platformProviders.smtpDialog.button')}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
         ariaLabel={t('drawer.providerDetail')}
         closeLabel={t('drawer.closeProvider')}
         footer={selected ? (
@@ -255,6 +270,14 @@ export function PlatformProvidersTable({
           </dl>
         ) : null}
       </DetailDrawer>
+
+      {selected?.type === 'SMTP' ? (
+        <SmtpProviderDetailsDialog
+          open={isSmtpDialogOpen}
+          provider={selected}
+          onClose={() => { setIsSmtpDialogOpen(false) }}
+        />
+      ) : null}
 
       {editing ? (
         <PlatformProvidersModal
