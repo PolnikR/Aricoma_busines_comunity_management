@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  deleteRecoveryApplication,
   fetchRecoveryApplications,
   submitRecoveryApplicationDag,
 } from './recoveryApplicationsApi'
@@ -266,6 +267,40 @@ describe('recoveryApplicationsApi', () => {
         vms: [{ name: 'TEST-DB01' }, { name: 'TEST-DB02' }],
       },
     })
+  })
+
+  it('preserves the complete rollback report after deleting an orchestrated application', async () => {
+    const rollback = {
+      status: 'ok',
+      airflow: {
+        status: 'ok',
+        dag_id: 'dag_260824110551_7a41cafe',
+        dag_file: 'removed',
+        dag_record: 'deleted',
+        cleanup_metadata: { task_instances: 6 },
+      },
+      ibm: {
+        status: 'ok',
+        consistency_groups: ['cg_7a41cafe'],
+        fcmaps: [],
+        volumes: ['recovery-volume-01'],
+        errors: [],
+      },
+      vmware: {
+        status: 'ok',
+        removed_vms: ['finance-db-01'],
+      },
+    }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ applications: [], rollback }), { status: 200 }),
+    ))
+
+    await expect(deleteRecoveryApplication({
+      recoveryAppId: 'finance-recovery',
+      rollbackFromOrchestrator: true,
+      providerId: 'airflow-01',
+      computeProviderId: 'vmware-target-01',
+    })).resolves.toEqual({ applications: [], rollback })
   })
 
   it('submits the application body without pushing to the orchestrator by default', async () => {

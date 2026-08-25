@@ -135,7 +135,9 @@ export async function deleteRecoveryApplication(
 
     return {
       applications: mapRecoveryApplications(parsed),
-      rollback: request.rollbackFromOrchestrator && parsed.rollback ? rollbackReportSchema.parse(parsed.rollback) : null,
+      rollback: request.rollbackFromOrchestrator && parsed.rollback
+        ? rollbackReportSchema.parse((payload as Record<string, unknown>)['rollback'])
+        : null,
     }
   } catch (error) {
     if (error instanceof OrvalApiError) {
