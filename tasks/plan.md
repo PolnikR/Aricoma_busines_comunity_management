@@ -1,112 +1,162 @@
-# Implementation Plan: Oprava zlyhaných Vitest testov
+# Implementation Plan: Fixed VMware Provider Filters and Compact Resource Tabs
 
 ## Overview
 
-Kompletný beh Vitest (`vitest run --reporter=verbose`) skončil s výsledkom `67 failed`, `193 passed` test súborov a `1 failed`, `776 passed` testov. Zlyhania majú dve odlišné príčiny: 66 testových súborov nevie načítať deklarovaný balík `keycloak-js`, pretože chýba v lokálnom `node_modules`, a test `parseCapacity.test.ts` je závislý od slovenského locale (`6,98 TB` namiesto očakávaného stabilného `6.98 TB`).
+Implement the approved resource inventory design in the production React UI for
+both Resources (`source`) and Resources ISE (`target`). A VMware provider with a
+configured `vmPrefix` or first non-empty `vmTags` value owns an immutable filter:
+the provider configuration controls inventory requests, the search and filter
+controls remain visible but read-only, and the inventory header displays the
+active prefix/tag combination instead of the normal browse description.
 
-## Root-cause findings
+Provider tabs will use short resource-type labels with the programmatic provider
+ID in a compact monospace badge. The change is frontend-only; it does not alter
+the provider API, inventory endpoints, generated OpenAPI models, FlashSystem or
+IBM Power filter semantics, pagination, refresh, density, or detail drawers.
 
-- `keycloak-js@^26.2.4` je prítomný v `package.json` aj `package-lock.json`, ale `Test-Path node_modules/keycloak-js` vrátil `False`.
-- Chýbajúci balík spôsobuje import-resolution chyby v UI aj unit testoch; súvisiace mocking chyby sú sekundárnym prejavom neúspešného importu.
-- `formatCapacityBytes` používa `toLocaleString(undefined, ...)`, takže výsledok závisí od locale procesu. Test vyžaduje stabilný bodkový desatinný oddeľovač.
-- Predchádzajúce zmeny v pracovnom strome neboli zistené; plán nemení existujúci aplikačný kód.
+## Task Tracking
+
+Implementation tasks are tracked in GitHub Issues for
+`PolnikR/Aricoma_busines_comunity_management`. This file records architecture,
+ordering, checkpoints, and risks; issue bodies contain task-level acceptance
+criteria, verification commands, dependencies, and expected files.
+
+## Confirmed Behavior
+
+- A trimmed non-empty `vmPrefix` or first trimmed non-empty `vmTags` entry makes
+  the VMware provider filter fixed.
+- Fixed filter values are the only active search/tag values. Power state,
+  connection state, cluster, and untagged remain at their empty defaults.
+- Provider configuration wins over URL filters and `sessionStorage` snapshots
+  synchronously, before an inventory request can run.
+- Search and the Filters button remain visible. The dialog opens, but search,
+  every filter field, Clear all, and Apply are disabled. Cancel/close, refresh,
+  density, pagination, tabs, and row details remain usable.
+- Under `Inventory records`, a fixed provider replaces the browse description
+  with `Provider filter:` plus only the available chips:
+  `VM name <prefix>.*` and `VM tag <tag>`.
+- A provider without either value keeps the localized equivalent of
+  `Browse and inspect discovered VMware resources.` and editable filters.
+- Resource tabs show a short translated resource label and the provider ID,
+  never the provider display name. English labels are `VMware VMs`,
+  `Flash Volumes`, and `IBM Power`.
 
 ## Architecture Decisions
 
-- Najprv obnoviť konzistentnú dependency inštaláciu podľa existujúceho lockfile; nemeníme importy ani testy iba preto, aby sa obišiel chýbajúci balík.
-- Formátovanie kapacity bude mať explicitné locale pre technickú hodnotu, aby rovnaký vstup dával rovnaký výstup v CI, lokálne aj pri slovenskom/českom jazyku UI.
-- Overovanie bude vrstvené: najprv reprodukovať oba koreňové problémy, potom spustiť dotknuté testy, následne celý Vitest beh.
+- Add one pure VMware provider-filter normalizer and reuse its result in the URL
+  hook and page. This prevents request behavior, read-only state, and displayed
+  chips from disagreeing.
+- Keep the fixed-filter authority in `useVirtualMachineSearchParams`; disabling
+  controls alone is insufficient because direct URLs and old session snapshots
+  could otherwise change requests.
+- Clear or canonicalize stale mutable URL/session filter state when fixed mode
+  activates, while deriving the first query synchronously from provider data so
+  cleanup never causes a transient unfiltered fetch.
+- Extend `DataTableToolbar` through optional read-only props whose defaults keep
+  every existing caller unchanged. The Filters launcher stays enabled.
+- Let `InventoryShell` accept rich description content through `ReactNode`, then
+  render a focused `ProviderFilterSummary` from `VmwareResourcesPage`. Other
+  inventory pages continue passing strings.
+- Preserve `buildResourceTabsByRole` as the source of routing identity and sort
+  order, but stop appending `provider.name`. Render the existing `providerId`
+  with a resource-specific label component in both role pages.
+- Apply compact typography inside the resource tab label rather than changing
+  the shared `Tabs` defaults for unrelated screens.
+
+## Dependency Graph
+
+```text
+#6 Immutable provider-filter contract
+ |\
+ | +--> #7 Read-only toolbar controls ----+
+ |                                      |
+ +----> #8 Provider-filter summary -------+--> #9 Source/target integration
+
+#10 Short tab data and localized copy --> #11 Compact provider-ID tab rendering
+```
+
+Issues #7 and #8 may proceed in parallel after #6. Issues #10 and #11 form an
+independent branch and may proceed alongside the fixed-filter branch. Issue #9
+is the integration gate and starts only after #6, #7, and #8 are complete.
 
 ## Task List
 
-### Phase 1: Obnova testovacieho prostredia
+### Phase 1: Fixed-filter foundation
 
-## Task 1: Doplniť chýbajúce runtime dependency
+1. [#6 — Enforce immutable VMware provider filters](https://github.com/PolnikR/Aricoma_busines_comunity_management/issues/6)
+2. [#7 — Lock VMware filter controls for fixed providers](https://github.com/PolnikR/Aricoma_busines_comunity_management/issues/7)
+3. [#8 — Add localized VMware provider-filter summary](https://github.com/PolnikR/Aricoma_busines_comunity_management/issues/8)
 
-**Description:** Obnoviť `node_modules` z `package-lock.json` tak, aby bol dostupný deklarovaný `keycloak-js@26.2.4`. Použiť existujúci lockfile a nemeniteľné/clean install nastavenie podľa pravidiel projektu.
+### Checkpoint: Fixed-filter contract
 
-**Acceptance criteria:**
-- [ ] `node_modules/keycloak-js` existuje a dá sa načítať cez Vite/Vitest.
-- [ ] `package.json` ani `package-lock.json` sa nemenia bez dôvodu.
-- [ ] Import-resolution chyba z `src/config/keycloak.ts` zmizne.
+- [ ] #6 helper and hook tests prove fixed prefix-only, tag-only, combined, URL,
+      session, reset, source, target, and pagination behavior.
+- [ ] #7 toolbar tests prove the dialog opens but cannot mutate fixed filters.
+- [ ] #8 renders only configured chips in EN, SK, and CS and wraps on narrow
+      widths.
+- [ ] Focused lint and `git diff --check` pass for each atomic task commit.
 
-**Verification:**
-- [ ] Spustiť `vitest run` na jednom pôvodne zlyhávajúcom API teste a jednom UI teste.
-- [ ] Potom spustiť celý `vitest run`.
+### Phase 2: Fixed-filter integration
 
-**Dependencies:** None
+4. [#9 — Integrate fixed-filter state into Resources and Resources ISE](https://github.com/PolnikR/Aricoma_busines_comunity_management/issues/9)
 
-**Files likely touched:**
-- `node_modules/` (lokálny generovaný obsah; necommitovať)
+### Checkpoint: Resource page behavior
 
-**Estimated scope:** XS
+- [ ] Source and target use their selected provider configuration without a
+      transient unfiltered request.
+- [ ] Fixed providers show the summary and read-only controls.
+- [ ] Providers without a filter show the browse description and editable
+      controls.
+- [ ] Existing loading, background refresh, error, empty, pagination, density,
+      and detail-panel behavior remains green in focused tests.
 
-### Phase 2: Oprava deterministického formátovania
+### Phase 3: Compact provider tabs
 
-## Task 2: Stabilizovať formátovanie kapacity
+5. [#10 — Normalize compact resource provider tab labels](https://github.com/PolnikR/Aricoma_busines_comunity_management/issues/10)
+6. [#11 — Render compact provider ID badges in resource tabs](https://github.com/PolnikR/Aricoma_busines_comunity_management/issues/11)
 
-**Description:** Upraviť `formatCapacityBytes` tak, aby technické kapacitné hodnoty používali explicitné locale s bodkou, pričom zachovajú existujúce jednotky, zaokrúhlenie a nulovú hodnotu.
+### Final Checkpoint
 
-**Acceptance criteria:**
-- [ ] `formatCapacityBytes(6_980_000_000_000)` vracia `6.98 TB` bez ohľadu na locale procesu.
-- [ ] `formatCapacityBytes(0)` vracia `0 B`.
-- [ ] Existujúce testy helpera a spotrebitelia formátovanej hodnoty zostanú funkčné.
-
-**Verification:**
-- [ ] Spustiť `src/features/discovery-inventory/resources/helpers/parseCapacity.test.ts` v predvolenom locale.
-- [ ] Spustiť ten istý test s locale `sk-SK` alebo ekvivalentným locale nastavením, ak to runner podporuje.
-
-**Dependencies:** Task 1
-
-**Files likely touched:**
-- `src/features/discovery-inventory/resources/helpers/parseCapacity.ts`
-- `src/features/discovery-inventory/resources/helpers/parseCapacity.test.ts` iba ak bude potrebné doplniť locale regresný test
-
-**Estimated scope:** S
-
-### Checkpoint: Po Task 2
-
-- [ ] Všetky dotknuté testy prejdú.
-- [ ] Počet zlyhaní už nie je spôsobený chýbajúcim `keycloak-js` ani locale formátovaním.
-
-### Phase 3: Celkové overenie
-
-## Task 3: Overiť celý Vitest beh a oddeliť nové regresie
-
-**Description:** Spustiť celý testovací projekt po oboch opravách a pri prípadných zostávajúcich zlyhaniach ich analyzovať ako nové, samostatné koreňové príčiny.
-
-**Acceptance criteria:**
-- [ ] `vitest run --reporter=verbose` prejde bez zlyhaní.
-- [ ] Výsledok obsahuje všetkých pôvodných 260 testových súborov bez import-resolution chyby.
-- [ ] Neboli upravené nesúvisiace súbory.
-
-**Verification:**
-- [ ] `vitest run --reporter=verbose`
-- [ ] `git diff --check`
-- [ ] Cielený lint alebo typecheck pre zmenené súbory podľa dostupných skriptov.
-
-**Dependencies:** Task 2
-
-**Files likely touched:**
-- Súbory z Task 1–2
-
-**Estimated scope:** S
-
-### Checkpoint: Complete
-
-- [ ] Všetky testy prejdú.
-- [ ] Diff je minimálny a obsahuje iba opravu locale formátovania; `node_modules` nie je commitnutý.
-- [ ] Zmena je pripravená na samostatný commit.
+- [ ] All issue-specific Vitest commands pass together.
+- [ ] Changed TypeScript/TSX files pass focused ESLint.
+- [ ] Locale JSON files parse successfully.
+- [ ] Typecheck passes because the shared `InventoryShell` description contract
+      and resource-tab item rendering cross component boundaries.
+- [ ] Browser verification covers Resources and Resources ISE at 320, 768,
+      1024, and 1440 px, including tab overflow and the fixed-filter modal.
+- [ ] Network inspection confirms only canonical provider prefix/tag values are
+      sent and no transient unfiltered request occurs.
+- [ ] `git diff --check`, staged diff inspection, and task-scoped atomic commits
+      preserve unrelated worktree files.
+- [ ] The full suite/build is run only if focused verification exposes a
+      cross-cutting failure or the reviewer explicitly requests it.
 
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Lokálny `node_modules` je neúplný | High | Obnoviť dependency z existujúceho lockfile; nepovažovať import chyby za 66 nezávislých bugov. |
-| Locale oprava zmení UX čísiel v UI | Medium | Obmedziť zmenu na `formatCapacityBytes`; overiť existujúce helper a komponentové testy. |
-| Po obnove dependency sa odkryjú ďalšie zlyhania | Medium | Spustiť najprv reprezentatívne testy a potom celý Vitest beh; nové chyby evidovať oddelene. |
-| `npm` nie je dostupné v PATH | Medium | Použiť dostupný Node/npm launcher alebo upraviť PATH iba v shelli; neinštalovať náhodné verzie balíkov. |
+| UI is disabled but URL/session still overrides requests | High | Enforce authority in #6 before rendering read-only state |
+| Fixed mode briefly issues an unfiltered request | High | Compute canonical filters synchronously and test the first enabled query |
+| Stale snapshot returns if provider configuration later changes | Medium | Remove or canonicalize mutable snapshot state while fixed mode is active |
+| Shared toolbar change disables unrelated tables | High | Optional props default to current behavior; retain existing toolbar test |
+| Inventory header markup regresses other resource pages | Medium | Accept `ReactNode` compatibly and keep string rendering covered |
+| Compact tab styling leaks into global tabs | Medium | Style a resource-owned label component, not shared Tabs defaults |
+| Long provider IDs overflow on mobile | Medium | Monospace badge, no wrapping inside a tab, existing horizontal scroll controls |
+| Prefix display and request prefix diverge | Medium | Use the same normalized contract; append `.*` only for display |
+| Locale copy becomes inconsistent | Low | Update and parse EN, SK, and CS in the same task |
+
+## Out of Scope
+
+- Backend or OpenAPI changes.
+- Making fixed filters editable from Resources or Resources ISE.
+- Changes to FlashSystem or IBM Power filter behavior.
+- Replacing provider IDs with display names in tabs.
+- Redesigning shared tabs or inventory layouts outside the resource pages.
+- Committing the HTML prototype as production code; it remains a visual
+  reference only.
 
 ## Open Questions
 
-- Nie sú potrebné na začatie opravy. Ak nebude v prostredí dostupný npm klient, treba ho sprístupniť alebo potvrdiť alternatívny spôsob obnovy `node_modules`.
+None. The approved HTML prototype at
+`prototypes/resources-fixed-filter/index.html` is the visual reference, and the
+six linked issues are ready for implementation in dependency order.
