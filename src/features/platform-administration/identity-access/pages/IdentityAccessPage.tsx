@@ -18,11 +18,7 @@ import { SessionsSection } from '../components/SessionsSection'
 import { IdentityAccessNavigation } from '../components/IdentityAccessNavigation'
 import { KeycloakPlaceholderSection } from '../components/KeycloakPlaceholderSection'
 import { useIdentityAccessSection } from '../hooks/useIdentityAccessSection'
-import { identityAccessSectionGroups, type IdentityAccessSectionId } from '../models/identityAccessSections'
-
-const sectionLabels = new Map<IdentityAccessSectionId, string>(
-  identityAccessSectionGroups.flatMap(group => group.sections.map(section => [section.id, section.label] as const)),
-)
+import type { IdentityAccessSectionId } from '../models/identityAccessSections'
 
 interface SectionActionContext {
   sectionId: IdentityAccessSectionId
@@ -79,6 +75,7 @@ interface IdentityAccessSectionContentProps {
 }
 
 function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChange, onTabChange, onOpenEventSettings, isAddUserOpen, onSetAddUserOpen }: IdentityAccessSectionContentProps) {
+  const { t } = useTranslation()
   if (sectionId === 'users') return <UsersSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} isAddUserOpen={isAddUserOpen} onSetAddUserOpen={onSetAddUserOpen} />
   if (sectionId === 'realm-roles') return <RealmRolesSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'groups') return <GroupsSection />
@@ -93,7 +90,7 @@ function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChan
   if (sectionId === 'organizations') return <OrganizationsSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'sessions') return <SessionsSection />
 
-  return <KeycloakPlaceholderSection title={sectionLabels.get(sectionId) ?? sectionId} />
+  return <KeycloakPlaceholderSection title={t(`identity.navigation.sections.${sectionId}`)} />
 }
 
 export function IdentityAccessPage() {
