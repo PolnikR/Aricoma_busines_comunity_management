@@ -66,7 +66,7 @@ describe('FlashSystemInventoryView', () => {
     expect(screen.getByRole('columnheader', { name: 'Pool' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Type' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Mapped hosts' })).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: 'Copies' })).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Copies' })).not.toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'FlashCopy maps' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Provider' })).toBeInTheDocument()
     expect(screen.queryByRole('columnheader', { name: 'I/O group' })).not.toBeInTheDocument()

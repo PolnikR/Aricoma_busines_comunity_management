@@ -12,7 +12,6 @@ interface FlashSystemColumnLabels {
   pool: string
   type: string
   hosts: string
-  copies: string
   flashCopy: string
   provider: string
 }
@@ -52,7 +51,6 @@ export function createFlashSystemColumns(
         />
       ),
     },
-    { id: 'copies', header: labels.copies, cell: (volume) => volume.copy_count || '0', align: 'right' },
     { id: 'flashCopy', header: labels.flashCopy, cell: (volume) => volume.fc_map_count || '0', align: 'right' },
     { id: 'provider', header: labels.provider, cell: (volume) => volume.providerId || '-' },
   ]

@@ -74,7 +74,6 @@ export function FlashSystemInventoryView({
     pool: t('resources.flash.table.pool'),
     type: t('resources.flash.table.type'),
     hosts: t('resources.flash.table.hosts'),
-    copies: t('resources.flash.table.copies'),
     flashCopy: t('resources.flash.table.flashCopy'),
     provider: t('resources.common.provider'),
   }
