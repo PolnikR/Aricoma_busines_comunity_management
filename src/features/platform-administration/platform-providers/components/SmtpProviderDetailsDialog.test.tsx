@@ -27,7 +27,7 @@ describe('SmtpProviderDetailsDialog', () => {
     const url = smtpProvider.url
     if (!url) throw new Error('SMTP fixture URL is required')
 
-    expect(screen.getByRole('dialog', { name: 'platformProviders.smtpDialog.title' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'SMTP provider details' })).toBeInTheDocument()
     for (const value of [
       smtpProvider.id,
       smtpProvider.name,

@@ -68,10 +68,10 @@ describe('PlatformProvidersTable', () => {
       />,
     )
 
-    expect(screen.queryByRole('button', { name: 'platformProviders.smtpDialog.button' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'SMTP' })).not.toBeInTheDocument()
     await user.click(screen.getByText('Test SMTP'))
 
-    expect(screen.getByRole('button', { name: 'platformProviders.smtpDialog.button' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'SMTP' })).toBeInTheDocument()
   })
 
   it('opens SMTP details for the selected provider without a second modal', async () => {
@@ -87,12 +87,12 @@ describe('PlatformProvidersTable', () => {
     )
 
     await user.click(screen.getByText('Test SMTP'))
-    await user.click(screen.getByRole('button', { name: 'platformProviders.smtpDialog.button' }))
+    await user.click(screen.getByRole('button', { name: 'SMTP' }))
     const smtpUrl = smtpProvider.url
     if (!smtpUrl) throw new Error('SMTP fixture URL is required')
 
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
-    expect(screen.getByRole('dialog', { name: 'platformProviders.smtpDialog.title' })).toHaveTextContent('Test SMTP')
+    expect(screen.getByRole('dialog', { name: 'SMTP provider details' })).toHaveTextContent('Test SMTP')
     expect(screen.getByRole('link', { name: smtpUrl })).toHaveAttribute('href', smtpUrl)
     expect(deleteMutation.mutate).not.toHaveBeenCalled()
   })
@@ -110,10 +110,10 @@ describe('PlatformProvidersTable', () => {
     )
 
     await user.click(screen.getByText('Test SMTP'))
-    await user.click(screen.getByRole('button', { name: 'platformProviders.smtpDialog.button' }))
+    await user.click(screen.getByRole('button', { name: 'SMTP' }))
     await user.click(screen.getByRole('button', { name: 'Close' }))
 
-    expect(screen.queryByRole('dialog', { name: 'platformProviders.smtpDialog.title' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'SMTP provider details' })).not.toBeInTheDocument()
     expect(screen.getByRole('dialog', { name: 'Provider detail' })).toBeInTheDocument()
   })
 
