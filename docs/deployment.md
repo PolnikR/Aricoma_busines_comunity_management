@@ -1,89 +1,54 @@
 # Manuálne nasadenie abco-fe
 
-Aplikácia beží ako nginx kontajner na serveri `10.99.99.53:8080`, Keycloak na `10.99.99.53:8081`.
-Build (vrátane lint + typecheck + testov) prebieha **na serveri** v Dockeri — CI runner
-zatiaľ neexistuje, takže tento postup je jediná cesta.
+Aplikácia beží ako nginx kontajner na `10.99.99.53:8080`, Keycloak na `10.99.99.53:8081`.
+Build (lint + typecheck + testy) prebieha **na serveri** v Dockeri — CI runner zatiaľ
+neexistuje, takže tento postup je jediná cesta.
 
-**Predpoklad:** funguje `ssh aricoma@10.99.99.53` a máš zmeny commitnuté lokálne.
-Všetky príkazy nižšie spúšťaj **z lokálu, z koreňa repozitára** `abco-fe/`.
+**Predpoklad:** funguje `ssh aricoma@10.99.99.53` a zmeny máš commitnuté.
 
 ---
 
-## Kroky
-
-### 1. Skopíruj zdrojáky na server
+## 1. Skopíruj zdrojáky na server
 
 ```bash
-rsync -az --delete --exclude node_modules --exclude dist \
-  ./ aricoma@10.99.99.53:~/abco-fe-src/
+ROOT=$(git rev-parse --show-toplevel) && rsync -az --delete \
+  --exclude node_modules --exclude dist \
+  "$ROOT/" aricoma@10.99.99.53:~/abco-fe-src/
 ```
 
-Server nevidí GitLab, takže kód sa tam dostane len takto. `--delete` zahodí
-v `~/abco-fe-src/` súbory, ktoré už v repozitári nie sú — inak by sa lokálne zmazaný
-alebo premenovaný súbor buildoval ďalej a hľadal by si chybu, ktorá lokálne neexistuje.
-Kontajnerov sa to netýka, tie sa vymieňajú až v kroku 5.
+Server nevidí GitLab, kód sa tam dostane len takto. `--delete` drží `~/abco-fe-src/`
+ako presnú kópiu repozitára — bez neho by sa lokálne zmazaný alebo premenovaný súbor
+na serveri buildoval ďalej. Cesta je odvodená z koreňa repozitára, takže príkaz môžeš
+spustiť z ľubovoľného podadresára; mimo repozitára sa vôbec nespustí.
 
-> Pozor: práve kvôli `--delete` spúšťaj príkaz naozaj z koreňa repozitára. Z iného
-> adresára ti na serveri zmaže obsah `~/abco-fe-src/`.
-
-### 2. Skontroluj Keycloak konfiguráciu
+## 2. Zbuilduj a over image
 
 ```bash
-ssh aricoma@10.99.99.53 'cat ~/abco-fe-src/.env.production'
-```
-
-Musí vypísať presne:
-
-```
-VITE_KEYCLOAK_URL=http://10.99.99.53:8081
-VITE_KEYCLOAK_REALM=aricoma
-VITE_KEYCLOAK_CLIENT_ID=abcm-fe
-```
-
-Ak súbor chýba alebo je prázdny, build prejde, ale aplikácia skončí v redirect loope.
-Nepokračuj, kým to nesedí.
-
-### 3. Zbuilduj image
-
-```bash
-ssh aricoma@10.99.99.53 '
+ssh aricoma@10.99.99.53 'set -e
   cd ~/abco-fe-src
+  grep -q "VITE_KEYCLOAK_URL=http://10.99.99.53:8081" .env.production \
+    || { echo "CHYBA: .env.production nesedí"; exit 1; }
   docker build -t abco-fe:$(git rev-parse --short HEAD) -t abco-fe:latest .
-'
-```
-
-Trvá to niekoľko minút — v builde bežia aj `lint`, `typecheck` a testy. Ak niektorý
-padne, build skončí a **nič sa nenasadí** (starý kontajner beží ďalej). Oprav to
-lokálne a začni od kroku 1.
-
-### 4. Over, že Keycloak config je v bundle
-
-```bash
-ssh aricoma@10.99.99.53 '
   docker run --rm --entrypoint sh abco-fe:latest \
     -c "grep -rq \"http://10.99.99.53:8081\" /usr/share/nginx/html/assets/" \
-    && echo "OK: config je v bundle" || echo "CHYBA: config chyba, nenasadzuj"
+    || { echo "CHYBA: Keycloak config nie je v bundle"; exit 1; }
+  echo "=== BUILD OK ==="
 '
 ```
 
-Konfigurácia Keycloaku sa zapeká do JS bundle pri builde — nie je to runtime premenná.
-Ak tento krok vypíše CHYBA, nasadenie by rozbilo prihlásenie. Vráť sa na krok 2.
+Trvá to niekoľko minút. Konfigurácia Keycloaku sa **zapeká do JS bundle pri builde**,
+nie je to runtime premenná — preto tá kontrola pred aj po builde; bez nej skončí
+aplikácia v redirect loope.
 
-### 5. Vymeň kontajner
+Pokračuj, len ak posledný riadok je `=== BUILD OK ===`. Čokoľvek iné znamená, že
+sa nič nenasadilo a starý kontajner beží ďalej — oprav to lokálne a začni od kroku 1.
+
+## 3. Vymeň kontajner a over
 
 ```bash
 ssh aricoma@10.99.99.53 '
   docker rm -f abco-fe || true
   docker run -d --name abco-fe --restart unless-stopped -p 8080:80 abco-fe:latest
-'
-```
-
-Aplikácia je na pár sekúnd nedostupná.
-
-### 6. Over nasadenie
-
-```bash
-ssh aricoma@10.99.99.53 '
   sleep 10
   docker ps --filter name=abco-fe --format "{{.Status}}"
   curl -s -o /dev/null -w "app -> %{http_code}\n" http://10.99.99.53:8080/health
@@ -92,7 +57,7 @@ ssh aricoma@10.99.99.53 '
 '
 ```
 
-Očakávaný výstup:
+Aplikácia je na pár sekúnd nedostupná. Očakávaný výstup:
 
 ```
 Up X seconds (healthy)
@@ -100,7 +65,7 @@ app -> 200
 keycloak -> 200
 ```
 
-### 7. Preklikaj aplikáciu
+## 4. Preklikaj aplikáciu
 
 Otvor `http://10.99.99.53:8080/` a prihlás sa. Tým je nasadenie hotové.
 
@@ -108,8 +73,7 @@ Otvor `http://10.99.99.53:8080/` a prihlás sa. Tým je nasadenie hotové.
 
 ## Rollback
 
-Vráti sa na predchádzajúcu image. Krok 3 tie staršie necháva na serveri pod tagom
-s krátkym commit SHA, staršie manuálne buildy môžu mať aj tag `previous`:
+Krok 2 necháva staršie image na serveri pod tagom s krátkym commit SHA:
 
 ```bash
 ssh aricoma@10.99.99.53 '
@@ -125,12 +89,12 @@ ssh aricoma@10.99.99.53 '
 
 | Symptóm | Príčina / riešenie |
 |---|---|
-| Redirect loop na `/undefined/protocol/openid-connect/auth` | Keycloak config sa nedostal do bundle — chýba `.env.production` (krok 2) alebo výnimka `!.env.production` v `.dockerignore` |
+| Redirect loop na `/undefined/protocol/openid-connect/auth` | Keycloak config sa nedostal do bundle — chýba `.env.production` alebo výnimka `!.env.production` v `.dockerignore` |
 | `Invalid parameter: redirect_uri` | v Keycloak klientovi `abcm-fe` chýba `http://10.99.99.53:8080/*` vo *Valid redirect URIs* |
 | CORS chyba pri obnove tokenu | v klientovi `abcm-fe` chýba *Web origins* `http://10.99.99.53:8080` |
 | `crypto.randomUUID is not a function` | do buildu sa nedostal polyfill z `src/config/keycloak.ts` |
-| Kontajner nenaštartuje po `docker load` | arm64 image na x86_64 serveri — buildi na serveri (krok 3), nie lokálne |
-| Kontajner beží, ale `app -> 000` | pozri logy: `ssh aricoma@10.99.99.53 'docker logs --tail 50 abco-fe'` |
+| Kontajner nenaštartuje po `docker load` | arm64 image na x86_64 serveri — buildi na serveri (krok 2), nie lokálne |
+| Kontajner beží, ale `app -> 000` | `ssh aricoma@10.99.99.53 'docker logs --tail 50 abco-fe'` |
 
 ---
 
@@ -141,5 +105,5 @@ standard flow, redirect + post logout URIs `http://10.99.99.53:8080/*`,
 web origins `http://10.99.99.53:8080`.
 
 **Automatické nasadenie cez GitLab CI** (`.gitlab-ci.yml`, job `build-and-deploy`)
-je pripravené, ale k 25. 8. 2026 nemá runner — job ostáva `Pending`. Blokery a postup
-na ich odstránenie sú v [ci-runner.md](ci-runner.md).
+je pripravené, ale k 25. 8. 2026 nemá runner — job ostáva `Pending`. Blokery
+a postup sú v [ci-runner.md](ci-runner.md).
