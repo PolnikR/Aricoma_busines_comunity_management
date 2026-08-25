@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { DataTable, DataTableRequestState, DataTableSkeleton } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
@@ -6,13 +7,14 @@ import { useRolesPermissions } from '../hooks/useRolesPermissions'
 import { IdentityContentPanel } from './IdentityResourceLayout'
 
 export function PermissionsSection() {
+  const { t } = useTranslation()
   const { data, isLoading, error, refetch } = useRolesPermissions()
   const permissions = data?.permissions ?? []
   const roles = data?.roles ?? []
   const columns = useMemo<ColumnDef<{ permission: string; roles: string[] }>[]>(() => [
-    { id: 'permission', header: 'Permission', cell: row => row.permission },
-    { id: 'roles', header: 'Roles', cell: row => row.roles.join(', ') || '—' },
-  ], [])
+    { id: 'permission', header: t('identity.permissions.columns.permission'), cell: row => row.permission },
+    { id: 'roles', header: t('identity.permissions.columns.roles'), cell: row => row.roles.join(', ') || '—' },
+  ], [t])
   const rows = permissions.map(permission => ({
     permission,
     roles: roles.filter(role => role.permissions.includes(permission)).map(role => role.name),
@@ -24,9 +26,9 @@ export function PermissionsSection() {
         <div className="p-4">
           <DataTableRequestState
             hasCachedData={permissions.length > 0}
-            error={error ? { title: 'Permissions could not be loaded', description: error.message, retryLabel: 'Retry', isRetrying: false, onRetry: () => { void refetch() } } : null}
+            error={error ? { title: t('identity.permissions.loadFailed'), description: error.message, retryLabel: t('identity.common.actions.retry'), isRetrying: false, onRetry: () => { void refetch() } } : null}
           >
-            <DataTable layout="fit" columns={columns} rows={rows} rowKey={row => row.permission} ariaLabel="Identity permissions" emptyContent={<EmptyState title="No permissions found" description="No permissions are available for the current user." />} />
+            <DataTable layout="fit" columns={columns} rows={rows} rowKey={row => row.permission} ariaLabel={t('identity.permissions.ariaLabel')} emptyContent={<EmptyState title={t('identity.permissions.empty.title')} description={t('identity.permissions.empty.description')} />} />
           </DataTableRequestState>
         </div>
       )}
