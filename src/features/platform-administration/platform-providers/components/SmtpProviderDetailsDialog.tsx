@@ -1,6 +1,6 @@
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
-import { DetailRow } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
+import { toPlatformProviderJson } from '../helpers/platformProviderJson'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 
 interface SmtpProviderDetailsDialogProps {
@@ -15,41 +15,44 @@ export function SmtpProviderDetailsDialog({
   onClose,
 }: SmtpProviderDetailsDialogProps) {
   const { t } = useTranslation()
+  const title = t('platformProviders.smtpDialog.title')
+  const fields = [
+    { label: t('tables.provider.name'), value: provider.name },
+    { label: t('details.fromEmail'), value: provider.fromEmail ?? '-' },
+    { label: t('details.disableSsl'), value: provider.disableSsl == null ? '-' : String(provider.disableSsl) },
+    { label: t('details.disableTls'), value: provider.disableTls == null ? '-' : String(provider.disableTls) },
+  ]
 
   return (
     <ChecklistResultDialog
       open={open}
-      title={t('platformProviders.smtpDialog.title')}
+      title={title}
       primaryName={provider.name}
       subtitle={provider.id}
-      badges={[{ label: provider.type, color: 'info' }]}
+      badges={[
+        { label: provider.type, color: 'info' },
+        ...(provider.role ? [{
+          label: t(`forms.role.${provider.role}`),
+          color: provider.role === 'source' ? 'success' as const : 'warning' as const,
+        }] : []),
+      ]}
       checks={[]}
-      responseData={null}
+      responseData={toPlatformProviderJson(provider)}
       onClose={onClose}
     >
-      <dl className="px-1">
-        <DetailRow label={t('details.providerId')} value={<span className="font-mono">{provider.id}</span>} />
-        <DetailRow label={t('tables.provider.name')} value={provider.name} />
-        <DetailRow label={t('details.description')} value={provider.description || '-'} />
-        <DetailRow label={t('details.type')} value={provider.type} />
-        <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{provider.ipAddress}</span>} />
-        <DetailRow label={t('details.port')} value={<span className="font-mono">{provider.port}</span>} />
-        <DetailRow
-          label={t('details.url')}
-          value={provider.url ? (
-            <a
-              href={provider.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="wrap-break-word text-accent underline hover:text-accent/80"
-            >
-              {provider.url}
-            </a>
-          ) : '-'}
-        />
-        <DetailRow label={t('details.fromEmail')} value={provider.fromEmail ?? '-'} />
-        <DetailRow label={t('details.disableSsl')} value={provider.disableSsl == null ? '-' : String(provider.disableSsl)} />
-        <DetailRow label={t('details.disableTls')} value={provider.disableTls == null ? '-' : String(provider.disableTls)} />
+      <dl role="list" aria-label={title} className="space-y-2">
+        {fields.map(field => (
+          <div
+            key={field.label}
+            role="listitem"
+            className="rounded-lg border border-border bg-surface-subtle px-3 py-2.5"
+          >
+            <dt className="text-xs text-text-muted">{field.label}</dt>
+            <dd className="mt-0.5 wrap-break-word text-sm font-medium text-text-primary">
+              {field.value}
+            </dd>
+          </div>
+        ))}
       </dl>
     </ChecklistResultDialog>
   )

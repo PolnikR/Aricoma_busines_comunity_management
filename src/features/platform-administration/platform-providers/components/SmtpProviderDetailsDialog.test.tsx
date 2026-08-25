@@ -1,65 +1,95 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { SmtpProviderDetailsDialog } from './SmtpProviderDetailsDialog'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
-const smtpProvider: PlatformProviderRecord = {
+const rawSmtpProvider = {
   id: 'smtp-01',
   name: 'Test SMTP',
   description: 'Local test SMTP relay backing Airflow.',
   type: 'SMTP',
+  role: 'source',
   ipAddress: '10.99.99.53',
-  port: 1025,
+  credentialId: null,
   url: 'http://10.99.99.53:8025/',
+  defaultFlashcopyProviderId: null,
+  orchestratorConnId: null,
+  vmPrefix: null,
+  vmTags: [],
+  notificationEmail: null,
+  port: 1025,
+  dagDir: null,
   fromEmail: 'airflow@example.com',
   disableSsl: true,
-  disableTls: true,
-  dagDir: '',
-  credentialId: '',
+  disableTls: false,
   credentialStatus: 'none',
+} satisfies NonNullable<PlatformProviderRecord['rawRecord']>
+
+const smtpProvider: PlatformProviderRecord = {
+  ...rawSmtpProvider,
+  description: rawSmtpProvider.description,
+  ipAddress: rawSmtpProvider.ipAddress,
+  credentialId: '',
+  dagDir: '',
+  rawRecord: rawSmtpProvider,
 }
 
 describe('SmtpProviderDetailsDialog', () => {
-  it('renders all SMTP fields and links to the provider URL', () => {
+  it('renders the SMTP summary cards and complete raw provider response', async () => {
+    const user = userEvent.setup()
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+
     render(<SmtpProviderDetailsDialog open provider={smtpProvider} onClose={vi.fn()} />)
-    const url = smtpProvider.url
-    if (!url) throw new Error('SMTP fixture URL is required')
 
-    expect(screen.getByRole('dialog', { name: 'SMTP provider details' })).toBeInTheDocument()
-    for (const value of [
-      smtpProvider.id,
-      smtpProvider.name,
-      smtpProvider.description,
-      smtpProvider.type,
-      smtpProvider.ipAddress,
-      String(smtpProvider.port),
-      smtpProvider.fromEmail ?? '',
-      'true',
-    ]) {
-      expect(screen.getAllByText(value).length).toBeGreaterThan(0)
-    }
+    const dialog = screen.getByRole('dialog', { name: 'SMTP provider details' })
+    expect(within(dialog).getByText('Source')).toBeInTheDocument()
+    expect(within(dialog).queryByText('Connection test completed')).not.toBeInTheDocument()
+    expect(within(dialog).queryByText(/\d+ \/ \d+ passed/)).not.toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument()
 
-    const link = screen.getByRole('link', { name: url })
-    expect(link).toHaveAttribute('href', url)
-    expect(link).toHaveAttribute('target', '_blank')
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    const summary = within(dialog).getByRole('list', { name: 'SMTP provider details' })
+    const cards = within(summary).getAllByRole('listitem')
+    expect(cards).toHaveLength(4)
+    expect(cards[0]).toHaveTextContent('ProviderTest SMTP')
+    expect(cards[1]).toHaveTextContent('From emailairflow@example.com')
+    expect(cards[2]).toHaveTextContent('Disable SSLtrue')
+    expect(cards[3]).toHaveTextContent('Disable TLSfalse')
+
+    const responseBody = dialog.querySelector('pre')
+    expect(responseBody).toBeVisible()
+    expect(responseBody?.textContent).toBe(JSON.stringify(rawSmtpProvider, null, 2))
+
+    await user.click(within(dialog).getByRole('button', { name: 'Copy' }))
+    expect(writeText).toHaveBeenCalledWith(JSON.stringify(rawSmtpProvider, null, 2))
   })
 
-  it('shows a placeholder when the provider URL is absent', () => {
-    const providerWithoutUrl: PlatformProviderRecord = { ...smtpProvider }
-    delete providerWithoutUrl.url
+  it('shows placeholders for missing optional SMTP summary values', () => {
+    const providerWithoutOptionalValues: PlatformProviderRecord = {
+      ...smtpProvider,
+      fromEmail: null,
+      disableSsl: null,
+      disableTls: null,
+      rawRecord: {
+        ...rawSmtpProvider,
+        fromEmail: null,
+        disableSsl: null,
+        disableTls: null,
+      },
+    }
 
     render(
       <SmtpProviderDetailsDialog
         open
-        provider={providerWithoutUrl}
+        provider={providerWithoutOptionalValues}
         onClose={vi.fn()}
       />,
     )
 
-    expect(screen.queryByRole('link')).not.toBeInTheDocument()
-    expect(screen.getAllByText('-').length).toBeGreaterThan(0)
+    const summary = screen.getByRole('list', { name: 'SMTP provider details' })
+    expect(within(summary).getAllByText('-')).toHaveLength(3)
   })
 })

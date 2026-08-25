@@ -88,12 +88,11 @@ describe('PlatformProvidersTable', () => {
 
     await user.click(screen.getByText('Test SMTP'))
     await user.click(screen.getByRole('button', { name: 'SMTP' }))
-    const smtpUrl = smtpProvider.url
-    if (!smtpUrl) throw new Error('SMTP fixture URL is required')
 
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
-    expect(screen.getByRole('dialog', { name: 'SMTP provider details' })).toHaveTextContent('Test SMTP')
-    expect(screen.getByRole('link', { name: smtpUrl })).toHaveAttribute('href', smtpUrl)
+    const dialog = screen.getByRole('dialog', { name: 'SMTP provider details' })
+    expect(dialog).toHaveTextContent('Test SMTP')
+    expect(dialog.querySelector('pre')?.textContent).toBe(JSON.stringify(smtpProvider, null, 2))
     expect(deleteMutation.mutate).not.toHaveBeenCalled()
   })
 
