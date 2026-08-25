@@ -1,8 +1,9 @@
 # Manuálne nasadenie abco-fe
 
 Aplikácia beží ako nginx kontajner na `10.99.99.53:8080`, Keycloak na `10.99.99.53:8081`.
-Build (lint + typecheck + testy) prebieha **na serveri** v Dockeri — CI runner zatiaľ
-neexistuje, takže tento postup je jediná cesta.
+Build (lint + typecheck + testy) prebieha **na serveri** v Dockeri. Bežne to za teba
+spraví CI po pushi do `master` ([ci-runner.md](ci-runner.md)); tento postup je záloha,
+keď je runner nedostupný.
 
 **Predpoklad:** funguje `ssh aricoma@10.99.99.53` a zmeny máš commitnuté.
 
@@ -16,7 +17,7 @@ ROOT=$(git rev-parse --show-toplevel) && rsync -az --delete \
   "$ROOT/" aricoma@10.99.99.53:~/abco-fe-src/
 ```
 
-Server nevidí GitLab, kód sa tam dostane len takto. `--delete` drží `~/abco-fe-src/`
+Takto sa na server dostane aj to, čo ešte nie je v GitLabe. `--delete` drží `~/abco-fe-src/`
 ako presnú kópiu repozitára — bez neho by sa lokálne zmazaný alebo premenovaný súbor
 na serveri buildoval ďalej. Cesta je odvodená z koreňa repozitára, takže príkaz môžeš
 spustiť z ľubovoľného podadresára; mimo repozitára sa vôbec nespustí.
@@ -105,5 +106,4 @@ standard flow, redirect + post logout URIs `http://10.99.99.53:8080/*`,
 web origins `http://10.99.99.53:8080`.
 
 **Automatické nasadenie cez GitLab CI** (`.gitlab-ci.yml`, job `build-and-deploy`)
-je pripravené, ale k 25. 8. 2026 nemá runner — job ostáva `Pending`. Blokery
-a postup sú v [ci-runner.md](ci-runner.md).
+beží od 25. 8. 2026 na runneri `abco-fe (10.99.99.53)`. Detaily v [ci-runner.md](ci-runner.md).
