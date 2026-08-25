@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { buildAirflowDagUrl, EXTERNAL_SERVICES } from './externalServices'
+import { buildAirflowDagUrl, EXTERNAL_SERVICES, normalizeAirflowDagId } from './externalServices'
+
+describe('normalizeAirflowDagId', () => {
+  it('adds the canonical DAG prefix to a raw run id', () => {
+    expect(normalizeAirflowDagId('run-123')).toBe('dag_run-123')
+  })
+
+  it('keeps an already canonical DAG id unchanged', () => {
+    expect(normalizeAirflowDagId('dag_run-123')).toBe('dag_run-123')
+  })
+})
 
 describe('buildAirflowDagUrl', () => {
   it('opens the exact DAG under the selected provider URL', () => {

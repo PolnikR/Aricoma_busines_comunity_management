@@ -19,6 +19,10 @@ function resolveAirflowBaseUrl(providerUrl?: string | null): string {
   return providerUrl.trim()
 }
 
+export function normalizeAirflowDagId(runId: string): string {
+  return runId.startsWith('dag_') ? runId : `dag_${runId}`
+}
+
 export function buildAirflowDagUrl(
   runId: string,
   providerUrl?: string | null,
@@ -28,7 +32,7 @@ export function buildAirflowDagUrl(
   const dagsUrl = normalizedUrl.endsWith(EXTERNAL_SERVICES.airflow.dagsPath)
     ? normalizedUrl
     : `${normalizedUrl}${EXTERNAL_SERVICES.airflow.dagsPath}`
-  const dagId = runId.startsWith('dag_') ? runId : `dag_${runId}`
+  const dagId = normalizeAirflowDagId(runId)
 
   return `${dagsUrl}/${encodeURIComponent(dagId)}`
 }
