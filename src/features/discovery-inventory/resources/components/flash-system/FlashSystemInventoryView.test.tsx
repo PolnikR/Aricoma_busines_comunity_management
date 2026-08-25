@@ -69,6 +69,8 @@ describe('FlashSystemInventoryView', () => {
     expect(screen.queryByRole('columnheader', { name: 'Copies' })).not.toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'FlashCopy maps' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Provider' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Show details for host HOST_esx' }).closest('td')).toHaveClass('w-[19%]')
+    expect(screen.getByText('flash-01').closest('td')).toHaveClass('w-[15%]')
     expect(screen.queryByRole('columnheader', { name: 'I/O group' })).not.toBeInTheDocument()
     expect(screen.queryByRole('columnheader', { name: 'Protocol' })).not.toBeInTheDocument()
     const hostBadge = screen.getByRole('button', { name: 'Show details for host HOST_esx' })

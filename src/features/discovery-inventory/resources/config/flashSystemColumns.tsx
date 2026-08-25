@@ -25,6 +25,7 @@ export function createFlashSystemColumns(
     {
       id: 'name',
       header: labels.name,
+      cellClassName: 'w-[25%]',
       cell: (volume) => (
         <>
           <span className="block max-w-60 truncate font-semibold text-text-primary" title={volume.name}>{volume.name}</span>
@@ -35,14 +36,16 @@ export function createFlashSystemColumns(
     {
       id: 'status',
       header: labels.status,
+      cellClassName: 'w-[8%]',
       cell: (volume) => <StateCell tone={volume.status.toLowerCase() === 'online' ? 'on' : 'warn'} label={volume.status || '-'} />,
     },
-    { id: 'capacity', header: labels.capacity, cell: (volume) => volume.capacity || '-', align: 'right' },
-    { id: 'pool', header: labels.pool, cell: (volume) => volume.pool?.name ?? volume.mdisk_grp_name },
-    { id: 'type', header: labels.type, cell: (volume) => volume.type || '-' },
+    { id: 'capacity', header: labels.capacity, cell: (volume) => volume.capacity || '-', align: 'right', cellClassName: 'w-[8%]' },
+    { id: 'pool', header: labels.pool, cell: (volume) => volume.pool?.name ?? volume.mdisk_grp_name, cellClassName: 'w-[7%]' },
+    { id: 'type', header: labels.type, cell: (volume) => volume.type || '-', cellClassName: 'w-[7%]' },
     {
       id: 'hosts',
       header: labels.hosts,
+      cellClassName: 'w-[19%]',
       cell: (volume) => (
         <FlashSystemHostsCell
           volume={volume}
@@ -51,7 +54,7 @@ export function createFlashSystemColumns(
         />
       ),
     },
-    { id: 'flashCopy', header: labels.flashCopy, cell: (volume) => volume.fc_map_count || '0', align: 'right' },
-    { id: 'provider', header: labels.provider, cell: (volume) => volume.providerId || '-' },
+    { id: 'flashCopy', header: labels.flashCopy, cell: (volume) => volume.fc_map_count || '0', align: 'right', cellClassName: 'w-[11%]' },
+    { id: 'provider', header: labels.provider, cell: (volume) => volume.providerId || '-', cellClassName: 'w-[15%] whitespace-nowrap' },
   ]
 }
