@@ -124,3 +124,4 @@ The main diagram dependencies use these licenses:
 
 Keep their required license texts in the product's third-party notices when
 preparing a distributable release.
+
