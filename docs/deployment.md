@@ -41,6 +41,45 @@ CI pipeline používa **shell executor bežiaci priamo na `10.99.99.53`** —
 buildí a spúšťa Docker lokálne, nič sa neprenáša cez registry. Runner musí byť
 zaregistrovaný s tagom `deploy-abco` (ten istý tag je v `.gitlab-ci.yml`).
 
+> **Stav k 25. 8. 2026: runner neexistuje.** Job `build-and-deploy` preto ostáva
+> `Pending` s hláškou *„no runners that match all of the job's tags: deploy-abco“*.
+> Registrácii bránia tri veci, prvá z nich je mimo dosahu tohto repozitára:
+>
+> 1. **Sophos proxy blokuje prístup zo segmentu `10.99.99.0/24` na GitLab.**
+>    Každé HTTP/HTTPS spojenie z `10.99.99.53` na `172.20.1.90` ide cez gateway
+>    `10.99.99.1`, kde ho zachytí `forward.http.proxy:3128` a vráti
+>    `403 Forbidden` so stránkou „Blocked site“ (server dostane Sophos
+>    MITM certifikát, nie ten pravý od `HQSR CA`). Z Macu je ten istý GitLab
+>    dostupný (`HTTP 200`), takže ide o pravidlo na firewalle, nie o výpadok.
+>    **Treba požiadať správcov siete o výnimku `10.99.99.53 → git.esas.autocont.sk:443`.**
+>    Bez nej runner neprejde registráciou ani po nainštalovaní.
+> 2. **DNS** — server má v `/etc/resolv.conf` len `1.1.1.1` a `8.8.8.8`, interné
+>    záznamy nepozná (`getent hosts git.esas.autocont.sk` zlyhá).
+> 3. **Interná CA** — GitLab má certifikát od `HQSR CA`, ktorá nie je v systémovom
+>    truste Debianu.
+>
+> Inštalácia aj kroky 2 a 3 vyžadujú `sudo`, ktoré na účte `aricoma` chce heslo.
+
+Po odblokovaní na firewalle (bod 1) doplň DNS a CA:
+
+```bash
+# na 10.99.99.53 — DNS
+echo "172.20.1.90  git.esas.autocont.sk" | sudo tee -a /etc/hosts
+
+# CA: vytiahni chain zo stroja, ktory na GitLab dosiahne (napr. Mac), a nahraj ho
+openssl s_client -connect git.esas.autocont.sk:443 \
+  -servername git.esas.autocont.sk -showcerts </dev/null 2>/dev/null \
+  | awk '/BEGIN CERT/,/END CERT/' > /tmp/hqsr-ca.crt
+scp -i ~/.ssh/id_ed25519 /tmp/hqsr-ca.crt aricoma@10.99.99.53:~/
+
+# na 10.99.99.53
+sudo cp ~/hqsr-ca.crt /usr/local/share/ca-certificates/hqsr-ca.crt
+sudo update-ca-certificates
+curl -sI https://git.esas.autocont.sk/ | head -1   # musi byt 200/302, nie 403 ani TLS chyba
+```
+
+Až keď posledný `curl` prejde, má zmysel registrovať runner:
+
 ```bash
 # na 10.99.99.53
 curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh" | sudo bash
@@ -59,16 +98,8 @@ sudo usermod -aG docker gitlab-runner
 sudo systemctl restart gitlab-runner
 ```
 
-> **Pozor — DNS.** Server aktuálne nevie preložiť `git.esas.autocont.sk`
-> (`getent hosts git.esas.autocont.sk` zlyhá), hoci má funkčný výstup do
-> internetu. Runner sa bez toho nepripojí na GitLab. Treba buď doplniť interný
-> DNS resolver, alebo pridať záznam do `/etc/hosts`:
->
-> ```bash
-> echo "172.20.1.90  git.esas.autocont.sk" | sudo tee -a /etc/hosts
-> ```
->
-> Overenie: `curl -sI https://git.esas.autocont.sk/ | head -1`
+Kým runner neexistuje, nasadzuj podľa *Manuálne nasadenie → Variant A* nižšie —
+robí presne to isté, čo by robil job `build-and-deploy`.
 
 ### 3. CI/CD premenné
 
