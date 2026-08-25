@@ -2,15 +2,16 @@ import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { keycloak } from '@/config/keycloak'
+import { AuthContext, FALLBACK_AUTH_USER, type AuthStatus } from './AuthContext'
+import { mapKeycloakProfile } from './mapKeycloakProfile'
 
 interface AuthProviderProps {
   children: ReactNode
 }
 
-type AuthStatus = 'pending' | 'authenticated' | 'error'
-
 export function AuthProvider({ children }: AuthProviderProps) {
   const [status, setStatus] = useState<AuthStatus>('pending')
+  const [user, setUser] = useState(FALLBACK_AUTH_USER)
   const { t } = useTranslation()
   // React 19 StrictMode runs effects twice in dev; keycloak-js throws on a
   // second init() call, so a ref guards against that without affecting prod.
@@ -28,8 +29,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // PKCE is disabled here (Keycloak client must not enforce it either).
     keycloak
       .init({ onLoad: 'login-required', pkceMethod: false, checkLoginIframe: false })
-      .then((authenticated) => {
-        setStatus(authenticated ? 'authenticated' : 'error')
+      .then(async (authenticated) => {
+        if (!authenticated) {
+          setStatus('error')
+          return
+        }
+
+        try {
+          const profile = await keycloak.loadUserProfile()
+          setUser(mapKeycloakProfile(profile))
+        } catch (error: unknown) {
+          console.error('keycloak profile load failed', error)
+        }
+
+        setStatus('authenticated')
       })
       .catch((error: unknown) => {
         console.error('keycloak init failed', error)
@@ -51,5 +64,5 @@ export function AuthProvider({ children }: AuthProviderProps) {
     )
   }
 
-  return <>{children}</>
+  return <AuthContext.Provider value={{ status, user }}>{children}</AuthContext.Provider>
 }

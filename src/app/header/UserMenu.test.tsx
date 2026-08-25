@@ -4,6 +4,18 @@ import { beforeEach, describe, it, expect, vi } from 'vitest'
 import { UserMenu } from './UserMenu'
 import { LanguageProvider } from '@/contexts/LanguageProvider'
 import { ThemeProvider } from '@/contexts/ThemeProvider'
+import { AuthContext, type AuthContextValue } from '@/contexts/AuthContext'
+
+const authenticatedUser: AuthContextValue = {
+  status: 'authenticated',
+  user: {
+    id: 'user-123',
+    username: 'jane.doe',
+    displayName: 'Jane Doe',
+    email: 'jane.doe@example.com',
+    initials: 'JD',
+  },
+}
 
 function TestProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -165,5 +177,19 @@ describe('UserMenu', () => {
     expect(screen.getByText('AB')).toBeInTheDocument()
     expect(screen.getByText('ABCO operator')).toBeInTheDocument()
     expect(screen.getByText('Administrator')).toBeInTheDocument()
+  })
+
+  it('renders the authenticated Keycloak profile when props are omitted', () => {
+    render(
+      <TestProviders>
+        <AuthContext.Provider value={authenticatedUser}>
+          <UserMenu />
+        </AuthContext.Provider>
+      </TestProviders>,
+    )
+
+    expect(screen.getByText('JD')).toBeInTheDocument()
+    expect(screen.getByText('Jane Doe')).toBeInTheDocument()
+    expect(screen.getByText('jane.doe@example.com')).toBeInTheDocument()
   })
 })
