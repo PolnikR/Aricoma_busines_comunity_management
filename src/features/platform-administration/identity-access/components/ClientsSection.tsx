@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { Badge } from '@/shared/components/badge/Badge'
 import { DataTable, DataTableToolbar, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
@@ -10,10 +11,7 @@ import type { IdentityClientView, IdentityRoleView } from '../services/identityA
 import { IdentityContentPanel, IdentityResourceDetailPage, IdentitySettingsSection } from './IdentityResourceLayout'
 
 const CANONICAL_CLIENT_TABS = ['settings', 'keys', 'credentials', 'roles', 'client-scopes', 'authorization', 'service-accounts-roles', 'sessions', 'permissions'] as const
-const VISIBLE_CLIENT_TABS = [
-  { value: 'settings', label: 'Settings' },
-  { value: 'roles', label: 'Roles' },
-] as const
+const VISIBLE_CLIENT_TABS = ['settings', 'roles'] as const
 type ClientTabId = (typeof CANONICAL_CLIENT_TABS)[number]
 
 interface ClientsSectionProps {
@@ -28,80 +26,84 @@ function isClientTab(tabId: IdentityAccessTabId | null): tabId is ClientTabId {
 }
 
 export function ClientsSection({ entityId, tabId, onEntityChange, onTabChange }: ClientsSectionProps) {
+  const { t } = useTranslation()
   const { data, isLoading, error } = useIdentityAdminPreview()
   const clients = data?.clients ?? []
   const table = useTableState(clients, { searchFields: ['clientId', 'displayName', 'protocol'] })
   const columns = useMemo<ColumnDef<IdentityClientView>[]>(() => [
-    { id: 'id', header: 'Client ID', cell: client => <span className="font-semibold text-text-primary">{client.clientId}</span> },
-    { id: 'name', header: 'Display name', cell: client => client.displayName },
-    { id: 'protocol', header: 'Protocol', cell: client => client.protocol },
-    { id: 'status', header: 'Status', cell: client => <div className="flex flex-wrap gap-2"><Badge color={client.enabled ? 'success' : 'light'} size="sm">{client.enabled ? 'Enabled' : 'Disabled'}</Badge>{client.isPreview ? <Badge color="warning" size="sm">Preview only</Badge> : null}</div> },
-  ], [])
+    { id: 'id', header: t('identity.clients.columns.clientId'), cell: client => <span className="font-semibold text-text-primary">{client.clientId}</span> },
+    { id: 'name', header: t('identity.clients.columns.displayName'), cell: client => client.displayName },
+    { id: 'protocol', header: t('identity.clients.columns.protocol'), cell: client => client.protocol },
+    { id: 'status', header: t('identity.clients.columns.status'), cell: client => <div className="flex flex-wrap gap-2"><Badge color={client.enabled ? 'success' : 'light'} size="sm">{client.enabled ? t('identity.common.status.enabled') : t('identity.common.status.disabled')}</Badge>{client.isPreview ? <Badge color="warning" size="sm">{t('identity.clients.status.previewOnly')}</Badge> : null}</div> },
+  ], [t])
+  const tabs = VISIBLE_CLIENT_TABS.map(value => ({ value, label: t(`identity.clients.tabs.${value}`) }))
 
   const selectedClient = clients.find(client => client.id === entityId) ?? null
   if (entityId && selectedClient) {
     const activeTab: ClientTabId = isClientTab(tabId) ? tabId : 'settings'
     return (
       <IdentityResourceDetailPage
-        eyebrow="Manage"
+        eyebrow={t('identity.navigation.groups.manage')}
         title={selectedClient.displayName}
-        description={`${selectedClient.clientId} · Preview only, not deployed configuration`}
-        backLabel="Clients"
+        description={t('identity.clients.detail.description', { clientId: selectedClient.clientId })}
+        backLabel={t('identity.navigation.sections.clients')}
         onBack={() => { onEntityChange(null) }}
-        tabs={VISIBLE_CLIENT_TABS}
+        tabs={tabs}
         tabId={activeTab}
         onTabChange={nextTab => { onTabChange(nextTab) }}
-        tabAriaLabel="Client sections"
+        tabAriaLabel={t('identity.clients.tabs.ariaLabel')}
       >
         {activeTab === 'settings'
           ? <ClientSettings client={selectedClient} />
           : activeTab === 'roles'
             ? <ClientRoles roles={selectedClient.roles} capabilities={data?.capabilities ?? []} />
-            : <div className="p-4"><EmptyState title="Integration seam retained" description={`The canonical ${activeTab} deep link remains available for a future backend adapter.`} /></div>}
+            : <div className="p-4"><EmptyState title={t('identity.common.integration.title')} description={t('identity.common.integration.description', { tab: activeTab })} /></div>}
       </IdentityResourceDetailPage>
     )
   }
 
   return (
     <IdentityContentPanel>
-      <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder="Search clients" searchLabel="Search clients" density={table.density} onDensityChange={table.setDensity} />
+      <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder={t('identity.clients.search')} searchLabel={t('identity.clients.search')} density={table.density} onDensityChange={table.setDensity} />
       {error
-        ? <div className="p-4"><EmptyState title="Clients could not be loaded" description={error.message} /></div>
+        ? <div className="p-4"><EmptyState title={t('identity.clients.loadFailed')} description={error.message} /></div>
         : <DataTable
             layout="fit"
             columns={columns}
             rows={table.pageItems}
             rowKey={client => client.id}
             density={table.density}
-            ariaLabel="Clients"
+            ariaLabel={t('identity.navigation.sections.clients')}
             onRowClick={client => { onEntityChange(client.id) }}
-            rowAriaLabel={client => `Open client ${client.clientId}`}
-            emptyContent={<EmptyState title={isLoading ? 'Loading client preview' : 'No preview clients'} description="Preview client data is provided by the frontend IdentityAdminGateway adapter." />}
+            rowAriaLabel={client => t('identity.clients.rowAriaLabel', { clientId: client.clientId })}
+            emptyContent={<EmptyState title={isLoading ? t('identity.clients.loading') : t('identity.clients.empty.title')} description={t('identity.clients.empty.description')} />}
           />}
     </IdentityContentPanel>
   )
 }
 
 function ClientSettings({ client }: { client: IdentityClientView }) {
+  const { t } = useTranslation()
   return (
-    <IdentitySettingsSection title="Client settings" description="Transport-neutral preview values. No credential material exists in this public-browser design.">
+    <IdentitySettingsSection title={t('identity.clients.settings.title')} description={t('identity.clients.settings.description')}>
       <div className="grid min-w-0 gap-4 md:grid-cols-2">
-        <Field label="Client ID" htmlFor="client-id"><Input id="client-id" value={client.clientId} readOnly /></Field>
-        <Field label="Display name" htmlFor="client-display-name"><Input id="client-display-name" value={client.displayName} readOnly /></Field>
-        <Field label="Protocol" htmlFor="client-protocol"><Input id="client-protocol" value={client.protocol} readOnly /></Field>
-        <Field label="Root URL" htmlFor="client-root-url"><Input id="client-root-url" value={client.rootUrl} readOnly /></Field>
-        <Field label="Home URL" htmlFor="client-home-url"><Input id="client-home-url" value={client.homeUrl} readOnly /></Field>
-        <div className="flex min-w-0 flex-wrap items-end gap-2"><Badge color={client.enabled ? 'success' : 'light'}>{client.enabled ? 'Enabled' : 'Disabled'}</Badge><Badge color="info">{client.isPublicClient ? 'Public client' : 'Confidential client'}</Badge><Badge color="warning">Preview only</Badge></div>
+        <Field label={t('identity.clients.fields.clientId')} htmlFor="client-id"><Input id="client-id" value={client.clientId} readOnly /></Field>
+        <Field label={t('identity.clients.fields.displayName')} htmlFor="client-display-name"><Input id="client-display-name" value={client.displayName} readOnly /></Field>
+        <Field label={t('identity.clients.fields.protocol')} htmlFor="client-protocol"><Input id="client-protocol" value={client.protocol} readOnly /></Field>
+        <Field label={t('identity.clients.fields.rootUrl')} htmlFor="client-root-url"><Input id="client-root-url" value={client.rootUrl} readOnly /></Field>
+        <Field label={t('identity.clients.fields.homeUrl')} htmlFor="client-home-url"><Input id="client-home-url" value={client.homeUrl} readOnly /></Field>
+        <div className="flex min-w-0 flex-wrap items-end gap-2"><Badge color={client.enabled ? 'success' : 'light'}>{client.enabled ? t('identity.common.status.enabled') : t('identity.common.status.disabled')}</Badge><Badge color="info">{client.isPublicClient ? t('identity.clients.status.publicClient') : t('identity.clients.status.confidentialClient')}</Badge><Badge color="warning">{t('identity.clients.status.previewOnly')}</Badge></div>
       </div>
     </IdentitySettingsSection>
   )
 }
 
 function ClientRoles({ roles, capabilities }: { roles: IdentityRoleView[]; capabilities: { id: string; description: string }[] }) {
+  const { t } = useTranslation()
   const columns = useMemo<ColumnDef<IdentityRoleView>[]>(() => [
-    { id: 'name', header: 'Role', cell: role => <span className="font-semibold text-text-primary">{role.name}</span> },
-    { id: 'description', header: 'Purpose', cell: role => role.description },
-    { id: 'capabilities', header: 'Preview capabilities', cell: role => role.capabilityIds.map(id => capabilities.find(capability => capability.id === id)?.description).filter(Boolean).join(' ') },
-  ], [capabilities])
-  return <DataTable layout="fit" columns={columns} rows={roles} rowKey={role => role.id} ariaLabel="ABCO client roles" />
+    { id: 'name', header: t('identity.clients.roles.columns.role'), cell: role => <span className="font-semibold text-text-primary">{role.name}</span> },
+    { id: 'description', header: t('identity.clients.roles.columns.purpose'), cell: role => role.description },
+    { id: 'capabilities', header: t('identity.clients.roles.columns.capabilities'), cell: role => role.capabilityIds.map(id => capabilities.find(capability => capability.id === id)?.description).filter(Boolean).join(' ') },
+  ], [capabilities, t])
+  return <DataTable layout="fit" columns={columns} rows={roles} rowKey={role => role.id} ariaLabel={t('identity.clients.roles.ariaLabel')} />
 }

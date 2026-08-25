@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { DataTable } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
@@ -9,14 +11,14 @@ interface ClientSessionSummary {
   offlineSessions: number
 }
 
-const columns: ColumnDef<ClientSessionSummary>[] = [
-  { id: 'client', header: 'Client', cell: row => <span className="font-semibold text-text-primary">{row.clientId}</span> },
-  { id: 'active', header: 'Active sessions', align: 'right', cell: row => String(row.activeSessions) },
-  { id: 'offline', header: 'Offline sessions', align: 'right', cell: row => String(row.offlineSessions) },
-]
-
 export function SessionsSection() {
+  const { t } = useTranslation()
   const clientSessions: ClientSessionSummary[] = []
+  const columns = useMemo<ColumnDef<ClientSessionSummary>[]>(() => [
+    { id: 'client', header: t('identity.sessions.columns.client'), cell: row => <span className="font-semibold text-text-primary">{row.clientId}</span> },
+    { id: 'active', header: t('identity.sessions.columns.active'), align: 'right', cell: row => String(row.activeSessions) },
+    { id: 'offline', header: t('identity.sessions.columns.offline'), align: 'right', cell: row => String(row.offlineSessions) },
+  ], [t])
 
   return (
     <IdentityContentPanel>
@@ -25,11 +27,11 @@ export function SessionsSection() {
         columns={columns}
         rows={clientSessions}
         rowKey={row => row.clientId}
-        ariaLabel="Realm client sessions"
+        ariaLabel={t('identity.sessions.ariaLabel')}
         emptyContent={
           <EmptyState
-            title="Client session overview not connected"
-            description="The current frontend Session model contains individual user sessions but no Keycloak client-session aggregation, so realm client counts are intentionally not fabricated."
+            title={t('identity.sessions.empty.title')}
+            description={t('identity.sessions.empty.description')}
           />
         }
       />

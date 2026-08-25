@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import {
@@ -20,15 +21,9 @@ import type { IdentityRoleRecord } from '../model/rolesPermissionsTypes'
 import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection, IdentityContentPanel } from './IdentityResourceLayout'
 
 const ROLE_SEARCH_FIELDS: (keyof IdentityRoleRecord)[] = ['name', 'permissions']
-const ROLE_TABS = [
-  { value: 'details', label: 'Details' },
-  { value: 'associated-roles', label: 'Associated roles' },
-  { value: 'attributes', label: 'Attributes' },
-  { value: 'users-in-role', label: 'Users in role' },
-  { value: 'permissions', label: 'Permissions' },
-] as const
+const ROLE_TABS = ['details', 'associated-roles', 'attributes', 'users-in-role', 'permissions'] as const
 
-type RoleTabId = (typeof ROLE_TABS)[number]['value']
+type RoleTabId = (typeof ROLE_TABS)[number]
 
 interface RealmRolesSectionProps {
   entityId: string | null
@@ -38,10 +33,11 @@ interface RealmRolesSectionProps {
 }
 
 function isRoleTab(tabId: IdentityAccessTabId | null): tabId is RoleTabId {
-  return ROLE_TABS.some(tab => tab.value === tabId)
+  return ROLE_TABS.some(tab => tab === tabId)
 }
 
 export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange }: RealmRolesSectionProps) {
+  const { t } = useTranslation()
   const { data, isLoading, error, refetch } = useRolesPermissions()
   const roles = data?.roles ?? []
   const { data: users = [] } = useUsers()
@@ -51,7 +47,7 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
   const columns = useMemo<ColumnDef<IdentityRoleRecord>[]>(() => [
     {
       id: 'name',
-      header: 'Role name',
+      header: t('identity.roles.columns.name'),
       cell: role => (
         <>
           <span className="block font-semibold text-text-primary">{role.name}</span>
@@ -59,14 +55,14 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
         </>
       ),
     },
-    { id: 'permissions', header: 'Permissions', cell: role => role.permissions.join(', ') || '—' },
-    { id: 'members', header: 'Users in role', align: 'right', cell: role => String(users.filter(user => user.roleIds.includes(role.id)).length) },
-  ], [users])
+    { id: 'permissions', header: t('identity.roles.columns.permissions'), cell: role => role.permissions.join(', ') || '—' },
+    { id: 'members', header: t('identity.roles.columns.users'), align: 'right', cell: role => String(users.filter(user => user.roleIds.includes(role.id)).length) },
+  ], [t, users])
 
   const userColumns = useMemo<ColumnDef<User>[]>(() => [
     {
       id: 'user',
-      header: 'User',
+      header: t('identity.roles.userColumns.user'),
       cell: user => (
         <>
           <span className="block font-semibold text-text-primary">{user.name}</span>
@@ -74,15 +70,16 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
         </>
       ),
     },
-    { id: 'status', header: 'Status', cell: user => <Badge color={user.status === 'active' ? 'success' : user.status === 'locked' ? 'error' : 'light'} size="sm">{user.status}</Badge> },
-  ], [])
+    { id: 'status', header: t('identity.roles.userColumns.status'), cell: user => <Badge color={user.status === 'active' ? 'success' : user.status === 'locked' ? 'error' : 'light'} size="sm">{user.status === 'active' ? t('identity.common.status.active') : user.status === 'locked' ? t('identity.common.status.locked') : user.status}</Badge> },
+  ], [t])
+  const tabs = ROLE_TABS.map(value => ({ value, label: t(`identity.roles.tabs.${value}`) }))
 
   if (entityId) {
     if (!selectedRole) {
       return (
         <div>
-          <IdentityResourceHeader title="Role not found" backLabel="Realm roles" onBack={() => { onEntityChange(null) }} />
-          <div className="p-4"><EmptyState title="Role not found" description="The selected realm role is not available in the current Identity & Access data." /></div>
+          <IdentityResourceHeader title={t('identity.roles.notFound.title')} backLabel={t('identity.navigation.sections.realm-roles')} onBack={() => { onEntityChange(null) }} />
+          <div className="p-4"><EmptyState title={t('identity.roles.notFound.title')} description={t('identity.roles.notFound.description')} /></div>
         </div>
       )
     }
@@ -93,41 +90,41 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
 
     if (activeTab === 'details') {
       detailContent = (
-        <IdentitySettingsSection title="Role details" description="Only fields present in the current realm-role contract are shown.">
+        <IdentitySettingsSection title={t('identity.roles.details.title')} description={t('identity.roles.details.description')}>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Role name" htmlFor="realm-role-name"><Input id="realm-role-name" value={selectedRole.name} readOnly /></Field>
-            <Field label="Permissions" htmlFor="realm-role-permissions" className="md:col-span-2"><Input id="realm-role-permissions" value={selectedRole.permissions.join(', ')} readOnly /></Field>
+            <Field label={t('identity.roles.fields.name')} htmlFor="realm-role-name"><Input id="realm-role-name" value={selectedRole.name} readOnly /></Field>
+            <Field label={t('identity.roles.fields.permissions')} htmlFor="realm-role-permissions" className="md:col-span-2"><Input id="realm-role-permissions" value={selectedRole.permissions.join(', ')} readOnly /></Field>
           </div>
-          <p className="mt-4 text-xs text-text-muted">Role permissions are loaded from the current user permissions contract.</p>
+          <p className="mt-4 text-xs text-text-muted">{t('identity.roles.details.permissionsNote')}</p>
         </IdentitySettingsSection>
       )
     } else if (activeTab === 'users-in-role') {
       detailContent = usersInRole.length > 0
-        ? <DataTable layout="fit" columns={userColumns} rows={usersInRole} rowKey={user => user.id} ariaLabel="Users in realm role" />
-        : <div className="p-4"><EmptyState title="No users in role" description="No users are assigned to this role in the current Identity & Access data." /></div>
+        ? <DataTable layout="fit" columns={userColumns} rows={usersInRole} rowKey={user => user.id} ariaLabel={t('identity.roles.usersInRole.ariaLabel')} />
+        : <div className="p-4"><EmptyState title={t('identity.roles.usersInRole.emptyTitle')} description={t('identity.roles.usersInRole.emptyDescription')} /></div>
     } else if (activeTab === 'permissions') {
       detailContent = (
         <div className="p-4">
-          <EmptyState title="Permissions" description="Role permissions are shown in the role details loaded from the current API contract." />
+          <EmptyState title={t('identity.roles.tabs.permissions')} description={t('identity.roles.permissions.description')} />
         </div>
       )
     } else {
-      const label = ROLE_TABS.find(tab => tab.value === activeTab)?.label ?? activeTab
-      detailContent = <div className="p-4"><EmptyState title={label} description={`Keycloak ${label.toLowerCase()} data is not connected yet.`} /></div>
+      const label = t(`identity.roles.tabs.${activeTab}`)
+      detailContent = <div className="p-4"><EmptyState title={label} description={t('identity.roles.integration.description', { section: label.toLowerCase() })} /></div>
     }
 
     return (
       <IdentityResourceDetailPage
-        eyebrow="Manage"
+        eyebrow={t('identity.navigation.groups.manage')}
         title={selectedRole.name}
-        description="Realm role"
-        backLabel="Realm roles"
+        description={t('identity.roles.detailDescription')}
+        backLabel={t('identity.navigation.sections.realm-roles')}
         onBack={() => { onEntityChange(null) }}
-        tabs={ROLE_TABS}
+        tabs={tabs}
         tabId={activeTab}
         onTabChange={nextTab => { onTabChange(nextTab) }}
-        tabAriaLabel="Realm role sections"
-        actions={<Button size="sm" variant="outline" disabled title="Available after Keycloak integration">Actions</Button>}
+        tabAriaLabel={t('identity.roles.tabs.ariaLabel')}
+        actions={<Button size="sm" variant="outline" disabled title={t('identity.actions.requires.keycloak')}>{t('identity.roles.actions')}</Button>}
       >
         {detailContent}
       </IdentityResourceDetailPage>
@@ -143,15 +140,15 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
           <DataTableToolbar
             searchValue={table.search}
             onSearchChange={table.setSearch}
-            searchPlaceholder="Search roles"
-            searchLabel="Search roles"
+            searchPlaceholder={t('identity.roles.search')}
+            searchLabel={t('identity.roles.search')}
             density={table.density}
             onDensityChange={table.setDensity}
           />
           <div className="custom-scrollbar min-h-0 flex-1 lg:overflow-y-auto">
             <DataTableRequestState
               hasCachedData={roles.length > 0}
-              error={error ? { title: 'Roles could not be loaded', description: error.message, retryLabel: 'Retry', isRetrying: false, onRetry: () => { void refetch() } } : null}
+              error={error ? { title: t('identity.roles.loadFailed'), description: error.message, retryLabel: t('identity.common.actions.retry'), isRetrying: false, onRetry: () => { void refetch() } } : null}
             >
               <DataTable
                 layout="fit"
@@ -159,10 +156,10 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
                 rows={table.pageItems}
                 rowKey={role => role.id}
                 density={table.density}
-                ariaLabel="Realm roles"
-                rowAriaLabel={role => `Open realm role ${role.name}`}
+                ariaLabel={t('identity.navigation.sections.realm-roles')}
+                rowAriaLabel={role => t('identity.roles.rowAriaLabel', { name: role.name })}
                 onRowClick={role => { onEntityChange(role.id) }}
-                emptyContent={roles.length > 0 ? 'No roles match your search.' : <EmptyState title="No roles found" description="No realm roles are available in the current Identity & Access data." />}
+                emptyContent={roles.length > 0 ? t('identity.roles.empty.filtered') : <EmptyState title={t('identity.roles.empty.title')} description={t('identity.roles.empty.description')} />}
               />
             </DataTableRequestState>
           </div>

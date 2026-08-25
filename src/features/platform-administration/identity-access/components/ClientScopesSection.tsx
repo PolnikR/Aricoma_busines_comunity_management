@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { DataTable, DataTableToolbar, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
@@ -12,13 +13,9 @@ interface ClientScopeSummary {
   assignment: string
 }
 
-const CLIENT_SCOPE_TABS = [
-  { value: 'settings', label: 'Settings' },
-  { value: 'mappers', label: 'Mappers' },
-  { value: 'scope', label: 'Scope' },
-] as const
+const CLIENT_SCOPE_TABS = ['settings', 'mappers', 'scope'] as const
 
-type ClientScopeTabId = (typeof CLIENT_SCOPE_TABS)[number]['value']
+type ClientScopeTabId = (typeof CLIENT_SCOPE_TABS)[number]
 
 interface ClientScopesSectionProps {
   entityId: string | null
@@ -28,36 +25,38 @@ interface ClientScopesSectionProps {
 }
 
 function isClientScopeTab(tabId: IdentityAccessTabId | null): tabId is ClientScopeTabId {
-  return CLIENT_SCOPE_TABS.some(tab => tab.value === tabId)
+  return CLIENT_SCOPE_TABS.some(tab => tab === tabId)
 }
 
 export function ClientScopesSection({ entityId, tabId, onEntityChange, onTabChange }: ClientScopesSectionProps) {
+  const { t } = useTranslation()
   const scopes: ClientScopeSummary[] = []
   const table = useTableState(scopes, { searchFields: ['id', 'name', 'protocol', 'assignment'] })
   const columns = useMemo<ColumnDef<ClientScopeSummary>[]>(() => [
-    { id: 'name', header: 'Name', cell: scope => <span className="font-semibold text-text-primary">{scope.name}</span> },
-    { id: 'protocol', header: 'Protocol', cell: scope => scope.protocol || '—' },
-    { id: 'assignment', header: 'Assigned type', cell: scope => scope.assignment || '—' },
-  ], [])
+    { id: 'name', header: t('identity.clientScopes.columns.name'), cell: scope => <span className="font-semibold text-text-primary">{scope.name}</span> },
+    { id: 'protocol', header: t('identity.clientScopes.columns.protocol'), cell: scope => scope.protocol || '—' },
+    { id: 'assignment', header: t('identity.clientScopes.columns.assignment'), cell: scope => scope.assignment || '—' },
+  ], [t])
+  const tabs = CLIENT_SCOPE_TABS.map(value => ({ value, label: t(`identity.clientScopes.tabs.${value}`) }))
 
   if (entityId) {
     const activeTab: ClientScopeTabId = isClientScopeTab(tabId) ? tabId : 'settings'
     return (
       <IdentityResourceDetailPage
-        eyebrow="Manage"
+        eyebrow={t('identity.navigation.groups.manage')}
         title={entityId}
-        description="Keycloak client scope"
-        backLabel="Client scopes"
+        description={t('identity.clientScopes.detail.description')}
+        backLabel={t('identity.navigation.sections.client-scopes')}
         onBack={() => { onEntityChange(null) }}
-        tabs={CLIENT_SCOPE_TABS}
+        tabs={tabs}
         tabId={activeTab}
         onTabChange={nextTab => { onTabChange(nextTab) }}
-        tabAriaLabel="Client scope sections"
+        tabAriaLabel={t('identity.clientScopes.tabs.ariaLabel')}
       >
         <div className="p-4">
           <EmptyState
-            title={CLIENT_SCOPE_TABS.find(tab => tab.value === activeTab)?.label ?? activeTab}
-            description="The Keycloak client-scope API contract is not connected yet, so mappers and scope mappings are intentionally not fabricated."
+            title={t(`identity.clientScopes.tabs.${activeTab}`)}
+            description={t('identity.clientScopes.detail.notConnected')}
           />
         </div>
       </IdentityResourceDetailPage>
@@ -66,17 +65,17 @@ export function ClientScopesSection({ entityId, tabId, onEntityChange, onTabChan
 
   return (
     <IdentityContentPanel>
-      <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder="Search client scopes" searchLabel="Search client scopes" density={table.density} onDensityChange={table.setDensity} />
+      <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder={t('identity.clientScopes.search')} searchLabel={t('identity.clientScopes.search')} density={table.density} onDensityChange={table.setDensity} />
       <DataTable
         layout="fit"
         columns={columns}
         rows={table.pageItems}
         rowKey={scope => scope.id}
         density={table.density}
-        ariaLabel="Client scopes"
+        ariaLabel={t('identity.navigation.sections.client-scopes')}
         onRowClick={scope => { onEntityChange(scope.id) }}
-        rowAriaLabel={scope => `Open client scope ${scope.name}`}
-        emptyContent={<EmptyState title="No client scopes connected" description="The Keycloak client-scopes endpoint is not connected yet." />}
+        rowAriaLabel={scope => t('identity.clientScopes.rowAriaLabel', { name: scope.name })}
+        emptyContent={<EmptyState title={t('identity.clientScopes.empty.title')} description={t('identity.clientScopes.empty.description')} />}
       />
     </IdentityContentPanel>
   )

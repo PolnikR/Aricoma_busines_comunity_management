@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { DataTable, DataTableToolbar, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
@@ -6,12 +7,9 @@ import { Tabs } from '@/shared/components/tabs/Tabs'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
 import { IdentityContentPanel } from './IdentityResourceLayout'
 
-const EVENT_TABS = [
-  { value: 'user-events', label: 'User events' },
-  { value: 'admin-events', label: 'Admin events' },
-] as const
+const EVENT_TABS = ['user-events', 'admin-events'] as const
 
-type EventTabId = (typeof EVENT_TABS)[number]['value']
+type EventTabId = (typeof EVENT_TABS)[number]
 
 interface EventAuditRow {
   id: string
@@ -29,44 +27,46 @@ interface EventsSectionProps {
 }
 
 function isEventTab(tabId: IdentityAccessTabId | null): tabId is EventTabId {
-  return EVENT_TABS.some(tab => tab.value === tabId)
+  return EVENT_TABS.some(tab => tab === tabId)
 }
 
 export function EventsSection({ tabId, onTabChange }: EventsSectionProps) {
+  const { t } = useTranslation()
   const activeTab: EventTabId = isEventTab(tabId) ? tabId : 'user-events'
   const events: EventAuditRow[] = []
   const table = useTableState(events, { searchFields: ['type', 'actor', 'target', 'source'] })
   const columns = useMemo<ColumnDef<EventAuditRow>[]>(() => activeTab === 'user-events'
     ? [
-        { id: 'time', header: 'Time', cell: event => event.time },
-        { id: 'type', header: 'Event type', cell: event => event.type },
-        { id: 'actor', header: 'User', cell: event => event.actor || '—' },
-        { id: 'target', header: 'Client', cell: event => event.target || '—' },
-        { id: 'source', header: 'IP address', cell: event => event.source || '—' },
+        { id: 'time', header: t('identity.events.columns.time'), cell: event => event.time },
+        { id: 'type', header: t('identity.events.columns.eventType'), cell: event => event.type },
+        { id: 'actor', header: t('identity.events.columns.user'), cell: event => event.actor || '—' },
+        { id: 'target', header: t('identity.events.columns.client'), cell: event => event.target || '—' },
+        { id: 'source', header: t('identity.events.columns.ipAddress'), cell: event => event.source || '—' },
       ]
     : [
-        { id: 'time', header: 'Time', cell: event => event.time },
-        { id: 'type', header: 'Operation', cell: event => event.type },
-        { id: 'actor', header: 'Administrator', cell: event => event.actor || '—' },
-        { id: 'target', header: 'Resource', cell: event => event.target || '—' },
-      ], [activeTab])
+        { id: 'time', header: t('identity.events.columns.time'), cell: event => event.time },
+        { id: 'type', header: t('identity.events.columns.operation'), cell: event => event.type },
+        { id: 'actor', header: t('identity.events.columns.administrator'), cell: event => event.actor || '—' },
+        { id: 'target', header: t('identity.events.columns.resource'), cell: event => event.target || '—' },
+      ], [activeTab, t])
+  const tabs = EVENT_TABS.map(value => ({ value, label: t(`identity.events.tabs.${value}`) }))
 
   return (
     <IdentityContentPanel>
       <Tabs
-        items={EVENT_TABS}
+        items={tabs}
         value={activeTab}
         onChange={onTabChange}
-        ariaLabel="Event audit sections"
+        ariaLabel={t('identity.events.tabs.ariaLabel')}
         indicator="inset"
-        scrollControls={{ previousLabel: 'Scroll Event audit sections left', nextLabel: 'Scroll Event audit sections right' }}
+        scrollControls={{ previousLabel: t('identity.events.tabs.scrollPrevious'), nextLabel: t('identity.events.tabs.scrollNext') }}
       />
       <div className="min-w-0">
         <DataTableToolbar
           searchValue={table.search}
           onSearchChange={table.setSearch}
-          searchPlaceholder={activeTab === 'user-events' ? 'Search user events' : 'Search admin events'}
-          searchLabel={activeTab === 'user-events' ? 'Search user events' : 'Search admin events'}
+          searchPlaceholder={activeTab === 'user-events' ? t('identity.events.search.user') : t('identity.events.search.admin')}
+          searchLabel={activeTab === 'user-events' ? t('identity.events.search.user') : t('identity.events.search.admin')}
           density={table.density}
           onDensityChange={table.setDensity}
         />
@@ -76,8 +76,8 @@ export function EventsSection({ tabId, onTabChange }: EventsSectionProps) {
           rows={table.pageItems}
           rowKey={event => event.id}
           density={table.density}
-          ariaLabel={activeTab === 'user-events' ? 'User events' : 'Admin events'}
-          emptyContent={<EmptyState title={activeTab === 'user-events' ? 'No user events connected' : 'No admin events connected'} description="Keycloak event audit data is not available from the current frontend contract." />}
+          ariaLabel={activeTab === 'user-events' ? t('identity.events.tabs.user-events') : t('identity.events.tabs.admin-events')}
+          emptyContent={<EmptyState title={activeTab === 'user-events' ? t('identity.events.empty.user') : t('identity.events.empty.admin')} description={t('identity.events.empty.description')} />}
         />
       </div>
     </IdentityContentPanel>
