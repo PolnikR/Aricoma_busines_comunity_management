@@ -18,8 +18,13 @@ rsync -az --delete --exclude node_modules --exclude dist \
   ./ aricoma@10.99.99.53:~/abco-fe-src/
 ```
 
-> Pozor: spúšťaj to naozaj z koreňa repozitára. `--delete` zmaže na serveri všetko,
-> čo nie je v aktuálnom adresári.
+Server nevidí GitLab, takže kód sa tam dostane len takto. `--delete` zahodí
+v `~/abco-fe-src/` súbory, ktoré už v repozitári nie sú — inak by sa lokálne zmazaný
+alebo premenovaný súbor buildoval ďalej a hľadal by si chybu, ktorá lokálne neexistuje.
+Kontajnerov sa to netýka, tie sa vymieňajú až v kroku 5.
+
+> Pozor: práve kvôli `--delete` spúšťaj príkaz naozaj z koreňa repozitára. Z iného
+> adresára ti na serveri zmaže obsah `~/abco-fe-src/`.
 
 ### 2. Skontroluj Keycloak konfiguráciu
 
