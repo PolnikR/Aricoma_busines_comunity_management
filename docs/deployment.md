@@ -6,9 +6,13 @@ zatiaľ neexistuje (dôvody nižšie), takže manuálny postup je jediná cesta.
 
 ## Manuálne nasadenie
 
-Príkazy predpokladajú, že `ssh aricoma@10.99.99.53` sa pripojí — kľúčom, heslom
-alebo cez záznam v `~/.ssh/config`, na tom tu nezáleží. Pri hesle sa každý z troch
-krokov spýta zvlášť; kto to nechce písať trikrát, nech si pridá kľúč.
+Všetky tri príkazy sa spúšťajú **z lokálu**, nie zo servera — predpokladajú len to,
+že `ssh aricoma@10.99.99.53` sa pripojí (kľúčom, heslom alebo cez `~/.ssh/config`,
+na tom tu nezáleží).
+
+Ak už si na serveri prihlásený, krok 1 preskoč (dopravuje kód z lokálu na server
+a na serveri by `./` bol tvoj home — s `--delete` by ti vymazal `~/abco-fe-src`)
+a z krokov 2 a 3 spusti len to, čo je vnútri `ssh '...'`.
 
 ```bash
 # 1. zdrojáky na server — spusti z koreňa repozitára (server nevidí GitLab)
