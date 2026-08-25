@@ -7,7 +7,7 @@ import { useProviders } from '@/features/providers-connectors/providers/hooks/us
 import { FlashSystemResourcesPage } from '@/features/discovery-inventory/resources/components/flash-system/FlashSystemResourcesPage'
 import { IbmPowerResourcesPage } from '@/features/discovery-inventory/resources/components/ibm-power/IbmPowerResourcesPage'
 import type { SourceResourcesPageProps } from '@/features/discovery-inventory/resources/components/SourceResourcesPageProps'
-import { buildResourceTargetTabs } from '@/features/discovery-inventory/resources/helpers/buildResourceSourceTabs'
+import { buildResourceTargetTabs, formatResourceProviderId } from '@/features/discovery-inventory/resources/helpers/buildResourceSourceTabs'
 import { VmwareResourcesPage } from '@/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage'
 import { useResourceTabSearchParam } from '@/features/discovery-inventory/resources/hooks/useResourceTabSearchParam'
 
@@ -65,7 +65,7 @@ export function ResourcesIsePage() {
         label: (
           <span className="inline-flex items-center gap-2">
             <span>{resourceTabLabels[tab.resourceTab]}</span>
-            {tab.providerId ? <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-[11px] text-text-muted">{tab.providerId}</span> : null}
+            {tab.providerId ? <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-[11px] text-text-muted">{formatResourceProviderId(tab.resourceTab, tab.providerId)}</span> : null}
           </span>
         ),
       }))}

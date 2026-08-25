@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import { buildResourceSourceTabs, buildResourceTargetTabs } from './buildResourceSourceTabs'
+import { buildResourceSourceTabs, buildResourceTargetTabs, formatResourceProviderId } from './buildResourceSourceTabs'
 
 const labels = {
   vmware: 'VMware VMs',
@@ -23,6 +23,12 @@ function provider(id: string, name: string, type: ProviderRecord['type'], role: 
 }
 
 describe('buildResourceSourceTabs', () => {
+  it('formats provider IDs as compact resource badges', () => {
+    expect(formatResourceProviderId('vmware', 'vmware-vcenter-03')).toBe('vm-03')
+    expect(formatResourceProviderId('flashsystem', 'ibm-flashsystem-01')).toBe('flash-01')
+    expect(formatResourceProviderId('ibm-power', 'ibm-power-01')).toBe('power-01')
+  })
+
   it('keeps one fallback tab for each resource type without providers', () => {
     expect(buildResourceSourceTabs([], labels)).toEqual([
       { value: 'vmware:none', resourceTab: 'vmware', providerId: null, label: labels.vmware },
