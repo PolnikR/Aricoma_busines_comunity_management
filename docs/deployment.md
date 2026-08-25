@@ -6,15 +6,18 @@ zatiaľ neexistuje (dôvody nižšie), takže manuálny postup je jediná cesta.
 
 ## Manuálne nasadenie
 
+Príkazy predpokladajú, že `ssh aricoma@10.99.99.53` sa pripojí — kľúčom, heslom
+alebo cez záznam v `~/.ssh/config`, na tom tu nezáleží. Pri hesle sa každý z troch
+krokov spýta zvlášť; kto to nechce písať trikrát, nech si pridá kľúč.
+
 ```bash
 # 1. zdrojáky na server — spusti z koreňa repozitára (server nevidí GitLab)
 rsync -az --delete \
   --exclude node_modules --exclude dist \
-  -e "ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes" \
   ./ aricoma@10.99.99.53:~/abco-fe-src/
 
 # 2. build a výmena kontajnera
-ssh -i ~/.ssh/id_ed25519 aricoma@10.99.99.53 '
+ssh aricoma@10.99.99.53 '
   cd ~/abco-fe-src
   cat .env.production                 # musí mať VITE_KEYCLOAK_URL/REALM/CLIENT_ID
   docker build -t abco-fe:latest .    # spustí aj lint + typecheck + testy
@@ -23,7 +26,7 @@ ssh -i ~/.ssh/id_ed25519 aricoma@10.99.99.53 '
 '
 
 # 3. overenie
-ssh -i ~/.ssh/id_ed25519 aricoma@10.99.99.53 '
+ssh aricoma@10.99.99.53 '
   docker ps --filter name=abco-fe --format "{{.Status}}"
   curl -s -o /dev/null -w "app -> %{http_code}\n" http://10.99.99.53:8080/health
   docker exec abco-fe grep -rq "http://10.99.99.53:8081" /usr/share/nginx/html/assets/ \
