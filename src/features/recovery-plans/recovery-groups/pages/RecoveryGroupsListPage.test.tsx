@@ -6,6 +6,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LanguageProvider } from '@/contexts/LanguageProvider'
 import { RecoveryGroupsListPage } from './RecoveryGroupsListPage'
 
+const keycloakMock = vi.hoisted(() => ({
+  token: 'recovery-groups-page-test-token',
+  updateToken: vi.fn(() => Promise.resolve(true)),
+  logout: vi.fn(() => Promise.resolve()),
+}))
+
+vi.mock('@/config/keycloak', () => ({ keycloak: keycloakMock }))
+
 describe('RecoveryGroupsListPage', () => {
   beforeEach(() => {
     localStorage.clear()
