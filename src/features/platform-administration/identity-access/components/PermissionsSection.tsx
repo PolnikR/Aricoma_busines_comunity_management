@@ -23,7 +23,7 @@ export function PermissionsSection() {
       {isLoading ? <DataTableSkeleton columnCount={2} rowCount={5} layout="fit" className="m-4" /> : (
         <div className="p-4">
           <DataTableRequestState
-            hasData={rows.length > 0}
+            hasCachedData={permissions.length > 0}
             error={error ? { title: 'Permissions could not be loaded', description: error.message, retryLabel: 'Retry', isRetrying: false, onRetry: () => { void refetch() } } : null}
           >
             <DataTable layout="fit" columns={columns} rows={rows} rowKey={row => row.permission} ariaLabel="Identity permissions" emptyContent={<EmptyState title="No permissions found" description="No permissions are available for the current user." />} />

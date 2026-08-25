@@ -150,7 +150,7 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
           />
           <div className="custom-scrollbar min-h-0 flex-1 lg:overflow-y-auto">
             <DataTableRequestState
-              hasData={roles.length > 0}
+              hasCachedData={roles.length > 0}
               error={error ? { title: 'Roles could not be loaded', description: error.message, retryLabel: 'Retry', isRetrying: false, onRetry: () => { void refetch() } } : null}
             >
               <DataTable

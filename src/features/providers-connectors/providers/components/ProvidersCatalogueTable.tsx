@@ -253,7 +253,7 @@ export function ProvidersCatalogueTable({
       />
 
       <DataTableRequestState
-        hasData={rows.length > 0}
+        hasCachedData={allProviders.length > 0}
         error={error ? {
           title: t('providers.loadFailed'),
           ...(loadErrorDescription ? { description: loadErrorDescription } : {}),

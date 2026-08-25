@@ -7,6 +7,13 @@ import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { ProviderRecord, ProviderRoleFilter } from '../model/providerTypes'
 import { useProviders } from '../hooks/useProviders'
 
+const keycloakMock = vi.hoisted(() => ({
+  token: 'provider-test-token',
+  updateToken: vi.fn(() => Promise.resolve(true)),
+  logout: vi.fn(() => Promise.resolve()),
+}))
+
+vi.mock('@/config/keycloak', () => ({ keycloak: keycloakMock }))
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('react-router', async (importOriginal) => ({
   ...await importOriginal<typeof import('react-router')>(),
