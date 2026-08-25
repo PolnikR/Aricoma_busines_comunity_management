@@ -2,12 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { apiFetch } from './apiClient'
 
 const keycloakMock = vi.hoisted(() => {
-  const token: string | undefined = 'initial-token'
-  return {
-    token,
+  const mock: {
+    token: string | undefined
+    updateToken: ReturnType<typeof vi.fn>
+    logout: ReturnType<typeof vi.fn>
+  } = {
+    token: 'initial-token',
     updateToken: vi.fn(),
     logout: vi.fn(),
   }
+  return mock
 })
 
 vi.mock('@/config/keycloak', () => ({ keycloak: keycloakMock }))
@@ -33,7 +37,6 @@ describe('apiFetch', () => {
     keycloakMock.updateToken.mockImplementation(() => {
       expect(fetchMock).not.toHaveBeenCalled()
       keycloakMock.token = 'new-access-token'
-      return Promise.resolve(true)
     })
 
     const result = await apiFetch('/api/example', {

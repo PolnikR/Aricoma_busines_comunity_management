@@ -5,7 +5,7 @@ import { cn } from '@/shared/utils/cn'
 
 interface AirflowDagLinkProps {
   runId: string
-  providerUrl?: string | null
+  providerUrl?: string | null | undefined
   stopPropagation?: boolean
   className?: string
 }

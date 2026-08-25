@@ -50,7 +50,7 @@ describe('useIdentityAdminPreview', () => {
     })
     await waitFor(() => { expect(result.current.data).not.toBeNull() })
 
-    let mutationPromise: Promise<void> | undefined
+    let mutationPromise: Promise<boolean> | undefined
     act(() => {
       mutationPromise = result.current.mutate(() => Promise.resolve())
     })
