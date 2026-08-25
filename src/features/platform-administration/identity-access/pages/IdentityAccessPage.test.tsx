@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { IdentityAccessPage } from './IdentityAccessPage'
 import { identityAccessSectionGroups, identityAccessVisibleSectionIds, type IdentityAccessSectionId } from '../models/identityAccessSections'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
 vi.mock('../components/UsersSection', () => ({ UsersSection: () => <div>Users content</div> }))
 vi.mock('../components/RealmRolesSection', () => ({ RealmRolesSection: () => <div>Realm roles content</div> }))
 vi.mock('../components/GroupsSection', () => ({ GroupsSection: () => <div>Groups content</div> }))

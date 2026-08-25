@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { Tabs, type TabItem } from '@/shared/components/tabs/Tabs'
 
@@ -64,6 +65,7 @@ export function IdentityResourceDetailPage<T extends string>({
   tabAriaLabel,
   ...headerProps
 }: IdentityResourceDetailPageProps<T>) {
+  const { t } = useTranslation()
   return (
     <IdentityContentPanel>
       <IdentityResourceHeader {...headerProps} />
@@ -73,7 +75,10 @@ export function IdentityResourceDetailPage<T extends string>({
         onChange={onTabChange}
         ariaLabel={tabAriaLabel}
         indicator="inset"
-        scrollControls={{ previousLabel: `Scroll ${tabAriaLabel} left`, nextLabel: `Scroll ${tabAriaLabel} right` }}
+        scrollControls={{
+          previousLabel: t('identity.common.scroll.previous', { label: tabAriaLabel }),
+          nextLabel: t('identity.common.scroll.next', { label: tabAriaLabel }),
+        }}
       />
       <div className="min-w-0">{children}</div>
     </IdentityContentPanel>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { UsersSection } from '../components/UsersSection'
@@ -29,34 +30,35 @@ interface SectionActionContext {
   tabId: import('../models/identityAccessSections').IdentityAccessTabId | null
   onSetAddUserOpen: (open: boolean) => void
   onOpenEventSettings: () => void
+  t: ReturnType<typeof useTranslation>['t']
 }
 
-function getSectionAction({ sectionId, entityId, tabId, onSetAddUserOpen, onOpenEventSettings }: SectionActionContext) {
+function getSectionAction({ sectionId, entityId, tabId, onSetAddUserOpen, onOpenEventSettings, t }: SectionActionContext) {
   if (entityId) return null
 
   // Preserve top-level section actions so later agents can safely remove duplicate IdentityResourceHeader actions.
   switch (sectionId) {
     case 'users':
-      return <Button size="sm" onClick={() => { onSetAddUserOpen(true) }}>Add user</Button>
+      return <Button size="sm" onClick={() => { onSetAddUserOpen(true) }}>{t('identity.actions.addUser')}</Button>
     case 'realm-roles':
-      return <Button size="sm" disabled title="Available after Keycloak integration">Create role</Button>
+      return <Button size="sm" disabled title={t('identity.actions.requires.keycloak')}>{t('identity.actions.createRole')}</Button>
     case 'client-scopes':
-      return <Button size="sm" disabled title="Requires Keycloak client-scope integration">Create client scope</Button>
+      return <Button size="sm" disabled title={t('identity.actions.requires.clientScopes')}>{t('identity.actions.createClientScope')}</Button>
     case 'organizations':
-      return <Button size="sm" disabled title="Requires a Keycloak organization backend contract">Create organization</Button>
+      return <Button size="sm" disabled title={t('identity.actions.requires.organizations')}>{t('identity.actions.createOrganization')}</Button>
     case 'groups':
-      return <Button size="sm" disabled title="Requires Keycloak group integration">Create group</Button>
+      return <Button size="sm" disabled title={t('identity.actions.requires.groups')}>{t('identity.actions.createGroup')}</Button>
     case 'sessions':
-      return <Button size="sm" variant="danger" disabled title="Requires Keycloak realm-session integration">Sign out all active sessions</Button>
+      return <Button size="sm" variant="danger" disabled title={t('identity.actions.requires.sessions')}>{t('identity.actions.signOutAllSessions')}</Button>
     case 'events':
-      return <Button size="sm" variant="outline" onClick={onOpenEventSettings}>Event settings</Button>
+      return <Button size="sm" variant="outline" onClick={onOpenEventSettings}>{t('identity.actions.eventSettings')}</Button>
     case 'authentication':
-      return tabId === 'flows' ? <Button size="sm" disabled title="Requires Keycloak authentication integration">Create flow</Button> : null
+      return tabId === 'flows' ? <Button size="sm" disabled title={t('identity.actions.requires.authentication')}>{t('identity.actions.createFlow')}</Button> : null
     case 'user-federation':
       return (
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" disabled title="Requires Keycloak federation integration">Add LDAP</Button>
-          <Button size="sm" variant="outline" disabled title="Requires Keycloak federation integration">Add Kerberos</Button>
+          <Button size="sm" variant="outline" disabled title={t('identity.actions.requires.federation')}>{t('identity.actions.addLdap')}</Button>
+          <Button size="sm" variant="outline" disabled title={t('identity.actions.requires.federation')}>{t('identity.actions.addKerberos')}</Button>
         </div>
       )
     // identity-providers, permissions, and other sections intentionally have no top-level action
@@ -95,21 +97,23 @@ function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChan
 }
 
 export function IdentityAccessPage() {
+  const { t } = useTranslation()
   const { sectionId, groupId, entityId, tabId, setSectionId, setSectionTab, setGroupId, setEntityId, setTabId } = useIdentityAccessSection()
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
 
   return (
     <div className="flex min-h-full min-w-0 flex-col gap-4 overflow-x-hidden lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow="Platform administration"
-        title="Identity & Access"
-        description="Manage Keycloak identities, applications, access policies, sessions, authentication, and realm configuration."
+        eyebrow={t('identity.page.eyebrow')}
+        title={t('identity.page.title')}
+        description={t('identity.page.description')}
         actions={getSectionAction({
           sectionId,
           entityId,
           tabId,
           onSetAddUserOpen: setIsAddUserOpen,
           onOpenEventSettings: () => { setSectionTab('realm-settings', 'events') },
+          t,
         })}
       />
 

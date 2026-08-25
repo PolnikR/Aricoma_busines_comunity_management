@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { Button } from '@/shared/components/button/Button'
 import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection } from './IdentityResourceLayout'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
 describe('IdentityResourceLayout', () => {
   it('renders resource header context with shared actions and back navigation', async () => {
     const onBack = vi.fn()

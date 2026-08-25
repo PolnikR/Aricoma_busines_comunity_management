@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { IdentityAccessNavigation } from './IdentityAccessNavigation'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
 function renderNavigation(overrides?: Partial<Parameters<typeof IdentityAccessNavigation>[0]>) {
   const props: Parameters<typeof IdentityAccessNavigation>[0] = {
     groupId: 'manage',
