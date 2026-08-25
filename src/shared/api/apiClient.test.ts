@@ -94,6 +94,20 @@ describe('apiFetch', () => {
     expect(keycloakMock.logout).toHaveBeenCalledWith({ redirectUri: window.location.origin })
   })
 
+  it('preserves the refresh failure when the reauthentication logout also fails', async () => {
+    const refreshError = new Error('refresh failed')
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    keycloakMock.updateToken.mockRejectedValue(refreshError)
+    keycloakMock.logout.mockRejectedValue(new Error('logout failed'))
+
+    await expect(apiFetch('/api/example')).rejects.toBe(refreshError)
+    await Promise.resolve()
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(keycloakMock.logout).toHaveBeenCalledWith({ redirectUri: window.location.origin })
+  })
+
   it('stops the request and logs out when no access token is available', async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)

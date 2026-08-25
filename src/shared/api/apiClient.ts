@@ -1,7 +1,7 @@
 import { keycloak } from '@/config/keycloak'
 
 function reauthenticate() {
-  void keycloak.logout({ redirectUri: window.location.origin })
+  void keycloak.logout({ redirectUri: window.location.origin }).catch(() => undefined)
 }
 
 // Single choke point for backend calls. Refreshes the in-memory Keycloak token,
