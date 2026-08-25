@@ -5,6 +5,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { rolesPermissionsKeys } from '../api/rolesPermissionsQueryKeys'
 import { useRolesPermissions } from './useRolesPermissions'
 
+const keycloakMock = vi.hoisted(() => ({
+  token: 'roles-permissions-test-token',
+  updateToken: vi.fn(() => Promise.resolve(true)),
+  logout: vi.fn(() => Promise.resolve()),
+}))
+
+vi.mock('@/config/keycloak', () => ({ keycloak: keycloakMock }))
+
 afterEach(() => { vi.unstubAllGlobals() })
 
 describe('useRolesPermissions', () => {
