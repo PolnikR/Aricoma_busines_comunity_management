@@ -1,229 +1,77 @@
 # Nasadenie abco-fe
 
-Cieľový server: `10.99.99.53` (user `aricoma`), aplikácia beží na porte `8080`,
-Keycloak na porte `8081`.
-
-## Ako to funguje
-
-Aplikácia je statický Vite build servírovaný nginxom v Docker kontajneri.
-Keycloak konfigurácia (`VITE_KEYCLOAK_URL`, `VITE_KEYCLOAK_REALM`,
-`VITE_KEYCLOAK_CLIENT_ID`) sa **zapeká do bundle v čase buildu** — nie je to
-runtime premenná. Zmena Keycloak nastavení preto vždy vyžaduje nový build
-a nasadenie novej image.
-
-Dôsledok: `.env.production` musí byť v Docker build kontexte. `.dockerignore`
-vylučuje `.env.*`, preto obsahuje výnimku `!.env.production`. Bez nej sa
-vybuilduje `new Keycloak({url: undefined, realm: undefined, clientId: undefined})`
-a aplikácia skončí v rekurzívnom redirect loope na
-`/undefined/protocol/openid-connect/auth`.
-
-## Jednorazové kroky
-
-### 1. Keycloak klient
-
-V realme `aricoma` musí existovať klient `abcm-fe` s týmto nastavením:
-
-| Položka | Hodnota |
-|---|---|
-| Client ID | `abcm-fe` |
-| Client authentication | Off (public client) |
-| Standard flow | Enabled |
-| Valid redirect URIs | `http://10.99.99.53:8080/*` |
-| Valid post logout redirect URIs | `http://10.99.99.53:8080/*` |
-| Web origins | `http://10.99.99.53:8080` |
-
-Bez `Web origins` zlyhá tichá obnova tokenu na CORS, bez `redirect URIs`
-Keycloak odmietne login s `Invalid parameter: redirect_uri`.
-
-### 2. GitLab runner na serveri (pre automatické nasadenie)
-
-CI pipeline používa **shell executor bežiaci priamo na `10.99.99.53`** —
-buildí a spúšťa Docker lokálne, nič sa neprenáša cez registry. Runner musí byť
-zaregistrovaný s tagom `deploy-abco` (ten istý tag je v `.gitlab-ci.yml`).
-
-> **Stav k 25. 8. 2026: runner neexistuje.** Job `build-and-deploy` preto ostáva
-> `Pending` s hláškou *„no runners that match all of the job's tags: deploy-abco“*.
-> Registrácii bránia tri veci, prvá z nich je mimo dosahu tohto repozitára:
->
-> 1. **Sophos proxy blokuje prístup zo segmentu `10.99.99.0/24` na GitLab.**
->    Každé HTTP/HTTPS spojenie z `10.99.99.53` na `172.20.1.90` ide cez gateway
->    `10.99.99.1`, kde ho zachytí `forward.http.proxy:3128` a vráti
->    `403 Forbidden` so stránkou „Blocked site“ (server dostane Sophos
->    MITM certifikát, nie ten pravý od `HQSR CA`). Z Macu je ten istý GitLab
->    dostupný (`HTTP 200`), takže ide o pravidlo na firewalle, nie o výpadok.
->    **Treba požiadať správcov siete o výnimku `10.99.99.53 → git.esas.autocont.sk:443`.**
->    Bez nej runner neprejde registráciou ani po nainštalovaní.
-> 2. **DNS** — server má v `/etc/resolv.conf` len `1.1.1.1` a `8.8.8.8`, interné
->    záznamy nepozná (`getent hosts git.esas.autocont.sk` zlyhá).
-> 3. **Interná CA** — GitLab má certifikát od `HQSR CA`, ktorá nie je v systémovom
->    truste Debianu.
->
-> Inštalácia aj kroky 2 a 3 vyžadujú `sudo`, ktoré na účte `aricoma` chce heslo.
-
-Po odblokovaní na firewalle (bod 1) doplň DNS a CA:
-
-```bash
-# na 10.99.99.53 — DNS
-echo "172.20.1.90  git.esas.autocont.sk" | sudo tee -a /etc/hosts
-
-# CA: vytiahni chain zo stroja, ktory na GitLab dosiahne (napr. Mac), a nahraj ho
-openssl s_client -connect git.esas.autocont.sk:443 \
-  -servername git.esas.autocont.sk -showcerts </dev/null 2>/dev/null \
-  | awk '/BEGIN CERT/,/END CERT/' > /tmp/hqsr-ca.crt
-scp -i ~/.ssh/id_ed25519 /tmp/hqsr-ca.crt aricoma@10.99.99.53:~/
-
-# na 10.99.99.53
-sudo cp ~/hqsr-ca.crt /usr/local/share/ca-certificates/hqsr-ca.crt
-sudo update-ca-certificates
-curl -sI https://git.esas.autocont.sk/ | head -1   # musi byt 200/302, nie 403 ani TLS chyba
-```
-
-Až keď posledný `curl` prejde, má zmysel registrovať runner:
-
-```bash
-# na 10.99.99.53
-curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh" | sudo bash
-sudo apt-get install -y gitlab-runner
-
-sudo gitlab-runner register \
-  --non-interactive \
-  --url "https://git.esas.autocont.sk/" \
-  --token "<registration-token zo Settings > CI/CD > Runners>" \
-  --executor "shell" \
-  --description "abco-deploy" \
-  --tag-list "deploy-abco"
-
-# runner potrebuje pristup k Dockeru
-sudo usermod -aG docker gitlab-runner
-sudo systemctl restart gitlab-runner
-```
-
-Kým runner neexistuje, nasadzuj podľa *Manuálne nasadenie → Variant A* nižšie —
-robí presne to isté, čo by robil job `build-and-deploy`.
-
-### 3. CI/CD premenné
-
-Predvolené hodnoty sú v `variables:` bloku `.gitlab-ci.yml` a fungujú pre
-existujúce prostredie. Ak treba mieriť na iný Keycloak, prepíš ich v
-**Settings → CI/CD → Variables**: `VITE_KEYCLOAK_URL`, `VITE_KEYCLOAK_REALM`,
-`VITE_KEYCLOAK_CLIENT_ID`.
-
-## Automatické nasadenie
-
-Push do `master` spustí pipeline sám. Na ostatných vetvách je job manuálny
-(spustíš ho tlačidlom v **CI/CD → Pipelines**).
-
-Pipeline robí:
-
-1. **build-and-deploy** — vygeneruje `.env.production` z CI premenných, overí že
-   nie sú prázdne, `docker build`, overí že sa Keycloak hodnoty naozaj dostali
-   do bundle, vymení kontajner, zmaže staré image (ponechá 5 najnovších).
-2. **verify_deploy** — počká 10 s, skontroluje `HTTP 200` na `/health`, overí
-   Keycloak config v nasadenom bundle a dostupnosť realmu.
+Server `10.99.99.53` (user `aricoma`), aplikácia na porte `8080`, Keycloak na `8081`.
+Statický Vite build v nginx kontajneri. Buildí sa **priamo na serveri** — CI runner
+zatiaľ neexistuje (dôvody nižšie), takže manuálny postup je jediná cesta.
 
 ## Manuálne nasadenie
 
-### Variant A — build priamo na serveri (odporúčaný)
-
-Zhodný s tým, čo robí CI, a nemá problém s architektúrou.
-
 ```bash
-# 1. dostať zdrojáky na server (server nevidí GitLab, preto rsync z lokálu)
+# 1. zdrojáky na server (server nevidí GitLab)
 rsync -az --delete \
   --exclude node_modules --exclude dist --exclude .git \
   -e "ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes" \
   "/Users/melis/Aricoma/ABC Orchestracia/abco-fe/" \
   aricoma@10.99.99.53:~/abco-fe-src/
 
-# 2. na serveri
-ssh -i ~/.ssh/id_ed25519 aricoma@10.99.99.53
-cd ~/abco-fe-src
-
-# 3. skontrolovať Keycloak konfiguráciu, ktorá sa zapečie
-cat .env.production
-# VITE_KEYCLOAK_URL=http://10.99.99.53:8081
-# VITE_KEYCLOAK_REALM=aricoma
-# VITE_KEYCLOAK_CLIENT_ID=abcm-fe
-
-# 4. build (spusti lint + typecheck + testy, potom vite build)
-docker build -t abco-fe:latest .
-
-# 5. overiť, ze sa config zapiekol — NEPRESKAKOVAT
-docker run --rm --entrypoint sh abco-fe:latest \
-  -c "grep -roE 'url:.{0,30}realm:.{0,12}clientId:.{0,12}' /usr/share/nginx/html/assets/ | head -1"
-# musí vypísať reálne hodnoty, nie `url:void 0`
-
-# 6. výmena kontajnera
-docker stop abco-fe || true
-docker rm abco-fe || true
-docker run -d --name abco-fe --restart unless-stopped -p 8080:80 abco-fe:latest
-```
-
-### Variant B — build na Macu, prenos cez tar
-
-Použi, len ak sa nedá buildovať na serveri.
-
-> **Architektúra.** Server je `x86_64`. Apple Silicon vybuildí `arm64` image,
-> ktorý sa na serveri načíta, ale nespustí. Preto je `--platform linux/amd64`
-> povinný.
-
-```bash
-cd "/Users/melis/Aricoma/ABC Orchestracia/abco-fe"
-
-docker build --platform linux/amd64 -t abco-fe:latest .
-docker image inspect abco-fe:latest --format '{{.Os}}/{{.Architecture}}'   # linux/amd64
-
-docker save abco-fe:latest -o /tmp/abco-fe.tar
-scp -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes /tmp/abco-fe.tar aricoma@10.99.99.53:~/abco-fe.tar
-
+# 2. build a výmena kontajnera
 ssh -i ~/.ssh/id_ed25519 aricoma@10.99.99.53 '
-  docker load -i ~/abco-fe.tar
+  cd ~/abco-fe-src
+  cat .env.production                 # musí mať VITE_KEYCLOAK_URL/REALM/CLIENT_ID
+  docker build -t abco-fe:latest .    # spustí aj lint + typecheck + testy
   docker rm -f abco-fe || true
   docker run -d --name abco-fe --restart unless-stopped -p 8080:80 abco-fe:latest
 '
-```
 
-## Overenie po nasadení
-
-```bash
+# 3. overenie
 ssh -i ~/.ssh/id_ed25519 aricoma@10.99.99.53 '
-  docker ps --filter name=abco-fe --format "{{.Status}}\t{{.Ports}}"
-  curl -s -o /dev/null -w "app /health -> %{http_code}\n" http://10.99.99.53:8080/health
-  curl -s -o /dev/null -w "keycloak realm -> %{http_code}\n" \
-    http://10.99.99.53:8081/realms/aricoma/.well-known/openid-configuration
-  docker exec abco-fe sh -c "grep -rq \"http://10.99.99.53:8081\" /usr/share/nginx/html/assets/" \
+  docker ps --filter name=abco-fe --format "{{.Status}}"
+  curl -s -o /dev/null -w "app -> %{http_code}\n" http://10.99.99.53:8080/health
+  docker exec abco-fe grep -rq "http://10.99.99.53:8081" /usr/share/nginx/html/assets/ \
     && echo "keycloak config v bundle: OK"
 '
 ```
 
-Očakávané: kontajner `Up (healthy)`, obe HTTP `200`, config `OK`. Nakoniec
-otvor `http://10.99.99.53:8080/` a preklikaj login.
+Očakávané: `Up (healthy)`, `app -> 200`, `config: OK`. Nakoniec otvor
+`http://10.99.99.53:8080/` a preklikaj login.
 
-## Rollback
+**Rollback:** image sú tagované commit SHA, drží sa posledných 5.
+`docker rm -f abco-fe && docker run -d --name abco-fe --restart unless-stopped -p 8080:80 abco-fe:<tag>`
 
-Image sú tagované commit SHA, na serveri sa drží posledných 5.
+## Čo sa najčastejšie pokazí
 
-```bash
-ssh -i ~/.ssh/id_ed25519 aricoma@10.99.99.53 '
-  docker images abco-fe --format "{{.Tag}}\t{{.CreatedAt}}"
-  docker rm -f abco-fe
-  docker run -d --name abco-fe --restart unless-stopped -p 8080:80 abco-fe:<predchadzajuci-tag>
-'
-```
+| Symptóm | Príčina |
+|---|---|
+| Redirect loop na `/undefined/protocol/openid-connect/auth` | Keycloak config sa nedostal do bundle — chýba `.env.production` v build kontexte alebo `!.env.production` v `.dockerignore` |
+| `Invalid parameter: redirect_uri` | v klientovi `abcm-fe` chýba `http://10.99.99.53:8080/*` v *Valid redirect URIs* |
+| CORS chyba pri obnove tokenu | v klientovi chýba *Web origins* `http://10.99.99.53:8080` |
+| Kontajner sa nespustí po `docker load` | arm64 image na x86_64 serveri — buildi na serveri, alebo pridaj `--platform linux/amd64` |
+| `crypto.randomUUID is not a function` | do buildu sa nedostal polyfill z `src/config/keycloak.ts` |
 
-## Riešenie problémov
+Keycloak konfigurácia sa **zapeká do bundle pri builde**, nie je runtime premenná —
+každá jej zmena vyžaduje nový build a novú image.
 
-**Redirect loop na `/undefined/protocol/openid-connect/auth`** — do bundle sa
-nedostala Keycloak konfigurácia. Skontroluj, že `.dockerignore` má
-`!.env.production` a že `.env.production` existuje v build kontexte. Potvrdíš to
-príkazom z kroku 5 vyššie: ak vidíš `url:void 0`, je to ono.
+## Jednorazové kroky
 
-**`Invalid parameter: redirect_uri`** — chýba `http://10.99.99.53:8080/*`
-v `Valid redirect URIs` klienta `abcm-fe`.
+**Keycloak klient** v realme `aricoma`: `abcm-fe`, public (client authentication Off),
+standard flow, redirect + post logout URIs `http://10.99.99.53:8080/*`,
+web origins `http://10.99.99.53:8080`.
 
-**Kontajner sa nespustí po `docker load`** — nesúlad architektúry, pozri
-variant B.
+**GitLab runner** (pre automatické nasadenie push-om do `master`) — shell executor na
+`10.99.99.53` s tagom `deploy-abco`. K 25. 8. 2026 neexistuje, job `build-and-deploy`
+ostáva `Pending`. Blokery, v tomto poradí:
 
-**Login zlyhá na `crypto.randomUUID is not a function`** — beží sa cez plain
-HTTP, kde nie je secure context. Polyfill je v `src/config/keycloak.ts`; ak sa
-chyba vráti, znamená to, že sa tento súbor nedostal do buildu.
+1. **Sophos proxy na `10.99.99.1` blokuje `10.99.99.0/24 → GitLab`** (vracia `403`
+   s MITM certifikátom). Treba výnimku `10.99.99.53 → git.esas.autocont.sk:443`.
+   Z Macu ten istý GitLab funguje, čiže ide o firewall pravidlo.
+2. **DNS** — server má len `1.1.1.1`/`8.8.8.8`, interné záznamy nepozná:
+   `echo "172.20.1.90  git.esas.autocont.sk" | sudo tee -a /etc/hosts`
+3. **CA** — GitLab certifikát vydala `HQSR CA`, ktorá nie je v truste Debianu.
+   Chain vytiahni `openssl s_client -connect git.esas.autocont.sk:443 -showcerts`
+   zo stroja, ktorý na GitLab dosiahne, nahraj do
+   `/usr/local/share/ca-certificates/` a spusti `sudo update-ca-certificates`.
+
+Až keď `curl -sI https://git.esas.autocont.sk/` na serveri vráti `200`/`302`, má zmysel
+`gitlab-runner register --executor shell --tag-list deploy-abco` (+ `usermod -aG docker
+gitlab-runner`). Kroky 2, 3 aj inštalácia potrebujú `sudo`, ktoré na účte `aricoma`
+chce heslo.
