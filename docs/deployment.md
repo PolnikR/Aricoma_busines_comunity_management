@@ -9,7 +9,7 @@ zatiaľ neexistuje (dôvody nižšie), takže manuálny postup je jediná cesta.
 ```bash
 # 1. zdrojáky na server — spusti z koreňa repozitára (server nevidí GitLab)
 rsync -az --delete \
-  --exclude node_modules --exclude dist --exclude .git \
+  --exclude node_modules --exclude dist \
   -e "ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes" \
   ./ aricoma@10.99.99.53:~/abco-fe-src/
 
