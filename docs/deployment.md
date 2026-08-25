@@ -7,12 +7,11 @@ zatiaľ neexistuje (dôvody nižšie), takže manuálny postup je jediná cesta.
 ## Manuálne nasadenie
 
 ```bash
-# 1. zdrojáky na server (server nevidí GitLab)
+# 1. zdrojáky na server — spusti z koreňa repozitára (server nevidí GitLab)
 rsync -az --delete \
   --exclude node_modules --exclude dist --exclude .git \
   -e "ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes" \
-  "/Users/melis/Aricoma/ABC Orchestracia/abco-fe/" \
-  aricoma@10.99.99.53:~/abco-fe-src/
+  ./ aricoma@10.99.99.53:~/abco-fe-src/
 
 # 2. build a výmena kontajnera
 ssh -i ~/.ssh/id_ed25519 aricoma@10.99.99.53 '
