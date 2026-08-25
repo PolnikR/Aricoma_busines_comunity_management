@@ -12,13 +12,17 @@ export interface DataTableRequestError {
 interface DataTableRequestStateProps {
   children: ReactNode
   error?: DataTableRequestError | null
-  hasData?: boolean
+  hasCachedData?: boolean
 }
 
-export function DataTableRequestState({ children, error, hasData = false }: DataTableRequestStateProps) {
+export function DataTableRequestState({
+  children,
+  error,
+  hasCachedData = false,
+}: DataTableRequestStateProps) {
   if (!error) return children
 
-  if (hasData) {
+  if (hasCachedData) {
     return (
       <div className="flex min-h-0 flex-col gap-3">
         <FetchErrorAlert
