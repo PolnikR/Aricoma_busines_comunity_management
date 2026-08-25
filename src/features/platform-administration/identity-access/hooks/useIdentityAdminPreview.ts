@@ -2,10 +2,18 @@ import { useCallback, useEffect, useState } from 'react'
 import type { IdentityAdminPreview } from '../services/identityAdminGateway'
 import { useIdentityAdminGateway } from './useIdentityAdminGateway'
 
+function toMutationError(cause: unknown) {
+  return cause instanceof Error
+    ? cause
+    : new Error('Identity administration operation could not be completed')
+}
+
 export function useIdentityAdminPreview() {
   const gateway = useIdentityAdminGateway()
   const [data, setData] = useState<IdentityAdminPreview | null>(null)
   const [error, setError] = useState<Error | null>(null)
+  const [isMutating, setIsMutating] = useState(false)
+  const [mutationError, setMutationError] = useState<Error | null>(null)
 
   const refresh = useCallback(async () => {
     try {
@@ -33,9 +41,27 @@ export function useIdentityAdminPreview() {
   }, [gateway])
 
   const mutate = useCallback(async (operation: () => Promise<unknown>) => {
-    await operation()
-    await refresh()
+    setIsMutating(true)
+    setMutationError(null)
+
+    try {
+      await operation()
+      await refresh()
+    } catch (cause) {
+      setMutationError(toMutationError(cause))
+    } finally {
+      setIsMutating(false)
+    }
   }, [refresh])
 
-  return { data, error, isLoading: data === null && error === null, refresh, mutate, gateway }
+  return {
+    data,
+    error,
+    isLoading: data === null && error === null,
+    isMutating,
+    mutationError,
+    refresh,
+    mutate,
+    gateway,
+  }
 }
