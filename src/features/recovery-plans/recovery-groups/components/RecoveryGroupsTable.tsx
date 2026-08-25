@@ -17,9 +17,9 @@ import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { Tabs } from '@/shared/components/tabs/Tabs'
-import { ExternalLinkIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
-import { buildAirflowDagUrl } from '@/config/externalServices'
+import { normalizeAirflowDagId } from '@/config/externalServices'
+import { AirflowDagLink } from '@/shared/components/airflow/AirflowDagLink'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
 import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
@@ -109,7 +109,9 @@ export function RecoveryGroupsTable({
 
   const navigate = useNavigate()
   const isSelectedOrchestrated = Boolean(selected?.pushToOrchestrator && selected.airflowRunId && selected.orchestrationProviderId)
-  const selectedDagId = isSelectedOrchestrated && selected?.airflowRunId ? `dag_${selected.airflowRunId}` : null
+  const selectedDagId = isSelectedOrchestrated && selected?.airflowRunId
+    ? normalizeAirflowDagId(selected.airflowRunId)
+    : null
   const { latestRun } = useLatestOrchestratorRun(
     isSelectedOrchestrated ? (selected?.orchestrationProviderId ?? null) : null,
     selectedDagId,
@@ -165,21 +167,12 @@ export function RecoveryGroupsTable({
         const providerUrl = platformProviders.find(
           provider => provider.id === group.orchestrationProviderId,
         )?.url
-        const dagId = group.airflowRunId.startsWith('dag_')
-          ? group.airflowRunId
-          : `dag_${group.airflowRunId}`
-
         return (
-          <a
-            href={buildAirflowDagUrl(group.airflowRunId, providerUrl)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 font-mono text-xs text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
-            onClick={(event) => { event.stopPropagation() }}
-          >
-            {dagId}
-            <ExternalLinkIcon className="size-3.5 shrink-0" />
-          </a>
+          <AirflowDagLink
+            runId={group.airflowRunId}
+            providerUrl={providerUrl}
+            stopPropagation
+          />
         )
       },
     },
@@ -464,15 +457,10 @@ export function RecoveryGroupsTable({
                   label={t('tables.recoveryGroups.airflowRunId')}
                   value={
                     selected.airflowRunId ? (
-                      <a
-                        href={buildAirflowDagUrl(selected.airflowRunId, selectedOrchestrationProviderUrl)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
-                      >
-                        {selected.airflowRunId}
-                        <ExternalLinkIcon className="size-3.5 shrink-0" />
-                      </a>
+                      <AirflowDagLink
+                        runId={selected.airflowRunId}
+                        providerUrl={selectedOrchestrationProviderUrl}
+                      />
                     ) : (
                       '—'
                     )

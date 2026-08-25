@@ -22,8 +22,8 @@ import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
 import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/features/recovery-plans/recovery-runs/helpers/formatRecoveryRun'
 import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
-import { buildAirflowDagUrl } from '@/config/externalServices'
-import { ExternalLinkIcon } from '@/shared/icons/Icons'
+import { normalizeAirflowDagId } from '@/config/externalServices'
+import { AirflowDagLink } from '@/shared/components/airflow/AirflowDagLink'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 import type { RollbackReport } from '../api/schemas/recoveryApplicationsSchema'
 import { toRecoveryApplicationJson } from '../helpers/mapRecoveryApplications'
@@ -164,7 +164,7 @@ export function RecoveryApplicationsTable({
   const isSelectedOrchestrated = Boolean(
     selectedAirflowRunId && selected?.orchestrationProviderId,
   )
-  const selectedDagId = selectedAirflowRunId ? `dag_${selectedAirflowRunId}` : null
+  const selectedDagId = selectedAirflowRunId ? normalizeAirflowDagId(selectedAirflowRunId) : null
   const { latestRun } = useLatestOrchestratorRun(
     isSelectedOrchestrated ? (selected?.orchestrationProviderId ?? null) : null,
     selectedDagId,
@@ -181,21 +181,12 @@ export function RecoveryApplicationsTable({
         const providerUrl = platformProviders.find(
           provider => provider.id === app.orchestrationProviderId,
         )?.url
-        const dagId = app.airflowRunId.startsWith('dag_')
-          ? app.airflowRunId
-          : `dag_${app.airflowRunId}`
-
         return (
-          <a
-            href={buildAirflowDagUrl(app.airflowRunId, providerUrl)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 font-mono text-xs text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
-            onClick={(event) => { event.stopPropagation() }}
-          >
-            {dagId}
-            <ExternalLinkIcon className="size-3.5 shrink-0" />
-          </a>
+          <AirflowDagLink
+            runId={app.airflowRunId}
+            providerUrl={providerUrl}
+            stopPropagation
+          />
         )
       },
     },
@@ -416,15 +407,10 @@ export function RecoveryApplicationsTable({
                       label={t('details.airflowDagId')}
                       value={
                         selectedAirflowRunId ? (
-                          <a
-                            href={buildAirflowDagUrl(selectedAirflowRunId, selectedOrchestrationProviderUrl)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 font-mono text-xs text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
-                          >
-                            {selectedDagId}
-                            <ExternalLinkIcon className="size-3.5 shrink-0" />
-                          </a>
+                          <AirflowDagLink
+                            runId={selectedAirflowRunId}
+                            providerUrl={selectedOrchestrationProviderUrl}
+                          />
                         ) : (
                           <span className="font-mono text-xs">{selectedDagId}</span>
                         )
