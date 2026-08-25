@@ -1,3 +1,4 @@
+import { Alert } from '@/shared/components/alert/Alert'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { CheckboxField, Field, Input, Select } from '@/shared/components/form/FormControls'
 import { Tabs } from '@/shared/components/tabs/Tabs'
@@ -26,7 +27,7 @@ function isRealmSettingsTab(tabId: IdentityAccessTabId | null): tabId is RealmSe
 }
 
 export function RealmSettingsSection({ tabId, onTabChange }: RealmSettingsSectionProps) {
-  const { data, error, gateway, mutate } = useIdentityAdminPreview()
+  const { data, error, isMutating, mutationError, gateway, mutate } = useIdentityAdminPreview()
   const activeTab: RealmSettingsTabId = isRealmSettingsTab(tabId) ? tabId : 'general'
   const realm = data?.realm
 
@@ -46,7 +47,7 @@ export function RealmSettingsSection({ tabId, onTabChange }: RealmSettingsSectio
       </IdentitySettingsSection>
     )
   } else if (activeTab === 'login') {
-    content = <LoginPreview value={realm.login} onChange={next => mutate(() => gateway.updateRealmLogin(next))} />
+    content = <LoginPreview value={realm.login} disabled={isMutating} onChange={next => mutate(() => gateway.updateRealmLogin(next))} />
   } else if (activeTab === 'user-profile') {
     content = (
       <IdentitySettingsSection title="User profile" description="Candidate requirements and editability for ABCO identity fields.">
@@ -85,20 +86,24 @@ export function RealmSettingsSection({ tabId, onTabChange }: RealmSettingsSectio
   return (
     <IdentityContentPanel>
       <Tabs items={VISIBLE_REALM_TABS} value={activeTab} onChange={onTabChange} ariaLabel="Realm settings sections" indicator="inset" scrollControls={{ previousLabel: 'Scroll Realm settings sections left', nextLabel: 'Scroll Realm settings sections right' }} />
+      {mutationError ? <Alert className="m-4 mb-0" variant="error" title="Realm change could not be completed" description={mutationError.message} /> : null}
       <div className="min-w-0">{content}</div>
     </IdentityContentPanel>
   )
 }
 
-function LoginPreview({ value, onChange }: { value: RealmLoginPreview; onChange: (value: RealmLoginPreview) => Promise<unknown> }) {
-  const toggle = (key: keyof RealmLoginPreview) => { void onChange({ ...value, [key]: !value[key] }) }
+function LoginPreview({ value, disabled, onChange }: { value: RealmLoginPreview; disabled: boolean; onChange: (value: RealmLoginPreview) => Promise<unknown> }) {
+  const toggle = (key: keyof RealmLoginPreview) => {
+    if (disabled) return
+    void onChange({ ...value, [key]: !value[key] })
+  }
   return (
     <IdentitySettingsSection title="Login" description="Candidate login settings represented as editable preview state.">
       <div className="grid gap-4 sm:grid-cols-2">
-        <CheckboxField label="User registration" checked={value.isUserRegistrationEnabled} onChange={() => { toggle('isUserRegistrationEnabled') }} />
-        <CheckboxField label="Email as username" checked={value.isEmailLoginEnabled} onChange={() => { toggle('isEmailLoginEnabled') }} />
-        <CheckboxField label="Remember me" checked={value.isRememberMeEnabled} onChange={() => { toggle('isRememberMeEnabled') }} />
-        <CheckboxField label="Verify email" checked={value.isEmailVerificationRequired} onChange={() => { toggle('isEmailVerificationRequired') }} />
+        <CheckboxField label="User registration" checked={value.isUserRegistrationEnabled} disabled={disabled} onChange={() => { toggle('isUserRegistrationEnabled') }} />
+        <CheckboxField label="Email as username" checked={value.isEmailLoginEnabled} disabled={disabled} onChange={() => { toggle('isEmailLoginEnabled') }} />
+        <CheckboxField label="Remember me" checked={value.isRememberMeEnabled} disabled={disabled} onChange={() => { toggle('isRememberMeEnabled') }} />
+        <CheckboxField label="Verify email" checked={value.isEmailVerificationRequired} disabled={disabled} onChange={() => { toggle('isEmailVerificationRequired') }} />
       </div>
       <p className="mt-4 text-xs text-text-muted">Changes stay in this preview and are not persisted to a realm.</p>
     </IdentitySettingsSection>

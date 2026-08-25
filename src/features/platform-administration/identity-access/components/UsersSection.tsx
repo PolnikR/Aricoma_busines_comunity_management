@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { DataTable, DataTablePagination, DataTableToolbar, useTableState } from '@/shared/components/data-table'
@@ -40,7 +41,7 @@ function userDisplayName(user: IdentityUserView) {
 
 export function UsersSection(props: UsersSectionProps) {
   const { entityId, tabId, onEntityChange, onTabChange, isAddUserOpen, onSetAddUserOpen } = props
-  const { data, error, isLoading, gateway, mutate, refresh } = useIdentityAdminPreview()
+  const { data, error, isLoading, isMutating, mutationError, gateway, mutate, refresh } = useIdentityAdminPreview()
   const users = data?.users ?? []
   const roles = useMemo(() => data?.roles ?? [], [data?.roles])
   const selectedUser = users.find(user => user.id === entityId) ?? null
@@ -65,9 +66,9 @@ export function UsersSection(props: UsersSectionProps) {
     if (activeTab === 'details') {
       detailContent = <UserDetails user={selectedUser} />
     } else if (activeTab === 'credentials') {
-      detailContent = <UserCredentials user={selectedUser} actions={data?.requiredActions ?? []} onToggle={(actionId, isRequired) => mutate(() => gateway.setUserRequiredAction(selectedUser.id, actionId, isRequired))} />
+      detailContent = <UserCredentials user={selectedUser} actions={data?.requiredActions ?? []} disabled={isMutating} onToggle={(actionId, isRequired) => mutate(() => gateway.setUserRequiredAction(selectedUser.id, actionId, isRequired))} />
     } else if (activeTab === 'role-mappings') {
-      detailContent = <UserRoleMappings user={selectedUser} roles={roles} capabilities={data?.capabilities ?? []} onToggle={(roleId, isAssigned) => mutate(() => gateway.setUserRole(selectedUser.id, roleId, isAssigned))} />
+      detailContent = <UserRoleMappings user={selectedUser} roles={roles} capabilities={data?.capabilities ?? []} disabled={isMutating} onToggle={(roleId, isAssigned) => mutate(() => gateway.setUserRole(selectedUser.id, roleId, isAssigned))} />
     } else if (activeTab === 'sessions') {
       detailContent = <UserSessions sessions={userSessions} />
     } else {
@@ -76,6 +77,7 @@ export function UsersSection(props: UsersSectionProps) {
 
     return (
       <IdentityResourceDetailPage eyebrow="Manage" title={userDisplayName(selectedUser)} description={selectedUser.email} backLabel="Users" onBack={() => { onEntityChange(null) }} tabs={VISIBLE_USER_TABS} tabId={activeTab} onTabChange={nextTab => { onTabChange(nextTab) }} tabAriaLabel="User management sections">
+        {mutationError ? <Alert className="m-4" variant="error" title="Identity change could not be completed" description={mutationError.message} /> : null}
         {detailContent}
       </IdentityResourceDetailPage>
     )
@@ -83,6 +85,7 @@ export function UsersSection(props: UsersSectionProps) {
 
   return (
     <IdentityContentPanel>
+      {mutationError && !isAddUserOpen ? <Alert className="m-4 mb-0" variant="error" title="Identity change could not be completed" description={mutationError.message} /> : null}
       <DataTableToolbar searchValue={table.search} onSearchChange={table.setSearch} searchPlaceholder="Search users" searchLabel="Search users" density={table.density} onDensityChange={table.setDensity} />
       <div className="custom-scrollbar min-h-0 flex-1 lg:overflow-y-auto">
         {error
@@ -90,7 +93,17 @@ export function UsersSection(props: UsersSectionProps) {
           : <DataTable layout="fit" columns={columns} rows={table.pageItems} rowKey={user => user.id} density={table.density} ariaLabel="Users" rowAriaLabel={user => `Open user ${userDisplayName(user)}`} onRowClick={user => { onEntityChange(user.id) }} emptyContent={<EmptyState title={isLoading ? 'Loading user preview' : 'No users found'} description="User preview data is provided by the frontend IdentityAdminGateway adapter." />} />}
       </div>
       {!error ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
-      <AddUserModal open={isAddUserOpen} onClose={() => { onSetAddUserOpen(false) }} onCreate={async input => { await mutate(() => gateway.createUser(input)); onSetAddUserOpen(false) }} />
+      <AddUserModal
+        open={isAddUserOpen}
+        isCreating={isMutating}
+        error={mutationError}
+        onClose={() => { onSetAddUserOpen(false) }}
+        onCreate={async input => {
+          const created = await mutate(() => gateway.createUser(input))
+          if (created) onSetAddUserOpen(false)
+          return created
+        }}
+      />
     </IdentityContentPanel>
   )
 }
@@ -99,20 +112,20 @@ function UserDetails({ user }: { user: IdentityUserView }) {
   return <IdentitySettingsSection title="User details" description="Focused identity fields from the frontend preview contract."><div className="grid min-w-0 gap-4 md:grid-cols-2"><Field label="Username" htmlFor="identity-user-username"><Input id="identity-user-username" value={user.username} readOnly /></Field><Field label="Email" htmlFor="identity-user-email"><Input id="identity-user-email" value={user.email} readOnly /></Field><Field label="First name" htmlFor="identity-user-first-name"><Input id="identity-user-first-name" value={user.firstName} readOnly /></Field><Field label="Last name" htmlFor="identity-user-last-name"><Input id="identity-user-last-name" value={user.lastName} readOnly /></Field><div><span className="mb-1.5 block text-xs font-medium text-text-secondary">Enabled/status</span><Badge color={user.enabled ? 'success' : 'light'}>{user.enabled ? 'active' : 'inactive'}</Badge></div></div></IdentitySettingsSection>
 }
 
-function UserCredentials({ user, actions, onToggle }: { user: IdentityUserView; actions: RequiredActionView[]; onToggle: (actionId: string, isRequired: boolean) => Promise<unknown> }) {
-  return <IdentitySettingsSection title="Credentials and required actions" description="Safe preview controls without credential values or authentication material."><p className="mb-4 text-sm text-text-secondary">No credential values are stored or displayed in this preview.</p><div className="grid gap-3 sm:grid-cols-2">{actions.map(action => <CheckboxField key={action.id} label={`Require ${action.name}`} checked={user.requiredActionIds.includes(action.id)} onChange={event => { void onToggle(action.id, event.currentTarget.checked) }} />)}</div></IdentitySettingsSection>
+function UserCredentials({ user, actions, disabled, onToggle }: { user: IdentityUserView; actions: RequiredActionView[]; disabled: boolean; onToggle: (actionId: string, isRequired: boolean) => Promise<unknown> }) {
+  return <IdentitySettingsSection title="Credentials and required actions" description="Safe preview controls without credential values or authentication material."><p className="mb-4 text-sm text-text-secondary">No credential values are stored or displayed in this preview.</p><div className="grid gap-3 sm:grid-cols-2">{actions.map(action => <CheckboxField key={action.id} label={`Require ${action.name}`} checked={user.requiredActionIds.includes(action.id)} disabled={disabled} onChange={event => { void onToggle(action.id, event.currentTarget.checked) }} />)}</div></IdentitySettingsSection>
 }
 
-function UserRoleMappings({ user, roles, capabilities, onToggle }: { user: IdentityUserView; roles: IdentityRoleView[]; capabilities: IdentityCapabilityView[]; onToggle: (roleId: string, isAssigned: boolean) => Promise<unknown> }) {
+function UserRoleMappings({ user, roles, capabilities, disabled, onToggle }: { user: IdentityUserView; roles: IdentityRoleView[]; capabilities: IdentityCapabilityView[]; disabled: boolean; onToggle: (roleId: string, isAssigned: boolean) => Promise<unknown> }) {
   const assigned = roles.filter(role => user.roleIds.includes(role.id))
   const available = roles.filter(role => !user.roleIds.includes(role.id))
   const effectiveCapabilityIds = new Set(assigned.flatMap(role => role.capabilityIds))
   const effectiveCapabilities = capabilities.filter(capability => effectiveCapabilityIds.has(capability.id))
-  return <div className="space-y-4 p-4"><RoleList title="Assigned ABCO client roles" roles={assigned} actionLabel="Remove" onAction={role => onToggle(role.id, false)} empty="No assigned ABCO client roles." /><RoleList title="Available ABCO client roles" roles={available} actionLabel="Assign" onAction={role => onToggle(role.id, true)} empty="All preview roles are assigned." /><section className="rounded-lg border border-border bg-surface p-4"><h3 className="text-sm font-semibold text-text-primary">Effective ABCO application capabilities</h3><ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-text-secondary">{effectiveCapabilities.map(capability => <li key={capability.id}><span className="font-medium text-text-primary">{capability.label}:</span> {capability.description}</li>)}</ul></section></div>
+  return <div className="space-y-4 p-4"><RoleList title="Assigned ABCO client roles" roles={assigned} actionLabel="Remove" disabled={disabled} onAction={role => onToggle(role.id, false)} empty="No assigned ABCO client roles." /><RoleList title="Available ABCO client roles" roles={available} actionLabel="Assign" disabled={disabled} onAction={role => onToggle(role.id, true)} empty="All preview roles are assigned." /><section className="rounded-lg border border-border bg-surface p-4"><h3 className="text-sm font-semibold text-text-primary">Effective ABCO application capabilities</h3><ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-text-secondary">{effectiveCapabilities.map(capability => <li key={capability.id}><span className="font-medium text-text-primary">{capability.label}:</span> {capability.description}</li>)}</ul></section></div>
 }
 
-function RoleList({ title, roles, actionLabel, onAction, empty }: { title: string; roles: IdentityRoleView[]; actionLabel: string; onAction: (role: IdentityRoleView) => Promise<unknown>; empty: string }) {
-  return <section className="rounded-lg border border-border bg-surface p-4"><h3 className="text-sm font-semibold text-text-primary">{title}</h3>{roles.length === 0 ? <p className="mt-3 text-sm text-text-muted">{empty}</p> : <ul className="mt-3 divide-y divide-border">{roles.map(role => <li key={role.id} className="flex min-w-0 items-center justify-between gap-3 py-3"><div className="min-w-0"><p className="font-medium text-text-primary">{role.name}</p><p className="text-xs text-text-muted">{role.description}</p></div><Button size="sm" variant="outline" onClick={() => { void onAction(role) }}>{actionLabel}</Button></li>)}</ul>}</section>
+function RoleList({ title, roles, actionLabel, disabled, onAction, empty }: { title: string; roles: IdentityRoleView[]; actionLabel: string; disabled: boolean; onAction: (role: IdentityRoleView) => Promise<unknown>; empty: string }) {
+  return <section className="rounded-lg border border-border bg-surface p-4"><h3 className="text-sm font-semibold text-text-primary">{title}</h3>{roles.length === 0 ? <p className="mt-3 text-sm text-text-muted">{empty}</p> : <ul className="mt-3 divide-y divide-border">{roles.map(role => <li key={role.id} className="flex min-w-0 items-center justify-between gap-3 py-3"><div className="min-w-0"><p className="font-medium text-text-primary">{role.name}</p><p className="text-xs text-text-muted">{role.description}</p></div><Button size="sm" variant="outline" disabled={disabled} onClick={() => { void onAction(role) }}>{actionLabel}</Button></li>)}</ul>}</section>
 }
 
 function UserSessions({ sessions }: { sessions: Session[] }) {
@@ -122,9 +135,18 @@ function UserSessions({ sessions }: { sessions: Session[] }) {
 
 const EMPTY_USER_INPUT: CreateIdentityUserInput = { username: '', email: '', firstName: '', lastName: '', enabled: true }
 
-function AddUserModal({ open, onClose, onCreate }: { open: boolean; onClose: () => void; onCreate: (input: CreateIdentityUserInput) => Promise<void> }) {
+function AddUserModal({ open, isCreating, error, onClose, onCreate }: { open: boolean; isCreating: boolean; error: Error | null; onClose: () => void; onCreate: (input: CreateIdentityUserInput) => Promise<boolean> }) {
   const [input, setInput] = useState(EMPTY_USER_INPUT)
   const isValid = [input.username, input.email, input.firstName, input.lastName].every(value => value.trim().length > 0)
   const setField = (field: keyof CreateIdentityUserInput, value: string | boolean) => { setInput(current => ({ ...current, [field]: value })) }
-  return <Modal open={open} onClose={onClose} title="Add user" footer={<><Button size="sm" variant="ghost" onClick={onClose}>Cancel</Button><Button size="sm" disabled={!isValid} onClick={() => { void onCreate(input).then(() => { setInput(EMPTY_USER_INPUT) }) }}>Create user</Button></>}><div className="space-y-4 px-6 py-4"><p className="text-xs text-text-muted">Creates an in-memory preview user only. A future gateway adapter can replace this transport-neutral flow.</p><Field label="Username" htmlFor="new-user-username"><Input id="new-user-username" value={input.username} onChange={event => { setField('username', event.currentTarget.value) }} /></Field><Field label="Email" htmlFor="new-user-email"><Input id="new-user-email" type="email" value={input.email} onChange={event => { setField('email', event.currentTarget.value) }} /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="First name" htmlFor="new-user-first-name"><Input id="new-user-first-name" value={input.firstName} onChange={event => { setField('firstName', event.currentTarget.value) }} /></Field><Field label="Last name" htmlFor="new-user-last-name"><Input id="new-user-last-name" value={input.lastName} onChange={event => { setField('lastName', event.currentTarget.value) }} /></Field></div><CheckboxField label="Enabled" checked={input.enabled} onChange={event => { setField('enabled', event.currentTarget.checked) }} /></div></Modal>
+  const resetAndClose = () => {
+    if (isCreating) return
+    setInput({ ...EMPTY_USER_INPUT })
+    onClose()
+  }
+  const create = async () => {
+    if (!isValid || isCreating) return
+    if (await onCreate(input)) setInput({ ...EMPTY_USER_INPUT })
+  }
+  return <Modal open={open} onClose={resetAndClose} title="Add user" footer={<><Button size="sm" variant="ghost" disabled={isCreating} onClick={resetAndClose}>Cancel</Button><Button size="sm" disabled={!isValid || isCreating} onClick={() => { void create() }}>{isCreating ? 'Creating user…' : 'Create user'}</Button></>}><div className="space-y-4 px-6 py-4">{error ? <Alert variant="error" title="User could not be created" description={error.message} /> : null}<p className="text-xs text-text-muted">Creates an in-memory preview user only. A future gateway adapter can replace this transport-neutral flow.</p><Field label="Username" htmlFor="new-user-username"><Input id="new-user-username" value={input.username} disabled={isCreating} onChange={event => { setField('username', event.currentTarget.value) }} /></Field><Field label="Email" htmlFor="new-user-email"><Input id="new-user-email" type="email" value={input.email} disabled={isCreating} onChange={event => { setField('email', event.currentTarget.value) }} /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="First name" htmlFor="new-user-first-name"><Input id="new-user-first-name" value={input.firstName} disabled={isCreating} onChange={event => { setField('firstName', event.currentTarget.value) }} /></Field><Field label="Last name" htmlFor="new-user-last-name"><Input id="new-user-last-name" value={input.lastName} disabled={isCreating} onChange={event => { setField('lastName', event.currentTarget.value) }} /></Field></div><CheckboxField label="Enabled" checked={input.enabled} disabled={isCreating} onChange={event => { setField('enabled', event.currentTarget.checked) }} /></div></Modal>
 }

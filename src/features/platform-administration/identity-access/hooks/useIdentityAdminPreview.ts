@@ -47,8 +47,10 @@ export function useIdentityAdminPreview() {
     try {
       await operation()
       await refresh()
+      return true
     } catch (cause) {
       setMutationError(toMutationError(cause))
+      return false
     } finally {
       setIsMutating(false)
     }

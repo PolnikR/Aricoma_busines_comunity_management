@@ -2,6 +2,9 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { RealmSettingsSection } from './RealmSettingsSection'
+import { IdentityAdminGatewayProvider } from '../services/IdentityAdminGatewayProvider'
+import { createMockIdentityAdminGateway } from '../services/mockIdentityAdminGateway'
+import type { RealmLoginPreview } from '../services/identityAdminGateway'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
@@ -47,5 +50,33 @@ describe('RealmSettingsSection', () => {
 
     rerender(<RealmSettingsSection tabId="themes" onTabChange={vi.fn()} />)
     expect(await screen.findByDisplayValue('abco')).toBeInTheDocument()
+  })
+
+  it('disables login mutations while pending and exposes a rejected mutation', async () => {
+    const gateway = createMockIdentityAdminGateway()
+    let rejectMutation: ((reason?: unknown) => void) | undefined
+    const mutation = new Promise<void>((_, reject) => { rejectMutation = reject })
+    const updateRealmLogin = vi.fn((input: RealmLoginPreview) => {
+      void input
+      return mutation
+    })
+    gateway.updateRealmLogin = updateRealmLogin
+
+    render(
+      <IdentityAdminGatewayProvider gateway={gateway}>
+        <RealmSettingsSection tabId="login" onTabChange={vi.fn()} />
+      </IdentityAdminGatewayProvider>,
+    )
+
+    const registration = await screen.findByRole('checkbox', { name: 'User registration' })
+    await userEvent.click(registration)
+    expect(updateRealmLogin).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('checkbox', { name: 'User registration' })).toBeDisabled()
+    expect(screen.getByRole('checkbox', { name: 'Email as username' })).toBeDisabled()
+
+    rejectMutation?.(new Error('Realm update rejected'))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Realm change could not be completed')
+    expect(screen.getByRole('alert')).toHaveTextContent('Realm update rejected')
+    expect(screen.getByRole('checkbox', { name: 'User registration' })).not.toBeDisabled()
   })
 })
