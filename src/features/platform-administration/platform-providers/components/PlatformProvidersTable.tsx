@@ -200,8 +200,8 @@ export function PlatformProvidersTable({
             <Badge color="info" size="sm">{selected.type}</Badge>
             {selected.type === 'SMTP' ? (
               <Button
-                size="xs"
-                variant="soft"
+                size="sm"
+                variant="outline"
                 onClick={() => { setIsSmtpDialogOpen(true) }}
               >
                 {t('platformProviders.smtpDialog.button')}

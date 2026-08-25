@@ -71,7 +71,13 @@ describe('PlatformProvidersTable', () => {
     expect(screen.queryByRole('button', { name: 'SMTP' })).not.toBeInTheDocument()
     await user.click(screen.getByText('Test SMTP'))
 
-    expect(screen.getByRole('button', { name: 'SMTP' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'SMTP' })).toHaveClass(
+      'h-9',
+      'border',
+      'border-border-strong',
+      'bg-surface',
+      'shadow-sm',
+    )
   })
 
   it('opens SMTP details for the selected provider without a second modal', async () => {
