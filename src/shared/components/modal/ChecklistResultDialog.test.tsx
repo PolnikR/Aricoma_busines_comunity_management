@@ -56,6 +56,25 @@ describe('ChecklistResultDialog', () => {
     expect(screen.getByText('test-123')).toBeInTheDocument()
   })
 
+  it('renders informational content without a test status or passed count', () => {
+    renderWithProviders(
+      <ChecklistResultDialog
+        open
+        title="SMTP provider"
+        primaryName="Test SMTP"
+        subtitle="smtp-01"
+        checks={[]}
+        responseData={null}
+        onClose={vi.fn()}
+      >
+        <p>SMTP provider details</p>
+      </ChecklistResultDialog>,
+    )
+
+    expect(screen.getByText('SMTP provider details')).toBeInTheDocument()
+    expect(screen.queryByText(/passed/)).not.toBeInTheDocument()
+  })
+
   it('displays status bar with passed count', () => {
     renderWithProviders(<ChecklistResultDialog {...baseProps} />)
     expect(screen.getByText('Test completed')).toBeInTheDocument()
