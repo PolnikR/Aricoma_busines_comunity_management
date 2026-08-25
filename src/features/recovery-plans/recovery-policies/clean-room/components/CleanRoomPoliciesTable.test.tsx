@@ -78,4 +78,10 @@ describe('CleanRoomPoliciesTable', () => {
     render(<CleanRoomPoliciesTable policies={[]} isLoading={false} error={new OrvalApiError(503, 'Unavailable', { detail: 'Clean room service unavailable.' })} isRetrying={false} onRetry={vi.fn()} />)
     expect(screen.getByRole('alert')).toHaveTextContent('Clean room service unavailable.')
   })
+
+  it('keeps pagination available when cached policies remain after a refresh error', () => {
+    render(<CleanRoomPoliciesTable policies={[policy]} isLoading={false} error={new Error('background refresh failed')} isRetrying={false} onRetry={vi.fn()} />)
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByLabelText('Rows per page')).toBeInTheDocument()
+  })
 })

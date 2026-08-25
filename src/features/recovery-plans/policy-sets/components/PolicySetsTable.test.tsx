@@ -158,6 +158,21 @@ describe('PolicySetsTable', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 
+  it('keeps pagination available when cached policy sets remain after a refresh error', () => {
+    render(
+      <PolicySetsTable
+        policySets={[policySet]}
+        isLoading={false}
+        error={new Error('background refresh failed')}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByLabelText('Rows per page')).toBeInTheDocument()
+  })
+
   it('closes the confirmation and shows backend detail when delete fails', async () => {
     const user = userEvent.setup()
     deleteMutation.error = null

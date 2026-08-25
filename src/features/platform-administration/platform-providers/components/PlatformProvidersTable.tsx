@@ -178,7 +178,7 @@ export function PlatformProvidersTable({
         />
       </DataTableRequestState>
 
-      {!error ? (
+      {(!error || providers.length > 0) ? (
         <DataTablePagination
           page={table.page}
           pageSize={table.pageSize}

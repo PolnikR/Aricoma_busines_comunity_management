@@ -183,7 +183,7 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
               />
             </DataTableRequestState>
           </div>
-          {!error ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
+          {(!error || roles.length > 0) ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
         </>
       )}
     </IdentityContentPanel>

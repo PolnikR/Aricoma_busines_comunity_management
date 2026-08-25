@@ -75,4 +75,19 @@ describe('RealmRolesSection', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(refetch).toHaveBeenCalledOnce()
   })
+
+  it('keeps pagination available when cached roles remain after a refresh error', () => {
+    vi.mocked(useRolesPermissions).mockReturnValue({
+      data: { roles: [role], permissions: ['providers.read'] },
+      isLoading: false,
+      error: new Error('background refresh failed'),
+      refetch: vi.fn(),
+    } as never)
+    vi.mocked(useUsers).mockReturnValue({ data: [], isLoading: false, error: null, refetch: vi.fn() })
+
+    renderSection()
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByLabelText('Rows per page')).toBeInTheDocument()
+  })
 })

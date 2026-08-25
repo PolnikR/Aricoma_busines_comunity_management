@@ -235,7 +235,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
         />
       </DataTableRequestState>
 
-      {!error ? (
+      {(!error || policies.length > 0) ? (
         <DataTablePagination
           page={table.page}
           pageSize={table.pageSize}

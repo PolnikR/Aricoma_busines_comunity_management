@@ -187,6 +187,21 @@ describe('PlatformProvidersTable', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 
+  it('keeps pagination available when cached providers remain after a refresh error', () => {
+    render(
+      <PlatformProvidersTable
+        providers={[baseProvider]}
+        isLoading={false}
+        error={new Error('background refresh failed')}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByLabelText('Rows per page')).toBeInTheDocument()
+  })
+
   it('closes failed delete confirmation and shows backend detail in the table context', async () => {
     const user = userEvent.setup()
     render(

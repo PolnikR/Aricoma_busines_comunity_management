@@ -207,6 +207,7 @@ describe('RecoveryGroupsTable', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Recovery groups could not be loaded')
     expect(screen.getByText('No recovery groups defined yet')).toBeInTheDocument()
+    expect(screen.getByLabelText('Rows per page')).toBeInTheDocument()
   })
 
   it('renders the IBM Power workload label', () => {

@@ -100,6 +100,18 @@ describe('RecoveryApplicationsTable', () => {
     expect(screen.getByText(/applications: expected array/)).toBeInTheDocument()
   })
 
+  it('keeps pagination available when cached applications remain after a refresh error', () => {
+    renderTable(
+      <RecoveryApplicationsTable
+        applications={[application]}
+        error={new Error('background refresh failed')}
+      />,
+    )
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByLabelText('Rows per page')).toBeInTheDocument()
+  })
+
   it('opens backend application details and dispatches Edit without Delete', async () => {
     const user = userEvent.setup()
     const onEdit = vi.fn()

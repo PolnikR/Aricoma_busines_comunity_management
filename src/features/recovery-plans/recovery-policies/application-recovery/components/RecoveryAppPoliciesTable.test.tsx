@@ -83,4 +83,10 @@ describe('RecoveryAppPoliciesTable', () => {
     render(<RecoveryAppPoliciesTable policies={[]} isLoading={false} error={new OrvalApiError(503, 'Unavailable', { detail: 'Recovery policy service unavailable.' })} isRetrying={false} onRetry={vi.fn()} />)
     expect(screen.getByRole('alert')).toHaveTextContent('Recovery policy service unavailable.')
   })
+
+  it('keeps pagination available when cached policies remain after a refresh error', () => {
+    render(<RecoveryAppPoliciesTable policies={[policy]} isLoading={false} error={new Error('background refresh failed')} isRetrying={false} onRetry={vi.fn()} />)
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByLabelText('Rows per page')).toBeInTheDocument()
+  })
 })

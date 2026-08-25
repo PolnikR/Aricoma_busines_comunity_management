@@ -206,7 +206,7 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
         />
       </DataTableRequestState>
 
-      {!error ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
+      {(!error || policies.length > 0) ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
 
       <DetailDrawer
         open={selected !== null}

@@ -275,7 +275,7 @@ export function ProvidersCatalogueTable({
         />
       </DataTableRequestState>
 
-      {!error ? (
+      {(!error || allProviders.length > 0) ? (
         <DataTablePagination
           page={table.page}
           pageSize={table.pageSize}

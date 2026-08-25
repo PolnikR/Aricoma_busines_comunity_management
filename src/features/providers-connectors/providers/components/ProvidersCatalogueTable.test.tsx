@@ -188,6 +188,27 @@ describe('ProvidersCatalogueTable', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 
+  it('keeps pagination available when the all-provider cache survives a refresh error', () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProvidersCatalogueTable
+          providers={[providerA]}
+          allProviders={[providerA, providerB]}
+          roleFilter="all"
+          onRoleFilterChange={vi.fn()}
+          isLoading={false}
+          error={new Error('background refresh failed')}
+          isRetrying={false}
+          onRetry={vi.fn()}
+        />
+      </QueryClientProvider>,
+    )
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByLabelText('Rows per page')).toBeInTheDocument()
+  })
+
   it('requests a role from the server only after filters are applied', async () => {
     renderTable()
     await screen.findByText('Production vCenter')

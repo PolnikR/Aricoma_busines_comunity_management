@@ -152,7 +152,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         </DataTableRequestState>
       </div>
 
-      {!error ? (
+      {(!error || policySets.length > 0) ? (
         <DataTablePagination
           page={table.page}
           pageSize={table.pageSize}

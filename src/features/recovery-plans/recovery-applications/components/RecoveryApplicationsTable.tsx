@@ -314,7 +314,7 @@ export function RecoveryApplicationsTable({
         />
       </DataTableRequestState>
 
-      {!error ? (
+      {(!error || applications.length > 0) ? (
         <DataTablePagination
           page={table.page}
           pageSize={table.pageSize}

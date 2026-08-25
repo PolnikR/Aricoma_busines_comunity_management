@@ -182,7 +182,7 @@ export function RecoveryRunsTable({
         </DataTableRequestState>
       </div>
 
-      {!error ? (
+      {(!error || hasCachedData) ? (
         <DataTablePagination
           page={page}
           pageSize={pageSize}

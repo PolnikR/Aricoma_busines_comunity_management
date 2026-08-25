@@ -204,5 +204,6 @@ describe('RecoveryRunsTable', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Recovery runs could not be loaded')
     expect(screen.getByText('No entities match your search.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Rows per page')).toBeInTheDocument()
   })
 })

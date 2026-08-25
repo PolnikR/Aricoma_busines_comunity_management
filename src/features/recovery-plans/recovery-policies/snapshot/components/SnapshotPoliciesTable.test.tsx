@@ -113,6 +113,7 @@ describe('SnapshotPoliciesTable', () => {
 
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByText('No snapshot policies match your search.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Rows per page')).toBeInTheDocument()
   })
 
   it('shows supported backend detail in the load error', () => {
