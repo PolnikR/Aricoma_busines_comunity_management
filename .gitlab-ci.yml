@@ -1,0 +1,97 @@
+variables:
+  AUTO_DEVOPS_ENABLED: "false"
+  IMAGE_TAG: ${CI_COMMIT_SHORT_SHA}
+  IMAGE_NAME: abco-fe
+  CONTAINER_NAME: abco-fe
+  HOST_PORT: "8080"
+  DEPLOY_URL: "http://10.99.99.53:8080"
+  # Vite inlines VITE_* at build time, so these are baked into the bundle and
+  # cannot be changed without a rebuild. Override them in
+  # Settings > CI/CD > Variables to point a deployment at a different Keycloak.
+  VITE_KEYCLOAK_URL: "http://10.99.99.53:8081"
+  VITE_KEYCLOAK_REALM: "aricoma"
+  VITE_KEYCLOAK_CLIENT_ID: "abcm-fe"
+
+stages:
+  - build-and-deploy
+  - check
+
+build-and-deploy:
+  stage: build-and-deploy
+  tags:
+    - deploy-abco
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: on_success
+    - when: manual
+  script:
+    # Fail before the build rather than shipping a bundle with
+    # new Keycloak({url: undefined, ...}), which sends the app into a
+    # recursive /undefined/protocol/openid-connect redirect loop.
+    - |
+      for v in VITE_KEYCLOAK_URL VITE_KEYCLOAK_REALM VITE_KEYCLOAK_CLIENT_ID; do
+        if [ -z "$(eval echo \$$v)" ]; then
+          echo "CHYBA: premenna $v nie je nastavena"
+          exit 1
+        fi
+      done
+    - |
+      cat > .env.production <<EOF
+      VITE_KEYCLOAK_URL=${VITE_KEYCLOAK_URL}
+      VITE_KEYCLOAK_REALM=${VITE_KEYCLOAK_REALM}
+      VITE_KEYCLOAK_CLIENT_ID=${VITE_KEYCLOAK_CLIENT_ID}
+      EOF
+    - echo "Keycloak config pre build:" && cat .env.production
+    - docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest .
+    # .dockerignore excludes .env.*, so a missing !.env.production exception
+    # would silently produce an undefined Keycloak config. Verify the values
+    # actually reached the bundle before touching the running container.
+    - |
+      if ! docker run --rm --entrypoint sh ${IMAGE_NAME}:${IMAGE_TAG} \
+        -c "grep -rq '${VITE_KEYCLOAK_URL}' /usr/share/nginx/html/assets/"; then
+        echo "CHYBA: Keycloak config sa nezapiekla do bundle (skontroluj .dockerignore)"
+        exit 1
+      fi
+    - 'echo "OK: Keycloak config je v bundle"'
+    - docker stop ${CONTAINER_NAME} || true
+    - docker rm ${CONTAINER_NAME} || true
+    - docker run -d --name ${CONTAINER_NAME} --restart unless-stopped -p ${HOST_PORT}:80 ${IMAGE_NAME}:${IMAGE_TAG}
+    - docker images ${IMAGE_NAME} --format "{{.Repository}}:{{.Tag}}" | tail -n +6 | xargs -r docker rmi || true
+  environment:
+    name: production
+    url: ${DEPLOY_URL}
+
+verify_deploy:
+  stage: check
+  tags:
+    - deploy-abco
+  script:
+    - |
+      echo "Cakam 10s..."
+      sleep 10
+      STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${DEPLOY_URL}/health)
+      if [ "$STATUS" = "200" ]; then
+        echo "OK: HTTP $STATUS"
+      else
+        echo "CHYBA: HTTP $STATUS"
+        docker logs --tail 50 ${CONTAINER_NAME}
+        exit 1
+      fi
+    - |
+      echo "Overujem Keycloak config v nasadenom bundle..."
+      docker exec ${CONTAINER_NAME} sh -c \
+        "grep -rq '${VITE_KEYCLOAK_URL}' /usr/share/nginx/html/assets/" \
+        && echo "OK: ${VITE_KEYCLOAK_URL} / ${VITE_KEYCLOAK_REALM} / ${VITE_KEYCLOAK_CLIENT_ID}" \
+        || { echo "CHYBA: nasadeny bundle nema Keycloak config"; exit 1; }
+    - |
+      echo "Overujem dostupnost Keycloak realmu..."
+      STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+        "${VITE_KEYCLOAK_URL}/realms/${VITE_KEYCLOAK_REALM}/.well-known/openid-configuration")
+      if [ "$STATUS" = "200" ]; then
+        echo "OK: realm ${VITE_KEYCLOAK_REALM} odpoveda"
+      else
+        echo "CHYBA: realm ${VITE_KEYCLOAK_REALM} vratil HTTP $STATUS"
+        exit 1
+      fi
+  needs:
+    - build-and-deploy
