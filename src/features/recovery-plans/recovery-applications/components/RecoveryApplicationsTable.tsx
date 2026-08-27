@@ -31,6 +31,7 @@ import { RecoveryApplicationRollbackResultModal } from './RecoveryApplicationRol
 
 interface RecoveryApplicationsTableProps {
   applications: RecoveryApplicationListItem[]
+  isLoading?: boolean
   providers?: { id: string; name: string }[]
   onEdit?: (id: string) => void
   onDelete?: (app: RecoveryApplicationListItem) => Promise<{ applications: RecoveryApplicationListItem[]; rollback: RollbackReport | null }>
@@ -117,6 +118,7 @@ function getBaseColumns(t: ReturnType<typeof useTranslation>['t'], providers?: {
 
 export function RecoveryApplicationsTable({
   applications,
+  isLoading = false,
   providers,
   onEdit,
   onDelete,
@@ -253,6 +255,7 @@ export function RecoveryApplicationsTable({
             >
               <Select
                 id="recovery-application-environment-filter"
+                disabled={isLoading}
                 value={pendingFilters.environment}
                 onChange={(event) => {
                   setPendingFilters(current => ({
@@ -273,6 +276,7 @@ export function RecoveryApplicationsTable({
             >
               <Select
                 id="recovery-application-platform-filter"
+                disabled={isLoading}
                 value={pendingFilters.platform}
                 onChange={(event) => {
                   setPendingFilters(current => ({
@@ -304,10 +308,11 @@ export function RecoveryApplicationsTable({
         <DataTable
           columns={columns}
           rows={table.pageItems}
+          isLoading={isLoading}
           rowKey={(app) => app.id}
           density={table.density}
           minWidthClassName="min-w-250"
-          ariaLabel={t('pages.recovery.tableAriaLabel')}
+          ariaLabel={isLoading ? t('pages.recovery.loading') : t('pages.recovery.tableAriaLabel')}
           onRowClick={(app) => { setSelectedId(app.id); setDetailTab('overview') }}
           selectedRowKey={selectedId}
           emptyContent={applications.length > 0 ? t('messages.noResults') : t('pages.recovery.empty.noApplications')}
@@ -319,6 +324,7 @@ export function RecoveryApplicationsTable({
           page={table.page}
           pageSize={table.pageSize}
           total={table.total}
+          isLoading={isLoading}
           onPageChange={table.setPage}
           onPageSizeChange={table.setPageSize}
         />
