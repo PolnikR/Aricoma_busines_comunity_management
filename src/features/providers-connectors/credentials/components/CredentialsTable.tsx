@@ -6,7 +6,6 @@ import {
   DataTable,
   DataTablePagination,
   DataTableRequestState,
-  DataTableSkeleton,
   DataTableToolbar,
   DetailDrawer,
   DetailRow,
@@ -65,16 +64,6 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
     },
   ]
 
-  if (isLoading) {
-    return (
-      <DataTableSkeleton
-        columnCount={3}
-        ariaLabel={t('credentials.loading')}
-        className="flex-1 rounded-none border-0 shadow-none lg:min-h-0"
-      />
-    )
-  }
-
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {deleteCredential.error ? (
@@ -107,9 +96,10 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
           columns={columns}
           rows={table.pageItems}
           rowKey={credential => credential.id}
+          isLoading={isLoading}
           density={table.density}
           minWidthClassName="min-w-190"
-          ariaLabel={t('credentials.table.ariaLabel')}
+          ariaLabel={t(isLoading ? 'credentials.loading' : 'credentials.table.ariaLabel')}
           onRowClick={credential => { setSelectedId(credential.id) }}
           selectedRowKey={selectedId}
           emptyContent={rows.length > 0 ? t('credentials.noMatches') : t('credentials.empty')}
@@ -120,6 +110,7 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
           page={table.page}
           pageSize={table.pageSize}
           total={table.total}
+          isLoading={isLoading}
           onPageChange={table.setPage}
           onPageSizeChange={table.setPageSize}
         />
