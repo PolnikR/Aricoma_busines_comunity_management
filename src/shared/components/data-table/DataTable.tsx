@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
+import { SkeletonBlock } from './DataTableSkeleton'
 
 export type TableDensity = 'comfortable' | 'compact'
 
@@ -11,6 +12,8 @@ export interface ColumnDef<T> {
   hideInCompact?: boolean
   cellClassName?: string
 }
+
+const loadingWidths = ['w-24', 'w-16', 'w-20', 'w-28', 'w-14']
 
 interface DataTableProps<T> {
   columns: ColumnDef<T>[]
@@ -27,6 +30,8 @@ interface DataTableProps<T> {
   ariaLabel?: string
   headerCellClassName?: string
   cellClassName?: string
+  isLoading?: boolean
+  loadingRowCount?: number
 }
 
 export function DataTable<T>({
@@ -44,6 +49,8 @@ export function DataTable<T>({
   ariaLabel = 'Data table',
   headerCellClassName,
   cellClassName,
+  isLoading = false,
+  loadingRowCount = 6,
 }: DataTableProps<T>) {
   const visibleColumns = columns.filter((column) => !(density === 'compact' && column.hideInCompact))
   const rowPad = density === 'compact' ? 'py-1.5' : 'py-2.5'
@@ -61,7 +68,9 @@ export function DataTable<T>({
       className={isFitLayout
         ? 'w-full min-w-0 overflow-x-hidden'
         : 'custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain'}
-      tabIndex={isFitLayout ? undefined : 0}
+      tabIndex={isFitLayout || isLoading ? undefined : 0}
+      role={isLoading ? 'status' : undefined}
+      aria-busy={isLoading ? true : undefined}
       aria-label={ariaLabel}
     >
       <Table className={isFitLayout ? 'w-full table-fixed' : minWidthClassName}>
@@ -74,8 +83,21 @@ export function DataTable<T>({
             ))}
           </TableRow>
         </TableHeader>
-        <TableBody className="divide-y divide-border">
-          {rows.length > 0 ? (
+        <TableBody className="divide-y divide-border" aria-hidden={isLoading ? true : undefined}>
+          {isLoading ? (
+            Array.from({ length: Math.max(1, loadingRowCount) }, (_, rowIndex) => (
+              <TableRow key={rowIndex} className="bg-surface">
+                {visibleColumns.map((column, columnIndex) => (
+                  <TableCell
+                    key={column.id}
+                    className={`${bodyCell} ${column.align === 'right' ? 'text-right tabular-nums' : ''} ${column.cellClassName ?? ''}`}
+                  >
+                    <SkeletonBlock className={`h-3.5 ${loadingWidths[(rowIndex + columnIndex) % loadingWidths.length] ?? 'w-20'}`} />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : rows.length > 0 ? (
             rows.map((row, index) => {
               const key = rowKey(row, index)
               const selectionKey = rowSelectionKey?.(row) ?? key

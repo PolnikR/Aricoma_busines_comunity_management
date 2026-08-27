@@ -2,7 +2,7 @@
 
 ## Stage 1: Shared tables and metrics
 
-- [ ] Task 1: Add value-only loading rows to `DataTable`.
+- [x] Task 1: Add value-only loading rows to `DataTable`.
 - [ ] Task 2: Migrate provider catalogue and credentials tables.
 - [ ] Task 3: Migrate the platform providers table.
 - [ ] Task 4: Migrate policy sets and application recovery policy tables.

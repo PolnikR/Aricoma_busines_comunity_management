@@ -44,4 +44,27 @@ describe('DataTable', () => {
     expect(wrapper).toHaveClass('overflow-x-auto')
     expect(wrapper).toHaveAttribute('tabindex', '0')
   })
+
+  it('keeps real headers visible and skeletonizes only body values while loading', () => {
+    const { container } = render(
+      <DataTable
+        columns={columns}
+        rows={[]}
+        rowKey={row => row.id}
+        ariaLabel="Loading resources"
+        isLoading
+        loadingRowCount={3}
+      />,
+    )
+
+    const wrapper = screen.getByRole('status', { name: 'Loading resources' })
+    const table = within(wrapper).getByRole('table')
+    expect(wrapper).toHaveAttribute('aria-busy', 'true')
+    expect(wrapper).not.toHaveAttribute('tabindex')
+    expect(within(table).getByRole('columnheader', { name: 'Name' })).toBeVisible()
+    expect(within(table).getByRole('columnheader', { name: 'Description' })).toBeVisible()
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(3)
+    expect(container.querySelector('tbody')).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.queryByText('No records found')).not.toBeInTheDocument()
+  })
 })
