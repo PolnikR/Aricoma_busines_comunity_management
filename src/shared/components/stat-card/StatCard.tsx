@@ -10,6 +10,7 @@ interface StatCardProps {
   size?: 'sm' | 'md'
   className?: string
   isLoading?: boolean
+  isHelperLoading?: boolean
 }
 
 export function StatCard({
@@ -20,6 +21,7 @@ export function StatCard({
   size = 'md',
   className,
   isLoading = false,
+  isHelperLoading = false,
 }: StatCardProps) {
   const isSmall = size === 'sm'
 
@@ -58,7 +60,7 @@ export function StatCard({
             'truncate text-text-muted',
             isSmall ? 'text-[10px] leading-tight' : 'text-[11px]',
           )}>
-            {helper}
+            {isHelperLoading ? <SkeletonBlock className="h-2.5 w-20" /> : helper}
           </p>
         ) : null}
       </div>

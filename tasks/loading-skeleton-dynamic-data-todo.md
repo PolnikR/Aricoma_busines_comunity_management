@@ -13,7 +13,7 @@
 - [x] Task 7a: Migrate VM inventory and VM snapshot tables.
 - [x] Task 7b: Migrate Permissions and Realm Roles tables.
 - [x] Task 8: Add value-level loading to `StatCard`.
-- [ ] Task 9: Migrate VMware metrics.
+- [x] Task 9: Migrate VMware metrics.
 - [ ] Task 10a: Migrate FlashSystem metrics.
 - [ ] Task 10b: Migrate IBM Power metrics.
 

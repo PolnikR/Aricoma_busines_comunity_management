@@ -4,7 +4,6 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { DataTablePagination } from '@/shared/components/data-table'
-import { MetricsSkeleton } from '@/shared/components/stat-card/StatCard'
 import { useVmwareResourceInventory } from '@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory'
 import { useTags } from '../../hooks/useVmwareTags'
 import {
@@ -116,7 +115,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   }
   const vmwareLoading = providersSuccess && vmwareProviders.length > 0 && isInitialLoading
   const metrics = providersPending || vmwareLoading
-    ? <MetricsSkeleton />
+    ? <VirtualMachineMetrics isLoading />
     : data && !providersError
       ? <VirtualMachineMetrics metrics={data.metrics} />
       : null
