@@ -153,7 +153,8 @@ export function AppSidebar() {
         </button>
       </div>
 
-      <div className="custom-scrollbar flex flex-1 flex-col overflow-y-auto py-5">
+      {/* The collapsed rail must not clip its flyouts, and 6 icons never need to scroll. */}
+      <div className={`custom-scrollbar flex flex-1 flex-col py-5 ${isCollapsed ? 'overflow-visible' : 'overflow-y-auto'}`}>
         <nav className="mb-6" aria-label="Main navigation">
           <h2 className={isCollapsed ? 'sr-only' : 'mb-2 px-2.5 text-[9px] font-medium uppercase tracking-[0.12em] text-text-subtle'}>
             {t('nav.menu')}
