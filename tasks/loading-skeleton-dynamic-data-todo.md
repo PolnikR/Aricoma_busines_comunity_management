@@ -11,7 +11,7 @@
 - [x] Task 6b: Migrate the Recovery Groups list table.
 - [x] Task 6c: Migrate the Recovery Runs table.
 - [x] Task 7a: Migrate VM inventory and VM snapshot tables.
-- [ ] Task 7b: Migrate Permissions and Realm Roles tables.
+- [x] Task 7b: Migrate Permissions and Realm Roles tables.
 - [x] Task 8: Add value-level loading to `StatCard`.
 - [ ] Task 9: Migrate VMware metrics.
 - [ ] Task 10a: Migrate FlashSystem metrics.

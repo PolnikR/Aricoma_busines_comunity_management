@@ -6,7 +6,6 @@ import {
   DataTable,
   DataTablePagination,
   DataTableRequestState,
-  DataTableSkeleton,
   DataTableToolbar,
   useTableState,
 } from '@/shared/components/data-table'
@@ -153,10 +152,7 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
 
   return (
     <IdentityContentPanel>
-      {isLoading ? (
-        <DataTableSkeleton columnCount={3} rowCount={5} layout="fit" className="rounded-none border-0 shadow-none" />
-      ) : (
-        <>
+      <>
           <DataTableToolbar
             searchValue={table.search}
             onSearchChange={table.setSearch}
@@ -174,6 +170,8 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
                 layout="fit"
                 columns={columns}
                 rows={table.pageItems}
+                isLoading={isLoading}
+                loadingRowCount={5}
                 rowKey={role => role.id}
                 density={table.density}
                 ariaLabel={t('identity.navigation.sections.realm-roles')}
@@ -183,9 +181,8 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
               />
             </DataTableRequestState>
           </div>
-          {(!error || roles.length > 0) ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
-        </>
-      )}
+          {(!error || roles.length > 0) ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} isLoading={isLoading} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
+      </>
     </IdentityContentPanel>
   )
 }
