@@ -1,7 +1,6 @@
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
-import { MetricsSkeleton } from '@/shared/components/stat-card/StatCard'
 import { getProvidersByTypeAndRole } from '@/features/providers-connectors/providers/utils/providerFilters'
 import { useResourceInventoryQueries } from '../../hooks/useResourceInventoryQueries'
 import { ResourceInventoryShell } from '../ResourceInventoryShell'
@@ -25,14 +24,13 @@ export function FlashSystemResourcesPage(props: SourceResourcesPageProps) {
   const hasData = sourceQuery.flashSystemResources.length > 0
   const requestFailed = sourceQuery.hasProviders && sourceQuery.failures.length > 0 && !hasData
   const sourceLoading = providersSuccess && sourceProviders.length > 0 && sourceQuery.isLoading
-  const metrics = providersPending || sourceLoading
-    ? <MetricsSkeleton />
-    : providersError || sourceProviders.length === 0 || requestFailed
+  const metrics = providersError || (!providersPending && sourceProviders.length === 0) || requestFailed
       ? null
       : (
           <FlashSystemMetrics
             resources={sourceQuery.flashSystemResources}
             inventories={sourceQuery.flashSystemInventories}
+            isLoading={providersPending || sourceLoading}
             labels={{
               total: t('resources.flash.metrics.total'),
               active: t('resources.flash.metrics.online'),

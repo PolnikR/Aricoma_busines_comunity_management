@@ -14,8 +14,8 @@
 - [x] Task 7b: Migrate Permissions and Realm Roles tables.
 - [x] Task 8: Add value-level loading to `StatCard`.
 - [x] Task 9: Migrate VMware metrics.
-- [ ] Task 10a: Migrate FlashSystem metrics.
-- [ ] Task 10b: Migrate IBM Power metrics.
+- [x] Task 10a: Migrate FlashSystem metrics.
+- [x] Task 10b: Migrate IBM Power metrics.
 
 ## Checkpoint: Stage 1
 
