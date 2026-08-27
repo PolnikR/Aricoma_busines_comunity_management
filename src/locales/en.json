@@ -68,6 +68,8 @@
   "nav.execution": "Execution Engine",
   "nav.monitoring": "Monitoring & Audit",
   "nav.apis": "Internal Component APIs",
+  "nav.collapse": "Collapse menu",
+  "nav.expand": "Expand menu",
   "nav.menu": "Menu",
 
   "pages.virtualMachines.title": "Virtual machines",

@@ -1,13 +1,21 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { LanguageProvider } from '@/contexts/LanguageProvider'
 import { SidebarProvider } from './SidebarContext'
 import { AppSidebar } from './AppSidebar'
 
+const originalInnerWidth = window.innerWidth
+
 describe('AppSidebar', () => {
   beforeEach(() => {
     localStorage.setItem('app-language', 'en')
+    localStorage.removeItem('app-sidebar-expanded')
+  })
+
+  afterEach(() => {
+    window.innerWidth = originalInnerWidth
   })
 
   it('shows Recovery Groups in the Recovery Plans section', async () => {
@@ -143,5 +151,64 @@ describe('AppSidebar', () => {
       { timeout: 5000 },
     )
     expect(applications).toHaveClass('bg-accent-soft', 'text-accent')
+  })
+
+  describe('collapsed rail', () => {
+    function renderAt(width: number) {
+      window.innerWidth = width
+
+      return render(
+        <MemoryRouter initialEntries={['/recovery-plans/recovery-applications']}>
+          <LanguageProvider>
+            <SidebarProvider>
+              <AppSidebar />
+            </SidebarProvider>
+          </LanguageProvider>
+        </MemoryRouter>,
+      )
+    }
+
+    it('hides the brand link once the desktop rail is collapsed', async () => {
+      const user = userEvent.setup()
+      renderAt(1440)
+
+      const collapse = await screen.findByRole('button', { name: 'Collapse menu' }, { timeout: 5000 })
+      expect(screen.getByRole('link', { name: 'Aricoma home' })).toBeInTheDocument()
+
+      await user.click(collapse)
+
+      expect(screen.queryByRole('link', { name: 'Aricoma home' })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Expand menu' })).toBeInTheDocument()
+    })
+
+    it('keeps submenu targets reachable through the flyout while collapsed', async () => {
+      const user = userEvent.setup()
+      renderAt(1440)
+
+      await user.click(await screen.findByRole('button', { name: 'Collapse menu' }, { timeout: 5000 }))
+
+      expect(screen.getByRole('link', { name: 'Recovery Groups' })).toHaveAttribute(
+        'href',
+        '/recovery-plans/recovery-groups',
+      )
+    })
+
+    it('remembers the collapsed choice across reloads', async () => {
+      const user = userEvent.setup()
+      renderAt(1440)
+
+      await user.click(await screen.findByRole('button', { name: 'Collapse menu' }, { timeout: 5000 }))
+
+      expect(localStorage.getItem('app-sidebar-expanded')).toBe('false')
+    })
+
+    it('never collapses below the desktop breakpoint', async () => {
+      const user = userEvent.setup()
+      renderAt(1024)
+
+      await user.click(await screen.findByRole('button', { name: 'Collapse menu' }, { timeout: 5000 }))
+
+      expect(screen.getByRole('link', { name: 'Aricoma home' })).toBeInTheDocument()
+    })
   })
 })

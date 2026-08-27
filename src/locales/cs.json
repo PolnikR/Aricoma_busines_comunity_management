@@ -65,6 +65,8 @@
   "nav.execution": "Spouštěcí engine",
   "nav.monitoring": "Monitorování a audit",
   "nav.apis": "Vnitřní API komponent",
+  "nav.collapse": "Sbalit menu",
+  "nav.expand": "Rozbalit menu",
   "nav.menu": "Menu",
   "pages.virtualMachines.title": "Virtuální stroje",
   "pages.virtualMachines.description": "Přehled inventáře, stavu a umístění VMware.",

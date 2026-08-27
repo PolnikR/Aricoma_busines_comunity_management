@@ -65,6 +65,8 @@
   "nav.execution": "Vykonávanie úloh",
   "nav.monitoring": "Monitorovanie a audit",
   "nav.apis": "Interné API komponentov",
+  "nav.collapse": "Zbaliť menu",
+  "nav.expand": "Rozbaliť menu",
   "nav.menu": "Menu",
   "pages.virtualMachines.title": "Virtuálne stroje",
   "pages.virtualMachines.description": "Prehľad virtuálnych strojov VMware, ich stavu a umiestnenia.",

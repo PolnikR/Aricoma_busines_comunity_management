@@ -5,12 +5,15 @@ import { routes } from '@/app/routes'
 import { useTranslation } from '@/hooks/useTranslation'
 import {
   ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   ExecutionIcon,
   LayersIcon,
   PlugIcon,
   ServerIcon,
   SettingsIcon,
 } from '@/shared/icons/Icons'
+import { SidebarFlyout } from './SidebarFlyout'
 import { useSidebar } from './useSidebar'
 
 interface NavItem {
@@ -112,7 +115,7 @@ function getTranslationKey(name: string): string {
 
 export function AppSidebar() {
   const { t } = useTranslation()
-  const { isMobileOpen, closeMobileSidebar } = useSidebar()
+  const { isMobileOpen, isCollapsed, closeMobileSidebar, toggleSidebar } = useSidebar()
   const location = useLocation()
   const [openMenu, setOpenMenu] = useState<string>(() => findRouteMenu(location.pathname) ?? 'Discovery & Inventory')
 
@@ -127,40 +130,64 @@ export function AppSidebar() {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 flex w-[256px] flex-col border-r border-border bg-surface px-3 text-text-primary shadow-2xl transition-transform duration-300 ease-out lg:static lg:h-full lg:w-max lg:min-w-[272px] lg:max-w-[min(352px,32vw)] lg:shrink-0 lg:translate-x-0 lg:rounded-[22px] lg:border lg:border-border lg:shadow-[0_14px_35px_-28px_rgba(37,72,112,0.4)] ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      className={`fixed inset-y-0 left-0 z-50 flex w-[256px] flex-col border-r border-border bg-surface px-3 text-text-primary shadow-2xl transition-transform duration-300 ease-out lg:static lg:h-full lg:shrink-0 lg:translate-x-0 lg:rounded-[22px] lg:border lg:border-border lg:shadow-[0_14px_35px_-28px_rgba(37,72,112,0.4)] ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} ${isCollapsed ? 'lg:w-18 lg:min-w-18 lg:max-w-18 lg:px-2' : 'lg:w-max lg:min-w-[272px] lg:max-w-[min(352px,32vw)]'}`}
     >
-      <div className="flex h-[72px] shrink-0 items-center border-b border-border px-2">
-        <NavLink to={routes.resources} className="flex min-w-0 items-center gap-2.5" aria-label="Aricoma home">
-          <img src="/aricoma-logo.png" alt="Aricoma" className="size-9 shrink-0 rounded-lg" />
-          <span>
-            <span className="block truncate text-[13px] font-semibold text-text-primary">{t('header.appName')}</span>
-            <span className="block truncate text-[10px] text-text-muted">{t('header.tagline')}</span>
-          </span>
-        </NavLink>
+      <div className={`flex h-[72px] shrink-0 items-center border-b border-border ${isCollapsed ? 'justify-center px-0' : 'px-2'}`}>
+        {isCollapsed ? null : (
+          <NavLink to={routes.resources} className="flex min-w-0 items-center gap-2.5" aria-label="Aricoma home">
+            <img src="/aricoma-logo.png" alt="Aricoma" className="size-9 shrink-0 rounded-lg" />
+            <span>
+              <span className="block truncate text-[13px] font-semibold text-text-primary">{t('header.appName')}</span>
+              <span className="block truncate text-[10px] text-text-muted">{t('header.tagline')}</span>
+            </span>
+          </NavLink>
+        )}
+
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          aria-label={isCollapsed ? t('nav.expand') : t('nav.collapse')}
+          className={`hidden shrink-0 rounded-lg p-1.5 text-text-muted transition hover:bg-surface-muted hover:text-accent xl:block ${isCollapsed ? '' : 'ml-auto'}`}
+        >
+          {isCollapsed ? <ChevronRightIcon className="size-4" /> : <ChevronLeftIcon className="size-4" />}
+        </button>
       </div>
 
       <div className="custom-scrollbar flex flex-1 flex-col overflow-y-auto py-5">
         <nav className="mb-6" aria-label="Main navigation">
-          <h2 className="mb-2 px-2.5 text-[9px] font-medium uppercase tracking-[0.12em] text-text-subtle">
+          <h2 className={isCollapsed ? 'sr-only' : 'mb-2 px-2.5 text-[9px] font-medium uppercase tracking-[0.12em] text-text-subtle'}>
             {t('nav.menu')}
           </h2>
 
           <ul className="flex flex-col gap-0.5">
             {navItems.map((item) => (
-              <li key={item.name}>
+              <li key={item.name} className="group relative">
                 {item.subItems ? (
                   <>
                     <button
                       type="button"
-                      className={`group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition ${isMenuOpen(item.name) ? 'bg-accent-soft text-accent' : 'text-text-secondary hover:bg-surface-muted hover:text-text-secondary'}`}
+                      className={`flex w-full items-center gap-2.5 rounded-lg py-2 text-left text-xs font-medium transition ${isCollapsed ? 'justify-center px-0' : 'px-2.5'} ${isMenuOpen(item.name) ? 'bg-accent-soft text-accent' : 'text-text-secondary hover:bg-surface-muted hover:text-text-secondary'}`}
                       onClick={() => {
                         setOpenMenu((current) => (current === item.name ? '' : item.name))
                       }}
                     >
                       <span className={`shrink-0 ${isMenuOpen(item.name) ? 'text-accent' : 'text-text-muted'}`}>{item.icon}</span>
-                      <span className="min-w-0 flex-1 whitespace-normal leading-4 [overflow-wrap:anywhere]">{t(getTranslationKey(item.name))}</span>
-                      <ChevronDownIcon className={`size-4 shrink-0 transition-transform ${isMenuOpen(item.name) ? 'rotate-180 text-accent' : 'text-text-muted'}`} />
+                      <span className={isCollapsed ? 'sr-only' : 'min-w-0 flex-1 whitespace-normal leading-4 [overflow-wrap:anywhere]'}>{t(getTranslationKey(item.name))}</span>
+                      {isCollapsed ? null : (
+                        <ChevronDownIcon className={`size-4 shrink-0 transition-transform ${isMenuOpen(item.name) ? 'rotate-180 text-accent' : 'text-text-muted'}`} />
+                      )}
                     </button>
+                    {isCollapsed ? (
+                      <SidebarFlyout
+                        title={t(getTranslationKey(item.name))}
+                        items={item.subItems.map((subItem) => ({
+                          name: t(getTranslationKey(subItem.name)),
+                          path: subItem.path,
+                        }))}
+                        isItemActive={isSubItemActive}
+                        onNavigate={closeMobileSidebar}
+                      />
+                    ) : (
                     <div className={`overflow-hidden transition-all duration-300 ${isMenuOpen(item.name) ? 'max-h-[34rem]' : 'max-h-0'}`}>
                         <ul className="ml-[18px] mt-1 space-y-0.5 border-l border-border pl-3">
                           {item.subItems.map((subItem) => (
@@ -176,14 +203,16 @@ export function AppSidebar() {
                           ))}
                         </ul>
                       </div>
+                    )}
                   </>
                 ) : item.path ? (
+                  <>
                   <NavLink
                     to={item.path}
                     onClick={closeMobileSidebar}
                     className={({ isActive }) => {
                       const routeActive = isActive || (item.path === routes.recoveryActions && location.pathname.startsWith(`${routes.recoveryActions}/`))
-                      return `group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition ${routeActive ? 'bg-accent-soft text-accent' : 'text-text-secondary hover:bg-surface-muted hover:text-text-secondary'}`
+                      return `flex items-center gap-2.5 rounded-lg py-2 text-xs font-medium transition ${isCollapsed ? 'justify-center px-0' : 'px-2.5'} ${routeActive ? 'bg-accent-soft text-accent' : 'text-text-secondary hover:bg-surface-muted hover:text-text-secondary'}`
                     }}
                   >
                     {({ isActive }) => {
@@ -191,11 +220,20 @@ export function AppSidebar() {
                       return (
                       <>
                         <span className={`shrink-0 ${routeActive ? 'text-accent' : 'text-text-muted'}`}>{item.icon}</span>
-                        <span className="min-w-0 flex-1 whitespace-normal leading-4 [overflow-wrap:anywhere]">{t(getTranslationKey(item.name))}</span>
+                        <span className={isCollapsed ? 'sr-only' : 'min-w-0 flex-1 whitespace-normal leading-4 [overflow-wrap:anywhere]'}>{t(getTranslationKey(item.name))}</span>
                       </>
                       )
                     }}
                   </NavLink>
+                  {isCollapsed ? (
+                    <SidebarFlyout
+                      title={t(getTranslationKey(item.name))}
+                      items={[]}
+                      isItemActive={isSubItemActive}
+                      onNavigate={closeMobileSidebar}
+                    />
+                  ) : null}
+                  </>
                 ) : null}
               </li>
             ))}
