@@ -42,7 +42,7 @@ export function AppShellSkeleton() {
           </header>
 
           <main className="flex flex-1 flex-col px-4 py-5 sm:px-6 lg:min-h-0 lg:overflow-hidden lg:px-6 lg:py-5 xl:px-8">
-            <div className="mb-5 flex shrink-0 items-end justify-between gap-4">
+            <div data-testid="skeleton-page-heading" className="mb-5 flex shrink-0 flex-col items-end gap-4 sm:flex-row sm:justify-between">
               <div className="space-y-2">
                 <div className="h-3 w-24 animate-pulse rounded bg-surface-muted" />
                 <div className="h-8 w-56 max-w-[70vw] animate-pulse rounded-md bg-surface-muted sm:w-72" />

@@ -12,4 +12,10 @@ describe('AppShellSkeleton', () => {
     expect(container.querySelectorAll('a, button, input, img')).toHaveLength(0)
     expect(screen.queryByText('Loading')).not.toBeInTheDocument()
   })
+
+  it('stacks the page heading and action placeholders below the small breakpoint', () => {
+    render(<AppShellSkeleton />)
+
+    expect(screen.getByTestId('skeleton-page-heading')).toHaveClass('flex-col', 'sm:flex-row')
+  })
 })
