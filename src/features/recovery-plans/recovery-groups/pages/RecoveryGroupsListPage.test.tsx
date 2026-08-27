@@ -45,6 +45,8 @@ describe('RecoveryGroupsListPage', () => {
     )
 
     expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByRole('searchbox', { name: 'pages.recoveryGroups.searchLabel' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'tables.recoveryGroups.group' })).toBeVisible()
     expect(await screen.findByRole('heading', { name: 'Recovery Groups' })).toBeInTheDocument()
     expect(screen.getByText(/Manage reusable groups of resources/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeEnabled()

@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router'
 import { Button } from '@/shared/components/button/Button'
 import { Alert } from '@/shared/components/alert/Alert'
-import { DataTableSkeleton } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -43,13 +42,7 @@ export function RecoveryGroupsListPage() {
             description={extractBackendErrorDetail(mutationError)}
           />
         ) : null}
-        {isLoading ? (
-          <DataTableSkeleton
-            columnCount={5}
-            ariaLabel={t('pages.recoveryGroups.loading')}
-            className="flex-1 lg:min-h-0"
-          />
-        ) : !error && groups.length === 0 ? (
+        {!isLoading && !error && groups.length === 0 ? (
           <EmptyState
             title={t('pages.recoveryGroups.empty.title')}
             description={t('pages.recoveryGroups.empty.description')}
@@ -63,6 +56,7 @@ export function RecoveryGroupsListPage() {
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
             <RecoveryGroupsTable
               groups={groups}
+              isLoading={isLoading}
               onEdit={navigateToEdit}
               onDelete={remove}
               onRollback={rollback}

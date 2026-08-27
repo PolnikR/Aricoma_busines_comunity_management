@@ -40,6 +40,7 @@ import type { RollbackReport } from '../api/schemas/recoveryGroupsSchema'
 
 interface RecoveryGroupsTableProps {
   groups: RecoveryGroup[]
+  isLoading?: boolean
   onEdit: (id: string) => void
   onDelete: (group: RecoveryGroup) => Promise<RollbackReport | null>
   onRollback: (groupId: string, providerId: string) => Promise<void>
@@ -61,6 +62,7 @@ const EMPTY_FILTERS: RecoveryGroupFilters = {
 
 export function RecoveryGroupsTable({
   groups,
+  isLoading = false,
   onEdit,
   onDelete,
   onRollback,
@@ -306,10 +308,11 @@ export function RecoveryGroupsTable({
         <DataTable
           columns={columns}
           rows={table.pageItems}
+          isLoading={isLoading}
           rowKey={group => group.id}
           density={table.density}
           minWidthClassName="min-w-200"
-          ariaLabel={t('pages.recoveryGroups.tableAriaLabel')}
+          ariaLabel={isLoading ? t('pages.recoveryGroups.loading') : t('pages.recoveryGroups.tableAriaLabel')}
           onRowClick={group => { setSelectedId(group.id); setDetailTab('overview') }}
           selectedRowKey={selectedId}
           emptyContent={t('pages.recoveryGroups.empty.noGroups')}
@@ -321,6 +324,7 @@ export function RecoveryGroupsTable({
           page={table.page}
           pageSize={table.pageSize}
           total={table.total}
+          isLoading={isLoading}
           onPageChange={table.setPage}
           onPageSizeChange={table.setPageSize}
         />
