@@ -5,7 +5,7 @@
 - [x] Task 1: Add value-only loading rows to `DataTable`.
 - [x] Task 2: Migrate provider catalogue and credentials tables.
 - [x] Task 3: Migrate the platform providers table.
-- [ ] Task 4: Migrate policy sets and application recovery policy tables.
+- [x] Task 4: Migrate policy sets and application recovery policy tables.
 - [ ] Task 5: Migrate snapshot and clean-room policy tables.
 - [ ] Task 6a: Migrate the Recovery Applications list table.
 - [ ] Task 6b: Migrate the Recovery Groups list table.
