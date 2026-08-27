@@ -9,7 +9,7 @@
 - [x] Task 5: Migrate snapshot and clean-room policy tables.
 - [x] Task 6a: Migrate the Recovery Applications list table.
 - [x] Task 6b: Migrate the Recovery Groups list table.
-- [ ] Task 6c: Migrate the Recovery Runs table.
+- [x] Task 6c: Migrate the Recovery Runs table.
 - [ ] Task 7a: Migrate VM inventory and VM snapshot tables.
 - [ ] Task 7b: Migrate Permissions and Realm Roles tables.
 - [x] Task 8: Add value-level loading to `StatCard`.
