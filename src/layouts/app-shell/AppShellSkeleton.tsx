@@ -14,7 +14,7 @@ export function AppShellSkeleton() {
       aria-label={t('messages.loading')}
     >
       <div className="flex min-h-screen w-full gap-3 lg:h-full lg:min-h-0 xl:gap-4" aria-hidden="true">
-        <aside className="hidden flex-col rounded-[22px] border border-border bg-surface px-3 shadow-[0_14px_35px_-28px_rgba(37,72,112,0.4)] lg:flex lg:w-[272px] lg:shrink-0 xl:w-[min(352px,32vw)]">
+        <aside className="hidden flex-col rounded-[22px] border border-border bg-surface px-3 shadow-sm lg:flex lg:w-[272px] lg:shrink-0 xl:w-[min(352px,32vw)]">
           <div className="flex h-[72px] items-center gap-2.5 border-b border-border px-2">
             <div className="size-9 animate-pulse rounded-lg bg-surface-muted" />
             <div className="space-y-2">
@@ -34,7 +34,7 @@ export function AppShellSkeleton() {
           </div>
         </aside>
 
-        <section className="flex min-w-0 flex-1 flex-col bg-surface lg:min-h-0 lg:overflow-hidden lg:rounded-[28px] lg:border lg:border-border lg:shadow-[0_24px_70px_-34px_rgba(34,78,122,0.35)]">
+        <section className="flex min-w-0 flex-1 flex-col bg-surface lg:min-h-0 lg:overflow-hidden lg:rounded-[28px] lg:border lg:border-border lg:shadow-sm">
           <header className="flex h-16 shrink-0 items-center border-b border-border bg-surface/95 px-4 sm:px-6 lg:h-[72px] lg:px-7">
             <div className="h-10 w-10 animate-pulse rounded-xl bg-surface-muted sm:hidden" />
             <div className="hidden h-10 w-[min(42vw,420px)] animate-pulse rounded-xl bg-surface-muted sm:block" />
