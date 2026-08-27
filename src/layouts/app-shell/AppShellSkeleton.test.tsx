@@ -16,6 +16,6 @@ describe('AppShellSkeleton', () => {
   it('stacks the page heading and action placeholders below the small breakpoint', () => {
     render(<AppShellSkeleton />)
 
-    expect(screen.getByTestId('skeleton-page-heading')).toHaveClass('flex-col', 'sm:flex-row')
+    expect(screen.getByTestId('skeleton-page-heading')).toHaveClass('flex-col', 'items-start', 'sm:flex-row', 'sm:items-end')
   })
 })
