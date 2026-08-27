@@ -126,7 +126,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         />
       ) : null}
 
-      <div className="custom-scrollbar flex min-h-0 flex-1 flex-col lg:overflow-y-auto">
+      <div className="custom-scrollbar flex min-h-[120px] flex-1 flex-col lg:overflow-y-auto">
         <DataTableRequestState
           hasCachedData={policySets.length > 0}
           error={error ? {

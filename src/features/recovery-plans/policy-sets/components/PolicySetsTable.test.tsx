@@ -60,7 +60,7 @@ describe('PolicySetsTable', () => {
     const scrollRegion = tableLayout?.children.item(1)
 
     expect(tableLayout).toHaveClass('min-h-0', 'min-w-0', 'flex-1')
-    expect(scrollRegion).toHaveClass('custom-scrollbar', 'min-h-0', 'flex-1', 'lg:overflow-y-auto')
+    expect(scrollRegion).toHaveClass('custom-scrollbar', 'min-h-[120px]', 'flex-1', 'lg:overflow-y-auto')
     expect(scrollRegion).not.toHaveClass('overflow-y-auto')
     expect(screen.getByText('Showing 1-1 of 1')).toBeInTheDocument()
   })

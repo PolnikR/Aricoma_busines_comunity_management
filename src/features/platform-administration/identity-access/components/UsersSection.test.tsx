@@ -26,7 +26,7 @@ describe('UsersSection', () => {
     expect(await screen.findByText('Alice Smith')).toBeInTheDocument()
     const scrollRegion = usersTable.parentElement
     expect(usersTable).toBeInTheDocument()
-    expect(scrollRegion).toHaveClass('min-h-0', 'flex-1', 'lg:overflow-y-auto')
+    expect(scrollRegion).toHaveClass('min-h-[120px]', 'flex-1', 'lg:overflow-y-auto')
     expect(scrollRegion).not.toContainElement(screen.getByLabelText('Rows per page'))
     expect(screen.queryByText('Search and manage users')).not.toBeInTheDocument()
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search users' }), 'bob@')

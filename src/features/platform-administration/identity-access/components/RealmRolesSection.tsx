@@ -165,7 +165,7 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
             density={table.density}
             onDensityChange={table.setDensity}
           />
-          <div className="custom-scrollbar min-h-0 flex-1 lg:overflow-y-auto">
+          <div className="custom-scrollbar min-h-[120px] flex-1 lg:overflow-y-auto">
             <DataTableRequestState
               hasCachedData={roles.length > 0}
               error={error ? { title: t('identity.roles.loadFailed'), description: error.message, retryLabel: t('identity.common.actions.retry'), isRetrying: false, onRetry: () => { void refetch() } } : null}

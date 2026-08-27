@@ -27,7 +27,7 @@ export function ResourceInventoryPanel({
       aria-label={ariaLabel}
     >
       {toolbar}
-      <div className="custom-scrollbar flex-1 lg:min-h-0 lg:overflow-y-auto">
+      <div className="custom-scrollbar flex-1 lg:min-h-[120px] lg:overflow-y-auto">
         <DataTableRequestState error={error ?? null}>
           {children}
         </DataTableRequestState>

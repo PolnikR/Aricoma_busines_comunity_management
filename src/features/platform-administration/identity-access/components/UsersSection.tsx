@@ -182,7 +182,7 @@ export function UsersSection(props: UsersSectionProps) {
         density={table.density}
         onDensityChange={table.setDensity}
       />
-      <div className="custom-scrollbar min-h-0 flex-1 lg:overflow-y-auto">
+      <div className="custom-scrollbar min-h-[120px] flex-1 lg:overflow-y-auto">
         {error ? (
           <div className="p-4">
             <EmptyState

@@ -20,8 +20,16 @@ export function AppShell() {
         <AppSidebar />
         <section className="flex min-w-0 flex-1 flex-col bg-surface lg:min-h-0 lg:overflow-hidden lg:rounded-[28px] lg:border lg:border-border lg:shadow-[0_24px_70px_-34px_rgba(34,78,122,0.35)]">
           <AppHeader />
-          <main className="flex-1 px-4 py-5 sm:px-6 lg:min-h-0 lg:overflow-hidden lg:px-6 lg:py-5 xl:px-8">
-            <Outlet />
+          <main className="flex flex-1 flex-col px-4 py-5 sm:px-6 lg:min-h-0 lg:overflow-auto lg:px-6 lg:py-5 xl:px-8">
+            {/*
+              min-h-min stops the page shrinking past its own content minimum, so a
+              window too short to hold it overflows into a scrollbar instead of
+              squeezing the table to nothing. The browser derives that minimum per
+              page, which keeps it correct when the metrics grid wraps.
+            */}
+            <div className="flex flex-1 flex-col lg:min-h-min">
+              <Outlet />
+            </div>
           </main>
         </section>
       </div>

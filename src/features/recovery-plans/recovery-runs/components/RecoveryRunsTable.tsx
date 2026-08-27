@@ -158,7 +158,7 @@ export function RecoveryRunsTable({
         searchLabel={t('recoveryRuns.search.label')}
       />
 
-      <div className="custom-scrollbar flex min-h-0 flex-1 flex-col lg:overflow-y-auto">
+      <div className="custom-scrollbar flex min-h-[120px] flex-1 flex-col lg:overflow-y-auto">
         <DataTableRequestState
           hasCachedData={hasCachedData}
           error={error ? {
