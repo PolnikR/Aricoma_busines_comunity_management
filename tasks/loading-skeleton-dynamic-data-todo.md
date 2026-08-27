@@ -30,7 +30,7 @@
 
 ## Stage 2: Specialized loading states
 
-- [ ] Task 11: Preserve infrastructure topology chrome during loading.
+- [x] Task 11: Preserve infrastructure topology chrome during loading.
 - [ ] Task 12: Preserve the provider detail shell during loading.
 - [ ] Task 13: Preserve the recovery application editor shell.
 - [ ] Task 14: Preserve the recovery group editor shell.
