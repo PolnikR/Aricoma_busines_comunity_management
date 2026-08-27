@@ -14,7 +14,7 @@ interface DataTableSkeletonProps {
 const widths = ['w-24', 'w-16', 'w-20', 'w-28', 'w-14']
 
 export function SkeletonBlock({ className }: { className: string }) {
-  return <span className={cn('block animate-pulse rounded-md bg-surface-muted', className)} />
+  return <span className={cn('block animate-pulse rounded-md bg-surface-muted', className)} aria-hidden="true" />
 }
 
 export function DataTableSkeleton({
