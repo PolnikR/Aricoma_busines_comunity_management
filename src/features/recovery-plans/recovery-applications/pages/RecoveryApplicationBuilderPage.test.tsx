@@ -99,6 +99,17 @@ beforeEach(() => {
 })
 
 describe('RecoveryApplicationBuilderPage', () => {
+  it('keeps the builder in a constrained body region for nested resource scrolling', () => {
+    render(<RecoveryApplicationBuilderPage />)
+
+    expect(screen.getByRole('button', { name: 'Save fixture' }).parentElement).toHaveClass(
+      'flex',
+      'flex-1',
+      'flex-col',
+      'lg:min-h-0',
+    )
+  })
+
   it('keeps the localized submit title and shows nested backend detail', () => {
     submitMutation.error = new Error('Submit recovery application request failed with status 409', {
       cause: new OrvalApiError(409, 'Conflict', { detail: 'An application with this ID already exists.' }),

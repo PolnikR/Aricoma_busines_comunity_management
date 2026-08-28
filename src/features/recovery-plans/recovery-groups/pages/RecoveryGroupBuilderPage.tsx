@@ -66,34 +66,36 @@ export function RecoveryGroupBuilderPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
         eyebrow={t('pages.recoveryGroupBuilder.eyebrow')}
         title={t('pages.recoveryGroupBuilder.title')}
         description={t('pages.recoveryGroupBuilder.description')}
         actions={<Button size="sm" variant="outline" onClick={requestBack}>{t('buttons.back')}</Button>}
       />
-      {error ? <Alert variant="error" className="mx-4 mt-4" title={error} /> : null}
-      {loadError ? (
-        <div className="p-4">
-          <FetchErrorAlert
-            title={t('pages.recoveryGroups.errors.load')}
-            {...(loadErrorDescription ? { description: loadErrorDescription } : {})}
-            onRetry={() => { void refresh() }}
-            retryLabel={t('buttons.retry')}
-            variant="full"
+      <div className="flex flex-1 flex-col lg:min-h-0">
+        {error ? <Alert variant="error" className="mx-4 mt-4" title={error} /> : null}
+        {loadError ? (
+          <div className="p-4">
+            <FetchErrorAlert
+              title={t('pages.recoveryGroups.errors.load')}
+              {...(loadErrorDescription ? { description: loadErrorDescription } : {})}
+              onRetry={() => { void refresh() }}
+              retryLabel={t('buttons.retry')}
+              variant="full"
+            />
+          </div>
+        ) : (
+          <RecoveryGroupBuilder
+            onCreate={draft => { void handleCreate(draft) }}
+            onCancel={requestBack}
+            onDirtyChange={setIsDirty}
+            existingIds={groups.map(group => group.id)}
+            isSaving={isCreating}
+            isInitialLoading={isLoading}
           />
-        </div>
-      ) : (
-        <RecoveryGroupBuilder
-          onCreate={draft => { void handleCreate(draft) }}
-          onCancel={requestBack}
-          onDirtyChange={setIsDirty}
-          existingIds={groups.map(group => group.id)}
-          isSaving={isCreating}
-          isInitialLoading={isLoading}
-        />
-      )}
+        )}
+      </div>
       <ConfirmDialog
         open={navigationGuard.isNavigationBlocked}
         title={t('recovery.builder.discardDialog.title')}

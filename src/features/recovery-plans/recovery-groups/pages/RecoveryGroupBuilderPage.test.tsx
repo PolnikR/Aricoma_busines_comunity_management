@@ -84,15 +84,14 @@ beforeEach(() => {
 })
 
 describe('RecoveryGroupBuilderPage', () => {
-  it('contains the builder page so resource panels own their desktop scroll', () => {
+  it('gives the builder a constrained body region for nested resource scrolling', () => {
     const { container } = render(<RecoveryGroupBuilderPage />)
 
-    expect(container.firstElementChild).toHaveClass(
+    expect(container.querySelector('fieldset')?.parentElement).toHaveClass(
       'flex',
-      'min-h-full',
-      'lg:h-full',
+      'flex-1',
+      'flex-col',
       'lg:min-h-0',
-      'lg:overflow-hidden',
     )
   })
 

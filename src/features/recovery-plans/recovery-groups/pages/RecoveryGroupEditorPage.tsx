@@ -97,25 +97,27 @@ export function RecoveryGroupEditorPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
         eyebrow={t('pages.recoveryGroupEditor.eyebrow')}
         title={t('pages.recoveryGroupEditor.title')}
         description={t('pages.recoveryGroupEditor.description')}
         actions={<Button size="sm" variant="outline" onClick={requestBack}>{t('buttons.back')}</Button>}
       />
-      {error ? <Alert variant="error" className="mx-4 mt-4" title={error} /> : null}
-      <RecoveryGroupBuilder
-        key={group?.id ?? 'loading'}
-        {...(group ? { initialData: group } : {})}
-        submitLabel={t('pages.recoveryGroupEditor.saveButton')}
-        onCreate={draft => { void handleUpdate(draft) }}
-        onCancel={requestBack}
-        onDirtyChange={setIsDirty}
-        existingIds={groups.map(item => item.id)}
-        isSaving={isUpdating}
-        isInitialLoading={isLoading}
-      />
+      <div className="flex flex-1 flex-col lg:min-h-0">
+        {error ? <Alert variant="error" className="mx-4 mt-4" title={error} /> : null}
+        <RecoveryGroupBuilder
+          key={group?.id ?? 'loading'}
+          {...(group ? { initialData: group } : {})}
+          submitLabel={t('pages.recoveryGroupEditor.saveButton')}
+          onCreate={draft => { void handleUpdate(draft) }}
+          onCancel={requestBack}
+          onDirtyChange={setIsDirty}
+          existingIds={groups.map(item => item.id)}
+          isSaving={isUpdating}
+          isInitialLoading={isLoading}
+        />
+      </div>
       <ConfirmDialog
         open={navigationGuard.isNavigationBlocked}
         title={t('recovery.builder.discardDialog.title')}
