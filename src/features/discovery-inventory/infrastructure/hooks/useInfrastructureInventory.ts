@@ -12,14 +12,14 @@ export function useInfrastructureInventory(provider: ProviderRecord | null) {
   const queryKey = provider?.type === 'IBM_POWER'
     ? discoveryInventoryKeys.resourceInventory('IBM_POWER', provider.id)
     : provider?.type === 'VMWARE'
-      ? discoveryInventoryKeys.resourceInventory('VMWARE', provider.id)
+      ? discoveryInventoryKeys.vmwareSearch({ providerId: provider.id })
       : ['infrastructure-topology', 'inactive'] as const
 
   return useQuery<InfrastructureInventory>({
     queryKey,
     queryFn: () => {
       if (provider?.type === 'IBM_POWER') return fetchPowerInventory(provider.id)
-      if (provider?.type === 'VMWARE') return fetchVmwareInventory(provider.id)
+      if (provider?.type === 'VMWARE') return fetchVmwareInventory({ providerId: provider.id })
       throw new Error('A supported infrastructure provider is required.')
     },
     enabled: isSupported,

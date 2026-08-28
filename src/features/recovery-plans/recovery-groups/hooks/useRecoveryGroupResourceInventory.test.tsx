@@ -20,7 +20,8 @@ vi.mock('@/features/discovery-inventory/resources/api/flashSystemInventoryApi', 
 vi.mock('@/features/discovery-inventory/resources/api/powerInventoryApi', () => ({
   fetchPowerInventory: vi.fn(),
 }))
-vi.mock('@/features/discovery-inventory/resources/api/vmwareInventoryApi', () => ({
+vi.mock('@/features/discovery-inventory/resources/api/vmwareInventoryApi', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/features/discovery-inventory/resources/api/vmwareInventoryApi')>(),
   fetchVmwareInventory: vi.fn(),
 }))
 
@@ -81,7 +82,7 @@ describe('useRecoveryGroupResourceInventory', () => {
     expect(result.current.data?.resourceNames).toEqual(expectedNames)
 
     if (workloadType === 'vmware_virtual_machines') {
-      expect(fetchVmwareInventory).toHaveBeenCalledWith(providerId)
+      expect(fetchVmwareInventory).toHaveBeenCalledWith({ providerId })
     } else if (workloadType === 'ibm_power_virtual_machines') {
       expect(fetchPowerInventory).toHaveBeenCalledWith(providerId)
     } else {
@@ -168,7 +169,7 @@ describe('useRecoveryGroupResourceInventory', () => {
     [
       'vmware_virtual_machines',
       'vmware-1',
-      discoveryInventoryKeys.inventory('vmware-1'),
+      discoveryInventoryKeys.vmwareSearch({ providerId: 'vmware-1' }),
       {
         reportedCount: 1,
         virtualMachines: [{ name: 'CACHED-VM' } as DiscoveredVirtualMachine],

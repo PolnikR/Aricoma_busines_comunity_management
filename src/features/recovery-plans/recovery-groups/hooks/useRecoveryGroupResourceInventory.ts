@@ -32,8 +32,8 @@ function getInventoryQueryDefinition(
   switch (workloadType) {
     case 'vmware_virtual_machines':
       return {
-        queryKey: discoveryInventoryKeys.inventory(providerId),
-        queryFn: () => fetchVmwareInventory(providerId),
+        queryKey: discoveryInventoryKeys.vmwareSearch({ providerId }),
+        queryFn: () => fetchVmwareInventory({ providerId }),
       }
     case 'ibm_power_virtual_machines':
       return {
