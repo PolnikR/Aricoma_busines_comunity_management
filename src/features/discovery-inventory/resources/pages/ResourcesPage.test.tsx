@@ -69,6 +69,13 @@ let virtualMachineQuery = {
   cluster: '', tags: [] as string[], untagged: false,
 }
 
+function parseRequestBody(init: RequestInit): Record<string, unknown> {
+  if (typeof init.body !== 'string') throw new Error('Expected a JSON request body')
+  const parsed: unknown = JSON.parse(init.body)
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Expected a JSON object request body')
+  return parsed as Record<string, unknown>
+}
+
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory')>()
@@ -286,7 +293,7 @@ describe('ResourcesPage', () => {
     useStatefulVirtualMachineSearchParams = true
     useRealVmwareResourceInventory = true
     const fetchMock = vi.fn((url: string, init: RequestInit) => {
-      if (JSON.parse(String(init.body)).name_prefix === 'sdf') return Promise.resolve(new Response(JSON.stringify({ count: 0, vms: [] }), { status: 200 }))
+      if (parseRequestBody(init)['name_prefix'] === 'sdf') return Promise.resolve(new Response(JSON.stringify({ count: 0, vms: [] }), { status: 200 }))
       throw new Error(`Unexpected request: ${url}`)
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -319,7 +326,7 @@ describe('ResourcesPage', () => {
     expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBe(search)
     expect(search).toHaveFocus()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-    expect(fetchMock.mock.calls.filter(([, init]) => JSON.parse(String((init as RequestInit).body)).name_prefix === 'sdf').length).toBe(1)
+    expect(fetchMock.mock.calls.filter(([, init]) => parseRequestBody(init)['name_prefix'] === 'sdf').length).toBe(1)
 
     await act(async () => { await vi.advanceTimersByTimeAsync(1) })
     expect(screen.getByText('No virtual machines found')).toBeInTheDocument()

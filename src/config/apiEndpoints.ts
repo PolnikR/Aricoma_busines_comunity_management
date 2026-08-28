@@ -1,7 +1,5 @@
 export const API_ENDPOINTS = {
   discovery: {
-    virtualMachines: '/api/vms',
-    virtualMachinesByTag: '/api/vms_by_tag',
     powerVirtualMachines: '/api/get_power_vm',
     flashSystemVolumes: '/api/get_volumes',
     flashSystemVolumeTree: '/api/get_volume_tree',

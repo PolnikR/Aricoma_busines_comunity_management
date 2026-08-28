@@ -42,6 +42,13 @@ const validPayload = {
   ],
 }
 
+function parseRequestBody(init: RequestInit): Record<string, unknown> {
+  if (typeof init.body !== 'string') throw new Error('Expected a JSON request body')
+  const parsed: unknown = JSON.parse(init.body)
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Expected a JSON object request body')
+  return parsed as Record<string, unknown>
+}
+
 describe('fetchVmwareInventory', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
@@ -104,7 +111,7 @@ describe('fetchVmwareInventory', () => {
 
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/vms/search')
-    expect(JSON.parse(String(init.body))).toEqual({ tag: 'WEB' })
+    expect(parseRequestBody(init)).toEqual({ tag: 'WEB' })
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
@@ -122,7 +129,7 @@ describe('fetchVmwareInventory', () => {
 
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/vms/search?provider_id=vmware-vcenter-01')
-    expect(JSON.parse(String(init.body))).toEqual({
+    expect(parseRequestBody(init)).toEqual({
       folder_name: 'Applications',
       tag: 'WEB',
       name_prefix: 'application-',
@@ -423,7 +430,7 @@ describe('fetchInventory', () => {
 
     expect(result.source).toBe('vmware')
     expect(mock.mock.calls[0]?.[0]).toBe('/api/vms/search?provider_id=vmware-vcenter-01')
-    expect(JSON.parse(String((mock.mock.calls[0]?.[1] as RequestInit).body))).toEqual({})
+    expect(parseRequestBody(mock.mock.calls[0]?.[1] as RequestInit)).toEqual({})
   })
 
   it('dispatches IBM Power providers to the Power inventory endpoint', async () => {

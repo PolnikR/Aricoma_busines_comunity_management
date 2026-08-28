@@ -9,6 +9,11 @@ describe('API_ENDPOINTS', () => {
     expect(new Set(endpoints).size).toBe(endpoints.length)
   })
 
+  it('does not register deprecated VMware inventory endpoint paths', () => {
+    expect(API_ENDPOINTS.discovery).not.toHaveProperty('virtualMachines')
+    expect(API_ENDPOINTS.discovery).not.toHaveProperty('virtualMachinesByTag')
+  })
+
   it('defines the platform provider API contract', () => {
     expect(API_ENDPOINTS.platformProviders).toEqual({
       list: '/api/get_platform_providers',

@@ -24,6 +24,13 @@ function inventoryResponse(names: string[]) {
   }), { status: 200 })
 }
 
+function parseRequestBody(init: RequestInit): Record<string, unknown> {
+  if (typeof init.body !== 'string') throw new Error('Expected a JSON request body')
+  const parsed: unknown = JSON.parse(init.body)
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Expected a JSON object request body')
+  return parsed as Record<string, unknown>
+}
+
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.useRealTimers()
@@ -104,7 +111,7 @@ describe('useVmwareResourceInventory', () => {
   it('retains previous tag data during name debounce and the next name query', async () => {
     let resolveNameResponse: ((response: Response) => void) | undefined
     const nameResponse = new Promise<Response>((resolve) => { resolveNameResponse = resolve })
-    const fetchMock = vi.fn((_: string, init: RequestInit) => JSON.parse(String(init.body)).tag
+    const fetchMock = vi.fn((_: string, init: RequestInit) => parseRequestBody(init)['tag']
       ? Promise.resolve(inventoryResponse(['WEB-01']))
       : nameResponse)
     vi.stubGlobal('fetch', fetchMock)
@@ -137,7 +144,7 @@ describe('useVmwareResourceInventory', () => {
   it('does not expose retained empty data as an empty success during debounce or refetch', async () => {
     let resolveNameResponse: ((response: Response) => void) | undefined
     const nameResponse = new Promise<Response>((resolve) => { resolveNameResponse = resolve })
-    const fetchMock = vi.fn((_: string, init: RequestInit) => JSON.parse(String(init.body)).tag
+    const fetchMock = vi.fn((_: string, init: RequestInit) => parseRequestBody(init)['tag']
       ? Promise.resolve(inventoryResponse([]))
       : nameResponse)
     vi.stubGlobal('fetch', fetchMock)

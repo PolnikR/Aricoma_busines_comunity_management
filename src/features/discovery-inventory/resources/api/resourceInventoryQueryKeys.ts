@@ -5,9 +5,6 @@ export const discoveryInventoryKeys = {
   resourceInventory: (providerType: string, providerId?: string) => (
     ['resource-inventory', providerType, providerId ?? null] as const
   ),
-  inventory: (providerId?: string, tag?: string) => (
-    [...discoveryInventoryKeys.all, 'inventory', providerId ?? null, tag ?? null] as const
-  ),
   vmwareSearch: (search: VmwareInventorySearch = {}) => {
     const normalized = normalizeVmwareInventorySearch(search)
     return [
@@ -31,11 +28,5 @@ export const discoveryInventoryKeys = {
   ),
   volumeTree: (providerId?: string, view?: string) => (
     [...discoveryInventoryKeys.all, 'volume-tree', providerId ?? null, view ?? null] as const
-  ),
-  vmsByName: (prefix?: string, providerId?: string) => (
-    [...discoveryInventoryKeys.all, 'vms-by-name', prefix ?? null, providerId ?? null] as const
-  ),
-  rawVmsByName: (prefix?: string, providerId?: string) => (
-    [...discoveryInventoryKeys.all, 'raw-vms-by-name', prefix ?? null, providerId ?? null] as const
   ),
 }
