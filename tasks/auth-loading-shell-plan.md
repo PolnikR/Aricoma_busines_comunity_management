@@ -62,28 +62,28 @@ from Task 1, and the final visual check depends on the complete transition.
 
 ### Phase 1: Skeleton presentation contract
 
-- [ ] Task 1: Build and test the pure full-app shell skeleton.
+- [x] Task 1: Build and test the pure full-app shell skeleton.
 
 ### Checkpoint: Presentation
 
-- [ ] The focused component test proves the shell is one accessible busy state.
-- [ ] No links, buttons, inputs, images, or visible loading copy are rendered.
-- [ ] Desktop and mobile structures use the existing application breakpoints.
+- [x] The focused component test proves the shell is one accessible busy state.
+- [x] No links, buttons, inputs, images, or visible loading copy are rendered.
+- [x] Desktop and mobile structures use the existing application breakpoints.
 
 ### Phase 2: Authentication integration
 
-- [ ] Task 2: Replace the pending authentication text with `AppShellSkeleton`.
+- [x] Task 2: Replace the pending authentication text with `AppShellSkeleton`.
 
 ### Final Checkpoint
 
-- [ ] Pending authentication shows the skeleton and withholds application
+- [x] Pending authentication shows the skeleton and withholds application
       children.
-- [ ] Successful authentication removes the skeleton and renders children.
-- [ ] Failed initialization still renders the existing login-server error.
+- [x] Successful authentication removes the skeleton and renders children.
+- [x] Failed initialization still renders the existing login-server error.
 - [ ] Light/dark and mobile/desktop browser checks show no structural overflow
       or interactive controls in the skeleton.
-- [ ] Focused tests, focused ESLint, typecheck, and `git diff --check` pass.
-- [ ] The full test suite and production build are not run unless focused
+- [x] Focused tests, focused ESLint, typecheck, and `git diff --check` pass.
+- [x] The full test suite and production build are not run unless focused
       verification reveals a cross-cutting issue or the reviewer requests them.
 
 ## Verification Strategy

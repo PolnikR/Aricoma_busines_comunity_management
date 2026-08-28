@@ -15,6 +15,7 @@ const keycloakMock = vi.hoisted(() => ({
 }))
 
 vi.mock('@/config/keycloak', () => ({ keycloak: keycloakMock }))
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 function AuthDetails() {
   const { status, user } = useAuthContext()
@@ -31,6 +32,22 @@ describe('AuthProvider', () => {
     vi.clearAllMocks()
     keycloakMock.onTokenExpired = undefined
     keycloakMock.init.mockResolvedValue(true)
+  })
+
+  it('renders the application shell skeleton while Keycloak initialization is pending', () => {
+    keycloakMock.init.mockReturnValue(new Promise(() => undefined))
+
+    render(
+      <TestProviders>
+        <AuthProvider>
+          <div>Authenticated application</div>
+        </AuthProvider>
+      </TestProviders>,
+    )
+
+    expect(screen.getByRole('status', { name: 'Loading' })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.queryByText('Authenticated application')).not.toBeInTheDocument()
+    expect(screen.queryByText('Loading')).not.toBeInTheDocument()
   })
 
   it('loads the authenticated Keycloak profile before rendering children', async () => {
@@ -52,6 +69,7 @@ describe('AuthProvider', () => {
     )
 
     expect(await screen.findByText('Jane Doe|jane.doe@example.com')).toBeInTheDocument()
+    expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument()
     expect(keycloakMock.init).toHaveBeenCalledWith({
       onLoad: 'login-required',
       pkceMethod: false,
@@ -74,6 +92,23 @@ describe('AuthProvider', () => {
 
     expect(await screen.findByText('ABCO operator|')).toBeInTheDocument()
     expect(consoleError).toHaveBeenCalledWith('keycloak profile load failed', expect.any(Error))
+    consoleError.mockRestore()
+  })
+
+  it('retains the login-server error message when Keycloak initialization fails', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    keycloakMock.init.mockRejectedValue(new Error('login server unavailable'))
+
+    render(
+      <TestProviders>
+        <AuthProvider>
+          <AuthDetails />
+        </AuthProvider>
+      </TestProviders>,
+    )
+
+    expect(await screen.findByText('Unable to reach the login server.')).toBeInTheDocument()
+    expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument()
     consoleError.mockRestore()
   })
 
