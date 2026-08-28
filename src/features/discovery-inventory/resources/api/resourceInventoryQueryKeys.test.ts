@@ -24,4 +24,24 @@ describe('discoveryInventoryKeys', () => {
       'discovery-inventory', 'volume-tree', 'flash-01', 'flat',
     ])
   })
+
+  it('builds a canonical VMware search key from normalized server filters', () => {
+    expect(discoveryInventoryKeys.vmwareSearch()).toEqual([
+      'discovery-inventory', 'vmware-search', null, null, null, null,
+    ])
+    expect(discoveryInventoryKeys.vmwareSearch({
+      providerId: ' provider-1 ',
+      folderName: ' folder-1 ',
+      tag: ' prod ',
+      namePrefix: ' app ',
+      forceRefresh: true,
+    })).toEqual([
+      'discovery-inventory', 'vmware-search', 'provider-1', 'folder-1', 'prod', 'app',
+    ])
+  })
+
+  it('ignores forceRefresh when building the VMware search key', () => {
+    expect(discoveryInventoryKeys.vmwareSearch({ providerId: 'provider-1', forceRefresh: false }))
+      .toEqual(discoveryInventoryKeys.vmwareSearch({ providerId: 'provider-1', forceRefresh: true }))
+  })
 })
