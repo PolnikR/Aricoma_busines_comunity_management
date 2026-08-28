@@ -6,6 +6,59 @@
  */
 import * as zod from 'zod';
 
+export const CacheHistoryRetention = zod.object({
+  "retention_days": zod.int(),
+  "max_records": zod.int()
+});
+
+export type CacheHistoryRetention = zod.input<typeof CacheHistoryRetention>;
+export type CacheHistoryRetentionOutput = zod.output<typeof CacheHistoryRetention>;
+
+export const CacheConfigResponse = zod.object({
+  "defaults": zod.record(zod.string(), zod.int()),
+  "history_retention": CacheHistoryRetention
+});
+
+export type CacheConfigResponse = zod.input<typeof CacheConfigResponse>;
+export type CacheConfigResponseOutput = zod.output<typeof CacheConfigResponse>;
+
+export const CacheHistoryRetentionUpdate = zod.object({
+  "retention_days": zod.union([zod.int(),zod.null()]).exactOptional(),
+  "max_records": zod.union([zod.int(),zod.null()]).exactOptional()
+});
+
+export type CacheHistoryRetentionUpdate = zod.input<typeof CacheHistoryRetentionUpdate>;
+export type CacheHistoryRetentionUpdateOutput = zod.output<typeof CacheHistoryRetentionUpdate>;
+
+export const CacheConfigUpdate = zod.object({
+  "defaults": zod.union([zod.record(zod.string(), zod.int()),zod.null()]).exactOptional(),
+  "history_retention": zod.union([CacheHistoryRetentionUpdate,zod.null()]).exactOptional()
+});
+
+export type CacheConfigUpdate = zod.input<typeof CacheConfigUpdate>;
+export type CacheConfigUpdateOutput = zod.output<typeof CacheConfigUpdate>;
+
+export const CacheRunRecord = zod.object({
+  "provider_id": zod.string(),
+  "provider_type": zod.string(),
+  "triggered_by": zod.enum(['stale', 'forced', 'param_change']),
+  "started_at": zod.string(),
+  "duration_ms": zod.int(),
+  "success": zod.boolean(),
+  "record_count": zod.union([zod.int(),zod.null()]).exactOptional(),
+  "error": zod.union([zod.string(),zod.null()]).exactOptional()
+});
+
+export type CacheRunRecord = zod.input<typeof CacheRunRecord>;
+export type CacheRunRecordOutput = zod.output<typeof CacheRunRecord>;
+
+export const CacheHistoryResponse = zod.object({
+  "runs": zod.array(CacheRunRecord)
+});
+
+export type CacheHistoryResponse = zod.input<typeof CacheHistoryResponse>;
+export type CacheHistoryResponseOutput = zod.output<typeof CacheHistoryResponse>;
+
 export const cleanRoomPolicyRecordEnabledDefault = true;
 
 export const CleanRoomPolicyRecord = zod.object({
@@ -95,7 +148,7 @@ export const HealthResponse = zod.object({
 export type HealthResponse = zod.input<typeof HealthResponse>;
 export type HealthResponseOutput = zod.output<typeof HealthResponse>;
 
-export const ProviderType = zod.enum(['VMWARE', 'FLASHCOPY', 'IBM_POWER', 'AIRFLOW', 'SMTP']);
+export const ProviderType = zod.enum(['VMWARE', 'FLASHCOPY', 'IBM_POWER', 'AIRFLOW', 'SMTP', 'BACKEND']);
 
 export type ProviderType = zod.input<typeof ProviderType>;
 export type ProviderTypeOutput = zod.output<typeof ProviderType>;
@@ -117,11 +170,14 @@ export const OrchestrationProvider = zod.object({
   "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmTags": zod.array(zod.string()).exactOptional(),
   "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "cacheRefreshSeconds": zod.union([zod.int(),zod.null()]).exactOptional(),
   "port": zod.int().default(orchestrationProviderPortDefault),
   "dagDir": zod.union([zod.string(),zod.null()]).exactOptional(),
   "fromEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
   "disableSsl": zod.union([zod.boolean(),zod.null()]).exactOptional(),
-  "disableTls": zod.union([zod.boolean(),zod.null()]).exactOptional()
+  "disableTls": zod.union([zod.boolean(),zod.null()]).exactOptional(),
+  "loggingEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional(),
+  "jwtEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional()
 });
 
 export type OrchestrationProvider = zod.input<typeof OrchestrationProvider>;
@@ -144,11 +200,14 @@ export const OrchestrationProviderRecord = zod.object({
   "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmTags": zod.array(zod.string()).exactOptional(),
   "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "cacheRefreshSeconds": zod.union([zod.int(),zod.null()]).exactOptional(),
   "port": zod.int().default(orchestrationProviderRecordPortDefault),
   "dagDir": zod.union([zod.string(),zod.null()]).exactOptional(),
   "fromEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
   "disableSsl": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "disableTls": zod.union([zod.boolean(),zod.null()]).exactOptional(),
+  "loggingEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional(),
+  "jwtEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "credentialStatus": zod.union([zod.string(),zod.null()]).exactOptional()
 });
 
@@ -249,7 +308,8 @@ export const Provider = zod.object({
   "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmTags": zod.array(zod.string()).exactOptional(),
-  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional()
+  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "cacheRefreshSeconds": zod.union([zod.int(),zod.null()]).exactOptional()
 });
 
 export type Provider = zod.input<typeof Provider>;
@@ -280,6 +340,7 @@ export const ProviderRecord = zod.object({
   "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmTags": zod.array(zod.string()).exactOptional(),
   "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "cacheRefreshSeconds": zod.union([zod.int(),zod.null()]).exactOptional(),
   "credentialStatus": zod.union([zod.string(),zod.null()]).exactOptional()
 });
 
@@ -694,6 +755,18 @@ export const VmRecord = zod.object({
 export type VmRecord = zod.input<typeof VmRecord>;
 export type VmRecordOutput = zod.output<typeof VmRecord>;
 
+export const vmSearchFilterForceRefreshDefault = false;
+
+export const VmSearchFilter = zod.object({
+  "folder_name": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "tag": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "name_prefix": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "force_refresh": zod.boolean().default(vmSearchFilterForceRefreshDefault)
+});
+
+export type VmSearchFilter = zod.input<typeof VmSearchFilter>;
+export type VmSearchFilterOutput = zod.output<typeof VmSearchFilter>;
+
 export const VmsResponse = zod.object({
   "count": zod.int(),
   "vms": zod.array(VmRecord)
@@ -933,14 +1006,37 @@ export const DeleteCredentialRouteDeleteCredentialDeleteResponse = CredentialsRe
 
 
 /**
+ * @summary Vms Search
+ */
+export const vmsSearchVmsSearchPostQueryProviderIdDefault = `vmware-vcenter-01`;
+
+export const VmsSearchVmsSearchPostQueryParams = zod.object({
+  "provider_id": zod.string().default(vmsSearchVmsSearchPostQueryProviderIdDefault).describe('id of the vCenter provider to use')
+})
+
+export const vmsSearchVmsSearchPostHeaderXUserDefault = `admin`;
+
+export const VmsSearchVmsSearchPostHeader = zod.object({
+  "X-User": zod.union([zod.string(),zod.null()]).default(vmsSearchVmsSearchPostHeaderXUserDefault)
+})
+
+export const VmsSearchVmsSearchPostBody = zod.union([VmSearchFilter,zod.null()])
+
+export const VmsSearchVmsSearchPostResponse = VmsResponse
+
+
+/**
+ * @deprecated
  * @summary Vms In Folder
  */
 export const vmsInFolderVmsInFolderGetQueryNameDefault = `_TEST masiny`;
 export const vmsInFolderVmsInFolderGetQueryProviderIdDefault = `vmware-vcenter-01`;
+export const vmsInFolderVmsInFolderGetQueryForceRefreshDefault = false;
 
 export const VmsInFolderVmsInFolderGetQueryParams = zod.object({
   "name": zod.string().default(vmsInFolderVmsInFolderGetQueryNameDefault).describe('vCenter folder name'),
-  "provider_id": zod.string().default(vmsInFolderVmsInFolderGetQueryProviderIdDefault).describe('id of the vCenter provider to use')
+  "provider_id": zod.string().default(vmsInFolderVmsInFolderGetQueryProviderIdDefault).describe('id of the vCenter provider to use'),
+  "force_refresh": zod.boolean().default(vmsInFolderVmsInFolderGetQueryForceRefreshDefault).describe('bypass cache and fetch live')
 })
 
 export const vmsInFolderVmsInFolderGetHeaderXUserDefault = `admin`;
@@ -953,12 +1049,15 @@ export const VmsInFolderVmsInFolderGetResponse = VmsResponse
 
 
 /**
+ * @deprecated
  * @summary Vms
  */
 export const vmsVmsGetQueryProviderIdDefault = `vmware-vcenter-01`;
+export const vmsVmsGetQueryForceRefreshDefault = false;
 
 export const VmsVmsGetQueryParams = zod.object({
-  "provider_id": zod.string().default(vmsVmsGetQueryProviderIdDefault).describe('id of the vCenter provider to use')
+  "provider_id": zod.string().default(vmsVmsGetQueryProviderIdDefault).describe('id of the vCenter provider to use'),
+  "force_refresh": zod.boolean().default(vmsVmsGetQueryForceRefreshDefault).describe('bypass cache and fetch live')
 })
 
 export const vmsVmsGetHeaderXUserDefault = `admin`;
@@ -971,14 +1070,17 @@ export const VmsVmsGetResponse = VmsResponse
 
 
 /**
+ * @deprecated
  * @summary Vms By Tag
  */
 export const vmsByTagVmsByTagGetQueryTagDefault = `WEB`;
 export const vmsByTagVmsByTagGetQueryProviderIdDefault = `vmware-vcenter-01`;
+export const vmsByTagVmsByTagGetQueryForceRefreshDefault = false;
 
 export const VmsByTagVmsByTagGetQueryParams = zod.object({
   "tag": zod.string().default(vmsByTagVmsByTagGetQueryTagDefault).describe('vCenter tag for VM'),
-  "provider_id": zod.string().default(vmsByTagVmsByTagGetQueryProviderIdDefault).describe('id of the vCenter provider to use')
+  "provider_id": zod.string().default(vmsByTagVmsByTagGetQueryProviderIdDefault).describe('id of the vCenter provider to use'),
+  "force_refresh": zod.boolean().default(vmsByTagVmsByTagGetQueryForceRefreshDefault).describe('bypass cache and fetch live')
 })
 
 export const vmsByTagVmsByTagGetHeaderXUserDefault = `admin`;
@@ -991,14 +1093,17 @@ export const VmsByTagVmsByTagGetResponse = VmsResponse
 
 
 /**
+ * @deprecated
  * @summary Vms By Name
  */
 export const vmsByNameVmsByNameGetQueryPrefixDefault = `WEB`;
 export const vmsByNameVmsByNameGetQueryProviderIdDefault = `vmware-vcenter-01`;
+export const vmsByNameVmsByNameGetQueryForceRefreshDefault = false;
 
 export const VmsByNameVmsByNameGetQueryParams = zod.object({
   "prefix": zod.string().default(vmsByNameVmsByNameGetQueryPrefixDefault).describe('Case-sensitive prefix to match against VM name (vm.name.startswith(prefix))'),
-  "provider_id": zod.string().default(vmsByNameVmsByNameGetQueryProviderIdDefault).describe('id of the vCenter provider to use')
+  "provider_id": zod.string().default(vmsByNameVmsByNameGetQueryProviderIdDefault).describe('id of the vCenter provider to use'),
+  "force_refresh": zod.boolean().default(vmsByNameVmsByNameGetQueryForceRefreshDefault).describe('bypass cache and fetch live')
 })
 
 export const vmsByNameVmsByNameGetHeaderXUserDefault = `admin`;
@@ -1054,9 +1159,11 @@ export const VdisksByVmVdisksByVmGetResponse = VdisksByVmResponse
  * @summary Get Volumes Route
  */
 export const getVolumesRouteGetVolumesGetQueryProviderIdDefault = `ibm-flashsystem-01`;
+export const getVolumesRouteGetVolumesGetQueryForceRefreshDefault = false;
 
 export const GetVolumesRouteGetVolumesGetQueryParams = zod.object({
-  "provider_id": zod.string().default(getVolumesRouteGetVolumesGetQueryProviderIdDefault).describe('id of the IBM FlashSystem provider to use')
+  "provider_id": zod.string().default(getVolumesRouteGetVolumesGetQueryProviderIdDefault).describe('id of the IBM FlashSystem provider to use'),
+  "force_refresh": zod.boolean().default(getVolumesRouteGetVolumesGetQueryForceRefreshDefault).describe('bypass cache and fetch live')
 })
 
 export const getVolumesRouteGetVolumesGetHeaderXUserDefault = `admin`;
@@ -1075,10 +1182,12 @@ export const GetVolumesRouteGetVolumesGetResponse = VolumesResponse
  */
 export const getVolumeTreeRouteGetVolumeTreeGetQueryProviderIdDefault = `ibm-flashsystem-01`;
 export const getVolumeTreeRouteGetVolumeTreeGetQueryViewDefault = `all`;
+export const getVolumeTreeRouteGetVolumeTreeGetQueryForceRefreshDefault = false;
 
 export const GetVolumeTreeRouteGetVolumeTreeGetQueryParams = zod.object({
   "provider_id": zod.string().default(getVolumeTreeRouteGetVolumeTreeGetQueryProviderIdDefault).describe('id of the IBM FlashSystem provider to use'),
-  "view": zod.enum(['all', 'snapshot', 'consistency_group', 'flat']).default(getVolumeTreeRouteGetVolumeTreeGetQueryViewDefault).describe('which tree(s) to build; \'all\' returns all three')
+  "view": zod.enum(['all', 'snapshot', 'consistency_group', 'flat']).default(getVolumeTreeRouteGetVolumeTreeGetQueryViewDefault).describe('which tree(s) to build; \'all\' returns all three'),
+  "force_refresh": zod.boolean().default(getVolumeTreeRouteGetVolumeTreeGetQueryForceRefreshDefault).describe('bypass cache and fetch live')
 })
 
 export const getVolumeTreeRouteGetVolumeTreeGetHeaderXUserDefault = `admin`;
@@ -1094,9 +1203,11 @@ export const GetVolumeTreeRouteGetVolumeTreeGetResponse = VolumeTreeResponse
  * @summary Get Power Vm
  */
 export const getPowerVmGetPowerVmGetQueryProviderIdDefault = `ibm-power-01`;
+export const getPowerVmGetPowerVmGetQueryForceRefreshDefault = false;
 
 export const GetPowerVmGetPowerVmGetQueryParams = zod.object({
-  "provider_id": zod.string().default(getPowerVmGetPowerVmGetQueryProviderIdDefault).describe('id of the IBM Power provider to use')
+  "provider_id": zod.string().default(getPowerVmGetPowerVmGetQueryProviderIdDefault).describe('id of the IBM Power provider to use'),
+  "force_refresh": zod.boolean().default(getPowerVmGetPowerVmGetQueryForceRefreshDefault).describe('bypass cache and fetch live')
 })
 
 export const getPowerVmGetPowerVmGetHeaderXUserDefault = `admin`;
@@ -1106,6 +1217,73 @@ export const GetPowerVmGetPowerVmGetHeader = zod.object({
 })
 
 export const GetPowerVmGetPowerVmGetResponse = PowerVmsResponse
+
+
+/**
+ * @summary Get Cache Config
+ */
+export const getCacheConfigDiscoveryCacheConfigGetHeaderXUserDefault = `admin`;
+
+export const GetCacheConfigDiscoveryCacheConfigGetHeader = zod.object({
+  "X-User": zod.union([zod.string(),zod.null()]).default(getCacheConfigDiscoveryCacheConfigGetHeaderXUserDefault)
+})
+
+export const GetCacheConfigDiscoveryCacheConfigGetResponse = CacheConfigResponse
+
+
+/**
+ * @summary Update Cache Config
+ */
+export const updateCacheConfigDiscoveryCacheConfigPutHeaderXUserDefault = `admin`;
+
+export const UpdateCacheConfigDiscoveryCacheConfigPutHeader = zod.object({
+  "X-User": zod.union([zod.string(),zod.null()]).default(updateCacheConfigDiscoveryCacheConfigPutHeaderXUserDefault)
+})
+
+export const UpdateCacheConfigDiscoveryCacheConfigPutBody = CacheConfigUpdate
+
+export const UpdateCacheConfigDiscoveryCacheConfigPutResponse = CacheConfigResponse
+
+
+/**
+ * @summary Get Cache History
+ */
+export const GetCacheHistoryDiscoveryCacheHistoryGetQueryParams = zod.object({
+  "provider_id": zod.union([zod.string(),zod.null()]).exactOptional().describe('filter to one provider'),
+  "limit": zod.union([zod.int(),zod.null()]).exactOptional().describe('cap the number of returned runs')
+})
+
+export const getCacheHistoryDiscoveryCacheHistoryGetHeaderXUserDefault = `admin`;
+
+export const GetCacheHistoryDiscoveryCacheHistoryGetHeader = zod.object({
+  "X-User": zod.union([zod.string(),zod.null()]).default(getCacheHistoryDiscoveryCacheHistoryGetHeaderXUserDefault)
+})
+
+export const GetCacheHistoryDiscoveryCacheHistoryGetResponse = CacheHistoryResponse
+
+
+/**
+ * @summary Get Access Logs
+ */
+export const getAccessLogsGetAccessLogsGetQueryLinesDefault = 200;
+export const getAccessLogsGetAccessLogsGetQueryLinesMax = 5000;
+
+
+
+export const GetAccessLogsGetAccessLogsGetQueryParams = zod.object({
+  "lines": zod.int().min(1).max(getAccessLogsGetAccessLogsGetQueryLinesMax).default(getAccessLogsGetAccessLogsGetQueryLinesDefault).describe('max log entries to return'),
+  "status": zod.union([zod.int(),zod.null()]).exactOptional().describe('filter by HTTP status code'),
+  "method": zod.union([zod.string(),zod.null()]).exactOptional().describe('filter by HTTP method'),
+  "path_contains": zod.union([zod.string(),zod.null()]).exactOptional().describe('filter by substring of the request path')
+})
+
+export const getAccessLogsGetAccessLogsGetHeaderXUserDefault = `admin`;
+
+export const GetAccessLogsGetAccessLogsGetHeader = zod.object({
+  "X-User": zod.union([zod.string(),zod.null()]).default(getAccessLogsGetAccessLogsGetHeaderXUserDefault)
+})
+
+export const GetAccessLogsGetAccessLogsGetResponse = zod.unknown()
 
 
 /**

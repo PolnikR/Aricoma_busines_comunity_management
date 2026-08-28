@@ -5,17 +5,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type VmsByTagVmsByTagGetParams = {
-/**
- * vCenter tag for VM
- */
-tag?: string;
+export type VmsSearchVmsSearchPostParams = {
 /**
  * id of the vCenter provider to use
  */
 provider_id?: string;
-/**
- * bypass cache and fetch live
- */
-force_refresh?: boolean;
 };

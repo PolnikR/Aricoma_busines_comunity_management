@@ -21,4 +21,5 @@ export interface Provider {
   vmPrefix?: string | null;
   vmTags?: string[];
   notificationEmail?: string | null;
+  cacheRefreshSeconds?: number | null;
 }

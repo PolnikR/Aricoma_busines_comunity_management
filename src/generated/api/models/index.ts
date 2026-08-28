@@ -5,6 +5,15 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './cacheConfigResponse.gen';
+export * from './cacheConfigResponseDefaults.gen';
+export * from './cacheConfigUpdate.gen';
+export * from './cacheConfigUpdateDefaults.gen';
+export * from './cacheHistoryResponse.gen';
+export * from './cacheHistoryRetention.gen';
+export * from './cacheHistoryRetentionUpdate.gen';
+export * from './cacheRunRecord.gen';
+export * from './cacheRunRecordTriggeredBy.gen';
 export * from './cleanRoomPoliciesResponse.gen';
 export * from './cleanRoomPolicy.gen';
 export * from './cleanRoomPolicyRecord.gen';
@@ -20,6 +29,8 @@ export * from './deleteProviderRouteDeleteProviderDeleteParams.gen';
 export * from './deleteRecoveryAppPolicyRouteDeleteRecoveryAppPolicyDeleteParams.gen';
 export * from './deleteRecoveryAppRouteDeleteRecoveryAppDeleteParams.gen';
 export * from './deleteRecoveryGroupRouteDeleteRecoveryGroupDeleteParams.gen';
+export * from './getAccessLogsGetAccessLogsGetParams.gen';
+export * from './getCacheHistoryDiscoveryCacheHistoryGetParams.gen';
 export * from './getOrchestratorRunsGetOrchestratorRunsGetParams.gen';
 export * from './getPlatformProvidersGetPlatformProvidersGetParams.gen';
 export * from './getPowerVmGetPowerVmGetParams.gen';
@@ -106,8 +117,10 @@ export * from './vmDisk.gen';
 export * from './vmRecord.gen';
 export * from './vmsByNameVmsByNameGetParams.gen';
 export * from './vmsByTagVmsByTagGetParams.gen';
+export * from './vmSearchFilter.gen';
 export * from './vmsInFolderVmsInFolderGetParams.gen';
 export * from './vmsResponse.gen';
+export * from './vmsSearchVmsSearchPostParams.gen';
 export * from './vmsVmsGetParams.gen';
 export * from './volumesResponse.gen';
 export * from './volumesResponseClusters.gen';

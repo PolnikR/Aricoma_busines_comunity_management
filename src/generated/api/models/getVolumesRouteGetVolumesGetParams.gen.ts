@@ -10,4 +10,8 @@ export type GetVolumesRouteGetVolumesGetParams = {
  * id of the IBM FlashSystem provider to use
  */
 provider_id?: string;
+/**
+ * bypass cache and fetch live
+ */
+force_refresh?: boolean;
 };

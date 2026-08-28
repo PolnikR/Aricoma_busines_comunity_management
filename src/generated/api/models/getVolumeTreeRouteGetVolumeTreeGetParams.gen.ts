@@ -15,4 +15,8 @@ provider_id?: string;
  * which tree(s) to build; 'all' returns all three
  */
 view?: GetVolumeTreeRouteGetVolumeTreeGetView;
+/**
+ * bypass cache and fetch live
+ */
+force_refresh?: boolean;
 };

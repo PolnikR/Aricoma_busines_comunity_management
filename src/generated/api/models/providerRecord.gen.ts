@@ -21,6 +21,7 @@ export interface ProviderRecord {
   vmPrefix?: string | null;
   vmTags?: string[];
   notificationEmail?: string | null;
+  cacheRefreshSeconds?: number | null;
   credentialStatus?: string | null;
   [key: string]: unknown;
  }

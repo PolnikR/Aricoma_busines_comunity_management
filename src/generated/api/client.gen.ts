@@ -5,6 +5,9 @@
  * OpenAPI spec version: 0.1.0
  */
 import type {
+  CacheConfigResponse,
+  CacheConfigUpdate,
+  CacheHistoryResponse,
   CleanRoomPoliciesResponse,
   CleanRoomPolicy,
   Credential,
@@ -18,6 +21,8 @@ import type {
   DeleteRecoveryAppPolicyRouteDeleteRecoveryAppPolicyDeleteParams,
   DeleteRecoveryAppRouteDeleteRecoveryAppDeleteParams,
   DeleteRecoveryGroupRouteDeleteRecoveryGroupDeleteParams,
+  GetAccessLogsGetAccessLogsGetParams,
+  GetCacheHistoryDiscoveryCacheHistoryGetParams,
   GetOrchestratorRunsGetOrchestratorRunsGetParams,
   GetPlatformProvidersGetPlatformProvidersGetParams,
   GetPowerVmGetPowerVmGetParams,
@@ -52,10 +57,12 @@ import type {
   TestProviderTestProviderGetParams,
   VdisksByVmResponse,
   VdisksByVmVdisksByVmGetParams,
+  VmSearchFilter,
   VmsByNameVmsByNameGetParams,
   VmsByTagVmsByTagGetParams,
   VmsInFolderVmsInFolderGetParams,
   VmsResponse,
+  VmsSearchVmsSearchPostParams,
   VmsVmsGetParams,
   VolumeTreeResponse,
   VolumesResponse
@@ -392,6 +399,38 @@ export const deleteCredentialRouteDeleteCredentialDelete = async (params: Delete
 
 
 
+export const getVmsSearchVmsSearchPostUrl = (params?: VmsSearchVmsSearchPostParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/vms/search?${stringifiedParams}` : `/vms/search`
+}
+
+/**
+ * @summary Vms Search
+ */
+export const vmsSearchVmsSearchPost = async (vmSearchFilterNull?: VmSearchFilter | null,
+    params?: VmsSearchVmsSearchPostParams, options?: Parameters<typeof orvalMutator>[1]): Promise<VmsResponse> => {
+
+  return orvalMutator<VmsResponse>(getVmsSearchVmsSearchPostUrl(params),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(vmSearchFilterNull)
+  }
+);}
+
+
+
 export const getVmsInFolderVmsInFolderGetUrl = (params?: VmsInFolderVmsInFolderGetParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -408,6 +447,7 @@ export const getVmsInFolderVmsInFolderGetUrl = (params?: VmsInFolderVmsInFolderG
 }
 
 /**
+ * @deprecated
  * @summary Vms In Folder
  */
 export const vmsInFolderVmsInFolderGet = async (params?: VmsInFolderVmsInFolderGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<VmsResponse> => {
@@ -439,6 +479,7 @@ export const getVmsVmsGetUrl = (params?: VmsVmsGetParams,) => {
 }
 
 /**
+ * @deprecated
  * @summary Vms
  */
 export const vmsVmsGet = async (params?: VmsVmsGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<VmsResponse> => {
@@ -470,6 +511,7 @@ export const getVmsByTagVmsByTagGetUrl = (params?: VmsByTagVmsByTagGetParams,) =
 }
 
 /**
+ * @deprecated
  * @summary Vms By Tag
  */
 export const vmsByTagVmsByTagGet = async (params?: VmsByTagVmsByTagGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<VmsResponse> => {
@@ -501,6 +543,7 @@ export const getVmsByNameVmsByNameGetUrl = (params?: VmsByNameVmsByNameGetParams
 }
 
 /**
+ * @deprecated
  * @summary Vms By Name
  */
 export const vmsByNameVmsByNameGet = async (params?: VmsByNameVmsByNameGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<VmsResponse> => {
@@ -663,6 +706,116 @@ export const getGetPowerVmGetPowerVmGetUrl = (params?: GetPowerVmGetPowerVmGetPa
 export const getPowerVmGetPowerVmGet = async (params?: GetPowerVmGetPowerVmGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<PowerVmsResponse> => {
 
   return orvalMutator<PowerVmsResponse>(getGetPowerVmGetPowerVmGetUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export const getGetCacheConfigDiscoveryCacheConfigGetUrl = () => {
+
+
+
+
+  return `/discovery/cache/config`
+}
+
+/**
+ * @summary Get Cache Config
+ */
+export const getCacheConfigDiscoveryCacheConfigGet = async ( options?: Parameters<typeof orvalMutator>[1]): Promise<CacheConfigResponse> => {
+
+  return orvalMutator<CacheConfigResponse>(getGetCacheConfigDiscoveryCacheConfigGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export const getUpdateCacheConfigDiscoveryCacheConfigPutUrl = () => {
+
+
+
+
+  return `/discovery/cache/config`
+}
+
+/**
+ * @summary Update Cache Config
+ */
+export const updateCacheConfigDiscoveryCacheConfigPut = async (cacheConfigUpdate: CacheConfigUpdate, options?: Parameters<typeof orvalMutator>[1]): Promise<CacheConfigResponse> => {
+
+  return orvalMutator<CacheConfigResponse>(getUpdateCacheConfigDiscoveryCacheConfigPutUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(cacheConfigUpdate)
+  }
+);}
+
+
+
+export const getGetCacheHistoryDiscoveryCacheHistoryGetUrl = (params?: GetCacheHistoryDiscoveryCacheHistoryGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/discovery/cache/history?${stringifiedParams}` : `/discovery/cache/history`
+}
+
+/**
+ * @summary Get Cache History
+ */
+export const getCacheHistoryDiscoveryCacheHistoryGet = async (params?: GetCacheHistoryDiscoveryCacheHistoryGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<CacheHistoryResponse> => {
+
+  return orvalMutator<CacheHistoryResponse>(getGetCacheHistoryDiscoveryCacheHistoryGetUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export const getGetAccessLogsGetAccessLogsGetUrl = (params?: GetAccessLogsGetAccessLogsGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/get_access_logs?${stringifiedParams}` : `/get_access_logs`
+}
+
+/**
+ * @summary Get Access Logs
+ */
+export const getAccessLogsGetAccessLogsGet = async (params?: GetAccessLogsGetAccessLogsGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<unknown> => {
+
+  return orvalMutator<unknown>(getGetAccessLogsGetAccessLogsGetUrl(params),
   {
     ...options,
     method: 'GET'

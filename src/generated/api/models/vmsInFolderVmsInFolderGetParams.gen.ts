@@ -14,4 +14,8 @@ name?: string;
  * id of the vCenter provider to use
  */
 provider_id?: string;
+/**
+ * bypass cache and fetch live
+ */
+force_refresh?: boolean;
 };

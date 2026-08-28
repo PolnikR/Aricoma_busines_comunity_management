@@ -10,4 +10,8 @@ export type GetPowerVmGetPowerVmGetParams = {
  * id of the IBM Power provider to use
  */
 provider_id?: string;
+/**
+ * bypass cache and fetch live
+ */
+force_refresh?: boolean;
 };
