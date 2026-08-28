@@ -19,14 +19,14 @@
 
 ## Checkpoint: Stage 1
 
-- [ ] Run all Stage 1 focused Vitest files together.
-- [ ] Confirm static toolbars, column names, metric icons, and labels remain visible.
-- [ ] Confirm cached background refresh never reverts to skeletons.
-- [ ] Confirm loading, error, empty-success, and populated-success remain distinct.
-- [ ] Run focused ESLint for changed files with zero warnings.
-- [ ] Run `npm run typecheck`.
+- [x] Run all Stage 1 focused Vitest files together.
+- [x] Confirm static toolbars, column names, metric icons, and labels remain visible.
+- [x] Confirm cached background refresh never reverts to skeletons.
+- [x] Confirm loading, error, empty-success, and populated-success remain distinct.
+- [x] Run focused ESLint for changed files with zero warnings.
+- [x] Run `npm run typecheck`.
 - [ ] Browser-check representative tables and metrics at 320, 768, 1024, and 1440 px.
-- [ ] Commit every task/sub-slice atomically before Stage 2.
+- [x] Commit every task/sub-slice atomically before Stage 2.
 
 ## Stage 2: Specialized loading states
 
@@ -42,11 +42,11 @@
 
 ## Checkpoint: Complete
 
-- [ ] Run all affected focused Vitest files together.
-- [ ] Run `npm run typecheck`.
-- [ ] Run focused ESLint for every changed TS/TSX file.
-- [ ] Run `git diff --check` and inspect staged files before each commit.
-- [ ] Audit remaining skeleton and whole-page loading branches and document valid exceptions.
+- [x] Run all affected focused Vitest files together.
+- [x] Run `npm run typecheck`.
+- [x] Run focused ESLint for every changed TS/TSX file.
+- [x] Run `git diff --check` and inspect staged files before each commit.
+- [x] Audit remaining skeleton and whole-page loading branches and document valid exceptions.
 - [ ] Browser-check table, metric, topology, editor, sidebar, and Identity loading states.
-- [ ] Confirm `RouteLoadingSkeleton` and mutation indicators remain unchanged.
-- [ ] Confirm every implementation slice has an atomic task-scoped commit.
+- [x] Confirm `RouteLoadingSkeleton` and mutation indicators remain unchanged.
+- [x] Confirm every implementation slice has an atomic task-scoped commit.
