@@ -6,6 +6,7 @@ import { Alert } from '@/shared/components/alert/Alert'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { PageHeader } from '@/shared/components/page/PageHeader'
+import { SkeletonBlock } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
 import { RecoveryApplicationOrchestratorSuccessModal } from '../components/RecoveryApplicationOrchestratorSuccessModal'
@@ -73,14 +74,6 @@ export function RecoveryApplicationEditorPage() {
     })
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-96 items-center justify-center text-sm text-text-muted" role="status">
-        {t('pages.recoveryEditor.error.loading')}
-      </div>
-    )
-  }
-
   if (error) {
     return (
       <div className="flex min-h-full flex-col">
@@ -104,7 +97,7 @@ export function RecoveryApplicationEditorPage() {
     )
   }
 
-  if (!initialData) {
+  if (!isLoading && !initialData) {
     return (
       <div className="flex min-h-full flex-col">
         <PageHeader
@@ -121,7 +114,9 @@ export function RecoveryApplicationEditorPage() {
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
         eyebrow={t('pages.recoveryEditor.eyebrow')}
-        title={`${t('buttons.edit')} ${initialData.name}`}
+        title={isLoading
+          ? <span className="flex items-center gap-2">{t('buttons.edit')} <SkeletonBlock className="h-7 w-44" /></span>
+          : `${t('buttons.edit')} ${initialData?.name ?? ''}`}
         description={t('pages.recoveryEditor.saveDescription')}
         actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
       />
@@ -135,12 +130,14 @@ export function RecoveryApplicationEditorPage() {
           />
         ) : null}
         <RecoveryAppBuilder
+          key={initialData?.fileName ?? 'loading'}
           onCancel={goBack}
-          initialData={initialData}
+          {...(initialData ? { initialData } : {})}
           onSave={handleSave}
           onDirtyChange={setIsDirty}
           isSaving={submitApplication.isPending}
           disableFileName
+          isInitialLoading={isLoading}
         />
       </div>
       <ConfirmDialog

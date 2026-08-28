@@ -87,33 +87,36 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
     onSave,
     onDirtyChange,
     disableFileName,
+    isInitialLoading,
   }: {
-    initialData: RecoveryApplicationFormState
+    initialData?: RecoveryApplicationFormState
     onSave: (state: RecoveryApplicationFormState) => void
     onDirtyChange?: (isDirty: boolean) => void
     disableFileName?: boolean
+    isInitialLoading?: boolean
   }) => (
-    <div>
-      <span>{initialData.name}</span>
-      <span>{initialData.fileName}</span>
+    <fieldset disabled={isInitialLoading} aria-busy={isInitialLoading}>
+      <span>Application details</span>
+      <span>{initialData?.name}</span>
+      <span>{initialData?.fileName}</span>
       <span>{disableFileName ? 'Filename disabled' : 'Filename enabled'}</span>
-      <button type="button" onClick={() => { onSave(initialData) }}>Save unchanged</button>
+      <button type="button" onClick={() => { if (initialData) onSave(initialData) }}>Save unchanged</button>
       <button
         type="button"
-        onClick={() => { onSave({ ...initialData, name: 'Renamed App' }) }}
+        onClick={() => { if (initialData) onSave({ ...initialData, name: 'Renamed App' }) }}
       >
         Save renamed
       </button>
       <button
         type="button"
-        onClick={() => { onSave({ ...initialData, pushToOrchestrator: true }) }}
+        onClick={() => { if (initialData) onSave({ ...initialData, pushToOrchestrator: true }) }}
       >
         Save orchestrated
       </button>
       <button type="button" onClick={() => { onDirtyChange?.(true) }}>
         Change builder
       </button>
-    </div>
+    </fieldset>
   ),
 }))
 
@@ -235,8 +238,13 @@ describe('RecoveryApplicationEditorPage', () => {
 
   it('renders loading, load-error, and not-found states', () => {
     recoveryQuery = { ...recoveryQuery, data: undefined, isLoading: true }
-    const { rerender } = render(<RecoveryApplicationEditorPage />)
-    expect(screen.getByRole('status')).toHaveTextContent('Loading recovery application')
+    const { container, rerender } = render(<RecoveryApplicationEditorPage />)
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
+    expect(screen.getByText('Application details')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save unchanged' })).toBeDisabled()
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument()
+    expect(container.querySelector('.animate-pulse')).toBeInTheDocument()
+    expect(screen.queryByText('Loading recovery application')).not.toBeInTheDocument()
 
     recoveryQuery = {
       ...recoveryQuery,

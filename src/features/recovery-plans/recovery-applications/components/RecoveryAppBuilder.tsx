@@ -29,6 +29,7 @@ interface RecoveryAppBuilderProps {
   isSaving?: boolean
   initialData?: RecoveryApplicationFormState
   disableFileName?: boolean
+  isInitialLoading?: boolean
 }
 
 const DEFAULT_TIERS: Record<string, DraftRecoveryTier> = {
@@ -71,6 +72,7 @@ export function RecoveryAppBuilder({
   isSaving,
   initialData,
   disableFileName = false,
+  isInitialLoading = false,
 }: RecoveryAppBuilderProps) {
   const { t } = useTranslation()
   const [step, setStep] = useState(1)
@@ -275,6 +277,7 @@ export function RecoveryAppBuilder({
   }
 
   return (
+    <fieldset className="contents" disabled={isInitialLoading} aria-busy={isInitialLoading}>
     <div className="flex min-h-0 flex-1 p-4">
       <div className="grid min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-surface shadow-sm lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="custom-scrollbar min-h-0 overflow-x-hidden overflow-y-auto border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
@@ -482,5 +485,6 @@ export function RecoveryAppBuilder({
         </div>
       </div>
     </div>
+    </fieldset>
   )
 }

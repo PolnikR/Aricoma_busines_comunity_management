@@ -32,7 +32,7 @@
 
 - [x] Task 11: Preserve infrastructure topology chrome during loading.
 - [x] Task 12: Preserve the provider detail shell during loading.
-- [ ] Task 13: Preserve the recovery application editor shell.
+- [x] Task 13: Preserve the recovery application editor shell.
 - [ ] Task 14: Preserve the recovery group editor shell.
 - [ ] Task 15a: Refine recovery builder/type-step loading regions.
 - [ ] Task 15b: Refine shared resource-sidebar loading regions.
