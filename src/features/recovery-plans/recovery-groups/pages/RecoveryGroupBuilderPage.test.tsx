@@ -84,6 +84,18 @@ beforeEach(() => {
 })
 
 describe('RecoveryGroupBuilderPage', () => {
+  it('contains the builder page so resource panels own their desktop scroll', () => {
+    const { container } = render(<RecoveryGroupBuilderPage />)
+
+    expect(container.firstElementChild).toHaveClass(
+      'flex',
+      'min-h-full',
+      'lg:h-full',
+      'lg:min-h-0',
+      'lg:overflow-hidden',
+    )
+  })
+
   it('shows the success modal with the airflow run id when pushed to the orchestrator', async () => {
     const user = userEvent.setup()
     const openWindow = vi.spyOn(window, 'open').mockImplementation(() => null)

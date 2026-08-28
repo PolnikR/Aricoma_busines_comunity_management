@@ -66,7 +66,7 @@ export function RecoveryGroupBuilderPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
       <PageHeader
         eyebrow={t('pages.recoveryGroupBuilder.eyebrow')}
         title={t('pages.recoveryGroupBuilder.title')}

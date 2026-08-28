@@ -97,7 +97,7 @@ export function RecoveryGroupEditorPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
       <PageHeader
         eyebrow={t('pages.recoveryGroupEditor.eyebrow')}
         title={t('pages.recoveryGroupEditor.title')}

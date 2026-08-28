@@ -107,6 +107,18 @@ describe('RecoveryGroupEditorPage', () => {
     recoveryGroupsState.isLoading = false
   })
 
+  it('contains the editor page so resource panels own their desktop scroll', () => {
+    const { container } = render(<RecoveryGroupEditorPage />)
+
+    expect(container.firstElementChild).toHaveClass(
+      'flex',
+      'min-h-full',
+      'lg:h-full',
+      'lg:min-h-0',
+      'lg:overflow-hidden',
+    )
+  })
+
   it('prefills the builder and updates the existing recovery group', async () => {
     const user = userEvent.setup()
     update.mockResolvedValue({ airflowRunId: null })
