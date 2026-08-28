@@ -5,6 +5,7 @@ import { Card } from '@/shared/components/card/Card'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { PageHeader } from '@/shared/components/page/PageHeader'
+import { SkeletonBlock } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '../hooks/useProviders'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
@@ -20,6 +21,10 @@ function roleColor(role: 'source' | 'target') {
   return role === 'source' ? 'success' as const : 'warning' as const
 }
 
+function textOrFallback(value: string | null | undefined, fallback: string) {
+  return value?.trim().length ? value : fallback
+}
+
 export function ProviderDetailPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -29,14 +34,6 @@ export function ProviderDetailPage() {
   const loadErrorDescription = extractBackendErrorDetail(error)
 
   const goBack = () => { void navigate('/providers-connectors/providers') }
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-96 items-center justify-center text-sm text-text-muted" role="status">
-        {t('pages.providers.detail.loading')}
-      </div>
-    )
-  }
 
   if (error) {
     return (
@@ -60,7 +57,7 @@ export function ProviderDetailPage() {
     )
   }
 
-  if (!provider) {
+  if (!isLoading && !provider) {
     return (
       <div className="flex min-h-full flex-col">
         <PageHeader
@@ -80,48 +77,50 @@ export function ProviderDetailPage() {
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
         eyebrow={t('pages.providers.eyebrow')}
-        title={provider.name}
-        description={provider.description || t('pages.providers.description')}
+        title={isLoading ? <SkeletonBlock className="h-8 w-48" /> : provider?.name ?? ''}
+        description={isLoading ? <SkeletonBlock className="h-4 w-72" /> : textOrFallback(provider?.description, t('pages.providers.description'))}
         actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
       />
 
-      <div className="flex-1 p-3 lg:min-h-0">
+      <div className="flex-1 p-3 lg:min-h-0" aria-busy={isLoading}>
         <Card>
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
               <h2 className="text-base font-semibold text-text-primary">{t('pages.providers.detail.title')}</h2>
               <p className="mt-1 text-sm text-text-muted">{t('pages.providers.detail.apiDescription')}</p>
             </div>
-            <Badge color="info" size="sm">
-              {providerTypeLabel(provider.type)}
-            </Badge>
+            {isLoading
+              ? <SkeletonBlock className="h-6 w-20 rounded-full" />
+              : <Badge color="info" size="sm">{provider ? providerTypeLabel(provider.type) : ''}</Badge>}
           </div>
 
           <dl className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
             <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.providerId')}</dt>
-              <dd className="mt-1 font-mono text-sm text-text-primary">{provider.id}</dd>
+              <dd className="mt-1 font-mono text-sm text-text-primary">{isLoading ? <SkeletonBlock className="h-4 w-32" /> : provider?.id}</dd>
             </div>
             <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.type')}</dt>
               <dd className="mt-1 text-sm text-text-primary">
-                {providerTypeLabel(provider.type)}
+                {isLoading ? <SkeletonBlock className="h-4 w-20" /> : provider ? providerTypeLabel(provider.type) : ''}
               </dd>
             </div>
             <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.role')}</dt>
               <dd className="mt-1">
-                <Badge color={roleColor(provider.role ?? 'source')} size="sm">{t(`forms.role.${provider.role ?? 'source'}`)}</Badge>
+                {isLoading
+                  ? <SkeletonBlock className="h-6 w-16 rounded-full" />
+                  : <Badge color={roleColor(provider?.role ?? 'source')} size="sm">{t(`forms.role.${provider?.role ?? 'source'}`)}</Badge>}
               </dd>
             </div>
             <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.ipAddress')}</dt>
-              <dd className="mt-1 font-mono text-sm text-text-primary">{provider.ipAddress || '-'}</dd>
+              <dd className="mt-1 font-mono text-sm text-text-primary">{isLoading ? <SkeletonBlock className="h-4 w-28" /> : textOrFallback(provider?.ipAddress, '-')}</dd>
             </div>
             <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.url')}</dt>
               <dd className="mt-1 text-sm text-text-primary">
-                {provider.url ? (
+                {isLoading ? <SkeletonBlock className="h-4 w-44" /> : provider?.url ? (
                   <a
                     href={provider.url}
                     target="_blank"
@@ -135,26 +134,28 @@ export function ProviderDetailPage() {
             </div>
             <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.description')}</dt>
-              <dd className="mt-1 text-sm text-text-primary">{provider.description || '-'}</dd>
+              <dd className="mt-1 text-sm text-text-primary">{isLoading ? <SkeletonBlock className="h-4 w-40" /> : textOrFallback(provider?.description, '-')}</dd>
             </div>
             <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.defaultFlashcopyProviderId')}</dt>
-              <dd className="mt-1 font-mono text-sm text-text-primary">{provider.defaultFlashcopyProviderId ?? '-'}</dd>
+              <dd className="mt-1 font-mono text-sm text-text-primary">{isLoading ? <SkeletonBlock className="h-4 w-32" /> : provider?.defaultFlashcopyProviderId ?? '-'}</dd>
             </div>
             <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.orchestratorConnId')}</dt>
-              <dd className="mt-1 font-mono text-sm text-text-primary">{provider.orchestratorConnId ?? '-'}</dd>
+              <dd className="mt-1 font-mono text-sm text-text-primary">{isLoading ? <SkeletonBlock className="h-4 w-28" /> : provider?.orchestratorConnId ?? '-'}</dd>
             </div>
             <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.credential')}</dt>
-              <dd className="mt-1 font-mono text-sm text-text-primary">{provider.credentialId ?? '-'}</dd>
+              <dd className="mt-1 font-mono text-sm text-text-primary">{isLoading ? <SkeletonBlock className="h-4 w-28" /> : provider?.credentialId ?? '-'}</dd>
             </div>
             <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.credentialStatus')}</dt>
               <dd className="mt-1">
-                <Badge color={credentialStatusColor(provider.credentialStatus)} size="sm">
-                  {t(`providers.credentials.status.${provider.credentialStatus}`)}
-                </Badge>
+                {isLoading
+                  ? <SkeletonBlock className="h-6 w-16 rounded-full" />
+                  : provider ? <Badge color={credentialStatusColor(provider.credentialStatus)} size="sm">
+                      {t(`providers.credentials.status.${provider.credentialStatus}`)}
+                    </Badge> : null}
               </dd>
             </div>
           </dl>
