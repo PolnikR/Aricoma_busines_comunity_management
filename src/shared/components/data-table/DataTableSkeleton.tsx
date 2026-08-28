@@ -50,7 +50,7 @@ export function DataTableSkeleton({
 
       <div
         className={layout === 'fit'
-          ? 'w-full min-w-0 flex-1 overflow-x-hidden'
+          ? 'w-full min-w-0 flex-1 min-h-0 overflow-hidden'
           : 'custom-scrollbar w-full min-w-0 flex-1 touch-pan-x overflow-x-auto overscroll-x-contain'}
         aria-hidden="true"
       >

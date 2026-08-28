@@ -11,6 +11,7 @@ export function ResourceInventoryLoading({ ariaLabel, columnCount = 9 }: Resourc
     <DataTableSkeleton
       columnCount={columnCount}
       ariaLabel={ariaLabel}
+      layout="fit"
       className="flex-1 lg:min-h-0"
     />
   )
