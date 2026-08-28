@@ -70,14 +70,17 @@ describe('fetchVmwareInventory', () => {
     })
   })
 
-  it('requests without a provider filter by default', async () => {
+  it('requests an explicit empty POST body without a provider filter by default', async () => {
     const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
     vi.stubGlobal('fetch', mock)
 
     await fetchVmwareInventory()
 
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/vms')
+    expect(url).toBe('/api/vms/search')
+    expect(init.method).toBe('POST')
+    expect(init.body).toBe('{}')
+    expect(new Headers(init.headers).get('Content-Type')).toBe('application/json')
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
@@ -85,39 +88,69 @@ describe('fetchVmwareInventory', () => {
     const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
     vi.stubGlobal('fetch', mock)
 
-    await fetchVmwareInventory('vmware-vcenter-01')
+    await fetchVmwareInventory({ providerId: 'vmware-vcenter-01' })
 
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/vms?provider_id=vmware-vcenter-01')
+    expect(url).toBe('/api/vms/search?provider_id=vmware-vcenter-01')
+    expect(init.body).toBe('{}')
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
-  it('uses the vms_by_tag endpoint when a tag is given', async () => {
+  it('sends a tag filter in the POST body', async () => {
     const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
     vi.stubGlobal('fetch', mock)
 
-    await fetchVmwareInventory(undefined, 'WEB')
+    await fetchVmwareInventory({ tag: 'WEB' })
 
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/vms_by_tag?tag=WEB')
+    expect(url).toBe('/api/vms/search')
+    expect(JSON.parse(String(init.body))).toEqual({ tag: 'WEB' })
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
-  it('includes both tag and provider_id when both are given', async () => {
+  it('sends all normalized filters in one AND request', async () => {
     const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
     vi.stubGlobal('fetch', mock)
 
-    await fetchVmwareInventory('vmware-vcenter-01', 'WEB')
+    await fetchVmwareInventory({
+      providerId: ' vmware-vcenter-01 ',
+      folderName: ' Applications ',
+      tag: ' WEB ',
+      namePrefix: ' application- ',
+      forceRefresh: true,
+    })
 
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/vms_by_tag?tag=WEB&provider_id=vmware-vcenter-01')
+    expect(url).toBe('/api/vms/search?provider_id=vmware-vcenter-01')
+    expect(JSON.parse(String(init.body))).toEqual({
+      folder_name: 'Applications',
+      tag: 'WEB',
+      name_prefix: 'application-',
+      force_refresh: true,
+    })
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
+  })
+
+  it('omits whitespace-only filters from the request', async () => {
+    const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
+    vi.stubGlobal('fetch', mock)
+
+    await fetchVmwareInventory({
+      providerId: '  ',
+      folderName: '\t',
+      tag: '',
+      namePrefix: '  ',
+    })
+
+    const [url, init] = mock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/vms/search')
+    expect(init.body).toBe('{}')
   })
 
   it('propagates a server failure for a filtered tag query', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 500 })))
 
-    await expect(fetchVmwareInventory(undefined, 'WEB')).rejects.toThrow(
+    await expect(fetchVmwareInventory({ tag: 'WEB' })).rejects.toThrow(
       'Discovery inventory request failed with status 500',
     )
   })
@@ -127,7 +160,7 @@ describe('fetchVmwareInventory', () => {
       new Response(JSON.stringify({ detail: "provider 'ibm-flashsystem-01' is not a VMWARE provider" }), { status: 400 }),
     ))
 
-    await expect(fetchVmwareInventory('ibm-flashsystem-01')).rejects.toThrow(
+    await expect(fetchVmwareInventory({ providerId: 'ibm-flashsystem-01' })).rejects.toThrow(
       'Discovery inventory request failed with status 400',
     )
   })
@@ -382,14 +415,15 @@ describe('fetchInventory', () => {
     credentialStatus: 'ok',
   })
 
-  it('dispatches VMware providers to the VMware inventory endpoint', async () => {
+  it('dispatches VMware providers to the VMware search endpoint', async () => {
     const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(validPayload), { status: 200 }))
     vi.stubGlobal('fetch', mock)
 
     const result = await fetchInventory(provider('VMWARE', 'vmware-vcenter-01'))
 
     expect(result.source).toBe('vmware')
-    expect(mock.mock.calls[0]?.[0]).toBe('/api/vms?provider_id=vmware-vcenter-01')
+    expect(mock.mock.calls[0]?.[0]).toBe('/api/vms/search?provider_id=vmware-vcenter-01')
+    expect(JSON.parse(String((mock.mock.calls[0]?.[1] as RequestInit).body))).toEqual({})
   })
 
   it('dispatches IBM Power providers to the Power inventory endpoint', async () => {
