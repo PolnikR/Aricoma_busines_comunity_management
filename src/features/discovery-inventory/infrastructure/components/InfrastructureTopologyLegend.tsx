@@ -1,16 +1,19 @@
 import { useTranslation } from '@/hooks/useTranslation'
+import { SkeletonBlock } from '@/shared/components/data-table'
 import type { InfrastructureTopologyPlatform } from '../model/topologyTypes'
 
 interface InfrastructureTopologyLegendProps {
   platform: InfrastructureTopologyPlatform
   visibleNodes: number
   visibleEdges: number
+  isLoading?: boolean
 }
 
 export function InfrastructureTopologyLegend({
   platform,
   visibleNodes,
   visibleEdges,
+  isLoading = false,
 }: InfrastructureTopologyLegendProps) {
   const { t } = useTranslation()
   const isPower = platform === 'ibm-power'
@@ -49,7 +52,7 @@ export function InfrastructureTopologyLegend({
         </span>
       </div>
       <span className="shrink-0 font-medium text-text-secondary">
-        {visibleNodes} {t('legend.statisticsNodes')} / {visibleEdges} {t('legend.statisticsRelations')}
+        {isLoading ? <SkeletonBlock className="mr-1 inline-block h-3 w-5" /> : visibleNodes} {t('legend.statisticsNodes')} / {isLoading ? <SkeletonBlock className="mx-1 inline-block h-3 w-5" /> : visibleEdges} {t('legend.statisticsRelations')}
       </span>
     </div>
   )

@@ -70,7 +70,7 @@ export function ResourceSidebar({
           className="text-xs"
         />
       </div>
-      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-2">
+      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-2" aria-busy={isLoading}>
         {isLoading ? (
           <ListSkeleton rowCount={8} ariaLabel={loadingLabel} />
         ) : error && normalizedItems.length === 0 ? (

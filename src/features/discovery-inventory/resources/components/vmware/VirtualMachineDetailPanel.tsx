@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/com
 import {
   DataTable,
   DataTableRequestState,
-  DataTableSkeleton,
+  SkeletonBlock,
   DetailDrawer,
   DetailRow,
   DetailStat,
@@ -232,17 +232,7 @@ export function VirtualMachineDetailPanel({
 
               {selectedTab === 'snapshots' && (
                 <div className="flex flex-col" key={`snapshots-${virtualMachine.id}`}>
-                  {vdisksLoading ? (
-                    <DataTableSkeleton
-                      columnCount={5}
-                      rowCount={4}
-                      ariaLabel={t('pages.virtualMachines.detail.loadingSnapshots')}
-                      showToolbar={false}
-                      showPagination={false}
-                      className="rounded-none border-0 shadow-none"
-                    />
-                  ) : (
-                    <DataTableRequestState
+                  <DataTableRequestState
                       error={vdisksError ? {
                         title: t('resources.common.loadFailed'),
                         retryLabel: t('buttons.retry'),
@@ -254,26 +244,27 @@ export function VirtualMachineDetailPanel({
                         <div className="border-b border-border px-4 py-3">
                           <div className="flex gap-2">
                             <span className="inline-flex items-center rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
-                              {snapshotCounts.source} {t('details.sourceMappings')}
+                              {vdisksLoading ? <SkeletonBlock className="mr-1 inline-block h-3 w-5" /> : snapshotCounts.source} {t('details.sourceMappings')}
                             </span>
                             <span className="inline-flex items-center rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
-                              {snapshotCounts.target} {t('details.targetMappings')}
+                              {vdisksLoading ? <SkeletonBlock className="mr-1 inline-block h-3 w-5" /> : snapshotCounts.target} {t('details.targetMappings')}
                             </span>
                           </div>
                         </div>
                         <DataTable<StorageVolumeMapping>
                           columns={snapshotColumns}
                           rows={snapshotMappings}
+                          isLoading={vdisksLoading}
+                          loadingRowCount={4}
                           rowKey={(mapping, index) => `${mapping.id}-${String(index)}`}
                           minWidthClassName="min-w-180"
                           emptyContent={t('pages.virtualMachines.detail.noSnapshots')}
-                          ariaLabel={t('pages.virtualMachines.detail.snapshotsTable')}
+                          ariaLabel={vdisksLoading ? t('pages.virtualMachines.detail.loadingSnapshots') : t('pages.virtualMachines.detail.snapshotsTable')}
                           headerCellClassName={headerCell}
                           cellClassName={cell}
                         />
                       </>
-                    </DataTableRequestState>
-                  )}
+                  </DataTableRequestState>
                 </div>
               )}
             </div>

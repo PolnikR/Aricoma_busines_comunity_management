@@ -129,12 +129,16 @@ describe('ProvidersCatalogueTable', () => {
     cleanup()
   })
 
-  it('renders the shared table skeleton while providers are loading', () => {
+  it('keeps provider table chrome visible and skeletonizes only rows while loading', () => {
     vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => undefined)))
 
     renderTable()
 
     expect(screen.getByRole('status', { name: 'Loading providers' })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByRole('searchbox', { name: 'Search providers by name' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Provider' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Description' })).toBeVisible()
+    expect(screen.getByRole('combobox', { name: 'Rows per page' })).toBeDisabled()
     expect(screen.queryByText('Loading providers…')).not.toBeInTheDocument()
   })
 

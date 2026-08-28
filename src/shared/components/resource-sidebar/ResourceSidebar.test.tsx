@@ -16,6 +16,22 @@ const labels = {
 }
 
 describe('ResourceSidebar', () => {
+  it('keeps static sidebar controls mounted while only remote entries load', () => {
+    render(
+      <ResourceSidebar
+        {...labels}
+        items={[]}
+        dragDataKey="vm-name"
+        isLoading
+      />,
+    )
+
+    expect(screen.getByRole('heading', { name: 'Available resources' })).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Search resources' })).toBeDisabled()
+    expect(screen.getByRole('status', { name: 'Loading resources' })).toBeInTheDocument()
+    expect(screen.queryByText('No resources')).not.toBeInTheDocument()
+  })
+
   it('deduplicates, sorts, filters, and exposes resources only as drag sources', async () => {
     const user = userEvent.setup()
     const setData = vi.fn()

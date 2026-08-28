@@ -45,6 +45,24 @@ const partialPolicySet: PolicySet = {
 }
 
 describe('PolicySetsTable', () => {
+  it('keeps its static toolbar and headers visible while policy-set rows load', () => {
+    render(
+      <PolicySetsTable
+        policySets={[]}
+        isLoading
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('searchbox', { name: 'Search policy sets' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Policies' })).toBeVisible()
+    expect(screen.getByRole('status', { name: 'Loading policy sets' })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByRole('combobox', { name: 'Rows per page' })).toBeDisabled()
+  })
+
   it('keeps pagination outside a desktop-only table scroll region', () => {
     const { container } = render(
       <PolicySetsTable

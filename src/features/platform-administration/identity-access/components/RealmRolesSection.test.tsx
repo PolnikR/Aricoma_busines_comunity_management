@@ -24,6 +24,17 @@ function renderSection(overrides?: Partial<Parameters<typeof RealmRolesSection>[
 }
 
 describe('RealmRolesSection', () => {
+  it('keeps role search and column labels visible while API rows load', () => {
+    vi.mocked(useRolesPermissions).mockReturnValue({ data: undefined, isLoading: true, error: null, refetch: vi.fn() } as never)
+    vi.mocked(useUsers).mockReturnValue({ data: [], isLoading: false, error: null, refetch: vi.fn() })
+    renderSection()
+
+    expect(screen.getByRole('searchbox', { name: 'Search roles' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Role name' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Permissions' })).toBeVisible()
+    expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true')
+  })
+
   it('uses the shared list/search pattern without generic permission counts', async () => {
     mockLoadedRoles([role, { ...role, id: 'role-viewer', name: 'Viewer', permissions: [] }])
     const props = renderSection()

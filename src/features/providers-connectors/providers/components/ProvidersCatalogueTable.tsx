@@ -5,7 +5,6 @@ import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import {
   DataTable,
-  DataTableSkeleton,
   DataTableToolbar,
   DataTablePagination,
   DataTableRequestState,
@@ -197,16 +196,6 @@ export function ProvidersCatalogueTable({
     testConnection.reset()
   }
 
-  if (isLoading) {
-    return (
-      <DataTableSkeleton
-        columnCount={7}
-        ariaLabel={t('providers.loading')}
-        className="flex-1 rounded-none border-0 shadow-none lg:min-h-0"
-      />
-    )
-  }
-
   return (
     <div className="flex flex-col">
       {deleteProvider.error ? (
@@ -229,10 +218,11 @@ export function ProvidersCatalogueTable({
         onFilterOpen={openFilters}
         onApplyFilters={applyFilters}
         onClearFilters={clearFilters}
+        filterControlsDisabled={isLoading}
         filterPanel={
           <>
             <Field label={t('details.type')} htmlFor="provider-type-filter">
-              <Select id="provider-type-filter" value={pendingType} onChange={(event) => { setPendingType(event.target.value) }}>
+              <Select id="provider-type-filter" value={pendingType} disabled={isLoading} onChange={(event) => { setPendingType(event.target.value) }}>
                 <option value="">{t('providers.allTypes')}</option>
                 {types.map((type) => <option key={type} value={type}>{providerTypeLabel(type)}</option>)}
               </Select>
@@ -241,6 +231,7 @@ export function ProvidersCatalogueTable({
               <Select
                 id="provider-role-filter"
                 value={pendingRole}
+                disabled={isLoading}
                 onChange={(event) => { setPendingRole(event.target.value as ProviderRoleFilter) }}
               >
                 <option value="all">{t('providers.allRoles')}</option>
@@ -266,9 +257,10 @@ export function ProvidersCatalogueTable({
           columns={columns}
           rows={table.pageItems}
           rowKey={(provider) => provider.id}
+          isLoading={isLoading}
           density={table.density}
           minWidthClassName="min-w-215"
-          ariaLabel={t('providers.tableLabel')}
+          ariaLabel={t(isLoading ? 'providers.loading' : 'providers.tableLabel')}
           onRowClick={(provider) => { setSelectedId(provider.id) }}
           selectedRowKey={selectedId}
           emptyContent={rows.length > 0 ? t('providers.noMatches') : t('providers.empty')}
@@ -280,6 +272,7 @@ export function ProvidersCatalogueTable({
           page={table.page}
           pageSize={table.pageSize}
           total={table.total}
+          isLoading={isLoading}
           onPageChange={table.setPage}
           onPageSizeChange={table.setPageSize}
         />

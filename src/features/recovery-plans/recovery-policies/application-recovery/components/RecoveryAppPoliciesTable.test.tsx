@@ -27,6 +27,22 @@ const latestPolicy: RecoveryAppPolicy = {
 }
 
 describe('RecoveryAppPoliciesTable', () => {
+  it('keeps static table content visible and dependent filters disabled while rows load', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryAppPoliciesTable policies={[]} isLoading error={null} isRetrying={false} onRetry={vi.fn()} />)
+
+    expect(screen.getByRole('searchbox', { name: 'Search recovery app policies' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Policy' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Snapshot selection' })).toBeVisible()
+    expect(screen.getByRole('status', { name: 'Loading recovery app policies' })).toHaveAttribute('aria-busy', 'true')
+
+    await user.click(screen.getByRole('button', { name: 'Filters' }))
+    expect(screen.getByLabelText('Level')).toBeDisabled()
+    expect(screen.getByLabelText('Status')).toBeDisabled()
+    expect(screen.getByLabelText('Selection mode')).toBeDisabled()
+    expect(screen.getByRole('combobox', { name: 'Rows per page' })).toBeDisabled()
+  })
+
   it('shows schedule selection and opens an accessible detail drawer', async () => {
     render(<RecoveryAppPoliciesTable policies={[policy]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} />)
 

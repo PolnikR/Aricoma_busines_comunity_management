@@ -4,11 +4,27 @@ import { describe, expect, it, vi } from 'vitest'
 import { RealmSettingsSection } from './RealmSettingsSection'
 import { IdentityAdminGatewayProvider } from '../services/IdentityAdminGatewayProvider'
 import { createMockIdentityAdminGateway } from '../services/mockIdentityAdminGateway'
-import type { RealmLoginPreview } from '../services/identityAdminGateway'
+import type { IdentityAdminPreview, RealmLoginPreview } from '../services/identityAdminGateway'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 describe('RealmSettingsSection', () => {
+  it('keeps realm tabs and field labels visible while adapter values load', () => {
+    const gateway = createMockIdentityAdminGateway()
+    gateway.getPreview = vi.fn(() => new Promise<IdentityAdminPreview>(() => undefined))
+    const { container } = render(
+      <IdentityAdminGatewayProvider gateway={gateway}>
+        <RealmSettingsSection tabId="general" onTabChange={vi.fn()} />
+      </IdentityAdminGatewayProvider>,
+    )
+
+    expect(screen.getByRole('tab', { name: 'General' })).toBeInTheDocument()
+    expect(screen.getByText('Realm name')).toBeInTheDocument()
+    expect(screen.getByText('Display name')).toBeInTheDocument()
+    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(1)
+    expect(screen.queryByText('Loading realm preview')).not.toBeInTheDocument()
+  })
+
   it('shows only the five approved realm tabs and preview realm context', async () => {
     render(<RealmSettingsSection tabId="general" onTabChange={vi.fn()} />)
     const tabs = within(screen.getByRole('tablist', { name: 'Realm settings sections' }))

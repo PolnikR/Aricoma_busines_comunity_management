@@ -7,7 +7,6 @@ import {
   DataTable,
   DataTablePagination,
   DataTableRequestState,
-  DataTableSkeleton,
   DataTableToolbar,
   DetailDrawer,
   DetailRow,
@@ -140,10 +139,6 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
   const loadErrorDetail = extractBackendErrorDetail(error)
   const deleteErrorDetail = extractBackendErrorDetail(deletePolicy.error)
 
-  if (isLoading) {
-    return <DataTableSkeleton columnCount={7} ariaLabel={t('recoveryAppPolicies.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
-  }
-
   return (
     <div className="flex flex-col">
       <DataTableToolbar
@@ -165,20 +160,20 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
         filterPanel={(
           <>
             <Field label={t('recoveryAppPolicies.filters.level')} htmlFor="recovery-app-policy-level-filter">
-              <Select id="recovery-app-policy-level-filter" value={pendingFilters.level} onChange={event => { setPendingFilters(current => ({ ...current, level: event.target.value })) }}>
+              <Select id="recovery-app-policy-level-filter" disabled={isLoading} value={pendingFilters.level} onChange={event => { setPendingFilters(current => ({ ...current, level: event.target.value })) }}>
                 <option value="">{t('recoveryAppPolicies.filters.allLevels')}</option>
                 {filterOptions.levels.map(level => <option key={level} value={level}>{level}</option>)}
               </Select>
             </Field>
             <Field label={t('recoveryAppPolicies.filters.status')} htmlFor="recovery-app-policy-status-filter">
-              <Select id="recovery-app-policy-status-filter" value={pendingFilters.status} onChange={event => { setPendingFilters(current => ({ ...current, status: event.target.value })) }}>
+              <Select id="recovery-app-policy-status-filter" disabled={isLoading} value={pendingFilters.status} onChange={event => { setPendingFilters(current => ({ ...current, status: event.target.value })) }}>
                 <option value="">{t('recoveryAppPolicies.filters.allStatuses')}</option>
                 <option value="enabled">{t('recoveryAppPolicies.enabled')}</option>
                 <option value="disabled">{t('recoveryAppPolicies.disabled')}</option>
               </Select>
             </Field>
             <Field label={t('recoveryAppPolicies.filters.selectionMode')} htmlFor="recovery-app-policy-selection-filter">
-              <Select id="recovery-app-policy-selection-filter" value={pendingFilters.selectionMode} onChange={event => { setPendingFilters(current => ({ ...current, selectionMode: event.target.value })) }}>
+              <Select id="recovery-app-policy-selection-filter" disabled={isLoading} value={pendingFilters.selectionMode} onChange={event => { setPendingFilters(current => ({ ...current, selectionMode: event.target.value })) }}>
                 <option value="">{t('recoveryAppPolicies.filters.allSelectionModes')}</option>
                 <option value="latest">{t('recoveryAppPolicies.selection.latest')}</option>
                 <option value="time_range">{t('recoveryAppPolicies.selection.time_range')}</option>
@@ -195,10 +190,11 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
         <DataTable
           columns={getColumns(t, setJsonViewId)}
           rows={table.pageItems}
+          isLoading={isLoading}
           rowKey={policy => policy.id}
           density={table.density}
           minWidthClassName="min-w-260"
-          ariaLabel={t('recoveryAppPolicies.tableLabel')}
+          ariaLabel={isLoading ? t('recoveryAppPolicies.loading') : t('recoveryAppPolicies.tableLabel')}
           rowAriaLabel={policy => policy.name}
           onRowClick={policy => { setSelectedId(policy.id) }}
           selectedRowKey={selectedId}
@@ -206,7 +202,7 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
         />
       </DataTableRequestState>
 
-      {(!error || policies.length > 0) ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
+      {(!error || policies.length > 0) ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} isLoading={isLoading} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
 
       <DetailDrawer
         open={selected !== null}

@@ -7,7 +7,6 @@ import {
   DataTable,
   DataTablePagination,
   DataTableRequestState,
-  DataTableSkeleton,
   DataTableToolbar,
   DetailDrawer,
   DetailRow,
@@ -92,10 +91,6 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
   const loadErrorDetail = extractBackendErrorDetail(error)
   const deleteErrorDetail = extractBackendErrorDetail(deletePolicy.error)
 
-  if (isLoading) {
-    return <DataTableSkeleton columnCount={4} ariaLabel={t('cleanRoomPolicies.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
-  }
-
   return (
     <div className="flex flex-col">
       <DataTableToolbar
@@ -122,10 +117,11 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
         <DataTable
           columns={getColumns(t, setJsonViewId)}
           rows={table.pageItems}
+          isLoading={isLoading}
           rowKey={policy => policy.id}
           density={table.density}
           minWidthClassName="min-w-180"
-          ariaLabel={t('cleanRoomPolicies.tableLabel')}
+          ariaLabel={isLoading ? t('cleanRoomPolicies.loading') : t('cleanRoomPolicies.tableLabel')}
           rowAriaLabel={policy => policy.name}
           onRowClick={policy => { setSelectedId(policy.id) }}
           selectedRowKey={selectedId}
@@ -138,6 +134,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
           page={table.page}
           pageSize={table.pageSize}
           total={table.total}
+          isLoading={isLoading}
           onPageChange={table.setPage}
           onPageSizeChange={table.setPageSize}
         />

@@ -72,7 +72,11 @@ describe('ProviderDetailPage', () => {
   it('renders loading, error, and missing states', () => {
     query = { ...query, isLoading: true }
     const view = render(<ProviderDetailPage />)
-    expect(screen.getByRole('status')).toHaveTextContent('Loading provider')
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
+    expect(screen.getByText('Provider details')).toBeInTheDocument()
+    expect(screen.getByText('Provider ID')).toBeInTheDocument()
+    expect(screen.queryByText('Loading provider')).not.toBeInTheDocument()
+    expect(view.container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(5)
     query = { ...query, isLoading: false, error: new Error('offline') }
     view.rerender(<ProviderDetailPage />)
     expect(screen.getByRole('alert')).not.toHaveTextContent('offline')

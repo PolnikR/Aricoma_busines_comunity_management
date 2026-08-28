@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
-import { DataTable, DataTableRequestState, DataTableSkeleton } from '@/shared/components/data-table'
+import { DataTable, DataTableRequestState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { useRolesPermissions } from '../hooks/useRolesPermissions'
@@ -22,8 +22,7 @@ export function PermissionsSection() {
 
   return (
     <IdentityContentPanel>
-      {isLoading ? <DataTableSkeleton columnCount={2} rowCount={5} layout="fit" className="m-4" /> : (
-        <div className="p-4">
+      <div className="p-4">
           <DataTableRequestState
             hasCachedData={permissions.length > 0}
             error={error ? { title: t('identity.permissions.loadFailed'), description: error.message, retryLabel: t('identity.common.actions.retry'), isRetrying: false, onRetry: () => { void refetch() } } : null}
@@ -32,6 +31,8 @@ export function PermissionsSection() {
               layout="fit"
               columns={columns}
               rows={rows}
+              isLoading={isLoading}
+              loadingRowCount={5}
               rowKey={row => row.permission}
               ariaLabel={t('identity.permissions.ariaLabel')}
               emptyContent={(
@@ -42,8 +43,7 @@ export function PermissionsSection() {
               )}
             />
           </DataTableRequestState>
-        </div>
-      )}
+      </div>
     </IdentityContentPanel>
   )
 }

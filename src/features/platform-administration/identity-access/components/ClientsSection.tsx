@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Badge } from '@/shared/components/badge/Badge'
-import { DataTable, DataTableToolbar, useTableState } from '@/shared/components/data-table'
+import { DataTable, DataTableToolbar, SkeletonBlock, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { Field, Input } from '@/shared/components/form/FormControls'
@@ -50,6 +50,24 @@ export function ClientsSection({ entityId, tabId, onEntityChange, onTabChange }:
   const tabs = VISIBLE_CLIENT_TABS.map(value => ({ value, label: t(`identity.clients.tabs.${value}`) }))
 
   const selectedClient = clients.find(client => client.id === entityId) ?? null
+  if (entityId && isLoading && !selectedClient) {
+    const activeTab: ClientTabId = isClientTab(tabId) ? tabId : 'settings'
+    return (
+      <IdentityResourceDetailPage
+        eyebrow={t('identity.navigation.groups.manage')}
+        title={<SkeletonBlock className="h-6 w-40" />}
+        description={<SkeletonBlock className="h-3 w-56" />}
+        backLabel={t('identity.navigation.sections.clients')}
+        onBack={() => { onEntityChange(null) }}
+        tabs={tabs}
+        tabId={activeTab}
+        onTabChange={nextTab => { onTabChange(nextTab) }}
+        tabAriaLabel={t('identity.clients.tabs.ariaLabel')}
+      >
+        <LoadingClientSettings />
+      </IdentityResourceDetailPage>
+    )
+  }
   if (entityId && selectedClient) {
     const activeTab: ClientTabId = isClientTab(tabId) ? tabId : 'settings'
     return (
@@ -94,9 +112,32 @@ export function ClientsSection({ entityId, tabId, onEntityChange, onTabChange }:
             ariaLabel={t('identity.navigation.sections.clients')}
             onRowClick={client => { onEntityChange(client.id) }}
             rowAriaLabel={client => t('identity.clients.rowAriaLabel', { clientId: client.clientId })}
+            isLoading={isLoading && clients.length === 0}
             emptyContent={<EmptyState title={isLoading ? t('identity.clients.loading') : t('identity.clients.empty.title')} description={t('identity.clients.empty.description')} />}
           />}
     </IdentityContentPanel>
+  )
+}
+
+function LoadingClientSettings() {
+  const { t } = useTranslation()
+  return (
+    <IdentitySettingsSection title={t('identity.clients.settings.title')} description={t('identity.clients.settings.description')}>
+      <div className="grid min-w-0 gap-4 md:grid-cols-2" aria-busy="true">
+        {[
+          t('identity.clients.fields.clientId'),
+          t('identity.clients.fields.displayName'),
+          t('identity.clients.fields.protocol'),
+          t('identity.clients.fields.rootUrl'),
+          t('identity.clients.fields.homeUrl'),
+        ].map(label => (
+          <div key={label}>
+            <span className="mb-1.5 block text-xs font-medium text-text-secondary">{label}</span>
+            <SkeletonBlock className="h-10 w-full rounded-lg" />
+          </div>
+        ))}
+      </div>
+    </IdentitySettingsSection>
   )
 }
 

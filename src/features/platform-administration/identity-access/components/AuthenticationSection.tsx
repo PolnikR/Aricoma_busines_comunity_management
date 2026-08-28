@@ -36,7 +36,7 @@ export function AuthenticationSection({ tabId, onTabChange }: AuthenticationSect
       ? <div className="p-4"><EmptyState title={t('identity.authentication.requiredActions.loadFailed')} description={error.message} /></div>
       : data
         ? <RequiredActionsTable actions={data.requiredActions} disabled={isMutating} onChange={(actionId, update) => mutate(() => gateway.updateRequiredAction(actionId, update))} />
-        : <div className="p-4"><EmptyState title={t('identity.authentication.requiredActions.loading')} description={t('identity.common.adapterReading')} /></div>
+        : <RequiredActionsTable actions={[]} disabled isLoading onChange={() => Promise.resolve()} />
   } else if (activeTab === 'flows') {
     const columns: ColumnDef<{ id: string; name: string; description: string }>[] = [
       { id: 'name', header: t('identity.authentication.flows.columns.name'), cell: flow => flow.name },
@@ -87,7 +87,7 @@ export function AuthenticationSection({ tabId, onTabChange }: AuthenticationSect
   )
 }
 
-function RequiredActionsTable({ actions, disabled, onChange }: { actions: RequiredActionView[]; disabled: boolean; onChange: (actionId: string, update: Pick<RequiredActionView, 'isEnabled' | 'isDefault'>) => Promise<unknown> }) {
+function RequiredActionsTable({ actions, disabled, isLoading = false, onChange }: { actions: RequiredActionView[]; disabled: boolean; isLoading?: boolean; onChange: (actionId: string, update: Pick<RequiredActionView, 'isEnabled' | 'isDefault'>) => Promise<unknown> }) {
   const { t } = useTranslation()
   const columns = useMemo<ColumnDef<RequiredActionView>[]>(() => [
     {
@@ -138,6 +138,7 @@ function RequiredActionsTable({ actions, disabled, onChange }: { actions: Requir
         rowKey={action => action.id}
         ariaLabel={t('identity.authentication.requiredActions.ariaLabel')}
         minWidthClassName="min-w-[42rem]"
+        isLoading={isLoading}
       />
       <p className="border-t border-border p-3 text-xs text-text-muted">{t('identity.authentication.requiredActions.previewNote')}</p>
     </div>

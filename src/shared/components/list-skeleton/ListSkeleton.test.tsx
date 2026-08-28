@@ -9,6 +9,7 @@ describe('ListSkeleton', () => {
     const skeleton = screen.getByRole('status', { name: 'Loading virtual machines' })
     expect(skeleton).toHaveAttribute('aria-busy', 'true')
     expect(skeleton.querySelectorAll('[aria-hidden="true"] > div')).toHaveLength(4)
+    expect(skeleton.querySelectorAll('button, a, input, select, textarea')).toHaveLength(0)
   })
 
   it('renders at least one row', () => {

@@ -5,7 +5,6 @@ import {
   DataTable,
   DataTablePagination,
   DataTableRequestState,
-  DataTableSkeleton,
   DataTableToolbar,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
@@ -145,10 +144,6 @@ export function RecoveryRunsTable({
   const { t } = useTranslation()
   const errorDetail = extractBackendErrorDetail(error)
 
-  if (isLoading) {
-    return <DataTableSkeleton columnCount={showEntityType ? 5 : 4} ariaLabel={t('recoveryRuns.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
-  }
-
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <DataTableToolbar
@@ -172,8 +167,9 @@ export function RecoveryRunsTable({
           <DataTable
             columns={getColumns(t, showEntityType, onRetry)}
             rows={rows}
+            isLoading={isLoading}
             rowKey={row => `${row.entityType}:${row.id}`}
-            ariaLabel={t('recoveryRuns.tableLabel')}
+            ariaLabel={isLoading ? t('recoveryRuns.loading') : t('recoveryRuns.tableLabel')}
             rowAriaLabel={row => row.name}
             onRowClick={row => { onSelectEntity(row.entityType, row.id) }}
             selectedRowKey={selectedEntityKey}
@@ -187,6 +183,7 @@ export function RecoveryRunsTable({
           page={page}
           pageSize={pageSize}
           total={total}
+          isLoading={isLoading}
           onPageChange={onPageChange}
           onPageSizeChange={onPageSizeChange}
         />

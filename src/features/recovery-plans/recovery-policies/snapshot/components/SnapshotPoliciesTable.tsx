@@ -7,7 +7,6 @@ import {
   DataTable,
   DataTablePagination,
   DataTableRequestState,
-  DataTableSkeleton,
   DataTableToolbar,
   DetailDrawer,
   DetailRow,
@@ -151,10 +150,6 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
     table.setPage(1)
   }
 
-  if (isLoading) {
-    return <DataTableSkeleton columnCount={8} ariaLabel={t('snapshotPolicies.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
-  }
-
   return (
     <div className="flex flex-col">
       <DataTableToolbar
@@ -224,10 +219,11 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
         <DataTable
           columns={getColumns(t, setJsonViewId)}
           rows={table.pageItems}
+          isLoading={isLoading}
           rowKey={policy => policy.id}
           density={table.density}
           minWidthClassName="min-w-260"
-          ariaLabel={t('snapshotPolicies.tableLabel')}
+          ariaLabel={isLoading ? t('snapshotPolicies.loading') : t('snapshotPolicies.tableLabel')}
           rowAriaLabel={policy => policy.name}
           onRowClick={policy => { setSelectedId(policy.id) }}
           selectedRowKey={selectedId}
@@ -240,6 +236,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
           page={table.page}
           pageSize={table.pageSize}
           total={table.total}
+          isLoading={isLoading}
           onPageChange={table.setPage}
           onPageSizeChange={table.setPageSize}
         />
