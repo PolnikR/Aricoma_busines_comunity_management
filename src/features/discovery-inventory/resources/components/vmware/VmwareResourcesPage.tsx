@@ -61,6 +61,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   const resolvedProviderFilter: VmwareProviderFilter = providerFilter ?? { isFixed: false, prefix: '', tag: '', filters: { search: '', tags: [] } }
   const resolvedIsFilterFixed = isFilterFixed ?? resolvedProviderFilter.isFixed
   const inventoryEnabled = providersSuccess && selectedProvider !== null && isInitialized
+  const serverSideTag = getServerSideTagFilter(query.tags)
   const {
     data: inventory,
     isInitialLoading,
@@ -69,12 +70,12 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     isError,
     isEmpty,
     refetch,
-  } = useVmwareResourceInventory(
-    selectedProvider?.id,
-    query.search,
-    getServerSideTagFilter(query.tags),
-    inventoryEnabled,
-  )
+  } = useVmwareResourceInventory({
+    ...(selectedProvider?.id !== undefined ? { providerId: selectedProvider.id } : {}),
+    namePrefix: query.search,
+    ...(serverSideTag !== undefined ? { tag: serverSideTag } : {}),
+    enabled: inventoryEnabled,
+  })
   const { data: serverTags = [] } = useTags(selectedProvider?.id, inventoryEnabled)
   const availableTags = useMemo(
     () => [...new Set([...serverTags, ...query.tags])],

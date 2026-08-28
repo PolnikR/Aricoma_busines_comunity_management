@@ -3,7 +3,6 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
-import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
 import { useVmwareResourceInventory } from './useVmwareResourceInventory'
 
 function createWrapper(queryClient: QueryClient) {
@@ -32,21 +31,24 @@ afterEach(() => {
 
 describe('useVmwareResourceInventory', () => {
   it.each([
-    { namePrefix: '', tag: '', expectedUrl: '/api/vms?provider_id=vcenter-01' },
-    { namePrefix: '', tag: 'prod', expectedUrl: '/api/vms_by_tag?tag=prod&provider_id=vcenter-01' },
-  ])('uses the matching remote endpoint for $namePrefix/$tag filters', async ({ namePrefix, tag, expectedUrl }) => {
+    { namePrefix: '', tag: '', expectedBody: {} },
+    { namePrefix: '', tag: 'prod', expectedBody: { tag: 'prod' } },
+  ])('uses the matching server filters for $namePrefix/$tag', async ({ namePrefix, tag, expectedBody }) => {
     const fetchMock = vi.fn().mockResolvedValue(inventoryResponse(['WEB-01']))
     vi.stubGlobal('fetch', fetchMock)
 
     const { result } = renderHook(
-      () => useVmwareResourceInventory('vcenter-01', namePrefix, tag, true),
+      () => useVmwareResourceInventory({ providerId: 'vcenter-01', namePrefix, tag, enabled: true }),
       { wrapper: createWrapper(createQueryClient()) },
     )
 
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
 
     expect(fetchMock).toHaveBeenCalledOnce()
-    expect(fetchMock).toHaveBeenCalledWith(expectedUrl, expect.any(Object))
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/vms/search?provider_id=vcenter-01',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify(expectedBody) }),
+    )
   })
 
   it('waits 300 ms before requesting a name-only prefix and normalizes its result', async () => {
@@ -54,7 +56,7 @@ describe('useVmwareResourceInventory', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     const { result } = renderHook(
-      () => useVmwareResourceInventory('vcenter-01', 'WEB', '', true),
+      () => useVmwareResourceInventory({ providerId: 'vcenter-01', namePrefix: 'WEB', enabled: true }),
       { wrapper: createWrapper(createQueryClient()) },
     )
 
@@ -66,8 +68,8 @@ describe('useVmwareResourceInventory', () => {
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/vms_by_name?prefix=WEB&provider_id=vcenter-01',
-      expect.any(Object),
+      '/api/vms/search?provider_id=vcenter-01',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ name_prefix: 'WEB' }) }),
     )
     expect(result.current.data?.virtualMachines.map((vm) => vm.name)).toEqual(['WEB-01'])
   })
@@ -78,7 +80,7 @@ describe('useVmwareResourceInventory', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     const { result, rerender } = renderHook(
-      ({ prefix }: { prefix: string }) => useVmwareResourceInventory('vcenter-01', prefix, '', true),
+      ({ prefix }: { prefix: string }) => useVmwareResourceInventory({ providerId: 'vcenter-01', namePrefix: prefix, enabled: true }),
       { wrapper: createWrapper(createQueryClient()), initialProps: { prefix: 'W' } },
     )
 
@@ -94,21 +96,21 @@ describe('useVmwareResourceInventory', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(1) })
     expect(fetchMock).toHaveBeenCalledOnce()
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/vms_by_name?prefix=WEB&provider_id=vcenter-01',
-      expect.any(Object),
+      '/api/vms/search?provider_id=vcenter-01',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ name_prefix: 'WEB' }) }),
     )
   })
 
   it('retains previous tag data during name debounce and the next name query', async () => {
     let resolveNameResponse: ((response: Response) => void) | undefined
     const nameResponse = new Promise<Response>((resolve) => { resolveNameResponse = resolve })
-    const fetchMock = vi.fn((url: string) => url.includes('/vms_by_tag')
+    const fetchMock = vi.fn((_: string, init: RequestInit) => JSON.parse(String(init.body)).tag
       ? Promise.resolve(inventoryResponse(['WEB-01']))
       : nameResponse)
     vi.stubGlobal('fetch', fetchMock)
 
     const { result, rerender } = renderHook(
-      ({ prefix, tag }: { prefix: string; tag: string }) => useVmwareResourceInventory('vcenter-01', prefix, tag, true),
+      ({ prefix, tag }: { prefix: string; tag: string }) => useVmwareResourceInventory({ providerId: 'vcenter-01', namePrefix: prefix, tag, enabled: true }),
       { wrapper: createWrapper(createQueryClient()), initialProps: { prefix: '', tag: 'prod' } },
     )
 
@@ -135,13 +137,13 @@ describe('useVmwareResourceInventory', () => {
   it('does not expose retained empty data as an empty success during debounce or refetch', async () => {
     let resolveNameResponse: ((response: Response) => void) | undefined
     const nameResponse = new Promise<Response>((resolve) => { resolveNameResponse = resolve })
-    const fetchMock = vi.fn((url: string) => url.includes('/vms_by_tag')
+    const fetchMock = vi.fn((_: string, init: RequestInit) => JSON.parse(String(init.body)).tag
       ? Promise.resolve(inventoryResponse([]))
       : nameResponse)
     vi.stubGlobal('fetch', fetchMock)
 
     const { result, rerender } = renderHook(
-      ({ prefix, tag }: { prefix: string; tag: string }) => useVmwareResourceInventory('vcenter-01', prefix, tag, true),
+      ({ prefix, tag }: { prefix: string; tag: string }) => useVmwareResourceInventory({ providerId: 'vcenter-01', namePrefix: prefix, tag, enabled: true }),
       { wrapper: createWrapper(createQueryClient()), initialProps: { prefix: '', tag: 'prod' } },
     )
 
@@ -166,7 +168,7 @@ describe('useVmwareResourceInventory', () => {
     vi.stubGlobal('fetch', fetchMock)
     const queryClient = createQueryClient(1)
     const { result, rerender } = renderHook(
-      ({ prefix }: { prefix: string }) => useVmwareResourceInventory('vcenter-01', prefix, '', true),
+      ({ prefix }: { prefix: string }) => useVmwareResourceInventory({ providerId: 'vcenter-01', namePrefix: prefix, enabled: true }),
       { wrapper: createWrapper(queryClient), initialProps: { prefix: 'WEB' } },
     )
 
@@ -190,7 +192,7 @@ describe('useVmwareResourceInventory', () => {
     vi.stubGlobal('fetch', fetchMock)
     const queryClient = createQueryClient(1)
     const { result, rerender } = renderHook(
-      ({ prefix }: { prefix: string }) => useVmwareResourceInventory('vcenter-01', prefix, '', true),
+      ({ prefix }: { prefix: string }) => useVmwareResourceInventory({ providerId: 'vcenter-01', namePrefix: prefix, enabled: true }),
       { wrapper: createWrapper(queryClient), initialProps: { prefix: 'WEB' } },
     )
 
@@ -204,24 +206,24 @@ describe('useVmwareResourceInventory', () => {
     expect(result.current.isInitialLoading).toBe(false)
   })
 
-  it('filters tag inventory by a case-sensitive name prefix without adding the prefix to the cache key', async () => {
+  it('sends tag and name prefix together in the server request and cache key', async () => {
+    vi.useFakeTimers()
     const fetchMock = vi.fn().mockResolvedValue(inventoryResponse(['WEB-01', 'web-02', 'DB-01']))
     vi.stubGlobal('fetch', fetchMock)
-    const queryClient = createQueryClient()
-    const { result, rerender } = renderHook(
-      ({ prefix }: { prefix: string }) => useVmwareResourceInventory('vcenter-01', prefix, 'prod', true),
-      { wrapper: createWrapper(queryClient), initialProps: { prefix: 'WEB' } },
+    renderHook(
+      ({ prefix }: { prefix: string }) => useVmwareResourceInventory({ providerId: 'vcenter-01', namePrefix: prefix, tag: 'prod', enabled: true }),
+      { wrapper: createWrapper(createQueryClient()), initialProps: { prefix: 'WEB' } },
     )
 
-    await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
-    expect(result.current.data?.virtualMachines.map((vm) => vm.name)).toEqual(['WEB-01'])
-
-    rerender({ prefix: 'DB' })
-
-    expect(result.current.data?.virtualMachines.map((vm) => vm.name)).toEqual(['DB-01'])
+    expect(fetchMock).not.toHaveBeenCalled()
+    await act(async () => { await vi.advanceTimersByTimeAsync(299) })
+    expect(fetchMock).not.toHaveBeenCalled()
+    await act(async () => { await vi.advanceTimersByTimeAsync(1) })
     expect(fetchMock).toHaveBeenCalledOnce()
-    expect(queryClient.getQueryData(discoveryInventoryKeys.inventory('vcenter-01', 'prod')))
-      .toMatchObject({ virtualMachines: [{ name: 'WEB-01' }, { name: 'web-02' }, { name: 'DB-01' }] })
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/vms/search?provider_id=vcenter-01',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ tag: 'prod', name_prefix: 'WEB' }) }),
+    )
   })
 
   it('does not fetch without an enabled provider and refetches only the active tag operation', async () => {
@@ -229,7 +231,7 @@ describe('useVmwareResourceInventory', () => {
     vi.stubGlobal('fetch', fetchMock)
     const queryClient = createQueryClient()
     const disabled = renderHook(
-      () => useVmwareResourceInventory(undefined, '', 'prod', true),
+      () => useVmwareResourceInventory({ tag: 'prod', enabled: true }),
       { wrapper: createWrapper(queryClient) },
     )
 
@@ -237,7 +239,7 @@ describe('useVmwareResourceInventory', () => {
     expect(fetchMock).not.toHaveBeenCalled()
 
     const active = renderHook(
-      () => useVmwareResourceInventory('vcenter-01', 'WEB', 'prod', true),
+      () => useVmwareResourceInventory({ providerId: 'vcenter-01', namePrefix: 'WEB', tag: 'prod', enabled: true }),
       { wrapper: createWrapper(queryClient) },
     )
     await waitFor(() => { expect(active.result.current.isSuccess).toBe(true) })
@@ -245,9 +247,9 @@ describe('useVmwareResourceInventory', () => {
     await active.result.current.refetch()
 
     expect(fetchMock.mock.calls).toEqual(expect.arrayContaining([
-      ['/api/vms_by_tag?tag=prod&provider_id=vcenter-01', expect.any(Object)],
+      ['/api/vms/search?provider_id=vcenter-01', expect.objectContaining({ method: 'POST', body: JSON.stringify({ tag: 'prod', name_prefix: 'WEB' }) })],
     ]))
-    expect(fetchMock.mock.calls.every(([url]) => url === '/api/vms_by_tag?tag=prod&provider_id=vcenter-01')).toBe(true)
+    expect(fetchMock.mock.calls.every(([url]) => url === '/api/vms/search?provider_id=vcenter-01')).toBe(true)
   })
 
   it('returns to fresh cached provider/tag inventory without another request', async () => {
@@ -257,7 +259,7 @@ describe('useVmwareResourceInventory', () => {
     vi.stubGlobal('fetch', fetchMock)
     const queryClient = createQueryClient()
     const { result, rerender } = renderHook(
-      ({ providerId }: { providerId: string }) => useVmwareResourceInventory(providerId, '', 'prod', true),
+      ({ providerId }: { providerId: string }) => useVmwareResourceInventory({ providerId, tag: 'prod', enabled: true }),
       { wrapper: createWrapper(queryClient), initialProps: { providerId: 'vcenter-01' } },
     )
 
@@ -279,7 +281,7 @@ describe('useVmwareResourceInventory', () => {
     vi.stubGlobal('fetch', fetchMock)
     const queryClient = createQueryClient()
     const { result, rerender } = renderHook(
-      ({ providerId }: { providerId: string }) => useVmwareResourceInventory(providerId, '', 'prod', true),
+      ({ providerId }: { providerId: string }) => useVmwareResourceInventory({ providerId, tag: 'prod', enabled: true }),
       { wrapper: createWrapper(queryClient), initialProps: { providerId: 'vcenter-01' } },
     )
 
@@ -298,7 +300,7 @@ describe('useVmwareResourceInventory', () => {
     vi.stubGlobal('fetch', fetchMock)
     const queryClient = createQueryClient(1)
     const { result } = renderHook(
-      () => useVmwareResourceInventory('vcenter-01', '', '', true),
+      () => useVmwareResourceInventory({ providerId: 'vcenter-01', enabled: true }),
       { wrapper: createWrapper(queryClient) },
     )
 
@@ -312,7 +314,7 @@ describe('useVmwareResourceInventory', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(inventoryResponse([])))
 
     const { result } = renderHook(
-      () => useVmwareResourceInventory('vcenter-01', '', '', true),
+      () => useVmwareResourceInventory({ providerId: 'vcenter-01', enabled: true }),
       { wrapper: createWrapper(createQueryClient()) },
     )
 
