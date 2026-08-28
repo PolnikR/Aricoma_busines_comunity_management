@@ -1,4 +1,11 @@
-# Implementačný plán: obnovenie interného scrollbaru Recovery Group resources
+# Superseded: pôvodný plán Recovery Group resources scrollbaru
+
+> Tento plán je neplatný. Implementácia podľa neho v commite `4346efe` nepriniesla
+> zmenu reálneho browser layoutu. `lg:overflow-hidden` na page roote nevytvoril
+> chýbajúci výškovo obmedzený flex kontajner. Korekčný plán pre Recovery Application
+> aj Recovery Group je v `tasks/recovery-builder-scroll-containment-plan.md`.
+
+# Pôvodný implementačný plán: obnovenie interného scrollbaru Recovery Group resources
 
 ## Prehľad
 

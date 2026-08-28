@@ -1,4 +1,8 @@
-# Checklist: Recovery Group resources scrollbar
+# Superseded checklist: Recovery Group resources scrollbar
+
+> Tento checklist už nevykonávať. Page-root `lg:overflow-hidden` hypotéza bola
+> browser screenshotom vyvrátená. Aktuálny checklist je v
+> `tasks/recovery-builder-scroll-containment-todo.md`.
 
 Súvisiaci plán:
 `tasks/recovery-group-resource-scroll-plan.md`.
