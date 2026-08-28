@@ -3,7 +3,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { Alert } from '@/shared/components/alert/Alert'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
-import { DataTable, DataTablePagination, DataTableToolbar, useTableState } from '@/shared/components/data-table'
+import { DataTable, DataTablePagination, DataTableToolbar, SkeletonBlock, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { CheckboxField, Field, Input } from '@/shared/components/form/FormControls'
@@ -76,6 +76,7 @@ export function UsersSection(props: UsersSectionProps) {
   }, [clearMutationError, isAddUserOpen])
 
   if (entityId) {
+    const activeTab: UserTabId = isUserTab(tabId) ? tabId : 'details'
     if (!selectedUser && !isLoading) {
       return (
         <div>
@@ -95,15 +96,22 @@ export function UsersSection(props: UsersSectionProps) {
     }
     if (!selectedUser) {
       return (
-        <IdentityContentPanel>
-          <div className="p-4">
-            <EmptyState title={t('identity.users.loading')} description={t('identity.common.adapterReading')} />
-          </div>
-        </IdentityContentPanel>
+        <IdentityResourceDetailPage
+          eyebrow={t('identity.navigation.groups.manage')}
+          title={<SkeletonBlock className="h-6 w-40" />}
+          description={<SkeletonBlock className="h-3 w-56" />}
+          backLabel={t('identity.navigation.sections.users')}
+          onBack={() => { onEntityChange(null) }}
+          tabs={tabs}
+          tabId={activeTab}
+          onTabChange={nextTab => { onTabChange(nextTab) }}
+          tabAriaLabel={t('identity.users.tabs.ariaLabel')}
+        >
+          <LoadingUserDetails />
+        </IdentityResourceDetailPage>
       )
     }
 
-    const activeTab: UserTabId = isUserTab(tabId) ? tabId : 'details'
     let detailContent
     if (activeTab === 'details') {
       detailContent = <UserDetails user={selectedUser} />
@@ -201,6 +209,7 @@ export function UsersSection(props: UsersSectionProps) {
             ariaLabel={t('identity.navigation.sections.users')}
             rowAriaLabel={user => t('identity.users.rowAriaLabel', { name: userDisplayName(user) })}
             onRowClick={user => { onEntityChange(user.id) }}
+            isLoading={isLoading && users.length === 0}
             emptyContent={(
               <EmptyState
                 title={isLoading ? t('identity.users.loading') : t('identity.users.empty.title')}
@@ -217,6 +226,7 @@ export function UsersSection(props: UsersSectionProps) {
           total={table.total}
           onPageChange={table.setPage}
           onPageSizeChange={table.setPageSize}
+          isLoading={isLoading && users.length === 0}
         />
       ) : null}
       <AddUserModal
@@ -234,6 +244,27 @@ export function UsersSection(props: UsersSectionProps) {
         }}
       />
     </IdentityContentPanel>
+  )
+}
+
+function LoadingUserDetails() {
+  const { t } = useTranslation()
+  return (
+    <IdentitySettingsSection title={t('identity.users.details.title')} description={t('identity.users.details.description')}>
+      <div className="grid min-w-0 gap-4 md:grid-cols-2" aria-busy="true">
+        {[
+          t('identity.users.fields.username'),
+          t('identity.users.fields.email'),
+          t('identity.users.fields.firstName'),
+          t('identity.users.fields.lastName'),
+        ].map(label => (
+          <div key={label}>
+            <span className="mb-1.5 block text-xs font-medium text-text-secondary">{label}</span>
+            <SkeletonBlock className="h-10 w-full rounded-lg" />
+          </div>
+        ))}
+      </div>
+    </IdentitySettingsSection>
   )
 }
 
