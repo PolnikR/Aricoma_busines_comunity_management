@@ -37,7 +37,7 @@
 - [x] Task 15a: Refine recovery builder/type-step loading regions.
 - [x] Task 15b: Refine shared resource-sidebar loading regions.
 - [x] Task 16: Refine Identity users and clients loading states.
-- [ ] Task 17: Refine Identity realm and authentication loading states.
+- [x] Task 17: Refine Identity realm and authentication loading states.
 - [ ] Task 18: Complete loading-transition accessibility and visual audit.
 
 ## Checkpoint: Complete

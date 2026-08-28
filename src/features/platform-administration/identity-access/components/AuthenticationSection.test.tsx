@@ -4,10 +4,27 @@ import { describe, expect, it, vi } from 'vitest'
 import { IdentityAdminGatewayProvider } from '../services/IdentityAdminGatewayProvider'
 import { createMockIdentityAdminGateway } from '../services/mockIdentityAdminGateway'
 import { AuthenticationSection } from './AuthenticationSection'
+import type { IdentityAdminPreview } from '../services/identityAdminGateway'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 describe('AuthenticationSection', () => {
+  it('keeps required-action table labels visible while adapter rows load', () => {
+    const gateway = createMockIdentityAdminGateway()
+    gateway.getPreview = vi.fn(() => new Promise<IdentityAdminPreview>(() => undefined))
+    const { container } = render(
+      <IdentityAdminGatewayProvider gateway={gateway}>
+        <AuthenticationSection tabId="required-actions" onTabChange={vi.fn()} />
+      </IdentityAdminGatewayProvider>,
+    )
+
+    expect(screen.getByRole('tab', { name: 'Required actions' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Required action' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument()
+    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Loading required actions')).not.toBeInTheDocument()
+  })
+
   it('shows only Required actions and renders the approved preview rows by default', async () => {
     render(<AuthenticationSection tabId={null} onTabChange={vi.fn()} />)
     const tabs = within(screen.getByRole('tablist', { name: 'Authentication sections' }))
