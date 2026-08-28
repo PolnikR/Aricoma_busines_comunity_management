@@ -74,10 +74,6 @@ export function RecoveryGroupEditorPage() {
     navigationGuard.runWithoutBlocking(navigateToGroups)
   }
 
-  if (isLoading) {
-    return <div className="p-6" role="status">{t('pages.recoveryGroups.loading')}</div>
-  }
-
   if (loadError) {
     return (
       <div className="p-6">
@@ -92,7 +88,7 @@ export function RecoveryGroupEditorPage() {
     )
   }
 
-  if (!group) {
+  if (!isLoading && !group) {
     return (
       <div className="p-6">
         <Alert variant="error" title={t('pages.recoveryGroupEditor.error.notFound')} />
@@ -110,13 +106,15 @@ export function RecoveryGroupEditorPage() {
       />
       {error ? <Alert variant="error" className="mx-4 mt-4" title={error} /> : null}
       <RecoveryGroupBuilder
-        initialData={group}
+        key={group?.id ?? 'loading'}
+        {...(group ? { initialData: group } : {})}
         submitLabel={t('pages.recoveryGroupEditor.saveButton')}
         onCreate={draft => { void handleUpdate(draft) }}
         onCancel={requestBack}
         onDirtyChange={setIsDirty}
         existingIds={groups.map(item => item.id)}
         isSaving={isUpdating}
+        isInitialLoading={isLoading}
       />
       <ConfirmDialog
         open={navigationGuard.isNavigationBlocked}
