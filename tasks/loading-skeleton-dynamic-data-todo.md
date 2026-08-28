@@ -34,8 +34,8 @@
 - [x] Task 12: Preserve the provider detail shell during loading.
 - [x] Task 13: Preserve the recovery application editor shell.
 - [x] Task 14: Preserve the recovery group editor shell.
-- [ ] Task 15a: Refine recovery builder/type-step loading regions.
-- [ ] Task 15b: Refine shared resource-sidebar loading regions.
+- [x] Task 15a: Refine recovery builder/type-step loading regions.
+- [x] Task 15b: Refine shared resource-sidebar loading regions.
 - [ ] Task 16: Refine Identity users and clients loading states.
 - [ ] Task 17: Refine Identity realm and authentication loading states.
 - [ ] Task 18: Complete loading-transition accessibility and visual audit.
