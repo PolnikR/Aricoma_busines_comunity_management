@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
 import {
@@ -13,13 +13,14 @@ const NAME_SEARCH_DEBOUNCE_MS = 300
 interface ForceRefreshSnapshot {
   search: VmwareInventorySearch
   queryKey: ReturnType<typeof discoveryInventoryKeys.vmwareSearch>
+  queryHash: string
+  requestId: number
 }
 
-function isCurrentQueryKey(
-  left: readonly unknown[],
-  right: readonly unknown[],
-) {
-  return left.length === right.length && left.every((value, index) => value === right[index])
+interface ForceRefreshState {
+  latestRequestId: number
+  pendingRequestIds: number[]
+  error: Error | null
 }
 
 export interface VmwareResourceInventoryOptions {
@@ -48,7 +49,8 @@ export function useVmwareResourceInventory({
   const hasNamePrefix = normalizedNamePrefix !== undefined
   const [debouncedNamePrefix, setDebouncedNamePrefix] = useState('')
   const [settledProviderId, setSettledProviderId] = useState<string | undefined>()
-  const [forceRefreshSnapshot, setForceRefreshSnapshot] = useState<ForceRefreshSnapshot | null>(null)
+  const [forceRefreshStates, setForceRefreshStates] = useState<Record<string, ForceRefreshState>>({})
+  const forceRefreshRequestId = useRef(0)
 
   useEffect(() => {
     const timeout = setTimeout(
@@ -65,6 +67,7 @@ export function useVmwareResourceInventory({
     ...(debouncedNamePrefix ? { namePrefix: debouncedNamePrefix } : {}),
   }
   const queryKey = discoveryInventoryKeys.vmwareSearch(search)
+  const queryHash = JSON.stringify(queryKey)
   const canFetch = enabled && Boolean(normalizedSearch.providerId)
     && (!hasNamePrefix || debouncedNamePrefix === normalizedNamePrefix)
 
@@ -79,19 +82,57 @@ export function useVmwareResourceInventory({
     },
   })
 
+  const settleForceRefresh = (snapshot: ForceRefreshSnapshot, error: Error | null) => {
+    setForceRefreshStates((states) => {
+      const state = states[snapshot.queryHash]
+      if (!state) return states
+
+      const pendingRequestIds = state.pendingRequestIds.filter((requestId) => requestId !== snapshot.requestId)
+      const nextState = {
+        ...state,
+        pendingRequestIds,
+        error: state.latestRequestId === snapshot.requestId ? error : state.error,
+      }
+
+      if (pendingRequestIds.length > 0 || nextState.error !== null) {
+        return { ...states, [snapshot.queryHash]: nextState }
+      }
+
+      const { [snapshot.queryHash]: _, ...remainingStates } = states
+      return remainingStates
+    })
+  }
   const forceRefreshMutation = useMutation<DiscoveryInventory, Error, ForceRefreshSnapshot>({
     mutationFn: ({ search: snapshotSearch }) => fetchVmwareInventory({ ...snapshotSearch, forceRefresh: true }),
     onSuccess: (data, { queryKey: snapshotQueryKey }) => {
       queryClient.setQueryData(snapshotQueryKey, data)
     },
+    onSettled: (_, error, snapshot) => {
+      settleForceRefresh(snapshot, error)
+    },
   })
   const forceRefresh = () => {
-    const snapshot = { search, queryKey }
-    setForceRefreshSnapshot(snapshot)
+    const snapshot = {
+      search,
+      queryKey,
+      queryHash,
+      requestId: forceRefreshRequestId.current + 1,
+    }
+    forceRefreshRequestId.current = snapshot.requestId
+    setForceRefreshStates((states) => {
+      const previousState = states[queryHash]
+      return {
+        ...states,
+        [queryHash]: {
+          latestRequestId: snapshot.requestId,
+          pendingRequestIds: [...(previousState?.pendingRequestIds ?? []), snapshot.requestId],
+          error: null,
+        },
+      }
+    })
     return forceRefreshMutation.mutateAsync(snapshot)
   }
-  const isCurrentForceRefresh = forceRefreshSnapshot !== null
-    && isCurrentQueryKey(forceRefreshSnapshot.queryKey, queryKey)
+  const forceRefreshState = forceRefreshStates[queryHash]
 
   const isDebouncing = hasNamePrefix && debouncedNamePrefix !== normalizedNamePrefix
   const hasSettledProviderQuery = settledProviderId === normalizedSearch.providerId
@@ -110,8 +151,8 @@ export function useVmwareResourceInventory({
   return {
     ...query,
     forceRefresh,
-    isForceRefreshing: forceRefreshMutation.isPending && isCurrentForceRefresh,
-    forceRefreshError: isCurrentForceRefresh ? forceRefreshMutation.error ?? null : null,
+    isForceRefreshing: Boolean(forceRefreshState?.pendingRequestIds.length),
+    forceRefreshError: forceRefreshState?.error ?? null,
     isDebouncing,
     isInitialLoading: canFetch && query.isPending && !isDebouncing && !hasSettledProviderQuery,
     isBackgroundFetching: query.isFetching && Boolean(query.data),

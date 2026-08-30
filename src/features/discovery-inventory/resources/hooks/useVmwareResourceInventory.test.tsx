@@ -330,11 +330,15 @@ describe('useVmwareResourceInventory', () => {
     expect(result.current.forceRefreshError).toMatchObject({ message: 'live request failed' })
   })
 
-  it('writes an in-flight force refresh only to the query key it snapshotted', async () => {
-    let resolveForceRefresh: ((response: Response) => void) | undefined
-    const forceRefreshResponse = new Promise<Response>((resolve) => { resolveForceRefresh = resolve })
+  it('keeps concurrent force-refresh pending state with the query key it snapshotted', async () => {
+    let resolveFirstForceRefresh: ((response: Response) => void) | undefined
+    let resolveSecondForceRefresh: ((response: Response) => void) | undefined
+    const firstForceRefreshResponse = new Promise<Response>((resolve) => { resolveFirstForceRefresh = resolve })
+    const secondForceRefreshResponse = new Promise<Response>((resolve) => { resolveSecondForceRefresh = resolve })
     const fetchMock = vi.fn((url: string, init: RequestInit) => {
-      if (parseRequestBody(init).force_refresh) return forceRefreshResponse
+      if (parseRequestBody(init).force_refresh) {
+        return url.includes('vcenter-01') ? firstForceRefreshResponse : secondForceRefreshResponse
+      }
       return Promise.resolve(inventoryResponse([url.includes('vcenter-01') ? 'VCenter-01' : 'VCenter-02']))
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -345,11 +349,22 @@ describe('useVmwareResourceInventory', () => {
     )
 
     await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('VCenter-01') })
-    act(() => { void result.current.forceRefresh() })
+    let firstForceRefresh: Promise<unknown> | undefined
+    act(() => { firstForceRefresh = result.current.forceRefresh() })
+    if (!firstForceRefresh) throw new Error('Expected the first force refresh promise')
     rerender({ providerId: 'vcenter-02' })
     await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('VCenter-02') })
+    let secondForceRefresh: Promise<unknown> | undefined
+    act(() => { secondForceRefresh = result.current.forceRefresh() })
+    if (!secondForceRefresh) throw new Error('Expected the second force refresh promise')
+    await waitFor(() => { expect(result.current.isForceRefreshing).toBe(true) })
 
-    act(() => { resolveForceRefresh?.(inventoryResponse(['VCenter-01 refreshed'])) })
+    rerender({ providerId: 'vcenter-01' })
+    await waitFor(() => { expect(result.current.isForceRefreshing).toBe(true) })
+    rerender({ providerId: 'vcenter-02' })
+
+    act(() => { resolveFirstForceRefresh?.(inventoryResponse(['VCenter-01 refreshed'])) })
+    await act(async () => { await firstForceRefresh })
     await waitFor(() => {
       expect(queryClient.getQueryData(discoveryInventoryKeys.vmwareSearch({ providerId: 'vcenter-01' }))).toMatchObject({
         virtualMachines: [{ name: 'VCenter-01 refreshed' }],
@@ -358,14 +373,22 @@ describe('useVmwareResourceInventory', () => {
 
     expect(result.current.data?.virtualMachines.map((vm) => vm.name)).toEqual(['VCenter-02'])
     expect(result.current.forceRefreshError).toBeNull()
-    expect(result.current.isForceRefreshing).toBe(false)
+    expect(result.current.isForceRefreshing).toBe(true)
+
+    act(() => { resolveSecondForceRefresh?.(inventoryResponse(['VCenter-02 refreshed'])) })
+    await act(async () => { await secondForceRefresh })
+    await waitFor(() => { expect(result.current.isForceRefreshing).toBe(false) })
   })
 
-  it('hides a previous query force-refresh failure after switching providers', async () => {
-    let rejectForceRefresh: ((error: Error) => void) | undefined
-    const forceRefreshResponse = new Promise<Response>((_, reject) => { rejectForceRefresh = reject })
+  it('keeps a rejected force refresh scoped to its original query while another refresh remains pending', async () => {
+    let rejectFirstForceRefresh: ((error: Error) => void) | undefined
+    let resolveSecondForceRefresh: ((response: Response) => void) | undefined
+    const firstForceRefreshResponse = new Promise<Response>((_, reject) => { rejectFirstForceRefresh = reject })
+    const secondForceRefreshResponse = new Promise<Response>((resolve) => { resolveSecondForceRefresh = resolve })
     const fetchMock = vi.fn((url: string, init: RequestInit) => {
-      if (parseRequestBody(init).force_refresh) return forceRefreshResponse
+      if (parseRequestBody(init).force_refresh) {
+        return url.includes('vcenter-01') ? firstForceRefreshResponse : secondForceRefreshResponse
+      }
       return Promise.resolve(inventoryResponse([url.includes('vcenter-01') ? 'VCenter-01' : 'VCenter-02']))
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -375,15 +398,38 @@ describe('useVmwareResourceInventory', () => {
     )
 
     await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('VCenter-01') })
-    act(() => { void result.current.forceRefresh().catch(() => undefined) })
+    let firstForceRefresh: Promise<unknown> | undefined
+    act(() => { firstForceRefresh = result.current.forceRefresh() })
+    if (!firstForceRefresh) throw new Error('Expected the first force refresh promise')
     rerender({ providerId: 'vcenter-02' })
     await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('VCenter-02') })
+    let secondForceRefresh: Promise<unknown> | undefined
+    act(() => { secondForceRefresh = result.current.forceRefresh() })
+    if (!secondForceRefresh) throw new Error('Expected the second force refresh promise')
+    await waitFor(() => { expect(result.current.isForceRefreshing).toBe(true) })
 
-    act(() => { rejectForceRefresh?.(new Error('old provider failed')) })
-    await waitFor(() => { expect(result.current.isForceRefreshing).toBe(false) })
+    act(() => { rejectFirstForceRefresh?.(new Error('old provider failed')) })
+    await act(async () => {
+      await expect(firstForceRefresh).rejects.toThrow('old provider failed')
+    })
 
     expect(result.current.forceRefreshError).toBeNull()
     expect(result.current.isError).toBe(false)
+    expect(result.current.isForceRefreshing).toBe(true)
+
+    rerender({ providerId: 'vcenter-01' })
+    await waitFor(() => {
+      expect(result.current.forceRefreshError).toMatchObject({ message: 'old provider failed' })
+    })
+    expect(result.current.isForceRefreshing).toBe(false)
+
+    rerender({ providerId: 'vcenter-02' })
+    expect(result.current.forceRefreshError).toBeNull()
+    expect(result.current.isForceRefreshing).toBe(true)
+
+    act(() => { resolveSecondForceRefresh?.(inventoryResponse(['VCenter-02 refreshed'])) })
+    await act(async () => { await secondForceRefresh })
+    await waitFor(() => { expect(result.current.isForceRefreshing).toBe(false) })
   })
 
   it('returns to fresh cached provider/tag inventory without another request', async () => {
