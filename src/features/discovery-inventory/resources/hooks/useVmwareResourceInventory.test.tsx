@@ -336,7 +336,7 @@ describe('useVmwareResourceInventory', () => {
     const firstForceRefreshResponse = new Promise<Response>((resolve) => { resolveFirstForceRefresh = resolve })
     const secondForceRefreshResponse = new Promise<Response>((resolve) => { resolveSecondForceRefresh = resolve })
     const fetchMock = vi.fn((url: string, init: RequestInit) => {
-      if (parseRequestBody(init).force_refresh) {
+      if (parseRequestBody(init)['force_refresh']) {
         return url.includes('vcenter-01') ? firstForceRefreshResponse : secondForceRefreshResponse
       }
       return Promise.resolve(inventoryResponse([url.includes('vcenter-01') ? 'VCenter-01' : 'VCenter-02']))
@@ -387,7 +387,7 @@ describe('useVmwareResourceInventory', () => {
     const firstForceRefreshResponse = new Promise<Response>((_, reject) => { rejectFirstForceRefresh = reject })
     const secondForceRefreshResponse = new Promise<Response>((resolve) => { resolveSecondForceRefresh = resolve })
     const fetchMock = vi.fn((url: string, init: RequestInit) => {
-      if (parseRequestBody(init).force_refresh) {
+      if (parseRequestBody(init)['force_refresh']) {
         return url.includes('vcenter-01') ? firstForceRefreshResponse : secondForceRefreshResponse
       }
       return Promise.resolve(inventoryResponse([url.includes('vcenter-01') ? 'VCenter-01' : 'VCenter-02']))
