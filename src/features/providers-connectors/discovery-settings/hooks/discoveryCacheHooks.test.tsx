@@ -38,6 +38,23 @@ describe('Discovery Cache hooks', () => {
     expect(client.getQueryData(discoveryCacheKeys.history({ providerId: 'a', limit: 1 }))).not.toEqual(client.getQueryData(discoveryCacheKeys.history({ providerId: 'b', limit: 2 })))
   })
 
+  it('does not fetch while disabled and fetches the canonical config when enabled', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const configData = { defaults: { VMWARE: 300 }, historyRetention: { retentionDays: 30, maxRecords: 100 } }
+    api.fetchDiscoveryCacheConfig.mockResolvedValue(configData)
+    const { result, rerender } = renderHook(
+      ({ enabled }: { enabled: boolean }) => useDiscoveryCacheConfig({ enabled }),
+      { initialProps: { enabled: false }, wrapper: wrapperFor(client) },
+    )
+
+    expect(api.fetchDiscoveryCacheConfig).not.toHaveBeenCalled()
+    rerender({ enabled: true })
+    await waitFor(() => {
+      expect(result.current.data).toEqual(configData)
+    })
+    expect(api.fetchDiscoveryCacheConfig).toHaveBeenCalledTimes(1)
+  })
+
   it('writes a successful update directly to config cache', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
     const updated = { defaults: { VMWARE: 60 }, historyRetention: { retentionDays: 30, maxRecords: 100 } }
