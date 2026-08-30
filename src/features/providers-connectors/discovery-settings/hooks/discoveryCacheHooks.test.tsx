@@ -26,9 +26,15 @@ describe('Discovery Cache hooks', () => {
     const { result: config } = renderHook(useDiscoveryCacheConfig, { wrapper: wrapperFor(client) })
     const { result: first } = renderHook(() => { return useDiscoveryCacheHistory({ providerId: 'a', limit: 1 }) }, { wrapper: wrapperFor(client) })
     const { result: second } = renderHook(() => { return useDiscoveryCacheHistory({ providerId: 'b', limit: 2 }) }, { wrapper: wrapperFor(client) })
-    await waitFor(() => expect(config.current.data).toBeDefined())
-    await waitFor(() => expect(first.current.data).toBeDefined())
-    await waitFor(() => expect(second.current.data).toBeDefined())
+    await waitFor(() => {
+      expect(config.current.data).toBeDefined()
+    })
+    await waitFor(() => {
+      expect(first.current.data).toBeDefined()
+    })
+    await waitFor(() => {
+      expect(second.current.data).toBeDefined()
+    })
     expect(client.getQueryData(discoveryCacheKeys.history({ providerId: 'a', limit: 1 }))).not.toEqual(client.getQueryData(discoveryCacheKeys.history({ providerId: 'b', limit: 2 })))
   })
 
