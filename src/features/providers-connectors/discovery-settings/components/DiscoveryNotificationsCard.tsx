@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { SettingsSectionCard } from '@/shared/components/settings/SettingsSectionCard'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import { Toggle } from '@/shared/components/toggle/Toggle'
@@ -7,14 +8,15 @@ import { cn } from '@/shared/utils/cn'
 import { useTranslation } from '@/hooks/useTranslation'
 import type {
   DiscoveryNotificationRecipient,
-  DiscoverySettings,
+  DiscoveryNotificationSettings,
 } from '../model/discoverySettingsTypes'
 
 interface DiscoveryNotificationsCardProps {
-  settings: DiscoverySettings
+  settings: DiscoveryNotificationSettings
   recipients: DiscoveryNotificationRecipient[]
-  onChange: (patch: Partial<DiscoverySettings>) => void
+  onChange: (patch: Partial<DiscoveryNotificationSettings>) => void
   onTestNotification: () => void
+  footer?: ReactNode
 }
 
 export function DiscoveryNotificationsCard({
@@ -22,6 +24,7 @@ export function DiscoveryNotificationsCard({
   recipients,
   onChange,
   onTestNotification,
+  footer,
 }: DiscoveryNotificationsCardProps) {
   const { t } = useTranslation()
   const selectedRecipient = recipients.find(recipient => recipient.id === settings.recipientId) ?? recipients[0]
@@ -31,6 +34,7 @@ export function DiscoveryNotificationsCard({
       icon={<MonitoringIcon className="size-5" />}
       title={t('pages.discoverySettings.notifications.title')}
       description={t('pages.discoverySettings.notifications.description')}
+      footer={footer}
     >
       <div className="flex items-start justify-between gap-4">
         <div>
