@@ -55,4 +55,24 @@ describe('ResourceSidebar', () => {
     await user.type(screen.getByRole('searchbox', { name: 'Search resources' }), 'web')
     expect(screen.queryByText('DB-01')).not.toBeInTheDocument()
   })
+
+  it('reports controlled server search text without locally filtering server results', () => {
+    const onSearchChange = vi.fn()
+    render(
+      <ResourceSidebar
+        {...labels}
+        items={['DB-01']}
+        dragDataKey="vm-name"
+        searchValue="WEB"
+        onSearchChange={onSearchChange}
+      />,
+    )
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search resources' }), {
+      target: { value: 'WEB-01' },
+    })
+
+    expect(onSearchChange).toHaveBeenCalledWith('WEB-01')
+    expect(screen.getByText('DB-01')).toBeInTheDocument()
+  })
 })
