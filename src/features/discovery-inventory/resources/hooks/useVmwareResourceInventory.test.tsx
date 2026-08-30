@@ -354,6 +354,7 @@ describe('useVmwareResourceInventory', () => {
     if (!firstForceRefresh) throw new Error('Expected the first force refresh promise')
     rerender({ providerId: 'vcenter-02' })
     await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('VCenter-02') })
+    expect(result.current.isForceRefreshing).toBe(false)
     let secondForceRefresh: Promise<unknown> | undefined
     act(() => { secondForceRefresh = result.current.forceRefresh() })
     if (!secondForceRefresh) throw new Error('Expected the second force refresh promise')
@@ -403,6 +404,7 @@ describe('useVmwareResourceInventory', () => {
     if (!firstForceRefresh) throw new Error('Expected the first force refresh promise')
     rerender({ providerId: 'vcenter-02' })
     await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('VCenter-02') })
+    expect(result.current.isForceRefreshing).toBe(false)
     let secondForceRefresh: Promise<unknown> | undefined
     act(() => { secondForceRefresh = result.current.forceRefresh() })
     if (!secondForceRefresh) throw new Error('Expected the second force refresh promise')
