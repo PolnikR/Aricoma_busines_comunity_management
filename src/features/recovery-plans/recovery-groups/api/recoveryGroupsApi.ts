@@ -156,13 +156,13 @@ export async function deleteRecoveryGroup(
 export async function rollbackRecoveryGroupOrchestration(
   groupId: string,
   providerId: string,
-): Promise<void> {
+): Promise<RollbackReport> {
   try {
     const payload = await rollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPost({
       recovery_group_id: groupId,
       provider_id: providerId,
     })
-    parseRecoveryGroups(payload, 'POST /rollback_group_from_orchestrator')
+    return parseRollbackReport(payload, 'POST /rollback_group_from_orchestrator')
   } catch (error) {
     throw toOrvalRequestError(error, 'Rollback recovery group orchestration')
   }

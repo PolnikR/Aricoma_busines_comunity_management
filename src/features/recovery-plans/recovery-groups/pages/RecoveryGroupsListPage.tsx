@@ -59,7 +59,7 @@ export function RecoveryGroupsListPage() {
               isLoading={isLoading}
               onEdit={navigateToEdit}
               onDelete={remove}
-              onRollback={rollback}
+              onRollback={async (groupId, providerId) => { await rollback(groupId, providerId) }}
               error={error instanceof Error ? error : null}
               isRetrying={isFetching}
               isDeleting={isDeleting}

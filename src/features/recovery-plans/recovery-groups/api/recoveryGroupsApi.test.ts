@@ -112,14 +112,15 @@ describe('rollbackRecoveryGroupOrchestration', () => {
   })
 
   it('posts to /api/rollback_group_from_orchestrator with recovery_group_id and provider_id', async () => {
+    const rollback = { status: 'ok', airflow: { status: 'ok' } }
     const mockFetch = vi.spyOn(apiFetchModule, 'apiFetch').mockResolvedValue(
       new Response(
-        JSON.stringify({ recovery_groups: [] }),
+        JSON.stringify({ recovery_groups: [], rollback }),
         { status: 200 }
       )
     )
 
-    await rollbackRecoveryGroupOrchestration('test-group', 'airflow-01')
+    await expect(rollbackRecoveryGroupOrchestration('test-group', 'airflow-01')).resolves.toEqual(rollback)
 
     const call = mockFetch.mock.calls[0]
     expect(call).toBeDefined()
@@ -130,20 +131,19 @@ describe('rollbackRecoveryGroupOrchestration', () => {
     expect(init.method).toBe('POST')
   })
 
-  it('resolves without a value on a valid response', async () => {
+  it('returns a partial-detail-compatible rollback report', async () => {
+    const rollback = { status: 'partial', ibm: { status: 'failed', errors: ['Unable to delete volume'] } }
     vi.spyOn(apiFetchModule, 'apiFetch').mockResolvedValue(
       new Response(
-        JSON.stringify({ recovery_groups: [] }),
+        JSON.stringify({ recovery_groups: [], rollback }),
         { status: 200 }
       )
     )
 
-    await expect(
-      rollbackRecoveryGroupOrchestration('test-group', 'airflow-01'),
-    ).resolves.toBeUndefined()
+    await expect(rollbackRecoveryGroupOrchestration('test-group', 'airflow-01')).resolves.toEqual(rollback)
   })
 
-  it('rejects a response missing the required recovery_groups field', async () => {
+  it('rejects a response missing the required rollback report', async () => {
     vi.spyOn(apiFetchModule, 'apiFetch').mockResolvedValue(
       new Response(
         JSON.stringify({}),
