@@ -321,7 +321,7 @@ export function RecoveryAppBuilder({
                   <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.tiers.description')}</p>
                 </div>
                 <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-lg border border-border lg:grid-cols-[280px_minmax(0,1fr)]">
-                  <div className="custom-scrollbar overflow-y-auto border-b border-border lg:border-b-0 lg:border-r">
+                  <div className="custom-scrollbar min-h-0 overflow-y-auto border-b border-border lg:border-b-0 lg:border-r">
                     <ResourceSidebar
                       items={sidebarItems}
                       itemLabels={groupLabels}
@@ -341,7 +341,7 @@ export function RecoveryAppBuilder({
                       onRetry={() => { void refreshGroups() }}
                     />
                   </div>
-                  <div className="custom-scrollbar overflow-y-auto p-4">
+                  <div className="custom-scrollbar min-h-0 overflow-y-auto p-4">
                     <TierCanvas
                       tiers={tierCanvasTiers}
                       recoveryGroupVmOptions={recoveryGroupVmOptions}

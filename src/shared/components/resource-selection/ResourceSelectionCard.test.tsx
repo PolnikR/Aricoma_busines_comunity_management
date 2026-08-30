@@ -23,6 +23,7 @@ describe('ResourceSelectionCard', () => {
     const list = screen.getByLabelText('Selected resources')
     const dropZone = list.closest('section')
     expect(dropZone).not.toBeNull()
+    expect(list).toHaveClass('custom-scrollbar', 'min-h-0', 'flex-1', 'overflow-y-auto')
     if (!dropZone) return
 
     fireEvent.drop(dropZone, {

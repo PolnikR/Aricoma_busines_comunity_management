@@ -193,6 +193,21 @@ describe('RecoveryAppBuilder', () => {
     expect(screen.getByText('Database options: 2')).toBeInTheDocument()
   })
 
+  it('keeps available groups and tier canvas in independent scroll regions', async () => {
+    render(<RecoveryAppBuilder />)
+    await openTiers()
+
+    expect(screen.getByRole('list', { name: 'Available recovery groups' }).parentElement).toHaveClass(
+      'custom-scrollbar',
+      'overflow-y-auto',
+    )
+    expect(screen.getByText('Tier count: 1').parentElement?.parentElement).toHaveClass(
+      'custom-scrollbar',
+      'min-h-0',
+      'overflow-y-auto',
+    )
+  })
+
   it('keeps tier assignments when moving to policy selection', async () => {
     render(<RecoveryAppBuilder />)
     await openPolicy()

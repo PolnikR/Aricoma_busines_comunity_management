@@ -86,4 +86,39 @@ describe('RecoveryGroupResourcesStep', () => {
     expect(screen.getByText('Recovery group resources could not be loaded')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
+
+  it('keeps available and selected resources in independent scroll regions', () => {
+    useRecoveryGroupResourceInventory.mockReturnValue({
+      data: { resourceNames: ['VM-01'] },
+      error: null,
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    })
+
+    const { container } = render(
+      <RecoveryGroupResourcesStep
+        workloadType="vmware_virtual_machines"
+        providerId="vmware-1"
+        resources={['VM-01']}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    )
+
+    expect(container.firstElementChild?.children[0]).toHaveClass('h-72', 'min-h-0', 'overflow-hidden', 'lg:h-full')
+    expect(container.firstElementChild?.children[1]).toHaveClass('flex', 'h-72', 'min-h-0', 'flex-col', 'lg:h-full')
+    expect(screen.getByRole('list', { name: 'Available virtual machines' }).parentElement).toHaveClass(
+      'custom-scrollbar',
+      'min-h-0',
+      'flex-1',
+      'overflow-y-auto',
+    )
+    expect(screen.getByLabelText('Selected recovery group virtual machines')).toHaveClass(
+      'custom-scrollbar',
+      'min-h-0',
+      'flex-1',
+      'overflow-y-auto',
+    )
+  })
 })

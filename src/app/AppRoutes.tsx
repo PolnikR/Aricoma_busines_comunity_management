@@ -246,6 +246,7 @@ export function AppRoutes() {
             />
             <Route
               path="create"
+              handle={{ contentScroll: 'contained' }}
               element={
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryGroupBuilderPage />
@@ -254,6 +255,7 @@ export function AppRoutes() {
             />
             <Route
               path=":id/edit"
+              handle={{ contentScroll: 'contained' }}
               element={
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryGroupEditorPage />
@@ -272,6 +274,7 @@ export function AppRoutes() {
             />
             <Route
               path="create"
+              handle={{ contentScroll: 'contained' }}
               element={
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryApplicationBuilderPage />
@@ -280,6 +283,7 @@ export function AppRoutes() {
             />
             <Route
               path=":id/edit"
+              handle={{ contentScroll: 'contained' }}
               element={
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryApplicationEditorPage />
