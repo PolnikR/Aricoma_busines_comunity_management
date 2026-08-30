@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
+import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
 import { useVmwareResourceInventory } from './useVmwareResourceInventory'
 
 function createWrapper(queryClient: QueryClient) {
@@ -257,6 +258,132 @@ describe('useVmwareResourceInventory', () => {
       ['/api/vms/search?provider_id=vcenter-01', expect.objectContaining({ method: 'POST', body: JSON.stringify({ tag: 'prod', name_prefix: 'WEB' }) })],
     ]))
     expect(fetchMock.mock.calls.every(([url]) => url === '/api/vms/search?provider_id=vcenter-01')).toBe(true)
+  })
+
+  it('force refreshes the settled provider, folder, tag, and name prefix without changing the query key', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(inventoryResponse(['Cached VM']))
+      .mockResolvedValueOnce(inventoryResponse(['Refreshed VM']))
+    vi.stubGlobal('fetch', fetchMock)
+    const queryClient = createQueryClient()
+    const { result } = renderHook(
+      () => useVmwareResourceInventory({
+        providerId: 'vcenter-01',
+        folderName: 'Applications',
+        namePrefix: 'WEB',
+        tag: 'prod',
+        enabled: true,
+      }),
+      { wrapper: createWrapper(queryClient) },
+    )
+
+    await new Promise((resolve) => { setTimeout(resolve, 300) })
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+
+    const queryKey = discoveryInventoryKeys.vmwareSearch({
+      providerId: 'vcenter-01',
+      folderName: 'Applications',
+      namePrefix: 'WEB',
+      tag: 'prod',
+    })
+    await act(async () => { await result.current.forceRefresh() })
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      '/api/vms/search?provider_id=vcenter-01',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          folder_name: 'Applications',
+          tag: 'prod',
+          name_prefix: 'WEB',
+          force_refresh: true,
+        }),
+      }),
+    )
+    await waitFor(() => {
+      expect(result.current.data?.virtualMachines.map((vm) => vm.name)).toEqual(['Refreshed VM'])
+    })
+    expect(queryClient.getQueryData(queryKey)).toEqual(result.current.data)
+    expect(queryClient.getQueryCache().findAll({ queryKey })).toHaveLength(1)
+    expect(result.current.forceRefreshError).toBeNull()
+  })
+
+  it('keeps cached inventory visible and exposes a force-refresh request failure separately', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(inventoryResponse(['Cached VM']))
+      .mockRejectedValueOnce(new Error('live request failed'))
+    vi.stubGlobal('fetch', fetchMock)
+    const { result } = renderHook(
+      () => useVmwareResourceInventory({ providerId: 'vcenter-01', enabled: true }),
+      { wrapper: createWrapper(createQueryClient()) },
+    )
+
+    await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('Cached VM') })
+    await act(async () => {
+      await expect(result.current.forceRefresh()).rejects.toThrow('live request failed')
+    })
+
+    expect(result.current.data?.virtualMachines.map((vm) => vm.name)).toEqual(['Cached VM'])
+    expect(result.current.isError).toBe(false)
+    expect(result.current.isForceRefreshing).toBe(false)
+    expect(result.current.forceRefreshError).toMatchObject({ message: 'live request failed' })
+  })
+
+  it('writes an in-flight force refresh only to the query key it snapshotted', async () => {
+    let resolveForceRefresh: ((response: Response) => void) | undefined
+    const forceRefreshResponse = new Promise<Response>((resolve) => { resolveForceRefresh = resolve })
+    const fetchMock = vi.fn((url: string, init: RequestInit) => {
+      if (parseRequestBody(init).force_refresh) return forceRefreshResponse
+      return Promise.resolve(inventoryResponse([url.includes('vcenter-01') ? 'VCenter-01' : 'VCenter-02']))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const queryClient = createQueryClient()
+    const { result, rerender } = renderHook(
+      ({ providerId }: { providerId: string }) => useVmwareResourceInventory({ providerId, enabled: true }),
+      { wrapper: createWrapper(queryClient), initialProps: { providerId: 'vcenter-01' } },
+    )
+
+    await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('VCenter-01') })
+    act(() => { void result.current.forceRefresh() })
+    rerender({ providerId: 'vcenter-02' })
+    await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('VCenter-02') })
+
+    act(() => { resolveForceRefresh?.(inventoryResponse(['VCenter-01 refreshed'])) })
+    await waitFor(() => {
+      expect(queryClient.getQueryData(discoveryInventoryKeys.vmwareSearch({ providerId: 'vcenter-01' }))).toMatchObject({
+        virtualMachines: [{ name: 'VCenter-01 refreshed' }],
+      })
+    })
+
+    expect(result.current.data?.virtualMachines.map((vm) => vm.name)).toEqual(['VCenter-02'])
+    expect(result.current.forceRefreshError).toBeNull()
+    expect(result.current.isForceRefreshing).toBe(false)
+  })
+
+  it('hides a previous query force-refresh failure after switching providers', async () => {
+    let rejectForceRefresh: ((error: Error) => void) | undefined
+    const forceRefreshResponse = new Promise<Response>((_, reject) => { rejectForceRefresh = reject })
+    const fetchMock = vi.fn((url: string, init: RequestInit) => {
+      if (parseRequestBody(init).force_refresh) return forceRefreshResponse
+      return Promise.resolve(inventoryResponse([url.includes('vcenter-01') ? 'VCenter-01' : 'VCenter-02']))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const { result, rerender } = renderHook(
+      ({ providerId }: { providerId: string }) => useVmwareResourceInventory({ providerId, enabled: true }),
+      { wrapper: createWrapper(createQueryClient()), initialProps: { providerId: 'vcenter-01' } },
+    )
+
+    await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('VCenter-01') })
+    act(() => { void result.current.forceRefresh().catch(() => undefined) })
+    rerender({ providerId: 'vcenter-02' })
+    await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('VCenter-02') })
+
+    act(() => { rejectForceRefresh?.(new Error('old provider failed')) })
+    await waitFor(() => { expect(result.current.isForceRefreshing).toBe(false) })
+
+    expect(result.current.forceRefreshError).toBeNull()
+    expect(result.current.isError).toBe(false)
   })
 
   it('returns to fresh cached provider/tag inventory without another request', async () => {
