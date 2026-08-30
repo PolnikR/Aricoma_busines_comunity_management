@@ -6,6 +6,10 @@ export const API_ENDPOINTS = {
     virtualDisksByVm: '/api/vdisks_by_vm',
     tags: '/api/tags',
   },
+  discoveryCache: {
+    config: '/api/discovery/cache/config',
+    history: '/api/discovery/cache/history',
+  },
   providers: {
     list: '/api/get_providers',
     submit: '/api/submit_provider',

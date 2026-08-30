@@ -37,4 +37,11 @@ describe('API_ENDPOINTS', () => {
       delete: '/api/delete_clean_room_policy',
     })
   })
+
+  it('defines the Discovery Cache API contract', () => {
+    expect(API_ENDPOINTS.discoveryCache).toEqual({
+      config: '/api/discovery/cache/config',
+      history: '/api/discovery/cache/history',
+    })
+  })
 })
