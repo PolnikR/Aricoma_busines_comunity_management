@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
 import { ResourceSelectionCard } from '@/shared/components/resource-selection/ResourceSelectionCard'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -14,7 +14,16 @@ interface RecoveryGroupResourcesStepProps {
   onMetadataAvailable?: (metadata: Record<string, RecoveryGroupVmMetadata>) => void
 }
 
-export function RecoveryGroupResourcesStep({
+export function RecoveryGroupResourcesStep(props: RecoveryGroupResourcesStepProps) {
+  return (
+    <RecoveryGroupResourcesStepContent
+      key={`${props.workloadType ?? ''}|${props.providerId ?? ''}`}
+      {...props}
+    />
+  )
+}
+
+function RecoveryGroupResourcesStepContent({
   workloadType,
   providerId,
   resources,
@@ -23,7 +32,9 @@ export function RecoveryGroupResourcesStep({
   onMetadataAvailable,
 }: RecoveryGroupResourcesStepProps) {
   const { t } = useTranslation()
-  const query = useRecoveryGroupResourceInventory(workloadType, providerId)
+  const [vmwareNamePrefix, setVmwareNamePrefix] = useState('')
+  const isVmware = workloadType === 'vmware_virtual_machines'
+  const query = useRecoveryGroupResourceInventory(workloadType, providerId, { vmwareNamePrefix })
   const availableResources = query.data?.resourceNames ?? []
   const vmMetadataByName = query.data?.vmMetadataByName
 
@@ -54,6 +65,10 @@ export function RecoveryGroupResourcesStep({
           staleErrorDescription={t('pages.recoveryGroupBuilder.resources.error.showingPrevious')}
           retryLabel={t('buttons.retry')}
           onRetry={() => { void query.refetch() }}
+          {...(isVmware ? {
+            searchValue: vmwareNamePrefix,
+            onSearchChange: setVmwareNamePrefix,
+          } : {})}
         />
       </div>
       <div className="flex h-72 min-h-0 flex-col rounded-lg border-2 border-dashed border-border bg-surface p-4 lg:h-full">
