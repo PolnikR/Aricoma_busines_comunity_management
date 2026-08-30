@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchFlashSystemInventory } from '@/features/discovery-inventory/resources/api/flashSystemInventoryApi'
 import { fetchPowerInventory } from '@/features/discovery-inventory/resources/api/powerInventoryApi'
@@ -104,7 +104,7 @@ export function useRecoveryGroupResourceInventory(
 ) {
   const isVmware = workloadType === 'vmware_virtual_machines'
   const vmwareQuery = useVmwareResourceInventory({
-    providerId: isVmware ? providerId ?? undefined : undefined,
+    ...(isVmware && providerId ? { providerId } : {}),
     ...(isVmware && vmwareNamePrefix !== undefined ? { namePrefix: vmwareNamePrefix } : {}),
     enabled: enabled && isVmware,
   })
@@ -128,17 +128,15 @@ export function useRecoveryGroupResourceInventory(
     select: selectFn,
     enabled: enabled && definition !== null,
   })
+  const vmwareData = useMemo(
+    () => vmwareQuery.data ? selectFn(vmwareQuery.data) : undefined,
+    [selectFn, vmwareQuery.data],
+  )
 
   if (isVmware) {
-    const inventory = vmwareQuery.data
     return {
       ...vmwareQuery,
-      data: inventory ? {
-        resourceNames: Array.from(new Set(
-          getResourceNames(inventory).map(name => name.trim()).filter(Boolean),
-        )),
-        vmMetadataByName: getVmMetadataByName('vmware_virtual_machines', inventory),
-      } : undefined,
+      data: vmwareData,
     }
   }
 

@@ -143,6 +143,26 @@ describe('useRecoveryGroupResourceInventory', () => {
     })
   })
 
+  it('keeps VMware recovery data stable across rerenders without new inventory data', async () => {
+    const { result, rerender } = renderHook(
+      ({ prefix }: { prefix: string }) => useRecoveryGroupResourceInventory(
+        'vmware_virtual_machines',
+        'vmware-1',
+        { vmwareNamePrefix: prefix },
+      ),
+      { wrapper: createWrapper(), initialProps: { prefix: '' } },
+    )
+
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+    const initialData = result.current.data
+    const initialMetadata = result.current.data?.vmMetadataByName
+
+    rerender({ prefix: '' })
+
+    expect(result.current.data).toBe(initialData)
+    expect(result.current.data?.vmMetadataByName).toBe(initialMetadata)
+  })
+
   it('does not extract VM metadata for ibm_flashsystem', async () => {
     const { result } = renderHook(
       () => useRecoveryGroupResourceInventory('ibm_flashsystem', 'flash-1'),
