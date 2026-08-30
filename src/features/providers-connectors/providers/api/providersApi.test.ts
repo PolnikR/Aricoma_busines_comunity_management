@@ -207,19 +207,24 @@ describe('submitProvider', () => {
     const mock = stubFetch({ providers: [provider] })
 
     const [mappedProvider] = await fetchProviders()
+    if (!mappedProvider) {
+      throw new Error('Expected mapped provider')
+    }
+
     await submitProvider({
-      id: mappedProvider!.id,
-      name: mappedProvider!.name,
-      description: mappedProvider!.description,
-      type: mappedProvider!.type,
-      ipAddress: mappedProvider!.ipAddress,
-      credentialId: mappedProvider!.credentialId,
-      role: mappedProvider!.role!,
-      cacheRefreshSeconds: mappedProvider!.cacheRefreshSeconds,
+      id: mappedProvider.id,
+      name: mappedProvider.name,
+      description: mappedProvider.description,
+      type: mappedProvider.type,
+      ipAddress: mappedProvider.ipAddress,
+      credentialId: mappedProvider.credentialId,
+      role: mappedProvider.role ?? 'source',
+      cacheRefreshSeconds: mappedProvider.cacheRefreshSeconds,
     })
 
     expect(mappedProvider).toMatchObject({ cacheRefreshSeconds: 300 })
-    expect(JSON.parse(mock.mock.calls[1]![1].body as string)).toMatchObject({ cacheRefreshSeconds: 300 })
+    const [, init] = mock.mock.calls[1] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toMatchObject({ cacheRefreshSeconds: 300 })
   })
 
   it('posts explicit empty VM settings when clearing them', async () => {
@@ -272,7 +277,7 @@ describe('submitProvider', () => {
       credentialId: providerA.credentialId,
       role: providerA.role ?? 'source',
     }
-    await expect(submitProvider(submitData)).rejects.toThrow(`Submit provider request failed with status ${status}`)
+    await expect(submitProvider(submitData)).rejects.toThrow(`Submit provider request failed with status ${String(status)}`)
   })
 
   it('rejects a malformed successful response', async () => {
