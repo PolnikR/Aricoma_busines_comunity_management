@@ -12,6 +12,7 @@ describe('DiscoverySettingsPage', () => {
     expect(screen.getByRole('region', { name: 'Discovery schedule' })).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Discovery history' })).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Failure notifications' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('History retention')).not.toBeInTheDocument()
     expect(screen.queryByText('UI template')).not.toBeInTheDocument()
   })
 

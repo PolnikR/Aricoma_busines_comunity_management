@@ -6,35 +6,49 @@ import { DiscoveryHistoryCard } from '../components/DiscoveryHistoryCard'
 import { DiscoveryNotificationsCard } from '../components/DiscoveryNotificationsCard'
 import { DiscoveryScheduleCard } from '../components/DiscoveryScheduleCard'
 import {
-  DEFAULT_DISCOVERY_SETTINGS,
+  DEFAULT_DISCOVERY_NOTIFICATION_SETTINGS,
+  DEFAULT_DISCOVERY_SCHEDULE_SETTINGS,
   DISCOVERY_NOTIFICATION_RECIPIENTS,
 } from '../mocks/discoverySettingsMocks'
-import type { DiscoverySettings } from '../model/discoverySettingsTypes'
+import type {
+  DiscoveryNotificationSettings,
+  DiscoveryScheduleSettings,
+} from '../model/discoverySettingsTypes'
 
 export function DiscoverySettingsPage() {
   const { t } = useTranslation()
-  const [settings, setSettings] = useState<DiscoverySettings>(DEFAULT_DISCOVERY_SETTINGS)
-  const [savedSettings, setSavedSettings] = useState<DiscoverySettings>(DEFAULT_DISCOVERY_SETTINGS)
+  const [scheduleSettings, setScheduleSettings] = useState<DiscoveryScheduleSettings>(DEFAULT_DISCOVERY_SCHEDULE_SETTINGS)
+  const [savedScheduleSettings, setSavedScheduleSettings] = useState<DiscoveryScheduleSettings>(DEFAULT_DISCOVERY_SCHEDULE_SETTINGS)
+  const [notificationSettings, setNotificationSettings] = useState<DiscoveryNotificationSettings>(DEFAULT_DISCOVERY_NOTIFICATION_SETTINGS)
+  const [savedNotificationSettings, setSavedNotificationSettings] = useState<DiscoveryNotificationSettings>(DEFAULT_DISCOVERY_NOTIFICATION_SETTINGS)
   const [statusMessage, setStatusMessage] = useState(() => t('pages.discoverySettings.status.noChanges'))
-  const isDirty = JSON.stringify(settings) !== JSON.stringify(savedSettings)
+  const isDirty = JSON.stringify(scheduleSettings) !== JSON.stringify(savedScheduleSettings)
+    || JSON.stringify(notificationSettings) !== JSON.stringify(savedNotificationSettings)
 
-  const updateSettings = (patch: Partial<DiscoverySettings>) => {
-    setSettings(current => ({ ...current, ...patch }))
+  const updateScheduleSettings = (patch: Partial<DiscoveryScheduleSettings>) => {
+    setScheduleSettings(current => ({ ...current, ...patch }))
+    setStatusMessage(t('pages.discoverySettings.status.unsaved'))
+  }
+
+  const updateNotificationSettings = (patch: Partial<DiscoveryNotificationSettings>) => {
+    setNotificationSettings(current => ({ ...current, ...patch }))
     setStatusMessage(t('pages.discoverySettings.status.unsaved'))
   }
 
   const handleSave = () => {
-    setSavedSettings(settings)
+    setSavedScheduleSettings(scheduleSettings)
+    setSavedNotificationSettings(notificationSettings)
     setStatusMessage(t('pages.discoverySettings.status.savedLocally'))
   }
 
   const handleCancel = () => {
-    setSettings(savedSettings)
+    setScheduleSettings(savedScheduleSettings)
+    setNotificationSettings(savedNotificationSettings)
     setStatusMessage(t('pages.discoverySettings.status.discarded'))
   }
 
   const handleTestNotification = () => {
-    const recipient = DISCOVERY_NOTIFICATION_RECIPIENTS.find(user => user.id === settings.recipientId)
+    const recipient = DISCOVERY_NOTIFICATION_RECIPIENTS.find(user => user.id === notificationSettings.recipientId)
     if (recipient) {
       setStatusMessage(t('pages.discoverySettings.status.testNotificationPrepared').replace('{{email}}', recipient.email))
     }
@@ -50,12 +64,12 @@ export function DiscoverySettingsPage() {
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3 lg:p-3">
         <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-1 gap-3 overflow-y-auto lg:grid-cols-3 lg:overflow-hidden">
-          <DiscoveryScheduleCard settings={settings} onChange={updateSettings} />
-          <DiscoveryHistoryCard settings={settings} onChange={updateSettings} />
+          <DiscoveryScheduleCard settings={scheduleSettings} onChange={updateScheduleSettings} />
+          <DiscoveryHistoryCard />
           <DiscoveryNotificationsCard
-            settings={settings}
+            settings={notificationSettings}
             recipients={DISCOVERY_NOTIFICATION_RECIPIENTS}
-            onChange={updateSettings}
+            onChange={updateNotificationSettings}
             onTestNotification={handleTestNotification}
           />
         </div>
