@@ -113,11 +113,14 @@
 ### Task 7 — Real server-backed History
 
 - [ ] Rewrite existing `DiscoveryHistoryCard`; remove old mock-retention UI.
-- [ ] Provider filter is Provider ID text input + Apply/Clear.
-- [ ] Do not call/use `useProviders()`.
-- [ ] Do not render a provider dropdown requiring `VIEW_PROVIDERS`.
-- [ ] Keep pending typed provider text separate from applied server filter.
-- [ ] Apply sets backend `provider_id`; Clear removes it.
+- [ ] Provider filter is a shared `Select` populated from existing `useProviders('all')`.
+- [ ] Use Infrastructure Providers only (`VMWARE`, `FLASHCOPY`, `IBM_POWER`) from the existing provider model/API.
+- [ ] Add `All infrastructure providers` as the first option.
+- [ ] Use provider name/type as the visible label and provider `id` as the option value.
+- [ ] Selecting a provider immediately sets backend `provider_id`; selecting All removes it.
+- [ ] Do not use provider-list data to filter History rows locally.
+- [ ] Provider-list loading/error must not replace successful History data.
+- [ ] Preserve a deep-linked `providerId` even if it is temporarily absent from the provider list.
 - [ ] Limit choices: 25 / 50 / 100.
 - [ ] Use `useDiscoveryCacheHistory({ providerId, limit })`.
 - [ ] Pass `history.runs` directly to shared `DataTable`.
@@ -135,8 +138,8 @@
 - [ ] Never render raw `run.error`.
 - [ ] Use shared loading/error/cached-error/empty states.
 - [ ] Refresh calls query `refetch()` with same criteria.
-- [ ] Component tests prove Apply/Clear/limit become server query criteria.
-- [ ] Test typing alone does not alter currently rendered rows.
+- [ ] Component tests prove provider selection/All/limit become server query criteria.
+- [ ] Test provider selection never filters already returned History rows on the client.
 - [ ] Test response order is unchanged.
 - [ ] Test raw error is absent from DOM.
 
@@ -167,7 +170,7 @@
 - [ ] Add localized tab labels/aria label.
 - [ ] Update page description for Configuration / History / Notifications model.
 - [ ] Add Cache config/default/retention/validation labels.
-- [ ] Add History Provider ID / Apply / Clear / Latest runs / Refresh labels.
+- [ ] Add History Provider / All infrastructure providers / Latest runs / Refresh labels.
 - [ ] Add History column labels.
 - [ ] Add localized stale / forced / param change labels.
 - [ ] Add localized Success / Failed labels.
@@ -186,7 +189,7 @@
 - [ ] No History request runs before History is mounted.
 - [ ] No Cache config GET runs when opening a non-Configuration deep link.
 - [ ] UI imports handwritten hooks only, never generated Orval operations.
-- [ ] History flow makes no `/get_providers` request.
+- [ ] History loads the existing infrastructure provider list for the dropdown through `useProviders('all')`.
 - [ ] History requests contain only supported backend `provider_id` and `limit` criteria.
 - [ ] Cache PUT payload contains changed fields only.
 - [ ] Cache Save triggers no History request and no FE inventory invalidation.
@@ -219,7 +222,7 @@
 - [ ] No generated-client manual edit.
 - [ ] No backend Schedule API invention.
 - [ ] No backend Notification API invention.
-- [ ] No provider-RBAC change for dropdown support.
+- [ ] No provider-RBAC/JWT change; revalidate permissions later when real JWT authentication is implemented.
 - [ ] No History status/type/date/text filters.
 - [ ] No client History filtering/search/sort/pagination.
 - [ ] No History polling.

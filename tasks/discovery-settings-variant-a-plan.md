@@ -160,23 +160,31 @@ History logs actual live fetch attempts. Cache hits are not logged.
 
 `error` may contain technical text and must **not** be exposed directly to end users in the History table.
 
-#### Permission consequence for the Provider filter
+#### Infrastructure Provider source for the History filter
 
-A critical RBAC detail:
+Discovery Cache is functionally tied to **Infrastructure Providers**, not Platform Providers. The existing frontend infrastructure-provider model already limits provider types to:
 
 ```text
-PLATFORM_ADMIN
-├── VIEW_DIAGNOSTICS
-└── MANAGE_PLATFORM_CONFIGURATION
+VMWARE
+FLASHCOPY
+IBM_POWER
 ```
 
-but `PLATFORM_ADMIN` does **not** have `VIEW_PROVIDERS`.
+The History filter therefore uses the existing `useProviders('all')` query to populate a shared `Select` with Infrastructure Providers only. The dropdown is a selection aid; it does **not** perform History filtering itself.
 
-`GET /get_providers` requires `VIEW_PROVIDERS`.
+The selected provider's `id` is passed unchanged to the real History endpoint as `provider_id`:
 
-Therefore the History filter must **not** depend on `useProviders()` merely to populate a dropdown. The approved implementation will use a **Provider ID input with Apply/Clear** and send the applied value as backend `provider_id`.
+```text
+useProviders('all')
+        ↓
+Infrastructure Provider dropdown
+        ↓ selected provider.id
+useDiscoveryCacheHistory({ providerId, limit })
+        ↓
+GET /discovery/cache/history?provider_id=<id>&limit=<n>
+```
 
-If a future product requirement mandates a provider dropdown, the backend permission/data contract must first be changed explicitly. That is out of scope here.
+The current development backend resolves API identity through `X-User` and currently defaults that header to `admin`; JWT-based user-role resolution is not implemented yet. Therefore the present development RBAC distinction around `VIEW_PROVIDERS` must not force a manual Provider ID UX. When JWT authentication is implemented, the provider-list permission contract must be revalidated separately, but that future auth work is outside this frontend redesign.
 
 ---
 
@@ -188,9 +196,9 @@ If a future product requirement mandates a provider dropdown, the backend permis
 4. **Do not create a new feature-local React component.** Reuse the three existing Discovery Settings components and compose shared primitives directly in the page.
 5. If implementation reveals a genuinely missing reusable React primitive, it must be added under `src/shared/components/...`, have a focused unit test, and be consumed from there. Do not add one unless necessary.
 6. History uses backend filtering only. No `Array.filter`, client search, client sorting, `useTableState`, or client pagination over `runs`.
-7. Do not use `DataTableToolbar` for History because it always owns a client search input. Compose the server query controls from shared `Field`, `Input`, `Select`, and `Button` instead.
+7. Do not use `DataTableToolbar` for History because it always owns a client search input. Compose the server query controls from shared `Field`, `Select`, and `Button` instead.
 8. Do not use `DataTablePagination`; the backend does not expose `page`, `offset`, or total-count semantics.
-9. Do not use `useProviders()` for History filtering.
+9. Use the existing `useProviders('all')` only to populate the Infrastructure Provider dropdown; History rows themselves remain server-filtered exclusively by `/discovery/cache/history`.
 10. Do not poll History. Manual Refresh uses the existing query `refetch()` with the same server criteria.
 11. Do not display raw `DiscoveryCacheRun.error` text.
 12. Do not parse `startedAt` with `new Date()` or otherwise invent timezone semantics. The backend/OpenAPI currently exposes it as a plain string. Presentation may normalize the separator/precision only when the expected string pattern matches.
@@ -283,7 +291,7 @@ This uses the backend partial-update contract and avoids unnecessarily overwriti
 ### History
 
 ```text
-Provider ID [________________] [Apply] [Clear]
+Provider [ All infrastructure providers ▼ ]
 Latest runs [50 ▼]                            [Refresh]
 
 DataTable
@@ -292,11 +300,15 @@ DataTable
 └──────────┴──────────┴──────┴─────────┴────────┴──────────┴─────────┘
 ```
 
+The Provider dropdown is populated from the existing infrastructure-provider query and should present a human-readable label such as `Provider name — TYPE`, while its value remains the provider `id`.
+
 Server flow:
 
 ```text
-pending Provider ID input
-        ↓ Apply
+useProviders('all')
+        ↓
+Infrastructure Provider dropdown
+        ↓ selected id / All providers
 URL providerId
         ↓
 useDiscoveryCacheHistory({ providerId, limit })
@@ -310,9 +322,8 @@ DataTable rows = response.runs
 
 Rules:
 
-- typing does not filter already loaded rows;
-- Apply changes the server query;
-- Clear removes `provider_id` and requests all providers again;
+- selecting a provider immediately changes the server query;
+- selecting `All infrastructure providers` removes `provider_id` and requests all History runs again;
 - changing `limit` changes the server query immediately;
 - Refresh refetches the same query key/criteria;
 - rows are never sorted or filtered on the client;
@@ -437,7 +448,9 @@ No new React component is required by the approved design.
 
 ### Provider filter
 
-Do not fetch Providers for the filter. This prevents a legitimate `VIEW_DIAGNOSTICS` user from being blocked by an unrelated `VIEW_PROVIDERS` requirement.
+Populate the dropdown with the existing `useProviders('all')` infrastructure-provider query. Provider-list loading/error must not block the History table itself: History can still load the unfiltered server response while provider options are unavailable. A provider-list error should therefore be shown as a compact selector-specific error/retry state rather than replacing successful History data.
+
+If a deep link contains a `providerId` that is not present in the currently loaded provider list, preserve that URL value and continue sending it to the History endpoint; do not silently clear a server criterion because the selector data is temporarily stale or unavailable.
 
 ---
 
@@ -521,7 +534,7 @@ Must remain sequential:
 
 **Verification:**
 
-- [ ] Memory-router tests cover default, valid deep link, invalid tab/limit fallback, provider apply/clear, and param preservation.
+- [ ] Memory-router tests cover default, valid deep link, invalid tab/limit fallback, provider selection/All providers, and param preservation.
 - [ ] Back/Forward-compatible state is derived only from `useSearchParams`.
 
 **Dependencies:** None.
@@ -688,9 +701,13 @@ Must remain sequential:
 
 **Acceptance criteria:**
 
-- [ ] Provider filter is a free-text Provider ID input with explicit Apply and Clear actions.
-- [ ] Pending typed text does not modify the currently displayed rows.
-- [ ] Apply updates URL/server `providerId`; Clear removes it.
+- [ ] Provider filter is a shared `Select` populated by the existing `useProviders('all')` Infrastructure Provider query.
+- [ ] The first option is `All infrastructure providers` and maps to `providerId: undefined`.
+- [ ] Each provider option uses a human-readable name/type label and the provider `id` as its value.
+- [ ] Selecting a provider updates URL/server `providerId` immediately; selecting All removes it.
+- [ ] Do not locally filter the provider query result into History rows; the selected id is only a server request criterion.
+- [ ] Provider-list loading/error does not replace already successful History table data.
+- [ ] A deep-linked `providerId` absent from the current provider list is preserved rather than silently cleared.
 - [ ] Limit choices are `25`, `50`, `100`; changing limit updates the server query immediately.
 - [ ] `useDiscoveryCacheHistory({ providerId, limit })` is the only source of rows.
 - [ ] `rows` passed to `DataTable` are the returned `history.runs` in the backend-provided order.
@@ -708,7 +725,7 @@ Must remain sequential:
 **Verification:**
 
 - [ ] Component test verifies initial `{ providerId: undefined, limit: 50 }` request.
-- [ ] Apply/Clear tests verify new hook criteria/server query identity; loaded rows are not filtered locally while typing.
+- [ ] Provider-selection tests verify selected provider ids become hook/server criteria and `All infrastructure providers` removes `provider_id`.
 - [ ] Limit test verifies the hook receives the selected new limit.
 - [ ] Row-order test proves response order is preserved.
 - [ ] Test proves raw backend `error` text is absent from the DOM.
@@ -810,7 +827,7 @@ Must remain sequential:
 - [ ] Tab switching preserves History `providerId`/`limit` URL criteria.
 - [ ] Only active-tab remote queries run: no History request before History is mounted; no Cache config request when Configuration is disabled by deep-link state.
 - [ ] Configuration Cache calls only the existing handwritten hook layer; no generated client import appears in UI code.
-- [ ] History never requests `/get_providers`.
+- [ ] History requests the existing infrastructure provider list through `useProviders('all')` to populate the dropdown.
 - [ ] History network requests contain only supported backend criteria (`provider_id`, `limit`).
 - [ ] No client filter/search/pagination affects History rows.
 - [ ] Cache PUT partial payload matches changed fields only.
@@ -829,7 +846,7 @@ Must remain sequential:
 - [ ] `npm run build` passes because a shared component and a routed multi-view page were changed.
 - [ ] `git diff --check` passes.
 - [ ] Browser verification at 320, 768, 1024, and 1440 px.
-- [ ] Browser network inspection verifies History Apply/Clear/limit/Refresh requests and absence of `/get_providers` from the History flow.
+- [ ] Browser network inspection verifies the provider-list request plus History provider-selection/All/limit/Refresh requests; only `/discovery/cache/history` performs History row filtering.
 - [ ] Review task-owned diff before commit; unrelated worktree files remain untouched.
 
 **Dependencies:** Tasks 1–9.
@@ -899,8 +916,8 @@ There is intentionally **no** new feature-local React component in the target st
 | No redundant config GET after PUT | existing mutation hook regression |
 | History server provider filter | History component hook/request assertion + browser network |
 | History server limit | History component test + browser network |
-| No client filtering/sorting/pagination | code boundary + row-order/typing tests |
-| No `/get_providers` dependency | imports/network assertion |
+| No client filtering/sorting/pagination | code boundary + row-order/provider-selection tests |
+| Infrastructure Provider dropdown source | `useProviders('all')` component assertion + browser network |
 | No raw History error display | History component test |
 | No timezone invention | presentation helper/row assertion; no `Date` parsing |
 | 403/fetch errors | shared request-state component assertions |
@@ -917,7 +934,7 @@ There is intentionally **no** new feature-local React component in the target st
 | Risk | Impact | Mitigation |
 |---|---|---|
 | History silently becomes client-filtered through a familiar table helper | High | Explicitly ban `DataTableToolbar`, `useTableState`, `DataTablePagination`, `runs.filter`, and client sort for this view |
-| Provider dropdown introduces an unauthorized `/get_providers` dependency | High | Provider ID input + backend `provider_id` only; browser network assertion verifies no provider-list request |
+| Future JWT/RBAC mapping makes provider-list permission incompatible with History access | Medium | Keep current development dropdown UX; revalidate `VIEW_PROVIDERS` vs diagnostics permissions when real JWT auth is implemented rather than degrading current UX to manual IDs |
 | One Save implies mock + backend atomic persistence | High | Separate card-level Schedule and Cache footers/actions/status; Notifications has its own tab-local footer |
 | Cache Save overwrites unrelated concurrent defaults | High | Generate minimal partial patch from draft vs baseline |
 | Unknown future backend default keys disappear | High | Render and preserve all `Record<string, number>` entries; friendly labels are presentation-only |
@@ -940,7 +957,7 @@ There is intentionally **no** new feature-local React component in the target st
 - Generated Orval edits/regeneration unless `api:check` proves the checked-in contract unexpectedly changed.
 - Backend Schedule persistence; no such contract currently exists.
 - Backend Notification persistence/test delivery; no such contract currently exists.
-- Changing provider RBAC to allow a History provider dropdown.
+- Changing provider RBAC/JWT authentication; current frontend uses the existing infrastructure-provider list contract and future auth integration must revalidate permissions separately.
 - Adding History filters for status, provider type, trigger, dates, or text search; backend does not expose them.
 - Client-side History filtering/search/sort/pagination.
 - Automatic History polling.
@@ -958,7 +975,7 @@ There is intentionally **no** new feature-local React component in the target st
 
 None required to start implementation.
 
-The Provider History filter intentionally uses Provider ID text + Apply/Clear because the verified backend RBAC permits diagnostic users who may not have `VIEW_PROVIDERS`. A dropdown is a future backend-contract/RBAC decision, not an unresolved frontend question.
+The History Provider filter is an Infrastructure Provider dropdown backed by the existing `useProviders('all')` query. This decision is valid for the current development authentication model. When backend JWT authentication replaces the current `X-User` development identity, the permission relationship between provider-list access and Discovery diagnostics must be reviewed as part of that auth work.
 
 ---
 
@@ -966,7 +983,7 @@ The Provider History filter intentionally uses Provider ID text + Apply/Clear be
 
 Before implementation begins:
 
-- [ ] Human reviewer approves Variant A architecture and the Provider ID server-filter decision.
+- [ ] Human reviewer approves Variant A architecture and the Infrastructure Provider dropdown feeding the server-side `provider_id` filter.
 - [ ] Human reviewer accepts the explicit split between local Schedule/Notifications and real Cache/History persistence.
 - [ ] Tasks are executed in dependency order with the checkpoints above.
 - [ ] Implementation stays scoped to the files/behaviors identified here unless new repository evidence requires a plan update first.
