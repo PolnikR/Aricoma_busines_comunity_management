@@ -370,8 +370,8 @@ export function AppRoutes() {
           <Route path="*" element={<Navigate to={routes.recoveryActionValidate} replace />} />
         </Route>
         <Route path="discovery-inventory" element={<Navigate to={routes.resources} replace />} />
-        <Route path={toRoutePath(routes.resources)} element={<ResourcesPage />} />
-        <Route path={toRoutePath(routes.resourcesIse)} element={<ResourcesIsePage />} />
+        <Route path={toRoutePath(routes.resources)} handle={{ contentScroll: 'contained' }} element={<ResourcesPage />} />
+        <Route path={toRoutePath(routes.resourcesIse)} handle={{ contentScroll: 'contained' }} element={<ResourcesIsePage />} />
         <Route path={toRoutePath(routes.resourcesRoleSourceLegacy)} element={<Navigate to={routes.resources} replace />} />
         <Route path={toRoutePath(routes.resourcesRoleTargetLegacy)} element={<Navigate to={routes.resourcesIse} replace />} />
         <Route path="discovery-inventory/virtual-machines" element={<Navigate to={routes.resources} replace />} />

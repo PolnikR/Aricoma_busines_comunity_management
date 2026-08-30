@@ -1,10 +1,18 @@
-import { Outlet } from 'react-router'
+import { Outlet, useMatches } from 'react-router'
+import { cn } from '@/shared/utils/cn'
 import { AppHeader } from './AppHeader'
 import { AppSidebar } from './AppSidebar'
 import { useSidebar } from './useSidebar'
 
+interface AppShellRouteHandle {
+  contentScroll?: 'contained'
+}
+
 export function AppShell() {
   const { isMobileOpen, closeMobileSidebar } = useSidebar()
+  const hasContainedContent = useMatches().some(match => (
+    (match.handle as AppShellRouteHandle | undefined)?.contentScroll === 'contained'
+  ))
 
   return (
     <div className="min-h-screen p-0 text-text-primary lg:h-screen lg:overflow-hidden lg:p-3 xl:p-4">
@@ -20,14 +28,20 @@ export function AppShell() {
         <AppSidebar />
         <section className="flex min-w-0 flex-1 flex-col bg-surface lg:min-h-0 lg:overflow-hidden lg:rounded-[28px] lg:border lg:border-border lg:shadow-[0_24px_70px_-34px_rgba(34,78,122,0.35)]">
           <AppHeader />
-          <main className="flex flex-1 flex-col px-4 py-5 sm:px-6 lg:min-h-0 lg:overflow-auto lg:px-6 lg:py-5 xl:px-8">
+          <main className={cn(
+            'flex flex-1 flex-col px-4 py-5 sm:px-6 lg:min-h-0 lg:px-6 lg:py-5 xl:px-8',
+            hasContainedContent ? 'lg:overflow-hidden' : 'lg:overflow-auto',
+          )}>
             {/*
               min-h-min stops the page shrinking past its own content minimum, so a
               window too short to hold it overflows into a scrollbar instead of
               squeezing the table to nothing. The browser derives that minimum per
               page, which keeps it correct when the metrics grid wraps.
             */}
-            <div className="flex flex-1 flex-col lg:min-h-min">
+            <div className={cn(
+              'flex flex-1 flex-col',
+              hasContainedContent ? 'lg:min-h-0' : 'lg:min-h-min',
+            )}>
               <Outlet />
             </div>
           </main>
