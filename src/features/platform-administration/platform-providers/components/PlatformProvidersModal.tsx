@@ -41,6 +41,8 @@ const EMPTY_PLATFORM_PROVIDER_FORM: PlatformProviderFormData = {
   fromEmail: '',
   disableSsl: null,
   disableTls: null,
+  loggingEnabled: null,
+  jwtEnabled: null,
 }
 
 function toPlatformProviderFormData(provider: PlatformProviderRecord): PlatformProviderFormData {
@@ -60,6 +62,8 @@ function toPlatformProviderFormData(provider: PlatformProviderRecord): PlatformP
     fromEmail: provider.fromEmail ?? '',
     disableSsl: provider.disableSsl ?? null,
     disableTls: provider.disableTls ?? null,
+    loggingEnabled: provider.loggingEnabled ?? null,
+    jwtEnabled: provider.jwtEnabled ?? null,
   }
 }
 
@@ -96,6 +100,8 @@ export function PlatformProvidersModal({
     || formData.fromEmail !== initialForm.fromEmail
     || formData.disableSsl !== initialForm.disableSsl
     || formData.disableTls !== initialForm.disableTls
+    || formData.loggingEnabled !== initialForm.loggingEnabled
+    || formData.jwtEnabled !== initialForm.jwtEnabled
     || formData.vmPrefix !== initialForm.vmPrefix
     || formData.vmTags.length !== initialForm.vmTags.length
     || formData.vmTags.some((tag, index) => tag !== initialForm.vmTags[index])
@@ -182,6 +188,8 @@ export function PlatformProvidersModal({
       fromEmail: formData.fromEmail.trim() || null,
       disableSsl: formData.disableSsl,
       disableTls: formData.disableTls,
+      loggingEnabled: formData.type === 'BACKEND' ? formData.loggingEnabled : null,
+      jwtEnabled: formData.type === 'BACKEND' ? formData.jwtEnabled : null,
     }
 
     upsert.mutate(

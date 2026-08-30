@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -300,7 +300,7 @@ describe('RecoveryGroupsTable', () => {
     expect(screen.queryByText('Orchestration rolled back')).not.toBeInTheDocument()
   })
 
-  it('shows a plain success confirmation after a standalone rollback, without report detail', async () => {
+  it('shows the rollback report after a standalone rollback', async () => {
     const user = userEvent.setup()
     const databaseGroup = groups.find(group => group.id === 'database-group')
     if (!databaseGroup) throw new Error('Expected database group fixture')
@@ -309,7 +309,12 @@ describe('RecoveryGroupsTable', () => {
       pushToOrchestrator: true,
       orchestrationProviderId: 'airflow-01',
     }
-    const onRollback = vi.fn().mockResolvedValue(undefined)
+    const report = {
+      status: 'ok',
+      airflow: { status: 'ok', dag_id: 'dag_123' },
+      ibm: { status: 'ok', errors: [] },
+    }
+    const onRollback = vi.fn().mockResolvedValue(report)
     renderTable(
       <RecoveryGroupsTable
         groups={[orchestratedGroup]}
@@ -326,9 +331,40 @@ describe('RecoveryGroupsTable', () => {
 
     expect(onRollback).toHaveBeenCalledWith('database-group', 'airflow-01')
     expect(await screen.findByText('Orchestration rolled back')).toBeInTheDocument()
-    expect(screen.getByText('Rolled back')).toBeInTheDocument()
-    expect(screen.queryByText('DAG ID')).not.toBeInTheDocument()
-    expect(screen.queryByText('IBM FlashCopy')).not.toBeInTheDocument()
+    expect(screen.getAllByText(/dag_123/).length).toBeGreaterThan(0)
+    expect(screen.getByText('Airflow')).toBeInTheDocument()
+    expect(screen.getByText('IBM FlashCopy')).toBeInTheDocument()
+  })
+
+  it('does not open a rollback result modal when a standalone rollback is rejected', async () => {
+    const user = userEvent.setup()
+    const databaseGroup = groups.find(group => group.id === 'database-group')
+    if (!databaseGroup) throw new Error('Expected database group fixture')
+    const orchestratedGroup: RecoveryGroup = {
+      ...databaseGroup,
+      pushToOrchestrator: true,
+      orchestrationProviderId: 'airflow-01',
+    }
+    const onRollback = vi.fn().mockRejectedValue(new Error('Rollback request failed'))
+    renderTable(
+      <RecoveryGroupsTable
+        groups={[orchestratedGroup]}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onRollback={onRollback}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: '⋯' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Roll back' }))
+    const confirmDialog = screen.getByRole('dialog', { name: 'Roll back orchestration?' })
+    await user.click(within(confirmDialog).getByRole('button', { name: 'Roll back' }))
+
+    expect(onRollback).toHaveBeenCalledWith('database-group', 'airflow-01')
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Roll back orchestration?' })).not.toBeInTheDocument()
+    })
+    expect(screen.queryByRole('dialog', { name: 'Recovery group rollback result' })).not.toBeInTheDocument()
   })
 
   it('shows the resolved policy set name in the detail drawer', async () => {

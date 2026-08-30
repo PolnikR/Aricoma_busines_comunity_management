@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   createRecoveryGroup: vi.fn(),
   updateRecoveryGroup: vi.fn(),
   deleteRecoveryGroup: vi.fn(),
+  rollbackRecoveryGroupOrchestration: vi.fn(),
   useProviders: vi.fn(),
 }))
 
@@ -19,6 +20,7 @@ vi.mock('../api/recoveryGroupsApi', () => ({
   createRecoveryGroup: mocks.createRecoveryGroup,
   updateRecoveryGroup: mocks.updateRecoveryGroup,
   deleteRecoveryGroup: mocks.deleteRecoveryGroup,
+  rollbackRecoveryGroupOrchestration: mocks.rollbackRecoveryGroupOrchestration,
 }))
 
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
@@ -78,6 +80,7 @@ describe('useRecoveryGroups', () => {
     mocks.createRecoveryGroup.mockResolvedValue(group)
     mocks.updateRecoveryGroup.mockResolvedValue(group)
     mocks.deleteRecoveryGroup.mockResolvedValue(null)
+    mocks.rollbackRecoveryGroupOrchestration.mockResolvedValue({ status: 'ok' })
   })
 
   it('loads groups using the provider records needed to identify VM type', async () => {
@@ -173,5 +176,22 @@ describe('useRecoveryGroups', () => {
       code: 'missing_orchestration_provider',
     })
     expect(mocks.deleteRecoveryGroup).not.toHaveBeenCalled()
+  })
+
+  it('returns the rollback report and invalidates the list after a standalone rollback', async () => {
+    const report = { status: 'partial', airflow: { status: 'ok' }, ibm: { status: 'failed', errors: ['volume busy'] } }
+    mocks.rollbackRecoveryGroupOrchestration.mockResolvedValue(report)
+    const { result } = renderHook(() => useRecoveryGroups(), { wrapper: createWrapper() })
+    await waitFor(() => { expect(result.current.groups).toEqual([group]) })
+    mocks.fetchRecoveryGroups.mockClear()
+
+    let returned: unknown
+    await act(async () => {
+      returned = await result.current.rollback(group.id, 'airflow-01')
+    })
+
+    expect(mocks.rollbackRecoveryGroupOrchestration).toHaveBeenCalledWith(group.id, 'airflow-01')
+    expect(returned).toEqual(report)
+    await waitFor(() => { expect(mocks.fetchRecoveryGroups).toHaveBeenCalledWith([provider]) })
   })
 })

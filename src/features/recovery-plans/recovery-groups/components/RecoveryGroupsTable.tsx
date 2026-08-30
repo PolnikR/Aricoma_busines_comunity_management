@@ -28,7 +28,6 @@ import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/fe
 import { toRecoveryGroupJson } from '../helpers/mapRecoveryGroups'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupRollbackResultModal } from './RecoveryGroupRollbackResultModal'
-import { RecoveryGroupRollbackSuccessModal } from './RecoveryGroupRollbackSuccessModal'
 import { RecoveryGroupContextMenu } from './RecoveryGroupContextMenu'
 import {
   getResourceTypeLabelKey,
@@ -43,7 +42,7 @@ interface RecoveryGroupsTableProps {
   isLoading?: boolean
   onEdit: (id: string) => void
   onDelete: (group: RecoveryGroup) => Promise<RollbackReport | null>
-  onRollback: (groupId: string, providerId: string) => Promise<void>
+  onRollback: (groupId: string, providerId: string) => Promise<RollbackReport>
   error?: Error | null
   isRetrying?: boolean
   isDeleting?: boolean
@@ -81,7 +80,6 @@ export function RecoveryGroupsTable({
   const [deleteTarget, setDeleteTarget] = useState<RecoveryGroup | null>(null)
   const [rollbackTarget, setRollbackTarget] = useState<RecoveryGroup | null>(null)
   const [rollbackResult, setRollbackResult] = useState<{ groupName: string; report: RollbackReport } | null>(null)
-  const [rollbackSuccessGroupName, setRollbackSuccessGroupName] = useState<string | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [isRollingBack, setIsRollingBack] = useState(false)
   const [detailTab, setDetailTab] = useState<'overview' | 'orchestration'>('overview')
@@ -547,8 +545,8 @@ export function RecoveryGroupsTable({
           setIsRollingBack(true)
           void (async () => {
             try {
-              await onRollback(groupId, providerId)
-              setRollbackSuccessGroupName(groupName)
+              const report = await onRollback(groupId, providerId)
+              setRollbackResult({ groupName, report })
               setSelectedId(null)
               setRollbackTarget(null)
             } catch {
@@ -565,12 +563,6 @@ export function RecoveryGroupsTable({
         onClose={() => { setRollbackResult(null) }}
         groupName={rollbackResult?.groupName ?? ''}
         report={rollbackResult?.report ?? null}
-      />
-
-      <RecoveryGroupRollbackSuccessModal
-        open={rollbackSuccessGroupName !== null}
-        onClose={() => { setRollbackSuccessGroupName(null) }}
-        groupName={rollbackSuccessGroupName ?? ''}
       />
 
       <JsonViewerModal

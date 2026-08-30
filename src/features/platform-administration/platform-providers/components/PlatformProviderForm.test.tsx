@@ -21,6 +21,8 @@ const formData: PlatformProviderFormData = {
   fromEmail: '',
   disableSsl: null,
   disableTls: null,
+  loggingEnabled: null,
+  jwtEnabled: null,
 }
 
 describe('PlatformProviderForm', () => {
@@ -138,6 +140,77 @@ describe('PlatformProviderForm', () => {
     expect(screen.getByRole('checkbox', { name: 'Disable TLS' })).not.toBeChecked()
     fireEvent.click(screen.getByRole('checkbox', { name: 'Disable SSL' }))
     expect(onChange).toHaveBeenCalledWith('disableSsl', false)
+  })
+
+  it('renders BACKEND controls and reports explicit boolean changes', () => {
+    const onChange = vi.fn()
+    const { rerender } = render(
+      <PlatformProviderForm
+        data={{ ...formData, type: 'BACKEND', loggingEnabled: null, jwtEnabled: null }}
+        errors={{}}
+        isSubmitting={false}
+        credentials={[]}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        tags={[]}
+        tagsDisabled={false}
+        onTagsChange={vi.fn()}
+        onChange={onChange}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable logging' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable JWT' }))
+
+    expect(onChange).toHaveBeenCalledWith('loggingEnabled', true)
+    expect(onChange).toHaveBeenCalledWith('jwtEnabled', true)
+    expect(screen.getByText('JWT enforcement is not yet implemented on the backend.')).toBeVisible()
+
+    rerender(
+      <PlatformProviderForm
+        data={{ ...formData, type: 'BACKEND', loggingEnabled: true, jwtEnabled: true }}
+        errors={{}}
+        isSubmitting={false}
+        credentials={[]}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        tags={[]}
+        tagsDisabled={false}
+        onTagsChange={vi.fn()}
+        onChange={onChange}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable logging' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable JWT' }))
+    expect(onChange).toHaveBeenCalledWith('loggingEnabled', false)
+    expect(onChange).toHaveBeenCalledWith('jwtEnabled', false)
+  })
+
+  it.each(['AIRFLOW', 'SMTP'])('does not render BACKEND controls for %s providers', (type) => {
+    render(
+      <PlatformProviderForm
+        data={{ ...formData, type }}
+        errors={{}}
+        isSubmitting={false}
+        credentials={[]}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        tags={[]}
+        tagsDisabled={false}
+        onTagsChange={vi.fn()}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByRole('checkbox', { name: 'Enable logging' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('checkbox', { name: 'Enable JWT' })).not.toBeInTheDocument()
   })
 
   it('uses the compact provider-style rows for platform fields', () => {

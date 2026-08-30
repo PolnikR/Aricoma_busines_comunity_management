@@ -20,6 +20,7 @@ export interface ProviderCreateFormData {
   vmPrefix: string
   vmTags: string[]
   notificationEmail: string
+  cacheRefreshSeconds: string
 }
 
 interface ProviderCreateFormProps {
@@ -193,6 +194,22 @@ export function ProviderCreateForm({
           {errors.port ? <p className="mt-1 text-xs text-red-600">{errors.port}</p> : null}
         </Field>
       </div>
+
+      <Field label={t('forms.cacheRefreshSeconds')} htmlFor="create-cacheRefreshSeconds">
+        <Input
+          id="create-cacheRefreshSeconds"
+          type="number"
+          min={1}
+          step={1}
+          value={data.cacheRefreshSeconds}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('cacheRefreshSeconds', event.target.value) }}
+          onKeyDown={handleKeyDown}
+          disabled={isSubmitting}
+          aria-invalid={Boolean(errors.cacheRefreshSeconds)}
+        />
+        <p className="mt-1 text-xs text-text-muted">{t('forms.cacheRefreshSecondsHelper')}</p>
+        {errors.cacheRefreshSeconds ? <p className="mt-1 text-xs text-red-600">{errors.cacheRefreshSeconds}</p> : null}
+      </Field>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label={t('forms.vmPrefix')} htmlFor="create-vmPrefix">

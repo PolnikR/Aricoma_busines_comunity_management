@@ -71,6 +71,9 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     isError,
     isEmpty,
     refetch,
+    forceRefresh,
+    isForceRefreshing,
+    forceRefreshError,
   } = useVmwareResourceInventory({
     ...(selectedProvider?.id !== undefined ? { providerId: selectedProvider.id } : {}),
     namePrefix: query.search,
@@ -86,6 +89,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [density, setDensity] = useState<TableDensity>('compact')
   const handleRefetch = () => { void refetch() }
+  const handleForceRefresh = () => { void forceRefresh().catch(() => undefined) }
 
   const allData = useMemo(
     () => inventory ? mapInventoryToVirtualMachines(inventory) : null,
@@ -121,12 +125,12 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     : data && !providersError
       ? <VirtualMachineMetrics metrics={data.metrics} />
       : null
-  const notice = isError && data ? (
+  const notice = (isError || forceRefreshError) && data ? (
     <FetchErrorAlert
       title={t('pages.virtualMachines.error.latestFailed')}
       description={t('pages.virtualMachines.error.showingPrevious')}
-      isRetrying={isFetching}
-      onRetry={handleRefetch}
+      isRetrying={isFetching || isForceRefreshing}
+      onRetry={isError ? handleRefetch : handleForceRefresh}
     />
   ) : null
 
@@ -213,10 +217,10 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
         eyebrow={t(role === 'target' ? 'pages.resourcesIse.eyebrow' : 'pages.virtualMachines.eyebrow')}
         title={t('pages.virtualMachines.title')}
         description={t('pages.virtualMachines.description')}
-        isFetching={providersFetching || isFetching}
+        isFetching={providersFetching || isFetching || isForceRefreshing}
         onRefresh={() => {
           if (!providersSuccess || vmwareProviders.length === 0) onRefetchProviders()
-          else handleRefetch()
+          else handleForceRefresh()
         }}
       />
       <ResourceInventoryShell

@@ -57,6 +57,9 @@ function mapProviderRecord(provider: GeneratedProviderRecord): ProviderRecord {
     ...(provider.vmPrefix !== undefined ? { vmPrefix: provider.vmPrefix } : {}),
     ...(provider.vmTags !== undefined ? { vmTags: provider.vmTags } : {}),
     ...(provider.notificationEmail !== undefined ? { notificationEmail: provider.notificationEmail } : {}),
+    ...(provider.cacheRefreshSeconds !== undefined
+      ? { cacheRefreshSeconds: provider.cacheRefreshSeconds }
+      : {}),
   })
   return {
     ...validated,
@@ -111,9 +114,13 @@ export async function submitProvider(provider: ProviderSubmitData): Promise<void
     ...(validatedProvider.notificationEmail !== undefined
       ? { notificationEmail: validatedProvider.notificationEmail }
       : {}),
+    ...(validatedProvider.cacheRefreshSeconds !== undefined
+      ? { cacheRefreshSeconds: validatedProvider.cacheRefreshSeconds }
+      : {}),
   }
   try {
-    await submitProviderSubmitProviderPost(generatedProvider)
+    const payload = await submitProviderSubmitProviderPost(generatedProvider)
+    parseProviders(payload, 'POST /submit_provider')
   } catch (error) {
     if (error instanceof OrvalApiError) {
       throw new Error(`Submit provider request failed with status ${String(error.status)}`, { cause: error })

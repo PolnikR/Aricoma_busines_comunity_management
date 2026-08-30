@@ -30,6 +30,7 @@ export interface ProviderRecord {
   vmPrefix?: string | null | undefined
   vmTags?: string[] | undefined
   notificationEmail?: string | null | undefined
+  cacheRefreshSeconds?: number | null | undefined
   credentialStatus: ProviderCredentialStatus
   /** Validated GET record before UI normalization; unknown API fields are removed by Zod. */
   rawRecord?: ProviderRecordOutput | undefined
@@ -50,5 +51,6 @@ export interface ProviderSubmitData {
   vmPrefix?: string | null | undefined
   vmTags?: string[] | undefined
   notificationEmail?: string | null | undefined
+  cacheRefreshSeconds?: number | null | undefined
 }
 import type { ProviderRecordOutput } from '@/generated/api/zod.gen'

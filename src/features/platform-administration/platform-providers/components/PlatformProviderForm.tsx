@@ -20,6 +20,8 @@ export interface PlatformProviderFormData {
   fromEmail: string
   disableSsl: boolean | null
   disableTls: boolean | null
+  loggingEnabled: boolean | null
+  jwtEnabled: boolean | null
 }
 
 interface PlatformProviderFormProps {
@@ -242,6 +244,30 @@ export function PlatformProviderForm({
         {errors.dagDir ? <p className="mt-1 text-xs text-red-600">{errors.dagDir}</p> : null}
         </Field>
       </div>
+
+      {data.type === 'BACKEND' ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <CheckboxField
+            id="platform-provider-logging-enabled"
+            label={t('forms.loggingEnabled')}
+            checked={data.loggingEnabled === true}
+            disabled={isSubmitting}
+            variant="bordered"
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('loggingEnabled', event.target.checked) }}
+          />
+          <div>
+            <CheckboxField
+              id="platform-provider-jwt-enabled"
+              label={t('forms.jwtEnabled')}
+              checked={data.jwtEnabled === true}
+              disabled={isSubmitting}
+              variant="bordered"
+              onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('jwtEnabled', event.target.checked) }}
+            />
+            <p className="mt-1 text-xs text-text-muted">{t('forms.jwtEnabledHelper')}</p>
+          </div>
+        </div>
+      ) : null}
 
       <Field label={t('forms.notificationEmail')} htmlFor="platform-provider-notificationEmail">
         <Input
