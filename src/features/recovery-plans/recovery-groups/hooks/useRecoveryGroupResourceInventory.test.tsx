@@ -165,6 +165,24 @@ describe('useRecoveryGroupResourceInventory', () => {
     expect(fetchFlashSystemInventory).not.toHaveBeenCalled()
   })
 
+  it('uses the canonical VMware inventory lifecycle for a name prefix', async () => {
+    const { result } = renderHook(
+      () => useRecoveryGroupResourceInventory('vmware_virtual_machines', 'vmware-1', {
+        vmwareNamePrefix: 'WEB',
+      }),
+      { wrapper: createWrapper() },
+    )
+
+    expect(fetchVmwareInventory).not.toHaveBeenCalled()
+
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) }, { timeout: 1_000 })
+
+    expect(fetchVmwareInventory).toHaveBeenCalledWith({
+      providerId: 'vmware-1',
+      namePrefix: 'WEB',
+    })
+  })
+
   it.each([
     [
       'vmware_virtual_machines',
