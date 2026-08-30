@@ -75,6 +75,7 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByLabelText('URL')).toBeInTheDocument()
     expect(screen.getByLabelText('Notification email')).toBeInTheDocument()
     expect(screen.getByLabelText('Port')).toHaveValue(22)
+    expect(screen.getByLabelText(/Cache refresh interval \(seconds\)/)).toHaveValue(null)
     expect(screen.getByLabelText('Credentials')).toBeInTheDocument()
     expect(useTagsMock).toHaveBeenCalledWith(null, false)
 
@@ -85,7 +86,7 @@ describe('ProvidersCreateModal', () => {
 
   it('loads VMware tags only for an edited provider and submits VM settings', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(
-      new Response(JSON.stringify({}), { status: 200 }),
+      new Response(JSON.stringify({ providers: [] }), { status: 200 }),
     )
     vi.stubGlobal('fetch', mockFetch)
     const editedProvider: ProviderRecord = {
@@ -406,8 +407,9 @@ describe('ProvidersCreateModal', () => {
   })
 
   it('prefills fields and locks the id and type in edit mode', () => {
+    const providerWithCacheRefresh = { ...mockProviderA, cacheRefreshSeconds: 120 }
     renderWithQueryClient(
-      <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[mockProviderA]} provider={mockProviderA} />,
+      <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[providerWithCacheRefresh]} provider={providerWithCacheRefresh} />,
     )
     expect(screen.getByRole('heading', { name: 'Edit provider' })).toBeInTheDocument()
     const idInput = screen.getByLabelText('ID')
@@ -420,11 +422,72 @@ describe('ProvidersCreateModal', () => {
     expect((nameInput as HTMLInputElement).value).toBe('Production vCenter')
     expect(screen.getByLabelText('Credentials')).toHaveValue('vcenter-admin')
     expect(screen.getByLabelText('Notification email')).toHaveValue('provider-alerts@example.test')
+    expect(screen.getByLabelText(/Cache refresh interval \(seconds\)/)).toHaveValue(120)
+  })
+
+  it.each(['0', '-1', '1.5'])('rejects invalid cache refresh interval %s before requesting', (cacheRefreshSeconds) => {
+    const mockFetch = vi.fn()
+    vi.stubGlobal('fetch', mockFetch)
+
+    renderWithQueryClient(
+      <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[]} />,
+    )
+
+    fillValidForm()
+    fireEvent.change(screen.getByLabelText(/Cache refresh interval \(seconds\)/), { target: { value: cacheRefreshSeconds } })
+    fireEvent.click(screen.getByRole('button', { name: /Create provider/i }))
+
+    expect(screen.getByText('Enter a positive whole number.')).toBeInTheDocument()
+    expect(mockFetch).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
+
+  it('submits an edited cache refresh interval', async () => {
+    const providerWithCacheRefresh = { ...mockProviderA, cacheRefreshSeconds: 120 }
+    const mockFetch = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', mockFetch)
+    const onClose = vi.fn()
+    renderWithQueryClient(
+      <ProvidersCreateModal
+        open
+        onClose={onClose}
+        existingProviders={[providerWithCacheRefresh]}
+        provider={providerWithCacheRefresh}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText(/Cache refresh interval \(seconds\)/), { target: { value: '60' } })
+    fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(JSON.parse((mockFetch.mock.calls[0]?.[1] as RequestInit).body as string)).toMatchObject({ cacheRefreshSeconds: 60 })
+    vi.unstubAllGlobals()
+  })
+
+  it('submits null when an edited cache refresh interval is cleared', async () => {
+    const providerWithCacheRefresh = { ...mockProviderA, cacheRefreshSeconds: 120 }
+    const mockFetch = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', mockFetch)
+    const onClose = vi.fn()
+
+    renderWithQueryClient(
+      <ProvidersCreateModal
+        open
+        onClose={onClose}
+        existingProviders={[providerWithCacheRefresh]}
+        provider={providerWithCacheRefresh}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText(/Cache refresh interval \(seconds\)/), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(JSON.parse((mockFetch.mock.calls[0]?.[1] as RequestInit).body as string)).toMatchObject({ cacheRefreshSeconds: null })
+    vi.unstubAllGlobals()
   })
 
   it('posts a single edited provider object in edit mode', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(
-      new Response(JSON.stringify({}), { status: 200 }),
+      new Response(JSON.stringify({ providers: [] }), { status: 200 }),
     )
     vi.stubGlobal('fetch', mockFetch)
     const onClose = vi.fn()
@@ -462,7 +525,7 @@ describe('ProvidersCreateModal', () => {
   })
 
   it('submits null when an edited notification email is cleared', async () => {
-    const mockFetch = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }))
+    const mockFetch = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
     vi.stubGlobal('fetch', mockFetch)
     const onClose = vi.fn()
 
@@ -498,5 +561,18 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByRole('heading', { name: 'Discard unsaved provider changes?' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
     expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it('warns before closing when only cache refresh interval changes', () => {
+    const onClose = vi.fn()
+    renderWithQueryClient(
+      <ProvidersCreateModal open onClose={onClose} existingProviders={[]} />,
+    )
+
+    fireEvent.change(screen.getByLabelText(/Cache refresh interval \(seconds\)/), { target: { value: '60' } })
+    fireEvent.click(screen.getByRole('button', { name: /Cancel/i }))
+
+    expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByRole('heading', { name: 'Discard unsaved provider changes?' })).toBeInTheDocument()
   })
 })

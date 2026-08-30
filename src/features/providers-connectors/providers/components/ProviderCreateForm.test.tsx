@@ -20,6 +20,7 @@ const data = {
   vmPrefix: 'prod-',
   vmTags: ['saved-tag'],
   notificationEmail: 'provider-alerts@example.test',
+  cacheRefreshSeconds: '120',
 }
 
 const credentials = [{
@@ -100,6 +101,32 @@ describe('ProviderCreateForm', () => {
     expect(input).toHaveValue('provider-alerts@example.test')
     fireEvent.change(input, { target: { value: 'new-alerts@example.test' } })
     expect(onChange).toHaveBeenCalledWith('notificationEmail', 'new-alerts@example.test')
+  })
+
+  it('renders and reports cache refresh interval changes', () => {
+    const onChange = vi.fn()
+
+    render(
+      <ProviderCreateForm
+        data={data}
+        errors={{}}
+        isSubmitting={false}
+        credentials={credentials}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        onTagsChange={vi.fn()}
+        onChange={onChange}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    const input = screen.getByLabelText(/Cache refresh interval \(seconds\)/)
+    expect(input).toHaveValue(120)
+    expect(input).toHaveAttribute('min', '1')
+    expect(input).toHaveAttribute('step', '1')
+    fireEvent.change(input, { target: { value: '60' } })
+    expect(onChange).toHaveBeenCalledWith('cacheRefreshSeconds', '60')
   })
 
   it('renders VM settings and reports a single selected tag', async () => {

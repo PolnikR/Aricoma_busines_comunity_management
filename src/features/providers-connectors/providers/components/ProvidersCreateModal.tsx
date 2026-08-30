@@ -38,6 +38,7 @@ const EMPTY_FORM: ProviderCreateFormData = {
   vmPrefix: '',
   vmTags: [],
   notificationEmail: '',
+  cacheRefreshSeconds: '',
 }
 
 function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
@@ -57,6 +58,9 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         vmPrefix: provider.vmPrefix ?? '',
         vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
         notificationEmail: provider.notificationEmail ?? '',
+        cacheRefreshSeconds: provider.cacheRefreshSeconds === null || provider.cacheRefreshSeconds === undefined
+          ? ''
+          : String(provider.cacheRefreshSeconds),
       }
     : EMPTY_FORM
 }
@@ -87,6 +91,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     || formData.defaultFlashcopyProviderId !== initialForm.defaultFlashcopyProviderId
     || formData.orchestratorConnId !== initialForm.orchestratorConnId
     || formData.notificationEmail !== initialForm.notificationEmail
+    || formData.cacheRefreshSeconds !== initialForm.cacheRefreshSeconds
     || formData.vmPrefix !== initialForm.vmPrefix
     || formData.vmTags.length !== initialForm.vmTags.length
     || formData.vmTags.some((tag, index) => tag !== initialForm.vmTags[index])
@@ -173,6 +178,10 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     if (!Number.isInteger(port) || port < 1 || port > 65535) {
       newErrors.port = t('forms.portRequired')
     }
+    const cacheRefreshSeconds = formData.cacheRefreshSeconds.trim()
+    if (cacheRefreshSeconds && (!/^\d+$/.test(cacheRefreshSeconds) || !Number.isSafeInteger(Number(cacheRefreshSeconds)) || Number(cacheRefreshSeconds) < 1)) {
+      newErrors.cacheRefreshSeconds = t('forms.cacheRefreshSecondsInvalid')
+    }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -200,6 +209,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     record.vmPrefix = formData.vmPrefix.trim() || null
     record.vmTags = [...formData.vmTags]
     record.notificationEmail = formData.notificationEmail.trim() || null
+    record.cacheRefreshSeconds = formData.cacheRefreshSeconds.trim() ? Number(formData.cacheRefreshSeconds) : null
 
     upsert.mutate(
       { provider: record },
