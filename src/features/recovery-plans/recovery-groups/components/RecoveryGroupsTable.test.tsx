@@ -300,7 +300,7 @@ describe('RecoveryGroupsTable', () => {
     expect(screen.queryByText('Orchestration rolled back')).not.toBeInTheDocument()
   })
 
-  it('shows a plain success confirmation after a standalone rollback, without report detail', async () => {
+  it('shows the rollback report after a standalone rollback', async () => {
     const user = userEvent.setup()
     const databaseGroup = groups.find(group => group.id === 'database-group')
     if (!databaseGroup) throw new Error('Expected database group fixture')
@@ -309,7 +309,12 @@ describe('RecoveryGroupsTable', () => {
       pushToOrchestrator: true,
       orchestrationProviderId: 'airflow-01',
     }
-    const onRollback = vi.fn().mockResolvedValue(undefined)
+    const report = {
+      status: 'ok',
+      airflow: { status: 'ok', dag_id: 'dag_123' },
+      ibm: { status: 'ok', errors: [] },
+    }
+    const onRollback = vi.fn().mockResolvedValue(report)
     renderTable(
       <RecoveryGroupsTable
         groups={[orchestratedGroup]}
@@ -326,9 +331,9 @@ describe('RecoveryGroupsTable', () => {
 
     expect(onRollback).toHaveBeenCalledWith('database-group', 'airflow-01')
     expect(await screen.findByText('Orchestration rolled back')).toBeInTheDocument()
-    expect(screen.getByText('Rolled back')).toBeInTheDocument()
-    expect(screen.queryByText('DAG ID')).not.toBeInTheDocument()
-    expect(screen.queryByText('IBM FlashCopy')).not.toBeInTheDocument()
+    expect(screen.getAllByText(/dag_123/).length).toBeGreaterThan(0)
+    expect(screen.getByText('Airflow')).toBeInTheDocument()
+    expect(screen.getByText('IBM FlashCopy')).toBeInTheDocument()
   })
 
   it('shows the resolved policy set name in the detail drawer', async () => {
