@@ -5,6 +5,7 @@ import { getProvidersByTypeAndRole } from '@/features/providers-connectors/provi
 import { useResourceInventoryQueries } from '../../hooks/useResourceInventoryQueries'
 import { ResourceInventoryShell } from '../ResourceInventoryShell'
 import { ResourceInventoryLoading, ResourceInventoryState } from '../ResourceInventoryStates'
+import { ResourceViewportFrame } from '../ResourceViewportFrame'
 import type { SourceResourcesPageProps } from '../SourceResourcesPageProps'
 import { FlashSystemMetrics } from '../SourceInventoryMetrics'
 import { FlashSystemInventoryView } from './FlashSystemInventoryView'
@@ -95,7 +96,7 @@ export function FlashSystemResourcesPage(props: SourceResourcesPageProps) {
   }
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <ResourceViewportFrame>
       <TableToolbar
         eyebrow={t(role === 'target' ? 'pages.resourcesIse.eyebrow' : 'pages.virtualMachines.eyebrow')}
         title={t('resources.flash.title')}
@@ -115,6 +116,6 @@ export function FlashSystemResourcesPage(props: SourceResourcesPageProps) {
       >
         {content}
       </ResourceInventoryShell>
-    </div>
+    </ResourceViewportFrame>
   )
 }

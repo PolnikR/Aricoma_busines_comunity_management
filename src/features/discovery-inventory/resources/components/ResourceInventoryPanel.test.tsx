@@ -46,4 +46,20 @@ describe('ResourceInventoryPanel', () => {
     expect(screen.getByText('Inventory rows')).toBeInTheDocument()
     expect(screen.getByText('Pagination')).toBeInTheDocument()
   })
+
+  it('uses a contained three-row layout instead of a vertical data scrollbar', () => {
+    render(
+      <ResourceInventoryPanel
+        ariaLabel="Resource inventory"
+        toolbar={<button type="button">Filters</button>}
+        pagination={<div>Pagination</div>}
+      >
+        <div>Inventory rows</div>
+      </ResourceInventoryPanel>,
+    )
+
+    const panel = screen.getByRole('region', { name: 'Resource inventory' })
+    expect(panel).toHaveClass('grid', 'grid-rows-[auto_minmax(0,1fr)_auto]', 'min-h-0', 'overflow-hidden')
+    expect(panel.querySelector('.overflow-y-auto')).not.toBeInTheDocument()
+  })
 })

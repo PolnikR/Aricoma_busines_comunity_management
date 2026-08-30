@@ -10,6 +10,7 @@ import type { SourceResourcesPageProps } from '@/features/discovery-inventory/re
 import { buildResourceTargetTabs, formatResourceProviderId } from '@/features/discovery-inventory/resources/helpers/buildResourceSourceTabs'
 import { VmwareResourcesPage } from '@/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage'
 import { useResourceTabSearchParam } from '@/features/discovery-inventory/resources/hooks/useResourceTabSearchParam'
+import { ResourceViewportFrame } from '@/features/discovery-inventory/resources/components/ResourceViewportFrame'
 
 export function ResourcesIsePage() {
   const { t } = useTranslation()
@@ -41,7 +42,7 @@ export function ResourcesIsePage() {
 
   if (providersSuccess && visibleRoleTabs.length === 0) {
     return (
-      <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+      <ResourceViewportFrame>
         <TableToolbar
           eyebrow={t('pages.resourcesIse.eyebrow')}
           title={t('pages.virtualMachines.title')}
@@ -53,7 +54,7 @@ export function ResourcesIsePage() {
           title={t('resources.common.noProviderTitle')}
           description={t('resources.common.noProviderDescription')}
         />
-      </div>
+      </ResourceViewportFrame>
     )
   }
 

@@ -17,6 +17,7 @@ import { getProvidersByTypeAndRole } from '@/features/providers-connectors/provi
 import { ResourceInventoryPanel } from '../ResourceInventoryPanel'
 import { ResourceInventoryShell } from '../ResourceInventoryShell'
 import { ResourceInventoryLoading, ResourceInventoryState } from '../ResourceInventoryStates'
+import { ResourceViewportFrame } from '../ResourceViewportFrame'
 import type { SourceResourcesPageProps } from '../SourceResourcesPageProps'
 import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
 import { VirtualMachineMetrics } from './VirtualMachineMetrics'
@@ -207,7 +208,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   }
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <ResourceViewportFrame>
       <TableToolbar
         eyebrow={t(role === 'target' ? 'pages.resourcesIse.eyebrow' : 'pages.virtualMachines.eyebrow')}
         title={t('pages.virtualMachines.title')}
@@ -243,6 +244,6 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
           setSelectedId(null)
         }}
       />
-    </div>
+    </ResourceViewportFrame>
   )
 }
