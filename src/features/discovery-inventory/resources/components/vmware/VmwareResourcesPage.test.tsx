@@ -19,6 +19,11 @@ const vm: VirtualMachine = {
 
 let inventory: { reportedCount: number; virtualMachines: VirtualMachine[] }
 let inventoryBackgroundFetching = false
+let inventoryError = false
+let forceRefreshError: Error | null = null
+let forceRefreshPending = false
+const refetchInventory = vi.fn()
+const forceRefreshInventory = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('../../hooks/useVirtualMachineSearchParams', () => ({
   useVirtualMachineSearchParams: () => ({
@@ -32,13 +37,15 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
 vi.mock('../../hooks/useVmwareResourceInventory', () => ({
   useVmwareResourceInventory: () => ({
     data: inventory, isInitialLoading: false, isFetching: inventoryBackgroundFetching, isBackgroundFetching: inventoryBackgroundFetching,
-    isError: false, isEmpty: inventory.virtualMachines.length === 0, refetch: vi.fn(),
+    isError: inventoryError, isEmpty: inventory.virtualMachines.length === 0, refetch: refetchInventory,
+    forceRefresh: forceRefreshInventory, isForceRefreshing: forceRefreshPending, forceRefreshError,
   }),
 }))
 vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory', () => ({
   useVmwareResourceInventory: () => ({
     data: inventory, isInitialLoading: false, isFetching: inventoryBackgroundFetching, isBackgroundFetching: inventoryBackgroundFetching,
-    isError: false, isEmpty: inventory.virtualMachines.length === 0, refetch: vi.fn(),
+    isError: inventoryError, isEmpty: inventory.virtualMachines.length === 0, refetch: refetchInventory,
+    forceRefresh: forceRefreshInventory, isForceRefreshing: forceRefreshPending, forceRefreshError,
   }),
 }))
 vi.mock('../../hooks/useVmwareTags', () => ({ useTags: () => ({ data: [] }) }))
@@ -76,6 +83,9 @@ const props = {
 beforeEach(() => {
   inventory = { reportedCount: 1, virtualMachines: [vm] }
   inventoryBackgroundFetching = false
+  inventoryError = false
+  forceRefreshError = null
+  forceRefreshPending = false
 })
 afterEach(() => { vi.clearAllMocks() })
 
@@ -100,5 +110,37 @@ describe('VmwareResourcesPage', () => {
     view.rerender(<VmwareResourcesPage {...props} />)
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('uses the live force refresh command from the page header', () => {
+    forceRefreshPending = true
+
+    render(<VmwareResourcesPage {...props} />)
+
+    expect(screen.getByText('Updating')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+
+    expect(forceRefreshInventory).toHaveBeenCalledOnce()
+    expect(refetchInventory).not.toHaveBeenCalled()
+  })
+
+  it('keeps inventory query-error retry on ordinary refetch', () => {
+    inventoryError = true
+
+    render(<VmwareResourcesPage {...props} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+
+    expect(refetchInventory).toHaveBeenCalledOnce()
+    expect(forceRefreshInventory).not.toHaveBeenCalled()
+  })
+
+  it('keeps cached inventory visible when live refresh fails', () => {
+    forceRefreshError = new Error('Live refresh failed')
+
+    render(<VmwareResourcesPage {...props} />)
+
+    expect(screen.getByTestId('vm-table')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('pages.virtualMachines.error.latestFailed')
   })
 })
