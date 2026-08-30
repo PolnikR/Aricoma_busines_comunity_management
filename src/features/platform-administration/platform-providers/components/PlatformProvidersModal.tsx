@@ -188,8 +188,8 @@ export function PlatformProvidersModal({
       fromEmail: formData.fromEmail.trim() || null,
       disableSsl: formData.disableSsl,
       disableTls: formData.disableTls,
-      loggingEnabled: formData.loggingEnabled,
-      jwtEnabled: formData.jwtEnabled,
+      loggingEnabled: formData.type === 'BACKEND' ? formData.loggingEnabled : null,
+      jwtEnabled: formData.type === 'BACKEND' ? formData.jwtEnabled : null,
     }
 
     upsert.mutate(

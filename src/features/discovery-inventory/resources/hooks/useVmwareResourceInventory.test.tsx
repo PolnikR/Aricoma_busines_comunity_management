@@ -381,6 +381,40 @@ describe('useVmwareResourceInventory', () => {
     await waitFor(() => { expect(result.current.isForceRefreshing).toBe(false) })
   })
 
+  it('keeps the newest same-key force refresh in the inventory cache when responses settle out of order', async () => {
+    let resolveFirstForceRefresh: ((response: Response) => void) | undefined
+    let resolveSecondForceRefresh: ((response: Response) => void) | undefined
+    const firstForceRefreshResponse = new Promise<Response>((resolve) => { resolveFirstForceRefresh = resolve })
+    const secondForceRefreshResponse = new Promise<Response>((resolve) => { resolveSecondForceRefresh = resolve })
+    let forceRefreshCount = 0
+    const fetchMock = vi.fn((_: string, init: RequestInit) => {
+      if (!parseRequestBody(init)['force_refresh']) return Promise.resolve(inventoryResponse(['Cached VM']))
+      forceRefreshCount += 1
+      return forceRefreshCount === 1 ? firstForceRefreshResponse : secondForceRefreshResponse
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const { result } = renderHook(
+      () => useVmwareResourceInventory({ providerId: 'vcenter-01', enabled: true }),
+      { wrapper: createWrapper(createQueryClient()) },
+    )
+
+    await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('Cached VM') })
+    let firstForceRefresh: Promise<unknown> | undefined
+    let secondForceRefresh: Promise<unknown> | undefined
+    act(() => { firstForceRefresh = result.current.forceRefresh() })
+    act(() => { secondForceRefresh = result.current.forceRefresh() })
+    if (!firstForceRefresh || !secondForceRefresh) throw new Error('Expected both force refresh promises')
+
+    act(() => { resolveSecondForceRefresh?.(inventoryResponse(['Newer VM'])) })
+    await act(async () => { await secondForceRefresh })
+    act(() => { resolveFirstForceRefresh?.(inventoryResponse(['Older VM'])) })
+    await act(async () => { await firstForceRefresh })
+
+    await waitFor(() => {
+      expect(result.current.data?.virtualMachines.map((vm) => vm.name)).toEqual(['Newer VM'])
+    })
+  })
+
   it('keeps a rejected force refresh scoped to its original query while another refresh remains pending', async () => {
     let rejectFirstForceRefresh: ((error: Error) => void) | undefined
     let resolveSecondForceRefresh: ((response: Response) => void) | undefined

@@ -146,7 +146,7 @@ describe('rollbackRecoveryGroupOrchestration', () => {
   it('rejects a response missing the required rollback report', async () => {
     vi.spyOn(apiFetchModule, 'apiFetch').mockResolvedValue(
       new Response(
-        JSON.stringify({}),
+        JSON.stringify({ recovery_groups: [] }),
         { status: 200 }
       )
     )
@@ -233,7 +233,7 @@ describe('deleteRecoveryGroup', () => {
 
   it('rejects a rollback deletion response without a rollback report', async () => {
     vi.spyOn(apiFetchModule, 'apiFetch').mockResolvedValue(
-      new Response(JSON.stringify(recoveryGroupsPayload), { status: 200 }),
+      new Response(JSON.stringify({ recovery_groups: [] }), { status: 200 }),
     )
 
     await expect(deleteRecoveryGroup({

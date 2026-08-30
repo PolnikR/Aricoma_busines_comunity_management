@@ -51,6 +51,7 @@ export function useVmwareResourceInventory({
   const [settledProviderId, setSettledProviderId] = useState<string | undefined>()
   const [forceRefreshStates, setForceRefreshStates] = useState<Record<string, ForceRefreshState>>({})
   const forceRefreshRequestId = useRef(0)
+  const latestForceRefreshRequestIds = useRef<Record<string, number>>({})
 
   useEffect(() => {
     const timeout = setTimeout(
@@ -98,14 +99,16 @@ export function useVmwareResourceInventory({
         return { ...states, [snapshot.queryHash]: nextState }
       }
 
-      const { [snapshot.queryHash]: _, ...remainingStates } = states
-      return remainingStates
+      return Object.fromEntries(
+        Object.entries(states).filter(([queryHash]) => queryHash !== snapshot.queryHash),
+      )
     })
   }
   const forceRefreshMutation = useMutation<DiscoveryInventory, Error, ForceRefreshSnapshot>({
     mutationFn: ({ search: snapshotSearch }) => fetchVmwareInventory({ ...snapshotSearch, forceRefresh: true }),
-    onSuccess: (data, { queryKey: snapshotQueryKey }) => {
-      queryClient.setQueryData(snapshotQueryKey, data)
+    onSuccess: (data, snapshot) => {
+      if (latestForceRefreshRequestIds.current[snapshot.queryHash] !== snapshot.requestId) return
+      queryClient.setQueryData(snapshot.queryKey, data)
     },
     onSettled: (_, error, snapshot) => {
       settleForceRefresh(snapshot, error)
@@ -119,6 +122,7 @@ export function useVmwareResourceInventory({
       requestId: forceRefreshRequestId.current + 1,
     }
     forceRefreshRequestId.current = snapshot.requestId
+    latestForceRefreshRequestIds.current[queryHash] = snapshot.requestId
     setForceRefreshStates((states) => {
       const previousState = states[queryHash]
       return {

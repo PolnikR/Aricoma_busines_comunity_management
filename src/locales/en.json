@@ -872,8 +872,6 @@
   "recoveryGroups.rollback.resultSubtitle": "Orchestrator cleanup report",
   "recoveryGroups.rollback.status": "Status",
   "recoveryGroups.rollback.resultSuccessTitle": "Orchestration rolled back",
-  "recoveryGroups.rollback.resultSuccessDescription": "{groupName} is no longer under orchestrator control.",
-  "recoveryGroups.rollback.resultSuccessBadge": "Rolled back",
   "recoveryGroups.rollback.resultWarningTitle": "Rollback partially completed",
   "recoveryGroups.rollback.resultWarningDescription": "Some cleanup operations did not complete. See details below.",
   "recoveryGroups.rollback.resultDagId": "DAG ID",

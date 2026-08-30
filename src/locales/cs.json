@@ -838,8 +838,6 @@
   "recoveryGroups.rollback.resultSubtitle": "Přehled odstranění prostředků orchestrace",
   "recoveryGroups.rollback.status": "Stav",
   "recoveryGroups.rollback.resultSuccessTitle": "Orchestrace byla vrácena zpět",
-  "recoveryGroups.rollback.resultSuccessDescription": "Skupina {groupName} již není pod kontrolou orchestrátoru.",
-  "recoveryGroups.rollback.resultSuccessBadge": "Vráceno zpět",
   "recoveryGroups.rollback.resultWarningTitle": "Vrácení bylo částečně dokončeno",
   "recoveryGroups.rollback.resultWarningDescription": "Některé operace čištění nebyly dokončeny. Podrobnosti najdete níže.",
   "recoveryGroups.rollback.resultDagId": "ID DAG",

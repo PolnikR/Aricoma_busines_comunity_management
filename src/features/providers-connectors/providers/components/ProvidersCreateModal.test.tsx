@@ -442,6 +442,23 @@ describe('ProvidersCreateModal', () => {
     vi.unstubAllGlobals()
   })
 
+  it('rejects a non-numeric cache refresh interval before requesting', () => {
+    const mockFetch = vi.fn()
+    vi.stubGlobal('fetch', mockFetch)
+
+    renderWithQueryClient(
+      <ProvidersCreateModal open onClose={vi.fn()} existingProviders={[]} />,
+    )
+
+    fillValidForm()
+    fireEvent.change(screen.getByLabelText(/Cache refresh interval \(seconds\)/), { target: { value: '1e3' } })
+    fireEvent.click(screen.getByRole('button', { name: /Create provider/i }))
+
+    expect(screen.getByText('Enter a positive whole number.')).toBeInTheDocument()
+    expect(mockFetch).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
+
   it('submits an edited cache refresh interval', async () => {
     const providerWithCacheRefresh = { ...mockProviderA, cacheRefreshSeconds: 120 }
     const mockFetch = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
