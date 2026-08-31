@@ -4,7 +4,11 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { ProviderRecord } from '../../providers/model/providerTypes'
-import type { DiscoveryCacheHistory, DiscoveryCacheRun } from '../model/discoveryCacheTypes'
+import type {
+  DiscoveryCacheHistory,
+  DiscoveryCacheHistoryFilters,
+  DiscoveryCacheRun,
+} from '../model/discoveryCacheTypes'
 import type { DiscoverySettingsHistoryLimit } from '../hooks/useDiscoverySettingsSearchParams'
 
 const labels = vi.hoisted(() => ({
@@ -41,14 +45,14 @@ const labels = vi.hoisted(() => ({
 
 vi.mock('@/hooks/useTranslation', () => ({
   useTranslation: () => ({
-    t: (key: keyof typeof labels) => labels[key] ?? key,
+    t: (key: keyof typeof labels) => labels[key],
     language: 'en' as const,
   }),
 }))
 
 const hooks = vi.hoisted(() => ({
-  useDiscoveryCacheHistory: vi.fn(),
-  useProviders: vi.fn(),
+  useDiscoveryCacheHistory: vi.fn<(filters: DiscoveryCacheHistoryFilters) => unknown>(),
+  useProviders: vi.fn<(role: string) => unknown>(),
 }))
 
 vi.mock('../hooks/useDiscoveryCacheHistory', () => ({
@@ -251,6 +255,51 @@ describe('DiscoveryHistoryCard', () => {
 
     expect(retryHistory).toHaveBeenCalledTimes(1)
     expect(hooks.useDiscoveryCacheHistory).toHaveBeenLastCalledWith({ providerId: 'vmware-01', limit: 25 })
+  })
+
+  it('keeps cached History rows visible when a refetch fails', async () => {
+    const user = userEvent.setup()
+    const retryHistory = vi.fn()
+    hooks.useDiscoveryCacheHistory.mockReturnValue(historyQuery({
+      error: new OrvalApiError(503, 'Unavailable', { detail: 'History service unavailable.' }),
+      refetch: retryHistory,
+    }))
+
+    render(<HistoryHarness initialProviderId="vmware-01" />)
+
+    expect(screen.getByRole('alert')).toHaveTextContent('History service unavailable.')
+    expect(screen.getByText('power-01')).toBeInTheDocument()
+    expect(screen.queryByText(/database password leaked/i)).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Retry loading discovery history' }))
+
+    expect(retryHistory).toHaveBeenCalledTimes(1)
+    expect(hooks.useDiscoveryCacheHistory).toHaveBeenLastCalledWith({ providerId: 'vmware-01', limit: 50 })
+  })
+
+  it('renders shared table loading state without an empty-state message', () => {
+    hooks.useDiscoveryCacheHistory.mockReturnValue(historyQuery({
+      data: undefined,
+      isLoading: true,
+      isFetching: true,
+    }))
+
+    render(<HistoryHarness />)
+
+    expect(screen.getByRole('status', { name: 'Loading discovery history' })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.queryByText('No discovery history')).not.toBeInTheDocument()
+  })
+
+  it('leaves an unexpected started-at string unchanged', () => {
+    hooks.useDiscoveryCacheHistory.mockReturnValue(historyQuery({
+      data: {
+        runs: [{ ...runs[0], startedAt: 'NOT-A-TIMESTAMPZ' }],
+      },
+    }))
+
+    render(<HistoryHarness />)
+
+    expect(screen.getByText('NOT-A-TIMESTAMPZ')).toBeInTheDocument()
   })
 
   it('refreshes the current query and renders an accessible empty success state', async () => {
