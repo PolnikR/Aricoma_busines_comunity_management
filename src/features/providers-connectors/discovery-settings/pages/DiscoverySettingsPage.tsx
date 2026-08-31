@@ -15,7 +15,6 @@ import { SettingsIcon } from '@/shared/icons/Icons'
 import { providerTypeLabel } from '../../providers/helpers/providerTypeLabel'
 import { DiscoveryHistoryCard } from '../components/DiscoveryHistoryCard'
 import { DiscoveryNotificationsCard } from '../components/DiscoveryNotificationsCard'
-import { DiscoveryScheduleCard } from '../components/DiscoveryScheduleCard'
 import { getOrderedDiscoveryCacheDefaultKeys } from '../helpers/discoveryCacheConfigDraft'
 import { useDiscoveryCacheConfig } from '../hooks/useDiscoveryCacheConfig'
 import { useDiscoveryCacheConfigDraft } from '../hooks/useDiscoveryCacheConfigDraft'
@@ -26,27 +25,18 @@ import type { DiscoverySettingsTab } from '../hooks/useDiscoverySettingsSearchPa
 import { useUpdateDiscoveryCacheConfig } from '../hooks/useUpdateDiscoveryCacheConfig'
 import {
   DEFAULT_DISCOVERY_NOTIFICATION_SETTINGS,
-  DEFAULT_DISCOVERY_SCHEDULE_SETTINGS,
   DISCOVERY_NOTIFICATION_RECIPIENTS,
 } from '../mocks/discoverySettingsMocks'
-import type {
-  DiscoveryNotificationSettings,
-  DiscoveryScheduleSettings,
-} from '../model/discoverySettingsTypes'
+import type { DiscoveryNotificationSettings } from '../model/discoverySettingsTypes'
 
 export function DiscoverySettingsPage() {
   const { t } = useTranslation()
   const {
     tab,
     providerId,
-    limit,
     setTab,
     setProviderId,
-    setLimit,
   } = useDiscoverySettingsSearchParams()
-  const [scheduleSettings, setScheduleSettings] = useState<DiscoveryScheduleSettings>(DEFAULT_DISCOVERY_SCHEDULE_SETTINGS)
-  const [savedScheduleSettings, setSavedScheduleSettings] = useState<DiscoveryScheduleSettings>(DEFAULT_DISCOVERY_SCHEDULE_SETTINGS)
-  const [scheduleStatus, setScheduleStatus] = useState(() => t('pages.discoverySettings.schedule.status.localOnly'))
   const [notificationSettings, setNotificationSettings] = useState<DiscoveryNotificationSettings>(DEFAULT_DISCOVERY_NOTIFICATION_SETTINGS)
   const [savedNotificationSettings, setSavedNotificationSettings] = useState<DiscoveryNotificationSettings>(DEFAULT_DISCOVERY_NOTIFICATION_SETTINGS)
   const [notificationStatus, setNotificationStatus] = useState(() => t('pages.discoverySettings.notifications.status.localOnly'))
@@ -54,7 +44,6 @@ export function DiscoverySettingsPage() {
   const cacheQuery = useDiscoveryCacheConfig({ enabled: tab === 'configuration' })
   const updateCacheConfig = useUpdateDiscoveryCacheConfig()
   const cacheDraft = useDiscoveryCacheConfigDraft(cacheQuery.data)
-  const isScheduleDirty = JSON.stringify(scheduleSettings) !== JSON.stringify(savedScheduleSettings)
   const isNotificationDirty = JSON.stringify(notificationSettings) !== JSON.stringify(savedNotificationSettings)
   const canSaveCache = cacheDraft.isDirty
     && cacheDraft.validation?.isValid === true
@@ -65,21 +54,6 @@ export function DiscoverySettingsPage() {
     { value: 'history', label: t('pages.discoverySettings.tabs.history') },
     { value: 'notifications', label: t('pages.discoverySettings.tabs.notifications') },
   ]
-
-  const updateScheduleSettings = (patch: Partial<DiscoveryScheduleSettings>) => {
-    setScheduleSettings(current => ({ ...current, ...patch }))
-    setScheduleStatus(t('pages.discoverySettings.schedule.status.unsaved'))
-  }
-
-  const saveSchedule = () => {
-    setSavedScheduleSettings(scheduleSettings)
-    setScheduleStatus(t('pages.discoverySettings.schedule.status.saved'))
-  }
-
-  const cancelSchedule = () => {
-    setScheduleSettings(savedScheduleSettings)
-    setScheduleStatus(t('pages.discoverySettings.schedule.status.discarded'))
-  }
 
   const updateNotificationSettings = (patch: Partial<DiscoveryNotificationSettings>) => {
     setNotificationSettings(current => ({ ...current, ...patch }))
@@ -123,20 +97,6 @@ export function DiscoverySettingsPage() {
     setCacheStatus(t('pages.discoverySettings.cache.status.discarded'))
   }
 
-  const scheduleFooter = (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-xs text-text-muted" role="status" aria-live="polite">{scheduleStatus}</p>
-      <div className="flex shrink-0 gap-2">
-        <Button size="sm" variant="ghost" onClick={cancelSchedule} disabled={!isScheduleDirty}>
-          {t('pages.discoverySettings.schedule.actions.cancel')}
-        </Button>
-        <Button size="sm" variant="primary" onClick={saveSchedule} disabled={!isScheduleDirty}>
-          {t('pages.discoverySettings.schedule.actions.save')}
-        </Button>
-      </div>
-    </div>
-  )
-
   const cacheFooter = (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-xs text-text-muted" role="status" aria-live="polite">{cacheStatus}</p>
@@ -173,7 +133,7 @@ export function DiscoverySettingsPage() {
   )
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
       <PageHeader
         eyebrow={t('pages.discoverySettings.eyebrow')}
         title={t('pages.discoverySettings.title')}
@@ -187,15 +147,9 @@ export function DiscoverySettingsPage() {
         ariaLabel={t('pages.discoverySettings.tabs.ariaLabel')}
       />
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-3">
+      <div className={`min-h-0 flex-1 p-3 ${tab === 'history' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         {tab === 'configuration' ? (
-          <div role="tabpanel" aria-label={t('pages.discoverySettings.tabs.configuration')} className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
-            <DiscoveryScheduleCard
-              settings={scheduleSettings}
-              onChange={updateScheduleSettings}
-              footer={scheduleFooter}
-            />
-
+          <div role="tabpanel" aria-label={t('pages.discoverySettings.tabs.configuration')}>
             <SettingsSectionCard
               icon={<SettingsIcon className="size-5" />}
               title={t('pages.discoverySettings.cache.title')}
@@ -370,12 +324,10 @@ export function DiscoverySettingsPage() {
         ) : null}
 
         {tab === 'history' ? (
-          <div role="tabpanel" aria-label={t('pages.discoverySettings.tabs.history')}>
+          <div role="tabpanel" aria-label={t('pages.discoverySettings.tabs.history')} className="h-full min-h-0">
             <DiscoveryHistoryCard
               providerId={providerId}
-              limit={limit}
               onProviderIdChange={setProviderId}
-              onLimitChange={setLimit}
             />
           </div>
         ) : null}

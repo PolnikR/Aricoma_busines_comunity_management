@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
-import { DataTable, DataTableRequestState } from '@/shared/components/data-table'
+import { DataTable, DataTablePagination, DataTableRequestState } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { Field, Select } from '@/shared/components/form/FormControls'
@@ -11,41 +12,47 @@ import { providerTypeLabel } from '../../providers/helpers/providerTypeLabel'
 import { useProviders } from '../../providers/hooks/useProviders'
 import { getDiscoveryCacheHistoryColumns } from '../config/discoveryCacheHistoryColumns'
 import { useDiscoveryCacheHistory } from '../hooks/useDiscoveryCacheHistory'
-import { DISCOVERY_SETTINGS_HISTORY_LIMITS } from '../hooks/useDiscoverySettingsSearchParams'
-import type { DiscoverySettingsHistoryLimit } from '../hooks/useDiscoverySettingsSearchParams'
+
+const HISTORY_SERVER_LIMIT = 100
+const HISTORY_PAGE_SIZE_OPTIONS = [10, 25, 50]
 
 interface DiscoveryHistoryCardProps {
   providerId: string | undefined
-  limit: DiscoverySettingsHistoryLimit
   onProviderIdChange: (providerId: string) => void
-  onLimitChange: (limit: DiscoverySettingsHistoryLimit) => void
 }
 
 export function DiscoveryHistoryCard({
   providerId,
-  limit,
   onProviderIdChange,
-  onLimitChange,
 }: DiscoveryHistoryCardProps) {
   const { t } = useTranslation()
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
   const providersQuery = useProviders('all')
   const historyQuery = useDiscoveryCacheHistory({
     ...(providerId ? { providerId } : {}),
-    limit,
+    limit: HISTORY_SERVER_LIMIT,
   })
   const providers = providersQuery.data ?? []
   const rows = historyQuery.data?.runs ?? []
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize))
+  const safePage = Math.min(page, pageCount)
+  const pageStart = (safePage - 1) * pageSize
+  const visibleRows = rows.slice(pageStart, pageStart + pageSize)
   const hasUnknownSelectedProvider = Boolean(providerId)
     && !providers.some(provider => provider.id === providerId)
   const columns = getDiscoveryCacheHistoryColumns(t)
+  const showPagination = historyQuery.data !== undefined || historyQuery.isLoading
 
   return (
     <SettingsSectionCard
       icon={<LayersIcon className="size-5" />}
       title={t('pages.discoverySettings.history.title')}
       description={t('pages.discoverySettings.history.description')}
+      className="flex h-full min-h-0 flex-col"
+      contentClassName="flex min-h-0 flex-1 flex-col"
     >
-      <div className="space-y-3">
+      <div className="shrink-0 space-y-3 p-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <Field
             label={t('pages.discoverySettings.history.filters.provider')}
@@ -56,7 +63,10 @@ export function DiscoveryHistoryCard({
               id="discovery-history-provider"
               value={providerId ?? ''}
               disabled={providersQuery.isLoading}
-              onChange={event => { onProviderIdChange(event.target.value) }}
+              onChange={event => {
+                setPage(1)
+                onProviderIdChange(event.target.value)
+              }}
             >
               <option value="">{t('pages.discoverySettings.history.filters.allProviders')}</option>
               {hasUnknownSelectedProvider ? <option value={providerId}>{providerId}</option> : null}
@@ -64,24 +74,6 @@ export function DiscoveryHistoryCard({
                 <option key={provider.id} value={provider.id}>
                   {provider.name} — {providerTypeLabel(provider.type)}
                 </option>
-              ))}
-            </Select>
-          </Field>
-
-          <Field
-            label={t('pages.discoverySettings.history.filters.limit')}
-            htmlFor="discovery-history-limit"
-            className="w-full sm:w-36"
-          >
-            <Select
-              id="discovery-history-limit"
-              value={String(limit)}
-              onChange={event => {
-                onLimitChange(Number(event.target.value) as DiscoverySettingsHistoryLimit)
-              }}
-            >
-              {DISCOVERY_SETTINGS_HISTORY_LIMITS.map(choice => (
-                <option key={choice} value={choice}>{choice}</option>
               ))}
             </Select>
           </Field>
@@ -112,7 +104,9 @@ export function DiscoveryHistoryCard({
             variant="compact"
           />
         ) : null}
+      </div>
 
+      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
         <DataTableRequestState
           hasCachedData={historyQuery.data !== undefined}
           error={historyQuery.error ? {
@@ -128,7 +122,7 @@ export function DiscoveryHistoryCard({
         >
           <DataTable
             columns={columns}
-            rows={rows}
+            rows={visibleRows}
             rowKey={(run, index) => `${run.providerId}-${run.startedAt}-${String(index)}`}
             isLoading={historyQuery.isLoading}
             loadingRowCount={5}
@@ -145,6 +139,21 @@ export function DiscoveryHistoryCard({
           />
         </DataTableRequestState>
       </div>
+
+      {showPagination ? (
+        <DataTablePagination
+          page={safePage}
+          pageSize={pageSize}
+          total={rows.length}
+          pageSizeOptions={HISTORY_PAGE_SIZE_OPTIONS}
+          isLoading={historyQuery.isLoading}
+          onPageChange={setPage}
+          onPageSizeChange={nextPageSize => {
+            setPageSize(nextPageSize)
+            setPage(1)
+          }}
+        />
+      ) : null}
     </SettingsSectionCard>
   )
 }

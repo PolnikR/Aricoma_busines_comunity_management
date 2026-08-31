@@ -10,6 +10,7 @@ interface SettingsSectionCardProps {
   action?: ReactNode
   footer?: ReactNode
   className?: string
+  contentClassName?: string
 }
 
 export function SettingsSectionCard({
@@ -20,6 +21,7 @@ export function SettingsSectionCard({
   action,
   footer,
   className,
+  contentClassName,
 }: SettingsSectionCardProps) {
   const headingId = useId()
 
@@ -43,7 +45,7 @@ export function SettingsSectionCard({
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
-      <div className="p-5 sm:p-6 lg:p-3">{children}</div>
+      <div className={contentClassName ?? 'p-5 sm:p-6 lg:p-3'}>{children}</div>
       {footer ? <div className="border-t border-border p-5 sm:px-6 lg:px-3">{footer}</div> : null}
     </section>
   )

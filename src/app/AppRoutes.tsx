@@ -171,6 +171,7 @@ function renderProvidersConnectorsRoutes(pages: typeof providersConnectorsPages)
         <Route
           key={page.path}
           path={toRoutePath(page.path)}
+          handle={{ contentScroll: 'contained' }}
           element={(
             <Suspense fallback={<RouteLoadingSkeleton />}>
               <DiscoverySettingsPage />

@@ -23,49 +23,47 @@ describe('useDiscoverySettingsSearchParams', () => {
     expect(result.current.tab).toBe(tab)
   })
 
-  it('defaults to configuration and the default History limit without URL state', () => {
+  it('defaults to configuration without History server-limit state', () => {
     const { result } = renderHook(() => useDiscoverySettingsSearchParams(), { wrapper: createWrapper() })
 
     expect(result.current.tab).toBe('configuration')
     expect(result.current.providerId).toBeUndefined()
-    expect(result.current.limit).toBe(50)
+    expect(result.current).not.toHaveProperty('limit')
+    expect(result.current).not.toHaveProperty('setLimit')
   })
 
-  it('falls back to defaults for invalid tab and History limit values', () => {
+  it('falls back to configuration and ignores a legacy History limit parameter', () => {
     const { result } = renderHook(() => useDiscoverySettingsSearchParams(), {
-      wrapper: createWrapper('/?tab=unknown&limit=10'),
+      wrapper: createWrapper('/?tab=unknown&limit=100'),
     })
 
     expect(result.current.tab).toBe('configuration')
-    expect(result.current.limit).toBe(50)
+    expect(result.current).not.toHaveProperty('limit')
   })
 
-  it('omits the configuration tab and default limit while preserving unrelated parameters', () => {
+  it('omits the configuration tab while preserving unrelated parameters', () => {
     const { result } = renderHook(useSearchParamsState, {
       wrapper: createWrapper('/?tab=history&limit=100&keep=visible'),
     })
 
     act(() => { result.current.setTab('configuration') })
-    act(() => { result.current.setLimit(50) })
 
     const params = new URLSearchParams(result.current.location.search)
     expect(params.has('tab')).toBe(false)
-    expect(params.has('limit')).toBe(false)
+    expect(params.get('limit')).toBe('100')
     expect(params.get('keep')).toBe('visible')
   })
 
-  it('preserves applied History criteria when tabs change', () => {
+  it('preserves the applied provider criterion when tabs change', () => {
     const { result } = renderHook(useSearchParamsState, {
-      wrapper: createWrapper('/?tab=history&providerId=vmware-vcenter-01&limit=100'),
+      wrapper: createWrapper('/?tab=history&providerId=vmware-vcenter-01'),
     })
 
     act(() => { result.current.setTab('notifications') })
     expect(result.current.providerId).toBe('vmware-vcenter-01')
-    expect(result.current.limit).toBe(100)
 
     act(() => { result.current.setTab('history') })
     expect(result.current.providerId).toBe('vmware-vcenter-01')
-    expect(result.current.limit).toBe(100)
   })
 
   it('trims provider IDs and removes the criterion when All providers is selected', () => {
@@ -81,14 +79,5 @@ describe('useDiscoverySettingsSearchParams', () => {
     expect(result.current.providerId).toBeUndefined()
     expect(new URLSearchParams(result.current.location.search).has('providerId')).toBe(false)
     expect(new URLSearchParams(result.current.location.search).get('keep')).toBe('visible')
-  })
-
-  it.each([25, 50, 100] as const)('uses supported History limit %s', limit => {
-    const { result } = renderHook(useSearchParamsState, { wrapper: createWrapper() })
-
-    act(() => { result.current.setLimit(limit) })
-
-    expect(result.current.limit).toBe(limit)
-    expect(new URLSearchParams(result.current.location.search).get('limit')).toBe(limit === 50 ? null : String(limit))
   })
 })

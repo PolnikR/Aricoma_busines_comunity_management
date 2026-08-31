@@ -47,7 +47,7 @@ describe('ResourceInventoryPanel', () => {
     expect(screen.getByText('Pagination')).toBeInTheDocument()
   })
 
-  it('uses a contained three-row layout instead of a vertical data scrollbar', () => {
+  it('keeps toolbar and pagination outside a contained vertical data scrollbar', () => {
     render(
       <ResourceInventoryPanel
         ariaLabel="Resource inventory"
@@ -60,6 +60,10 @@ describe('ResourceInventoryPanel', () => {
 
     const panel = screen.getByRole('region', { name: 'Resource inventory' })
     expect(panel).toHaveClass('grid', 'grid-rows-[auto_minmax(0,1fr)_auto]', 'min-h-0', 'overflow-hidden')
-    expect(panel.querySelector('.overflow-y-auto')).not.toBeInTheDocument()
+    const dataRegion = panel.querySelector('.overflow-y-auto')
+    expect(dataRegion).toHaveClass('custom-scrollbar', 'min-h-0', 'overflow-y-auto')
+    expect(dataRegion).toContainElement(screen.getByText('Inventory rows'))
+    expect(dataRegion).not.toContainElement(screen.getByRole('button', { name: 'Filters' }))
+    expect(dataRegion).not.toContainElement(screen.getByText('Pagination'))
   })
 })

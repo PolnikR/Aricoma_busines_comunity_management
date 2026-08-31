@@ -58,29 +58,20 @@ describe('DiscoverySettingsPage', () => {
 
     expect(screen.getByRole('tablist', { name: 'Discovery settings sections' })).toBeInTheDocument()
     expect(screen.getAllByRole('tab')).toHaveLength(3)
-    expect(screen.getByRole('region', { name: 'Discovery schedule' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Discovery schedule' })).not.toBeInTheDocument()
     expect(await screen.findByRole('region', { name: 'Cache configuration' })).toBeInTheDocument()
+    expect(screen.getByRole('tabpanel', { name: 'Configuration' })).not.toHaveClass('lg:grid-cols-2')
     expect(screen.queryByRole('region', { name: 'Discovery history' })).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Failure notifications' })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('tab', { name: 'History' }))
 
+    const historyPanel = screen.getByRole('tabpanel', { name: 'History' })
     expect(screen.getByRole('region', { name: 'Discovery history' })).toBeInTheDocument()
+    expect(historyPanel.parentElement).toHaveClass('overflow-hidden')
+    expect(historyPanel.parentElement).not.toHaveClass('overflow-y-auto')
     expect(screen.queryByRole('region', { name: 'Discovery schedule' })).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Cache configuration' })).not.toBeInTheDocument()
-  })
-
-  it('saves Schedule locally without calling the cache mutation', async () => {
-    const user = userEvent.setup()
-    renderPage()
-    const schedule = screen.getByRole('region', { name: 'Discovery schedule' })
-
-    await user.selectOptions(within(schedule).getByLabelText('Discovery frequency'), '6 hours')
-    await user.click(within(schedule).getByRole('button', { name: 'Save schedule' }))
-
-    expect(api.updateDiscoveryCacheConfig).not.toHaveBeenCalled()
-    expect(within(schedule).getByRole('status')).toHaveTextContent('Schedule saved locally.')
-    expect(within(schedule).getByRole('button', { name: 'Save schedule' })).toBeDisabled()
   })
 
   it('persists notification edits locally and restores the saved baseline on Cancel', async () => {
@@ -173,11 +164,11 @@ describe('DiscoverySettingsPage', () => {
     expect(api.updateDiscoveryCacheConfig).not.toHaveBeenCalled()
   })
 
-  it('keeps Schedule usable while the cache config is loading', () => {
+  it('keeps only the Cache configuration loading state visible', () => {
     api.fetchDiscoveryCacheConfig.mockReturnValue(new Promise(() => undefined))
     renderPage()
 
-    expect(screen.getByRole('switch', { name: 'Scheduled discovery' })).toBeEnabled()
+    expect(screen.queryByRole('region', { name: 'Discovery schedule' })).not.toBeInTheDocument()
     expect(screen.getByRole('status', { name: 'Loading cache configuration' })).toHaveAttribute('aria-busy', 'true')
   })
 
