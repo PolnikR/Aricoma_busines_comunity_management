@@ -143,7 +143,7 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(screen.getByRole('table')).toBeInTheDocument()
   })
 
-  it('shows the shared table skeleton while snapshots are loading', async () => {
+  it('keeps snapshot labels and real table headers visible while values load', async () => {
     const user = userEvent.setup()
     useVdisksByVmMock.mockReturnValue({
       data: undefined,
@@ -165,6 +165,9 @@ describe('VirtualMachineDetailPanel resize', () => {
     await user.click(screen.getByRole('tab', { name: 'Snapshots' }))
 
     expect(screen.getByRole('status', { name: 'Loading snapshots...' })).toBeInTheDocument()
+    expect(screen.getByText('source mappings')).toBeVisible()
+    expect(screen.getByText('target mappings')).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Source' })).toBeVisible()
   })
 
   it('shows the shared snapshot error state and retries the same request', async () => {

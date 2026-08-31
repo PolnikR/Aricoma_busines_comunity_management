@@ -10,6 +10,7 @@ import {
 import { recoveryGroupKeys } from '../api/recoveryGroupQueryKeys'
 import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsError } from '../api/recoveryGroupsErrors'
+import type { RollbackReport } from '../api/schemas/recoveryGroupsSchema'
 
 export function useRecoveryGroups() {
   const queryClient = useQueryClient()
@@ -75,7 +76,7 @@ export function useRecoveryGroups() {
     create: createMutation.mutateAsync,
     update: (id: string, draft: RecoveryGroupDraft) => updateMutation.mutateAsync({ id, draft }),
     remove: (group: RecoveryGroup) => deleteMutation.mutateAsync(group),
-    rollback: (groupId: string, providerId: string): Promise<void> => (
+    rollback: (groupId: string, providerId: string): Promise<RollbackReport> => (
       rollbackMutation.mutateAsync({ groupId, providerId })
     ),
     isCreating: createMutation.isPending,

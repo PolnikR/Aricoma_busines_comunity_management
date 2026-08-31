@@ -45,6 +45,8 @@ const editedProvider = {
   fromEmail: null,
   disableSsl: null,
   disableTls: null,
+  loggingEnabled: null,
+  jwtEnabled: null,
 }
 
 beforeEach(() => {
@@ -174,6 +176,82 @@ describe('PlatformProvidersModal', () => {
 
     const submitted = mutate.mock.calls[0]?.[0] as { provider?: { notificationEmail?: unknown } } | undefined
     expect(submitted?.provider?.notificationEmail).toBeNull()
+  })
+
+  it('preserves untouched BACKEND flags and submits explicit values after interaction', () => {
+    const mutate = vi.fn()
+    vi.mocked(useUpsertPlatformProvider).mockReturnValue({
+      isPending: false,
+      mutate,
+    } as unknown as ReturnType<typeof useUpsertPlatformProvider>)
+
+    const backendProvider = { ...editedProvider, type: 'BACKEND' as const }
+    const { rerender } = render(
+      <PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} provider={backendProvider} />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /Edit platform provider/i }))
+    expect(mutate.mock.calls[0]?.[0]).toMatchObject({
+      provider: { loggingEnabled: null, jwtEnabled: null },
+    })
+
+    rerender(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} provider={backendProvider} />)
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable logging' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable JWT' }))
+    fireEvent.click(screen.getByRole('button', { name: /Edit platform provider/i }))
+
+    expect(mutate.mock.calls[1]?.[0]).toMatchObject({
+      provider: { loggingEnabled: true, jwtEnabled: true },
+    })
+  })
+
+  it('submits false when enabled BACKEND flags are unchecked', () => {
+    const mutate = vi.fn()
+    vi.mocked(useUpsertPlatformProvider).mockReturnValue({
+      isPending: false,
+      mutate,
+    } as unknown as ReturnType<typeof useUpsertPlatformProvider>)
+
+    render(
+      <PlatformProvidersModal
+        open
+        onClose={vi.fn()}
+        existingProviders={[]}
+        provider={{ ...editedProvider, type: 'BACKEND', loggingEnabled: true, jwtEnabled: true }}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable logging' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable JWT' }))
+    fireEvent.click(screen.getByRole('button', { name: /Edit platform provider/i }))
+
+    expect(mutate.mock.calls[0]?.[0]).toMatchObject({
+      provider: { loggingEnabled: false, jwtEnabled: false },
+    })
+  })
+
+  it('clears BACKEND flags when the final submitted type changes to AIRFLOW', () => {
+    const mutate = vi.fn()
+    vi.mocked(useUpsertPlatformProvider).mockReturnValue({
+      isPending: false,
+      mutate,
+    } as unknown as ReturnType<typeof useUpsertPlatformProvider>)
+
+    render(
+      <PlatformProvidersModal
+        open
+        onClose={vi.fn()}
+        existingProviders={[]}
+        provider={{ ...editedProvider, type: 'BACKEND', loggingEnabled: true, jwtEnabled: true }}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'AIRFLOW' } })
+    fireEvent.click(screen.getByRole('button', { name: /Edit platform provider/i }))
+
+    expect(mutate.mock.calls[0]?.[0]).toMatchObject({
+      provider: { type: 'AIRFLOW', loggingEnabled: null, jwtEnabled: null },
+    })
   })
 
   it('shows the localized save failure title with supported backend detail', () => {

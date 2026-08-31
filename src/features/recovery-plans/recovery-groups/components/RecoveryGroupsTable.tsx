@@ -28,7 +28,6 @@ import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/fe
 import { toRecoveryGroupJson } from '../helpers/mapRecoveryGroups'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupRollbackResultModal } from './RecoveryGroupRollbackResultModal'
-import { RecoveryGroupRollbackSuccessModal } from './RecoveryGroupRollbackSuccessModal'
 import { RecoveryGroupContextMenu } from './RecoveryGroupContextMenu'
 import {
   getResourceTypeLabelKey,
@@ -40,9 +39,10 @@ import type { RollbackReport } from '../api/schemas/recoveryGroupsSchema'
 
 interface RecoveryGroupsTableProps {
   groups: RecoveryGroup[]
+  isLoading?: boolean
   onEdit: (id: string) => void
   onDelete: (group: RecoveryGroup) => Promise<RollbackReport | null>
-  onRollback: (groupId: string, providerId: string) => Promise<void>
+  onRollback: (groupId: string, providerId: string) => Promise<RollbackReport>
   error?: Error | null
   isRetrying?: boolean
   isDeleting?: boolean
@@ -61,6 +61,7 @@ const EMPTY_FILTERS: RecoveryGroupFilters = {
 
 export function RecoveryGroupsTable({
   groups,
+  isLoading = false,
   onEdit,
   onDelete,
   onRollback,
@@ -79,7 +80,6 @@ export function RecoveryGroupsTable({
   const [deleteTarget, setDeleteTarget] = useState<RecoveryGroup | null>(null)
   const [rollbackTarget, setRollbackTarget] = useState<RecoveryGroup | null>(null)
   const [rollbackResult, setRollbackResult] = useState<{ groupName: string; report: RollbackReport } | null>(null)
-  const [rollbackSuccessGroupName, setRollbackSuccessGroupName] = useState<string | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [isRollingBack, setIsRollingBack] = useState(false)
   const [detailTab, setDetailTab] = useState<'overview' | 'orchestration'>('overview')
@@ -306,10 +306,11 @@ export function RecoveryGroupsTable({
         <DataTable
           columns={columns}
           rows={table.pageItems}
+          isLoading={isLoading}
           rowKey={group => group.id}
           density={table.density}
           minWidthClassName="min-w-200"
-          ariaLabel={t('pages.recoveryGroups.tableAriaLabel')}
+          ariaLabel={isLoading ? t('pages.recoveryGroups.loading') : t('pages.recoveryGroups.tableAriaLabel')}
           onRowClick={group => { setSelectedId(group.id); setDetailTab('overview') }}
           selectedRowKey={selectedId}
           emptyContent={t('pages.recoveryGroups.empty.noGroups')}
@@ -321,6 +322,7 @@ export function RecoveryGroupsTable({
           page={table.page}
           pageSize={table.pageSize}
           total={table.total}
+          isLoading={isLoading}
           onPageChange={table.setPage}
           onPageSizeChange={table.setPageSize}
         />
@@ -543,8 +545,8 @@ export function RecoveryGroupsTable({
           setIsRollingBack(true)
           void (async () => {
             try {
-              await onRollback(groupId, providerId)
-              setRollbackSuccessGroupName(groupName)
+              const report = await onRollback(groupId, providerId)
+              setRollbackResult({ groupName, report })
               setSelectedId(null)
               setRollbackTarget(null)
             } catch {
@@ -561,12 +563,6 @@ export function RecoveryGroupsTable({
         onClose={() => { setRollbackResult(null) }}
         groupName={rollbackResult?.groupName ?? ''}
         report={rollbackResult?.report ?? null}
-      />
-
-      <RecoveryGroupRollbackSuccessModal
-        open={rollbackSuccessGroupName !== null}
-        onClose={() => { setRollbackSuccessGroupName(null) }}
-        groupName={rollbackSuccessGroupName ?? ''}
       />
 
       <JsonViewerModal

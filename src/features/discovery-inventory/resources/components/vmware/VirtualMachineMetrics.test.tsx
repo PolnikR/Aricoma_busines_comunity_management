@@ -5,6 +5,16 @@ import { VirtualMachineMetrics } from './VirtualMachineMetrics'
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 describe('VirtualMachineMetrics', () => {
+  it('keeps metric labels and icons visible while only remote values load', () => {
+    render(<VirtualMachineMetrics isLoading />)
+
+    for (const label of ['Discovered VMs', 'Powered on', 'Clusters', 'Allocated memory']) {
+      expect(screen.getByText(label)).toBeVisible()
+    }
+    expect(screen.getAllByRole('article').every(card => card.getAttribute('aria-busy') === 'true')).toBe(true)
+    expect(screen.queryByText('0% of inventory')).not.toBeInTheDocument()
+  })
+
   it('renders totals and calculates the powered-on percentage', () => {
     render(<VirtualMachineMetrics metrics={{
       total: 8,

@@ -4,7 +4,6 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { DataTablePagination } from '@/shared/components/data-table'
-import { MetricsSkeleton } from '@/shared/components/stat-card/StatCard'
 import { useVmwareResourceInventory } from '@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory'
 import { useTags } from '../../hooks/useVmwareTags'
 import {
@@ -18,6 +17,7 @@ import { getProvidersByTypeAndRole } from '@/features/providers-connectors/provi
 import { ResourceInventoryPanel } from '../ResourceInventoryPanel'
 import { ResourceInventoryShell } from '../ResourceInventoryShell'
 import { ResourceInventoryLoading, ResourceInventoryState } from '../ResourceInventoryStates'
+import { ResourceViewportFrame } from '../ResourceViewportFrame'
 import type { SourceResourcesPageProps } from '../SourceResourcesPageProps'
 import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
 import { VirtualMachineMetrics } from './VirtualMachineMetrics'
@@ -62,6 +62,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   const resolvedProviderFilter: VmwareProviderFilter = providerFilter ?? { isFixed: false, prefix: '', tag: '', filters: { search: '', tags: [] } }
   const resolvedIsFilterFixed = isFilterFixed ?? resolvedProviderFilter.isFixed
   const inventoryEnabled = providersSuccess && selectedProvider !== null && isInitialized
+  const serverSideTag = getServerSideTagFilter(query.tags)
   const {
     data: inventory,
     isInitialLoading,
@@ -70,12 +71,15 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     isError,
     isEmpty,
     refetch,
-  } = useVmwareResourceInventory(
-    selectedProvider?.id,
-    query.search,
-    getServerSideTagFilter(query.tags),
-    inventoryEnabled,
-  )
+    forceRefresh,
+    isForceRefreshing,
+    forceRefreshError,
+  } = useVmwareResourceInventory({
+    ...(selectedProvider?.id !== undefined ? { providerId: selectedProvider.id } : {}),
+    namePrefix: query.search,
+    ...(serverSideTag !== undefined ? { tag: serverSideTag } : {}),
+    enabled: inventoryEnabled,
+  })
   const { data: serverTags = [] } = useTags(selectedProvider?.id, inventoryEnabled)
   const availableTags = useMemo(
     () => [...new Set([...serverTags, ...query.tags])],
@@ -85,6 +89,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [density, setDensity] = useState<TableDensity>('compact')
   const handleRefetch = () => { void refetch() }
+  const handleForceRefresh = () => { void forceRefresh().catch(() => undefined) }
 
   const allData = useMemo(
     () => inventory ? mapInventoryToVirtualMachines(inventory) : null,
@@ -116,16 +121,16 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   }
   const vmwareLoading = providersSuccess && vmwareProviders.length > 0 && isInitialLoading
   const metrics = providersPending || vmwareLoading
-    ? <MetricsSkeleton />
+    ? <VirtualMachineMetrics isLoading />
     : data && !providersError
       ? <VirtualMachineMetrics metrics={data.metrics} />
       : null
-  const notice = isError && data ? (
+  const notice = (isError || forceRefreshError) && data ? (
     <FetchErrorAlert
       title={t('pages.virtualMachines.error.latestFailed')}
       description={t('pages.virtualMachines.error.showingPrevious')}
-      isRetrying={isFetching}
-      onRetry={handleRefetch}
+      isRetrying={isFetching || isForceRefreshing}
+      onRetry={isError ? handleRefetch : handleForceRefresh}
     />
   ) : null
 
@@ -207,15 +212,15 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
   }
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <ResourceViewportFrame>
       <TableToolbar
         eyebrow={t(role === 'target' ? 'pages.resourcesIse.eyebrow' : 'pages.virtualMachines.eyebrow')}
         title={t('pages.virtualMachines.title')}
         description={t('pages.virtualMachines.description')}
-        isFetching={providersFetching || isFetching}
+        isFetching={providersFetching || isFetching || isForceRefreshing}
         onRefresh={() => {
           if (!providersSuccess || vmwareProviders.length === 0) onRefetchProviders()
-          else handleRefetch()
+          else handleForceRefresh()
         }}
       />
       <ResourceInventoryShell
@@ -243,6 +248,6 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
           setSelectedId(null)
         }}
       />
-    </div>
+    </ResourceViewportFrame>
   )
 }

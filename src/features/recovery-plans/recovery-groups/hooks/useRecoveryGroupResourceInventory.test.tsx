@@ -20,7 +20,8 @@ vi.mock('@/features/discovery-inventory/resources/api/flashSystemInventoryApi', 
 vi.mock('@/features/discovery-inventory/resources/api/powerInventoryApi', () => ({
   fetchPowerInventory: vi.fn(),
 }))
-vi.mock('@/features/discovery-inventory/resources/api/vmwareInventoryApi', () => ({
+vi.mock('@/features/discovery-inventory/resources/api/vmwareInventoryApi', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/features/discovery-inventory/resources/api/vmwareInventoryApi')>(),
   fetchVmwareInventory: vi.fn(),
 }))
 
@@ -81,7 +82,7 @@ describe('useRecoveryGroupResourceInventory', () => {
     expect(result.current.data?.resourceNames).toEqual(expectedNames)
 
     if (workloadType === 'vmware_virtual_machines') {
-      expect(fetchVmwareInventory).toHaveBeenCalledWith(providerId)
+      expect(fetchVmwareInventory).toHaveBeenCalledWith({ providerId })
     } else if (workloadType === 'ibm_power_virtual_machines') {
       expect(fetchPowerInventory).toHaveBeenCalledWith(providerId)
     } else {
@@ -142,6 +143,26 @@ describe('useRecoveryGroupResourceInventory', () => {
     })
   })
 
+  it('keeps VMware recovery data stable across rerenders without new inventory data', async () => {
+    const { result, rerender } = renderHook(
+      ({ prefix }: { prefix: string }) => useRecoveryGroupResourceInventory(
+        'vmware_virtual_machines',
+        'vmware-1',
+        { vmwareNamePrefix: prefix },
+      ),
+      { wrapper: createWrapper(), initialProps: { prefix: '' } },
+    )
+
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+    const initialData = result.current.data
+    const initialMetadata = result.current.data?.vmMetadataByName
+
+    rerender({ prefix: '' })
+
+    expect(result.current.data).toBe(initialData)
+    expect(result.current.data?.vmMetadataByName).toBe(initialMetadata)
+  })
+
   it('does not extract VM metadata for ibm_flashsystem', async () => {
     const { result } = renderHook(
       () => useRecoveryGroupResourceInventory('ibm_flashsystem', 'flash-1'),
@@ -164,11 +185,29 @@ describe('useRecoveryGroupResourceInventory', () => {
     expect(fetchFlashSystemInventory).not.toHaveBeenCalled()
   })
 
+  it('uses the canonical VMware inventory lifecycle for a name prefix', async () => {
+    const { result } = renderHook(
+      () => useRecoveryGroupResourceInventory('vmware_virtual_machines', 'vmware-1', {
+        vmwareNamePrefix: 'WEB',
+      }),
+      { wrapper: createWrapper() },
+    )
+
+    expect(fetchVmwareInventory).not.toHaveBeenCalled()
+
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) }, { timeout: 1_000 })
+
+    expect(fetchVmwareInventory).toHaveBeenCalledWith({
+      providerId: 'vmware-1',
+      namePrefix: 'WEB',
+    })
+  })
+
   it.each([
     [
       'vmware_virtual_machines',
       'vmware-1',
-      discoveryInventoryKeys.inventory('vmware-1'),
+      discoveryInventoryKeys.vmwareSearch({ providerId: 'vmware-1' }),
       {
         reportedCount: 1,
         virtualMachines: [{ name: 'CACHED-VM' } as DiscoveredVirtualMachine],

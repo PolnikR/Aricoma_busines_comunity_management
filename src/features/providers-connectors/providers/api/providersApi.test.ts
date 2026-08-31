@@ -31,7 +31,9 @@ const providerB: ProviderRecord = {
 const listPayload = { providers: [providerA, providerB] }
 
 function stubFetch(payload: unknown, status = 200) {
-  const mock = vi.fn().mockResolvedValue(new Response(payload === null ? null : JSON.stringify(payload), { status }))
+  const mock = vi.fn().mockImplementation(() => Promise.resolve(
+    new Response(payload === null ? null : JSON.stringify(payload), { status }),
+  ))
   vi.stubGlobal('fetch', mock)
   return mock
 }
@@ -187,7 +189,7 @@ describe('submitProvider', () => {
       credentialId: 'vcenter-admin',
       role: 'source',
     }
-    const mock = stubFetch({})
+    const mock = stubFetch({ providers: [newProvider] })
 
     await submitProvider(newProvider)
 
@@ -200,8 +202,33 @@ describe('submitProvider', () => {
     expect(headers.get('Content-Type')).toBe('application/json')
   })
 
+  it('round-trips cacheRefreshSeconds through GET mapping and POST payload', async () => {
+    const provider = { ...providerA, cacheRefreshSeconds: 300 }
+    const mock = stubFetch({ providers: [provider] })
+
+    const [mappedProvider] = await fetchProviders()
+    if (!mappedProvider) {
+      throw new Error('Expected mapped provider')
+    }
+
+    await submitProvider({
+      id: mappedProvider.id,
+      name: mappedProvider.name,
+      description: mappedProvider.description,
+      type: mappedProvider.type,
+      ipAddress: mappedProvider.ipAddress,
+      credentialId: mappedProvider.credentialId,
+      role: mappedProvider.role ?? 'source',
+      cacheRefreshSeconds: mappedProvider.cacheRefreshSeconds,
+    })
+
+    expect(mappedProvider).toMatchObject({ cacheRefreshSeconds: 300 })
+    const [, init] = mock.mock.calls[1] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toMatchObject({ cacheRefreshSeconds: 300 })
+  })
+
   it('posts explicit empty VM settings when clearing them', async () => {
-    const mock = stubFetch({})
+    const mock = stubFetch({ providers: [providerA] })
     const provider: ProviderSubmitData = {
       id: providerA.id,
       name: providerA.name,
@@ -221,7 +248,7 @@ describe('submitProvider', () => {
   })
 
   it('posts null notificationEmail when clearing an existing value', async () => {
-    const mock = stubFetch({})
+    const mock = stubFetch({ providers: [providerA] })
     const provider: ProviderSubmitData = {
       id: providerA.id,
       name: providerA.name,
@@ -239,8 +266,8 @@ describe('submitProvider', () => {
     expect(JSON.parse(init.body as string)).toMatchObject({ notificationEmail: null })
   })
 
-  it('throws on an HTTP failure', async () => {
-    stubFetch(null, 500)
+  it.each([400, 500])('wraps HTTP %s failures as before', async status => {
+    stubFetch(null, status)
     const submitData: ProviderSubmitData = {
       id: providerA.id,
       name: providerA.name,
@@ -250,7 +277,22 @@ describe('submitProvider', () => {
       credentialId: providerA.credentialId,
       role: providerA.role ?? 'source',
     }
-    await expect(submitProvider(submitData)).rejects.toThrow('Submit provider request failed with status 500')
+    await expect(submitProvider(submitData)).rejects.toThrow(`Submit provider request failed with status ${String(status)}`)
+  })
+
+  it('rejects a malformed successful response', async () => {
+    stubFetch({})
+    const submitData: ProviderSubmitData = {
+      id: providerA.id,
+      name: providerA.name,
+      description: providerA.description,
+      type: providerA.type,
+      ipAddress: providerA.ipAddress,
+      credentialId: providerA.credentialId,
+      role: providerA.role ?? 'source',
+    }
+
+    await expect(submitProvider(submitData)).rejects.toBeInstanceOf(Error)
   })
 
   it('rejects a provider with an invalid URL', async () => {

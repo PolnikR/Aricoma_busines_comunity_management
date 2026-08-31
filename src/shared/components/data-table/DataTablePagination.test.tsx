@@ -23,4 +23,27 @@ describe('DataTablePagination', () => {
     expect(screen.queryByRole('combobox', { name: 'Rows per page' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Next page' })).toBeInTheDocument()
   })
+
+  it('keeps static pagination copy and skeletonizes only response counts while loading', () => {
+    const { container } = render(
+      <DataTablePagination
+        page={1}
+        pageSize={10}
+        total={0}
+        isLoading
+        onPageChange={vi.fn()}
+        onPageSizeChange={vi.fn()}
+      />,
+    )
+
+    const pagination = container.firstElementChild
+    const summary = screen.getByText((content, element) => element?.tagName === 'SPAN' && content.includes('Showing'))
+    expect(pagination).toHaveAttribute('aria-busy', 'true')
+    expect(summary).toHaveTextContent('Showing')
+    expect(summary).toHaveTextContent('of')
+    expect(summary).not.toHaveTextContent('0')
+    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThanOrEqual(5)
+    expect(screen.getByRole('combobox', { name: 'Rows per page' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Next page' })).toBeDisabled()
+  })
 })

@@ -18,4 +18,5 @@ export const providerSubmitSchema = z.object({
   vmPrefix: z.string().nullable().optional(),
   vmTags: z.array(z.string()).optional(),
   notificationEmail: z.string().trim().pipe(z.email()).nullable().optional(),
+  cacheRefreshSeconds: z.int().positive().nullable().optional(),
 })

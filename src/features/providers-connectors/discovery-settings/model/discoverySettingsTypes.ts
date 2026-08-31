@@ -9,23 +9,13 @@ export const DISCOVERY_FREQUENCIES = [
 
 export type DiscoveryFrequency = (typeof DISCOVERY_FREQUENCIES)[number]
 
-export const DISCOVERY_RETENTION_OPTIONS = [
-  '7 days',
-  '30 days',
-  '90 days',
-  '180 days',
-  '1 year',
-  'custom',
-] as const
-
-export type DiscoveryRetention = (typeof DISCOVERY_RETENTION_OPTIONS)[number]
-
-export interface DiscoverySettings {
+export interface DiscoveryScheduleSettings {
   scheduleEnabled: boolean
   frequency: DiscoveryFrequency
   timezone: string
-  retention: DiscoveryRetention
-  customRetentionDays: number
+}
+
+export interface DiscoveryNotificationSettings {
   notificationsEnabled: boolean
   recipientId: string
 }

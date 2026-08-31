@@ -14,4 +14,5 @@ export const ProviderType = {
   IBM_POWER: 'IBM_POWER',
   AIRFLOW: 'AIRFLOW',
   SMTP: 'SMTP',
+  BACKEND: 'BACKEND',
 } as const;

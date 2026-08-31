@@ -1,11 +1,30 @@
 import { describe, expect, it } from 'vitest'
+import type { RouteObject } from 'react-router'
 import { createAppRouter } from './createAppRouter'
 
-function collectPaths(routes: ReturnType<typeof createAppRouter>['routes']): string[] {
+function collectPaths(routes: RouteObject[]): string[] {
   return routes.flatMap((route) => [
     ...(route.path ? [route.path] : []),
     ...(route.children ? collectPaths(route.children) : []),
   ])
+}
+
+function findRouteByPathChain(
+  routes: RouteObject[],
+  pathChain: string[],
+): RouteObject | undefined {
+  const [path, ...remaining] = pathChain
+  for (const candidate of routes) {
+    if (candidate.path === path) {
+      if (remaining.length === 0) return candidate
+      return candidate.children ? findRouteByPathChain(candidate.children, remaining) : undefined
+    }
+    if (candidate.children) {
+      const nested = findRouteByPathChain(candidate.children, pathChain)
+      if (nested) return nested
+    }
+  }
+  return undefined
 }
 
 describe('createAppRouter', () => {
@@ -36,4 +55,24 @@ describe('createAppRouter', () => {
 
     router.dispose()
   })
+
+  it('marks only recovery builder create/edit routes for contained desktop scrolling', () => {
+    const router = createAppRouter()
+    const containedRoutes = [
+      ['recovery-plans', 'recovery-groups', 'create'],
+      ['recovery-plans', 'recovery-groups', ':id/edit'],
+      ['recovery-plans', 'recovery-applications', 'create'],
+      ['recovery-plans', 'recovery-applications', ':id/edit'],
+    ]
+
+    for (const pathChain of containedRoutes) {
+      expect(findRouteByPathChain(router.routes, pathChain)?.handle).toEqual({ contentScroll: 'contained' })
+    }
+
+    expect(findRouteByPathChain(router.routes, ['recovery-plans', 'recovery-groups'])?.children?.[0]?.handle).toBeUndefined()
+    expect(findRouteByPathChain(router.routes, ['recovery-plans', 'recovery-applications'])?.children?.[0]?.handle).toBeUndefined()
+
+    router.dispose()
+  })
+
 })

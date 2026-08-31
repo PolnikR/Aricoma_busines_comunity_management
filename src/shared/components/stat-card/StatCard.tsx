@@ -9,6 +9,8 @@ interface StatCardProps {
   helper?: ReactNode
   size?: 'sm' | 'md'
   className?: string
+  isLoading?: boolean
+  isHelperLoading?: boolean
 }
 
 export function StatCard({
@@ -18,6 +20,8 @@ export function StatCard({
   helper,
   size = 'md',
   className,
+  isLoading = false,
+  isHelperLoading = false,
 }: StatCardProps) {
   const isSmall = size === 'sm'
 
@@ -28,6 +32,7 @@ export function StatCard({
         isSmall ? 'gap-2.5 rounded-xl px-3 py-2' : 'min-h-20 gap-3 rounded-[18px] p-3.5',
         className,
       )}
+      aria-busy={isLoading ? true : undefined}
     >
       <div className={cn(
         'flex shrink-0 items-center justify-center bg-accent-soft text-accent',
@@ -40,7 +45,9 @@ export function StatCard({
           'block truncate font-semibold text-text-primary',
           isSmall ? 'text-sm leading-tight' : 'text-lg',
         )}>
-          {value}
+          {isLoading
+            ? <SkeletonBlock className={isSmall ? 'h-4 w-12' : 'h-5 w-16'} />
+            : value}
         </strong>
         <p className={cn(
           'font-medium text-text-secondary',
@@ -53,7 +60,7 @@ export function StatCard({
             'truncate text-text-muted',
             isSmall ? 'text-[10px] leading-tight' : 'text-[11px]',
           )}>
-            {helper}
+            {isHelperLoading ? <SkeletonBlock className="h-2.5 w-20" /> : helper}
           </p>
         ) : null}
       </div>

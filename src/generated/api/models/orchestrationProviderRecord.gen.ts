@@ -21,11 +21,14 @@ export interface OrchestrationProviderRecord {
   vmPrefix?: string | null;
   vmTags?: string[];
   notificationEmail?: string | null;
+  cacheRefreshSeconds?: number | null;
   port?: number;
   dagDir?: string | null;
   fromEmail?: string | null;
   disableSsl?: boolean | null;
   disableTls?: boolean | null;
+  loggingEnabled?: boolean | null;
+  jwtEnabled?: boolean | null;
   credentialStatus?: string | null;
   [key: string]: unknown;
  }

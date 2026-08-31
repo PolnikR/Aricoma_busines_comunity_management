@@ -112,7 +112,7 @@ describe('RecoveryRunsTable', () => {
     expect(onSelectEntity).toHaveBeenCalledWith('application', 'finance_recovery')
   })
 
-  it('shows a loading skeleton instead of the table while loading', () => {
+  it('keeps search and the real table chrome visible while run rows load', () => {
     render(
       <RecoveryRunsTable
         {...tableStateProps}
@@ -127,7 +127,10 @@ describe('RecoveryRunsTable', () => {
       />,
     )
 
-    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Search recovery runs' })).toBeVisible()
+    expect(screen.getByRole('table')).toBeVisible()
+    expect(screen.getByRole('status', { name: 'Loading recovery runs' })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByRole('combobox', { name: 'Rows per page' })).toBeDisabled()
   })
 
   it('distinguishes loading and failed latest-run lookups from a successful empty result', () => {

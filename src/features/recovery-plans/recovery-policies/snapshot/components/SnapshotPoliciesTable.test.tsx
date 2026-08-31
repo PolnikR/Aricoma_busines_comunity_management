@@ -37,6 +37,16 @@ const archivePolicy: SnapshotPolicy = {
 }
 
 describe('SnapshotPoliciesTable', () => {
+  it('keeps the toolbar and real column labels visible while rows load', () => {
+    render(<SnapshotPoliciesTable policies={[]} isLoading error={null} isRetrying={false} onRetry={vi.fn()} />)
+
+    expect(screen.getByRole('searchbox', { name: 'Search snapshot policies' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Policy' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Retention' })).toBeVisible()
+    expect(screen.getByRole('status', { name: 'Loading snapshot policies' })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByRole('combobox', { name: 'Rows per page' })).toBeDisabled()
+  })
+
   it('shows the policy schedule and opens an accessible detail drawer', async () => {
     render(
       <SnapshotPoliciesTable

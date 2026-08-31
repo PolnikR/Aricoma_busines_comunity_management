@@ -16,6 +16,22 @@ const labels = {
 }
 
 describe('ResourceSidebar', () => {
+  it('keeps static sidebar controls mounted while only remote entries load', () => {
+    render(
+      <ResourceSidebar
+        {...labels}
+        items={[]}
+        dragDataKey="vm-name"
+        isLoading
+      />,
+    )
+
+    expect(screen.getByRole('heading', { name: 'Available resources' })).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Search resources' })).toBeDisabled()
+    expect(screen.getByRole('status', { name: 'Loading resources' })).toBeInTheDocument()
+    expect(screen.queryByText('No resources')).not.toBeInTheDocument()
+  })
+
   it('deduplicates, sorts, filters, and exposes resources only as drag sources', async () => {
     const user = userEvent.setup()
     const setData = vi.fn()
@@ -38,5 +54,25 @@ describe('ResourceSidebar', () => {
     await user.clear(screen.getByRole('searchbox', { name: 'Search resources' }))
     await user.type(screen.getByRole('searchbox', { name: 'Search resources' }), 'web')
     expect(screen.queryByText('DB-01')).not.toBeInTheDocument()
+  })
+
+  it('reports controlled server search text without locally filtering server results', () => {
+    const onSearchChange = vi.fn()
+    render(
+      <ResourceSidebar
+        {...labels}
+        items={['DB-01']}
+        dragDataKey="vm-name"
+        searchValue="WEB"
+        onSearchChange={onSearchChange}
+      />,
+    )
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search resources' }), {
+      target: { value: 'WEB-01' },
+    })
+
+    expect(onSearchChange).toHaveBeenCalledWith('WEB-01')
+    expect(screen.getByText('DB-01')).toBeInTheDocument()
   })
 })

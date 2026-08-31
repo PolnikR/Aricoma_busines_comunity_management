@@ -60,26 +60,41 @@ function buildDraft(pushToOrchestrator: boolean): RecoveryGroupDraft {
 vi.mock('../components/RecoveryGroupBuilder', () => ({
   RecoveryGroupBuilder: ({
     onCreate,
+    isInitialLoading,
   }: {
     onCreate: (draft: RecoveryGroupDraft) => void
+    isInitialLoading?: boolean
   }) => (
-    <>
+    <fieldset disabled={isInitialLoading} aria-busy={isInitialLoading}>
+      <span>Group type</span>
       <button type="button" onClick={() => { onCreate(buildDraft(true)) }}>
         Create with orchestration
       </button>
       <button type="button" onClick={() => { onCreate(buildDraft(false)) }}>
         Create without orchestration
       </button>
-    </>
+    </fieldset>
   ),
 }))
 
 beforeEach(() => {
   vi.clearAllMocks()
   recoveryGroupsState.error = null
+  recoveryGroupsState.isLoading = false
 })
 
 describe('RecoveryGroupBuilderPage', () => {
+  it('gives the builder a constrained body region for nested resource scrolling', () => {
+    const { container } = render(<RecoveryGroupBuilderPage />)
+
+    expect(container.querySelector('fieldset')?.parentElement).toHaveClass(
+      'flex',
+      'flex-1',
+      'flex-col',
+      'lg:min-h-0',
+    )
+  })
+
   it('shows the success modal with the airflow run id when pushed to the orchestrator', async () => {
     const user = userEvent.setup()
     const openWindow = vi.spyOn(window, 'open').mockImplementation(() => null)
@@ -156,5 +171,17 @@ describe('RecoveryGroupBuilderPage', () => {
     const alert = screen.getByRole('alert')
     expect(alert).toHaveTextContent('Recovery groups could not be loaded')
     expect(alert).toHaveTextContent('The recovery groups service is unavailable.')
+  })
+
+  it('keeps the builder labels mounted and actions disabled while existing ids load', () => {
+    recoveryGroupsState.isLoading = true
+
+    const { container } = render(<RecoveryGroupBuilderPage />)
+
+    expect(screen.getByText('Create Recovery Group')).toBeInTheDocument()
+    expect(screen.getByText('Group type')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create without orchestration' })).toBeDisabled()
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument()
+    expect(screen.queryByRole('status', { name: 'Loading recovery groups' })).not.toBeInTheDocument()
   })
 })

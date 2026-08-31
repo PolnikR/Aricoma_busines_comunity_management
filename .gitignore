@@ -30,3 +30,6 @@ yarn-debug.log*
 # Temporary files
 *.tmp
 *.temp
+
+# Local Git worktrees
+.worktrees/

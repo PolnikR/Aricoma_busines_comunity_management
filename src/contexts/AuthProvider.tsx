@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { useTranslation } from '@/hooks/useTranslation'
 import { keycloak } from '@/config/keycloak'
+import { AppShellSkeleton } from '@/layouts/app-shell/AppShellSkeleton'
 import { AuthContext, FALLBACK_AUTH_USER, type AuthStatus } from './AuthContext'
 import { mapKeycloakProfile } from './mapKeycloakProfile'
 
@@ -12,7 +12,6 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [status, setStatus] = useState<AuthStatus>('pending')
   const [user, setUser] = useState(FALLBACK_AUTH_USER)
-  const { t } = useTranslation()
   // React 19 StrictMode runs effects twice in dev; keycloak-js throws on a
   // second init() call, so a ref guards against that without affecting prod.
   const didInit = useRef(false)
@@ -56,10 +55,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [])
 
-  if (status !== 'authenticated') {
+  if (status === 'pending') {
+    return <AppShellSkeleton />
+  }
+
+  if (status === 'error') {
     return (
       <div className="flex h-screen items-center justify-center bg-surface text-text-secondary">
-        {status === 'error' ? 'Unable to reach the login server.' : t('messages.loading')}
+        Unable to reach the login server.
       </div>
     )
   }

@@ -22,9 +22,10 @@ interface FlashSystemMetricsProps {
   inventories: { provider: ProviderRecord; inventory: FlashSystemInventory }[]
   labels: MetricLabels
   helperLabels?: { pools: string; hosts: string }
+  isLoading?: boolean
 }
 
-export function FlashSystemMetrics({ resources, inventories, labels, helperLabels }: FlashSystemMetricsProps) {
+export function FlashSystemMetrics({ resources, inventories, labels, helperLabels, isLoading = false }: FlashSystemMetricsProps) {
   const pools = new Map<string, { capacity: number; free: number }>()
   inventories.forEach(({ provider, inventory }) => {
     Object.entries(inventory.pools).forEach(([poolId, pool]) => {
@@ -43,22 +44,23 @@ export function FlashSystemMetrics({ resources, inventories, labels, helperLabel
     { label: labels.third, value: formatCapacityBytes(totalCapacity), helper: `${String(pools.size)} ${helperLabels?.pools ?? ''}`.trim(), icon: <MemoryIcon className="size-4" /> },
     { label: labels.fourth, value: formatCapacityBytes(freeCapacity), helper: `${String(new Set(resources.flatMap((resource) => resource.resolvedHostMaps.map((host) => `${resource.providerId}:${host.host_id}`))).size)} ${helperLabels?.hosts ?? ''}`.trim(), icon: <CpuIcon className="size-4" /> },
   ]
-  return <MetricGrid items={items} />
+  return <MetricGrid items={items} isLoading={isLoading} dynamicHelperIndexes={[2, 3]} />
 }
 
 interface PowerMetricsProps {
   resources: PowerPartitionResource[]
   labels: MetricLabels
+  isLoading?: boolean
 }
 
-export function PowerMetrics({ resources, labels }: PowerMetricsProps) {
+export function PowerMetrics({ resources, labels, isLoading = false }: PowerMetricsProps) {
   const items = [
     { label: labels.total, value: resources.length.toLocaleString(), helper: labels.validated, icon: <ServerIcon className="size-4" /> },
     { label: labels.active, value: resources.filter((resource) => resource.partitionState.toLowerCase() === 'running').length.toLocaleString(), helper: labels.validated, icon: <LayersIcon className="size-4" /> },
     { label: labels.third, value: resources.filter((resource) => resource.partitionKind === 'LPAR').length.toLocaleString(), helper: labels.validated, icon: <CpuIcon className="size-4" /> },
     { label: labels.fourth, value: resources.filter((resource) => resource.partitionKind === 'VIOS').length.toLocaleString(), helper: labels.validated, icon: <MemoryIcon className="size-4" /> },
   ]
-  return <MetricGrid items={items} />
+  return <MetricGrid items={items} isLoading={isLoading} />
 }
 
 interface MetricItem {
@@ -68,10 +70,10 @@ interface MetricItem {
   icon: ReactNode
 }
 
-function MetricGrid({ items }: { items: MetricItem[] }) {
+function MetricGrid({ items, isLoading, dynamicHelperIndexes = [] }: { items: MetricItem[]; isLoading: boolean; dynamicHelperIndexes?: number[] }) {
   return (
     <div className="grid shrink-0 grid-cols-2 gap-2.5 xl:grid-cols-4">
-      {items.map((item) => <StatCard key={item.label} size="sm" {...item} />)}
+      {items.map((item, index) => <StatCard key={item.label} size="sm" isLoading={isLoading} isHelperLoading={isLoading && dynamicHelperIndexes.includes(index)} {...item} />)}
     </div>
   )
 }

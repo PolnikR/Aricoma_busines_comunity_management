@@ -78,13 +78,16 @@ vi.mock('../components/RecoveryGroupBuilder', () => ({
     initialData,
     submitLabel,
     onCreate,
+    isInitialLoading,
   }: {
-    initialData: RecoveryGroup
+    initialData?: RecoveryGroup
     submitLabel: string
     onCreate: (draft: RecoveryGroupDraft) => void
+    isInitialLoading?: boolean
   }) => (
-    <div>
-      <span>{initialData.name}</span>
+    <fieldset disabled={isInitialLoading} aria-busy={isInitialLoading}>
+      <span>Group details</span>
+      <span>{initialData?.name}</span>
       <span>{submitLabel}</span>
       <button type="button" onClick={() => { onCreate(buildUpdateDraft(false)) }}>
         Submit edit
@@ -92,14 +95,27 @@ vi.mock('../components/RecoveryGroupBuilder', () => ({
       <button type="button" onClick={() => { onCreate(buildUpdateDraft(true)) }}>
         Submit edit with orchestration
       </button>
-    </div>
+    </fieldset>
   ),
 }))
 
 describe('RecoveryGroupEditorPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    recoveryGroupsState.groups = [group]
     recoveryGroupsState.error = null
+    recoveryGroupsState.isLoading = false
+  })
+
+  it('gives the builder a constrained body region for nested resource scrolling', () => {
+    const { container } = render(<RecoveryGroupEditorPage />)
+
+    expect(container.querySelector('fieldset')?.parentElement).toHaveClass(
+      'flex',
+      'flex-1',
+      'flex-col',
+      'lg:min-h-0',
+    )
   })
 
   it('prefills the builder and updates the existing recovery group', async () => {
@@ -172,5 +188,19 @@ describe('RecoveryGroupEditorPage', () => {
     const alert = screen.getByRole('alert')
     expect(alert).toHaveTextContent('Recovery groups could not be loaded')
     expect(alert).toHaveTextContent('The recovery groups service is unavailable.')
+  })
+
+  it('keeps the editor shell mounted and disabled while the group loads', () => {
+    recoveryGroupsState.isLoading = true
+    recoveryGroupsState.groups = []
+
+    const { container } = render(<RecoveryGroupEditorPage />)
+
+    expect(screen.getByText('Edit Recovery Group')).toBeInTheDocument()
+    expect(screen.getByText('Group details')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Submit edit' })).toBeDisabled()
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument()
+    expect(screen.queryByText('Loading recovery groups...')).not.toBeInTheDocument()
   })
 })

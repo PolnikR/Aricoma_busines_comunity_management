@@ -1,85 +1,162 @@
-import { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
-import { fetchVmwareInventory } from '../api/vmwareInventoryApi'
-import { fetchVmsByName } from '../api/vmsByNameApi'
-import { mapVmwareInventory } from '../helpers/mapVmwareInventory'
+import {
+  fetchVmwareInventory,
+  normalizeVmwareInventorySearch,
+  type VmwareInventorySearch,
+} from '../api/vmwareInventoryApi'
 import type { DiscoveryInventory } from '../model/discoveryTypes'
 
 const NAME_SEARCH_DEBOUNCE_MS = 300
 
-export function useVmwareResourceInventory(
-  providerId?: string,
-  namePrefix = '',
-  tag = '',
+interface ForceRefreshSnapshot {
+  search: VmwareInventorySearch
+  queryKey: ReturnType<typeof discoveryInventoryKeys.vmwareSearch>
+  queryHash: string
+  requestId: number
+}
+
+interface ForceRefreshState {
+  latestRequestId: number
+  pendingRequestIds: number[]
+  error: Error | null
+}
+
+export interface VmwareResourceInventoryOptions {
+  providerId?: string
+  folderName?: string
+  namePrefix?: string
+  tag?: string
+  enabled?: boolean
+}
+
+export function useVmwareResourceInventory({
+  providerId,
+  folderName,
+  namePrefix,
+  tag,
   enabled = true,
-) {
-  const hasNamePrefix = Boolean(namePrefix)
-  const hasTag = Boolean(tag)
-  const isNameOnly = hasNamePrefix && !hasTag
+}: VmwareResourceInventoryOptions = {}) {
+  const queryClient = useQueryClient()
+  const normalizedSearch = normalizeVmwareInventorySearch({
+    ...(providerId !== undefined ? { providerId } : {}),
+    ...(folderName !== undefined ? { folderName } : {}),
+    ...(namePrefix !== undefined ? { namePrefix } : {}),
+    ...(tag !== undefined ? { tag } : {}),
+  })
+  const normalizedNamePrefix = normalizedSearch.namePrefix
+  const hasNamePrefix = normalizedNamePrefix !== undefined
   const [debouncedNamePrefix, setDebouncedNamePrefix] = useState('')
   const [settledProviderId, setSettledProviderId] = useState<string | undefined>()
+  const [forceRefreshStates, setForceRefreshStates] = useState<Record<string, ForceRefreshState>>({})
+  const forceRefreshRequestId = useRef(0)
+  const latestForceRefreshRequestIds = useRef<Record<string, number>>({})
 
   useEffect(() => {
     const timeout = setTimeout(
-      () => { setDebouncedNamePrefix(isNameOnly ? namePrefix : '') },
-      isNameOnly ? NAME_SEARCH_DEBOUNCE_MS : 0,
+      () => { setDebouncedNamePrefix(normalizedNamePrefix ?? '') },
+      hasNamePrefix ? NAME_SEARCH_DEBOUNCE_MS : 0,
     )
     return () => { clearTimeout(timeout) }
-  }, [isNameOnly, namePrefix])
+  }, [hasNamePrefix, normalizedNamePrefix])
 
-  const queryKey = isNameOnly
-    ? discoveryInventoryKeys.vmsByName(debouncedNamePrefix, providerId)
-    : discoveryInventoryKeys.inventory(providerId, hasTag ? tag : undefined)
-  const canFetch = enabled && Boolean(providerId) && (!isNameOnly || debouncedNamePrefix === namePrefix)
+  const search: VmwareInventorySearch = {
+    ...(normalizedSearch.providerId ? { providerId: normalizedSearch.providerId } : {}),
+    ...(normalizedSearch.folderName ? { folderName: normalizedSearch.folderName } : {}),
+    ...(normalizedSearch.tag ? { tag: normalizedSearch.tag } : {}),
+    ...(debouncedNamePrefix ? { namePrefix: debouncedNamePrefix } : {}),
+  }
+  const queryKey = discoveryInventoryKeys.vmwareSearch(search)
+  const queryHash = JSON.stringify(queryKey)
+  const canFetch = enabled && Boolean(normalizedSearch.providerId)
+    && (!hasNamePrefix || debouncedNamePrefix === normalizedNamePrefix)
 
   const query = useQuery<DiscoveryInventory>({
     queryKey,
-    queryFn: async () => {
-      if (isNameOnly) {
-        const response = await fetchVmsByName({
-          prefix: debouncedNamePrefix,
-          ...(providerId !== undefined ? { providerId } : {}),
-        })
-        return mapVmwareInventory(response)
-      }
-
-      return fetchVmwareInventory(providerId, hasTag ? tag : undefined)
-    },
+    queryFn: () => fetchVmwareInventory(search),
     enabled: canFetch,
     placeholderData: (previousData, previousQuery) => {
       const previousKey = previousQuery?.queryKey
-      const previousProviderId = previousKey?.[1] === 'inventory'
-        ? previousKey[2]
-        : previousKey?.[1] === 'vms-by-name'
-          ? previousKey[3]
-          : undefined
-      return previousProviderId === providerId ? previousData : undefined
+      const previousProviderId = previousKey?.[1] === 'vmware-search' ? previousKey[2] : undefined
+      return previousProviderId === normalizedSearch.providerId ? previousData : undefined
     },
-    select: (inventory) => hasTag && hasNamePrefix
-      ? {
-          ...inventory,
-          virtualMachines: inventory.virtualMachines.filter((vm) => vm.name.startsWith(namePrefix)),
-        }
-      : inventory,
   })
 
-  const isDebouncing = isNameOnly && debouncedNamePrefix !== namePrefix
-  const hasSettledProviderQuery = settledProviderId === providerId
+  const settleForceRefresh = (snapshot: ForceRefreshSnapshot, error: Error | null) => {
+    setForceRefreshStates((states) => {
+      const state = states[snapshot.queryHash]
+      if (!state) return states
+
+      const pendingRequestIds = state.pendingRequestIds.filter((requestId) => requestId !== snapshot.requestId)
+      const nextState = {
+        ...state,
+        pendingRequestIds,
+        error: state.latestRequestId === snapshot.requestId ? error : state.error,
+      }
+
+      if (pendingRequestIds.length > 0 || nextState.error !== null) {
+        return { ...states, [snapshot.queryHash]: nextState }
+      }
+
+      return Object.fromEntries(
+        Object.entries(states).filter(([queryHash]) => queryHash !== snapshot.queryHash),
+      )
+    })
+  }
+  const forceRefreshMutation = useMutation<DiscoveryInventory, Error, ForceRefreshSnapshot>({
+    mutationFn: ({ search: snapshotSearch }) => fetchVmwareInventory({ ...snapshotSearch, forceRefresh: true }),
+    onSuccess: (data, snapshot) => {
+      if (latestForceRefreshRequestIds.current[snapshot.queryHash] !== snapshot.requestId) return
+      queryClient.setQueryData(snapshot.queryKey, data)
+    },
+    onSettled: (_, error, snapshot) => {
+      settleForceRefresh(snapshot, error)
+    },
+  })
+  const forceRefresh = () => {
+    const snapshot = {
+      search,
+      queryKey,
+      queryHash,
+      requestId: forceRefreshRequestId.current + 1,
+    }
+    forceRefreshRequestId.current = snapshot.requestId
+    latestForceRefreshRequestIds.current[queryHash] = snapshot.requestId
+    setForceRefreshStates((states) => {
+      const previousState = states[queryHash]
+      return {
+        ...states,
+        [queryHash]: {
+          latestRequestId: snapshot.requestId,
+          pendingRequestIds: [...(previousState?.pendingRequestIds ?? []), snapshot.requestId],
+          error: null,
+        },
+      }
+    })
+    return forceRefreshMutation.mutateAsync(snapshot)
+  }
+  const forceRefreshState = forceRefreshStates[queryHash]
+
+  const isDebouncing = hasNamePrefix && debouncedNamePrefix !== normalizedNamePrefix
+  const hasSettledProviderQuery = settledProviderId === normalizedSearch.providerId
 
   useEffect(() => {
     if (!canFetch || query.isPending) return
 
     let cancelled = false
     queueMicrotask(() => {
-      if (!cancelled) setSettledProviderId(providerId)
+      if (!cancelled) setSettledProviderId(normalizedSearch.providerId)
     })
 
     return () => { cancelled = true }
-  }, [canFetch, providerId, query.isPending])
+  }, [canFetch, normalizedSearch.providerId, query.isPending])
 
   return {
     ...query,
+    forceRefresh,
+    isForceRefreshing: Boolean(forceRefreshState?.pendingRequestIds.length),
+    forceRefreshError: forceRefreshState?.error ?? null,
     isDebouncing,
     isInitialLoading: canFetch && query.isPending && !isDebouncing && !hasSettledProviderQuery,
     isBackgroundFetching: query.isFetching && Boolean(query.data),

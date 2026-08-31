@@ -1,9 +1,9 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchFlashSystemInventory } from '@/features/discovery-inventory/resources/api/flashSystemInventoryApi'
 import { fetchPowerInventory } from '@/features/discovery-inventory/resources/api/powerInventoryApi'
-import { fetchVmwareInventory } from '@/features/discovery-inventory/resources/api/vmwareInventoryApi'
 import { discoveryInventoryKeys } from '@/features/discovery-inventory/resources/api/resourceInventoryQueryKeys'
+import { useVmwareResourceInventory } from '@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory'
 import type {
   DiscoveredVirtualMachine,
   DiscoveryInventory,
@@ -18,6 +18,11 @@ interface RecoveryGroupResourceInventory {
   vmMetadataByName: Record<string, RecoveryGroupVmMetadata>
 }
 
+interface RecoveryGroupResourceInventoryOptions {
+  vmwareNamePrefix?: string
+  enabled?: boolean
+}
+
 type ResourceInventory = DiscoveryInventory | PowerInventory | FlashSystemInventory
 
 interface InventoryQueryDefinition {
@@ -26,15 +31,10 @@ interface InventoryQueryDefinition {
 }
 
 function getInventoryQueryDefinition(
-  workloadType: RecoveryGroupWorkloadType,
+  workloadType: Exclude<RecoveryGroupWorkloadType, 'vmware_virtual_machines'>,
   providerId: string,
 ): InventoryQueryDefinition {
   switch (workloadType) {
-    case 'vmware_virtual_machines':
-      return {
-        queryKey: discoveryInventoryKeys.inventory(providerId),
-        queryFn: () => fetchVmwareInventory(providerId),
-      }
     case 'ibm_power_virtual_machines':
       return {
         queryKey: discoveryInventoryKeys.resourceInventory('IBM_POWER', providerId),
@@ -100,9 +100,15 @@ function getVmMetadataByName(
 export function useRecoveryGroupResourceInventory(
   workloadType: RecoveryGroupWorkloadType | null,
   providerId: string | null,
-  enabled = true,
+  { vmwareNamePrefix, enabled = true }: RecoveryGroupResourceInventoryOptions = {},
 ) {
-  const definition = workloadType && providerId
+  const isVmware = workloadType === 'vmware_virtual_machines'
+  const vmwareQuery = useVmwareResourceInventory({
+    ...(isVmware && providerId ? { providerId } : {}),
+    ...(isVmware && vmwareNamePrefix !== undefined ? { namePrefix: vmwareNamePrefix } : {}),
+    enabled: enabled && isVmware,
+  })
+  const definition = workloadType && providerId && !isVmware
     ? getInventoryQueryDefinition(workloadType, providerId)
     : null
 
@@ -113,7 +119,7 @@ export function useRecoveryGroupResourceInventory(
     vmMetadataByName: workloadType ? getVmMetadataByName(workloadType, inventory) : {},
   }), [workloadType])
 
-  return useQuery<ResourceInventory, Error, RecoveryGroupResourceInventory>({
+  const nonVmwareQuery = useQuery<ResourceInventory, Error, RecoveryGroupResourceInventory>({
     queryKey: definition?.queryKey ?? [...discoveryInventoryKeys.all, 'inactive'],
     queryFn: () => {
       if (!definition) throw new Error('A workload type and provider are required')
@@ -122,4 +128,17 @@ export function useRecoveryGroupResourceInventory(
     select: selectFn,
     enabled: enabled && definition !== null,
   })
+  const vmwareData = useMemo(
+    () => vmwareQuery.data ? selectFn(vmwareQuery.data) : undefined,
+    [selectFn, vmwareQuery.data],
+  )
+
+  if (isVmware) {
+    return {
+      ...vmwareQuery,
+      data: vmwareData,
+    }
+  }
+
+  return nonVmwareQuery
 }

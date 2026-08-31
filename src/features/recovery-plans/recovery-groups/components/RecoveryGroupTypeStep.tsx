@@ -71,15 +71,17 @@ export function RecoveryGroupTypeStep({
         </span>{' '}
         {t('pages.recoveryGroupBuilder.type.note')}
       </p>
-      <Tabs
-        items={tabs}
-        value={visibleCategory}
-        onChange={value => {
-          if (!readOnly) onCategoryChange(value)
-        }}
-        ariaLabel={t('pages.recoveryGroupBuilder.type.categories.ariaLabel')}
-        className="mt-5 px-0"
-      />
+      <fieldset className="contents" disabled={isLoadingProviders}>
+        <Tabs
+          items={tabs}
+          value={visibleCategory}
+          onChange={value => {
+            if (!readOnly) onCategoryChange(value)
+          }}
+          ariaLabel={t('pages.recoveryGroupBuilder.type.categories.ariaLabel')}
+          className="mt-5 px-0"
+        />
+      </fieldset>
 
       {isLoadingProviders ? (
         <div className="mt-4 max-w-4xl">

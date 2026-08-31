@@ -1,6 +1,6 @@
 import { useTranslation } from '@/hooks/useTranslation'
 import { Alert } from '@/shared/components/alert/Alert'
-import { DataTable } from '@/shared/components/data-table'
+import { DataTable, SkeletonBlock } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { CheckboxField, Field, Input, Select } from '@/shared/components/form/FormControls'
@@ -34,7 +34,7 @@ export function RealmSettingsSection({ tabId, onTabChange }: RealmSettingsSectio
   if (error) {
     content = <div className="p-4"><EmptyState title={t('identity.realm.loadFailed')} description={error.message} /></div>
   } else if (!realm) {
-    content = <div className="p-4"><EmptyState title={t('identity.realm.loading')} description={t('identity.common.adapterReading')} /></div>
+    content = <RealmLoadingContent activeTab={activeTab} />
   } else if (activeTab === 'general') {
     content = (
       <IdentitySettingsSection title={t('identity.realm.tabs.general')} description={t('identity.realm.general.description')}>
@@ -127,7 +127,40 @@ export function RealmSettingsSection({ tabId, onTabChange }: RealmSettingsSectio
   )
 }
 
-function UserProfileTable({ attributes }: { attributes: UserProfileAttributeView[] }) {
+function RealmLoadingContent({ activeTab }: { activeTab: RealmSettingsTabId }) {
+  const { t } = useTranslation()
+  if (activeTab === 'user-profile') {
+    return (
+      <IdentitySettingsSection title={t('identity.realm.tabs.user-profile')} description={t('identity.realm.userProfile.description')}>
+        <UserProfileTable attributes={[]} isLoading />
+      </IdentitySettingsSection>
+    )
+  }
+
+  const fields = activeTab === 'email'
+    ? [t('identity.realm.email.host'), t('identity.realm.email.port'), t('identity.realm.email.from'), t('identity.realm.email.authMaterial')]
+    : activeTab === 'themes'
+      ? [t('identity.realm.themes.loginTheme')]
+      : activeTab === 'login'
+        ? [t('identity.realm.login.registration'), t('identity.realm.login.emailAsUsername'), t('identity.realm.login.rememberMe'), t('identity.realm.login.verifyEmail')]
+        : [t('identity.realm.general.realmName'), t('identity.realm.general.displayName')]
+  const title = activeTab === 'general' ? t('identity.realm.tabs.general') : t(`identity.realm.tabs.${activeTab}`)
+
+  return (
+    <IdentitySettingsSection title={title}>
+      <div className="grid min-w-0 gap-4 md:grid-cols-2" aria-busy="true">
+        {fields.map(label => (
+          <div key={label}>
+            <span className="mb-1.5 block text-xs font-medium text-text-secondary">{label}</span>
+            <SkeletonBlock className="h-10 w-full rounded-lg" />
+          </div>
+        ))}
+      </div>
+    </IdentitySettingsSection>
+  )
+}
+
+function UserProfileTable({ attributes, isLoading = false }: { attributes: UserProfileAttributeView[]; isLoading?: boolean }) {
   const { t } = useTranslation()
   const columns: ColumnDef<UserProfileAttributeView>[] = [
     {
@@ -154,6 +187,7 @@ function UserProfileTable({ attributes }: { attributes: UserProfileAttributeView
       rowKey={attribute => attribute.id}
       ariaLabel={t('identity.realm.userProfile.ariaLabel')}
       minWidthClassName="min-w-[34rem]"
+      isLoading={isLoading}
     />
   )
 }

@@ -2,10 +2,28 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { ClientsSection } from './ClientsSection'
+import { IdentityAdminGatewayProvider } from '../services/IdentityAdminGatewayProvider'
+import { createMockIdentityAdminGateway } from '../services/mockIdentityAdminGateway'
+import type { IdentityAdminPreview } from '../services/identityAdminGateway'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 describe('ClientsSection', () => {
+  it('keeps client table chrome visible and skeletonizes only remote rows while loading', () => {
+    const gateway = createMockIdentityAdminGateway()
+    gateway.getPreview = vi.fn(() => new Promise<IdentityAdminPreview>(() => undefined))
+    const { container } = render(
+      <IdentityAdminGatewayProvider gateway={gateway}>
+        <ClientsSection entityId={null} tabId={null} onEntityChange={vi.fn()} onTabChange={vi.fn()} />
+      </IdentityAdminGatewayProvider>,
+    )
+
+    expect(screen.getByRole('searchbox', { name: 'Search clients' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Client ID' })).toBeInTheDocument()
+    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0)
+    expect(screen.queryByText('No clients found')).not.toBeInTheDocument()
+  })
+
   it('lists the preview public browser client', async () => {
     render(<ClientsSection entityId={null} tabId={null} onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
     expect(screen.getByRole('searchbox', { name: 'Search clients' })).toBeInTheDocument()

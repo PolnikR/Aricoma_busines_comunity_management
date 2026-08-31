@@ -129,7 +129,7 @@ export function InfrastructurePage() {
         onProviderChange={handleProviderChange}
       />
 
-      {isLoading ? <InfrastructureTopologySkeleton /> : null}
+      {isLoading ? <InfrastructureTopologySkeleton platform={platform} flashSystemView={flashSystemView} /> : null}
 
       {!isLoading && providersQuery.error && !providersQuery.data ? (
         <FetchErrorAlert

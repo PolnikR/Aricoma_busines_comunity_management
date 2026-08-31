@@ -12,7 +12,11 @@ export type ProviderInventory =
 export async function fetchInventory(provider: ProviderRecord, tag?: string): Promise<ProviderInventory> {
   switch (provider.type) {
     case 'VMWARE':
-      return { source: 'vmware', provider, inventory: await fetchVmwareInventory(provider.id, tag) }
+      return {
+        source: 'vmware',
+        provider,
+        inventory: await fetchVmwareInventory({ providerId: provider.id, ...(tag ? { tag } : {}) }),
+      }
     case 'IBM_POWER':
       return { source: 'power', provider, inventory: await fetchPowerInventory(provider.id) }
     case 'FLASHCOPY':

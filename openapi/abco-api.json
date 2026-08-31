@@ -703,6 +703,85 @@
         }
       }
     },
+    "/vms/search": {
+      "post": {
+        "tags": [
+          "vCenter Inventory"
+        ],
+        "summary": "Vms Search",
+        "operationId": "vms_search_vms_search_post",
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "id of the vCenter provider to use",
+              "default": "vmware-vcenter-01",
+              "title": "Provider Id"
+            },
+            "description": "id of the vCenter provider to use"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/VmSearchFilter"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VmsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/vms_in_folder": {
       "get": {
         "tags": [
@@ -710,6 +789,7 @@
         ],
         "summary": "Vms In Folder",
         "operationId": "vms_in_folder_vms_in_folder_get",
+        "deprecated": true,
         "parameters": [
           {
             "name": "name",
@@ -734,6 +814,18 @@
               "title": "Provider Id"
             },
             "description": "id of the vCenter provider to use"
+          },
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "bypass cache and fetch live",
+              "default": false,
+              "title": "Force Refresh"
+            },
+            "description": "bypass cache and fetch live"
           },
           {
             "name": "X-User",
@@ -784,6 +876,7 @@
         ],
         "summary": "Vms",
         "operationId": "vms_vms_get",
+        "deprecated": true,
         "parameters": [
           {
             "name": "provider_id",
@@ -796,6 +889,18 @@
               "title": "Provider Id"
             },
             "description": "id of the vCenter provider to use"
+          },
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "bypass cache and fetch live",
+              "default": false,
+              "title": "Force Refresh"
+            },
+            "description": "bypass cache and fetch live"
           },
           {
             "name": "X-User",
@@ -846,6 +951,7 @@
         ],
         "summary": "Vms By Tag",
         "operationId": "vms_by_tag_vms_by_tag_get",
+        "deprecated": true,
         "parameters": [
           {
             "name": "tag",
@@ -870,6 +976,18 @@
               "title": "Provider Id"
             },
             "description": "id of the vCenter provider to use"
+          },
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "bypass cache and fetch live",
+              "default": false,
+              "title": "Force Refresh"
+            },
+            "description": "bypass cache and fetch live"
           },
           {
             "name": "X-User",
@@ -920,6 +1038,7 @@
         ],
         "summary": "Vms By Name",
         "operationId": "vms_by_name_vms_by_name_get",
+        "deprecated": true,
         "parameters": [
           {
             "name": "prefix",
@@ -944,6 +1063,18 @@
               "title": "Provider Id"
             },
             "description": "id of the vCenter provider to use"
+          },
+          {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "bypass cache and fetch live",
+              "default": false,
+              "title": "Force Refresh"
+            },
+            "description": "bypass cache and fetch live"
           },
           {
             "name": "X-User",
@@ -1156,6 +1287,18 @@
             "description": "id of the IBM FlashSystem provider to use"
           },
           {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "bypass cache and fetch live",
+              "default": false,
+              "title": "Force Refresh"
+            },
+            "description": "bypass cache and fetch live"
+          },
+          {
             "name": "X-User",
             "in": "header",
             "required": false,
@@ -1237,6 +1380,18 @@
             "description": "which tree(s) to build; 'all' returns all three"
           },
           {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "bypass cache and fetch live",
+              "default": false,
+              "title": "Force Refresh"
+            },
+            "description": "bypass cache and fetch live"
+          },
+          {
             "name": "X-User",
             "in": "header",
             "required": false,
@@ -1299,6 +1454,18 @@
             "description": "id of the IBM Power provider to use"
           },
           {
+            "name": "force_refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "bypass cache and fetch live",
+              "default": false,
+              "title": "Force Refresh"
+            },
+            "description": "bypass cache and fetch live"
+          },
+          {
             "name": "X-User",
             "in": "header",
             "required": false,
@@ -1324,6 +1491,316 @@
                 "schema": {
                   "$ref": "#/components/schemas/PowerVmsResponse"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/discovery/cache/config": {
+      "get": {
+        "tags": [
+          "Discovery Cache"
+        ],
+        "summary": "Get Cache Config",
+        "operationId": "get_cache_config_discovery_cache_config_get",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheConfigResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Discovery Cache"
+        ],
+        "summary": "Update Cache Config",
+        "operationId": "update_cache_config_discovery_cache_config_put",
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CacheConfigUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheConfigResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/discovery/cache/history": {
+      "get": {
+        "tags": [
+          "Discovery Cache"
+        ],
+        "summary": "Get Cache History",
+        "operationId": "get_cache_history_discovery_cache_history_get",
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "filter to one provider",
+              "title": "Provider Id"
+            },
+            "description": "filter to one provider"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "cap the number of returned runs",
+              "title": "Limit"
+            },
+            "description": "cap the number of returned runs"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_access_logs": {
+      "get": {
+        "tags": [
+          "Logs"
+        ],
+        "summary": "Get Access Logs",
+        "operationId": "get_access_logs_get_access_logs_get",
+        "parameters": [
+          {
+            "name": "lines",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5000,
+              "minimum": 1,
+              "description": "max log entries to return",
+              "default": 200,
+              "title": "Lines"
+            },
+            "description": "max log entries to return"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "filter by HTTP status code",
+              "title": "Status"
+            },
+            "description": "filter by HTTP status code"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "filter by HTTP method",
+              "title": "Method"
+            },
+            "description": "filter by HTTP method"
+          },
+          {
+            "name": "path_contains",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "filter by substring of the request path",
+              "title": "Path Contains"
+            },
+            "description": "filter by substring of the request path"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -2725,6 +3202,183 @@
   },
   "components": {
     "schemas": {
+      "CacheConfigResponse": {
+        "properties": {
+          "defaults": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Defaults"
+          },
+          "history_retention": {
+            "$ref": "#/components/schemas/CacheHistoryRetention"
+          }
+        },
+        "type": "object",
+        "required": [
+          "defaults",
+          "history_retention"
+        ],
+        "title": "CacheConfigResponse"
+      },
+      "CacheConfigUpdate": {
+        "properties": {
+          "defaults": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Defaults"
+          },
+          "history_retention": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CacheHistoryRetentionUpdate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "CacheConfigUpdate"
+      },
+      "CacheHistoryResponse": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/CacheRunRecord"
+            },
+            "type": "array",
+            "title": "Runs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "runs"
+        ],
+        "title": "CacheHistoryResponse"
+      },
+      "CacheHistoryRetention": {
+        "properties": {
+          "retention_days": {
+            "type": "integer",
+            "title": "Retention Days"
+          },
+          "max_records": {
+            "type": "integer",
+            "title": "Max Records"
+          }
+        },
+        "type": "object",
+        "required": [
+          "retention_days",
+          "max_records"
+        ],
+        "title": "CacheHistoryRetention"
+      },
+      "CacheHistoryRetentionUpdate": {
+        "properties": {
+          "retention_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retention Days"
+          },
+          "max_records": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Records"
+          }
+        },
+        "type": "object",
+        "title": "CacheHistoryRetentionUpdate"
+      },
+      "CacheRunRecord": {
+        "properties": {
+          "provider_id": {
+            "type": "string",
+            "title": "Provider Id"
+          },
+          "provider_type": {
+            "type": "string",
+            "title": "Provider Type"
+          },
+          "triggered_by": {
+            "type": "string",
+            "enum": [
+              "stale",
+              "forced",
+              "param_change"
+            ],
+            "title": "Triggered By"
+          },
+          "started_at": {
+            "type": "string",
+            "title": "Started At"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "title": "Duration Ms"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "record_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Record Count"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider_id",
+          "provider_type",
+          "triggered_by",
+          "started_at",
+          "duration_ms",
+          "success"
+        ],
+        "title": "CacheRunRecord"
+      },
       "CleanRoomPoliciesResponse": {
         "properties": {
           "clean_room_policies": {
@@ -3048,6 +3702,17 @@
             ],
             "title": "Notificationemail"
           },
+          "cacheRefreshSeconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cacherefreshseconds"
+          },
           "port": {
             "type": "integer",
             "title": "Port",
@@ -3096,6 +3761,28 @@
               }
             ],
             "title": "Disabletls"
+          },
+          "loggingEnabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loggingenabled"
+          },
+          "jwtEnabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jwtenabled"
           }
         },
         "type": "object",
@@ -3223,6 +3910,17 @@
             ],
             "title": "Notificationemail"
           },
+          "cacheRefreshSeconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cacherefreshseconds"
+          },
           "port": {
             "type": "integer",
             "title": "Port",
@@ -3271,6 +3969,28 @@
               }
             ],
             "title": "Disabletls"
+          },
+          "loggingEnabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loggingenabled"
+          },
+          "jwtEnabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jwtenabled"
           },
           "credentialStatus": {
             "anyOf": [
@@ -3718,6 +4438,17 @@
               }
             ],
             "title": "Notificationemail"
+          },
+          "cacheRefreshSeconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cacherefreshseconds"
           }
         },
         "type": "object",
@@ -3868,6 +4599,17 @@
             ],
             "title": "Notificationemail"
           },
+          "cacheRefreshSeconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cacherefreshseconds"
+          },
           "credentialStatus": {
             "anyOf": [
               {
@@ -3927,7 +4669,8 @@
           "FLASHCOPY",
           "IBM_POWER",
           "AIRFLOW",
-          "SMTP"
+          "SMTP",
+          "BACKEND"
         ],
         "title": "ProviderType"
       },
@@ -5395,6 +6138,50 @@
         "additionalProperties": true,
         "type": "object",
         "title": "VmRecord"
+      },
+      "VmSearchFilter": {
+        "properties": {
+          "folder_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Folder Name"
+          },
+          "tag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tag"
+          },
+          "name_prefix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Prefix"
+          },
+          "force_refresh": {
+            "type": "boolean",
+            "title": "Force Refresh",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "VmSearchFilter"
       },
       "VmsResponse": {
         "properties": {

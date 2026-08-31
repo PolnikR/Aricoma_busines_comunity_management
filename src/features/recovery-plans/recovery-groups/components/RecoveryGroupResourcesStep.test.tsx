@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryGroupResourcesStep } from './RecoveryGroupResourcesStep'
 
@@ -11,7 +12,7 @@ interface InventoryQueryDouble {
 }
 
 const useRecoveryGroupResourceInventory = vi.fn<
-  (workloadType: string | null, providerId: string | null) => InventoryQueryDouble
+  (workloadType: string | null, providerId: string | null, options?: { vmwareNamePrefix?: string }) => InventoryQueryDouble
 >()
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -19,11 +20,13 @@ vi.mock('../hooks/useRecoveryGroupResourceInventory', () => ({
   useRecoveryGroupResourceInventory: (
     workloadType: string | null,
     providerId: string | null,
-  ) => useRecoveryGroupResourceInventory(workloadType, providerId),
+    options?: { vmwareNamePrefix?: string },
+  ) => useRecoveryGroupResourceInventory(workloadType, providerId, options),
 }))
 
 describe('RecoveryGroupResourcesStep', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     useRecoveryGroupResourceInventory.mockReturnValue({
       data: { resourceNames: [] },
       error: null,
@@ -61,7 +64,11 @@ describe('RecoveryGroupResourcesStep', () => {
     )
 
     expect(screen.getByText(resourceName)).toBeInTheDocument()
-    expect(useRecoveryGroupResourceInventory).toHaveBeenCalledWith(workloadType, providerId)
+    expect(useRecoveryGroupResourceInventory).toHaveBeenLastCalledWith(
+      workloadType,
+      providerId,
+      { vmwareNamePrefix: '' },
+    )
   })
 
   it('shows a retryable inventory error', () => {
@@ -85,5 +92,127 @@ describe('RecoveryGroupResourcesStep', () => {
 
     expect(screen.getByText('Recovery group resources could not be loaded')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+  })
+
+  it('passes VMware search text to the inventory hook without filtering its server result locally', async () => {
+    const user = userEvent.setup()
+    useRecoveryGroupResourceInventory.mockReturnValue({
+      data: { resourceNames: ['DB-01'] },
+      error: null,
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    })
+
+    render(
+      <RecoveryGroupResourcesStep
+        workloadType="vmware_virtual_machines"
+        providerId="vmware-1"
+        resources={['SELECTED-VM']}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    )
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search virtual machines' }), 'WEB')
+
+    expect(useRecoveryGroupResourceInventory).toHaveBeenLastCalledWith(
+      'vmware_virtual_machines',
+      'vmware-1',
+      { vmwareNamePrefix: 'WEB' },
+    )
+    expect(screen.getByText('DB-01')).toBeInTheDocument()
+    expect(screen.getByText('SELECTED-VM')).toBeInTheDocument()
+  })
+
+  it('clears VMware search text when its provider scope changes', async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(
+      <RecoveryGroupResourcesStep
+        workloadType="vmware_virtual_machines"
+        providerId="vmware-1"
+        resources={[]}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    )
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search virtual machines' }), 'WEB')
+    rerender(
+      <RecoveryGroupResourcesStep
+        workloadType="vmware_virtual_machines"
+        providerId="vmware-2"
+        resources={[]}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    )
+
+    expect(useRecoveryGroupResourceInventory).toHaveBeenLastCalledWith(
+      'vmware_virtual_machines',
+      'vmware-2',
+      { vmwareNamePrefix: '' },
+    )
+  })
+
+  it('keeps IBM Power search local', async () => {
+    const user = userEvent.setup()
+    useRecoveryGroupResourceInventory.mockReturnValue({
+      data: { resourceNames: ['LPAR-01'] },
+      error: null,
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    })
+
+    render(
+      <RecoveryGroupResourcesStep
+        workloadType="ibm_power_virtual_machines"
+        providerId="power-1"
+        resources={[]}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    )
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search virtual machines' }), 'WEB')
+
+    expect(useRecoveryGroupResourceInventory).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText('LPAR-01')).not.toBeInTheDocument()
+  })
+
+  it('keeps available and selected resources in independent scroll regions', () => {
+    useRecoveryGroupResourceInventory.mockReturnValue({
+      data: { resourceNames: ['VM-01'] },
+      error: null,
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    })
+
+    const { container } = render(
+      <RecoveryGroupResourcesStep
+        workloadType="vmware_virtual_machines"
+        providerId="vmware-1"
+        resources={['VM-01']}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    )
+
+    expect(container.firstElementChild?.children[0]).toHaveClass('h-72', 'min-h-0', 'overflow-hidden', 'lg:h-full')
+    expect(container.firstElementChild?.children[1]).toHaveClass('flex', 'h-72', 'min-h-0', 'flex-col', 'lg:h-full')
+    expect(screen.getByRole('list', { name: 'Available virtual machines' }).parentElement).toHaveClass(
+      'custom-scrollbar',
+      'min-h-0',
+      'flex-1',
+      'overflow-y-auto',
+    )
+    expect(screen.getByLabelText('Selected recovery group virtual machines')).toHaveClass(
+      'custom-scrollbar',
+      'min-h-0',
+      'flex-1',
+      'overflow-y-auto',
+    )
   })
 })

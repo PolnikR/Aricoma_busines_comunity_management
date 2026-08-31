@@ -69,6 +69,13 @@ let virtualMachineQuery = {
   cluster: '', tags: [] as string[], untagged: false,
 }
 
+function parseRequestBody(init: RequestInit): Record<string, unknown> {
+  if (typeof init.body !== 'string') throw new Error('Expected a JSON request body')
+  const parsed: unknown = JSON.parse(init.body)
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Expected a JSON object request body')
+  return parsed as Record<string, unknown>
+}
+
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory')>()
@@ -198,7 +205,9 @@ describe('ResourcesPage', () => {
     virtualMachineSearchParamsInitialized = false
     const view = render(<ResourcesPage />)
 
-    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith('vmware-01', '', undefined, false)
+    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith({
+      providerId: 'vmware-01', namePrefix: '', enabled: false,
+    })
 
     virtualMachineQuery = {
       ...virtualMachineQuery,
@@ -208,8 +217,12 @@ describe('ResourcesPage', () => {
     virtualMachineSearchParamsInitialized = true
     view.rerender(<ResourcesPage />)
 
-    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith('vmware-01', 'DEFAULT-', 'default-tag', true)
-    expect(vmwareResourceInventorySpy).not.toHaveBeenCalledWith('vmware-01', '', undefined, true)
+    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith({
+      providerId: 'vmware-01', namePrefix: 'DEFAULT-', tag: 'default-tag', enabled: true,
+    })
+    expect(vmwareResourceInventorySpy).not.toHaveBeenCalledWith({
+      providerId: 'vmware-01', namePrefix: '', enabled: true,
+    })
   })
 
   it('scopes provider defaults, URL filters, tags, and inventory to the selected source VMware provider', () => {
@@ -236,12 +249,9 @@ describe('ResourcesPage', () => {
       vmPrefix: 'SELECTED-',
       vmTags: ['selected-tag'],
     })
-    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith(
-      'vmware-02',
-      'url-prefix',
-      'url-tag',
-      true,
-    )
+    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith({
+      providerId: 'vmware-02', namePrefix: 'url-prefix', tag: 'url-tag', enabled: true,
+    })
     expect(vmwareTagsSpy).toHaveBeenLastCalledWith('vmware-02', true)
   })
 
@@ -282,15 +292,15 @@ describe('ResourcesPage', () => {
     vi.useFakeTimers()
     useStatefulVirtualMachineSearchParams = true
     useRealVmwareResourceInventory = true
-    const fetchMock = vi.fn((url: string) => {
-      if (url.includes('prefix=sdf')) return Promise.resolve(new Response(JSON.stringify({ count: 0, vms: [] }), { status: 200 }))
+    const fetchMock = vi.fn((url: string, init: RequestInit) => {
+      if (parseRequestBody(init)['name_prefix'] === 'sdf') return Promise.resolve(new Response(JSON.stringify({ count: 0, vms: [] }), { status: 200 }))
       throw new Error(`Unexpected request: ${url}`)
     })
     vi.stubGlobal('fetch', fetchMock)
     const queryClient = new QueryClient({
       defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false, retryDelay: 1 } },
     })
-    queryClient.setQueryData(discoveryInventoryKeys.inventory('vmware-01'), { reportedCount: 0, virtualMachines: [] })
+    queryClient.setQueryData(discoveryInventoryKeys.vmwareSearch({ providerId: 'vmware-01' }), { reportedCount: 0, virtualMachines: [] })
 
     render(<QueryClientProvider client={queryClient}><ResourcesPage /></QueryClientProvider>)
 
@@ -316,7 +326,7 @@ describe('ResourcesPage', () => {
     expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBe(search)
     expect(search).toHaveFocus()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-    expect(fetchMock.mock.calls.filter(([url]) => url.includes('prefix=sdf&')).length).toBe(1)
+    expect(fetchMock.mock.calls.filter(([, init]) => parseRequestBody(init)['name_prefix'] === 'sdf').length).toBe(1)
 
     await act(async () => { await vi.advanceTimersByTimeAsync(1) })
     expect(screen.getByText('No virtual machines found')).toBeInTheDocument()

@@ -10,7 +10,8 @@ import { useInfrastructureInventory } from './useInfrastructureInventory'
 vi.mock('../../resources/api/powerInventoryApi', () => ({
   fetchPowerInventory: vi.fn(),
 }))
-vi.mock('../../resources/api/vmwareInventoryApi', () => ({
+vi.mock('../../resources/api/vmwareInventoryApi', async (importOriginal) => ({
+  ...await importOriginal<typeof import('../../resources/api/vmwareInventoryApi')>(),
   fetchVmwareInventory: vi.fn(),
 }))
 
@@ -40,7 +41,7 @@ describe('useInfrastructureInventory', () => {
     const { result } = renderHook(() => useInfrastructureInventory(selected), { wrapper })
 
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
-    expect(fetchVmwareInventory).toHaveBeenCalledWith('vcenter-01')
+    expect(fetchVmwareInventory).toHaveBeenCalledWith({ providerId: 'vcenter-01' })
     expect(fetchPowerInventory).not.toHaveBeenCalled()
   })
 

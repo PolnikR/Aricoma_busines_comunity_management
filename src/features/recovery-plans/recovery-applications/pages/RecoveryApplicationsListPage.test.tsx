@@ -155,6 +155,12 @@ describe('RecoveryApplicationsListPage', () => {
       </QueryClientProvider>,
     )
     expect(screen.getByRole('status', { name: 'Loading recovery applications...' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Recovery Applications' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Create Application' })).toBeVisible()
+    expect(screen.getByRole('searchbox', { name: 'Search applications' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Application' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Environment' })).toBeVisible()
+    expect(screen.getByRole('combobox', { name: 'Rows per page' })).toBeDisabled()
     query = { ...query, isLoading: false, error: new Error('offline') }
     view.rerender(
       <QueryClientProvider client={client}>

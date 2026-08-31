@@ -19,6 +19,25 @@ vi.mock('./CredentialCreateModal', () => ({
 }))
 
 describe('CredentialsTable', () => {
+  it('keeps credential table chrome visible and skeletonizes only rows while loading', () => {
+    render(
+      <CredentialsTable
+        credentials={[]}
+        isLoading
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('searchbox', { name: 'Search credentials' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Credential' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Description' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Username' })).toBeVisible()
+    expect(screen.getByRole('status', { name: 'Loading credentials' })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByRole('combobox', { name: 'Rows per page' })).toBeDisabled()
+  })
+
   it('keeps the table toolbar available and retries when loading credentials fails', async () => {
     const user = userEvent.setup()
     const onRetry = vi.fn()

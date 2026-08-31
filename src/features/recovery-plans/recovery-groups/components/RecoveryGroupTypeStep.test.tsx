@@ -35,6 +35,26 @@ const availableProviders = [
 ]
 
 describe('RecoveryGroupTypeStep', () => {
+  it('keeps known copy visible and disables category selection while providers load', () => {
+    render(
+      <RecoveryGroupTypeStep
+        providers={[]}
+        isLoadingProviders
+        providerError={null}
+        onRetryProviders={vi.fn()}
+        sourceCategory={null}
+        selected={null}
+        onCategoryChange={vi.fn()}
+        onSelect={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Resource type')).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Compute workloads' })).toBeDisabled()
+    expect(screen.getByRole('status', { name: 'Loading available resource types' })).toBeInTheDocument()
+    expect(screen.queryByText('No resource types available')).not.toBeInTheDocument()
+  })
+
   it('shows one compute card per healthy supported provider type', async () => {
     const user = userEvent.setup()
     const onSelect = vi.fn()

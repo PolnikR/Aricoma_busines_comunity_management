@@ -23,7 +23,7 @@ describe('DataTableSkeleton', () => {
     const skeleton = screen.getByRole('status')
     const table = within(skeleton).getByRole('table', { hidden: true })
     expect(table).toHaveClass('w-full', 'table-fixed')
-    expect(table.parentElement).toHaveClass('overflow-x-hidden')
+    expect(table.parentElement).toHaveClass('min-h-0', 'overflow-hidden')
   })
 
   it('can omit the toolbar and pagination', () => {

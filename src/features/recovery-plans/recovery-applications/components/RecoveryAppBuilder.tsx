@@ -29,6 +29,7 @@ interface RecoveryAppBuilderProps {
   isSaving?: boolean
   initialData?: RecoveryApplicationFormState
   disableFileName?: boolean
+  isInitialLoading?: boolean
 }
 
 const DEFAULT_TIERS: Record<string, DraftRecoveryTier> = {
@@ -71,6 +72,7 @@ export function RecoveryAppBuilder({
   isSaving,
   initialData,
   disableFileName = false,
+  isInitialLoading = false,
 }: RecoveryAppBuilderProps) {
   const { t } = useTranslation()
   const [step, setStep] = useState(1)
@@ -275,6 +277,7 @@ export function RecoveryAppBuilder({
   }
 
   return (
+    <fieldset className="contents" disabled={isInitialLoading} aria-busy={isInitialLoading}>
     <div className="flex min-h-0 flex-1 p-4">
       <div className="grid min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-surface shadow-sm lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="custom-scrollbar min-h-0 overflow-x-hidden overflow-y-auto border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
@@ -318,7 +321,7 @@ export function RecoveryAppBuilder({
                   <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.tiers.description')}</p>
                 </div>
                 <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-lg border border-border lg:grid-cols-[280px_minmax(0,1fr)]">
-                  <div className="custom-scrollbar overflow-y-auto border-b border-border lg:border-b-0 lg:border-r">
+                  <div className="custom-scrollbar min-h-0 overflow-y-auto border-b border-border lg:border-b-0 lg:border-r">
                     <ResourceSidebar
                       items={sidebarItems}
                       itemLabels={groupLabels}
@@ -338,7 +341,7 @@ export function RecoveryAppBuilder({
                       onRetry={() => { void refreshGroups() }}
                     />
                   </div>
-                  <div className="custom-scrollbar overflow-y-auto p-4">
+                  <div className="custom-scrollbar min-h-0 overflow-y-auto p-4">
                     <TierCanvas
                       tiers={tierCanvasTiers}
                       recoveryGroupVmOptions={recoveryGroupVmOptions}
@@ -482,5 +485,6 @@ export function RecoveryAppBuilder({
         </div>
       </div>
     </div>
+    </fieldset>
   )
 }

@@ -1,14 +1,16 @@
 import type {
   DiscoveryNotificationRecipient,
-  DiscoverySettings,
+  DiscoveryNotificationSettings,
+  DiscoveryScheduleSettings,
 } from '../model/discoverySettingsTypes'
 
-export const DEFAULT_DISCOVERY_SETTINGS: DiscoverySettings = {
+export const DEFAULT_DISCOVERY_SCHEDULE_SETTINGS: DiscoveryScheduleSettings = {
   scheduleEnabled: true,
   frequency: '1 hour',
   timezone: 'Europe/Bratislava (UTC+02:00)',
-  retention: '30 days',
-  customRetentionDays: 45,
+}
+
+export const DEFAULT_DISCOVERY_NOTIFICATION_SETTINGS: DiscoveryNotificationSettings = {
   notificationsEnabled: true,
   recipientId: 'nina',
 }

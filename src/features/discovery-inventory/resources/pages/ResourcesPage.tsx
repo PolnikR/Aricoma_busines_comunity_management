@@ -10,6 +10,7 @@ import type { SourceResourcesPageProps } from '../components/SourceResourcesPage
 import { buildResourceSourceTabs, formatResourceProviderId } from '../helpers/buildResourceSourceTabs'
 import { VmwareResourcesPage } from '../components/vmware/VmwareResourcesPage'
 import { useResourceTabSearchParam } from '../hooks/useResourceTabSearchParam'
+import { ResourceViewportFrame } from '../components/ResourceViewportFrame'
 
 export function ResourcesPage() {
   const { t } = useTranslation()
@@ -41,7 +42,7 @@ export function ResourcesPage() {
 
   if (providersSuccess && visibleRoleTabs.length === 0) {
     return (
-      <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+      <ResourceViewportFrame>
         <TableToolbar
           eyebrow={t('pages.virtualMachines.eyebrow')}
           title={t('pages.virtualMachines.title')}
@@ -53,7 +54,7 @@ export function ResourcesPage() {
           title={t('resources.common.noProviderTitle')}
           description={t('resources.common.noProviderDescription')}
         />
-      </div>
+      </ResourceViewportFrame>
     )
   }
 

@@ -224,13 +224,10 @@ describe('ResourcesIsePage', () => {
           tags: [{ id: 'server-tag', name: 'server-tag' }],
         }), { status: 200 }))
       }
-      if (url === '/api/vms_by_tag?tag=recovery&provider_id=vmware-target-01') {
+      if (url === '/api/vms/search?provider_id=vmware-target-01') {
         return Promise.resolve(new Response(JSON.stringify({
-          count: 2,
-          vms: [
-            { name: 'DR-recovery-01', tags: ['recovery'] },
-            { name: 'OTHER-01', tags: ['recovery'] },
-          ],
+          count: 1,
+          vms: [{ name: 'DR-recovery-01', tags: ['recovery'] }],
         }), { status: 200 }))
       }
       return Promise.reject(new Error(`Unexpected request: ${url}`))
@@ -246,8 +243,8 @@ describe('ResourcesIsePage', () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
-        '/api/vms_by_tag?tag=recovery&provider_id=vmware-target-01',
-        expect.any(Object),
+        '/api/vms/search?provider_id=vmware-target-01',
+        expect.objectContaining({ method: 'POST', body: JSON.stringify({ tag: 'recovery', name_prefix: 'DR-' }) }),
       )
     })
     await waitFor(() => { expect(screen.getByText('DR-recovery-01')).toBeInTheDocument() })
@@ -275,7 +272,7 @@ describe('ResourcesIsePage', () => {
           ? Promise.resolve(new Response('tags unavailable', { status: 500 }))
           : Promise.resolve(new Response(JSON.stringify({ count: 0, tags: [] }), { status: 200 }))
       }
-      if (url === '/api/vms_by_tag?tag=recovery&provider_id=vmware-target-01') {
+      if (url === '/api/vms/search?provider_id=vmware-target-01') {
         return Promise.resolve(new Response(JSON.stringify({
           count: 1,
           vms: [{ name: 'DR-recovery-01', tags: ['recovery'] }],
@@ -294,8 +291,8 @@ describe('ResourcesIsePage', () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
-        '/api/vms_by_tag?tag=recovery&provider_id=vmware-target-01',
-        expect.any(Object),
+        '/api/vms/search?provider_id=vmware-target-01',
+        expect.objectContaining({ method: 'POST', body: JSON.stringify({ tag: 'recovery', name_prefix: 'DR-' }) }),
       )
       expect(screen.getByText('DR-recovery-01')).toBeInTheDocument()
     })
@@ -329,12 +326,9 @@ describe('ResourcesIsePage', () => {
       vmPrefix: 'TARGET-SELECTED-',
       vmTags: ['target-selected-tag'],
     })
-    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith(
-      'vmware-target-02',
-      'ise-url-prefix',
-      'ise-url-tag',
-      true,
-    )
+    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith({
+      providerId: 'vmware-target-02', namePrefix: 'ise-url-prefix', tag: 'ise-url-tag', enabled: true,
+    })
     expect(vmwareTagsSpy).toHaveBeenLastCalledWith('vmware-target-02', true)
   })
 

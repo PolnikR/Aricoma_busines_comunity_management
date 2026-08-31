@@ -45,6 +45,24 @@ const partialPolicySet: PolicySet = {
 }
 
 describe('PolicySetsTable', () => {
+  it('keeps its static toolbar and headers visible while policy-set rows load', () => {
+    render(
+      <PolicySetsTable
+        policySets={[]}
+        isLoading
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('searchbox', { name: 'Search policy sets' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Policies' })).toBeVisible()
+    expect(screen.getByRole('status', { name: 'Loading policy sets' })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByRole('combobox', { name: 'Rows per page' })).toBeDisabled()
+  })
+
   it('keeps pagination outside a desktop-only table scroll region', () => {
     const { container } = render(
       <PolicySetsTable
@@ -60,7 +78,7 @@ describe('PolicySetsTable', () => {
     const scrollRegion = tableLayout?.children.item(1)
 
     expect(tableLayout).toHaveClass('min-h-0', 'min-w-0', 'flex-1')
-    expect(scrollRegion).toHaveClass('custom-scrollbar', 'min-h-0', 'flex-1', 'lg:overflow-y-auto')
+    expect(scrollRegion).toHaveClass('custom-scrollbar', 'min-h-[120px]', 'flex-1', 'lg:overflow-y-auto')
     expect(scrollRegion).not.toHaveClass('overflow-y-auto')
     expect(screen.getByText('Showing 1-1 of 1')).toBeInTheDocument()
   })

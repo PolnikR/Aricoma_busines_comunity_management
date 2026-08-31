@@ -6,7 +6,6 @@ import {
   DataTable,
   DataTablePagination,
   DataTableRequestState,
-  DataTableSkeleton,
   DataTableToolbar,
   DetailDrawer,
   DetailRow,
@@ -102,10 +101,6 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
   const deleteErrorDetail = extractBackendErrorDetail(deletePolicySet.error)
   const loadErrorDetail = extractBackendErrorDetail(error)
 
-  if (isLoading) {
-    return <DataTableSkeleton columnCount={4} ariaLabel={t('policySets.loading')} className="flex-1 rounded-none border-0 shadow-none lg:min-h-0" />
-  }
-
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <DataTableToolbar
@@ -126,7 +121,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         />
       ) : null}
 
-      <div className="custom-scrollbar flex min-h-0 flex-1 flex-col lg:overflow-y-auto">
+      <div className="custom-scrollbar flex min-h-[120px] flex-1 flex-col lg:overflow-y-auto">
         <DataTableRequestState
           hasCachedData={policySets.length > 0}
           error={error ? {
@@ -140,10 +135,11 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
           <DataTable
             columns={getColumns(t, setJsonViewId)}
             rows={table.pageItems}
+            isLoading={isLoading}
             rowKey={policySet => policySet.id}
             density={table.density}
             minWidthClassName="min-w-200"
-            ariaLabel={t('policySets.tableLabel')}
+            ariaLabel={isLoading ? t('policySets.loading') : t('policySets.tableLabel')}
             rowAriaLabel={policySet => policySet.name}
             onRowClick={policySet => { setSelectedId(policySet.id) }}
             selectedRowKey={selectedId}
@@ -157,6 +153,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
           page={table.page}
           pageSize={table.pageSize}
           total={table.total}
+          isLoading={isLoading}
           onPageChange={table.setPage}
           onPageSizeChange={table.setPageSize}
         />

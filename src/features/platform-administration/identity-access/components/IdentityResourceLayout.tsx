@@ -17,8 +17,8 @@ export function IdentityContentPanel({ children }: IdentityContentPanelProps) {
 
 interface IdentityResourceHeaderProps {
   eyebrow?: string
-  title: string
-  description?: string
+  title: ReactNode
+  description?: ReactNode
   actions?: ReactNode
   backLabel?: string
   onBack?: () => void

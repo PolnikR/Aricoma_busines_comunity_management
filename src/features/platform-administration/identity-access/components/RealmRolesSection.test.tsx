@@ -24,6 +24,17 @@ function renderSection(overrides?: Partial<Parameters<typeof RealmRolesSection>[
 }
 
 describe('RealmRolesSection', () => {
+  it('keeps role search and column labels visible while API rows load', () => {
+    vi.mocked(useRolesPermissions).mockReturnValue({ data: undefined, isLoading: true, error: null, refetch: vi.fn() } as never)
+    vi.mocked(useUsers).mockReturnValue({ data: [], isLoading: false, error: null, refetch: vi.fn() })
+    renderSection()
+
+    expect(screen.getByRole('searchbox', { name: 'Search roles' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Role name' })).toBeVisible()
+    expect(screen.getByRole('columnheader', { name: 'Permissions' })).toBeVisible()
+    expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true')
+  })
+
   it('uses the shared list/search pattern without generic permission counts', async () => {
     mockLoadedRoles([role, { ...role, id: 'role-viewer', name: 'Viewer', permissions: [] }])
     const props = renderSection()
@@ -31,7 +42,7 @@ describe('RealmRolesSection', () => {
     const rolesTable = screen.getByLabelText('Realm roles')
     const scrollRegion = rolesTable.parentElement
     expect(rolesTable).toBeInTheDocument()
-    expect(scrollRegion).toHaveClass('min-h-0', 'flex-1', 'lg:overflow-y-auto')
+    expect(scrollRegion).toHaveClass('min-h-[120px]', 'flex-1', 'lg:overflow-y-auto')
     expect(scrollRegion).not.toContainElement(screen.getByLabelText('Rows per page'))
     expect(screen.queryByText('Manage realm-level roles')).not.toBeInTheDocument()
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search roles' }), 'viewer')

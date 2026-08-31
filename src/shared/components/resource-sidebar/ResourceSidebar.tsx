@@ -20,6 +20,8 @@ interface ResourceSidebarProps {
   staleErrorDescription: string
   retryLabel: string
   onRetry?: () => void
+  searchValue?: string
+  onSearchChange?: (value: string) => void
 }
 
 export function ResourceSidebar({
@@ -39,19 +41,23 @@ export function ResourceSidebar({
   staleErrorDescription,
   retryLabel,
   onRetry,
+  searchValue,
+  onSearchChange,
 }: ResourceSidebarProps) {
   const [search, setSearch] = useState('')
+  const isServerSearch = searchValue !== undefined && onSearchChange !== undefined
+  const currentSearch = isServerSearch ? searchValue : search
   const normalizedItems = useMemo(
     () => Array.from(new Set(items)).sort(),
     [items],
   )
   const filteredItems = useMemo(
-    () => normalizedItems.filter((item) => {
+    () => isServerSearch ? normalizedItems : normalizedItems.filter((item) => {
       const query = search.toLowerCase()
       return item.toLowerCase().includes(query)
         || itemLabels[item]?.toLowerCase().includes(query)
     }),
-    [itemLabels, normalizedItems, search],
+    [isServerSearch, itemLabels, normalizedItems, search],
   )
   const handleRetry = () => { onRetry?.() }
 
@@ -63,14 +69,20 @@ export function ResourceSidebar({
           type="search"
           aria-label={searchPlaceholder}
           placeholder={searchPlaceholder}
-          value={search}
+          value={currentSearch}
           disabled={isLoading}
-          onChange={event => { setSearch(event.target.value) }}
+          onChange={event => {
+            if (isServerSearch) {
+              onSearchChange(event.target.value)
+            } else {
+              setSearch(event.target.value)
+            }
+          }}
           size="sm"
           className="text-xs"
         />
       </div>
-      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-2">
+      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-2" aria-busy={isLoading}>
         {isLoading ? (
           <ListSkeleton rowCount={8} ariaLabel={loadingLabel} />
         ) : error && normalizedItems.length === 0 ? (
@@ -95,7 +107,7 @@ export function ResourceSidebar({
             ) : null}
             {filteredItems.length === 0 ? (
               <div className="py-4 text-center text-xs text-text-subtle">
-                {search ? noMatchesLabel : noItemsLabel}
+                {currentSearch ? noMatchesLabel : noItemsLabel}
               </div>
             ) : (
               <div role="list" aria-label={title}>

@@ -171,6 +171,7 @@ function renderProvidersConnectorsRoutes(pages: typeof providersConnectorsPages)
         <Route
           key={page.path}
           path={toRoutePath(page.path)}
+          handle={{ contentScroll: 'contained' }}
           element={(
             <Suspense fallback={<RouteLoadingSkeleton />}>
               <DiscoverySettingsPage />
@@ -246,6 +247,7 @@ export function AppRoutes() {
             />
             <Route
               path="create"
+              handle={{ contentScroll: 'contained' }}
               element={
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryGroupBuilderPage />
@@ -254,6 +256,7 @@ export function AppRoutes() {
             />
             <Route
               path=":id/edit"
+              handle={{ contentScroll: 'contained' }}
               element={
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryGroupEditorPage />
@@ -272,6 +275,7 @@ export function AppRoutes() {
             />
             <Route
               path="create"
+              handle={{ contentScroll: 'contained' }}
               element={
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryApplicationBuilderPage />
@@ -280,6 +284,7 @@ export function AppRoutes() {
             />
             <Route
               path=":id/edit"
+              handle={{ contentScroll: 'contained' }}
               element={
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryApplicationEditorPage />
@@ -370,8 +375,8 @@ export function AppRoutes() {
           <Route path="*" element={<Navigate to={routes.recoveryActionValidate} replace />} />
         </Route>
         <Route path="discovery-inventory" element={<Navigate to={routes.resources} replace />} />
-        <Route path={toRoutePath(routes.resources)} element={<ResourcesPage />} />
-        <Route path={toRoutePath(routes.resourcesIse)} element={<ResourcesIsePage />} />
+        <Route path={toRoutePath(routes.resources)} handle={{ contentScroll: 'contained' }} element={<ResourcesPage />} />
+        <Route path={toRoutePath(routes.resourcesIse)} handle={{ contentScroll: 'contained' }} element={<ResourcesIsePage />} />
         <Route path={toRoutePath(routes.resourcesRoleSourceLegacy)} element={<Navigate to={routes.resources} replace />} />
         <Route path={toRoutePath(routes.resourcesRoleTargetLegacy)} element={<Navigate to={routes.resourcesIse} replace />} />
         <Route path="discovery-inventory/virtual-machines" element={<Navigate to={routes.resources} replace />} />

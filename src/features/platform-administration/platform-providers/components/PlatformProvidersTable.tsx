@@ -7,7 +7,6 @@ import { ExternalLinkIcon } from '@/shared/icons/Icons'
 import {
   DataTable,
   DataTablePagination,
-  DataTableSkeleton,
   DataTableToolbar,
   DataTableRequestState,
   DetailDrawer,
@@ -126,16 +125,6 @@ export function PlatformProvidersTable({
   const columns = getColumns(t, setJsonViewId)
   const table = useTableState(rows, { searchFields: ['name', 'id', 'ipAddress'] })
 
-  if (isLoading) {
-    return (
-      <DataTableSkeleton
-        columnCount={7}
-        ariaLabel={t('platformProviders.loading')}
-        className="flex-1 rounded-none border-0 shadow-none lg:min-h-0"
-      />
-    )
-  }
-
   return (
     <div className="flex flex-col">
       {deleteProvider.error ? (
@@ -168,10 +157,11 @@ export function PlatformProvidersTable({
         <DataTable
           columns={columns}
           rows={table.pageItems}
+          isLoading={isLoading}
           rowKey={(provider) => provider.id}
           density={table.density}
           minWidthClassName="min-w-245"
-          ariaLabel={t('platformProviders.tableLabel')}
+          ariaLabel={isLoading ? t('platformProviders.loading') : t('platformProviders.tableLabel')}
           onRowClick={(provider) => { setSelectedId(provider.id) }}
           selectedRowKey={selectedId}
           emptyContent={rows.length > 0 ? t('platformProviders.noMatches') : t('platformProviders.empty')}
@@ -183,6 +173,7 @@ export function PlatformProvidersTable({
           page={table.page}
           pageSize={table.pageSize}
           total={table.total}
+          isLoading={isLoading}
           onPageChange={table.setPage}
           onPageSizeChange={table.setPageSize}
         />

@@ -1,11 +1,11 @@
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
-import { MetricsSkeleton } from '@/shared/components/stat-card/StatCard'
 import { getProvidersByTypeAndRole } from '@/features/providers-connectors/providers/utils/providerFilters'
 import { useResourceInventoryQueries } from '../../hooks/useResourceInventoryQueries'
 import { ResourceInventoryShell } from '../ResourceInventoryShell'
 import { ResourceInventoryLoading, ResourceInventoryState } from '../ResourceInventoryStates'
+import { ResourceViewportFrame } from '../ResourceViewportFrame'
 import type { SourceResourcesPageProps } from '../SourceResourcesPageProps'
 import { PowerMetrics } from '../SourceInventoryMetrics'
 import { PowerInventoryView } from './PowerInventoryView'
@@ -25,13 +25,12 @@ export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
   const hasData = sourceQuery.powerResources.length > 0
   const requestFailed = sourceQuery.hasProviders && sourceQuery.failures.length > 0 && !hasData
   const sourceLoading = providersSuccess && sourceProviders.length > 0 && sourceQuery.isLoading
-  const metrics = providersPending || sourceLoading
-    ? <MetricsSkeleton />
-    : providersError || sourceProviders.length === 0 || requestFailed
+  const metrics = providersError || (!providersPending && sourceProviders.length === 0) || requestFailed
       ? null
       : (
           <PowerMetrics
             resources={sourceQuery.powerResources}
+            isLoading={providersPending || sourceLoading}
             labels={{
               total: t('resources.power.metrics.total'),
               active: t('resources.power.metrics.running'),
@@ -91,7 +90,7 @@ export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
   }
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <ResourceViewportFrame>
       <TableToolbar
         eyebrow={t(role === 'target' ? 'pages.resourcesIse.eyebrow' : 'pages.virtualMachines.eyebrow')}
         title={t('resources.power.title')}
@@ -111,6 +110,6 @@ export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
       >
         {content}
       </ResourceInventoryShell>
-    </div>
+    </ResourceViewportFrame>
   )
 }
