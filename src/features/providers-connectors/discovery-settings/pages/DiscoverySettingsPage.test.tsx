@@ -10,12 +10,14 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 
 const api = vi.hoisted(() => ({
   fetchDiscoveryCacheConfig: vi.fn(),
+  fetchDiscoveryCacheHistory: vi.fn(),
   updateDiscoveryCacheConfig: vi.fn(),
 }))
 
 vi.mock('../api/discoveryCacheApi', async importOriginal => ({
   ...await importOriginal<typeof import('../api/discoveryCacheApi')>(),
   fetchDiscoveryCacheConfig: api.fetchDiscoveryCacheConfig,
+  fetchDiscoveryCacheHistory: api.fetchDiscoveryCacheHistory,
   updateDiscoveryCacheConfig: api.updateDiscoveryCacheConfig,
 }))
 
@@ -79,6 +81,39 @@ describe('DiscoverySettingsPage', () => {
     expect(api.updateDiscoveryCacheConfig).not.toHaveBeenCalled()
     expect(within(schedule).getByRole('status')).toHaveTextContent('Schedule saved locally.')
     expect(within(schedule).getByRole('button', { name: 'Save schedule' })).toBeDisabled()
+  })
+
+  it('persists notification edits locally and restores the saved baseline on Cancel', async () => {
+    const user = userEvent.setup()
+    renderPage('/providers-connectors/discovery-settings?tab=notifications')
+    const notifications = screen.getByRole('region', { name: 'Failure notifications' })
+    const recipient = within(notifications).getByLabelText('Notification recipient')
+
+    expect(api.fetchDiscoveryCacheConfig).not.toHaveBeenCalled()
+    expect(api.fetchDiscoveryCacheHistory).not.toHaveBeenCalled()
+
+    await user.selectOptions(recipient, 'martin')
+    await user.click(within(notifications).getByRole('button', { name: 'Save notification changes' }))
+    await user.selectOptions(recipient, 'jana')
+    await user.click(within(notifications).getByRole('button', { name: 'Cancel notification changes' }))
+
+    expect(recipient).toHaveValue('martin')
+    expect(within(notifications).getByRole('status')).toHaveTextContent('Notification changes discarded locally.')
+    expect(api.updateDiscoveryCacheConfig).not.toHaveBeenCalled()
+  })
+
+  it('prepares a local notification test for the selected recipient without cache requests', async () => {
+    const user = userEvent.setup()
+    renderPage('/providers-connectors/discovery-settings?tab=notifications')
+    const notifications = screen.getByRole('region', { name: 'Failure notifications' })
+
+    await user.selectOptions(within(notifications).getByLabelText('Notification recipient'), 'martin')
+    await user.click(within(notifications).getByRole('button', { name: 'Send test' }))
+
+    expect(within(notifications).getByRole('status')).toHaveTextContent('Test notification prepared for martin.horvath@example.com.')
+    expect(api.fetchDiscoveryCacheConfig).not.toHaveBeenCalled()
+    expect(api.fetchDiscoveryCacheHistory).not.toHaveBeenCalled()
+    expect(api.updateDiscoveryCacheConfig).not.toHaveBeenCalled()
   })
 
   it('sends only the changed TTL and adopts the response without another GET', async () => {

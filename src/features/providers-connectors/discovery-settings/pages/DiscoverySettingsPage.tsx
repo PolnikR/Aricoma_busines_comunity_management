@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
+import { Card, CardDescription, CardTitle } from '@/shared/components/card/Card'
 import { SkeletonBlock } from '@/shared/components/data-table'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { Field, Input } from '@/shared/components/form/FormControls'
@@ -47,11 +48,14 @@ export function DiscoverySettingsPage() {
   const [savedScheduleSettings, setSavedScheduleSettings] = useState<DiscoveryScheduleSettings>(DEFAULT_DISCOVERY_SCHEDULE_SETTINGS)
   const [scheduleStatus, setScheduleStatus] = useState(() => t('pages.discoverySettings.schedule.status.localOnly'))
   const [notificationSettings, setNotificationSettings] = useState<DiscoveryNotificationSettings>(DEFAULT_DISCOVERY_NOTIFICATION_SETTINGS)
+  const [savedNotificationSettings, setSavedNotificationSettings] = useState<DiscoveryNotificationSettings>(DEFAULT_DISCOVERY_NOTIFICATION_SETTINGS)
+  const [notificationStatus, setNotificationStatus] = useState(() => t('pages.discoverySettings.notifications.status.localOnly'))
   const [cacheStatus, setCacheStatus] = useState(() => t('pages.discoverySettings.cache.status.noChanges'))
   const cacheQuery = useDiscoveryCacheConfig({ enabled: tab === 'configuration' })
   const updateCacheConfig = useUpdateDiscoveryCacheConfig()
   const cacheDraft = useDiscoveryCacheConfigDraft(cacheQuery.data)
   const isScheduleDirty = JSON.stringify(scheduleSettings) !== JSON.stringify(savedScheduleSettings)
+  const isNotificationDirty = JSON.stringify(notificationSettings) !== JSON.stringify(savedNotificationSettings)
   const canSaveCache = cacheDraft.isDirty
     && cacheDraft.validation?.isValid === true
     && cacheDraft.patch !== null
@@ -75,6 +79,27 @@ export function DiscoverySettingsPage() {
   const cancelSchedule = () => {
     setScheduleSettings(savedScheduleSettings)
     setScheduleStatus(t('pages.discoverySettings.schedule.status.discarded'))
+  }
+
+  const updateNotificationSettings = (patch: Partial<DiscoveryNotificationSettings>) => {
+    setNotificationSettings(current => ({ ...current, ...patch }))
+    setNotificationStatus(t('pages.discoverySettings.notifications.status.unsaved'))
+  }
+
+  const saveNotifications = () => {
+    setSavedNotificationSettings(notificationSettings)
+    setNotificationStatus(t('pages.discoverySettings.notifications.status.saved'))
+  }
+
+  const cancelNotifications = () => {
+    setNotificationSettings(savedNotificationSettings)
+    setNotificationStatus(t('pages.discoverySettings.notifications.status.discarded'))
+  }
+
+  const prepareTestNotification = () => {
+    const recipient = DISCOVERY_NOTIFICATION_RECIPIENTS.find(item => item.id === notificationSettings.recipientId)
+    if (!recipient) return
+    setNotificationStatus(t('pages.discoverySettings.status.testNotificationPrepared', { email: recipient.email }))
   }
 
   const markCacheChanged = () => {
@@ -128,6 +153,20 @@ export function DiscoverySettingsPage() {
           {updateCacheConfig.isPending
             ? t('pages.discoverySettings.cache.actions.saving')
             : t('pages.discoverySettings.cache.actions.save')}
+        </Button>
+      </div>
+    </div>
+  )
+
+  const notificationsFooter = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-xs text-text-muted" role="status" aria-live="polite">{notificationStatus}</p>
+      <div className="flex shrink-0 gap-2">
+        <Button size="sm" variant="ghost" onClick={cancelNotifications} disabled={!isNotificationDirty}>
+          {t('pages.discoverySettings.notifications.actions.cancel')}
+        </Button>
+        <Button size="sm" variant="primary" onClick={saveNotifications} disabled={!isNotificationDirty}>
+          {t('pages.discoverySettings.notifications.actions.save')}
         </Button>
       </div>
     </div>
@@ -342,13 +381,18 @@ export function DiscoverySettingsPage() {
         ) : null}
 
         {tab === 'notifications' ? (
-          <div role="tabpanel" aria-label={t('pages.discoverySettings.tabs.notifications')}>
+          <div role="tabpanel" aria-label={t('pages.discoverySettings.tabs.notifications')} className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
             <DiscoveryNotificationsCard
               settings={notificationSettings}
               recipients={DISCOVERY_NOTIFICATION_RECIPIENTS}
-              onChange={patch => { setNotificationSettings(current => ({ ...current, ...patch })) }}
-              onTestNotification={() => undefined}
+              onChange={updateNotificationSettings}
+              onTestNotification={prepareTestNotification}
+              footer={notificationsFooter}
             />
+            <Card className="space-y-2">
+              <CardTitle>{t('pages.discoverySettings.notifications.localOnly.title')}</CardTitle>
+              <CardDescription>{t('pages.discoverySettings.notifications.localOnly.description')}</CardDescription>
+            </Card>
           </div>
         ) : null}
       </div>
