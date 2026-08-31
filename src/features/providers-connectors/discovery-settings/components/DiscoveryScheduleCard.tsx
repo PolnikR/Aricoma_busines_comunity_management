@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { SettingsSectionCard } from '@/shared/components/settings/SettingsSectionCard'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import { Toggle } from '@/shared/components/toggle/Toggle'
@@ -5,15 +6,16 @@ import { ExecutionIcon } from '@/shared/icons/Icons'
 import { cn } from '@/shared/utils/cn'
 import { useTranslation } from '@/hooks/useTranslation'
 import { DISCOVERY_FREQUENCIES } from '../model/discoverySettingsTypes'
-import type { DiscoveryFrequency, DiscoverySettings } from '../model/discoverySettingsTypes'
+import type { DiscoveryFrequency, DiscoveryScheduleSettings } from '../model/discoverySettingsTypes'
 import { DISCOVERY_TIMEZONES } from '../mocks/discoverySettingsMocks'
 
 interface DiscoveryScheduleCardProps {
-  settings: DiscoverySettings
-  onChange: (patch: Partial<DiscoverySettings>) => void
+  settings: DiscoveryScheduleSettings
+  onChange: (patch: Partial<DiscoveryScheduleSettings>) => void
+  footer?: ReactNode
 }
 
-export function DiscoveryScheduleCard({ settings, onChange }: DiscoveryScheduleCardProps) {
+export function DiscoveryScheduleCard({ settings, onChange, footer }: DiscoveryScheduleCardProps) {
   const { t } = useTranslation()
   const frequencyLabels: Record<DiscoveryFrequency, string> = {
     '15 minutes': t('pages.discoverySettings.schedule.frequency.15Minutes'),
@@ -29,6 +31,7 @@ export function DiscoveryScheduleCard({ settings, onChange }: DiscoveryScheduleC
       icon={<ExecutionIcon className="size-5" />}
       title={t('pages.discoverySettings.schedule.title')}
       description={t('pages.discoverySettings.schedule.description')}
+      footer={footer}
     >
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -50,7 +53,7 @@ export function DiscoveryScheduleCard({ settings, onChange }: DiscoveryScheduleC
             id="discovery-frequency"
             value={settings.frequency}
             disabled={!settings.scheduleEnabled}
-            onChange={event => { onChange({ frequency: event.target.value as DiscoverySettings['frequency'] }) }}
+            onChange={event => { onChange({ frequency: event.target.value as DiscoveryScheduleSettings['frequency'] }) }}
           >
             {DISCOVERY_FREQUENCIES.map(frequency => (
               <option key={frequency} value={frequency}>
