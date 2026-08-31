@@ -43,8 +43,8 @@ describe('DiscoveryNotificationsCard', () => {
       <DiscoveryNotificationsCard
         settings={DEFAULT_DISCOVERY_NOTIFICATION_SETTINGS}
         recipients={DISCOVERY_NOTIFICATION_RECIPIENTS}
-        onChange={() => {}}
-        onTestNotification={() => {}}
+        onChange={vi.fn()}
+        onTestNotification={vi.fn()}
         footer={<button type="button">Save notifications</button>}
       />,
     )

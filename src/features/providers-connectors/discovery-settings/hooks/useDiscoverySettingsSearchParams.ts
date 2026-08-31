@@ -23,7 +23,7 @@ export function useDiscoverySettingsSearchParams() {
   const requestedProviderId = searchParams.get('providerId')?.trim()
   const tab: DiscoverySettingsTab = isDiscoverySettingsTab(requestedTab) ? requestedTab : 'configuration'
   const limit = parseDiscoverySettingsHistoryLimit(requestedLimit)
-  const providerId = requestedProviderId || undefined
+  const providerId = requestedProviderId ?? undefined
 
   const setTab = (nextTab: DiscoverySettingsTab) => {
     setSearchParams(current => {

@@ -54,8 +54,7 @@ describe('SettingsSectionCard', () => {
 
     expect(footer).toHaveClass('border-t', 'border-border')
     expect(section).toContainElement(screen.getByRole('button', { name: 'Save schedule' }))
-    expect(section.textContent?.indexOf('Section content')).toBeLessThan(
-      section.textContent?.indexOf('Save schedule') ?? -1,
-    )
+    const sectionText = section.textContent
+    expect(sectionText.indexOf('Section content')).toBeLessThan(sectionText.indexOf('Save schedule'))
   })
 })
