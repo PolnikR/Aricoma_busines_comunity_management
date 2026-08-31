@@ -21,9 +21,7 @@ vi.mock('../hooks/useRecoveryGroupResourceInventory', () => ({
     workloadType: string | null,
     providerId: string | null,
     options?: { vmwareNamePrefix?: string },
-  ) => options === undefined
-    ? useRecoveryGroupResourceInventory(workloadType, providerId)
-    : useRecoveryGroupResourceInventory(workloadType, providerId, options),
+  ) => useRecoveryGroupResourceInventory(workloadType, providerId, options),
 }))
 
 describe('RecoveryGroupResourcesStep', () => {
