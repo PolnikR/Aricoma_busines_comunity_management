@@ -35,7 +35,14 @@ import type {
 
 export function DiscoverySettingsPage() {
   const { t } = useTranslation()
-  const { tab, setTab } = useDiscoverySettingsSearchParams()
+  const {
+    tab,
+    providerId,
+    limit,
+    setTab,
+    setProviderId,
+    setLimit,
+  } = useDiscoverySettingsSearchParams()
   const [scheduleSettings, setScheduleSettings] = useState<DiscoveryScheduleSettings>(DEFAULT_DISCOVERY_SCHEDULE_SETTINGS)
   const [savedScheduleSettings, setSavedScheduleSettings] = useState<DiscoveryScheduleSettings>(DEFAULT_DISCOVERY_SCHEDULE_SETTINGS)
   const [scheduleStatus, setScheduleStatus] = useState(() => t('pages.discoverySettings.schedule.status.localOnly'))
@@ -325,7 +332,12 @@ export function DiscoverySettingsPage() {
 
         {tab === 'history' ? (
           <div role="tabpanel" aria-label={t('pages.discoverySettings.tabs.history')}>
-            <DiscoveryHistoryCard />
+            <DiscoveryHistoryCard
+              providerId={providerId}
+              limit={limit}
+              onProviderIdChange={setProviderId}
+              onLimitChange={setLimit}
+            />
           </div>
         ) : null}
 
