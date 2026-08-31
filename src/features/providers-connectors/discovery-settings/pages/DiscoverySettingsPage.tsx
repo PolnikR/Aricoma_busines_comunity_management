@@ -7,6 +7,7 @@ import { SkeletonBlock } from '@/shared/components/data-table'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { Field, Input } from '@/shared/components/form/FormControls'
 import { PageHeader } from '@/shared/components/page/PageHeader'
+import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
 import { SettingsSectionCard } from '@/shared/components/settings/SettingsSectionCard'
 import { Tabs } from '@/shared/components/tabs/Tabs'
 import type { TabItem } from '@/shared/components/tabs/Tabs'
@@ -54,6 +55,31 @@ export function DiscoverySettingsPage() {
     { value: 'history', label: t('pages.discoverySettings.tabs.history') },
     { value: 'notifications', label: t('pages.discoverySettings.tabs.notifications') },
   ]
+  const sectionHeader = {
+    configuration: {
+      title: t('pages.discoverySettings.cache.title'),
+      description: t('pages.discoverySettings.cache.description'),
+    },
+    history: {
+      title: t('pages.discoverySettings.history.title'),
+      description: t('pages.discoverySettings.history.description'),
+    },
+    notifications: {
+      title: t('pages.discoverySettings.notifications.title'),
+      description: t('pages.discoverySettings.notifications.description'),
+    },
+  }[tab]
+  const tabs = (
+    <Tabs
+      items={tabItems}
+      value={tab}
+      onChange={setTab}
+      ariaLabel={t('pages.discoverySettings.tabs.ariaLabel')}
+      indicator="inset"
+      compact
+      className="w-full shrink-0 border-b-0 bg-surface px-0 sm:w-auto"
+    />
+  )
 
   const updateNotificationSettings = (patch: Partial<DiscoveryNotificationSettings>) => {
     setNotificationSettings(current => ({ ...current, ...patch }))
@@ -140,14 +166,12 @@ export function DiscoverySettingsPage() {
         description={t('pages.discoverySettings.description')}
       />
 
-      <Tabs
-        items={tabItems}
-        value={tab}
-        onChange={setTab}
-        ariaLabel={t('pages.discoverySettings.tabs.ariaLabel')}
-      />
-
-      <div className={`min-h-0 flex-1 p-3 ${tab === 'history' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+      <InventoryShell
+        inventoryTitle={sectionHeader.title}
+        inventoryDescription={sectionHeader.description}
+        tabs={tabs}
+      >
+        <div className={`min-h-0 flex-1 ${tab === 'history' ? 'overflow-hidden' : 'custom-scrollbar overflow-y-auto'}`}>
         {tab === 'configuration' ? (
           <div role="tabpanel" aria-label={t('pages.discoverySettings.tabs.configuration')}>
             <SettingsSectionCard
@@ -155,6 +179,7 @@ export function DiscoverySettingsPage() {
               title={t('pages.discoverySettings.cache.title')}
               description={t('pages.discoverySettings.cache.description')}
               footer={cacheFooter}
+              showHeader={false}
             >
               {cacheDraft.draft === undefined && cacheQuery.error ? (
                 <FetchErrorAlert
@@ -340,6 +365,7 @@ export function DiscoverySettingsPage() {
               onChange={updateNotificationSettings}
               onTestNotification={prepareTestNotification}
               footer={notificationsFooter}
+              showHeader={false}
             />
             <Card className="space-y-2">
               <CardTitle>{t('pages.discoverySettings.notifications.localOnly.title')}</CardTitle>
@@ -347,7 +373,8 @@ export function DiscoverySettingsPage() {
             </Card>
           </div>
         ) : null}
-      </div>
+        </div>
+      </InventoryShell>
     </div>
   )
 }

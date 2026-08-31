@@ -5,8 +5,7 @@ import { DataTable, DataTablePagination, DataTableRequestState } from '@/shared/
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { Field, Select } from '@/shared/components/form/FormControls'
-import { SettingsSectionCard } from '@/shared/components/settings/SettingsSectionCard'
-import { LayersIcon, RefreshIcon } from '@/shared/icons/Icons'
+import { RefreshIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { providerTypeLabel } from '../../providers/helpers/providerTypeLabel'
 import { useProviders } from '../../providers/hooks/useProviders'
@@ -45,19 +44,13 @@ export function DiscoveryHistoryCard({
   const showPagination = historyQuery.data !== undefined || historyQuery.isLoading
 
   return (
-    <SettingsSectionCard
-      icon={<LayersIcon className="size-5" />}
-      title={t('pages.discoverySettings.history.title')}
-      description={t('pages.discoverySettings.history.description')}
-      className="flex h-full min-h-0 flex-col"
-      contentClassName="flex min-h-0 flex-1 flex-col"
-    >
-      <div className="shrink-0 space-y-3 p-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+    <section className="grid h-full min-w-0 min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
+      <div className="shrink-0 border-b border-border">
+        <div className="flex flex-col gap-3 p-4 lg:flex-row lg:items-end lg:justify-between">
           <Field
             label={t('pages.discoverySettings.history.filters.provider')}
             htmlFor="discovery-history-provider"
-            className="min-w-0 flex-1"
+            className="min-w-0 flex-1 lg:max-w-2xl"
           >
             <Select
               id="discovery-history-provider"
@@ -92,21 +85,23 @@ export function DiscoveryHistoryCard({
         </div>
 
         {providersQuery.error ? (
-          <FetchErrorAlert
-            title={t('pages.discoverySettings.history.providers.loadFailed')}
-            description={resolveUserFacingErrorMessage(
-              providersQuery.error,
-              t('pages.discoverySettings.history.providers.loadFailedDescription'),
-            )}
-            retryLabel={t('pages.discoverySettings.history.providers.retry')}
-            isRetrying={providersQuery.isFetching}
-            onRetry={() => { void providersQuery.refetch() }}
-            variant="compact"
-          />
+          <div className="px-4 pb-4">
+            <FetchErrorAlert
+              title={t('pages.discoverySettings.history.providers.loadFailed')}
+              description={resolveUserFacingErrorMessage(
+                providersQuery.error,
+                t('pages.discoverySettings.history.providers.loadFailedDescription'),
+              )}
+              retryLabel={t('pages.discoverySettings.history.providers.retry')}
+              isRetrying={providersQuery.isFetching}
+              onRetry={() => { void providersQuery.refetch() }}
+              variant="compact"
+            />
+          </div>
         ) : null}
       </div>
 
-      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
+      <div className="custom-scrollbar min-h-0 overflow-y-auto">
         <DataTableRequestState
           hasCachedData={historyQuery.data !== undefined}
           error={historyQuery.error ? {
@@ -147,6 +142,7 @@ export function DiscoveryHistoryCard({
           total={rows.length}
           pageSizeOptions={HISTORY_PAGE_SIZE_OPTIONS}
           isLoading={historyQuery.isLoading}
+          paginationAriaLabel={t('pages.discoverySettings.history.pagination.ariaLabel')}
           onPageChange={setPage}
           onPageSizeChange={nextPageSize => {
             setPageSize(nextPageSize)
@@ -154,6 +150,6 @@ export function DiscoveryHistoryCard({
           }}
         />
       ) : null}
-    </SettingsSectionCard>
+    </section>
   )
 }

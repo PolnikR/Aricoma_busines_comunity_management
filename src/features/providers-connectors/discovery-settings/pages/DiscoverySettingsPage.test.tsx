@@ -46,6 +46,7 @@ describe('DiscoverySettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     api.fetchDiscoveryCacheConfig.mockResolvedValue(config)
+    api.fetchDiscoveryCacheHistory.mockResolvedValue({ runs: [] })
     api.updateDiscoveryCacheConfig.mockImplementation((patch: DiscoveryCacheConfigPatch) => Promise.resolve({
       defaults: { ...config.defaults, ...patch.defaults },
       historyRetention: { ...config.historyRetention, ...patch.historyRetention },
@@ -56,10 +57,10 @@ describe('DiscoverySettingsPage', () => {
     const user = userEvent.setup()
     renderPage()
 
-    expect(screen.getByRole('tablist', { name: 'Discovery settings sections' })).toBeInTheDocument()
-    expect(screen.getAllByRole('tab')).toHaveLength(3)
+    const configuration = await screen.findByRole('region', { name: 'Cache configuration' })
+    expect(within(configuration).getByRole('tablist', { name: 'Discovery settings sections' })).toBeInTheDocument()
+    expect(within(configuration).getAllByRole('tab')).toHaveLength(3)
     expect(screen.queryByRole('region', { name: 'Discovery schedule' })).not.toBeInTheDocument()
-    expect(await screen.findByRole('region', { name: 'Cache configuration' })).toBeInTheDocument()
     expect(screen.getByRole('tabpanel', { name: 'Configuration' })).not.toHaveClass('lg:grid-cols-2')
     expect(screen.queryByRole('region', { name: 'Discovery history' })).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Failure notifications' })).not.toBeInTheDocument()
@@ -67,7 +68,9 @@ describe('DiscoverySettingsPage', () => {
     await user.click(screen.getByRole('tab', { name: 'History' }))
 
     const historyPanel = screen.getByRole('tabpanel', { name: 'History' })
-    expect(screen.getByRole('region', { name: 'Discovery history' })).toBeInTheDocument()
+    const history = screen.getByRole('region', { name: 'Discovery history' })
+    expect(within(history).getByRole('tablist', { name: 'Discovery settings sections' })).toBeInTheDocument()
+    expect(within(history).getByLabelText('Discovery history runs')).toBeInTheDocument()
     expect(historyPanel.parentElement).toHaveClass('overflow-hidden')
     expect(historyPanel.parentElement).not.toHaveClass('overflow-y-auto')
     expect(screen.queryByRole('region', { name: 'Discovery schedule' })).not.toBeInTheDocument()

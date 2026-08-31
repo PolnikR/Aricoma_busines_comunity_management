@@ -19,6 +19,7 @@ const labels = vi.hoisted(() => ({
   'pages.discoverySettings.history.actions.refreshing': 'Refreshing history',
   'pages.discoverySettings.history.table.ariaLabel': 'Discovery history runs',
   'pages.discoverySettings.history.table.loading': 'Loading discovery history',
+  'pages.discoverySettings.history.pagination.ariaLabel': 'Discovery history pagination',
   'pages.discoverySettings.history.table.empty.title': 'No discovery history',
   'pages.discoverySettings.history.table.empty.description': 'No server discovery runs were returned.',
   'pages.discoverySettings.history.table.columns.started': 'Started',
@@ -100,7 +101,7 @@ const runs: DiscoveryCacheRun[] = [
     providerId: 'power-01',
     providerType: 'IBM_POWER',
     triggeredBy: 'forced',
-    startedAt: '2026-08-30T10:20:30Z',
+    startedAt: '2026-08-30T10:20:30.167838',
     durationMs: 2400,
     success: false,
     recordCount: null,
@@ -174,17 +175,20 @@ describe('DiscoveryHistoryCard', () => {
     expect(hooks.useDiscoveryCacheHistory).toHaveBeenLastCalledWith({ limit: 100 })
     expect(screen.queryByLabelText('Latest runs')).not.toBeInTheDocument()
 
-    const table = within(screen.getByLabelText('Discovery history runs')).getByRole('table')
+    const tableViewport = screen.getByLabelText('Discovery history runs')
+    const table = within(tableViewport).getByRole('table')
     const renderedProviderIds = within(table).getAllByRole('row').slice(1).map(row => (
       within(row).getAllByRole('cell')[1]?.textContent
     ))
 
     expect(renderedProviderIds).toEqual(['power-01', 'vmware-01'])
-    expect(screen.getByText('2026-08-30 10:20:30 UTC')).toBeInTheDocument()
+    expect(screen.getByText('30. 8. 2026 10:20:30')).toBeInTheDocument()
     expect(screen.queryByText(/database password leaked/i)).not.toBeInTheDocument()
 
-    const history = screen.getByRole('region', { name: 'Discovery history' })
-    const verticalScroll = history.querySelector('.overflow-y-auto')
+    const history = tableViewport.closest('section')
+    expect(history).not.toBeNull()
+    expect(history).toHaveClass('grid', 'h-full', 'grid-rows-[auto_minmax(0,1fr)_auto]', 'overflow-hidden')
+    const verticalScroll = history?.querySelector('.overflow-y-auto') ?? null
     expect(verticalScroll).toHaveClass('custom-scrollbar', 'min-h-0', 'overflow-y-auto')
     expect(verticalScroll).toContainElement(screen.getByLabelText('Discovery history runs'))
     expect(verticalScroll).not.toContainElement(screen.getByLabelText('Rows per page'))
@@ -217,6 +221,7 @@ describe('DiscoveryHistoryCard', () => {
     expect(screen.getByText('provider-01')).toBeInTheDocument()
     expect(screen.queryByText('provider-26')).not.toBeInTheDocument()
     expect(screen.getByText('Showing 1-25 of 60')).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Discovery history pagination' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Next page' }))
 

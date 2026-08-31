@@ -1619,6 +1619,7 @@
   "pages.discoverySettings.history.loadFailed": "Históriu zisťovania sa nepodarilo načítať",
   "pages.discoverySettings.history.loadFailedDescription": "Históriu zisťovania sa nepodarilo načítať.",
   "pages.discoverySettings.history.table.ariaLabel": "Behy histórie zisťovania",
+  "pages.discoverySettings.history.pagination.ariaLabel": "Stránkovanie histórie zisťovania",
   "pages.discoverySettings.history.table.loading": "Načítava sa história zisťovania",
   "pages.discoverySettings.history.table.empty.title": "Žiadna história zisťovania",
   "pages.discoverySettings.history.table.empty.description": "Server nevrátil žiadne behy zisťovania.",

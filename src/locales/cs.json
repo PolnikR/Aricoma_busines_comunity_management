@@ -1619,6 +1619,7 @@
   "pages.discoverySettings.history.loadFailed": "Historii zjišťování se nepodařilo načíst",
   "pages.discoverySettings.history.loadFailedDescription": "Historii zjišťování se nepodařilo načíst.",
   "pages.discoverySettings.history.table.ariaLabel": "Běhy historie zjišťování",
+  "pages.discoverySettings.history.pagination.ariaLabel": "Stránkování historie zjišťování",
   "pages.discoverySettings.history.table.loading": "Načítá se historie zjišťování",
   "pages.discoverySettings.history.table.empty.title": "Žádná historie zjišťování",
   "pages.discoverySettings.history.table.empty.description": "Server nevrátil žádné běhy zjišťování.",

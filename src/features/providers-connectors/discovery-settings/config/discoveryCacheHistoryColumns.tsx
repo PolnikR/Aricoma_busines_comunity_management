@@ -8,10 +8,18 @@ import type { DiscoveryCacheRun } from '../model/discoveryCacheTypes'
 type Translate = ReturnType<typeof useTranslation>['t']
 
 function formatStartedAt(startedAt: string): string {
-  const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(?:\.\d+)?)Z$/.exec(startedAt)
-  if (!match?.[1] || !match[2]) return startedAt
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/.exec(startedAt)
+  if (!match) return startedAt
 
-  return `${match[1]} ${match[2]} UTC`
+  const year = match[1]
+  const month = match[2]
+  const day = match[3]
+  const hour = match[4]
+  const minute = match[5]
+  const second = match[6]
+  if (!year || !month || !day || !hour || !minute || !second) return startedAt
+
+  return `${String(Number(day))}. ${String(Number(month))}. ${year} ${hour}:${minute}:${second}`
 }
 
 export function getDiscoveryCacheHistoryColumns(t: Translate): ColumnDef<DiscoveryCacheRun>[] {

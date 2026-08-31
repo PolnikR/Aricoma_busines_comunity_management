@@ -17,6 +17,7 @@ interface DiscoveryNotificationsCardProps {
   onChange: (patch: Partial<DiscoveryNotificationSettings>) => void
   onTestNotification: () => void
   footer?: ReactNode
+  showHeader?: boolean
 }
 
 export function DiscoveryNotificationsCard({
@@ -25,6 +26,7 @@ export function DiscoveryNotificationsCard({
   onChange,
   onTestNotification,
   footer,
+  showHeader = true,
 }: DiscoveryNotificationsCardProps) {
   const { t } = useTranslation()
   const selectedRecipient = recipients.find(recipient => recipient.id === settings.recipientId) ?? recipients[0]
@@ -35,6 +37,7 @@ export function DiscoveryNotificationsCard({
       title={t('pages.discoverySettings.notifications.title')}
       description={t('pages.discoverySettings.notifications.description')}
       footer={footer}
+      showHeader={showHeader}
     >
       <div className="flex items-start justify-between gap-4">
         <div>

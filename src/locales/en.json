@@ -1656,6 +1656,7 @@
   "pages.discoverySettings.history.loadFailed": "Discovery history could not be loaded",
   "pages.discoverySettings.history.loadFailedDescription": "Unable to load discovery history.",
   "pages.discoverySettings.history.table.ariaLabel": "Discovery history runs",
+  "pages.discoverySettings.history.pagination.ariaLabel": "Discovery history pagination",
   "pages.discoverySettings.history.table.loading": "Loading discovery history",
   "pages.discoverySettings.history.table.empty.title": "No discovery history",
   "pages.discoverySettings.history.table.empty.description": "No server discovery runs were returned.",

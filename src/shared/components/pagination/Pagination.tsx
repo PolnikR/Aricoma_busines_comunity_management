@@ -5,6 +5,7 @@ interface PaginationProps {
   pageCount: number
   disabled?: boolean
   isLoading?: boolean
+  ariaLabel?: string
   onPageChange: (page: number) => void
 }
 
@@ -24,11 +25,18 @@ function getPageItems(page: number, pageCount: number): PageItem[] {
   return items
 }
 
-export function Pagination({ page, pageCount, disabled = false, isLoading = false, onPageChange }: PaginationProps) {
+export function Pagination({
+  page,
+  pageCount,
+  disabled = false,
+  isLoading = false,
+  ariaLabel = 'Virtual machines pagination',
+  onPageChange,
+}: PaginationProps) {
   if (pageCount <= 1 && !isLoading) return null
 
   return (
-    <nav className="flex items-center justify-between gap-2 sm:justify-end" aria-label="Virtual machines pagination">
+    <nav className="flex items-center justify-between gap-2 sm:justify-end" aria-label={ariaLabel}>
       <button type="button" className="flex size-9 items-center justify-center rounded-xl border border-border-strong bg-surface text-text-muted shadow-sm transition hover:bg-accent-soft hover:text-accent disabled:cursor-not-allowed disabled:opacity-40" disabled={disabled || isLoading || page <= 1} aria-label="Previous page" onClick={() => { onPageChange(page - 1) }}>
         <ChevronLeftIcon className="size-5" />
       </button>

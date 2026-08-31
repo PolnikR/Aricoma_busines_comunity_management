@@ -10,6 +10,7 @@ interface DataTablePaginationProps {
   pageSizeOptions?: number[]
   disabled?: boolean
   isLoading?: boolean
+  paginationAriaLabel?: string
   onPageChange: (page: number) => void
   onPageSizeChange: (pageSize: number) => void
 }
@@ -21,6 +22,7 @@ export function DataTablePagination({
   pageSizeOptions = [10, 25, 50],
   disabled = false,
   isLoading = false,
+  paginationAriaLabel,
   onPageChange,
   onPageSizeChange,
 }: DataTablePaginationProps) {
@@ -58,7 +60,14 @@ export function DataTablePagination({
           </label>
         ) : null}
       </div>
-      <Pagination page={page} pageCount={pageCount} disabled={controlsDisabled} isLoading={isLoading} onPageChange={onPageChange} />
+      <Pagination
+        page={page}
+        pageCount={pageCount}
+        disabled={controlsDisabled}
+        isLoading={isLoading}
+        {...(paginationAriaLabel ? { ariaLabel: paginationAriaLabel } : {})}
+        onPageChange={onPageChange}
+      />
     </div>
   )
 }
