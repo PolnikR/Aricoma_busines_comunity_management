@@ -19,8 +19,9 @@ reviewable, verified, atomic commit on the branch selected for implementation.
 
 - Existing routes, page labels, provider/recovery workflows, query parameters,
   loading states, error states, and API payloads behave as before.
-- Resources and Resources ISE still differ by `source`/`target` role, but render
-  through one role-configured page implementation.
+- Resources and Resources ISE remain separate page components with independent
+  mount, state, and query lifecycles. They share only pure role-neutral helpers
+  and types that cannot introduce remount flicker during route transitions.
 - Create and edit pages, and the three policy modal variants, retain their current
   confirmation, dirty-state, submit, reset, and error behavior.
 - No platform-provider field is added or removed by this plan. Field coverage
@@ -44,8 +45,9 @@ reviewable, verified, atomic commit on the branch selected for implementation.
 ### Duplication and ownership
 
 - `PolicySetPicker` is owned by `recovery-plans/policy-sets`, not `shared`.
-- Source and target resource inventory pages are thin role-specific wrappers over
-  one tested implementation.
+- Source and target resource inventory pages remain independently rendered
+  features. Only deterministic tab selection, provider-role filtering, and related
+  types are shared; React state, queries, and page rendering remain page-owned.
 - Recovery group create/edit pages share one editor-session hook; recovery
   application create/edit pages share a separate editor-session hook.
 - Snapshot, clean-room, and application-recovery policy modals share one local
@@ -79,6 +81,9 @@ reviewable, verified, atomic commit on the branch selected for implementation.
    payload mapping stay local.
 5. **Add enforcement after migration.** The architecture check lands after the
    current violations are removed, avoiding a permanent allowlist of known debt.
+6. **Preserve resource page lifecycles.** Do not introduce a role-configured shared
+   page component. That shape previously caused visible remount flicker and
+   non-smooth source/target transitions. Share only pure functions and types.
 
 ## Dependency Graph
 
@@ -98,7 +103,7 @@ T3 Provider public contract
              |
              +--> T8 Recovery transport boundary
 
-T4 --> T9 Consolidated role resource page
+T4 --> T9 Shared pure resource-page logic
 
 T7 --> T10 Recovery-group editor session
 T7 --> T11 Recovery-application editor session
@@ -369,29 +374,33 @@ a minimal recovery-owned provider lookup. Preserve payload and response mapping.
 
 ### Phase 4: Consolidate high-value duplication
 
-#### Task 9: Consolidate source and target resource role pages
+#### Task 9: Share pure resource-page logic without merging page components
 
-**Description:** Extract one role-configured inventory page and retain small
-`ResourcesPage` and `ResourcesIsePage` wrappers. Preserve role-specific copy and
-route/search behavior.
+**Description:** Keep `ResourcesPage` and `ResourcesIsePage` as separate rendered
+features with independent component lifecycles. Extract only deterministic,
+side-effect-free provider-role filtering and active-tab resolution that both pages
+already implement. Do not extract a shared page component or stateful page hook.
 
 **Acceptance criteria:**
 
-- [ ] Shared implementation receives `source` or `target` through a typed config.
-- [ ] Existing source/target behavior and test scenarios remain unchanged.
-- [ ] Wrapper pages contain only role configuration and composition.
+- [ ] Both pages remain separate components that own their queries, local state,
+      URL synchronization, loading/error states, and resource rendering.
+- [ ] Shared helpers are pure and preserve existing source/target tab selection.
+- [ ] Route transitions have no new loading/empty flash or remount regression.
 
 **Verification:**
 
-- [ ] `npm exec vitest run src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx src/features/discovery-inventory/resources/components/ResourcesByRolePage.test.tsx`
+- [ ] `npm exec vitest run src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx src/features/discovery-inventory/resources/helpers/resolveResourcePageState.test.ts`
 - [ ] `npm exec eslint -- <changed TypeScript/TSX files>`
+- [ ] Browser check: switch repeatedly between Resources and Resources ISE and
+      confirm that content does not flash through loading/empty state.
 
 **Dependencies:** Task 4
 
 **Files likely touched:**
 
-- `src/features/discovery-inventory/resources/components/ResourcesByRolePage.tsx`
-- `src/features/discovery-inventory/resources/components/ResourcesByRolePage.test.tsx`
+- `src/features/discovery-inventory/resources/helpers/resolveResourcePageState.ts`
+- `src/features/discovery-inventory/resources/helpers/resolveResourcePageState.test.ts`
 - `src/features/discovery-inventory/resources/pages/ResourcesPage.tsx`
 - `src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.tsx`
 
@@ -561,7 +570,8 @@ the existing CI quality path without changing production build output.
 - [ ] All task-specific Vitest files pass in one focused combined run.
 - [ ] Changed TypeScript/TSX files pass ESLint; affected locale/config files parse.
 - [ ] Typecheck passes because public contracts and route registry cross module boundaries.
-- [ ] Manual smoke verification covers both resource roles, provider creation,
+- [ ] Manual smoke verification covers flicker-free transitions between both
+      resource roles, provider creation,
       recovery group/application create+edit, policy modal cancel+save, and navigation.
 - [ ] Network comparison confirms unchanged endpoints, query keys, request payloads,
       invalidation, and first-load query enablement.
@@ -589,7 +599,7 @@ this environment, so this section applies the stricter repository rules from
 | Public files become shallow re-export barrels | High | Export only consumer use cases/types; review contracts at Checkpoints A-C |
 | Import moves break test mocks while runtime code still works | High | Migrate production imports and their focused mocks in the same task |
 | Query keys or enablement change during hook extraction | High | Assert key/invalidation/first-request behavior before and after |
-| Consolidated role page erases source/target differences | High | Typed role config and retain both existing page test suites |
+| Shared resource abstraction reintroduces transition flicker | High | Keep both page components and their lifecycles separate; share pure helpers only |
 | Generic workflow hook mixes recovery domains | Medium | Keep separate group, application, and policy session primitives |
 | Route registry changes URL or lazy-loading semantics | High | Snapshot paths/redirects and test navigation highlighting before removal |
 | Architecture script has false positives | Medium | Fixture tests, actionable output, explicit parsing scope, no generated files |

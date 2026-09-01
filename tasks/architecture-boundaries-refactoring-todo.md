@@ -41,14 +41,14 @@ are in `tasks/architecture-boundaries-refactoring-plan.md`.
 
 ## Phase 4: Consolidate duplication
 
-- [ ] T9 Consolidate source and target resource role pages.
+- [ ] T9 Share pure resource-page logic without merging page components.
 - [ ] T10 Extract the recovery-group editor session.
 - [ ] T11 Extract the recovery-application editor session.
 
 ## Checkpoint D
 
 - [ ] Focused T9-T11 tests pass together.
-- [ ] Resource roles and recovery create/edit flows pass smoke checks.
+- [ ] Resource transitions remain flicker-free and recovery create/edit flows pass smoke checks.
 - [ ] No route, payload, or query-string behavior changed.
 
 - [ ] T12 Extract the policy modal lifecycle.
