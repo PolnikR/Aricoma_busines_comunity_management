@@ -117,7 +117,7 @@ export function RowActionsMenu({
         disabled={editDisabled}
         title={editDisabled ? editDisabledTitle : undefined}
         aria-disabled={editDisabled}
-        className={`w-full text-left px-4 py-2 text-sm transition-colors first:rounded-t-lg ${editDisabled ? 'cursor-not-allowed text-text-muted opacity-60' : 'text-text-primary hover:bg-surface-subtle'}`}
+        className={`w-full text-left px-4 py-2 text-sm transition-colors first:rounded-t-lg ${editDisabled ? 'cursor-not-allowed text-text-muted opacity-60' : 'text-text-primary hover:bg-surface-hover'}`}
         onClick={(e) => {
           e.stopPropagation()
           if (editDisabled) return
@@ -129,7 +129,7 @@ export function RowActionsMenu({
       </button>
       <button
         role="menuitem"
-        className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-surface-subtle transition-colors border-t border-border"
+        className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-surface-hover transition-colors border-t border-border"
         onClick={(e) => {
           e.stopPropagation()
           onDelete()
@@ -144,7 +144,7 @@ export function RowActionsMenu({
           className={`w-full text-left px-4 py-2 text-sm transition-colors border-t border-border last:rounded-b-lg ${
             rollback.disabled
               ? 'text-red-400 opacity-50 cursor-not-allowed'
-              : 'text-red-600 hover:bg-surface-subtle'
+              : 'text-red-600 hover:bg-surface-hover'
           }`}
           disabled={rollback.disabled}
           title={rollback.disabledTitle}
