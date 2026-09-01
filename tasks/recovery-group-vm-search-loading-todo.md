@@ -1,47 +1,47 @@
 # Todo: Recovery group VM search loading skeleton
 
-Patrí k `tasks/recovery-group-vm-search-loading-plan.md`. Stav: pripravené na implementáciu po schválení.
+Patrí k `tasks/recovery-group-vm-search-loading-plan.md`. Stav: Phase 1-4 hotové a commitnuté (`0c06a2e`). Phase 5 browser verification zostáva na interaktívnu session.
 
 ## Phase 1 — Hook exposes `isSearching`
 
-- [ ] VMware branch: `isSearching: isDebouncing || isBackgroundFetching`.
-- [ ] Non-VMware branch: `isSearching: false`.
-- [ ] Overiť, že property je dostupná na union return type bez narrowingu.
-- [ ] Test: true počas debounce okna.
-- [ ] Test: true počas refetchu so zobrazenými predchádzajúcimi dátami.
-- [ ] Test: false po dokončení fetchu.
-- [ ] Test: false pre `ibm_power_virtual_machines` a `ibm_flashsystem`.
+- [x] VMware branch: `isSearching: isDebouncing || isBackgroundFetching`.
+- [x] Non-VMware branch: `isSearching: false`.
+- [x] Overiť, že property je dostupná na union return type bez narrowingu.
+- [x] Test: true počas debounce okna.
+- [x] Test: true počas refetchu so zobrazenými predchádzajúcimi dátami.
+- [x] Test: false po dokončení fetchu.
+- [x] Test: false pre `ibm_power_virtual_machines` a `ibm_flashsystem`.
 
 ## Phase 2 — `ResourceSidebar` skeleton state
 
-- [ ] Pridať `isSearching?: boolean` s defaultom `false`.
-- [ ] Renderovať existujúci `ListSkeleton` pri `isLoading || isSearching`.
-- [ ] Nechať `disabled={isLoading}` na search inpute nezmenené.
-- [ ] `aria-busy={isLoading || isSearching}` na data regióne.
-- [ ] Test: skeleton viditeľný pri `isSearching`, searchbox enabled, items neprítomné.
-- [ ] Overiť, že existujúci `isLoading` test prechádza bez zmeny.
+- [x] Pridať `isSearching?: boolean` s defaultom `false`.
+- [x] Renderovať existujúci `ListSkeleton` pri `isLoading || isSearching`.
+- [x] Nechať `disabled={isLoading}` na search inpute nezmenené.
+- [x] `aria-busy={isLoading || isSearching}` na data regióne.
+- [x] Test: skeleton viditeľný pri `isSearching`, searchbox enabled, items neprítomné.
+- [x] Overiť, že existujúci `isLoading` test prechádza bez zmeny.
 
 ### Checkpoint A
-- [ ] Hook vracia `isSearching` v oboch branchoch.
-- [ ] Sidebar zobrazí skeleton bez disablovania inputu.
-- [ ] `RecoveryAppBuilder` render nezmenený.
+- [x] Hook vracia `isSearching` v oboch branchoch.
+- [x] Sidebar zobrazí skeleton bez disablovania inputu.
+- [x] `RecoveryAppBuilder` render nezmenený.
 
 ## Phase 3 — Wiring v resources stepe
 
-- [ ] `RecoveryGroupResourcesStep` posiela `isSearching={query.isSearching}`.
-- [ ] Pridať `isSearching` do `InventoryQueryDouble`.
-- [ ] Doplniť `isSearching` do všetkých `mockReturnValue` blokov v teste.
-- [ ] Test: skeleton pri `isSearching: true`, searchbox enabled.
-- [ ] Test: items pri `isSearching: false`.
-- [ ] Overiť, že existujúce testy stepu prechádzajú.
+- [x] `RecoveryGroupResourcesStep` posiela `isSearching={query.isSearching}`.
+- [x] Pridať `isSearching` do `InventoryQueryDouble`.
+- [x] Doplniť `isSearching` do všetkých `mockReturnValue` blokov v teste.
+- [x] Test: skeleton pri `isSearching: true`, searchbox enabled.
+- [x] Test: items pri `isSearching: false`.
+- [x] Overiť, že existujúce testy stepu prechádzajú.
 
 ## Phase 4 — Automated verification
 
-- [ ] Focused Vitest: ResourceSidebar + hook + resources step + `RecoveryAppBuilder`.
-- [ ] Focused ESLint nad zmenenými súbormi.
-- [ ] `npm run typecheck`.
-- [ ] `git diff --check`.
-- [ ] Review task-owned diff.
+- [x] Focused Vitest: ResourceSidebar + hook + resources step + `RecoveryAppBuilder`.
+- [x] Focused ESLint nad zmenenými súbormi.
+- [~] `npm run typecheck` - moje súbory bez chyby; celý build blokuje nesúvisiaci rozbitý import `./RecoveryGroupContextMenu` v `RecoveryGroupsTable.tsx` (cudzia paralelná práca v worktree).
+- [x] `git diff --check`.
+- [x] Review task-owned diff.
 
 ## Phase 5 — Mandatory browser verification
 
