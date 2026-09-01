@@ -58,6 +58,7 @@ function RecoveryGroupResourcesStepContent({
           noMatchesLabel={t(key('noMatches'))}
           dragDataKey="recovery-group-resource-name"
           isLoading={query.isLoading}
+          isSearching={query.isSearching}
           isRetrying={query.isFetching}
           error={query.error instanceof Error ? query.error : null}
           errorTitle={t('pages.recoveryGroupBuilder.resources.error.title')}

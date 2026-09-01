@@ -7,6 +7,7 @@ interface InventoryQueryDouble {
   data: { resourceNames: string[] } | undefined
   error: Error | null
   isLoading: boolean
+  isSearching: boolean
   isFetching: boolean
   refetch: () => void
 }
@@ -31,6 +32,7 @@ describe('RecoveryGroupResourcesStep', () => {
       data: { resourceNames: [] },
       error: null,
       isLoading: false,
+      isSearching: false,
       isFetching: false,
       refetch: vi.fn(),
     })
@@ -49,6 +51,7 @@ describe('RecoveryGroupResourcesStep', () => {
       data: { resourceNames: [resourceName] },
       error: null,
       isLoading: false,
+      isSearching: false,
       isFetching: false,
       refetch: vi.fn(),
     })
@@ -76,6 +79,7 @@ describe('RecoveryGroupResourcesStep', () => {
       data: undefined,
       error: new Error('Provider unavailable'),
       isLoading: false,
+      isSearching: false,
       isFetching: false,
       refetch: vi.fn(),
     })
@@ -100,6 +104,7 @@ describe('RecoveryGroupResourcesStep', () => {
       data: { resourceNames: ['DB-01'] },
       error: null,
       isLoading: false,
+      isSearching: false,
       isFetching: false,
       refetch: vi.fn(),
     })
@@ -123,6 +128,37 @@ describe('RecoveryGroupResourcesStep', () => {
     )
     expect(screen.getByText('DB-01')).toBeInTheDocument()
     expect(screen.getByText('SELECTED-VM')).toBeInTheDocument()
+  })
+
+  it('shows the loading list while a VMware search is in flight and keeps the search box usable', async () => {
+    const user = userEvent.setup()
+    useRecoveryGroupResourceInventory.mockReturnValue({
+      data: { resourceNames: ['DB-01'] },
+      error: null,
+      isLoading: false,
+      isSearching: true,
+      isFetching: true,
+      refetch: vi.fn(),
+    })
+
+    render(
+      <RecoveryGroupResourcesStep
+        workloadType="vmware_virtual_machines"
+        providerId="vmware-1"
+        resources={[]}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    )
+
+    const searchbox = screen.getByRole('searchbox', { name: 'Search virtual machines' })
+    expect(screen.getByRole('status', { name: 'Loading virtual machines' })).toBeInTheDocument()
+    expect(screen.queryByText('DB-01')).not.toBeInTheDocument()
+    expect(searchbox).toBeEnabled()
+
+    await user.type(searchbox, 'WEB')
+
+    expect(searchbox).toHaveValue('WEB')
   })
 
   it('clears VMware search text when its provider scope changes', async () => {
@@ -161,6 +197,7 @@ describe('RecoveryGroupResourcesStep', () => {
       data: { resourceNames: ['LPAR-01'] },
       error: null,
       isLoading: false,
+      isSearching: false,
       isFetching: false,
       refetch: vi.fn(),
     })
@@ -186,6 +223,7 @@ describe('RecoveryGroupResourcesStep', () => {
       data: { resourceNames: ['VM-01'] },
       error: null,
       isLoading: false,
+      isSearching: false,
       isFetching: false,
       refetch: vi.fn(),
     })

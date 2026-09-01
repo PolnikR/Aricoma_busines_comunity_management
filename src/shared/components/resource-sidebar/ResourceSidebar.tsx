@@ -13,6 +13,7 @@ interface ResourceSidebarProps {
   noMatchesLabel: string
   dragDataKey: string
   isLoading?: boolean
+  isSearching?: boolean
   isRetrying?: boolean
   error?: Error | null
   errorTitle: string
@@ -34,6 +35,7 @@ export function ResourceSidebar({
   noMatchesLabel,
   dragDataKey,
   isLoading = false,
+  isSearching = false,
   isRetrying = false,
   error,
   errorTitle,
@@ -60,6 +62,7 @@ export function ResourceSidebar({
     [isServerSearch, itemLabels, normalizedItems, search],
   )
   const handleRetry = () => { onRetry?.() }
+  const showSkeleton = isLoading || isSearching
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-surface-subtle">
@@ -82,8 +85,8 @@ export function ResourceSidebar({
           className="text-xs"
         />
       </div>
-      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-2" aria-busy={isLoading}>
-        {isLoading ? (
+      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-2" aria-busy={showSkeleton}>
+        {showSkeleton ? (
           <ListSkeleton rowCount={8} ariaLabel={loadingLabel} />
         ) : error && normalizedItems.length === 0 ? (
           <FetchErrorAlert

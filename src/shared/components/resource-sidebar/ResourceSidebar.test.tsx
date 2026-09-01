@@ -56,6 +56,26 @@ describe('ResourceSidebar', () => {
     expect(screen.queryByText('DB-01')).not.toBeInTheDocument()
   })
 
+  it('shows the loading list while a server search runs without locking the search input', () => {
+    render(
+      <ResourceSidebar
+        {...labels}
+        items={['DB-01']}
+        dragDataKey="vm-name"
+        searchValue="WEB"
+        onSearchChange={vi.fn()}
+        isSearching
+      />,
+    )
+
+    const searchbox = screen.getByRole('searchbox', { name: 'Search resources' })
+    expect(screen.getByRole('status', { name: 'Loading resources' })).toBeInTheDocument()
+    expect(searchbox).toBeEnabled()
+    expect(searchbox).toHaveValue('WEB')
+    expect(screen.queryByText('DB-01')).not.toBeInTheDocument()
+    expect(screen.queryByText('No matches')).not.toBeInTheDocument()
+  })
+
   it('reports controlled server search text without locally filtering server results', () => {
     const onSearchChange = vi.fn()
     render(

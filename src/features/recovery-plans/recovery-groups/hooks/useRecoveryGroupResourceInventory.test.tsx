@@ -203,6 +203,71 @@ describe('useRecoveryGroupResourceInventory', () => {
     })
   })
 
+  it('reports searching while a VMware name prefix debounces and then fetches', async () => {
+    const { result } = renderHook(
+      () => useRecoveryGroupResourceInventory('vmware_virtual_machines', 'vmware-1', {
+        vmwareNamePrefix: 'WEB',
+      }),
+      { wrapper: createWrapper() },
+    )
+
+    expect(result.current.isSearching).toBe(true)
+
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) }, { timeout: 1_000 })
+
+    expect(result.current.isSearching).toBe(false)
+  })
+
+  it('keeps searching true while a new prefix request replaces already visible data', async () => {
+    const { result, rerender } = renderHook(
+      ({ prefix }: { prefix: string }) => useRecoveryGroupResourceInventory(
+        'vmware_virtual_machines',
+        'vmware-1',
+        { vmwareNamePrefix: prefix },
+      ),
+      { wrapper: createWrapper(), initialProps: { prefix: '' } },
+    )
+
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+    expect(result.current.isSearching).toBe(false)
+
+    let resolveSearch: ((inventory: { reportedCount: number; virtualMachines: DiscoveredVirtualMachine[] }) => void) | undefined
+    vi.mocked(fetchVmwareInventory).mockImplementation(
+      () => new Promise((resolve) => { resolveSearch = resolve }),
+    )
+    rerender({ prefix: 'WEB' })
+
+    expect(result.current.isSearching).toBe(true)
+
+    await waitFor(() => {
+      expect(fetchVmwareInventory).toHaveBeenCalledWith({ providerId: 'vmware-1', namePrefix: 'WEB' })
+    }, { timeout: 1_000 })
+
+    expect(result.current.isSearching).toBe(true)
+    expect(result.current.data?.resourceNames).toEqual(['VM-01', 'VM-02'])
+
+    resolveSearch?.({ reportedCount: 1, virtualMachines: [{ name: 'WEB-01' } as DiscoveredVirtualMachine] })
+
+    await waitFor(() => { expect(result.current.isSearching).toBe(false) })
+    expect(result.current.data?.resourceNames).toEqual(['WEB-01'])
+  })
+
+  it.each([
+    ['ibm_power_virtual_machines', 'power-1'],
+    ['ibm_flashsystem', 'flash-1'],
+  ] as const)('never reports searching for locally filtered %s', async (workloadType, providerId) => {
+    const { result } = renderHook(
+      () => useRecoveryGroupResourceInventory(workloadType, providerId),
+      { wrapper: createWrapper() },
+    )
+
+    expect(result.current.isSearching).toBe(false)
+
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+
+    expect(result.current.isSearching).toBe(false)
+  })
+
   it.each([
     [
       'vmware_virtual_machines',

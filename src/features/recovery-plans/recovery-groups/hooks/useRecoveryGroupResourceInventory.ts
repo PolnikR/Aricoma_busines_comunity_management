@@ -137,8 +137,9 @@ export function useRecoveryGroupResourceInventory(
     return {
       ...vmwareQuery,
       data: vmwareData,
+      isSearching: vmwareQuery.isDebouncing || vmwareQuery.isBackgroundFetching,
     }
   }
 
-  return nonVmwareQuery
+  return { ...nonVmwareQuery, isSearching: false }
 }
