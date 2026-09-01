@@ -3,6 +3,13 @@
 Detailed acceptance criteria, verification commands, dependencies, and likely files
 are in `tasks/architecture-boundaries-refactoring-plan.md`.
 
+## Execution prerequisite
+
+- [ ] Record every production cross-feature import and test mock in
+      `tasks/architecture-boundaries-import-inventory.md`.
+- [ ] Assign each import to a bounded migration task before starting T1.
+- [ ] Review the inventory and the resulting task additions.
+
 ## Phase 1: Ownership and provider seam
 
 - [ ] T1 Establish feature-owned policy-set picker.

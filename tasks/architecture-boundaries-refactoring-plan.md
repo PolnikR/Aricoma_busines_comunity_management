@@ -84,6 +84,27 @@ reviewable, verified, atomic commit on the branch selected for implementation.
 6. **Preserve resource page lifecycles.** Do not introduce a role-configured shared
    page component. That shape previously caused visible remount flicker and
    non-smooth source/target transitions. Share only pure functions and types.
+7. **Use app composition for integration data.** A feature that needs data owned by
+   another feature receives it through a typed app-owned composition boundary. In
+   particular, VMware tag choices are passed into provider creation rather than
+   imported by the provider feature from discovery.
+8. **Enforce the agreed boundary in CI.** `public.ts` is the only permitted
+   cross-feature import convention. The architecture check is both an explicit
+   local npm command and a required GitLab CI quality gate.
+
+## Execution Prerequisite: Complete Import Inventory
+
+Before the first production migration, record every current cross-feature import
+and its owning migration task in
+`tasks/architecture-boundaries-import-inventory.md`. The initial audit found 58
+production cross-feature imports and 27 test mocks; the inventory is complete only
+when each of them is assigned to a bounded task. It must include the presently
+unplanned discovery-to-recovery boundary (`discovery-inventory/public.ts`) and
+split any migration that would touch more than five files.
+
+This prerequisite prevents a partial migration from making the final architecture
+guard fail on legitimate but unplanned consumers. It is a planning gate, not a
+production-code task, and must be reviewed before Task 1 starts.
 
 ## Dependency Graph
 
@@ -606,13 +627,16 @@ this environment, so this section applies the stricter repository rules from
 | Large migration conflicts with concurrent feature work | Medium | Small atomic tasks, checkpoint merges, no broad formatting/refactoring |
 | Scope drifts into provider field redesign | Medium | Treat Orval/UI field completeness as a separate product plan |
 
-## Open Questions for Human Approval
+## Approved Decisions — 2026-09-01
 
-1. Confirm that the implementation should remain behavior-preserving and that
-   platform-provider field completeness is a separate follow-up.
-2. Confirm `public.ts` as the enforced cross-feature import convention. If the team
-   prefers `index.ts`, choose it before Task 3; do not support both conventions.
-3. Confirm whether Task 14 should run in GitLab CI only or also in a local pre-commit
-   hook. The recommended baseline is GitLab CI plus an explicit npm command.
+- The implementation remains behavior-preserving; platform-provider field
+  completeness is a separate follow-up.
+- `public.ts` is the sole cross-feature import convention; `index.ts` is not an
+  alternative public boundary.
+- App composition owns injection of cross-feature integration data, including
+  VMware tag choices for provider creation.
+- The architecture check runs as an explicit local npm command and in GitLab CI;
+  it is not added as a pre-commit hook.
 
-Implementation must not start until this plan and these three decisions are approved.
+Implementation may start only after the import inventory prerequisite above is
+reviewed and its bounded migration tasks are added to this plan and checklist.
