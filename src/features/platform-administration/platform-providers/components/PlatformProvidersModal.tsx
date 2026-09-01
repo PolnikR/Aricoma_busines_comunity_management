@@ -43,6 +43,8 @@ const EMPTY_PLATFORM_PROVIDER_FORM: PlatformProviderFormData = {
   disableTls: null,
   loggingEnabled: null,
   jwtEnabled: null,
+  realm: '',
+  clientId: '',
 }
 
 function toPlatformProviderFormData(provider: PlatformProviderRecord): PlatformProviderFormData {
@@ -64,6 +66,8 @@ function toPlatformProviderFormData(provider: PlatformProviderRecord): PlatformP
     disableTls: provider.disableTls ?? null,
     loggingEnabled: provider.loggingEnabled ?? null,
     jwtEnabled: provider.jwtEnabled ?? null,
+    realm: provider.realm ?? '',
+    clientId: provider.clientId ?? '',
   }
 }
 
@@ -102,6 +106,8 @@ export function PlatformProvidersModal({
     || formData.disableTls !== initialForm.disableTls
     || formData.loggingEnabled !== initialForm.loggingEnabled
     || formData.jwtEnabled !== initialForm.jwtEnabled
+    || formData.realm !== initialForm.realm
+    || formData.clientId !== initialForm.clientId
     || formData.vmPrefix !== initialForm.vmPrefix
     || formData.vmTags.length !== initialForm.vmTags.length
     || formData.vmTags.some((tag, index) => tag !== initialForm.vmTags[index])
@@ -190,6 +196,8 @@ export function PlatformProvidersModal({
       disableTls: formData.disableTls,
       loggingEnabled: formData.type === 'BACKEND' ? formData.loggingEnabled : null,
       jwtEnabled: formData.type === 'BACKEND' ? formData.jwtEnabled : null,
+      realm: formData.type === 'KEYCLOAK' ? formData.realm.trim() || null : null,
+      clientId: formData.type === 'KEYCLOAK' ? formData.clientId.trim() || null : null,
     }
 
     upsert.mutate(

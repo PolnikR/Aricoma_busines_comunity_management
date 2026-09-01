@@ -148,7 +148,7 @@ export const HealthResponse = zod.object({
 export type HealthResponse = zod.input<typeof HealthResponse>;
 export type HealthResponseOutput = zod.output<typeof HealthResponse>;
 
-export const ProviderType = zod.enum(['VMWARE', 'FLASHCOPY', 'IBM_POWER', 'AIRFLOW', 'SMTP', 'BACKEND']);
+export const ProviderType = zod.enum(['VMWARE', 'FLASHCOPY', 'IBM_POWER', 'AIRFLOW', 'SMTP', 'BACKEND', 'KEYCLOAK']);
 
 export type ProviderType = zod.input<typeof ProviderType>;
 export type ProviderTypeOutput = zod.output<typeof ProviderType>;
@@ -177,7 +177,9 @@ export const OrchestrationProvider = zod.object({
   "disableSsl": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "disableTls": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "loggingEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional(),
-  "jwtEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional()
+  "jwtEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional(),
+  "realm": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "clientId": zod.union([zod.string(),zod.null()]).exactOptional()
 });
 
 export type OrchestrationProvider = zod.input<typeof OrchestrationProvider>;
@@ -208,6 +210,8 @@ export const OrchestrationProviderRecord = zod.object({
   "disableTls": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "loggingEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "jwtEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional(),
+  "realm": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "clientId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "credentialStatus": zod.union([zod.string(),zod.null()]).exactOptional()
 });
 
@@ -573,7 +577,8 @@ export type RecoveryGroupsResponseOutput = zod.output<typeof RecoveryGroupsRespo
 
 export const RoleRecord = zod.object({
   "name": zod.string(),
-  "permissions": zod.array(zod.string())
+  "permissions": zod.array(zod.string()),
+  "description": zod.union([zod.string(),zod.null()]).exactOptional()
 });
 
 export type RoleRecord = zod.input<typeof RoleRecord>;

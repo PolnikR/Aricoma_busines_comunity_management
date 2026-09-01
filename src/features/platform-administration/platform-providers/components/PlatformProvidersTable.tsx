@@ -217,6 +217,33 @@ export function PlatformProvidersTable({
           <dl className="px-5 py-2">
             <DetailRow label={t('details.providerId')} value={<span className="font-mono">{selected.id}</span>} />
             <DetailRow label={t('details.type')} value={selected.type} />
+            {selected.type === 'KEYCLOAK' ? (
+              <>
+                <DetailRow
+                  label={t('details.url')}
+                  value={selected.url ? (
+                    <a
+                      href={selected.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
+                    >
+                      {selected.url}
+                      <ExternalLinkIcon className="size-3.5 shrink-0" />
+                    </a>
+                  ) : '-'}
+                />
+                <DetailRow label={t('details.realm')} value={selected.realm ?? '-'} />
+                <DetailRow label={t('details.clientId')} value={<span className="font-mono">{selected.clientId ?? '-'}</span>} />
+                <DetailRow label={t('details.credential')} value={<span className="font-mono">{selected.credentialId || '-'}</span>} />
+                <DetailRow
+                  label={t('details.credentialStatus')}
+                  value={<Badge color={credentialStatusColor(selected.credentialStatus)} size="sm">{t(`providers.credentials.status.${selected.credentialStatus}`)}</Badge>}
+                />
+                <DetailRow label={t('details.description')} value={selected.description || '-'} />
+              </>
+            ) : (
+            <>
             <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{selected.ipAddress}</span>} />
             <DetailRow label={t('details.port')} value={<span className="font-mono">{selected.port}</span>} />
             <DetailRow label={t('details.dagDir')} value={<span className="font-mono">{selected.dagDir || '-'}</span>} />
@@ -277,6 +304,8 @@ export function PlatformProvidersTable({
                 <DetailRow label={t('details.description')} value={selected.description || '-'} />
               </>
             ) : null}
+            </>
+            )}
           </dl>
         ) : null}
       </DetailDrawer>

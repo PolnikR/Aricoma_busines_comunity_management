@@ -106,6 +106,13 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
             <Field label={t('identity.roles.fields.name')} htmlFor="realm-role-name">
               <Input id="realm-role-name" value={selectedRole.name} readOnly />
             </Field>
+            <Field label={t('identity.roles.fields.description')} htmlFor="realm-role-description">
+              <Input
+                id="realm-role-description"
+                value={selectedRole.description?.trim() ? selectedRole.description : '—'}
+                readOnly
+              />
+            </Field>
             <Field
               label={t('identity.roles.fields.permissions')}
               htmlFor="realm-role-permissions"

@@ -23,6 +23,8 @@ const formData: PlatformProviderFormData = {
   disableTls: null,
   loggingEnabled: null,
   jwtEnabled: null,
+  realm: '',
+  clientId: '',
 }
 
 describe('PlatformProviderForm', () => {

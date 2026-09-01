@@ -29,4 +29,6 @@ export interface OrchestrationProvider {
   disableTls?: boolean | null;
   loggingEnabled?: boolean | null;
   jwtEnabled?: boolean | null;
+  realm?: string | null;
+  clientId?: string | null;
 }

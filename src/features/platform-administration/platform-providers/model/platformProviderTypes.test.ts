@@ -4,7 +4,7 @@ import { platformProviderSubmitSchema } from '../api/schemas/platformProvidersSc
 
 describe('PLATFORM_PROVIDER_TYPES', () => {
   it('is derived from the generated OpenAPI provider type schema', () => {
-    expect(PLATFORM_PROVIDER_TYPES).toEqual(['VMWARE', 'FLASHCOPY', 'IBM_POWER', 'AIRFLOW', 'SMTP', 'BACKEND'])
+    expect(PLATFORM_PROVIDER_TYPES).toEqual(['VMWARE', 'FLASHCOPY', 'IBM_POWER', 'AIRFLOW', 'SMTP', 'BACKEND', 'KEYCLOAK'])
   })
 })
 

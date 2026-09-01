@@ -22,6 +22,8 @@ export interface PlatformProviderFormData {
   disableTls: boolean | null
   loggingEnabled: boolean | null
   jwtEnabled: boolean | null
+  realm: string
+  clientId: string
 }
 
 interface PlatformProviderFormProps {
@@ -159,6 +161,7 @@ export function PlatformProviderForm({
         </Field>
       </div>
 
+      {data.type !== 'KEYCLOAK' ? (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_7.5rem]">
         <Field label={t('forms.ip')} htmlFor="platform-provider-ip">
           <Input
@@ -188,7 +191,9 @@ export function PlatformProviderForm({
           {errors.port ? <p className="mt-1 text-xs text-red-600">{errors.port}</p> : null}
         </Field>
       </div>
+      ) : null}
 
+      {data.type !== 'KEYCLOAK' ? (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label={t('forms.vmPrefix')} htmlFor="platform-provider-vm-prefix">
           <Input
@@ -217,7 +222,48 @@ export function PlatformProviderForm({
           <p className="mt-1 text-xs text-text-muted">{t('providers.tags.platformHint')}</p>
         </Field>
       </div>
+      ) : null}
 
+      {data.type === 'KEYCLOAK' ? (
+        <>
+          <Field label={t('forms.url')} htmlFor="platform-provider-url">
+            <Input
+              id="platform-provider-url"
+              type="url"
+              value={data.url}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('url', event.target.value) }}
+              onKeyDown={handleKeyDown}
+              disabled={isSubmitting}
+              aria-invalid={Boolean(errors.url)}
+            />
+            {errors.url ? <p className="mt-1 text-xs text-red-600">{errors.url}</p> : null}
+          </Field>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Field label={t('forms.realm')} htmlFor="platform-provider-realm">
+              <Input
+                id="platform-provider-realm"
+                value={data.realm}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('realm', event.target.value) }}
+                onKeyDown={handleKeyDown}
+                disabled={isSubmitting}
+                aria-invalid={Boolean(errors.realm)}
+              />
+              {errors.realm ? <p className="mt-1 text-xs text-red-600">{errors.realm}</p> : null}
+            </Field>
+            <Field label={t('forms.clientId')} htmlFor="platform-provider-client-id">
+              <Input
+                id="platform-provider-client-id"
+                value={data.clientId}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('clientId', event.target.value) }}
+                onKeyDown={handleKeyDown}
+                disabled={isSubmitting}
+                aria-invalid={Boolean(errors.clientId)}
+              />
+              {errors.clientId ? <p className="mt-1 text-xs text-red-600">{errors.clientId}</p> : null}
+            </Field>
+          </div>
+        </>
+      ) : (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label={t('forms.url')} htmlFor="platform-provider-url">
         <Input
@@ -244,6 +290,7 @@ export function PlatformProviderForm({
         {errors.dagDir ? <p className="mt-1 text-xs text-red-600">{errors.dagDir}</p> : null}
         </Field>
       </div>
+      )}
 
       {data.type === 'BACKEND' ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -269,6 +316,8 @@ export function PlatformProviderForm({
         </div>
       ) : null}
 
+      {data.type !== 'KEYCLOAK' ? (
+      <>
       <Field label={t('forms.notificationEmail')} htmlFor="platform-provider-notificationEmail">
         <Input
           id="platform-provider-notificationEmail"
@@ -313,6 +362,8 @@ export function PlatformProviderForm({
           />
         </div>
       </div>
+      </>
+      ) : null}
     </div>
   )
 }

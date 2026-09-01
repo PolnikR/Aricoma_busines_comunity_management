@@ -4,6 +4,7 @@ export interface IdentityRoleRecord {
   id: string
   name: string
   permissions: string[]
+  description?: string
 }
 
 export interface IdentityRolesPermissions {
@@ -17,6 +18,7 @@ export function mapRolesPermissions(payload: RolesPermissionsResponseOutput): Id
       id: role.name,
       name: role.name,
       permissions: role.permissions,
+      description: role.description ?? '',
     })),
     permissions: payload.permissions,
   }

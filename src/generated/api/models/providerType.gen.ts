@@ -15,4 +15,5 @@ export const ProviderType = {
   AIRFLOW: 'AIRFLOW',
   SMTP: 'SMTP',
   BACKEND: 'BACKEND',
+  KEYCLOAK: 'KEYCLOAK',
 } as const;

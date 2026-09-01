@@ -33,6 +33,11 @@
         ],
         "summary": "Get Roles Permissions",
         "operationId": "get_roles_permissions_get_roles_permissions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -83,6 +88,11 @@
         ],
         "summary": "Get Providers",
         "operationId": "get_providers_get_providers_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "role",
@@ -150,6 +160,11 @@
         ],
         "summary": "Submit Provider",
         "operationId": "submit_provider_submit_provider_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -210,6 +225,11 @@
         ],
         "summary": "Test Provider",
         "operationId": "test_provider_test_provider_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "provider_id",
@@ -271,6 +291,11 @@
         ],
         "summary": "Delete Provider Route",
         "operationId": "delete_provider_route_delete_provider_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "provider_id",
@@ -332,6 +357,11 @@
         ],
         "summary": "Get Platform Providers",
         "operationId": "get_platform_providers_get_platform_providers_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "type",
@@ -394,6 +424,11 @@
         ],
         "summary": "Submit Platform Provider",
         "operationId": "submit_platform_provider_submit_platform_provider_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -454,6 +489,11 @@
         ],
         "summary": "Delete Platform Provider",
         "operationId": "delete_platform_provider_delete_platform_provider_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "provider_id",
@@ -515,6 +555,11 @@
         ],
         "summary": "Get Credentials Route",
         "operationId": "get_credentials_route_get_credentials_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -565,6 +610,11 @@
         ],
         "summary": "Submit Credential",
         "operationId": "submit_credential_submit_credential_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -625,6 +675,11 @@
         ],
         "summary": "Delete Credential Route",
         "operationId": "delete_credential_route_delete_credential_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "credential_id",
@@ -710,6 +765,11 @@
         ],
         "summary": "Vms Search",
         "operationId": "vms_search_vms_search_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "provider_id",
@@ -790,6 +850,11 @@
         "summary": "Vms In Folder",
         "operationId": "vms_in_folder_vms_in_folder_get",
         "deprecated": true,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "name",
@@ -877,6 +942,11 @@
         "summary": "Vms",
         "operationId": "vms_vms_get",
         "deprecated": true,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "provider_id",
@@ -952,6 +1022,11 @@
         "summary": "Vms By Tag",
         "operationId": "vms_by_tag_vms_by_tag_get",
         "deprecated": true,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "tag",
@@ -1039,6 +1114,11 @@
         "summary": "Vms By Name",
         "operationId": "vms_by_name_vms_by_name_get",
         "deprecated": true,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "prefix",
@@ -1125,6 +1205,11 @@
         ],
         "summary": "Tags",
         "operationId": "tags_tags_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "provider_id",
@@ -1187,6 +1272,11 @@
         ],
         "summary": "Vdisks By Vm",
         "operationId": "vdisks_by_vm_vdisks_by_vm_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "vm_name",
@@ -1273,6 +1363,11 @@
         ],
         "summary": "Get Volumes Route",
         "operationId": "get_volumes_route_get_volumes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "provider_id",
@@ -1348,6 +1443,11 @@
         "summary": "Get Volume Tree Route",
         "description": "Pool-rooted trees of volumes, FlashCopy mappings and consistency groups,\npre-nested for the frontend. See docs/frontend-volume-tree.md.",
         "operationId": "get_volume_tree_route_get_volume_tree_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "provider_id",
@@ -1440,6 +1540,11 @@
         ],
         "summary": "Get Power Vm",
         "operationId": "get_power_vm_get_power_vm_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "provider_id",
@@ -1514,6 +1619,11 @@
         ],
         "summary": "Get Cache Config",
         "operationId": "get_cache_config_discovery_cache_config_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -1562,6 +1672,11 @@
         ],
         "summary": "Update Cache Config",
         "operationId": "update_cache_config_discovery_cache_config_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -1622,6 +1737,11 @@
         ],
         "summary": "Get Cache History",
         "operationId": "get_cache_history_discovery_cache_history_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "provider_id",
@@ -1708,6 +1828,11 @@
         ],
         "summary": "Get Access Logs",
         "operationId": "get_access_logs_get_access_logs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "lines",
@@ -1824,6 +1949,11 @@
         ],
         "summary": "Get Orchestrator Runs",
         "operationId": "get_orchestrator_runs_get_orchestrator_runs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "provider_id",
@@ -1932,6 +2062,11 @@
         ],
         "summary": "Get Recovery Apps",
         "operationId": "get_recovery_apps_get_recovery_apps_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -1982,6 +2117,11 @@
         ],
         "summary": "Submit Recovery Dag",
         "operationId": "submit_recovery_dag_submit_recovery_dag_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "provider_id",
@@ -2066,6 +2206,11 @@
         ],
         "summary": "Delete Recovery App Route",
         "operationId": "delete_recovery_app_route_delete_recovery_app_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "recovery_app_id",
@@ -2189,6 +2334,11 @@
         ],
         "summary": "Get Recovery Groups",
         "operationId": "get_recovery_groups_get_recovery_groups_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -2239,6 +2389,11 @@
         ],
         "summary": "Submit Recovery Group",
         "operationId": "submit_recovery_group_submit_recovery_group_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "provider_id",
@@ -2324,6 +2479,11 @@
         "summary": "Rollback Group From Orchestrator",
         "description": "Delete the group's Airflow DAG (file, record, every run and task instance)\nand every IBM FlashCopy object it created. The group record itself is kept —\nonly push_to_orchestrator flips to false.",
         "operationId": "rollback_group_from_orchestrator_rollback_group_from_orchestrator_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "recovery_group_id",
@@ -2396,6 +2556,11 @@
         ],
         "summary": "Delete Recovery Group Route",
         "operationId": "delete_recovery_group_route_delete_recovery_group_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "recovery_group_id",
@@ -2522,6 +2687,11 @@
         ],
         "summary": "Get Policies",
         "operationId": "get_policies_get_policies_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -2572,6 +2742,11 @@
         ],
         "summary": "Submit Policy",
         "operationId": "submit_policy_submit_policy_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -2632,6 +2807,11 @@
         ],
         "summary": "Delete Policy",
         "operationId": "delete_policy_delete_policy_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "policy_id",
@@ -2693,6 +2873,11 @@
         ],
         "summary": "Get Policy Sets",
         "operationId": "get_policy_sets_get_policy_sets_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -2743,6 +2928,11 @@
         ],
         "summary": "Submit Policy Set",
         "operationId": "submit_policy_set_submit_policy_set_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -2803,6 +2993,11 @@
         ],
         "summary": "Delete Policy Set Route",
         "operationId": "delete_policy_set_route_delete_policy_set_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "policy_set_id",
@@ -2864,6 +3059,11 @@
         ],
         "summary": "Get Recovery App Policies",
         "operationId": "get_recovery_app_policies_get_recovery_app_policies_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -2914,6 +3114,11 @@
         ],
         "summary": "Submit Recovery App Policy",
         "operationId": "submit_recovery_app_policy_submit_recovery_app_policy_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -2974,6 +3179,11 @@
         ],
         "summary": "Delete Recovery App Policy Route",
         "operationId": "delete_recovery_app_policy_route_delete_recovery_app_policy_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "policy_id",
@@ -3035,6 +3245,11 @@
         ],
         "summary": "Get Clean Room Policies",
         "operationId": "get_clean_room_policies_get_clean_room_policies_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -3085,6 +3300,11 @@
         ],
         "summary": "Submit Clean Room Policy",
         "operationId": "submit_clean_room_policy_submit_clean_room_policy_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "X-User",
@@ -3145,6 +3365,11 @@
         ],
         "summary": "Delete Clean Room Policy Route",
         "operationId": "delete_clean_room_policy_route_delete_clean_room_policy_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "policy_id",
@@ -3783,6 +4008,28 @@
               }
             ],
             "title": "Jwtenabled"
+          },
+          "realm": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Realm"
+          },
+          "clientId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clientid"
           }
         },
         "type": "object",
@@ -3991,6 +4238,28 @@
               }
             ],
             "title": "Jwtenabled"
+          },
+          "realm": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Realm"
+          },
+          "clientId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clientid"
           },
           "credentialStatus": {
             "anyOf": [
@@ -4670,7 +4939,8 @@
           "IBM_POWER",
           "AIRFLOW",
           "SMTP",
-          "BACKEND"
+          "BACKEND",
+          "KEYCLOAK"
         ],
         "title": "ProviderType"
       },
@@ -5506,6 +5776,17 @@
             },
             "type": "array",
             "title": "Permissions"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
           }
         },
         "type": "object",
@@ -6383,6 +6664,12 @@
           "clusters"
         ],
         "title": "VolumesResponse"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

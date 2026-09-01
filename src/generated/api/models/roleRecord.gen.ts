@@ -8,4 +8,5 @@
 export interface RoleRecord {
   name: string;
   permissions: string[];
+  description?: string | null;
 }
