@@ -929,7 +929,17 @@ Približne 8–14 hodín focused FE implementation + tests + browser/network ver
 
 Implementácia má byť rozdelená do S/M taskov. Task, ktorý začne zasahovať viac ako približne 5 nezávislých files alebo viac subsystémov, sa má ďalej rozbiť.
 
-## Otvorené otázky / blockers
+## Implementation status — 2026-09-01
 
-1. Potvrdiť, že exact BE field name je naozaj `swaggerEnables` (nie podobný variant). Aktuálny generated OpenAPI ho neobsahuje.
-2. Potvrdiť backend clear semantics pre relevantné optional strings: či explicitný Edit clear vyžaduje `null`, alebo backend interpretuje omission ako clear. Aktuálny FE používa `null` pre viacero cleared values; exact payload test sa musí riadiť backend kontraktom.
+FE implementácia Tasks 2–15 je dokončená na vetve `test`.
+
+- `ff09f4f` — `feat(platform-providers): map fields by provider type`
+- `153e4c7` — `test(platform-providers): cover cleared type fields`
+- type-specific domain/read mapper, Create/Edit, validation, submit payload, Detail/Table a raw JSON separation sú zapracované,
+- `swaggerEnables` sa používa cez generated OpenAPI contract,
+- relevantné cleared optional strings sa v submit mapperi normalizujú na `null`; nerelevantné type fields sa do payloadu vôbec nepridávajú,
+- automated verification je zelená: focused tests, forced TypeScript build, focused ESLint, locale JSON parse a `git diff --check`.
+
+## Remaining verification blocker
+
+Task 16 — autentizovaný browser/network matrix — ostáva neoverený v Rel.AI browser prostredí. Lokálny FE redirectuje na Keycloak `10.99.99.53:8081`, ale browser session povoľuje iba loopback porty; OIDC authorize request je preto zablokovaný ako `outside_allowed_loopback_ports` / `ERR_BLOCKED_BY_CLIENT`. Task 16 sa nesmie označiť ako splnený bez reálneho autentizovaného browser/network overenia.
