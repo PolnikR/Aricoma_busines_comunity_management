@@ -17,7 +17,14 @@ afterEach(() => { vi.unstubAllGlobals() })
 
 describe('useRolesPermissions', () => {
   it('loads and caches the current user roles and permissions', async () => {
-    const response = { roles: [{ name: 'platform-admin', permissions: ['providers.read'] }], permissions: ['providers.read'] }
+    const response = {
+      roles: [{
+        name: 'platform-admin',
+        permissions: ['providers.read'],
+        description: 'Manages platform configuration.',
+      }],
+      permissions: ['providers.read'],
+    }
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(response), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
     const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 15 * 60 * 1000 } } })
@@ -28,7 +35,12 @@ describe('useRolesPermissions', () => {
     const second = renderHook(() => useRolesPermissions(), { wrapper })
     expect(second.result.current.data?.roles[0]?.id).toBe('platform-admin')
     expect(client.getQueryData(rolesPermissionsKeys.detail())).toEqual({
-      roles: [{ id: 'platform-admin', name: 'platform-admin', permissions: ['providers.read'] }],
+      roles: [{
+        id: 'platform-admin',
+        name: 'platform-admin',
+        permissions: ['providers.read'],
+        description: 'Manages platform configuration.',
+      }],
       permissions: ['providers.read'],
     })
     expect(fetchMock).toHaveBeenCalledTimes(1)
