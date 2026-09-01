@@ -29,6 +29,7 @@ export interface OrchestrationProviderRecord {
   disableTls?: boolean | null;
   loggingEnabled?: boolean | null;
   jwtEnabled?: boolean | null;
+  swaggerEnables?: boolean | null;
   realm?: string | null;
   clientId?: string | null;
   credentialStatus?: string | null;

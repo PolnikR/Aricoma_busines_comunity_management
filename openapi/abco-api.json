@@ -4009,6 +4009,17 @@
             ],
             "title": "Jwtenabled"
           },
+          "swaggerEnables": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Swaggerenables"
+          },
           "realm": {
             "anyOf": [
               {
@@ -4238,6 +4249,17 @@
               }
             ],
             "title": "Jwtenabled"
+          },
+          "swaggerEnables": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Swaggerenables"
           },
           "realm": {
             "anyOf": [
