@@ -140,6 +140,7 @@ describe('RecoveryGroupsTable', () => {
     expect(await screen.findByText('Recovery Group')).toBeInTheDocument()
     expect(screen.getByText('Workload Type')).toBeInTheDocument()
     expect(screen.getByText('Resource Type')).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Actions' })).toBeInTheDocument()
 
     await user.click(screen.getByText('Database group'))
 

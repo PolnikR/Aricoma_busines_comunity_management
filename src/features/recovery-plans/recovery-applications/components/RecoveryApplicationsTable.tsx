@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { routes } from '@/app/routes'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
@@ -14,6 +14,7 @@ import {
   DataTableRequestState,
   DetailDrawer,
   DetailRow,
+  RowActionsMenu,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
@@ -134,6 +135,7 @@ export function RecoveryApplicationsTable({
   const [pendingFilters, setPendingFilters] = useState<RecoveryApplicationFilters>(EMPTY_FILTERS)
   const [deleteTarget, setDeleteTarget] = useState<RecoveryApplicationListItem | null>(null)
   const [rollbackResult, setRollbackResult] = useState<{ appName: string; report: RollbackReport } | null>(null)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [detailTab, setDetailTab] = useState<'overview' | 'orchestration'>('overview')
   const errorDescription = resolveUserFacingErrorMessage(error, '')
 
@@ -208,11 +210,41 @@ export function RecoveryApplicationsTable({
         </Button>
       ),
     },
-  ], [t, providers, platformProviders])
+    ...(onDelete ? [{
+      id: 'actions',
+      header: t('tables.recovery.actions'),
+      cell: (app: RecoveryApplicationListItem) => (
+        <Button
+          data-recovery-application-menu-trigger={app.id}
+          size="xs"
+          variant="ghost"
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation()
+            setOpenMenuId(openMenuId === app.id ? null : app.id)
+          }}
+        >
+          ⋯
+        </Button>
+      ),
+    }] : []),
+  ], [t, providers, platformProviders, openMenuId, onDelete])
 
   const table = useTableState(rows, {
     searchFields: ['id'],
   })
+
+  const triggerRefForMenu = useRef<HTMLButtonElement | null>(null)
+
+  const currentMenuApp = useMemo(
+    () => rows.find(app => app.id === openMenuId) ?? null,
+    [rows, openMenuId],
+  )
+
+  useEffect(() => {
+    if (!openMenuId) return
+    const button = document.querySelector(`[data-recovery-application-menu-trigger="${openMenuId}"]`)
+    triggerRefForMenu.current = button instanceof HTMLButtonElement ? button : null
+  }, [openMenuId])
 
   const prepareFilters = () => {
     setPendingFilters(filters)
@@ -327,6 +359,25 @@ export function RecoveryApplicationsTable({
           isLoading={isLoading}
           onPageChange={table.setPage}
           onPageSizeChange={table.setPageSize}
+        />
+      ) : null}
+
+      {openMenuId && currentMenuApp && onDelete ? (
+        <RowActionsMenu
+          triggerRef={triggerRefForMenu}
+          open={true}
+          onClose={() => { setOpenMenuId(null) }}
+          ariaLabel={`${t('tables.recovery.actions')} for ${currentMenuApp.data.application.name}`}
+          editLabel={t('buttons.edit')}
+          {...(onEdit ? {} : { editDisabled: true })}
+          deleteLabel={t('buttons.delete')}
+          edit={() => {
+            onEdit?.(currentMenuApp.id)
+            setSelectedId(null)
+          }}
+          delete={() => {
+            setDeleteTarget(currentMenuApp)
+          }}
         />
       ) : null}
 
@@ -517,6 +568,7 @@ export function RecoveryApplicationsTable({
               }
               setDeleteTarget(null)
               setSelectedId(null)
+              setOpenMenuId(null)
             } catch {
               setDeleteTarget(null)
             }

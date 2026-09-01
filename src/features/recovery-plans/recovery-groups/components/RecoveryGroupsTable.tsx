@@ -11,6 +11,7 @@ import {
   DataTableToolbar,
   DetailDrawer,
   DetailRow,
+  RowActionsMenu,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
@@ -28,7 +29,6 @@ import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/fe
 import { toRecoveryGroupJson } from '../helpers/mapRecoveryGroups'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupRollbackResultModal } from './RecoveryGroupRollbackResultModal'
-import { RecoveryGroupContextMenu } from './RecoveryGroupContextMenu'
 import {
   getResourceTypeLabelKey,
   getSourceCategoryLabelKey,
@@ -194,7 +194,7 @@ export function RecoveryGroupsTable({
     },
     {
       id: 'actions',
-      header: '',
+      header: t('tables.recoveryGroups.actions'),
       cell: group => (
         <Button
           data-recovery-group-menu-trigger={group.id}
@@ -329,7 +329,7 @@ export function RecoveryGroupsTable({
       ) : null}
 
       {openMenuId && currentMenuGroup && (
-        <RecoveryGroupContextMenu
+        <RowActionsMenu
           triggerRef={triggerRefForMenu}
           open={true}
           onClose={() => { setOpenMenuId(null) }}

@@ -126,6 +126,38 @@ describe('RecoveryApplicationsTable', () => {
     expect(onEdit).toHaveBeenCalledWith('finance-app')
   })
 
+  it('opens the row actions menu without selecting the row and dispatches Edit', async () => {
+    const user = userEvent.setup()
+    const onEdit = vi.fn()
+    renderTable(
+      <RecoveryApplicationsTable applications={[application]} onEdit={onEdit} onDelete={vi.fn()} />,
+    )
+
+    expect(screen.getByRole('columnheader', { name: 'Actions' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '⋯' }))
+
+    const menu = screen.getByRole('menu', { name: 'Actions for Finance Recovery' })
+    expect(screen.queryByRole('dialog', { name: 'Application detail' })).not.toBeInTheDocument()
+    expect(within(menu).queryByRole('menuitem', { name: 'Roll back' })).not.toBeInTheDocument()
+
+    await user.click(within(menu).getByRole('menuitem', { name: 'Edit' }))
+    expect(onEdit).toHaveBeenCalledWith('finance-app')
+  })
+
+  it('opens the delete confirmation from the row actions menu', async () => {
+    const user = userEvent.setup()
+    renderTable(
+      <RecoveryApplicationsTable applications={[application]} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    )
+
+    await user.click(screen.getByRole('button', { name: '⋯' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Delete' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Delete recovery application' })
+    expect(dialog).toHaveTextContent('Finance Recovery')
+  })
+
   it('renders a clickable Airflow DAG ID without opening the row detail', async () => {
     const user = userEvent.setup()
     renderTable(<RecoveryApplicationsTable applications={[application, developmentApplication]} />)

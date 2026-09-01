@@ -13,7 +13,7 @@ const MENU_WIDTH = 160
 const VIEWPORT_GAP = 8
 const TRIGGER_GAP = 4
 
-interface RecoveryGroupContextMenuProps {
+interface RowActionsMenuProps {
   triggerRef: React.RefObject<HTMLButtonElement | null>
   open: boolean
   onClose: () => void
@@ -32,7 +32,7 @@ interface RecoveryGroupContextMenuProps {
   }
 }
 
-export function RecoveryGroupContextMenu({
+export function RowActionsMenu({
   triggerRef,
   open,
   onClose,
@@ -44,7 +44,7 @@ export function RecoveryGroupContextMenu({
   edit,
   delete: onDelete,
   rollback,
-}: RecoveryGroupContextMenuProps) {
+}: RowActionsMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<CSSProperties>({})
   const menuId = useId()

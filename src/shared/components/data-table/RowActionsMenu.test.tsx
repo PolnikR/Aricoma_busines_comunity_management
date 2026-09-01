@@ -2,13 +2,13 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createRef } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import { RecoveryGroupContextMenu } from './RecoveryGroupContextMenu'
+import { RowActionsMenu } from './RowActionsMenu'
 
-describe('RecoveryGroupContextMenu', () => {
+describe('RowActionsMenu', () => {
   it('renders nothing when closed', () => {
     const triggerRef = createRef<HTMLButtonElement>()
     const { container } = render(
-      <RecoveryGroupContextMenu
+      <RowActionsMenu
         triggerRef={triggerRef}
         open={false}
         onClose={vi.fn()}
@@ -26,7 +26,7 @@ describe('RecoveryGroupContextMenu', () => {
   it('renders menu items when open', () => {
     const triggerRef = createRef<HTMLButtonElement>()
     render(
-      <RecoveryGroupContextMenu
+      <RowActionsMenu
         triggerRef={triggerRef}
         open={true}
         onClose={vi.fn()}
@@ -49,7 +49,7 @@ describe('RecoveryGroupContextMenu', () => {
     const edit = vi.fn()
 
     render(
-      <RecoveryGroupContextMenu
+      <RowActionsMenu
         triggerRef={triggerRef}
         open={true}
         onClose={vi.fn()}
@@ -71,7 +71,7 @@ describe('RecoveryGroupContextMenu', () => {
     const deleteCallback = vi.fn()
 
     render(
-      <RecoveryGroupContextMenu
+      <RowActionsMenu
         triggerRef={triggerRef}
         open={true}
         onClose={vi.fn()}
@@ -93,7 +93,7 @@ describe('RecoveryGroupContextMenu', () => {
     const onClose = vi.fn()
 
     const { rerender } = render(
-      <RecoveryGroupContextMenu
+      <RowActionsMenu
         triggerRef={triggerRef}
         open={true}
         onClose={onClose}
@@ -110,7 +110,7 @@ describe('RecoveryGroupContextMenu', () => {
 
     // Re-render with open=false to verify it closes
     rerender(
-      <RecoveryGroupContextMenu
+      <RowActionsMenu
         triggerRef={triggerRef}
         open={false}
         onClose={onClose}
@@ -133,7 +133,7 @@ describe('RecoveryGroupContextMenu', () => {
     render(
       <>
         <div data-testid="outside">Click outside</div>
-        <RecoveryGroupContextMenu
+        <RowActionsMenu
           triggerRef={triggerRef}
           open={true}
           onClose={onClose}
@@ -155,7 +155,7 @@ describe('RecoveryGroupContextMenu', () => {
     const onRollback = vi.fn()
 
     render(
-      <RecoveryGroupContextMenu
+      <RowActionsMenu
         triggerRef={triggerRef}
         open={true}
         onClose={vi.fn()}
@@ -180,7 +180,7 @@ describe('RecoveryGroupContextMenu', () => {
     const triggerRef = createRef<HTMLButtonElement>()
 
     render(
-      <RecoveryGroupContextMenu
+      <RowActionsMenu
         triggerRef={triggerRef}
         open={true}
         onClose={vi.fn()}
@@ -209,7 +209,7 @@ describe('RecoveryGroupContextMenu', () => {
     const onRollback = vi.fn()
 
     render(
-      <RecoveryGroupContextMenu
+      <RowActionsMenu
         triggerRef={triggerRef}
         open={true}
         onClose={vi.fn()}
@@ -236,7 +236,7 @@ describe('RecoveryGroupContextMenu', () => {
     const onRollback = vi.fn()
 
     render(
-      <RecoveryGroupContextMenu
+      <RowActionsMenu
         triggerRef={triggerRef}
         open={true}
         onClose={vi.fn()}
@@ -263,7 +263,7 @@ describe('RecoveryGroupContextMenu', () => {
     const onClose = vi.fn()
 
     render(
-      <RecoveryGroupContextMenu
+      <RowActionsMenu
         triggerRef={triggerRef}
         open={true}
         onClose={onClose}

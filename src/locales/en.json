@@ -291,6 +291,7 @@
   "tables.recovery.submission": "Submission",
   "tables.recovery.json": "JSON",
   "tables.recovery.viewJson": "View",
+  "tables.recovery.actions": "Actions",
   "tables.recovery.active": "Active",
   "tables.recovery.draft": "Draft",
   "tables.recovery.vmware": "VMware",
@@ -308,6 +309,7 @@
   "tables.recoveryGroups.policySet": "Policy Set",
   "tables.recoveryGroups.json": "JSON",
   "tables.recoveryGroups.viewJson": "View",
+  "tables.recoveryGroups.actions": "Actions",
   "recoveryGroups.modal.jsonViewer.title": "Recovery Group JSON",
 
   "toolbar.vmSearch": "Search virtual machines",
