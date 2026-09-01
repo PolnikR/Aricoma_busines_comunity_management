@@ -110,4 +110,50 @@ describe('toPlatformProviderSubmitData', () => {
       credentialId: 'keycloak-admin',
     })
   })
+
+  it('sends null for a cleared optional SMTP from address without adding unrelated keys', () => {
+    const payload = toPlatformProviderSubmitData({
+      ...common,
+      type: 'SMTP',
+      ipAddress: '10.0.0.2',
+      port: '1025',
+      fromEmail: '   ',
+      disableSsl: false,
+      disableTls: true,
+    })
+
+    expect(payload).toEqual({
+      id: 'provider-01',
+      name: 'Provider',
+      description: 'Description',
+      type: 'SMTP',
+      url: 'http://provider.example.test',
+      ipAddress: '10.0.0.2',
+      port: 1025,
+      fromEmail: null,
+      disableSsl: false,
+      disableTls: true,
+    })
+  })
+
+  it('sends null for cleared KEYCLOAK strings without adding unrelated keys', () => {
+    const payload = toPlatformProviderSubmitData({
+      ...common,
+      type: 'KEYCLOAK',
+      realm: ' ',
+      clientId: '',
+      credentialId: '   ',
+    })
+
+    expect(payload).toEqual({
+      id: 'provider-01',
+      name: 'Provider',
+      description: 'Description',
+      type: 'KEYCLOAK',
+      url: 'http://provider.example.test',
+      realm: null,
+      clientId: null,
+      credentialId: null,
+    })
+  })
 })
