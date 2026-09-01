@@ -1,250 +1,129 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { PlatformProviderForm, type PlatformProviderFormData } from './PlatformProviderForm'
+import { EMPTY_PLATFORM_PROVIDER_FORM } from '../model/platformProviderForm'
+import type { PlatformProviderFormData } from '../model/platformProviderForm'
+import { PlatformProviderForm } from './PlatformProviderForm'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
-const formData: PlatformProviderFormData = {
-  id: 'airflow-1',
-  name: 'Production Airflow',
-  description: 'Production orchestration',
-  type: 'AIRFLOW',
-  ipAddress: '10.99.99.40',
-  url: 'https://airflow.example.test',
-  port: '22',
-  dagDir: '/opt/airflow/dags',
-  credentialId: 'credential-1',
-  vmPrefix: 'airflow-',
-  vmTags: ['saved-platform-tag'],
-  notificationEmail: 'platform-alerts@example.test',
-  fromEmail: '',
-  disableSsl: null,
-  disableTls: null,
-  loggingEnabled: null,
-  jwtEnabled: null,
-  realm: '',
-  clientId: '',
+function data(type: PlatformProviderFormData['type']): PlatformProviderFormData {
+  return {
+    ...EMPTY_PLATFORM_PROVIDER_FORM,
+    id: 'provider-1',
+    name: 'Provider',
+    description: 'Description',
+    type,
+    url: 'https://provider.example.test',
+  }
+}
+
+function renderForm(formData: PlatformProviderFormData, onChange = vi.fn()) {
+  render(
+    <PlatformProviderForm
+      data={formData}
+      errors={{}}
+      isSubmitting={false}
+      credentials={[
+        { id: 'credential-1', name: 'Credential 1', username: 'admin', credentialStatus: 'ok' } as never,
+      ]}
+      credentialsLoading={false}
+      credentialsError={false}
+      onRetryCredentials={vi.fn()}
+      onChange={onChange}
+      onSubmit={vi.fn()}
+    />,
+  )
+  return onChange
+}
+
+function expectAbsent(labels: string[]) {
+  for (const label of labels) expect(screen.queryByLabelText(label)).not.toBeInTheDocument()
 }
 
 describe('PlatformProviderForm', () => {
-  it('keeps IP address and port in a responsive grid row', () => {
-    render(
-      <PlatformProviderForm
-        data={formData}
-        errors={{}}
-        isSubmitting={false}
-        credentials={[]}
-        credentialsLoading={false}
-        credentialsError={false}
-        onRetryCredentials={vi.fn()}
-        tags={[]}
-        tagsDisabled={false}
-        onTagsChange={vi.fn()}
-        onChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />,
-    )
+  it('offers only the four platform-provider types', () => {
+    renderForm(data(''))
+    const select = screen.getByLabelText('Type')
+    if (!(select instanceof HTMLSelectElement)) throw new Error('Platform provider type select not found')
+    const options = Array.from(select.options).map(option => option.value)
+    expect(options).toEqual(['', 'AIRFLOW', 'SMTP', 'BACKEND', 'KEYCLOAK'])
+  })
 
+  it('renders only AIRFLOW configuration fields', () => {
+    renderForm({
+      ...data('AIRFLOW'),
+      ipAddress: '10.0.0.1',
+      port: '22',
+      dagDir: '/opt/airflow/dags',
+      credentialId: 'credential-1',
+      notificationEmail: 'platform@example.test',
+    })
+
+    for (const label of ['URL', 'IP address', 'Port', 'DAG directory', 'Credentials', 'Notification email']) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument()
+    }
+    expectAbsent(['From email', 'Disable SSL', 'Disable TLS', 'Enable logging', 'Enable JWT', 'Enable Swagger', 'Realm', 'Client ID'])
+  })
+
+  it('renders only SMTP configuration fields', () => {
+    renderForm({
+      ...data('SMTP'),
+      ipAddress: '10.0.0.2',
+      port: '1025',
+      fromEmail: 'airflow@example.test',
+      disableSsl: true,
+      disableTls: false,
+    })
+
+    for (const label of ['URL', 'IP address', 'Port', 'From email', 'Disable SSL', 'Disable TLS']) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument()
+    }
+    expect(screen.getByRole('checkbox', { name: 'Disable SSL' })).toBeChecked()
+    expectAbsent(['DAG directory', 'Credentials', 'Notification email', 'Enable logging', 'Enable JWT', 'Enable Swagger', 'Realm', 'Client ID'])
+  })
+
+  it('renders only BACKEND configuration fields and reports all boolean controls', () => {
+    const onChange = renderForm({
+      ...data('BACKEND'),
+      notificationEmail: 'backend@example.test',
+      loggingEnabled: true,
+      jwtEnabled: false,
+      swaggerEnables: true,
+    })
+
+    for (const label of ['URL', 'Notification email', 'Enable logging', 'Enable JWT', 'Enable Swagger']) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument()
+    }
+    expectAbsent(['IP address', 'Port', 'DAG directory', 'Credentials', 'From email', 'Disable SSL', 'Disable TLS', 'Realm', 'Client ID'])
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable logging' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable JWT' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable Swagger' }))
+    expect(onChange).toHaveBeenCalledWith('loggingEnabled', false)
+    expect(onChange).toHaveBeenCalledWith('jwtEnabled', true)
+    expect(onChange).toHaveBeenCalledWith('swaggerEnables', false)
+  })
+
+  it('renders only KEYCLOAK configuration fields and preserves a missing credential option', () => {
+    renderForm({
+      ...data('KEYCLOAK'),
+      realm: 'aricoma',
+      clientId: 'abco-be',
+      credentialId: 'missing-credential',
+    })
+
+    for (const label of ['URL', 'Realm', 'Client ID', 'Credentials']) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument()
+    }
+    expect(screen.getByLabelText('Credentials')).toHaveValue('missing-credential')
+    expectAbsent(['IP address', 'Port', 'DAG directory', 'Notification email', 'From email', 'Disable SSL', 'Disable TLS', 'Enable logging', 'Enable JWT', 'Enable Swagger'])
+  })
+
+  it('keeps AIRFLOW IP and port in the compact responsive row', () => {
+    renderForm({ ...data('AIRFLOW'), ipAddress: '10.0.0.1', port: '22' })
     const ipField = screen.getByLabelText('IP address').closest('label')
     const portField = screen.getByLabelText('Port').closest('label')
-    const row = ipField?.parentElement
-
-    expect(row).toBe(portField?.parentElement)
-    expect(row).toHaveClass('grid', 'grid-cols-1', 'sm:grid-cols-[minmax(0,1fr)_7.5rem]')
-
-    const portInput = screen.getByLabelText('Port')
-    expect(screen.getByLabelText('URL')).toHaveValue('https://airflow.example.test')
-    expect(portInput).toHaveAttribute('type', 'number')
-    expect(portInput).toHaveAttribute('min', '1')
-    expect(portInput).toHaveAttribute('max', '65535')
-    expect(portInput).toHaveAttribute('step', '1')
-  })
-
-  it('renders VM prefix and reports a single selected platform tag', async () => {
-    const user = userEvent.setup()
-    const onTagsChange = vi.fn()
-    render(
-      <PlatformProviderForm
-        data={formData}
-        errors={{}}
-        isSubmitting={false}
-        credentials={[]}
-        credentialsLoading={false}
-        credentialsError={false}
-        onRetryCredentials={vi.fn()}
-        tags={['replacement-platform-tag']}
-        tagsDisabled={false}
-        onTagsChange={onTagsChange}
-        onChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />,
-    )
-
-    expect(screen.getByLabelText('VM prefix')).toHaveValue('airflow-')
-    const vmTagsSelect = document.querySelector<HTMLSelectElement>('#platform-provider-vm-tags')
-    if (!vmTagsSelect) throw new Error('VM tags select not found')
-    expect(vmTagsSelect).toHaveValue('saved-platform-tag')
-
-    await user.selectOptions(vmTagsSelect, 'replacement-platform-tag')
-    expect(onTagsChange).toHaveBeenLastCalledWith(['replacement-platform-tag'])
-
-    await user.selectOptions(vmTagsSelect, '')
-    expect(onTagsChange).toHaveBeenLastCalledWith([])
-  })
-
-  it('renders and reports notification email changes', () => {
-    const onChange = vi.fn()
-    render(
-      <PlatformProviderForm
-        data={formData}
-        errors={{}}
-        isSubmitting={false}
-        credentials={[]}
-        credentialsLoading={false}
-        credentialsError={false}
-        onRetryCredentials={vi.fn()}
-        tags={[]}
-        tagsDisabled={false}
-        onTagsChange={vi.fn()}
-        onChange={onChange}
-        onSubmit={vi.fn()}
-      />,
-    )
-
-    const input = screen.getByLabelText('Notification email')
-    expect(input).toHaveValue('platform-alerts@example.test')
-    fireEvent.change(input, { target: { value: 'new-alerts@example.test' } })
-    expect(onChange).toHaveBeenCalledWith('notificationEmail', 'new-alerts@example.test')
-  })
-
-  it('renders and reports the optional SMTP fields', () => {
-    const onChange = vi.fn()
-    render(
-      <PlatformProviderForm
-        data={{ ...formData, fromEmail: 'airflow@example.com', disableSsl: true, disableTls: false }}
-        errors={{}}
-        isSubmitting={false}
-        credentials={[]}
-        credentialsLoading={false}
-        credentialsError={false}
-        onRetryCredentials={vi.fn()}
-        tags={[]}
-        tagsDisabled={false}
-        onTagsChange={vi.fn()}
-        onChange={onChange}
-        onSubmit={vi.fn()}
-      />,
-    )
-
-    expect(screen.getByLabelText('From email')).toHaveValue('airflow@example.com')
-    expect(screen.getByRole('checkbox', { name: 'Disable SSL' })).toBeChecked()
-    expect(screen.getByRole('checkbox', { name: 'Disable TLS' })).not.toBeChecked()
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Disable SSL' }))
-    expect(onChange).toHaveBeenCalledWith('disableSsl', false)
-  })
-
-  it('renders BACKEND controls and reports explicit boolean changes', () => {
-    const onChange = vi.fn()
-    const { rerender } = render(
-      <PlatformProviderForm
-        data={{ ...formData, type: 'BACKEND', loggingEnabled: null, jwtEnabled: null }}
-        errors={{}}
-        isSubmitting={false}
-        credentials={[]}
-        credentialsLoading={false}
-        credentialsError={false}
-        onRetryCredentials={vi.fn()}
-        tags={[]}
-        tagsDisabled={false}
-        onTagsChange={vi.fn()}
-        onChange={onChange}
-        onSubmit={vi.fn()}
-      />,
-    )
-
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable logging' }))
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable JWT' }))
-
-    expect(onChange).toHaveBeenCalledWith('loggingEnabled', true)
-    expect(onChange).toHaveBeenCalledWith('jwtEnabled', true)
-    expect(screen.getByText('JWT enforcement is not yet implemented on the backend.')).toBeVisible()
-
-    rerender(
-      <PlatformProviderForm
-        data={{ ...formData, type: 'BACKEND', loggingEnabled: true, jwtEnabled: true }}
-        errors={{}}
-        isSubmitting={false}
-        credentials={[]}
-        credentialsLoading={false}
-        credentialsError={false}
-        onRetryCredentials={vi.fn()}
-        tags={[]}
-        tagsDisabled={false}
-        onTagsChange={vi.fn()}
-        onChange={onChange}
-        onSubmit={vi.fn()}
-      />,
-    )
-
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable logging' }))
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable JWT' }))
-    expect(onChange).toHaveBeenCalledWith('loggingEnabled', false)
-    expect(onChange).toHaveBeenCalledWith('jwtEnabled', false)
-  })
-
-  it.each(['AIRFLOW', 'SMTP'])('does not render BACKEND controls for %s providers', (type) => {
-    render(
-      <PlatformProviderForm
-        data={{ ...formData, type }}
-        errors={{}}
-        isSubmitting={false}
-        credentials={[]}
-        credentialsLoading={false}
-        credentialsError={false}
-        onRetryCredentials={vi.fn()}
-        tags={[]}
-        tagsDisabled={false}
-        onTagsChange={vi.fn()}
-        onChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />,
-    )
-
-    expect(screen.queryByRole('checkbox', { name: 'Enable logging' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('checkbox', { name: 'Enable JWT' })).not.toBeInTheDocument()
-  })
-
-  it('uses the compact provider-style rows for platform fields', () => {
-    render(
-      <PlatformProviderForm
-        data={formData}
-        errors={{}}
-        isSubmitting={false}
-        credentials={[]}
-        credentialsLoading={false}
-        credentialsError={false}
-        onRetryCredentials={vi.fn()}
-        tags={[]}
-        tagsDisabled={false}
-        onTagsChange={vi.fn()}
-        onChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />,
-    )
-
-    const idRow = screen.getByLabelText('ID').closest('label')?.parentElement
-    const nameRow = screen.getByLabelText('Provider name').closest('label')?.parentElement
-    const typeRow = screen.getByLabelText('Type').closest('label')?.parentElement
-    const credentialsRow = screen.getByLabelText('Credentials').closest('label')?.parentElement
-    const urlRow = screen.getByLabelText('URL').closest('label')?.parentElement
-    const dagDirRow = screen.getByLabelText('DAG directory').closest('label')?.parentElement
-
-    expect(idRow).toBe(nameRow)
-    expect(typeRow).toBe(credentialsRow)
-    expect(urlRow).toBe(dagDirRow)
-    expect(idRow).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-2')
-    expect(typeRow).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-2')
-    expect(urlRow).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-2')
+    expect(ipField?.parentElement).toBe(portField?.parentElement)
+    expect(ipField?.parentElement).toHaveClass('grid', 'grid-cols-1', 'sm:grid-cols-[minmax(0,1fr)_7.5rem]')
   })
 })

@@ -20,6 +20,7 @@ const airflowProvider: PlatformProviderRecord = {
   port: 22,
   dagDir: '/home/airflow/dags',
   credentialId: 'airflow-ssh',
+  notificationEmail: null,
   credentialStatus: 'ok',
 }
 
@@ -27,11 +28,12 @@ const submitData: PlatformProviderSubmitData = {
   id: airflowProvider.id,
   name: airflowProvider.name,
   description: airflowProvider.description,
-  type: airflowProvider.type,
-  ipAddress: airflowProvider.ipAddress,
-  port: airflowProvider.port,
-  dagDir: airflowProvider.dagDir,
-  credentialId: airflowProvider.credentialId,
+  type: 'AIRFLOW',
+  ipAddress: '10.99.99.55',
+  port: 22,
+  dagDir: '/home/airflow/dags',
+  credentialId: 'airflow-ssh',
+  notificationEmail: null,
 }
 
 function createQueryContext() {

@@ -3,9 +3,11 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { toPlatformProviderJson } from '../helpers/platformProviderJson'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 
+type SmtpProviderRecord = Extract<PlatformProviderRecord, { type: 'SMTP' }>
+
 interface SmtpProviderDetailsDialogProps {
   open: boolean
-  provider: PlatformProviderRecord
+  provider: SmtpProviderRecord
   onClose: () => void
 }
 

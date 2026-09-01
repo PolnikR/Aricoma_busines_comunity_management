@@ -15,6 +15,7 @@ const airflowProvider: PlatformProviderRecord = {
   port: 8080,
   dagDir: '/opt/airflow/dags',
   credentialId: 'airflow-admin',
+  notificationEmail: null,
   credentialStatus: 'ok',
 }
 

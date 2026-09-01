@@ -33,12 +33,35 @@ const smtpProvider: PlatformProviderRecord = {
   ipAddress: '10.99.99.53',
   port: 1025,
   url: 'http://10.99.99.53:8025/',
-  dagDir: '',
-  credentialId: '',
   credentialStatus: 'none',
   fromEmail: 'airflow@example.com',
   disableSsl: true,
   disableTls: true,
+}
+
+const backendProvider: PlatformProviderRecord = {
+  id: 'backend',
+  name: 'ABCo API',
+  description: 'Backend service.',
+  type: 'BACKEND',
+  url: 'http://10.99.99.54:8000/',
+  credentialStatus: 'none',
+  notificationEmail: 'abcobe@example.com',
+  loggingEnabled: true,
+  jwtEnabled: false,
+  swaggerEnables: true,
+}
+
+const keycloakProvider: PlatformProviderRecord = {
+  id: 'keycloak-01',
+  name: 'Aricoma Keycloak',
+  description: 'Realm role sync target.',
+  type: 'KEYCLOAK',
+  url: 'http://10.99.99.53:8081',
+  credentialStatus: 'ok',
+  realm: 'aricoma',
+  clientId: 'abco-be',
+  credentialId: 'keycloak-admin',
 }
 
 const deleteMutation = {
@@ -158,16 +181,81 @@ describe('PlatformProvidersTable', () => {
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
     const smtpUrl = smtpProvider.url
     if (!smtpUrl) throw new Error('SMTP fixture URL is required')
-    for (const label of ['Provider ID', 'Type', 'IP address', 'Port', 'DAG directory', 'URL', 'Notification email', 'From email']) {
+    for (const label of ['Provider ID', 'Type', 'URL', 'Description', 'IP address', 'Port', 'From email', 'Disable SSL', 'Disable TLS']) {
       expect(within(drawer).getByText(label)).toBeInTheDocument()
     }
 
     expect(within(drawer).getByRole('link', { name: smtpUrl })).toHaveAttribute('href', smtpUrl)
     expect(within(drawer).getByText('airflow@example.com')).toBeInTheDocument()
-    expect(within(drawer).queryByText('Description')).not.toBeInTheDocument()
-    expect(within(drawer).queryByText('Disable SSL')).not.toBeInTheDocument()
-    expect(within(drawer).queryByText('Disable TLS')).not.toBeInTheDocument()
+    expect(within(drawer).queryByText('DAG directory')).not.toBeInTheDocument()
+    expect(within(drawer).queryByText('Notification email')).not.toBeInTheDocument()
     expect(within(drawer).queryByText('Credential')).not.toBeInTheDocument()
+  })
+
+  it('shows only AIRFLOW configuration fields in the detail drawer', async () => {
+    const user = userEvent.setup()
+    render(
+      <PlatformProvidersTable
+        providers={[baseProvider]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByText('Primary Airflow'))
+    const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
+    for (const label of ['IP address', 'Port', 'DAG directory', 'Credential', 'Credential status', 'Notification email']) {
+      expect(within(drawer).getByText(label)).toBeInTheDocument()
+    }
+    for (const label of ['From email', 'Disable SSL', 'Disable TLS', 'Logging enabled', 'JWT enabled', 'Swagger enabled', 'Realm', 'Client ID']) {
+      expect(within(drawer).queryByText(label)).not.toBeInTheDocument()
+    }
+  })
+
+  it('shows only BACKEND configuration fields in the detail drawer', async () => {
+    const user = userEvent.setup()
+    render(
+      <PlatformProvidersTable
+        providers={[backendProvider]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByText('ABCo API'))
+    const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
+    for (const label of ['Notification email', 'Logging enabled', 'JWT enabled', 'Swagger enabled']) {
+      expect(within(drawer).getByText(label)).toBeInTheDocument()
+    }
+    for (const label of ['IP address', 'Port', 'DAG directory', 'Credential', 'From email', 'Disable SSL', 'Disable TLS', 'Realm', 'Client ID']) {
+      expect(within(drawer).queryByText(label)).not.toBeInTheDocument()
+    }
+  })
+
+  it('shows only KEYCLOAK configuration fields in the detail drawer', async () => {
+    const user = userEvent.setup()
+    render(
+      <PlatformProvidersTable
+        providers={[keycloakProvider]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByText('Aricoma Keycloak'))
+    const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
+    for (const label of ['Realm', 'Client ID', 'Credential', 'Credential status']) {
+      expect(within(drawer).getByText(label)).toBeInTheDocument()
+    }
+    for (const label of ['IP address', 'Port', 'DAG directory', 'Notification email', 'From email', 'Disable SSL', 'Disable TLS', 'Logging enabled', 'JWT enabled', 'Swagger enabled']) {
+      expect(within(drawer).queryByText(label)).not.toBeInTheDocument()
+    }
   })
 
   it('keeps search available without exposing platform-provider API errors', () => {

@@ -28,13 +28,21 @@ const rawSmtpProvider = {
   credentialStatus: 'none',
 } satisfies NonNullable<PlatformProviderRecord['rawRecord']>
 
-const smtpProvider: PlatformProviderRecord = {
-  ...rawSmtpProvider,
+type SmtpProviderRecord = Extract<PlatformProviderRecord, { type: 'SMTP' }>
+
+const smtpProvider: SmtpProviderRecord = {
+  id: rawSmtpProvider.id,
+  name: rawSmtpProvider.name,
   description: rawSmtpProvider.description,
+  type: 'SMTP',
+  role: 'source',
+  url: rawSmtpProvider.url,
   ipAddress: rawSmtpProvider.ipAddress,
-  credentialId: '',
+  port: rawSmtpProvider.port,
   credentialStatus: 'none',
-  dagDir: '',
+  fromEmail: rawSmtpProvider.fromEmail,
+  disableSsl: rawSmtpProvider.disableSsl,
+  disableTls: rawSmtpProvider.disableTls,
   rawRecord: rawSmtpProvider,
 }
 
@@ -69,7 +77,7 @@ describe('SmtpProviderDetailsDialog', () => {
   })
 
   it('shows placeholders for missing optional SMTP summary values', () => {
-    const providerWithoutOptionalValues: PlatformProviderRecord = {
+    const providerWithoutOptionalValues: SmtpProviderRecord = {
       ...smtpProvider,
       fromEmail: null,
       disableSsl: null,

@@ -10,12 +10,16 @@ import {
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
 import { toOrvalRequestError } from '@/shared/api/orvalMutator'
 import type {
+  PlatformProviderCoreRecord,
   PlatformProviderCredentialStatus,
   PlatformProviderRecord,
   PlatformProviderSubmitData,
   PlatformProviderWriteRecord,
 } from '../model/platformProviderTypes'
-import { PLATFORM_PROVIDER_CREDENTIAL_STATUSES } from '../model/platformProviderTypes'
+import {
+  isPlatformProviderType,
+  PLATFORM_PROVIDER_CREDENTIAL_STATUSES,
+} from '../model/platformProviderTypes'
 import {
   platformProviderRecordSchema,
   platformProviderSubmitSchema,
@@ -23,6 +27,71 @@ import {
 
 function isCredentialStatus(value: string): value is PlatformProviderCredentialStatus {
   return PLATFORM_PROVIDER_CREDENTIAL_STATUSES.some(status => status === value)
+}
+
+function mapPlatformProviderCore(
+  provider: OrchestrationProviderRecordOutput,
+): PlatformProviderCoreRecord {
+  if (!isPlatformProviderType(provider.type)) {
+    throw new Error(`Unsupported platform provider type: ${provider.type}`)
+  }
+
+  const common = {
+    id: provider.id,
+    name: provider.name,
+    description: provider.description ?? '',
+    role: provider.role,
+    ...(provider.url != null ? { url: provider.url } : {}),
+  }
+
+  switch (provider.type) {
+    case 'AIRFLOW':
+      return {
+        ...common,
+        type: provider.type,
+        ipAddress: provider.ipAddress ?? '',
+        port: provider.port,
+        dagDir: provider.dagDir ?? '',
+        credentialId: provider.credentialId ?? '',
+        notificationEmail: provider.notificationEmail ?? null,
+      }
+    case 'SMTP':
+      return {
+        ...common,
+        type: provider.type,
+        ipAddress: provider.ipAddress ?? '',
+        port: provider.port,
+        fromEmail: provider.fromEmail ?? null,
+        disableSsl: provider.disableSsl ?? null,
+        disableTls: provider.disableTls ?? null,
+      }
+    case 'BACKEND':
+      return {
+        ...common,
+        type: provider.type,
+        notificationEmail: provider.notificationEmail ?? null,
+        loggingEnabled: provider.loggingEnabled ?? null,
+        jwtEnabled: provider.jwtEnabled ?? null,
+        swaggerEnables: provider.swaggerEnables ?? null,
+      }
+    case 'KEYCLOAK':
+      return {
+        ...common,
+        type: provider.type,
+        realm: provider.realm ?? '',
+        clientId: provider.clientId ?? '',
+        credentialId: provider.credentialId ?? '',
+      }
+  }
+}
+
+function resolveCredentialStatus(
+  value: string | null | undefined,
+  requireCredentialStatus: boolean,
+): PlatformProviderCredentialStatus | undefined {
+  if (value == null) return requireCredentialStatus ? 'none' : undefined
+  if (isCredentialStatus(value)) return value
+  throw new Error(`Unsupported platform provider credential status: ${value}`)
 }
 
 function mapPlatformProvider(
@@ -37,29 +106,21 @@ function mapPlatformProvider(
   provider: OrchestrationProviderRecordOutput,
   requireCredentialStatus: boolean,
 ): PlatformProviderRecord | PlatformProviderWriteRecord {
-  if (provider.credentialStatus != null && !isCredentialStatus(provider.credentialStatus)) {
-    throw new Error(`Unsupported platform provider credential status: ${provider.credentialStatus}`)
+  const parsed = platformProviderRecordSchema.parse(provider)
+  const core = mapPlatformProviderCore(parsed)
+  const credentialStatus = resolveCredentialStatus(parsed.credentialStatus, requireCredentialStatus)
+
+  if (requireCredentialStatus) {
+    return {
+      ...core,
+      credentialStatus: credentialStatus ?? 'none',
+      rawRecord: parsed,
+    }
   }
 
-  const parsed = platformProviderRecordSchema.parse(provider)
-  const { credentialStatus: parsedCredentialStatus, url: parsedUrl, ...parsedProvider } = parsed
-  let credentialStatus: PlatformProviderCredentialStatus | undefined
-  if (parsedCredentialStatus == null) credentialStatus = requireCredentialStatus ? 'none' : undefined
-  else if (isCredentialStatus(parsedCredentialStatus)) credentialStatus = parsedCredentialStatus
-  else throw new Error(`Unsupported platform provider credential status: ${parsedCredentialStatus}`)
-  const validated = {
-    ...parsedProvider,
-    description: parsedProvider.description ?? '',
-    ipAddress: parsedProvider.ipAddress ?? '',
-    port: parsedProvider.port,
-    dagDir: parsedProvider.dagDir ?? '',
-    credentialId: parsedProvider.credentialId ?? '',
-    ...(parsedUrl != null ? { url: parsedUrl } : {}),
-  }
   return {
-    ...validated,
+    ...core,
     ...(credentialStatus !== undefined ? { credentialStatus } : {}),
-    ...(requireCredentialStatus ? { rawRecord: parsed } : {}),
   }
 }
 

@@ -29,6 +29,20 @@ function credentialStatusColor(status: PlatformProviderRecord['credentialStatus'
   return 'light' as const
 }
 
+function providerUrl(value: string | undefined) {
+  return value ? (
+    <a
+      href={value}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex min-w-0 items-center gap-1.5 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
+    >
+      <span className="truncate">{value}</span>
+      <ExternalLinkIcon className="size-3.5 shrink-0" />
+    </a>
+  ) : '-'
+}
+
 function getColumns(
   t: ReturnType<typeof useTranslation>['t'],
   onViewJson: (providerId: string) => void,
@@ -37,7 +51,7 @@ function getColumns(
     {
       id: 'name',
       header: t('tables.provider.name'),
-      cell: (provider) => (
+      cell: provider => (
         <>
           <span className="block font-semibold text-text-primary">{provider.name}</span>
           <span className="mt-0.5 block font-mono text-[11px] text-text-subtle">{provider.id}</span>
@@ -47,33 +61,20 @@ function getColumns(
     {
       id: 'description',
       header: t('tables.provider.description'),
-      cell: (provider) => <span className="block max-w-md truncate" title={provider.description}>{provider.description || '-'}</span>,
+      cell: provider => <span className="block max-w-md truncate" title={provider.description}>{provider.description || '-'}</span>,
     },
     {
       id: 'type',
       header: t('tables.provider.type'),
-      cell: (provider) => <Badge color="info" size="sm">{provider.type}</Badge>,
+      cell: provider => <Badge color="info" size="sm">{provider.type}</Badge>,
     },
     {
-      id: 'endpoint',
-      header: t('tables.provider.endpoint'),
-      cell: (provider) => <span className="font-mono text-[12px] text-text-secondary">{provider.ipAddress}:{provider.port}</span>,
-    },
-    {
-      id: 'dagDir',
-      header: t('tables.provider.dagDir'),
-      cell: (provider) => <span className="block max-w-56 truncate font-mono text-[12px]" title={provider.dagDir}>{provider.dagDir || '-'}</span>,
-    },
-    {
-      id: 'credential',
-      header: t('tables.provider.credential'),
-      cell: (provider) => (
-        <div className="flex flex-col items-start gap-1">
-          <span className="font-mono text-[12px] text-text-secondary">{provider.credentialId || '-'}</span>
-          <Badge color={credentialStatusColor(provider.credentialStatus)} size="sm">
-            {t(`providers.credentials.status.${provider.credentialStatus}`)}
-          </Badge>
-        </div>
+      id: 'url',
+      header: t('details.url'),
+      cell: provider => (
+        <span className="block max-w-72 truncate font-mono text-[12px] text-text-secondary" title={provider.url}>
+          {provider.url ?? '-'}
+        </span>
       ),
     },
     {
@@ -93,6 +94,63 @@ function getColumns(
       ),
     },
   ]
+}
+
+function PlatformProviderDetail({ provider }: { provider: PlatformProviderRecord }) {
+  const { t } = useTranslation()
+  const credentialStatus = (
+    <Badge color={credentialStatusColor(provider.credentialStatus)} size="sm">
+      {t(`providers.credentials.status.${provider.credentialStatus}`)}
+    </Badge>
+  )
+
+  return (
+    <dl className="px-5 py-2">
+      <DetailRow label={t('details.providerId')} value={<span className="font-mono">{provider.id}</span>} />
+      <DetailRow label={t('details.type')} value={provider.type} />
+      <DetailRow label={t('details.url')} value={providerUrl(provider.url)} />
+      <DetailRow label={t('details.description')} value={provider.description || '-'} />
+
+      {provider.type === 'AIRFLOW' ? (
+        <>
+          <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{provider.ipAddress}</span>} />
+          <DetailRow label={t('details.port')} value={<span className="font-mono">{provider.port}</span>} />
+          <DetailRow label={t('details.dagDir')} value={<span className="font-mono">{provider.dagDir || '-'}</span>} />
+          <DetailRow label={t('details.credential')} value={<span className="font-mono">{provider.credentialId || '-'}</span>} />
+          <DetailRow label={t('details.credentialStatus')} value={credentialStatus} />
+          <DetailRow label={t('details.notificationEmail')} value={provider.notificationEmail ?? '-'} />
+        </>
+      ) : null}
+
+      {provider.type === 'SMTP' ? (
+        <>
+          <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{provider.ipAddress}</span>} />
+          <DetailRow label={t('details.port')} value={<span className="font-mono">{provider.port}</span>} />
+          <DetailRow label={t('details.fromEmail')} value={provider.fromEmail ?? '-'} />
+          <DetailRow label={t('details.disableSsl')} value={provider.disableSsl == null ? '-' : String(provider.disableSsl)} />
+          <DetailRow label={t('details.disableTls')} value={provider.disableTls == null ? '-' : String(provider.disableTls)} />
+        </>
+      ) : null}
+
+      {provider.type === 'BACKEND' ? (
+        <>
+          <DetailRow label={t('details.notificationEmail')} value={provider.notificationEmail ?? '-'} />
+          <DetailRow label={t('details.loggingEnabled')} value={provider.loggingEnabled == null ? '-' : String(provider.loggingEnabled)} />
+          <DetailRow label={t('details.jwtEnabled')} value={provider.jwtEnabled == null ? '-' : String(provider.jwtEnabled)} />
+          <DetailRow label={t('details.swaggerEnables')} value={provider.swaggerEnables == null ? '-' : String(provider.swaggerEnables)} />
+        </>
+      ) : null}
+
+      {provider.type === 'KEYCLOAK' ? (
+        <>
+          <DetailRow label={t('details.realm')} value={provider.realm || '-'} />
+          <DetailRow label={t('details.clientId')} value={<span className="font-mono">{provider.clientId || '-'}</span>} />
+          <DetailRow label={t('details.credential')} value={<span className="font-mono">{provider.credentialId || '-'}</span>} />
+          <DetailRow label={t('details.credentialStatus')} value={credentialStatus} />
+        </>
+      ) : null}
+    </dl>
+  )
 }
 
 interface PlatformProvidersTableProps {
@@ -123,7 +181,7 @@ export function PlatformProvidersTable({
   const selected = rows.find(provider => provider.id === selectedId) ?? null
   const jsonViewed = rows.find(provider => provider.id === jsonViewId) ?? null
   const columns = getColumns(t, setJsonViewId)
-  const table = useTableState(rows, { searchFields: ['name', 'id', 'ipAddress'] })
+  const table = useTableState(rows, { searchFields: ['name', 'id', 'type'] })
 
   return (
     <div className="flex flex-col">
@@ -158,11 +216,11 @@ export function PlatformProvidersTable({
           columns={columns}
           rows={table.pageItems}
           isLoading={isLoading}
-          rowKey={(provider) => provider.id}
+          rowKey={provider => provider.id}
           density={table.density}
-          minWidthClassName="min-w-245"
+          minWidthClassName="min-w-180"
           ariaLabel={isLoading ? t('platformProviders.loading') : t('platformProviders.tableLabel')}
-          onRowClick={(provider) => { setSelectedId(provider.id) }}
+          onRowClick={provider => { setSelectedId(provider.id) }}
           selectedRowKey={selectedId}
           emptyContent={rows.length > 0 ? t('platformProviders.noMatches') : t('platformProviders.empty')}
         />
@@ -190,11 +248,7 @@ export function PlatformProvidersTable({
           <div className="flex min-w-0 items-center justify-between gap-3">
             <Badge color="info" size="sm">{selected.type}</Badge>
             {selected.type === 'SMTP' ? (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => { setIsSmtpDialogOpen(true) }}
-              >
+              <Button size="sm" variant="outline" onClick={() => { setIsSmtpDialogOpen(true) }}>
                 {t('platformProviders.smtpDialog.button')}
               </Button>
             ) : null}
@@ -213,101 +267,7 @@ export function PlatformProvidersTable({
           </>
         ) : null}
       >
-        {selected ? (
-          <dl className="px-5 py-2">
-            <DetailRow label={t('details.providerId')} value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label={t('details.type')} value={selected.type} />
-            {selected.type === 'KEYCLOAK' ? (
-              <>
-                <DetailRow
-                  label={t('details.url')}
-                  value={selected.url ? (
-                    <a
-                      href={selected.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
-                    >
-                      {selected.url}
-                      <ExternalLinkIcon className="size-3.5 shrink-0" />
-                    </a>
-                  ) : '-'}
-                />
-                <DetailRow label={t('details.realm')} value={selected.realm ?? '-'} />
-                <DetailRow label={t('details.clientId')} value={<span className="font-mono">{selected.clientId ?? '-'}</span>} />
-                <DetailRow label={t('details.credential')} value={<span className="font-mono">{selected.credentialId || '-'}</span>} />
-                <DetailRow
-                  label={t('details.credentialStatus')}
-                  value={<Badge color={credentialStatusColor(selected.credentialStatus)} size="sm">{t(`providers.credentials.status.${selected.credentialStatus}`)}</Badge>}
-                />
-                <DetailRow label={t('details.description')} value={selected.description || '-'} />
-              </>
-            ) : (
-            <>
-            <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{selected.ipAddress}</span>} />
-            <DetailRow label={t('details.port')} value={<span className="font-mono">{selected.port}</span>} />
-            <DetailRow label={t('details.dagDir')} value={<span className="font-mono">{selected.dagDir || '-'}</span>} />
-            {selected.type === 'SMTP' ? (
-              <DetailRow
-                label={t('details.url')}
-                value={selected.url ? (
-                  <a
-                    href={selected.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
-                  >
-                    {selected.url}
-                    <ExternalLinkIcon className="size-3.5 shrink-0" />
-                  </a>
-                ) : '-'}
-              />
-            ) : selected.url ? (
-              <DetailRow
-                label={t('details.url')}
-                value={(
-                  <a
-                    href={selected.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
-                  >
-                    {selected.url}
-                    <ExternalLinkIcon className="size-3.5 shrink-0" />
-                  </a>
-                )}
-              />
-            ) : null}
-            <DetailRow
-              label={t('details.notificationEmail')}
-              value={selected.notificationEmail ?? '-'}
-            />
-            <DetailRow
-              label={t('details.fromEmail')}
-              value={selected.fromEmail ?? '-'}
-            />
-            {selected.type !== 'SMTP' ? (
-              <>
-                <DetailRow
-                  label={t('details.disableSsl')}
-                  value={selected.disableSsl == null ? '-' : String(selected.disableSsl)}
-                />
-                <DetailRow
-                  label={t('details.disableTls')}
-                  value={selected.disableTls == null ? '-' : String(selected.disableTls)}
-                />
-                <DetailRow label={t('details.credential')} value={<span className="font-mono">{selected.credentialId || '-'}</span>} />
-                <DetailRow
-                  label={t('details.credentialStatus')}
-                  value={<Badge color={credentialStatusColor(selected.credentialStatus)} size="sm">{t(`providers.credentials.status.${selected.credentialStatus}`)}</Badge>}
-                />
-                <DetailRow label={t('details.description')} value={selected.description || '-'} />
-              </>
-            ) : null}
-            </>
-            )}
-          </dl>
-        ) : null}
+        {selected ? <PlatformProviderDetail provider={selected} /> : null}
       </DetailDrawer>
 
       {selected?.type === 'SMTP' ? (

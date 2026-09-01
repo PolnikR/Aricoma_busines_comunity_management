@@ -14,14 +14,13 @@ const airflowProvider: PlatformProviderRecord = {
   name: 'Primary Airflow',
   description: 'Application recovery DAG orchestration.',
   type: 'AIRFLOW',
+  url: 'http://10.99.99.55:8080/',
   ipAddress: '10.99.99.55',
   port: 22,
   dagDir: '/home/airflow/dags',
   credentialId: 'airflow-ssh',
   credentialStatus: 'ok',
   notificationEmail: 'platform-alerts@example.test',
-  vmPrefix: 'platform-',
-  vmTags: ['platform-tag'],
 }
 
 const smtpProvider: PlatformProviderRecord = {
@@ -29,14 +28,38 @@ const smtpProvider: PlatformProviderRecord = {
   name: 'Test SMTP',
   description: 'Local test SMTP relay.',
   type: 'SMTP',
+  url: 'http://10.99.99.53:8025/',
   ipAddress: '10.99.99.53',
   port: 1025,
-  dagDir: '',
-  credentialId: '',
   credentialStatus: 'none',
   fromEmail: 'airflow@example.com',
   disableSsl: true,
   disableTls: true,
+}
+
+const backendProvider: PlatformProviderRecord = {
+  id: 'backend',
+  name: 'ABCo API',
+  description: 'Backend service.',
+  type: 'BACKEND',
+  url: 'http://10.99.99.54:8000/',
+  credentialStatus: 'none',
+  notificationEmail: 'abcobe@example.com',
+  loggingEnabled: true,
+  jwtEnabled: false,
+  swaggerEnables: true,
+}
+
+const keycloakProvider: PlatformProviderRecord = {
+  id: 'keycloak-01',
+  name: 'Aricoma Keycloak',
+  description: 'Realm role sync target.',
+  type: 'KEYCLOAK',
+  url: 'http://10.99.99.53:8081',
+  credentialStatus: 'ok',
+  realm: 'aricoma',
+  clientId: 'abco-be',
+  credentialId: 'keycloak-admin',
 }
 
 const platformProviderSubmitData: PlatformProviderSubmitData = {
@@ -49,8 +72,7 @@ const platformProviderSubmitData: PlatformProviderSubmitData = {
   dagDir: '/opt/airflow/dags',
   credentialId: 'airflow-ssh',
   url: 'http://10.99.99.56:8080/',
-  vmPrefix: null,
-  vmTags: [],
+  notificationEmail: null,
 }
 
 function stubFetch(payload: unknown, status = 200) {
@@ -66,23 +88,73 @@ afterEach(() => {
 })
 
 describe('fetchPlatformProviders', () => {
-  it('loads and validates platform providers independently from infrastructure providers', async () => {
-    const fetchMock = stubFetch({ providers: [airflowProvider, smtpProvider] })
+  it('maps each platform-provider type to only its owned configuration fields', async () => {
+    const rawProviders = [
+      {
+        ...airflowProvider,
+        fromEmail: 'must-not-leak@example.test',
+        loggingEnabled: true,
+        realm: 'must-not-leak',
+      },
+      {
+        ...smtpProvider,
+        dagDir: '/must/not/leak',
+        credentialId: 'must-not-leak',
+        jwtEnabled: true,
+      },
+      {
+        ...backendProvider,
+        ipAddress: '10.0.0.1',
+        port: 9999,
+        dagDir: '/must/not/leak',
+        realm: 'must-not-leak',
+      },
+      {
+        ...keycloakProvider,
+        ipAddress: '10.0.0.2',
+        port: 1234,
+        dagDir: '/must/not/leak',
+        loggingEnabled: true,
+      },
+    ]
+    const fetchMock = stubFetch({ providers: rawProviders })
 
-    await expect(fetchPlatformProviders()).resolves.toMatchObject([airflowProvider, smtpProvider])
+    const providers = await fetchPlatformProviders()
+
+    expect(providers).toHaveLength(4)
+    expect(providers[0]).toMatchObject(airflowProvider)
+    expect(providers[0]).not.toHaveProperty('fromEmail')
+    expect(providers[0]).not.toHaveProperty('loggingEnabled')
+    expect(providers[0]).not.toHaveProperty('realm')
+
+    expect(providers[1]).toMatchObject(smtpProvider)
+    expect(providers[1]).not.toHaveProperty('dagDir')
+    expect(providers[1]).not.toHaveProperty('credentialId')
+    expect(providers[1]).not.toHaveProperty('jwtEnabled')
+
+    expect(providers[2]).toMatchObject(backendProvider)
+    expect(providers[2]).not.toHaveProperty('ipAddress')
+    expect(providers[2]).not.toHaveProperty('port')
+    expect(providers[2]).not.toHaveProperty('dagDir')
+    expect(providers[2]).not.toHaveProperty('realm')
+
+    expect(providers[3]).toMatchObject(keycloakProvider)
+    expect(providers[3]).not.toHaveProperty('ipAddress')
+    expect(providers[3]).not.toHaveProperty('port')
+    expect(providers[3]).not.toHaveProperty('dagDir')
+    expect(providers[3]).not.toHaveProperty('loggingEnabled')
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/get_platform_providers')
     expect(new Headers(init.headers).get('X-User')).toBe('admin')
   })
 
-  it('applies the generated SSH port default when the response omits port', async () => {
-    const backendProvider = { ...airflowProvider, port: undefined }
-    stubFetch({ providers: [backendProvider] })
+  it('applies the generated SSH port default to AIRFLOW when the response omits port', async () => {
+    stubFetch({ providers: [{ ...airflowProvider, port: undefined }] })
 
     const providers = await fetchPlatformProviders()
 
-    expect(providers[0]?.port).toBe(22)
+    expect(providers[0]).toMatchObject({ type: 'AIRFLOW', port: 22 })
   })
 
   it('uses the safe unavailable status when the generated response omits credential status', async () => {
@@ -96,37 +168,51 @@ describe('fetchPlatformProviders', () => {
   it.each([
     ['null', null],
     ['omitted', undefined],
-  ])('accepts an orchestration provider with a %s DAG directory', async (_case, dagDir) => {
+  ])('accepts an AIRFLOW provider with a %s DAG directory', async (_case, dagDir) => {
     stubFetch({ providers: [{ ...airflowProvider, dagDir }] })
 
     await expect(fetchPlatformProviders()).resolves.toMatchObject([{
       id: airflowProvider.id,
+      type: 'AIRFLOW',
       dagDir: '',
     }])
   })
 
-  it('preserves the validated GET record before applying UI fallbacks', async () => {
-    const backendProvider = {
-      ...airflowProvider,
+  it('preserves the validated GET record separately from UI normalization', async () => {
+    const rawProvider = {
+      ...backendProvider,
       description: null,
       url: null,
       credentialStatus: null,
+      ipAddress: 'raw-only-value',
     }
-    stubFetch({ providers: [backendProvider] })
+    stubFetch({ providers: [rawProvider] })
 
     const [provider] = await fetchPlatformProviders()
 
     expect(provider).toMatchObject({
+      type: 'BACKEND',
       description: '',
       credentialStatus: 'none',
-      notificationEmail: 'platform-alerts@example.test',
+      notificationEmail: 'abcobe@example.com',
     })
-    expect(provider?.rawRecord).toEqual({ ...backendProvider, role: 'source' })
+    expect(provider).not.toHaveProperty('ipAddress')
+    expect(provider?.rawRecord).toEqual({ ...rawProvider, role: 'source', port: 22 })
   })
 
+  it.each(['VMWARE', 'FLASHCOPY', 'IBM_POWER'] as const)(
+    'rejects generated provider type %s from the platform-provider endpoint',
+    async (type) => {
+      stubFetch({ providers: [{ ...airflowProvider, type }] })
+
+      await expect(fetchPlatformProviders()).rejects.toThrow(
+        `Unsupported platform provider type: ${type}`,
+      )
+    },
+  )
+
   it('rejects a platform provider with an unknown OpenAPI type', async () => {
-    const provider = { ...airflowProvider, type: 'UNKNOWN' }
-    stubFetch({ providers: [provider] })
+    stubFetch({ providers: [{ ...airflowProvider, type: 'UNKNOWN' }] })
     await expect(fetchPlatformProviders()).rejects.toBeInstanceOf(Error)
   })
 
@@ -140,10 +226,18 @@ describe('fetchPlatformProviders', () => {
 
 describe('submitPlatformProvider', () => {
   it('posts the platform-provider contract and validates the returned list', async () => {
-    const returnedProviders = [airflowProvider, platformProviderSubmitData]
-    const fetchMock = stubFetch({ providers: returnedProviders })
+    const fetchMock = stubFetch({ providers: [platformProviderSubmitData] })
 
-    await expect(submitPlatformProvider(platformProviderSubmitData)).resolves.toMatchObject(returnedProviders)
+    await expect(submitPlatformProvider(platformProviderSubmitData)).resolves.toMatchObject([{
+      id: platformProviderSubmitData.id,
+      name: platformProviderSubmitData.name,
+      type: 'AIRFLOW',
+      ipAddress: platformProviderSubmitData.ipAddress,
+      port: 22,
+      dagDir: platformProviderSubmitData.dagDir,
+      credentialId: platformProviderSubmitData.credentialId,
+      notificationEmail: null,
+    }])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/submit_platform_provider')
@@ -213,9 +307,10 @@ describe('deletePlatformProvider', () => {
   it('URL-encodes provider_id and validates the returned list', async () => {
     const fetchMock = stubFetch({ providers: [platformProviderSubmitData] })
 
-    await expect(deletePlatformProvider('airflow/main 01')).resolves.toMatchObject([
-      platformProviderSubmitData,
-    ])
+    await expect(deletePlatformProvider('airflow/main 01')).resolves.toMatchObject([{
+      id: platformProviderSubmitData.id,
+      type: 'AIRFLOW',
+    }])
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/delete_platform_provider?provider_id=airflow%2Fmain+01')
