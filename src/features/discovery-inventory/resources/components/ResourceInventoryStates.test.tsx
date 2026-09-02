@@ -29,6 +29,7 @@ describe('ResourceInventoryLoading', () => {
     const state = screen.getByText('Inventory state').closest('section')
     expect(state).toHaveClass(
       'flex-1',
+      'min-w-0',
       'min-h-0',
       'grid',
       'grid-rows-[auto_minmax(0,1fr)_auto]',
