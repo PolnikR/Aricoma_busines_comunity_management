@@ -128,6 +128,11 @@ const IdentityAccessPage = lazy(async () => {
   return { default: page.IdentityAccessPage }
 })
 
+const AuditPage = lazy(async () => {
+  const page = await import('@/features/platform-administration/audit/pages/AuditPage')
+  return { default: page.AuditPage }
+})
+
 function toRoutePath(path: string) {
   return path.replace(/^\//, '')
 }
@@ -221,6 +226,15 @@ export function AppRoutes() {
           element={(
             <Suspense fallback={<RouteLoadingSkeleton />}>
               <IdentityAccessPage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path={toRoutePath(routes.platformAuditRetention)}
+          handle={{ contentScroll: 'contained' }}
+          element={(
+            <Suspense fallback={<RouteLoadingSkeleton />}>
+              <AuditPage />
             </Suspense>
           )}
         />
