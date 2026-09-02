@@ -2,24 +2,51 @@ import type { ComponentProps } from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { LanguageContext, type Language } from '@/contexts/LanguageContext'
+import czechTranslations from '@/locales/cs.json'
+import englishTranslations from '@/locales/en.json'
 import { AccessLogsQueryToolbar } from './AccessLogsQueryToolbar'
 
-function renderToolbar(overrides: Partial<ComponentProps<typeof AccessLogsQueryToolbar>> = {}) {
+function renderToolbar(
+  overrides: Partial<ComponentProps<typeof AccessLogsQueryToolbar>> = {},
+  language: Language = 'en',
+) {
   const onFiltersChange = vi.fn()
   const onDensityChange = vi.fn()
   render(
-    <AccessLogsQueryToolbar
-      filters={{ lines: 200, status: 500, method: 'GET', pathContains: '/health' }}
-      onFiltersChange={onFiltersChange}
-      density="comfortable"
-      onDensityChange={onDensityChange}
-      {...overrides}
-    />,
+    <LanguageContext.Provider value={{
+      language,
+      setLanguage: vi.fn(),
+      translations: language === 'cs' ? czechTranslations : englishTranslations,
+    }}>
+      <AccessLogsQueryToolbar
+        filters={{ lines: 200, status: 500, method: 'GET', pathContains: '/health' }}
+        onFiltersChange={onFiltersChange}
+        density="comfortable"
+        onDensityChange={onDensityChange}
+        {...overrides}
+      />
+    </LanguageContext.Provider>,
   )
   return { onFiltersChange, onDensityChange }
 }
 
 describe('AccessLogsQueryToolbar', () => {
+  it('renders query controls from the active Czech translation context', async () => {
+    const user = userEvent.setup()
+    renderToolbar({}, 'cs')
+
+    await user.click(screen.getByRole('button', { name: 'Nastavit dotaz přístupových logů' }))
+
+    expect(screen.getByLabelText('Ovládací prvky dotazu přístupových logů')).toBeInTheDocument()
+    expect(screen.getByLabelText('Řádky')).toBeInTheDocument()
+    expect(screen.getByLabelText('Stav')).toBeInTheDocument()
+    expect(screen.getByLabelText('Metoda')).toBeInTheDocument()
+    expect(screen.getByLabelText('Cesta obsahuje')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Vymazat vše' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Použít' })).toBeInTheDocument()
+  })
+
   it('expands its inline query controls and collapses them as cancellation', async () => {
     const user = userEvent.setup()
     const { onFiltersChange } = renderToolbar()

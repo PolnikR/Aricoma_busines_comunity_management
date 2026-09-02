@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import {
   DataTable,
@@ -27,38 +28,40 @@ function formatDuration(durationMs: number) {
   return `${String(durationMs)} ms`
 }
 
-function rowAriaLabel(record: AccessLogRecord) {
-  return record.kind === 'request' ? `${record.method} ${record.path}` : 'Raw access log entry'
+function rowAriaLabel(record: AccessLogRecord, rawEntryLabel: string) {
+  return record.kind === 'request' ? `${record.method} ${record.path}` : rawEntryLabel
 }
 
-const columns: ColumnDef<AccessLogTableRow>[] = [
-  {
-    id: 'method',
-    header: 'Method',
-    cell: ({ record }) => record.kind === 'request'
-      ? <span className="font-mono font-medium text-text-primary">{record.method}</span>
-      : '—',
-  },
-  {
-    id: 'path',
-    header: 'Path',
-    cell: ({ record }) => record.kind === 'request'
-      ? <span className="block max-w-xl truncate font-mono" title={record.path}>{record.path}</span>
-      : <span className="text-text-muted">Raw access-log entry</span>,
-  },
-  {
-    id: 'status',
-    header: 'Status',
-    align: 'right',
-    cell: ({ record }) => record.kind === 'request' ? String(record.status) : '—',
-  },
-  {
-    id: 'duration',
-    header: 'Duration',
-    align: 'right',
-    cell: ({ record }) => record.kind === 'request' ? formatDuration(record.durationMs) : '—',
-  },
-]
+function createColumns(t: (key: string) => string): ColumnDef<AccessLogTableRow>[] {
+  return [
+    {
+      id: 'method',
+      header: t('audit.accessLogs.table.columns.method'),
+      cell: ({ record }) => record.kind === 'request'
+        ? <span className="font-mono font-medium text-text-primary">{record.method}</span>
+        : '—',
+    },
+    {
+      id: 'path',
+      header: t('audit.accessLogs.table.columns.path'),
+      cell: ({ record }) => record.kind === 'request'
+        ? <span className="block max-w-xl truncate font-mono" title={record.path}>{record.path}</span>
+        : <span className="text-text-muted">{t('audit.accessLogs.table.rawEntry')}</span>,
+    },
+    {
+      id: 'status',
+      header: t('audit.accessLogs.table.columns.status'),
+      align: 'right',
+      cell: ({ record }) => record.kind === 'request' ? String(record.status) : '—',
+    },
+    {
+      id: 'duration',
+      header: t('audit.accessLogs.table.columns.duration'),
+      align: 'right',
+      cell: ({ record }) => record.kind === 'request' ? formatDuration(record.durationMs) : '—',
+    },
+  ]
+}
 
 export function AccessLogsTable({ filters, density }: AccessLogsTableProps) {
   const { data = [], error, isLoading, isFetching, refetch } = useAccessLogs(filters)
@@ -87,6 +90,7 @@ interface AccessLogsTableViewProps {
 }
 
 function AccessLogsTableView({ data, density, error, isFetching, isLoading, refetch }: AccessLogsTableViewProps) {
+  const { t } = useTranslation()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(INITIAL_PAGE_SIZE)
   const [selectedRow, setSelectedRow] = useState<AccessLogTableRow | null>(null)
@@ -98,6 +102,7 @@ function AccessLogsTableView({ data, density, error, isFetching, isLoading, refe
     record,
   })), [data, pageSize, startIndex])
   const errorDetail = extractBackendErrorDetail(error)
+  const columns = useMemo(() => createColumns(t), [t])
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -105,9 +110,9 @@ function AccessLogsTableView({ data, density, error, isFetching, isLoading, refe
         <DataTableRequestState
           hasCachedData={data.length > 0}
           error={error ? {
-            title: data.length > 0 ? 'Access logs could not be refreshed.' : 'Access logs could not be loaded.',
+            title: data.length > 0 ? t('audit.accessLogs.error.refresh') : t('audit.accessLogs.error.load'),
             ...(errorDetail ? { description: errorDetail } : {}),
-            retryLabel: 'Retry',
+            retryLabel: t('audit.accessLogs.error.retry'),
             isRetrying: isFetching,
             onRetry: () => { void refetch() },
           } : null}
@@ -116,13 +121,13 @@ function AccessLogsTableView({ data, density, error, isFetching, isLoading, refe
             columns={columns}
             rows={pageRows}
             rowKey={row => row.key}
-            rowAriaLabel={row => rowAriaLabel(row.record)}
+            rowAriaLabel={row => rowAriaLabel(row.record, t('audit.accessLogs.table.rawEntry'))}
             density={density}
             isLoading={isLoading}
-            ariaLabel={isLoading ? 'Loading access logs' : 'Access logs'}
+            ariaLabel={isLoading ? t('audit.accessLogs.table.loading') : t('audit.accessLogs.table.ariaLabel')}
             onRowClick={setSelectedRow}
             selectedRowKey={selectedRow?.key}
-            emptyContent="No access logs found."
+            emptyContent={t('audit.accessLogs.table.empty')}
           />
         </DataTableRequestState>
       </div>

@@ -1,4 +1,5 @@
 import { DetailDrawer, DetailRow } from '@/shared/components/data-table'
+import { useTranslation } from '@/hooks/useTranslation'
 import type { AccessLogRecord } from '../model/accessLogTypes'
 
 interface AccessLogDetailDrawerProps {
@@ -32,32 +33,33 @@ function BodySection({ label, value }: { label: string; value: unknown }) {
 }
 
 export function AccessLogDetailDrawer({ record, onClose }: AccessLogDetailDrawerProps) {
+  const { t } = useTranslation()
   const isRequest = record?.kind === 'request'
-  const title = isRequest ? `${record.method} ${record.path}` : 'Raw access-log entry'
+  const title = isRequest ? `${record.method} ${record.path}` : t('audit.accessLogs.table.rawEntry')
 
   return (
     <DetailDrawer
       open={record !== null}
       onClose={onClose}
       resizable
-      eyebrow="Access log"
+      eyebrow={t('audit.accessLogs.detail.eyebrow')}
       title={title}
-      ariaLabel="Access log details"
-      closeLabel="Close access log details"
+      ariaLabel={t('audit.accessLogs.detail.ariaLabel')}
+      closeLabel={t('audit.accessLogs.detail.close')}
     >
       {isRequest ? (
         <>
           <dl className="px-5 py-2">
-            <DetailRow label="Method" value={<span className="font-mono">{record.method}</span>} />
-            <DetailRow label="Path" value={<span className="font-mono">{record.path}</span>} />
-            <DetailRow label="Status" value={String(record.status)} />
-            <DetailRow label="Duration" value={`${String(record.durationMs)} ms`} />
+            <DetailRow label={t('audit.accessLogs.detail.method')} value={<span className="font-mono">{record.method}</span>} />
+            <DetailRow label={t('audit.accessLogs.detail.path')} value={<span className="font-mono">{record.path}</span>} />
+            <DetailRow label={t('audit.accessLogs.detail.status')} value={String(record.status)} />
+            <DetailRow label={t('audit.accessLogs.detail.duration')} value={`${String(record.durationMs)} ms`} />
           </dl>
-          <BodySection label="Request body" value={record.requestBody} />
-          <BodySection label="Response body" value={record.responseBody} />
+          <BodySection label={t('audit.accessLogs.detail.requestBody')} value={record.requestBody} />
+          <BodySection label={t('audit.accessLogs.detail.responseBody')} value={record.responseBody} />
         </>
       ) : record ? (
-        <BodySection label="Raw entry" value={record.raw} />
+        <BodySection label={t('audit.accessLogs.detail.rawEntry')} value={record.raw} />
       ) : null}
     </DetailDrawer>
   )

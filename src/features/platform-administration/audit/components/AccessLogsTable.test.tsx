@@ -2,7 +2,9 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { LanguageProvider } from '@/contexts/LanguageProvider'
+import { LanguageContext, type Language } from '@/contexts/LanguageContext'
+import czechTranslations from '@/locales/cs.json'
+import englishTranslations from '@/locales/en.json'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import type { AccessLogFilters, AccessLogRecord } from '../model/accessLogTypes'
 import { fetchAccessLogs } from '../api/accessLogsApi'
@@ -34,13 +36,18 @@ function createQueryClient() {
 function renderTable(
   filters: AccessLogFilters = { lines: 200 },
   queryClient = createQueryClient(),
+  language: Language = 'en',
 ) {
   const view = render(
-    <LanguageProvider>
+    <LanguageContext.Provider value={{
+      language,
+      setLanguage: vi.fn(),
+      translations: language === 'cs' ? czechTranslations : englishTranslations,
+    }}>
       <QueryClientProvider client={queryClient}>
         <AccessLogsTable filters={filters} density="compact" />
       </QueryClientProvider>
-    </LanguageProvider>,
+    </LanguageContext.Provider>,
   )
 
   return { ...view, queryClient }
@@ -63,47 +70,48 @@ afterEach(() => {
 })
 
 describe('AccessLogsTable', () => {
-  it('shows four-column loading skeleton while the access-log request is pending', () => {
+  it('shows a localized four-column loading skeleton while the access-log request is pending', () => {
     fetchAccessLogsMock.mockReturnValue(new Promise(() => undefined))
 
-    renderTable()
+    renderTable({ lines: 200 }, createQueryClient(), 'cs')
 
-    const table = screen.getByRole('status', { name: 'Loading access logs' })
+    const table = screen.getByRole('status', { name: 'Načítání přístupových logů' })
     expect(table).toHaveAttribute('aria-busy', 'true')
     expect(within(table).getAllByRole('columnheader').map(header => header.textContent)).toEqual([
-      'Method',
-      'Path',
-      'Status',
-      'Duration',
+      'Metoda',
+      'Cesta',
+      'Stav',
+      'Doba trvání',
     ])
   })
 
-  it('shows an empty state when the fetched access-log window has no entries', async () => {
+  it('shows a localized empty state when the fetched access-log window has no entries', async () => {
     fetchAccessLogsMock.mockResolvedValue([])
 
-    renderTable()
+    renderTable({ lines: 200 }, createQueryClient(), 'cs')
 
-    expect(await screen.findByText('No access logs found.')).toBeInTheDocument()
+    expect(await screen.findByText('Nebyly nalezeny žádné přístupové logy.')).toBeInTheDocument()
   })
 
-  it('keeps cached rows visible with a compact refresh error', async () => {
+  it('keeps cached rows visible with a localized compact refresh error', async () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false, staleTime: 0 } },
     })
     queryClient.setQueryData(accessLogKeys.list({ lines: 200 }), [requestEntry])
     fetchAccessLogsMock.mockRejectedValue(new Error('Access log service unavailable'))
 
-    renderTable({ lines: 200 }, queryClient)
+    renderTable({ lines: 200 }, queryClient, 'cs')
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Access logs could not be refreshed.')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Přístupové logy se nepodařilo obnovit.')
+    expect(screen.getByRole('button', { name: 'Zkusit znovu' })).toBeInTheDocument()
     expect(screen.getByText('/api/jobs')).toBeInTheDocument()
   })
 
-  it('opens the selected request with JSON bodies after keyboard activation', async () => {
+  it('opens the selected request with localized JSON-body details after keyboard activation', async () => {
     const user = userEvent.setup()
     fetchAccessLogsMock.mockResolvedValue([requestEntry])
 
-    renderTable()
+    renderTable({ lines: 200 }, createQueryClient(), 'cs')
 
     const row = await screen.findByRole('row', { name: 'POST /api/jobs' })
     expect(screen.queryByText('"nightly"')).not.toBeInTheDocument()
@@ -111,8 +119,12 @@ describe('AccessLogsTable', () => {
     row.focus()
     await user.keyboard('{Enter}')
 
-    const drawer = screen.getByRole('dialog', { name: 'Access log details' })
+    const drawer = screen.getByRole('dialog', { name: 'Podrobnosti přístupového logu' })
     expect(drawer).toHaveTextContent('POST /api/jobs')
+    expect(drawer).toHaveTextContent('Přístupový log')
+    expect(drawer).toHaveTextContent('Tělo požadavku')
+    expect(drawer).toHaveTextContent('Tělo odpovědi')
+    expect(screen.getByRole('button', { name: 'Zavřít podrobnosti přístupového logu' })).toBeInTheDocument()
     expect(drawer).toHaveTextContent('"job": "nightly"')
     expect(drawer).toHaveTextContent('"result": "queued"')
   })
@@ -145,7 +157,7 @@ describe('AccessLogsTable', () => {
 
     renderTable()
 
-    await user.click(await screen.findByRole('row', { name: 'Raw access log entry' }))
+    await user.click(await screen.findByRole('row', { name: 'Raw access-log entry' }))
 
     const drawer = screen.getByRole('dialog', { name: 'Access log details' })
     expect(drawer).toHaveTextContent('Raw access-log entry')
@@ -179,11 +191,15 @@ describe('AccessLogsTable', () => {
     expect(screen.getByRole('dialog', { name: 'Access log details' })).toBeInTheDocument()
 
     rerender(
-      <LanguageProvider>
+      <LanguageContext.Provider value={{
+        language: 'en',
+        setLanguage: vi.fn(),
+        translations: englishTranslations,
+      }}>
         <QueryClientProvider client={queryClient}>
           <AccessLogsTable filters={{ lines: 200, status: 204 }} density="compact" />
         </QueryClientProvider>
-      </LanguageProvider>,
+      </LanguageContext.Provider>,
     )
 
     expect(await screen.findByRole('row', { name: 'DELETE /api/reloaded/1' })).toBeInTheDocument()

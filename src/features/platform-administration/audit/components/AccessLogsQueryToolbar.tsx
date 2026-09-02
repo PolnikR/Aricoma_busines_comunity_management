@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import type { TableDensity } from '@/shared/components/data-table'
 import { Field, Input } from '@/shared/components/form/FormControls'
@@ -46,6 +47,7 @@ export function AccessLogsQueryToolbar({
   density,
   onDensityChange,
 }: AccessLogsQueryToolbarProps) {
+  const { t } = useTranslation()
   const [isExpanded, setIsExpanded] = useState(false)
   const [draft, setDraft] = useState(() => createDraft(filters))
   const lines = Number(draft.lines)
@@ -93,19 +95,19 @@ export function AccessLogsQueryToolbar({
           size="sm"
           variant="outline"
           startIcon={<FilterIcon className="size-4" />}
-          aria-label="Configure access-log query"
+          aria-label={t('audit.accessLogs.query.configure')}
           aria-controls="access-log-query-controls"
           aria-expanded={isExpanded}
           onClick={toggleExpanded}
         >
-          Query
+          {t('audit.accessLogs.query.configure')}
         </Button>
         <RowDensityToggle density={density} onDensityChange={onDensityChange} />
       </div>
 
       {isExpanded ? (
-        <div id="access-log-query-controls" aria-label="Access-log query controls" className="grid gap-3 border-t border-border bg-surface-subtle p-4 md:grid-cols-2 xl:grid-cols-[140px_140px_160px_minmax(240px,1fr)_auto] xl:items-end">
-          <Field label="Lines" htmlFor="access-log-lines">
+        <div id="access-log-query-controls" aria-label={t('audit.accessLogs.query.controls')} className="grid gap-3 border-t border-border bg-surface-subtle p-4 md:grid-cols-2 xl:grid-cols-[140px_140px_160px_minmax(240px,1fr)_auto] xl:items-end">
+          <Field label={t('audit.accessLogs.query.lines')} htmlFor="access-log-lines">
             <Input
               id="access-log-lines"
               type="number"
@@ -116,9 +118,9 @@ export function AccessLogsQueryToolbar({
               invalid={!hasValidLines}
               onChange={(event) => { setDraft((current) => ({ ...current, lines: event.target.value })) }}
             />
-            {!hasValidLines ? <span className="mt-1 block text-xs text-error-600">Lines must be between 1 and 5000.</span> : null}
+            {!hasValidLines ? <span className="mt-1 block text-xs text-error-600">{t('audit.accessLogs.query.validation.lines')}</span> : null}
           </Field>
-          <Field label="Status" htmlFor="access-log-status">
+          <Field label={t('audit.accessLogs.query.status')} htmlFor="access-log-status">
             <Input
               id="access-log-status"
               type="number"
@@ -127,16 +129,16 @@ export function AccessLogsQueryToolbar({
               invalid={!hasValidStatus}
               onChange={(event) => { setDraft((current) => ({ ...current, status: event.target.value })) }}
             />
-            {!hasValidStatus ? <span className="mt-1 block text-xs text-error-600">Status must be an integer.</span> : null}
+            {!hasValidStatus ? <span className="mt-1 block text-xs text-error-600">{t('audit.accessLogs.query.validation.status')}</span> : null}
           </Field>
-          <Field label="Method" htmlFor="access-log-method">
+          <Field label={t('audit.accessLogs.query.method')} htmlFor="access-log-method">
             <Input
               id="access-log-method"
               value={draft.method}
               onChange={(event) => { setDraft((current) => ({ ...current, method: event.target.value })) }}
             />
           </Field>
-          <Field label="Path contains" htmlFor="access-log-path-contains">
+          <Field label={t('audit.accessLogs.query.pathContains')} htmlFor="access-log-path-contains">
             <Input
               id="access-log-path-contains"
               value={draft.pathContains}
@@ -144,8 +146,8 @@ export function AccessLogsQueryToolbar({
             />
           </Field>
           <div className="flex gap-2 xl:justify-end">
-            <Button size="sm" variant="ghost" onClick={clearAll}>Clear all</Button>
-            <Button size="sm" onClick={apply} disabled={!isValid}>Apply</Button>
+            <Button size="sm" variant="ghost" onClick={clearAll}>{t('audit.accessLogs.query.clearAll')}</Button>
+            <Button size="sm" onClick={apply} disabled={!isValid}>{t('audit.accessLogs.query.apply')}</Button>
           </div>
         </div>
       ) : null}
