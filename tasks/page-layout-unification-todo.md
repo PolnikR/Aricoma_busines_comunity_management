@@ -19,7 +19,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 
 - [x] Task 1 — Resources reference contract tests + browser measurement targets.
 - [x] Task 2 — Resources + Resources ISE no-provider state v canonical primary surface.
-- [ ] Task 3 — Zjednotiť Resources radius/request-state geometry; odstrániť `rounded-2xl` table contract oproti `rounded-[20px]` canonical Card.
+- [x] Task 3 — Zjednotiť Resources radius/request-state geometry; odstrániť `rounded-2xl` table contract oproti `rounded-[20px]` canonical Card.
 
 ## Checkpoint A0
 
