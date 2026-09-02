@@ -60,7 +60,14 @@ describe('ResourceInventoryPanel', () => {
     )
 
     const panel = screen.getByRole('region', { name: 'Resource inventory' })
-    expect(panel).toHaveClass('grid', 'grid-rows-[auto_minmax(0,1fr)_auto]', 'min-h-0', 'overflow-hidden')
+    expect(panel).toHaveClass(
+      'grid',
+      'grid-rows-[auto_minmax(0,1fr)_auto]',
+      'min-h-0',
+      'overflow-hidden',
+      'rounded-[20px]',
+    )
+    expect(panel).not.toHaveClass('rounded-2xl')
     const dataRegion = panel.querySelector('.overflow-y-auto')
     expect(dataRegion).toHaveClass('custom-scrollbar', 'min-h-0', 'overflow-y-auto')
     expect(dataRegion).toContainElement(screen.getByText('Inventory rows'))

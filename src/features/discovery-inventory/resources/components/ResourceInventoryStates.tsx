@@ -12,15 +12,17 @@ export function ResourceInventoryLoading({ ariaLabel, columnCount = 9 }: Resourc
       columnCount={columnCount}
       ariaLabel={ariaLabel}
       layout="fit"
-      className="flex-1 lg:min-h-0"
+      className="flex-1 min-h-0 !rounded-[20px]"
     />
   )
 }
 
 export function ResourceInventoryState({ children }: { children: ReactNode }) {
   return (
-    <section className="flex min-h-72 flex-1 items-center justify-center rounded-2xl border border-border bg-surface p-4 shadow-sm">
-      <div className="w-full max-w-3xl">{children}</div>
+    <section className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-[20px] border border-border bg-surface shadow-sm">
+      <div className="row-start-2 flex min-h-0 items-center justify-center p-4">
+        <div className="w-full max-w-3xl">{children}</div>
+      </div>
     </section>
   )
 }
