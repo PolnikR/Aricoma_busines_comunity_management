@@ -50,7 +50,7 @@ export function toPlatformProviderSubmitData(
         notificationEmail: nullable(form.notificationEmail),
         loggingEnabled: form.loggingEnabled,
         jwtEnabled: form.jwtEnabled,
-        swaggerEnables: form.swaggerEnables,
+        swaggerEnabled: form.swaggerEnabled,
       }
     case 'KEYCLOAK':
       return {

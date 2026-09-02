@@ -56,7 +56,7 @@ const backendProvider: PlatformProviderRecord = {
   notificationEmail: 'backend@example.test',
   loggingEnabled: true,
   jwtEnabled: false,
-  swaggerEnables: true,
+  swaggerEnabled: true,
   credentialStatus: 'none',
 }
 
@@ -188,7 +188,7 @@ describe('PlatformProvidersModal', () => {
         notificationEmail: 'backend@example.test',
         loggingEnabled: true,
         jwtEnabled: false,
-        swaggerEnables: true,
+        swaggerEnabled: true,
       },
     })
   })
@@ -217,7 +217,7 @@ describe('PlatformProvidersModal', () => {
     })
     expect(payload).not.toHaveProperty('loggingEnabled')
     expect(payload).not.toHaveProperty('jwtEnabled')
-    expect(payload).not.toHaveProperty('swaggerEnables')
+    expect(payload).not.toHaveProperty('swaggerEnabled')
   })
 
   it('drops SMTP fields after switching to KEYCLOAK', () => {

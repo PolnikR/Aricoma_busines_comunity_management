@@ -13,12 +13,12 @@ Detailný plán: `tasks/platform-provider-type-specific-fields-plan.md`.
 
 # Phase 0 — Contract prerequisite
 
-- [x] Task 1 — Potvrdiť exact BACKEND field `swaggerEnables` v BE/OpenAPI.
+- [x] Task 1 — Potvrdiť exact BACKEND field `swaggerEnabled` v BE/OpenAPI.
 - [x] FE OpenAPI client vygenerovaný štandardným Orval flow; žiadny handwritten workaround.
 
 ## Checkpoint A
 
-- [x] `swaggerEnables` exact name/type potvrdený.
+- [x] `swaggerEnabled` exact name/type potvrdený.
 - [x] Generated `OrchestrationProvider` a `OrchestrationProviderRecord` ho obsahujú.
 
 # Phase 1 — FE type foundation
@@ -123,7 +123,7 @@ Detailný plán: `tasks/platform-provider-type-specific-fields-plan.md`.
 - [x] `notificationEmail`.
 - [x] `loggingEnabled`.
 - [x] `jwtEnabled`.
-- [x] `swaggerEnables`.
+- [x] `swaggerEnabled`.
 - [x] bez IP/port/DAG/credential/SMTP/Keycloak fields.
 
 ### KEYCLOAK payload
@@ -226,5 +226,5 @@ Browser blocker (2026-09-01): lokálny FE na `127.0.0.1:5173` sa korektne pokús
 - [x] Detail zobrazuje iba relevantné config fields.
 - [x] Main table je cross-type summary.
 - [x] Raw JSON viewer zachovaný.
-- [x] `swaggerEnables` používa generated OpenAPI contract.
+- [x] `swaggerEnabled` používa generated OpenAPI contract.
 - [ ] Browser/network matrix green — blokované externým Keycloak redirectom v Rel.AI browseri.

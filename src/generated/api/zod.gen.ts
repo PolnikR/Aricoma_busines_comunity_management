@@ -178,7 +178,7 @@ export const OrchestrationProvider = zod.object({
   "disableTls": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "loggingEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "jwtEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional(),
-  "swaggerEnables": zod.union([zod.boolean(),zod.null()]).exactOptional(),
+  "swaggerEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "realm": zod.union([zod.string(),zod.null()]).exactOptional(),
   "clientId": zod.union([zod.string(),zod.null()]).exactOptional()
 });
@@ -211,7 +211,7 @@ export const OrchestrationProviderRecord = zod.object({
   "disableTls": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "loggingEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "jwtEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional(),
-  "swaggerEnables": zod.union([zod.boolean(),zod.null()]).exactOptional(),
+  "swaggerEnabled": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "realm": zod.union([zod.string(),zod.null()]).exactOptional(),
   "clientId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "credentialStatus": zod.union([zod.string(),zod.null()]).exactOptional()

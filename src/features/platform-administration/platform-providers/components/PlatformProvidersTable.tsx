@@ -137,7 +137,7 @@ function PlatformProviderDetail({ provider }: { provider: PlatformProviderRecord
           <DetailRow label={t('details.notificationEmail')} value={provider.notificationEmail ?? '-'} />
           <DetailRow label={t('details.loggingEnabled')} value={provider.loggingEnabled == null ? '-' : String(provider.loggingEnabled)} />
           <DetailRow label={t('details.jwtEnabled')} value={provider.jwtEnabled == null ? '-' : String(provider.jwtEnabled)} />
-          <DetailRow label={t('details.swaggerEnables')} value={provider.swaggerEnables == null ? '-' : String(provider.swaggerEnables)} />
+          <DetailRow label={t('details.swaggerEnabled')} value={provider.swaggerEnabled == null ? '-' : String(provider.swaggerEnabled)} />
         </>
       ) : null}
 

@@ -47,7 +47,7 @@ const backendProvider: PlatformProviderRecord = {
   notificationEmail: 'abcobe@example.com',
   loggingEnabled: true,
   jwtEnabled: false,
-  swaggerEnables: true,
+  swaggerEnabled: true,
 }
 
 const keycloakProvider: PlatformProviderRecord = {

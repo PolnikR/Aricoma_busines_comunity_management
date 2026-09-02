@@ -72,7 +72,7 @@ describe('toPlatformProviderSubmitData', () => {
       notificationEmail: '',
       loggingEnabled: true,
       jwtEnabled: false,
-      swaggerEnables: false,
+      swaggerEnabled: false,
       ipAddress: 'must-not-leak',
     })
 
@@ -85,7 +85,7 @@ describe('toPlatformProviderSubmitData', () => {
       notificationEmail: null,
       loggingEnabled: true,
       jwtEnabled: false,
-      swaggerEnables: false,
+      swaggerEnabled: false,
     })
   })
 

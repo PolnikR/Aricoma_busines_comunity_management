@@ -306,11 +306,11 @@ export function PlatformProviderForm({
             </div>
             <CheckboxField
               id="platform-provider-swagger-enabled"
-              label={t('forms.swaggerEnables')}
-              checked={data.swaggerEnables === true}
+              label={t('forms.swaggerEnabled')}
+              checked={data.swaggerEnabled === true}
               disabled={isSubmitting}
               variant="bordered"
-              onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('swaggerEnables', event.target.checked) }}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('swaggerEnabled', event.target.checked) }}
             />
           </div>
         </>

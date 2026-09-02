@@ -24,7 +24,7 @@ describe('platform provider type contract', () => {
     expect(PLATFORM_PROVIDER_FIELD_CONTRACT).toEqual({
       AIRFLOW: ['ipAddress', 'port', 'dagDir', 'credentialId', 'notificationEmail'],
       SMTP: ['ipAddress', 'port', 'fromEmail', 'disableSsl', 'disableTls'],
-      BACKEND: ['notificationEmail', 'loggingEnabled', 'jwtEnabled', 'swaggerEnables'],
+      BACKEND: ['notificationEmail', 'loggingEnabled', 'jwtEnabled', 'swaggerEnabled'],
       KEYCLOAK: ['realm', 'clientId', 'credentialId'],
     })
   })
@@ -33,7 +33,7 @@ describe('platform provider type contract', () => {
     expectTypeOf<KeycloakPlatformProvider['realm']>().toEqualTypeOf<string>()
     expectTypeOf<KeycloakPlatformProvider['dagDir']>().toEqualTypeOf<undefined>()
     expectTypeOf<SmtpPlatformProvider['loggingEnabled']>().toEqualTypeOf<undefined>()
-    expectTypeOf<BackendPlatformProvider['swaggerEnables']>().toEqualTypeOf<boolean | null>()
+    expectTypeOf<BackendPlatformProvider['swaggerEnabled']>().toEqualTypeOf<boolean | null>()
   })
 })
 

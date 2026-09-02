@@ -72,7 +72,7 @@ function mapPlatformProviderCore(
         notificationEmail: provider.notificationEmail ?? null,
         loggingEnabled: provider.loggingEnabled ?? null,
         jwtEnabled: provider.jwtEnabled ?? null,
-        swaggerEnables: provider.swaggerEnables ?? null,
+        swaggerEnabled: provider.swaggerEnabled ?? null,
       }
     case 'KEYCLOAK':
       return {

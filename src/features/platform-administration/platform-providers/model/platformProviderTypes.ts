@@ -24,7 +24,7 @@ export const PLATFORM_PROVIDER_COMMON_FIELDS = [
 export const PLATFORM_PROVIDER_FIELD_CONTRACT = {
   AIRFLOW: ['ipAddress', 'port', 'dagDir', 'credentialId', 'notificationEmail'],
   SMTP: ['ipAddress', 'port', 'fromEmail', 'disableSsl', 'disableTls'],
-  BACKEND: ['notificationEmail', 'loggingEnabled', 'jwtEnabled', 'swaggerEnables'],
+  BACKEND: ['notificationEmail', 'loggingEnabled', 'jwtEnabled', 'swaggerEnabled'],
   KEYCLOAK: ['realm', 'clientId', 'credentialId'],
 } as const satisfies Record<PlatformProviderType, readonly (keyof OrchestrationProvider)[]>
 
@@ -50,7 +50,7 @@ interface PlatformProviderConfigShape {
   disableTls: boolean | null
   loggingEnabled: boolean | null
   jwtEnabled: boolean | null
-  swaggerEnables: boolean | null
+  swaggerEnabled: boolean | null
   realm: string
   clientId: string
 }
@@ -92,7 +92,7 @@ export type BackendPlatformProvider = PlatformProviderVariant<'BACKEND', {
   notificationEmail: string | null
   loggingEnabled: boolean | null
   jwtEnabled: boolean | null
-  swaggerEnables: boolean | null
+  swaggerEnabled: boolean | null
 }>
 
 export type KeycloakPlatformProvider = PlatformProviderVariant<'KEYCLOAK', {

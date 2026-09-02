@@ -44,7 +44,7 @@ Požadovaná Platform Provider štruktúra:
 - `notificationEmail`
 - `loggingEnabled`
 - `jwtEnabled`
-- `swaggerEnables`
+- `swaggerEnabled`
 
 ### KEYCLOAK
 
@@ -90,11 +90,11 @@ Aktuálny generated `OrchestrationProvider` / `OrchestrationProviderRecord` obsa
 - `realm`
 - `clientId`
 
-### Contract status: `swaggerEnables` resolved
+### Contract status: `swaggerEnabled` resolved
 
-BACKEND pole `swaggerEnables` bolo potvrdené ako `Optional[bool]`, pridané do BE `OrchestrationProvider`, prenesené do FE OpenAPI snapshotu a vygenerované Orvalom do `OrchestrationProvider`, `OrchestrationProviderRecord` aj Zod kontraktu.
+BACKEND pole `swaggerEnabled` bolo potvrdené ako `Optional[bool]`, pridané do BE `OrchestrationProvider`, prenesené do FE OpenAPI snapshotu a vygenerované Orvalom do `OrchestrationProvider`, `OrchestrationProviderRecord` aj Zod kontraktu.
 
-Phase 0 blocker je odstránený; ďalšie tasky môžu `swaggerEnables` používať cez generated API contract bez handwritten workaroundu.
+Phase 0 blocker je odstránený; ďalšie tasky môžu `swaggerEnabled` používať cez generated API contract bez handwritten workaroundu.
 
 ### Aktuálny FE model
 
@@ -425,7 +425,7 @@ Dôvod: JSON viewer je diagnostický raw API view; Detail/Create/Edit sú produc
 ## Dependency graph
 
 ```text
-BE/OpenAPI swaggerEnables contract
+BE/OpenAPI swaggerEnabled contract
           |
           v
 Generated client/types
@@ -458,9 +458,9 @@ End-to-end browser/network verification
 
 # Phase 0 — Contract prerequisite
 
-## Task 1: Confirm and expose BACKEND `swaggerEnables` in OpenAPI
+## Task 1: Confirm and expose BACKEND `swaggerEnabled` in OpenAPI
 
-**Description:** Overiť presný backend field name z požadovanej štruktúry (`swaggerEnables`). Ak je field skutočne súčasťou Platform Provider BACKEND contractu, doplniť ho na backend schema/OpenAPI source a znovu vygenerovať FE OpenAPI client. FE handwritten types sa nesmú použiť ako náhrada chýbajúceho API contractu.
+**Description:** Overiť presný backend field name z požadovanej štruktúry (`swaggerEnabled`). Ak je field skutočne súčasťou Platform Provider BACKEND contractu, doplniť ho na backend schema/OpenAPI source a znovu vygenerovať FE OpenAPI client. FE handwritten types sa nesmú použiť ako náhrada chýbajúceho API contractu.
 
 **Acceptance criteria:**
 - [x] BE/OpenAPI jednoznačne definuje exact field name a typ.
@@ -478,11 +478,11 @@ End-to-end browser/network verification
 - `openapi/abco-api.json` cez štandardný pull/generation flow,
 - generated API files cez Orval generation, nie manuálne.
 
-**Estimated scope:** M cross-contract task. Ak sa BE zmena rieši samostatne, tento task je explicitný blocker iba pre `swaggerEnables`; ostatné FE tasky môžu byť pripravené paralelne.
+**Estimated scope:** M cross-contract task. Ak sa BE zmena rieši samostatne, tento task je explicitný blocker iba pre `swaggerEnabled`; ostatné FE tasky môžu byť pripravené paralelne.
 
 ## Checkpoint A — API contract
 
-- [x] `swaggerEnables` exact naming potvrdený.
+- [x] `swaggerEnabled` exact naming potvrdený.
 - [x] No handwritten FE-only contract workaround.
 - [x] Generated client synchronizovaný pred final BACKEND UI wiring.
 
@@ -600,7 +600,7 @@ End-to-end browser/network verification
 **Verification:**
 - [ ] Parameterized form tests kontrolujú visible aj absent labels pre každý type.
 - [ ] Credential selector je prítomný iba AIRFLOW a KEYCLOAK.
-- [ ] `swaggerEnables` assertion sa aktivuje po splnení Task 1.
+- [ ] `swaggerEnabled` assertion sa aktivuje po splnení Task 1.
 
 **Dependencies:** Task 5; BACKEND Swagger row navyše Task 1.
 
@@ -854,7 +854,7 @@ End-to-end browser/network verification
 
 - [ ] Create/Edit zobrazuje common + BACKEND fields.
 - [ ] Detail zobrazuje iba common + BACKEND fields.
-- [ ] Network POST body obsahuje `notificationEmail`, `loggingEnabled`, `jwtEnabled`, `swaggerEnables` a žiadne AIRFLOW/SMTP/KEYCLOAK keys.
+- [ ] Network POST body obsahuje `notificationEmail`, `loggingEnabled`, `jwtEnabled`, `swaggerEnabled` a žiadne AIRFLOW/SMTP/KEYCLOAK keys.
 
 ### KEYCLOAK
 
@@ -888,7 +888,7 @@ End-to-end browser/network verification
 - [ ] Detail zobrazuje common + relevant type fields a nie `-` rows pre neexistujúci config.
 - [ ] Main table nemá AIRFLOW-specific assumptions pre heterogénne rows.
 - [ ] Raw JSON viewer zachová backend response.
-- [ ] `swaggerEnables` je implementované až po generated OpenAPI podpore.
+- [ ] `swaggerEnabled` je implementované až po generated OpenAPI podpore.
 - [ ] Focused tests, typecheck, lint, diff check a browser/network matrix green.
 
 ## Riziká a mitigácie
@@ -899,7 +899,7 @@ End-to-end browser/network verification
 | Field ownership sa rozíde medzi Detail/Form/Payload | High | Jeden feature-local field ownership contract + exact-key regression tests |
 | Hidden stale field sa odošle po type switchi | High | Discriminated form state + type reset + exact outbound payload tests |
 | Edit clear sa stratí pri omission | High | Explicit null-vs-omission policy per relevant optional field |
-| FE ručne pridá `swaggerEnables` bez OpenAPI | High | Task 1 contract prerequisite; generated schema zostáva API source of truth |
+| FE ručne pridá `swaggerEnabled` bez OpenAPI | High | Task 1 contract prerequisite; generated schema zostáva API source of truth |
 | Discriminated union rozbije current table search na `ipAddress` | Medium | Main table/search upraviť na cross-type fields; type-specific values patria do detailu |
 | Raw JSON viewer začne ukazovať FE-normalized object | Medium | Zachovať `rawRecord` a samostatný JSON helper contract |
 | Existing credentials unavailable option sa stratí | Medium | Edit regression test pre missing credential reference AIRFLOW/KEYCLOAK |
@@ -909,7 +909,7 @@ End-to-end browser/network verification
 
 - `providers-connectors/providers` infra provider feature.
 - Recovery provider selection logic.
-- Backend behavior mimo potrebného OpenAPI `swaggerEnables` contractu.
+- Backend behavior mimo potrebného OpenAPI `swaggerEnabled` contractu.
 - Redizajn Platform Providers page layout; to patrí do samostatného page-layout-unification programu.
 - Zmena generic `DataTable`.
 - Dynamický schema-driven form engine.
@@ -925,7 +925,7 @@ Tieto súbory nesmú byť resetované, stage-nuté ani zahrnuté do Platform Pro
 
 ## Odhad
 
-Približne 8–14 hodín focused FE implementation + tests + browser/network verification po dostupnosti `swaggerEnables` OpenAPI contractu.
+Približne 8–14 hodín focused FE implementation + tests + browser/network verification po dostupnosti `swaggerEnabled` OpenAPI contractu.
 
 Implementácia má byť rozdelená do S/M taskov. Task, ktorý začne zasahovať viac ako približne 5 nezávislých files alebo viac subsystémov, sa má ďalej rozbiť.
 
@@ -936,7 +936,7 @@ FE implementácia Tasks 2–15 je dokončená na vetve `test`.
 - `ff09f4f` — `feat(platform-providers): map fields by provider type`
 - `153e4c7` — `test(platform-providers): cover cleared type fields`
 - type-specific domain/read mapper, Create/Edit, validation, submit payload, Detail/Table a raw JSON separation sú zapracované,
-- `swaggerEnables` sa používa cez generated OpenAPI contract,
+- `swaggerEnabled` sa používa cez generated OpenAPI contract,
 - relevantné cleared optional strings sa v submit mapperi normalizujú na `null`; nerelevantné type fields sa do payloadu vôbec nepridávajú,
 - automated verification je zelená: focused tests, forced TypeScript build, focused ESLint, locale JSON parse a `git diff --check`.
 

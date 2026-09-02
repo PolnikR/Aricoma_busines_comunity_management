@@ -88,7 +88,7 @@ describe('PlatformProviderForm', () => {
       notificationEmail: 'backend@example.test',
       loggingEnabled: true,
       jwtEnabled: false,
-      swaggerEnables: true,
+      swaggerEnabled: true,
     })
 
     for (const label of ['URL', 'Notification email', 'Enable logging', 'Enable JWT', 'Enable Swagger']) {
@@ -101,7 +101,7 @@ describe('PlatformProviderForm', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'Enable Swagger' }))
     expect(onChange).toHaveBeenCalledWith('loggingEnabled', false)
     expect(onChange).toHaveBeenCalledWith('jwtEnabled', true)
-    expect(onChange).toHaveBeenCalledWith('swaggerEnables', false)
+    expect(onChange).toHaveBeenCalledWith('swaggerEnabled', false)
   })
 
   it('renders only KEYCLOAK configuration fields and preserves a missing credential option', () => {
