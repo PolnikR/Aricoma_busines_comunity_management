@@ -316,6 +316,19 @@ Phase 1: table/list pages       Phase 2: workspaces/settings
 
 **Estimated scope:** M.
 
+### Task 1 browser measurement checklist
+
+Run this in a real browser for Resources and Resources ISE at the same desktop viewport and normal loaded state. Record X/Y/W/H for every boundary; JSDOM contract tests do not substitute for these measurements.
+
+| Boundary | Start/end to measure | Expected ownership |
+| --- | --- | --- |
+| Header | top of page content through the bottom of `TableToolbar`/page header | It remains outside the primary surface and does not move with table scrolling. |
+| Primary surface | outer `InventoryShell` card border | It contains the source tabs and inventory panel; metrics/notices stay outside. |
+| Table viewport | below the panel toolbar through the top of pagination | It is the sole vertical-scroll area and its X/W align to the panel. |
+| Pagination | top and bottom edges of its panel slot | It is a fixed panel footer, below the data viewport and outside vertical scrolling. |
+
+Also record viewport size, zoom, active source tab, scrollbar state, table viewport `clientHeight`/`scrollHeight`, and table `clientWidth`/`scrollWidth`. Repeat with enough rows to activate vertical scrolling and enough columns to activate horizontal scrolling.
+
 ## Task 2: Normalize no-provider state in Resources and Resources ISE
 
 **Description:** Odstrániť early-return geometry, ktorá pri žiadnom providerovi obchádza canonical `InventoryShell`/primary surface.
