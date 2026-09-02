@@ -32,67 +32,70 @@ function renderToolbar(
 }
 
 describe('AccessLogsQueryToolbar', () => {
-  it('renders query controls from the active Czech translation context', async () => {
+  it('renders search, density and filter controls from the active Czech translation context', async () => {
     const user = userEvent.setup()
     renderToolbar({}, 'cs')
 
-    await user.click(screen.getByRole('button', { name: 'Nastavit dotaz přístupových logů' }))
-
-    expect(screen.getByLabelText('Ovládací prvky dotazu přístupových logů')).toBeInTheDocument()
-    expect(screen.getByLabelText('Řádky')).toBeInTheDocument()
-    expect(screen.getByLabelText('Stav')).toBeInTheDocument()
-    expect(screen.getByLabelText('Metoda')).toBeInTheDocument()
-    expect(screen.getByLabelText('Cesta obsahuje')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Vymazat vše' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Použít' })).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Hledat v přístupových lozích podle cesty' })).toHaveValue('/health')
     expect(screen.getByRole('group', { name: 'Hustota řádků' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'pohodlný' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'kompaktní' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Filtry/ }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Filtrovat přístupové logy' })
+    expect(dialog).toBeInTheDocument()
+    expect(screen.getByLabelText('Řádky')).toBeInTheDocument()
+    expect(screen.getByLabelText('Stav')).toBeInTheDocument()
+    expect(screen.getByLabelText('Metoda')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Vymazat vše' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Aplikovat' })).toBeInTheDocument()
   })
 
-  it('expands its inline query controls and collapses them as cancellation', async () => {
+  it('applies the path search immediately without opening the filter dialog', async () => {
+    const user = userEvent.setup()
+    const { onFiltersChange } = renderToolbar({ filters: { lines: 200 } })
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search access logs by path' }), '/')
+
+    expect(onFiltersChange).toHaveBeenCalledExactlyOnceWith({ lines: 200, pathContains: '/' })
+  })
+
+  it('counts the applied filters on the filter trigger', () => {
+    renderToolbar()
+
+    expect(screen.getByRole('button', { name: 'Filters 3' })).toBeInTheDocument()
+  })
+
+  it('discards dialog edits that were not applied', async () => {
     const user = userEvent.setup()
     const { onFiltersChange } = renderToolbar()
 
-    const trigger = screen.getByRole('button', { name: 'Configure access-log query' })
-    expect(trigger).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByLabelText('Lines')).not.toBeInTheDocument()
-
-    await user.click(trigger)
-    expect(trigger).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByLabelText('Lines')).toHaveValue(200)
-    expect(screen.getByLabelText('Status')).toHaveValue(500)
-    expect(screen.getByLabelText('Method')).toHaveValue('GET')
-    expect(screen.getByLabelText('Path contains')).toHaveValue('/health')
-
+    await user.click(screen.getByRole('button', { name: /Filters/ }))
     await user.clear(screen.getByLabelText('Method'))
     await user.type(screen.getByLabelText('Method'), 'POST')
-    await user.click(trigger)
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
 
-    expect(screen.queryByLabelText('Lines')).not.toBeInTheDocument()
     expect(onFiltersChange).not.toHaveBeenCalled()
 
-    await user.click(trigger)
+    await user.click(screen.getByRole('button', { name: /Filters/ }))
     expect(screen.getByLabelText('Method')).toHaveValue('GET')
   })
 
   it('keeps draft values isolated until Apply submits a normalized filter snapshot', async () => {
     const user = userEvent.setup()
     const { onFiltersChange } = renderToolbar()
-    await user.click(screen.getByRole('button', { name: 'Configure access-log query' }))
+    await user.click(screen.getByRole('button', { name: /Filters/ }))
 
     const linesInput = screen.getByLabelText('Lines')
     const statusInput = screen.getByLabelText('Status')
     const methodInput = screen.getByLabelText('Method')
-    const pathContainsInput = screen.getByLabelText('Path contains')
     await user.clear(linesInput)
     await user.type(linesInput, '300')
     await user.clear(statusInput)
     await user.type(statusInput, '404')
     await user.clear(methodInput)
     await user.type(methodInput, ' post ')
-    await user.clear(pathContainsInput)
-    await user.type(pathContainsInput, ' /billing ')
 
     expect(onFiltersChange).not.toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: 'Apply' }))
@@ -102,7 +105,7 @@ describe('AccessLogsQueryToolbar', () => {
       lines: 300,
       status: 404,
       method: 'POST',
-      pathContains: '/billing',
+      pathContains: '/health',
     })
   })
 
@@ -112,7 +115,7 @@ describe('AccessLogsQueryToolbar', () => {
   ])('rejects an out-of-range Lines draft of $lines', async ({ lines, message }) => {
     const user = userEvent.setup()
     renderToolbar()
-    await user.click(screen.getByRole('button', { name: 'Configure access-log query' }))
+    await user.click(screen.getByRole('button', { name: /Filters/ }))
 
     const linesInput = screen.getByLabelText('Lines')
     await user.clear(linesInput)
@@ -126,7 +129,7 @@ describe('AccessLogsQueryToolbar', () => {
   it('requires Status to be an optional integer', async () => {
     const user = userEvent.setup()
     renderToolbar()
-    await user.click(screen.getByRole('button', { name: 'Configure access-log query' }))
+    await user.click(screen.getByRole('button', { name: /Filters/ }))
 
     const statusInput = screen.getByLabelText('Status')
     await user.clear(statusInput)
@@ -140,7 +143,7 @@ describe('AccessLogsQueryToolbar', () => {
   it('clears filters to the server defaults', async () => {
     const user = userEvent.setup()
     const { onFiltersChange } = renderToolbar()
-    await user.click(screen.getByRole('button', { name: 'Configure access-log query' }))
+    await user.click(screen.getByRole('button', { name: /Filters/ }))
 
     await user.click(screen.getByRole('button', { name: 'Clear all' }))
 
@@ -149,8 +152,6 @@ describe('AccessLogsQueryToolbar', () => {
     expect(screen.getByLabelText('Lines')).toHaveValue(200)
     expect(screen.getByLabelText('Status')).toHaveValue(null)
     expect(screen.getByLabelText('Method')).toHaveValue('')
-    expect(screen.getByLabelText('Path contains')).toHaveValue('')
-    expect(screen.queryByLabelText('X-User')).not.toBeInTheDocument()
   })
 
   it('exposes labelled density choices and dispatches changes', async () => {

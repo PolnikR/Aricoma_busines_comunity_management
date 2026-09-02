@@ -54,7 +54,7 @@ describe('AuditPage', () => {
     expect(await screen.findByRole('row', { name: 'GET /api/access-logs' })).toBeInTheDocument()
     expect(fetchAccessLogsMock).toHaveBeenCalledWith({ lines: 200 })
 
-    await user.click(screen.getByRole('button', { name: 'Configure access-log query' }))
+    await user.click(screen.getByRole('button', { name: /Filters/ }))
     await user.clear(screen.getByLabelText('Status'))
     await user.type(screen.getByLabelText('Status'), '404')
     await user.clear(screen.getByLabelText('Method'))
@@ -194,7 +194,7 @@ describe('AuditPage', () => {
     await user.click(screen.getByRole('button', { name: 'Page 2' }))
     expect(screen.getByRole('row', { name: 'GET /api/entry/26' })).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Configure access-log query' }))
+    await user.click(screen.getByRole('button', { name: /Filters/ }))
     await user.click(screen.getByRole('button', { name: 'Clear all' }))
 
     expect(screen.getByRole('row', { name: 'GET /api/entry/1' })).toBeInTheDocument()

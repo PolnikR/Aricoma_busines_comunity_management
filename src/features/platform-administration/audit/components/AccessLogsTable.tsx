@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import {
   DataTable,
   DataTablePagination,
-  DataTableRequestState,
+  StateCell,
 } from '@/shared/components/data-table'
-import type { ColumnDef, TableDensity } from '@/shared/components/data-table'
+import type { ColumnDef, StateTone, TableDensity } from '@/shared/components/data-table'
+import { InventoryPanel } from '@/shared/components/inventory-shell/InventoryPanel'
 import { normalizeAccessLogFilters } from '../api/accessLogQueryKeys'
 import { useAccessLogs } from '../hooks/useAccessLogs'
 import type { AccessLogFilters, AccessLogRecord } from '../model/accessLogTypes'
@@ -22,10 +24,19 @@ interface AccessLogTableRow {
 interface AccessLogsTableProps {
   filters: AccessLogFilters
   density: TableDensity
+  toolbar?: ReactNode
+  resetKey?: number
 }
 
 function formatDuration(durationMs: number) {
   return `${String(durationMs)} ms`
+}
+
+function statusTone(status: number): StateTone {
+  if (status >= 500) return 'error'
+  if (status >= 400) return 'warn'
+  if (status >= 300) return 'off'
+  return 'on'
 }
 
 function rowAriaLabel(record: AccessLogRecord, rawEntryLabel: string) {
@@ -51,8 +62,9 @@ function createColumns(t: (key: string) => string): ColumnDef<AccessLogTableRow>
     {
       id: 'status',
       header: t('audit.accessLogs.table.columns.status'),
-      align: 'right',
-      cell: ({ record }) => record.kind === 'request' ? String(record.status) : '—',
+      cell: ({ record }) => record.kind === 'request'
+        ? <StateCell tone={statusTone(record.status)} label={String(record.status)} />
+        : '—',
     },
     {
       id: 'duration',
@@ -63,39 +75,22 @@ function createColumns(t: (key: string) => string): ColumnDef<AccessLogTableRow>
   ]
 }
 
-export function AccessLogsTable({ filters, density }: AccessLogsTableProps) {
-  const { data = [], dataUpdatedAt, error, isLoading, isFetching, refetch } = useAccessLogs(filters)
-  const appliedQueryKey = JSON.stringify(normalizeAccessLogFilters(filters))
-
-  return (
-    <AccessLogsTableView
-      key={appliedQueryKey}
-      data={data}
-      dataUpdatedAt={dataUpdatedAt}
-      density={density}
-      error={error}
-      isFetching={isFetching}
-      isLoading={isLoading}
-      refetch={refetch}
-    />
-  )
-}
-
-interface AccessLogsTableViewProps {
-  data: AccessLogRecord[]
-  dataUpdatedAt: number
-  density: TableDensity
-  error: Error | null
-  isFetching: boolean
-  isLoading: boolean
-  refetch: () => Promise<unknown>
-}
-
-function AccessLogsTableView({ data, dataUpdatedAt, density, error, isFetching, isLoading, refetch }: AccessLogsTableViewProps) {
+export function AccessLogsTable({ filters, density, toolbar, resetKey = 0 }: AccessLogsTableProps) {
   const { t } = useTranslation()
+  const { data = [], dataUpdatedAt, error, isLoading, isFetching, refetch } = useAccessLogs(filters)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(INITIAL_PAGE_SIZE)
   const [selection, setSelection] = useState<{ dataUpdatedAt: number, row: AccessLogTableRow } | null>(null)
+  const appliedQuery = `${JSON.stringify(normalizeAccessLogFilters(filters))}#${String(resetKey)}`
+  const [renderedQuery, setRenderedQuery] = useState(appliedQuery)
+
+  if (renderedQuery !== appliedQuery) {
+    setRenderedQuery(appliedQuery)
+    setPage(1)
+    setPageSize(INITIAL_PAGE_SIZE)
+    setSelection(null)
+  }
+
   const selectedRow = selection?.dataUpdatedAt === dataUpdatedAt ? selection.row : null
   const pageCount = Math.max(1, Math.ceil(data.length / pageSize))
   const currentPage = Math.min(page, pageCount)
@@ -108,51 +103,52 @@ function AccessLogsTableView({ data, dataUpdatedAt, density, error, isFetching, 
   const columns = useMemo(() => createColumns(t), [t])
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <div className="custom-scrollbar flex min-h-[120px] flex-1 flex-col lg:overflow-y-auto">
-        <DataTableRequestState
-          hasCachedData={data.length > 0}
-          error={error ? {
-            title: data.length > 0 ? t('audit.accessLogs.error.refresh') : t('audit.accessLogs.error.load'),
-            ...(errorDetail ? { description: errorDetail } : {}),
-            retryLabel: t('audit.accessLogs.error.retry'),
-            isRetrying: isFetching,
-            onRetry: () => { void refetch() },
-          } : null}
-        >
-          <DataTable
-            columns={columns}
-            rows={pageRows}
-            rowKey={row => row.key}
-            rowAriaLabel={row => rowAriaLabel(row.record, t('audit.accessLogs.table.rawEntry'))}
-            density={density}
+    <>
+      <InventoryPanel
+        ariaLabel={t('audit.accessLogs.table.ariaLabel')}
+        toolbar={toolbar}
+        hasCachedData={data.length > 0}
+        error={error ? {
+          title: data.length > 0 ? t('audit.accessLogs.error.refresh') : t('audit.accessLogs.error.load'),
+          ...(errorDetail ? { description: errorDetail } : {}),
+          retryLabel: t('audit.accessLogs.error.retry'),
+          isRetrying: isFetching,
+          onRetry: () => { void refetch() },
+        } : null}
+        pagination={(
+          <DataTablePagination
+            page={currentPage}
+            pageSize={pageSize}
+            total={data.length}
             isLoading={isLoading}
-            ariaLabel={isLoading ? t('audit.accessLogs.table.loading') : t('audit.accessLogs.table.ariaLabel')}
-            onRowClick={(row) => { setSelection({ dataUpdatedAt, row }) }}
-            selectedRowKey={selectedRow?.key ?? null}
-            emptyContent={t('audit.accessLogs.table.empty')}
+            onPageChange={setPage}
+            onPageSizeChange={(nextPageSize) => { setPageSize(nextPageSize); setPage(1) }}
+            paginationAriaLabel={t('audit.accessLogs.table.ariaLabel')}
+            rowsPerPageLabel={t('pagination.rowsPerPage')}
+            previousPageLabel={t('pagination.previousPage')}
+            nextPageLabel={t('pagination.nextPage')}
+            pageOfLabel={t('pagination.pageOf')}
+            pageLabel={t('pagination.page')}
           />
-        </DataTableRequestState>
-      </div>
-
-      {(!error || data.length > 0) ? (
-        <DataTablePagination
-          page={currentPage}
-          pageSize={pageSize}
-          total={data.length}
+        )}
+      >
+        <DataTable
+          columns={columns}
+          rows={pageRows}
+          rowKey={row => row.key}
+          rowAriaLabel={row => rowAriaLabel(row.record, t('audit.accessLogs.table.rawEntry'))}
+          density={density}
           isLoading={isLoading}
-          onPageChange={setPage}
-          onPageSizeChange={(nextPageSize) => { setPageSize(nextPageSize); setPage(1) }}
-          paginationAriaLabel={t('audit.accessLogs.table.ariaLabel')}
-          rowsPerPageLabel={t('pagination.rowsPerPage')}
-          previousPageLabel={t('pagination.previousPage')}
-          nextPageLabel={t('pagination.nextPage')}
-          pageOfLabel={t('pagination.pageOf')}
-          pageLabel={t('pagination.page')}
+          ariaLabel={isLoading ? t('audit.accessLogs.table.loading') : t('audit.accessLogs.table.ariaLabel')}
+          onRowClick={(row) => { setSelection({ dataUpdatedAt, row }) }}
+          selectedRowKey={selectedRow?.key ?? null}
+          emptyContent={t('audit.accessLogs.table.empty')}
+          headerCellClassName="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle"
+          cellClassName={`px-3 ${density === 'compact' ? 'py-1.5' : 'py-2.5'} text-[13px] text-text-secondary align-top`}
         />
-      ) : null}
+      </InventoryPanel>
 
       <AccessLogDetailDrawer record={selectedRow?.record ?? null} onClose={() => { setSelection(null) }} />
-    </div>
+    </>
   )
 }

@@ -5,6 +5,7 @@ import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import type { TableDensity } from '@/shared/components/data-table'
 import { AccessLogsQueryToolbar } from '../components/AccessLogsQueryToolbar'
 import { AccessLogsTable } from '../components/AccessLogsTable'
+import { normalizeAccessLogFilters } from '../api/accessLogQueryKeys'
 import { useAccessLogs } from '../hooks/useAccessLogs'
 import { useAuditSearchParams } from '../hooks/useAuditSearchParams'
 
@@ -26,15 +27,25 @@ export function AuditPage() {
         refreshLabel={t('common.refresh')}
         updatingLabel={t('status.updating')}
       />
-      <InventoryShell>
-        <AccessLogsQueryToolbar
+      <InventoryShell
+        inventoryTitle={t('audit.accessLogs.inventory.title')}
+        inventoryDescription={t('audit.accessLogs.inventory.description')
+          .replace('{lines}', String(normalizeAccessLogFilters(filters).lines))}
+      >
+        <AccessLogsTable
           filters={filters}
-          onFiltersChange={setFilters}
           density={density}
-          onDensityChange={setDensity}
-          onFiltersClear={() => { setTableResetKey((current) => current + 1) }}
+          resetKey={tableResetKey}
+          toolbar={(
+            <AccessLogsQueryToolbar
+              filters={filters}
+              onFiltersChange={setFilters}
+              density={density}
+              onDensityChange={setDensity}
+              onFiltersClear={() => { setTableResetKey((current) => current + 1) }}
+            />
+          )}
         />
-        <AccessLogsTable key={tableResetKey} filters={filters} density={density} />
       </InventoryShell>
     </div>
   )

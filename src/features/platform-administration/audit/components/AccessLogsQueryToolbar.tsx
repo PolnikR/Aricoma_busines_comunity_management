@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
-import { Button } from '@/shared/components/button/Button'
+import { DataTableToolbar } from '@/shared/components/data-table'
 import type { TableDensity } from '@/shared/components/data-table'
 import { Field, Input } from '@/shared/components/form/FormControls'
-import { RowDensityToggle } from '@/shared/components/table/RowDensityToggle'
-import { FilterIcon } from '@/shared/icons/Icons'
 import {
   DEFAULT_ACCESS_LOG_LINES,
   MAX_ACCESS_LOG_LINES,
@@ -25,7 +23,6 @@ interface AccessLogFilterDraft {
   lines: string
   status: string
   method: string
-  pathContains: string
 }
 
 function createDraft(filters: AccessLogFilters): AccessLogFilterDraft {
@@ -34,7 +31,6 @@ function createDraft(filters: AccessLogFilters): AccessLogFilterDraft {
     lines: String(normalized.lines),
     status: normalized.status === undefined ? '' : String(normalized.status),
     method: normalized.method ?? '',
-    pathContains: normalized.pathContains ?? '',
   }
 }
 
@@ -50,38 +46,27 @@ export function AccessLogsQueryToolbar({
   onFiltersClear,
 }: AccessLogsQueryToolbarProps) {
   const { t } = useTranslation()
-  const [isExpanded, setIsExpanded] = useState(false)
   const [draft, setDraft] = useState(() => createDraft(filters))
   const lines = Number(draft.lines)
   const hasValidLines = isInteger(draft.lines) && lines >= MIN_ACCESS_LOG_LINES && lines <= MAX_ACCESS_LOG_LINES
   const hasValidStatus = !draft.status.trim() || isInteger(draft.status)
   const isValid = hasValidLines && hasValidStatus
-
-  const cancel = () => {
-    setDraft(createDraft(filters))
-    setIsExpanded(false)
-  }
-
-  const toggleExpanded = () => {
-    if (isExpanded) cancel()
-    else {
-      setDraft(createDraft(filters))
-      setIsExpanded(true)
-    }
-  }
+  const normalizedFilters = normalizeAccessLogFilters(filters)
+  const activeFilterCount = [
+    normalizedFilters.status,
+    normalizedFilters.method,
+    normalizedFilters.pathContains,
+  ].filter((value) => value !== undefined).length
 
   const apply = () => {
-    if (!isValid) return
-
     const nextFilters = normalizeAccessLogFilters({
       lines,
       ...(draft.status.trim() ? { status: Number(draft.status) } : {}),
       method: draft.method,
-      pathContains: draft.pathContains,
+      ...(normalizedFilters.pathContains !== undefined ? { pathContains: normalizedFilters.pathContains } : {}),
     })
     onFiltersChange(nextFilters)
     setDraft(createDraft(nextFilters))
-    setIsExpanded(false)
   }
 
   const clearAll = () => {
@@ -92,30 +77,28 @@ export function AccessLogsQueryToolbar({
   }
 
   return (
-    <div className="shrink-0 border-b border-border bg-surface">
-      <div className="flex items-center justify-between gap-3 p-4">
-        <Button
-          size="sm"
-          variant="outline"
-          startIcon={<FilterIcon className="size-4" />}
-          aria-label={t('audit.accessLogs.query.configure')}
-          aria-controls="access-log-query-controls"
-          aria-expanded={isExpanded}
-          onClick={toggleExpanded}
-        >
-          {t('audit.accessLogs.query.configure')}
-        </Button>
-        <RowDensityToggle
-          density={density}
-          onDensityChange={onDensityChange}
-          ariaLabel={t('density.rowDensity')}
-          comfortableLabel={t('density.comfortable')}
-          compactLabel={t('density.compact')}
-        />
-      </div>
-
-      {isExpanded ? (
-        <div id="access-log-query-controls" aria-label={t('audit.accessLogs.query.controls')} className="grid gap-3 border-t border-border bg-surface-subtle p-4 md:grid-cols-2 xl:grid-cols-[140px_140px_160px_minmax(240px,1fr)_auto] xl:items-end">
+    <DataTableToolbar
+      searchValue={normalizedFilters.pathContains ?? ''}
+      onSearchChange={(pathContains) => { onFiltersChange({ ...normalizedFilters, pathContains }) }}
+      searchPlaceholder={t('audit.accessLogs.query.pathContains')}
+      searchLabel={t('audit.accessLogs.toolbar.searchLabel')}
+      filterTitle={t('audit.accessLogs.toolbar.filterTitle')}
+      filterButtonLabel={t('audit.accessLogs.toolbar.filters')}
+      cancelLabel={t('buttons.cancel')}
+      clearLabel={t('buttons.clearAll')}
+      applyLabel={t('buttons.apply')}
+      activeFilterCount={activeFilterCount}
+      applyDisabled={!isValid}
+      density={density}
+      onDensityChange={onDensityChange}
+      densityAriaLabel={t('density.rowDensity')}
+      comfortableLabel={t('density.comfortable')}
+      compactLabel={t('density.compact')}
+      onFilterOpen={() => { setDraft(createDraft(filters)) }}
+      onApplyFilters={apply}
+      onClearFilters={clearAll}
+      filterPanel={(
+        <>
           <Field label={t('audit.accessLogs.query.lines')} htmlFor="access-log-lines">
             <Input
               id="access-log-lines"
@@ -147,19 +130,8 @@ export function AccessLogsQueryToolbar({
               onChange={(event) => { setDraft((current) => ({ ...current, method: event.target.value })) }}
             />
           </Field>
-          <Field label={t('audit.accessLogs.query.pathContains')} htmlFor="access-log-path-contains">
-            <Input
-              id="access-log-path-contains"
-              value={draft.pathContains}
-              onChange={(event) => { setDraft((current) => ({ ...current, pathContains: event.target.value })) }}
-            />
-          </Field>
-          <div className="flex gap-2 xl:justify-end">
-            <Button size="sm" variant="ghost" onClick={clearAll}>{t('audit.accessLogs.query.clearAll')}</Button>
-            <Button size="sm" onClick={apply} disabled={!isValid}>{t('audit.accessLogs.query.apply')}</Button>
-          </div>
-        </div>
-      ) : null}
-    </div>
+        </>
+      )}
+    />
   )
 }

@@ -27,6 +27,7 @@ interface DataTableToolbarProps {
   onApplyFilters?: () => void
   onClearFilters?: () => void
   filterControlsDisabled?: boolean
+  applyDisabled?: boolean
   onFilterOpen?: () => void
   filterButtonLabel?: string
   cancelLabel?: string
@@ -34,6 +35,9 @@ interface DataTableToolbarProps {
   applyLabel?: string
   density?: TableDensity
   onDensityChange?: (density: TableDensity) => void
+  densityAriaLabel?: string
+  comfortableLabel?: string
+  compactLabel?: string
 }
 
 export function DataTableToolbar({
@@ -51,6 +55,7 @@ export function DataTableToolbar({
   onApplyFilters,
   onClearFilters,
   filterControlsDisabled = false,
+  applyDisabled = false,
   onFilterOpen,
   filterButtonLabel = 'Filters',
   cancelLabel = 'Cancel',
@@ -58,6 +63,9 @@ export function DataTableToolbar({
   applyLabel = 'Apply',
   density,
   onDensityChange,
+  densityAriaLabel,
+  comfortableLabel,
+  compactLabel,
 }: DataTableToolbarProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -102,7 +110,13 @@ export function DataTableToolbar({
           ) : null}
 
           {density && onDensityChange ? (
-            <RowDensityToggle density={density} onDensityChange={onDensityChange} />
+            <RowDensityToggle
+              density={density}
+              onDensityChange={onDensityChange}
+              {...(densityAriaLabel ? { ariaLabel: densityAriaLabel } : {})}
+              {...(comfortableLabel ? { comfortableLabel } : {})}
+              {...(compactLabel ? { compactLabel } : {})}
+            />
           ) : null}
 
           {filterPanel ? (
@@ -121,7 +135,7 @@ export function DataTableToolbar({
           <>
             <Button size="sm" variant="ghost" onClick={() => { setIsModalOpen(false) }} className="flex-1">{cancelLabel}</Button>
             <Button size="sm" variant="ghost" onClick={() => { onClearFilters?.() }} disabled={filterControlsDisabled} className="flex-1">{clearLabel}</Button>
-            <Button size="sm" onClick={applyFilters} disabled={filterControlsDisabled} className="flex-1">{applyLabel}</Button>
+            <Button size="sm" onClick={applyFilters} disabled={filterControlsDisabled || applyDisabled} className="flex-1">{applyLabel}</Button>
           </>
         }
       >

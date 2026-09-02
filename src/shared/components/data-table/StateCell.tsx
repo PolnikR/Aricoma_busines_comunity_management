@@ -1,14 +1,16 @@
-export type StateTone = 'on' | 'warn' | 'off'
+export type StateTone = 'on' | 'warn' | 'error' | 'off'
 
 const dotColor: Record<StateTone, string> = {
   on: 'bg-success-600',
   warn: 'bg-warning-500',
+  error: 'bg-error-500',
   off: 'bg-text-subtle',
 }
 
 const textColor: Record<StateTone, string> = {
   on: 'text-success-700 dark:text-success-400',
   warn: 'text-warning-700 dark:text-warning-400',
+  error: 'text-error-700 dark:text-error-400',
   off: 'text-text-muted',
 }
 

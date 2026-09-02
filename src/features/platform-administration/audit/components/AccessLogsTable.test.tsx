@@ -108,6 +108,22 @@ describe('AccessLogsTable', () => {
     expect(screen.getByText('/api/jobs')).toBeInTheDocument()
   })
 
+  it('tones the status cell by response class', async () => {
+    fetchAccessLogsMock.mockResolvedValue([
+      { ...requestEntry, status: 200 },
+      { ...requestEntry, path: '/api/jobs/2', status: 304 },
+      { ...requestEntry, path: '/api/jobs/3', status: 404 },
+      { ...requestEntry, path: '/api/jobs/4', status: 500 },
+    ])
+
+    renderTable()
+
+    expect(await screen.findByTitle('200')).toHaveClass('text-success-700')
+    expect(screen.getByTitle('304')).toHaveClass('text-text-muted')
+    expect(screen.getByTitle('404')).toHaveClass('text-warning-700')
+    expect(screen.getByTitle('500')).toHaveClass('text-error-700')
+  })
+
   it('opens the selected request with localized JSON-body details after keyboard activation', async () => {
     const user = userEvent.setup()
     fetchAccessLogsMock.mockResolvedValue([requestEntry])
