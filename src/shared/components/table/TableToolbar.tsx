@@ -9,6 +9,8 @@ interface TableToolbarProps {
   isFetching?: boolean
   onRefresh?: () => void
   actions?: ReactNode
+  refreshLabel?: string
+  updatingLabel?: string
 }
 
 export function TableToolbar({
@@ -18,6 +20,8 @@ export function TableToolbar({
   isFetching = false,
   onRefresh,
   actions,
+  refreshLabel = 'Refresh',
+  updatingLabel = 'Updating',
 }: TableToolbarProps) {
   return (
     <PageHeader
@@ -29,13 +33,13 @@ export function TableToolbar({
           {isFetching ? (
             <span className="inline-flex items-center gap-2 text-xs text-text-muted">
               <span className="size-2 animate-pulse rounded-full bg-accent" />
-              Updating
+              {updatingLabel}
             </span>
           ) : null}
           {actions}
           {onRefresh ? (
             <Button size="sm" variant="outline" onClick={onRefresh}>
-              Refresh
+              {refreshLabel}
             </Button>
           ) : null}
         </div>

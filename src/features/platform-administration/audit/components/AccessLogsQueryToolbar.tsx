@@ -18,6 +18,7 @@ interface AccessLogsQueryToolbarProps {
   onFiltersChange: (filters: AccessLogFilters) => void
   density: TableDensity
   onDensityChange: (density: TableDensity) => void
+  onFiltersClear?: () => void
 }
 
 interface AccessLogFilterDraft {
@@ -46,6 +47,7 @@ export function AccessLogsQueryToolbar({
   onFiltersChange,
   density,
   onDensityChange,
+  onFiltersClear,
 }: AccessLogsQueryToolbarProps) {
   const { t } = useTranslation()
   const [isExpanded, setIsExpanded] = useState(false)
@@ -85,6 +87,7 @@ export function AccessLogsQueryToolbar({
   const clearAll = () => {
     const defaults = { lines: DEFAULT_ACCESS_LOG_LINES }
     onFiltersChange(defaults)
+    onFiltersClear?.()
     setDraft(createDraft(defaults))
   }
 
@@ -102,7 +105,13 @@ export function AccessLogsQueryToolbar({
         >
           {t('audit.accessLogs.query.configure')}
         </Button>
-        <RowDensityToggle density={density} onDensityChange={onDensityChange} />
+        <RowDensityToggle
+          density={density}
+          onDensityChange={onDensityChange}
+          ariaLabel={t('density.rowDensity')}
+          comfortableLabel={t('density.comfortable')}
+          compactLabel={t('density.compact')}
+        />
       </div>
 
       {isExpanded ? (

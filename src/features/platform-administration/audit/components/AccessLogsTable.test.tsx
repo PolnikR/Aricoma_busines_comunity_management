@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -91,6 +91,7 @@ describe('AccessLogsTable', () => {
     renderTable({ lines: 200 }, createQueryClient(), 'cs')
 
     expect(await screen.findByText('Nebyly nalezeny žádné přístupové logy.')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Řádků na stránku' })).toHaveValue('25')
   })
 
   it('keeps cached rows visible with a localized compact refresh error', async () => {
@@ -164,10 +165,28 @@ describe('AccessLogsTable', () => {
     expect(drawer).toHaveTextContent('malformed access log line')
   })
 
+  it('clears the selected snapshot row after a successful background refresh', async () => {
+    const user = userEvent.setup()
+    fetchAccessLogsMock
+      .mockResolvedValueOnce([requestEntry])
+      .mockResolvedValueOnce([{ ...requestEntry, method: 'GET', path: '/api/refreshed' }])
+    const { queryClient } = renderTable()
+
+    await user.click(await screen.findByRole('row', { name: 'POST /api/jobs' }))
+    expect(screen.getByRole('dialog', { name: 'Access log details' })).toBeInTheDocument()
+
+    await act(async () => {
+      await queryClient.refetchQueries({ queryKey: accessLogKeys.list({ lines: 200 }) })
+    })
+
+    expect(await screen.findByRole('row', { name: 'GET /api/refreshed' })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Access log details' })).not.toBeInTheDocument()
+  })
+
   it('keeps pagination local and resets its page and selection for a new applied query', async () => {
     const user = userEvent.setup()
-    const firstWindow = accessEntries(12)
-    const nextWindow = accessEntries(12).map((entry, index) => ({
+    const firstWindow = accessEntries(26)
+    const nextWindow = accessEntries(26).map((entry, index) => ({
       ...entry,
       method: 'DELETE',
       path: `/api/reloaded/${String(index + 1)}`,
@@ -180,14 +199,14 @@ describe('AccessLogsTable', () => {
 
     await screen.findByRole('row', { name: 'GET /api/entries/1' })
     await user.click(screen.getByRole('button', { name: 'Page 2' }))
-    expect(screen.getByRole('row', { name: 'GET /api/entries/11' })).toBeInTheDocument()
+    expect(screen.getByRole('row', { name: 'GET /api/entries/26' })).toBeInTheDocument()
     expect(fetchAccessLogsMock).toHaveBeenCalledOnce()
 
     await user.selectOptions(screen.getByRole('combobox', { name: 'Rows per page' }), '25')
-    expect(screen.getByRole('row', { name: 'GET /api/entries/12' })).toBeInTheDocument()
+    expect(screen.getByRole('row', { name: 'GET /api/entries/25' })).toBeInTheDocument()
     expect(fetchAccessLogsMock).toHaveBeenCalledOnce()
 
-    await user.click(screen.getByRole('row', { name: 'GET /api/entries/12' }))
+    await user.click(screen.getByRole('row', { name: 'GET /api/entries/25' }))
     expect(screen.getByRole('dialog', { name: 'Access log details' })).toBeInTheDocument()
 
     rerender(

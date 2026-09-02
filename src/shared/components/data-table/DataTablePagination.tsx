@@ -11,6 +11,11 @@ interface DataTablePaginationProps {
   disabled?: boolean
   isLoading?: boolean
   paginationAriaLabel?: string
+  rowsPerPageLabel?: string
+  previousPageLabel?: string
+  nextPageLabel?: string
+  pageOfLabel?: string
+  pageLabel?: string
   onPageChange: (page: number) => void
   onPageSizeChange: (pageSize: number) => void
 }
@@ -23,6 +28,11 @@ export function DataTablePagination({
   disabled = false,
   isLoading = false,
   paginationAriaLabel,
+  rowsPerPageLabel = 'Rows per page',
+  previousPageLabel,
+  nextPageLabel,
+  pageOfLabel,
+  pageLabel,
   onPageChange,
   onPageSizeChange,
 }: DataTablePaginationProps) {
@@ -54,7 +64,7 @@ export function DataTablePagination({
         {canChangePageSize ? (
           <label className="flex items-center gap-2">
             <span className="text-xs">{t('pagination.rows')}</span>
-            <Select aria-label="Rows per page" className="h-9 w-20" value={pageSize} onChange={handlePageSize} disabled={controlsDisabled}>
+            <Select aria-label={rowsPerPageLabel} className="h-9 w-20" value={pageSize} onChange={handlePageSize} disabled={controlsDisabled}>
               {pageSizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}
             </Select>
           </label>
@@ -66,6 +76,10 @@ export function DataTablePagination({
         disabled={controlsDisabled}
         isLoading={isLoading}
         {...(paginationAriaLabel ? { ariaLabel: paginationAriaLabel } : {})}
+        {...(previousPageLabel ? { previousPageLabel } : {})}
+        {...(nextPageLabel ? { nextPageLabel } : {})}
+        {...(pageOfLabel ? { pageOfLabel } : {})}
+        {...(pageLabel ? { pageLabel } : {})}
         onPageChange={onPageChange}
       />
     </div>

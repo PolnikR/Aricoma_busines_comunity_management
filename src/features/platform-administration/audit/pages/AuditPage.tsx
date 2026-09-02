@@ -13,6 +13,7 @@ export function AuditPage() {
   const { filters, setFilters } = useAuditSearchParams()
   const { isFetching, refetch } = useAccessLogs(filters)
   const [density, setDensity] = useState<TableDensity>('comfortable')
+  const [tableResetKey, setTableResetKey] = useState(0)
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
@@ -22,6 +23,8 @@ export function AuditPage() {
         description={t('audit.accessLogs.page.description')}
         isFetching={isFetching}
         onRefresh={() => { void refetch() }}
+        refreshLabel={t('common.refresh')}
+        updatingLabel={t('status.updating')}
       />
       <InventoryShell>
         <AccessLogsQueryToolbar
@@ -29,8 +32,9 @@ export function AuditPage() {
           onFiltersChange={setFilters}
           density={density}
           onDensityChange={setDensity}
+          onFiltersClear={() => { setTableResetKey((current) => current + 1) }}
         />
-        <AccessLogsTable filters={filters} density={density} />
+        <AccessLogsTable key={tableResetKey} filters={filters} density={density} />
       </InventoryShell>
     </div>
   )

@@ -12,7 +12,7 @@ import { useAccessLogs } from '../hooks/useAccessLogs'
 import type { AccessLogFilters, AccessLogRecord } from '../model/accessLogTypes'
 import { AccessLogDetailDrawer } from './AccessLogDetailDrawer'
 
-const INITIAL_PAGE_SIZE = 10
+const INITIAL_PAGE_SIZE = 25
 
 interface AccessLogTableRow {
   key: string
@@ -64,13 +64,14 @@ function createColumns(t: (key: string) => string): ColumnDef<AccessLogTableRow>
 }
 
 export function AccessLogsTable({ filters, density }: AccessLogsTableProps) {
-  const { data = [], error, isLoading, isFetching, refetch } = useAccessLogs(filters)
+  const { data = [], dataUpdatedAt, error, isLoading, isFetching, refetch } = useAccessLogs(filters)
   const appliedQueryKey = JSON.stringify(normalizeAccessLogFilters(filters))
 
   return (
     <AccessLogsTableView
       key={appliedQueryKey}
       data={data}
+      dataUpdatedAt={dataUpdatedAt}
       density={density}
       error={error}
       isFetching={isFetching}
@@ -82,6 +83,7 @@ export function AccessLogsTable({ filters, density }: AccessLogsTableProps) {
 
 interface AccessLogsTableViewProps {
   data: AccessLogRecord[]
+  dataUpdatedAt: number
   density: TableDensity
   error: Error | null
   isFetching: boolean
@@ -89,11 +91,12 @@ interface AccessLogsTableViewProps {
   refetch: () => Promise<unknown>
 }
 
-function AccessLogsTableView({ data, density, error, isFetching, isLoading, refetch }: AccessLogsTableViewProps) {
+function AccessLogsTableView({ data, dataUpdatedAt, density, error, isFetching, isLoading, refetch }: AccessLogsTableViewProps) {
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(INITIAL_PAGE_SIZE)
-  const [selectedRow, setSelectedRow] = useState<AccessLogTableRow | null>(null)
+  const [selection, setSelection] = useState<{ dataUpdatedAt: number, row: AccessLogTableRow } | null>(null)
+  const selectedRow = selection?.dataUpdatedAt === dataUpdatedAt ? selection.row : null
   const pageCount = Math.max(1, Math.ceil(data.length / pageSize))
   const currentPage = Math.min(page, pageCount)
   const startIndex = (currentPage - 1) * pageSize
@@ -125,7 +128,7 @@ function AccessLogsTableView({ data, density, error, isFetching, isLoading, refe
             density={density}
             isLoading={isLoading}
             ariaLabel={isLoading ? t('audit.accessLogs.table.loading') : t('audit.accessLogs.table.ariaLabel')}
-            onRowClick={setSelectedRow}
+            onRowClick={(row) => { setSelection({ dataUpdatedAt, row }) }}
             selectedRowKey={selectedRow?.key ?? null}
             emptyContent={t('audit.accessLogs.table.empty')}
           />
@@ -140,10 +143,16 @@ function AccessLogsTableView({ data, density, error, isFetching, isLoading, refe
           isLoading={isLoading}
           onPageChange={setPage}
           onPageSizeChange={(nextPageSize) => { setPageSize(nextPageSize); setPage(1) }}
+          paginationAriaLabel={t('audit.accessLogs.table.ariaLabel')}
+          rowsPerPageLabel={t('pagination.rowsPerPage')}
+          previousPageLabel={t('pagination.previousPage')}
+          nextPageLabel={t('pagination.nextPage')}
+          pageOfLabel={t('pagination.pageOf')}
+          pageLabel={t('pagination.page')}
         />
       ) : null}
 
-      <AccessLogDetailDrawer record={selectedRow?.record ?? null} onClose={() => { setSelectedRow(null) }} />
+      <AccessLogDetailDrawer record={selectedRow?.record ?? null} onClose={() => { setSelection(null) }} />
     </div>
   )
 }

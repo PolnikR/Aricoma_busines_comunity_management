@@ -45,6 +45,9 @@ describe('AccessLogsQueryToolbar', () => {
     expect(screen.getByLabelText('Cesta obsahuje')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Vymazat vše' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Použít' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Hustota řádků' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'pohodlný' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'kompaktní' })).toBeInTheDocument()
   })
 
   it('expands its inline query controls and collapses them as cancellation', async () => {
