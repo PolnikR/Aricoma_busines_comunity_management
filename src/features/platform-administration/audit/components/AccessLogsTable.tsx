@@ -126,7 +126,7 @@ function AccessLogsTableView({ data, density, error, isFetching, isLoading, refe
             isLoading={isLoading}
             ariaLabel={isLoading ? t('audit.accessLogs.table.loading') : t('audit.accessLogs.table.ariaLabel')}
             onRowClick={setSelectedRow}
-            selectedRowKey={selectedRow?.key}
+            selectedRowKey={selectedRow?.key ?? null}
             emptyContent={t('audit.accessLogs.table.empty')}
           />
         </DataTableRequestState>

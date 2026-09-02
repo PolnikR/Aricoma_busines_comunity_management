@@ -165,7 +165,7 @@ describe('useAccessLogs', () => {
     act(() => { refetchPromise = result.current.refetch() })
 
     await waitFor(() => { expect(result.current.isBackgroundFetching).toBe(true) })
-    expect(queryClient.getQueryCache().find({ queryKey: accessLogKeys.list() })?.options.refetchInterval).toBeUndefined()
+    expect(queryClient.getQueryCache().find({ queryKey: accessLogKeys.list() })?.options).not.toHaveProperty('refetchInterval')
 
     resolveRefresh?.([])
     await act(async () => { await refetchPromise })
@@ -175,11 +175,12 @@ describe('useAccessLogs', () => {
   it('does not request again while only draft filter state changes', async () => {
     fetchAccessLogsMock.mockResolvedValue([])
     const queryClient = createQueryClient()
+    const initialProps: { draft: AccessLogFilters } = { draft: { method: 'GET' } }
     const { result, rerender } = renderHook(
       ({ draft }: { draft: AccessLogFilters }) => useAppliedAccessLogs(draft),
       {
         wrapper: createAuditWrapper('/?lines=200', queryClient),
-        initialProps: { draft: { method: 'GET' } },
+        initialProps,
       },
     )
 

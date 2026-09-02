@@ -39,9 +39,9 @@ describe('AuditPage', () => {
     const user = userEvent.setup()
     fetchAccessLogsMock.mockImplementation((filters) => Promise.resolve([{
       kind: 'request' as const,
-      method: filters.method ?? 'GET',
+      method: filters?.method ?? 'GET',
       path: '/api/access-logs',
-      status: filters.status ?? 200,
+      status: filters?.status ?? 200,
       durationMs: 8,
       requestBody: null,
       responseBody: null,

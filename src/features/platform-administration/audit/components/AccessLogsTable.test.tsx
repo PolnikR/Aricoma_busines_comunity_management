@@ -174,7 +174,7 @@ describe('AccessLogsTable', () => {
       status: 204,
     }))
     fetchAccessLogsMock.mockImplementation((filters) => Promise.resolve(
-      filters.status === 204 ? nextWindow : firstWindow,
+      filters?.status === 204 ? nextWindow : firstWindow,
     ))
     const { rerender, queryClient } = renderTable()
 
