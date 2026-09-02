@@ -61,4 +61,21 @@ describe('TableToolbar', () => {
 
     expect(screen.getByRole('button', { name: /custom action/i })).toBeInTheDocument()
   })
+
+  it('keeps page-header content and actions in the top-level toolbar slot', () => {
+    render(
+      <TableToolbar
+        eyebrow="Resources"
+        title="Resource inventory"
+        description="Manage discovered resources"
+        actions={<button type="button">Add resource</button>}
+      />,
+    )
+
+    const heading = screen.getByRole('heading', { name: 'Resource inventory', level: 1 })
+    const header = heading.parentElement?.parentElement
+    expect(header).toContainElement(screen.getByText('Manage discovered resources'))
+    expect(header).toContainElement(screen.getByRole('button', { name: 'Add resource' }))
+    expect(header).toHaveClass('shrink-0')
+  })
 })

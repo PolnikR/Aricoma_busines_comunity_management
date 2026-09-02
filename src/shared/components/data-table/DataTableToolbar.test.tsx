@@ -28,6 +28,29 @@ describe('DataTableToolbar', () => {
     expect(screen.queryByText('Filter content')).not.toBeInTheDocument()
   })
 
+  it('keeps the filter trigger in the toolbar and modal actions in its footer', () => {
+    render(
+      <DataTableToolbar
+        searchValue=""
+        onSearchChange={vi.fn()}
+        filterPanel={<div>Filter fields</div>}
+      />,
+    )
+
+    const trigger = screen.getByRole('button', { name: 'Filters' })
+    expect(trigger).toHaveAttribute('aria-haspopup', 'dialog')
+    fireEvent.click(trigger)
+
+    const dialog = screen.getByRole('dialog', { name: 'Filters' })
+    const filterFields = screen.getByText('Filter fields')
+    const applyButton = screen.getByRole('button', { name: 'Apply' })
+    const footer = applyButton.parentElement
+    expect(dialog).toContainElement(filterFields)
+    expect(footer).toContainElement(screen.getByRole('button', { name: 'Cancel' }))
+    expect(footer).toContainElement(screen.getByRole('button', { name: 'Clear all' }))
+    expect(filterFields.parentElement).not.toContainElement(applyButton)
+  })
+
   it('keeps the filter dialog launchable while disabling mutable controls', () => {
     render(
       <DataTableToolbar

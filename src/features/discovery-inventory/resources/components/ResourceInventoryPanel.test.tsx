@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
 import { ResourceInventoryPanel } from './ResourceInventoryPanel'
 
 describe('ResourceInventoryPanel', () => {
@@ -65,5 +66,27 @@ describe('ResourceInventoryPanel', () => {
     expect(dataRegion).toContainElement(screen.getByText('Inventory rows'))
     expect(dataRegion).not.toContainElement(screen.getByRole('button', { name: 'Filters' }))
     expect(dataRegion).not.toContainElement(screen.getByText('Pagination'))
+  })
+
+  it('keeps metrics and notices outside the primary inventory surface', () => {
+    render(
+      <InventoryShell
+        metrics={<div>Resource metrics</div>}
+        notice={<div>Resource notice</div>}
+        inventoryTitle="Resource inventory"
+      >
+        <ResourceInventoryPanel
+          ariaLabel="Resource inventory table"
+          toolbar={<div>Table toolbar</div>}
+        >
+          <div>Inventory rows</div>
+        </ResourceInventoryPanel>
+      </InventoryShell>,
+    )
+
+    const surface = screen.getByRole('region', { name: 'Resource inventory' })
+    expect(surface).toContainElement(screen.getByRole('region', { name: 'Resource inventory table' }))
+    expect(surface).not.toContainElement(screen.getByText('Resource metrics'))
+    expect(surface).not.toContainElement(screen.getByText('Resource notice'))
   })
 })
