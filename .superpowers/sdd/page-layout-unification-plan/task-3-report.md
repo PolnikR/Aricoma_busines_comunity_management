@@ -28,3 +28,12 @@
 ## Commit
 
 - `fix: normalize Resources surface state geometry` (this report is included in that atomic task commit).
+
+## Review round 1/5 follow-up
+
+- Added `min-w-0` to `ResourceInventoryState` so unbreakable empty or fatal-state content cannot widen the canonical primary surface.
+- Added the matching state-surface contract assertion in `ResourceInventoryStates.test.tsx`.
+- `C:\\Users\\polnikr\\AppData\\Roaming\\nvm\\v22.23.1\\npm.cmd exec vitest run src/features/discovery-inventory/resources/components/ResourceInventoryStates.test.tsx` — 1 file, 2 tests passed.
+- `C:\\Users\\polnikr\\AppData\\Roaming\\nvm\\v22.23.1\\npm.cmd exec eslint src/features/discovery-inventory/resources/components/ResourceInventoryStates.tsx src/features/discovery-inventory/resources/components/ResourceInventoryStates.test.tsx` — passed.
+- `git diff --check` — passed.
+- Correction commit: `3e3e993d534ab248703c64bfeea9f13fab2b3976` (`fix: constrain Resources state surface width`).
