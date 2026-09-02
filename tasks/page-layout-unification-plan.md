@@ -1,1251 +1,1033 @@
-# Implementačný plán: Zjednotenie page layoutov a geometry contractu
+# Implementačný plán: Zjednotenie page layoutov podľa Resources reference
+
+**Revízia:** 2026-09-02 — Resources/Resources ISE sú canonical visual/layout reference.
 
 ## Prehľad
 
-Cieľom je systematicky zjednotiť geometriu všetkých frontend pages bez zmeny ich business logiky, API kontraktov, filtrov, query lifecycle, typografie, farebnosti alebo feature-specific správania. Audit potvrdil, že problém nie je lokálna odchýlka jednej tabuľky, ale kombinácia viacerých layout kontraktov: rozdielny page/body inset, nested `InventoryShell`, odlišný table-height contract, rôzny scroll owner, stavovo závislá geometria a odlišné loading fallbacks.
+Cieľom je zjednotiť vizuálnu geometriu frontend pages bez zmeny business logiky, API kontraktov, query lifecycle, filtrov, dátových stĺpcov alebo feature-specific správania.
 
-Zmena je zámerne rozdelená na malé S/M tasky. Žiadny implementačný task nemá byť XL. Po každej 2–4 taskovej skupine nasleduje checkpoint a browser overenie. Implementácia sa nesmie robiť ako jeden veľký refactor commit.
+Nový smer je zámerne **reference-driven**: nebudeme najprv navrhovať nový abstraktný layout systém a až potom doň prerábať existujúce pages. Aktuálne `Resources` má najzrelší kombinovaný pattern pre full-height containment, header/actions, tabs, filter modal, stabilný table viewport a pagination. Preto sa najprv `Resources` + `Resources ISE` stabilizujú a browserovo schvália ako **canonical visual/layout reference**. Až potom sa ich overený geometry contract extrahuje do minimálnych shared primitives a aplikuje na ostatné pages.
 
-Tento dokument je plán. Pri jeho vytvorení sa produkčný source kód nemení.
+Resources sa nesmie kopírovať slepo. Pred vyhlásením za canonical reference sa musia odstrániť dve dnes známe nekonzistencie:
 
-## Východiskový stav potvrdený auditom
+1. `no-provider` vetva nesmie obchádzať `InventoryShell`/primary surface boundary,
+2. `ResourceInventoryPanel` nesmie používať odlišný primary/table surface radius (`rounded-2xl`) oproti canonical `Card` radiusu (`rounded-[20px]`).
 
-### Route-level scope
+Implementácia je rozdelená na malé S/M tasky s explicitným browser checkpointom každé 2–3 implementačné tasky. Žiadny task nemá byť XL a žiadny shared abstraction sa nevytvorí skôr, než je pattern dokázaný na Resources reference.
 
-Audit pokrýva 26 route-level feature pages:
+Tento dokument je plán. Pri jeho úprave sa produkčný source kód nemení.
 
-1. `InfrastructurePage`
-2. `ResourcesPage`
-3. `ResourcesIsePage`
-4. `ModuleWorkQueuePage`
-5. `ConfigurationPage`
-6. `IdentityAccessPage`
-7. `PlatformProvidersPage`
-8. `CredentialsPage`
-9. `DiscoverySettingsPage`
-10. `ProviderDetailPage`
-11. `ProvidersPage`
-12. `RecoveryActionsExecutePage`
-13. `RecoveryActionsHistoryPage`
-14. `RecoveryActionsSchedulePage`
-15. `RecoveryActionsValidatePage`
-16. `PolicySetsPage`
-17. `RecoveryApplicationBuilderPage`
-18. `RecoveryApplicationEditorPage`
-19. `RecoveryApplicationsListPage`
-20. `RecoveryGroupBuilderPage`
-21. `RecoveryGroupEditorPage`
-22. `RecoveryGroupsListPage`
-23. `RecoveryAppPoliciesPage`
-24. `CleanRoomPoliciesPage`
-25. `SnapshotPoliciesPage`
-26. `RecoveryRunsPage`
+---
 
-Audit navyše zahŕňa nested Resources provider views a Identity Access sections.
+# 1. Canonical Resources reference
 
-### Hlavné potvrdené nekonzistencie
+## 1.1 Existujúce komponenty, ktoré tvoria baseline
 
-- `AppShell` má route-dependent `contentScroll: 'contained'`, ale contained režim používa iba časť pages, hoci mnoho ďalších pages už interne používa `h-full`, `min-h-0` a `overflow-hidden`.
-- Page body používa viac hierarchií: priamy `p-3 -> table`, `p-3 -> InventoryShell -> p-3 -> table`, alebo `InventoryShell` bez outer `p-3`.
-- Hlavné surfaces používajú `rounded-lg`, `rounded-xl`, `rounded-2xl` aj `rounded-[20px]`.
-- Table roots majú tri rozdielne height contracty:
-  - content-driven `flex flex-col`,
-  - čiastočný `flex-1`,
-  - stabilný `toolbar -> minmax(0,1fr) viewport -> pagination`.
-- `RecoveryGroupsListPage` a `RecoveryApplicationsListPage` pri empty stave odstránia celý table surface a nahradia ho samostatným `EmptyState`.
-- `ProviderDetailPage`, builder edit pages a ďalšie routes majú error/not-found wrappery s iným paddingom alebo bez normálneho page frame.
-- `RouteLoadingSkeleton` predstiera table page aj pre builder/workspace/settings routes.
-- `Identity Access` má ďalšiu vnútornú vrstvu nekonzistencie medzi jednotlivými sections.
-- `RecoveryGroupBuilder` používa `240px` wizard sidebar, `RecoveryAppBuilder` `280px`.
+Canonical contract je odvodený z existujúcich komponentov, nie z nového dizajnu:
 
-### Existujúce dobré patterns, ktoré sa majú zachovať
+- `AppShell` — outer content X/Y a route-level contained/default scroll,
+- `ResourceViewportFrame` — full-height contained chain pre Resources,
+- `TableToolbar` + `PageHeader` — page title/description/actions/refresh,
+- `InventoryShell` + `Card` — primary surface, optional metrics/notice, title/description/tabs,
+- `Tabs` — surface tabs,
+- `DataTableToolbar` — search, density, filter button a filter modal,
+- `ResourceInventoryPanel` — `toolbar / minmax(0,1fr) data viewport / pagination`,
+- `DataTablePagination` — fixed footer,
+- `DataTable` — horizontal table scroll.
 
-- `ResourceInventoryPanel` a `DiscoveryHistoryCard` už používajú stabilný `auto / minmax(0,1fr) / auto` layout.
-- `PolicySetsTable` a `RecoveryRunsTable` už majú samostatný flex-fill scrollable data region.
-- `RecoveryActionsPageShell` už správne centralizuje outer workspace geometry pre štyri routes.
-- `ResourceViewportFrame` a existujúci route-level contained režim už dokazujú, že desktop containment je možné zaviesť bez globálneho prepnutia všetkých routes.
-- `DataTable` má zostať vlastníkom horizontálneho scrollu; vertikálny scroll má patriť nadriadenému content viewportu.
+## 1.2 Canonical geometry contract
 
-## Scope
-
-### V rozsahu
-
-- spoločný route/page geometry contract,
-- primary page surface contract,
-- table height/scroll/pagination contract,
-- jednotné desktopové contained správanie pre pages, ktoré majú fixný workspace/table surface,
-- stabilné loading/error/empty state boundaries,
-- zjednotenie table/list pages,
-- zjednotenie Resources shellu bez straty metrics/tabs/filter summary/filtering/drawer functionality,
-- zjednotenie Workspace/Settings pages,
-- zjednotenie Identity Access outer frame a table-like sections,
-- zjednotenie builder outer geometry a state boundaries,
-- route-loading skeletony podľa archetypu,
-- focused tests, typecheck/lint/diff checks a povinná browser verifikácia.
-
-### Mimo rozsahu
-
-- API, OpenAPI alebo generated-client zmeny,
-- zmena business logiky, query keys, cache policy alebo polling,
-- zmena tabuliek z pohľadu stĺpcov, dát alebo row density defaults,
-- redizajn typografie, farieb, buttonov, badges alebo formulárov,
-- zmena filters/search semantics,
-- zmena Resources provider selection alebo VM provider-filter semantics,
-- zmena Recovery builder DnD/business flow,
-- server-side pagination redesign,
-- zavedenie nového visual-regression frameworku,
-- pevné `calc(100vh - ...)`, JS viewport matematika, CSS zoom alebo fixné `max-height` hacky.
-
-## Architektonické rozhodnutia
-
-### A1. Page archetypes
-
-Použiť malé množstvo explicitných archetypov, nie jeden gigantický univerzálny komponent:
+Po stabilizácii Resources musí reference vyzerať logicky takto:
 
 ```text
-Contained Table Page
-Contained Inventory Page
-Contained Workspace/Settings Page
-Contained Builder Page
-Document/Detail Page
+AppShell main content
+│
+├─ TableToolbar / PageHeader
+│  ├─ eyebrow + title + description
+│  └─ right actions
+│     ├─ updating indicator (iba pri fetchi)
+│     ├─ feature action: Add / Create / Back / iná akcia
+│     └─ Refresh
+│
+└─ InventoryShell
+   ├─ optional metrics
+   ├─ optional notice
+   └─ canonical primary Card
+      ├─ optional surface header
+      │  ├─ title + description
+      │  └─ tabs
+      └─ content inset
+         └─ DataTableSurface (extracted from ResourceInventoryPanel)
+            ├─ DataTableToolbar
+            │  ├─ Search
+            │  ├─ optional quick segments
+            │  ├─ optional density
+            │  └─ Filters -> shared Modal
+            ├─ scrollable data viewport
+            └─ fixed pagination/footer
 ```
 
-Rovnaký archetyp musí používať rovnaké outer geometry pravidlá. Feature-specific slots môžu byť voliteľné; prázdne miesto sa nebude umelo rezervovať len preto, aby page s metrics mala rovnaký Y ako page bez metrics.
+### Outer X/Y
 
-### A2. `PageFrame`
+- `AppShell` ostáva vlastníkom outer main paddingu; feature pages nesmú pridávať druhý náhodný outer inset.
+- `PageHeader`/`TableToolbar` ostáva na rovnakom left/right content boundary.
+- Primary surface používa rovnaký left/right boundary ako Resources.
+- Medzi `PageHeader` a ďalším funkčným slotom zostáva existujúci `PageHeader` spacing (`mb-5`).
+- Page nesmie vytvoriť accidental hierarchy typu `outer p-3 -> InventoryShell -> inner p-3`, ak Resources reference používa iba inner content inset.
 
-Nový shared primitive bude vlastniť route-level flex chain, nie feature obsah:
+### Header actions
+
+- Page-level actions sú v pravom `TableToolbar/PageHeader` action slote.
+- Feature action (`Add`, `Create`, `Back`, ...) je pred `Refresh`.
+- `Refresh` používa spoločný `TableToolbar` placement a loading/update indikáciu.
+- Default pre bežné Add/Create/Refresh controls je existujúci small button pattern; feature-specific destructive/primary semantics sa nesmú prepisovať iba kvôli unifikácii.
+- Žiadne duplicity refresh/add tlačidiel vo vnútri primary surface, ak ide o page-level action.
+
+### Tabs
+
+- Table/inventory tabs patria do primary surface headeru, nie do náhodného wrappera nad surface.
+- Reference štýl je Resources pattern: compact tabs, inset selected indicator a horizontal overflow/scroll controls, keď je to potrebné.
+- Tabs sa pridávajú iba pages, ktoré ich významovo majú; nevytvára sa prázdny tab slot.
+
+### Filter modal
+
+- Table filtre používajú `DataTableToolbar` filter trigger a shared `Modal` pattern, ak ich semantics zodpovedajú table filtrom.
+- Search ostáva vľavo, density/filter controls vpravo.
+- Modal footer používa existujúci `Cancel / Clear all / Apply` contract.
+- Každá feature dodáva iba svoje filter fields a existujúcu filter logiku; filter semantics sa nemenia.
+- Workspace/configuration forms sa nesmú nasilu meniť na table filter modal.
+
+### Table viewport a pagination
+
+Canonical table panel používa:
 
 ```text
-flex min-h-full min-w-0 flex-col
-lg:h-full lg:min-h-0
+grid-rows-[auto_minmax(0,1fr)_auto]
 ```
 
-`PageHeader` zostáva existujúci komponent a jeho `mb-5` sa nemení.
+- toolbar je `shrink-0`/fixed top slot,
+- iba data region je vertical scroll owner,
+- pagination/footer je fixed bottom slot,
+- `DataTable` si ponechá horizontal scroll,
+- 0/1/5/10/25/many rows nesmú meniť outer surface height ani pagination Y,
+- rows sa nestretchujú do blank space.
 
-### A3. `PageBody`
+### Request states
 
-Contained pages budú používať jednotný body boundary:
+`loading`, `fatal error`, `empty`, cached-data refresh error a mutation alert nesmú nahradiť outer page/surface contract.
+
+Canonical pravidlo:
 
 ```text
-flex min-w-0 flex-1 flex-col p-3
-lg:min-h-0 lg:overflow-hidden
+same page header
+same primary surface boundary
+same toolbar/header slots, ak sú funkčne dostupné
+state sa mení vo vnútri content boundary
 ```
 
-Mobil ostáva prirodzene scrollovateľný; desktop containment sa opiera o existujúci route handle `contentScroll: 'contained'`.
+`no-provider` je explicitne súčasť tohto pravidla. Resources/Resources ISE nesmú mať early-return layout, ktorý vynechá canonical primary surface.
 
-### A4. `PageSurface`
+### Radius
 
-Primary page surface bude mať jeden visual contract odvodený z existujúceho shared `Card`:
+Canonical bordered surface radius pre page/table visual contract je odvodený z shared `Card`:
 
 ```text
-flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden
-rounded-[20px] border border-border bg-surface
-shared Card shadow
+rounded-[20px]
 ```
 
-Primary surface nesmie byť v rovnakom archetype raz `rounded-lg`, inokedy `rounded-2xl`.
+Po stabilizácii baseline nesmie `ResourceInventoryPanel`/extracted `DataTableSurface` ponechať `rounded-2xl`, ak predstavuje rovnaký bordered table surface contract. Nested semantic cards mimo primary/table layout contractu môžu mať vlastný radius.
 
-Nested semantic cards vnútri settings/forms/previews zostávajú feature-specific a nemusia používať rovnaký radius ako primary surface.
+### Scroll ownership
 
-### A5. `TableSurface`
+Na desktop contained route je jeden hlavný vertical scroll owner pre danú obsahovú vetvu:
 
-`TableSurface` bude layout primitive, nie data abstraction. Nebude obsahovať fetchovanie, filtering, pagination state ani columns.
-
-Contract:
-
-```text
-PageSurface
-├ optional surface header/tabs/context
-└ TableSurface
-   ├ top slot: toolbar + optional notice
-   ├ content viewport: minmax(0,1fr), vertical scroll owner
-   └ pagination/footer
-```
-
-Stredný viewport:
-
-```text
-custom-scrollbar min-h-0 overflow-y-auto
-[scrollbar-gutter:stable]
-```
-
-`DataTable` si ponechá existujúci horizontálny `overflow-x-auto`.
-
-### A6. Number-of-rows invariant
-
-Pri `0`, `1`, `5`, `10`, `25` alebo veľkom počte riadkov sa primary surface nesmie meniť podľa výšky dát.
-
-- rows zostávajú prirodzene vysoké podľa density,
-- pri krátkom zozname ostáva blank space v content viewporte,
-- pagination zostáva na rovnakom spodnom Y,
-- pri dlhom zozname scrolluje iba content viewport.
-
-### A7. Request-state invariant
-
-Loading/error/empty nesmú nahrádzať outer page frame alebo primary surface.
-
-Správne:
-
-```text
-PageHeader
-PageBody
-PageSurface
-  TableSurface / Workspace body
-    loading | error | empty | data
-```
-
-Nesprávne:
-
-```text
-if error -> return <div className="p-6">...</div>
-```
-
-Mutation alerts sa majú renderovať vo vnútri fixnej surface/top oblasti, aby nemenili outer X/Y/W/H.
-
-### A8. Scroll ownership
-
-Na desktop contained page musí byť presne jeden hlavný vertical scroll owner v každej obsahovej vetve:
-
-- table page: table content viewport,
-- workspace/settings: workspace body,
+- inventory/table: data viewport,
+- workspace/settings: workspace content body,
 - builder: step-specific inner panel,
-- Resources: resource table viewport,
-- document/detail: default AppShell/page scroll môže zostať.
+- topology: canvas/panel podľa feature,
+- detail/document: AppShell/main natural scroll môže zostať.
 
-Nesmie vzniknúť kombinácia page scroll + table scroll pre ten istý obsah.
+Nesmie existovať page scroll + table scroll pre ten istý obsah.
 
-### A9. Route containment
+### Optional slots
 
-Existujúci `contentScroll: 'contained'` mechanizmus v `AppShell` sa zachová. Nebude sa nahrádzať URL matchingom ani globálnym `overflow-hidden` pre všetky routes.
+Metrics/notice/tabs sú funkčné optional slots. Ak semanticky neexistujú, nevytvára sa neviditeľný spacer iba kvôli identickému absolútnemu Y medzi odlišnými slot topológiami. Pri rovnakej slot topológii však loading/error/empty/data musia zachovať rovnakú geometriu.
 
-Routes sa budú prepínať na contained režim po migračných dávkach, nie všetky naraz predtým, než ich vnútorný flex chain bude pripravený.
+---
 
-### A10. Compatibility wrappers
+# 2. Scope a route traceability
 
-Existujúce `InventoryShell`, `ResourceViewportFrame` a `ResourceInventoryPanel` sa nebudú odstraňovať na začiatku.
+## 2.1 V rozsahu
 
-- nový contract sa najprv dokáže na pilotoch,
-- compatibility wrappers sa migrujú alebo odstránia až keď ich referencie klesnú na nulu,
-- žiadny shared wrapper sa nesmie globálne zmeniť tak, že neprejdené pages dostanú nový layout pred svojím migračným taskom.
+- stabilizácia Resources/Resources ISE ako canonical reference,
+- page header X/Y a actions placement,
+- primary surface X/Y/W/H a radius contract,
+- tabs placement/style pre table/inventory pages,
+- table search/density/filter modal pattern,
+- table height/scroll/pagination contract,
+- loading/error/empty/no-provider state containment,
+- contained route ownership,
+- table/list pages,
+- workspace/settings pages,
+- Identity Access outer layout + table-like sections,
+- builders/detail/topology outer geometry,
+- `ModuleWorkQueuePage`, ktorá v pôvodnom pláne nemala vlastný migračný task,
+- archetype-aware route loading fallback,
+- browser geometry measurements a final 26-route signoff.
 
-## Dependency graph
+## 2.2 Mimo rozsahu
+
+- API/OpenAPI/generated-client zmeny,
+- backend zmeny,
+- query keys, cache policy, polling alebo request semantics,
+- table columns/data semantics/server pagination redesign,
+- filter/search semantics,
+- provider selection a Resources provider-filter semantics,
+- Recovery builder DnD/business flow,
+- redizajn typografie/farieb/badges/form controls,
+- zavedenie nového visual-regression frameworku,
+- `calc(100vh - ...)`, JS viewport matematika, CSS zoom alebo page-specific max-height hacky.
+
+## 2.3 Route -> archetype -> task matrix
+
+Táto tabuľka je autoritatívna traceability mapa. Final DoD sa nesmie označiť za hotové, kým každá z 26 routes nemá dokončený svoj task + final browser signoff.
+
+| # | Route-level page | Archetype | Target scroll owner | Route mode | Primary task |
+|---|---|---|---|---|---|
+| 1 | `InfrastructurePage` | Topology workspace | topology/canvas panel | contained | 37–38 |
+| 2 | `ResourcesPage` | Canonical inventory | resource data viewport | contained | 1–7 |
+| 3 | `ResourcesIsePage` | Canonical inventory | resource data viewport | contained | 1–7 |
+| 4 | `ModuleWorkQueuePage` | Document/workspace | AppShell natural scroll | default | 35 |
+| 5 | `ConfigurationPage` | Workspace/settings | configuration body | contained | 19 |
+| 6 | `IdentityAccessPage` | Workspace | identity content panel | contained | 24–30 |
+| 7 | `PlatformProvidersPage` | Table/list | table data viewport | contained | 9 |
+| 8 | `CredentialsPage` | Table/list | table data viewport | contained | 10 |
+| 9 | `DiscoverySettingsPage` | Workspace/settings | active tab body | contained | 20–21 |
+| 10 | `ProviderDetailPage` | Detail/document | AppShell natural scroll | default | 36 |
+| 11 | `ProvidersPage` | Table/list | table data viewport | contained | 8 |
+| 12 | `RecoveryActionsExecutePage` | Workspace | action panel | contained | 22 |
+| 13 | `RecoveryActionsHistoryPage` | Workspace + table | history data viewport | contained | 22–23 |
+| 14 | `RecoveryActionsSchedulePage` | Workspace | action panel | contained | 22 |
+| 15 | `RecoveryActionsValidatePage` | Workspace | action panel | contained | 22 |
+| 16 | `PolicySetsPage` | Table/list | table data viewport | contained | 12 |
+| 17 | `RecoveryApplicationBuilderPage` | Builder | step-specific panel | contained | 32–34 |
+| 18 | `RecoveryApplicationEditorPage` | Builder | step-specific panel | contained | 32–34 |
+| 19 | `RecoveryApplicationsListPage` | Table/list | table data viewport | contained | 11 |
+| 20 | `RecoveryGroupBuilderPage` | Builder | step-specific panel | contained | 32–34 |
+| 21 | `RecoveryGroupEditorPage` | Builder | step-specific panel | contained | 32–34 |
+| 22 | `RecoveryGroupsListPage` | Table/list | table data viewport | contained | 13 |
+| 23 | `RecoveryAppPoliciesPage` | Table + surface tabs | table data viewport | contained | 14–15 |
+| 24 | `CleanRoomPoliciesPage` | Table + surface tabs | table data viewport | contained | 14–15 |
+| 25 | `SnapshotPoliciesPage` | Table + surface tabs | table data viewport | contained | 14 |
+| 26 | `RecoveryRunsPage` | Table + tabs/context | table data viewport | contained | 16 |
+
+---
+
+# 3. Architektonické rozhodnutia
+
+## A1. Resources je reference, nie exception
+
+Resources sa najprv opraví a browserovo schváli. Až po Checkpoint A sa jeho geometry contract môže použiť ako baseline pre ostatné pages.
+
+## A2. Existing shared components first
+
+Pred vytvorením nového komponentu sa musí preveriť, či požadovaný contract už poskytuje `TableToolbar`, `InventoryShell`, `Card`, `Tabs`, `DataTableToolbar`, `DataTablePagination` alebo `AppShell`.
+
+## A3. Shared extraction iba z proven Resources patternu
+
+Povolené nové primitives sú len extrakcie existujúceho Resources správania:
+
+- generic contained frame z `ResourceViewportFrame`, ak ho potrebuje druhá feature,
+- generic table surface z `ResourceInventoryPanel`, po canonical approval.
+
+Nesmie sa vytvoriť nový všeobecný `PageFrame/PageSurface/TableSurface` API len podľa teoretického návrhu.
+
+## A4. No outer double inset
+
+Resources reference rozhoduje, kde je outer page inset a kde inner surface/table inset. Migrácia nesmie kopírovať `p-3` vrstvy mechanicky.
+
+## A5. Same archetype, same visual placement
+
+Pri rovnakom viewporte a rovnakej slot topológii sa porovnáva s Resources reference:
+
+- header left/right,
+- actions right edge,
+- primary surface left/right,
+- primary surface top pri rovnakej slot topológii,
+- table toolbar top,
+- pagination top/bottom anchor.
+
+## A6. Feature semantics zostávajú feature-specific
+
+Resources metrics, provider tabs, VM filters, provider summary a detail drawer sa nekopírujú na pages, ktoré ich nemajú. Kopíruje sa ich **layout slot contract**, nie business obsah.
+
+## A7. Contained mode až po pripravenom inner chain
+
+`contentScroll: 'contained'` sa pridá až keď page vlastní svoj vnútorný scroll. Žiadny global `overflow-hidden` switch.
+
+## A8. Mobile natural scroll
+
+Desktop môže byť contained; mobilný layout musí zostať prirodzene scrollovateľný a ovládateľný.
+
+---
+
+# 4. Dependency graph
 
 ```text
-Phase 1: shared geometry primitives
+Phase 0: Stabilize Resources + Resources ISE
         |
         v
-Phase 2: pilot (Groups + Policies + Resources)
+Canonical Resources browser approval
         |
         v
-Pilot browser approval
+Extract only proven shared geometry
         |
-        +---------------------------+
-        |                           |
-        v                           v
-Phase 3: remaining table pages   Phase 4: workspaces/settings
-        |                           |
-        +-------------+-------------+
+        +----------------------------+
+        |                            |
+        v                            v
+Phase 1: table/list pages       Phase 2: workspaces/settings
+        |                            |
+        +-------------+--------------+
                       v
-              Phase 5: builders/details/topology
+          Phase 3: builders/detail/topology/document
                       |
                       v
-              Phase 6: loading fallbacks + cleanup
-                      |
-                      v
-              Final cross-cutting verification
+          Phase 4: fallbacks/cleanup/final matrix
 ```
 
 ---
 
-# Phase 1 — Shared geometry foundation
+# Phase 0 — Stabilize and lock Resources reference
 
-## Task 1: Add RED contract tests for shared layout primitives
+## Task 1: Add Resources reference contract tests and measurement targets
 
-**Description:** Vytvoriť focused tests, ktoré definujú očakávaný class/DOM contract pre `PageFrame`, `PageSurface` a `TableSurface`. Testy nemajú predstierať reálne pixelové layout meranie v JSDOM; majú chrániť ownership, flex/grid chain a scroll boundary.
+**Description:** Zachytiť aktuálny intended Resources contract bez pixelových tvrdení v JSDOM. Testy majú chrániť DOM ownership a sloty, browser measurement protocol bude merať reálne X/Y/W/H.
 
 **Acceptance criteria:**
-- [ ] `PageFrame` test vyžaduje full-height desktop flex contract a `min-w-0`.
-- [ ] `PageSurface` test vyžaduje `flex-1`, `min-h-0`, `overflow-hidden` a primary radius `rounded-[20px]`.
-- [ ] `TableSurface` test vyžaduje oddelený top/content/footer contract a vertical scroll iba na content viewporte.
+- [ ] Tests pokrývajú `ResourceViewportFrame`, `TableToolbar`, `InventoryShell`, `ResourceInventoryPanel` a `DataTableToolbar` ownership.
+- [ ] Explicitne sa testuje top/data/footer separation a filter modal trigger/footer.
+- [ ] Measurement checklist definuje header, primary surface, table viewport a pagination boundaries.
 
-**Verification:**
-- [ ] RED failure je iba z neexistujúceho/nezavedeného contractu, nie zo setup chyby.
-- [ ] Žiadny existujúci source component sa v tomto taske nemení.
+**Verification:** focused Resources component tests + `git diff --check`.
 
 **Dependencies:** None.
 
-**Files likely touched:**
-- `src/shared/components/page/PageFrame.test.tsx`
-- `src/shared/components/page/PageSurface.test.tsx`
-- `src/shared/components/data-table/TableSurface.test.tsx`
+**Files likely touched:** existing Resources/shared test files only, max 5.
 
-**Estimated scope:** M — 3 files.
+**Estimated scope:** M.
 
-## Task 2: Implement `PageFrame` and `PageBody`
+## Task 2: Normalize no-provider state in Resources and Resources ISE
 
-**Description:** Zaviesť minimálny shared route/page primitive. Bez title/actions API; `PageHeader` sa compose-uje zvonka.
+**Description:** Odstrániť early-return geometry, ktorá pri žiadnom providerovi obchádza canonical `InventoryShell`/primary surface.
 
 **Acceptance criteria:**
-- [ ] `PageFrame` nevlastní feature props ani route navigation.
-- [ ] `PageBody` implementuje jednotný `p-3` contained body contract.
-- [ ] Mobilný layout nemá nútený fixed-height scroll.
+- [ ] `ResourcesPage` no-provider state ostáva v rovnakom primary surface boundary ako loaded route.
+- [ ] `ResourcesIsePage` používa rovnaký state boundary.
+- [ ] `TableToolbar` ostáva dostupný; provider/query semantics sa nemenia.
 
-**Verification:**
-- [ ] `PageFrame.test.tsx` prejde.
-- [ ] focused ESLint pre nový source/test prejde.
+**Verification:** focused `ResourcesPage` + `ResourcesIsePage` tests pre no-provider/loading/error.
 
 **Dependencies:** Task 1.
 
-**Files likely touched:**
-- `src/shared/components/page/PageFrame.tsx`
-- `src/shared/components/page/PageFrame.test.tsx`
+**Files likely touched:** 4 page source/test files.
 
-**Estimated scope:** S — 2 files.
+**Estimated scope:** M.
 
-## Task 3: Implement `PageSurface`
+## Task 3: Normalize Resources surface radius and request-state geometry
 
-**Description:** Zaviesť primary visual surface s jednotným radius/border/shadow contractom a voliteľným header slotom. Nepridávať feature-specific props.
+**Description:** Odstrániť mixed primary/table radius a potvrdiť, že loading/error/empty/data nemenia canonical surface contract.
 
 **Acceptance criteria:**
-- [ ] Surface je `flex-1 min-h-0 min-w-0 overflow-hidden`.
-- [ ] Visual contract používa shared Card radius/shadow hodnoty.
-- [ ] Optional header je `shrink-0`; bez headeru nevzniká prázdny rezervovaný pás.
+- [ ] Canonical bordered table surface používa `rounded-[20px]`; `rounded-2xl` sa z `ResourceInventoryPanel` contractu odstráni.
+- [ ] Toolbar/data/pagination ownership ostáva zachovaný.
+- [ ] Fatal error/empty/loading nemenia outer primary surface X/W a pri rovnakej slot topológii ani Y/H.
 
-**Verification:**
-- [ ] `PageSurface.test.tsx` prejde.
-- [ ] `Card` source sa nemusí meniť, ak sa dá existujúci contract compose-nuť.
+**Verification:** `ResourceInventoryPanel.test.tsx`, `ResourceInventoryStates.test.tsx`, provider page state tests.
 
-**Dependencies:** Task 1.
+**Dependencies:** Tasks 1–2.
 
-**Files likely touched:**
-- `src/shared/components/page/PageSurface.tsx`
-- `src/shared/components/page/PageSurface.test.tsx`
+**Files likely touched:** max 4 Resources source/test files.
 
-**Estimated scope:** S — 2 files.
+**Estimated scope:** M.
 
-## Task 4: Implement `TableSurface`
+### Checkpoint A0 — Resources source baseline
 
-**Description:** Zaviesť layout-only primitive pre toolbar/notice, scrollable data viewport a pagination. Table state zostáva v feature komponentoch.
+- [ ] Tasks 1–3 focused tests green.
+- [ ] No-provider už neobchádza primary surface.
+- [ ] Canonical Resources table/surface radius je jednotný.
+- [ ] No API/query/filter behavior diff.
+
+## Task 4: Browser-verify canonical Resources matrix
+
+**Routes/data:** Resources + Resources ISE; VMware, FlashSystem, IBM Power; no-provider, loading, error, empty, 1 row, page-full rows, overflow rows.
+
+**Viewporty:** `1542x765`, `1366x768`, `1920x1080`, `390x844` smoke.
 
 **Acceptance criteria:**
-- [ ] Top a footer sú mimo vertical scroll regionu.
-- [ ] Content region je `min-h-0` a jediný vertical table scroll owner.
-- [ ] `scrollbar-gutter: stable` alebo ekvivalent zabraňuje horizontálnemu poskoku pri objavení scrollbaru.
-- [ ] `DataTable` horizontálny scroll sa nemení.
+- [ ] Zaznamenané header/action/surface/table/pagination X/Y/W/H measurements.
+- [ ] 1 row nemení pagination Y; overflow scrolluje iba data viewport.
+- [ ] Filter modal, tabs, detail drawer a horizontal table scroll fungujú.
 
-**Verification:**
-- [ ] `TableSurface.test.tsx` prejde.
-- [ ] `DataTable.test.tsx`, `DataTableToolbar.test.tsx`, `DataTablePagination.test.tsx` zostanú zelené bez source zmeny.
+**Verification:** real browser; console bez nových warnings/errors.
 
-**Dependencies:** Task 1.
+**Dependencies:** Checkpoint A0.
 
-**Files likely touched:**
-- `src/shared/components/data-table/TableSurface.tsx`
-- `src/shared/components/data-table/TableSurface.test.tsx`
-- shared data-table export file iba ak je potrebný export
+**Files likely touched:** ideally none; measurement evidence môže ísť do `tasks/page-layout-reference-measurements.md`.
 
-**Estimated scope:** M — 2–3 files.
+**Estimated scope:** M verification.
 
-## Checkpoint A — Foundation
+## Task 5: Extract generic contained frame from `ResourceViewportFrame`
 
-- [ ] Tasks 1–4 focused tests sú zelené.
-- [ ] Nové primitives nemajú feature imports.
-- [ ] Žiadny existujúci route/page ešte nebol migrovaný.
-- [ ] `npm run typecheck` prejde.
-- [ ] `git diff --check` prejde.
-- [ ] Review potvrdí, že API nových primitives je malé a bez optional-prop explosion.
+**Description:** Až po browser approval extrahovať presný proven full-height contained chain do generic shared primitive. `ResourceViewportFrame` zostane compatibility wrapper alebo alias.
+
+**Acceptance criteria:**
+- [ ] Generic primitive má rovnaké classes/behavior ako schválený Resources frame.
+- [ ] Resources call sites nepotrebujú business rewrite.
+- [ ] Žiadne title/actions/feature props sa do frame API nepridávajú.
+
+**Verification:** frame tests + Resources page tests.
+
+**Dependencies:** Task 4.
+
+**Files likely touched:** generic source/test + ResourceViewportFrame source/test, max 4.
+
+**Estimated scope:** M.
+
+## Task 6: Extract shared `DataTableSurface` from `ResourceInventoryPanel`
+
+**Description:** Extrahovať presný schválený `auto / minmax(0,1fr) / auto` Resources contract do shared data-table primitive. `ResourceInventoryPanel` zostane thin compatibility wrapper pre Resources error typing/wiring.
+
+**Acceptance criteria:**
+- [ ] Shared surface vlastní iba layout slots, nie fetch/filter/pagination state.
+- [ ] Toolbar a footer sú mimo vertical data scrollbar.
+- [ ] Radius/scroll contract je identický s canonical Resources baseline.
+
+**Verification:** shared surface tests + `ResourceInventoryPanel.test.tsx`.
+
+**Dependencies:** Task 4.
+
+**Files likely touched:** shared source/test + ResourceInventoryPanel source/test, max 4.
+
+**Estimated scope:** M.
+
+### Checkpoint A1 — Proven shared extraction
+
+- [ ] Tasks 5–6 green.
+- [ ] Shared APIs sú minimálne a priamo odvodené z Resources.
+- [ ] Žiadna feature import závislosť v shared primitives.
+
+## Task 7: Re-verify Resources/Resources ISE after extraction
+
+**Acceptance criteria:**
+- [ ] Browser measurements ostávajú v baseline tolerancii bez geometry driftu.
+- [ ] VMware/FlashSystem/IBM Power + target Resources ISE fungujú.
+- [ ] Filter modal/tabs/pagination/detail drawer behavior bez regresie.
+
+**Dependencies:** Tasks 5–6.
+
+**Estimated scope:** S–M verification.
+
+## Checkpoint A — Canonical Resources reference locked
+
+- [ ] Resources baseline je schválený a autoritatívny pre ďalšie phases.
+- [ ] No-provider + radius inconsistencies sú odstránené.
+- [ ] Measurement evidence existuje pre desktop baseline.
+- [ ] Až teraz sa smú migrovať ostatné pages.
 
 ---
 
-# Phase 2 — Pilot: Recovery Groups, Recovery Policies, Resources
+# Phase 1 — Table/list pages follow Resources
 
-## Task 5: Add contained route metadata for pilot pages
+Každá table/list migrácia musí porovnať svoju geometriu s canonical Resources pri rovnakom viewporte. Feature-specific obsah zostáva zachovaný.
 
-**Description:** Pilot routes prepnúť do existing `contentScroll: 'contained'` režimu až po pripravených primitives.
-
-**Pilot routes:**
-- Recovery Groups list,
-- Snapshot Policies,
-- Application Recovery Policies,
-- Clean Room Policies,
-- Resources a Resources ISE už contained režim majú a nemenia sa.
+## Task 8: Providers
 
 **Acceptance criteria:**
-- [ ] Pilot list/policy routes majú explicitný contained handle.
-- [ ] Default document route zostáva bez handle.
-- [ ] `AppShell` implementácia sa nemení, ak existujúci mechanism stačí.
+- [ ] Header/actions/Refresh používajú Resources `TableToolbar` placement.
+- [ ] Odstráni sa accidental outer `p-3 -> InventoryShell -> inner p-3`; primary surface má Resources X/W contract.
+- [ ] Table používa shared `DataTableSurface`; filters/detail/create semantics sa nemenia.
 
-**Verification:**
-- [ ] Router/AppShell tests odlíšia contained a default route.
+**Verification:** `ProvidersPage.test.tsx`, `ProvidersCatalogueTable.test.tsx`, browser `1366x768`.
 
 **Dependencies:** Checkpoint A.
 
-**Files likely touched:**
-- `src/app/AppRoutes.tsx`
-- `src/app/router.test.tsx`
-- `src/layouts/app-shell/AppShell.test.tsx` iba ak existujúce assertions nepokrývajú nový route set
+**Estimated scope:** M.
 
-**Estimated scope:** M — 2–3 files.
-
-## Task 6: Migrate Recovery Groups list to the new contract
-
-**Description:** `RecoveryGroupsListPage` bude pilot jednoduchého TablePage archetypu. Empty, loading, fetch error a mutation error zostanú vo fixnom primary surface.
+## Task 9: Platform Providers
 
 **Acceptance criteria:**
-- [ ] Page používa `PageFrame -> PageHeader -> PageBody -> PageSurface -> TableSurface`.
-- [ ] `RecoveryGroupsTable` už nemá content-driven root `flex flex-col` ako jediný height contract.
-- [ ] Empty state sa renderuje v table content viewporte; primary surface zostáva prítomný.
-- [ ] Pagination zostáva na spodnom Y pri 0/1/many rows.
-- [ ] Mutation error nezväčší outer page height ani neposunie primary surface.
+- [ ] `Add Platform Provider` je v Resources-compatible page action slote pred Refresh.
+- [ ] Primary surface/table viewport/pagination kopíruje canonical Resources geometry.
+- [ ] AIRFLOW/SMTP/BACKEND/KEYCLOAK type-specific Create/Edit/Detail contract sa nemení.
 
-**Verification:**
-- [ ] Page test: surface zostáva pri empty stave.
-- [ ] Table test: toolbar/content/pagination ownership.
-- [ ] Existing edit/delete/rollback/detail interactions zostanú zelené.
-
-**Dependencies:** Task 5.
-
-**Files likely touched:**
-- `src/features/recovery-plans/recovery-groups/pages/RecoveryGroupsListPage.tsx`
-- `src/features/recovery-plans/recovery-groups/pages/RecoveryGroupsListPage.test.tsx`
-- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.tsx`
-- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.test.tsx`
-
-**Estimated scope:** M — 4 files.
-
-## Task 7: Migrate Recovery Policy shell + Snapshot Policies
-
-**Description:** Presunúť shared `RecoveryPolicyPageShell` na nový PageFrame/PageSurface contract a Snapshot table na TableSurface. Tabs ostávajú surface-header slotom.
-
-**Acceptance criteria:**
-- [ ] Policy tabs ostávajú na rovnakom mieste vo všetkých policy routes.
-- [ ] Snapshot table používa fixed toolbar/content/pagination contract.
-- [ ] Delete/load errors sú vo vnútri primary surface.
-- [ ] Žiadny nested primary `rounded-lg` table card nie je potrebný.
-
-**Verification:**
-- [ ] `RecoveryPolicyPageShell.test.tsx`.
-- [ ] `SnapshotPoliciesTable.test.tsx`.
-- [ ] `SnapshotPoliciesPage.test.tsx`.
-
-**Dependencies:** Task 5.
-
-**Files likely touched:**
-- `src/features/recovery-plans/recovery-policies/components/RecoveryPolicyPageShell.tsx`
-- `src/features/recovery-plans/recovery-policies/components/RecoveryPolicyPageShell.test.tsx`
-- `src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.tsx`
-- `src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.test.tsx`
-
-**Estimated scope:** M — 4 files.
-
-## Task 8: Migrate Application Recovery + Clean Room policy tables
-
-**Description:** Dokončiť oba zostávajúce policy table variants na rovnaký TableSurface contract bez ďalšej zmeny shellu.
-
-**Acceptance criteria:**
-- [ ] Oba table roots používajú rovnaký height/scroll/pagination contract ako Snapshot.
-- [ ] Page-specific filters/forms/actions sa nemenia.
-- [ ] Error/empty state neodstraňuje primary PageSurface.
-
-**Verification:**
-- [ ] Focused component tests pre oba tables.
-- [ ] Existujúce page tests zostanú zelené.
-
-**Dependencies:** Task 7.
-
-**Files likely touched:**
-- `src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPoliciesTable.tsx`
-- `src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPoliciesTable.test.tsx`
-- `src/features/recovery-plans/recovery-policies/clean-room/components/CleanRoomPoliciesTable.tsx`
-- `src/features/recovery-plans/recovery-policies/clean-room/components/CleanRoomPoliciesTable.test.tsx`
-
-**Estimated scope:** M — 4 files.
-
-## Task 9: Migrate Resources compatibility shell to shared primitives
-
-**Description:** Zachovať Resources feature API, ale previesť `ResourceInventoryShell` a `ResourceInventoryPanel` na nový shared PageSurface/TableSurface contract. Nezasahovať do provider queries, tabs, metrics, filter summary ani drawer.
-
-**Acceptance criteria:**
-- [ ] VMware, FlashSystem a IBM Power call sites nepotrebujú business-logic rewrite.
-- [ ] Metrics/notice ostávajú pred primary surface.
-- [ ] Inventory title/description/provider tabs ostávajú surface header.
-- [ ] Toolbar/content/pagination používa shared TableSurface.
-- [ ] Resource detail drawer ostáva overlay a nemení frame geometry.
-
-**Verification:**
-- [ ] `ResourceInventoryPanel.test.tsx` prejde s novým shared contractom.
-- [ ] `ResourceViewportFrame.test.tsx` zostane zelený.
-- [ ] `VmwareResourcesPage.test.tsx`, `FlashSystemInventoryView.test.tsx`, `PowerInventoryView.test.tsx` prejdú.
+**Verification:** Platform Providers page/table/modal focused tests + browser geometry check.
 
 **Dependencies:** Checkpoint A.
 
-**Files likely touched:**
-- `src/features/discovery-inventory/resources/components/ResourceInventoryShell.tsx`
-- `src/features/discovery-inventory/resources/components/ResourceInventoryPanel.tsx`
-- `src/features/discovery-inventory/resources/components/ResourceInventoryPanel.test.tsx`
-- nový `ResourceInventoryShell.test.tsx` iba ak je potrebný explicitný compatibility test
+**Estimated scope:** M.
 
-**Estimated scope:** M — 3–4 files.
-
-## Task 10: Align Resources request-state containment
-
-**Description:** Overiť, že loaded/background-loading/empty/fatal-error branches používajú rovnaký primary surface boundary. Nezavádzať umelé blank metrics sloty; optional metrics/notice môžu legitímne meniť vertical slot topology, ale samotná surface nesmie byť nahradená iným wrapperom.
+## Task 10: Credentials
 
 **Acceptance criteria:**
-- [ ] `ResourceInventoryLoading`, fatal error a empty state sa zmestia do rovnakého surface/content boundary.
-- [ ] Table-specific loading nemení toolbar/footer ownership.
-- [ ] Surface width/X zostáva rovnaký medzi loaded/empty/error.
+- [ ] Header/action placement podľa Resources.
+- [ ] Table panel používa canonical toolbar/data/footer contract.
+- [ ] Create/edit/delete/error behavior zostáva rovnaký.
 
-**Verification:**
-- [ ] `ResourceInventoryStates.test.tsx`.
-- [ ] `VmwareResourcesPage.test.tsx` loading/error/empty branches.
+**Verification:** Credentials focused page/table tests + browser short-list check.
 
-**Dependencies:** Task 9.
+**Dependencies:** Checkpoint A.
 
-**Files likely touched:**
-- `src/features/discovery-inventory/resources/components/ResourceInventoryStates.tsx`
-- `src/features/discovery-inventory/resources/components/ResourceInventoryStates.test.tsx`
-- `src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.tsx` iba ak state wiring potrebuje layout-only zmenu
-- `src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx`
+**Estimated scope:** M.
 
-**Estimated scope:** M — 2–4 files.
+### Checkpoint B1 — Providers administration tables
 
-## Task 11: Pilot browser verification and decision gate
+- [ ] Providers / Platform Providers / Credentials X/Y/W table contract zodpovedá Resources.
+- [ ] Add/Create + Refresh placement je konzistentný.
+- [ ] No nested vertical scroll.
 
-**Description:** Pred ďalšou migráciou overiť tri odlišné archetypy v reálnom browseri. Ak pilot nevyrieši poskakovanie alebo vytvorí nested scroll, zvyšok migrácie sa nezačne.
-
-**Routes:**
-- Recovery Groups,
-- Snapshot Policies + preklik na ďalšie policy tabs,
-- Resources VMware/FlashSystem/IBM Power,
-- Resources ISE aspoň jeden provider type.
-
-**Viewporty:**
-- `1542x765` primárny desktop,
-- `1366x768` krátky desktop,
-- `1920x1080` široký desktop,
-- `390x844` mobilný smoke check.
+## Task 11: Recovery Applications list
 
 **Acceptance criteria:**
-- [ ] Primary surface má rovnaký outer X/inset na pilot pages.
-- [ ] 1-row table nepresunie pagination nahor.
-- [ ] Dlhý table list scrolluje iba content viewport.
-- [ ] Sticky table header funguje.
-- [ ] Horizontal DataTable scroll ostáva funkčný.
-- [ ] Switching policy tabs nemení outer surface X/W/H.
-- [ ] Resources detail drawer nemení surface geometry.
-- [ ] Console bez nových React/layout warningov.
+- [ ] Create + Refresh placement podľa Resources.
+- [ ] Empty state zostáva v canonical surface/data viewport.
+- [ ] Orchestrator/edit/delete/detail semantics sa nemenia.
 
-**Dependencies:** Tasks 6–10.
+**Verification:** page/table focused tests + 0/1/many browser check.
 
-**Files likely touched:** None; verification only.
+**Dependencies:** Checkpoint A.
 
-**Estimated scope:** M — browser verification.
+**Estimated scope:** M.
 
-## Checkpoint B — Pilot approval
+## Task 12: Policy Sets
 
-- [ ] Pilot browser matrix je zelená.
-- [ ] Review potvrdí shared primitives bez API expansion.
-- [ ] Žiadny business/API diff.
-- [ ] Až potom pokračovať na remaining table pages.
+**Description:** Zachovať existujúci dobrý inner scroll behavior, zmeniť iba surrounding geometry na Resources baseline.
+
+**Acceptance criteria:**
+- [ ] Existujúci fixed pagination/scroll behavior sa neregresuje.
+- [ ] Add + Refresh a primary surface placement zodpovedajú Resources.
+- [ ] Žiadny nový outer/double inset.
+
+**Verification:** Policy Sets page/table tests + browser `1366x768`.
+
+**Dependencies:** Checkpoint A.
+
+**Estimated scope:** M.
+
+## Task 13: Recovery Groups list
+
+**Acceptance criteria:**
+- [ ] Create + Refresh placement podľa Resources.
+- [ ] Empty/load/mutation error zostávajú v canonical surface boundary.
+- [ ] 0/1/many rows nemenia pagination anchor.
+
+**Verification:** page/table interaction tests + browser state matrix.
+
+**Dependencies:** Checkpoint A.
+
+**Estimated scope:** M.
+
+### Checkpoint B2 — Recovery core tables
+
+- [ ] Tasks 11–13 green.
+- [ ] Empty/mutation states nemenia outer surface.
+- [ ] Pagination anchor matches Resources behavior.
+
+## Task 14: Recovery Policies shell + Snapshot Policies
+
+**Acceptance criteria:**
+- [ ] Policy tabs sú v primary surface headeri v Resources-style compact/inset placement.
+- [ ] Add + Refresh sú v page header action slote.
+- [ ] Snapshot table používa canonical table surface.
+
+**Verification:** policy shell + Snapshot page/table tests + tab browser check.
+
+**Dependencies:** Checkpoint A.
+
+**Estimated scope:** M.
+
+## Task 15: Application Recovery + Clean Room policy tables
+
+**Acceptance criteria:**
+- [ ] Obe variants používajú rovnaký table contract ako Snapshot.
+- [ ] Filters/actions/modal semantics sa nemenia.
+- [ ] Tab switch nemení outer surface X/W/H.
+
+**Verification:** focused table/page tests + browser tab switching.
+
+**Dependencies:** Task 14.
+
+**Estimated scope:** M.
+
+## Task 16: Recovery Runs
+
+**Acceptance criteria:**
+- [ ] Page header/action/refresh placement podľa Resources.
+- [ ] Tabs/context slots sú v canonical surface hierarchy.
+- [ ] History drawer ostáva overlay; table viewport/pagination stabilný.
+
+**Verification:** Recovery Runs page/table/history drawer tests + browser check.
+
+**Dependencies:** Checkpoint A.
+
+**Estimated scope:** M.
+
+### Checkpoint B3 — Tabbed table pages
+
+- [ ] Recovery Policies + Runs use Resources-style surface tabs where applicable.
+- [ ] Switching tabs nemení accidental outer geometry.
+- [ ] Fixed data viewport + pagination preserved.
+
+## Task 17: Enable contained route metadata for migrated table routes
+
+**Description:** Route handles sa upravia až po tom, čo všetky table pages bezpečne vlastnia inner scroll.
+
+**Acceptance criteria:**
+- [ ] Providers, Platform Providers, Credentials, Recovery Applications, Policy Sets, Recovery Groups, Recovery Policies a Recovery Runs sú contained.
+- [ ] Default document/detail routes ostávajú default.
+- [ ] Route metadata je jediný mechanism; žiadne URL matching overflow hacks.
+
+**Verification:** `router.test.tsx` + `AppShell.test.tsx`.
+
+**Dependencies:** Tasks 8–16.
+
+**Estimated scope:** M.
+
+## Task 18: Table-page canonical browser matrix
+
+**Routes:** všetky Phase 1 table/list pages.
+
+**Acceptance criteria:**
+- [ ] Header/action/surface left/right boundaries sa porovnajú s Resources baseline.
+- [ ] 0/1/many rows, loading/error/empty nemajú pagination/surface jump.
+- [ ] Filter modal pattern je konzistentný tam, kde table filters existujú.
+
+**Dependencies:** Task 17.
+
+**Estimated scope:** M verification.
+
+## Checkpoint B — Table archetype complete
+
+- [ ] Všetky table/list routes používajú canonical Resources-derived geometry.
+- [ ] No accidental double inset.
+- [ ] No double vertical scroll.
+- [ ] Table browser matrix green.
 
 ---
 
-# Phase 3 — Remaining table/list pages
+# Phase 2 — Settings and workspace pages
 
-Nasledujúce tasky môžu po Checkpoint B bežať paralelne po feature oblastiach, pretože nebudú meniť shared primitives. Route contained handles sa pridajú až po migrácii celej dávky v samostatnom taske.
+Workspace pages preberajú z Resources najmä outer header X/Y, page actions placement, Card visual contract a explicitný scroll ownership. Table-specific filter/pagination pattern sa používa iba v embedded tables.
 
-## Task 12: Migrate Providers list
-
-**Acceptance criteria:**
-- [ ] Odstráni sa accidental `p-3 -> InventoryShell -> p-3 -> nested table card` hierarchy.
-- [ ] Providers používa rovnaký primary surface + TableSurface ako pilot.
-- [ ] role filter, connection test, detail drawer, create modal a pagination sa nemenia.
-
-**Verification:**
-- [ ] `ProvidersPage.test.tsx`.
-- [ ] `ProvidersCatalogueTable.test.tsx`.
-
-**Dependencies:** Checkpoint B.
-
-**Files likely touched:**
-- `src/features/providers-connectors/providers/pages/ProvidersPage.tsx`
-- `src/features/providers-connectors/providers/pages/ProvidersPage.test.tsx`
-- `src/features/providers-connectors/providers/components/ProvidersCatalogueTable.tsx`
-- `src/features/providers-connectors/providers/components/ProvidersCatalogueTable.test.tsx`
-
-**Estimated scope:** M — 4 files.
-
-## Task 13: Migrate Platform Providers list
+## Task 19: Configuration
 
 **Acceptance criteria:**
-- [ ] Rovnaký PageSurface/TableSurface contract ako Providers.
-- [ ] SMTP dialog, edit/delete, create modal a credential indicators sa nemenia.
+- [ ] PageHeader X/Y a primary Card left/right/radius zodpovedajú canonical baseline.
+- [ ] RuntimeConfigurationPanel body/footer scroll behavior sa zachová.
+- [ ] Route je contained iba s explicitným panel scroll ownerom.
 
-**Verification:**
-- [ ] `PlatformProvidersPage.test.tsx`.
-- [ ] `PlatformProvidersTable.test.tsx`.
+**Verification:** Configuration page/panel tests + browser `1366x768`.
 
-**Dependencies:** Checkpoint B.
-
-**Files likely touched:** 4 page/table source+test files.
+**Dependencies:** Checkpoint A.
 
 **Estimated scope:** M.
 
-## Task 14: Migrate Credentials list
+## Task 20: Discovery Settings outer workspace
 
 **Acceptance criteria:**
-- [ ] Existing partial flex contract sa nahradí plným TableSurface contractom.
-- [ ] Create/edit/delete/load error flows zostanú funkčné.
-- [ ] Pagination je fixed footer.
+- [ ] Page header + primary surface placement podľa baseline.
+- [ ] Configuration/History/Notifications tabs majú explicitný surface slot.
+- [ ] Active tab owns one vertical scroll path.
 
-**Verification:**
-- [ ] `CredentialsTable.test.tsx`.
-- [ ] Add focused page structure test, ak dnes chýba.
+**Verification:** Discovery Settings page/search-param tests.
 
-**Dependencies:** Checkpoint B.
-
-**Files likely touched:**
-- `src/features/providers-connectors/credentials/pages/CredentialsPage.tsx`
-- `src/features/providers-connectors/credentials/components/CredentialsTable.tsx`
-- `src/features/providers-connectors/credentials/components/CredentialsTable.test.tsx`
-- nový page test iba ak je potrebný
-
-**Estimated scope:** M — 3–4 files.
-
-## Task 15: Migrate Recovery Applications list
-
-**Acceptance criteria:**
-- [ ] Empty state zostáva vo fixnej primary surface.
-- [ ] Table root už nie je content-driven.
-- [ ] Orchestrator run columns, edit/delete/detail behavior sa nemenia.
-
-**Verification:**
-- [ ] `RecoveryApplicationsListPage.test.tsx`.
-- [ ] `RecoveryApplicationsTable.test.tsx`.
-
-**Dependencies:** Checkpoint B.
-
-**Files likely touched:** 4 page/table source+test files.
+**Dependencies:** Checkpoint A.
 
 **Estimated scope:** M.
 
-## Task 16: Migrate Policy Sets without regressing existing scroll fix
-
-**Description:** Policy Sets už má dobrý inner scroll contract. Zmena má odstrániť nested shell inconsistency, nie znovu riešiť scroll od nuly.
+## Task 21: Discovery History embedded table
 
 **Acceptance criteria:**
-- [ ] Existujúci fixed toolbar/pagination behavior zostáva.
-- [ ] Existing `min-h-0/min-w-0` chain sa zachová alebo zjednoduší iba ak nový primitive poskytuje rovnaký contract.
-- [ ] Žiadny návrat page-driven table scrollu.
+- [ ] Existing filters/refresh -> data scroll -> pagination sa mapuje na shared `DataTableSurface` bez semantic zmeny.
+- [ ] Filter UX používa `DataTableToolbar` pattern tam, kde zodpovedá existujúcej logike.
+- [ ] Client-side pagination semantics sa nemenia.
 
-**Verification:**
-- [ ] `PolicySetsPage.test.tsx`.
-- [ ] `PolicySetsTable.test.tsx`.
-- [ ] Browser smoke pri `1366x768`.
+**Verification:** `DiscoveryHistoryCard.test.tsx` + browser history tab.
 
-**Dependencies:** Checkpoint B.
-
-**Files likely touched:** 4 page/table source+test files.
-
-**Estimated scope:** M.
-
-## Task 17: Migrate Recovery Runs
-
-**Acceptance criteria:**
-- [ ] Scope note ostáva feature slot, ale nevyhadzuje primary surface z frame.
-- [ ] Tabs zostávajú surface header.
-- [ ] Existing fixed table body/pagination behavior zostáva.
-- [ ] History drawer ostáva overlay.
-
-**Verification:**
-- [ ] `RecoveryRunsPage.test.tsx`.
-- [ ] `RecoveryRunsTable.test.tsx`.
-- [ ] `RecoveryRunHistoryDrawer.test.tsx` musí zostať zelený bez layout rewrite.
-
-**Dependencies:** Checkpoint B.
-
-**Files likely touched:**
-- `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx`
-- `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx`
-- `src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.tsx`
-- `src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.test.tsx`
-
-**Estimated scope:** M.
-
-## Task 18: Enable contained mode for migrated table routes
-
-**Description:** Po dokončení Tasks 12–17 označiť migrated table/list routes ako contained. Tým sa zabráni stavu, kde route je contained predtým, než jej vnútorný flex chain vie bezpečne vlastniť scroll.
-
-**Acceptance criteria:**
-- [ ] Providers, Platform Providers, Credentials, Recovery Applications, Policy Sets a Recovery Runs routes sú contained.
-- [ ] Document/placeholder/detail routes zostávajú default scroll.
-
-**Verification:**
-- [ ] `router.test.tsx`.
-- [ ] `AppShell.test.tsx` contained/default regression.
-
-**Dependencies:** Tasks 12–17.
-
-**Files likely touched:**
-- `src/app/AppRoutes.tsx`
-- `src/app/router.test.tsx`
-- `src/layouts/app-shell/AppShell.test.tsx` iba ak treba
-
-**Estimated scope:** M.
-
-## Task 19: Table-page browser matrix
-
-**Routes:** Providers, Platform Providers, Credentials, Recovery Groups, Recovery Applications, Policy Sets, Recovery Policies, Recovery Runs.
-
-**Acceptance criteria:**
-- [ ] Same archetype => same PageHeader-to-surface inset.
-- [ ] Short list a long list nemenia surface H/pagination Y.
-- [ ] Empty/error/loading zachovajú primary surface.
-- [ ] Žiadny double vertical scrollbar.
-- [ ] Horizontal table scroll stále funguje.
-
-**Dependencies:** Task 18.
-
-**Files likely touched:** None.
-
-**Estimated scope:** M.
-
-## Checkpoint C — Table archetype complete
-
-- [ ] Všetky table/list pages používajú shared primitives.
-- [ ] `InventoryShell` už nie je potrebný pre simple table pages.
-- [ ] Table browser matrix je zelená.
-
----
-
-# Phase 4 — Settings and workspace pages
-
-## Task 20: Migrate Configuration to PageFrame/PageSurface
-
-**Acceptance criteria:**
-- [ ] Existing `RuntimeConfigurationPanel` fixed body/footer behavior sa zachová.
-- [ ] Primary surface geometry sa zjednotí bez zmeny fields/save/reset logiky.
-- [ ] Route sa po migrácii prepne na contained.
-
-**Verification:**
-- [ ] `ConfigurationPage.test.tsx`.
-- [ ] Add/extend `RuntimeConfigurationPanel` structure test iba ak potrebné.
-
-**Dependencies:** Checkpoint B.
-
-**Files likely touched:**
-- `src/features/platform-administration/configuration/pages/ConfigurationPage.tsx`
-- `src/features/platform-administration/configuration/pages/ConfigurationPage.test.tsx`
-- `src/app/AppRoutes.tsx`
-- `src/app/router.test.tsx`
-
-**Estimated scope:** M.
-
-## Task 21: Migrate Discovery Settings outer workspace
-
-**Acceptance criteria:**
-- [ ] PageHeader/body/primary surface používajú shared contract.
-- [ ] Configuration/History/Notifications tab behavior sa nemení.
-- [ ] Existing contained route zostáva.
-- [ ] Scroll owner sa deklaruje per tab content, nie náhodným parent overflowom.
-
-**Verification:**
-- [ ] `DiscoverySettingsPage.test.tsx`.
-- [ ] Search-param tests zostanú zelené bez source zmeny, ak route state ostáva rovnaký.
-
-**Dependencies:** Checkpoint B.
-
-**Files likely touched:**
-- `src/features/providers-connectors/discovery-settings/pages/DiscoverySettingsPage.tsx`
-- `src/features/providers-connectors/discovery-settings/pages/DiscoverySettingsPage.test.tsx`
+**Dependencies:** Task 20.
 
 **Estimated scope:** S–M.
 
-## Task 22: Replace Discovery History local table geometry with shared TableSurface
+### Checkpoint C1 — Settings
+
+- [ ] Configuration + Discovery Settings geometry stable.
+- [ ] Embedded history table follows canonical table contract.
+- [ ] No clipping at `1366x768`.
+
+## Task 22: Recovery Actions shared shell
 
 **Acceptance criteria:**
-- [ ] Existing `filters/refresh -> scroll table -> fixed pagination` behavior zostáva.
-- [ ] Client-side history pagination semantics sa nemenia.
-- [ ] Shared TableSurface nahradí duplicate grid layout bez regressie.
+- [ ] Execute/History/Schedule/Validate zdieľajú jeden outer header + Card geometry contract.
+- [ ] Refresh ostáva v canonical page action slot.
+- [ ] Všetky štyri routes sú contained iba cez shared shell scroll ownership.
 
-**Verification:**
-- [ ] `DiscoveryHistoryCard.test.tsx`.
-- [ ] Network/query tests nie sú potrebné meniť, ak request semantics ostanú.
+**Verification:** shell/navigation/router focused tests.
 
-**Dependencies:** Task 21.
-
-**Files likely touched:**
-- `src/features/providers-connectors/discovery-settings/components/DiscoveryHistoryCard.tsx`
-- `src/features/providers-connectors/discovery-settings/components/DiscoveryHistoryCard.test.tsx`
-
-**Estimated scope:** S.
-
-## Task 23: Migrate Recovery Actions shared shell
-
-**Acceptance criteria:**
-- [ ] `RecoveryActionsPageShell` používa shared PageFrame/PageSurface.
-- [ ] `WorkspaceTabs`, panel scroll a feature child contents sa nemenia.
-- [ ] Všetky štyri routes sa prepínajú spolu, nie po jednom divergentne.
-- [ ] Routes sa označia contained.
-
-**Verification:**
-- [ ] `RecoveryActionsPageShell.test.tsx`.
-- [ ] navigation model tests zostanú zelené.
-
-**Dependencies:** Checkpoint B.
-
-**Files likely touched:**
-- `src/features/recovery-actions/components/RecoveryActionsPageShell.tsx`
-- `src/features/recovery-actions/components/RecoveryActionsPageShell.test.tsx`
-- `src/app/AppRoutes.tsx`
-- `src/app/router.test.tsx`
+**Dependencies:** Checkpoint A.
 
 **Estimated scope:** M.
 
-## Task 24: Normalize Recovery Actions History embedded table
+## Task 23: Recovery Actions History table
 
 **Acceptance criteria:**
-- [ ] History table využíva dostupnú workspace šírku/výšku bez vlastného accidental Card contractu.
-- [ ] Workspace page stále scrolluje iba na definovanom paneli.
-- [ ] History filters a drawer/selection behavior sa nemenia.
+- [ ] History table používa shared data surface bez accidental nested Card.
+- [ ] Filter/selection/drawer semantics sa nemenia.
+- [ ] Workspace shell ostáva jediným outer geometry ownerom.
 
-**Verification:**
-- [ ] Focused render/navigation test pre History page alebo rozšírenie shell testu.
+**Verification:** History focused tests + browser.
 
-**Dependencies:** Task 23.
+**Dependencies:** Task 22.
 
-**Files likely touched:**
-- `src/features/recovery-actions/pages/RecoveryActionsHistoryPage.tsx`
-- príslušný nový/rozšírený test file
+**Estimated scope:** S–M.
 
-**Estimated scope:** S.
-
-## Task 25: Migrate Identity Access outer frame and resource panel contract
-
-**Description:** Identity Access je workspace archetype. Najprv zjednotiť iba outer page, navigation a `IdentityContentPanel`; jednotlivé sections sa migrujú až ďalšími taskami.
+## Task 24: Identity Access outer frame
 
 **Acceptance criteria:**
-- [ ] `IdentityAccessPage` používa PageFrame/PageBody/PageSurface bez extra root `gap-4` nad PageHeader marginom.
-- [ ] `IdentityContentPanel` má explicitný `min-h-0/min-w-0/flex-1` contract.
-- [ ] Identity navigation ostáva shrink-0.
-- [ ] Route sa prepne na contained.
+- [ ] `IdentityAccessPage` header/actions X/Y a primary surface boundary sú aligned s baseline.
+- [ ] Identity navigation je shrink-0; `IdentityContentPanel` explicitne vlastní fill/scroll chain.
+- [ ] Route je contained; žiadny extra root gap/padding layer.
 
-**Verification:**
-- [ ] `IdentityAccessPage.test.tsx`.
-- [ ] `IdentityResourceLayout.test.tsx`.
-- [ ] `IdentityAccessNavigation.test.tsx` zostane zelený.
+**Verification:** IdentityAccessPage + IdentityResourceLayout + navigation tests.
 
-**Dependencies:** Checkpoint B.
-
-**Files likely touched:**
-- `src/features/platform-administration/identity-access/pages/IdentityAccessPage.tsx`
-- `src/features/platform-administration/identity-access/pages/IdentityAccessPage.test.tsx`
-- `src/features/platform-administration/identity-access/components/IdentityResourceLayout.tsx`
-- `src/features/platform-administration/identity-access/components/IdentityResourceLayout.test.tsx`
+**Dependencies:** Checkpoint A.
 
 **Estimated scope:** M.
 
-## Task 26: Identity Users + Realm Roles table contract
+### Checkpoint C2 — Workspace shells
 
-**Acceptance criteria:**
-- [ ] Oba sections používajú shared TableSurface bez zmeny data/actions/details behavior.
-- [ ] Existing toolbar/content/pagination ownership sa zachová.
-- [ ] Detail subpages/tabs ostávajú feature-specific.
+- [ ] Recovery Actions + Identity outer geometry stable.
+- [ ] Jeden vertical scroll owner per workspace branch.
+- [ ] Header action placement matches canonical baseline.
 
-**Verification:**
-- [ ] `UsersSection.test.tsx`.
-- [ ] `RealmRolesSection.test.tsx`.
+## Task 25: Identity Users + Realm Roles
 
-**Dependencies:** Task 25.
+**Acceptance criteria:** table-like lists používajú shared data surface; detail behavior a actions unchanged; pagination/toolbar ownership explicit.
 
-**Files likely touched:** 4 source+test files.
+**Verification:** `UsersSection.test.tsx`, `RealmRolesSection.test.tsx`.
 
-**Estimated scope:** M.
-
-## Task 27: Identity Clients + Client Scopes table contract
-
-**Acceptance criteria:**
-- [ ] Table-like list views získajú bounded content region.
-- [ ] Detail forms/roles subviews sa nemenia.
-- [ ] Ak list nemá pagination, TableSurface footer slot ostáva prázdny bez fake pagination.
-
-**Verification:**
-- [ ] `ClientsSection.test.tsx`.
-- [ ] `ClientScopesSection.test.tsx`.
-
-**Dependencies:** Task 25.
-
-**Files likely touched:** 4 source+test files.
+**Dependencies:** Task 24.
 
 **Estimated scope:** M.
 
-## Task 28: Identity Organizations + User Federation table contract
+## Task 26: Identity Clients + Client Scopes
 
-**Acceptance criteria/verification:** rovnaký pattern ako Task 27; feature-specific integration placeholders ostávajú.
+**Acceptance criteria:** bounded content region; Resources-derived toolbar/filter pattern len kde existujú table filters; detail subviews unchanged.
 
-**Dependencies:** Task 25.
+**Verification:** section tests.
 
-**Files likely touched:** 4 source+test files.
-
-**Estimated scope:** M.
-
-## Task 29: Identity Sessions + Permissions table contract
-
-**Acceptance criteria:**
-- [ ] Sessions už nie je bare table bez explicitného viewport boundary.
-- [ ] Permissions odstráni accidental extra outer `p-4`, ak nie je semanticky potrebný.
-- [ ] Data/content semantics sa nemenia.
-
-**Verification:**
-- [ ] `SessionsSection.test.tsx`.
-- [ ] `PermissionsSection.test.tsx`.
-
-**Dependencies:** Task 25.
-
-**Files likely touched:** 4 source+test files.
+**Dependencies:** Task 24.
 
 **Estimated scope:** M.
 
-## Task 30: Identity Events + Authentication content contract
+## Task 27: Identity Organizations + User Federation
 
-**Acceptance criteria:**
-- [ ] Events tabs + toolbar + table majú explicitný fill/scroll ownership.
-- [ ] Authentication required-actions table a tab content nepoužívajú accidental content-height wrapper.
-- [ ] Non-table Authentication policies placeholder ostáva prirodzený content.
+**Acceptance criteria:** rovnaký table geometry contract; integration placeholders/business behavior unchanged; no fake pagination.
 
-**Verification:**
-- [ ] `EventsSection.test.tsx`.
-- [ ] `AuthenticationSection.test.tsx`.
+**Verification:** section tests.
 
-**Dependencies:** Task 25.
-
-**Files likely touched:** 4 source+test files.
+**Dependencies:** Task 24.
 
 **Estimated scope:** M.
 
-## Task 31: Identity non-table workspace regression pass
+### Checkpoint C3 — Identity lists I
 
-**Description:** Overiť Groups, Realm Settings a Identity Providers po outer migration. Produkčný source meniť iba ak browser/test preukáže clipping alebo broken min-height chain.
+- [ ] Tasks 25–27 use same table geometry contract.
+- [ ] No feature behavior redesign.
 
-**Acceptance criteria:**
-- [ ] Groups 260px hierarchy workspace zostáva funkčný.
-- [ ] Realm Settings forms/tabs sú dostupné cez definovaný workspace scroll.
-- [ ] Identity Providers cards sa neorežú.
+## Task 28: Identity Sessions + Permissions
 
-**Verification:**
-- [ ] Existing tests pre Groups/RealmSettings/IdentityProviders.
-- [ ] Browser smoke.
+**Acceptance criteria:** Sessions má explicitný data viewport; Permissions odstráni accidental extra outer inset; semantics unchanged.
 
-**Dependencies:** Tasks 25–30.
+**Verification:** section tests.
 
-**Files likely touched:** ideally none; max 3 focused source/test pairs iba pri potvrdenej regresii a rozdelené do samostatného follow-up tasku.
+**Dependencies:** Task 24.
+
+**Estimated scope:** M.
+
+## Task 29: Identity Events + Authentication
+
+**Acceptance criteria:** Events table/tabs explicit fill/scroll; required-actions table bounded; non-table policy content ostáva natural workspace content.
+
+**Verification:** section tests.
+
+**Dependencies:** Task 24.
+
+**Estimated scope:** M.
+
+## Task 30: Identity non-table regression pass
+
+**Routes/sections:** Groups, Realm Settings, Identity Providers.
+
+**Acceptance criteria:** hierarchy/forms/cards accessible; no clipping; source meniť iba pri potvrdenej geometry regresii.
+
+**Verification:** existing tests + browser smoke.
+
+**Dependencies:** Tasks 25–29.
 
 **Estimated scope:** S verification.
 
-## Task 32: Workspace browser checkpoint
+### Checkpoint C4 — Identity complete
 
-**Routes:** Configuration, Discovery Settings všetky tabs, Recovery Actions všetky tabs, Identity Access hlavné sections.
+- [ ] Table sections share Resources-derived contract.
+- [ ] Non-table sections bez regressie.
 
-**Acceptance criteria:**
-- [ ] Jeden vertical scroll owner na contained workspaces.
-- [ ] PageHeader a primary surface outer X/Y sú stabilné.
-- [ ] Switching tabs/sections nevytvára horizontálne poskočenie z browser scrollbar width.
-- [ ] No clipping pri `1366x768`.
+## Task 31: Workspace browser matrix
 
-**Dependencies:** Tasks 20–31.
+**Routes:** Configuration, Discovery Settings all tabs, Recovery Actions all tabs, Identity Access representative sections.
 
-**Estimated scope:** M.
+**Acceptance criteria:** header/surface X/Y aligned; no scrollbar-induced horizontal jump; one vertical scroll owner; `1366x768` no clipping.
 
-## Checkpoint D — Workspace archetype complete
+**Dependencies:** Tasks 19–30.
 
-- [ ] Settings/Workspace routes používajú shared outer contract.
-- [ ] Identity list sections majú rovnaký table geometry contract.
-- [ ] Non-table Identity sections sú bez regresie.
+**Estimated scope:** M verification.
+
+## Checkpoint C — Workspace archetype complete
 
 ---
 
-# Phase 5 — Builders, details and topology
+# Phase 3 — Builders, detail, topology and document page
 
-## Task 33: Normalize Recovery Group create/edit page state boundaries
+## Task 32: Recovery Group create/edit outer geometry
 
-**Acceptance criteria:**
-- [ ] Create aj edit používajú rovnaký PageFrame/PageBody boundary.
-- [ ] Load error/not-found neodstráni PageHeader ani primary builder surface boundary.
-- [ ] Mutation alert sa renderuje vnútri builder workspace boundary.
-- [ ] Existing contained route metadata zostáva.
+**Acceptance criteria:** create/edit share same outer frame; load/error/mutation states preserve header + builder boundary; DnD/business flow unchanged.
 
-**Verification:**
-- [ ] `RecoveryGroupBuilderPage.test.tsx`.
-- [ ] `RecoveryGroupEditorPage.test.tsx`.
+**Verification:** builder/editor page tests.
 
-**Dependencies:** Checkpoint B.
-
-**Files likely touched:** 4 page source+test files.
+**Dependencies:** Checkpoint A.
 
 **Estimated scope:** M.
 
-## Task 34: Normalize Recovery Application create/edit page state boundaries
+## Task 33: Recovery Application create/edit outer geometry
 
-**Acceptance criteria:** rovnaký contract ako Task 33; file-name disable, submit/orchestrator success a unsaved guard sa nemenia.
+**Acceptance criteria:** same as Group builder; unsaved guard/file-name/orchestrator semantics unchanged.
 
-**Verification:**
-- [ ] `RecoveryApplicationBuilderPage.test.tsx`.
-- [ ] `RecoveryApplicationEditorPage.test.tsx`.
+**Verification:** builder/editor page tests.
 
-**Dependencies:** Checkpoint B.
-
-**Files likely touched:** 4 page source+test files.
+**Dependencies:** Checkpoint A.
 
 **Estimated scope:** M.
 
-## Task 35: Standardize builder primary surface and wizard sidebar width
+## Task 34: Builder surface + common wizard sidebar width
 
-**Description:** Obe builder implementations majú rovnaký shell koncept, ale 240px vs 280px wizard width. Pred zmenou zmerať najdlhšie lokalizované step labels a zvoliť najmenšiu spoločnú šírku, ktorá neclipuje ani jeden builder. Nevyberať nový rozmer náhodne.
+**Description:** Primary Card visual contract sa zarovná s canonical Card. Sidebar width sa nepreberá z Resources; vyberie sa podľa browser evidence oboch builders.
 
 **Acceptance criteria:**
-- [ ] Group aj Application builder používajú rovnaký primary surface radius/border/shadow.
-- [ ] Wizard sidebar desktop width je rovnaký a zdokumentovaný testom/class contractom.
-- [ ] Width voľba je odvodená z browser overenia oboch builders, nie z kompromisného čísla bez dôkazu.
-- [ ] Step-specific inner scroll ownership zostáva zachovaný.
+- [ ] Group/App builder primary bordered surface radius/shadow aligned with canonical Card.
+- [ ] Jedna sidebar width podľa longest SK/EN labels.
+- [ ] Step-specific scroll ownership unchanged.
 
-**Verification:**
-- [ ] `RecoveryGroupBuilder.test.tsx`.
-- [ ] `RecoveryAppBuilder.test.tsx`.
-- [ ] Browser check v SK/EN, ak step labels majú rôznu dĺžku.
+**Verification:** builder component tests + SK/EN browser measurement.
 
-**Dependencies:** Tasks 33–34.
-
-**Files likely touched:**
-- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.tsx`
-- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx`
-- `src/features/recovery-plans/recovery-applications/components/RecoveryAppBuilder.tsx`
-- `src/features/recovery-plans/recovery-applications/components/RecoveryAppBuilder.test.tsx`
+**Dependencies:** Tasks 32–33.
 
 **Estimated scope:** M.
 
-## Task 36: Normalize Provider Detail success/error/not-found geometry
+### Checkpoint D1 — Builders
+
+- [ ] Create/edit states stable.
+- [ ] Sidebar decision backed by browser evidence.
+
+## Task 35: ModuleWorkQueuePage
+
+**Description:** Explicitne pokryť page, ktorá bola v pôvodnom 26-route audite, ale nemala vlastný task.
 
 **Acceptance criteria:**
-- [ ] Success/error/not-found používajú rovnaký PageHeader/PageBody outer contract.
-- [ ] `p-6` special-state shift sa odstráni.
-- [ ] Detail môže zostať Document/Detail archetype s prirodzeným content scrollom; nemusí sa nútene prepnúť na contained.
+- [ ] PageHeader left/right boundary zodpovedá baseline.
+- [ ] Main/aside Card radius/shadow používajú shared Card contract bez accidental outer insetu.
+- [ ] Page ostáva Document/workspace s natural AppShell scrollom; netlačí sa do table/contained patternu.
 
-**Verification:**
-- [ ] `ProviderDetailPage.test.tsx` pre všetky tri states.
+**Verification:** `ModuleWorkQueuePage.test.tsx` + browser desktop/mobile smoke.
 
-**Dependencies:** Foundation.
+**Dependencies:** Checkpoint A.
 
-**Files likely touched:**
-- `src/features/providers-connectors/providers/pages/ProviderDetailPage.tsx`
-- `src/features/providers-connectors/providers/pages/ProviderDetailPage.test.tsx`
+**Estimated scope:** S–M.
+
+## Task 36: Provider Detail success/error/not-found
+
+**Acceptance criteria:** všetky states majú rovnaký header/body inset; special `p-6` geometry shift odstránený; default natural scroll zachovaný.
+
+**Verification:** ProviderDetailPage tests pre success/error/not-found.
+
+**Dependencies:** Checkpoint A.
 
 **Estimated scope:** S.
 
-## Task 37: Normalize Infrastructure outer page/workspace boundary
+## Task 37: Infrastructure outer topology workspace
 
-**Acceptance criteria:**
-- [ ] PageHeader + source selector + topology surface používajú explicitný contained workspace chain.
-- [ ] Source selector zostáva feature-specific pre-surface control.
-- [ ] Topology canvas/toolbar/legend semantics sa nemenia.
-- [ ] Route sa prepne na contained po potvrdení flex chainu.
+**Acceptance criteria:** header/action placement podľa baseline; source selector ostáva feature slot; topology primary Card aligned; route contained s explicitným canvas/panel scroll ownerom.
 
-**Verification:**
-- [ ] `InfrastructurePage.test.tsx`.
-- [ ] `InfrastructureTopologyWorkspace.test.tsx` zostane zelený.
-- [ ] router contained assertion.
+**Verification:** Infrastructure page/workspace/router tests.
 
-**Dependencies:** Foundation.
-
-**Files likely touched:**
-- `src/features/discovery-inventory/infrastructure/pages/InfrastructurePage.tsx`
-- `src/features/discovery-inventory/infrastructure/pages/InfrastructurePage.test.tsx`
-- `src/app/AppRoutes.tsx`
-- `src/app/router.test.tsx`
+**Dependencies:** Checkpoint A.
 
 **Estimated scope:** M.
 
-## Task 38: Align Infrastructure loading skeleton with final workspace geometry
+### Checkpoint D2 — Document/detail/topology outer geometry
 
-**Acceptance criteria:**
-- [ ] Skeleton používa rovnaký primary surface boundary ako loaded topology.
-- [ ] Hardcoded `min-h-[620px]`/`min-h-[430px]` sa zachová iba ak browser dôkaz ukáže, že je to semantický minimum; inak sa nahradí flex-fill contractom.
-- [ ] Toolbar/legend skeleton positions zodpovedajú loaded workspace slots.
+- [ ] ModuleWorkQueue + Provider Detail + Infrastructure consciously mapped to their archetypes.
+- [ ] Resources table contract sa na ne neaplikuje nasilu.
 
-**Verification:**
-- [ ] `InfrastructureTopologySkeleton.test.tsx`.
-- [ ] Browser loading-to-loaded transition bez výrazného geometry jumpu.
+## Task 38: Infrastructure loading skeleton
+
+**Acceptance criteria:** loading uses same outer topology surface; hardcoded min-heights only with browser evidence; loading->loaded no major outer jump.
+
+**Verification:** skeleton test + browser transition.
 
 **Dependencies:** Task 37.
 
-**Files likely touched:**
-- `src/features/discovery-inventory/infrastructure/components/InfrastructureTopologySkeleton.tsx`
-- `src/features/discovery-inventory/infrastructure/components/InfrastructureTopologySkeleton.test.tsx`
-
 **Estimated scope:** S.
 
-## Task 39: Builder/detail/topology browser checkpoint
+## Task 39: Builder/detail/topology/document browser matrix
 
-**Routes:** Group create/edit, Application create/edit, Provider Detail success/error if reproducible, Infrastructure all provider types.
+**Routes:** Group/App create/edit, ModuleWorkQueue, Provider Detail, Infrastructure.
 
-**Viewporty:** `1542x765`, `1366x768`, `1920x1080`, mobile smoke.
+**Acceptance criteria:** outer header/Card boundaries stable; inner canvas/list scroll owners correct; error/loading transitions preserve geometry; mobile smoke usable.
 
-**Acceptance criteria:**
-- [ ] Builder action footer ostáva dostupný.
-- [ ] Inner lists/canvas vlastnia scroll, nie AppShell main.
-- [ ] Error/loading transitions nemenia outer frame.
-- [ ] Infrastructure loading->loaded nepreskočí na iný outer surface size.
+**Dependencies:** Tasks 32–38.
 
-**Dependencies:** Tasks 33–38.
+**Estimated scope:** M verification.
 
-**Estimated scope:** M.
+## Checkpoint D — Non-table archetypes complete
 
 ---
 
-# Phase 6 — Loading fallbacks, compatibility cleanup and final verification
+# Phase 4 — Route fallbacks, cleanup and final verification
 
-## Task 40: Introduce archetype-aware `RouteLoadingSkeleton`
+## Task 40: Archetype-aware `RouteLoadingSkeleton`
 
-**Description:** Nahradiť one-size-fits-all table fallback variantami bez vytvorenia separátneho skeleton komponentu pre každú page.
-
-**Minimálne varianty:**
-- `table`,
-- `workspace`,
-- `builder`,
-- `detail/document` iba ak je skutočne potrebný.
+**Variants:** `table`, `workspace`, `builder`, optional `detail/document`.
 
 **Acceptance criteria:**
-- [ ] Varianty používajú PageFrame/PageBody/PageSurface geometry.
-- [ ] Table fallback obsahuje toolbar/content/footer proportions.
-- [ ] Builder fallback obsahuje wizard/sidebar + content + footer proportions.
-- [ ] Workspace fallback nereprezentuje neexistujúcu tabuľku.
+- [ ] Table skeleton proportions follow canonical Resources header/surface/toolbar/data/footer geometry.
+- [ ] Workspace/builder skeletons represent their real archetype, nie fake table.
+- [ ] Infrastructure keeps topology-specific skeleton.
 
-**Verification:**
-- [ ] `RouteLoadingSkeleton.test.tsx` pre každý variant.
+**Verification:** RouteLoadingSkeleton tests per variant.
 
-**Dependencies:** Checkpoints C–D a builder migration.
-
-**Files likely touched:**
-- `src/shared/components/page/RouteLoadingSkeleton.tsx`
-- `src/shared/components/page/RouteLoadingSkeleton.test.tsx`
+**Dependencies:** Checkpoints B–D.
 
 **Estimated scope:** M.
 
-## Task 41: Wire route fallbacks to correct archetype
+## Task 41: Wire route fallbacks to route matrix
 
-**Acceptance criteria:**
-- [ ] Table routes používajú table fallback.
-- [ ] Settings/Identity/Recovery Actions používajú workspace fallback.
-- [ ] Group/Application create/edit používajú builder fallback.
-- [ ] Infrastructure si ponechá vlastný topology skeleton.
+**Acceptance criteria:** every lazy route uses correct archetype fallback; route matrix and router tests agree; no fallback changes business routing.
 
-**Verification:**
-- [ ] `router.test.tsx` alebo dedicated route-fallback assertions.
-- [ ] Browser slow-load smoke aspoň pre table/workspace/builder.
+**Verification:** router/fallback tests.
 
 **Dependencies:** Task 40.
 
-**Files likely touched:**
-- `src/app/AppRoutes.tsx`
-- `src/app/router.test.tsx`
-
 **Estimated scope:** S–M.
 
-## Task 42: Remove or reduce obsolete layout wrappers only after reference check
+## Task 42: Reference-check and remove obsolete wrappers only when safe
 
-**Description:** Po migrácii spraviť impact/reference check pre `InventoryShell`, `ResourceViewportFrame` a lokálne duplicate table wrappers. Odstrániť iba skutočne nepoužívané abstractions.
+**Description:** Po migrácii preveriť references pre `ResourceViewportFrame`, compatibility `ResourceInventoryPanel`, local duplicate table wrappers a obsolete geometry helpers.
 
 **Acceptance criteria:**
-- [ ] Žiadny wrapper sa nemaže len preto, že nový primitive existuje.
-- [ ] Delete iba pri 0 produkčných references alebo po explicitnej compatibility replacement.
-- [ ] Žiadna feature behavior zmena.
+- [ ] Delete iba pri 0 production references alebo explicitnom compatibility replacement.
+- [ ] `InventoryShell`/other shared component sa nemaže len preto, že vznikla nová extrakcia.
+- [ ] Každý cleanup nad 5 files sa rozdelí na samostatný follow-up task.
 
-**Verification:**
-- [ ] symbol/reference search pred delete.
-- [ ] focused tests podľa dotknutých references.
+**Verification:** symbol/reference search + focused tests.
 
-**Dependencies:** Tasks 12–41.
-
-**Files likely touched:** určia sa až reference checkom; task sa musí rozdeliť, ak by presiahol 5 files.
+**Dependencies:** Tasks 7–41.
 
 **Estimated scope:** S–M.
+
+### Checkpoint E1 — Fallback/cleanup
+
+- [ ] Route fallbacks match archetypes.
+- [ ] Compatibility wrappers cleaned only from evidence.
 
 ## Task 43: Final cross-cutting automated verification
 
-**Description:** Keďže refactor zasiahne shared layout primitives a väčšinu route archetypov, finálny checkpoint je cross-cutting a oprávňuje širšiu verification než jednotlivé tasky.
-
-**Acceptance criteria:**
-- [ ] Všetky focused suites z migračných taskov sú zelené.
-- [ ] Full `npm test` alebo ekvivalentný complete Vitest run prejde.
-- [ ] `npm run typecheck` prejde.
-- [ ] `npm run lint` prejde bez nových warningov/errors.
-- [ ] `npm run build` prejde, pretože shared route/layout zmena je cross-cutting.
-- [ ] `git diff --check` prejde.
+**Acceptance criteria:** complete Vitest run, `npm run typecheck`, `npm run lint`, `npm run build`, `git diff --check` green.
 
 **Dependencies:** Task 42.
-
-**Files likely touched:** None; iba regression fixes, ktoré musia byť task-scoped a vysvetlené.
 
 **Estimated scope:** M verification.
 
 ## Task 44: Final browser regression matrix
 
-**Representative routes:**
+**Viewporty:** `1542x765`, `1366x768`, `1920x1080`, `390x844` smoke.
 
-Table:
-- Providers,
-- Recovery Groups,
-- Recovery Policies,
-- Recovery Runs.
-
-Inventory:
-- Resources,
-- Resources ISE.
-
-Workspace:
-- Discovery Settings,
-- Configuration,
-- Recovery Actions,
-- Identity Access.
-
-Builder/detail/topology:
-- Group Builder,
-- Application Builder,
-- Provider Detail,
-- Infrastructure.
+**Representative routes:** canonical Resources/ISE; all table routes; Configuration/Discovery/Recovery Actions/Identity; both builders; ModuleWorkQueue; Provider Detail; Infrastructure.
 
 **Acceptance criteria:**
-- [ ] Same archetype => same outer body/surface inset.
-- [ ] No unexpected page horizontal shift pri vertical scrollbar appearance.
-- [ ] Table pagination anchor stabilný.
-- [ ] No nested desktop vertical scrollbar for same content path.
-- [ ] Loading/error/empty preserve primary surface boundary.
-- [ ] Mobile natural scroll remains usable.
-- [ ] Browser console bez nových warnings/errors.
+- [ ] Same archetype + same slot topology => same canonical outer geometry.
+- [ ] Header actions/tabs/filter modal/table pagination follow reference contracts.
+- [ ] No nested desktop vertical scrollbar, clipping alebo console regressions.
 
 **Dependencies:** Task 43.
 
-**Estimated scope:** L verification, ale bez source implementácie; ak odhalí regresiu, každá oprava sa otvorí ako samostatný S/M task.
+**Estimated scope:** L verification only; každá nájdená regresia je samostatný S/M fix task.
+
+## Task 45: Final 26-route traceability signoff
+
+**Description:** Prejsť autoritatívnu matrix z §2.3 riadok po riadku.
+
+**Acceptance criteria:**
+- [ ] Všetkých 26 route-level pages má completed migration/verification task.
+- [ ] Každá page má vedome určený archetype, route mode a scroll owner.
+- [ ] Žiadna page nie je iba uvedená v audite bez implementačného/verifikačného tasku.
+
+**Dependencies:** Task 44.
+
+**Estimated scope:** S verification/documentation.
 
 ## Checkpoint E — Complete
 
-- [ ] Všetkých 26 route-level pages je klasifikovaných a vedome používa jeden archetype contract.
-- [ ] Table/list pages používajú fixed primary surface + fixed pagination contract.
-- [ ] Resources zachováva všetky feature-specific controls a používa shared geometry.
-- [ ] Workspace pages majú jeden explicitný scroll owner.
-- [ ] Builders majú zjednotenú outer geometry a rovnakú sidebar-width policy.
-- [ ] Detail/error/loading states nemenia náhodne body inset.
-- [ ] Route-loading fallback zodpovedá cieľovému archetypu.
-- [ ] Shared wrappers sú vyčistené iba tam, kde sú skutočne obsolete.
+- [ ] Resources + Resources ISE sú canonical reference a ich známe baseline inconsistencies sú odstránené.
+- [ ] Table/list pages match Resources-derived X/Y/actions/tabs/filter/table/pagination contract.
+- [ ] Workspace/builder/detail/topology/document pages preberajú iba relevantné baseline rules, nie table semantics.
+- [ ] Všetkých 26 routes je traceable a browserovo sign-offnutých.
 
 ---
 
-# Verification strategy
+# 5. Browser measurement protocol
 
-## Per-task verification
+Pri canonical baseline a každom checkpointu zaznamenať:
 
-Každý implementačný task musí použiť najmenší focused scope, ktorý dokazuje danú zmenu:
+- viewport size,
+- page header `left/top/width/height`,
+- action group `left/right/top/height`,
+- primary surface `left/top/width/height`,
+- surface header/tabs bounds,
+- data toolbar bounds,
+- data viewport `clientHeight/scrollHeight/overflow-y`,
+- table `clientWidth/scrollWidth/overflow-x`,
+- pagination `top/height/bottom`,
+- AppShell/main/page/table scrollbar presence.
+
+Porovnanie sa robí s Resources baseline pri rovnakom viewporte. Absolútne Y nemusí byť rovnaké medzi pages s odlišnými funkčnými slots (napr. metrics), ale rovnaká slot topology nesmie mať accidental wrapper/padding drift.
+
+# 6. Required data/state scenarios
+
+Pre table/inventory pages:
+
+- loading,
+- fatal load error bez cached data,
+- cached-data refresh error,
+- no-provider, ak feature pozná provider boundary,
+- empty success,
+- 1 row,
+- page-size/full page,
+- overflowing rows,
+- mutation alert, ak feature podporuje mutation,
+- open filter modal,
+- active tabs, ak feature má tabs.
+
+# 7. Verification strategy
+
+Per implementation task:
 
 ```text
 npm exec vitest run <affected-test-files>
@@ -1253,138 +1035,79 @@ npm exec -- eslint <changed-ts-tsx-files> --max-warnings=0
 git diff --check
 ```
 
-`npm run typecheck` sa pridáva pri shared primitive, route contract alebo type-level zmene.
+`npm run typecheck` pri shared extraction, route contract alebo type-level zmene.
 
-## Checkpoint verification
+Browser checkpoints sú povinné; JSDOM class assertions nie sú dôkaz reálneho X/Y/overflow behavioru.
 
-Po Pilot/Table/Workspace/Builder checkpointoch sa vykoná browser verification. JSDOM class assertions nie sú dôkaz reálneho overflowu.
+Final checkpoint je cross-cutting a preto zahŕňa complete tests + typecheck + lint + build.
 
-## Final verification
+# 8. Rollback strategy
 
-Pretože výsledná zmena je cross-cutting, na konci sa vykoná full tests + typecheck + lint + build.
+1. Každý task/feature slice má atomic commit.
+2. Pri browser gate failure sa opravuje/revertuje posledný slice, nie celý program.
+3. Canonical Resources contract sa nemení kvôli jednej page-specific výnimke bez dôkazu, že problém reprodukujú minimálne dve nezávislé pages.
+4. Žiadne page-specific max-height/viewport hacks na obídenie canonical contractu.
 
-# Browser measurement protocol
+# 9. Parallelization
 
-Pri každom browser checku zaznamenať pre relevantné DOM boundaries:
+## Sekvenčné
 
-- `clientWidth`, `scrollWidth`,
-- `clientHeight`, `scrollHeight`,
-- computed `overflow-x`, `overflow-y`,
-- top/left/width/height primary PageSurface,
-- top/left/width/height table viewport,
-- top/height pagination,
-- prítomnosť browser/main/table scrollbarov.
+- Tasks 1–7: Resources stabilization -> browser approval -> shared extraction.
+- Route contained switch až po inner table migrations.
+- Identity outer frame pred Identity sections.
+- Loading fallback/cleanup až po archetype stabilization.
 
-Dôležité nie je absolútne pixelové číslo medzi odlišnými archetypmi, ale invariant:
+## Bezpečne paralelizovateľné po Checkpoint A
 
-- rovnaký archetyp a rovnaká slot topology => rovnaký geometry contract,
-- rozdiel smie vzniknúť iba z viditeľného funkčného slotu (metrics/tabs/notice), nie z accidental wrapper/padding.
-
-# Test-data scenarios
-
-Pre table components mať automated coverage minimálne pre:
-
-- loading,
-- fatal load error bez cached data,
-- cached-data refresh error,
-- empty success,
-- 1 row,
-- page-size/full page rows,
-- overflowing rows,
-- mutation alert, ak feature podporuje mutation.
-
-Rows sa nesmú stretchovať do voľného priestoru; voľný priestor patrí content viewportu.
-
-# Rollback strategy
-
-Refactor sa musí implementovať po checkpointoch a atomických commits. Ak browser gate zlyhá:
-
-1. nerevertovať celý program,
-2. revertovať alebo opraviť iba posledný archetype slice,
-3. shared primitive contract meniť iba ak problém reprodukujú minimálne dva nezávislé pilot pages,
-4. nepoužiť page-specific `max-height` workaround na obídenie shared contractu.
-
-# Parallelization
-
-## Bezpečne paralelizovateľné po Checkpoint B
-
-- Providers / Platform Providers / Credentials / Recovery Applications / Policy Sets / Recovery Runs migrations,
-- Configuration / Discovery Settings / Recovery Actions migrations,
-- Identity section pairs po dokončení Identity outer frame,
-- Provider Detail môže bežať nezávisle od builder migration.
-
-## Musí byť sekvenčné
-
-- Foundation primitives pred pilotom,
-- pilot pred masovou migráciou,
-- route contained switch až po pripravenom vnútornom layout contracte danej dávky,
-- Identity outer frame pred section migrations,
-- loading fallback wiring až po stabilizovaní archetypov,
-- cleanup wrappers až po reference checku.
+- jednotlivé table pages 8–16, ak nemenia rovnaký shared component,
+- Configuration/Discovery/Recovery Actions slices,
+- Provider Detail a ModuleWorkQueue,
+- Identity section pairs po Task 24.
 
 ## Coordination hazard
 
-`src/app/AppRoutes.tsx` je shared hot file. Paralelné agents by ho nemali editovať súčasne. Route metadata/fallback wiring má mať jedného vlastníka alebo byť vykonané sekvenčne.
+`src/app/AppRoutes.tsx` je hot file. Route metadata a fallback wiring má mať jedného vlastníka alebo sa musí vykonať sekvenčne.
 
-# Risks and mitigations
+# 10. Risks and mitigations
 
 | Riziko | Dopad | Mitigácia |
 |---|---|---|
-| Global layout primitive rozbije veľa pages naraz | High | Najprv nové primitives bez adopcie; pilot; compatibility wrappers; žiadny big-bang shared wrapper rewrite |
-| Contained route začne clipovať obsah | High | Handle pridať až po feature flex-chain migrácii; browser gate na krátkom desktope |
-| Pagination sa znovu odsekne | High | TableSurface fixed footer + `min-h-0` chain + browser overflow dataset |
-| Nested vertical scroll | High | Jeden explicitný scroll owner; computed overflow meranie |
-| Browser scrollbar spôsobí horizontal jump | Medium | `scrollbar-gutter: stable` na table/workspace viewportoch, kde je relevantný |
-| Empty/error state zmení celý page layout | High | Request states renderovať v primary surface; regression tests |
-| Resources stratí provider-specific controls | High | Nezasahovať do hooks/query/filter tabs/drawer; Resources compatibility task je layout-only |
-| Identity refactor sa zmení na funkčný redesign | High | Outer frame first; table sections po dvojiciach; non-table sections verification-only |
-| Builder inner scroll sa rozbije pri zjednotení sidebaru | High | Existujúci contained builder plan je baseline; browser test selected/available panes |
-| Shared radius zmení nested semantic cards | Medium | `rounded-[20px]` iba primary PageSurface; nested cards out of scope |
-| Route fallback wiring vytvorí veľký merge konflikt | Medium | Jeden route owner, samostatný late-phase task |
-| Unrelated generated/OpenAPI zmeny sa dostanú do commitov | High | Explicit path staging; pred každým commitom `git diff --cached --name-status` |
+| Resources sa skopíruje aj s dnešnými chybami | High | Tasks 1–4 odstránia no-provider/radius inconsistency pred canonical approval |
+| Nový shared abstraction zopakuje predošlý neúspešný smer | High | Shared extraction až po browser-approved Resources; API musí kopírovať proven DOM/classes |
+| Double outer inset | High | Resources X/W baseline + explicit removal accidental outer `p-3` |
+| Pagination sa hýbe podľa rows | High | `auto/minmax(0,1fr)/auto` shared surface + browser 0/1/many datasets |
+| Nested vertical scroll | High | Jeden explicitný scroll owner + computed overflow measurement |
+| Tabs budú na rôznych miestach | Medium | Table/inventory tabs v canonical primary surface header |
+| Filter UX sa rozíde | Medium | `DataTableToolbar` + shared Modal pre table filters; feature dodá iba fields/semantics |
+| No-provider/error zmení layout | High | State invariant vo vnútri canonical surface |
+| Identity refactor sa zmení na redesign | High | Outer first; table sections po dvojiciach; non-table verification-only |
+| Builders budú nasilu kopírovať table layout | High | Route archetype matrix jasne oddeľuje relevantné baseline rules |
+| Unrelated worktree changes sa dostanú do commitov | High | explicit path staging + staged diff review |
 
-# Current working-tree safety note
+# 11. Current working-tree safety note
 
-Pri vytvorení tohto plánu sú na vetve `test` už existujúce nezávislé modified files:
+Pri tejto revízii plánu sú v worktree nezávislé zmeny:
 
-- `openapi/abco-api.json`
-- `src/generated/api/models/orchestrationProvider.gen.ts`
-- `src/generated/api/models/orchestrationProviderRecord.gen.ts`
-- `src/generated/api/models/providerType.gen.ts`
-- `src/generated/api/zod.gen.ts`
+- `tasks/access-logs-audit-plan.md`
+- `tasks/access-logs-audit-todo.md`
 
-Tieto súbory nie sú súčasťou page-layout refaktoru. Žiadny task z tohto plánu ich nesmie stage-nuť, meniť, resetovať ani zahrnúť do commitu.
+Nie sú súčasťou page-layout programu a nesmú byť stage-nuté, resetnuté ani zahrnuté do jeho commitov. Rovnaké pravidlo platí pre akékoľvek budúce unrelated OpenAPI/generated alebo iné pre-existing changes.
 
-# Estimated program size
+# 12. Definition of Done
 
-Toto je veľká cross-cutting zmena.
-
-Odhad:
-
-- približne 30–45 hodín focused implementation + verification práce,
-- približne 12–20 atomických implementačných commitov,
-- 5 hlavných browser/checkpoint gates,
-- source scope potenciálne desiatky files, ale každý jednotlivý task ostáva S/M a typicky <= 5 files.
-
-Odhad nezahŕňa nové produktové požiadavky ani API/backend zmeny odhalené počas implementácie.
-
-# Open questions / decision gates
-
-1. **Builder sidebar width:** nevyberať 240/260/280 bez browser evidence. Task 35 vyberie jednu spoločnú hodnotu podľa najdlhšieho reálneho step labelu.
-2. **Metrics slot:** nepridávať neviditeľný spacer len kvôli identickému Y medzi stavmi, kde metrics semanticky neexistujú. Ak reviewer požaduje absolútne identický surface Y aj pri fatal provider error, je to samostatné produktové rozhodnutie.
-3. **Primary surface flattening:** cieľový contract predpokladá jeden primary PageSurface a odstraňuje accidental nested primary cards. Nested semantic cards zostávajú. Pilot browser gate musí potvrdiť, že výsledok zodpovedá očakávanej vizuálnej hierarchii pred masovou migráciou.
-
-# Definition of Done
-
-- [ ] Každý implementačný task má focused acceptance criteria a verification.
-- [ ] Žiadny task nie je XL; task s >5 nezávislými source files sa rozdelí.
-- [ ] Pilot bol schválený pred masovou migráciou.
-- [ ] Same-archetype pages používajú rovnaký PageFrame/PageBody/PageSurface contract.
-- [ ] Table rows count nemení primary surface height ani pagination Y.
-- [ ] Loading/error/empty nemenia outer primary surface boundary.
+- [ ] Resources/Resources ISE no-provider state neobchádza canonical primary surface.
+- [ ] Canonical primary/table bordered surface nepoužíva mixed `rounded-2xl` vs `rounded-[20px]` contract.
+- [ ] Resources baseline bol browserovo schválený pred migráciou ostatných pages.
+- [ ] Shared contained/table primitives sú iba extrakcie proven Resources patternu.
+- [ ] Same table archetype používa rovnaké header/action/surface/tab/filter/table/pagination placement pravidlá.
+- [ ] Add/Create/Refresh actions sú v canonical page action slote.
+- [ ] Table filters používajú shared `DataTableToolbar` modal pattern, kde významovo patria.
+- [ ] 0/1/many rows nemenia primary table surface H ani pagination Y.
+- [ ] Loading/error/empty/no-provider nemenia accidental outer surface boundary.
 - [ ] Desktop contained pages majú jedného explicitného vertical scroll ownera.
-- [ ] Mobilný natural scroll zostáva funkčný.
-- [ ] Typografia, farby, feature logic, API calls, filters a query semantics zostali zachované.
-- [ ] Focused tests + checkpoint browser verification prešli počas migrácie.
-- [ ] Finálne full tests, lint, typecheck, build a `git diff --check` prešli.
-- [ ] Každý commit je atomický a neobsahuje pre-existing OpenAPI/generated zmeny.
+- [ ] Mobile natural scroll ostáva použiteľný.
+- [ ] Všetkých 26 route-level pages je priamo mapovaných na archetype + task + route mode + scroll owner.
+- [ ] `ModuleWorkQueuePage` a `ResourcesIsePage` majú explicitné pokrytie, nie iba audit mention/smoke.
+- [ ] Typografia, farby, business logic, API calls, query/filter semantics zostali zachované okrem explicitnej layout unifikácie.
+- [ ] Final complete tests, lint, typecheck, build, `git diff --check` a browser matrix sú zelené.
+- [ ] Každý implementation commit je atomic a neobsahuje unrelated pre-existing changes.
