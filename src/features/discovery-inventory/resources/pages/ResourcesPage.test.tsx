@@ -455,7 +455,7 @@ describe('ResourcesPage', () => {
     expect(screen.queryByText('No provider configured')).not.toBeInTheDocument()
   })
 
-  it('renders a terminal no-provider state without a loading skeleton', () => {
+  it('renders the terminal no-provider state inside the inventory surface', () => {
     providersQuery = {
       ...providersQuery,
       data: [],
@@ -464,7 +464,9 @@ describe('ResourcesPage', () => {
 
     render(<ResourcesPage />)
 
-    expect(screen.getByText('No provider configured')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Virtual machines' })).toBeInTheDocument()
+    const inventoryRegion = screen.getByRole('region', { name: 'Inventory records' })
+    expect(within(inventoryRegion).getByText('No provider configured')).toBeInTheDocument()
     expect(screen.queryByText('Metrics skeleton')).not.toBeInTheDocument()
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
   })

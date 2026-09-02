@@ -1,7 +1,5 @@
 import { useMemo } from 'react'
 import { Tabs } from '@/shared/components/tabs/Tabs'
-import { EmptyState } from '@/shared/components/empty-state/EmptyState'
-import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
 import { FlashSystemResourcesPage } from '@/features/discovery-inventory/resources/components/flash-system/FlashSystemResourcesPage'
@@ -10,7 +8,6 @@ import type { SourceResourcesPageProps } from '@/features/discovery-inventory/re
 import { buildResourceTargetTabs, formatResourceProviderId } from '@/features/discovery-inventory/resources/helpers/buildResourceSourceTabs'
 import { VmwareResourcesPage } from '@/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage'
 import { useResourceTabSearchParam } from '@/features/discovery-inventory/resources/hooks/useResourceTabSearchParam'
-import { ResourceViewportFrame } from '@/features/discovery-inventory/resources/components/ResourceViewportFrame'
 
 export function ResourcesIsePage() {
   const { t } = useTranslation()
@@ -39,24 +36,6 @@ export function ResourcesIsePage() {
   const effectiveActiveTab = providersSuccess && activeRoleTab?.providerId === null && visibleRoleTabs.length > 0
     ? visibleRoleTabs[0]
     : activeRoleTab
-
-  if (providersSuccess && visibleRoleTabs.length === 0) {
-    return (
-      <ResourceViewportFrame>
-        <TableToolbar
-          eyebrow={t('pages.resourcesIse.eyebrow')}
-          title={t('pages.virtualMachines.title')}
-          description={t('pages.virtualMachines.description')}
-          isFetching={providersFetching}
-          onRefresh={() => { void refetchProviders() }}
-        />
-        <EmptyState
-          title={t('resources.common.noProviderTitle')}
-          description={t('resources.common.noProviderDescription')}
-        />
-      </ResourceViewportFrame>
-    )
-  }
 
   const tabs = (
     <Tabs
@@ -95,7 +74,7 @@ export function ResourcesIsePage() {
     providersError: providersError instanceof Error ? providersError : null,
     onRefetchProviders: () => { void refetchProviders() },
     providerId: effectiveActiveTab?.providerId ?? null,
-    tabs,
+    tabs: visibleRoleTabs.length > 0 ? tabs : undefined,
     t,
     role: 'target',
   }

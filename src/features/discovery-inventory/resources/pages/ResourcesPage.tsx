@@ -1,7 +1,5 @@
 import { useMemo } from 'react'
 import { Tabs } from '@/shared/components/tabs/Tabs'
-import { EmptyState } from '@/shared/components/empty-state/EmptyState'
-import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
 import { FlashSystemResourcesPage } from '../components/flash-system/FlashSystemResourcesPage'
@@ -10,7 +8,6 @@ import type { SourceResourcesPageProps } from '../components/SourceResourcesPage
 import { buildResourceSourceTabs, formatResourceProviderId } from '../helpers/buildResourceSourceTabs'
 import { VmwareResourcesPage } from '../components/vmware/VmwareResourcesPage'
 import { useResourceTabSearchParam } from '../hooks/useResourceTabSearchParam'
-import { ResourceViewportFrame } from '../components/ResourceViewportFrame'
 
 export function ResourcesPage() {
   const { t } = useTranslation()
@@ -39,24 +36,6 @@ export function ResourcesPage() {
   const effectiveActiveTab = providersSuccess && activeRoleTab?.providerId === null && visibleRoleTabs.length > 0
     ? visibleRoleTabs[0]
     : activeRoleTab
-
-  if (providersSuccess && visibleRoleTabs.length === 0) {
-    return (
-      <ResourceViewportFrame>
-        <TableToolbar
-          eyebrow={t('pages.virtualMachines.eyebrow')}
-          title={t('pages.virtualMachines.title')}
-          description={t('pages.virtualMachines.description')}
-          isFetching={providersFetching}
-          onRefresh={() => { void refetchProviders() }}
-        />
-        <EmptyState
-          title={t('resources.common.noProviderTitle')}
-          description={t('resources.common.noProviderDescription')}
-        />
-      </ResourceViewportFrame>
-    )
-  }
 
   const tabs = (
     <Tabs
@@ -95,7 +74,7 @@ export function ResourcesPage() {
     providersError: providersError instanceof Error ? providersError : null,
     onRefetchProviders: () => { void refetchProviders() },
     providerId: effectiveActiveTab?.providerId ?? null,
-    tabs,
+    tabs: visibleRoleTabs.length > 0 ? tabs : undefined,
     t,
     role: 'source',
   }
