@@ -1925,7 +1925,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AccessLogsResponse"
+                }
               }
             }
           },
@@ -3809,6 +3811,79 @@
           "status"
         ],
         "title": "HealthResponse"
+      },
+      "AccessLogEntry": {
+        "additionalProperties": true,
+        "properties": {
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          },
+          "duration_ms": {
+            "type": "number",
+            "title": "Duration Ms"
+          },
+          "request_body": {
+            "title": "Request Body"
+          },
+          "response_body": {
+            "title": "Response Body"
+          }
+        },
+        "type": "object",
+        "required": [
+          "method",
+          "path",
+          "status",
+          "duration_ms",
+          "request_body",
+          "response_body"
+        ],
+        "title": "AccessLogEntry"
+      },
+      "RawAccessLogEntry": {
+        "properties": {
+          "raw": {
+            "type": "string",
+            "title": "Raw"
+          }
+        },
+        "type": "object",
+        "required": [
+          "raw"
+        ],
+        "title": "RawAccessLogEntry"
+      },
+      "AccessLogsResponse": {
+        "properties": {
+          "entries": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AccessLogEntry"
+                },
+                {
+                  "$ref": "#/components/schemas/RawAccessLogEntry"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Entries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entries"
+        ],
+        "title": "AccessLogsResponse"
       },
       "OrchestrationProvider": {
         "properties": {

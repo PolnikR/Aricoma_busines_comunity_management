@@ -4,9 +4,21 @@ interface RowDensityToggleProps {
   density: TableDensity
   onDensityChange: (density: TableDensity) => void
   isFetching?: boolean
+  ariaLabel?: string
+  comfortableLabel?: string
+  compactLabel?: string
 }
 
-export function RowDensityToggle({ density, onDensityChange, isFetching }: RowDensityToggleProps) {
+export function RowDensityToggle({
+  density,
+  onDensityChange,
+  isFetching,
+  ariaLabel = 'Row density',
+  comfortableLabel = 'comfortable',
+  compactLabel = 'compact',
+}: RowDensityToggleProps) {
+  const labels = { comfortable: comfortableLabel, compact: compactLabel }
+
   return (
     <div className="flex items-center gap-3">
       {isFetching ? (
@@ -15,7 +27,7 @@ export function RowDensityToggle({ density, onDensityChange, isFetching }: RowDe
           Updating
         </span>
       ) : null}
-      <div className="inline-flex h-10 overflow-x-auto rounded-xl bg-surface-muted p-0.5" role="group" aria-label="Row density">
+      <div className="inline-flex h-10 overflow-x-auto rounded-xl bg-surface-muted p-0.5" role="group" aria-label={ariaLabel}>
         {(['comfortable', 'compact'] as const).map((mode) => (
           <button
             key={mode}
@@ -26,7 +38,7 @@ export function RowDensityToggle({ density, onDensityChange, isFetching }: RowDe
             aria-pressed={density === mode}
             className={`shrink-0 rounded-[10px] px-3 text-xs font-medium capitalize transition sm:text-sm ${density === mode ? 'bg-surface text-accent shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
           >
-            {mode}
+            {labels[mode]}
           </button>
         ))}
       </div>

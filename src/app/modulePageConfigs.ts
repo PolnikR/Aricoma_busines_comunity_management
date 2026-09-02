@@ -38,15 +38,6 @@ export const platformAdministrationPages: ModulePageConfig[] = [
     apiBoundary: 'GET /api/platform/identity-access',
     workflowItems: ['Users and roles', 'Session controls', 'Service identities'],
   },
-  {
-    path: routes.platformAuditRetention,
-    eyebrow: 'Platform Administration',
-    title: 'Audit',
-    description: 'Audit evidence workspace for audit records, search, export, SIEM forwarding, retention, and protected evidence.',
-    excelSource: '10 PA Requirements: Audit; Data management',
-    apiBoundary: 'GET /api/platform/audit-retention',
-    workflowItems: ['Audit search', 'Export queue', 'Retention policy'],
-  },
 ]
 
 export const providersConnectorsPages: ModulePageConfig[] = [

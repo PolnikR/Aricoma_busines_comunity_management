@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type {
+  AccessLogsResponse,
   CacheConfigResponse,
   CacheConfigUpdate,
   CacheHistoryResponse,
@@ -813,9 +814,9 @@ export const getGetAccessLogsGetAccessLogsGetUrl = (params?: GetAccessLogsGetAcc
 /**
  * @summary Get Access Logs
  */
-export const getAccessLogsGetAccessLogsGet = async (params?: GetAccessLogsGetAccessLogsGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<unknown> => {
+export const getAccessLogsGetAccessLogsGet = async (params?: GetAccessLogsGetAccessLogsGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<AccessLogsResponse> => {
 
-  return orvalMutator<unknown>(getGetAccessLogsGetAccessLogsGetUrl(params),
+  return orvalMutator<AccessLogsResponse>(getGetAccessLogsGetAccessLogsGetUrl(params),
   {
     ...options,
     method: 'GET'

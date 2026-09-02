@@ -148,6 +148,32 @@ export const HealthResponse = zod.object({
 export type HealthResponse = zod.input<typeof HealthResponse>;
 export type HealthResponseOutput = zod.output<typeof HealthResponse>;
 
+export const AccessLogEntry = zod.object({
+  "method": zod.string(),
+  "path": zod.string(),
+  "status": zod.int(),
+  "duration_ms": zod.number(),
+  "request_body": zod.unknown(),
+  "response_body": zod.unknown()
+});
+
+export type AccessLogEntry = zod.input<typeof AccessLogEntry>;
+export type AccessLogEntryOutput = zod.output<typeof AccessLogEntry>;
+
+export const RawAccessLogEntry = zod.object({
+  "raw": zod.string()
+});
+
+export type RawAccessLogEntry = zod.input<typeof RawAccessLogEntry>;
+export type RawAccessLogEntryOutput = zod.output<typeof RawAccessLogEntry>;
+
+export const AccessLogsResponse = zod.object({
+  "entries": zod.array(zod.union([AccessLogEntry,RawAccessLogEntry]))
+});
+
+export type AccessLogsResponse = zod.input<typeof AccessLogsResponse>;
+export type AccessLogsResponseOutput = zod.output<typeof AccessLogsResponse>;
+
 export const ProviderType = zod.enum(['VMWARE', 'FLASHCOPY', 'IBM_POWER', 'AIRFLOW', 'SMTP', 'BACKEND', 'KEYCLOAK']);
 
 export type ProviderType = zod.input<typeof ProviderType>;
@@ -1290,7 +1316,7 @@ export const GetAccessLogsGetAccessLogsGetHeader = zod.object({
   "X-User": zod.union([zod.string(),zod.null()]).default(getAccessLogsGetAccessLogsGetHeaderXUserDefault)
 })
 
-export const GetAccessLogsGetAccessLogsGetResponse = zod.unknown()
+export const GetAccessLogsGetAccessLogsGetResponse = AccessLogsResponse
 
 
 /**

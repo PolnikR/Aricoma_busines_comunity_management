@@ -5,6 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './accessLogEntry.gen';
+export * from './accessLogsResponse.gen';
 export * from './cacheConfigResponse.gen';
 export * from './cacheConfigResponseDefaults.gen';
 export * from './cacheConfigUpdate.gen';
@@ -65,6 +67,7 @@ export * from './providerRole.gen';
 export * from './providersResponse.gen';
 export * from './providerTestResponse.gen';
 export * from './providerType.gen';
+export * from './rawAccessLogEntry.gen';
 export * from './recoveryApplication.gen';
 export * from './recoveryApplicationTiers.gen';
 export * from './recoveryAppPoliciesResponse.gen';
