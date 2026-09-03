@@ -126,7 +126,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] One vertical scroll owner per workspace branch.
 
 - [x] Task 25 — Identity Users + Realm Roles.
-- [ ] Task 26 — Identity Clients + Client Scopes.
+- [x] Task 26 — Identity Clients + Client Scopes.
 - [ ] Task 27 — Identity Organizations + User Federation.
 
 ## Checkpoint C3

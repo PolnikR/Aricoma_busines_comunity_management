@@ -27,7 +27,7 @@ describe('ClientsSection', () => {
   it('lists the preview public browser client', async () => {
     render(<ClientsSection entityId={null} tabId={null} onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
     expect(screen.getByRole('searchbox', { name: 'Search clients' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Clients')).toBeInTheDocument()
+    expect(screen.getAllByLabelText('Clients')[0]).toHaveClass('grid', 'grid-rows-[auto_minmax(0,1fr)_auto]')
     expect(await screen.findByText('abcm-fe')).toBeInTheDocument()
     expect(screen.getByText('Preview only')).toBeInTheDocument()
   })

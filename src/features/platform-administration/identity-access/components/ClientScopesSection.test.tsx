@@ -9,7 +9,7 @@ describe('ClientScopesSection', () => {
   it('uses shared search/table controls without fabricating client scopes', () => {
     render(<ClientScopesSection entityId={null} tabId={null} onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
     expect(screen.getByRole('searchbox', { name: 'Search client scopes' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Client scopes')).toBeInTheDocument()
+    expect(screen.getAllByLabelText('Client scopes')[0]).toHaveClass('grid', 'grid-rows-[auto_minmax(0,1fr)_auto]')
     expect(screen.getByText('No client scopes connected')).toBeInTheDocument()
   })
 

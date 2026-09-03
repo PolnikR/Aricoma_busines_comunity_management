@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
-import { DataTable, DataTableToolbar, useTableState } from '@/shared/components/data-table'
+import { DataTable, DataTableSurface, DataTableToolbar, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
-import { IdentityContentPanel, IdentityResourceDetailPage } from './IdentityResourceLayout'
+import { IdentityResourceDetailPage } from './IdentityResourceLayout'
 
 interface ClientScopeSummary {
   id: string
@@ -64,15 +64,17 @@ export function ClientScopesSection({ entityId, tabId, onEntityChange, onTabChan
   }
 
   return (
-    <IdentityContentPanel>
-      <DataTableToolbar
+    <DataTableSurface
+      ariaLabel={t('identity.navigation.sections.client-scopes')}
+      toolbar={<DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
         searchPlaceholder={t('identity.clientScopes.search')}
         searchLabel={t('identity.clientScopes.search')}
         density={table.density}
         onDensityChange={table.setDensity}
-      />
+      />}
+    >
       <DataTable
         layout="fit"
         columns={columns}
@@ -84,6 +86,6 @@ export function ClientScopesSection({ entityId, tabId, onEntityChange, onTabChan
         rowAriaLabel={scope => t('identity.clientScopes.rowAriaLabel', { name: scope.name })}
         emptyContent={<EmptyState title={t('identity.clientScopes.empty.title')} description={t('identity.clientScopes.empty.description')} />}
       />
-    </IdentityContentPanel>
+    </DataTableSurface>
   )
 }

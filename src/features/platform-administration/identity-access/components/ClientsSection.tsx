@@ -1,14 +1,14 @@
 import { useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Badge } from '@/shared/components/badge/Badge'
-import { DataTable, DataTableToolbar, SkeletonBlock, useTableState } from '@/shared/components/data-table'
+import { DataTable, DataTableSurface, DataTableToolbar, SkeletonBlock, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { Field, Input } from '@/shared/components/form/FormControls'
 import { useIdentityAdminPreview } from '../hooks/useIdentityAdminPreview'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
 import type { IdentityClientView, IdentityRoleView } from '../services/identityAdminGateway'
-import { IdentityContentPanel, IdentityResourceDetailPage, IdentitySettingsSection } from './IdentityResourceLayout'
+import { IdentityResourceDetailPage, IdentitySettingsSection } from './IdentityResourceLayout'
 
 const CANONICAL_CLIENT_TABS = ['settings', 'keys', 'credentials', 'roles', 'client-scopes', 'authorization', 'service-accounts-roles', 'sessions', 'permissions'] as const
 const VISIBLE_CLIENT_TABS = ['settings', 'roles'] as const
@@ -92,15 +92,17 @@ export function ClientsSection({ entityId, tabId, onEntityChange, onTabChange }:
   }
 
   return (
-    <IdentityContentPanel>
-      <DataTableToolbar
+    <DataTableSurface
+      ariaLabel={t('identity.navigation.sections.clients')}
+      toolbar={<DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
         searchPlaceholder={t('identity.clients.search')}
         searchLabel={t('identity.clients.search')}
         density={table.density}
         onDensityChange={table.setDensity}
-      />
+      />}
+    >
       {error
         ? <div className="p-4"><EmptyState title={t('identity.clients.loadFailed')} description={error.message} /></div>
         : <DataTable
@@ -115,7 +117,7 @@ export function ClientsSection({ entityId, tabId, onEntityChange, onTabChange }:
             isLoading={isLoading && clients.length === 0}
             emptyContent={<EmptyState title={isLoading ? t('identity.clients.loading') : t('identity.clients.empty.title')} description={t('identity.clients.empty.description')} />}
           />}
-    </IdentityContentPanel>
+    </DataTableSurface>
   )
 }
 
