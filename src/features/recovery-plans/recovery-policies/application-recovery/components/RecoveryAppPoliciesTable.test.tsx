@@ -31,6 +31,7 @@ describe('RecoveryAppPoliciesTable', () => {
     const user = userEvent.setup()
     render(<RecoveryAppPoliciesTable policies={[]} isLoading error={null} isRetrying={false} onRetry={vi.fn()} />)
 
+    expect(screen.getByRole('region', { name: 'Recovery app policies table' })).toBeInTheDocument()
     expect(screen.getByRole('searchbox', { name: 'Search recovery app policies' })).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Policy' })).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Snapshot selection' })).toBeVisible()

@@ -29,6 +29,7 @@ describe('CleanRoomPoliciesTable', () => {
       />,
     )
 
+    expect(screen.getByRole('region', { name: 'Clean room policies table' })).toBeInTheDocument()
     expect(screen.getByRole('searchbox', { name: 'Search clean room policies' })).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Policy' })).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Status' })).toBeVisible()

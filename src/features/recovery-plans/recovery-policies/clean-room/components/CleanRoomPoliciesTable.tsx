@@ -5,6 +5,7 @@ import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import {
   DataTable,
+  DataTableSurface,
   DataTablePagination,
   DataTableRequestState,
   DataTableToolbar,
@@ -91,8 +92,8 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
   const loadErrorDetail = extractBackendErrorDetail(error)
   const deleteErrorDetail = extractBackendErrorDetail(deletePolicy.error)
 
-  return (
-    <div className="flex flex-col">
+  const toolbar = (
+    <>
       <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
@@ -103,7 +104,23 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
       />
 
       {deletePolicy.error ? <Alert className="mx-4 mt-4" title={t('cleanRoomPolicies.delete.title')} {...(deleteErrorDetail ? { description: deleteErrorDetail } : {})} variant="error" /> : null}
+    </>
+  )
 
+  const pagination = (!error || policies.length > 0) ? (
+    <DataTablePagination
+      page={table.page}
+      pageSize={table.pageSize}
+      total={table.total}
+      isLoading={isLoading}
+      onPageChange={table.setPage}
+      onPageSizeChange={table.setPageSize}
+    />
+  ) : null
+
+  return (
+    <>
+      <DataTableSurface ariaLabel={t('cleanRoomPolicies.tableLabel')} toolbar={toolbar} pagination={pagination}>
       <DataTableRequestState
         hasCachedData={policies.length > 0}
         error={error ? {
@@ -128,17 +145,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
           emptyContent={rows.length > 0 ? t('cleanRoomPolicies.noMatches') : t('cleanRoomPolicies.empty')}
         />
       </DataTableRequestState>
-
-      {(!error || policies.length > 0) ? (
-        <DataTablePagination
-          page={table.page}
-          pageSize={table.pageSize}
-          total={table.total}
-          isLoading={isLoading}
-          onPageChange={table.setPage}
-          onPageSizeChange={table.setPageSize}
-        />
-      ) : null}
+      </DataTableSurface>
 
       <DetailDrawer
         open={selected !== null}
@@ -232,6 +239,6 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
           onClose={() => { setJsonViewId(null) }}
         />
       ) : null}
-    </div>
+    </>
   )
 }
