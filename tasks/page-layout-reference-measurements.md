@@ -23,13 +23,15 @@ runtime states were observed from the supplied screenshots.
 | Resources | VMware VMs, 200 records at `1542x765` | The table keeps the canonical contained surface and fixed pagination. |
 | Resources | VMware VMs, 200 records at `1920x1080` | The expanded desktop view preserves the same header, surface, and pagination ownership. |
 | Resources ISE | VMware VMs, 1 row at `390x844` | Mobile layout is usable; the table retains horizontal scrolling and fixed pagination. |
+| Resources | VMware VMs, loading | Metrics, tabs, primary surface, and a fixed skeleton footer remain inside the canonical geometry. |
+| Resources | FlashSystem Volumes, loading | The FlashSystem skeleton preserves the same primary surface and fixed footer ownership. |
 
 ## Coverage limitations
 
 - Resources ISE currently exposes only the VMware provider tab, so its
   FlashSystem and IBM Power variants could not be reviewed.
-- No-provider, loading, and fatal-error states were not available in the
-  authenticated runtime and were not fabricated.
+- No-provider and fatal-error states were not available in the authenticated
+  runtime and were not fabricated.
 - No console capture was available from the user-managed browser.
 
 Task 4 stays incomplete until those scenarios are available for real-browser
