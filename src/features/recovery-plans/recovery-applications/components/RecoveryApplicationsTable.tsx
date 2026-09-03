@@ -9,6 +9,7 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import {
   DataTable,
+  DataTableSurface,
   DataTableToolbar,
   DataTablePagination,
   DataTableRequestState,
@@ -261,9 +262,8 @@ export function RecoveryApplicationsTable({
     table.setPage(1)
   }
 
-  return (
-    <div className="flex flex-col">
-      <DataTableToolbar
+  const toolbar = (
+    <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
         searchPlaceholder={t('pages.recovery.searchPlaceholder')}
@@ -325,8 +325,27 @@ export function RecoveryApplicationsTable({
             </Field>
           </>
         }
-      />
+    />
+  )
 
+  const pagination = (!error || applications.length > 0) ? (
+    <DataTablePagination
+      page={table.page}
+      pageSize={table.pageSize}
+      total={table.total}
+      isLoading={isLoading}
+      onPageChange={table.setPage}
+      onPageSizeChange={table.setPageSize}
+    />
+  ) : null
+
+  return (
+    <>
+      <DataTableSurface
+        ariaLabel={t('pages.recovery.tableAriaLabel')}
+        toolbar={toolbar}
+        pagination={pagination}
+      >
       <DataTableRequestState
         hasCachedData={applications.length > 0}
         error={error ? {
@@ -350,17 +369,7 @@ export function RecoveryApplicationsTable({
           emptyContent={applications.length > 0 ? t('messages.noResults') : t('pages.recovery.empty.noApplications')}
         />
       </DataTableRequestState>
-
-      {(!error || applications.length > 0) ? (
-        <DataTablePagination
-          page={table.page}
-          pageSize={table.pageSize}
-          total={table.total}
-          isLoading={isLoading}
-          onPageChange={table.setPage}
-          onPageSizeChange={table.setPageSize}
-        />
-      ) : null}
+      </DataTableSurface>
 
       {openMenuId && currentMenuApp && onDelete ? (
         <RowActionsMenu
@@ -582,6 +591,6 @@ export function RecoveryApplicationsTable({
         applicationName={rollbackResult?.appName ?? ''}
         report={rollbackResult?.report ?? null}
       />
-    </div>
+    </>
   )
 }

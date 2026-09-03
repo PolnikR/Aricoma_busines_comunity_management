@@ -176,6 +176,7 @@ describe('RecoveryApplicationsListPage', () => {
       </QueryClientProvider>,
     )
     expect(screen.getByText('No recovery applications defined yet')).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Recovery applications table' })).toBeInTheDocument()
   })
 
   it('navigates to create and encoded edit routes without the json extension', async () => {

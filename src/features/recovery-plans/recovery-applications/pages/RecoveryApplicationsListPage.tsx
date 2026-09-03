@@ -2,8 +2,8 @@ import { useNavigate } from 'react-router'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
+import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
-import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
 import { useRecoveryApplications } from '../hooks/useRecoveryApplications'
@@ -44,40 +44,27 @@ export function RecoveryApplicationsListPage() {
         }
       />
 
-      <div className="flex-1 flex flex-col gap-4 lg:min-h-0 overflow-hidden p-3">
-        {deleteError ? (
+      <InventoryShell
+        notice={deleteError ? (
           <Alert
             variant="error"
             title={t('dialogs.deleteRecoveryApplication')}
             {...(deleteErrorDescription ? { description: deleteErrorDescription } : {})}
           />
         ) : null}
-        {!isLoading && !error && (!applications || applications.length === 0) ? (
-          <EmptyState
-            title={t('pages.recovery.empty.title')}
-            description={t('pages.recovery.empty.description')}
-            action={
-              <Button onClick={() => { void navigate('/recovery-plans/recovery-applications/create') }}>
-                {t('pages.recovery.empty.createButton')}
-              </Button>
-            }
-          />
-        ) : (
-          <div className="flex-1 flex flex-col min-h-0 bg-surface rounded-lg border border-border shadow-sm overflow-hidden">
-            <RecoveryApplicationsTable
-              applications={applications ?? []}
-              isLoading={isLoading}
-              providers={providers}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              isDeleting={isDeleting}
-              error={error instanceof Error ? error : null}
-              isRetrying={isFetching}
-              onRetry={() => { void refetch() }}
-            />
-          </div>
-        )}
-      </div>
+      >
+        <RecoveryApplicationsTable
+          applications={applications ?? []}
+          isLoading={isLoading}
+          providers={providers}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          isDeleting={isDeleting}
+          error={error instanceof Error ? error : null}
+          isRetrying={isFetching}
+          onRetry={() => { void refetch() }}
+        />
+      </InventoryShell>
     </div>
   )
 }

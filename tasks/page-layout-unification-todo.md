@@ -74,7 +74,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] Add/Create + Refresh placement consistent.
 - [ ] No nested vertical scroll.
 
-- [ ] Task 11 — Recovery Applications list.
+- [x] Task 11 — Recovery Applications list.
 - [ ] Task 12 — Policy Sets; zachovať existujúci dobrý scroll fix.
 - [ ] Task 13 — Recovery Groups list.
 
@@ -220,7 +220,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] PolicySetsPage — Task 12.
 - [ ] RecoveryApplicationBuilderPage — Tasks 32–34.
 - [ ] RecoveryApplicationEditorPage — Tasks 32–34.
-- [ ] RecoveryApplicationsListPage — Task 11.
+- [x] RecoveryApplicationsListPage — Task 11.
 - [ ] RecoveryGroupBuilderPage — Tasks 32–34.
 - [ ] RecoveryGroupEditorPage — Tasks 32–34.
 - [ ] RecoveryGroupsListPage — Task 13.
