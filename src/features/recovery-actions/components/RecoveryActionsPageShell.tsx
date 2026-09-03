@@ -58,7 +58,7 @@ export function RecoveryActionsPageShell({ activeTab, children }: RecoveryAction
         actions={<Button size="sm" variant="outline" onClick={() => { window.location.reload() }}>{t('common.refresh')}</Button>}
       />
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-3">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <Card className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
           <div className="flex shrink-0 flex-col gap-1 border-b border-border px-4 py-4 sm:px-5">
             <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryActions.workspace.title')}</h2>

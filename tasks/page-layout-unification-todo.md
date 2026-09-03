@@ -116,7 +116,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] Configuration + Discovery Settings stable at `1366x768`.
 - [ ] History table uses canonical table contract.
 
-- [ ] Task 22 — Recovery Actions shared shell for Execute/History/Schedule/Validate.
+- [x] Task 22 — Recovery Actions shared shell for Execute/History/Schedule/Validate.
 - [ ] Task 23 — Recovery Actions History embedded table.
 - [ ] Task 24 — Identity Access outer frame/content panel.
 

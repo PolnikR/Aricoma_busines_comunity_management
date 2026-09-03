@@ -367,6 +367,7 @@ export function AppRoutes() {
           <Route index element={<Navigate to={routes.recoveryActionValidate} replace />} />
           <Route
             path="validate"
+            handle={{ contentScroll: 'contained' }}
             element={(
               <Suspense fallback={<RouteLoadingSkeleton />}>
                 <RecoveryActionsValidatePage />
@@ -375,6 +376,7 @@ export function AppRoutes() {
           />
           <Route
             path="execute"
+            handle={{ contentScroll: 'contained' }}
             element={(
               <Suspense fallback={<RouteLoadingSkeleton />}>
                 <RecoveryActionsExecutePage />
@@ -383,6 +385,7 @@ export function AppRoutes() {
           />
           <Route
             path="schedule"
+            handle={{ contentScroll: 'contained' }}
             element={(
               <Suspense fallback={<RouteLoadingSkeleton />}>
                 <RecoveryActionsSchedulePage />
@@ -391,6 +394,7 @@ export function AppRoutes() {
           />
           <Route
             path="history"
+            handle={{ contentScroll: 'contained' }}
             element={(
               <Suspense fallback={<RouteLoadingSkeleton />}>
                 <RecoveryActionsHistoryPage />
