@@ -38,7 +38,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] Žiadne feature imports v shared primitives.
 - [ ] Resources tests stále green.
 
-- [ ] Task 7 — Re-verify Resources + Resources ISE po shared extraction. Resources recheck recorded in `tasks/page-layout-reference-measurements.md`; Resources ISE remains pending.
+- [x] Task 7 — Re-verify Resources + Resources ISE po shared extraction.
 
 ## Checkpoint A — Canonical reference locked
 

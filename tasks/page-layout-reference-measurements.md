@@ -26,6 +26,7 @@ runtime states were observed from the supplied screenshots.
 | Resources | VMware VMs, loading | Metrics, tabs, primary surface, and a fixed skeleton footer remain inside the canonical geometry. |
 | Resources | FlashSystem Volumes, loading | The FlashSystem skeleton preserves the same primary surface and fixed footer ownership. |
 | Resources | VMware VMs, 200 records after shared frame/surface extraction | The canonical primary surface, internal data scrollbar, and fixed pagination remain unchanged. |
+| Resources ISE | VMware VMs, 1 row after shared frame/surface extraction | The target inventory keeps the same contained surface, toolbar, and fixed pagination. |
 
 ## Coverage limitations
 
