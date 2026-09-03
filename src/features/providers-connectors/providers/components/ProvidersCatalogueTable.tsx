@@ -8,6 +8,7 @@ import {
   DataTableToolbar,
   DataTablePagination,
   DataTableRequestState,
+  DataTableSurface,
   DetailDrawer,
   DetailRow,
   useTableState,
@@ -196,8 +197,8 @@ export function ProvidersCatalogueTable({
     testConnection.reset()
   }
 
-  return (
-    <div className="flex flex-col">
+  const toolbar = (
+    <>
       {deleteProvider.error ? (
         <Alert
           variant="error"
@@ -242,7 +243,27 @@ export function ProvidersCatalogueTable({
           </>
         }
       />
+    </>
+  )
 
+  const pagination = (!error || allProviders.length > 0) ? (
+    <DataTablePagination
+      page={table.page}
+      pageSize={table.pageSize}
+      total={table.total}
+      isLoading={isLoading}
+      onPageChange={table.setPage}
+      onPageSizeChange={table.setPageSize}
+    />
+  ) : null
+
+  return (
+    <>
+      <DataTableSurface
+        ariaLabel={t(isLoading ? 'providers.loading' : 'providers.tableLabel')}
+        toolbar={toolbar}
+        pagination={pagination}
+      >
       <DataTableRequestState
         hasCachedData={allProviders.length > 0}
         error={error ? {
@@ -266,17 +287,7 @@ export function ProvidersCatalogueTable({
           emptyContent={rows.length > 0 ? t('providers.noMatches') : t('providers.empty')}
         />
       </DataTableRequestState>
-
-      {(!error || allProviders.length > 0) ? (
-        <DataTablePagination
-          page={table.page}
-          pageSize={table.pageSize}
-          total={table.total}
-          isLoading={isLoading}
-          onPageChange={table.setPage}
-          onPageSizeChange={table.setPageSize}
-        />
-      ) : null}
+      </DataTableSurface>
 
       <DetailDrawer
         open={selected !== null && !isConnectionTestOpen}
@@ -432,6 +443,6 @@ export function ProvidersCatalogueTable({
         closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
       />
-    </div>
+    </>
   )
 }

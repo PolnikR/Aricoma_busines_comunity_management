@@ -32,25 +32,21 @@ export function ProvidersPage() {
         )}
       />
 
-      <div className="flex-1 overflow-hidden p-3 lg:min-h-0">
-        <InventoryShell
-          inventoryTitle={t('pages.providers.infrastructure.title')}
-          inventoryDescription={t('pages.providers.infrastructure.description')}
-        >
-          <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm lg:min-h-0">
-            <ProvidersCatalogueTable
-              providers={providers}
-              allProviders={allProviders}
-              roleFilter={roleFilter}
-              onRoleFilterChange={setRoleFilter}
-              isLoading={visibleProvidersQuery.isLoading}
-              error={visibleProvidersQuery.error instanceof Error ? visibleProvidersQuery.error : null}
-              isRetrying={visibleProvidersQuery.isFetching}
-              onRetry={() => { void visibleProvidersQuery.refetch() }}
-            />
-          </div>
-        </InventoryShell>
-      </div>
+      <InventoryShell
+        inventoryTitle={t('pages.providers.infrastructure.title')}
+        inventoryDescription={t('pages.providers.infrastructure.description')}
+      >
+        <ProvidersCatalogueTable
+          providers={providers}
+          allProviders={allProviders}
+          roleFilter={roleFilter}
+          onRoleFilterChange={setRoleFilter}
+          isLoading={visibleProvidersQuery.isLoading}
+          error={visibleProvidersQuery.error instanceof Error ? visibleProvidersQuery.error : null}
+          isRetrying={visibleProvidersQuery.isFetching}
+          onRetry={() => { void visibleProvidersQuery.refetch() }}
+        />
+      </InventoryShell>
 
       <ProvidersCreateModal
         open={isCreateModalOpen}
