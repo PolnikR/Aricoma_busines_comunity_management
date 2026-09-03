@@ -108,7 +108,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 # Phase 2 — Settings / Workspace
 
 - [x] Task 19 — Configuration.
-- [ ] Task 20 — Discovery Settings outer workspace.
+- [x] Task 20 — Discovery Settings outer workspace.
 - [ ] Task 21 — Discovery History embedded table -> shared data surface.
 
 ## Checkpoint C1
