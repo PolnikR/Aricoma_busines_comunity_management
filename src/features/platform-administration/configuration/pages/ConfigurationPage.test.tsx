@@ -5,7 +5,7 @@ import { ConfigurationPage } from './ConfigurationPage'
 
 describe('ConfigurationPage', () => {
   it('renders the runtime and session sections with default values', () => {
-    render(<ConfigurationPage />)
+    const { container } = render(<ConfigurationPage />)
 
     expect(screen.getByRole('heading', { name: 'Configuration' })).toBeInTheDocument()
     expect(screen.getByText('Runtime directories')).toBeInTheDocument()
@@ -14,6 +14,7 @@ describe('ConfigurationPage', () => {
     expect(screen.getByLabelText('Temp directory')).toHaveValue('/tmp')
     expect(screen.getByLabelText('Log directory')).toHaveValue('/var/log/recovery-defender')
     expect(screen.getByLabelText('Session timeout (minutes)')).toHaveValue(30)
+    expect(container.querySelector('.p-3')).toBeNull()
   })
 
   it('enables save only after a field changes, and disables it again after saving', async () => {
