@@ -154,6 +154,7 @@ function renderProvidersConnectorsRoutes(pages: typeof providersConnectorsPages)
         <Route
           key={page.path}
           path={toRoutePath(page.path)}
+          handle={{ contentScroll: 'contained' }}
           element={<ProvidersPage />}
         />
       )
@@ -163,6 +164,7 @@ function renderProvidersConnectorsRoutes(pages: typeof providersConnectorsPages)
         <Route
           key={page.path}
           path={toRoutePath(page.path)}
+          handle={{ contentScroll: 'contained' }}
           element={(
             <Suspense fallback={<RouteLoadingSkeleton />}>
               <CredentialsPage />
@@ -207,6 +209,7 @@ export function AppRoutes() {
         ))}
         <Route
           path={toRoutePath(routes.platformProviders)}
+          handle={{ contentScroll: 'contained' }}
           element={(
             <Suspense fallback={<RouteLoadingSkeleton />}>
               <PlatformProvidersPage />
@@ -253,6 +256,7 @@ export function AppRoutes() {
           <Route path="recovery-groups">
             <Route
               index
+              handle={{ contentScroll: 'contained' }}
               element={
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryGroupsListPage />
@@ -281,6 +285,7 @@ export function AppRoutes() {
           <Route path="recovery-applications">
             <Route
               index
+              handle={{ contentScroll: 'contained' }}
               element={
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryApplicationsListPage />
@@ -308,6 +313,7 @@ export function AppRoutes() {
           </Route>
           <Route
             path="recovery-runs"
+            handle={{ contentScroll: 'contained' }}
             element={(
               <Suspense fallback={<RouteLoadingSkeleton />}>
                 <RecoveryRunsPage />
@@ -318,6 +324,7 @@ export function AppRoutes() {
             <Route index element={<Navigate to={routes.recoveryPolicySnapshot} replace />} />
             <Route
               path="snapshot"
+              handle={{ contentScroll: 'contained' }}
               element={(
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <SnapshotPoliciesPage />
@@ -326,6 +333,7 @@ export function AppRoutes() {
             />
             <Route
               path="application-recovery"
+              handle={{ contentScroll: 'contained' }}
               element={(
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <RecoveryAppPoliciesPage />
@@ -334,6 +342,7 @@ export function AppRoutes() {
             />
             <Route
               path="clean-room"
+              handle={{ contentScroll: 'contained' }}
               element={(
                 <Suspense fallback={<RouteLoadingSkeleton />}>
                   <CleanRoomPoliciesPage />
@@ -345,6 +354,7 @@ export function AppRoutes() {
           <Route path="recovery-app-policies" element={<Navigate to={routes.recoveryPolicyApplicationRecovery} replace />} />
           <Route
             path="policy-sets"
+            handle={{ contentScroll: 'contained' }}
             element={(
               <Suspense fallback={<RouteLoadingSkeleton />}>
                 <PolicySetsPage />

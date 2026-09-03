@@ -93,7 +93,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] Tabbed table pages share one tabs/surface/table geometry contract.
 - [ ] Tab switching nemení outer surface X/W/H.
 
-- [ ] Task 17 — Enable contained route metadata až po inner table migrations.
+- [x] Task 17 — Enable contained route metadata až po inner table migrations.
 - [ ] Task 18 — Full table-page browser matrix.
 
 ## Checkpoint B — Table archetype complete

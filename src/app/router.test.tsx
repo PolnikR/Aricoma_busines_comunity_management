@@ -56,21 +56,29 @@ describe('createAppRouter', () => {
     router.dispose()
   })
 
-  it('marks only recovery builder create/edit routes for contained desktop scrolling', () => {
+  it('marks migrated table routes and recovery builders for contained desktop scrolling', () => {
     const router = createAppRouter()
     const containedRoutes = [
       ['recovery-plans', 'recovery-groups', 'create'],
       ['recovery-plans', 'recovery-groups', ':id/edit'],
       ['recovery-plans', 'recovery-applications', 'create'],
       ['recovery-plans', 'recovery-applications', ':id/edit'],
+      ['providers-connectors/providers'],
+      ['providers-connectors/credentials'],
+      ['platform-administration/platform-providers'],
+      ['recovery-plans', 'recovery-runs'],
+      ['recovery-plans', 'recovery-policies', 'snapshot'],
+      ['recovery-plans', 'recovery-policies', 'application-recovery'],
+      ['recovery-plans', 'recovery-policies', 'clean-room'],
+      ['recovery-plans', 'policy-sets'],
     ]
 
     for (const pathChain of containedRoutes) {
       expect(findRouteByPathChain(router.routes, pathChain)?.handle).toEqual({ contentScroll: 'contained' })
     }
 
-    expect(findRouteByPathChain(router.routes, ['recovery-plans', 'recovery-groups'])?.children?.[0]?.handle).toBeUndefined()
-    expect(findRouteByPathChain(router.routes, ['recovery-plans', 'recovery-applications'])?.children?.[0]?.handle).toBeUndefined()
+    expect(findRouteByPathChain(router.routes, ['recovery-plans', 'recovery-groups'])?.children?.[0]?.handle).toEqual({ contentScroll: 'contained' })
+    expect(findRouteByPathChain(router.routes, ['recovery-plans', 'recovery-applications'])?.children?.[0]?.handle).toEqual({ contentScroll: 'contained' })
 
     router.dispose()
   })
