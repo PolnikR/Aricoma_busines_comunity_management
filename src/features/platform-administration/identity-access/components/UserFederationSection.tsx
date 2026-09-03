@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
-import { DataTable, DataTableToolbar, useTableState } from '@/shared/components/data-table'
+import { DataTable, DataTableSurface, DataTableToolbar, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
-import { IdentityContentPanel, IdentityResourceDetailPage } from './IdentityResourceLayout'
+import { IdentityResourceDetailPage } from './IdentityResourceLayout'
 
 interface FederationProviderSummary {
   id: string
@@ -59,15 +59,17 @@ export function UserFederationSection({ entityId, tabId, onEntityChange, onTabCh
   }
 
   return (
-    <IdentityContentPanel>
-      <DataTableToolbar
+    <DataTableSurface
+      ariaLabel={t('identity.federation.ariaLabel')}
+      toolbar={<DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
         searchPlaceholder={t('identity.federation.search')}
         searchLabel={t('identity.federation.search')}
         density={table.density}
         onDensityChange={table.setDensity}
-      />
+      />}
+    >
       <DataTable
         layout="fit"
         columns={columns}
@@ -79,6 +81,6 @@ export function UserFederationSection({ entityId, tabId, onEntityChange, onTabCh
         rowAriaLabel={provider => t('identity.federation.rowAriaLabel', { name: provider.name })}
         emptyContent={<EmptyState title={t('identity.federation.empty.title')} description={t('identity.federation.empty.description')} />}
       />
-    </IdentityContentPanel>
+    </DataTableSurface>
   )
 }

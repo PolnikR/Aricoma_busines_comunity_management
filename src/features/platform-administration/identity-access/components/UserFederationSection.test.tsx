@@ -8,7 +8,7 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 describe('UserFederationSection', () => {
   it('renders the configured-provider table in provider-style panel', () => {
     render(<UserFederationSection entityId={null} tabId={null} onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
-    expect(screen.getByLabelText('User federation providers')).toBeInTheDocument()
+    expect(screen.getAllByLabelText('User federation providers')[0]).toHaveClass('grid', 'grid-rows-[auto_minmax(0,1fr)_auto]')
     expect(screen.getByText('No federation providers connected')).toBeInTheDocument()
   })
 

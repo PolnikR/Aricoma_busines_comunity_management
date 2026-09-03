@@ -9,7 +9,7 @@ describe('OrganizationsSection', () => {
   it('does not present the generic ABCO organization mock as Keycloak organization data', () => {
     render(<OrganizationsSection entityId={null} tabId={null} onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
 
-    expect(screen.getByLabelText('Keycloak organizations')).toBeInTheDocument()
+    expect(screen.getAllByLabelText('Keycloak organizations')[0]).toHaveClass('grid', 'grid-rows-[auto_minmax(0,1fr)_auto]')
     expect(screen.getByText('Keycloak organizations not connected')).toBeInTheDocument()
     expect(screen.queryByText('Engineering')).not.toBeInTheDocument()
   })

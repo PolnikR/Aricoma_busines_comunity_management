@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
-import { DataTable, DataTableToolbar, useTableState } from '@/shared/components/data-table'
+import { DataTable, DataTableSurface, DataTableToolbar, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
-import { IdentityContentPanel, IdentityResourceDetailPage } from './IdentityResourceLayout'
+import { IdentityResourceDetailPage } from './IdentityResourceLayout'
 
 interface KeycloakOrganizationListItem {
   id: string
@@ -66,15 +66,17 @@ export function OrganizationsSection({ entityId, tabId, onEntityChange, onTabCha
   }
 
   return (
-    <IdentityContentPanel>
-      <DataTableToolbar
+    <DataTableSurface
+      ariaLabel={t('identity.organizations.ariaLabel')}
+      toolbar={<DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
         searchPlaceholder={t('identity.organizations.search')}
         searchLabel={t('identity.organizations.search')}
         density={table.density}
         onDensityChange={table.setDensity}
-      />
+      />}
+    >
       <DataTable
         layout="fit"
         columns={columns}
@@ -86,6 +88,6 @@ export function OrganizationsSection({ entityId, tabId, onEntityChange, onTabCha
         rowAriaLabel={organization => t('identity.organizations.rowAriaLabel', { name: organization.name })}
         emptyContent={<EmptyState title={t('identity.organizations.empty.title')} description={t('identity.organizations.empty.description')} />}
       />
-    </IdentityContentPanel>
+    </DataTableSurface>
   )
 }
