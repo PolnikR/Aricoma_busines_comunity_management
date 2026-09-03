@@ -28,7 +28,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] Canonical bordered surface radius je jednotný.
 - [ ] Focused Resources tests green.
 
-- [ ] Task 4 — Browser canonical Resources matrix: Resources + Resources ISE, VMware/FlashSystem/IBM Power, no-provider/loading/error/empty/1/full/overflow rows.
+- [ ] Task 4 — Browser canonical Resources matrix: Resources + Resources ISE, VMware/FlashSystem/IBM Power, no-provider/loading/error/empty/1/full/overflow rows. Partial manual evidence: `tasks/page-layout-reference-measurements.md`.
 - [ ] Task 5 — Generic contained frame extrahovaný iba z browser-approved `ResourceViewportFrame`.
 - [ ] Task 6 — Shared `DataTableSurface` extrahovaný iba z browser-approved `ResourceInventoryPanel`.
 
