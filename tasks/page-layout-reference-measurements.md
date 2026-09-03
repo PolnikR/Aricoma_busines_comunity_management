@@ -25,6 +25,7 @@ runtime states were observed from the supplied screenshots.
 | Resources ISE | VMware VMs, 1 row at `390x844` | Mobile layout is usable; the table retains horizontal scrolling and fixed pagination. |
 | Resources | VMware VMs, loading | Metrics, tabs, primary surface, and a fixed skeleton footer remain inside the canonical geometry. |
 | Resources | FlashSystem Volumes, loading | The FlashSystem skeleton preserves the same primary surface and fixed footer ownership. |
+| Resources | VMware VMs, 200 records after shared frame/surface extraction | The canonical primary surface, internal data scrollbar, and fixed pagination remain unchanged. |
 
 ## Coverage limitations
 
