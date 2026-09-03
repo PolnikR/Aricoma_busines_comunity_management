@@ -3,6 +3,7 @@ import {
   DataTableRequestState,
   type DataTableRequestError,
 } from '@/shared/components/data-table'
+import { DataTableSurface } from '@/shared/components/data-table/DataTableSurface'
 
 interface InventoryPanelProps {
   ariaLabel: string
@@ -22,17 +23,14 @@ export function InventoryPanel({
   hasCachedData = false,
 }: InventoryPanelProps) {
   return (
-    <section
-      className="grid min-w-0 min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-[20px] border border-border bg-surface shadow-sm"
-      aria-label={ariaLabel}
+    <DataTableSurface
+      ariaLabel={ariaLabel}
+      toolbar={toolbar}
+      pagination={(!error || hasCachedData) && pagination}
     >
-      {toolbar}
-      <div className="custom-scrollbar min-h-0 overflow-y-auto">
-        <DataTableRequestState error={error ?? null} hasCachedData={hasCachedData}>
-          {children}
-        </DataTableRequestState>
-      </div>
-      {(!error || hasCachedData) && pagination}
-    </section>
+      <DataTableRequestState error={error ?? null} hasCachedData={hasCachedData}>
+        {children}
+      </DataTableRequestState>
+    </DataTableSurface>
   )
 }
