@@ -3,6 +3,7 @@ import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Badge } from '@/shared/components/badge/Badge'
 import {
   DataTable,
+  DataTableSurface,
   DataTablePagination,
   DataTableRequestState,
   DataTableToolbar,
@@ -144,16 +145,28 @@ export function RecoveryRunsTable({
   const { t } = useTranslation()
   const errorDetail = extractBackendErrorDetail(error)
 
-  return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <DataTableToolbar
+  const toolbar = (
+    <DataTableToolbar
         searchValue={search}
         onSearchChange={onSearchChange}
         searchPlaceholder={t('recoveryRuns.search.placeholder')}
         searchLabel={t('recoveryRuns.search.label')}
-      />
+    />
+  )
 
-      <div className="custom-scrollbar flex min-h-[120px] flex-1 flex-col lg:overflow-y-auto">
+  const pagination = (!error || hasCachedData) ? (
+    <DataTablePagination
+      page={page}
+      pageSize={pageSize}
+      total={total}
+      isLoading={isLoading}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+    />
+  ) : null
+
+  return (
+    <DataTableSurface ariaLabel={t('recoveryRuns.tableLabel')} toolbar={toolbar} pagination={pagination}>
         <DataTableRequestState
           hasCachedData={hasCachedData}
           error={error ? {
@@ -176,18 +189,6 @@ export function RecoveryRunsTable({
             emptyContent={search.trim() ? t('recoveryRuns.noMatches') : t('recoveryRuns.empty')}
           />
         </DataTableRequestState>
-      </div>
-
-      {(!error || hasCachedData) ? (
-        <DataTablePagination
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          isLoading={isLoading}
-          onPageChange={onPageChange}
-          onPageSizeChange={onPageSizeChange}
-        />
-      ) : null}
-    </div>
+    </DataTableSurface>
   )
 }

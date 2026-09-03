@@ -127,6 +127,7 @@ describe('RecoveryRunsTable', () => {
       />,
     )
 
+    expect(screen.getByRole('region', { name: 'Recovery runs' })).toBeInTheDocument()
     expect(screen.getByRole('searchbox', { name: 'Search recovery runs' })).toBeVisible()
     expect(screen.getByRole('table')).toBeVisible()
     expect(screen.getByRole('status', { name: 'Loading recovery runs' })).toHaveAttribute('aria-busy', 'true')

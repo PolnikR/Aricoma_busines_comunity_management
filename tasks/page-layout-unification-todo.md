@@ -86,7 +86,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 
 - [x] Task 14 — Recovery Policy shell + Snapshot; tabs v Resources-style surface headeri.
 - [x] Task 15 — Application Recovery + Clean Room policy tables.
-- [ ] Task 16 — Recovery Runs.
+- [x] Task 16 — Recovery Runs.
 
 ## Checkpoint B3
 

@@ -73,47 +73,42 @@ export function RecoveryRunsPage() {
         }}
       />
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden p-3">
-        {!isLoading ? (
+      <InventoryShell
+        notice={!isLoading ? (
           <p className="px-1 text-xs text-text-muted">
             {t('recoveryRuns.scopeNote').replace('{count}', String(visibleEntities.length))}
           </p>
         ) : null}
-
-        <InventoryShell
-          inventoryTitle={t('recoveryRuns.tableLabel')}
-          inventoryDescription={t('pages.recoveryRuns.description')}
-          tabs={(
-            <Tabs<RecoveryRunTab>
-              items={tabItems}
-              value={tab}
-              onChange={setTab}
-              ariaLabel={t('recoveryRuns.tabs.ariaLabel')}
-            />
-          )}
-        >
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
-            <RecoveryRunsTable
-              rows={rows}
-              hasCachedData={entities.length > 0}
-              search={table.search}
-              onSearchChange={table.setSearch}
-              page={table.page}
-              pageSize={table.pageSize}
-              total={table.total}
-              onPageChange={table.setPage}
-              onPageSizeChange={table.setPageSize}
-              showEntityType={tab === 'all'}
-              isLoading={isLoading}
-              error={error}
-              isRetrying={isFetching}
-              onRetry={refetch}
-              onSelectEntity={(nextEntityType, nextEntityId) => { setEntity(nextEntityType, nextEntityId) }}
-              selectedEntityKey={selectedEntityKey}
-            />
-          </div>
-        </InventoryShell>
-      </div>
+        inventoryTitle={t('recoveryRuns.tableLabel')}
+        inventoryDescription={t('pages.recoveryRuns.description')}
+        tabs={(
+          <Tabs<RecoveryRunTab>
+            items={tabItems}
+            value={tab}
+            onChange={setTab}
+            ariaLabel={t('recoveryRuns.tabs.ariaLabel')}
+          />
+        )}
+      >
+        <RecoveryRunsTable
+          rows={rows}
+          hasCachedData={entities.length > 0}
+          search={table.search}
+          onSearchChange={table.setSearch}
+          page={table.page}
+          pageSize={table.pageSize}
+          total={table.total}
+          onPageChange={table.setPage}
+          onPageSizeChange={table.setPageSize}
+          showEntityType={tab === 'all'}
+          isLoading={isLoading}
+          error={error}
+          isRetrying={isFetching}
+          onRetry={refetch}
+          onSelectEntity={(nextEntityType, nextEntityId) => { setEntity(nextEntityType, nextEntityId) }}
+          selectedEntityKey={selectedEntityKey}
+        />
+      </InventoryShell>
 
       <RecoveryRunHistoryDrawer
         entity={selectedEntity}
