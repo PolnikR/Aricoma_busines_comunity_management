@@ -99,7 +99,7 @@ export function IdentityAccessPage() {
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
 
   return (
-    <div className="flex min-h-full min-w-0 flex-col gap-4 overflow-x-hidden lg:h-full lg:min-h-0">
+    <div className="flex min-h-full min-w-0 flex-col overflow-hidden lg:h-full lg:min-h-0">
       <PageHeader
         eyebrow={t('identity.page.eyebrow')}
         title={t('identity.page.title')}
@@ -114,14 +114,14 @@ export function IdentityAccessPage() {
         })}
       />
 
-      <div className="flex min-h-[38rem] min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm lg:min-h-0 lg:flex-1">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
         <IdentityAccessNavigation
           groupId={groupId}
           sectionId={sectionId}
           onGroupChange={setGroupId}
           onSectionChange={setSectionId}
         />
-        <section className="flex min-w-0 flex-1 flex-col overflow-hidden bg-surface-subtle p-3 lg:min-h-0" aria-live="polite">
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-surface-subtle p-3" aria-live="polite">
           <IdentityAccessSectionContent
             sectionId={sectionId}
             entityId={entityId}

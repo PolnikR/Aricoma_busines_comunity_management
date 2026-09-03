@@ -67,6 +67,7 @@ describe('createAppRouter', () => {
       ['providers-connectors/credentials'],
       ['platform-administration/platform-providers'],
       ['platform-administration/configuration'],
+      ['platform-administration/identity-access'],
       ['recovery-plans', 'recovery-runs'],
       ['recovery-plans', 'recovery-policies', 'snapshot'],
       ['recovery-plans', 'recovery-policies', 'application-recovery'],

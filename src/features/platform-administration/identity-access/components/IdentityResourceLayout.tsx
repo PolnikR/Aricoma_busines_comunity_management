@@ -9,7 +9,7 @@ interface IdentityContentPanelProps {
 
 export function IdentityContentPanel({ children }: IdentityContentPanelProps) {
   return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
       {children}
     </div>
   )
@@ -80,7 +80,7 @@ export function IdentityResourceDetailPage<T extends string>({
           nextLabel: t('identity.common.scroll.next', { label: tabAriaLabel }),
         }}
       />
-      <div className="min-w-0">{children}</div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto">{children}</div>
     </IdentityContentPanel>
   )
 }

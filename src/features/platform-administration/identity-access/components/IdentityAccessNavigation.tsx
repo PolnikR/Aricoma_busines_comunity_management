@@ -28,7 +28,7 @@ export function IdentityAccessNavigation({
   const activeGroupLabel = t(`identity.navigation.groups.${activeGroup.id}`)
 
   return (
-    <nav aria-label={t('identity.navigation.ariaLabel')} className="min-w-0 border-b border-border bg-surface">
+    <nav aria-label={t('identity.navigation.ariaLabel')} className="shrink-0 min-w-0 border-b border-border bg-surface">
       <div className="px-4 py-3">
         <div className="w-fit max-w-full">
           <FilterTabs

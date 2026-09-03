@@ -118,7 +118,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 
 - [x] Task 22 — Recovery Actions shared shell for Execute/History/Schedule/Validate.
 - [x] Task 23 — Recovery Actions History embedded table.
-- [ ] Task 24 — Identity Access outer frame/content panel.
+- [x] Task 24 — Identity Access outer frame/content panel.
 
 ## Checkpoint C2
 

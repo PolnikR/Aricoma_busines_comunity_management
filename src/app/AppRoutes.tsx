@@ -227,6 +227,7 @@ export function AppRoutes() {
         />
         <Route
           path={toRoutePath(routes.platformIdentityAccess)}
+          handle={{ contentScroll: 'contained' }}
           element={(
             <Suspense fallback={<RouteLoadingSkeleton />}>
               <IdentityAccessPage />

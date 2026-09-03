@@ -42,6 +42,7 @@ describe('IdentityResourceLayout', () => {
     )
 
     expect(screen.getByRole('tablist', { name: 'Client sections' })).toBeInTheDocument()
+    expect(screen.getByText('Settings content').parentElement).toHaveClass('min-h-0', 'flex-1', 'overflow-auto')
     expect(screen.getByRole('tab', { name: 'Settings' })).toHaveAttribute('aria-selected', 'true')
     await userEvent.click(screen.getByRole('tab', { name: 'Roles' }))
     expect(onTabChange).toHaveBeenCalledWith('roles')
