@@ -218,6 +218,7 @@ export function AppRoutes() {
         />
         <Route
           path={toRoutePath(routes.platformConfiguration)}
+          handle={{ contentScroll: 'contained' }}
           element={(
             <Suspense fallback={<RouteLoadingSkeleton />}>
               <ConfigurationPage />
