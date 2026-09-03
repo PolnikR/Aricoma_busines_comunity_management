@@ -133,7 +133,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 
 - [ ] Identity list sections I share canonical data-surface geometry.
 
-- [ ] Task 28 — Identity Sessions + Permissions.
+- [x] Task 28 — Identity Sessions + Permissions.
 - [ ] Task 29 — Identity Events + Authentication.
 - [ ] Task 30 — Identity Groups/Realm Settings/Identity Providers non-table regression pass.
 

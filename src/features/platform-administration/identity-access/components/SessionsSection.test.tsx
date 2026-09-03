@@ -6,7 +6,7 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 
 describe('SessionsSection', () => {
   it('renders the Keycloak realm-level client-session contract without fabricating client aggregation', () => {
-    render(<SessionsSection />)
+    const { container } = render(<SessionsSection />)
 
     expect(screen.getByLabelText('Realm client sessions')).toBeInTheDocument()
     expect(screen.getByText('Client')).toBeInTheDocument()
@@ -14,5 +14,6 @@ describe('SessionsSection', () => {
     expect(screen.getByText('Offline sessions')).toBeInTheDocument()
     expect(screen.getByText('Client session overview not connected')).toBeInTheDocument()
     expect(screen.queryByText('192.168.1.100')).not.toBeInTheDocument()
+    expect(container.querySelector('.custom-scrollbar')).toHaveClass('min-h-0', 'flex-1', 'overflow-y-auto')
   })
 })

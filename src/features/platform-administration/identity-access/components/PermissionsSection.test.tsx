@@ -10,11 +10,12 @@ vi.mock('../hooks/useRolesPermissions', () => useRolesPermissionsMock)
 describe('PermissionsSection', () => {
   it('keeps permission column labels visible while API rows load', () => {
     useRolesPermissionsMock.useRolesPermissions.mockReturnValue({ data: undefined, isLoading: true, error: null, refetch: vi.fn() })
-    render(<PermissionsSection />)
+    const { container } = render(<PermissionsSection />)
 
     expect(screen.getByRole('columnheader', { name: 'Permission' })).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Roles' })).toBeVisible()
     expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true')
+    expect(container.querySelector('.p-4')).toBeNull()
   })
 
   it('renders API permissions and roles without reusing ABCO permission mocks', () => {

@@ -22,27 +22,27 @@ export function PermissionsSection() {
 
   return (
     <IdentityContentPanel>
-      <div className="p-4">
-          <DataTableRequestState
-            hasCachedData={permissions.length > 0}
-            error={error ? { title: t('identity.permissions.loadFailed'), description: error.message, retryLabel: t('identity.common.actions.retry'), isRetrying: false, onRetry: () => { void refetch() } } : null}
-          >
-            <DataTable
-              layout="fit"
-              columns={columns}
-              rows={rows}
-              isLoading={isLoading}
-              loadingRowCount={5}
-              rowKey={row => row.permission}
-              ariaLabel={t('identity.permissions.ariaLabel')}
-              emptyContent={(
-                <EmptyState
-                  title={t('identity.permissions.empty.title')}
-                  description={t('identity.permissions.empty.description')}
-                />
-              )}
-            />
-          </DataTableRequestState>
+      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
+        <DataTableRequestState
+          hasCachedData={permissions.length > 0}
+          error={error ? { title: t('identity.permissions.loadFailed'), description: error.message, retryLabel: t('identity.common.actions.retry'), isRetrying: false, onRetry: () => { void refetch() } } : null}
+        >
+          <DataTable
+            layout="fit"
+            columns={columns}
+            rows={rows}
+            isLoading={isLoading}
+            loadingRowCount={5}
+            rowKey={row => row.permission}
+            ariaLabel={t('identity.permissions.ariaLabel')}
+            emptyContent={(
+              <EmptyState
+                title={t('identity.permissions.empty.title')}
+                description={t('identity.permissions.empty.description')}
+              />
+            )}
+          />
+        </DataTableRequestState>
       </div>
     </IdentityContentPanel>
   )

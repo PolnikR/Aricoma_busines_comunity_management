@@ -22,19 +22,21 @@ export function SessionsSection() {
 
   return (
     <IdentityContentPanel>
-      <DataTable
-        layout="fit"
-        columns={columns}
-        rows={clientSessions}
-        rowKey={row => row.clientId}
-        ariaLabel={t('identity.sessions.ariaLabel')}
-        emptyContent={
-          <EmptyState
-            title={t('identity.sessions.empty.title')}
-            description={t('identity.sessions.empty.description')}
-          />
-        }
-      />
+      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
+        <DataTable
+          layout="fit"
+          columns={columns}
+          rows={clientSessions}
+          rowKey={row => row.clientId}
+          ariaLabel={t('identity.sessions.ariaLabel')}
+          emptyContent={
+            <EmptyState
+              title={t('identity.sessions.empty.title')}
+              description={t('identity.sessions.empty.description')}
+            />
+          }
+        />
+      </div>
     </IdentityContentPanel>
   )
 }
