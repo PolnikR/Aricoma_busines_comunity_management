@@ -47,25 +47,21 @@ export function RecoveryPolicyPageShell({
         actions={actions}
       />
 
-      <div className="flex-1 overflow-hidden p-3 lg:min-h-0">
-        <InventoryShell
-          {...(inventoryTitle !== undefined ? { inventoryTitle } : {})}
-          {...(inventoryDescription !== undefined ? { inventoryDescription } : {})}
-          tabs={(
-            <Tabs
-              items={tabs}
-              value={activeTab}
-              onChange={onTabChange}
-              ariaLabel={tabsAriaLabel}
-              indicator="inset"
-            />
-          )}
-        >
-          <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm lg:min-h-0">
-            {children}
-          </div>
-        </InventoryShell>
-      </div>
+      <InventoryShell
+        {...(inventoryTitle !== undefined ? { inventoryTitle } : {})}
+        {...(inventoryDescription !== undefined ? { inventoryDescription } : {})}
+        tabs={(
+          <Tabs
+            items={tabs}
+            value={activeTab}
+            onChange={onTabChange}
+            ariaLabel={tabsAriaLabel}
+            indicator="inset"
+          />
+        )}
+      >
+        {children}
+      </InventoryShell>
     </div>
   )
 }

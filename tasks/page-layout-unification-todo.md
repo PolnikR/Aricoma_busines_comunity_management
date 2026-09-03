@@ -84,7 +84,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] Empty/error/mutation state v canonical surface.
 - [ ] Pagination anchor stable.
 
-- [ ] Task 14 — Recovery Policy shell + Snapshot; tabs v Resources-style surface headeri.
+- [x] Task 14 — Recovery Policy shell + Snapshot; tabs v Resources-style surface headeri.
 - [ ] Task 15 — Application Recovery + Clean Room policy tables.
 - [ ] Task 16 — Recovery Runs.
 

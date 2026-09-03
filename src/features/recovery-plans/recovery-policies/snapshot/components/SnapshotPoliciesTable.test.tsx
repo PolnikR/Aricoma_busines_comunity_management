@@ -40,6 +40,7 @@ describe('SnapshotPoliciesTable', () => {
   it('keeps the toolbar and real column labels visible while rows load', () => {
     render(<SnapshotPoliciesTable policies={[]} isLoading error={null} isRetrying={false} onRetry={vi.fn()} />)
 
+    expect(screen.getByRole('region', { name: 'Snapshot policies table' })).toBeInTheDocument()
     expect(screen.getByRole('searchbox', { name: 'Search snapshot policies' })).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Policy' })).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Retention' })).toBeVisible()
