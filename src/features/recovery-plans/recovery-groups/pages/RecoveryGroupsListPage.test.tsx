@@ -51,6 +51,7 @@ describe('RecoveryGroupsListPage', () => {
     expect(screen.getByText(/Manage reusable groups of resources/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeEnabled()
     expect(await screen.findByRole('button', { name: 'Create Your First Recovery Group' })).toBeEnabled()
+    expect(screen.getByRole('region', { name: 'Recovery groups table' })).toBeInTheDocument()
   })
 
   it('keeps table filters available when loading recovery groups fails', async () => {

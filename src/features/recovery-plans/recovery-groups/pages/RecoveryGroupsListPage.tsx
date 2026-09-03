@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router'
 import { Button } from '@/shared/components/button/Button'
 import { Alert } from '@/shared/components/alert/Alert'
-import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { routes } from '@/app/routes'
@@ -34,40 +34,28 @@ export function RecoveryGroupsListPage() {
         }
       />
 
-      <div className="flex flex-1 flex-col gap-4 overflow-hidden p-3 lg:min-h-0">
-        {mutationError ? (
+      <InventoryShell
+        notice={mutationError ? (
           <Alert
             variant="error"
             title={t(getRecoveryGroupsErrorKey(mutationError))}
             description={extractBackendErrorDetail(mutationError)}
           />
         ) : null}
-        {!isLoading && !error && groups.length === 0 ? (
-          <EmptyState
-            title={t('pages.recoveryGroups.empty.title')}
-            description={t('pages.recoveryGroups.empty.description')}
-            action={
-              <Button onClick={navigateToCreate}>
-                {t('pages.recoveryGroups.empty.createButton')}
-              </Button>
-            }
-          />
-        ) : (
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
-            <RecoveryGroupsTable
-              groups={groups}
-              isLoading={isLoading}
-              onEdit={navigateToEdit}
-              onDelete={remove}
-              onRollback={rollback}
-              error={error instanceof Error ? error : null}
-              isRetrying={isFetching}
-              isDeleting={isDeleting}
-              onRetry={() => { void refresh() }}
-            />
-          </div>
-        )}
-      </div>
+      >
+        <RecoveryGroupsTable
+          groups={groups}
+          isLoading={isLoading}
+          onEdit={navigateToEdit}
+          onDelete={remove}
+          onRollback={rollback}
+          error={error instanceof Error ? error : null}
+          isRetrying={isFetching}
+          isDeleting={isDeleting}
+          onRetry={() => { void refresh() }}
+          onCreate={navigateToCreate}
+        />
+      </InventoryShell>
     </div>
   )
 }

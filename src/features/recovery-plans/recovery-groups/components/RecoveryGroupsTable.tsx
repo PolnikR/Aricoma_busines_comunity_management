@@ -6,6 +6,7 @@ import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import {
   DataTable,
+  DataTableSurface,
   DataTablePagination,
   DataTableRequestState,
   DataTableToolbar,
@@ -47,6 +48,7 @@ interface RecoveryGroupsTableProps {
   isRetrying?: boolean
   isDeleting?: boolean
   onRetry?: () => void
+  onCreate?: () => void
 }
 
 interface RecoveryGroupFilters {
@@ -69,6 +71,7 @@ export function RecoveryGroupsTable({
   isRetrying = false,
   isDeleting = false,
   onRetry = () => undefined,
+  onCreate,
 }: RecoveryGroupsTableProps) {
   const { t } = useTranslation()
   const { data: policySets = [] } = usePolicySets()
@@ -234,9 +237,8 @@ export function RecoveryGroupsTable({
     triggerRefForMenu.current = button instanceof HTMLButtonElement ? button : null
   }, [openMenuId])
 
-  return (
-    <div className="flex flex-col">
-      <DataTableToolbar
+  const toolbar = (
+    <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
         searchPlaceholder={t('pages.recoveryGroups.searchPlaceholder')}
@@ -291,8 +293,27 @@ export function RecoveryGroupsTable({
             </Field>
           </>
         }
-      />
+    />
+  )
 
+  const pagination = (!error || groups.length > 0) ? (
+    <DataTablePagination
+      page={table.page}
+      pageSize={table.pageSize}
+      total={table.total}
+      isLoading={isLoading}
+      onPageChange={table.setPage}
+      onPageSizeChange={table.setPageSize}
+    />
+  ) : null
+
+  return (
+    <>
+      <DataTableSurface
+        ariaLabel={t('pages.recoveryGroups.tableAriaLabel')}
+        toolbar={toolbar}
+        pagination={pagination}
+      >
       <DataTableRequestState
         hasCachedData={groups.length > 0}
         error={error ? {
@@ -313,20 +334,20 @@ export function RecoveryGroupsTable({
           ariaLabel={isLoading ? t('pages.recoveryGroups.loading') : t('pages.recoveryGroups.tableAriaLabel')}
           onRowClick={group => { setSelectedId(group.id); setDetailTab('overview') }}
           selectedRowKey={selectedId}
-          emptyContent={t('pages.recoveryGroups.empty.noGroups')}
+          emptyContent={groups.length > 0 ? t('pages.recoveryGroups.empty.noGroups') : (
+            <div className="space-y-3">
+              <p>{t('pages.recoveryGroups.empty.title')}</p>
+              <p>{t('pages.recoveryGroups.empty.description')}</p>
+              {onCreate ? (
+                <Button size="sm" onClick={onCreate}>
+                  {t('pages.recoveryGroups.empty.createButton')}
+                </Button>
+              ) : null}
+            </div>
+          )}
         />
       </DataTableRequestState>
-
-      {(!error || groups.length > 0) ? (
-        <DataTablePagination
-          page={table.page}
-          pageSize={table.pageSize}
-          total={table.total}
-          isLoading={isLoading}
-          onPageChange={table.setPage}
-          onPageSizeChange={table.setPageSize}
-        />
-      ) : null}
+      </DataTableSurface>
 
       {openMenuId && currentMenuGroup && (
         <RowActionsMenu
@@ -572,6 +593,6 @@ export function RecoveryGroupsTable({
         closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
       />
-    </div>
+    </>
   )
 }

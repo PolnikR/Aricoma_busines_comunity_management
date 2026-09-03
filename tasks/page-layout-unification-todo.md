@@ -76,7 +76,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 
 - [x] Task 11 — Recovery Applications list.
 - [x] Task 12 — Policy Sets; zachovať existujúci dobrý scroll fix.
-- [ ] Task 13 — Recovery Groups list.
+- [x] Task 13 — Recovery Groups list.
 
 ## Checkpoint B2
 
