@@ -65,7 +65,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 # Phase 1 — Table/list pages
 
 - [x] Task 8 — Providers.
-- [ ] Task 9 — Platform Providers; zachovať AIRFLOW/SMTP/BACKEND/KEYCLOAK type-specific contract.
+- [x] Task 9 — Platform Providers; zachovať AIRFLOW/SMTP/BACKEND/KEYCLOAK type-specific contract.
 - [ ] Task 10 — Credentials.
 
 ## Checkpoint B1

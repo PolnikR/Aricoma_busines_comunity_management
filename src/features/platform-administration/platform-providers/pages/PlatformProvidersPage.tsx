@@ -33,22 +33,18 @@ export function PlatformProvidersPage() {
         )}
       />
 
-      <div className="flex-1 overflow-hidden p-3 lg:min-h-0">
-        <InventoryShell
+      <InventoryShell
           inventoryTitle={t('pages.platformProviders.inventoryTitle')}
           inventoryDescription={t('pages.platformProviders.inventoryDescription')}
         >
-          <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm lg:min-h-0">
-            <PlatformProvidersTable
+        <PlatformProvidersTable
               providers={platformProviders}
               isLoading={isLoading}
               error={error instanceof Error ? error : null}
               isRetrying={isFetching}
               onRetry={() => { void refetch() }}
-            />
-          </div>
-        </InventoryShell>
-      </div>
+        />
+      </InventoryShell>
 
       <PlatformProvidersModal
         open={isCreateModalOpen}

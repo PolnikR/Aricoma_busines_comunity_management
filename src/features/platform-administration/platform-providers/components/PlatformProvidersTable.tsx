@@ -9,6 +9,7 @@ import {
   DataTablePagination,
   DataTableToolbar,
   DataTableRequestState,
+  DataTableSurface,
   DetailDrawer,
   DetailRow,
   useTableState,
@@ -183,8 +184,8 @@ export function PlatformProvidersTable({
   const columns = getColumns(t, setJsonViewId)
   const table = useTableState(rows, { searchFields: ['name', 'id', 'type'] })
 
-  return (
-    <div className="flex flex-col">
+  const toolbar = (
+    <>
       {deleteProvider.error ? (
         <Alert
           className="mx-4 mt-4"
@@ -201,7 +202,27 @@ export function PlatformProvidersTable({
         density={table.density}
         onDensityChange={table.setDensity}
       />
+    </>
+  )
 
+  const pagination = (!error || providers.length > 0) ? (
+    <DataTablePagination
+      page={table.page}
+      pageSize={table.pageSize}
+      total={table.total}
+      isLoading={isLoading}
+      onPageChange={table.setPage}
+      onPageSizeChange={table.setPageSize}
+    />
+  ) : null
+
+  return (
+    <>
+      <DataTableSurface
+        ariaLabel={isLoading ? t('platformProviders.loading') : t('platformProviders.tableLabel')}
+        toolbar={toolbar}
+        pagination={pagination}
+      >
       <DataTableRequestState
         hasCachedData={providers.length > 0}
         error={error ? {
@@ -225,17 +246,7 @@ export function PlatformProvidersTable({
           emptyContent={rows.length > 0 ? t('platformProviders.noMatches') : t('platformProviders.empty')}
         />
       </DataTableRequestState>
-
-      {(!error || providers.length > 0) ? (
-        <DataTablePagination
-          page={table.page}
-          pageSize={table.pageSize}
-          total={table.total}
-          isLoading={isLoading}
-          onPageChange={table.setPage}
-          onPageSizeChange={table.setPageSize}
-        />
-      ) : null}
+      </DataTableSurface>
 
       <DetailDrawer
         open={selected !== null && !isSmtpDialogOpen}
@@ -313,6 +324,6 @@ export function PlatformProvidersTable({
         closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
       />
-    </div>
+    </>
   )
 }
