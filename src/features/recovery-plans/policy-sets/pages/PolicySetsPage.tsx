@@ -27,23 +27,19 @@ export function PolicySetsPage() {
         )}
       />
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3">
-        <InventoryShell
-          inventoryTitle={t('pages.policySets.inventoryTitle')}
-          inventoryDescription={t('pages.policySets.inventoryDescription')}
-          tabs={null}
-        >
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
-            <PolicySetsTable
-              policySets={policySets}
-              isLoading={isLoading}
-              error={error instanceof Error ? error : null}
-              isRetrying={isFetching}
-              onRetry={() => { void refetch() }}
-            />
-          </div>
-        </InventoryShell>
-      </div>
+      <InventoryShell
+        inventoryTitle={t('pages.policySets.inventoryTitle')}
+        inventoryDescription={t('pages.policySets.inventoryDescription')}
+        tabs={null}
+      >
+        <PolicySetsTable
+          policySets={policySets}
+          isLoading={isLoading}
+          error={error instanceof Error ? error : null}
+          isRetrying={isFetching}
+          onRetry={() => { void refetch() }}
+        />
+      </InventoryShell>
 
       <PolicySetModal
         open={isCreateModalOpen}

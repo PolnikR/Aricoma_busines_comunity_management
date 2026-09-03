@@ -38,9 +38,9 @@ describe('PolicySetsPage', () => {
     render(<PolicySetsPage />)
 
     const inventorySection = screen.getByRole('region', { name: 'Policy set records' })
-    const inventoryHost = inventorySection.parentElement?.parentElement
+    const inventoryHost = inventorySection.parentElement
 
-    expect(inventoryHost).toHaveClass('flex', 'min-h-0', 'min-w-0', 'flex-1', 'flex-col', 'overflow-hidden')
+    expect(inventoryHost).toHaveClass('flex', 'flex-1', 'flex-col', 'lg:min-h-0')
   })
 
   it('opens the create modal with cached policy sets', async () => {

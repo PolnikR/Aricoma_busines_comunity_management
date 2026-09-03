@@ -75,7 +75,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] No nested vertical scroll.
 
 - [x] Task 11 — Recovery Applications list.
-- [ ] Task 12 — Policy Sets; zachovať existujúci dobrý scroll fix.
+- [x] Task 12 — Policy Sets; zachovať existujúci dobrý scroll fix.
 - [ ] Task 13 — Recovery Groups list.
 
 ## Checkpoint B2

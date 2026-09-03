@@ -4,6 +4,7 @@ import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import {
   DataTable,
+  DataTableSurface,
   DataTablePagination,
   DataTableRequestState,
   DataTableToolbar,
@@ -101,8 +102,8 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
   const deleteErrorDetail = extractBackendErrorDetail(deletePolicySet.error)
   const loadErrorDetail = extractBackendErrorDetail(error)
 
-  return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+  const toolbar = (
+    <>
       <DataTableToolbar
         searchValue={table.search}
         onSearchChange={table.setSearch}
@@ -111,7 +112,6 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         density={table.density}
         onDensityChange={table.setDensity}
       />
-
       {deletePolicySet.error ? (
         <Alert
           className="mx-4 mt-4"
@@ -120,8 +120,27 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
           variant="error"
         />
       ) : null}
+    </>
+  )
 
-      <div className="custom-scrollbar flex min-h-[120px] flex-1 flex-col lg:overflow-y-auto">
+  const pagination = (!error || policySets.length > 0) ? (
+    <DataTablePagination
+      page={table.page}
+      pageSize={table.pageSize}
+      total={table.total}
+      isLoading={isLoading}
+      onPageChange={table.setPage}
+      onPageSizeChange={table.setPageSize}
+    />
+  ) : null
+
+  return (
+    <>
+      <DataTableSurface
+        ariaLabel={t('policySets.tableLabel')}
+        toolbar={toolbar}
+        pagination={pagination}
+      >
         <DataTableRequestState
           hasCachedData={policySets.length > 0}
           error={error ? {
@@ -146,18 +165,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
             emptyContent={rows.length > 0 ? t('policySets.noMatches') : t('policySets.empty')}
           />
         </DataTableRequestState>
-      </div>
-
-      {(!error || policySets.length > 0) ? (
-        <DataTablePagination
-          page={table.page}
-          pageSize={table.pageSize}
-          total={table.total}
-          isLoading={isLoading}
-          onPageChange={table.setPage}
-          onPageSizeChange={table.setPageSize}
-        />
-      ) : null}
+      </DataTableSurface>
 
       <DetailDrawer
         open={selected !== null}
@@ -214,6 +222,6 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
       />
-    </div>
+    </>
   )
 }
