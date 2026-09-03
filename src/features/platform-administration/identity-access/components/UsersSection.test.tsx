@@ -65,11 +65,13 @@ describe('UsersSection', () => {
   it('keeps shared table search and opens a user through the URL entity callback', async () => {
     const props = renderSection()
 
-    const usersTable = await screen.findByLabelText('Users')
+    const [usersSurface, usersTable] = await screen.findAllByLabelText('Users')
     expect(await screen.findByText('Alice Smith')).toBeInTheDocument()
     const scrollRegion = usersTable.parentElement
+    expect(usersSurface).toHaveClass('grid', 'grid-rows-[auto_minmax(0,1fr)_auto]')
     expect(usersTable).toBeInTheDocument()
-    expect(scrollRegion).toHaveClass('min-h-[120px]', 'flex-1', 'lg:overflow-y-auto')
+    expect(scrollRegion).toHaveClass('custom-scrollbar', 'min-h-0', 'overflow-y-auto')
+    expect(scrollRegion.parentElement).toBe(usersSurface)
     expect(scrollRegion).not.toContainElement(screen.getByLabelText('Rows per page'))
     expect(screen.queryByText('Search and manage users')).not.toBeInTheDocument()
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search users' }), 'bob@')

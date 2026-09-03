@@ -39,10 +39,12 @@ describe('RealmRolesSection', () => {
     mockLoadedRoles([role, { ...role, id: 'role-viewer', name: 'Viewer', permissions: [] }])
     const props = renderSection()
 
-    const rolesTable = screen.getByLabelText('Realm roles')
+    const [rolesSurface, rolesTable] = screen.getAllByLabelText('Realm roles')
     const scrollRegion = rolesTable.parentElement
     expect(rolesTable).toBeInTheDocument()
-    expect(scrollRegion).toHaveClass('min-h-[120px]', 'flex-1', 'lg:overflow-y-auto')
+    expect(rolesSurface).toHaveClass('grid', 'grid-rows-[auto_minmax(0,1fr)_auto]')
+    expect(scrollRegion).toHaveClass('custom-scrollbar', 'min-h-0', 'overflow-y-auto')
+    expect(scrollRegion.parentElement).toBe(rolesSurface)
     expect(scrollRegion).not.toContainElement(screen.getByLabelText('Rows per page'))
     expect(screen.queryByText('Manage realm-level roles')).not.toBeInTheDocument()
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search roles' }), 'viewer')

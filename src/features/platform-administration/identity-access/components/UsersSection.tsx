@@ -3,7 +3,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { Alert } from '@/shared/components/alert/Alert'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
-import { DataTable, DataTablePagination, DataTableToolbar, SkeletonBlock, useTableState } from '@/shared/components/data-table'
+import { DataTable, DataTablePagination, DataTableSurface, DataTableToolbar, SkeletonBlock, useTableState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { CheckboxField, Field, Input } from '@/shared/components/form/FormControls'
@@ -13,7 +13,7 @@ import { useSessions } from '../hooks/useSessions'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
 import type { Session } from '../models/identityTypes'
 import type { CreateIdentityUserInput, IdentityCapabilityView, IdentityRoleView, IdentityUserView, RequiredActionView } from '../services/identityAdminGateway'
-import { IdentityContentPanel, IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection } from './IdentityResourceLayout'
+import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection } from './IdentityResourceLayout'
 
 const CANONICAL_USER_TABS = ['details', 'attributes', 'credentials', 'role-mappings', 'groups', 'consents', 'sessions', 'identity-provider-links'] as const
 const VISIBLE_USER_TABS = ['details', 'credentials', 'role-mappings'] as const
@@ -173,24 +173,40 @@ export function UsersSection(props: UsersSectionProps) {
   }
 
   return (
-    <IdentityContentPanel>
-      {mutationError && !isAddUserOpen ? (
-        <Alert
-          className="m-4 mb-0"
-          variant="error"
-          title={t('identity.users.mutationFailed')}
-          description={mutationError.message}
+    <>
+    <DataTableSurface
+      ariaLabel={t('identity.navigation.sections.users')}
+      toolbar={(
+        <>
+          {mutationError && !isAddUserOpen ? (
+            <Alert
+              className="m-4 mb-0"
+              variant="error"
+              title={t('identity.users.mutationFailed')}
+              description={mutationError.message}
+            />
+          ) : null}
+          <DataTableToolbar
+            searchValue={table.search}
+            onSearchChange={table.setSearch}
+            searchPlaceholder={t('identity.users.search')}
+            searchLabel={t('identity.users.search')}
+            density={table.density}
+            onDensityChange={table.setDensity}
+          />
+        </>
+      )}
+      pagination={!error ? (
+        <DataTablePagination
+          page={table.page}
+          pageSize={table.pageSize}
+          total={table.total}
+          onPageChange={table.setPage}
+          onPageSizeChange={table.setPageSize}
+          isLoading={isLoading && users.length === 0}
         />
       ) : null}
-      <DataTableToolbar
-        searchValue={table.search}
-        onSearchChange={table.setSearch}
-        searchPlaceholder={t('identity.users.search')}
-        searchLabel={t('identity.users.search')}
-        density={table.density}
-        onDensityChange={table.setDensity}
-      />
-      <div className="custom-scrollbar min-h-[120px] flex-1 lg:overflow-y-auto">
+    >
         {error ? (
           <div className="p-4">
             <EmptyState
@@ -218,17 +234,7 @@ export function UsersSection(props: UsersSectionProps) {
             )}
           />
         )}
-      </div>
-      {!error ? (
-        <DataTablePagination
-          page={table.page}
-          pageSize={table.pageSize}
-          total={table.total}
-          onPageChange={table.setPage}
-          onPageSizeChange={table.setPageSize}
-          isLoading={isLoading && users.length === 0}
-        />
-      ) : null}
+    </DataTableSurface>
       <AddUserModal
         open={isAddUserOpen}
         isCreating={isMutating}
@@ -243,7 +249,7 @@ export function UsersSection(props: UsersSectionProps) {
           return created
         }}
       />
-    </IdentityContentPanel>
+    </>
   )
 }
 

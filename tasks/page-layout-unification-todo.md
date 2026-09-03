@@ -125,7 +125,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] Recovery Actions + Identity outer header/Card geometry aligned.
 - [ ] One vertical scroll owner per workspace branch.
 
-- [ ] Task 25 — Identity Users + Realm Roles.
+- [x] Task 25 — Identity Users + Realm Roles.
 - [ ] Task 26 — Identity Clients + Client Scopes.
 - [ ] Task 27 — Identity Organizations + User Federation.
 

@@ -6,6 +6,7 @@ import {
   DataTable,
   DataTablePagination,
   DataTableRequestState,
+  DataTableSurface,
   DataTableToolbar,
   useTableState,
 } from '@/shared/components/data-table'
@@ -17,7 +18,7 @@ import { useUsers } from '../hooks/useUsers'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
 import type { User } from '../models/identityTypes'
 import type { IdentityRoleRecord } from '../model/rolesPermissionsTypes'
-import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection, IdentityContentPanel } from './IdentityResourceLayout'
+import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection } from './IdentityResourceLayout'
 
 const ROLE_SEARCH_FIELDS: (keyof IdentityRoleRecord)[] = ['name', 'permissions']
 const ROLE_TABS = ['details', 'associated-roles', 'attributes', 'users-in-role', 'permissions'] as const
@@ -158,8 +159,9 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
   }
 
   return (
-    <IdentityContentPanel>
-      <>
+    <DataTableSurface
+      ariaLabel={t('identity.navigation.sections.realm-roles')}
+      toolbar={(
           <DataTableToolbar
             searchValue={table.search}
             onSearchChange={table.setSearch}
@@ -168,7 +170,9 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
             density={table.density}
             onDensityChange={table.setDensity}
           />
-          <div className="custom-scrollbar min-h-[120px] flex-1 lg:overflow-y-auto">
+      )}
+      pagination={(!error || roles.length > 0) ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} isLoading={isLoading} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
+    >
             <DataTableRequestState
               hasCachedData={roles.length > 0}
               error={error ? { title: t('identity.roles.loadFailed'), description: error.message, retryLabel: t('identity.common.actions.retry'), isRetrying: false, onRetry: () => { void refetch() } } : null}
@@ -187,9 +191,6 @@ export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange
                 emptyContent={roles.length > 0 ? t('identity.roles.empty.filtered') : <EmptyState title={t('identity.roles.empty.title')} description={t('identity.roles.empty.description')} />}
               />
             </DataTableRequestState>
-          </div>
-          {(!error || roles.length > 0) ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} isLoading={isLoading} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null}
-      </>
-    </IdentityContentPanel>
+    </DataTableSurface>
   )
 }
