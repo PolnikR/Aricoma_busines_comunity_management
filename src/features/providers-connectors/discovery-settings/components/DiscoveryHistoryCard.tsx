@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
-import { DataTable, DataTablePagination, DataTableRequestState } from '@/shared/components/data-table'
+import { DataTable, DataTablePagination, DataTableRequestState, DataTableSurface } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { Field, Select } from '@/shared/components/form/FormControls'
@@ -43,9 +43,8 @@ export function DiscoveryHistoryCard({
   const columns = getDiscoveryCacheHistoryColumns(t)
   const showPagination = historyQuery.data !== undefined || historyQuery.isLoading
 
-  return (
-    <section className="grid h-full min-w-0 min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
-      <div className="shrink-0 border-b border-border">
+  const toolbar = (
+    <div className="shrink-0 border-b border-border">
         <div className="flex flex-col gap-3 p-4 lg:flex-row lg:items-end lg:justify-between">
           <Field
             label={t('pages.discoverySettings.history.filters.provider')}
@@ -99,9 +98,31 @@ export function DiscoveryHistoryCard({
             />
           </div>
         ) : null}
-      </div>
+    </div>
+  )
 
-      <div className="custom-scrollbar min-h-0 overflow-y-auto">
+  const pagination = showPagination ? (
+    <DataTablePagination
+      page={safePage}
+      pageSize={pageSize}
+      total={rows.length}
+      pageSizeOptions={HISTORY_PAGE_SIZE_OPTIONS}
+      isLoading={historyQuery.isLoading}
+      paginationAriaLabel={t('pages.discoverySettings.history.pagination.ariaLabel')}
+      onPageChange={setPage}
+      onPageSizeChange={nextPageSize => {
+        setPageSize(nextPageSize)
+        setPage(1)
+      }}
+    />
+  ) : null
+
+  return (
+    <DataTableSurface
+      ariaLabel={`${t('pages.discoverySettings.history.title')} table`}
+      toolbar={toolbar}
+      pagination={pagination}
+    >
         <DataTableRequestState
           hasCachedData={historyQuery.data !== undefined}
           error={historyQuery.error ? {
@@ -133,23 +154,6 @@ export function DiscoveryHistoryCard({
             )}
           />
         </DataTableRequestState>
-      </div>
-
-      {showPagination ? (
-        <DataTablePagination
-          page={safePage}
-          pageSize={pageSize}
-          total={rows.length}
-          pageSizeOptions={HISTORY_PAGE_SIZE_OPTIONS}
-          isLoading={historyQuery.isLoading}
-          paginationAriaLabel={t('pages.discoverySettings.history.pagination.ariaLabel')}
-          onPageChange={setPage}
-          onPageSizeChange={nextPageSize => {
-            setPageSize(nextPageSize)
-            setPage(1)
-          }}
-        />
-      ) : null}
-    </section>
+    </DataTableSurface>
   )
 }

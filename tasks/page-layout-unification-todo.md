@@ -109,7 +109,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 
 - [x] Task 19 — Configuration.
 - [x] Task 20 — Discovery Settings outer workspace.
-- [ ] Task 21 — Discovery History embedded table -> shared data surface.
+- [x] Task 21 — Discovery History embedded table -> shared data surface.
 
 ## Checkpoint C1
 

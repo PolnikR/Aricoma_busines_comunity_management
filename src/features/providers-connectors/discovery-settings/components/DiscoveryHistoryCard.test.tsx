@@ -187,7 +187,7 @@ describe('DiscoveryHistoryCard', () => {
 
     const history = tableViewport.closest('section')
     expect(history).not.toBeNull()
-    expect(history).toHaveClass('grid', 'h-full', 'grid-rows-[auto_minmax(0,1fr)_auto]', 'overflow-hidden')
+    expect(history).toHaveClass('grid', 'min-h-0', 'flex-1', 'grid-rows-[auto_minmax(0,1fr)_auto]', 'rounded-[20px]', 'overflow-hidden')
     const verticalScroll = history?.querySelector('.overflow-y-auto') ?? null
     expect(verticalScroll).toHaveClass('custom-scrollbar', 'min-h-0', 'overflow-y-auto')
     expect(verticalScroll).toContainElement(screen.getByLabelText('Discovery history runs'))
