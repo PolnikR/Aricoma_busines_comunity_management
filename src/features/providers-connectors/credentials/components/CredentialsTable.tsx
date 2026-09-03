@@ -6,6 +6,7 @@ import {
   DataTable,
   DataTablePagination,
   DataTableRequestState,
+  DataTableSurface,
   DataTableToolbar,
   DetailDrawer,
   DetailRow,
@@ -64,8 +65,8 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
     },
   ]
 
-  return (
-    <div className="flex min-h-0 flex-1 flex-col">
+  const toolbar = (
+    <>
       {deleteCredential.error ? (
         <Alert
           className="mx-4 mt-4"
@@ -82,6 +83,27 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
         density={table.density}
         onDensityChange={table.setDensity}
       />
+    </>
+  )
+
+  const pagination = !error ? (
+    <DataTablePagination
+      page={table.page}
+      pageSize={table.pageSize}
+      total={table.total}
+      isLoading={isLoading}
+      onPageChange={table.setPage}
+      onPageSizeChange={table.setPageSize}
+    />
+  ) : null
+
+  return (
+    <>
+      <DataTableSurface
+        ariaLabel={t(isLoading ? 'credentials.loading' : 'credentials.table.ariaLabel')}
+        toolbar={toolbar}
+        pagination={pagination}
+      >
       <DataTableRequestState
         hasCachedData={credentials.length > 0}
         error={error ? {
@@ -105,16 +127,7 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
           emptyContent={rows.length > 0 ? t('credentials.noMatches') : t('credentials.empty')}
         />
       </DataTableRequestState>
-      {!error ? (
-        <DataTablePagination
-          page={table.page}
-          pageSize={table.pageSize}
-          total={table.total}
-          isLoading={isLoading}
-          onPageChange={table.setPage}
-          onPageSizeChange={table.setPageSize}
-        />
-      ) : null}
+      </DataTableSurface>
       <DetailDrawer
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
@@ -184,6 +197,6 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
           })
         }}
       />
-    </div>
+    </>
   )
 }

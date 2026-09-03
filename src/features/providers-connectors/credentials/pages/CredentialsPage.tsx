@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
+import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useCredentials } from '../hooks/useCredentials'
@@ -25,17 +26,18 @@ export function CredentialsPage() {
           </Button>
         )}
       />
-      <div className="flex flex-1 flex-col gap-4 overflow-hidden p-3 lg:min-h-0">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
-          <CredentialsTable
-            credentials={data}
-            isLoading={isLoading}
-            error={error}
-            isRetrying={isFetching}
-            onRetry={() => { void refetch() }}
-          />
-        </div>
-      </div>
+      <InventoryShell
+        inventoryTitle={t('credentials.page.title')}
+        inventoryDescription={t('credentials.page.description')}
+      >
+        <CredentialsTable
+          credentials={data}
+          isLoading={isLoading}
+          error={error}
+          isRetrying={isFetching}
+          onRetry={() => { void refetch() }}
+        />
+      </InventoryShell>
       <CredentialCreateModal
         open={createOpen}
         existingCredentials={data}
