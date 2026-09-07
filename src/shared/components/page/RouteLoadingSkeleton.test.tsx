@@ -19,4 +19,10 @@ describe('RouteLoadingSkeleton', () => {
     expect(container.firstElementChild).toHaveAttribute('aria-busy', 'true')
     expect(screen.getByRole('status', { name: 'Loading virtual machines' })).toBeInTheDocument()
   })
+
+  it('renders a builder-shaped loading state when requested', () => {
+    const { container } = render(<RouteLoadingSkeleton variant="builder" />)
+    expect(screen.getByLabelText('Loading')).toHaveAttribute('aria-busy', 'true')
+    expect(container.querySelector('.lg\\:grid-cols-\\[280px_minmax\\(0\\,1fr\\)\\]')).toBeInTheDocument()
+  })
 })

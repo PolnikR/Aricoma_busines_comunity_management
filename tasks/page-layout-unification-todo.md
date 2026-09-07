@@ -178,8 +178,8 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 
 # Phase 4 — Fallbacks / Cleanup / Final
 
-- [ ] Task 40 — Archetype-aware `RouteLoadingSkeleton` variants.
-- [ ] Task 41 — Wire route fallbacks to route matrix.
+- [x] Task 40 — Archetype-aware `RouteLoadingSkeleton` variants.
+- [x] Task 41 — Wire builder route fallbacks to the route matrix.
 - [ ] Task 42 — Reference check + remove only truly obsolete wrappers.
 
 ## Checkpoint E1
