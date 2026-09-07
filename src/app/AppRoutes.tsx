@@ -412,6 +412,7 @@ export function AppRoutes() {
         <Route path="discovery-inventory/virtual-machines" element={<Navigate to={routes.resources} replace />} />
         <Route
           path="discovery-inventory/infrastructure"
+          handle={{ contentScroll: 'contained' }}
           element={(
             <Suspense fallback={<InfrastructureTopologySkeleton />}>
               <InfrastructurePage />

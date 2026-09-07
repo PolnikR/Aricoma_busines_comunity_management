@@ -77,6 +77,7 @@ describe('createAppRouter', () => {
       ['recovery-actions', 'execute'],
       ['recovery-actions', 'schedule'],
       ['recovery-actions', 'history'],
+      ['discovery-inventory/infrastructure'],
     ]
 
     for (const pathChain of containedRoutes) {

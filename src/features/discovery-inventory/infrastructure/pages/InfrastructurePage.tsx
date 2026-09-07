@@ -103,7 +103,7 @@ export function InfrastructurePage() {
   const activeErrorDetail = extractBackendErrorDetail(activeQuery.error)
 
   return (
-    <div className="flex flex-1 min-h-full w-full min-w-0 max-w-full flex-col overflow-x-hidden lg:h-full lg:min-h-0">
+    <div className="flex min-h-full min-w-0 flex-1 flex-col overflow-hidden lg:h-full lg:min-h-0">
       <PageHeader
         eyebrow={t('pages.infrastructure.eyebrow')}
         title={t('pages.infrastructure.title')}

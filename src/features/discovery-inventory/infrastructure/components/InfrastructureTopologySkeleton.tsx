@@ -14,7 +14,7 @@ export function InfrastructureTopologySkeleton({ platform = 'vmware', flashSyste
   const { t } = useTranslation()
   return (
     <div
-      className="flex min-h-[620px] flex-1 flex-col overflow-hidden rounded-[20px] border border-border bg-surface"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[20px] border border-border bg-surface shadow-sm"
       aria-busy="true"
       aria-label={t('topology.loading')}
     >
@@ -32,8 +32,8 @@ export function InfrastructureTopologySkeleton({ platform = 'vmware', flashSyste
           onFitView={() => undefined}
         />
       </fieldset>
-      <div className="flex-1 bg-surface-subtle p-6">
-        <div className="h-full min-h-[430px] animate-pulse rounded-xl bg-surface-muted" />
+      <div className="min-h-0 flex-1 bg-surface-subtle p-6">
+        <div className="h-full animate-pulse rounded-xl bg-surface-muted" />
       </div>
       <InfrastructureTopologyLegend platform={platform} visibleNodes={0} visibleEdges={0} isLoading />
     </div>

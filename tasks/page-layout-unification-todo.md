@@ -163,7 +163,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 
 - [x] Task 35 — `ModuleWorkQueuePage` explicit alignment task.
 - [x] Task 36 — Provider Detail success/error/not-found geometry.
-- [ ] Task 37 — Infrastructure outer topology workspace.
+- [x] Task 37 — Infrastructure outer topology workspace.
 
 ## Checkpoint D2
 
@@ -171,7 +171,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] Provider Detail remains default-scroll detail archetype.
 - [ ] Infrastructure has explicit topology scroll owner.
 
-- [ ] Task 38 — Infrastructure loading skeleton geometry.
+- [x] Task 38 — Infrastructure loading skeleton geometry.
 - [ ] Task 39 — Builder/detail/topology/document browser matrix.
 
 ## Checkpoint D — Non-table archetypes complete
