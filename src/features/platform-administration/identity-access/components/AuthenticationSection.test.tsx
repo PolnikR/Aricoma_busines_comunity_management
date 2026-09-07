@@ -23,6 +23,7 @@ describe('AuthenticationSection', () => {
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument()
     expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0)
     expect(screen.queryByText('Loading required actions')).not.toBeInTheDocument()
+    expect(container.querySelector('.custom-scrollbar')).toHaveClass('min-h-0', 'flex-1', 'overflow-y-auto')
   })
 
   it('shows only Required actions and renders the approved preview rows by default', async () => {

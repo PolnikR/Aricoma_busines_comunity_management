@@ -8,7 +8,7 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 describe('EventsSection', () => {
   it('renders user and admin audit tabs without redundant header', () => {
     const onTabChange = vi.fn()
-    render(<EventsSection tabId="user-events" onTabChange={onTabChange} onOpenSettings={vi.fn()} />)
+    const { container } = render(<EventsSection tabId="user-events" onTabChange={onTabChange} onOpenSettings={vi.fn()} />)
 
     expect(screen.getByRole('tablist', { name: 'Event audit sections' })).toBeInTheDocument()
     expect(screen.getByLabelText('User events')).toBeInTheDocument()
@@ -17,6 +17,7 @@ describe('EventsSection', () => {
 
     expect(screen.queryByRole('heading', { name: 'Events' })).not.toBeInTheDocument()
     expect(screen.queryByText(/Review Keycloak user activity/)).not.toBeInTheDocument()
+    expect(container.querySelector('.custom-scrollbar')).toHaveClass('min-h-0', 'flex-1', 'overflow-y-auto')
   })
 
   it('delegates audit tab navigation', async () => {

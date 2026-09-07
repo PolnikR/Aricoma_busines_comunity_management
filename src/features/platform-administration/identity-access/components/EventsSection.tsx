@@ -61,7 +61,7 @@ export function EventsSection({ tabId, onTabChange }: EventsSectionProps) {
         indicator="inset"
         scrollControls={{ previousLabel: t('identity.events.tabs.scrollPrevious'), nextLabel: t('identity.events.tabs.scrollNext') }}
       />
-      <div className="min-w-0">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <DataTableToolbar
           searchValue={table.search}
           onSearchChange={table.setSearch}
@@ -70,15 +70,17 @@ export function EventsSection({ tabId, onTabChange }: EventsSectionProps) {
           density={table.density}
           onDensityChange={table.setDensity}
         />
-        <DataTable
-          layout="fit"
-          columns={columns}
-          rows={table.pageItems}
-          rowKey={event => event.id}
-          density={table.density}
-          ariaLabel={activeTab === 'user-events' ? t('identity.events.tabs.user-events') : t('identity.events.tabs.admin-events')}
-          emptyContent={<EmptyState title={activeTab === 'user-events' ? t('identity.events.empty.user') : t('identity.events.empty.admin')} description={t('identity.events.empty.description')} />}
-        />
+        <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
+          <DataTable
+            layout="fit"
+            columns={columns}
+            rows={table.pageItems}
+            rowKey={event => event.id}
+            density={table.density}
+            ariaLabel={activeTab === 'user-events' ? t('identity.events.tabs.user-events') : t('identity.events.tabs.admin-events')}
+            emptyContent={<EmptyState title={activeTab === 'user-events' ? t('identity.events.empty.user') : t('identity.events.empty.admin')} description={t('identity.events.empty.description')} />}
+          />
+        </div>
       </div>
     </IdentityContentPanel>
   )

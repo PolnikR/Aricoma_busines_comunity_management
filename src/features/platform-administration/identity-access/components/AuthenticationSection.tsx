@@ -82,7 +82,7 @@ export function AuthenticationSection({ tabId, onTabChange }: AuthenticationSect
           description={mutationError.message}
         />
       ) : null}
-      <div className="min-w-0">{content}</div>
+      <div className="custom-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto">{content}</div>
     </IdentityContentPanel>
   )
 }
