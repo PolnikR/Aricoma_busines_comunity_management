@@ -83,7 +83,7 @@ export function RecoveryApplicationEditorPage() {
           description={t('pages.recoveryEditor.loadDescription')}
           actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
         />
-        <div className="p-6">
+        <div className="flex min-h-0 flex-1 flex-col p-4">
           <FetchErrorAlert
             title={t('pages.recoveryEditor.error.failed')}
             description={loadErrorDescription}

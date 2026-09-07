@@ -153,7 +153,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 # Phase 3 — Builders / Detail / Topology / Document
 
 - [x] Task 32 — Recovery Group create/edit outer geometry.
-- [ ] Task 33 — Recovery Application create/edit outer geometry.
+- [x] Task 33 — Recovery Application create/edit outer geometry.
 - [ ] Task 34 — Builder primary Card + evidence-based common wizard sidebar width.
 
 ## Checkpoint D1
