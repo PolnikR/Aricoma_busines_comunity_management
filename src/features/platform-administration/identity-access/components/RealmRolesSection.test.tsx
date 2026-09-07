@@ -40,7 +40,9 @@ describe('RealmRolesSection', () => {
     const props = renderSection()
 
     const [rolesSurface, rolesTable] = screen.getAllByLabelText('Realm roles')
+    if (!rolesSurface || !rolesTable) throw new Error('Expected realm roles surface and table')
     const scrollRegion = rolesTable.parentElement
+    if (!scrollRegion) throw new Error('Expected realm roles table scroll region')
     expect(rolesTable).toBeInTheDocument()
     expect(rolesSurface).toHaveClass('grid', 'grid-rows-[auto_minmax(0,1fr)_auto]')
     expect(scrollRegion).toHaveClass('custom-scrollbar', 'min-h-0', 'overflow-y-auto')

@@ -66,8 +66,10 @@ describe('UsersSection', () => {
     const props = renderSection()
 
     const [usersSurface, usersTable] = await screen.findAllByLabelText('Users')
+    if (!usersSurface || !usersTable) throw new Error('Expected users surface and table')
     expect(await screen.findByText('Alice Smith')).toBeInTheDocument()
     const scrollRegion = usersTable.parentElement
+    if (!scrollRegion) throw new Error('Expected users table scroll region')
     expect(usersSurface).toHaveClass('grid', 'grid-rows-[auto_minmax(0,1fr)_auto]')
     expect(usersTable).toBeInTheDocument()
     expect(scrollRegion).toHaveClass('custom-scrollbar', 'min-h-0', 'overflow-y-auto')

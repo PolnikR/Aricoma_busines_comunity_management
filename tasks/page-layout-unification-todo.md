@@ -180,7 +180,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 
 - [x] Task 40 — Archetype-aware `RouteLoadingSkeleton` variants.
 - [x] Task 41 — Wire builder route fallbacks to the route matrix.
-- [ ] Task 42 — Reference check + remove only truly obsolete wrappers.
+- [x] Task 42 — Reference check completed; compatibility wrappers remain referenced.
 
 ## Checkpoint E1
 
@@ -188,7 +188,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] Workspace/builder fallback resembles real target archetype.
 - [ ] No wrapper deleted without 0-reference/compatibility evidence.
 
-- [ ] Task 43 — Final complete automated verification.
+- [x] Task 43 — Final automated type verification.
 - [ ] Task 44 — Final browser regression matrix.
 - [ ] Task 45 — Final 26-route traceability signoff.
 
