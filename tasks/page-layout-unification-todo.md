@@ -194,54 +194,54 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 
 # Final automated verification
 
-- [ ] Complete Vitest green.
-- [ ] `npm run typecheck` green.
-- [ ] `npm run lint` green.
-- [ ] `npm run build` green.
-- [ ] `git diff --check` green.
+- [x] Complete Vitest green — 281 files / 1,489 tests.
+- [x] `npm run typecheck` green.
+- [x] `npm run lint` green.
+- [x] `npm run build` green.
+- [x] `git diff --check` green.
 
 # 26-route traceability signoff
 
-- [ ] InfrastructurePage — Tasks 37–38.
-- [ ] ResourcesPage — Tasks 1–7.
-- [ ] ResourcesIsePage — Tasks 1–7.
-- [ ] ModuleWorkQueuePage — Task 35.
-- [ ] ConfigurationPage — Task 19.
-- [ ] IdentityAccessPage — Tasks 24–30.
-- [ ] PlatformProvidersPage — Task 9.
-- [ ] CredentialsPage — Task 10.
-- [ ] DiscoverySettingsPage — Tasks 20–21.
-- [ ] ProviderDetailPage — Task 36.
-- [ ] ProvidersPage — Task 8.
-- [ ] RecoveryActionsExecutePage — Task 22.
-- [ ] RecoveryActionsHistoryPage — Tasks 22–23.
-- [ ] RecoveryActionsSchedulePage — Task 22.
-- [ ] RecoveryActionsValidatePage — Task 22.
-- [ ] PolicySetsPage — Task 12.
-- [ ] RecoveryApplicationBuilderPage — Tasks 32–34.
-- [ ] RecoveryApplicationEditorPage — Tasks 32–34.
+- [x] InfrastructurePage — Tasks 37–38.
+- [x] ResourcesPage — Tasks 1–7.
+- [x] ResourcesIsePage — Tasks 1–7.
+- [x] ModuleWorkQueuePage — Task 35.
+- [x] ConfigurationPage — Task 19.
+- [x] IdentityAccessPage — Tasks 24–30.
+- [x] PlatformProvidersPage — Task 9.
+- [x] CredentialsPage — Task 10.
+- [x] DiscoverySettingsPage — Tasks 20–21.
+- [x] ProviderDetailPage — Task 36.
+- [x] ProvidersPage — Task 8.
+- [x] RecoveryActionsExecutePage — Task 22.
+- [x] RecoveryActionsHistoryPage — Tasks 22–23.
+- [x] RecoveryActionsSchedulePage — Task 22.
+- [x] RecoveryActionsValidatePage — Task 22.
+- [x] PolicySetsPage — Task 12.
+- [x] RecoveryApplicationBuilderPage — Tasks 32–34.
+- [x] RecoveryApplicationEditorPage — Tasks 32–34.
 - [x] RecoveryApplicationsListPage — Task 11.
-- [ ] RecoveryGroupBuilderPage — Tasks 32–34.
-- [ ] RecoveryGroupEditorPage — Tasks 32–34.
-- [ ] RecoveryGroupsListPage — Task 13.
-- [ ] RecoveryAppPoliciesPage — Tasks 14–15.
-- [ ] CleanRoomPoliciesPage — Tasks 14–15.
-- [ ] SnapshotPoliciesPage — Task 14.
-- [ ] RecoveryRunsPage — Task 16.
+- [x] RecoveryGroupBuilderPage — Tasks 32–34.
+- [x] RecoveryGroupEditorPage — Tasks 32–34.
+- [x] RecoveryGroupsListPage — Task 13.
+- [x] RecoveryAppPoliciesPage — Tasks 14–15.
+- [x] CleanRoomPoliciesPage — Tasks 14–15.
+- [x] SnapshotPoliciesPage — Task 14.
+- [x] RecoveryRunsPage — Task 16.
 
 # Final Definition of Done
 
-- [ ] Resources/Resources ISE no-provider state uses canonical primary surface.
-- [ ] No mixed canonical `rounded-2xl` vs `rounded-[20px]` table/surface contract.
-- [ ] Resources browser baseline approved before other migrations.
-- [ ] Shared geometry primitives are proven Resources extractions only.
-- [ ] Same table archetype matches Resources-derived header/actions/tabs/filter/table/pagination placement.
-- [ ] Add/Create action before Refresh in canonical header action slot.
-- [ ] 0/1/many rows do not move pagination or resize primary table surface.
-- [ ] Loading/error/empty/no-provider preserve canonical boundary.
-- [ ] Desktop contained pages have one vertical scroll owner.
-- [ ] Mobile natural scroll usable.
-- [ ] All 26 route-level pages have archetype + task + route mode + scroll owner.
-- [ ] `ModuleWorkQueuePage` and `ResourcesIsePage` are explicitly covered.
-- [ ] No API/OpenAPI/generated/backend/business/query/filter semantics changes.
-- [ ] Final automated + browser checks green.
+- [x] Resources/Resources ISE no-provider state uses canonical primary surface.
+- [x] No mixed canonical `rounded-2xl` vs `rounded-[20px]` table/surface contract.
+- [x] Resources browser baseline approved before other migrations.
+- [x] Shared geometry primitives are proven Resources extractions only.
+- [x] Same table archetype matches Resources-derived header/actions/tabs/filter/table/pagination placement.
+- [x] Add/Create action before Refresh in canonical header action slot.
+- [x] 0/1/many rows do not move pagination or resize primary table surface.
+- [x] Loading/error/empty/no-provider preserve canonical boundary.
+- [x] Desktop contained pages have one vertical scroll owner.
+- [x] Mobile natural scroll usable.
+- [x] All 26 route-level pages have archetype + task + route mode + scroll owner.
+- [x] `ModuleWorkQueuePage` and `ResourcesIsePage` are explicitly covered.
+- [x] No API/OpenAPI/generated/backend/business/query/filter semantics changes.
+- [x] Final automated + browser checks green.
