@@ -225,7 +225,7 @@ export function RecoveryGroupBuilder({
   return (
     <fieldset className="contents" disabled={isInitialLoading} aria-busy={isInitialLoading}>
     <div className="flex min-h-0 flex-1 p-4">
-      <div className="grid min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-surface shadow-sm lg:grid-cols-[240px_minmax(0,1fr)]">
+      <div className="grid min-h-0 flex-1 overflow-hidden rounded-[20px] border border-border bg-surface shadow-sm lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="custom-scrollbar min-h-0 overflow-y-auto border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
           <WizardSteps
             items={steps}
