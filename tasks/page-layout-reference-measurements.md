@@ -6,6 +6,12 @@
 
 ## Manual browser evidence
 
+### Authenticated recheck — 2026-09-07
+
+- Keycloak authentication succeeded at `http://localhost:5173`; `127.0.0.1` was rejected as an invalid redirect URI.
+- Identity & Access at `1366x768` rendered the aligned header/action, navigation, shared Users surface, toolbar, rows, and fixed pagination without observed clipping.
+- Resources reached its request-error state, but the provider request returned HTTP `502 Bad Gateway`; populated/loading/empty verification cannot be completed until that backend dependency recovers.
+
 The application was reviewed in the authenticated user browser because the
 isolated browser cannot navigate to the internal Keycloak host. The following
 runtime states were observed from the supplied screenshots.
