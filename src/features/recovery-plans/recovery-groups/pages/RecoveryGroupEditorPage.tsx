@@ -76,22 +76,38 @@ export function RecoveryGroupEditorPage() {
 
   if (loadError) {
     return (
-      <div className="p-6">
-        <FetchErrorAlert
-          title={t('pages.recoveryGroups.errors.load')}
-          {...(loadErrorDescription ? { description: loadErrorDescription } : {})}
-          onRetry={() => { void refresh() }}
-          retryLabel={t('buttons.retry')}
-          variant="full"
+      <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+        <PageHeader
+          eyebrow={t('pages.recoveryGroupEditor.eyebrow')}
+          title={t('pages.recoveryGroupEditor.title')}
+          description={t('pages.recoveryGroupEditor.description')}
+          actions={<Button size="sm" variant="outline" onClick={requestBack}>{t('buttons.back')}</Button>}
         />
+        <div className="flex min-h-0 flex-1 flex-col p-4">
+          <FetchErrorAlert
+            title={t('pages.recoveryGroups.errors.load')}
+            {...(loadErrorDescription ? { description: loadErrorDescription } : {})}
+            onRetry={() => { void refresh() }}
+            retryLabel={t('buttons.retry')}
+            variant="full"
+          />
+        </div>
       </div>
     )
   }
 
   if (!isLoading && !group) {
     return (
-      <div className="p-6">
-        <Alert variant="error" title={t('pages.recoveryGroupEditor.error.notFound')} />
+      <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+        <PageHeader
+          eyebrow={t('pages.recoveryGroupEditor.eyebrow')}
+          title={t('pages.recoveryGroupEditor.title')}
+          description={t('pages.recoveryGroupEditor.description')}
+          actions={<Button size="sm" variant="outline" onClick={requestBack}>{t('buttons.back')}</Button>}
+        />
+        <div className="flex min-h-0 flex-1 flex-col p-4">
+          <Alert variant="error" title={t('pages.recoveryGroupEditor.error.notFound')} />
+        </div>
       </div>
     )
   }
