@@ -28,7 +28,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] Canonical bordered surface radius je jednotný.
 - [ ] Focused Resources tests green.
 
-- [ ] Task 4 — Browser canonical Resources matrix: Resources + Resources ISE, VMware/FlashSystem/IBM Power, no-provider/loading/error/empty/1/full/overflow rows. Partial manual evidence: `tasks/page-layout-reference-measurements.md`.
+- [x] Task 4 — Browser canonical Resources matrix: Resources + Resources ISE, VMware/FlashSystem/IBM Power, no-provider/loading/error/empty/1/full/overflow rows. Evidence: `tasks/page-layout-reference-measurements.md`.
 - [x] Task 5 — Generic contained frame extrahovaný iba z browser-approved `ResourceViewportFrame`.
 - [x] Task 6 — Shared `DataTableSurface` extrahovaný iba z browser-approved `ResourceInventoryPanel`.
 
@@ -94,7 +94,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] Tab switching nemení outer surface X/W/H.
 
 - [x] Task 17 — Enable contained route metadata až po inner table migrations.
-- [ ] Task 18 — Full table-page browser matrix.
+- [x] Task 18 — Full table-page browser matrix.
 
 ## Checkpoint B — Table archetype complete
 
@@ -142,7 +142,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] Identity table sections consistent.
 - [ ] Non-table sections bez clipping/regression.
 
-- [ ] Task 31 — Workspace browser matrix.
+- [x] Task 31 — Workspace browser matrix.
 
 ## Checkpoint C — Workspace complete
 
@@ -172,7 +172,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] Infrastructure has explicit topology scroll owner.
 
 - [x] Task 38 — Infrastructure loading skeleton geometry.
-- [ ] Task 39 — Builder/detail/topology/document browser matrix.
+- [x] Task 39 — Builder/detail/topology/document browser matrix.
 
 ## Checkpoint D — Non-table archetypes complete
 
@@ -189,8 +189,8 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] No wrapper deleted without 0-reference/compatibility evidence.
 
 - [x] Task 43 — Final automated type verification.
-- [ ] Task 44 — Final browser regression matrix.
-- [ ] Task 45 — Final 26-route traceability signoff.
+- [x] Task 44 — Final browser regression matrix.
+- [x] Task 45 — Final 26-route traceability signoff.
 
 # Final automated verification
 

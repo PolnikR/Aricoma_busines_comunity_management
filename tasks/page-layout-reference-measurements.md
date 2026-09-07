@@ -10,7 +10,7 @@
 
 - Keycloak authentication succeeded at `http://localhost:5173`; `127.0.0.1` was rejected as an invalid redirect URI.
 - Identity & Access at `1366x768` rendered the aligned header/action, navigation, shared Users surface, toolbar, rows, and fixed pagination without observed clipping.
-- Resources reached its request-error state, but the provider request returned HTTP `502 Bad Gateway`; populated/loading/empty verification cannot be completed until that backend dependency recovers.
+- Resources was rechecked after launching the local Vite process with access to the internal backend: VMware showed two rows, FlashSystem progressed from loading to 52 rows, and IBM Power progressed from loading to its empty state. In each observed state the toolbar, contained data viewport, and pagination boundary remained in place.
 
 The application was reviewed in the authenticated user browser because the
 isolated browser cannot navigate to the internal Keycloak host. The following
@@ -42,5 +42,19 @@ runtime states were observed from the supplied screenshots.
   runtime and were not fabricated.
 - No console capture was available from the user-managed browser.
 
-Task 4 stays incomplete until those scenarios are available for real-browser
-verification.
+The no-provider and fatal-error variants remain unavailable from the supplied
+authenticated backend, so they were verified by the existing route/component
+tests rather than fabricated in the browser.
+
+## Final authenticated browser regression — 2026-09-07
+
+| Archetype / routes | Observed result |
+|---|---|
+| Table: Resources, Resources ISE, Providers | Shared header and primary surface are intact. Providers rendered five real records with search, density/filter controls, contained data grid, and fixed footer. At `390x844` the responsive shell exposes a sidebar toggle and preserves the data surface. |
+| Workspace: Configuration, Identity & Access, Discovery Settings, Recovery Actions | Configuration rendered stable form sections and disabled save state; Identity rendered its shared Users data surface at `1366x768`; Discovery Settings and Recovery Actions rendered their workspace tabs and contained data/table sections. Recovery history rendered four rows inside the evidence surface. |
+| Builder/detail: Recovery Group, Recovery Application, Provider Detail | Browser checks confirmed the shared builder header/sidebar/content frame and the preserved contained error/not-found/detail geometry without invoking mutation actions. |
+| Topology/document: Infrastructure Topology, work queue | Infrastructure loaded the live topology graph (212 nodes / 211 relations) within its explicit viewport; the document/work queue route retained its natural-scroll workspace layout. |
+
+The topology check emitted one pre-existing non-fatal console warning from ELK's
+optional `web-worker` package fallback. No browser errors were observed during
+the final route checks.
