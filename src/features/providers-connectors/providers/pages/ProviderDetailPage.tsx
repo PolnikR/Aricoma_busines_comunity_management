@@ -37,14 +37,14 @@ export function ProviderDetailPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-full flex-col">
+      <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader
           eyebrow={t('pages.providers.eyebrow')}
           title={t('pages.providers.title')}
           description={t('pages.providers.description')}
           actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
         />
-        <div className="p-6">
+        <div className="flex min-h-0 flex-1 flex-col p-3">
           <FetchErrorAlert
             title={t('pages.providers.detail.loadError')}
             {...(loadErrorDescription ? { description: loadErrorDescription } : {})}
@@ -59,14 +59,14 @@ export function ProviderDetailPage() {
 
   if (!isLoading && !provider) {
     return (
-      <div className="flex min-h-full flex-col">
+      <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader
           eyebrow={t('pages.providers.eyebrow')}
           title={t('pages.providers.detail.notFound')}
           description={t('pages.providers.detail.notFoundDesc')}
           actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
         />
-        <div className="p-6">
+        <div className="flex min-h-0 flex-1 flex-col p-3">
           <div className="rounded-lg bg-red-50 p-4 text-red-700">{t('pages.providers.detail.unknown')}</div>
         </div>
       </div>

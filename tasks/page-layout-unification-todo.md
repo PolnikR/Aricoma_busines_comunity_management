@@ -162,7 +162,7 @@ Každý implementačný task musí zostať S/M, typicky <= 5 files, s focused ve
 - [ ] Longest SK/EN wizard labels measured before width decision.
 
 - [ ] Task 35 — `ModuleWorkQueuePage` explicit alignment task.
-- [ ] Task 36 — Provider Detail success/error/not-found geometry.
+- [x] Task 36 — Provider Detail success/error/not-found geometry.
 - [ ] Task 37 — Infrastructure outer topology workspace.
 
 ## Checkpoint D2
