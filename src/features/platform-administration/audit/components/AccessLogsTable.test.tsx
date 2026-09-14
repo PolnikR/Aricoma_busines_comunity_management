@@ -27,6 +27,17 @@ const requestEntry: AccessLogRecord = {
   responseBody: [{ result: 'queued' }],
 }
 
+it('shows the user and Slovak date in Bratislava time', async () => {
+  fetchAccessLogsMock.mockResolvedValue([{
+    ...requestEntry,
+    user: 'admin',
+    timestamp: '2026-09-03T08:25:29.869196+00:00',
+  }])
+  renderTable()
+  expect(await screen.findByText('admin')).toBeInTheDocument()
+  expect(screen.getByText('03.09.2026 10:25:29')).toBeInTheDocument()
+})
+
 function createQueryClient() {
   return new QueryClient({
     defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false } },
@@ -70,7 +81,7 @@ afterEach(() => {
 })
 
 describe('AccessLogsTable', () => {
-  it('shows a localized four-column loading skeleton while the access-log request is pending', () => {
+  it('shows a localized six-column loading skeleton while the access-log request is pending', () => {
     fetchAccessLogsMock.mockReturnValue(new Promise(() => undefined))
 
     renderTable({ lines: 200 }, createQueryClient(), 'cs')
@@ -78,6 +89,8 @@ describe('AccessLogsTable', () => {
     const table = screen.getByRole('status', { name: 'Načítání přístupových logů' })
     expect(table).toHaveAttribute('aria-busy', 'true')
     expect(within(table).getAllByRole('columnheader').map(header => header.textContent)).toEqual([
+      'Datum a čas',
+      'Uživatel',
       'Metoda',
       'Cesta',
       'Stav',

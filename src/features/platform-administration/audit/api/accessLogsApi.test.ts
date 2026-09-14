@@ -38,6 +38,8 @@ describe('fetchAccessLogs', () => {
         path: '/api/jobs',
         status: 202,
         duration_ms: 12.5,
+        user: 'admin',
+        timestamp: '2026-09-03T08:25:29.869196+00:00',
         request_body: requestBody,
         response_body: responseBody,
       }],
@@ -49,6 +51,8 @@ describe('fetchAccessLogs', () => {
       path: '/api/jobs',
       status: 202,
       durationMs: 12.5,
+      user: 'admin',
+      timestamp: '2026-09-03T08:25:29.869196+00:00',
       requestBody,
       responseBody,
     }])

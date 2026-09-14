@@ -1,6 +1,6 @@
 import { getAccessLogsGetAccessLogsGet } from '@/generated/api/client.gen'
 import type { GetAccessLogsGetAccessLogsGetParams } from '@/generated/api/models'
-import type { AccessLogsResponseOutput } from '@/generated/api/zod.gen'
+import type { AccessLogsResponseOutput } from './schemas/accessLogSchema'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
 import { toOrvalRequestError } from '@/shared/api/orvalMutator'
 import type { AccessLogFilters, AccessLogRecord } from '../model/accessLogTypes'
@@ -31,6 +31,8 @@ function mapAccessLogRecord(
     path: entry.path,
     status: entry.status,
     durationMs: entry.duration_ms,
+    ...(entry.user != null ? { user: entry.user } : {}),
+    ...(entry.timestamp != null ? { timestamp: entry.timestamp } : {}),
     requestBody: entry.request_body,
     responseBody: entry.response_body,
   }

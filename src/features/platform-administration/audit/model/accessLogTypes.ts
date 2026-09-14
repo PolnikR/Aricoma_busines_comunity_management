@@ -7,6 +7,8 @@ export interface AccessLogFilters {
 
 export interface AccessLogRequestRecord {
   kind: 'request'
+  user?: string
+  timestamp?: string
   method: string
   path: string
   status: number

@@ -2175,6 +2175,8 @@
   "audit.accessLogs.table.columns.method": "Method",
   "audit.accessLogs.table.columns.path": "Path",
   "audit.accessLogs.table.columns.status": "Status",
+  "audit.accessLogs.table.columns.timestamp": "Date and time",
+  "audit.accessLogs.table.columns.user": "User",
   "audit.accessLogs.table.columns.duration": "Duration",
   "audit.accessLogs.error.load": "Access logs could not be loaded.",
   "audit.accessLogs.error.refresh": "Access logs could not be refreshed.",

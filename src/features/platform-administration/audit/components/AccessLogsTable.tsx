@@ -15,6 +15,18 @@ import type { AccessLogFilters, AccessLogRecord } from '../model/accessLogTypes'
 import { AccessLogDetailDrawer } from './AccessLogDetailDrawer'
 
 const INITIAL_PAGE_SIZE = 25
+const timestampFormatter = new Intl.DateTimeFormat('sk-SK', {
+  timeZone: 'Europe/Bratislava',
+  day: '2-digit', month: '2-digit', year: 'numeric',
+  hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+})
+
+function formatTimestamp(value: string | undefined) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return timestampFormatter.format(date).replace(/\.\s+/g, '.').replace(',', '')
+}
 
 interface AccessLogTableRow {
   key: string
@@ -45,6 +57,16 @@ function rowAriaLabel(record: AccessLogRecord, rawEntryLabel: string) {
 
 function createColumns(t: (key: string) => string): ColumnDef<AccessLogTableRow>[] {
   return [
+    {
+      id: 'timestamp',
+      header: t('audit.accessLogs.table.columns.timestamp'),
+      cell: ({ record }) => record.kind === 'request' ? formatTimestamp(record.timestamp) : '—',
+    },
+    {
+      id: 'user',
+      header: t('audit.accessLogs.table.columns.user'),
+      cell: ({ record }) => record.kind === 'request' ? record.user ?? '—' : '—',
+    },
     {
       id: 'method',
       header: t('audit.accessLogs.table.columns.method'),

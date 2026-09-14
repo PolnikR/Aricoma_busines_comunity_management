@@ -2138,6 +2138,8 @@
   "audit.accessLogs.table.columns.method": "Metóda",
   "audit.accessLogs.table.columns.path": "Cesta",
   "audit.accessLogs.table.columns.status": "Stav",
+  "audit.accessLogs.table.columns.timestamp": "Dátum a čas",
+  "audit.accessLogs.table.columns.user": "Používateľ",
   "audit.accessLogs.table.columns.duration": "Trvanie",
   "audit.accessLogs.error.load": "Prístupové logy sa nepodarilo načítať.",
   "audit.accessLogs.error.refresh": "Prístupové logy sa nepodarilo obnoviť.",
