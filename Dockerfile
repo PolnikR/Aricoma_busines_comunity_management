@@ -3,7 +3,7 @@ FROM node:22.23.1-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install --global npm@11.19.1 && npm ci
 
 COPY . .
 RUN npm run lint && npm run typecheck && npm run test && npx vite build
