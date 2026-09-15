@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
+import { Pagination } from '@/shared/components/pagination/Pagination'
 import { ResponseBodyViewer } from '@/shared/components/response-body/ResponseBodyViewer'
 import { ChevronDownIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -9,6 +11,8 @@ interface RecoveryGroupInventoryProps {
   runId: string | null
   active: boolean
 }
+
+const RELATIONS_PAGE_SIZE = 5
 
 function providerObjectLabel(value: Record<string, unknown>): string {
   for (const key of ['name', 'volume_name', 'vdisk_name', 'id', 'uid']) {
@@ -21,6 +25,7 @@ function providerObjectLabel(value: Record<string, unknown>): string {
 export function RecoveryGroupInventory({ runId, active }: RecoveryGroupInventoryProps) {
   const { t } = useTranslation()
   const query = useRecoveryGroupInventory(runId, active)
+  const [relationPages, setRelationPages] = useState<Record<string, number>>({})
 
   if (!runId) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.noRun')}</p>
   if (query.isLoading) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.loading')}</p>
@@ -62,8 +67,24 @@ export function RecoveryGroupInventory({ runId, active }: RecoveryGroupInventory
       <p className="text-[10px] font-semibold uppercase tracking-wider text-text-subtle">
         {t('recoveryInventory.volumeInventory')} · {query.data.provider_id_volume ?? '—'}
       </p>
-      {volumes.length === 0 ? <p className="text-sm text-text-subtle">{t('recoveryInventory.empty')}</p> : volumes.map(([name, volume]) => (
-        <details key={name} className="group overflow-hidden rounded-lg border border-border bg-surface">
+      {volumes.length === 0 ? <p className="text-sm text-text-subtle">{t('recoveryInventory.empty')}</p> : volumes.map(([name, volume]) => {
+        const pageKey = `${query.data.run_id}:${name}`
+        const pageCount = Math.max(1, Math.ceil(volume.relations.length / RELATIONS_PAGE_SIZE))
+        const page = Math.min(relationPages[pageKey] ?? 1, pageCount)
+        const visibleRelations = volume.relations.slice(
+          (page - 1) * RELATIONS_PAGE_SIZE,
+          page * RELATIONS_PAGE_SIZE,
+        )
+
+        return <details
+          key={name}
+          className="group overflow-hidden rounded-lg border border-border bg-surface"
+          onToggle={(event) => {
+            if (!event.currentTarget.open && page !== 1) {
+              setRelationPages(current => ({ ...current, [pageKey]: 1 }))
+            }
+          }}
+        >
           <summary className="grid cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 px-3 py-3 marker:hidden">
             <div className="min-w-0">
               <span className="block truncate text-sm font-semibold text-text-primary">{name}</span>
@@ -73,7 +94,7 @@ export function RecoveryGroupInventory({ runId, active }: RecoveryGroupInventory
             <ChevronDownIcon className="size-4 text-text-muted transition-transform group-open:rotate-180" />
           </summary>
           <div className="space-y-3 border-t border-border bg-surface-subtle px-3 py-3">
-            {volume.relations.length === 0 ? <p className="text-xs text-text-subtle">{t('recoveryInventory.noRelations')}</p> : volume.relations.map((relation, index) => {
+            {volume.relations.length === 0 ? <p className="text-xs text-text-subtle">{t('recoveryInventory.noRelations')}</p> : visibleRelations.map((relation, index) => {
               const pairedName = providerObjectLabel(relation.paired_volume)
               const sourceName = relation.role === 'source' ? name : pairedName
               const targetName = relation.role === 'target' ? name : pairedName
@@ -81,22 +102,36 @@ export function RecoveryGroupInventory({ runId, active }: RecoveryGroupInventory
                 <div key={`${relation.role}-${String(index)}`} className="grid grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1fr)] items-center gap-1.5">
                   <div className="min-w-0 rounded-md border border-border bg-surface px-2.5 py-2">
                     <span className="block text-[9px] font-semibold uppercase tracking-wide text-text-subtle">{t('recoveryInventory.sourceVolume')}</span>
-                    <span className="mt-0.5 block truncate text-xs font-semibold text-text-primary">{sourceName}</span>
+                    <span className="mt-0.5 block truncate text-xs font-semibold text-text-primary" title={sourceName}>{sourceName}</span>
                   </div>
                   <span className="text-center text-sm font-bold text-accent" aria-hidden="true">→</span>
                   <div className="min-w-0 rounded-md border border-border bg-surface px-2.5 py-2">
                     <span className="block text-[9px] font-semibold uppercase tracking-wide text-text-subtle">{t('recoveryInventory.targetVolume')}</span>
-                    <span className="mt-0.5 block truncate text-xs font-semibold text-text-primary">{targetName}</span>
+                    <span className="mt-0.5 block truncate text-xs font-semibold text-text-primary" title={targetName}>{targetName}</span>
                   </div>
                 </div>
               )
             })}
+            {pageCount > 1 ? (
+              <Pagination
+                page={page}
+                pageCount={pageCount}
+                ariaLabel={t('recoveryInventory.relations')}
+                previousPageLabel={t('pagination.previousPage')}
+                nextPageLabel={t('pagination.nextPage')}
+                pageOfLabel={t('pagination.pageOf')}
+                pageLabel={t('pagination.page')}
+                onPageChange={(nextPage) => {
+                  setRelationPages(current => ({ ...current, [pageKey]: nextPage }))
+                }}
+              />
+            ) : null}
             <div aria-label={t('recoveryInventory.showTechnicalJson')}>
               <ResponseBodyViewer data={volume} defaultOpen={false} />
             </div>
           </div>
         </details>
-      ))}
+      })}
     </div>
   )
 }
