@@ -2162,5 +2162,16 @@
   "recoveryInventory.found": "Nalezeno",
   "recoveryInventory.notFound": "Nenalezeno",
   "recoveryInventory.datastores": "Datová úložiště",
-  "recoveryInventory.pairedVolume": "Mapování a párový svazek"
+  "recoveryInventory.pairedVolume": "Mapování a párový svazek",
+  "recoveryInventory.volumes": "Svazky",
+  "recoveryInventory.relations": "Vazby",
+  "recoveryInventory.tiers": "Vrstvy",
+  "recoveryInventory.virtualMachines": "Virtuální stroje",
+  "recoveryInventory.volumeInventory": "Inventář svazků",
+  "recoveryInventory.tierInventory": "Inventář vrstev",
+  "recoveryInventory.mappingRelations": "mapovací vazby",
+  "recoveryInventory.noRelations": "Nebyly vráceny žádné mapovací vazby.",
+  "recoveryInventory.sourceVolume": "Zdrojový svazek",
+  "recoveryInventory.targetVolume": "Cílový svazek",
+  "recoveryInventory.showTechnicalJson": "Zobrazit technický JSON"
 }

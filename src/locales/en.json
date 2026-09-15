@@ -2199,5 +2199,16 @@
   "recoveryInventory.found": "Found",
   "recoveryInventory.notFound": "Not found",
   "recoveryInventory.datastores": "Datastores",
-  "recoveryInventory.pairedVolume": "Mapping and paired volume"
+  "recoveryInventory.pairedVolume": "Mapping and paired volume",
+  "recoveryInventory.volumes": "Volumes",
+  "recoveryInventory.relations": "Relations",
+  "recoveryInventory.tiers": "Tiers",
+  "recoveryInventory.virtualMachines": "Virtual machines",
+  "recoveryInventory.volumeInventory": "Volume inventory",
+  "recoveryInventory.tierInventory": "Tier inventory",
+  "recoveryInventory.mappingRelations": "mapping relations",
+  "recoveryInventory.noRelations": "No mapping relations were returned.",
+  "recoveryInventory.sourceVolume": "Source volume",
+  "recoveryInventory.targetVolume": "Target volume",
+  "recoveryInventory.showTechnicalJson": "Show technical JSON"
 }

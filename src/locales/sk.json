@@ -2162,5 +2162,16 @@
   "recoveryInventory.found": "Nájdené",
   "recoveryInventory.notFound": "Nenájdené",
   "recoveryInventory.datastores": "Dátové úložiská",
-  "recoveryInventory.pairedVolume": "Mapovanie a párový volume"
+  "recoveryInventory.pairedVolume": "Mapovanie a párový volume",
+  "recoveryInventory.volumes": "Volumes",
+  "recoveryInventory.relations": "Väzby",
+  "recoveryInventory.tiers": "Vrstvy",
+  "recoveryInventory.virtualMachines": "Virtuálne stroje",
+  "recoveryInventory.volumeInventory": "Inventár volumes",
+  "recoveryInventory.tierInventory": "Inventár vrstiev",
+  "recoveryInventory.mappingRelations": "mapovacie väzby",
+  "recoveryInventory.noRelations": "Neboli vrátené žiadne mapovacie väzby.",
+  "recoveryInventory.sourceVolume": "Zdrojový volume",
+  "recoveryInventory.targetVolume": "Cieľový volume",
+  "recoveryInventory.showTechnicalJson": "Zobraziť technický JSON"
 }
