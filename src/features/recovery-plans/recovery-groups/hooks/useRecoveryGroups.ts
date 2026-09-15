@@ -3,6 +3,7 @@ import { useProviders } from '@/features/providers-connectors/providers/hooks/us
 import {
   createRecoveryGroup,
   deleteRecoveryGroup,
+  fetchRecoveryGroupInventory,
   fetchRecoveryGroups,
   rollbackRecoveryGroupOrchestration,
   updateRecoveryGroup,
@@ -11,6 +12,14 @@ import { recoveryGroupKeys } from '../api/recoveryGroupQueryKeys'
 import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsError } from '../api/recoveryGroupsErrors'
 import type { RollbackReport } from '../api/schemas/recoveryGroupsSchema'
+
+export function useRecoveryGroupInventory(runId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: recoveryGroupKeys.inventory(runId ?? ''),
+    queryFn: () => fetchRecoveryGroupInventory(runId ?? ''),
+    enabled: enabled && Boolean(runId),
+  })
+}
 
 export function useRecoveryGroups() {
   const queryClient = useQueryClient()

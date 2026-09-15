@@ -2153,5 +2153,14 @@
   "audit.accessLogs.detail.duration": "Trvanie",
   "audit.accessLogs.detail.requestBody": "Telo požiadavky",
   "audit.accessLogs.detail.responseBody": "Telo odpovede",
-  "audit.accessLogs.detail.rawEntry": "Nespracovaný záznam"
+  "audit.accessLogs.detail.rawEntry": "Nespracovaný záznam",
+  "details.tabs.inventory": "Inventár",
+  "recoveryInventory.noRun": "Inventár je dostupný až po spustení orchestrácie.",
+  "recoveryInventory.loading": "Načítava sa inventár…",
+  "recoveryInventory.error": "Inventár sa nepodarilo načítať",
+  "recoveryInventory.empty": "Inventár neobsahuje žiadne položky.",
+  "recoveryInventory.found": "Nájdené",
+  "recoveryInventory.notFound": "Nenájdené",
+  "recoveryInventory.datastores": "Dátové úložiská",
+  "recoveryInventory.pairedVolume": "Mapovanie a párový volume"
 }

@@ -30,6 +30,7 @@ import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTy
 import type { RollbackReport } from '../api/schemas/recoveryApplicationsSchema'
 import { toRecoveryApplicationJson } from '../helpers/mapRecoveryApplications'
 import { RecoveryApplicationRollbackResultModal } from './RecoveryApplicationRollbackResultModal'
+import { RecoveryApplicationInventory } from './RecoveryApplicationInventory'
 
 interface RecoveryApplicationsTableProps {
   applications: RecoveryApplicationListItem[]
@@ -137,7 +138,7 @@ export function RecoveryApplicationsTable({
   const [deleteTarget, setDeleteTarget] = useState<RecoveryApplicationListItem | null>(null)
   const [rollbackResult, setRollbackResult] = useState<{ appName: string; report: RollbackReport } | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
-  const [detailTab, setDetailTab] = useState<'overview' | 'orchestration'>('overview')
+  const [detailTab, setDetailTab] = useState<'overview' | 'orchestration' | 'inventory'>('overview')
   const errorDescription = resolveUserFacingErrorMessage(error, '')
 
   const filterOptions = useMemo(() => ({
@@ -428,6 +429,7 @@ export function RecoveryApplicationsTable({
               items={[
                 { value: 'overview' as const, label: t('details.tabs.overview') },
                 { value: 'orchestration' as const, label: t('details.tabs.orchestration') },
+                { value: 'inventory' as const, label: t('details.tabs.inventory') },
               ]}
               value={detailTab}
               onChange={setDetailTab}
@@ -457,7 +459,7 @@ export function RecoveryApplicationsTable({
                   />
                 )}
               </dl>
-            ) : (
+            ) : detailTab === 'orchestration' ? (
               <dl className="px-5 py-4 space-y-3">
                 <DetailRow
                   label={t('details.orchestration')}
@@ -507,6 +509,8 @@ export function RecoveryApplicationsTable({
                   <p className="text-xs text-text-subtle">{t('details.notOrchestrated')}</p>
                 )}
               </dl>
+            ) : (
+              <RecoveryApplicationInventory runId={selectedAirflowRunId ?? null} active />
             )}
           </>
         ) : null}

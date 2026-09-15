@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as apiFetchModule from '@/shared/api/apiClient'
-import { createRecoveryGroup, deleteRecoveryGroup, fetchRecoveryGroups, rollbackRecoveryGroupOrchestration } from './recoveryGroupsApi'
+import { createRecoveryGroup, deleteRecoveryGroup, fetchRecoveryGroupInventory, fetchRecoveryGroups, rollbackRecoveryGroupOrchestration } from './recoveryGroupsApi'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 
@@ -68,6 +68,23 @@ describe('fetchRecoveryGroups', () => {
       resources: [],
       relatedVolumes: [],
     })
+  })
+})
+
+describe('fetchRecoveryGroupInventory', () => {
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('loads group inventory by run ID', async () => {
+    const apiFetch = vi.spyOn(apiFetchModule, 'apiFetch').mockResolvedValue(new Response(JSON.stringify({
+      recovery_group_id: 'group-1',
+      recovery_group_name: 'Database',
+      run_id: 'run-group-1',
+      provider_id_volume: 'flash-1',
+      volumes: {},
+    }), { status: 200 }))
+
+    await expect(fetchRecoveryGroupInventory('run-group-1')).resolves.toMatchObject({ run_id: 'run-group-1' })
+    expect(apiFetch.mock.calls[0]?.[0]).toBe('/api/get_recovery_group_inventory?run_id=run-group-1')
   })
 })
 

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   deleteRecoveryApplication,
+  fetchRecoveryApplicationInventory,
   fetchRecoveryApplications,
   submitRecoveryApplicationDag,
 } from './recoveryApplicationsApi'
@@ -53,6 +54,18 @@ afterEach(() => {
 })
 
 describe('recoveryApplicationsApi', () => {
+  it('loads application inventory by run ID', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      recovery_app_id: 'app-1',
+      recovery_app_name: 'Finance',
+      run_id: 'run-app-1',
+      tiers: [],
+    }), { status: 200 })))
+
+    await expect(fetchRecoveryApplicationInventory('run-app-1')).resolves.toMatchObject({ run_id: 'run-app-1' })
+    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe('/api/get_recovery_app_inventory?run_id=run-app-1')
+  })
+
   it('loads the current generated response contract without a recovery group description', async () => {
     const currentBackendPayload = {
       applications: [{

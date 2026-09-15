@@ -1,15 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   fetchRecoveryApplications,
+  fetchRecoveryApplicationInventory,
   submitRecoveryApplicationDag,
 } from '../api/recoveryApplicationsApi'
-import { recoveryApplicationsQueryKey } from '../api/recoveryApplicationQueryKeys'
+import { recoveryApplicationInventoryQueryKey, recoveryApplicationsQueryKey } from '../api/recoveryApplicationQueryKeys'
 import type { SubmitRecoveryApplicationInput } from '../model/recoveryApplicationTypes'
 
 export function useRecoveryApplications() {
   return useQuery({
     queryKey: recoveryApplicationsQueryKey,
     queryFn: fetchRecoveryApplications,
+  })
+}
+
+export function useRecoveryApplicationInventory(runId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: recoveryApplicationInventoryQueryKey(runId ?? ''),
+    queryFn: () => fetchRecoveryApplicationInventory(runId ?? ''),
+    enabled: enabled && Boolean(runId),
   })
 }
 

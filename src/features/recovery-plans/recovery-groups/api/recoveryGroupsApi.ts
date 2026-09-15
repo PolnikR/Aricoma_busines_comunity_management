@@ -1,11 +1,13 @@
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import {
   deleteRecoveryGroupRouteDeleteRecoveryGroupDelete,
+  getRecoveryGroupInventoryGetRecoveryGroupInventoryGet,
   getRecoveryGroupsGetRecoveryGroupsGet,
   rollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPost,
   submitRecoveryGroupSubmitRecoveryGroupPost,
 } from '@/generated/api/client.gen'
 import {
+  RecoveryGroupInventoryResponse,
   RecoveryGroupsResponse,
   type RecoveryGroupRecordOutput,
 } from '@/generated/api/zod.gen'
@@ -80,6 +82,19 @@ export async function fetchRecoveryGroups(providers: ProviderRecord[]): Promise<
       .map(record => mapRecoveryGroupApiRecord(toRecoveryGroupReadRecord(record), providers))
   } catch (error) {
     throw toOrvalRequestError(error, 'Get recovery groups')
+  }
+}
+
+export async function fetchRecoveryGroupInventory(runId: string) {
+  try {
+    const payload = await getRecoveryGroupInventoryGetRecoveryGroupInventoryGet({ run_id: runId })
+    return parseGeneratedResponse(
+      RecoveryGroupInventoryResponse,
+      payload,
+      'GET /get_recovery_group_inventory',
+    )
+  } catch (error) {
+    throw toOrvalRequestError(error, 'Get recovery group inventory')
   }
 }
 

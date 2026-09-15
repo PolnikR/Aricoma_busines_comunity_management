@@ -148,32 +148,6 @@ export const HealthResponse = zod.object({
 export type HealthResponse = zod.input<typeof HealthResponse>;
 export type HealthResponseOutput = zod.output<typeof HealthResponse>;
 
-export const AccessLogEntry = zod.object({
-  "method": zod.string(),
-  "path": zod.string(),
-  "status": zod.int(),
-  "duration_ms": zod.number(),
-  "request_body": zod.unknown(),
-  "response_body": zod.unknown()
-});
-
-export type AccessLogEntry = zod.input<typeof AccessLogEntry>;
-export type AccessLogEntryOutput = zod.output<typeof AccessLogEntry>;
-
-export const RawAccessLogEntry = zod.object({
-  "raw": zod.string()
-});
-
-export type RawAccessLogEntry = zod.input<typeof RawAccessLogEntry>;
-export type RawAccessLogEntryOutput = zod.output<typeof RawAccessLogEntry>;
-
-export const AccessLogsResponse = zod.object({
-  "entries": zod.array(zod.union([AccessLogEntry,RawAccessLogEntry]))
-});
-
-export type AccessLogsResponse = zod.input<typeof AccessLogsResponse>;
-export type AccessLogsResponseOutput = zod.output<typeof AccessLogsResponse>;
-
 export const ProviderType = zod.enum(['VMWARE', 'FLASHCOPY', 'IBM_POWER', 'AIRFLOW', 'SMTP', 'BACKEND', 'KEYCLOAK']);
 
 export type ProviderType = zod.input<typeof ProviderType>;
@@ -260,7 +234,7 @@ export type OrchestratorPushOutput = zod.output<typeof OrchestratorPush>;
 export const OrchestratorRunsResponse = zod.object({
   "provider_id": zod.string(),
   "dag_id": zod.string()
-}).describe('Airflow\'s own GET \/dagRuns response, merged with provider_id\/dag_id.\nLeft permissive (extra=\"allow\") since the run\/task fields are Airflow\'s\nschema, not this API\'s.');
+}).describe('Airflow\'s own GET /dagRuns response, merged with provider_id/dag_id.\nLeft permissive (extra="allow") since the run/task fields are Airflow\'s\nschema, not this API\'s.');
 
 export type OrchestratorRunsResponse = zod.input<typeof OrchestratorRunsResponse>;
 export type OrchestratorRunsResponseOutput = zod.output<typeof OrchestratorRunsResponse>;
@@ -396,6 +370,39 @@ export const ProvidersResponse = zod.object({
 export type ProvidersResponse = zod.input<typeof ProvidersResponse>;
 export type ProvidersResponseOutput = zod.output<typeof ProvidersResponse>;
 
+export const recoveryAppInventoryVmDatastoresDefault = [];
+
+export const RecoveryAppInventoryVm = zod.object({
+  "name": zod.string(),
+  "found": zod.boolean(),
+  "datastores": zod.array(zod.string()).default(recoveryAppInventoryVmDatastoresDefault),
+  "error": zod.union([zod.string(),zod.null()]).exactOptional()
+});
+
+export type RecoveryAppInventoryVm = zod.input<typeof RecoveryAppInventoryVm>;
+export type RecoveryAppInventoryVmOutput = zod.output<typeof RecoveryAppInventoryVm>;
+
+export const RecoveryAppInventoryTier = zod.object({
+  "tier_name": zod.string(),
+  "recovery_group_id": zod.string(),
+  "recovery_group_name": zod.string(),
+  "provider_id_vm": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "vms": zod.array(RecoveryAppInventoryVm)
+});
+
+export type RecoveryAppInventoryTier = zod.input<typeof RecoveryAppInventoryTier>;
+export type RecoveryAppInventoryTierOutput = zod.output<typeof RecoveryAppInventoryTier>;
+
+export const RecoveryAppInventoryResponse = zod.object({
+  "recovery_app_id": zod.string(),
+  "recovery_app_name": zod.string(),
+  "run_id": zod.string(),
+  "tiers": zod.array(RecoveryAppInventoryTier)
+});
+
+export type RecoveryAppInventoryResponse = zod.input<typeof RecoveryAppInventoryResponse>;
+export type RecoveryAppInventoryResponseOutput = zod.output<typeof RecoveryAppInventoryResponse>;
+
 export const recoveryAppPolicyRecordFrequencyValueExclusiveMin = 0;
 
 export const recoveryAppPolicyRecordRetentionValueExclusiveMin = 0;
@@ -499,7 +506,7 @@ export const RecoveryApplication = zod.object({
   "target_connection": zod.string(),
   "tiers": zod.record(zod.string(), RecoveryTier),
   "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional()
-}).describe('Shape accessed unconditionally by apache_airflow\/dags\/recovery_app_template.py\nat Airflow DAG-parse time - keep fields in sync with that module.');
+}).describe('Shape accessed unconditionally by apache_airflow/dags/recovery_app_template.py\nat Airflow DAG-parse time - keep fields in sync with that module.');
 
 export type RecoveryApplication = zod.input<typeof RecoveryApplication>;
 export type RecoveryApplicationOutput = zod.output<typeof RecoveryApplication>;
@@ -511,7 +518,7 @@ export const RecoveryAppRecord = zod.object({
   "airflow_run_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "push_to_orchestrator": zod.union([zod.boolean(),zod.null()]).exactOptional(),
   "orchestration_provider_id": zod.union([zod.string(),zod.null()]).exactOptional()
-}).describe('\'application\' shape mirrors what apache_airflow\/dags\/recovery_app_template.py\naccesses unconditionally - see recovery.recovery.RecoveryApplication.');
+}).describe('\'application\' shape mirrors what apache_airflow/dags/recovery_app_template.py\naccesses unconditionally - see recovery.recovery.RecoveryApplication.');
 
 export type RecoveryAppRecord = zod.input<typeof RecoveryAppRecord>;
 export type RecoveryAppRecordOutput = zod.output<typeof RecoveryAppRecord>;
@@ -520,7 +527,7 @@ export const RecoveryAppSubmission = zod.object({
   "id": zod.string(),
   "application": RecoveryApplication,
   "policy_set_id": zod.union([zod.string(),zod.null()]).exactOptional()
-}).describe('POST \/submit_recovery_dag request body.');
+}).describe('POST /submit_recovery_dag request body.');
 
 export type RecoveryAppSubmission = zod.input<typeof RecoveryAppSubmission>;
 export type RecoveryAppSubmissionOutput = zod.output<typeof RecoveryAppSubmission>;
@@ -528,14 +535,14 @@ export type RecoveryAppSubmissionOutput = zod.output<typeof RecoveryAppSubmissio
 export const RecoveryAppSubmitResponse = zod.object({
   "applications": zod.array(RecoveryAppRecord),
   "orchestrator_push": zod.union([OrchestratorPush,zod.null()]).exactOptional()
-}).describe('Same \'applications\' envelope key as \/get_recovery_apps - the router\nre-keys upsert_recovery_app\'s own \'recovery_applications\' result to match.');
+}).describe('Same \'applications\' envelope key as /get_recovery_apps - the router\nre-keys upsert_recovery_app\'s own \'recovery_applications\' result to match.');
 
 export type RecoveryAppSubmitResponse = zod.input<typeof RecoveryAppSubmitResponse>;
 export type RecoveryAppSubmitResponseOutput = zod.output<typeof RecoveryAppSubmitResponse>;
 
 export const RollbackReport = zod.object({
   "status": zod.enum(['ok', 'partial', 'failed', 'skipped'])
-}).describe('recovery\/rollback.py\'s report: shape varies a lot by status (see\nrollback_recovery_group\'s docstring), so only `status` is pinned down.');
+}).describe('recovery/rollback.py\'s report: shape varies a lot by status (see\nrollback_recovery_group\'s docstring), so only `status` is pinned down.');
 
 export type RollbackReport = zod.input<typeof RollbackReport>;
 export type RollbackReportOutput = zod.output<typeof RollbackReport>;
@@ -572,6 +579,38 @@ export const RecoveryGroup = zod.object({
 
 export type RecoveryGroup = zod.input<typeof RecoveryGroup>;
 export type RecoveryGroupOutput = zod.output<typeof RecoveryGroup>;
+
+export const VolumeMappingRelation = zod.object({
+  "role": zod.enum(['source', 'target']),
+  "mapping": zod.record(zod.string(), zod.unknown()),
+  "paired_volume": zod.record(zod.string(), zod.unknown()),
+  "consistency_group": zod.union([zod.record(zod.string(), zod.unknown()),zod.null()]).exactOptional()
+});
+
+export type VolumeMappingRelation = zod.input<typeof VolumeMappingRelation>;
+export type VolumeMappingRelationOutput = zod.output<typeof VolumeMappingRelation>;
+
+export const recoveryGroupVolumeInventoryRelationsDefault = [];
+
+export const RecoveryGroupVolumeInventory = zod.object({
+  "found": zod.boolean(),
+  "vdisk": zod.union([zod.record(zod.string(), zod.unknown()),zod.null()]).exactOptional(),
+  "relations": zod.array(VolumeMappingRelation).default(recoveryGroupVolumeInventoryRelationsDefault)
+});
+
+export type RecoveryGroupVolumeInventory = zod.input<typeof RecoveryGroupVolumeInventory>;
+export type RecoveryGroupVolumeInventoryOutput = zod.output<typeof RecoveryGroupVolumeInventory>;
+
+export const RecoveryGroupInventoryResponse = zod.object({
+  "recovery_group_id": zod.string(),
+  "recovery_group_name": zod.string(),
+  "run_id": zod.string(),
+  "provider_id_volume": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "volumes": zod.record(zod.string(), RecoveryGroupVolumeInventory)
+});
+
+export type RecoveryGroupInventoryResponse = zod.input<typeof RecoveryGroupInventoryResponse>;
+export type RecoveryGroupInventoryResponseOutput = zod.output<typeof RecoveryGroupInventoryResponse>;
 
 export const recoveryGroupRecordVmsDefault = [];
 export const recoveryGroupRecordVolumesDefault = [];
@@ -866,6 +905,34 @@ export const VolumesResponse = zod.object({
 
 export type VolumesResponse = zod.input<typeof VolumesResponse>;
 export type VolumesResponseOutput = zod.output<typeof VolumesResponse>;
+
+export const AccessLogEntry = zod.object({
+  "timestamp": zod.string(),
+  "user": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "method": zod.string(),
+  "path": zod.string(),
+  "status": zod.int(),
+  "duration_ms": zod.number(),
+  "request_body": zod.unknown(),
+  "response_body": zod.unknown()
+});
+
+export type AccessLogEntry = zod.input<typeof AccessLogEntry>;
+export type AccessLogEntryOutput = zod.output<typeof AccessLogEntry>;
+
+export const RawAccessLogEntry = zod.object({
+  "raw": zod.string()
+});
+
+export type RawAccessLogEntry = zod.input<typeof RawAccessLogEntry>;
+export type RawAccessLogEntryOutput = zod.output<typeof RawAccessLogEntry>;
+
+export const AccessLogsResponse = zod.object({
+  "entries": zod.array(zod.union([AccessLogEntry,RawAccessLogEntry]))
+});
+
+export type AccessLogsResponse = zod.input<typeof AccessLogsResponse>;
+export type AccessLogsResponseOutput = zod.output<typeof AccessLogsResponse>;
 /**
  * @summary Health
  */
@@ -1378,6 +1445,22 @@ export const SubmitRecoveryDagSubmitRecoveryDagPostResponse = RecoveryAppSubmitR
 
 
 /**
+ * @summary Get Recovery App Inventory
+ */
+export const GetRecoveryAppInventoryGetRecoveryAppInventoryGetQueryParams = zod.object({
+  "run_id": zod.string().describe('the recovery app\'s own airflow_run_id')
+})
+
+export const getRecoveryAppInventoryGetRecoveryAppInventoryGetHeaderXUserDefault = `admin`;
+
+export const GetRecoveryAppInventoryGetRecoveryAppInventoryGetHeader = zod.object({
+  "X-User": zod.union([zod.string(),zod.null()]).default(getRecoveryAppInventoryGetRecoveryAppInventoryGetHeaderXUserDefault)
+})
+
+export const GetRecoveryAppInventoryGetRecoveryAppInventoryGetResponse = RecoveryAppInventoryResponse
+
+
+/**
  * @summary Delete Recovery App Route
  */
 export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryRollbackFromOrchestratorDefault = false;
@@ -1434,6 +1517,22 @@ export const SubmitRecoveryGroupSubmitRecoveryGroupPostHeader = zod.object({
 export const SubmitRecoveryGroupSubmitRecoveryGroupPostBody = RecoveryGroup
 
 export const SubmitRecoveryGroupSubmitRecoveryGroupPostResponse = RecoveryGroupsResponse
+
+
+/**
+ * @summary Get Recovery Group Inventory
+ */
+export const GetRecoveryGroupInventoryGetRecoveryGroupInventoryGetQueryParams = zod.object({
+  "run_id": zod.string().describe('the recovery group\'s own airflow_run_id')
+})
+
+export const getRecoveryGroupInventoryGetRecoveryGroupInventoryGetHeaderXUserDefault = `admin`;
+
+export const GetRecoveryGroupInventoryGetRecoveryGroupInventoryGetHeader = zod.object({
+  "X-User": zod.union([zod.string(),zod.null()]).default(getRecoveryGroupInventoryGetRecoveryGroupInventoryGetHeaderXUserDefault)
+})
+
+export const GetRecoveryGroupInventoryGetRecoveryGroupInventoryGetResponse = RecoveryGroupInventoryResponse
 
 
 /**

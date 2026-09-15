@@ -2201,6 +2201,72 @@
         }
       }
     },
+    "/get_recovery_app_inventory": {
+      "get": {
+        "tags": [
+          "Recovery Apps"
+        ],
+        "summary": "Get Recovery App Inventory",
+        "operationId": "get_recovery_app_inventory_get_recovery_app_inventory_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "the recovery app's own airflow_run_id",
+              "title": "Run Id"
+            },
+            "description": "the recovery app's own airflow_run_id"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryAppInventoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/delete_recovery_app": {
       "delete": {
         "tags": [
@@ -2456,6 +2522,72 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RecoveryGroupsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_recovery_group_inventory": {
+      "get": {
+        "tags": [
+          "Recovery Groups"
+        ],
+        "summary": "Get Recovery Group Inventory",
+        "operationId": "get_recovery_group_inventory_get_recovery_group_inventory_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "the recovery group's own airflow_run_id",
+              "title": "Run Id"
+            },
+            "description": "the recovery group's own airflow_run_id"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "admin",
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryGroupInventoryResponse"
                 }
               }
             }
@@ -3812,79 +3944,6 @@
         ],
         "title": "HealthResponse"
       },
-      "AccessLogEntry": {
-        "additionalProperties": true,
-        "properties": {
-          "method": {
-            "type": "string",
-            "title": "Method"
-          },
-          "path": {
-            "type": "string",
-            "title": "Path"
-          },
-          "status": {
-            "type": "integer",
-            "title": "Status"
-          },
-          "duration_ms": {
-            "type": "number",
-            "title": "Duration Ms"
-          },
-          "request_body": {
-            "title": "Request Body"
-          },
-          "response_body": {
-            "title": "Response Body"
-          }
-        },
-        "type": "object",
-        "required": [
-          "method",
-          "path",
-          "status",
-          "duration_ms",
-          "request_body",
-          "response_body"
-        ],
-        "title": "AccessLogEntry"
-      },
-      "RawAccessLogEntry": {
-        "properties": {
-          "raw": {
-            "type": "string",
-            "title": "Raw"
-          }
-        },
-        "type": "object",
-        "required": [
-          "raw"
-        ],
-        "title": "RawAccessLogEntry"
-      },
-      "AccessLogsResponse": {
-        "properties": {
-          "entries": {
-            "items": {
-              "anyOf": [
-                {
-                  "$ref": "#/components/schemas/AccessLogEntry"
-                },
-                {
-                  "$ref": "#/components/schemas/RawAccessLogEntry"
-                }
-              ]
-            },
-            "type": "array",
-            "title": "Entries"
-          }
-        },
-        "type": "object",
-        "required": [
-          "entries"
-        ],
-        "title": "AccessLogsResponse"
-      },
       "OrchestrationProvider": {
         "properties": {
           "id": {
@@ -5057,6 +5116,117 @@
         ],
         "title": "ProvidersResponse"
       },
+      "RecoveryAppInventoryResponse": {
+        "properties": {
+          "recovery_app_id": {
+            "type": "string",
+            "title": "Recovery App Id"
+          },
+          "recovery_app_name": {
+            "type": "string",
+            "title": "Recovery App Name"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "tiers": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveryAppInventoryTier"
+            },
+            "type": "array",
+            "title": "Tiers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recovery_app_id",
+          "recovery_app_name",
+          "run_id",
+          "tiers"
+        ],
+        "title": "RecoveryAppInventoryResponse"
+      },
+      "RecoveryAppInventoryTier": {
+        "properties": {
+          "tier_name": {
+            "type": "string",
+            "title": "Tier Name"
+          },
+          "recovery_group_id": {
+            "type": "string",
+            "title": "Recovery Group Id"
+          },
+          "recovery_group_name": {
+            "type": "string",
+            "title": "Recovery Group Name"
+          },
+          "provider_id_vm": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Id Vm"
+          },
+          "vms": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveryAppInventoryVm"
+            },
+            "type": "array",
+            "title": "Vms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tier_name",
+          "recovery_group_id",
+          "recovery_group_name",
+          "vms"
+        ],
+        "title": "RecoveryAppInventoryTier"
+      },
+      "RecoveryAppInventoryVm": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "found": {
+            "type": "boolean",
+            "title": "Found"
+          },
+          "datastores": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Datastores",
+            "default": []
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "name",
+          "found"
+        ],
+        "title": "RecoveryAppInventoryVm"
+      },
       "RecoveryAppPoliciesResponse": {
         "properties": {
           "recovery_app_policies": {
@@ -5628,6 +5798,48 @@
         ],
         "title": "RecoveryGroup"
       },
+      "RecoveryGroupInventoryResponse": {
+        "properties": {
+          "recovery_group_id": {
+            "type": "string",
+            "title": "Recovery Group Id"
+          },
+          "recovery_group_name": {
+            "type": "string",
+            "title": "Recovery Group Name"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "provider_id_volume": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Id Volume"
+          },
+          "volumes": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/RecoveryGroupVolumeInventory"
+            },
+            "type": "object",
+            "title": "Volumes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recovery_group_id",
+          "recovery_group_name",
+          "run_id",
+          "volumes"
+        ],
+        "title": "RecoveryGroupInventoryResponse"
+      },
       "RecoveryGroupRecord": {
         "properties": {
           "id": {
@@ -5776,6 +5988,40 @@
           "name"
         ],
         "title": "RecoveryGroupRef"
+      },
+      "RecoveryGroupVolumeInventory": {
+        "properties": {
+          "found": {
+            "type": "boolean",
+            "title": "Found"
+          },
+          "vdisk": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vdisk"
+          },
+          "relations": {
+            "items": {
+              "$ref": "#/components/schemas/VolumeMappingRelation"
+            },
+            "type": "array",
+            "title": "Relations",
+            "default": []
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "found"
+        ],
+        "title": "RecoveryGroupVolumeInventory"
       },
       "RecoveryGroupsResponse": {
         "properties": {
@@ -6582,6 +6828,48 @@
         ],
         "title": "VmsResponse"
       },
+      "VolumeMappingRelation": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "source",
+              "target"
+            ],
+            "title": "Role"
+          },
+          "mapping": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Mapping"
+          },
+          "paired_volume": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Paired Volume"
+          },
+          "consistency_group": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consistency Group"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "role",
+          "mapping",
+          "paired_volume"
+        ],
+        "title": "VolumeMappingRelation"
+      },
       "VolumeTreeCounts": {
         "properties": {
           "pools": {
@@ -6761,6 +7049,95 @@
           "clusters"
         ],
         "title": "VolumesResponse"
+      },
+      "AccessLogEntry": {
+        "additionalProperties": true,
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "user": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          },
+          "duration_ms": {
+            "type": "number",
+            "title": "Duration Ms"
+          },
+          "request_body": {
+            "title": "Request Body"
+          },
+          "response_body": {
+            "title": "Response Body"
+          }
+        },
+        "type": "object",
+        "required": [
+          "timestamp",
+          "method",
+          "path",
+          "status",
+          "duration_ms",
+          "request_body",
+          "response_body"
+        ],
+        "title": "AccessLogEntry"
+      },
+      "RawAccessLogEntry": {
+        "properties": {
+          "raw": {
+            "type": "string",
+            "title": "Raw"
+          }
+        },
+        "type": "object",
+        "required": [
+          "raw"
+        ],
+        "title": "RawAccessLogEntry"
+      },
+      "AccessLogsResponse": {
+        "properties": {
+          "entries": {
+            "items": {
+              "anyOf": [
+                {
+                    "$ref": "#/components/schemas/AccessLogEntry"
+                },
+                {
+                    "$ref": "#/components/schemas/RawAccessLogEntry"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Entries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entries"
+        ],
+        "title": "AccessLogsResponse"
       }
     },
     "securitySchemes": {

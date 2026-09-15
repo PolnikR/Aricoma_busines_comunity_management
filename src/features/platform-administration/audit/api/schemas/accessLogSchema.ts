@@ -1,16 +1,11 @@
-import { z } from 'zod'
 import {
   AccessLogEntry,
+  AccessLogsResponse,
   RawAccessLogEntry,
 } from '@/generated/api/zod.gen'
+import { z } from 'zod'
 
-// The backend includes these fields before publishing them in OpenAPI.
-export const accessLogEntrySchema = AccessLogEntry.extend({
-  user: z.string().nullish(),
-  timestamp: z.string().nullish(),
-})
+export const accessLogEntrySchema = AccessLogEntry
 export const rawAccessLogEntrySchema = RawAccessLogEntry
-export const accessLogsResponseSchema = z.object({
-  entries: z.array(z.union([accessLogEntrySchema, rawAccessLogEntrySchema])),
-})
+export const accessLogsResponseSchema = AccessLogsResponse
 export type AccessLogsResponseOutput = z.output<typeof accessLogsResponseSchema>

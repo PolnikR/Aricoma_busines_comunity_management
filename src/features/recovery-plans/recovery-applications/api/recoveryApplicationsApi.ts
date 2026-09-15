@@ -1,16 +1,18 @@
 import {
   deleteRecoveryAppRouteDeleteRecoveryAppDelete,
+  getRecoveryAppInventoryGetRecoveryAppInventoryGet,
   getRecoveryAppsGetRecoveryAppsGet,
   submitRecoveryDagSubmitRecoveryDagPost,
 } from '@/generated/api/client.gen'
 import {
   RecoveryAppsResponse,
+  RecoveryAppInventoryResponse,
   RecoveryAppSubmitResponse,
   type OrchestratorPushOutput,
   type RecoveryAppSubmitResponseOutput,
 } from '@/generated/api/zod.gen'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
-import { OrvalApiError } from '@/shared/api/orvalMutator'
+import { OrvalApiError, toOrvalRequestError } from '@/shared/api/orvalMutator'
 import type {
   RecoveryApplicationData,
   RecoveryApplicationListItem,
@@ -34,6 +36,19 @@ export async function fetchRecoveryApplications(): Promise<RecoveryApplicationLi
       throw new Error(`Failed to fetch recovery applications: ${reason}`, { cause: error })
     }
     throw error
+  }
+}
+
+export async function fetchRecoveryApplicationInventory(runId: string) {
+  try {
+    const payload = await getRecoveryAppInventoryGetRecoveryAppInventoryGet({ run_id: runId })
+    return parseGeneratedResponse(
+      RecoveryAppInventoryResponse,
+      payload,
+      'GET /get_recovery_app_inventory',
+    )
+  } catch (error) {
+    throw toOrvalRequestError(error, 'Get recovery application inventory')
   }
 }
 

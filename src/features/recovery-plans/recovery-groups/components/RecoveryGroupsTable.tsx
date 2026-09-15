@@ -18,6 +18,7 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
+import { RecoveryGroupInventory } from './RecoveryGroupInventory'
 import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useTranslation } from '@/hooks/useTranslation'
 import { normalizeAirflowDagId } from '@/config/externalServices'
@@ -85,7 +86,7 @@ export function RecoveryGroupsTable({
   const [rollbackResult, setRollbackResult] = useState<{ groupName: string; report: RollbackReport } | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [isRollingBack, setIsRollingBack] = useState(false)
-  const [detailTab, setDetailTab] = useState<'overview' | 'orchestration'>('overview')
+  const [detailTab, setDetailTab] = useState<'overview' | 'orchestration' | 'inventory'>('overview')
 
   const filterOptions = useMemo(() => ({
     workloadTypes: Array.from(new Set(groups.map(group => group.workloadType ?? 'unresolved'))).sort(),
@@ -429,6 +430,7 @@ export function RecoveryGroupsTable({
               items={[
                 { value: 'overview' as const, label: t('details.tabs.overview') },
                 { value: 'orchestration' as const, label: t('details.tabs.orchestration') },
+                { value: 'inventory' as const, label: t('details.tabs.inventory') },
               ]}
               value={detailTab}
               onChange={setDetailTab}
@@ -466,7 +468,7 @@ export function RecoveryGroupsTable({
                   }
                 />
               </dl>
-            ) : (
+            ) : detailTab === 'orchestration' ? (
               <dl className="space-y-3 px-5 py-4">
                 <DetailRow
                   label={t('tables.recoveryGroups.orchestration')}
@@ -514,6 +516,8 @@ export function RecoveryGroupsTable({
                   </>
                 ) : null}
               </dl>
+            ) : (
+              <RecoveryGroupInventory runId={selected.airflowRunId ?? null} active />
             )}
           </>
         ) : null}

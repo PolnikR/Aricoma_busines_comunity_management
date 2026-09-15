@@ -28,6 +28,8 @@ import type {
   GetPlatformProvidersGetPlatformProvidersGetParams,
   GetPowerVmGetPowerVmGetParams,
   GetProvidersGetProvidersGetParams,
+  GetRecoveryAppInventoryGetRecoveryAppInventoryGetParams,
+  GetRecoveryGroupInventoryGetRecoveryGroupInventoryGetParams,
   GetVolumeTreeRouteGetVolumeTreeGetParams,
   GetVolumesRouteGetVolumesGetParams,
   HealthResponse,
@@ -40,12 +42,14 @@ import type {
   Provider,
   ProviderTestResponse,
   ProvidersResponse,
+  RecoveryAppInventoryResponse,
   RecoveryAppPoliciesResponse,
   RecoveryAppPolicy,
   RecoveryAppSubmission,
   RecoveryAppSubmitResponse,
   RecoveryAppsResponse,
   RecoveryGroup,
+  RecoveryGroupInventoryResponse,
   RecoveryGroupsResponse,
   RolesPermissionsResponse,
   RollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostParams,
@@ -162,11 +166,25 @@ export const getSubmitProviderSubmitProviderPostUrl = () => {
  */
 export const submitProviderSubmitProviderPost = async (provider: Provider, options?: Parameters<typeof orvalMutator>[1]): Promise<ProvidersResponse> => {
 
-  return orvalMutator<ProvidersResponse>(getSubmitProviderSubmitProviderPostUrl(),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return orvalMutator<ProvidersResponse>(getSubmitProviderSubmitProviderPostUrl(),
   {
     ...options,
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(provider)
   }
 );}
@@ -279,11 +297,25 @@ export const getSubmitPlatformProviderSubmitPlatformProviderPostUrl = () => {
  */
 export const submitPlatformProviderSubmitPlatformProviderPost = async (orchestrationProvider: OrchestrationProvider, options?: Parameters<typeof orvalMutator>[1]): Promise<PlatformProvidersResponse> => {
 
-  return orvalMutator<PlatformProvidersResponse>(getSubmitPlatformProviderSubmitPlatformProviderPostUrl(),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return orvalMutator<PlatformProvidersResponse>(getSubmitPlatformProviderSubmitPlatformProviderPostUrl(),
   {
     ...options,
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(orchestrationProvider)
   }
 );}
@@ -358,11 +390,25 @@ export const getSubmitCredentialSubmitCredentialPostUrl = () => {
  */
 export const submitCredentialSubmitCredentialPost = async (credential: Credential, options?: Parameters<typeof orvalMutator>[1]): Promise<CredentialsResponse> => {
 
-  return orvalMutator<CredentialsResponse>(getSubmitCredentialSubmitCredentialPostUrl(),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return orvalMutator<CredentialsResponse>(getSubmitCredentialSubmitCredentialPostUrl(),
   {
     ...options,
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(credential)
   }
 );}
@@ -421,11 +467,25 @@ export const getVmsSearchVmsSearchPostUrl = (params?: VmsSearchVmsSearchPostPara
 export const vmsSearchVmsSearchPost = async (vmSearchFilterNull?: VmSearchFilter | null,
     params?: VmsSearchVmsSearchPostParams, options?: Parameters<typeof orvalMutator>[1]): Promise<VmsResponse> => {
 
-  return orvalMutator<VmsResponse>(getVmsSearchVmsSearchPostUrl(params),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return orvalMutator<VmsResponse>(getVmsSearchVmsSearchPostUrl(params),
   {
     ...options,
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(vmSearchFilterNull)
   }
 );}
@@ -754,11 +814,25 @@ export const getUpdateCacheConfigDiscoveryCacheConfigPutUrl = () => {
  */
 export const updateCacheConfigDiscoveryCacheConfigPut = async (cacheConfigUpdate: CacheConfigUpdate, options?: Parameters<typeof orvalMutator>[1]): Promise<CacheConfigResponse> => {
 
-  return orvalMutator<CacheConfigResponse>(getUpdateCacheConfigDiscoveryCacheConfigPutUrl(),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return orvalMutator<CacheConfigResponse>(getUpdateCacheConfigDiscoveryCacheConfigPutUrl(),
   {
     ...options,
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(cacheConfigUpdate)
   }
 );}
@@ -903,12 +977,57 @@ export const getSubmitRecoveryDagSubmitRecoveryDagPostUrl = (params?: SubmitReco
 export const submitRecoveryDagSubmitRecoveryDagPost = async (recoveryAppSubmission: RecoveryAppSubmission,
     params?: SubmitRecoveryDagSubmitRecoveryDagPostParams, options?: Parameters<typeof orvalMutator>[1]): Promise<RecoveryAppSubmitResponse> => {
 
-  return orvalMutator<RecoveryAppSubmitResponse>(getSubmitRecoveryDagSubmitRecoveryDagPostUrl(params),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return orvalMutator<RecoveryAppSubmitResponse>(getSubmitRecoveryDagSubmitRecoveryDagPostUrl(params),
   {
     ...options,
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(recoveryAppSubmission)
+  }
+);}
+
+
+
+export const getGetRecoveryAppInventoryGetRecoveryAppInventoryGetUrl = (params: GetRecoveryAppInventoryGetRecoveryAppInventoryGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/get_recovery_app_inventory?${stringifiedParams}` : `/get_recovery_app_inventory`
+}
+
+/**
+ * @summary Get Recovery App Inventory
+ */
+export const getRecoveryAppInventoryGetRecoveryAppInventoryGet = async (params: GetRecoveryAppInventoryGetRecoveryAppInventoryGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<RecoveryAppInventoryResponse> => {
+
+  return orvalMutator<RecoveryAppInventoryResponse>(getGetRecoveryAppInventoryGetRecoveryAppInventoryGetUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
   }
 );}
 
@@ -990,12 +1109,57 @@ export const getSubmitRecoveryGroupSubmitRecoveryGroupPostUrl = (params?: Submit
 export const submitRecoveryGroupSubmitRecoveryGroupPost = async (recoveryGroup: RecoveryGroup,
     params?: SubmitRecoveryGroupSubmitRecoveryGroupPostParams, options?: Parameters<typeof orvalMutator>[1]): Promise<RecoveryGroupsResponse> => {
 
-  return orvalMutator<RecoveryGroupsResponse>(getSubmitRecoveryGroupSubmitRecoveryGroupPostUrl(params),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return orvalMutator<RecoveryGroupsResponse>(getSubmitRecoveryGroupSubmitRecoveryGroupPostUrl(params),
   {
     ...options,
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(recoveryGroup)
+  }
+);}
+
+
+
+export const getGetRecoveryGroupInventoryGetRecoveryGroupInventoryGetUrl = (params: GetRecoveryGroupInventoryGetRecoveryGroupInventoryGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/get_recovery_group_inventory?${stringifiedParams}` : `/get_recovery_group_inventory`
+}
+
+/**
+ * @summary Get Recovery Group Inventory
+ */
+export const getRecoveryGroupInventoryGetRecoveryGroupInventoryGet = async (params: GetRecoveryGroupInventoryGetRecoveryGroupInventoryGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<RecoveryGroupInventoryResponse> => {
+
+  return orvalMutator<RecoveryGroupInventoryResponse>(getGetRecoveryGroupInventoryGetRecoveryGroupInventoryGetUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
   }
 );}
 
@@ -1103,11 +1267,25 @@ export const getSubmitPolicySubmitPolicyPostUrl = () => {
  */
 export const submitPolicySubmitPolicyPost = async (snapshotPolicy: SnapshotPolicy, options?: Parameters<typeof orvalMutator>[1]): Promise<SnapshotPoliciesResponse> => {
 
-  return orvalMutator<SnapshotPoliciesResponse>(getSubmitPolicySubmitPolicyPostUrl(),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return orvalMutator<SnapshotPoliciesResponse>(getSubmitPolicySubmitPolicyPostUrl(),
   {
     ...options,
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(snapshotPolicy)
   }
 );}
@@ -1182,11 +1360,25 @@ export const getSubmitPolicySetSubmitPolicySetPostUrl = () => {
  */
 export const submitPolicySetSubmitPolicySetPost = async (policySet: PolicySet, options?: Parameters<typeof orvalMutator>[1]): Promise<PolicySetsResponse> => {
 
-  return orvalMutator<PolicySetsResponse>(getSubmitPolicySetSubmitPolicySetPostUrl(),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return orvalMutator<PolicySetsResponse>(getSubmitPolicySetSubmitPolicySetPostUrl(),
   {
     ...options,
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(policySet)
   }
 );}
@@ -1261,11 +1453,25 @@ export const getSubmitRecoveryAppPolicySubmitRecoveryAppPolicyPostUrl = () => {
  */
 export const submitRecoveryAppPolicySubmitRecoveryAppPolicyPost = async (recoveryAppPolicy: RecoveryAppPolicy, options?: Parameters<typeof orvalMutator>[1]): Promise<RecoveryAppPoliciesResponse> => {
 
-  return orvalMutator<RecoveryAppPoliciesResponse>(getSubmitRecoveryAppPolicySubmitRecoveryAppPolicyPostUrl(),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return orvalMutator<RecoveryAppPoliciesResponse>(getSubmitRecoveryAppPolicySubmitRecoveryAppPolicyPostUrl(),
   {
     ...options,
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(recoveryAppPolicy)
   }
 );}
@@ -1340,11 +1546,25 @@ export const getSubmitCleanRoomPolicySubmitCleanRoomPolicyPostUrl = () => {
  */
 export const submitCleanRoomPolicySubmitCleanRoomPolicyPost = async (cleanRoomPolicy: CleanRoomPolicy, options?: Parameters<typeof orvalMutator>[1]): Promise<CleanRoomPoliciesResponse> => {
 
-  return orvalMutator<CleanRoomPoliciesResponse>(getSubmitCleanRoomPolicySubmitCleanRoomPolicyPostUrl(),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return orvalMutator<CleanRoomPoliciesResponse>(getSubmitCleanRoomPolicySubmitCleanRoomPolicyPostUrl(),
   {
     ...options,
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(cleanRoomPolicy)
   }
 );}

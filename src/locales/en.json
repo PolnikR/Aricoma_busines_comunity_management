@@ -2190,5 +2190,14 @@
   "audit.accessLogs.detail.duration": "Duration",
   "audit.accessLogs.detail.requestBody": "Request body",
   "audit.accessLogs.detail.responseBody": "Response body",
-  "audit.accessLogs.detail.rawEntry": "Raw entry"
+  "audit.accessLogs.detail.rawEntry": "Raw entry",
+  "details.tabs.inventory": "Inventory",
+  "recoveryInventory.noRun": "Inventory is available after an orchestrated run.",
+  "recoveryInventory.loading": "Loading inventory...",
+  "recoveryInventory.error": "Inventory could not be loaded",
+  "recoveryInventory.empty": "No inventory items were returned.",
+  "recoveryInventory.found": "Found",
+  "recoveryInventory.notFound": "Not found",
+  "recoveryInventory.datastores": "Datastores",
+  "recoveryInventory.pairedVolume": "Mapping and paired volume"
 }

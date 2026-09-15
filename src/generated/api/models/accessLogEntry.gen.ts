@@ -6,6 +6,8 @@
  */
 
 export interface AccessLogEntry {
+  timestamp: string;
+  user?: string | null;
   method: string;
   path: string;
   status: number;
