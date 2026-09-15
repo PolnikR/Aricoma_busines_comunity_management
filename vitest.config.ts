@@ -14,12 +14,14 @@ const aliases = {
   'elkjs-runtime': path.resolve(__dirname, './node_modules/elkjs/lib/elk.bundled.js'),
 }
 
+const maxWorkers = process.platform === 'win32' ? 1 : 2
+
 export default defineConfig({
   resolve: {
     alias: aliases,
   },
   test: {
-    maxWorkers: 2,
+    maxWorkers,
     passWithNoTests: true,
     projects: [
       {
@@ -29,7 +31,7 @@ export default defineConfig({
           environment: 'jsdom',
           include: ['src/**/*.test.tsx', ...domTypescriptTests],
           isolate: true,
-          maxWorkers: 2,
+          maxWorkers,
           setupFiles: ['./src/test-utils/setup.ts'],
         },
       },
@@ -41,7 +43,7 @@ export default defineConfig({
           include: ['src/**/*.test.ts'],
           exclude: domTypescriptTests,
           isolate: false,
-          maxWorkers: 2,
+          maxWorkers,
           setupFiles: ['./src/test-utils/setupUnit.ts'],
         },
       },
