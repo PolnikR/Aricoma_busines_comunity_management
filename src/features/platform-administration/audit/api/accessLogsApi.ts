@@ -32,7 +32,7 @@ function mapAccessLogRecord(
     status: entry.status,
     durationMs: entry.duration_ms,
     ...(entry.user != null ? { user: entry.user } : {}),
-    ...(entry.timestamp != null ? { timestamp: entry.timestamp } : {}),
+    timestamp: entry.timestamp,
     requestBody: entry.request_body,
     responseBody: entry.response_body,
   }

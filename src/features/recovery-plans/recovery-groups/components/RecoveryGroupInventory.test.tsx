@@ -37,8 +37,8 @@ describe('RecoveryGroupInventory', () => {
   it('paginates volume relations and exposes complete truncated names', async () => {
     const relations = Array.from({ length: 6 }, (_, index) => ({
       role: 'source' as const,
-      mapping: { id: `map-${index + 1}` },
-      paired_volume: { name: `target-volume-with-a-long-name-${index + 1}` },
+      mapping: { id: `map-${String(index + 1)}` },
+      paired_volume: { name: `target-volume-with-a-long-name-${String(index + 1)}` },
     }))
     vi.mocked(useRecoveryGroupInventory).mockReturnValue({
       data: { recovery_group_id: 'group-1', recovery_group_name: 'Database', run_id: 'run-2', provider_id_volume: 'flash-1', volumes: { 'source-volume-with-a-long-name': { found: true, relations } } },
