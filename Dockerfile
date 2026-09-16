@@ -10,8 +10,10 @@ RUN npm run lint && npm run typecheck && npm run test && npx vite build
 
 FROM nginx:1.27.5-alpine AS runtime
 
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
+
+ENV BACKEND_URL=http://10.99.99.54:8000
 
 EXPOSE 80
 
