@@ -20,7 +20,7 @@ The current defect occurs when switching from an unprefixed provider to a provid
 
 Scope the debounced name prefix to the active `providerId` inside `useVmwareResourceInventory`.
 
-- Initialize the scoped debounce state with the current provider and normalized prefix.
+- Initialize the scoped debounce state with the current provider and an empty prefix so initial and same-provider search input retains the existing 300 ms debounce.
 - When `providerId` changes, use the destination provider's normalized prefix immediately for the query key and request. Synchronize the stored debounce state to the new provider without applying the 300 ms delay.
 - When only `namePrefix` changes for the same provider, continue using the current 300 ms debounce.
 - Preserve the existing provider-aware `placeholderData` guard so data cannot leak between providers.

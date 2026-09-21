@@ -488,6 +488,43 @@ describe('useVmwareResourceInventory', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
+  it('switches provider filters immediately and returns to cached provider data', async () => {
+    const fetchMock = vi.fn((url: string) => Promise.resolve(inventoryResponse([
+      url.includes('provider_id=vm-01') ? 'VM 01' : 'VM 03',
+    ])))
+    vi.stubGlobal('fetch', fetchMock)
+    const queryClient = createQueryClient()
+    const { result, rerender } = renderHook(
+      ({ providerId, namePrefix, tag }: { providerId: string; namePrefix: string; tag: string }) => (
+        useVmwareResourceInventory({ providerId, namePrefix, tag, enabled: true })
+      ),
+      {
+        wrapper: createWrapper(queryClient),
+        initialProps: { providerId: 'vm-01', namePrefix: 'TEST-', tag: 'WEB' },
+      },
+    )
+
+    await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('VM 01') })
+
+    rerender({ providerId: 'vm-03', namePrefix: '', tag: '' })
+
+    expect(result.current.data).toBeUndefined()
+    expect(result.current.isInitialLoading).toBe(true)
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenLastCalledWith(
+        '/api/vms/search?provider_id=vm-03',
+        expect.objectContaining({ method: 'POST', body: '{}' }),
+      )
+    })
+    await waitFor(() => { expect(result.current.data?.virtualMachines[0]?.name).toBe('VM 03') })
+
+    const requestCountBeforeCachedReturn = fetchMock.mock.calls.length
+    rerender({ providerId: 'vm-01', namePrefix: 'TEST-', tag: 'WEB' })
+
+    expect(result.current.data?.virtualMachines[0]?.name).toBe('VM 01')
+    expect(fetchMock).toHaveBeenCalledTimes(requestCountBeforeCachedReturn)
+  })
+
   it('does not present the previous provider inventory while a new provider scope is pending', async () => {
     let resolveSecondResponse: ((response: Response) => void) | undefined
     const secondResponse = new Promise<Response>((resolve) => { resolveSecondResponse = resolve })

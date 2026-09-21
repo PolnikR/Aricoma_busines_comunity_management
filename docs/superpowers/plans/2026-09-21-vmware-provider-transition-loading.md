@@ -35,7 +35,7 @@
 - Consumes: `useVmwareResourceInventory(options: VmwareResourceInventoryOptions)` and `discoveryInventoryKeys.vmwareSearch(search)`.
 - Produces: the existing hook return contract with unchanged field names; provider changes use an immediate effective prefix while same-provider prefix edits remain debounced.
 
-- [ ] **Step 1: Add the failing provider-transition regression test**
+- [x] **Step 1: Add the failing provider-transition regression test**
 
 Add one focused test using a real `QueryClient`, a stubbed `fetch`, and controllable responses. Exercise `vm-01` with `TEST-`/`WEB`, uncached `vm-03` without a prefix, then cached `vm-01` again. Include these assertions at the transition boundaries:
 
@@ -55,7 +55,7 @@ expect(fetchMock).toHaveBeenCalledTimes(requestCountBeforeCachedReturn)
 
 After the cached return, change only `namePrefix` on `vm-01`. Assert that `isDebouncing` is `true`, the request count is unchanged at 299 ms, and increases once at 300 ms.
 
-- [ ] **Step 2: Run the regression test and verify the current behavior fails**
+- [x] **Step 2: Run the regression test and verify the current behavior fails**
 
 Run:
 
@@ -65,9 +65,9 @@ npm.cmd exec -- vitest run src/features/discovery-inventory/resources/hooks/useV
 
 Expected: FAIL before implementation because returning from the unprefixed provider to prefixed `vm-01` enters debounce with no data and `isInitialLoading === false`, or because the destination provider request is delayed.
 
-- [ ] **Step 3: Introduce provider-scoped debounce state**
+- [x] **Step 3: Introduce provider-scoped debounce state**
 
-Replace the scalar debounce state with an explicit provider/value pair initialized from the normalized current options:
+Replace the scalar debounce state with an explicit provider/value pair. Keep the initial value empty so the existing first-search debounce remains intact:
 
 ```ts
 interface DebouncedNamePrefixState {
@@ -79,7 +79,7 @@ const currentProviderId = normalizedSearch.providerId
 const currentNamePrefix = normalizedSearch.namePrefix ?? ''
 const [debouncedNamePrefixState, setDebouncedNamePrefixState] = useState<DebouncedNamePrefixState>(() => ({
   providerId: currentProviderId,
-  value: currentNamePrefix,
+  value: '',
 }))
 const providerChanged = debouncedNamePrefixState.providerId !== currentProviderId
 const effectiveNamePrefix = providerChanged ? currentNamePrefix : debouncedNamePrefixState.value
@@ -108,7 +108,7 @@ const isDebouncing = !providerChanged
 
 Set `canFetch` from `enabled`, `currentProviderId`, and `!isDebouncing`. Do not weaken the existing `placeholderData` provider check.
 
-- [ ] **Step 4: Run the focused regression test and full hook test file**
+- [x] **Step 4: Run the focused regression test and full hook test file**
 
 Run:
 
@@ -119,7 +119,7 @@ npm.cmd exec -- vitest run src/features/discovery-inventory/resources/hooks/useV
 
 Expected: the regression test passes; then all tests in the hook test file pass with zero failures.
 
-- [ ] **Step 5: Run focused static verification**
+- [x] **Step 5: Run focused static verification**
 
 Run:
 
@@ -130,7 +130,7 @@ git diff --check
 
 Expected: both commands exit with code 0 and emit no lint or whitespace errors. The complete suite and production build are not required because the change is isolated to one hook contract covered by its focused test file.
 
-- [ ] **Step 6: Review scope and commit the fix**
+- [x] **Step 6: Review scope and commit the fix**
 
 Confirm that only the hook and its test changed, no debug instrumentation remains, and no unrelated formatting is present. Then run:
 

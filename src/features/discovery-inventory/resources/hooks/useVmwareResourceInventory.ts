@@ -31,6 +31,11 @@ export interface VmwareResourceInventoryOptions {
   enabled?: boolean
 }
 
+interface DebouncedNamePrefixState {
+  providerId: string | undefined
+  value: string
+}
+
 export function useVmwareResourceInventory({
   providerId,
   folderName,
@@ -46,31 +51,40 @@ export function useVmwareResourceInventory({
     ...(tag !== undefined ? { tag } : {}),
   })
   const normalizedNamePrefix = normalizedSearch.namePrefix
+  const currentProviderId = normalizedSearch.providerId
+  const currentNamePrefix = normalizedNamePrefix ?? ''
   const hasNamePrefix = normalizedNamePrefix !== undefined
-  const [debouncedNamePrefix, setDebouncedNamePrefix] = useState('')
+  const [debouncedNamePrefixState, setDebouncedNamePrefixState] = useState<DebouncedNamePrefixState>(() => ({
+    providerId: currentProviderId,
+    value: '',
+  }))
   const [settledProviderId, setSettledProviderId] = useState<string | undefined>()
   const [forceRefreshStates, setForceRefreshStates] = useState<Record<string, ForceRefreshState>>({})
   const forceRefreshRequestId = useRef(0)
   const latestForceRefreshRequestIds = useRef<Record<string, number>>({})
+  const providerChanged = debouncedNamePrefixState.providerId !== currentProviderId
+  const effectiveNamePrefix = providerChanged ? currentNamePrefix : debouncedNamePrefixState.value
+  const isDebouncing = !providerChanged
+    && hasNamePrefix
+    && debouncedNamePrefixState.value !== currentNamePrefix
 
   useEffect(() => {
-    const timeout = setTimeout(
-      () => { setDebouncedNamePrefix(normalizedNamePrefix ?? '') },
-      hasNamePrefix ? NAME_SEARCH_DEBOUNCE_MS : 0,
-    )
+    const delay = providerChanged || !hasNamePrefix ? 0 : NAME_SEARCH_DEBOUNCE_MS
+    const timeout = setTimeout(() => {
+      setDebouncedNamePrefixState({ providerId: currentProviderId, value: currentNamePrefix })
+    }, delay)
     return () => { clearTimeout(timeout) }
-  }, [hasNamePrefix, normalizedNamePrefix])
+  }, [currentNamePrefix, currentProviderId, hasNamePrefix, providerChanged])
 
   const search: VmwareInventorySearch = {
     ...(normalizedSearch.providerId ? { providerId: normalizedSearch.providerId } : {}),
     ...(normalizedSearch.folderName ? { folderName: normalizedSearch.folderName } : {}),
     ...(normalizedSearch.tag ? { tag: normalizedSearch.tag } : {}),
-    ...(debouncedNamePrefix ? { namePrefix: debouncedNamePrefix } : {}),
+    ...(effectiveNamePrefix ? { namePrefix: effectiveNamePrefix } : {}),
   }
   const queryKey = discoveryInventoryKeys.vmwareSearch(search)
   const queryHash = JSON.stringify(queryKey)
-  const canFetch = enabled && Boolean(normalizedSearch.providerId)
-    && (!hasNamePrefix || debouncedNamePrefix === normalizedNamePrefix)
+  const canFetch = enabled && Boolean(currentProviderId) && !isDebouncing
 
   const query = useQuery<DiscoveryInventory>({
     queryKey,
@@ -138,7 +152,6 @@ export function useVmwareResourceInventory({
   }
   const forceRefreshState = forceRefreshStates[queryHash]
 
-  const isDebouncing = hasNamePrefix && debouncedNamePrefix !== normalizedNamePrefix
   const hasSettledProviderQuery = settledProviderId === normalizedSearch.providerId
 
   useEffect(() => {
@@ -158,7 +171,7 @@ export function useVmwareResourceInventory({
     isForceRefreshing: Boolean(forceRefreshState?.pendingRequestIds.length),
     forceRefreshError: forceRefreshState?.error ?? null,
     isDebouncing,
-    isInitialLoading: canFetch && query.isPending && !isDebouncing && !hasSettledProviderQuery,
+    isInitialLoading: canFetch && query.isPending && !hasSettledProviderQuery,
     isBackgroundFetching: query.isFetching && Boolean(query.data),
     error: isDebouncing ? null : query.error,
     isError: query.isError && !isDebouncing,
