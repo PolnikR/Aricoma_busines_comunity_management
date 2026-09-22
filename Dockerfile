@@ -16,9 +16,15 @@ RUN apk add --no-cache bash vim busybox-extras && \
 SHELL ["/bin/bash", "-c"]
 
 COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY docker/config.js.template /etc/nginx/app-templates/config.js.template
+COPY docker/40-generate-config.sh /docker-entrypoint.d/40-generate-config.sh
+RUN chmod +x /docker-entrypoint.d/40-generate-config.sh
 COPY --from=build /app/dist /usr/share/nginx/html
 
 ENV BACKEND_URL=http://10.99.99.53:8000
+ENV KEYCLOAK_URL=http://10.99.99.53:8081
+ENV KEYCLOAK_REALM=aricoma
+ENV KEYCLOAK_CLIENT_ID=abcm-fe
 
 EXPOSE 80
 

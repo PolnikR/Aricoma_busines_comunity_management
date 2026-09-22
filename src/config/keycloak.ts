@@ -15,7 +15,7 @@ if (typeof crypto.randomUUID !== 'function') {
 }
 
 export const keycloak = new Keycloak({
-  url: import.meta.env.VITE_KEYCLOAK_URL,
-  realm: import.meta.env.VITE_KEYCLOAK_REALM,
-  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID,
+  url: window.__APP_CONFIG__.KEYCLOAK_URL,
+  realm: window.__APP_CONFIG__.KEYCLOAK_REALM,
+  clientId: window.__APP_CONFIG__.KEYCLOAK_CLIENT_ID,
 })

@@ -27,19 +27,15 @@ spustiť z ľubovoľného podadresára; mimo repozitára sa vôbec nespustí.
 ```bash
 ssh aricoma@10.99.99.53 'set -e
   cd ~/abco-fe-src
-  grep -q "VITE_KEYCLOAK_URL=http://10.99.99.53:8081" .env.production \
-    || { echo "CHYBA: .env.production nesedí"; exit 1; }
   docker build -t abco-fe:$(git rev-parse --short HEAD) -t abco-fe:latest .
-  docker run --rm --entrypoint sh abco-fe:latest \
-    -c "grep -rq \"http://10.99.99.53:8081\" /usr/share/nginx/html/assets/" \
-    || { echo "CHYBA: Keycloak config nie je v bundle"; exit 1; }
   echo "=== BUILD OK ==="
 '
 ```
 
-Trvá to niekoľko minút. Konfigurácia Keycloaku sa **zapeká do JS bundle pri builde**,
-nie je to runtime premenná — preto tá kontrola pred aj po builde; bez nej skončí
-aplikácia v redirect loope.
+Trvá to niekoľko minút. Konfigurácia Keycloaku sa **generuje do `config.js` pri
+starte kontajnera** (`envsubst` z `KEYCLOAK_URL`/`KEYCLOAK_REALM`/`KEYCLOAK_CLIENT_ID`),
+nie je zapečená v JS bundle — zmenu Keycloaku tak nevyžaduje rebuild image, len
+nový `docker run` s inými `-e` premennými.
 
 Pokračuj, len ak posledný riadok je `=== BUILD OK ===`. Čokoľvek iné znamená, že
 sa nič nenasadilo a starý kontajner beží ďalej — oprav to lokálne a začni od kroku 1.
@@ -49,7 +45,11 @@ sa nič nenasadilo a starý kontajner beží ďalej — oprav to lokálne a zač
 ```bash
 ssh aricoma@10.99.99.53 '
   docker rm -f abco-fe || true
-  docker run -d --name abco-fe --restart unless-stopped -p 8080:80 abco-fe:latest
+  docker run -d --name abco-fe --restart unless-stopped -p 8080:80 \
+    -e KEYCLOAK_URL=http://10.99.99.53:8081 \
+    -e KEYCLOAK_REALM=aricoma \
+    -e KEYCLOAK_CLIENT_ID=abcm-fe \
+    abco-fe:latest
   sleep 10
   docker ps --filter name=abco-fe --format "{{.Status}}"
   curl -s -o /dev/null -w "app -> %{http_code}\n" http://10.99.99.53:8080/health
@@ -80,7 +80,11 @@ Krok 2 necháva staršie image na serveri pod tagom s krátkym commit SHA:
 ssh aricoma@10.99.99.53 '
   docker images abco-fe --format "{{.Tag}}\t{{.CreatedSince}}"   # vyber predchádzajúci tag
   docker rm -f abco-fe
-  docker run -d --name abco-fe --restart unless-stopped -p 8080:80 abco-fe:<tag>
+  docker run -d --name abco-fe --restart unless-stopped -p 8080:80 \
+    -e KEYCLOAK_URL=http://10.99.99.53:8081 \
+    -e KEYCLOAK_REALM=aricoma \
+    -e KEYCLOAK_CLIENT_ID=abcm-fe \
+    abco-fe:<tag>
 '
 ```
 
@@ -90,7 +94,7 @@ ssh aricoma@10.99.99.53 '
 
 | Symptóm | Príčina / riešenie |
 |---|---|
-| Redirect loop na `/undefined/protocol/openid-connect/auth` | Keycloak config sa nedostal do bundle — chýba `.env.production` alebo výnimka `!.env.production` v `.dockerignore` |
+| Redirect loop na `/undefined/protocol/openid-connect/auth` | Kontajner nebeží s `KEYCLOAK_URL`/`KEYCLOAK_REALM`/`KEYCLOAK_CLIENT_ID` alebo sa nevygeneroval `config.js` — over `docker exec abco-fe cat /usr/share/nginx/html/config.js` |
 | `Invalid parameter: redirect_uri` | v Keycloak klientovi `abcm-fe` chýba `http://10.99.99.53:8080/*` vo *Valid redirect URIs* |
 | CORS chyba pri obnove tokenu | v klientovi `abcm-fe` chýba *Web origins* `http://10.99.99.53:8080` |
 | `crypto.randomUUID is not a function` | do buildu sa nedostal polyfill z `src/config/keycloak.ts` |
