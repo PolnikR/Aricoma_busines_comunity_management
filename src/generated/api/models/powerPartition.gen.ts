@@ -12,4 +12,4 @@ export interface PowerPartition {
   PartitionState?: string;
   SystemName?: string;
   [key: string]: unknown;
-}
+ }

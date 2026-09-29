@@ -3,27 +3,21 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
-import { fetchFlashSystemInventory } from '@/features/discovery-inventory/resources/api/flashSystemInventoryApi'
-import { fetchPowerInventory } from '@/features/discovery-inventory/resources/api/powerInventoryApi'
-import { fetchVmwareInventory } from '@/features/discovery-inventory/resources/api/vmwareInventoryApi'
-import { discoveryInventoryKeys } from '@/features/discovery-inventory/resources/api/resourceInventoryQueryKeys'
-import type {
-  DiscoveredVirtualMachine,
-  FlashSystemVolumeResource,
-  PowerPartitionResource,
-} from '@/features/discovery-inventory/resources/model/discoveryTypes'
+import {
+  flashSystemInventoryQuery,
+  powerInventoryQuery,
+  vmwareInventoryQuery,
+} from '@/features/discovery-inventory/resources/model/inventoryQueries'
+import { VmsResponse, VolumesResponse } from '@/generated/query/zod'
+import { parseWireResponse } from '@/test-utils/parseWireResponse'
+import {
+  createDiscoveryFetchHandlers,
+  installDiscoveryFetch,
+} from '@/features/discovery-inventory/resources/test/discoveryFetch'
 import { useRecoveryGroupResourceInventory } from './useRecoveryGroupResourceInventory'
 
-vi.mock('@/features/discovery-inventory/resources/api/flashSystemInventoryApi', () => ({
-  fetchFlashSystemInventory: vi.fn(),
-}))
-vi.mock('@/features/discovery-inventory/resources/api/powerInventoryApi', () => ({
-  fetchPowerInventory: vi.fn(),
-}))
-vi.mock('@/features/discovery-inventory/resources/api/vmwareInventoryApi', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@/features/discovery-inventory/resources/api/vmwareInventoryApi')>(),
-  fetchVmwareInventory: vi.fn(),
-}))
+const discoveryFetch = createDiscoveryFetchHandlers()
+const { fetchFlashSystemInventory, fetchPowerInventory, fetchVmwareInventory } = discoveryFetch
 
 function createQueryClient() {
   return new QueryClient({
@@ -41,26 +35,15 @@ function createWrapper(queryClient = createQueryClient()) {
 describe('useRecoveryGroupResourceInventory', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchVmwareInventory).mockResolvedValue({
-      reportedCount: 2,
-      virtualMachines: [
-        { name: 'VM-01' } as DiscoveredVirtualMachine,
-        { name: 'VM-02' } as DiscoveredVirtualMachine,
-      ],
+    installDiscoveryFetch(discoveryFetch)
+    fetchVmwareInventory.mockReturnValue({ count: 2, vms: [{ name: 'VM-01' }, { name: 'VM-02' }] })
+    fetchPowerInventory.mockReturnValue({
+      count: 1,
+      counts_by_type: { LogicalPartition: 1, VirtualIOServer: 0 },
+      vms: [{ lpar: { PartitionName: 'LPAR-01' }, vios: {} }],
     })
-    vi.mocked(fetchPowerInventory).mockResolvedValue({
-      reportedCount: 1,
-      countsByType: { LogicalPartition: 1, VirtualIOServer: 0 },
-      virtualMachines: [],
-      partitions: [{ partitionName: 'LPAR-01' } as PowerPartitionResource],
-    })
-    vi.mocked(fetchFlashSystemInventory).mockResolvedValue({
-      reportedCount: 1,
-      volumes: [],
-      resources: [{ name: 'VOL-01' } as FlashSystemVolumeResource],
-      pools: {},
-      hosts: {},
-      clusters: {},
+    fetchFlashSystemInventory.mockReturnValue({
+      count: 1, volumes: [{ name: 'VOL-01' }], pools: {}, hosts: {}, clusters: {},
     })
   })
 
@@ -91,20 +74,20 @@ describe('useRecoveryGroupResourceInventory', () => {
   })
 
   it('extracts VM metadata for vmware and IBM Power workloads', async () => {
-    vi.mocked(fetchVmwareInventory).mockResolvedValue({
-      reportedCount: 1,
-      virtualMachines: [{
+    fetchVmwareInventory.mockReturnValue({
+      count: 1,
+      vms: [{
         name: 'db-vm-01',
-        hostname: 'db01.sampleapp.local',
-        ipAddress: '192.168.10.11',
-        guestOs: 'Ubuntu 22.04',
+        guest_hostname: 'db01.sampleapp.local',
+        ip_address: '192.168.10.11',
+        guest_os: 'Ubuntu 22.04',
         vcpu: 4,
-        memoryGb: 16,
-        disks: [
-          { id: '1', label: 'Hard disk 1', capacityGb: 150, datastore: 'ds1', filePath: 'x', thinProvisioned: true },
-          { id: '2', label: 'Hard disk 2', capacityGb: 50, datastore: 'ds1', filePath: 'y', thinProvisioned: true },
+        memory_gb: 16,
+        vdisks: [
+          { uuid: '1', label: 'Hard disk 1', capacity_gb: 150, datastore: 'ds1', file: 'x', thin_provisioned: true },
+          { uuid: '2', label: 'Hard disk 2', capacity_gb: 50, datastore: 'ds1', file: 'y', thin_provisioned: true },
         ],
-      } as DiscoveredVirtualMachine],
+      }],
     })
 
     const { result } = renderHook(
@@ -122,13 +105,12 @@ describe('useRecoveryGroupResourceInventory', () => {
       storage_gb: 200,
     })
 
-    vi.mocked(fetchPowerInventory).mockResolvedValue({
-      reportedCount: 1,
-      countsByType: { LogicalPartition: 1, VirtualIOServer: 0 },
-      virtualMachines: [],
-      partitions: [
-        { partitionName: 'LPAR-01', operatingSystemType: 'AIX' } as PowerPartitionResource,
-        { partitionName: 'LPAR-02', operatingSystemType: '' } as PowerPartitionResource,
+    fetchPowerInventory.mockReturnValue({
+      count: 2,
+      counts_by_type: { LogicalPartition: 2, VirtualIOServer: 0 },
+      vms: [
+        { lpar: { PartitionName: 'LPAR-01', OperatingSystemType: 'AIX' }, vios: {} },
+        { lpar: { PartitionName: 'LPAR-02', OperatingSystemType: '' }, vios: {} },
       ],
     })
 
@@ -231,8 +213,8 @@ describe('useRecoveryGroupResourceInventory', () => {
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
     expect(result.current.isSearching).toBe(false)
 
-    let resolveSearch: ((inventory: { reportedCount: number; virtualMachines: DiscoveredVirtualMachine[] }) => void) | undefined
-    vi.mocked(fetchVmwareInventory).mockImplementation(
+    let resolveSearch: ((response: unknown) => void) | undefined
+    fetchVmwareInventory.mockImplementation(
       () => new Promise((resolve) => { resolveSearch = resolve }),
     )
     rerender({ prefix: 'WEB' })
@@ -246,7 +228,7 @@ describe('useRecoveryGroupResourceInventory', () => {
     expect(result.current.isSearching).toBe(true)
     expect(result.current.data?.resourceNames).toEqual(['VM-01', 'VM-02'])
 
-    resolveSearch?.({ reportedCount: 1, virtualMachines: [{ name: 'WEB-01' } as DiscoveredVirtualMachine] })
+    resolveSearch?.({ count: 1, vms: [{ name: 'WEB-01' }] })
 
     await waitFor(() => { expect(result.current.isSearching).toBe(false) })
     expect(result.current.data?.resourceNames).toEqual(['WEB-01'])
@@ -272,37 +254,26 @@ describe('useRecoveryGroupResourceInventory', () => {
     [
       'vmware_virtual_machines',
       'vmware-1',
-      discoveryInventoryKeys.vmwareSearch({ providerId: 'vmware-1' }),
-      {
-        reportedCount: 1,
-        virtualMachines: [{ name: 'CACHED-VM' } as DiscoveredVirtualMachine],
-      },
+      vmwareInventoryQuery({ providerId: 'vmware-1' }).queryKey,
+      parseWireResponse(VmsResponse, { count: 1, vms: [{ name: 'CACHED-VM' }] }),
       ['CACHED-VM'],
     ],
     [
       'ibm_power_virtual_machines',
       'power-1',
-      discoveryInventoryKeys.resourceInventory('IBM_POWER', 'power-1'),
+      powerInventoryQuery('power-1').queryKey,
       {
-        reportedCount: 1,
-        countsByType: { LogicalPartition: 1, VirtualIOServer: 0 },
-        virtualMachines: [],
-        partitions: [{ partitionName: 'CACHED-LPAR' } as PowerPartitionResource],
+        count: 1,
+        counts_by_type: { LogicalPartition: 1, VirtualIOServer: 0 },
+        vms: [{ lpar: { PartitionName: 'CACHED-LPAR' }, vios: {} }],
       },
       ['CACHED-LPAR'],
     ],
     [
       'ibm_flashsystem',
       'flash-1',
-      discoveryInventoryKeys.resourceInventory('FLASHCOPY', 'flash-1'),
-      {
-        reportedCount: 1,
-        volumes: [],
-        resources: [{ name: 'CACHED-VOL' } as FlashSystemVolumeResource],
-        pools: {},
-        hosts: {},
-        clusters: {},
-      },
+      flashSystemInventoryQuery('flash-1').queryKey,
+      parseWireResponse(VolumesResponse, { count: 1, volumes: [{ name: 'CACHED-VOL' }], pools: {}, hosts: {}, clusters: {} }),
       ['CACHED-VOL'],
     ],
   ] as const)('reuses the discovery cache for %s', async (

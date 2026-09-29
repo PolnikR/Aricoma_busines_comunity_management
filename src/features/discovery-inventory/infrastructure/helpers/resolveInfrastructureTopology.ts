@@ -1,5 +1,5 @@
 import type { DiscoveryInventory, PowerInventory } from '../../resources/model/discoveryTypes'
-import type { FlashSystemVolumeTree } from '../api/flashSystemVolumeTreeApi'
+import type { FlashSystemVolumeTree } from '../model/selectVolumeTree'
 import type { InfrastructureTopology, InfrastructureTopologyPlatform } from '../model/topologyTypes'
 import { isPowerInventory } from '../../resources/helpers/inventoryTypeGuards'
 import { mapInventoryToTopology } from './mapInventoryToTopology'

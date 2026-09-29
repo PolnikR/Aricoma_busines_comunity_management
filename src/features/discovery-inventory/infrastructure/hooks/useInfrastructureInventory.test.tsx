@@ -3,17 +3,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import { fetchPowerInventory } from '../../resources/api/powerInventoryApi'
-import { fetchVmwareInventory } from '../../resources/api/vmwareInventoryApi'
 import { useInfrastructureInventory } from './useInfrastructureInventory'
+import { createDiscoveryFetchHandlers, installDiscoveryFetch } from '../../resources/test/discoveryFetch'
 
-vi.mock('../../resources/api/powerInventoryApi', () => ({
-  fetchPowerInventory: vi.fn(),
-}))
-vi.mock('../../resources/api/vmwareInventoryApi', async (importOriginal) => ({
-  ...await importOriginal<typeof import('../../resources/api/vmwareInventoryApi')>(),
-  fetchVmwareInventory: vi.fn(),
-}))
+const discoveryFetch = createDiscoveryFetchHandlers()
+const { fetchPowerInventory, fetchVmwareInventory } = discoveryFetch
+
 
 function provider(type: ProviderRecord['type'], id: string): ProviderRecord {
   return { id, type, role: 'source', name: id, description: '', ipAddress: '', credentialId: null, credentialStatus: 'ok' }
@@ -26,13 +21,7 @@ function wrapper({ children }: { children: ReactNode }) {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.mocked(fetchVmwareInventory).mockResolvedValue({ reportedCount: 0, virtualMachines: [] })
-  vi.mocked(fetchPowerInventory).mockResolvedValue({
-    reportedCount: 0,
-    countsByType: { LogicalPartition: 0, VirtualIOServer: 0 },
-    virtualMachines: [],
-    partitions: [],
-  })
+  installDiscoveryFetch(discoveryFetch)
 })
 
 describe('useInfrastructureInventory', () => {

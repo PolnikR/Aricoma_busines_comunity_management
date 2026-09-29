@@ -1,27 +1,37 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import type { PowerVmsResponse, VmsResponse } from '@/generated/query/zod'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import { discoveryInventoryKeys } from '../../resources/api/resourceInventoryQueryKeys'
-import { fetchPowerInventory } from '../../resources/api/powerInventoryApi'
-import { fetchVmwareInventory } from '../../resources/api/vmwareInventoryApi'
+import {
+  createPowerInventorySelect,
+  powerInventoryQuery,
+  selectVmwareInventory,
+  vmwareInventoryQuery,
+} from '../../resources/model/inventoryQueries'
 import type { DiscoveryInventory, PowerInventory } from '../../resources/model/discoveryTypes'
 
 export type InfrastructureInventory = DiscoveryInventory | PowerInventory
 
 export function useInfrastructureInventory(provider: ProviderRecord | null) {
-  const isSupported = provider?.type === 'VMWARE' || provider?.type === 'IBM_POWER'
-  const queryKey = provider?.type === 'IBM_POWER'
-    ? discoveryInventoryKeys.resourceInventory('IBM_POWER', provider.id)
-    : provider?.type === 'VMWARE'
-      ? discoveryInventoryKeys.vmwareSearch({ providerId: provider.id })
-      : ['infrastructure-topology', 'inactive'] as const
+  const providerType = provider?.type
+  const providerId = provider?.id
+  // One query per provider type: the power and VMware inventories come from
+  // different endpoints, so the response type is narrowed per branch.
+  const options = useMemo(() => {
+    if (providerType === 'IBM_POWER') {
+      const select = createPowerInventorySelect(providerId)
+      return { ...powerInventoryQuery(providerId), select: (data: unknown): InfrastructureInventory => select(data as PowerVmsResponse) }
+    }
+    if (providerType === 'VMWARE') {
+      return { ...vmwareInventoryQuery({ ...(providerId ? { providerId } : {}) }), select: (data: unknown): InfrastructureInventory => selectVmwareInventory(data as VmsResponse) }
+    }
+    return null
+  }, [providerId, providerType])
 
-  return useQuery<InfrastructureInventory>({
-    queryKey,
-    queryFn: () => {
-      if (provider?.type === 'IBM_POWER') return fetchPowerInventory(provider.id)
-      if (provider?.type === 'VMWARE') return fetchVmwareInventory({ providerId: provider.id })
-      throw new Error('A supported infrastructure provider is required.')
-    },
-    enabled: isSupported,
+  return useQuery<unknown, Error, InfrastructureInventory>({
+    queryKey: options?.queryKey ?? ['infrastructure-topology', 'inactive'],
+    queryFn: options?.queryFn ?? (() => Promise.reject(new Error('A supported infrastructure provider is required.'))),
+    ...(options ? { select: options.select } : {}),
+    enabled: options !== null,
   })
 }

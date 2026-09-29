@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import { ResourcesPage } from './ResourcesPage'
-import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
+import { vmwareInventoryQuery } from '../model/inventoryQueries'
 import type { DiscoveryInventory } from '../model/discoveryTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
@@ -301,7 +301,7 @@ describe('ResourcesPage', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false, retryDelay: 1 } },
     })
-    queryClient.setQueryData(discoveryInventoryKeys.vmwareSearch({ providerId: 'vmware-01' }), { reportedCount: 0, virtualMachines: [] })
+    queryClient.setQueryData(vmwareInventoryQuery({ providerId: 'vmware-01' }).queryKey, { count: 0, vms: [] })
 
     render(<QueryClientProvider client={queryClient}><ResourcesPage /></QueryClientProvider>)
 

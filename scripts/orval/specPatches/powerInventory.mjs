@@ -5,7 +5,9 @@ const partition = {
   properties: {
     PartitionUUID: str(), PartitionName: str(), PartitionType: str(), PartitionState: str(), SystemName: str(),
   },
-  additionalProperties: { anyOf: [{ type: 'string' }, { type: 'number' }, { type: 'boolean' }, { type: 'null' }] },
+  // Orval only keeps extra keys for `additionalProperties: true`; the partition
+  // records carry many vendor fields the mapper reads.
+  additionalProperties: true,
 }
 
 export default definePatch({

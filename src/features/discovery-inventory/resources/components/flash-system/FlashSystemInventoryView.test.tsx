@@ -3,7 +3,8 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { useTranslation } from '@/test-utils/mockUseTranslation'
-import { flashSystemInventoryResponseSchema } from '../../api/schemas/flashSystemInventorySchema'
+import { VolumesResponse } from '@/generated/query/zod'
+import { parseWireResponse } from '@/test-utils/parseWireResponse'
 import { mapFlashSystemInventory } from '../../helpers/mapFlashSystemInventory'
 import { FlashSystemInventoryView } from './FlashSystemInventoryView'
 
@@ -28,7 +29,7 @@ const secondProvider: ProviderRecord = {
 
 describe('FlashSystemInventoryView', () => {
   it('renders relevant columns and localized detail relationships', () => {
-    const inventory = mapFlashSystemInventory(flashSystemInventoryResponseSchema.parse({
+    const inventory = mapFlashSystemInventory(parseWireResponse(VolumesResponse, {
       count: 1,
       volumes: [{
         id: '0',
@@ -105,7 +106,7 @@ describe('FlashSystemInventoryView', () => {
 
   it('does not render a duplicate provider filter for the selected source tab', () => {
     const { t } = useTranslation()
-    const inventory = mapFlashSystemInventory(flashSystemInventoryResponseSchema.parse({
+    const inventory = mapFlashSystemInventory(parseWireResponse(VolumesResponse, {
       count: 1,
       volumes: [{
         id: '0',
@@ -133,7 +134,7 @@ describe('FlashSystemInventoryView', () => {
 
   it('closes the detail drawer when the selected volume is no longer in the provider dataset', async () => {
     const { t } = useTranslation()
-    const inventory = mapFlashSystemInventory(flashSystemInventoryResponseSchema.parse({
+    const inventory = mapFlashSystemInventory(parseWireResponse(VolumesResponse, {
       count: 1,
       volumes: [{
         id: '0',

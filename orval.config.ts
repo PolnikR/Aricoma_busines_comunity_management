@@ -62,6 +62,10 @@ export default defineConfig({
       fileExtension: '.gen.ts',
       override: {
         mutator: { path: 'src/shared/api/validatingMutator.ts', name: 'validatingMutator' },
+        // POST /vms/search is a read (filtered VM search), so it is generated as a query.
+        operations: {
+          vms_search_vms_search_post: { query: { useQuery: true, useMutation: false } },
+        },
         operationName,
         fetch: { includeHttpResponseReturnType: false },
         query: {

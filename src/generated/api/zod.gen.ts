@@ -1022,264 +1022,27 @@ export const VolumeTreeCounts = zod.object({
 export type VolumeTreeCounts = zod.input<typeof VolumeTreeCounts>;
 export type VolumeTreeCountsOutput = zod.output<typeof VolumeTreeCounts>;
 
-export const volumeTreePoolDetailIdDefault = ``;
-export const volumeTreePoolDetailParentMdiskGrpIdDefault = ``;
-export const volumeTreePoolDetailParentMdiskGrpNameDefault = ``;
-export const volumeTreePoolDetailSiteIdDefault = ``;
-export const volumeTreePoolDetailSiteNameDefault = ``;
-export const volumeTreePoolDetailMdiskCountDefault = `0`;
-export const volumeTreePoolDetailVdiskCountDefault = `0`;
-export const volumeTreePoolDetailChildMdiskGrpCountDefault = `0`;
-export const volumeTreePoolDetailNameDefault = `-`;
-export const volumeTreePoolDetailCapacityDefault = `-`;
-export const volumeTreePoolDetailExtentSizeDefault = `-`;
-export const volumeTreePoolDetailFreeCapacityDefault = `-`;
-export const volumeTreePoolDetailVirtualCapacityDefault = `-`;
-export const volumeTreePoolDetailUsedCapacityDefault = `-`;
-export const volumeTreePoolDetailRealCapacityDefault = `-`;
-export const volumeTreePoolDetailOverallocationDefault = `-`;
-export const volumeTreePoolDetailWarningDefault = `-`;
-export const volumeTreePoolDetailEasyTierDefault = `-`;
-export const volumeTreePoolDetailEasyTierStatusDefault = `-`;
-export const volumeTreePoolDetailCompressionActiveDefault = `-`;
-export const volumeTreePoolDetailCompressionVirtualCapacityDefault = `-`;
-export const volumeTreePoolDetailCompressionCompressedCapacityDefault = `-`;
-export const volumeTreePoolDetailCompressionUncompressedCapacityDefault = `-`;
-export const volumeTreePoolDetailChildMdiskGrpCapacityDefault = `-`;
-export const volumeTreePoolDetailTypeDefault = `-`;
-export const volumeTreePoolDetailEncryptDefault = `-`;
-export const volumeTreePoolDetailOwnerTypeDefault = `-`;
-export const volumeTreePoolDetailDataReductionDefault = `-`;
-export const volumeTreePoolDetailUsedCapacityBeforeReductionDefault = `-`;
-export const volumeTreePoolDetailUsedCapacityAfterReductionDefault = `-`;
-export const volumeTreePoolDetailOverheadCapacityDefault = `-`;
-export const volumeTreePoolDetailDeduplicationCapacitySavingDefault = `-`;
-export const volumeTreePoolDetailReclaimableCapacityDefault = `-`;
-export const volumeTreePoolDetailEasyTierFcmOverAllocationMaxDefault = `-`;
-export const volumeTreePoolDetailStatusDefault = `unknown`;
-export const volumeTreePoolDetailVolumeCountDefault = 0;
-
-export const VolumeTreePoolDetail = zod.object({
-  "id": zod.string().default(volumeTreePoolDetailIdDefault),
-  "parent_mdisk_grp_id": zod.string().default(volumeTreePoolDetailParentMdiskGrpIdDefault),
-  "parent_mdisk_grp_name": zod.string().default(volumeTreePoolDetailParentMdiskGrpNameDefault),
-  "site_id": zod.string().default(volumeTreePoolDetailSiteIdDefault),
-  "site_name": zod.string().default(volumeTreePoolDetailSiteNameDefault),
-  "mdisk_count": zod.string().default(volumeTreePoolDetailMdiskCountDefault),
-  "vdisk_count": zod.string().default(volumeTreePoolDetailVdiskCountDefault),
-  "child_mdisk_grp_count": zod.string().default(volumeTreePoolDetailChildMdiskGrpCountDefault),
-  "name": zod.string().default(volumeTreePoolDetailNameDefault),
-  "capacity": zod.string().default(volumeTreePoolDetailCapacityDefault),
-  "extent_size": zod.string().default(volumeTreePoolDetailExtentSizeDefault),
-  "free_capacity": zod.string().default(volumeTreePoolDetailFreeCapacityDefault),
-  "virtual_capacity": zod.string().default(volumeTreePoolDetailVirtualCapacityDefault),
-  "used_capacity": zod.string().default(volumeTreePoolDetailUsedCapacityDefault),
-  "real_capacity": zod.string().default(volumeTreePoolDetailRealCapacityDefault),
-  "overallocation": zod.string().default(volumeTreePoolDetailOverallocationDefault),
-  "warning": zod.string().default(volumeTreePoolDetailWarningDefault),
-  "easy_tier": zod.string().default(volumeTreePoolDetailEasyTierDefault),
-  "easy_tier_status": zod.string().default(volumeTreePoolDetailEasyTierStatusDefault),
-  "compression_active": zod.string().default(volumeTreePoolDetailCompressionActiveDefault),
-  "compression_virtual_capacity": zod.string().default(volumeTreePoolDetailCompressionVirtualCapacityDefault),
-  "compression_compressed_capacity": zod.string().default(volumeTreePoolDetailCompressionCompressedCapacityDefault),
-  "compression_uncompressed_capacity": zod.string().default(volumeTreePoolDetailCompressionUncompressedCapacityDefault),
-  "child_mdisk_grp_capacity": zod.string().default(volumeTreePoolDetailChildMdiskGrpCapacityDefault),
-  "type": zod.string().default(volumeTreePoolDetailTypeDefault),
-  "encrypt": zod.string().default(volumeTreePoolDetailEncryptDefault),
-  "owner_type": zod.string().default(volumeTreePoolDetailOwnerTypeDefault),
-  "data_reduction": zod.string().default(volumeTreePoolDetailDataReductionDefault),
-  "used_capacity_before_reduction": zod.string().default(volumeTreePoolDetailUsedCapacityBeforeReductionDefault),
-  "used_capacity_after_reduction": zod.string().default(volumeTreePoolDetailUsedCapacityAfterReductionDefault),
-  "overhead_capacity": zod.string().default(volumeTreePoolDetailOverheadCapacityDefault),
-  "deduplication_capacity_saving": zod.string().default(volumeTreePoolDetailDeduplicationCapacitySavingDefault),
-  "reclaimable_capacity": zod.string().default(volumeTreePoolDetailReclaimableCapacityDefault),
-  "easy_tier_fcm_over_allocation_max": zod.string().default(volumeTreePoolDetailEasyTierFcmOverAllocationMaxDefault),
-  "status": zod.string().default(volumeTreePoolDetailStatusDefault),
-  "volume_count": zod.int().default(volumeTreePoolDetailVolumeCountDefault)
-});
-
-export type VolumeTreePoolDetail = zod.input<typeof VolumeTreePoolDetail>;
-export type VolumeTreePoolDetailOutput = zod.output<typeof VolumeTreePoolDetail>;
-
-export const volumeTreeVolumeDetailIdDefault = ``;
-export const volumeTreeVolumeDetailIOGroupIdDefault = ``;
-export const volumeTreeVolumeDetailMdiskGrpIdDefault = ``;
-export const volumeTreeVolumeDetailFCIdDefault = ``;
-export const volumeTreeVolumeDetailFCNameDefault = ``;
-export const volumeTreeVolumeDetailRCIdDefault = ``;
-export const volumeTreeVolumeDetailRCNameDefault = ``;
-export const volumeTreeVolumeDetailVdiskUIDDefault = ``;
-export const volumeTreeVolumeDetailRCChangeDefault = ``;
-export const volumeTreeVolumeDetailParentMdiskGrpIdDefault = ``;
-export const volumeTreeVolumeDetailParentMdiskGrpNameDefault = ``;
-export const volumeTreeVolumeDetailVolumeIdDefault = ``;
-export const volumeTreeVolumeDetailVolumeNameDefault = ``;
-export const volumeTreeVolumeDetailFcMapCountDefault = `0`;
-export const volumeTreeVolumeDetailCopyCountDefault = `0`;
-export const volumeTreeVolumeDetailSeCopyCountDefault = `0`;
-export const volumeTreeVolumeDetailCompressedCopyCountDefault = `0`;
-export const volumeTreeVolumeDetailNameDefault = `-`;
-export const volumeTreeVolumeDetailIOGroupNameDefault = `-`;
-export const volumeTreeVolumeDetailMdiskGrpNameDefault = `-`;
-export const volumeTreeVolumeDetailCapacityDefault = `-`;
-export const volumeTreeVolumeDetailTypeDefault = `-`;
-export const volumeTreeVolumeDetailFastWriteStateDefault = `-`;
-export const volumeTreeVolumeDetailFormattingDefault = `-`;
-export const volumeTreeVolumeDetailEncryptDefault = `-`;
-export const volumeTreeVolumeDetailFunctionDefault = `-`;
-export const volumeTreeVolumeDetailProtocolDefault = `-`;
-export const volumeTreeVolumeDetailStatusDefault = `unknown`;
-export const volumeTreeVolumeDetailHostMapsItemHostIdDefault = ``;
-export const volumeTreeVolumeDetailHostMapsItemHostNameDefault = `-`;
-export const volumeTreeVolumeDetailHostMapsItemClusterNameDefault = ``;
-export const volumeTreeVolumeDetailHostMapsItemScsiIdDefault = ``;
-export const volumeTreeVolumeDetailHostMapsDefault = [];
-export const volumeTreeVolumeDetailIsSnapshotTargetDefault = false;
-export const volumeTreeVolumeDetailHasSnapshotsDefault = false;
-export const volumeTreeVolumeDetailSnapshotCountDefault = 0;
-export const volumeTreeVolumeDetailResolvedDefault = false;
-
-export const VolumeTreeVolumeDetail = zod.object({
-  "id": zod.string().default(volumeTreeVolumeDetailIdDefault),
-  "IO_group_id": zod.string().default(volumeTreeVolumeDetailIOGroupIdDefault),
-  "mdisk_grp_id": zod.string().default(volumeTreeVolumeDetailMdiskGrpIdDefault),
-  "FC_id": zod.string().default(volumeTreeVolumeDetailFCIdDefault),
-  "FC_name": zod.string().default(volumeTreeVolumeDetailFCNameDefault),
-  "RC_id": zod.string().default(volumeTreeVolumeDetailRCIdDefault),
-  "RC_name": zod.string().default(volumeTreeVolumeDetailRCNameDefault),
-  "vdisk_UID": zod.string().default(volumeTreeVolumeDetailVdiskUIDDefault),
-  "RC_change": zod.string().default(volumeTreeVolumeDetailRCChangeDefault),
-  "parent_mdisk_grp_id": zod.string().default(volumeTreeVolumeDetailParentMdiskGrpIdDefault),
-  "parent_mdisk_grp_name": zod.string().default(volumeTreeVolumeDetailParentMdiskGrpNameDefault),
-  "volume_id": zod.string().default(volumeTreeVolumeDetailVolumeIdDefault),
-  "volume_name": zod.string().default(volumeTreeVolumeDetailVolumeNameDefault),
-  "fc_map_count": zod.string().default(volumeTreeVolumeDetailFcMapCountDefault),
-  "copy_count": zod.string().default(volumeTreeVolumeDetailCopyCountDefault),
-  "se_copy_count": zod.string().default(volumeTreeVolumeDetailSeCopyCountDefault),
-  "compressed_copy_count": zod.string().default(volumeTreeVolumeDetailCompressedCopyCountDefault),
-  "name": zod.string().default(volumeTreeVolumeDetailNameDefault),
-  "IO_group_name": zod.string().default(volumeTreeVolumeDetailIOGroupNameDefault),
-  "mdisk_grp_name": zod.string().default(volumeTreeVolumeDetailMdiskGrpNameDefault),
-  "capacity": zod.string().default(volumeTreeVolumeDetailCapacityDefault),
-  "type": zod.string().default(volumeTreeVolumeDetailTypeDefault),
-  "fast_write_state": zod.string().default(volumeTreeVolumeDetailFastWriteStateDefault),
-  "formatting": zod.string().default(volumeTreeVolumeDetailFormattingDefault),
-  "encrypt": zod.string().default(volumeTreeVolumeDetailEncryptDefault),
-  "function": zod.string().default(volumeTreeVolumeDetailFunctionDefault),
-  "protocol": zod.string().default(volumeTreeVolumeDetailProtocolDefault),
-  "status": zod.string().default(volumeTreeVolumeDetailStatusDefault),
-  "host_maps": zod.array(zod.object({
-  "host_id": zod.string().default(volumeTreeVolumeDetailHostMapsItemHostIdDefault),
-  "host_name": zod.string().default(volumeTreeVolumeDetailHostMapsItemHostNameDefault),
-  "cluster_name": zod.string().default(volumeTreeVolumeDetailHostMapsItemClusterNameDefault),
-  "scsi_id": zod.string().default(volumeTreeVolumeDetailHostMapsItemScsiIdDefault)
-})).default(volumeTreeVolumeDetailHostMapsDefault),
-  "is_snapshot_target": zod.boolean().default(volumeTreeVolumeDetailIsSnapshotTargetDefault),
-  "has_snapshots": zod.boolean().default(volumeTreeVolumeDetailHasSnapshotsDefault),
-  "snapshot_count": zod.int().default(volumeTreeVolumeDetailSnapshotCountDefault),
-  "resolved": zod.boolean().default(volumeTreeVolumeDetailResolvedDefault),
-  "role": zod.enum(['source', 'target']).exactOptional()
-});
-
-export type VolumeTreeVolumeDetail = zod.input<typeof VolumeTreeVolumeDetail>;
-export type VolumeTreeVolumeDetailOutput = zod.output<typeof VolumeTreeVolumeDetail>;
-
-export const volumeTreeFcmapDetailIdDefault = ``;
-export const volumeTreeFcmapDetailSourceVdiskIdDefault = ``;
-export const volumeTreeFcmapDetailSourceVdiskNameDefault = ``;
-export const volumeTreeFcmapDetailTargetVdiskIdDefault = ``;
-export const volumeTreeFcmapDetailTargetVdiskNameDefault = ``;
-export const volumeTreeFcmapDetailGroupIdDefault = ``;
-export const volumeTreeFcmapDetailGroupNameDefault = ``;
-export const volumeTreeFcmapDetailPartnerFCIdDefault = ``;
-export const volumeTreeFcmapDetailPartnerFCNameDefault = ``;
-export const volumeTreeFcmapDetailStartTimeDefault = ``;
-export const volumeTreeFcmapDetailStartTimeIsoDefault = ``;
-export const volumeTreeFcmapDetailProgressDefault = `0`;
-export const volumeTreeFcmapDetailCopyRateDefault = `0`;
-export const volumeTreeFcmapDetailCleanProgressDefault = `0`;
-export const volumeTreeFcmapDetailNameDefault = `-`;
-export const volumeTreeFcmapDetailIncrementalDefault = `-`;
-export const volumeTreeFcmapDetailRestoringDefault = `-`;
-export const volumeTreeFcmapDetailRcControlledDefault = `-`;
-export const volumeTreeFcmapDetailStatusDefault = `unknown`;
-
-export const VolumeTreeFcmapDetail = zod.object({
-  "id": zod.string().default(volumeTreeFcmapDetailIdDefault),
-  "source_vdisk_id": zod.string().default(volumeTreeFcmapDetailSourceVdiskIdDefault),
-  "source_vdisk_name": zod.string().default(volumeTreeFcmapDetailSourceVdiskNameDefault),
-  "target_vdisk_id": zod.string().default(volumeTreeFcmapDetailTargetVdiskIdDefault),
-  "target_vdisk_name": zod.string().default(volumeTreeFcmapDetailTargetVdiskNameDefault),
-  "group_id": zod.string().default(volumeTreeFcmapDetailGroupIdDefault),
-  "group_name": zod.string().default(volumeTreeFcmapDetailGroupNameDefault),
-  "partner_FC_id": zod.string().default(volumeTreeFcmapDetailPartnerFCIdDefault),
-  "partner_FC_name": zod.string().default(volumeTreeFcmapDetailPartnerFCNameDefault),
-  "start_time": zod.string().default(volumeTreeFcmapDetailStartTimeDefault),
-  "start_time_iso": zod.string().default(volumeTreeFcmapDetailStartTimeIsoDefault),
-  "progress": zod.string().default(volumeTreeFcmapDetailProgressDefault),
-  "copy_rate": zod.string().default(volumeTreeFcmapDetailCopyRateDefault),
-  "clean_progress": zod.string().default(volumeTreeFcmapDetailCleanProgressDefault),
-  "name": zod.string().default(volumeTreeFcmapDetailNameDefault),
-  "incremental": zod.string().default(volumeTreeFcmapDetailIncrementalDefault),
-  "restoring": zod.string().default(volumeTreeFcmapDetailRestoringDefault),
-  "rc_controlled": zod.string().default(volumeTreeFcmapDetailRcControlledDefault),
-  "status": zod.string().default(volumeTreeFcmapDetailStatusDefault)
-});
-
-export type VolumeTreeFcmapDetail = zod.input<typeof VolumeTreeFcmapDetail>;
-export type VolumeTreeFcmapDetailOutput = zod.output<typeof VolumeTreeFcmapDetail>;
-
-export const volumeTreeConsistencyGroupDetailIdDefault = ``;
-export const volumeTreeConsistencyGroupDetailNameDefault = `-`;
-export const volumeTreeConsistencyGroupDetailStatusDefault = `unknown`;
-export const volumeTreeConsistencyGroupDetailStartTimeDefault = ``;
-export const volumeTreeConsistencyGroupDetailFcMappingCountDefault = 0;
-export const volumeTreeConsistencyGroupDetailPoolIdsDefault = [];
-export const volumeTreeConsistencyGroupDetailSpansPoolsDefault = false;
-export const volumeTreeConsistencyGroupDetailIsSyntheticDefault = false;
-
-export const VolumeTreeConsistencyGroupDetail = zod.object({
-  "id": zod.string().default(volumeTreeConsistencyGroupDetailIdDefault),
-  "name": zod.string().default(volumeTreeConsistencyGroupDetailNameDefault),
-  "status": zod.string().default(volumeTreeConsistencyGroupDetailStatusDefault),
-  "start_time": zod.string().default(volumeTreeConsistencyGroupDetailStartTimeDefault),
-  "fc_mapping_count": zod.int().default(volumeTreeConsistencyGroupDetailFcMappingCountDefault),
-  "pool_ids": zod.array(zod.string()).default(volumeTreeConsistencyGroupDetailPoolIdsDefault),
-  "spans_pools": zod.boolean().default(volumeTreeConsistencyGroupDetailSpansPoolsDefault),
-  "is_synthetic": zod.boolean().default(volumeTreeConsistencyGroupDetailIsSyntheticDefault)
-});
-
-export type VolumeTreeConsistencyGroupDetail = zod.input<typeof VolumeTreeConsistencyGroupDetail>;
-export type VolumeTreeConsistencyGroupDetailOutput = zod.output<typeof VolumeTreeConsistencyGroupDetail>;
-
+export const volumeTreeNodeDetailDefault = {};
 export const volumeTreeNodeChildrenDefault = [];
 
-export type VolumeTreeNodeKind = typeof VolumeTreeNodeKind[keyof typeof VolumeTreeNodeKind];
-
-
-export const VolumeTreeNodeKind = {
-  pool: 'pool',
-  volume: 'volume',
-  fcmap: 'fcmap',
-  consistency_group: 'consistency_group',
-} as const;
+export type VolumeTreeNodeDetail = { [key: string]: unknown };
 
 export type VolumeTreeNode = {
-  kind: VolumeTreeNodeKind;
+  kind: string;
   id?: string | null;
   name?: string | null;
   key: string;
-  detail?: VolumeTreePoolDetail | VolumeTreeVolumeDetail | VolumeTreeFcmapDetail | VolumeTreeConsistencyGroupDetail;
+  detail?: VolumeTreeNodeDetail;
   children?: VolumeTreeNode[];
   [key: string]: unknown;
  };
 
 export const VolumeTreeNode: zod.ZodType<VolumeTreeNode> = zod.object({
-  "kind": zod.enum(['pool', 'volume', 'fcmap', 'consistency_group']),
+  "kind": zod.string(),
   "id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "name": zod.union([zod.string(),zod.null()]).exactOptional(),
   "key": zod.string(),
-  "detail": zod.union([VolumeTreePoolDetail,VolumeTreeVolumeDetail,VolumeTreeFcmapDetail,VolumeTreeConsistencyGroupDetail]).exactOptional(),
+  "detail": zod.record(zod.string(), zod.unknown()).default(volumeTreeNodeDetailDefault),
   "children": zod.array(zod.lazy(() => VolumeTreeNode)).default(volumeTreeNodeChildrenDefault)
 });
 

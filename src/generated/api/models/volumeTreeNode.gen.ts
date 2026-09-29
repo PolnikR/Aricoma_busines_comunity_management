@@ -4,18 +4,14 @@
  * ABCo API
  * OpenAPI spec version: 0.1.0
  */
-import type { VolumeTreeConsistencyGroupDetail } from './volumeTreeConsistencyGroupDetail.gen';
-import type { VolumeTreeFcmapDetail } from './volumeTreeFcmapDetail.gen';
-import type { VolumeTreeNodeKind } from './volumeTreeNodeKind.gen';
-import type { VolumeTreePoolDetail } from './volumeTreePoolDetail.gen';
-import type { VolumeTreeVolumeDetail } from './volumeTreeVolumeDetail.gen';
+import type { VolumeTreeNodeDetail } from './volumeTreeNodeDetail.gen';
 
 export interface VolumeTreeNode {
-  kind: VolumeTreeNodeKind;
+  kind: string;
   id?: string | null;
   name?: string | null;
   key: string;
-  detail?: VolumeTreePoolDetail | VolumeTreeVolumeDetail | VolumeTreeFcmapDetail | VolumeTreeConsistencyGroupDetail;
+  detail?: VolumeTreeNodeDetail;
   children?: VolumeTreeNode[];
   [key: string]: unknown;
  }

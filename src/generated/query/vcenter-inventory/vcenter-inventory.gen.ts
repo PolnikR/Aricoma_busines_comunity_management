@@ -5,20 +5,16 @@
  * OpenAPI spec version: 0.1.0
  */
 import {
-  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
-  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
@@ -107,54 +103,87 @@ return validatingMutator<VmsResponse>(getPostVmsSearchUrl(params),
 
 
 
-export const getPostVmsSearchMutationKey = () => ['postVmsSearch'] as const;
-
-export const getPostVmsSearchMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postVmsSearch>>, TError,PostVmsSearchMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
-): UseMutationOptions<Awaited<ReturnType<typeof postVmsSearch>>, TError,PostVmsSearchMutationVariables, TContext> => {
-
-const mutationKey = getPostVmsSearchMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export const getPostVmsSearchQueryKey = (vmSearchFilterNull?: VmSearchFilter | null,
+    params?: PostVmsSearchParams,) => {
+    return [
+    'POST', `/vms/search`, ...(params ? [params] : []), vmSearchFilterNull
+    ] as const;
+    }
 
 
+export const getPostVmsSearchQueryOptions = <TData = Awaited<ReturnType<typeof postVmsSearch>>, TError = ErrorType<HTTPValidationError>>(vmSearchFilterNull?: VmSearchFilter | null,
+    params?: PostVmsSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof postVmsSearch>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPostVmsSearchQueryKey(vmSearchFilterNull,params);
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postVmsSearch>>, PostVmsSearchMutationVariables> = (props) => {
-          const {data,params} = props ?? {};
 
-          return  postVmsSearch(data,params,requestOptions)
-        }
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof postVmsSearch>>> = ({ signal }) => postVmsSearch(vmSearchFilterNull,params, { signal, ...requestOptions });
 
 
 
 
 
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof postVmsSearch>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
 
-  return  { mutationFn, ...mutationOptions }}
+export type PostVmsSearchQueryResult = NonNullable<Awaited<ReturnType<typeof postVmsSearch>>>
+export type PostVmsSearchQueryError = ErrorType<HTTPValidationError>
 
-    export type PostVmsSearchMutationResult = NonNullable<Awaited<ReturnType<typeof postVmsSearch>>>
-    export type PostVmsSearchMutationBody = VmSearchFilter | null | undefined
-    export type PostVmsSearchMutationError = ErrorType<HTTPValidationError>
-    export type PostVmsSearchMutationVariables = {data?: VmSearchFilter | null;params?: PostVmsSearchParams}
 
-    /**
+export function usePostVmsSearch<TData = Awaited<ReturnType<typeof postVmsSearch>>, TError = ErrorType<HTTPValidationError>>(
+ vmSearchFilterNull: undefined |  VmSearchFilter | null,
+    params: undefined |  PostVmsSearchParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof postVmsSearch>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof postVmsSearch>>,
+          TError,
+          Awaited<ReturnType<typeof postVmsSearch>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePostVmsSearch<TData = Awaited<ReturnType<typeof postVmsSearch>>, TError = ErrorType<HTTPValidationError>>(
+ vmSearchFilterNull?: VmSearchFilter | null,
+    params?: PostVmsSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof postVmsSearch>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof postVmsSearch>>,
+          TError,
+          Awaited<ReturnType<typeof postVmsSearch>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePostVmsSearch<TData = Awaited<ReturnType<typeof postVmsSearch>>, TError = ErrorType<HTTPValidationError>>(
+ vmSearchFilterNull?: VmSearchFilter | null,
+    params?: PostVmsSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof postVmsSearch>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
  * @summary Vms Search
  */
-export const usePostVmsSearch = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postVmsSearch>>, TError,PostVmsSearchMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof postVmsSearch>>,
-        TError,
-        PostVmsSearchMutationVariables,
-        TContext
-      > => {
-      return useMutation(getPostVmsSearchMutationOptions(options), queryClient);
-    }
-    export const getGetVmsInFolderUrl = (params?: GetVmsInFolderParams,) => {
+
+export function usePostVmsSearch<TData = Awaited<ReturnType<typeof postVmsSearch>>, TError = ErrorType<HTTPValidationError>>(
+ vmSearchFilterNull?: VmSearchFilter | null,
+    params?: PostVmsSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof postVmsSearch>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPostVmsSearchQueryOptions(vmSearchFilterNull,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getGetVmsInFolderUrl = (params?: GetVmsInFolderParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {

@@ -1,6 +1,5 @@
 import { z } from 'zod'
-import { VolumeTreeResponse } from '@/generated/api/zod.gen'
-import type { FlashSystemTreeNode } from '../../model/flashSystemVolumeTreeTypes'
+import type { FlashSystemTreeNode } from '../model/flashSystemVolumeTreeTypes'
 
 const poolDetailSchema = z.object({
   id: z.string().catch(''),
@@ -155,11 +154,9 @@ const flashSystemTreeNodeSchema: z.ZodType<FlashSystemTreeNode> = z.lazy(() => (
   ])
 ))
 
-// SPEC GAP: the generated VolumeTreeNode has an open `kind` and an untyped
-// `detail` record. Counts and the envelope come from the generated schema; only
-// the tree nodes are typed locally for the topology UI.
-export const flashSystemVolumeTreeResponseSchema = VolumeTreeResponse.extend({
-  views: z.record(z.string(), z.array(flashSystemTreeNodeSchema)),
-})
-
-export type FlashSystemVolumeTreePayload = z.infer<typeof flashSystemVolumeTreeResponseSchema>
+// SPEC GAP handled in the feature: Orval cannot generate this recursive,
+// kind-discriminated tree (see docs/api/openapi-spec-gaps.md). The generated
+// schema validates the response envelope; this validates the nodes.
+export function parseVolumeTreeNodes(nodes: unknown[]): FlashSystemTreeNode[] {
+  return z.array(flashSystemTreeNodeSchema).parse(nodes)
+}

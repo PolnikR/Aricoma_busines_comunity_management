@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { flashSystemInventoryResponseSchema } from '../api/schemas/flashSystemInventorySchema'
+import { VolumesResponse } from '@/generated/query/zod'
+import { parseWireResponse } from '@/test-utils/parseWireResponse'
 import { mapFlashSystemInventory } from './mapFlashSystemInventory'
 
 describe('mapFlashSystemInventory', () => {
   it('preserves resource provider identity from an aggregate response', () => {
-    const payload = flashSystemInventoryResponseSchema.parse({
+    const payload = parseWireResponse(VolumesResponse, {
       count: 2,
       volumes: [
         { id: '0', name: 'volume-a', provider_id: 'flash-01' },
@@ -25,7 +26,7 @@ describe('mapFlashSystemInventory', () => {
   })
 
   it('retains all volume fields and resolves pool and host relations', () => {
-    const payload = flashSystemInventoryResponseSchema.parse({
+    const payload = parseWireResponse(VolumesResponse, {
       count: 1,
       volumes: [{
         id: '0', name: 'V5000_Volume1', status: 'online', capacity: '1.00TB',
@@ -55,7 +56,7 @@ describe('mapFlashSystemInventory', () => {
   })
 
   it('accepts missing IDs and creates unique stable resource identifiers', () => {
-    const payload = flashSystemInventoryResponseSchema.parse({
+    const payload = parseWireResponse(VolumesResponse, {
       count: 2,
       volumes: [
         { name: 'volume-a', id: '', vdisk_UID: 'uid-a' },

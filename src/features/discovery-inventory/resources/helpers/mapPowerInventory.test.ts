@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { powerInventoryResponseSchema } from '../api/schemas/powerInventorySchema'
+import { PowerVmsResponse } from '@/generated/query/zod'
+import { parseWireResponse } from '@/test-utils/parseWireResponse'
 import { mapPowerInventory } from './mapPowerInventory'
 
 describe('mapPowerInventory', () => {
   it('preserves resource provider identity from an aggregate response', () => {
-    const payload = powerInventoryResponseSchema.parse({
+    const payload = parseWireResponse(PowerVmsResponse, {
       count: 2,
       counts_by_type: { LogicalPartition: 2, VirtualIOServer: 0 },
       vms: [
@@ -31,7 +32,7 @@ describe('mapPowerInventory', () => {
   })
 
   it('excludes VIOS-only records from normalized inventory', () => {
-    const inventory = mapPowerInventory({
+    const inventory = mapPowerInventory(parseWireResponse(PowerVmsResponse, {
       count: 1,
       counts_by_type: { LogicalPartition: 0, VirtualIOServer: 1 },
       vms: [{
@@ -50,33 +51,33 @@ describe('mapPowerInventory', () => {
           State: 'Inactive',
         },
       }],
-    }, 'power-01')
+    }), 'power-01')
 
     expect(inventory.partitions).toEqual([])
   })
 
   it('prefers a populated LPAR deterministically and ignores empty records', () => {
-    const inventory = mapPowerInventory({
+    const inventory = mapPowerInventory(parseWireResponse(PowerVmsResponse, {
       count: 2,
       counts_by_type: { LogicalPartition: 1, VirtualIOServer: 1 },
       vms: [
         { lpar: { PartitionName: 'lpar1' }, vios: { PartitionName: 'vios1' } },
         { lpar: {}, vios: {} },
       ],
-    })
+    }))
     expect(inventory.partitions).toHaveLength(1)
     expect(inventory.partitions[0]?.partitionKind).toBe('LPAR')
   })
 
   it('falls through empty identities and keeps duplicate row identifiers unique', () => {
-    const inventory = mapPowerInventory({
+    const inventory = mapPowerInventory(parseWireResponse(PowerVmsResponse, {
       count: 2,
       counts_by_type: { LogicalPartition: 0, VirtualIOServer: 2 },
       vms: [
         { lpar: {}, vios: { PartitionUUID: ' ', PartitionName: 'vios1' } },
         { lpar: {}, vios: { PartitionUUID: '', PartitionName: 'vios1' } },
       ],
-    }, 'power-01')
+    }), 'power-01')
 
     expect(inventory.partitions).toEqual([])
   })

@@ -17,9 +17,15 @@ State: spec from regen commit `2df865b`.
 | `GET /get_volumes` | `VolumesResponse.volumes[]` | `record<string, unknown>` | IBM vdisk record: `id`, `name`, `IO_group_*`, `status`, `mdisk_grp_*`, `capacity`, `type`, `FC_*`, `RC_*`, `vdisk_UID`, counts, `host_maps[{ host_id, scsi_id }]`, ... | `resources/api/schemas/flashSystemInventorySchema.ts` | `flashSystemVolumes` |
 | `GET /get_volumes` | `pools`, `hosts`, `clusters` | `record<string, unknown>` | pool `{ name, capacity, used_capacity, free_capacity }`, host `{ name, cluster_id, cluster_name }`, cluster `{ name }` | same | `flashSystemVolumes` |
 | `GET /vdisks_by_vm` | `VdisksByVmResponse.vdisks` | `record<string, unknown>` | volume record with `sanpshosts` (sic) `{ has_snapshots, snapshot_count, is_snapshot, source_mappings[], target_mappings[] }` | `resources/api/schemas/vmStorageVolumesSchema.ts` | `vdisksByVm` |
-| `GET /get_volume_tree` | `VolumeTreeNode.kind` | `string` | enum `pool` \| `volume` \| `fcmap` \| `consistency_group` | `infrastructure/api/schemas/flashSystemVolumeTreeSchema.ts` | `volumeTree` |
-| `GET /get_volume_tree` | `VolumeTreeNode.detail` | `record<string, unknown>` | one detail shape per `kind` (pool, volume, fcmap, consistency group) | same | `volumeTree` |
+| `GET /get_volume_tree` | `VolumeTreeNode.kind` | `string` | enum `pool` \| `volume` \| `fcmap` \| `consistency_group` | `infrastructure/helpers/parseVolumeTreeNodes.ts` | not patched (see below) |
+| `GET /get_volume_tree` | `VolumeTreeNode.detail` | `record<string, unknown>` | one detail shape per `kind` (pool, volume, fcmap, consistency group) | same | not patched (see below) |
 | `DELETE /delete_recovery_group`, `POST /rollback_group_from_orchestrator`, `DELETE /delete_recovery_app` | `RollbackReport` | only `status` | `airflow { status, dag_id?, paused?, failed_runs?, dag_file?, dag_record? }`, `ibm { status, consistency_groups?, fcmaps?, volumes?, errors? }` | `recovery-groups/api/schemas/recoveryGroupsSchema.ts`, `recovery-applications/api/schemas/recoveryApplicationsSchema.ts` | `rollbackReport` |
+
+The volume tree is the one gap handled in the feature: Orval 8.33 generates neither
+recursive schemas (grandchildren become `unknown`) nor a `kind`-discriminated union for
+`detail` from this spec shape, so a spec patch would validate the tree incorrectly. The
+generated schema validates the response envelope; `parseVolumeTreeNodes.ts` validates
+the nodes.
 
 ## Incomplete request/response models
 

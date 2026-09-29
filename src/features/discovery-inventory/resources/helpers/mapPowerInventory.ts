@@ -1,5 +1,5 @@
-import type { PowerInventory } from '../model/discoveryTypes'
-import type { PowerInventoryPayload } from '../api/schemas/powerInventorySchema'
+import type { DiscoveredPowerVirtualMachine, PowerInventory } from '../model/discoveryTypes'
+import type { PowerVmsResponseOutput as PowerInventoryPayload } from '@/generated/query/zod'
 
 function asDisplayValue(value: unknown): string {
   if (value === null || value === undefined) return ''
@@ -22,10 +22,21 @@ function stableFingerprint(record: Record<string, unknown>): string {
   return `fallback-${(hash >>> 0).toString(36)}`
 }
 
+// SPEC GAP: LPAR/VIOS records carry vendor fields the spec does not type;
+// validatingMutator keeps them, so they are read as partition data here.
+function toPowerVirtualMachine(vm: PowerInventoryPayload['vms'][number]): DiscoveredPowerVirtualMachine {
+  return {
+    lpar: (vm.lpar ?? {}),
+    vios: (vm.vios ?? {}),
+  }
+}
+
 export function mapPowerInventory(payload: PowerInventoryPayload, providerId = ''): PowerInventory {
   const inventoryProviderId = asDisplayValue(payload.provider_id) || providerId
   const identityOccurrences = new Map<string, number>()
-  const partitions = payload.vms.flatMap((virtualMachine, index) => {
+  const virtualMachines = payload.vms.map(toPowerVirtualMachine)
+  const partitions = virtualMachines.flatMap((virtualMachine, index) => {
+    const wireProviderId = payload.vms[index]?.provider_id
     const hasLpar = Object.keys(virtualMachine.lpar).length > 0
     const hasVios = Object.keys(virtualMachine.vios).length > 0
     if (!hasLpar && !hasVios) return []
@@ -34,7 +45,7 @@ export function mapPowerInventory(payload: PowerInventoryPayload, providerId = '
     // Product rule: VIOS partitions are not supported by the application.
     if (partitionKind === 'VIOS') return []
     const partitionData = hasLpar ? virtualMachine.lpar : virtualMachine.vios
-    const resourceProviderId = asDisplayValue(virtualMachine.provider_id)
+    const resourceProviderId = asDisplayValue(wireProviderId)
       || asDisplayValue(partitionData['provider_id'])
       || inventoryProviderId
     const identity = [
@@ -74,7 +85,7 @@ export function mapPowerInventory(payload: PowerInventoryPayload, providerId = '
   return {
     reportedCount: payload.count,
     countsByType: payload.counts_by_type,
-    virtualMachines: payload.vms,
+    virtualMachines,
     partitions,
   }
 }
