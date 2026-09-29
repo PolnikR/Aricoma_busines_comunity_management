@@ -4,6 +4,8 @@
  * ABCo API
  * OpenAPI spec version: 0.1.0
  */
+import type { MetroMirrorConfig } from './metroMirrorConfig.gen';
+import type { RecoveryGroupTopology } from './recoveryGroupTopology.gen';
 import type { RecoveryVM } from './recoveryVM.gen';
 import type { RecoveryVolume } from './recoveryVolume.gen';
 
@@ -13,6 +15,8 @@ export interface RecoveryGroup {
   description?: string | null;
   provider_id_vm?: string | null;
   provider_id_volume?: string | null;
+  topology?: RecoveryGroupTopology;
+  metro_mirror?: MetroMirrorConfig | null;
   policy_set_id?: string | null;
   vms?: RecoveryVM[];
   volumes?: RecoveryVolume[];

@@ -3968,6 +3968,34 @@
         ],
         "title": "HealthResponse"
       },
+      "MetroMirrorConfig": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "existing",
+              "managed"
+            ],
+            "title": "Mode"
+          },
+          "consistency_group_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consistency Group Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode"
+        ],
+        "title": "MetroMirrorConfig"
+      },
       "OrchestrationProvider": {
         "properties": {
           "id": {
@@ -4000,6 +4028,17 @@
             ],
             "title": "Role",
             "default": "source"
+          },
+          "partnerProviderId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partnerproviderid"
           },
           "ipAddress": {
             "anyOf": [
@@ -4230,6 +4269,17 @@
             ],
             "title": "Role",
             "default": "source"
+          },
+          "partnerProviderId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partnerproviderid"
           },
           "ipAddress": {
             "anyOf": [
@@ -4782,6 +4832,17 @@
             "title": "Role",
             "default": "source"
           },
+          "partnerProviderId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partnerproviderid"
+          },
           "ipAddress": {
             "anyOf": [
               {
@@ -4930,6 +4991,17 @@
             ],
             "title": "Role",
             "default": "source"
+          },
+          "partnerProviderId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partnerproviderid"
           },
           "ipAddress": {
             "anyOf": [
@@ -5757,6 +5829,25 @@
             ],
             "title": "Provider Id Volume"
           },
+          "topology": {
+            "type": "string",
+            "enum": [
+              "local",
+              "metro_mirror"
+            ],
+            "title": "Topology",
+            "default": "local"
+          },
+          "metro_mirror": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetroMirrorConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "policy_set_id": {
             "anyOf": [
               {
@@ -5828,6 +5919,17 @@
             ],
             "title": "Provider Id Volume"
           },
+          "snapshot_provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Provider Id"
+          },
           "volumes": {
             "additionalProperties": {
               "$ref": "#/components/schemas/RecoveryGroupVolumeInventory"
@@ -5887,6 +5989,25 @@
               }
             ],
             "title": "Provider Id Volume"
+          },
+          "topology": {
+            "type": "string",
+            "enum": [
+              "local",
+              "metro_mirror"
+            ],
+            "title": "Topology",
+            "default": "local"
+          },
+          "metro_mirror": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetroMirrorConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "policy_set_id": {
             "anyOf": [
@@ -6081,6 +6202,17 @@
           "name": {
             "type": "string",
             "title": "Name"
+          },
+          "auxiliary_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auxiliary Name"
           }
         },
         "type": "object",

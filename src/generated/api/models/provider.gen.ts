@@ -13,6 +13,7 @@ export interface Provider {
   description?: string | null;
   type: ProviderType;
   role?: ProviderRole;
+  partnerProviderId?: string | null;
   ipAddress?: string | null;
   credentialId?: string | null;
   url?: string | null;

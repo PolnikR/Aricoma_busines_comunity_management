@@ -13,6 +13,7 @@ export interface OrchestrationProvider {
   description?: string | null;
   type: ProviderType;
   role?: OrchestrationProviderRole;
+  partnerProviderId?: string | null;
   ipAddress?: string | null;
   credentialId?: string | null;
   url?: string | null;

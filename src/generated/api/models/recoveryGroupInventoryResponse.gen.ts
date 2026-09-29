@@ -11,5 +11,6 @@ export interface RecoveryGroupInventoryResponse {
   recovery_group_name: string;
   run_id: string;
   provider_id_volume?: string | null;
+  snapshot_provider_id?: string | null;
   volumes: RecoveryGroupInventoryResponseVolumes;
 }

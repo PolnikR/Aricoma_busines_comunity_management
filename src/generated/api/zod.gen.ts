@@ -157,6 +157,14 @@ export const HealthResponse = zod.object({
 export type HealthResponse = zod.input<typeof HealthResponse>;
 export type HealthResponseOutput = zod.output<typeof HealthResponse>;
 
+export const MetroMirrorConfig = zod.object({
+  "mode": zod.enum(['existing', 'managed']),
+  "consistency_group_id": zod.union([zod.string(),zod.null()]).exactOptional()
+});
+
+export type MetroMirrorConfig = zod.input<typeof MetroMirrorConfig>;
+export type MetroMirrorConfigOutput = zod.output<typeof MetroMirrorConfig>;
+
 export const ProviderType = zod.enum(['VMWARE', 'FLASHCOPY', 'HITACHI', 'IBM_POWER', 'AIRFLOW', 'SMTP', 'BACKEND', 'KEYCLOAK']);
 
 export type ProviderType = zod.input<typeof ProviderType>;
@@ -171,6 +179,7 @@ export const OrchestrationProvider = zod.object({
   "description": zod.union([zod.string(),zod.null()]).exactOptional(),
   "type": ProviderType,
   "role": zod.enum(['source', 'target']).default(orchestrationProviderRoleDefault),
+  "partnerProviderId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "ipAddress": zod.union([zod.string(),zod.null()]).exactOptional(),
   "credentialId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "url": zod.union([zod.string(),zod.null()]).exactOptional(),
@@ -203,6 +212,7 @@ export const OrchestrationProviderRecord = zod.object({
   "description": zod.union([zod.string(),zod.null()]).exactOptional(),
   "type": ProviderType,
   "role": zod.enum(['source', 'target']).default(orchestrationProviderRecordRoleDefault),
+  "partnerProviderId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "ipAddress": zod.union([zod.string(),zod.null()]).exactOptional(),
   "credentialId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "url": zod.union([zod.string(),zod.null()]).exactOptional(),
@@ -314,6 +324,7 @@ export const Provider = zod.object({
   "description": zod.union([zod.string(),zod.null()]).exactOptional(),
   "type": ProviderType,
   "role": zod.enum(['source', 'target']).default(providerRoleDefault),
+  "partnerProviderId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "ipAddress": zod.union([zod.string(),zod.null()]).exactOptional(),
   "credentialId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "url": zod.union([zod.string(),zod.null()]).exactOptional(),
@@ -344,6 +355,7 @@ export const ProviderRecord = zod.object({
   "description": zod.union([zod.string(),zod.null()]).exactOptional(),
   "type": ProviderType,
   "role": zod.enum(['source', 'target']).default(providerRecordRoleDefault),
+  "partnerProviderId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "ipAddress": zod.union([zod.string(),zod.null()]).exactOptional(),
   "credentialId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "url": zod.union([zod.string(),zod.null()]).exactOptional(),
@@ -572,12 +584,14 @@ export type RecoveryAppsResponse = zod.input<typeof RecoveryAppsResponse>;
 export type RecoveryAppsResponseOutput = zod.output<typeof RecoveryAppsResponse>;
 
 export const RecoveryVolume = zod.object({
-  "name": zod.string()
+  "name": zod.string(),
+  "auxiliary_name": zod.union([zod.string(),zod.null()]).exactOptional()
 });
 
 export type RecoveryVolume = zod.input<typeof RecoveryVolume>;
 export type RecoveryVolumeOutput = zod.output<typeof RecoveryVolume>;
 
+export const recoveryGroupTopologyDefault = `local`;
 export const recoveryGroupVmsDefault = [];
 export const recoveryGroupVolumesDefault = [];
 
@@ -587,6 +601,8 @@ export const RecoveryGroup = zod.object({
   "description": zod.union([zod.string(),zod.null()]).exactOptional(),
   "provider_id_vm": zod.union([zod.string(),zod.null()]).exactOptional(),
   "provider_id_volume": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "topology": zod.enum(['local', 'metro_mirror']).default(recoveryGroupTopologyDefault),
+  "metro_mirror": zod.union([MetroMirrorConfig,zod.null()]).exactOptional(),
   "policy_set_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vms": zod.array(RecoveryVM).default(recoveryGroupVmsDefault),
   "volumes": zod.array(RecoveryVolume).default(recoveryGroupVolumesDefault),
@@ -622,12 +638,14 @@ export const RecoveryGroupInventoryResponse = zod.object({
   "recovery_group_name": zod.string(),
   "run_id": zod.string(),
   "provider_id_volume": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "snapshot_provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "volumes": zod.record(zod.string(), RecoveryGroupVolumeInventory)
 });
 
 export type RecoveryGroupInventoryResponse = zod.input<typeof RecoveryGroupInventoryResponse>;
 export type RecoveryGroupInventoryResponseOutput = zod.output<typeof RecoveryGroupInventoryResponse>;
 
+export const recoveryGroupRecordTopologyDefault = `local`;
 export const recoveryGroupRecordVmsDefault = [];
 export const recoveryGroupRecordVolumesDefault = [];
 
@@ -637,6 +655,8 @@ export const RecoveryGroupRecord = zod.object({
   "description": zod.union([zod.string(),zod.null()]).exactOptional(),
   "provider_id_vm": zod.union([zod.string(),zod.null()]).exactOptional(),
   "provider_id_volume": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "topology": zod.enum(['local', 'metro_mirror']).default(recoveryGroupRecordTopologyDefault),
+  "metro_mirror": zod.union([MetroMirrorConfig,zod.null()]).exactOptional(),
   "policy_set_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vms": zod.array(RecoveryVM).default(recoveryGroupRecordVmsDefault),
   "volumes": zod.array(RecoveryVolume).default(recoveryGroupRecordVolumesDefault),

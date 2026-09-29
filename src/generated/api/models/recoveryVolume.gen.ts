@@ -7,4 +7,5 @@
 
 export interface RecoveryVolume {
   name: string;
+  auxiliary_name?: string | null;
 }

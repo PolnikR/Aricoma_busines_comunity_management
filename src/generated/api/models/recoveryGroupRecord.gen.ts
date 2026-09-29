@@ -5,6 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { GroupOrchestrationState } from './groupOrchestrationState.gen';
+import type { MetroMirrorConfig } from './metroMirrorConfig.gen';
+import type { RecoveryGroupRecordTopology } from './recoveryGroupRecordTopology.gen';
 import type { RecoveryVM } from './recoveryVM.gen';
 import type { RecoveryVolume } from './recoveryVolume.gen';
 
@@ -14,6 +16,8 @@ export interface RecoveryGroupRecord {
   description?: string | null;
   provider_id_vm?: string | null;
   provider_id_volume?: string | null;
+  topology?: RecoveryGroupRecordTopology;
+  metro_mirror?: MetroMirrorConfig | null;
   policy_set_id?: string | null;
   vms?: RecoveryVM[];
   volumes?: RecoveryVolume[];
