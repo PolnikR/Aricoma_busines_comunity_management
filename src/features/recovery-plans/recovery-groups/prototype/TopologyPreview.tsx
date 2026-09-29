@@ -13,6 +13,7 @@ import { ResourceSelectionCard } from '@/shared/components/resource-selection/Re
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
 import { Card } from '@/shared/components/card/Card'
 import { DataTable } from '@/shared/components/data-table/DataTable'
+import { Badge } from '@/shared/components/badge/Badge'
 import { PolicySetPickerList } from '@/shared/components/policy-set-picker/PolicySetPickerList'
 import { Toggle } from '@/shared/components/toggle/Toggle'
 import { Alert } from '@/shared/components/alert/Alert'
@@ -22,14 +23,16 @@ import { policySets, stepLabels, storageProviders, vmVolumes } from './topologyP
 import '@/index.css'
 
 export function TopologyPreview() {
-  const [step, setStep] = useState(1)
+  const storagePreview = new URLSearchParams(window.location.search).get('storage')
+  const previewTopology = storagePreview === 'local' || storagePreview === 'metro_mirror' ? storagePreview : null
+  const [step, setStep] = useState(previewTopology ? 6 : 1)
   const [details, setDetails] = useState({ id: 'app02-mm', name: 'APP02 Recovery', description: 'Recovery configuration for production application workloads.' })
-  const [topology, setTopology] = useState<'local' | 'metro_mirror' | null>(null)
-  const [sourceId, setSourceId] = useState('')
-  const [groupId, setGroupId] = useState('')
-  const [resourceType, setResourceType] = useState(false)
-  const [compute, setCompute] = useState(false)
-  const [vms, setVms] = useState<string[]>([])
+  const [topology, setTopology] = useState<'local' | 'metro_mirror' | null>(previewTopology)
+  const [sourceId, setSourceId] = useState(previewTopology ? 'ibm-flashsystem-prod' : '')
+  const [groupId, setGroupId] = useState(previewTopology === 'metro_mirror' ? '1' : '')
+  const [resourceType, setResourceType] = useState(Boolean(previewTopology))
+  const [compute, setCompute] = useState(Boolean(previewTopology))
+  const [vms, setVms] = useState<string[]>(previewTopology ? ['APP02'] : [])
   const [auxiliary, setAuxiliary] = useState<Record<string, string>>({})
   const [policyId, setPolicyId] = useState<string | null>(null)
   const [orchestrator, setOrchestrator] = useState('')
@@ -40,6 +43,7 @@ export function TopologyPreview() {
   const partner = storageProviders.find(provider => provider.id === source?.partnerProviderId)
   const remote = topology === 'metro_mirror'
   const volumes = [...new Set(vms.flatMap(vm => vmVolumes[sourceId]?.[vm] ?? []))]
+  const mappedCount = volumes.filter(volume => auxiliary[volume]?.trim()).length
   const policy = policySets.find(item => item.id === policyId)
   const validations = [
     Boolean(details.id.trim() && details.name.trim() && details.description.trim()),
@@ -149,16 +153,28 @@ export function TopologyPreview() {
                       </div>
                     </div>
                   </div>}
-                  {step === 6 && <div className="grid gap-5">
-                    <div><h2 className="text-base font-semibold">Related storage</h2><p className="mt-1 text-sm text-text-muted">Source volumes discovered from {vms.join(', ')} on {source?.name}.</p></div>
-                    {remote && <Alert title="Existing Metro Mirror volumes" description="Enter the existing auxiliary volume on the partner FlashSystem for every source volume. An auxiliary volume is a replica, not a FlashCopy snapshot." />}
-                    {volumes.length === 0 ? <EmptyState title="No related volumes" description="Select virtual machines with source volumes." /> : remote ? <div className="overflow-x-auto rounded-xl border border-border">
-                      <DataTable rows={volumes} rowKey={volume => volume} ariaLabel="Metro Mirror volume pairs" density="comfortable" columns={[
-                        { id: 'source', header: 'Source volume', cell: volume => volume },
-                        { id: 'auxiliary', header: `Auxiliary volume · ${partner?.name ?? ''}`, cellClassName: 'min-w-56', cell: volume => <Input aria-label={`Auxiliary volume for ${volume}`} placeholder={`DR_${volume}`} value={auxiliary[volume] ?? ''} required invalid={auxiliary[volume] !== undefined && !auxiliary[volume].trim()} onChange={event => { setAuxiliary(current => ({ ...current, [volume]: event.target.value })) }} /> },
+                  {step === 6 && <div className="grid min-w-0 gap-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div><h2 className="text-base font-semibold">Related storage</h2><p className="mt-1 text-sm text-text-muted">Volumes discovered from your selected virtual machines.</p></div>
+                      <Badge color="light" size="sm">{remote ? 'Metro Mirror · Existing' : 'Local · FlashCopy'}</Badge>
+                    </div>
+                    <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+                      <Field label="Source FlashSystem" htmlFor="storage-source"><Input id="storage-source" value={source?.name ?? ''} readOnly /></Field>
+                      {remote ? <Field label="Partner FlashSystem" htmlFor="storage-partner"><Input id="storage-partner" value={partner?.name ?? ''} readOnly /></Field> : <Field label="Snapshot location" htmlFor="storage-snapshot"><Input id="storage-snapshot" value="Source FlashSystem · FlashCopy" readOnly /></Field>}
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
+                      <span>{volumes.length} source volumes · {vms.length} selected VMs{remote ? ` · Remote Copy group ${groupId}` : ''}</span>
+                      <span role="status">{remote ? `${String(mappedCount)} of ${String(volumes.length)} auxiliary names entered` : 'Automatically discovered'}</span>
+                    </div>
+                    <div className="min-w-0 overflow-hidden rounded-xl border border-border">
+                      <DataTable rows={volumes} rowKey={volume => volume} layout="fit" ariaLabel={remote ? 'Metro Mirror volume pairs' : 'Discovered source volumes'} density="comfortable" emptyContent={<EmptyState title="No related volumes" description="Select virtual machines with source volumes." />} columns={[
+                        { id: 'source', header: 'Source volume', cell: volume => <div className="py-2"><p className="break-all font-medium text-text-primary">{volume}</p><p className="mt-1 text-xs text-text-muted">{vms.filter(vm => vmVolumes[sourceId]?.[vm]?.includes(volume)).join(', ')} · Discovered</p></div> },
+                        remote
+                          ? { id: 'auxiliary', header: 'Auxiliary volume on partner', cell: volume => <div className="grid min-w-0 gap-2 py-2"><Input aria-label={`Auxiliary volume for ${volume}`} placeholder={`DR_${volume}`} value={auxiliary[volume] ?? ''} required invalid={auxiliary[volume] !== undefined && !auxiliary[volume].trim()} onChange={event => { setAuxiliary(current => ({ ...current, [volume]: event.target.value })) }} /><div><Badge color={auxiliary[volume]?.trim() ? 'info' : 'warning'} size="sm">{auxiliary[volume]?.trim() ? 'Name entered' : 'Required'}</Badge></div></div> }
+                          : { id: 'snapshot', header: 'Snapshot method', cell: () => <div><Badge color="light" size="sm">FlashCopy</Badge><p className="mt-1 text-xs text-text-muted">Point-in-time copy on Source</p></div> },
                       ]} />
-                    </div> : <ResourceSelectionCard title="Related volumes" items={volumes} emptyText="No related volumes" removeLabel="Remove" ariaLabel="Related volumes" />}
-                    <p className="text-xs text-text-muted">{remote ? 'Every source volume requires an auxiliary name before continuing.' : 'FlashCopy will create point-in-time copies on the source FlashSystem.'}</p>
+                    </div>
+                    <p className="text-xs leading-5 text-text-muted">{remote ? 'Enter the existing Metro Mirror replica name for each source volume. Auxiliary volumes are not snapshots; FlashCopy runs on the partner. Names are not checked against storage in this preview.' : 'Source volumes are discovered automatically. FlashCopy creates point-in-time copies on the same FlashSystem.'}</p>
                   </div>}
                   {step === 7 && <div className="grid gap-5">
                     <div><h2 className="text-base font-semibold">Policy Set</h2><p className="mt-1 text-sm text-text-muted">Choose the policies applied to this recovery group.</p></div>
