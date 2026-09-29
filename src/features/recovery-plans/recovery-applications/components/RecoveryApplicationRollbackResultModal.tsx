@@ -24,13 +24,11 @@ export function RecoveryApplicationRollbackResultModal({
 
   const checks: CheckItem[] = []
 
-  if (report.status) {
-    checks.push({
-      name: t('recovery.application.rollback.resultStatusSection'),
-      detail: report.status,
-      status: isClean ? 'ok' : 'warning',
-    })
-  }
+  checks.push({
+    name: t('recovery.application.rollback.resultStatusSection'),
+    detail: report.status,
+    status: isClean ? 'ok' : 'warning',
+  })
 
   if (report.airflow) {
     checks.push({
