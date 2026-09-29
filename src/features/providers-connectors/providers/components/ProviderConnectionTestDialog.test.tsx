@@ -2,26 +2,26 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ProviderConnectionTestDialog } from './ProviderConnectionTestDialog'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
-import type { ProviderConnectionTestResult } from '../model/providerConnectionTestTypes'
+import type { ProviderTestResponseOutput } from '@/generated/query/zod'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 afterEach(cleanup)
 
-const successResult: ProviderConnectionTestResult = {
+const successResult: ProviderTestResponseOutput = {
   ok: true,
-  providerId: 'vmware-vcenter-01',
-  providerType: 'VMWARE',
+  provider_id: 'vmware-vcenter-01',
+  provider_type: 'VMWARE',
   checks: [
     { name: 'Credentials', status: 'ok', detail: 'Credential validated' },
     { name: 'API reachability', status: 'ok', detail: 'Reached vCenter API' },
   ],
 }
 
-const failedResult: ProviderConnectionTestResult = {
+const failedResult: ProviderTestResponseOutput = {
   ok: false,
-  providerId: 'vmware-vcenter-01',
-  providerType: 'VMWARE',
+  provider_id: 'vmware-vcenter-01',
+  provider_type: 'VMWARE',
   checks: [
     { name: 'Credentials', status: 'ok', detail: 'Credential validated' },
     { name: 'API reachability', status: 'timeout', detail: 'Connection timed out after 5s' },
@@ -116,7 +116,7 @@ describe('ProviderConnectionTestDialog', () => {
         providerName="Production vCenter"
         providerId="vmware-vcenter-01"
         isPending={false}
-        result={{ ok: true, providerId: 'vmware-vcenter-01', providerType: 'VMWARE', checks: [] }}
+        result={{ ok: true, provider_id: 'vmware-vcenter-01', provider_type: 'VMWARE', checks: [] }}
         error={null}
         onClose={() => undefined}
         onRetry={() => undefined}

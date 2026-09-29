@@ -8,7 +8,8 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryApplicationsTable } from '../components/RecoveryApplicationsTable'
 import { useRecoveryApplications } from '../hooks/useRecoveryApplications'
 import { useDeleteRecoveryApplication } from '../hooks/useDeleteRecoveryApplication'
-import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 
@@ -16,7 +17,7 @@ export function RecoveryApplicationsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
-  const { data: providers = [] } = useProviders()
+  const { data: providers = [] } = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const { mutateAsync: deleteApplication, isPending: isDeleting, error: deleteError } = useDeleteRecoveryApplication()
   const deleteErrorDescription = resolveUserFacingErrorMessage(deleteError, '')
 

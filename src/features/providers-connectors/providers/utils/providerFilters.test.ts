@@ -10,7 +10,6 @@ describe('providerFilters', () => {
     type: 'VMWARE',
     role: 'source',
     ipAddress: '10.0.0.1',
-    port: 443,
     credentialId: null,
     credentialStatus: 'none',
   }
@@ -24,7 +23,6 @@ describe('providerFilters', () => {
     ...vmwareSourceProvider,
     id: 'vmware-legacy-01',
     name: 'VMware Legacy',
-    role: undefined,
   }
   const flashProvider: ProviderRecord = {
     ...vmwareSourceProvider,

@@ -416,8 +416,8 @@ describe('fetchInventory', () => {
     name: id,
     description: '',
     type,
+    role: 'source',
     ipAddress: '10.0.0.1',
-    port: 22,
     credentialId: 'credential-1',
     credentialStatus: 'ok',
   })

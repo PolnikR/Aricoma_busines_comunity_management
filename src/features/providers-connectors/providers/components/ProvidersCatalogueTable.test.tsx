@@ -5,7 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvidersCatalogueTable } from './ProvidersCatalogueTable'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { ProviderRecord, ProviderRoleFilter } from '../model/providerTypes'
-import { useProviders } from '../hooks/useProviders'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '../model/selectProviders'
 
 const keycloakMock = vi.hoisted(() => ({
   token: 'provider-test-token',
@@ -96,8 +97,8 @@ function renderTable() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   function ProvidersTableHarness() {
     const [roleFilter, setRoleFilter] = useState<ProviderRoleFilter>('all')
-    const { data = [], isLoading, isFetching, error, refetch } = useProviders(roleFilter)
-    const { data: allProviders = [] } = useProviders('all')
+    const { data = [], isLoading, isFetching, error, refetch } = useGetProviders({ role: roleFilter }, { query: { select: selectProviders } })
+    const { data: allProviders = [] } = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
     return (
       <ProvidersCatalogueTable
         providers={data}
@@ -285,7 +286,8 @@ describe('ProvidersCatalogueTable', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Test connection' }))
 
     const dialog = await screen.findByRole('dialog', { name: 'Test provider connection' })
-    expect(dialog).toHaveTextContent('Connection test completed')
+    // The test runs as a query, so the dialog opens before the result arrives.
+    await waitFor(() => { expect(dialog).toHaveTextContent('Connection test completed') })
     expect(dialog).toHaveTextContent('Credentials')
     expect(screen.queryByRole('dialog', { name: 'Provider detail' })).not.toBeInTheDocument()
   })

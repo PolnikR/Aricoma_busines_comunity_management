@@ -34,7 +34,6 @@ const mockProviderA: ProviderRecord = {
   type: 'VMWARE',
   ipAddress: '10.99.99.40',
   url: 'https://vcenter.example.test',
-  port: 22,
   credentialId: 'vcenter-admin',
   role: 'source',
   notificationEmail: 'provider-alerts@example.test',
@@ -150,13 +149,14 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByLabelText('VM tags')).toHaveValue('first-tag')
   })
 
-  it('preserves an edited provider port without sending it to the backend', async () => {
+  // port is not part of the providers contract: the field shows the default and is never sent.
+  it('shows the default port for an edited provider without sending it to the backend', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(
       new Response(JSON.stringify({ providers: [] }), { status: 200 }),
     )
     vi.stubGlobal('fetch', mockFetch)
     const onClose = vi.fn()
-    const editedProvider = { ...mockProviderA, port: 8443 }
+    const editedProvider = mockProviderA
     renderWithQueryClient(
       <ProvidersCreateModal
         open
@@ -166,7 +166,7 @@ describe('ProvidersCreateModal', () => {
       />,
     )
 
-    expect(screen.getByLabelText('Port')).toHaveValue(8443)
+    expect(screen.getByLabelText('Port')).toHaveValue(22)
     fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
 
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })

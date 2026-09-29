@@ -1,13 +1,10 @@
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
-import { toPlatformProviderJson } from '../helpers/platformProviderJson'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
-
-type SmtpProviderRecord = Extract<PlatformProviderRecord, { type: 'SMTP' }>
 
 interface SmtpProviderDetailsDialogProps {
   open: boolean
-  provider: SmtpProviderRecord
+  provider: PlatformProviderRecord
   onClose: () => void
 }
 
@@ -33,13 +30,13 @@ export function SmtpProviderDetailsDialog({
       subtitle={provider.id}
       badges={[
         { label: provider.type, color: 'info' },
-        ...(provider.role ? [{
+        {
           label: t(`forms.role.${provider.role}`),
           color: provider.role === 'source' ? 'success' as const : 'warning' as const,
-        }] : []),
+        },
       ]}
       checks={[]}
-      responseData={toPlatformProviderJson(provider)}
+      responseData={provider}
       onClose={onClose}
     >
       <dl role="list" aria-label={title} className="space-y-2">

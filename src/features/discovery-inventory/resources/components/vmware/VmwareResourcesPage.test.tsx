@@ -7,8 +7,8 @@ import type { VirtualMachine } from '../../types/virtualMachineTypes'
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 const provider: ProviderRecord = {
-  id: 'vmware-01', name: 'VMware 01', description: '', type: 'VMWARE', ipAddress: '10.0.0.1',
-  port: 22, credentialId: null, credentialStatus: 'none',
+  id: 'vmware-01', name: 'VMware 01', description: '', type: 'VMWARE', role: 'source', ipAddress: '10.0.0.1',
+ credentialId: null, credentialStatus: 'none',
 }
 const vm: VirtualMachine = {
   id: 'vm-01', name: 'VM 01', powerState: 'poweredOn', connectionState: 'connected', guestOs: 'Linux',
@@ -31,8 +31,9 @@ vi.mock('../../hooks/useVirtualMachineSearchParams', () => ({
     updateQuery: vi.fn(), updateFilters: vi.fn(), isInitialized: true,
   }),
 }))
-vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
-  useProviders: () => ({ data: [provider], error: null, isLoading: false, isSuccess: true, isFetching: false, refetch: vi.fn() }),
+vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/providers/providers.gen')>(),
+  useGetProviders: () => ({ data: [provider], error: null, isLoading: false, isSuccess: true, isFetching: false, refetch: vi.fn() }),
 }))
 vi.mock('../../hooks/useVmwareResourceInventory', () => ({
   useVmwareResourceInventory: () => ({

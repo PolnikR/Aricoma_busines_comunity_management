@@ -6,8 +6,10 @@ import { Field, Select } from '@/shared/components/form/FormControls'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
 import { isProgrammaticIdAvailable } from '@/shared/utils/programmaticId'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
-import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
+import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
+import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
 import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
 import { selectPolicySets } from '@/features/recovery-plans/policy-sets/model/selectPolicySets'
 import { getRecoveryGroupResourceOption } from '../config/recoveryGroupResourceOptions'
@@ -60,7 +62,7 @@ export function RecoveryGroupBuilder({
   isInitialLoading = false,
 }: RecoveryGroupBuilderProps) {
   const { t } = useTranslation()
-  const providerQuery = useProviders()
+  const providerQuery = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const allProviders = providerQuery.data ?? []
   const providers = initialData
     ? allProviders
@@ -119,7 +121,7 @@ export function RecoveryGroupBuilder({
   const policySetQuery = useGetPolicySets({ query: { select: selectPolicySets } })
   const policySets = policySetQuery.data ?? []
   const policySetValid = Boolean(draftState.policySetId)
-  const platformProvidersQuery = usePlatformProviders()
+  const platformProvidersQuery = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
   const eligiblePlatformProviders = filterByPlatformProviderCredentialStatus(platformProvidersQuery.data ?? [])
   const soleEligibleProviderId = eligiblePlatformProviders.length === 1
     ? (eligiblePlatformProviders[0]?.id ?? null)

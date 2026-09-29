@@ -6,7 +6,8 @@ import { SmtpProviderDetailsDialog } from './SmtpProviderDetailsDialog'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
-const rawSmtpProvider = {
+// The dialog shows the provider exactly as the generated select returns it.
+const smtpProvider: PlatformProviderRecord = {
   id: 'smtp-01',
   name: 'Test SMTP',
   description: 'Local test SMTP relay backing Airflow.',
@@ -25,24 +26,6 @@ const rawSmtpProvider = {
   disableSsl: true,
   disableTls: false,
   credentialStatus: 'none',
-} satisfies NonNullable<PlatformProviderRecord['rawRecord']>
-
-type SmtpProviderRecord = Extract<PlatformProviderRecord, { type: 'SMTP' }>
-
-const smtpProvider: SmtpProviderRecord = {
-  id: rawSmtpProvider.id,
-  name: rawSmtpProvider.name,
-  description: rawSmtpProvider.description,
-  type: 'SMTP',
-  role: 'source',
-  url: rawSmtpProvider.url,
-  ipAddress: rawSmtpProvider.ipAddress,
-  port: rawSmtpProvider.port,
-  credentialStatus: 'none',
-  fromEmail: rawSmtpProvider.fromEmail,
-  disableSsl: rawSmtpProvider.disableSsl,
-  disableTls: rawSmtpProvider.disableTls,
-  rawRecord: rawSmtpProvider,
 }
 
 describe('SmtpProviderDetailsDialog', () => {
@@ -69,24 +52,18 @@ describe('SmtpProviderDetailsDialog', () => {
 
     const responseBody = dialog.querySelector('pre')
     expect(responseBody).toBeVisible()
-    expect(responseBody?.textContent).toBe(JSON.stringify(rawSmtpProvider, null, 2))
+    expect(responseBody?.textContent).toBe(JSON.stringify(smtpProvider, null, 2))
 
     await user.click(within(dialog).getByRole('button', { name: 'Copy' }))
-    expect(writeText).toHaveBeenCalledWith(JSON.stringify(rawSmtpProvider, null, 2))
+    expect(writeText).toHaveBeenCalledWith(JSON.stringify(smtpProvider, null, 2))
   })
 
   it('shows placeholders for missing optional SMTP summary values', () => {
-    const providerWithoutOptionalValues: SmtpProviderRecord = {
+    const providerWithoutOptionalValues: PlatformProviderRecord = {
       ...smtpProvider,
       fromEmail: null,
       disableSsl: null,
       disableTls: null,
-      rawRecord: {
-        ...rawSmtpProvider,
-        fromEmail: null,
-        disableSsl: null,
-        disableTls: null,
-      },
     }
 
     render(

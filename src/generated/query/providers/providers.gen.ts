@@ -6,13 +6,15 @@
  */
 import {
   useMutation,
-  useQuery
+  useQuery,
+  useQueryClient
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
   MutationFunction,
+  MutationFunctionContext,
   QueryClient,
   QueryFunction,
   QueryKey,
@@ -206,7 +208,7 @@ return validatingMutator<ProvidersResponse>(getSubmitProviderUrl(),
 export const getSubmitProviderMutationKey = () => ['submitProvider'] as const;
 
 export const getSubmitProviderMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitProvider>>, TError,SubmitProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitProvider>>, TError,SubmitProviderMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitProvider>>, TError,SubmitProviderMutationVariables, TContext> => {
 
 const mutationKey = getSubmitProviderMutationKey();
@@ -225,12 +227,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  submitProvider(data,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof submitProvider>>, variables: SubmitProviderMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetProvidersQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type SubmitProviderMutationResult = NonNullable<Awaited<ReturnType<typeof submitProvider>>>
     export type SubmitProviderMutationBody = Provider
@@ -241,14 +248,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Submit Provider
  */
 export const useSubmitProvider = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitProvider>>, TError,SubmitProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitProvider>>, TError,SubmitProviderMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitProvider>>,
         TError,
         SubmitProviderMutationVariables,
         TContext
       > => {
-      return useMutation(getSubmitProviderMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getSubmitProviderMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }
     export const getTestProviderUrl = (params: TestProviderParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -393,7 +401,7 @@ export const deleteProvider = async (params: DeleteProviderParams, options?: Par
 export const getDeleteProviderMutationKey = () => ['deleteProvider'] as const;
 
 export const getDeleteProviderMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProvider>>, TError,DeleteProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProvider>>, TError,DeleteProviderMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteProvider>>, TError,DeleteProviderMutationVariables, TContext> => {
 
 const mutationKey = getDeleteProviderMutationKey();
@@ -412,12 +420,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  deleteProvider(params,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof deleteProvider>>, variables: DeleteProviderMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetProvidersQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type DeleteProviderMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProvider>>>
 
@@ -428,12 +441,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Delete Provider Route
  */
 export const useDeleteProvider = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProvider>>, TError,DeleteProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProvider>>, TError,DeleteProviderMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteProvider>>,
         TError,
         DeleteProviderMutationVariables,
         TContext
       > => {
-      return useMutation(getDeleteProviderMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getDeleteProviderMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }

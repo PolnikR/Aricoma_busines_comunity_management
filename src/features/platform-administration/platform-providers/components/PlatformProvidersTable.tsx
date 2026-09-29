@@ -18,8 +18,7 @@ import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useDeletePlatformProvider } from '../hooks/useDeletePlatformProvider'
-import { toPlatformProviderJson } from '../helpers/platformProviderJson'
+import { useDeletePlatformProvider } from '@/generated/query/platform-providers/platform-providers.gen'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { SmtpProviderDetailsDialog } from './SmtpProviderDetailsDialog'
 import { PlatformProvidersModal } from './PlatformProvidersModal'
@@ -62,7 +61,7 @@ function getColumns(
     {
       id: 'description',
       header: t('tables.provider.description'),
-      cell: provider => <span className="block max-w-md truncate" title={provider.description}>{provider.description || '-'}</span>,
+      cell: provider => <span className="block max-w-md truncate" title={provider.description ?? undefined}>{(provider.description ?? '') || '-'}</span>,
     },
     {
       id: 'type',
@@ -73,7 +72,7 @@ function getColumns(
       id: 'url',
       header: t('details.url'),
       cell: provider => (
-        <span className="block max-w-72 truncate font-mono text-[12px] text-text-secondary" title={provider.url}>
+        <span className="block max-w-72 truncate font-mono text-[12px] text-text-secondary" title={provider.url ?? undefined}>
           {provider.url ?? '-'}
         </span>
       ),
@@ -109,15 +108,15 @@ function PlatformProviderDetail({ provider }: { provider: PlatformProviderRecord
     <dl className="px-5 py-2">
       <DetailRow label={t('details.providerId')} value={<span className="font-mono">{provider.id}</span>} />
       <DetailRow label={t('details.type')} value={provider.type} />
-      <DetailRow label={t('details.url')} value={providerUrl(provider.url)} />
-      <DetailRow label={t('details.description')} value={provider.description || '-'} />
+      <DetailRow label={t('details.url')} value={providerUrl(provider.url ?? undefined)} />
+      <DetailRow label={t('details.description')} value={(provider.description ?? '') || '-'} />
 
       {provider.type === 'AIRFLOW' ? (
         <>
           <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{provider.ipAddress}</span>} />
           <DetailRow label={t('details.port')} value={<span className="font-mono">{provider.port}</span>} />
-          <DetailRow label={t('details.dagDir')} value={<span className="font-mono">{provider.dagDir || '-'}</span>} />
-          <DetailRow label={t('details.credential')} value={<span className="font-mono">{provider.credentialId || '-'}</span>} />
+          <DetailRow label={t('details.dagDir')} value={<span className="font-mono">{(provider.dagDir ?? '') || '-'}</span>} />
+          <DetailRow label={t('details.credential')} value={<span className="font-mono">{(provider.credentialId ?? '') || '-'}</span>} />
           <DetailRow label={t('details.credentialStatus')} value={credentialStatus} />
           <DetailRow label={t('details.notificationEmail')} value={provider.notificationEmail ?? '-'} />
         </>
@@ -144,9 +143,9 @@ function PlatformProviderDetail({ provider }: { provider: PlatformProviderRecord
 
       {provider.type === 'KEYCLOAK' ? (
         <>
-          <DetailRow label={t('details.realm')} value={provider.realm || '-'} />
-          <DetailRow label={t('details.clientId')} value={<span className="font-mono">{provider.clientId || '-'}</span>} />
-          <DetailRow label={t('details.credential')} value={<span className="font-mono">{provider.credentialId || '-'}</span>} />
+          <DetailRow label={t('details.realm')} value={(provider.realm ?? '') || '-'} />
+          <DetailRow label={t('details.clientId')} value={<span className="font-mono">{(provider.clientId ?? '') || '-'}</span>} />
+          <DetailRow label={t('details.credential')} value={<span className="font-mono">{(provider.credentialId ?? '') || '-'}</span>} />
           <DetailRow label={t('details.credentialStatus')} value={credentialStatus} />
         </>
       ) : null}
@@ -310,7 +309,7 @@ export function PlatformProvidersTable({
         onCancel={() => { setDeleteTarget(null) }}
         onConfirm={() => {
           if (!deleteTarget) return
-          deleteProvider.mutate(deleteTarget.id, {
+          deleteProvider.mutate({ params: { provider_id: deleteTarget.id } }, {
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
             onError: () => { setDeleteTarget(null) },
           })
@@ -320,7 +319,7 @@ export function PlatformProvidersTable({
       <JsonViewerModal
         open={jsonViewed !== null}
         title={t('platformProviders.jsonViewer.title')}
-        data={jsonViewed ? toPlatformProviderJson(jsonViewed) : null}
+        data={jsonViewed}
         closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
       />

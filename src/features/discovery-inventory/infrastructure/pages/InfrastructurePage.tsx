@@ -6,7 +6,8 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import type { FlashSystemVolumeTreeView } from '../model/flashSystemVolumeTreeTypes'
 import { resolveInfrastructureTopology } from '../helpers/resolveInfrastructureTopology'
 import { useInfrastructureInventory } from '../hooks/useInfrastructureInventory'
@@ -29,7 +30,7 @@ export function InfrastructurePage() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const platform = parseInfrastructurePlatform(searchParams.get('platform'))
-  const providersQuery = useProviders()
+  const providersQuery = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const providers = useMemo(() => providersQuery.data ?? [], [providersQuery.data])
   const compatibleProviders = useMemo(
     () => getInfrastructureProviders(providers, platform),

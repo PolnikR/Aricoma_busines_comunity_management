@@ -58,15 +58,16 @@ vi.mock('@/hooks/useTranslation', () => ({
 
 const hooks = vi.hoisted(() => ({
   useGetDiscoveryCacheHistory: vi.fn<(params?: GetDiscoveryCacheHistoryParams, options?: unknown) => unknown>(),
-  useProviders: vi.fn<(role: string) => unknown>(),
+  useProviders: vi.fn<(params: { role: string }, options?: unknown) => unknown>(),
 }))
 
 vi.mock('@/generated/query/discovery-cache/discovery-cache.gen', () => ({
   useGetDiscoveryCacheHistory: hooks.useGetDiscoveryCacheHistory,
 }))
 
-vi.mock('../../providers/hooks/useProviders', () => ({
-  useProviders: hooks.useProviders,
+vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/providers/providers.gen')>(),
+  useGetProviders: hooks.useProviders,
 }))
 
 import { DiscoveryHistoryCard } from './DiscoveryHistoryCard'
@@ -80,6 +81,7 @@ const providers: ProviderRecord[] = [
     name: 'Primary vCenter',
     description: '',
     type: 'VMWARE',
+    role: 'source',
     ipAddress: '192.0.2.10',
     credentialId: 'credential-01',
     credentialStatus: 'ok',
@@ -89,6 +91,7 @@ const providers: ProviderRecord[] = [
     name: 'Production Power',
     description: '',
     type: 'IBM_POWER',
+    role: 'source',
     ipAddress: '192.0.2.20',
     credentialId: 'credential-02',
     credentialStatus: 'ok',
@@ -170,7 +173,7 @@ describe('DiscoveryHistoryCard', () => {
   it('requests 100 server records, renders backend order, and keeps pagination outside the vertical scroll region', () => {
     render(<HistoryHarness />)
 
-    expect(hooks.useProviders).toHaveBeenCalledWith('all')
+    expect(hooks.useProviders).toHaveBeenCalledWith({ role: 'all' }, expect.anything())
     expect(hooks.useGetDiscoveryCacheHistory).toHaveBeenLastCalledWith({ limit: 100 }, selectOptions)
     expect(screen.queryByLabelText('Latest runs')).not.toBeInTheDocument()
 

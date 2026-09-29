@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { usePlatformProviders } from '../hooks/usePlatformProviders'
+import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
 import { PlatformProvidersPage } from './PlatformProvidersPage'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../hooks/usePlatformProviders', () => ({ usePlatformProviders: vi.fn() }))
+vi.mock('@/generated/query/platform-providers/platform-providers.gen', () => ({ useGetPlatformProviders: vi.fn() }))
 vi.mock('../components/PlatformProvidersTable', () => ({
   PlatformProvidersTable: ({ isLoading }: { isLoading: boolean }) => (
     <div>Platform provider catalogue {isLoading ? 'loading' : 'ready'}</div>
@@ -18,13 +18,13 @@ vi.mock('../components/PlatformProvidersModal', () => ({
 }))
 
 beforeEach(() => {
-  vi.mocked(usePlatformProviders).mockReturnValue({
+  vi.mocked(useGetPlatformProviders).mockReturnValue({
     data: [{ id: 'platform-provider-1' }],
     isLoading: false,
     isFetching: false,
     error: null,
     refetch: vi.fn(),
-  } as unknown as ReturnType<typeof usePlatformProviders>)
+  } as unknown as ReturnType<typeof useGetPlatformProviders>)
 })
 
 describe('PlatformProvidersPage', () => {
@@ -40,13 +40,13 @@ describe('PlatformProvidersPage', () => {
 
   it('refreshes platform providers from its own toolbar', async () => {
     const refetch = vi.fn()
-    vi.mocked(usePlatformProviders).mockReturnValue({
+    vi.mocked(useGetPlatformProviders).mockReturnValue({
       data: [],
       isLoading: false,
       isFetching: false,
       error: null,
       refetch,
-    } as unknown as ReturnType<typeof usePlatformProviders>)
+    } as unknown as ReturnType<typeof useGetPlatformProviders>)
     render(<PlatformProvidersPage />)
 
     await userEvent.click(screen.getByRole('button', { name: 'Refresh' }))
@@ -54,13 +54,13 @@ describe('PlatformProvidersPage', () => {
   })
 
   it('keeps the page header and create action visible during initial loading', () => {
-    vi.mocked(usePlatformProviders).mockReturnValue({
+    vi.mocked(useGetPlatformProviders).mockReturnValue({
       data: [],
       isLoading: true,
       isFetching: true,
       error: null,
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof usePlatformProviders>)
+    } as unknown as ReturnType<typeof useGetPlatformProviders>)
 
     render(<PlatformProvidersPage />)
 

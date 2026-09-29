@@ -23,7 +23,8 @@ import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResult
 import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
 import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/features/recovery-plans/recovery-runs/helpers/formatRecoveryRun'
-import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
+import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
+import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
 import { normalizeAirflowDagId } from '@/config/externalServices'
 import { AirflowDagLink } from '@/shared/components/airflow/AirflowDagLink'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
@@ -162,7 +163,7 @@ export function RecoveryApplicationsTable({
   const activeFilterCount = Number(Boolean(filters.environment)) + Number(Boolean(filters.platform))
 
   const navigate = useNavigate()
-  const { data: platformProviders = [] } = usePlatformProviders()
+  const { data: platformProviders = [] } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
   const selectedOrchestrationProviderUrl = platformProviders.find(
     provider => provider.id === selected?.orchestrationProviderId,
   )?.url

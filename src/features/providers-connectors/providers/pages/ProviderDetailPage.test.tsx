@@ -29,7 +29,8 @@ vi.mock('react-router', async (importOriginal) => ({
   useParams: () => ({ providerId: 'provider-1' }),
 }))
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../hooks/useProviders', () => ({ useProviders: () => query }))
+vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/providers/providers.gen')>(), useGetProviders: () => query }))
 
 beforeEach(() => {
   vi.clearAllMocks()

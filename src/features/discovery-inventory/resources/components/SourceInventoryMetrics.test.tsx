@@ -11,8 +11,8 @@ function provider(id: string): ProviderRecord {
     name: id,
     description: '',
     type: 'FLASHCOPY',
+    role: 'source',
     ipAddress: '10.0.0.1',
-    port: 22,
     credentialId: null,
     credentialStatus: 'none',
   }

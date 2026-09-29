@@ -2,9 +2,8 @@ import { ChecklistResultDialog, type CheckItem } from '@/shared/components/modal
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { useTranslation } from '@/hooks/useTranslation'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
-import { toProviderConnectionTestJson } from '../helpers/providerConnectionTestJson'
 import type { ProviderRole } from '../model/providerTypes'
-import type { ProviderConnectionTestResult } from '../model/providerConnectionTestTypes'
+import type { ProviderTestResponseOutput } from '@/generated/query/zod'
 
 interface ProviderConnectionTestDialogProps {
   open: boolean
@@ -12,7 +11,7 @@ interface ProviderConnectionTestDialogProps {
   providerId: string
   providerRole?: ProviderRole
   isPending: boolean
-  result: ProviderConnectionTestResult | null
+  result: ProviderTestResponseOutput | null
   error: Error | null
   onClose: () => void
   onRetry: () => void
@@ -44,7 +43,7 @@ export function ProviderConnectionTestDialog({
   })) ?? []
 
   const badges = result ? [
-    { label: providerTypeLabel(result.providerType), color: 'info' as const },
+    { label: providerTypeLabel(result.provider_type), color: 'info' as const },
     { label: t(`forms.role.${providerRole}`), color: providerRole === 'source' ? 'success' as const : 'warning' as const },
   ] : []
 
@@ -66,7 +65,7 @@ export function ProviderConnectionTestDialog({
         totalCount: result?.checks.length ?? 0,
       }}
       checks={checks}
-      responseData={result ? toProviderConnectionTestJson(result) : null}
+      responseData={result}
       responseSchemaType="ProviderTestResponse"
       onClose={onClose}
       {...(isFailed ? { onRetry } : {})}

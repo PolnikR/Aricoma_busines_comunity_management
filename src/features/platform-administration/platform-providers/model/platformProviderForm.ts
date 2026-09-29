@@ -64,7 +64,7 @@ export function toPlatformProviderFormData(provider: PlatformProviderRecord): Pl
   const common = {
     id: provider.id,
     name: provider.name,
-    description: provider.description,
+    description: provider.description ?? '',
     type: provider.type,
     url: provider.url ?? '',
     ...EMPTY_TYPE_SPECIFIC_FIELDS,
@@ -74,35 +74,35 @@ export function toPlatformProviderFormData(provider: PlatformProviderRecord): Pl
     case 'AIRFLOW':
       return {
         ...common,
-        ipAddress: provider.ipAddress,
+        ipAddress: provider.ipAddress ?? '',
         port: String(provider.port),
-        dagDir: provider.dagDir,
-        credentialId: provider.credentialId,
+        dagDir: provider.dagDir ?? '',
+        credentialId: provider.credentialId ?? '',
         notificationEmail: provider.notificationEmail ?? '',
       }
     case 'SMTP':
       return {
         ...common,
-        ipAddress: provider.ipAddress,
+        ipAddress: provider.ipAddress ?? '',
         port: String(provider.port),
         fromEmail: provider.fromEmail ?? '',
-        disableSsl: provider.disableSsl,
-        disableTls: provider.disableTls,
+        disableSsl: provider.disableSsl ?? null,
+        disableTls: provider.disableTls ?? null,
       }
     case 'BACKEND':
       return {
         ...common,
         notificationEmail: provider.notificationEmail ?? '',
-        loggingEnabled: provider.loggingEnabled,
-        jwtEnabled: provider.jwtEnabled,
-        swaggerEnabled: provider.swaggerEnabled,
+        loggingEnabled: provider.loggingEnabled ?? null,
+        jwtEnabled: provider.jwtEnabled ?? null,
+        swaggerEnabled: provider.swaggerEnabled ?? null,
       }
     case 'KEYCLOAK':
       return {
         ...common,
-        realm: provider.realm,
-        clientId: provider.clientId,
-        credentialId: provider.credentialId,
+        realm: provider.realm ?? '',
+        clientId: provider.clientId ?? '',
+        credentialId: provider.credentialId ?? '',
       }
   }
 }

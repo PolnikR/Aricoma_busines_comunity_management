@@ -36,8 +36,9 @@ vi.mock('@/generated/query/policy-sets/policy-sets.gen', () => ({
     ],
   }),
 }))
-vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
-  usePlatformProviders: () => ({
+vi.mock('@/generated/query/platform-providers/platform-providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/platform-providers/platform-providers.gen')>(),
+  useGetPlatformProviders: () => ({
     data: [
       { id: 'airflow-01', name: 'Dynamic Airflow', url: 'https://airflow.dynamic.test:8443' },
       { id: 'airflow-without-url', name: 'Fallback Airflow' },

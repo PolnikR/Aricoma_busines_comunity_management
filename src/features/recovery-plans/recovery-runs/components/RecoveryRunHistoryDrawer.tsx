@@ -3,7 +3,8 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { Badge } from '@/shared/components/badge/Badge'
 import { DataTablePagination, DetailDrawer } from '@/shared/components/data-table'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
-import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
+import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
+import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
 import { buildAirflowDagUrl } from '@/config/externalServices'
 import { ExternalLinkIcon } from '@/shared/icons/Icons'
 import { useAppRunHistory } from '../hooks/useAppRunHistory'
@@ -35,7 +36,7 @@ export function RecoveryRunHistoryDrawer({ entity, onClose }: RecoveryRunHistory
     page,
     pageSize: PAGE_SIZE,
   })
-  const { data: platformProviders = [] } = usePlatformProviders()
+  const { data: platformProviders = [] } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
   const providerUrl = platformProviders.find(
     provider => provider.id === entity?.providerId,
   )?.url

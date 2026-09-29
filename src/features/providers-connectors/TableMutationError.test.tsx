@@ -9,7 +9,8 @@ const deleteCredentialState = vi.hoisted(() => ({
   isPending: false,
   error: null as Error | null,
 }))
-vi.mock('./credentials/hooks/useDeleteCredential', () => ({
+vi.mock('@/generated/query/credentials/credentials.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/credentials/credentials.gen')>(),
   useDeleteCredential: () => deleteCredentialState,
 }))
 vi.mock('./credentials/components/CredentialCreateModal', () => ({

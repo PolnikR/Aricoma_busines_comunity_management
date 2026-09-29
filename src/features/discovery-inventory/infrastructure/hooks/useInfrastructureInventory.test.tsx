@@ -16,7 +16,7 @@ vi.mock('../../resources/api/vmwareInventoryApi', async (importOriginal) => ({
 }))
 
 function provider(type: ProviderRecord['type'], id: string): ProviderRecord {
-  return { id, type, name: id, description: '', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' }
+  return { id, type, role: 'source', name: id, description: '', ipAddress: '', credentialId: null, credentialStatus: 'ok' }
 }
 
 function wrapper({ children }: { children: ReactNode }) {

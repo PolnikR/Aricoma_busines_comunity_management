@@ -26,7 +26,8 @@ import { AirflowDagLink } from '@/shared/components/airflow/AirflowDagLink'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
 import { selectPolicySets } from '@/features/recovery-plans/policy-sets/model/selectPolicySets'
-import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
+import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
+import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
 import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/features/recovery-plans/recovery-runs/helpers/formatRecoveryRun'
 import { toRecoveryGroupJson } from '../helpers/mapRecoveryGroups'
@@ -77,7 +78,7 @@ export function RecoveryGroupsTable({
 }: RecoveryGroupsTableProps) {
   const { t } = useTranslation()
   const { data: policySets = [] } = useGetPolicySets({ query: { select: selectPolicySets } })
-  const { data: platformProviders = [] } = usePlatformProviders()
+  const { data: platformProviders = [] } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const [filters, setFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)

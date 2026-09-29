@@ -9,7 +9,8 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { routes } from '@/app/routes'
 import { extractBackendErrorDetail, resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
-import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
+import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
+import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
 import { RecoveryGroupBuilder } from '../components/RecoveryGroupBuilder'
 import { RecoveryGroupOrchestratorSuccessModal } from '../components/RecoveryGroupOrchestratorSuccessModal'
 import { useRecoveryGroups } from '../hooks/useRecoveryGroups'
@@ -28,7 +29,7 @@ export function RecoveryGroupBuilderPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { groups, create, isCreating, isLoading, error: loadError, refresh } = useRecoveryGroups()
-  const { data: platformProviders = [] } = usePlatformProviders()
+  const { data: platformProviders = [] } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
   const [isDirty, setIsDirty] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [orchestratorRun, setOrchestratorRun] = useState<OrchestratorRunInfo | null>(null)

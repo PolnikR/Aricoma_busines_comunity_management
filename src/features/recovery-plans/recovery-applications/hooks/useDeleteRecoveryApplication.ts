@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import { getProvidersByTypeAndRole } from '@/features/providers-connectors/providers/utils/providerFilters'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { deleteRecoveryApplication } from '../api/recoveryApplicationsApi'
@@ -43,7 +44,7 @@ export function resolveRollbackProviderIds(
 
 export function useDeleteRecoveryApplication() {
   const queryClient = useQueryClient()
-  const { data: providers = [] } = useProviders()
+  const { data: providers = [] } = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
 
   return useMutation({
     mutationFn: async (app: RecoveryApplicationListItem): Promise<{ applications: RecoveryApplicationListItem[]; rollback: RollbackReport | null }> => {

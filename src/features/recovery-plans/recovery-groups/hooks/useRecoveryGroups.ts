@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import {
   createRecoveryGroup,
   deleteRecoveryGroup,
@@ -23,7 +24,7 @@ export function useRecoveryGroupInventory(runId: string | null, enabled: boolean
 
 export function useRecoveryGroups() {
   const queryClient = useQueryClient()
-  const providerQuery = useProviders()
+  const providerQuery = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const providers = providerQuery.data ?? []
   const providerSignature = providers
     .map(provider => `${provider.id}:${provider.type}`)

@@ -23,8 +23,9 @@ vi.mock('../api/recoveryGroupsApi', () => ({
   rollbackRecoveryGroupOrchestration: mocks.rollbackRecoveryGroupOrchestration,
 }))
 
-vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
-  useProviders: mocks.useProviders,
+vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/providers/providers.gen')>(),
+  useGetProviders: mocks.useProviders,
 }))
 
 const provider: ProviderRecord = {
@@ -32,8 +33,8 @@ const provider: ProviderRecord = {
   name: 'Production vCenter',
   description: 'VMware inventory',
   type: 'VMWARE',
+  role: 'source',
   ipAddress: '10.99.99.40',
-  port: 22,
   credentialId: 'vcenter-admin',
   credentialStatus: 'ok',
 }

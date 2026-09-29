@@ -5,15 +5,16 @@ import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { ProvidersCatalogueTable } from '../components/ProvidersCatalogueTable'
 import { ProvidersCreateModal } from '../components/ProvidersCreateModal'
-import { useProviders } from '../hooks/useProviders'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '../model/selectProviders'
 import type { ProviderRoleFilter } from '../model/providerTypes'
 
 export function ProvidersPage() {
   const { t } = useTranslation()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [roleFilter, setRoleFilter] = useState<ProviderRoleFilter>('all')
-  const allProvidersQuery = useProviders('all')
-  const visibleProvidersQuery = useProviders(roleFilter)
+  const allProvidersQuery = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
+  const visibleProvidersQuery = useGetProviders({ role: roleFilter }, { query: { select: selectProviders } })
   const providers = visibleProvidersQuery.data ?? []
   const allProviders = allProvidersQuery.data ?? []
 

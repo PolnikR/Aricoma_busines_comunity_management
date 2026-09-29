@@ -25,7 +25,7 @@ let resourceTab: 'vmware' | 'flashsystem' | 'ibm-power' = 'vmware'
 let selectedProviderId: string | null = null
 const vmwareTargetProvider: ProviderRecord = {
   id: 'vmware-target-01', name: 'VMware Target 01', description: '', type: 'VMWARE',
-  ipAddress: '10.0.0.1', port: 22, credentialId: null, credentialStatus: 'none', role: 'target',
+  ipAddress: '10.0.0.1', credentialId: null, credentialStatus: 'none', role: 'target',
   vmPrefix: 'TARGET-', vmTags: ['target-tag'],
 }
 const flashTargetProvider: ProviderRecord = {
@@ -100,8 +100,9 @@ vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareTags', async (i
     },
   }
 })
-vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
-  useProviders: () => providersQuery,
+vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/providers/providers.gen')>(),
+  useGetProviders: () => providersQuery,
 }))
 vi.mock('@/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams')>()

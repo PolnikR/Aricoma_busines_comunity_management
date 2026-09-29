@@ -9,7 +9,8 @@ import { RefreshIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useGetDiscoveryCacheHistory } from '@/generated/query/discovery-cache/discovery-cache.gen'
 import { providerTypeLabel } from '../../providers/helpers/providerTypeLabel'
-import { useProviders } from '../../providers/hooks/useProviders'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import { getDiscoveryCacheHistoryColumns } from '../config/discoveryCacheHistoryColumns'
 import { historyParams } from '../model/historyParams'
 import { selectDiscoveryCacheHistory } from '../model/selectDiscoveryCacheHistory'
@@ -29,7 +30,7 @@ export function DiscoveryHistoryCard({
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
-  const providersQuery = useProviders('all')
+  const providersQuery = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const historyQuery = useGetDiscoveryCacheHistory(
     historyParams(providerId, HISTORY_SERVER_LIMIT),
     { query: { select: selectDiscoveryCacheHistory } },

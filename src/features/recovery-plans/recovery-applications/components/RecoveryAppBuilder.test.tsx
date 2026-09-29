@@ -66,14 +66,16 @@ const recoveryGroupsQuery = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
-  usePlatformProviders: () => platformProvidersQuery.current,
+vi.mock('@/generated/query/platform-providers/platform-providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/platform-providers/platform-providers.gen')>(),
+  useGetPlatformProviders: () => platformProvidersQuery.current,
 }))
 vi.mock('@/generated/query/policy-sets/policy-sets.gen', () => ({
   useGetPolicySets: () => policySetsQuery.current,
 }))
-vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
-  useProviders: () => providersQuery.current,
+vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/providers/providers.gen')>(),
+  useGetProviders: () => providersQuery.current,
 }))
 vi.mock('../../recovery-groups/hooks/useRecoveryGroups', () => ({
   useRecoveryGroups: () => recoveryGroupsQuery.current,

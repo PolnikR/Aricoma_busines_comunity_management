@@ -8,8 +8,9 @@ import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelated
 const { usePlatformProvidersMock } = vi.hoisted(() => ({ usePlatformProvidersMock: vi.fn() }))
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
-  useProviders: () => ({
+vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/providers/providers.gen')>(),
+  useGetProviders: () => ({
     data: [
       {
         id: 'vmware-vcenter-01',
@@ -146,8 +147,9 @@ vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => (
     error: null,
   }),
 }))
-vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
-  usePlatformProviders: usePlatformProvidersMock,
+vi.mock('@/generated/query/platform-providers/platform-providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/platform-providers/platform-providers.gen')>(),
+  useGetPlatformProviders: usePlatformProvidersMock,
 }))
 
 const defaultPlatformProvidersResult = {

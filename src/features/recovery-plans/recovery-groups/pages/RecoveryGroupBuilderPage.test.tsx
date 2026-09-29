@@ -33,8 +33,9 @@ vi.mock('../hooks/useRecoveryGroups', () => ({
   useRecoveryGroups: () => recoveryGroupsState,
 }))
 
-vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
-  usePlatformProviders: () => ({
+vi.mock('@/generated/query/platform-providers/platform-providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/platform-providers/platform-providers.gen')>(),
+  useGetPlatformProviders: () => ({
     data: [
       { id: 'airflow-01', name: 'Primary Airflow', url: airflowProviderUrl },
     ],

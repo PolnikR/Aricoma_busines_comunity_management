@@ -22,8 +22,8 @@ const knownProvider: ProviderRecord = {
   name: 'Production vCenter',
   description: 'VMware inventory',
   type: 'VMWARE',
+  role: 'source',
   ipAddress: '10.99.99.40',
-  port: 22,
   credentialId: 'vcenter-admin',
   credentialStatus: 'ok',
 }
