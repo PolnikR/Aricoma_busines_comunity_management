@@ -4,13 +4,14 @@ import {
   getCleanRoomPoliciesGetCleanRoomPoliciesGet,
   submitCleanRoomPolicySubmitCleanRoomPolicyPost,
 } from '@/generated/api/client.gen'
-import { CleanRoomPoliciesResponse } from '@/generated/api/zod.gen'
+import type { CleanRoomPolicy as CleanRoomPolicyWire } from '@/generated/api/models/cleanRoomPolicy.gen'
+import {
+  CleanRoomPoliciesResponse,
+  SubmitCleanRoomPolicySubmitCleanRoomPolicyPostBody,
+} from '@/generated/api/zod.gen'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
 import { toOrvalRequestError } from '@/shared/api/orvalMutator'
 import type { CleanRoomPolicy, CleanRoomPolicySubmitData } from '../model/cleanRoomPolicyTypes'
-import {
-  cleanRoomPolicySchema,
-} from './schemas/cleanRoomPoliciesSchema'
 
 const policyIdSchema = z.string().min(1)
 
@@ -37,14 +38,19 @@ export async function fetchCleanRoomPolicies(): Promise<CleanRoomPolicy[]> {
 
 export function toCleanRoomPolicySubmitPayload(
   policy: CleanRoomPolicySubmitData,
-): CleanRoomPolicySubmitData {
-  return cleanRoomPolicySchema.parse(policy)
+): CleanRoomPolicyWire {
+  return {
+    id: policy.id,
+    name: policy.name,
+    description: policy.description,
+    enabled: policy.enabled,
+  }
 }
 
 export async function submitCleanRoomPolicy(
   policy: CleanRoomPolicySubmitData,
 ): Promise<CleanRoomPolicy[]> {
-  const validated = toCleanRoomPolicySubmitPayload(policy)
+  const validated = SubmitCleanRoomPolicySubmitCleanRoomPolicyPostBody.parse(toCleanRoomPolicySubmitPayload(policy))
   try {
     return parsePolicies(await submitCleanRoomPolicySubmitCleanRoomPolicyPost(validated))
   } catch (error) {

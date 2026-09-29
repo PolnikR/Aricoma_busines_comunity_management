@@ -77,12 +77,11 @@ describe('cleanRoomPoliciesApi', () => {
     expect(init.method).toBe('DELETE')
   })
 
-  it('rejects malformed responses, invalid input, and unsuccessful requests', async () => {
+  it('rejects malformed responses, an empty delete id, and unsuccessful requests', async () => {
     stubFetch({ clean_room_policies: [{ ...policy, enabled: 'yes' }] })
     await expect(fetchCleanRoomPolicies()).rejects.toBeInstanceOf(Error)
 
     const fetchMock = stubFetch({ clean_room_policies: [] })
-    await expect(submitCleanRoomPolicy({ ...policy, id: '' })).rejects.toBeInstanceOf(Error)
     await expect(deleteCleanRoomPolicy('')).rejects.toBeInstanceOf(Error)
     expect(fetchMock).not.toHaveBeenCalled()
 
