@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
+import type { VmsResponse } from '@/generated/query/zod'
 import {
-  fetchVmwareInventory,
+  fetchVmwareInventoryLive,
   normalizeVmwareInventorySearch,
+  selectVmwareInventory,
+  vmwareInventoryQuery,
   type VmwareInventorySearch,
-} from '../api/vmwareInventoryApi'
+} from '../model/inventoryQueries'
 import type { DiscoveryInventory } from '../model/discoveryTypes'
 
 const NAME_SEARCH_DEBOUNCE_MS = 300
 
 interface ForceRefreshSnapshot {
   search: VmwareInventorySearch
-  queryKey: ReturnType<typeof discoveryInventoryKeys.vmwareSearch>
+  queryKey: readonly unknown[]
   queryHash: string
   requestId: number
 }
@@ -82,18 +84,20 @@ export function useVmwareResourceInventory({
     ...(normalizedSearch.tag ? { tag: normalizedSearch.tag } : {}),
     ...(effectiveNamePrefix ? { namePrefix: effectiveNamePrefix } : {}),
   }
-  const queryKey = discoveryInventoryKeys.vmwareSearch(search)
+  const { queryKey, queryFn } = vmwareInventoryQuery(search)
   const queryHash = JSON.stringify(queryKey)
   const canFetch = enabled && Boolean(currentProviderId) && !isDebouncing
 
-  const query = useQuery<DiscoveryInventory>({
+  const query = useQuery<VmsResponse, Error, DiscoveryInventory>({
     queryKey,
-    queryFn: () => fetchVmwareInventory(search),
+    queryFn,
+    select: selectVmwareInventory,
     enabled: canFetch,
+    // Keep the previous result visible while a new search for the same provider
+    // loads. The generated key is ['POST', '/vms/search', params, body].
     placeholderData: (previousData, previousQuery) => {
-      const previousKey = previousQuery?.queryKey
-      const previousProviderId = previousKey?.[1] === 'vmware-search' ? previousKey[2] : undefined
-      return previousProviderId === normalizedSearch.providerId ? previousData : undefined
+      const previousParams = previousQuery?.queryKey[2] as { provider_id?: string } | undefined
+      return previousParams?.provider_id === normalizedSearch.providerId ? previousData : undefined
     },
   })
 
@@ -118,8 +122,8 @@ export function useVmwareResourceInventory({
       )
     })
   }
-  const forceRefreshMutation = useMutation<DiscoveryInventory, Error, ForceRefreshSnapshot>({
-    mutationFn: ({ search: snapshotSearch }) => fetchVmwareInventory({ ...snapshotSearch, forceRefresh: true }),
+  const forceRefreshMutation = useMutation<VmsResponse, Error, ForceRefreshSnapshot>({
+    mutationFn: ({ search: snapshotSearch }) => fetchVmwareInventoryLive(snapshotSearch),
     onSuccess: (data, snapshot) => {
       if (latestForceRefreshRequestIds.current[snapshot.queryHash] !== snapshot.requestId) return
       queryClient.setQueryData(snapshot.queryKey, data)

@@ -38,6 +38,23 @@ npm run typecheck
 npm run build
 ```
 
+## Backend change workflow
+
+The API client, hooks, query keys and zod schemas in `src/generated/query` are
+generated from `openapi/abco-api.json` (see `docs/adr/0002-generated-react-query-api-layer.md`).
+After a backend change:
+
+```powershell
+npm run api:update
+npm run typecheck
+```
+
+`api:update` needs `BACKEND_URL`. The typecheck points at every use of a changed
+field. If generation fails with `Spec patch <name> is obsolete`, the backend fixed
+that gap: delete the patch in `scripts/orval/specPatches/` and its row in
+`docs/api/openapi-spec-gaps.md`. Commit the snapshot and `src/generated/query`
+together with the fixes.
+
 ## Source structure
 
 ```text

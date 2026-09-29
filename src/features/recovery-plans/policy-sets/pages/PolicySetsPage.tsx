@@ -5,12 +5,15 @@ import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PolicySetsTable } from '../components/PolicySetsTable'
 import { PolicySetModal } from '../components/PolicySetModal'
-import { usePolicySets } from '../hooks/usePolicySets'
+import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
+import { selectPolicySets } from '../model/selectPolicySets'
 
 export function PolicySetsPage() {
   const { t } = useTranslation()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const { data: policySets = [], isLoading, isFetching, error, refetch } = usePolicySets()
+  const { data: policySets = [], isLoading, isFetching, error, refetch } = useGetPolicySets({
+    query: { select: selectPolicySets },
+  })
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">

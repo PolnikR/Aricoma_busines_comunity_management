@@ -1,6 +1,6 @@
 import { ChecklistResultDialog, type CheckItem } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
-import type { RollbackReport } from '../api/schemas/recoveryApplicationsSchema'
+import type { RollbackReport } from '../model/recoveryApplicationTypes'
 import { isRollbackClean } from '../utils/rollbackReport'
 
 interface RecoveryApplicationRollbackResultModalProps {

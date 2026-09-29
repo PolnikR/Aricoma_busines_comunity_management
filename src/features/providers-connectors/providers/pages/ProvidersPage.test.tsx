@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useProviders } from '../hooks/useProviders'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
 import type { ProviderRecord, ProviderRoleFilter } from '../model/providerTypes'
 import { ProvidersPage } from './ProvidersPage'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../hooks/useProviders', () => ({ useProviders: vi.fn() }))
+vi.mock('@/generated/query/providers/providers.gen', () => ({ useGetProviders: vi.fn() }))
 vi.mock('../components/ProvidersCatalogueTable', () => ({
   ProvidersCatalogueTable: ({
     providers,
@@ -33,13 +33,13 @@ vi.mock('../components/ProvidersCreateModal', () => ({
 }))
 
 beforeEach(() => {
-  vi.mocked(useProviders).mockReturnValue({
+  vi.mocked(useGetProviders).mockReturnValue({
     data: [{ id: 'provider-1' }],
     isLoading: false,
     isFetching: false,
     error: null,
     refetch: vi.fn(),
-  } as unknown as ReturnType<typeof useProviders>)
+  } as unknown as ReturnType<typeof useGetProviders>)
 })
 
 describe('ProvidersPage', () => {
@@ -56,13 +56,13 @@ describe('ProvidersPage', () => {
 
   it('refreshes infrastructure providers from the toolbar', async () => {
     const refetch = vi.fn()
-    vi.mocked(useProviders).mockReturnValue({
+    vi.mocked(useGetProviders).mockReturnValue({
       data: [],
       isLoading: false,
       isFetching: false,
       error: null,
       refetch,
-    } as unknown as ReturnType<typeof useProviders>)
+    } as unknown as ReturnType<typeof useGetProviders>)
     render(<ProvidersPage />)
 
     await userEvent.click(screen.getByRole('button', { name: 'Refresh' }))
@@ -90,13 +90,13 @@ describe('ProvidersPage', () => {
       role: 'target',
       credentialStatus: 'ok',
     }
-    vi.mocked(useProviders).mockImplementation((role = 'all') => ({
-      data: role === 'source' ? [sourceProvider] : [sourceProvider, targetProvider],
+    vi.mocked(useGetProviders).mockImplementation((params) => ({
+      data: params?.role === 'source' ? [sourceProvider] : [sourceProvider, targetProvider],
       isLoading: false,
       isFetching: false,
       error: null,
       refetch: vi.fn(),
-    }) as unknown as ReturnType<typeof useProviders>)
+    }) as unknown as ReturnType<typeof useGetProviders>)
 
     render(<ProvidersPage />)
     expect(screen.getByText('Role: all')).toBeInTheDocument()
@@ -106,7 +106,7 @@ describe('ProvidersPage', () => {
     expect(screen.getByText('Role: source')).toBeInTheDocument()
     expect(screen.getByText('Source provider')).toBeInTheDocument()
     expect(screen.queryByText('Target provider')).not.toBeInTheDocument()
-    expect(useProviders).toHaveBeenCalledWith('source')
+    expect(useGetProviders).toHaveBeenCalledWith({ role: 'source' }, expect.anything())
   })
 
   it('keeps the complete provider list available to the create modal', async () => {
@@ -118,13 +118,13 @@ describe('ProvidersPage', () => {
       id: 'target-provider',
       name: 'Target provider',
     }
-    vi.mocked(useProviders).mockImplementation((role = 'all') => ({
-      data: role === 'target' ? [targetProvider] : [sourceProvider, targetProvider],
+    vi.mocked(useGetProviders).mockImplementation((params) => ({
+      data: params?.role === 'target' ? [targetProvider] : [sourceProvider, targetProvider],
       isLoading: false,
       isFetching: false,
       error: null,
       refetch: vi.fn(),
-    }) as unknown as ReturnType<typeof useProviders>)
+    }) as unknown as ReturnType<typeof useGetProviders>)
 
     render(<ProvidersPage />)
     await userEvent.click(screen.getByRole('button', { name: 'Apply target role' }))

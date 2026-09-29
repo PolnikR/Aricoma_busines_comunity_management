@@ -8,48 +8,7 @@ const input = {
   },
 } as const
 
-const mutator = {
-  path: 'src/shared/api/orvalMutator.ts',
-  name: 'orvalMutator',
-} as const
-
 export default defineConfig({
-  abcoFetch: {
-    input,
-    output: {
-      target: './src/generated/api/client.gen.ts',
-      schemas: './src/generated/api/models',
-      mode: 'single',
-      client: 'fetch',
-      httpClient: 'fetch',
-      indexFiles: true,
-      fileExtension: '.gen.ts',
-      override: {
-        mutator,
-        fetch: {
-          includeHttpResponseReturnType: false,
-        },
-      },
-    },
-  },
-  abcoZod: {
-    input,
-    output: {
-      target: './src/generated/api/zod.gen.ts',
-      mode: 'single',
-      client: 'zod',
-      indexFiles: true,
-      fileExtension: '.gen.ts',
-      override: {
-        zod: {
-          version: 4,
-          variant: 'classic',
-          generateReusableSchemas: true,
-          exactOptional: true,
-        },
-      },
-    },
-  },
   abcoQuery: {
     input,
     output: {
@@ -62,12 +21,24 @@ export default defineConfig({
       fileExtension: '.gen.ts',
       override: {
         mutator: { path: 'src/shared/api/validatingMutator.ts', name: 'validatingMutator' },
+        // POST /vms/search is a read (filtered VM search), so it is generated as a query.
+        operations: {
+          vms_search_vms_search_post: { query: { useQuery: true, useMutation: false } },
+        },
         operationName,
         fetch: { includeHttpResponseReturnType: false },
         query: {
           version: 5,
           mutationInvalidates: [
             { onMutations: ['submitCredential', 'deleteCredential'], invalidates: ['getCredentials'] },
+            { onMutations: ['submitPolicySet', 'deletePolicySet'], invalidates: ['getPolicySets'] },
+            { onMutations: ['submitPolicy', 'deletePolicy'], invalidates: ['getPolicies'] },
+            { onMutations: ['submitCleanRoomPolicy', 'deleteCleanRoomPolicy'], invalidates: ['getCleanRoomPolicies'] },
+            { onMutations: ['submitRecoveryAppPolicy', 'deleteRecoveryAppPolicy'], invalidates: ['getRecoveryAppPolicies'] },
+            { onMutations: ['putDiscoveryCacheConfig'], invalidates: ['getDiscoveryCacheConfig'] },
+            { onMutations: ['submitProvider', 'deleteProvider'], invalidates: ['getProviders'] },
+            { onMutations: ['submitPlatformProvider', 'deletePlatformProvider'], invalidates: ['getPlatformProviders'] },
+            { onMutations: ['submitRecoveryGroup', 'deleteRecoveryGroup', 'rollbackGroupFromOrchestrator'], invalidates: ['getRecoveryGroups'] },
           ],
         },
         zod: { version: 4, variant: 'classic', exactOptional: true },

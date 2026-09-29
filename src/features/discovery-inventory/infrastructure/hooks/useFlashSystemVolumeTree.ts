@@ -1,17 +1,12 @@
-import { useQuery } from '@tanstack/react-query'
-import { discoveryInventoryKeys } from '../../resources/api/resourceInventoryQueryKeys'
-import { fetchFlashSystemVolumeTree } from '../api/flashSystemVolumeTreeApi'
+import { useMemo } from 'react'
+import { useGetVolumeTree } from '@/generated/query/storage-volumes/storage-volumes.gen'
 import type { FlashSystemVolumeTreeView } from '../model/flashSystemVolumeTreeTypes'
+import { createVolumeTreeSelect } from '../model/selectVolumeTree'
 
 export function useFlashSystemVolumeTree(providerId: string | undefined, view: FlashSystemVolumeTreeView | undefined) {
-  return useQuery({
-    queryKey: discoveryInventoryKeys.volumeTree(providerId, view),
-    queryFn: () => {
-      if (!providerId || !view) {
-        throw new Error('A provider and view are required to fetch the FlashSystem volume tree.')
-      }
-      return fetchFlashSystemVolumeTree(providerId, view)
-    },
-    enabled: Boolean(providerId) && Boolean(view),
-  })
+  const select = useMemo(() => createVolumeTreeSelect(view ?? 'flat'), [view])
+  return useGetVolumeTree(
+    { provider_id: providerId ?? '', view: view ?? 'flat' },
+    { query: { select, enabled: Boolean(providerId) && Boolean(view) } },
+  )
 }

@@ -3,12 +3,13 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { DataTable, DataTableRequestState } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
-import { useRolesPermissions } from '../hooks/useRolesPermissions'
+import { selectRolesPermissions } from '../model/rolesPermissionsTypes'
+import { useGetRolesPermissions } from '@/generated/query/identity-access/identity-access.gen'
 import { IdentityContentPanel } from './IdentityResourceLayout'
 
 export function PermissionsSection() {
   const { t } = useTranslation()
-  const { data, isLoading, error, refetch } = useRolesPermissions()
+  const { data, isLoading, error, refetch } = useGetRolesPermissions({ query: { select: selectRolesPermissions } })
   const permissions = data?.permissions ?? []
   const roles = data?.roles ?? []
   const columns = useMemo<ColumnDef<{ permission: string; roles: string[] }>[]>(() => [

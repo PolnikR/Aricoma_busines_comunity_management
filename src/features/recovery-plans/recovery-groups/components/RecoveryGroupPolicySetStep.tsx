@@ -1,10 +1,10 @@
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { PolicySetPicker } from '@/shared/components/policy-set-picker/PolicySetPicker'
 import { useTranslation } from '@/hooks/useTranslation'
-import type { PolicySet } from '@/features/recovery-plans/policy-sets/model/policySetTypes'
+import type { PolicySetRecord } from '@/generated/query/zod'
 
 interface RecoveryGroupPolicySetStepProps {
-  policySets: PolicySet[]
+  policySets: PolicySetRecord[]
   isLoading: boolean
   selectedPolicySetId: string | null
   onSelect: (policySetId: string) => void

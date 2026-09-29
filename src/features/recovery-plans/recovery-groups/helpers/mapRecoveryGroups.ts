@@ -1,14 +1,12 @@
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import type { RecoveryGroupRecordOutput } from '@/generated/api/zod.gen'
+import type { RecoveryGroupRecordOutput } from '@/generated/query/zod'
 import type {
   RecoveryGroup,
   RecoveryGroupReadRecord,
   RecoveryGroupResourceConfiguration,
+  RecoveryGroupSubmitPayload,
   RecoveryGroupVmMetadata,
 } from '../model/recoveryGroupTypes'
-import type {
-  RecoveryGroupSubmitPayload,
-} from '../api/schemas/recoveryGroupsSchema'
 import type { ValidatedRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
 
 // Takes every generated field as-is and only normalizes nullable fields the
@@ -34,7 +32,7 @@ function toVmMetadataByName(
 function toVmsPayload(
   resources: string[],
   vmMetadataByName: Record<string, RecoveryGroupVmMetadata> | undefined,
-): RecoveryGroupSubmitPayload['vms'] {
+): ({ name: string } & RecoveryGroupVmMetadata)[] {
   return resources.map((name, index) => ({
     name,
     order: index + 1,

@@ -2,13 +2,13 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { useGetCredentials } from '@/generated/query/credentials/credentials.gen'
-import { useUpsertPlatformProvider } from '../hooks/useUpsertPlatformProvider'
+import { useSubmitPlatformProvider } from '@/generated/query/platform-providers/platform-providers.gen'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { PlatformProvidersModal } from './PlatformProvidersModal'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/credentials/credentials.gen', () => ({ useGetCredentials: vi.fn() }))
-vi.mock('../hooks/useUpsertPlatformProvider', () => ({ useUpsertPlatformProvider: vi.fn() }))
+vi.mock('@/generated/query/platform-providers/platform-providers.gen', () => ({ useSubmitPlatformProvider: vi.fn() }))
 vi.mock('@/shared/hooks/useUnsavedChangesGuard', () => ({
   useUnsavedChangesGuard: () => ({
     isNavigationBlocked: false,
@@ -24,6 +24,7 @@ const airflowProvider: PlatformProviderRecord = {
   name: 'Production Airflow',
   description: 'Production orchestration',
   type: 'AIRFLOW',
+  role: 'source',
   url: 'https://airflow.example.test',
   ipAddress: '10.99.99.40',
   port: 8443,
@@ -38,6 +39,7 @@ const smtpProvider: PlatformProviderRecord = {
   name: 'SMTP',
   description: 'Mail relay',
   type: 'SMTP',
+  role: 'source',
   url: 'http://smtp.example.test',
   ipAddress: '10.99.99.53',
   port: 1025,
@@ -52,6 +54,7 @@ const backendProvider: PlatformProviderRecord = {
   name: 'ABCo API',
   description: 'Backend service',
   type: 'BACKEND',
+  role: 'source', port: 22,
   url: 'http://backend.example.test',
   notificationEmail: 'backend@example.test',
   loggingEnabled: true,
@@ -65,6 +68,7 @@ const keycloakProvider: PlatformProviderRecord = {
   name: 'Keycloak',
   description: 'Identity provider',
   type: 'KEYCLOAK',
+  role: 'source', port: 22,
   url: 'http://keycloak.example.test',
   realm: 'aricoma',
   clientId: 'abco-be',
@@ -83,10 +87,10 @@ const emptyCredentialsQuery = {
 }
 
 function setMutate(mutate: ReturnType<typeof vi.fn>) {
-  vi.mocked(useUpsertPlatformProvider).mockReturnValue({
+  vi.mocked(useSubmitPlatformProvider).mockReturnValue({
     isPending: false,
     mutate,
-  } as unknown as ReturnType<typeof useUpsertPlatformProvider>)
+  } as unknown as ReturnType<typeof useSubmitPlatformProvider>)
 }
 
 function clickSave() {
@@ -94,11 +98,11 @@ function clickSave() {
 }
 
 function submittedProvider(mutate: ReturnType<typeof vi.fn>): Record<string, unknown> {
-  const mutationInput = mutate.mock.calls[0]?.[0] as unknown as { provider?: unknown } | undefined
-  if (!mutationInput?.provider || typeof mutationInput.provider !== 'object') {
+  const mutationInput = mutate.mock.calls[0]?.[0] as unknown as { data?: unknown } | undefined
+  if (!mutationInput?.data || typeof mutationInput.data !== 'object') {
     throw new Error('Platform provider mutation payload missing')
   }
-  return mutationInput.provider as Record<string, unknown>
+  return mutationInput.data as Record<string, unknown>
 }
 
 beforeEach(() => {
@@ -149,6 +153,17 @@ describe('PlatformProvidersModal', () => {
     expect(screen.queryByLabelText('Port')).not.toBeInTheDocument()
   })
 
+  it('blocks save and shows an error for an invalid notification email', () => {
+    const mutate = vi.fn()
+    setMutate(mutate)
+    render(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} provider={airflowProvider} />)
+    fireEvent.change(screen.getByLabelText('Notification email'), { target: { value: 'not-an-email' } })
+    clickSave()
+
+    expect(mutate).not.toHaveBeenCalled()
+    expect(screen.getByText('Enter a valid email address.')).toBeInTheDocument()
+  })
+
   it('submits an exact AIRFLOW payload and sends null when notification email is cleared', () => {
     const mutate = vi.fn()
     setMutate(mutate)
@@ -157,7 +172,7 @@ describe('PlatformProvidersModal', () => {
     clickSave()
 
     expect(mutate.mock.calls[0]?.[0]).toEqual({
-      provider: {
+      data: {
         id: 'airflow-1',
         name: 'Production Airflow',
         description: 'Production orchestration',
@@ -179,7 +194,7 @@ describe('PlatformProvidersModal', () => {
     clickSave()
 
     expect(mutate.mock.calls[0]?.[0]).toEqual({
-      provider: {
+      data: {
         id: 'backend',
         name: 'ABCo API',
         description: 'Backend service',

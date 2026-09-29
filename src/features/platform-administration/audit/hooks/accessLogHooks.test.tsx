@@ -2,19 +2,18 @@ import type { ReactNode } from 'react'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, useLocation } from 'react-router'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
-import type { AccessLogFilters } from '../model/accessLogTypes'
-import { fetchAccessLogs } from '../api/accessLogsApi'
-import { accessLogKeys } from '../api/accessLogQueryKeys'
-import { useAccessLogs } from './useAccessLogs'
+import type { AccessLogFilters, AccessLogRecord } from '../model/accessLogTypes'
+import { installAccessLogsFetch, type AccessLogsHandler } from '../test/accessLogsFetch'
+import { getGetAccessLogsQueryKey, useGetAccessLogs } from '@/generated/query/logs/logs.gen'
+import { toAccessLogParams } from '../model/accessLogFilters'
+import { selectAccessLogs } from '../model/selectAccessLogs'
 import { useAuditSearchParams } from './useAuditSearchParams'
 
-vi.mock('../api/accessLogsApi', () => ({
-  fetchAccessLogs: vi.fn(),
-}))
 
-const fetchAccessLogsMock = vi.mocked(fetchAccessLogs)
+const fetchAccessLogsMock: AccessLogsHandler = vi.fn()
+beforeEach(() => { installAccessLogsFetch(fetchAccessLogsMock) })
 
 function createQueryClient() {
   return new QueryClient({
@@ -38,6 +37,11 @@ function createAuditWrapper(initialEntry: string, queryClient?: QueryClient) {
   }
 }
 
+// Same wiring as AccessLogsTable and AuditPage use.
+function useAccessLogs(filters: AccessLogFilters = {}) {
+  return useGetAccessLogs(toAccessLogParams(filters), { query: { select: selectAccessLogs } })
+}
+
 function useAuditSearchParamsWithLocation() {
   return { ...useAuditSearchParams(), location: useLocation() }
 }
@@ -59,7 +63,7 @@ describe('access-log query keys', () => {
     { changed: { method: 'POST' }, name: 'method' },
     { changed: { pathContains: '/billing' }, name: 'pathContains' },
   ])('isolates the cache when $name changes', ({ changed }) => {
-    expect(accessLogKeys.list({ lines: 200 })).not.toEqual(accessLogKeys.list(changed))
+    expect(getGetAccessLogsQueryKey(toAccessLogParams({ lines: 200 }))).not.toEqual(getGetAccessLogsQueryKey(toAccessLogParams(changed)))
   })
 })
 
@@ -139,17 +143,17 @@ describe('useAccessLogs', () => {
     })
 
     expect(fetchAccessLogsMock).toHaveBeenCalledTimes(2)
-    expect(queryClient.getQueryData(accessLogKeys.list({ status: 200 }))).toEqual([
-      { kind: 'raw', raw: '{"lines":200,"status":200}' },
-    ])
-    expect(queryClient.getQueryData(accessLogKeys.list({ status: 404 }))).toEqual([
-      { kind: 'raw', raw: '{"lines":200,"status":404}' },
-    ])
+    expect(queryClient.getQueryData(getGetAccessLogsQueryKey(toAccessLogParams({ status: 200 })))).toEqual({
+      entries: [{ raw: '{"lines":200,"status":200}' }],
+    })
+    expect(queryClient.getQueryData(getGetAccessLogsQueryKey(toAccessLogParams({ status: 404 })))).toEqual({
+      entries: [{ raw: '{"lines":200,"status":404}' }],
+    })
   })
 
-  it('exposes manual refetch and background-fetch state without a polling interval', async () => {
-    let resolveRefresh: ((value: Awaited<ReturnType<typeof fetchAccessLogs>>) => void) | undefined
-    const refresh = new Promise<Awaited<ReturnType<typeof fetchAccessLogs>>>((resolve) => {
+  it('refetches on demand without a polling interval', async () => {
+    let resolveRefresh: ((value: AccessLogRecord[]) => void) | undefined
+    const refresh = new Promise<AccessLogRecord[]>((resolve) => {
       resolveRefresh = resolve
     })
     fetchAccessLogsMock
@@ -164,12 +168,12 @@ describe('useAccessLogs', () => {
     let refetchPromise: ReturnType<typeof result.current.refetch> | undefined
     act(() => { refetchPromise = result.current.refetch() })
 
-    await waitFor(() => { expect(result.current.isBackgroundFetching).toBe(true) })
-    expect(queryClient.getQueryCache().find({ queryKey: accessLogKeys.list() })?.options).not.toHaveProperty('refetchInterval')
+    await waitFor(() => { expect(fetchAccessLogsMock).toHaveBeenCalledTimes(2) })
+    expect(queryClient.getQueryCache().find({ queryKey: getGetAccessLogsQueryKey(toAccessLogParams()) })?.options).not.toHaveProperty('refetchInterval')
 
     resolveRefresh?.([])
     await act(async () => { await refetchPromise })
-    await waitFor(() => { expect(result.current.isBackgroundFetching).toBe(false) })
+    await waitFor(() => { expect(result.current.isFetching).toBe(false) })
   })
 
   it('does not request again while only draft filter state changes', async () => {

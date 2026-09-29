@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useTags } from './useVmwareTags'
-import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
+import { getGetTagsQueryKey } from '@/generated/query/vcenter-inventory/vcenter-inventory.gen'
 
 afterEach(() => { vi.unstubAllGlobals() })
 
@@ -22,7 +22,8 @@ describe('useTags', () => {
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
 
     expect(result.current.data).toEqual(['prod', 'db'])
-    expect(client.getQueryData(discoveryInventoryKeys.tags('vmware-vcenter-01'))).toEqual(['prod', 'db'])
+    // The cache holds the wire response; the tag names are produced by select.
+    expect(client.getQueryData(getGetTagsQueryKey({ provider_id: 'vmware-vcenter-01' }))).toMatchObject({ count: 2 })
     expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe('/api/tags?provider_id=vmware-vcenter-01')
   })
 

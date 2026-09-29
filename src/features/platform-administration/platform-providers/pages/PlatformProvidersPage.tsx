@@ -5,7 +5,8 @@ import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PlatformProvidersModal } from '../components/PlatformProvidersModal'
 import { PlatformProvidersTable } from '../components/PlatformProvidersTable'
-import { usePlatformProviders } from '../hooks/usePlatformProviders'
+import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
+import { selectPlatformProviders } from '../model/selectPlatformProviders'
 
 export function PlatformProvidersPage() {
   const { t } = useTranslation()
@@ -16,7 +17,7 @@ export function PlatformProvidersPage() {
     isFetching,
     error,
     refetch,
-  } = usePlatformProviders()
+  } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">

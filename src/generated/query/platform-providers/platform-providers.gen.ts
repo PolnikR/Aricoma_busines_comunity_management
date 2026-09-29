@@ -6,13 +6,15 @@
  */
 import {
   useMutation,
-  useQuery
+  useQuery,
+  useQueryClient
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
   MutationFunction,
+  MutationFunctionContext,
   QueryClient,
   QueryFunction,
   QueryKey,
@@ -204,7 +206,7 @@ return validatingMutator<PlatformProvidersResponse>(getSubmitPlatformProviderUrl
 export const getSubmitPlatformProviderMutationKey = () => ['submitPlatformProvider'] as const;
 
 export const getSubmitPlatformProviderMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitPlatformProvider>>, TError,SubmitPlatformProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitPlatformProvider>>, TError,SubmitPlatformProviderMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitPlatformProvider>>, TError,SubmitPlatformProviderMutationVariables, TContext> => {
 
 const mutationKey = getSubmitPlatformProviderMutationKey();
@@ -223,12 +225,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  submitPlatformProvider(data,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof submitPlatformProvider>>, variables: SubmitPlatformProviderMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetPlatformProvidersQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type SubmitPlatformProviderMutationResult = NonNullable<Awaited<ReturnType<typeof submitPlatformProvider>>>
     export type SubmitPlatformProviderMutationBody = OrchestrationProvider
@@ -239,14 +246,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Submit Platform Provider
  */
 export const useSubmitPlatformProvider = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitPlatformProvider>>, TError,SubmitPlatformProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitPlatformProvider>>, TError,SubmitPlatformProviderMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitPlatformProvider>>,
         TError,
         SubmitPlatformProviderMutationVariables,
         TContext
       > => {
-      return useMutation(getSubmitPlatformProviderMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getSubmitPlatformProviderMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }
     export const getDeletePlatformProviderUrl = (params: DeletePlatformProviderParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -284,7 +292,7 @@ export const deletePlatformProvider = async (params: DeletePlatformProviderParam
 export const getDeletePlatformProviderMutationKey = () => ['deletePlatformProvider'] as const;
 
 export const getDeletePlatformProviderMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlatformProvider>>, TError,DeletePlatformProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlatformProvider>>, TError,DeletePlatformProviderMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deletePlatformProvider>>, TError,DeletePlatformProviderMutationVariables, TContext> => {
 
 const mutationKey = getDeletePlatformProviderMutationKey();
@@ -303,12 +311,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  deletePlatformProvider(params,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof deletePlatformProvider>>, variables: DeletePlatformProviderMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetPlatformProvidersQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type DeletePlatformProviderMutationResult = NonNullable<Awaited<ReturnType<typeof deletePlatformProvider>>>
 
@@ -319,12 +332,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Delete Platform Provider
  */
 export const useDeletePlatformProvider = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlatformProvider>>, TError,DeletePlatformProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlatformProvider>>, TError,DeletePlatformProviderMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deletePlatformProvider>>,
         TError,
         DeletePlatformProviderMutationVariables,
         TContext
       > => {
-      return useMutation(getDeletePlatformProviderMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getDeletePlatformProviderMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }

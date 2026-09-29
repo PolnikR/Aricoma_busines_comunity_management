@@ -1,18 +1,18 @@
 import { useState } from 'react'
+import type { CacheConfigResponseOutput } from '@/generated/query/zod'
 import {
   createDiscoveryCacheConfigDraft,
   isDiscoveryCacheConfigDraftDirty,
   toDiscoveryCacheConfigPatch,
   validateDiscoveryCacheConfigDraft,
 } from '../helpers/discoveryCacheConfigDraft'
-import type { DiscoveryCacheConfig } from '../model/discoveryCacheTypes'
 
 interface DraftState {
-  baseline: DiscoveryCacheConfig
+  baseline: CacheConfigResponseOutput
   draft: ReturnType<typeof createDiscoveryCacheConfigDraft>
 }
 
-export function useDiscoveryCacheConfigDraft(config: DiscoveryCacheConfig | undefined) {
+export function useDiscoveryCacheConfigDraft(config: CacheConfigResponseOutput | undefined) {
   const [state, setState] = useState<DraftState | undefined>(() => config === undefined ? undefined : { baseline: config, draft: createDiscoveryCacheConfigDraft(config) })
   const [previousConfig, setPreviousConfig] = useState(config)
 
@@ -58,7 +58,7 @@ export function useDiscoveryCacheConfigDraft(config: DiscoveryCacheConfig | unde
     setState(current => current === undefined ? current : { ...current, draft: createDiscoveryCacheConfigDraft(current.baseline) })
   }
 
-  function adopt(config: DiscoveryCacheConfig) {
+  function adopt(config: CacheConfigResponseOutput) {
     setState({ baseline: config, draft: createDiscoveryCacheConfigDraft(config) })
   }
 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
@@ -19,12 +20,14 @@ import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { PlugIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
-import { useDeleteProvider } from '../hooks/useDeleteProvider'
-import { useTestProviderConnection } from '../hooks/useTestProviderConnection'
+import {
+  getTestProviderQueryKey,
+  useDeleteProvider,
+  useTestProvider,
+} from '@/generated/query/providers/providers.gen'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
 import { ProviderConnectionTestDialog } from './ProviderConnectionTestDialog'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
-import { toProviderJson } from '../helpers/providerJson'
 import type { ProviderRecord, ProviderRoleFilter } from '../model/providerTypes'
 
 function credentialStatusLabel(
@@ -62,7 +65,7 @@ function getColumns(
     {
       id: 'description',
       header: t('tables.provider.description'),
-      cell: (provider) => <span className="block max-w-md truncate" title={provider.description}>{provider.description || '-'}</span>,
+      cell: (provider) => <span className="block max-w-md truncate" title={provider.description ?? undefined}>{(provider.description ?? '') || '-'}</span>,
     },
     {
       id: 'type',
@@ -73,14 +76,14 @@ function getColumns(
       id: 'role',
       header: t('tables.provider.role'),
       cell: (provider) => {
-        const role = provider.role ?? 'source'
+        const role = provider.role
         return <Badge color={roleColor(role)} size="sm">{t(`forms.role.${role}`)}</Badge>
       },
     },
     {
       id: 'ipAddress',
       header: t('tables.provider.ip'),
-      cell: (provider) => <span className="font-mono text-[12px] text-text-secondary">{provider.ipAddress || '-'}</span>,
+      cell: (provider) => <span className="font-mono text-[12px] text-text-secondary">{(provider.ipAddress ?? '') || '-'}</span>,
     },
     {
       id: 'credential',
@@ -135,8 +138,8 @@ export function ProvidersCatalogueTable({
   onRetry,
 }: ProvidersCatalogueTableProps) {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const deleteProvider = useDeleteProvider()
-  const testConnection = useTestProviderConnection()
   const [typeFilter, setTypeFilter] = useState('')
   const [pendingType, setPendingType] = useState('')
   const [pendingRole, setPendingRole] = useState<ProviderRoleFilter>(roleFilter)
@@ -150,6 +153,15 @@ export function ProvidersCatalogueTable({
 
   const rows = useMemo(() => providers, [providers])
   const selected = rows.find((provider) => provider.id === selectedId) ?? null
+  const testParams = { provider_id: selected?.id ?? '' }
+  const testConnection = useTestProvider(testParams, {
+    query: { enabled: isConnectionTestOpen && selected?.credentialStatus === 'ok' },
+  })
+  // Every open and retry runs a fresh test: resetting drops the cached result, and an
+  // enabled (open) query is refetched by the reset.
+  const rerunConnectionTest = () => {
+    void queryClient.resetQueries({ queryKey: getTestProviderQueryKey(testParams) })
+  }
   const jsonViewed = rows.find(provider => provider.id === jsonViewId) ?? null
   const columns = getColumns(t, setJsonViewId)
   const types = useMemo(
@@ -187,14 +199,12 @@ export function ProvidersCatalogueTable({
 
   const openConnectionTest = () => {
     if (selected?.credentialStatus !== 'ok') return
-    testConnection.reset()
+    rerunConnectionTest()
     setIsConnectionTestOpen(true)
-    testConnection.mutate(selected)
   }
 
   const closeConnectionTest = () => {
     setIsConnectionTestOpen(false)
-    testConnection.reset()
   }
 
   const toolbar = (
@@ -347,11 +357,11 @@ export function ProvidersCatalogueTable({
             <DetailRow
               label={t('details.role')}
               value={(() => {
-                const role = selected.role ?? 'source'
+                const role = selected.role
                 return <Badge color={roleColor(role)} size="sm">{t(`forms.role.${role}`)}</Badge>
               })()}
             />
-            <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{selected.ipAddress || '-'}</span>} />
+            <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{(selected.ipAddress ?? '') || '-'}</span>} />
             <DetailRow
               label={t('details.url')}
               value={selected.url ? (
@@ -385,7 +395,7 @@ export function ProvidersCatalogueTable({
                 </Badge>
               )}
             />
-            <DetailRow label={t('details.description')} value={selected.description || '-'} />
+            <DetailRow label={t('details.description')} value={(selected.description ?? '') || '-'} />
           </dl>
         ) : null}
       </DetailDrawer>
@@ -399,9 +409,7 @@ export function ProvidersCatalogueTable({
         result={testConnection.data ?? null}
         error={testConnection.error instanceof Error ? testConnection.error : null}
         onClose={closeConnectionTest}
-        onRetry={() => {
-          if (selected) testConnection.mutate(selected)
-        }}
+        onRetry={rerunConnectionTest}
       />
 
       {editing ? (
@@ -425,7 +433,7 @@ export function ProvidersCatalogueTable({
         onCancel={() => { setDeleteTarget(null) }}
         onConfirm={() => {
           if (!deleteTarget) return
-          deleteProvider.mutate(deleteTarget.id, {
+          deleteProvider.mutate({ params: { provider_id: deleteTarget.id } }, {
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
             onError: () => { setDeleteTarget(null) },
           })
@@ -435,7 +443,7 @@ export function ProvidersCatalogueTable({
       <JsonViewerModal
         open={jsonViewed !== null}
         title={t('providers.jsonViewer.title')}
-        data={jsonViewed ? toProviderJson(jsonViewed) : null}
+        data={jsonViewed}
         closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
       />

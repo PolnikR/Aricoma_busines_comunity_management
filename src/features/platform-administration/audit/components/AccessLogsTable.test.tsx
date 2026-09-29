@@ -1,21 +1,20 @@
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest'
 import { LanguageContext, type Language } from '@/contexts/LanguageContext'
 import czechTranslations from '@/locales/cs.json'
 import englishTranslations from '@/locales/en.json'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import type { AccessLogFilters, AccessLogRecord } from '../model/accessLogTypes'
-import { fetchAccessLogs } from '../api/accessLogsApi'
-import { accessLogKeys } from '../api/accessLogQueryKeys'
+import { installAccessLogsFetch, toWireEntry, type AccessLogsHandler } from '../test/accessLogsFetch'
+import { getGetAccessLogsQueryKey } from '@/generated/query/logs/logs.gen'
+import { toAccessLogParams } from '../model/accessLogFilters'
 import { AccessLogsTable } from './AccessLogsTable'
 
-vi.mock('../api/accessLogsApi', () => ({
-  fetchAccessLogs: vi.fn(),
-}))
 
-const fetchAccessLogsMock = vi.mocked(fetchAccessLogs)
+const fetchAccessLogsMock: AccessLogsHandler = vi.fn()
+beforeEach(() => { installAccessLogsFetch(fetchAccessLogsMock) })
 
 const requestEntry: AccessLogRecord = {
   kind: 'request',
@@ -111,7 +110,7 @@ describe('AccessLogsTable', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false, staleTime: 0 } },
     })
-    queryClient.setQueryData(accessLogKeys.list({ lines: 200 }), [requestEntry])
+    queryClient.setQueryData(getGetAccessLogsQueryKey(toAccessLogParams({ lines: 200 })), { entries: [toWireEntry(requestEntry)] })
     fetchAccessLogsMock.mockRejectedValue(new Error('Access log service unavailable'))
 
     renderTable({ lines: 200 }, queryClient, 'cs')
@@ -205,7 +204,7 @@ describe('AccessLogsTable', () => {
     expect(screen.getByRole('dialog', { name: 'Access log details' })).toBeInTheDocument()
 
     await act(async () => {
-      await queryClient.refetchQueries({ queryKey: accessLogKeys.list({ lines: 200 }) })
+      await queryClient.refetchQueries({ queryKey: getGetAccessLogsQueryKey(toAccessLogParams({ lines: 200 })) })
     })
 
     expect(await screen.findByRole('row', { name: 'GET /api/refreshed' })).toBeInTheDocument()
@@ -222,7 +221,7 @@ describe('AccessLogsTable', () => {
       status: 204,
     }))
     fetchAccessLogsMock.mockImplementation((filters) => Promise.resolve(
-      filters?.status === 204 ? nextWindow : firstWindow,
+      filters.status === 204 ? nextWindow : firstWindow,
     ))
     const { rerender, queryClient } = renderTable()
 

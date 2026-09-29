@@ -2,11 +2,11 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useRecoveryAppPolicies } from '../hooks/useRecoveryAppPolicies'
+import { useGetRecoveryAppPolicies } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
 import { RecoveryAppPoliciesPage } from './RecoveryAppPoliciesPage'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../hooks/useRecoveryAppPolicies', () => ({ useRecoveryAppPolicies: vi.fn() }))
+vi.mock('@/generated/query/recovery-app-policies/recovery-app-policies.gen', () => ({ useGetRecoveryAppPolicies: vi.fn() }))
 vi.mock('../components/RecoveryAppPoliciesTable', () => ({
   RecoveryAppPoliciesTable: () => <div>Recovery app policy catalogue</div>,
 }))
@@ -17,9 +17,9 @@ vi.mock('../components/RecoveryAppPolicyModal', () => ({
 }))
 
 beforeEach(() => {
-  vi.mocked(useRecoveryAppPolicies).mockReturnValue({
+  vi.mocked(useGetRecoveryAppPolicies).mockReturnValue({
     data: [{ id: 'critical-daily-latest' }], isLoading: false, isFetching: false, error: null, refetch: vi.fn(),
-  } as unknown as ReturnType<typeof useRecoveryAppPolicies>)
+  } as unknown as ReturnType<typeof useGetRecoveryAppPolicies>)
 })
 
 describe('RecoveryAppPoliciesPage', () => {

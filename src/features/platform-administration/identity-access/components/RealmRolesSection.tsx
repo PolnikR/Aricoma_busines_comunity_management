@@ -13,11 +13,11 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { Field, Input } from '@/shared/components/form/FormControls'
-import { useRolesPermissions } from '../hooks/useRolesPermissions'
+import { useGetRolesPermissions } from '@/generated/query/identity-access/identity-access.gen'
 import { useUsers } from '../hooks/useUsers'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
 import type { User } from '../models/identityTypes'
-import type { IdentityRoleRecord } from '../model/rolesPermissionsTypes'
+import { selectRolesPermissions, type IdentityRoleRecord } from '../model/rolesPermissionsTypes'
 import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection } from './IdentityResourceLayout'
 
 const ROLE_SEARCH_FIELDS: (keyof IdentityRoleRecord)[] = ['name', 'permissions']
@@ -38,7 +38,7 @@ function isRoleTab(tabId: IdentityAccessTabId | null): tabId is RoleTabId {
 
 export function RealmRolesSection({ entityId, tabId, onEntityChange, onTabChange }: RealmRolesSectionProps) {
   const { t } = useTranslation()
-  const { data, isLoading, error, refetch } = useRolesPermissions()
+  const { data, isLoading, error, refetch } = useGetRolesPermissions({ query: { select: selectRolesPermissions } })
   const roles = data?.roles ?? []
   const { data: users = [] } = useUsers()
   const table = useTableState(roles, { searchFields: ROLE_SEARCH_FIELDS })

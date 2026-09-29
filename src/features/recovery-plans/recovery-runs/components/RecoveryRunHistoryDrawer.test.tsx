@@ -8,8 +8,9 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 vi.mock('../hooks/useAppRunHistory', () => ({
   useAppRunHistory: vi.fn(),
 }))
-vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
-  usePlatformProviders: () => ({
+vi.mock('@/generated/query/platform-providers/platform-providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/platform-providers/platform-providers.gen')>(),
+  useGetPlatformProviders: () => ({
     data: [{ id: 'airflow-01', name: 'Dynamic Airflow', url: 'https://airflow.dynamic.test:8443' }],
   }),
 }))

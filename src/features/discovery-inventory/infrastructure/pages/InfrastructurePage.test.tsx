@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
-import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { useInfrastructureInventory } from '../hooks/useInfrastructureInventory'
 import { useFlashSystemVolumeTree } from '../hooks/useFlashSystemVolumeTree'
@@ -11,8 +11,8 @@ import { InfrastructurePage } from './InfrastructurePage'
 import type { DiscoveryInventory, PowerInventory } from '../../resources/model/discoveryTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
-  useProviders: vi.fn(),
+vi.mock('@/generated/query/providers/providers.gen', () => ({
+  useGetProviders: vi.fn(),
 }))
 vi.mock('../hooks/useInfrastructureInventory', () => ({
   useInfrastructureInventory: vi.fn(),
@@ -33,9 +33,9 @@ vi.mock('../components/InfrastructureTopologyWorkspace', () => ({
 }))
 
 const providers: ProviderRecord[] = [
-  { id: 'vcenter-01', name: 'vCenter', description: '', type: 'VMWARE', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
-  { id: 'power-01', name: 'Power', description: '', type: 'IBM_POWER', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
-  { id: 'flash-01', name: 'Flash', description: '', type: 'FLASHCOPY', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
+  { id: 'vcenter-01', name: 'vCenter', description: '', type: 'VMWARE', role: 'source', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
+  { id: 'power-01', name: 'Power', description: '', type: 'IBM_POWER', role: 'source', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
+  { id: 'flash-01', name: 'Flash', description: '', type: 'FLASHCOPY', role: 'source', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
 ]
 
 const vmwareInventory: DiscoveryInventory = {
@@ -82,7 +82,7 @@ beforeEach(() => {
   providerQueryOverrides = {}
   inventoryQueryOverrides = {}
   vi.clearAllMocks()
-  vi.mocked(useProviders).mockImplementation(() => ({
+  vi.mocked(useGetProviders).mockImplementation(() => ({
     data: providers,
     error: null,
     isLoading: false,
@@ -90,7 +90,7 @@ beforeEach(() => {
     isFetching: false,
     refetch: vi.fn(),
     ...providerQueryOverrides,
-  }) as unknown as ReturnType<typeof useProviders>)
+  }) as unknown as ReturnType<typeof useGetProviders>)
   vi.mocked(useInfrastructureInventory).mockImplementation((provider) => ({
     data: provider?.type === 'IBM_POWER' ? powerInventory : vmwareInventory,
     error: null,

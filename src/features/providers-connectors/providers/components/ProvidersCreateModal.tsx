@@ -10,7 +10,7 @@ import { useTags } from '@/features/discovery-inventory/resources/hooks/useVmwar
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { useGetCredentials } from '@/generated/query/credentials/credentials.gen'
 import { selectCredentials } from '../../credentials/model/selectCredentials'
-import { useUpsertProvider } from '../hooks/useUpsertProvider'
+import { useSubmitProvider } from '@/generated/query/providers/providers.gen'
 import { ProviderCreateForm } from './ProviderCreateForm'
 import type { ProviderRecord, ProviderRole, ProviderSubmitData, ProviderType } from '../model/providerTypes'
 import type { ProviderCreateFormData } from './ProviderCreateForm'
@@ -46,12 +46,12 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
     ? {
         id: provider.id,
         name: provider.name,
-        description: provider.description,
+        description: provider.description ?? '',
         type: provider.type,
-        role: provider.role ?? 'source',
-        ipAddress: provider.ipAddress,
+        role: provider.role,
+        ipAddress: provider.ipAddress ?? '',
         url: provider.url ?? '',
-        port: String(provider.port ?? 22),
+        port: '22',
         credentialId: provider.credentialId ?? '',
         orchestratorConnId: provider.orchestratorConnId ?? '',
         vmPrefix: provider.vmPrefix ?? '',
@@ -67,7 +67,7 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
 // Modal for creating or editing a provider.
 export function ProvidersCreateModal({ open, onClose, existingProviders, provider }: ProvidersCreateModalProps) {
   const { t } = useTranslation()
-  const upsert = useUpsertProvider()
+  const upsert = useSubmitProvider()
   const credentialsQuery = useGetCredentials({
     query: { enabled: open, select: selectCredentials },
   })
@@ -210,7 +210,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     record.cacheRefreshSeconds = formData.cacheRefreshSeconds.trim() ? Number(formData.cacheRefreshSeconds) : null
 
     upsert.mutate(
-      { provider: record },
+      { data: record },
       {
         onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
         onError: (err: unknown) => {

@@ -1,4 +1,3 @@
-import { z } from 'zod'
 import type {
   RecoveryGroupDraft,
   RecoveryGroupResourceConfiguration,
@@ -6,23 +5,20 @@ import type {
 } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsError } from './recoveryGroupsErrors'
 
-export const recoveryGroupConfigurationSchema = z.discriminatedUnion('workloadType', [
-  z.object({
-    sourceCategory: z.literal('backup_system_workload'),
-    workloadType: z.literal('vmware_virtual_machines'),
-    resourceType: z.literal('vm'),
-  }),
-  z.object({
-    sourceCategory: z.literal('backup_system_workload'),
-    workloadType: z.literal('ibm_power_virtual_machines'),
-    resourceType: z.literal('vm'),
-  }),
-  z.object({
-    sourceCategory: z.literal('storage_system'),
-    workloadType: z.literal('ibm_flashsystem'),
-    resourceType: z.literal('volume'),
-  }),
-])
+// The resource combinations a group can be submitted with.
+const SUBMITTABLE_CONFIGURATIONS: readonly RecoveryGroupResourceConfiguration[] = [
+  { sourceCategory: 'backup_system_workload', workloadType: 'vmware_virtual_machines', resourceType: 'vm' },
+  { sourceCategory: 'backup_system_workload', workloadType: 'ibm_power_virtual_machines', resourceType: 'vm' },
+  { sourceCategory: 'storage_system', workloadType: 'ibm_flashsystem', resourceType: 'volume' },
+]
+
+function findSubmittableConfiguration(draft: RecoveryGroupDraft): RecoveryGroupResourceConfiguration | undefined {
+  return SUBMITTABLE_CONFIGURATIONS.find(configuration => (
+    configuration.sourceCategory === draft.sourceCategory
+    && configuration.workloadType === draft.workloadType
+    && configuration.resourceType === draft.resourceType
+  ))
+}
 
 export interface ValidatedRecoveryGroupDraft {
   id: string
@@ -51,11 +47,7 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     : null
   const relatedVolumes = (draft.relatedVolumes ?? []).map(resource => resource.trim())
   const orchestrationProviderId = draft.orchestrationProviderId?.trim() ?? ''
-  const configuration = recoveryGroupConfigurationSchema.safeParse({
-    sourceCategory: draft.sourceCategory,
-    workloadType: draft.workloadType,
-    resourceType: draft.resourceType,
-  })
+  const configuration = findSubmittableConfiguration(draft)
 
   if (
     !draft.id.trim()
@@ -69,7 +61,7 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     || relatedVolumes.some(resource => !resource)
     || new Set(relatedVolumes).size !== relatedVolumes.length
     || (relatedVolumes.length > 0 && !relatedVolumeProviderId)
-    || !configuration.success
+    || !configuration
     || !orchestrationProviderId
   ) {
     throw new RecoveryGroupsError('invalid_draft', 'Recovery group data is invalid')
@@ -84,7 +76,7 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     resources,
     relatedVolumeProviderId,
     relatedVolumes,
-    configuration: configuration.data,
+    configuration: { ...configuration },
     vmMetadataByName: draft.vmMetadataByName,
     orchestrationProviderId,
     pushToOrchestrator: draft.pushToOrchestrator,

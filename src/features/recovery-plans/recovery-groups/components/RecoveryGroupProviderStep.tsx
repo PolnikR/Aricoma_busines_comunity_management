@@ -62,8 +62,8 @@ export function RecoveryGroupProviderStep({
               key={provider.id}
               selected={provider.id === selectedProviderId}
               title={provider.name}
-              description={provider.description}
-              meta={`${provider.type} · ${provider.ipAddress}`}
+              description={provider.description ?? ''}
+              meta={`${provider.type} · ${provider.ipAddress ?? ''}`}
               icon={<span className="text-sm font-bold tracking-tight">{option?.brand}</span>}
               onClick={() => { onSelect(provider.id) }}
             />

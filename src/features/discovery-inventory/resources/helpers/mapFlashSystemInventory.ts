@@ -1,5 +1,5 @@
 import type { FlashSystemInventory } from '../model/discoveryTypes'
-import type { FlashSystemInventoryPayload } from '../api/schemas/flashSystemInventorySchema'
+import type { VolumesResponseOutput as FlashSystemInventoryPayload } from '@/generated/query/zod'
 import { parseCapacityBytes } from './parseCapacity'
 
 function normalizeIdentity(value: string | null | undefined): string {

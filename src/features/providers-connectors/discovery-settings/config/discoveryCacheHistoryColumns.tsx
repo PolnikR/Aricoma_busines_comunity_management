@@ -2,8 +2,8 @@ import { Badge } from '@/shared/components/badge/Badge'
 import { StateCell } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import type { useTranslation } from '@/hooks/useTranslation'
+import type { CacheRunRecordOutput } from '@/generated/query/zod'
 import { providerTypeLabel } from '../../providers/helpers/providerTypeLabel'
-import type { DiscoveryCacheRun } from '../model/discoveryCacheTypes'
 
 type Translate = ReturnType<typeof useTranslation>['t']
 
@@ -22,29 +22,29 @@ function formatStartedAt(startedAt: string): string {
   return `${String(Number(day))}. ${String(Number(month))}. ${year} ${hour}:${minute}:${second}`
 }
 
-export function getDiscoveryCacheHistoryColumns(t: Translate): ColumnDef<DiscoveryCacheRun>[] {
+export function getDiscoveryCacheHistoryColumns(t: Translate): ColumnDef<CacheRunRecordOutput>[] {
   return [
     {
       id: 'startedAt',
       header: t('pages.discoverySettings.history.table.columns.started'),
-      cell: run => <span className="whitespace-nowrap tabular-nums">{formatStartedAt(run.startedAt)}</span>,
+      cell: run => <span className="whitespace-nowrap tabular-nums">{formatStartedAt(run.started_at)}</span>,
     },
     {
       id: 'providerId',
       header: t('pages.discoverySettings.history.table.columns.provider'),
-      cell: run => <span className="font-mono text-[12px]">{run.providerId}</span>,
+      cell: run => <span className="font-mono text-[12px]">{run.provider_id}</span>,
     },
     {
       id: 'providerType',
       header: t('pages.discoverySettings.history.table.columns.providerType'),
-      cell: run => <Badge color="info" size="sm">{providerTypeLabel(run.providerType)}</Badge>,
+      cell: run => <Badge color="info" size="sm">{providerTypeLabel(run.provider_type)}</Badge>,
     },
     {
       id: 'triggeredBy',
       header: t('pages.discoverySettings.history.table.columns.triggeredBy'),
       cell: run => (
         <Badge color="light" size="sm">
-          {t(`pages.discoverySettings.history.trigger.${run.triggeredBy}`)}
+          {t(`pages.discoverySettings.history.trigger.${run.triggered_by}`)}
         </Badge>
       ),
     },
@@ -63,13 +63,13 @@ export function getDiscoveryCacheHistoryColumns(t: Translate): ColumnDef<Discove
     {
       id: 'duration',
       header: t('pages.discoverySettings.history.table.columns.duration'),
-      cell: run => <span className="whitespace-nowrap tabular-nums">{run.durationMs} ms</span>,
+      cell: run => <span className="whitespace-nowrap tabular-nums">{run.duration_ms} ms</span>,
       align: 'right',
     },
     {
       id: 'records',
       header: t('pages.discoverySettings.history.table.columns.records'),
-      cell: run => <span className="tabular-nums">{run.recordCount ?? '—'}</span>,
+      cell: run => <span className="tabular-nums">{run.record_count ?? '—'}</span>,
       align: 'right',
     },
   ]

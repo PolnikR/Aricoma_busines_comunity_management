@@ -50,11 +50,6 @@ test('types vdisks by VM', () => {
   assert.equal(schemas().VdisksByVmResponse.properties.vdisks.additionalProperties.$ref, '#/components/schemas/StorageVolume')
 })
 
-test('types volume tree node kind and detail', () => {
-  const node = schemas().VolumeTreeNode
-  assert.deepEqual(node.properties.kind.enum, ['pool', 'volume', 'fcmap', 'consistency_group'])
-  assert.equal(node.properties.detail.anyOf.length, 4)
-})
 
 test('types rollback report sections', () => {
   const report = schemas().RollbackReport
@@ -67,7 +62,7 @@ test('adds recovery VM metadata', () => {
     ['cpu', 'hostname', 'ip_address', 'memory_gb', 'name', 'order', 'os', 'storage_gb'])
 })
 
-for (const name of ['powerInventory', 'flashSystemVolumes', 'vdisksByVm', 'volumeTree', 'rollbackReport', 'recoveryVmMetadata']) {
+for (const name of ['powerInventory', 'flashSystemVolumes', 'vdisksByVm', 'rollbackReport', 'recoveryVmMetadata']) {
   test(`${name} fails once already applied`, () => {
     const patch = PATCHES.find(p => p.name === name)
     assert.throws(() => patch.run(transform(rawSpec())), new RegExp(`Spec patch ${name} is obsolete`))

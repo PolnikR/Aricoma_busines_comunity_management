@@ -13,17 +13,16 @@ import { Tabs } from '@/shared/components/tabs/Tabs'
 import type { TabItem } from '@/shared/components/tabs/Tabs'
 import { useTranslation } from '@/hooks/useTranslation'
 import { SettingsIcon } from '@/shared/icons/Icons'
+import { useGetDiscoveryCacheConfig, usePutDiscoveryCacheConfig } from '@/generated/query/discovery-cache/discovery-cache.gen'
 import { providerTypeLabel } from '../../providers/helpers/providerTypeLabel'
 import { DiscoveryHistoryCard } from '../components/DiscoveryHistoryCard'
 import { DiscoveryNotificationsCard } from '../components/DiscoveryNotificationsCard'
 import { getOrderedDiscoveryCacheDefaultKeys } from '../helpers/discoveryCacheConfigDraft'
-import { useDiscoveryCacheConfig } from '../hooks/useDiscoveryCacheConfig'
 import { useDiscoveryCacheConfigDraft } from '../hooks/useDiscoveryCacheConfigDraft'
 import {
   useDiscoverySettingsSearchParams,
 } from '../hooks/useDiscoverySettingsSearchParams'
 import type { DiscoverySettingsTab } from '../hooks/useDiscoverySettingsSearchParams'
-import { useUpdateDiscoveryCacheConfig } from '../hooks/useUpdateDiscoveryCacheConfig'
 import {
   DEFAULT_DISCOVERY_NOTIFICATION_SETTINGS,
   DISCOVERY_NOTIFICATION_RECIPIENTS,
@@ -42,8 +41,8 @@ export function DiscoverySettingsPage() {
   const [savedNotificationSettings, setSavedNotificationSettings] = useState<DiscoveryNotificationSettings>(DEFAULT_DISCOVERY_NOTIFICATION_SETTINGS)
   const [notificationStatus, setNotificationStatus] = useState(() => t('pages.discoverySettings.notifications.status.localOnly'))
   const [cacheStatus, setCacheStatus] = useState(() => t('pages.discoverySettings.cache.status.noChanges'))
-  const cacheQuery = useDiscoveryCacheConfig({ enabled: tab === 'configuration' })
-  const updateCacheConfig = useUpdateDiscoveryCacheConfig()
+  const cacheQuery = useGetDiscoveryCacheConfig({ query: { enabled: tab === 'configuration' } })
+  const updateCacheConfig = usePutDiscoveryCacheConfig()
   const cacheDraft = useDiscoveryCacheConfigDraft(cacheQuery.data)
   const isNotificationDirty = JSON.stringify(notificationSettings) !== JSON.stringify(savedNotificationSettings)
   const canSaveCache = cacheDraft.isDirty
@@ -109,7 +108,7 @@ export function DiscoverySettingsPage() {
 
   const saveCache = () => {
     if (!cacheDraft.patch) return
-    updateCacheConfig.mutate(cacheDraft.patch, {
+    updateCacheConfig.mutate({ data: cacheDraft.patch }, {
       onSuccess: config => {
         cacheDraft.adopt(config)
         setCacheStatus(t('pages.discoverySettings.cache.status.saved'))

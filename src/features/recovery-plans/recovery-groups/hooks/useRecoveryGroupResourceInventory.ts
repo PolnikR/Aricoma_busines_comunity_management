@@ -1,8 +1,12 @@
 import { useCallback, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchFlashSystemInventory } from '@/features/discovery-inventory/resources/api/flashSystemInventoryApi'
-import { fetchPowerInventory } from '@/features/discovery-inventory/resources/api/powerInventoryApi'
-import { discoveryInventoryKeys } from '@/features/discovery-inventory/resources/api/resourceInventoryQueryKeys'
+import type { PowerVmsResponse, VolumesResponse } from '@/generated/query/zod'
+import {
+  createFlashSystemInventorySelect,
+  createPowerInventorySelect,
+  flashSystemInventoryQuery,
+  powerInventoryQuery,
+} from '@/features/discovery-inventory/resources/model/inventoryQueries'
 import { useVmwareResourceInventory } from '@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory'
 import type {
   DiscoveredVirtualMachine,
@@ -27,7 +31,8 @@ type ResourceInventory = DiscoveryInventory | PowerInventory | FlashSystemInvent
 
 interface InventoryQueryDefinition {
   queryKey: readonly unknown[]
-  queryFn: () => Promise<ResourceInventory>
+  queryFn: (context: { signal: AbortSignal }) => Promise<unknown>
+  toInventory: (response: unknown) => ResourceInventory
 }
 
 function getInventoryQueryDefinition(
@@ -35,16 +40,14 @@ function getInventoryQueryDefinition(
   providerId: string,
 ): InventoryQueryDefinition {
   switch (workloadType) {
-    case 'ibm_power_virtual_machines':
-      return {
-        queryKey: discoveryInventoryKeys.resourceInventory('IBM_POWER', providerId),
-        queryFn: () => fetchPowerInventory(providerId),
-      }
-    case 'ibm_flashsystem':
-      return {
-        queryKey: discoveryInventoryKeys.resourceInventory('FLASHCOPY', providerId),
-        queryFn: () => fetchFlashSystemInventory(providerId),
-      }
+    case 'ibm_power_virtual_machines': {
+      const select = createPowerInventorySelect(providerId)
+      return { ...powerInventoryQuery(providerId), toInventory: response => select(response as PowerVmsResponse) }
+    }
+    case 'ibm_flashsystem': {
+      const select = createFlashSystemInventorySelect(providerId)
+      return { ...flashSystemInventoryQuery(providerId), toInventory: response => select(response as VolumesResponse) }
+    }
   }
 }
 
@@ -108,9 +111,12 @@ export function useRecoveryGroupResourceInventory(
     ...(isVmware && vmwareNamePrefix !== undefined ? { namePrefix: vmwareNamePrefix } : {}),
     enabled: enabled && isVmware,
   })
-  const definition = workloadType && providerId && !isVmware
-    ? getInventoryQueryDefinition(workloadType, providerId)
-    : null
+  const definition = useMemo(
+    () => workloadType && providerId && workloadType !== 'vmware_virtual_machines'
+      ? getInventoryQueryDefinition(workloadType, providerId)
+      : null,
+    [providerId, workloadType],
+  )
 
   const selectFn = useCallback((inventory: ResourceInventory) => ({
     resourceNames: Array.from(new Set(
@@ -119,13 +125,17 @@ export function useRecoveryGroupResourceInventory(
     vmMetadataByName: workloadType ? getVmMetadataByName(workloadType, inventory) : {},
   }), [workloadType])
 
-  const nonVmwareQuery = useQuery<ResourceInventory, Error, RecoveryGroupResourceInventory>({
-    queryKey: definition?.queryKey ?? [...discoveryInventoryKeys.all, 'inactive'],
-    queryFn: () => {
+  const selectResponse = useCallback(
+    (response: unknown) => {
       if (!definition) throw new Error('A workload type and provider are required')
-      return definition.queryFn()
+      return selectFn(definition.toInventory(response))
     },
-    select: selectFn,
+    [definition, selectFn],
+  )
+  const nonVmwareQuery = useQuery<unknown, Error, RecoveryGroupResourceInventory>({
+    queryKey: definition?.queryKey ?? ['recovery-group-resource-inventory', 'inactive'],
+    queryFn: definition?.queryFn ?? (() => Promise.reject(new Error('A workload type and provider are required'))),
+    select: selectResponse,
     enabled: enabled && definition !== null,
   })
   const vmwareData = useMemo(

@@ -4,10 +4,10 @@ import type {
   VmStorageVolumes,
 } from '../model/vmStorageVolumesTypes'
 import type {
-  StorageVolumeMappingPayload,
-  StorageVolumePayload,
-  VdisksPayload,
-} from '../api/schemas/vmStorageVolumesSchema'
+  StorageVolumeMappingOutput as StorageVolumeMappingPayload,
+  StorageVolumeOutput as StorageVolumePayload,
+  VdisksByVmResponseOutput as VdisksPayload,
+} from '@/generated/query/zod'
 
 function mapMapping(raw: StorageVolumeMappingPayload): StorageVolumeMapping {
   return {

@@ -6,13 +6,15 @@
  */
 import {
   useMutation,
-  useQuery
+  useQuery,
+  useQueryClient
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
   MutationFunction,
+  MutationFunctionContext,
   QueryClient,
   QueryFunction,
   QueryKey,
@@ -197,7 +199,7 @@ return validatingMutator<CacheConfigResponse>(getPutDiscoveryCacheConfigUrl(),
 export const getPutDiscoveryCacheConfigMutationKey = () => ['putDiscoveryCacheConfig'] as const;
 
 export const getPutDiscoveryCacheConfigMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putDiscoveryCacheConfig>>, TError,PutDiscoveryCacheConfigMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putDiscoveryCacheConfig>>, TError,PutDiscoveryCacheConfigMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof putDiscoveryCacheConfig>>, TError,PutDiscoveryCacheConfigMutationVariables, TContext> => {
 
 const mutationKey = getPutDiscoveryCacheConfigMutationKey();
@@ -216,12 +218,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  putDiscoveryCacheConfig(data,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof putDiscoveryCacheConfig>>, variables: PutDiscoveryCacheConfigMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetDiscoveryCacheConfigQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type PutDiscoveryCacheConfigMutationResult = NonNullable<Awaited<ReturnType<typeof putDiscoveryCacheConfig>>>
     export type PutDiscoveryCacheConfigMutationBody = CacheConfigUpdate
@@ -232,14 +239,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Update Cache Config
  */
 export const usePutDiscoveryCacheConfig = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putDiscoveryCacheConfig>>, TError,PutDiscoveryCacheConfigMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putDiscoveryCacheConfig>>, TError,PutDiscoveryCacheConfigMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof putDiscoveryCacheConfig>>,
         TError,
         PutDiscoveryCacheConfigMutationVariables,
         TContext
       > => {
-      return useMutation(getPutDiscoveryCacheConfigMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getPutDiscoveryCacheConfigMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }
     export const getGetDiscoveryCacheHistoryUrl = (params?: GetDiscoveryCacheHistoryParams,) => {
   const normalizedParams = new URLSearchParams();

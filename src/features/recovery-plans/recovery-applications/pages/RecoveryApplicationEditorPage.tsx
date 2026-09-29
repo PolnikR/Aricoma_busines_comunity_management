@@ -21,7 +21,8 @@ import {
 import type { OrchestratorPush, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
-import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
+import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
+import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
 
 export function RecoveryApplicationEditorPage() {
   const { t } = useTranslation()
@@ -34,7 +35,7 @@ export function RecoveryApplicationEditorPage() {
   const [orchestratedApplicationName, setOrchestratedApplicationName] = useState('')
   const [orchestratorProviderUrl, setOrchestratorProviderUrl] = useState<string | undefined>(undefined)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
-  const { data: platformProviders = [] } = usePlatformProviders()
+  const { data: platformProviders = [] } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
   const loadErrorDescription = resolveUserFacingErrorMessage(error, t('pages.recoveryEditor.requestFailed'))
   const submitErrorDescription = resolveUserFacingErrorMessage(submitApplication.error, '')
   const application = applications?.find(
@@ -65,7 +66,7 @@ export function RecoveryApplicationEditorPage() {
           setOrchestratedApplicationName(formState.name)
           setOrchestratorProviderUrl(platformProviders.find(
             provider => provider.id === formState.orchestrationProviderId,
-          )?.url)
+          )?.url ?? undefined)
           setOrchestratorPush(response.orchestrator_push)
           return
         }

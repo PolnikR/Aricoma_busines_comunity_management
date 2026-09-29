@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
-import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
+import { vmwareInventoryQuery } from '../model/inventoryQueries'
 import { useVmwareResourceInventory } from './useVmwareResourceInventory'
 
 function createWrapper(queryClient: QueryClient) {
@@ -280,7 +280,7 @@ describe('useVmwareResourceInventory', () => {
     await new Promise((resolve) => { setTimeout(resolve, 300) })
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
 
-    const queryKey = discoveryInventoryKeys.vmwareSearch({
+    const { queryKey } = vmwareInventoryQuery({
       providerId: 'vcenter-01',
       folderName: 'Applications',
       namePrefix: 'WEB',
@@ -304,7 +304,8 @@ describe('useVmwareResourceInventory', () => {
     await waitFor(() => {
       expect(result.current.data?.virtualMachines.map((vm) => vm.name)).toEqual(['Refreshed VM'])
     })
-    expect(queryClient.getQueryData(queryKey)).toEqual(result.current.data)
+    // The live result is stored as the wire response under the regular search key.
+    expect(queryClient.getQueryData(queryKey)).toMatchObject({ vms: [{ name: 'Refreshed VM' }] })
     expect(queryClient.getQueryCache().findAll({ queryKey })).toHaveLength(1)
     expect(result.current.forceRefreshError).toBeNull()
   })
@@ -367,8 +368,8 @@ describe('useVmwareResourceInventory', () => {
     act(() => { resolveFirstForceRefresh?.(inventoryResponse(['VCenter-01 refreshed'])) })
     await act(async () => { await firstForceRefresh })
     await waitFor(() => {
-      expect(queryClient.getQueryData(discoveryInventoryKeys.vmwareSearch({ providerId: 'vcenter-01' }))).toMatchObject({
-        virtualMachines: [{ name: 'VCenter-01 refreshed' }],
+      expect(queryClient.getQueryData(vmwareInventoryQuery({ providerId: 'vcenter-01' }).queryKey)).toMatchObject({
+        vms: [{ name: 'VCenter-01 refreshed' }],
       })
     })
 
@@ -560,7 +561,7 @@ describe('useVmwareResourceInventory', () => {
     await waitFor(() => { expect(result.current.isError).toBe(true) })
 
     expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(result.current.error?.message).toBe('Discovery inventory request failed with status 500')
+    expect(result.current.error).toMatchObject({ name: 'OrvalApiError', status: 500 })
   })
 
   it('distinguishes an empty successful inventory from an initial loading state', async () => {

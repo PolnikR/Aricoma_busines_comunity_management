@@ -1,80 +1,100 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
+import { useCallback } from 'react'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
 import {
-  createRecoveryGroup,
-  deleteRecoveryGroup,
-  fetchRecoveryGroupInventory,
-  fetchRecoveryGroups,
-  rollbackRecoveryGroupOrchestration,
-  updateRecoveryGroup,
-} from '../api/recoveryGroupsApi'
-import { recoveryGroupKeys } from '../api/recoveryGroupQueryKeys'
-import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
+  useDeleteRecoveryGroup,
+  useGetRecoveryGroups,
+  useRollbackGroupFromOrchestrator,
+  useSubmitRecoveryGroup,
+} from '@/generated/query/recovery-groups/recovery-groups.gen'
+import type { RecoveryGroupsResponse, RecoveryGroupsResponseOutput } from '@/generated/query/zod'
+import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import { toProgrammaticId } from '@/shared/utils/programmaticId'
+import {
+  mapRecoveryGroupApiRecord,
+  toRecoveryGroup,
+  toRecoveryGroupReadRecord,
+  toRecoveryGroupSubmitPayload,
+} from '../helpers/mapRecoveryGroups'
+import type { RecoveryGroup, RecoveryGroupDraft, RollbackReport } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsError } from '../api/recoveryGroupsErrors'
-import type { RollbackReport } from '../api/schemas/recoveryGroupsSchema'
+import { validateRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
 
-export function useRecoveryGroupInventory(runId: string | null, enabled: boolean) {
-  return useQuery({
-    queryKey: recoveryGroupKeys.inventory(runId ?? ''),
-    queryFn: () => fetchRecoveryGroupInventory(runId ?? ''),
-    enabled: enabled && Boolean(runId),
-  })
+function toRecoveryGroups(response: RecoveryGroupsResponse, providers: ProviderRecord[]): RecoveryGroup[] {
+  // validatingMutator hands select the parsed Output shape.
+  return (response as RecoveryGroupsResponseOutput).recovery_groups
+    .map(record => mapRecoveryGroupApiRecord(toRecoveryGroupReadRecord(record), providers))
 }
 
+function requireRollback(response: RecoveryGroupsResponse, operation: string): RollbackReport {
+  const { rollback } = response as RecoveryGroupsResponseOutput
+  if (!rollback) throw new Error(`${operation} response is missing rollback details`)
+  return rollback
+}
+
+// Recovery group list and mutations for the pages. The list depends on the
+// providers (workload type and provider resolution), so its select is rebuilt
+// when the provider set changes.
 export function useRecoveryGroups() {
-  const queryClient = useQueryClient()
-  const providerQuery = useProviders()
-  const providers = providerQuery.data ?? []
-  const providerSignature = providers
-    .map(provider => `${provider.id}:${provider.type}`)
-    .sort()
-    .join('|')
-  const query = useQuery({
-    queryKey: [...recoveryGroupKeys.list(), providerSignature],
-    queryFn: () => fetchRecoveryGroups(providers),
-    enabled: providerQuery.isSuccess,
-    retry: false,
+  const providerQuery = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
+  const providers = providerQuery.data
+  const selectGroups = useCallback(
+    (response: RecoveryGroupsResponse) => toRecoveryGroups(response, providers ?? []),
+    [providers],
+  )
+  const query = useGetRecoveryGroups({
+    query: { select: selectGroups, enabled: providerQuery.isSuccess, retry: false },
   })
 
-  const createMutation = useMutation({
-    mutationFn: createRecoveryGroup,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() }),
-  })
-  const updateMutation = useMutation({
-    mutationFn: ({ id, draft }: { id: string; draft: RecoveryGroupDraft }) => (
-      updateRecoveryGroup(id, draft)
-    ),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() }),
-  })
-  const deleteMutation = useMutation({
-    mutationFn: (group: RecoveryGroup) => {
-      if (group.pushToOrchestrator) {
-        const providerId = group.orchestrationProviderId?.trim()
-        if (!providerId) {
-          throw new RecoveryGroupsError(
-            'missing_orchestration_provider',
-            'An orchestration provider is required to roll back this recovery group',
-          )
-        }
-        return deleteRecoveryGroup({
-          recoveryGroupId: group.id,
-          rollbackFromOrchestrator: true,
-          providerId,
-        })
-      }
-      return deleteRecoveryGroup({
-        recoveryGroupId: group.id,
-        rollbackFromOrchestrator: false,
-      })
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() }),
-  })
-  const rollbackMutation = useMutation({
-    mutationFn: ({ groupId, providerId }: { groupId: string; providerId: string }) => (
-      rollbackRecoveryGroupOrchestration(groupId, providerId)
-    ),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: recoveryGroupKeys.list() }),
-  })
+  const createMutation = useSubmitRecoveryGroup()
+  const updateMutation = useSubmitRecoveryGroup()
+  const deleteMutation = useDeleteRecoveryGroup()
+  const rollbackMutation = useRollbackGroupFromOrchestrator()
+
+  const submit = async (
+    mutation: typeof createMutation,
+    draft: RecoveryGroupDraft,
+    requestedId?: string,
+  ): Promise<RecoveryGroup> => {
+    const validated = validateRecoveryGroupDraft(draft)
+    const id = toProgrammaticId(requestedId ?? validated.id)
+    if (!id) throw new RecoveryGroupsError('invalid_draft', 'Recovery group ID is required')
+    const response = await mutation.mutateAsync({
+      data: toRecoveryGroupSubmitPayload(validated, id),
+      params: {
+        provider_id: validated.orchestrationProviderId,
+        push_to_orchestrator: validated.pushToOrchestrator,
+      },
+    })
+    const airflowRunId = (response as RecoveryGroupsResponseOutput).recovery_groups
+      .find(record => record.id === id)?.orchestration?.run_id ?? null
+    return { ...toRecoveryGroup(validated, id), airflowRunId }
+  }
+
+  const remove = async (group: RecoveryGroup): Promise<RollbackReport | null> => {
+    if (!group.pushToOrchestrator) {
+      await deleteMutation.mutateAsync({ params: { recovery_group_id: group.id, rollback_from_orchestrator: false } })
+      return null
+    }
+    const providerId = group.orchestrationProviderId?.trim()
+    if (!providerId) {
+      throw new RecoveryGroupsError(
+        'missing_orchestration_provider',
+        'An orchestration provider is required to roll back this recovery group',
+      )
+    }
+    const response = await deleteMutation.mutateAsync({
+      params: { recovery_group_id: group.id, rollback_from_orchestrator: true, provider_id: providerId },
+    })
+    return requireRollback(response, 'DELETE /delete_recovery_group')
+  }
+
+  const rollback = async (groupId: string, providerId: string): Promise<RollbackReport> => {
+    const response = await rollbackMutation.mutateAsync({
+      params: { recovery_group_id: groupId, provider_id: providerId },
+    })
+    return requireRollback(response, 'POST /rollback_group_from_orchestrator')
+  }
 
   return {
     groups: query.data ?? [],
@@ -82,12 +102,10 @@ export function useRecoveryGroups() {
     isFetching: query.isFetching,
     error: providerQuery.error ?? query.error,
     refresh: providerQuery.isSuccess ? query.refetch : providerQuery.refetch,
-    create: createMutation.mutateAsync,
-    update: (id: string, draft: RecoveryGroupDraft) => updateMutation.mutateAsync({ id, draft }),
-    remove: (group: RecoveryGroup) => deleteMutation.mutateAsync(group),
-    rollback: (groupId: string, providerId: string): Promise<RollbackReport> => (
-      rollbackMutation.mutateAsync({ groupId, providerId })
-    ),
+    create: (draft: RecoveryGroupDraft) => submit(createMutation, draft),
+    update: (id: string, draft: RecoveryGroupDraft) => submit(updateMutation, draft, id),
+    remove,
+    rollback,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,

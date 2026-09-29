@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { RollbackReport } from '../api/schemas/recoveryGroupsSchema'
+import type { RollbackReport } from '../model/recoveryGroupTypes'
 import { isRollbackClean } from './rollbackReport'
 
 describe('isRollbackClean', () => {

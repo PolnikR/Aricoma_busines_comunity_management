@@ -9,8 +9,9 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef, StateTone, TableDensity } from '@/shared/components/data-table'
 import { InventoryPanel } from '@/shared/components/inventory-shell/InventoryPanel'
-import { normalizeAccessLogFilters } from '../api/accessLogQueryKeys'
-import { useAccessLogs } from '../hooks/useAccessLogs'
+import { normalizeAccessLogFilters, toAccessLogParams } from '../model/accessLogFilters'
+import { selectAccessLogs } from '../model/selectAccessLogs'
+import { useGetAccessLogs } from '@/generated/query/logs/logs.gen'
 import type { AccessLogFilters, AccessLogRecord } from '../model/accessLogTypes'
 import { AccessLogDetailDrawer } from './AccessLogDetailDrawer'
 
@@ -99,7 +100,7 @@ function createColumns(t: (key: string) => string): ColumnDef<AccessLogTableRow>
 
 export function AccessLogsTable({ filters, density, toolbar, resetKey = 0 }: AccessLogsTableProps) {
   const { t } = useTranslation()
-  const { data = [], dataUpdatedAt, error, isLoading, isFetching, refetch } = useAccessLogs(filters)
+  const { data = [], dataUpdatedAt, error, isLoading, isFetching, refetch } = useGetAccessLogs(toAccessLogParams(filters), { query: { select: selectAccessLogs } })
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(INITIAL_PAGE_SIZE)
   const [selection, setSelection] = useState<{ dataUpdatedAt: number, row: AccessLogTableRow } | null>(null)

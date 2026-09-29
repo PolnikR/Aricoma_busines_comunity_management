@@ -15,7 +15,6 @@ function provider(id: string, name: string, type: ProviderRecord['type'], role: 
     description: '',
     type,
     ipAddress: '10.0.0.1',
-    port: 22,
     credentialId: null,
     role,
     credentialStatus: 'none',

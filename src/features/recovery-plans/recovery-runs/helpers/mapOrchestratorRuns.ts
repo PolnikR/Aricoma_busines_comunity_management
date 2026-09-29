@@ -1,4 +1,4 @@
-import type { OrchestratorRunsResponse } from '@/generated/api/models/orchestratorRunsResponse.gen'
+import type { OrchestratorRunsResponseOutput } from '@/generated/query/zod'
 import type { OrchestratorRun, OrchestratorRunsPage } from '../model/recoveryRunTypes'
 
 function toStringOrNull(value: unknown): string | null {
@@ -30,7 +30,11 @@ function mapRun(raw: unknown): OrchestratorRun | null {
   }
 }
 
-export function mapOrchestratorRuns(response: OrchestratorRunsResponse): OrchestratorRunsPage {
+// The spec lists only provider_id/dag_id; the Airflow fields (dag_runs,
+// total_entries) arrive as unlisted keys kept by validatingMutator.
+type OrchestratorRunsWire = OrchestratorRunsResponseOutput & Record<string, unknown>
+
+export function mapOrchestratorRuns(response: OrchestratorRunsWire): OrchestratorRunsPage {
   const rawRuns = response['dag_runs']
   const runs = Array.isArray(rawRuns)
     ? rawRuns.map(mapRun).filter((run): run is OrchestratorRun => run !== null)

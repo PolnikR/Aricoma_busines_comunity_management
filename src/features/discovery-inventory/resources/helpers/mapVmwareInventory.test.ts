@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   VmsResponse as VmsResponseSchema,
   type VmsResponse as VmsResponseInput,
-} from '@/generated/api/zod.gen'
+} from '@/generated/query/zod'
 import { mapVmwareInventory } from './mapVmwareInventory'
 
 function createVm(providerId: string): VmsResponseInput['vms'][number] {

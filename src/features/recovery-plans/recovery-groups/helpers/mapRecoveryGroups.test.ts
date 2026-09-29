@@ -7,7 +7,7 @@ import {
   toRecoveryGroupReadRecord,
   toRecoveryGroupSubmitPayload,
 } from './mapRecoveryGroups'
-import { RecoveryGroupRecord } from '@/generated/api/zod.gen'
+import { RecoveryGroupRecord } from '@/generated/query/zod'
 import type { ValidatedRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
 
 // Fixtures go through the generated schema so contract defaults (e.g. topology)
@@ -21,8 +21,8 @@ const vmwareProvider: ProviderRecord = {
   name: 'Production vCenter',
   description: 'VMware inventory',
   type: 'VMWARE',
+  role: 'source',
   ipAddress: '10.99.99.40',
-  port: 22,
   credentialId: 'vcenter-admin',
   credentialStatus: 'ok',
 }
@@ -32,8 +32,8 @@ const flashSystemProvider: ProviderRecord = {
   name: 'IBM FlashSystem',
   description: 'Storage inventory',
   type: 'FLASHCOPY',
+  role: 'source',
   ipAddress: '10.99.99.246',
-  port: 22,
   credentialId: 'ibm-admin',
   credentialStatus: 'ok',
 }

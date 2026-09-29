@@ -16,23 +16,26 @@ import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useSnapshotPolicies } from '@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies'
-import { useRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies'
-import { useCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies'
-import { toPolicySetSubmitPayload } from '../api/policySetsApi'
-import { useDeletePolicySet } from '../hooks/useDeletePolicySet'
-import type { PolicySet } from '../model/policySetTypes'
+import { useGetPolicies } from '@/generated/query/snapshot-policies/snapshot-policies.gen'
+import { selectSnapshotPolicies } from '@/features/recovery-plans/recovery-policies/snapshot/model/selectSnapshotPolicies'
+import { useGetRecoveryAppPolicies } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
+import { selectRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/model/selectRecoveryAppPolicies'
+import { useGetCleanRoomPolicies } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
+import { selectCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/model/selectCleanRoomPolicies'
+import { useDeletePolicySet } from '@/generated/query/policy-sets/policy-sets.gen'
+import type { PolicySetRecordOutput } from '@/generated/query/zod'
 import { PolicySetModal } from './PolicySetModal'
 
-function countPolicies(policySet: PolicySet): number {
-  return [policySet.snapshotPolicyId, policySet.recoveryAppPolicyId, policySet.cleanRoomPolicyId]
+
+function countPolicies(policySet: PolicySetRecordOutput): number {
+  return [policySet.snapshot_policy_id, policySet.recovery_app_policy_id, policySet.clean_room_policy_id]
     .filter(Boolean).length
 }
 
 function getColumns(
   t: ReturnType<typeof useTranslation>['t'],
   onViewJson: (policySetId: string) => void,
-): ColumnDef<PolicySet>[] {
+): ColumnDef<PolicySetRecordOutput>[] {
   return [
     {
       id: 'name',
@@ -47,7 +50,10 @@ function getColumns(
     {
       id: 'description',
       header: t('tables.policySet.description'),
-      cell: policySet => <span className="block max-w-md truncate" title={policySet.description}>{policySet.description || '-'}</span>,
+      cell: (policySet) => {
+        const description = policySet.description ?? ''
+        return <span className="block max-w-md truncate" title={description}>{description || '-'}</span>
+      },
     },
     {
       id: 'policies',
@@ -75,7 +81,7 @@ function getColumns(
 }
 
 interface PolicySetsTableProps {
-  policySets: PolicySet[]
+  policySets: PolicySetRecordOutput[]
   isLoading: boolean
   error: Error | null
   isRetrying: boolean
@@ -85,12 +91,12 @@ interface PolicySetsTableProps {
 export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRetry }: PolicySetsTableProps) {
   const { t } = useTranslation()
   const deletePolicySet = useDeletePolicySet()
-  const { data: availablePolicies = [] } = useSnapshotPolicies()
-  const { data: availableRecoveryAppPolicies = [] } = useRecoveryAppPolicies()
-  const { data: availableCleanRoomPolicies = [] } = useCleanRoomPolicies()
+  const { data: availablePolicies = [] } = useGetPolicies({ query: { select: selectSnapshotPolicies } })
+  const { data: availableRecoveryAppPolicies = [] } = useGetRecoveryAppPolicies({ query: { select: selectRecoveryAppPolicies } })
+  const { data: availableCleanRoomPolicies = [] } = useGetCleanRoomPolicies({ query: { select: selectCleanRoomPolicies } })
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [editing, setEditing] = useState<PolicySet | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<PolicySet | null>(null)
+  const [editing, setEditing] = useState<PolicySetRecordOutput | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<PolicySetRecordOutput | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const rows = useMemo(() => policySets, [policySets])
   const selected = rows.find(policySet => policySet.id === selectedId) ?? null
@@ -186,10 +192,10 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         {selected ? (
           <dl className="px-5 py-2">
             <DetailRow label={t('details.policySetId')} value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label={t('details.description')} value={selected.description || '-'} />
-            <DetailRow label={t('details.snapshotPolicies')} value={selected.snapshotPolicyId ? policyName(selected.snapshotPolicyId) : '-'} />
-            <DetailRow label={t('details.recoveryAppPolicy')} value={recoveryAppPolicyName(selected.recoveryAppPolicyId)} />
-            <DetailRow label={t('details.cleanRoomPolicy')} value={cleanRoomPolicyName(selected.cleanRoomPolicyId)} />
+            <DetailRow label={t('details.description')} value={(selected.description ?? '') || '-'} />
+            <DetailRow label={t('details.snapshotPolicies')} value={selected.snapshot_policy_id ? policyName(selected.snapshot_policy_id) : '-'} />
+            <DetailRow label={t('details.recoveryAppPolicy')} value={recoveryAppPolicyName(selected.recovery_app_policy_id ?? '')} />
+            <DetailRow label={t('details.cleanRoomPolicy')} value={cleanRoomPolicyName(selected.clean_room_policy_id ?? '')} />
           </dl>
         ) : null}
       </DetailDrawer>
@@ -208,7 +214,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         onCancel={() => { setDeleteTarget(null) }}
         onConfirm={() => {
           if (!deleteTarget) return
-          deletePolicySet.mutate(deleteTarget.id, {
+          deletePolicySet.mutate({ params: { policy_set_id: deleteTarget.id } }, {
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
             onError: () => { setDeleteTarget(null) },
           })
@@ -218,7 +224,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
       <JsonViewerModal
         open={jsonViewed !== null}
         title={t('policySets.jsonViewer.title')}
-        data={jsonViewed ? toPolicySetSubmitPayload(jsonViewed) : null}
+        data={jsonViewed}
         closeLabel={t('buttons.close')}
         onClose={() => { setJsonViewId(null) }}
       />

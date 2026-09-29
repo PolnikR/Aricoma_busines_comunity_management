@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import { FlashSystemResourcesPage } from '../components/flash-system/FlashSystemResourcesPage'
 import { IbmPowerResourcesPage } from '../components/ibm-power/IbmPowerResourcesPage'
 import type { SourceResourcesPageProps } from '../components/SourceResourcesPageProps'
@@ -19,7 +20,7 @@ export function ResourcesPage() {
     isSuccess: providersSuccess,
     isFetching: providersFetching,
     refetch: refetchProviders,
-  } = useProviders()
+  } = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const resourceTabLabels = useMemo(() => ({
     vmware: t('pages.virtualMachines.tabs.vmware'),
     flashsystem: t('pages.virtualMachines.tabs.flashSystem'),

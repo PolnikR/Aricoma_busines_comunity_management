@@ -8,8 +8,9 @@ import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelated
 const { usePlatformProvidersMock } = vi.hoisted(() => ({ usePlatformProvidersMock: vi.fn() }))
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
-  useProviders: () => ({
+vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/providers/providers.gen')>(),
+  useGetProviders: () => ({
     data: [
       {
         id: 'vmware-vcenter-01',
@@ -77,16 +78,16 @@ vi.mock('../hooks/useRecoveryGroupRelatedVolumes', () => ({
     isLoading: false,
   })),
 }))
-vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
-  usePolicySets: () => ({
+vi.mock('@/generated/query/policy-sets/policy-sets.gen', () => ({
+  useGetPolicySets: () => ({
     data: [
       {
         id: 'tier2-apps',
         name: 'Tier 2 applications',
         description: 'Policy set using the medium-tier, 6-hour cadence.',
-        snapshotPolicyId: 'medium-6h',
-        recoveryAppPolicyId: 'critical-daily-latest',
-        cleanRoomPolicyId: 'enforce-clean-target',
+        snapshot_policy_id: 'medium-6h',
+        recovery_app_policy_id: 'critical-daily-latest',
+        clean_room_policy_id: 'enforce-clean-target',
       },
     ],
     isLoading: false,
@@ -94,48 +95,48 @@ vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
     refetch: vi.fn(),
   }),
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies', () => ({
-  useSnapshotPolicies: () => ({
+vi.mock('@/generated/query/snapshot-policies/snapshot-policies.gen', () => ({
+  useGetPolicies: () => ({
     data: [{
       id: 'medium-6h',
       name: 'Medium — 6h',
       description: 'Medium-tier snapshot cadence.',
       level: 'medium',
-      frequencyValue: 6,
-      frequencyUnit: 'hours',
-      retentionValue: 7,
-      retentionUnit: 'days',
-      maxSnapshots: null,
+      frequency_value: 6,
+      frequency_unit: 'hours',
+      retention_value: 7,
+      retention_unit: 'days',
+      max_snapshots: null,
       enabled: true,
     }],
     isLoading: false,
     error: null,
   }),
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies', () => ({
-  useRecoveryAppPolicies: () => ({
+vi.mock('@/generated/query/recovery-app-policies/recovery-app-policies.gen', () => ({
+  useGetRecoveryAppPolicies: () => ({
     data: [{
       id: 'critical-daily-latest',
       name: 'Critical — Daily DR Test',
       description: 'Daily recovery validation.',
       level: 'critical',
-      frequencyValue: 1,
-      frequencyUnit: 'days',
-      retentionValue: 4,
-      retentionUnit: 'hours',
-      bootVerify: true,
-      snapshotSelectionMode: 'latest',
-      snapshotMaxAgeValue: null,
-      snapshotMaxAgeUnit: null,
-      snapshotTargetTime: null,
+      frequency_value: 1,
+      frequency_unit: 'days',
+      retention_value: 4,
+      retention_unit: 'hours',
+      boot_verify: true,
+      snapshot_selection_mode: 'latest',
+      snapshot_max_age_value: null,
+      snapshot_max_age_unit: null,
+      snapshot_target_time: null,
       enabled: true,
     }],
     isLoading: false,
     error: null,
   }),
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies', () => ({
-  useCleanRoomPolicies: () => ({
+vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => ({
+  useGetCleanRoomPolicies: () => ({
     data: [{
       id: 'enforce-clean-target',
       name: 'Enforce Clean Target',
@@ -146,8 +147,9 @@ vi.mock('@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRo
     error: null,
   }),
 }))
-vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
-  usePlatformProviders: usePlatformProvidersMock,
+vi.mock('@/generated/query/platform-providers/platform-providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/platform-providers/platform-providers.gen')>(),
+  useGetPlatformProviders: usePlatformProvidersMock,
 }))
 
 const defaultPlatformProvidersResult = {

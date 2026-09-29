@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fetchVmwareInventory } from '../api/vmwareInventoryApi'
+import { selectVmwareInventory, vmwareInventoryQuery } from '../model/inventoryQueries'
 import type { VirtualMachinesQuery } from '../types/virtualMachineTypes'
 import { applyFiltersAndPagination } from './filterVirtualMachines'
 import { mapInventoryToVirtualMachines } from './mapInventoryToVirtualMachines'
@@ -54,7 +54,8 @@ function createQuery(overrides: Partial<VirtualMachinesQuery> = {}): VirtualMach
 }
 
 async function loadVirtualMachines() {
-  return mapInventoryToVirtualMachines(await fetchVmwareInventory())
+  const response = await vmwareInventoryQuery({}).queryFn({ signal: new AbortController().signal })
+  return mapInventoryToVirtualMachines(selectVmwareInventory(response))
 }
 
 describe('mapInventoryToVirtualMachines', () => {

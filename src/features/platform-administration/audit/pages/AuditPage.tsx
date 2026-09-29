@@ -5,14 +5,15 @@ import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import type { TableDensity } from '@/shared/components/data-table'
 import { AccessLogsQueryToolbar } from '../components/AccessLogsQueryToolbar'
 import { AccessLogsTable } from '../components/AccessLogsTable'
-import { normalizeAccessLogFilters } from '../api/accessLogQueryKeys'
-import { useAccessLogs } from '../hooks/useAccessLogs'
+import { useGetAccessLogs } from '@/generated/query/logs/logs.gen'
+import { normalizeAccessLogFilters, toAccessLogParams } from '../model/accessLogFilters'
+import { selectAccessLogs } from '../model/selectAccessLogs'
 import { useAuditSearchParams } from '../hooks/useAuditSearchParams'
 
 export function AuditPage() {
   const { t } = useTranslation()
   const { filters, setFilters } = useAuditSearchParams()
-  const { isFetching, refetch } = useAccessLogs(filters)
+  const { isFetching, refetch } = useGetAccessLogs(toAccessLogParams(filters), { query: { select: selectAccessLogs } })
   const [density, setDensity] = useState<TableDensity>('comfortable')
   const [tableResetKey, setTableResetKey] = useState(0)
 

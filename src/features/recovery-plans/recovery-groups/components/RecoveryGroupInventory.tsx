@@ -5,7 +5,8 @@ import { Pagination } from '@/shared/components/pagination/Pagination'
 import { ResponseBodyViewer } from '@/shared/components/response-body/ResponseBodyViewer'
 import { ChevronDownIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useRecoveryGroupInventory } from '../hooks/useRecoveryGroups'
+import { useGetRecoveryGroupInventory } from '@/generated/query/recovery-groups/recovery-groups.gen'
+import { selectRecoveryGroupInventory } from '../model/recoveryGroupTypes'
 
 interface RecoveryGroupInventoryProps {
   runId: string | null
@@ -24,7 +25,7 @@ function providerObjectLabel(value: Record<string, unknown>): string {
 
 export function RecoveryGroupInventory({ runId, active }: RecoveryGroupInventoryProps) {
   const { t } = useTranslation()
-  const query = useRecoveryGroupInventory(runId, active)
+  const query = useGetRecoveryGroupInventory({ run_id: runId ?? '' }, { query: { select: selectRecoveryGroupInventory, enabled: active && Boolean(runId) } })
   const [relationPages, setRelationPages] = useState<Record<string, number>>({})
 
   if (!runId) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.noRun')}</p>

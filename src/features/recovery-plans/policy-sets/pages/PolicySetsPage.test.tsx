@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { usePolicySets } from '../hooks/usePolicySets'
+import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
 import { PolicySetsPage } from './PolicySetsPage'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../hooks/usePolicySets', () => ({ usePolicySets: vi.fn() }))
+vi.mock('@/generated/query/policy-sets/policy-sets.gen', () => ({ useGetPolicySets: vi.fn() }))
 vi.mock('../components/PolicySetsTable', () => ({
   PolicySetsTable: () => <div>Policy set catalogue</div>,
 }))
@@ -16,13 +16,13 @@ vi.mock('../components/PolicySetModal', () => ({
 }))
 
 beforeEach(() => {
-  vi.mocked(usePolicySets).mockReturnValue({
+  vi.mocked(useGetPolicySets).mockReturnValue({
     data: [{ id: 'tier2-apps' }],
     isLoading: false,
     isFetching: false,
     error: null,
     refetch: vi.fn(),
-  } as unknown as ReturnType<typeof usePolicySets>)
+  } as unknown as ReturnType<typeof useGetPolicySets>)
 })
 
 describe('PolicySetsPage', () => {
@@ -52,13 +52,13 @@ describe('PolicySetsPage', () => {
 
   it('refreshes policy sets from the page toolbar', async () => {
     const refetch = vi.fn()
-    vi.mocked(usePolicySets).mockReturnValue({
+    vi.mocked(useGetPolicySets).mockReturnValue({
       data: [],
       isLoading: false,
       isFetching: false,
       error: null,
       refetch,
-    } as unknown as ReturnType<typeof usePolicySets>)
+    } as unknown as ReturnType<typeof useGetPolicySets>)
     render(<PolicySetsPage />)
 
     await userEvent.click(screen.getByRole('button', { name: 'Refresh' }))

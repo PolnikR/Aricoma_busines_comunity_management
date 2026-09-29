@@ -8,9 +8,9 @@ import {
 } from './infrastructureSourceSelection'
 
 const providers: ProviderRecord[] = [
-  { id: 'vcenter-01', name: 'vCenter', description: '', type: 'VMWARE', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
-  { id: 'flash-01', name: 'Flash', description: '', type: 'FLASHCOPY', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
-  { id: 'power-01', name: 'Power', description: '', type: 'IBM_POWER', ipAddress: '', port: 22, credentialId: null, credentialStatus: 'ok' },
+  { id: 'vcenter-01', name: 'vCenter', description: '', type: 'VMWARE', role: 'source', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
+  { id: 'flash-01', name: 'Flash', description: '', type: 'FLASHCOPY', role: 'source', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
+  { id: 'power-01', name: 'Power', description: '', type: 'IBM_POWER', role: 'source', ipAddress: '', credentialId: null, credentialStatus: 'ok' },
 ]
 
 describe('infrastructureSourceSelection', () => {

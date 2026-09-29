@@ -73,3 +73,29 @@ verify_deploy:
       fi
   needs:
     - build-and-deploy
+
+# Detects backend OpenAPI changes. The runner has Docker, not Node, so the Node
+# steps run in the same image as the Dockerfile build stage. On failure run
+# `npm run api:update` locally, fix the type errors and commit the snapshot.
+api-drift:
+  stage: check
+  tags:
+    - deploy-abco
+  needs: []
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - when: manual
+      allow_failure: true
+  variables:
+    BACKEND_URL: "http://10.99.99.53:8000"
+    NODE_IMAGE: "node:22.23.1-alpine"
+  script:
+    - |
+      docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e BACKEND_URL \
+        -v "${CI_PROJECT_DIR}:/app" -w /app ${NODE_IMAGE} \
+        sh -c "npm ci && npm run api:update"
+    - git diff --exit-code -- openapi/abco-api.json || { echo "Backend OpenAPI changed; run npm run api:update locally."; exit 1; }
+    - |
+      docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
+        -v "${CI_PROJECT_DIR}:/app" -w /app ${NODE_IMAGE} \
+        npx tsc -p tsconfig.app.json --noEmit

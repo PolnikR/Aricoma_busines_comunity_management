@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { PolicySet } from '@/features/recovery-plans/policy-sets/model/policySetTypes'
+import type { PolicySetRecord } from '@/generated/query/zod'
 import { RecoveryGroupPolicySetStep } from './RecoveryGroupPolicySetStep'
 
 const {
@@ -15,24 +15,24 @@ const {
 }))
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies', () => ({
-  useSnapshotPolicies: useSnapshotPoliciesMock,
+vi.mock('@/generated/query/snapshot-policies/snapshot-policies.gen', () => ({
+  useGetPolicies: useSnapshotPoliciesMock,
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies', () => ({
-  useRecoveryAppPolicies: useRecoveryAppPoliciesMock,
+vi.mock('@/generated/query/recovery-app-policies/recovery-app-policies.gen', () => ({
+  useGetRecoveryAppPolicies: useRecoveryAppPoliciesMock,
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies', () => ({
-  useCleanRoomPolicies: useCleanRoomPoliciesMock,
+vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => ({
+  useGetCleanRoomPolicies: useCleanRoomPoliciesMock,
 }))
 
-const policySets: PolicySet[] = [
+const policySets: PolicySetRecord[] = [
   {
     id: 'tier2-apps',
     name: 'Tier 2 applications',
     description: 'Policy set using the medium-tier, 6-hour cadence.',
-    snapshotPolicyId: 'medium-6h',
-    recoveryAppPolicyId: 'critical-daily-latest',
-    cleanRoomPolicyId: 'enforce-clean-target',
+    snapshot_policy_id: 'medium-6h',
+    recovery_app_policy_id: 'critical-daily-latest',
+    clean_room_policy_id: 'enforce-clean-target',
   },
 ]
 

@@ -12,8 +12,8 @@ export const vmVolumes: Record<string, Record<string, string[]>> = {
 }
 
 export const policySets = [
-  { id: 'test_1_hour_ps', name: 'Hourly recovery', description: 'Hourly snapshots, retained for 24 hours.', snapshotPolicyId: 'hourly', recoveryAppPolicyId: 'daily', cleanRoomPolicyId: 'clean' },
-  { id: 'critical_ps', name: 'Critical workloads', description: 'Snapshots every 15 minutes, retained for 48 hours.', snapshotPolicyId: 'quarter-hour', recoveryAppPolicyId: 'daily', cleanRoomPolicyId: 'clean' },
+  { id: 'test_1_hour_ps', name: 'Hourly recovery', description: 'Hourly snapshots, retained for 24 hours.', snapshot_policy_id: 'hourly', recovery_app_policy_id: 'daily', clean_room_policy_id: 'clean' },
+  { id: 'critical_ps', name: 'Critical workloads', description: 'Snapshots every 15 minutes, retained for 48 hours.', snapshot_policy_id: 'quarter-hour', recovery_app_policy_id: 'daily', clean_room_policy_id: 'clean' },
 ]
 
 export const stepLabels = ['Details', 'Topology', 'Resource type', 'Compute provider', 'Virtual machines', 'Related storage', 'Policy Set', 'Orchestration']

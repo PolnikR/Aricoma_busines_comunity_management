@@ -11,6 +11,7 @@ const airflowProvider: PlatformProviderRecord = {
   name: 'Primary Airflow',
   description: 'Primary orchestrator',
   type: 'AIRFLOW',
+  role: 'source',
   ipAddress: '10.99.99.60',
   port: 8080,
   dagDir: '/opt/airflow/dags',

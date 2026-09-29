@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
-import { fetchTags } from '../api/vmwareTagsApi'
+import { selectTags, tagsQuery } from '../model/inventoryQueries'
 
 export function useTags(providerId: string | null | undefined, enabled = true) {
   return useQuery({
-    queryKey: discoveryInventoryKeys.tags(providerId),
-    queryFn: () => providerId ? fetchTags(providerId) : Promise.resolve([]),
+    ...tagsQuery(providerId ?? ''),
+    select: selectTags,
     enabled: enabled && Boolean(providerId),
   })
 }

@@ -6,13 +6,15 @@
  */
 import {
   useMutation,
-  useQuery
+  useQuery,
+  useQueryClient
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
   MutationFunction,
+  MutationFunctionContext,
   QueryClient,
   QueryFunction,
   QueryKey,
@@ -196,7 +198,7 @@ return validatingMutator<CleanRoomPoliciesResponse>(getSubmitCleanRoomPolicyUrl(
 export const getSubmitCleanRoomPolicyMutationKey = () => ['submitCleanRoomPolicy'] as const;
 
 export const getSubmitCleanRoomPolicyMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitCleanRoomPolicy>>, TError,SubmitCleanRoomPolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitCleanRoomPolicy>>, TError,SubmitCleanRoomPolicyMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitCleanRoomPolicy>>, TError,SubmitCleanRoomPolicyMutationVariables, TContext> => {
 
 const mutationKey = getSubmitCleanRoomPolicyMutationKey();
@@ -215,12 +217,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  submitCleanRoomPolicy(data,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof submitCleanRoomPolicy>>, variables: SubmitCleanRoomPolicyMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetCleanRoomPoliciesQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type SubmitCleanRoomPolicyMutationResult = NonNullable<Awaited<ReturnType<typeof submitCleanRoomPolicy>>>
     export type SubmitCleanRoomPolicyMutationBody = CleanRoomPolicy
@@ -231,14 +238,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Submit Clean Room Policy
  */
 export const useSubmitCleanRoomPolicy = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitCleanRoomPolicy>>, TError,SubmitCleanRoomPolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitCleanRoomPolicy>>, TError,SubmitCleanRoomPolicyMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitCleanRoomPolicy>>,
         TError,
         SubmitCleanRoomPolicyMutationVariables,
         TContext
       > => {
-      return useMutation(getSubmitCleanRoomPolicyMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getSubmitCleanRoomPolicyMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }
     export const getDeleteCleanRoomPolicyUrl = (params: DeleteCleanRoomPolicyParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -276,7 +284,7 @@ export const deleteCleanRoomPolicy = async (params: DeleteCleanRoomPolicyParams,
 export const getDeleteCleanRoomPolicyMutationKey = () => ['deleteCleanRoomPolicy'] as const;
 
 export const getDeleteCleanRoomPolicyMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCleanRoomPolicy>>, TError,DeleteCleanRoomPolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCleanRoomPolicy>>, TError,DeleteCleanRoomPolicyMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteCleanRoomPolicy>>, TError,DeleteCleanRoomPolicyMutationVariables, TContext> => {
 
 const mutationKey = getDeleteCleanRoomPolicyMutationKey();
@@ -295,12 +303,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  deleteCleanRoomPolicy(params,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof deleteCleanRoomPolicy>>, variables: DeleteCleanRoomPolicyMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetCleanRoomPoliciesQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type DeleteCleanRoomPolicyMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCleanRoomPolicy>>>
 
@@ -311,12 +324,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Delete Clean Room Policy Route
  */
 export const useDeleteCleanRoomPolicy = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCleanRoomPolicy>>, TError,DeleteCleanRoomPolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCleanRoomPolicy>>, TError,DeleteCleanRoomPolicyMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteCleanRoomPolicy>>,
         TError,
         DeleteCleanRoomPolicyMutationVariables,
         TContext
       > => {
-      return useMutation(getDeleteCleanRoomPolicyMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getDeleteCleanRoomPolicyMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }

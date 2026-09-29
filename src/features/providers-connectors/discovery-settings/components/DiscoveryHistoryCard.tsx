@@ -7,10 +7,13 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { Field, Select } from '@/shared/components/form/FormControls'
 import { RefreshIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
+import { useGetDiscoveryCacheHistory } from '@/generated/query/discovery-cache/discovery-cache.gen'
 import { providerTypeLabel } from '../../providers/helpers/providerTypeLabel'
-import { useProviders } from '../../providers/hooks/useProviders'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import { getDiscoveryCacheHistoryColumns } from '../config/discoveryCacheHistoryColumns'
-import { useDiscoveryCacheHistory } from '../hooks/useDiscoveryCacheHistory'
+import { historyParams } from '../model/historyParams'
+import { selectDiscoveryCacheHistory } from '../model/selectDiscoveryCacheHistory'
 
 const HISTORY_SERVER_LIMIT = 100
 const HISTORY_PAGE_SIZE_OPTIONS = [10, 25, 50]
@@ -27,13 +30,13 @@ export function DiscoveryHistoryCard({
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
-  const providersQuery = useProviders('all')
-  const historyQuery = useDiscoveryCacheHistory({
-    ...(providerId ? { providerId } : {}),
-    limit: HISTORY_SERVER_LIMIT,
-  })
+  const providersQuery = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
+  const historyQuery = useGetDiscoveryCacheHistory(
+    historyParams(providerId, HISTORY_SERVER_LIMIT),
+    { query: { select: selectDiscoveryCacheHistory } },
+  )
   const providers = providersQuery.data ?? []
-  const rows = historyQuery.data?.runs ?? []
+  const rows = historyQuery.data ?? []
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize))
   const safePage = Math.min(page, pageCount)
   const pageStart = (safePage - 1) * pageSize
@@ -139,7 +142,7 @@ export function DiscoveryHistoryCard({
           <DataTable
             columns={columns}
             rows={visibleRows}
-            rowKey={(run, index) => `${run.providerId}-${run.startedAt}-${String(index)}`}
+            rowKey={(run, index) => `${run.provider_id}-${run.started_at}-${String(index)}`}
             isLoading={historyQuery.isLoading}
             loadingRowCount={5}
             minWidthClassName="min-w-220"

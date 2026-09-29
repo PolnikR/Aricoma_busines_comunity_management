@@ -4,24 +4,20 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import { fetchFlashSystemInventory } from '../api/flashSystemInventoryApi'
-import { fetchPowerInventory } from '../api/powerInventoryApi'
 import { useResourceInventoryQueries } from './useResourceInventoryQueries'
+import { createDiscoveryFetchHandlers, installDiscoveryFetch } from '../test/discoveryFetch'
 
-vi.mock('../api/flashSystemInventoryApi', () => ({
-  fetchFlashSystemInventory: vi.fn(),
-}))
-vi.mock('../api/powerInventoryApi', () => ({
-  fetchPowerInventory: vi.fn(),
-}))
+const discoveryFetch = createDiscoveryFetchHandlers()
+const { fetchFlashSystemInventory, fetchPowerInventory } = discoveryFetch
+
 
 const flashProvider: ProviderRecord = {
-  id: 'flash-01', name: 'Flash 01', description: '', type: 'FLASHCOPY',
-  ipAddress: '10.0.0.1', port: 22, credentialId: null, credentialStatus: 'none',
+  id: 'flash-01', name: 'Flash 01', description: '', type: 'FLASHCOPY', role: 'source',
+  ipAddress: '10.0.0.1', credentialId: null, credentialStatus: 'none',
 }
 const powerProvider: ProviderRecord = {
-  id: 'power-01', name: 'Power 01', description: '', type: 'IBM_POWER',
-  ipAddress: '10.0.0.2', port: 22, credentialId: null, credentialStatus: 'none',
+  id: 'power-01', name: 'Power 01', description: '', type: 'IBM_POWER', role: 'source',
+  ipAddress: '10.0.0.2', credentialId: null, credentialStatus: 'none',
 }
 const secondFlashProvider: ProviderRecord = {
   ...flashProvider,
@@ -44,15 +40,7 @@ function createQueryClient() {
 describe('useResourceInventoryQueries', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchFlashSystemInventory).mockResolvedValue({
-      reportedCount: 0, volumes: [], resources: [], pools: {}, hosts: {}, clusters: {},
-    })
-    vi.mocked(fetchPowerInventory).mockResolvedValue({
-      reportedCount: 0,
-      countsByType: { LogicalPartition: 0, VirtualIOServer: 0 },
-      virtualMachines: [],
-      partitions: [],
-    })
+    installDiscoveryFetch(discoveryFetch)
   })
 
   it('fetches all resources without provider_id and uses the all-provider cache key', async () => {
@@ -73,7 +61,8 @@ describe('useResourceInventoryQueries', () => {
     expect(fetchFlashSystemInventory).toHaveBeenCalledWith(undefined)
     expect(fetchPowerInventory).not.toHaveBeenCalled()
     expect(client.getQueryCache().find({
-      queryKey: ['resource-inventory', 'FLASHCOPY', null],
+      queryKey: ['/get_volumes'],
+      exact: true,
     })).toBeDefined()
   })
 
@@ -112,7 +101,7 @@ describe('useResourceInventoryQueries', () => {
     await waitFor(() => { expect(fetchFlashSystemInventory).toHaveBeenCalledTimes(2) })
     expect(fetchFlashSystemInventory).toHaveBeenLastCalledWith('flash-01')
     expect(client.getQueryCache().find({
-      queryKey: ['resource-inventory', 'FLASHCOPY', 'flash-01'],
+      queryKey: ['/get_volumes', { provider_id: 'flash-01' }],
     })).toBeDefined()
 
     providerId = undefined

@@ -1,8 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useGetOrchestratorRuns } from '@/generated/query/operations/operations.gen'
 import { ACTIVE_RUN_INTERVAL_MS, STANDARD_STALE_TIME_MS } from '@/shared/query/cachePolicy'
-import { fetchOrchestratorRuns } from '../api/recoveryRunsApi'
 import { isNonTerminalRunStatus } from '../helpers/runStatus'
-import { recoveryRunsKeys } from '../api/recoveryRunsQueryKeys'
+import { latestRunParams, newestRunOf, selectOrchestratorRuns } from '../model/orchestratorRunsQuery'
 import type { OrchestratorRun } from '../model/recoveryRunTypes'
 
 // Single-entity latest-run lookup for detail panels (e.g. an Application or
@@ -12,23 +11,24 @@ import type { OrchestratorRun } from '../model/recoveryRunTypes'
 export function useLatestOrchestratorRun(providerId: string | null, dagId: string | null) {
   const enabled = Boolean(providerId) && Boolean(dagId)
 
-  const query = useQuery({
-    queryKey: recoveryRunsKeys.latest(providerId, dagId ?? ''),
-    queryFn: () => fetchOrchestratorRuns(providerId ?? '', dagId ?? '', { limit: 1, orderBy: '-logical_date' }),
-    enabled,
-    staleTime: query => {
-      const latestRun = query.state.data?.runs[0]
-      return latestRun && isNonTerminalRunStatus(latestRun.status)
-        ? ACTIVE_RUN_INTERVAL_MS
-        : STANDARD_STALE_TIME_MS
+  const query = useGetOrchestratorRuns(latestRunParams(providerId ?? '', dagId ?? ''), {
+    query: {
+      select: selectOrchestratorRuns,
+      enabled,
+      staleTime: query => {
+        const latestRun = newestRunOf(query.state.data)
+        return latestRun && isNonTerminalRunStatus(latestRun.status)
+          ? ACTIVE_RUN_INTERVAL_MS
+          : STANDARD_STALE_TIME_MS
+      },
+      refetchInterval: query => {
+        const latestRun = newestRunOf(query.state.data)
+        return latestRun && isNonTerminalRunStatus(latestRun.status)
+          ? ACTIVE_RUN_INTERVAL_MS
+          : false
+      },
+      refetchIntervalInBackground: false,
     },
-    refetchInterval: query => {
-      const latestRun = query.state.data?.runs[0]
-      return latestRun && isNonTerminalRunStatus(latestRun.status)
-        ? ACTIVE_RUN_INTERVAL_MS
-        : false
-    },
-    refetchIntervalInBackground: false,
   })
 
   const latestRun: OrchestratorRun | null = query.data?.runs[0] ?? null

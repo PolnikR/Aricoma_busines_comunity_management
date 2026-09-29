@@ -1,6 +1,5 @@
 import { useQueries } from '@tanstack/react-query'
-import { discoveryInventoryKeys } from '@/features/discovery-inventory/resources/api/resourceInventoryQueryKeys'
-import { fetchVdisksByVm } from '@/features/discovery-inventory/resources/api/vmStorageVolumesApi'
+import { selectVdisks, vdisksByVmQuery } from '@/features/discovery-inventory/resources/model/inventoryQueries'
 
 interface RecoveryGroupRelatedVolumes {
   flashcopyProviderId: string | null
@@ -21,12 +20,8 @@ export function useRecoveryGroupRelatedVolumes(
 
   const results = useQueries({
     queries: vmNames.map(vmName => ({
-      queryKey: discoveryInventoryKeys.vdisksByVm(
-        vmName,
-        vmProviderId ?? undefined,
-        flashcopyProviderId ?? undefined,
-      ),
-      queryFn: () => fetchVdisksByVm(vmName, vmProviderId ?? undefined, flashcopyProviderId ?? undefined),
+      ...vdisksByVmQuery(vmName, vmProviderId ?? undefined, flashcopyProviderId ?? undefined),
+      select: selectVdisks,
       enabled: queryEnabled,
     })),
   })

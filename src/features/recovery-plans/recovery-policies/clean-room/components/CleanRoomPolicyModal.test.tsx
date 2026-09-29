@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { CleanRoomPolicy } from '../model/cleanRoomPolicyTypes'
+import type { CleanRoomPolicyRecordOutput } from '@/generated/query/zod'
 import { CleanRoomPolicyModal } from './CleanRoomPolicyModal'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -10,7 +10,7 @@ vi.mock('react-router', async (importOriginal) => ({
   useBlocker: () => ({ state: 'unblocked' as const }),
 }))
 
-const policy: CleanRoomPolicy = {
+const policy: CleanRoomPolicyRecordOutput = {
   id: 'enforce-clean-target',
   name: 'Enforce Clean Target',
   description: 'Remove conflicting target resources before recovery.',

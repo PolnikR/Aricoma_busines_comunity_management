@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
-import { fetchVdisksByVm } from '../api/vmStorageVolumesApi'
+import { selectVdisks, vdisksByVmQuery } from '../model/inventoryQueries'
 
 export function useVdisksByVm(
   vmName: string,
@@ -8,8 +7,8 @@ export function useVdisksByVm(
   ibmProviderId?: string,
 ) {
   return useQuery({
-    queryKey: discoveryInventoryKeys.vdisksByVm(vmName, providerId, ibmProviderId),
-    queryFn: () => fetchVdisksByVm(vmName, providerId, ibmProviderId),
+    ...vdisksByVmQuery(vmName, providerId, ibmProviderId),
+    select: selectVdisks,
     enabled: !!vmName && !!providerId,
   })
 }

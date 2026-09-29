@@ -2,11 +2,11 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useSnapshotPolicies } from '../hooks/useSnapshotPolicies'
+import { useGetPolicies } from '@/generated/query/snapshot-policies/snapshot-policies.gen'
 import { SnapshotPoliciesPage } from './SnapshotPoliciesPage'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../hooks/useSnapshotPolicies', () => ({ useSnapshotPolicies: vi.fn() }))
+vi.mock('@/generated/query/snapshot-policies/snapshot-policies.gen', () => ({ useGetPolicies: vi.fn() }))
 vi.mock('../components/SnapshotPoliciesTable', () => ({
   SnapshotPoliciesTable: () => <div>Snapshot policy catalogue</div>,
 }))
@@ -17,13 +17,13 @@ vi.mock('../components/SnapshotPolicyModal', () => ({
 }))
 
 beforeEach(() => {
-  vi.mocked(useSnapshotPolicies).mockReturnValue({
+  vi.mocked(useGetPolicies).mockReturnValue({
     data: [{ id: 'critical-15m' }],
     isLoading: false,
     isFetching: false,
     error: null,
     refetch: vi.fn(),
-  } as unknown as ReturnType<typeof useSnapshotPolicies>)
+  } as unknown as ReturnType<typeof useGetPolicies>)
 })
 
 describe('SnapshotPoliciesPage', () => {
@@ -46,13 +46,13 @@ describe('SnapshotPoliciesPage', () => {
 
   it('refreshes snapshot policies from the page toolbar', async () => {
     const refetch = vi.fn()
-    vi.mocked(useSnapshotPolicies).mockReturnValue({
+    vi.mocked(useGetPolicies).mockReturnValue({
       data: [],
       isLoading: false,
       isFetching: false,
       error: null,
       refetch,
-    } as unknown as ReturnType<typeof useSnapshotPolicies>)
+    } as unknown as ReturnType<typeof useGetPolicies>)
     render(<MemoryRouter><SnapshotPoliciesPage /></MemoryRouter>)
 
     await userEvent.click(screen.getByRole('button', { name: 'Refresh' }))

@@ -14,7 +14,6 @@ const sourceProvider: ProviderRecord = {
   type: 'VMWARE',
   role: 'source',
   ipAddress: '10.0.0.1',
-  port: 443,
   credentialId: null,
   credentialStatus: 'none',
 }
@@ -30,8 +29,9 @@ vi.mock('@/hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }))
 
-vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
-  useProviders: () => ({
+vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/providers/providers.gen')>(),
+  useGetProviders: () => ({
     data: [sourceProvider, targetProvider],
     error: null,
     isLoading: false,

@@ -2,9 +2,13 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { ProviderRecord, ProviderRole, ProviderType } from '@/features/providers-connectors/providers/model/providerTypes'
 import { getProvidersByTypeAndRole } from '@/features/providers-connectors/providers/utils/providerFilters'
-import { discoveryInventoryKeys } from '../api/resourceInventoryQueryKeys'
-import { fetchFlashSystemInventory } from '../api/flashSystemInventoryApi'
-import { fetchPowerInventory } from '../api/powerInventoryApi'
+import type { PowerVmsResponse, VolumesResponse } from '@/generated/query/zod'
+import {
+  createFlashSystemInventorySelect,
+  createPowerInventorySelect,
+  flashSystemInventoryQuery,
+  powerInventoryQuery,
+} from '../model/inventoryQueries'
 import type {
   FlashSystemInventory,
   FlashSystemVolumeResource,
@@ -51,11 +55,25 @@ export function useResourceInventoryQueries(
   const selectedProvider = matchingProviders.find((provider) => provider.id === providerId)
   const effectiveProviderId = selectedProvider?.id
 
-  const query = useQuery<FlashSystemInventory | PowerInventory>({
-    queryKey: discoveryInventoryKeys.resourceInventory(providerType ?? 'inactive', effectiveProviderId),
-    queryFn: async () => providerType === 'FLASHCOPY'
-      ? fetchFlashSystemInventory(effectiveProviderId)
-      : fetchPowerInventory(effectiveProviderId),
+  // FlashSystem and IBM Power inventories come from different endpoints, so the
+  // response type is narrowed per provider type.
+  const definition = useMemo(() => {
+    if (providerType === 'FLASHCOPY') {
+      const select = createFlashSystemInventorySelect(effectiveProviderId)
+      return {
+        ...flashSystemInventoryQuery(effectiveProviderId),
+        select: (response: unknown): FlashSystemInventory | PowerInventory => select(response as VolumesResponse),
+      }
+    }
+    const select = createPowerInventorySelect(effectiveProviderId)
+    return {
+      ...powerInventoryQuery(effectiveProviderId),
+      select: (response: unknown): FlashSystemInventory | PowerInventory => select(response as PowerVmsResponse),
+    }
+  }, [effectiveProviderId, providerType])
+
+  const query = useQuery<unknown, Error, FlashSystemInventory | PowerInventory>({
+    ...definition,
     enabled: providerType !== null && matchingProviders.length > 0,
   })
   const queryData = query.data

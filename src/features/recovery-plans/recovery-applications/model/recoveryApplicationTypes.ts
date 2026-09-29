@@ -1,4 +1,7 @@
-import type { RecoveryAppRecordOutput } from '@/generated/api/zod.gen'
+import type { RecoveryAppRecordOutput, RollbackReportOutput } from '@/generated/query/zod'
+
+// Rollback report of the delete response, typed by the patched spec.
+export type RollbackReport = RollbackReportOutput
 
 export interface RecoveryVM {
   name: string

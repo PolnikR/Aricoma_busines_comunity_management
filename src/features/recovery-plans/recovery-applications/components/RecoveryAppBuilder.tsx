@@ -10,9 +10,12 @@ import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSi
 import { Spinner } from '@/shared/components/spinner/Spinner'
 import { Toggle } from '@/shared/components/toggle/Toggle'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
-import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
-import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
-import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
+import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
+import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
+import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
+import { selectPolicySets } from '@/features/recovery-plans/policy-sets/model/selectPolicySets'
 import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
@@ -80,9 +83,9 @@ export function RecoveryAppBuilder({
     () => createInitialFormState(initialData),
   )
 
-  const providersQuery = useProviders()
-  const platformProvidersQuery = usePlatformProviders()
-  const policySetsQuery = usePolicySets()
+  const providersQuery = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
+  const platformProvidersQuery = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
+  const policySetsQuery = useGetPolicySets({ query: { select: selectPolicySets } })
   const {
     groups,
     isLoading: areGroupsLoading,

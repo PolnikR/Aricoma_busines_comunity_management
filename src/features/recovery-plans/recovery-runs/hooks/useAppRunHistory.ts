@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
 import type { Query } from '@tanstack/react-query'
+import { useGetOrchestratorRuns } from '@/generated/query/operations/operations.gen'
+import type { OrchestratorRunsResponse } from '@/generated/query/zod'
 import { ACTIVE_RUN_INTERVAL_MS, RECOVERY_RUNS_INTERVAL_MS } from '@/shared/query/cachePolicy'
-import { fetchOrchestratorRuns } from '../api/recoveryRunsApi'
 import { isNonTerminalRunStatus } from '../helpers/runStatus'
-import { recoveryRunsKeys } from '../api/recoveryRunsQueryKeys'
+import { newestRunOf, RUNS_ORDER_BY, selectOrchestratorRuns } from '../model/orchestratorRunsQuery'
 import type { OrchestratorRunsPage } from '../model/recoveryRunTypes'
 
 interface UseAppRunHistoryOptions {
@@ -15,10 +15,10 @@ interface UseAppRunHistoryOptions {
 
 const EMPTY_PAGE: OrchestratorRunsPage = { runs: [], total: 0 }
 
-function shouldFastPollHistory(query: Pick<Query<OrchestratorRunsPage>, 'state'>, page: number): boolean {
+function shouldFastPollHistory(query: Pick<Query<OrchestratorRunsResponse>, 'state'>, page: number): boolean {
   if (page !== 1) return false
 
-  const newestRun = query.state.data?.runs[0]
+  const newestRun = newestRunOf(query.state.data)
   return Boolean(newestRun && isNonTerminalRunStatus(newestRun.status))
 }
 
@@ -27,17 +27,21 @@ function shouldFastPollHistory(query: Pick<Query<OrchestratorRunsPage>, 'state'>
 export function useAppRunHistory({ providerId, dagId, page, pageSize }: UseAppRunHistoryOptions) {
   const enabled = Boolean(providerId) && Boolean(dagId)
 
-  const query = useQuery({
-    queryKey: recoveryRunsKeys.history(providerId, dagId ?? '', page, pageSize),
-    queryFn: () => fetchOrchestratorRuns(providerId ?? '', dagId ?? '', {
-      limit: pageSize,
-      offset: (page - 1) * pageSize,
-      orderBy: '-logical_date',
-    }),
-    enabled,
-    staleTime: query => shouldFastPollHistory(query, page) ? ACTIVE_RUN_INTERVAL_MS : RECOVERY_RUNS_INTERVAL_MS,
-    refetchInterval: query => shouldFastPollHistory(query, page) ? ACTIVE_RUN_INTERVAL_MS : false,
-    refetchIntervalInBackground: false,
+  const params = {
+    provider_id: providerId ?? '',
+    dag_id: dagId ?? '',
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+    order_by: RUNS_ORDER_BY,
+  }
+  const query = useGetOrchestratorRuns(params, {
+    query: {
+      select: selectOrchestratorRuns,
+      enabled,
+      staleTime: query => shouldFastPollHistory(query, page) ? ACTIVE_RUN_INTERVAL_MS : RECOVERY_RUNS_INTERVAL_MS,
+      refetchInterval: query => shouldFastPollHistory(query, page) ? ACTIVE_RUN_INTERVAL_MS : false,
+      refetchIntervalInBackground: false,
+    },
   })
 
   return {

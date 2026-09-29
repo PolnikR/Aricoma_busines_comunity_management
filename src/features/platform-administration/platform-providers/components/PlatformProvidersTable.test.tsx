@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { EXTERNAL_SERVICES } from '@/config/externalServices'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
-import { useDeletePlatformProvider } from '../hooks/useDeletePlatformProvider'
+import { useDeletePlatformProvider } from '@/generated/query/platform-providers/platform-providers.gen'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { PlatformProvidersTable } from './PlatformProvidersTable'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../hooks/useDeletePlatformProvider', () => ({
+vi.mock('@/generated/query/platform-providers/platform-providers.gen', () => ({
   useDeletePlatformProvider: vi.fn(),
 }))
 
@@ -17,6 +17,7 @@ const baseProvider: PlatformProviderRecord = {
   name: 'Primary Airflow',
   description: 'Application recovery DAG orchestration.',
   type: 'AIRFLOW',
+  role: 'source',
   ipAddress: '10.99.99.55',
   port: 22,
   dagDir: '/home/airflow/dags',
@@ -30,6 +31,7 @@ const smtpProvider: PlatformProviderRecord = {
   name: 'Test SMTP',
   description: 'Local test SMTP relay.',
   type: 'SMTP',
+  role: 'source',
   ipAddress: '10.99.99.53',
   port: 1025,
   url: 'http://10.99.99.53:8025/',
@@ -44,6 +46,7 @@ const backendProvider: PlatformProviderRecord = {
   name: 'ABCo API',
   description: 'Backend service.',
   type: 'BACKEND',
+  role: 'source', port: 22,
   url: 'http://10.99.99.54:8000/',
   credentialStatus: 'none',
   notificationEmail: 'abcobe@example.com',
@@ -57,6 +60,7 @@ const keycloakProvider: PlatformProviderRecord = {
   name: 'Aricoma Keycloak',
   description: 'Realm role sync target.',
   type: 'KEYCLOAK',
+  role: 'source', port: 22,
   url: 'http://10.99.99.53:8081',
   credentialStatus: 'ok',
   realm: 'aricoma',
@@ -394,13 +398,8 @@ describe('PlatformProvidersTable', () => {
       <PlatformProvidersTable
         providers={[{
           ...baseProvider,
-          url: EXTERNAL_SERVICES.airflow.dagsUrl,
-          rawRecord: {
-            ...baseProvider,
-            role: 'source',
-            description: null,
-            url: null,
-          },
+          description: null,
+          url: null,
         }]}
         isLoading={false}
         error={null}
@@ -418,7 +417,6 @@ describe('PlatformProvidersTable', () => {
     expect(dialog).toHaveTextContent('"credentialStatus": "ok"')
     expect(dialog).toHaveTextContent('"description": null')
     expect(dialog).toHaveTextContent('"url": null')
-    expect(dialog).not.toHaveTextContent(EXTERNAL_SERVICES.airflow.dagsUrl)
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
   })
 })

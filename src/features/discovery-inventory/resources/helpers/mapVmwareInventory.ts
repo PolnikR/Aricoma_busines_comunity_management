@@ -2,7 +2,7 @@ import type {
   VmDiskOutput,
   VmRecordOutput,
   VmsResponseOutput,
-} from '@/generated/api/zod.gen'
+} from '@/generated/query/zod'
 import type {
   DiscoveredVirtualDisk,
   DiscoveredVirtualMachine,

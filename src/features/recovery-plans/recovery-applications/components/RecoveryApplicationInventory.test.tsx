@@ -1,17 +1,17 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { useRecoveryApplicationInventory } from '../hooks/useRecoveryApplications'
+import { useGetRecoveryAppInventory } from '@/generated/query/recovery-apps/recovery-apps.gen'
 import { RecoveryApplicationInventory } from './RecoveryApplicationInventory'
 
-vi.mock('../hooks/useRecoveryApplications', () => ({ useRecoveryApplicationInventory: vi.fn() }))
+vi.mock('@/generated/query/recovery-apps/recovery-apps.gen', () => ({ useGetRecoveryAppInventory: vi.fn() }))
 vi.mock('@/hooks/useTranslation', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
 
 describe('RecoveryApplicationInventory', () => {
   it('renders summary metrics and compact tier disclosures with VM rows', () => {
-    vi.mocked(useRecoveryApplicationInventory).mockReturnValue({
+    vi.mocked(useGetRecoveryAppInventory).mockReturnValue({
       data: { recovery_app_id: 'app-1', recovery_app_name: 'Finance', run_id: 'run-1', compute_provider_id: 'vcenter-2', recovered_datastores: [{ datastore: 'recovered-ds', target_vdisk: 'DR_VOL01', vms: ['db-01'] }], tiers: [{ tier_name: 'Database', recovery_group_id: 'group-1', recovery_group_name: 'DB group', vms: [{ name: 'db-01', found: true, datastores: ['recovered-ds'] }] }] },
       isLoading: false, isFetching: false, error: null, refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useRecoveryApplicationInventory>)
+    } as unknown as ReturnType<typeof useGetRecoveryAppInventory>)
 
     render(<RecoveryApplicationInventory runId="run-1" active />)
     expect(screen.getByText('recoveryInventory.tiers')).toBeInTheDocument()

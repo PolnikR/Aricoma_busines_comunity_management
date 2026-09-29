@@ -8,7 +8,7 @@ import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useGetCredentials } from '@/generated/query/credentials/credentials.gen'
 import { selectCredentials } from '@/features/providers-connectors/credentials/model/selectCredentials'
-import { useUpsertPlatformProvider } from '../hooks/useUpsertPlatformProvider'
+import { useSubmitPlatformProvider } from '@/generated/query/platform-providers/platform-providers.gen'
 import { toPlatformProviderSubmitData } from '../helpers/platformProviderSubmitMapper'
 import {
   changePlatformProviderFormType,
@@ -31,6 +31,7 @@ function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
 
+
 export function PlatformProvidersModal({
   open,
   onClose,
@@ -38,7 +39,7 @@ export function PlatformProvidersModal({
   provider,
 }: PlatformProvidersModalProps) {
   const { t } = useTranslation()
-  const upsert = useUpsertPlatformProvider()
+  const upsert = useSubmitPlatformProvider()
   const credentialsQuery = useGetCredentials({
     query: { enabled: open, select: selectCredentials },
   })
@@ -146,7 +147,7 @@ export function PlatformProvidersModal({
 
     const record = toPlatformProviderSubmitData(formData)
     upsert.mutate(
-      { provider: record },
+      { data: record },
       {
         onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
         onError: (error: unknown) => {

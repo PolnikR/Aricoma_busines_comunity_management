@@ -7,11 +7,12 @@ import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { SkeletonBlock } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useProviders } from '../hooks/useProviders'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '../model/selectProviders'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
-import type { ProviderCredentialStatus } from '../model/providerTypes'
+import type { ProviderRecord } from '../model/providerTypes'
 
-function credentialStatusColor(status: ProviderCredentialStatus) {
+function credentialStatusColor(status: ProviderRecord['credentialStatus']) {
   if (status === 'ok') return 'success' as const
   if (status === 'missing') return 'error' as const
   return 'light' as const
@@ -29,7 +30,7 @@ export function ProviderDetailPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { providerId } = useParams<{ providerId: string }>()
-  const { data: providers, isLoading, error, refetch } = useProviders()
+  const { data: providers, isLoading, error, refetch } = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const provider = providers?.find((item) => item.id === providerId)
   const loadErrorDescription = extractBackendErrorDetail(error)
 

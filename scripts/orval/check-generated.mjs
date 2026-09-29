@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-const DEFAULT_GENERATED_DIRECTORY = path.resolve('src/generated/api')
+const DEFAULT_GENERATED_DIRECTORY = path.resolve('src/generated/query')
 
 async function listFiles(directory, relativeDirectory = '') {
   const entries = await readdir(path.join(directory, relativeDirectory), {
@@ -108,13 +108,8 @@ function isCommandLineEntryPoint() {
     && import.meta.url === pathToFileURL(path.resolve(entryPoint)).href
 }
 
-async function checkAllGeneratedDirectories() {
-  await assertGeneratedApiIsCurrent()
-  await assertGeneratedApiIsCurrent({ generatedDirectory: path.resolve('src/generated/query') })
-}
-
 if (isCommandLineEntryPoint()) {
-  checkAllGeneratedDirectories().catch((error) => {
+  assertGeneratedApiIsCurrent().catch((error) => {
     const message = error instanceof Error ? error.message : String(error)
     process.stderr.write(`${message}\n`)
     process.exitCode = 1

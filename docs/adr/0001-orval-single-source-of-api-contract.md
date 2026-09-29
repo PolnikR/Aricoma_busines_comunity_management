@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted, 2026-09-29.
+Superseded by [ADR 0002](0002-generated-react-query-api-layer.md), 2026-09-29.
+The generated schemas stay the source of the contract; the hand-written API
+modules, hooks and local `SPEC GAP` schemas this ADR allowed are gone.
 
 ## Context
 
