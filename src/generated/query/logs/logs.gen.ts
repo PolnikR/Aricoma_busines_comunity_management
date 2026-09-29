@@ -26,6 +26,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -87,7 +88,7 @@ export const getGetAccessLogsQueryKey = (params?: GetAccessLogsParams,) => {
     }
 
 
-export const getGetAccessLogsQueryOptions = <TData = Awaited<ReturnType<typeof getAccessLogs>>, TError = HTTPValidationError>(params?: GetAccessLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccessLogs>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetAccessLogsQueryOptions = <TData = Awaited<ReturnType<typeof getAccessLogs>>, TError = ErrorType<HTTPValidationError>>(params?: GetAccessLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccessLogs>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -106,10 +107,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetAccessLogsQueryResult = NonNullable<Awaited<ReturnType<typeof getAccessLogs>>>
-export type GetAccessLogsQueryError = HTTPValidationError
+export type GetAccessLogsQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetAccessLogs<TData = Awaited<ReturnType<typeof getAccessLogs>>, TError = HTTPValidationError>(
+export function useGetAccessLogs<TData = Awaited<ReturnType<typeof getAccessLogs>>, TError = ErrorType<HTTPValidationError>>(
  params: undefined |  GetAccessLogsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccessLogs>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAccessLogs>>,
@@ -119,7 +120,7 @@ export function useGetAccessLogs<TData = Awaited<ReturnType<typeof getAccessLogs
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAccessLogs<TData = Awaited<ReturnType<typeof getAccessLogs>>, TError = HTTPValidationError>(
+export function useGetAccessLogs<TData = Awaited<ReturnType<typeof getAccessLogs>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetAccessLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccessLogs>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAccessLogs>>,
@@ -129,7 +130,7 @@ export function useGetAccessLogs<TData = Awaited<ReturnType<typeof getAccessLogs
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAccessLogs<TData = Awaited<ReturnType<typeof getAccessLogs>>, TError = HTTPValidationError>(
+export function useGetAccessLogs<TData = Awaited<ReturnType<typeof getAccessLogs>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetAccessLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccessLogs>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -137,7 +138,7 @@ export function useGetAccessLogs<TData = Awaited<ReturnType<typeof getAccessLogs
  * @summary Get Access Logs
  */
 
-export function useGetAccessLogs<TData = Awaited<ReturnType<typeof getAccessLogs>>, TError = HTTPValidationError>(
+export function useGetAccessLogs<TData = Awaited<ReturnType<typeof getAccessLogs>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetAccessLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccessLogs>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

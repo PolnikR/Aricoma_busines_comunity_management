@@ -26,6 +26,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -87,7 +88,7 @@ export const getGetPowerVmQueryKey = (params?: GetPowerVmParams,) => {
     }
 
 
-export const getGetPowerVmQueryOptions = <TData = Awaited<ReturnType<typeof getPowerVm>>, TError = HTTPValidationError>(params?: GetPowerVmParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPowerVm>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetPowerVmQueryOptions = <TData = Awaited<ReturnType<typeof getPowerVm>>, TError = ErrorType<HTTPValidationError>>(params?: GetPowerVmParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPowerVm>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -106,10 +107,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetPowerVmQueryResult = NonNullable<Awaited<ReturnType<typeof getPowerVm>>>
-export type GetPowerVmQueryError = HTTPValidationError
+export type GetPowerVmQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetPowerVm<TData = Awaited<ReturnType<typeof getPowerVm>>, TError = HTTPValidationError>(
+export function useGetPowerVm<TData = Awaited<ReturnType<typeof getPowerVm>>, TError = ErrorType<HTTPValidationError>>(
  params: undefined |  GetPowerVmParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPowerVm>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPowerVm>>,
@@ -119,7 +120,7 @@ export function useGetPowerVm<TData = Awaited<ReturnType<typeof getPowerVm>>, TE
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPowerVm<TData = Awaited<ReturnType<typeof getPowerVm>>, TError = HTTPValidationError>(
+export function useGetPowerVm<TData = Awaited<ReturnType<typeof getPowerVm>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetPowerVmParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPowerVm>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPowerVm>>,
@@ -129,7 +130,7 @@ export function useGetPowerVm<TData = Awaited<ReturnType<typeof getPowerVm>>, TE
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPowerVm<TData = Awaited<ReturnType<typeof getPowerVm>>, TError = HTTPValidationError>(
+export function useGetPowerVm<TData = Awaited<ReturnType<typeof getPowerVm>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetPowerVmParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPowerVm>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -137,7 +138,7 @@ export function useGetPowerVm<TData = Awaited<ReturnType<typeof getPowerVm>>, TE
  * @summary Get Power Vm
  */
 
-export function useGetPowerVm<TData = Awaited<ReturnType<typeof getPowerVm>>, TError = HTTPValidationError>(
+export function useGetPowerVm<TData = Awaited<ReturnType<typeof getPowerVm>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetPowerVmParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPowerVm>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

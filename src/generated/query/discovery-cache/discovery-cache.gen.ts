@@ -32,6 +32,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -86,7 +87,7 @@ export const getGetDiscoveryCacheConfigQueryKey = () => {
     }
 
 
-export const getGetDiscoveryCacheConfigQueryOptions = <TData = Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetDiscoveryCacheConfigQueryOptions = <TData = Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError = ErrorType<HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -105,10 +106,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetDiscoveryCacheConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getDiscoveryCacheConfig>>>
-export type GetDiscoveryCacheConfigQueryError = HTTPValidationError
+export type GetDiscoveryCacheConfigQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetDiscoveryCacheConfig<TData = Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError = HTTPValidationError>(
+export function useGetDiscoveryCacheConfig<TData = Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError = ErrorType<HTTPValidationError>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getDiscoveryCacheConfig>>,
@@ -118,7 +119,7 @@ export function useGetDiscoveryCacheConfig<TData = Awaited<ReturnType<typeof get
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDiscoveryCacheConfig<TData = Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError = HTTPValidationError>(
+export function useGetDiscoveryCacheConfig<TData = Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getDiscoveryCacheConfig>>,
@@ -128,7 +129,7 @@ export function useGetDiscoveryCacheConfig<TData = Awaited<ReturnType<typeof get
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDiscoveryCacheConfig<TData = Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError = HTTPValidationError>(
+export function useGetDiscoveryCacheConfig<TData = Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -136,7 +137,7 @@ export function useGetDiscoveryCacheConfig<TData = Awaited<ReturnType<typeof get
  * @summary Get Cache Config
  */
 
-export function useGetDiscoveryCacheConfig<TData = Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError = HTTPValidationError>(
+export function useGetDiscoveryCacheConfig<TData = Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDiscoveryCacheConfig>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -195,7 +196,7 @@ return validatingMutator<CacheConfigResponse>(getPutDiscoveryCacheConfigUrl(),
 
 export const getPutDiscoveryCacheConfigMutationKey = () => ['putDiscoveryCacheConfig'] as const;
 
-export const getPutDiscoveryCacheConfigMutationOptions = <TError = HTTPValidationError,
+export const getPutDiscoveryCacheConfigMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putDiscoveryCacheConfig>>, TError,PutDiscoveryCacheConfigMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof putDiscoveryCacheConfig>>, TError,PutDiscoveryCacheConfigMutationVariables, TContext> => {
 
@@ -224,13 +225,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PutDiscoveryCacheConfigMutationResult = NonNullable<Awaited<ReturnType<typeof putDiscoveryCacheConfig>>>
     export type PutDiscoveryCacheConfigMutationBody = CacheConfigUpdate
-    export type PutDiscoveryCacheConfigMutationError = HTTPValidationError
+    export type PutDiscoveryCacheConfigMutationError = ErrorType<HTTPValidationError>
     export type PutDiscoveryCacheConfigMutationVariables = {data: CacheConfigUpdate}
 
     /**
  * @summary Update Cache Config
  */
-export const usePutDiscoveryCacheConfig = <TError = HTTPValidationError,
+export const usePutDiscoveryCacheConfig = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putDiscoveryCacheConfig>>, TError,PutDiscoveryCacheConfigMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof putDiscoveryCacheConfig>>,
@@ -280,7 +281,7 @@ export const getGetDiscoveryCacheHistoryQueryKey = (params?: GetDiscoveryCacheHi
     }
 
 
-export const getGetDiscoveryCacheHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError = HTTPValidationError>(params?: GetDiscoveryCacheHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetDiscoveryCacheHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError = ErrorType<HTTPValidationError>>(params?: GetDiscoveryCacheHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -299,10 +300,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetDiscoveryCacheHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getDiscoveryCacheHistory>>>
-export type GetDiscoveryCacheHistoryQueryError = HTTPValidationError
+export type GetDiscoveryCacheHistoryQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetDiscoveryCacheHistory<TData = Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError = HTTPValidationError>(
+export function useGetDiscoveryCacheHistory<TData = Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError = ErrorType<HTTPValidationError>>(
  params: undefined |  GetDiscoveryCacheHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getDiscoveryCacheHistory>>,
@@ -312,7 +313,7 @@ export function useGetDiscoveryCacheHistory<TData = Awaited<ReturnType<typeof ge
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDiscoveryCacheHistory<TData = Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError = HTTPValidationError>(
+export function useGetDiscoveryCacheHistory<TData = Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetDiscoveryCacheHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getDiscoveryCacheHistory>>,
@@ -322,7 +323,7 @@ export function useGetDiscoveryCacheHistory<TData = Awaited<ReturnType<typeof ge
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDiscoveryCacheHistory<TData = Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError = HTTPValidationError>(
+export function useGetDiscoveryCacheHistory<TData = Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetDiscoveryCacheHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -330,7 +331,7 @@ export function useGetDiscoveryCacheHistory<TData = Awaited<ReturnType<typeof ge
  * @summary Get Cache History
  */
 
-export function useGetDiscoveryCacheHistory<TData = Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError = HTTPValidationError>(
+export function useGetDiscoveryCacheHistory<TData = Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetDiscoveryCacheHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDiscoveryCacheHistory>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

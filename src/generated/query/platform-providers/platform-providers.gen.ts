@@ -32,6 +32,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -93,7 +94,7 @@ export const getGetPlatformProvidersQueryKey = (params?: GetPlatformProvidersPar
     }
 
 
-export const getGetPlatformProvidersQueryOptions = <TData = Awaited<ReturnType<typeof getPlatformProviders>>, TError = HTTPValidationError>(params?: GetPlatformProvidersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformProviders>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetPlatformProvidersQueryOptions = <TData = Awaited<ReturnType<typeof getPlatformProviders>>, TError = ErrorType<HTTPValidationError>>(params?: GetPlatformProvidersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformProviders>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -112,10 +113,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetPlatformProvidersQueryResult = NonNullable<Awaited<ReturnType<typeof getPlatformProviders>>>
-export type GetPlatformProvidersQueryError = HTTPValidationError
+export type GetPlatformProvidersQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetPlatformProviders<TData = Awaited<ReturnType<typeof getPlatformProviders>>, TError = HTTPValidationError>(
+export function useGetPlatformProviders<TData = Awaited<ReturnType<typeof getPlatformProviders>>, TError = ErrorType<HTTPValidationError>>(
  params: undefined |  GetPlatformProvidersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformProviders>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPlatformProviders>>,
@@ -125,7 +126,7 @@ export function useGetPlatformProviders<TData = Awaited<ReturnType<typeof getPla
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPlatformProviders<TData = Awaited<ReturnType<typeof getPlatformProviders>>, TError = HTTPValidationError>(
+export function useGetPlatformProviders<TData = Awaited<ReturnType<typeof getPlatformProviders>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetPlatformProvidersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformProviders>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPlatformProviders>>,
@@ -135,7 +136,7 @@ export function useGetPlatformProviders<TData = Awaited<ReturnType<typeof getPla
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPlatformProviders<TData = Awaited<ReturnType<typeof getPlatformProviders>>, TError = HTTPValidationError>(
+export function useGetPlatformProviders<TData = Awaited<ReturnType<typeof getPlatformProviders>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetPlatformProvidersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformProviders>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -143,7 +144,7 @@ export function useGetPlatformProviders<TData = Awaited<ReturnType<typeof getPla
  * @summary Get Platform Providers
  */
 
-export function useGetPlatformProviders<TData = Awaited<ReturnType<typeof getPlatformProviders>>, TError = HTTPValidationError>(
+export function useGetPlatformProviders<TData = Awaited<ReturnType<typeof getPlatformProviders>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetPlatformProvidersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformProviders>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -202,7 +203,7 @@ return validatingMutator<PlatformProvidersResponse>(getSubmitPlatformProviderUrl
 
 export const getSubmitPlatformProviderMutationKey = () => ['submitPlatformProvider'] as const;
 
-export const getSubmitPlatformProviderMutationOptions = <TError = HTTPValidationError,
+export const getSubmitPlatformProviderMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitPlatformProvider>>, TError,SubmitPlatformProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitPlatformProvider>>, TError,SubmitPlatformProviderMutationVariables, TContext> => {
 
@@ -231,13 +232,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SubmitPlatformProviderMutationResult = NonNullable<Awaited<ReturnType<typeof submitPlatformProvider>>>
     export type SubmitPlatformProviderMutationBody = OrchestrationProvider
-    export type SubmitPlatformProviderMutationError = HTTPValidationError
+    export type SubmitPlatformProviderMutationError = ErrorType<HTTPValidationError>
     export type SubmitPlatformProviderMutationVariables = {data: OrchestrationProvider}
 
     /**
  * @summary Submit Platform Provider
  */
-export const useSubmitPlatformProvider = <TError = HTTPValidationError,
+export const useSubmitPlatformProvider = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitPlatformProvider>>, TError,SubmitPlatformProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitPlatformProvider>>,
@@ -282,7 +283,7 @@ export const deletePlatformProvider = async (params: DeletePlatformProviderParam
 
 export const getDeletePlatformProviderMutationKey = () => ['deletePlatformProvider'] as const;
 
-export const getDeletePlatformProviderMutationOptions = <TError = HTTPValidationError,
+export const getDeletePlatformProviderMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlatformProvider>>, TError,DeletePlatformProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deletePlatformProvider>>, TError,DeletePlatformProviderMutationVariables, TContext> => {
 
@@ -311,13 +312,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeletePlatformProviderMutationResult = NonNullable<Awaited<ReturnType<typeof deletePlatformProvider>>>
 
-    export type DeletePlatformProviderMutationError = HTTPValidationError
+    export type DeletePlatformProviderMutationError = ErrorType<HTTPValidationError>
     export type DeletePlatformProviderMutationVariables = {params: DeletePlatformProviderParams}
 
     /**
  * @summary Delete Platform Provider
  */
-export const useDeletePlatformProvider = <TError = HTTPValidationError,
+export const useDeletePlatformProvider = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlatformProvider>>, TError,DeletePlatformProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deletePlatformProvider>>,

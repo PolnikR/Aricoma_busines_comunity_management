@@ -10,3 +10,8 @@ export async function validatingMutator<T>(url: string, options?: RequestInit): 
   const schema = responseSchemas[operation]
   return (schema ? parseGeneratedResponse(schema, payload, operation) : payload) as T
 }
+
+// Generated hooks use this as their error type: the mutator throws OrvalApiError
+// (HTTP failure), GeneratedResponseContractError (contract mismatch) or a network Error.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Orval requires this generic parameter to detect and use ErrorType
+export type ErrorType<_Error> = Error

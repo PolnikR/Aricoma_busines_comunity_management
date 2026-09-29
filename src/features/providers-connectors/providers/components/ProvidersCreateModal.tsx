@@ -9,7 +9,6 @@ import { isProgrammaticIdAvailable, toProgrammaticId } from '@/shared/utils/prog
 import { useTags } from '@/features/discovery-inventory/resources/hooks/useVmwareTags'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { useGetCredentials } from '@/generated/query/credentials/credentials.gen'
-import type { CredentialRecord } from '@/generated/query/zod'
 import { selectCredentials } from '../../credentials/model/selectCredentials'
 import { useUpsertProvider } from '../hooks/useUpsertProvider'
 import { ProviderCreateForm } from './ProviderCreateForm'
@@ -69,7 +68,7 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
 export function ProvidersCreateModal({ open, onClose, existingProviders, provider }: ProvidersCreateModalProps) {
   const { t } = useTranslation()
   const upsert = useUpsertProvider()
-  const credentialsQuery = useGetCredentials<CredentialRecord[], Error>({
+  const credentialsQuery = useGetCredentials({
     query: { enabled: open, select: selectCredentials },
   })
   const isEdit = Boolean(provider)

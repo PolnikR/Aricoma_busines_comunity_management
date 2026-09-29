@@ -34,6 +34,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -95,7 +96,7 @@ export const getGetProvidersQueryKey = (params?: GetProvidersParams,) => {
     }
 
 
-export const getGetProvidersQueryOptions = <TData = Awaited<ReturnType<typeof getProviders>>, TError = HTTPValidationError>(params?: GetProvidersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProviders>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetProvidersQueryOptions = <TData = Awaited<ReturnType<typeof getProviders>>, TError = ErrorType<HTTPValidationError>>(params?: GetProvidersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProviders>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -114,10 +115,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetProvidersQueryResult = NonNullable<Awaited<ReturnType<typeof getProviders>>>
-export type GetProvidersQueryError = HTTPValidationError
+export type GetProvidersQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetProviders<TData = Awaited<ReturnType<typeof getProviders>>, TError = HTTPValidationError>(
+export function useGetProviders<TData = Awaited<ReturnType<typeof getProviders>>, TError = ErrorType<HTTPValidationError>>(
  params: undefined |  GetProvidersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProviders>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getProviders>>,
@@ -127,7 +128,7 @@ export function useGetProviders<TData = Awaited<ReturnType<typeof getProviders>>
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetProviders<TData = Awaited<ReturnType<typeof getProviders>>, TError = HTTPValidationError>(
+export function useGetProviders<TData = Awaited<ReturnType<typeof getProviders>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetProvidersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProviders>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getProviders>>,
@@ -137,7 +138,7 @@ export function useGetProviders<TData = Awaited<ReturnType<typeof getProviders>>
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetProviders<TData = Awaited<ReturnType<typeof getProviders>>, TError = HTTPValidationError>(
+export function useGetProviders<TData = Awaited<ReturnType<typeof getProviders>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetProvidersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProviders>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -145,7 +146,7 @@ export function useGetProviders<TData = Awaited<ReturnType<typeof getProviders>>
  * @summary Get Providers
  */
 
-export function useGetProviders<TData = Awaited<ReturnType<typeof getProviders>>, TError = HTTPValidationError>(
+export function useGetProviders<TData = Awaited<ReturnType<typeof getProviders>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetProvidersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProviders>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -204,7 +205,7 @@ return validatingMutator<ProvidersResponse>(getSubmitProviderUrl(),
 
 export const getSubmitProviderMutationKey = () => ['submitProvider'] as const;
 
-export const getSubmitProviderMutationOptions = <TError = HTTPValidationError,
+export const getSubmitProviderMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitProvider>>, TError,SubmitProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitProvider>>, TError,SubmitProviderMutationVariables, TContext> => {
 
@@ -233,13 +234,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SubmitProviderMutationResult = NonNullable<Awaited<ReturnType<typeof submitProvider>>>
     export type SubmitProviderMutationBody = Provider
-    export type SubmitProviderMutationError = HTTPValidationError
+    export type SubmitProviderMutationError = ErrorType<HTTPValidationError>
     export type SubmitProviderMutationVariables = {data: Provider}
 
     /**
  * @summary Submit Provider
  */
-export const useSubmitProvider = <TError = HTTPValidationError,
+export const useSubmitProvider = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitProvider>>, TError,SubmitProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitProvider>>,
@@ -289,7 +290,7 @@ export const getTestProviderQueryKey = (params?: TestProviderParams,) => {
     }
 
 
-export const getTestProviderQueryOptions = <TData = Awaited<ReturnType<typeof testProvider>>, TError = HTTPValidationError>(params: TestProviderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testProvider>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getTestProviderQueryOptions = <TData = Awaited<ReturnType<typeof testProvider>>, TError = ErrorType<HTTPValidationError>>(params: TestProviderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testProvider>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -308,10 +309,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type TestProviderQueryResult = NonNullable<Awaited<ReturnType<typeof testProvider>>>
-export type TestProviderQueryError = HTTPValidationError
+export type TestProviderQueryError = ErrorType<HTTPValidationError>
 
 
-export function useTestProvider<TData = Awaited<ReturnType<typeof testProvider>>, TError = HTTPValidationError>(
+export function useTestProvider<TData = Awaited<ReturnType<typeof testProvider>>, TError = ErrorType<HTTPValidationError>>(
  params: TestProviderParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof testProvider>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof testProvider>>,
@@ -321,7 +322,7 @@ export function useTestProvider<TData = Awaited<ReturnType<typeof testProvider>>
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useTestProvider<TData = Awaited<ReturnType<typeof testProvider>>, TError = HTTPValidationError>(
+export function useTestProvider<TData = Awaited<ReturnType<typeof testProvider>>, TError = ErrorType<HTTPValidationError>>(
  params: TestProviderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testProvider>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof testProvider>>,
@@ -331,7 +332,7 @@ export function useTestProvider<TData = Awaited<ReturnType<typeof testProvider>>
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useTestProvider<TData = Awaited<ReturnType<typeof testProvider>>, TError = HTTPValidationError>(
+export function useTestProvider<TData = Awaited<ReturnType<typeof testProvider>>, TError = ErrorType<HTTPValidationError>>(
  params: TestProviderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testProvider>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -339,7 +340,7 @@ export function useTestProvider<TData = Awaited<ReturnType<typeof testProvider>>
  * @summary Test Provider
  */
 
-export function useTestProvider<TData = Awaited<ReturnType<typeof testProvider>>, TError = HTTPValidationError>(
+export function useTestProvider<TData = Awaited<ReturnType<typeof testProvider>>, TError = ErrorType<HTTPValidationError>>(
  params: TestProviderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testProvider>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -391,7 +392,7 @@ export const deleteProvider = async (params: DeleteProviderParams, options?: Par
 
 export const getDeleteProviderMutationKey = () => ['deleteProvider'] as const;
 
-export const getDeleteProviderMutationOptions = <TError = HTTPValidationError,
+export const getDeleteProviderMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProvider>>, TError,DeleteProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteProvider>>, TError,DeleteProviderMutationVariables, TContext> => {
 
@@ -420,13 +421,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteProviderMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProvider>>>
 
-    export type DeleteProviderMutationError = HTTPValidationError
+    export type DeleteProviderMutationError = ErrorType<HTTPValidationError>
     export type DeleteProviderMutationVariables = {params: DeleteProviderParams}
 
     /**
  * @summary Delete Provider Route
  */
-export const useDeleteProvider = <TError = HTTPValidationError,
+export const useDeleteProvider = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProvider>>, TError,DeleteProviderMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteProvider>>,

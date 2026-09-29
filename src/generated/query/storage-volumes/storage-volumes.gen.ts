@@ -28,6 +28,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -89,7 +90,7 @@ export const getGetVolumesQueryKey = (params?: GetVolumesParams,) => {
     }
 
 
-export const getGetVolumesQueryOptions = <TData = Awaited<ReturnType<typeof getVolumes>>, TError = HTTPValidationError>(params?: GetVolumesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVolumes>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetVolumesQueryOptions = <TData = Awaited<ReturnType<typeof getVolumes>>, TError = ErrorType<HTTPValidationError>>(params?: GetVolumesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVolumes>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -108,10 +109,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetVolumesQueryResult = NonNullable<Awaited<ReturnType<typeof getVolumes>>>
-export type GetVolumesQueryError = HTTPValidationError
+export type GetVolumesQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetVolumes<TData = Awaited<ReturnType<typeof getVolumes>>, TError = HTTPValidationError>(
+export function useGetVolumes<TData = Awaited<ReturnType<typeof getVolumes>>, TError = ErrorType<HTTPValidationError>>(
  params: undefined |  GetVolumesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVolumes>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVolumes>>,
@@ -121,7 +122,7 @@ export function useGetVolumes<TData = Awaited<ReturnType<typeof getVolumes>>, TE
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVolumes<TData = Awaited<ReturnType<typeof getVolumes>>, TError = HTTPValidationError>(
+export function useGetVolumes<TData = Awaited<ReturnType<typeof getVolumes>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVolumesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVolumes>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVolumes>>,
@@ -131,7 +132,7 @@ export function useGetVolumes<TData = Awaited<ReturnType<typeof getVolumes>>, TE
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVolumes<TData = Awaited<ReturnType<typeof getVolumes>>, TError = HTTPValidationError>(
+export function useGetVolumes<TData = Awaited<ReturnType<typeof getVolumes>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVolumesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVolumes>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -139,7 +140,7 @@ export function useGetVolumes<TData = Awaited<ReturnType<typeof getVolumes>>, TE
  * @summary Get Volumes Route
  */
 
-export function useGetVolumes<TData = Awaited<ReturnType<typeof getVolumes>>, TError = HTTPValidationError>(
+export function useGetVolumes<TData = Awaited<ReturnType<typeof getVolumes>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVolumesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVolumes>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -198,7 +199,7 @@ export const getGetVolumeTreeQueryKey = (params?: GetVolumeTreeParams,) => {
     }
 
 
-export const getGetVolumeTreeQueryOptions = <TData = Awaited<ReturnType<typeof getVolumeTree>>, TError = HTTPValidationError>(params?: GetVolumeTreeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVolumeTree>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetVolumeTreeQueryOptions = <TData = Awaited<ReturnType<typeof getVolumeTree>>, TError = ErrorType<HTTPValidationError>>(params?: GetVolumeTreeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVolumeTree>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -217,10 +218,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetVolumeTreeQueryResult = NonNullable<Awaited<ReturnType<typeof getVolumeTree>>>
-export type GetVolumeTreeQueryError = HTTPValidationError
+export type GetVolumeTreeQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetVolumeTree<TData = Awaited<ReturnType<typeof getVolumeTree>>, TError = HTTPValidationError>(
+export function useGetVolumeTree<TData = Awaited<ReturnType<typeof getVolumeTree>>, TError = ErrorType<HTTPValidationError>>(
  params: undefined |  GetVolumeTreeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVolumeTree>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVolumeTree>>,
@@ -230,7 +231,7 @@ export function useGetVolumeTree<TData = Awaited<ReturnType<typeof getVolumeTree
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVolumeTree<TData = Awaited<ReturnType<typeof getVolumeTree>>, TError = HTTPValidationError>(
+export function useGetVolumeTree<TData = Awaited<ReturnType<typeof getVolumeTree>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVolumeTreeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVolumeTree>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVolumeTree>>,
@@ -240,7 +241,7 @@ export function useGetVolumeTree<TData = Awaited<ReturnType<typeof getVolumeTree
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVolumeTree<TData = Awaited<ReturnType<typeof getVolumeTree>>, TError = HTTPValidationError>(
+export function useGetVolumeTree<TData = Awaited<ReturnType<typeof getVolumeTree>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVolumeTreeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVolumeTree>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -248,7 +249,7 @@ export function useGetVolumeTree<TData = Awaited<ReturnType<typeof getVolumeTree
  * @summary Get Volume Tree Route
  */
 
-export function useGetVolumeTree<TData = Awaited<ReturnType<typeof getVolumeTree>>, TError = HTTPValidationError>(
+export function useGetVolumeTree<TData = Awaited<ReturnType<typeof getVolumeTree>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVolumeTreeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVolumeTree>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

@@ -26,6 +26,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -87,7 +88,7 @@ export const getGetVdisksByVmQueryKey = (params?: GetVdisksByVmParams,) => {
     }
 
 
-export const getGetVdisksByVmQueryOptions = <TData = Awaited<ReturnType<typeof getVdisksByVm>>, TError = HTTPValidationError>(params?: GetVdisksByVmParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVdisksByVm>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetVdisksByVmQueryOptions = <TData = Awaited<ReturnType<typeof getVdisksByVm>>, TError = ErrorType<HTTPValidationError>>(params?: GetVdisksByVmParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVdisksByVm>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -106,10 +107,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetVdisksByVmQueryResult = NonNullable<Awaited<ReturnType<typeof getVdisksByVm>>>
-export type GetVdisksByVmQueryError = HTTPValidationError
+export type GetVdisksByVmQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetVdisksByVm<TData = Awaited<ReturnType<typeof getVdisksByVm>>, TError = HTTPValidationError>(
+export function useGetVdisksByVm<TData = Awaited<ReturnType<typeof getVdisksByVm>>, TError = ErrorType<HTTPValidationError>>(
  params: undefined |  GetVdisksByVmParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVdisksByVm>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVdisksByVm>>,
@@ -119,7 +120,7 @@ export function useGetVdisksByVm<TData = Awaited<ReturnType<typeof getVdisksByVm
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVdisksByVm<TData = Awaited<ReturnType<typeof getVdisksByVm>>, TError = HTTPValidationError>(
+export function useGetVdisksByVm<TData = Awaited<ReturnType<typeof getVdisksByVm>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVdisksByVmParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVdisksByVm>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVdisksByVm>>,
@@ -129,7 +130,7 @@ export function useGetVdisksByVm<TData = Awaited<ReturnType<typeof getVdisksByVm
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVdisksByVm<TData = Awaited<ReturnType<typeof getVdisksByVm>>, TError = HTTPValidationError>(
+export function useGetVdisksByVm<TData = Awaited<ReturnType<typeof getVdisksByVm>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVdisksByVmParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVdisksByVm>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -137,7 +138,7 @@ export function useGetVdisksByVm<TData = Awaited<ReturnType<typeof getVdisksByVm
  * @summary Vdisks By Vm
  */
 
-export function useGetVdisksByVm<TData = Awaited<ReturnType<typeof getVdisksByVm>>, TError = HTTPValidationError>(
+export function useGetVdisksByVm<TData = Awaited<ReturnType<typeof getVdisksByVm>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVdisksByVmParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVdisksByVm>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

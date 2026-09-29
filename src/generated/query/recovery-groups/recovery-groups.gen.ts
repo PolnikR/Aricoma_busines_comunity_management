@@ -35,6 +35,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -89,7 +90,7 @@ export const getGetRecoveryGroupsQueryKey = () => {
     }
 
 
-export const getGetRecoveryGroupsQueryOptions = <TData = Awaited<ReturnType<typeof getRecoveryGroups>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryGroups>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetRecoveryGroupsQueryOptions = <TData = Awaited<ReturnType<typeof getRecoveryGroups>>, TError = ErrorType<HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryGroups>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -108,10 +109,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetRecoveryGroupsQueryResult = NonNullable<Awaited<ReturnType<typeof getRecoveryGroups>>>
-export type GetRecoveryGroupsQueryError = HTTPValidationError
+export type GetRecoveryGroupsQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetRecoveryGroups<TData = Awaited<ReturnType<typeof getRecoveryGroups>>, TError = HTTPValidationError>(
+export function useGetRecoveryGroups<TData = Awaited<ReturnType<typeof getRecoveryGroups>>, TError = ErrorType<HTTPValidationError>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryGroups>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRecoveryGroups>>,
@@ -121,7 +122,7 @@ export function useGetRecoveryGroups<TData = Awaited<ReturnType<typeof getRecove
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRecoveryGroups<TData = Awaited<ReturnType<typeof getRecoveryGroups>>, TError = HTTPValidationError>(
+export function useGetRecoveryGroups<TData = Awaited<ReturnType<typeof getRecoveryGroups>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryGroups>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRecoveryGroups>>,
@@ -131,7 +132,7 @@ export function useGetRecoveryGroups<TData = Awaited<ReturnType<typeof getRecove
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRecoveryGroups<TData = Awaited<ReturnType<typeof getRecoveryGroups>>, TError = HTTPValidationError>(
+export function useGetRecoveryGroups<TData = Awaited<ReturnType<typeof getRecoveryGroups>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryGroups>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -139,7 +140,7 @@ export function useGetRecoveryGroups<TData = Awaited<ReturnType<typeof getRecove
  * @summary Get Recovery Groups
  */
 
-export function useGetRecoveryGroups<TData = Awaited<ReturnType<typeof getRecoveryGroups>>, TError = HTTPValidationError>(
+export function useGetRecoveryGroups<TData = Awaited<ReturnType<typeof getRecoveryGroups>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryGroups>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -206,7 +207,7 @@ return validatingMutator<RecoveryGroupsResponse>(getSubmitRecoveryGroupUrl(param
 
 export const getSubmitRecoveryGroupMutationKey = () => ['submitRecoveryGroup'] as const;
 
-export const getSubmitRecoveryGroupMutationOptions = <TError = HTTPValidationError,
+export const getSubmitRecoveryGroupMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryGroup>>, TError,SubmitRecoveryGroupMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryGroup>>, TError,SubmitRecoveryGroupMutationVariables, TContext> => {
 
@@ -235,13 +236,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SubmitRecoveryGroupMutationResult = NonNullable<Awaited<ReturnType<typeof submitRecoveryGroup>>>
     export type SubmitRecoveryGroupMutationBody = RecoveryGroup
-    export type SubmitRecoveryGroupMutationError = HTTPValidationError
+    export type SubmitRecoveryGroupMutationError = ErrorType<HTTPValidationError>
     export type SubmitRecoveryGroupMutationVariables = {data: RecoveryGroup;params?: SubmitRecoveryGroupParams}
 
     /**
  * @summary Submit Recovery Group
  */
-export const useSubmitRecoveryGroup = <TError = HTTPValidationError,
+export const useSubmitRecoveryGroup = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryGroup>>, TError,SubmitRecoveryGroupMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitRecoveryGroup>>,
@@ -291,7 +292,7 @@ export const getGetRecoveryGroupInventoryQueryKey = (params?: GetRecoveryGroupIn
     }
 
 
-export const getGetRecoveryGroupInventoryQueryOptions = <TData = Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError = HTTPValidationError>(params: GetRecoveryGroupInventoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetRecoveryGroupInventoryQueryOptions = <TData = Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError = ErrorType<HTTPValidationError>>(params: GetRecoveryGroupInventoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -310,10 +311,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetRecoveryGroupInventoryQueryResult = NonNullable<Awaited<ReturnType<typeof getRecoveryGroupInventory>>>
-export type GetRecoveryGroupInventoryQueryError = HTTPValidationError
+export type GetRecoveryGroupInventoryQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetRecoveryGroupInventory<TData = Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError = HTTPValidationError>(
+export function useGetRecoveryGroupInventory<TData = Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError = ErrorType<HTTPValidationError>>(
  params: GetRecoveryGroupInventoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRecoveryGroupInventory>>,
@@ -323,7 +324,7 @@ export function useGetRecoveryGroupInventory<TData = Awaited<ReturnType<typeof g
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRecoveryGroupInventory<TData = Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError = HTTPValidationError>(
+export function useGetRecoveryGroupInventory<TData = Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError = ErrorType<HTTPValidationError>>(
  params: GetRecoveryGroupInventoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRecoveryGroupInventory>>,
@@ -333,7 +334,7 @@ export function useGetRecoveryGroupInventory<TData = Awaited<ReturnType<typeof g
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRecoveryGroupInventory<TData = Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError = HTTPValidationError>(
+export function useGetRecoveryGroupInventory<TData = Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError = ErrorType<HTTPValidationError>>(
  params: GetRecoveryGroupInventoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -341,7 +342,7 @@ export function useGetRecoveryGroupInventory<TData = Awaited<ReturnType<typeof g
  * @summary Get Recovery Group Inventory
  */
 
-export function useGetRecoveryGroupInventory<TData = Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError = HTTPValidationError>(
+export function useGetRecoveryGroupInventory<TData = Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError = ErrorType<HTTPValidationError>>(
  params: GetRecoveryGroupInventoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryGroupInventory>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -396,7 +397,7 @@ export const rollbackGroupFromOrchestrator = async (params: RollbackGroupFromOrc
 
 export const getRollbackGroupFromOrchestratorMutationKey = () => ['rollbackGroupFromOrchestrator'] as const;
 
-export const getRollbackGroupFromOrchestratorMutationOptions = <TError = HTTPValidationError,
+export const getRollbackGroupFromOrchestratorMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rollbackGroupFromOrchestrator>>, TError,RollbackGroupFromOrchestratorMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof rollbackGroupFromOrchestrator>>, TError,RollbackGroupFromOrchestratorMutationVariables, TContext> => {
 
@@ -425,13 +426,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RollbackGroupFromOrchestratorMutationResult = NonNullable<Awaited<ReturnType<typeof rollbackGroupFromOrchestrator>>>
 
-    export type RollbackGroupFromOrchestratorMutationError = HTTPValidationError
+    export type RollbackGroupFromOrchestratorMutationError = ErrorType<HTTPValidationError>
     export type RollbackGroupFromOrchestratorMutationVariables = {params: RollbackGroupFromOrchestratorParams}
 
     /**
  * @summary Rollback Group From Orchestrator
  */
-export const useRollbackGroupFromOrchestrator = <TError = HTTPValidationError,
+export const useRollbackGroupFromOrchestrator = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rollbackGroupFromOrchestrator>>, TError,RollbackGroupFromOrchestratorMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof rollbackGroupFromOrchestrator>>,
@@ -476,7 +477,7 @@ export const deleteRecoveryGroup = async (params: DeleteRecoveryGroupParams, opt
 
 export const getDeleteRecoveryGroupMutationKey = () => ['deleteRecoveryGroup'] as const;
 
-export const getDeleteRecoveryGroupMutationOptions = <TError = HTTPValidationError,
+export const getDeleteRecoveryGroupMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryGroup>>, TError,DeleteRecoveryGroupMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryGroup>>, TError,DeleteRecoveryGroupMutationVariables, TContext> => {
 
@@ -505,13 +506,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteRecoveryGroupMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRecoveryGroup>>>
 
-    export type DeleteRecoveryGroupMutationError = HTTPValidationError
+    export type DeleteRecoveryGroupMutationError = ErrorType<HTTPValidationError>
     export type DeleteRecoveryGroupMutationVariables = {params: DeleteRecoveryGroupParams}
 
     /**
  * @summary Delete Recovery Group Route
  */
-export const useDeleteRecoveryGroup = <TError = HTTPValidationError,
+export const useDeleteRecoveryGroup = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryGroup>>, TError,DeleteRecoveryGroupMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteRecoveryGroup>>,

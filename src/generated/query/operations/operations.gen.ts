@@ -26,6 +26,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -87,7 +88,7 @@ export const getGetOrchestratorRunsQueryKey = (params?: GetOrchestratorRunsParam
     }
 
 
-export const getGetOrchestratorRunsQueryOptions = <TData = Awaited<ReturnType<typeof getOrchestratorRuns>>, TError = HTTPValidationError>(params: GetOrchestratorRunsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrchestratorRuns>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetOrchestratorRunsQueryOptions = <TData = Awaited<ReturnType<typeof getOrchestratorRuns>>, TError = ErrorType<HTTPValidationError>>(params: GetOrchestratorRunsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrchestratorRuns>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -106,10 +107,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetOrchestratorRunsQueryResult = NonNullable<Awaited<ReturnType<typeof getOrchestratorRuns>>>
-export type GetOrchestratorRunsQueryError = HTTPValidationError
+export type GetOrchestratorRunsQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetOrchestratorRuns<TData = Awaited<ReturnType<typeof getOrchestratorRuns>>, TError = HTTPValidationError>(
+export function useGetOrchestratorRuns<TData = Awaited<ReturnType<typeof getOrchestratorRuns>>, TError = ErrorType<HTTPValidationError>>(
  params: GetOrchestratorRunsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrchestratorRuns>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getOrchestratorRuns>>,
@@ -119,7 +120,7 @@ export function useGetOrchestratorRuns<TData = Awaited<ReturnType<typeof getOrch
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetOrchestratorRuns<TData = Awaited<ReturnType<typeof getOrchestratorRuns>>, TError = HTTPValidationError>(
+export function useGetOrchestratorRuns<TData = Awaited<ReturnType<typeof getOrchestratorRuns>>, TError = ErrorType<HTTPValidationError>>(
  params: GetOrchestratorRunsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrchestratorRuns>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getOrchestratorRuns>>,
@@ -129,7 +130,7 @@ export function useGetOrchestratorRuns<TData = Awaited<ReturnType<typeof getOrch
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetOrchestratorRuns<TData = Awaited<ReturnType<typeof getOrchestratorRuns>>, TError = HTTPValidationError>(
+export function useGetOrchestratorRuns<TData = Awaited<ReturnType<typeof getOrchestratorRuns>>, TError = ErrorType<HTTPValidationError>>(
  params: GetOrchestratorRunsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrchestratorRuns>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -137,7 +138,7 @@ export function useGetOrchestratorRuns<TData = Awaited<ReturnType<typeof getOrch
  * @summary Get Orchestrator Runs
  */
 
-export function useGetOrchestratorRuns<TData = Awaited<ReturnType<typeof getOrchestratorRuns>>, TError = HTTPValidationError>(
+export function useGetOrchestratorRuns<TData = Awaited<ReturnType<typeof getOrchestratorRuns>>, TError = ErrorType<HTTPValidationError>>(
  params: GetOrchestratorRunsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrchestratorRuns>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

@@ -31,6 +31,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -85,7 +86,7 @@ export const getGetPolicySetsQueryKey = () => {
     }
 
 
-export const getGetPolicySetsQueryOptions = <TData = Awaited<ReturnType<typeof getPolicySets>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolicySets>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetPolicySetsQueryOptions = <TData = Awaited<ReturnType<typeof getPolicySets>>, TError = ErrorType<HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolicySets>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -104,10 +105,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetPolicySetsQueryResult = NonNullable<Awaited<ReturnType<typeof getPolicySets>>>
-export type GetPolicySetsQueryError = HTTPValidationError
+export type GetPolicySetsQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetPolicySets<TData = Awaited<ReturnType<typeof getPolicySets>>, TError = HTTPValidationError>(
+export function useGetPolicySets<TData = Awaited<ReturnType<typeof getPolicySets>>, TError = ErrorType<HTTPValidationError>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolicySets>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPolicySets>>,
@@ -117,7 +118,7 @@ export function useGetPolicySets<TData = Awaited<ReturnType<typeof getPolicySets
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPolicySets<TData = Awaited<ReturnType<typeof getPolicySets>>, TError = HTTPValidationError>(
+export function useGetPolicySets<TData = Awaited<ReturnType<typeof getPolicySets>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolicySets>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPolicySets>>,
@@ -127,7 +128,7 @@ export function useGetPolicySets<TData = Awaited<ReturnType<typeof getPolicySets
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPolicySets<TData = Awaited<ReturnType<typeof getPolicySets>>, TError = HTTPValidationError>(
+export function useGetPolicySets<TData = Awaited<ReturnType<typeof getPolicySets>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolicySets>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -135,7 +136,7 @@ export function useGetPolicySets<TData = Awaited<ReturnType<typeof getPolicySets
  * @summary Get Policy Sets
  */
 
-export function useGetPolicySets<TData = Awaited<ReturnType<typeof getPolicySets>>, TError = HTTPValidationError>(
+export function useGetPolicySets<TData = Awaited<ReturnType<typeof getPolicySets>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolicySets>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -194,7 +195,7 @@ return validatingMutator<PolicySetsResponse>(getSubmitPolicySetUrl(),
 
 export const getSubmitPolicySetMutationKey = () => ['submitPolicySet'] as const;
 
-export const getSubmitPolicySetMutationOptions = <TError = HTTPValidationError,
+export const getSubmitPolicySetMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitPolicySet>>, TError,SubmitPolicySetMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitPolicySet>>, TError,SubmitPolicySetMutationVariables, TContext> => {
 
@@ -223,13 +224,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SubmitPolicySetMutationResult = NonNullable<Awaited<ReturnType<typeof submitPolicySet>>>
     export type SubmitPolicySetMutationBody = PolicySet
-    export type SubmitPolicySetMutationError = HTTPValidationError
+    export type SubmitPolicySetMutationError = ErrorType<HTTPValidationError>
     export type SubmitPolicySetMutationVariables = {data: PolicySet}
 
     /**
  * @summary Submit Policy Set
  */
-export const useSubmitPolicySet = <TError = HTTPValidationError,
+export const useSubmitPolicySet = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitPolicySet>>, TError,SubmitPolicySetMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitPolicySet>>,
@@ -274,7 +275,7 @@ export const deletePolicySet = async (params: DeletePolicySetParams, options?: P
 
 export const getDeletePolicySetMutationKey = () => ['deletePolicySet'] as const;
 
-export const getDeletePolicySetMutationOptions = <TError = HTTPValidationError,
+export const getDeletePolicySetMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePolicySet>>, TError,DeletePolicySetMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deletePolicySet>>, TError,DeletePolicySetMutationVariables, TContext> => {
 
@@ -303,13 +304,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeletePolicySetMutationResult = NonNullable<Awaited<ReturnType<typeof deletePolicySet>>>
 
-    export type DeletePolicySetMutationError = HTTPValidationError
+    export type DeletePolicySetMutationError = ErrorType<HTTPValidationError>
     export type DeletePolicySetMutationVariables = {params: DeletePolicySetParams}
 
     /**
  * @summary Delete Policy Set Route
  */
-export const useDeletePolicySet = <TError = HTTPValidationError,
+export const useDeletePolicySet = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePolicySet>>, TError,DeletePolicySetMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deletePolicySet>>,

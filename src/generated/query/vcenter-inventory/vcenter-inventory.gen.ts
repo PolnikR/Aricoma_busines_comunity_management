@@ -37,6 +37,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -108,7 +109,7 @@ return validatingMutator<VmsResponse>(getPostVmsSearchUrl(params),
 
 export const getPostVmsSearchMutationKey = () => ['postVmsSearch'] as const;
 
-export const getPostVmsSearchMutationOptions = <TError = HTTPValidationError,
+export const getPostVmsSearchMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postVmsSearch>>, TError,PostVmsSearchMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postVmsSearch>>, TError,PostVmsSearchMutationVariables, TContext> => {
 
@@ -137,13 +138,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PostVmsSearchMutationResult = NonNullable<Awaited<ReturnType<typeof postVmsSearch>>>
     export type PostVmsSearchMutationBody = VmSearchFilter | null | undefined
-    export type PostVmsSearchMutationError = HTTPValidationError
+    export type PostVmsSearchMutationError = ErrorType<HTTPValidationError>
     export type PostVmsSearchMutationVariables = {data?: VmSearchFilter | null;params?: PostVmsSearchParams}
 
     /**
  * @summary Vms Search
  */
-export const usePostVmsSearch = <TError = HTTPValidationError,
+export const usePostVmsSearch = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postVmsSearch>>, TError,PostVmsSearchMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postVmsSearch>>,
@@ -194,7 +195,7 @@ export const getGetVmsInFolderQueryKey = (params?: GetVmsInFolderParams,) => {
     }
 
 
-export const getGetVmsInFolderQueryOptions = <TData = Awaited<ReturnType<typeof getVmsInFolder>>, TError = HTTPValidationError>(params?: GetVmsInFolderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsInFolder>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetVmsInFolderQueryOptions = <TData = Awaited<ReturnType<typeof getVmsInFolder>>, TError = ErrorType<HTTPValidationError>>(params?: GetVmsInFolderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsInFolder>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -213,10 +214,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetVmsInFolderQueryResult = NonNullable<Awaited<ReturnType<typeof getVmsInFolder>>>
-export type GetVmsInFolderQueryError = HTTPValidationError
+export type GetVmsInFolderQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetVmsInFolder<TData = Awaited<ReturnType<typeof getVmsInFolder>>, TError = HTTPValidationError>(
+export function useGetVmsInFolder<TData = Awaited<ReturnType<typeof getVmsInFolder>>, TError = ErrorType<HTTPValidationError>>(
  params: undefined |  GetVmsInFolderParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsInFolder>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVmsInFolder>>,
@@ -226,7 +227,7 @@ export function useGetVmsInFolder<TData = Awaited<ReturnType<typeof getVmsInFold
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVmsInFolder<TData = Awaited<ReturnType<typeof getVmsInFolder>>, TError = HTTPValidationError>(
+export function useGetVmsInFolder<TData = Awaited<ReturnType<typeof getVmsInFolder>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVmsInFolderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsInFolder>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVmsInFolder>>,
@@ -236,7 +237,7 @@ export function useGetVmsInFolder<TData = Awaited<ReturnType<typeof getVmsInFold
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVmsInFolder<TData = Awaited<ReturnType<typeof getVmsInFolder>>, TError = HTTPValidationError>(
+export function useGetVmsInFolder<TData = Awaited<ReturnType<typeof getVmsInFolder>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVmsInFolderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsInFolder>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -245,7 +246,7 @@ export function useGetVmsInFolder<TData = Awaited<ReturnType<typeof getVmsInFold
  * @summary Vms In Folder
  */
 
-export function useGetVmsInFolder<TData = Awaited<ReturnType<typeof getVmsInFolder>>, TError = HTTPValidationError>(
+export function useGetVmsInFolder<TData = Awaited<ReturnType<typeof getVmsInFolder>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVmsInFolderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsInFolder>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -303,7 +304,7 @@ export const getGetVmsQueryKey = (params?: GetVmsParams,) => {
     }
 
 
-export const getGetVmsQueryOptions = <TData = Awaited<ReturnType<typeof getVms>>, TError = HTTPValidationError>(params?: GetVmsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVms>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetVmsQueryOptions = <TData = Awaited<ReturnType<typeof getVms>>, TError = ErrorType<HTTPValidationError>>(params?: GetVmsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVms>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -322,10 +323,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetVmsQueryResult = NonNullable<Awaited<ReturnType<typeof getVms>>>
-export type GetVmsQueryError = HTTPValidationError
+export type GetVmsQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetVms<TData = Awaited<ReturnType<typeof getVms>>, TError = HTTPValidationError>(
+export function useGetVms<TData = Awaited<ReturnType<typeof getVms>>, TError = ErrorType<HTTPValidationError>>(
  params: undefined |  GetVmsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVms>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVms>>,
@@ -335,7 +336,7 @@ export function useGetVms<TData = Awaited<ReturnType<typeof getVms>>, TError = H
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVms<TData = Awaited<ReturnType<typeof getVms>>, TError = HTTPValidationError>(
+export function useGetVms<TData = Awaited<ReturnType<typeof getVms>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVmsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVms>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVms>>,
@@ -345,7 +346,7 @@ export function useGetVms<TData = Awaited<ReturnType<typeof getVms>>, TError = H
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVms<TData = Awaited<ReturnType<typeof getVms>>, TError = HTTPValidationError>(
+export function useGetVms<TData = Awaited<ReturnType<typeof getVms>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVmsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVms>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -354,7 +355,7 @@ export function useGetVms<TData = Awaited<ReturnType<typeof getVms>>, TError = H
  * @summary Vms
  */
 
-export function useGetVms<TData = Awaited<ReturnType<typeof getVms>>, TError = HTTPValidationError>(
+export function useGetVms<TData = Awaited<ReturnType<typeof getVms>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVmsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVms>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -412,7 +413,7 @@ export const getGetVmsByTagQueryKey = (params?: GetVmsByTagParams,) => {
     }
 
 
-export const getGetVmsByTagQueryOptions = <TData = Awaited<ReturnType<typeof getVmsByTag>>, TError = HTTPValidationError>(params?: GetVmsByTagParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsByTag>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetVmsByTagQueryOptions = <TData = Awaited<ReturnType<typeof getVmsByTag>>, TError = ErrorType<HTTPValidationError>>(params?: GetVmsByTagParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsByTag>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -431,10 +432,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetVmsByTagQueryResult = NonNullable<Awaited<ReturnType<typeof getVmsByTag>>>
-export type GetVmsByTagQueryError = HTTPValidationError
+export type GetVmsByTagQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetVmsByTag<TData = Awaited<ReturnType<typeof getVmsByTag>>, TError = HTTPValidationError>(
+export function useGetVmsByTag<TData = Awaited<ReturnType<typeof getVmsByTag>>, TError = ErrorType<HTTPValidationError>>(
  params: undefined |  GetVmsByTagParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsByTag>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVmsByTag>>,
@@ -444,7 +445,7 @@ export function useGetVmsByTag<TData = Awaited<ReturnType<typeof getVmsByTag>>, 
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVmsByTag<TData = Awaited<ReturnType<typeof getVmsByTag>>, TError = HTTPValidationError>(
+export function useGetVmsByTag<TData = Awaited<ReturnType<typeof getVmsByTag>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVmsByTagParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsByTag>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVmsByTag>>,
@@ -454,7 +455,7 @@ export function useGetVmsByTag<TData = Awaited<ReturnType<typeof getVmsByTag>>, 
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVmsByTag<TData = Awaited<ReturnType<typeof getVmsByTag>>, TError = HTTPValidationError>(
+export function useGetVmsByTag<TData = Awaited<ReturnType<typeof getVmsByTag>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVmsByTagParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsByTag>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -463,7 +464,7 @@ export function useGetVmsByTag<TData = Awaited<ReturnType<typeof getVmsByTag>>, 
  * @summary Vms By Tag
  */
 
-export function useGetVmsByTag<TData = Awaited<ReturnType<typeof getVmsByTag>>, TError = HTTPValidationError>(
+export function useGetVmsByTag<TData = Awaited<ReturnType<typeof getVmsByTag>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVmsByTagParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsByTag>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -521,7 +522,7 @@ export const getGetVmsByNameQueryKey = (params?: GetVmsByNameParams,) => {
     }
 
 
-export const getGetVmsByNameQueryOptions = <TData = Awaited<ReturnType<typeof getVmsByName>>, TError = HTTPValidationError>(params?: GetVmsByNameParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsByName>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetVmsByNameQueryOptions = <TData = Awaited<ReturnType<typeof getVmsByName>>, TError = ErrorType<HTTPValidationError>>(params?: GetVmsByNameParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsByName>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -540,10 +541,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetVmsByNameQueryResult = NonNullable<Awaited<ReturnType<typeof getVmsByName>>>
-export type GetVmsByNameQueryError = HTTPValidationError
+export type GetVmsByNameQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetVmsByName<TData = Awaited<ReturnType<typeof getVmsByName>>, TError = HTTPValidationError>(
+export function useGetVmsByName<TData = Awaited<ReturnType<typeof getVmsByName>>, TError = ErrorType<HTTPValidationError>>(
  params: undefined |  GetVmsByNameParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsByName>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVmsByName>>,
@@ -553,7 +554,7 @@ export function useGetVmsByName<TData = Awaited<ReturnType<typeof getVmsByName>>
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVmsByName<TData = Awaited<ReturnType<typeof getVmsByName>>, TError = HTTPValidationError>(
+export function useGetVmsByName<TData = Awaited<ReturnType<typeof getVmsByName>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVmsByNameParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsByName>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVmsByName>>,
@@ -563,7 +564,7 @@ export function useGetVmsByName<TData = Awaited<ReturnType<typeof getVmsByName>>
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetVmsByName<TData = Awaited<ReturnType<typeof getVmsByName>>, TError = HTTPValidationError>(
+export function useGetVmsByName<TData = Awaited<ReturnType<typeof getVmsByName>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVmsByNameParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsByName>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -572,7 +573,7 @@ export function useGetVmsByName<TData = Awaited<ReturnType<typeof getVmsByName>>
  * @summary Vms By Name
  */
 
-export function useGetVmsByName<TData = Awaited<ReturnType<typeof getVmsByName>>, TError = HTTPValidationError>(
+export function useGetVmsByName<TData = Awaited<ReturnType<typeof getVmsByName>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetVmsByNameParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVmsByName>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -629,7 +630,7 @@ export const getGetTagsQueryKey = (params?: GetTagsParams,) => {
     }
 
 
-export const getGetTagsQueryOptions = <TData = Awaited<ReturnType<typeof getTags>>, TError = HTTPValidationError>(params?: GetTagsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTags>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetTagsQueryOptions = <TData = Awaited<ReturnType<typeof getTags>>, TError = ErrorType<HTTPValidationError>>(params?: GetTagsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTags>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -648,10 +649,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetTagsQueryResult = NonNullable<Awaited<ReturnType<typeof getTags>>>
-export type GetTagsQueryError = HTTPValidationError
+export type GetTagsQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetTags<TData = Awaited<ReturnType<typeof getTags>>, TError = HTTPValidationError>(
+export function useGetTags<TData = Awaited<ReturnType<typeof getTags>>, TError = ErrorType<HTTPValidationError>>(
  params: undefined |  GetTagsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTags>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getTags>>,
@@ -661,7 +662,7 @@ export function useGetTags<TData = Awaited<ReturnType<typeof getTags>>, TError =
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetTags<TData = Awaited<ReturnType<typeof getTags>>, TError = HTTPValidationError>(
+export function useGetTags<TData = Awaited<ReturnType<typeof getTags>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetTagsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTags>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getTags>>,
@@ -671,7 +672,7 @@ export function useGetTags<TData = Awaited<ReturnType<typeof getTags>>, TError =
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetTags<TData = Awaited<ReturnType<typeof getTags>>, TError = HTTPValidationError>(
+export function useGetTags<TData = Awaited<ReturnType<typeof getTags>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetTagsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTags>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -679,7 +680,7 @@ export function useGetTags<TData = Awaited<ReturnType<typeof getTags>>, TError =
  * @summary Tags
  */
 
-export function useGetTags<TData = Awaited<ReturnType<typeof getTags>>, TError = HTTPValidationError>(
+export function useGetTags<TData = Awaited<ReturnType<typeof getTags>>, TError = ErrorType<HTTPValidationError>>(
  params?: GetTagsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTags>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

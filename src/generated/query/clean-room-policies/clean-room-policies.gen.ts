@@ -31,6 +31,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -85,7 +86,7 @@ export const getGetCleanRoomPoliciesQueryKey = () => {
     }
 
 
-export const getGetCleanRoomPoliciesQueryOptions = <TData = Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetCleanRoomPoliciesQueryOptions = <TData = Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError = ErrorType<HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -104,10 +105,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetCleanRoomPoliciesQueryResult = NonNullable<Awaited<ReturnType<typeof getCleanRoomPolicies>>>
-export type GetCleanRoomPoliciesQueryError = HTTPValidationError
+export type GetCleanRoomPoliciesQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetCleanRoomPolicies<TData = Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError = HTTPValidationError>(
+export function useGetCleanRoomPolicies<TData = Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError = ErrorType<HTTPValidationError>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getCleanRoomPolicies>>,
@@ -117,7 +118,7 @@ export function useGetCleanRoomPolicies<TData = Awaited<ReturnType<typeof getCle
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCleanRoomPolicies<TData = Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError = HTTPValidationError>(
+export function useGetCleanRoomPolicies<TData = Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getCleanRoomPolicies>>,
@@ -127,7 +128,7 @@ export function useGetCleanRoomPolicies<TData = Awaited<ReturnType<typeof getCle
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCleanRoomPolicies<TData = Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError = HTTPValidationError>(
+export function useGetCleanRoomPolicies<TData = Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -135,7 +136,7 @@ export function useGetCleanRoomPolicies<TData = Awaited<ReturnType<typeof getCle
  * @summary Get Clean Room Policies
  */
 
-export function useGetCleanRoomPolicies<TData = Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError = HTTPValidationError>(
+export function useGetCleanRoomPolicies<TData = Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCleanRoomPolicies>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -194,7 +195,7 @@ return validatingMutator<CleanRoomPoliciesResponse>(getSubmitCleanRoomPolicyUrl(
 
 export const getSubmitCleanRoomPolicyMutationKey = () => ['submitCleanRoomPolicy'] as const;
 
-export const getSubmitCleanRoomPolicyMutationOptions = <TError = HTTPValidationError,
+export const getSubmitCleanRoomPolicyMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitCleanRoomPolicy>>, TError,SubmitCleanRoomPolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitCleanRoomPolicy>>, TError,SubmitCleanRoomPolicyMutationVariables, TContext> => {
 
@@ -223,13 +224,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SubmitCleanRoomPolicyMutationResult = NonNullable<Awaited<ReturnType<typeof submitCleanRoomPolicy>>>
     export type SubmitCleanRoomPolicyMutationBody = CleanRoomPolicy
-    export type SubmitCleanRoomPolicyMutationError = HTTPValidationError
+    export type SubmitCleanRoomPolicyMutationError = ErrorType<HTTPValidationError>
     export type SubmitCleanRoomPolicyMutationVariables = {data: CleanRoomPolicy}
 
     /**
  * @summary Submit Clean Room Policy
  */
-export const useSubmitCleanRoomPolicy = <TError = HTTPValidationError,
+export const useSubmitCleanRoomPolicy = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitCleanRoomPolicy>>, TError,SubmitCleanRoomPolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitCleanRoomPolicy>>,
@@ -274,7 +275,7 @@ export const deleteCleanRoomPolicy = async (params: DeleteCleanRoomPolicyParams,
 
 export const getDeleteCleanRoomPolicyMutationKey = () => ['deleteCleanRoomPolicy'] as const;
 
-export const getDeleteCleanRoomPolicyMutationOptions = <TError = HTTPValidationError,
+export const getDeleteCleanRoomPolicyMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCleanRoomPolicy>>, TError,DeleteCleanRoomPolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteCleanRoomPolicy>>, TError,DeleteCleanRoomPolicyMutationVariables, TContext> => {
 
@@ -303,13 +304,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteCleanRoomPolicyMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCleanRoomPolicy>>>
 
-    export type DeleteCleanRoomPolicyMutationError = HTTPValidationError
+    export type DeleteCleanRoomPolicyMutationError = ErrorType<HTTPValidationError>
     export type DeleteCleanRoomPolicyMutationVariables = {params: DeleteCleanRoomPolicyParams}
 
     /**
  * @summary Delete Clean Room Policy Route
  */
-export const useDeleteCleanRoomPolicy = <TError = HTTPValidationError,
+export const useDeleteCleanRoomPolicy = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCleanRoomPolicy>>, TError,DeleteCleanRoomPolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteCleanRoomPolicy>>,

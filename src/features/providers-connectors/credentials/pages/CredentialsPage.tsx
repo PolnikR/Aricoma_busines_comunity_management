@@ -4,7 +4,6 @@ import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShe
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useGetCredentials } from '@/generated/query/credentials/credentials.gen'
-import type { CredentialRecord } from '@/generated/query/zod'
 import { selectCredentials } from '../model/selectCredentials'
 import { CredentialCreateModal } from '../components/CredentialCreateModal'
 import { CredentialsTable } from '../components/CredentialsTable'
@@ -12,7 +11,7 @@ import { CredentialsTable } from '../components/CredentialsTable'
 export function CredentialsPage() {
   const { t } = useTranslation()
   const [createOpen, setCreateOpen] = useState(false)
-  const { data = [], isLoading, isFetching, error, refetch } = useGetCredentials<CredentialRecord[], Error>({
+  const { data = [], isLoading, isFetching, error, refetch } = useGetCredentials({
     query: { select: selectCredentials },
   })
 

@@ -33,6 +33,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -87,7 +88,7 @@ export const getGetCredentialsQueryKey = () => {
     }
 
 
-export const getGetCredentialsQueryOptions = <TData = Awaited<ReturnType<typeof getCredentials>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCredentials>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetCredentialsQueryOptions = <TData = Awaited<ReturnType<typeof getCredentials>>, TError = ErrorType<HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCredentials>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -106,10 +107,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetCredentialsQueryResult = NonNullable<Awaited<ReturnType<typeof getCredentials>>>
-export type GetCredentialsQueryError = HTTPValidationError
+export type GetCredentialsQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetCredentials<TData = Awaited<ReturnType<typeof getCredentials>>, TError = HTTPValidationError>(
+export function useGetCredentials<TData = Awaited<ReturnType<typeof getCredentials>>, TError = ErrorType<HTTPValidationError>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCredentials>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getCredentials>>,
@@ -119,7 +120,7 @@ export function useGetCredentials<TData = Awaited<ReturnType<typeof getCredentia
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCredentials<TData = Awaited<ReturnType<typeof getCredentials>>, TError = HTTPValidationError>(
+export function useGetCredentials<TData = Awaited<ReturnType<typeof getCredentials>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCredentials>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getCredentials>>,
@@ -129,7 +130,7 @@ export function useGetCredentials<TData = Awaited<ReturnType<typeof getCredentia
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCredentials<TData = Awaited<ReturnType<typeof getCredentials>>, TError = HTTPValidationError>(
+export function useGetCredentials<TData = Awaited<ReturnType<typeof getCredentials>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCredentials>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -137,7 +138,7 @@ export function useGetCredentials<TData = Awaited<ReturnType<typeof getCredentia
  * @summary Get Credentials Route
  */
 
-export function useGetCredentials<TData = Awaited<ReturnType<typeof getCredentials>>, TError = HTTPValidationError>(
+export function useGetCredentials<TData = Awaited<ReturnType<typeof getCredentials>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCredentials>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -196,7 +197,7 @@ return validatingMutator<CredentialsResponse>(getSubmitCredentialUrl(),
 
 export const getSubmitCredentialMutationKey = () => ['submitCredential'] as const;
 
-export const getSubmitCredentialMutationOptions = <TError = HTTPValidationError,
+export const getSubmitCredentialMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitCredential>>, TError,SubmitCredentialMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitCredential>>, TError,SubmitCredentialMutationVariables, TContext> => {
 
@@ -230,13 +231,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SubmitCredentialMutationResult = NonNullable<Awaited<ReturnType<typeof submitCredential>>>
     export type SubmitCredentialMutationBody = Credential
-    export type SubmitCredentialMutationError = HTTPValidationError
+    export type SubmitCredentialMutationError = ErrorType<HTTPValidationError>
     export type SubmitCredentialMutationVariables = {data: Credential}
 
     /**
  * @summary Submit Credential
  */
-export const useSubmitCredential = <TError = HTTPValidationError,
+export const useSubmitCredential = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitCredential>>, TError,SubmitCredentialMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitCredential>>,
@@ -282,7 +283,7 @@ export const deleteCredential = async (params: DeleteCredentialParams, options?:
 
 export const getDeleteCredentialMutationKey = () => ['deleteCredential'] as const;
 
-export const getDeleteCredentialMutationOptions = <TError = HTTPValidationError,
+export const getDeleteCredentialMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCredential>>, TError,DeleteCredentialMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteCredential>>, TError,DeleteCredentialMutationVariables, TContext> => {
 
@@ -316,13 +317,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteCredentialMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCredential>>>
 
-    export type DeleteCredentialMutationError = HTTPValidationError
+    export type DeleteCredentialMutationError = ErrorType<HTTPValidationError>
     export type DeleteCredentialMutationVariables = {params: DeleteCredentialParams}
 
     /**
  * @summary Delete Credential Route
  */
-export const useDeleteCredential = <TError = HTTPValidationError,
+export const useDeleteCredential = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCredential>>, TError,DeleteCredentialMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteCredential>>,

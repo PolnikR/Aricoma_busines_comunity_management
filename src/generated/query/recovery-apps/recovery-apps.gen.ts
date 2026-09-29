@@ -35,6 +35,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -89,7 +90,7 @@ export const getGetRecoveryAppsQueryKey = () => {
     }
 
 
-export const getGetRecoveryAppsQueryOptions = <TData = Awaited<ReturnType<typeof getRecoveryApps>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryApps>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetRecoveryAppsQueryOptions = <TData = Awaited<ReturnType<typeof getRecoveryApps>>, TError = ErrorType<HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryApps>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -108,10 +109,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetRecoveryAppsQueryResult = NonNullable<Awaited<ReturnType<typeof getRecoveryApps>>>
-export type GetRecoveryAppsQueryError = HTTPValidationError
+export type GetRecoveryAppsQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetRecoveryApps<TData = Awaited<ReturnType<typeof getRecoveryApps>>, TError = HTTPValidationError>(
+export function useGetRecoveryApps<TData = Awaited<ReturnType<typeof getRecoveryApps>>, TError = ErrorType<HTTPValidationError>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryApps>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRecoveryApps>>,
@@ -121,7 +122,7 @@ export function useGetRecoveryApps<TData = Awaited<ReturnType<typeof getRecovery
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRecoveryApps<TData = Awaited<ReturnType<typeof getRecoveryApps>>, TError = HTTPValidationError>(
+export function useGetRecoveryApps<TData = Awaited<ReturnType<typeof getRecoveryApps>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryApps>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRecoveryApps>>,
@@ -131,7 +132,7 @@ export function useGetRecoveryApps<TData = Awaited<ReturnType<typeof getRecovery
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRecoveryApps<TData = Awaited<ReturnType<typeof getRecoveryApps>>, TError = HTTPValidationError>(
+export function useGetRecoveryApps<TData = Awaited<ReturnType<typeof getRecoveryApps>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryApps>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -139,7 +140,7 @@ export function useGetRecoveryApps<TData = Awaited<ReturnType<typeof getRecovery
  * @summary Get Recovery Apps
  */
 
-export function useGetRecoveryApps<TData = Awaited<ReturnType<typeof getRecoveryApps>>, TError = HTTPValidationError>(
+export function useGetRecoveryApps<TData = Awaited<ReturnType<typeof getRecoveryApps>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryApps>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -206,7 +207,7 @@ return validatingMutator<RecoveryAppSubmitResponse>(getSubmitRecoveryDagUrl(para
 
 export const getSubmitRecoveryDagMutationKey = () => ['submitRecoveryDag'] as const;
 
-export const getSubmitRecoveryDagMutationOptions = <TError = HTTPValidationError,
+export const getSubmitRecoveryDagMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryDag>>, TError,SubmitRecoveryDagMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryDag>>, TError,SubmitRecoveryDagMutationVariables, TContext> => {
 
@@ -235,13 +236,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SubmitRecoveryDagMutationResult = NonNullable<Awaited<ReturnType<typeof submitRecoveryDag>>>
     export type SubmitRecoveryDagMutationBody = RecoveryAppSubmission
-    export type SubmitRecoveryDagMutationError = HTTPValidationError
+    export type SubmitRecoveryDagMutationError = ErrorType<HTTPValidationError>
     export type SubmitRecoveryDagMutationVariables = {data: RecoveryAppSubmission;params?: SubmitRecoveryDagParams}
 
     /**
  * @summary Submit Recovery Dag
  */
-export const useSubmitRecoveryDag = <TError = HTTPValidationError,
+export const useSubmitRecoveryDag = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryDag>>, TError,SubmitRecoveryDagMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitRecoveryDag>>,
@@ -296,7 +297,7 @@ export const getGetRecoveryAppInventoryQueryKey = (params?: GetRecoveryAppInvent
     }
 
 
-export const getGetRecoveryAppInventoryQueryOptions = <TData = Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError = HTTPValidationError>(params: GetRecoveryAppInventoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetRecoveryAppInventoryQueryOptions = <TData = Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError = ErrorType<HTTPValidationError>>(params: GetRecoveryAppInventoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -315,10 +316,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetRecoveryAppInventoryQueryResult = NonNullable<Awaited<ReturnType<typeof getRecoveryAppInventory>>>
-export type GetRecoveryAppInventoryQueryError = HTTPValidationError
+export type GetRecoveryAppInventoryQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetRecoveryAppInventory<TData = Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError = HTTPValidationError>(
+export function useGetRecoveryAppInventory<TData = Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError = ErrorType<HTTPValidationError>>(
  params: GetRecoveryAppInventoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRecoveryAppInventory>>,
@@ -328,7 +329,7 @@ export function useGetRecoveryAppInventory<TData = Awaited<ReturnType<typeof get
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRecoveryAppInventory<TData = Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError = HTTPValidationError>(
+export function useGetRecoveryAppInventory<TData = Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError = ErrorType<HTTPValidationError>>(
  params: GetRecoveryAppInventoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRecoveryAppInventory>>,
@@ -338,7 +339,7 @@ export function useGetRecoveryAppInventory<TData = Awaited<ReturnType<typeof get
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRecoveryAppInventory<TData = Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError = HTTPValidationError>(
+export function useGetRecoveryAppInventory<TData = Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError = ErrorType<HTTPValidationError>>(
  params: GetRecoveryAppInventoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -346,7 +347,7 @@ export function useGetRecoveryAppInventory<TData = Awaited<ReturnType<typeof get
  * @summary Get Recovery App Inventory
  */
 
-export function useGetRecoveryAppInventory<TData = Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError = HTTPValidationError>(
+export function useGetRecoveryAppInventory<TData = Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError = ErrorType<HTTPValidationError>>(
  params: GetRecoveryAppInventoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecoveryAppInventory>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -398,7 +399,7 @@ export const deleteRecoveryApp = async (params: DeleteRecoveryAppParams, options
 
 export const getDeleteRecoveryAppMutationKey = () => ['deleteRecoveryApp'] as const;
 
-export const getDeleteRecoveryAppMutationOptions = <TError = HTTPValidationError,
+export const getDeleteRecoveryAppMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryApp>>, TError,DeleteRecoveryAppMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryApp>>, TError,DeleteRecoveryAppMutationVariables, TContext> => {
 
@@ -427,13 +428,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteRecoveryAppMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRecoveryApp>>>
 
-    export type DeleteRecoveryAppMutationError = HTTPValidationError
+    export type DeleteRecoveryAppMutationError = ErrorType<HTTPValidationError>
     export type DeleteRecoveryAppMutationVariables = {params: DeleteRecoveryAppParams}
 
     /**
  * @summary Delete Recovery App Route
  */
-export const useDeleteRecoveryApp = <TError = HTTPValidationError,
+export const useDeleteRecoveryApp = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryApp>>, TError,DeleteRecoveryAppMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteRecoveryApp>>,

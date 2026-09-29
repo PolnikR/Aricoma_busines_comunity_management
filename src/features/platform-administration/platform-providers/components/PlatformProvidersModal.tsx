@@ -7,7 +7,6 @@ import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useGetCredentials } from '@/generated/query/credentials/credentials.gen'
-import type { CredentialRecord } from '@/generated/query/zod'
 import { selectCredentials } from '@/features/providers-connectors/credentials/model/selectCredentials'
 import { useUpsertPlatformProvider } from '../hooks/useUpsertPlatformProvider'
 import { toPlatformProviderSubmitData } from '../helpers/platformProviderSubmitMapper'
@@ -40,7 +39,7 @@ export function PlatformProvidersModal({
 }: PlatformProvidersModalProps) {
   const { t } = useTranslation()
   const upsert = useUpsertPlatformProvider()
-  const credentialsQuery = useGetCredentials<CredentialRecord[], Error>({
+  const credentialsQuery = useGetCredentials({
     query: { enabled: open, select: selectCredentials },
   })
   const isEdit = Boolean(provider)

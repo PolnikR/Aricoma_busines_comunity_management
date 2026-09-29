@@ -25,6 +25,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -79,7 +80,7 @@ export const getGetRolesPermissionsQueryKey = () => {
     }
 
 
-export const getGetRolesPermissionsQueryOptions = <TData = Awaited<ReturnType<typeof getRolesPermissions>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesPermissions>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetRolesPermissionsQueryOptions = <TData = Awaited<ReturnType<typeof getRolesPermissions>>, TError = ErrorType<HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesPermissions>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -98,10 +99,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetRolesPermissionsQueryResult = NonNullable<Awaited<ReturnType<typeof getRolesPermissions>>>
-export type GetRolesPermissionsQueryError = HTTPValidationError
+export type GetRolesPermissionsQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetRolesPermissions<TData = Awaited<ReturnType<typeof getRolesPermissions>>, TError = HTTPValidationError>(
+export function useGetRolesPermissions<TData = Awaited<ReturnType<typeof getRolesPermissions>>, TError = ErrorType<HTTPValidationError>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesPermissions>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRolesPermissions>>,
@@ -111,7 +112,7 @@ export function useGetRolesPermissions<TData = Awaited<ReturnType<typeof getRole
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRolesPermissions<TData = Awaited<ReturnType<typeof getRolesPermissions>>, TError = HTTPValidationError>(
+export function useGetRolesPermissions<TData = Awaited<ReturnType<typeof getRolesPermissions>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesPermissions>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRolesPermissions>>,
@@ -121,7 +122,7 @@ export function useGetRolesPermissions<TData = Awaited<ReturnType<typeof getRole
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRolesPermissions<TData = Awaited<ReturnType<typeof getRolesPermissions>>, TError = HTTPValidationError>(
+export function useGetRolesPermissions<TData = Awaited<ReturnType<typeof getRolesPermissions>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesPermissions>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -129,7 +130,7 @@ export function useGetRolesPermissions<TData = Awaited<ReturnType<typeof getRole
  * @summary Get Roles Permissions
  */
 
-export function useGetRolesPermissions<TData = Awaited<ReturnType<typeof getRolesPermissions>>, TError = HTTPValidationError>(
+export function useGetRolesPermissions<TData = Awaited<ReturnType<typeof getRolesPermissions>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesPermissions>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

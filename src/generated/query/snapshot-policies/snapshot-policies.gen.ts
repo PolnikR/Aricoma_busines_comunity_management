@@ -31,6 +31,7 @@ import type {
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
+import type { ErrorType } from '../../../shared/api/validatingMutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -85,7 +86,7 @@ export const getGetPoliciesQueryKey = () => {
     }
 
 
-export const getGetPoliciesQueryOptions = <TData = Awaited<ReturnType<typeof getPolicies>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolicies>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+export const getGetPoliciesQueryOptions = <TData = Awaited<ReturnType<typeof getPolicies>>, TError = ErrorType<HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolicies>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -104,10 +105,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetPoliciesQueryResult = NonNullable<Awaited<ReturnType<typeof getPolicies>>>
-export type GetPoliciesQueryError = HTTPValidationError
+export type GetPoliciesQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetPolicies<TData = Awaited<ReturnType<typeof getPolicies>>, TError = HTTPValidationError>(
+export function useGetPolicies<TData = Awaited<ReturnType<typeof getPolicies>>, TError = ErrorType<HTTPValidationError>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolicies>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPolicies>>,
@@ -117,7 +118,7 @@ export function useGetPolicies<TData = Awaited<ReturnType<typeof getPolicies>>, 
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPolicies<TData = Awaited<ReturnType<typeof getPolicies>>, TError = HTTPValidationError>(
+export function useGetPolicies<TData = Awaited<ReturnType<typeof getPolicies>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolicies>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPolicies>>,
@@ -127,7 +128,7 @@ export function useGetPolicies<TData = Awaited<ReturnType<typeof getPolicies>>, 
       >, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPolicies<TData = Awaited<ReturnType<typeof getPolicies>>, TError = HTTPValidationError>(
+export function useGetPolicies<TData = Awaited<ReturnType<typeof getPolicies>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolicies>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -135,7 +136,7 @@ export function useGetPolicies<TData = Awaited<ReturnType<typeof getPolicies>>, 
  * @summary Get Policies
  */
 
-export function useGetPolicies<TData = Awaited<ReturnType<typeof getPolicies>>, TError = HTTPValidationError>(
+export function useGetPolicies<TData = Awaited<ReturnType<typeof getPolicies>>, TError = ErrorType<HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolicies>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -194,7 +195,7 @@ return validatingMutator<SnapshotPoliciesResponse>(getSubmitPolicyUrl(),
 
 export const getSubmitPolicyMutationKey = () => ['submitPolicy'] as const;
 
-export const getSubmitPolicyMutationOptions = <TError = HTTPValidationError,
+export const getSubmitPolicyMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitPolicy>>, TError,SubmitPolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitPolicy>>, TError,SubmitPolicyMutationVariables, TContext> => {
 
@@ -223,13 +224,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type SubmitPolicyMutationResult = NonNullable<Awaited<ReturnType<typeof submitPolicy>>>
     export type SubmitPolicyMutationBody = SnapshotPolicy
-    export type SubmitPolicyMutationError = HTTPValidationError
+    export type SubmitPolicyMutationError = ErrorType<HTTPValidationError>
     export type SubmitPolicyMutationVariables = {data: SnapshotPolicy}
 
     /**
  * @summary Submit Policy
  */
-export const useSubmitPolicy = <TError = HTTPValidationError,
+export const useSubmitPolicy = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitPolicy>>, TError,SubmitPolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitPolicy>>,
@@ -274,7 +275,7 @@ export const deletePolicy = async (params: DeletePolicyParams, options?: Paramet
 
 export const getDeletePolicyMutationKey = () => ['deletePolicy'] as const;
 
-export const getDeletePolicyMutationOptions = <TError = HTTPValidationError,
+export const getDeletePolicyMutationOptions = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePolicy>>, TError,DeletePolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deletePolicy>>, TError,DeletePolicyMutationVariables, TContext> => {
 
@@ -303,13 +304,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeletePolicyMutationResult = NonNullable<Awaited<ReturnType<typeof deletePolicy>>>
 
-    export type DeletePolicyMutationError = HTTPValidationError
+    export type DeletePolicyMutationError = ErrorType<HTTPValidationError>
     export type DeletePolicyMutationVariables = {params: DeletePolicyParams}
 
     /**
  * @summary Delete Policy
  */
-export const useDeletePolicy = <TError = HTTPValidationError,
+export const useDeletePolicy = <TError = ErrorType<HTTPValidationError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePolicy>>, TError,DeletePolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deletePolicy>>,

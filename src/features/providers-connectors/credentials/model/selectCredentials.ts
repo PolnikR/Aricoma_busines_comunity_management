@@ -1,3 +1,3 @@
-import type { CredentialsResponse } from '@/generated/query/zod'
+import type { CredentialRecord, CredentialsResponse } from '@/generated/query/zod'
 
-export const selectCredentials = (response: CredentialsResponse) => response.credentials
+export const selectCredentials = (response: CredentialsResponse): CredentialRecord[] => response.credentials
