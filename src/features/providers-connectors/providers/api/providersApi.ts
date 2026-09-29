@@ -39,24 +39,14 @@ function mapProviderRecord(provider: GeneratedProviderRecord): ProviderRecord {
     throw new Error(`Unsupported provider credential status: ${provider.credentialStatus}`)
   }
 
+  // Pass every generated field through and override only the fields whose UI
+  // shape differs, so new contract fields reach the UI model automatically.
   return {
-    id: provider.id,
-    name: provider.name,
+    ...provider,
     description: provider.description ?? '',
     type: provider.type,
     ipAddress: provider.ipAddress ?? '',
     credentialId: provider.credentialId ?? null,
-    role: provider.role,
-    ...(provider.url !== undefined ? { url: provider.url } : {}),
-    ...(provider.orchestratorConnId !== undefined
-      ? { orchestratorConnId: provider.orchestratorConnId }
-      : {}),
-    ...(provider.vmPrefix !== undefined ? { vmPrefix: provider.vmPrefix } : {}),
-    ...(provider.vmTags !== undefined ? { vmTags: provider.vmTags } : {}),
-    ...(provider.notificationEmail !== undefined ? { notificationEmail: provider.notificationEmail } : {}),
-    ...(provider.cacheRefreshSeconds !== undefined
-      ? { cacheRefreshSeconds: provider.cacheRefreshSeconds }
-      : {}),
     credentialStatus: provider.credentialStatus ?? 'none',
     rawRecord: provider,
   }

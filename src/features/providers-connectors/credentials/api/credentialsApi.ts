@@ -20,10 +20,8 @@ import { encryptCredentialPassword } from './credentialsCrypto'
 function parseCredentials(payload: unknown, operation: string): CredentialRecord[] {
   return parseGeneratedResponse(CredentialsResponse, payload, operation).credentials
     .map(credential => ({
-      id: credential.id,
-      name: credential.name,
+      ...credential,
       description: credential.description ?? '',
-      username: credential.username,
     }))
 }
 

@@ -21,10 +21,8 @@ function parsePolicies(payload: unknown): CleanRoomPolicy[] {
     payload,
     'Clean room policies response',
   ).clean_room_policies.map(policy => ({
-    id: policy.id,
-    name: policy.name,
+    ...policy,
     description: policy.description ?? '',
-    enabled: policy.enabled,
   }))
 }
 
