@@ -6,7 +6,9 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useCredentials } from '@/features/providers-connectors/credentials/hooks/useCredentials'
+import { useGetCredentials } from '@/generated/query/credentials/credentials.gen'
+import type { CredentialRecord } from '@/generated/query/zod'
+import { selectCredentials } from '@/features/providers-connectors/credentials/model/selectCredentials'
 import { useUpsertPlatformProvider } from '../hooks/useUpsertPlatformProvider'
 import { toPlatformProviderSubmitData } from '../helpers/platformProviderSubmitMapper'
 import {
@@ -38,7 +40,9 @@ export function PlatformProvidersModal({
 }: PlatformProvidersModalProps) {
   const { t } = useTranslation()
   const upsert = useUpsertPlatformProvider()
-  const credentialsQuery = useCredentials({ enabled: open })
+  const credentialsQuery = useGetCredentials<CredentialRecord[], Error>({
+    query: { enabled: open, select: selectCredentials },
+  })
   const isEdit = Boolean(provider)
   const [formData, setFormData] = useState<PlatformProviderFormData>(EMPTY_PLATFORM_PROVIDER_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof PlatformProviderFormData, string>>>({})

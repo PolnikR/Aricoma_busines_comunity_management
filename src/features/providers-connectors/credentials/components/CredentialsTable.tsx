@@ -15,8 +15,8 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useDeleteCredential } from '../hooks/useDeleteCredential'
-import type { CredentialRecord } from '../model/credentialTypes'
+import { useDeleteCredential } from '@/generated/query/credentials/credentials.gen'
+import type { CredentialRecord } from '@/generated/query/zod'
 import { CredentialCreateModal } from './CredentialCreateModal'
 
 interface CredentialsTableProps {
@@ -53,8 +53,8 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
       id: 'description',
       header: t('credentials.table.description'),
       cell: credential => (
-        <span className="block max-w-lg truncate" title={credential.description}>
-          {credential.description}
+        <span className="block max-w-lg truncate" title={credential.description ?? ''}>
+          {credential.description ?? ''}
         </span>
       ),
     },
@@ -164,7 +164,7 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
           <dl className="px-5 py-2">
             <DetailRow label={t('credentials.detail.id')} value={<span className="font-mono">{selected.id}</span>} />
             <DetailRow label={t('credentials.detail.username')} value={<span className="font-mono">{selected.username}</span>} />
-            <DetailRow label={t('credentials.detail.description')} value={selected.description} />
+            <DetailRow label={t('credentials.detail.description')} value={selected.description ?? ''} />
             <DetailRow label={t('credentials.detail.password')} value={t('credentials.detail.passwordHidden')} />
           </dl>
         ) : null}
@@ -189,7 +189,7 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
         onCancel={() => { setDeleteTarget(null) }}
         onConfirm={() => {
           if (!deleteTarget) return
-          deleteCredential.mutate(deleteTarget.id, {
+          deleteCredential.mutate({ params: { credential_id: deleteTarget.id } }, {
             onSuccess: () => {
               setDeleteTarget(null)
               setSelectedId(null)

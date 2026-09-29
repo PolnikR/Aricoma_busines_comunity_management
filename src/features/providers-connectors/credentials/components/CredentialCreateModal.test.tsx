@@ -2,15 +2,13 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
-import type {
-  CredentialFormData,
-  CredentialSubmitPayload,
-} from '../model/credentialTypes'
+import type { Credential } from '@/generated/query/zod'
+import type { CredentialFormData } from '../model/credentialForm'
 import { CredentialCreateModal } from './CredentialCreateModal'
 
 const mutate = vi.fn()
 const createEncryptedCredentialPayload = vi.fn<
-  (form: CredentialFormData) => Promise<CredentialSubmitPayload>
+  (form: CredentialFormData) => Promise<Credential>
 >()
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -21,10 +19,10 @@ vi.mock('react-router', async (importOriginal) => {
     useBlocker: () => ({ state: 'unblocked' as const }),
   }
 })
-vi.mock('../hooks/useCreateCredential', () => ({
-  useCreateCredential: () => ({ mutate, isPending: false }),
+vi.mock('@/generated/query/credentials/credentials.gen', () => ({
+  useSubmitCredential: () => ({ mutate, isPending: false }),
 }))
-vi.mock('../api/credentialsApi', () => ({
+vi.mock('../api/credentialsCrypto', () => ({
   createEncryptedCredentialPayload: (form: CredentialFormData) => createEncryptedCredentialPayload(form),
 }))
 
@@ -118,12 +116,14 @@ describe('CredentialCreateModal', () => {
     )
     expect(mutate).toHaveBeenCalledWith(
       {
-        id: 'vcenter-admin',
-        name: 'vCenter admin',
-        description: 'Production account',
-        username: 'administrator',
-        password: 'encrypted-password',
-        password_encrypted: true,
+        data: {
+          id: 'vcenter-admin',
+          name: 'vCenter admin',
+          description: 'Production account',
+          username: 'administrator',
+          password: 'encrypted-password',
+          password_encrypted: true,
+        },
       },
       expect.objectContaining({}),
     )

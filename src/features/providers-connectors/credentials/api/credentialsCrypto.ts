@@ -1,5 +1,7 @@
 import { API_ENDPOINTS } from '@/config/apiEndpoints'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
+import type { Credential } from '@/generated/query/zod'
+import type { CredentialFormData } from '../model/credentialForm'
 
 let cachedPublicKey: Promise<CryptoKey> | null = null
 
@@ -89,4 +91,15 @@ export async function encryptCredentialPassword(password: string): Promise<strin
 
 export function clearCredentialPublicKeyCache(): void {
   cachedPublicKey = null
+}
+
+export async function createEncryptedCredentialPayload(form: CredentialFormData): Promise<Credential> {
+  return {
+    id: form.id.trim(),
+    name: form.name.trim(),
+    description: form.description.trim(),
+    username: form.username.trim(),
+    password: await encryptCredentialPassword(form.password),
+    password_encrypted: true,
+  }
 }

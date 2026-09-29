@@ -6,9 +6,10 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useCreateCredential } from '../hooks/useCreateCredential'
-import { createEncryptedCredentialPayload } from '../api/credentialsApi'
-import type { CredentialFormData, CredentialRecord } from '../model/credentialTypes'
+import { useSubmitCredential } from '@/generated/query/credentials/credentials.gen'
+import type { CredentialRecord } from '@/generated/query/zod'
+import { createEncryptedCredentialPayload } from '../api/credentialsCrypto'
+import type { CredentialFormData } from '../model/credentialForm'
 import { CredentialCreateForm } from './CredentialCreateForm'
 import type { CredentialCreateFormData } from './CredentialCreateForm'
 
@@ -33,7 +34,7 @@ function createInitialForm(credential?: CredentialRecord): CredentialCreateFormD
     ? {
         id: credential.id,
         name: credential.name,
-        description: credential.description,
+        description: credential.description ?? '',
         username: credential.username,
         password: '',
         confirmPassword: '',
@@ -48,7 +49,7 @@ export function CredentialCreateModal({
   credential,
 }: CredentialCreateModalProps) {
   const { t } = useTranslation()
-  const createCredential = useCreateCredential()
+  const createCredential = useSubmitCredential()
   const [form, setForm] = useState<CredentialCreateFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof CredentialCreateFormData, string>>>({})
   const [submitError, setSubmitError] = useState<unknown>(null)
@@ -123,7 +124,7 @@ export function CredentialCreateModal({
         password: form.password,
       }
       const payload = await createEncryptedCredentialPayload(credential)
-      createCredential.mutate(payload, {
+      createCredential.mutate({ data: payload }, {
         onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
         onError: (error: unknown) => {
           setSubmitError(error)

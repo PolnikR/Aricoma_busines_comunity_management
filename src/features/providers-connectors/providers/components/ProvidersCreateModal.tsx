@@ -8,8 +8,10 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { isProgrammaticIdAvailable, toProgrammaticId } from '@/shared/utils/programmaticId'
 import { useTags } from '@/features/discovery-inventory/resources/hooks/useVmwareTags'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
+import { useGetCredentials } from '@/generated/query/credentials/credentials.gen'
+import type { CredentialRecord } from '@/generated/query/zod'
+import { selectCredentials } from '../../credentials/model/selectCredentials'
 import { useUpsertProvider } from '../hooks/useUpsertProvider'
-import { useCredentials } from '../../credentials/hooks/useCredentials'
 import { ProviderCreateForm } from './ProviderCreateForm'
 import type { ProviderRecord, ProviderRole, ProviderSubmitData, ProviderType } from '../model/providerTypes'
 import type { ProviderCreateFormData } from './ProviderCreateForm'
@@ -67,7 +69,9 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
 export function ProvidersCreateModal({ open, onClose, existingProviders, provider }: ProvidersCreateModalProps) {
   const { t } = useTranslation()
   const upsert = useUpsertProvider()
-  const credentialsQuery = useCredentials({ enabled: open })
+  const credentialsQuery = useGetCredentials<CredentialRecord[], Error>({
+    query: { enabled: open, select: selectCredentials },
+  })
   const isEdit = Boolean(provider)
   const tagsEnabled = open && isEdit && provider?.type === 'VMWARE'
   const tagsQuery = useTags(provider?.id ?? null, tagsEnabled)

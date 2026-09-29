@@ -1,7 +1,7 @@
 import type { ChangeEvent, KeyboardEvent } from 'react'
 import { Field, Input, Textarea } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
-import type { CredentialFormData } from '../model/credentialTypes'
+import type { CredentialFormData } from '../model/credentialForm'
 
 export interface CredentialCreateFormData extends CredentialFormData {
   confirmPassword: string

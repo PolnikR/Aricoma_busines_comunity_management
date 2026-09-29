@@ -2,7 +2,7 @@ import type { ChangeEvent } from 'react'
 import { CheckboxField, Field, Input, Select } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PLATFORM_PROVIDER_TYPES } from '../model/platformProviderTypes'
-import type { CredentialRecord } from '@/features/providers-connectors/credentials/model/credentialTypes'
+import type { CredentialRecord } from '@/generated/query/zod'
 import type { PlatformProviderFormData } from '../model/platformProviderForm'
 
 export type { PlatformProviderFormData } from '../model/platformProviderForm'

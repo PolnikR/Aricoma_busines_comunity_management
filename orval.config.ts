@@ -64,7 +64,12 @@ export default defineConfig({
         mutator: { path: 'src/shared/api/validatingMutator.ts', name: 'validatingMutator' },
         operationName,
         fetch: { includeHttpResponseReturnType: false },
-        query: { version: 5, mutationInvalidates: [] },
+        query: {
+          version: 5,
+          mutationInvalidates: [
+            { onMutations: ['submitCredential', 'deleteCredential'], invalidates: ['getCredentials'] },
+          ],
+        },
         zod: { version: 4, variant: 'classic', exactOptional: true },
       },
     },

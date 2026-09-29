@@ -1,26 +1,49 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { CredentialsTable } from './CredentialsTable'
+import { CredentialsPage } from '../pages/CredentialsPage'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../hooks/useDeleteCredential', () => ({
-  useDeleteCredential: () => ({
-    mutate: vi.fn(),
-    isPending: false,
-    error: null,
-  }),
-}))
 vi.mock('./CredentialCreateModal', () => ({
   CredentialCreateModal: ({ credential }: { credential?: { id: string } }) => (
     <div>{credential ? `Editing ${credential.id}` : null}</div>
   ),
 }))
 
+function renderWithQueryClient(ui: React.ReactElement) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>)
+}
+
+function stubFetch(initialPayload: unknown) {
+  const mock = vi.fn((url: string, init?: RequestInit) => {
+    const method = init?.method ?? 'GET'
+    if (url.startsWith('/api/get_credentials')) {
+      return Promise.resolve(new Response(JSON.stringify(initialPayload), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }))
+    }
+    if (url.startsWith('/api/delete_credential') && method === 'DELETE') {
+      return Promise.resolve(new Response(JSON.stringify({ credentials: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }))
+    }
+    return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }))
+  })
+  vi.stubGlobal('fetch', mock)
+  return mock
+}
+
 describe('CredentialsTable', () => {
+  afterEach(() => { vi.unstubAllGlobals() })
+
   it('keeps credential table chrome visible and skeletonizes only rows while loading', () => {
-    render(
+    renderWithQueryClient(
       <CredentialsTable
         credentials={[]}
         isLoading
@@ -41,7 +64,7 @@ describe('CredentialsTable', () => {
   it('keeps the table toolbar available and retries when loading credentials fails', async () => {
     const user = userEvent.setup()
     const onRetry = vi.fn()
-    render(
+    renderWithQueryClient(
       <CredentialsTable
         credentials={[]}
         isLoading={false}
@@ -64,7 +87,7 @@ describe('CredentialsTable', () => {
         detail: [{ loc: ['query', 'scope'], msg: 'Credential scope is invalid.' }],
       }),
     })
-    render(
+    renderWithQueryClient(
       <CredentialsTable
         credentials={[]}
         isLoading={false}
@@ -82,7 +105,7 @@ describe('CredentialsTable', () => {
 
   it('opens a shared detail drawer and starts editing from its action', async () => {
     const user = userEvent.setup()
-    render(
+    renderWithQueryClient(
       <CredentialsTable
         credentials={[{
           id: 'vcenter-admin',
@@ -103,5 +126,24 @@ describe('CredentialsTable', () => {
     expect(screen.getByText('Stored securely and never displayed')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Edit' }))
     expect(screen.getByText('Editing vcenter-admin')).toBeInTheDocument()
+  })
+
+  it('refetches the credential list after a delete', async () => {
+    const fetchMock = stubFetch({
+      credentials: [{ id: 'c1', name: 'One', username: 'u' }],
+    })
+    const user = userEvent.setup()
+    renderWithQueryClient(<CredentialsPage />)
+
+    await screen.findByText('One')
+    await user.click(screen.getByText('One'))
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    const confirmDialog = screen.getByRole('dialog', { name: 'Delete credential' })
+    await user.click(within(confirmDialog).getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => {
+      const urls = fetchMock.mock.calls.map(([url]) => url)
+      expect(urls.filter(url => url.startsWith('/api/get_credentials'))).toHaveLength(2)
+    })
   })
 })

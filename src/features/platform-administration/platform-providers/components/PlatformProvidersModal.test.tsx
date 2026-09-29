@@ -1,13 +1,13 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
-import { useCredentials } from '@/features/providers-connectors/credentials/hooks/useCredentials'
+import { useGetCredentials } from '@/generated/query/credentials/credentials.gen'
 import { useUpsertPlatformProvider } from '../hooks/useUpsertPlatformProvider'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { PlatformProvidersModal } from './PlatformProvidersModal'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/providers-connectors/credentials/hooks/useCredentials', () => ({ useCredentials: vi.fn() }))
+vi.mock('@/generated/query/credentials/credentials.gen', () => ({ useGetCredentials: vi.fn() }))
 vi.mock('../hooks/useUpsertPlatformProvider', () => ({ useUpsertPlatformProvider: vi.fn() }))
 vi.mock('@/shared/hooks/useUnsavedChangesGuard', () => ({
   useUnsavedChangesGuard: () => ({
@@ -102,7 +102,7 @@ function submittedProvider(mutate: ReturnType<typeof vi.fn>): Record<string, unk
 }
 
 beforeEach(() => {
-  vi.mocked(useCredentials).mockReturnValue(emptyCredentialsQuery as unknown as ReturnType<typeof useCredentials>)
+  vi.mocked(useGetCredentials).mockReturnValue(emptyCredentialsQuery as unknown as ReturnType<typeof useGetCredentials>)
   setMutate(vi.fn())
 })
 

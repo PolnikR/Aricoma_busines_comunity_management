@@ -6,13 +6,15 @@
  */
 import {
   useMutation,
-  useQuery
+  useQuery,
+  useQueryClient
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
   MutationFunction,
+  MutationFunctionContext,
   QueryClient,
   QueryFunction,
   QueryKey,
@@ -195,7 +197,7 @@ return validatingMutator<CredentialsResponse>(getSubmitCredentialUrl(),
 export const getSubmitCredentialMutationKey = () => ['submitCredential'] as const;
 
 export const getSubmitCredentialMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitCredential>>, TError,SubmitCredentialMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitCredential>>, TError,SubmitCredentialMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitCredential>>, TError,SubmitCredentialMutationVariables, TContext> => {
 
 const mutationKey = getSubmitCredentialMutationKey();
@@ -214,12 +216,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  submitCredential(data,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof submitCredential>>, variables: SubmitCredentialMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetCredentialsQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type SubmitCredentialMutationResult = NonNullable<Awaited<ReturnType<typeof submitCredential>>>
     export type SubmitCredentialMutationBody = Credential
@@ -230,14 +237,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Submit Credential
  */
 export const useSubmitCredential = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitCredential>>, TError,SubmitCredentialMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitCredential>>, TError,SubmitCredentialMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitCredential>>,
         TError,
         SubmitCredentialMutationVariables,
         TContext
       > => {
-      return useMutation(getSubmitCredentialMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getSubmitCredentialMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }
     export const getDeleteCredentialUrl = (params: DeleteCredentialParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -275,7 +283,7 @@ export const deleteCredential = async (params: DeleteCredentialParams, options?:
 export const getDeleteCredentialMutationKey = () => ['deleteCredential'] as const;
 
 export const getDeleteCredentialMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCredential>>, TError,DeleteCredentialMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCredential>>, TError,DeleteCredentialMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteCredential>>, TError,DeleteCredentialMutationVariables, TContext> => {
 
 const mutationKey = getDeleteCredentialMutationKey();
@@ -294,12 +302,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  deleteCredential(params,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof deleteCredential>>, variables: DeleteCredentialMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetCredentialsQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type DeleteCredentialMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCredential>>>
 
@@ -310,12 +323,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Delete Credential Route
  */
 export const useDeleteCredential = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCredential>>, TError,DeleteCredentialMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCredential>>, TError,DeleteCredentialMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteCredential>>,
         TError,
         DeleteCredentialMutationVariables,
         TContext
       > => {
-      return useMutation(getDeleteCredentialMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getDeleteCredentialMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }
