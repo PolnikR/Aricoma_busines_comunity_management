@@ -15,7 +15,6 @@ const data = {
   url: 'https://vcenter.example.test',
   port: '22',
   credentialId: 'vcenter-admin',
-  defaultFlashcopyProviderId: '',
   orchestratorConnId: '',
   vmPrefix: 'prod-',
   vmTags: ['saved-tag'],

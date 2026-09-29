@@ -119,22 +119,6 @@ describe('fetchProviders', () => {
     expect(mock.mock.calls[0]?.[0]).toBe(expectedUrl)
   })
 
-  it('preserves an optional default FlashSystem provider reference', async () => {
-    stubFetch({
-      providers: [{
-        ...providerA,
-        defaultFlashcopyProviderId: 'ibm-flashsystem-01',
-      }],
-    })
-
-    const providers = await fetchProviders()
-
-    expect(providers[0]).toMatchObject({
-      id: 'vmware-vcenter-01',
-      defaultFlashcopyProviderId: 'ibm-flashsystem-01',
-    })
-  })
-
   it('preserves VM settings from the provider response', async () => {
     stubFetch({
       providers: [{
@@ -159,10 +143,8 @@ describe('fetchProviders', () => {
 
   it.each([
     ['missing id', { ...providerA, id: undefined }],
-    ['empty id', { ...providerA, id: '' }],
     ['invalid type', { ...providerA, type: 'UNKNOWN' }],
     ['invalid credential status', { ...providerA, credentialStatus: 'unknown' }],
-    ['invalid notification email', { ...providerA, notificationEmail: 'not-an-email' }],
   ])('rejects a provider with %s', async (_label, provider) => {
     stubFetch({ providers: [provider] })
     await expect(fetchProviders()).rejects.toBeInstanceOf(Error)
@@ -196,7 +178,7 @@ describe('submitProvider', () => {
     const [url, init] = mock.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/submit_provider')
     expect(init.method).toBe('POST')
-    expect(init.body).toBe(JSON.stringify(newProvider))
+    expect(JSON.parse(init.body as string)).toEqual(newProvider)
     const headers = new Headers(init.headers)
     expect(headers.get('X-User')).toBe('admin')
     expect(headers.get('Content-Type')).toBe('application/json')
@@ -219,7 +201,7 @@ describe('submitProvider', () => {
       ipAddress: mappedProvider.ipAddress,
       credentialId: mappedProvider.credentialId,
       role: mappedProvider.role ?? 'source',
-      cacheRefreshSeconds: mappedProvider.cacheRefreshSeconds,
+      cacheRefreshSeconds: mappedProvider.cacheRefreshSeconds ?? null,
     })
 
     expect(mappedProvider).toMatchObject({ cacheRefreshSeconds: 300 })
@@ -244,7 +226,7 @@ describe('submitProvider', () => {
     await submitProvider(provider)
 
     const [, init] = mock.mock.calls[0] as [string, RequestInit]
-    expect(init.body).toBe(JSON.stringify(provider))
+    expect(JSON.parse(init.body as string)).toEqual(provider)
   })
 
   it('posts null notificationEmail when clearing an existing value', async () => {
@@ -295,11 +277,6 @@ describe('submitProvider', () => {
     await expect(submitProvider(submitData)).rejects.toBeInstanceOf(Error)
   })
 
-  it('rejects a provider with an invalid URL', async () => {
-    stubFetch({ providers: [{ ...providerA, url: 'not-a-url' }] })
-
-    await expect(fetchProviders()).rejects.toBeInstanceOf(Error)
-  })
 
 })
 

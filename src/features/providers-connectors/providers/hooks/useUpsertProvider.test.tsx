@@ -45,7 +45,7 @@ describe('useUpsertProvider', () => {
   })
 
   it('posts a new provider and invalidates the provider list', async () => {
-    const newProvider: ProviderSubmitData = {
+    const newProvider = {
       id: 'flashsystem-01',
       name: 'Backup Array',
       description: '',
@@ -53,7 +53,7 @@ describe('useUpsertProvider', () => {
       ipAddress: '10.0.0.2',
       credentialId: 'ibm-admin',
       role: 'source',
-    }
+    } satisfies ProviderSubmitData
     const { mockFetch, queryClient, result } = setup([
       providerA,
       { ...newProvider, credentialStatus: 'ok' },
@@ -100,7 +100,7 @@ describe('useUpsertProvider', () => {
   })
 
   it('preserves providers added to the cache while the mutation is pending', async () => {
-    const newProvider: ProviderSubmitData = {
+    const newProvider = {
       id: 'flashsystem-01',
       name: 'Backup Array',
       description: '',
@@ -108,7 +108,7 @@ describe('useUpsertProvider', () => {
       ipAddress: '10.0.0.2',
       credentialId: 'ibm-admin',
       role: 'source',
-    }
+    } satisfies ProviderSubmitData
     const concurrentProvider: ProviderRecord = {
       id: 'powervm-01',
       name: 'PowerVM',

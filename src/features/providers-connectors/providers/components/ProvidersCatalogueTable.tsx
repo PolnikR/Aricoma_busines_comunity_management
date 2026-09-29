@@ -370,10 +370,6 @@ export function ProvidersCatalogueTable({
               value={selected.notificationEmail ?? '-'}
             />
             <DetailRow
-              label={t('details.defaultFlashcopyProviderId')}
-              value={<span className="font-mono">{selected.defaultFlashcopyProviderId ?? '-'}</span>}
-            />
-            <DetailRow
               label={t('details.orchestratorConnId')}
               value={<span className="font-mono">{selected.orchestratorConnId ?? '-'}</span>}
             />

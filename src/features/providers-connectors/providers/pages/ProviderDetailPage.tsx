@@ -137,10 +137,6 @@ export function ProviderDetailPage() {
               <dd className="mt-1 text-sm text-text-primary">{isLoading ? <SkeletonBlock className="h-4 w-40" /> : textOrFallback(provider?.description, '-')}</dd>
             </div>
             <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.defaultFlashcopyProviderId')}</dt>
-              <dd className="mt-1 font-mono text-sm text-text-primary">{isLoading ? <SkeletonBlock className="h-4 w-32" /> : provider?.defaultFlashcopyProviderId ?? '-'}</dd>
-            </div>
-            <div>
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.orchestratorConnId')}</dt>
               <dd className="mt-1 font-mono text-sm text-text-primary">{isLoading ? <SkeletonBlock className="h-4 w-28" /> : provider?.orchestratorConnId ?? '-'}</dd>
             </div>

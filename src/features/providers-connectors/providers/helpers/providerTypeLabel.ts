@@ -3,6 +3,7 @@ import type { ProviderType } from '../model/providerTypes'
 const providerTypeLabels: Record<ProviderType, string> = {
   VMWARE: 'VMware',
   FLASHCOPY: 'FlashCopy',
+  HITACHI: 'Hitachi',
   IBM_POWER: 'IBM Power',
 }
 

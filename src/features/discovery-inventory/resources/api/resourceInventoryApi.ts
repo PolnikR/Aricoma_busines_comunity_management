@@ -21,5 +21,7 @@ export async function fetchInventory(provider: ProviderRecord, tag?: string): Pr
       return { source: 'power', provider, inventory: await fetchPowerInventory(provider.id) }
     case 'FLASHCOPY':
       return { source: 'flashsystem', provider, inventory: await fetchFlashSystemInventory(provider.id) }
+    case 'HITACHI':
+      throw new Error('Inventory is not supported for Hitachi providers')
   }
 }

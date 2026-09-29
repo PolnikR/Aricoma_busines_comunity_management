@@ -33,7 +33,6 @@ const EMPTY_FORM: ProviderCreateFormData = {
   url: '',
   port: '22',
   credentialId: '',
-  defaultFlashcopyProviderId: '',
   orchestratorConnId: '',
   vmPrefix: '',
   vmTags: [],
@@ -53,7 +52,6 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         url: provider.url ?? '',
         port: String(provider.port ?? 22),
         credentialId: provider.credentialId ?? '',
-        defaultFlashcopyProviderId: provider.defaultFlashcopyProviderId ?? '',
         orchestratorConnId: provider.orchestratorConnId ?? '',
         vmPrefix: provider.vmPrefix ?? '',
         vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
@@ -88,7 +86,6 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     || formData.url !== initialForm.url
     || formData.port !== initialForm.port
     || formData.credentialId !== initialForm.credentialId
-    || formData.defaultFlashcopyProviderId !== initialForm.defaultFlashcopyProviderId
     || formData.orchestratorConnId !== initialForm.orchestratorConnId
     || formData.notificationEmail !== initialForm.notificationEmail
     || formData.cacheRefreshSeconds !== initialForm.cacheRefreshSeconds
@@ -202,9 +199,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     }
     const url = formData.url.trim()
     if (url) record.url = url
-    const defaultFlashcopyProviderId = formData.defaultFlashcopyProviderId.trim()
     const orchestratorConnId = formData.orchestratorConnId.trim()
-    if (defaultFlashcopyProviderId) record.defaultFlashcopyProviderId = defaultFlashcopyProviderId
     if (orchestratorConnId) record.orchestratorConnId = orchestratorConnId
     record.vmPrefix = formData.vmPrefix.trim() || null
     record.vmTags = [...formData.vmTags]
@@ -278,7 +273,6 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
           tagsError={tagsQuery.error !== null}
           tagsDisabled={!isEdit}
           onRetryTags={() => { void tagsQuery.refetch() }}
-          flashcopyProviders={existingProviders.filter(provider => provider.type === 'FLASHCOPY' && provider.role !== 'target')}
           onChange={handleChange}
           onTagsChange={handleTagsChange}
           onIdBlur={handleIdBlur}

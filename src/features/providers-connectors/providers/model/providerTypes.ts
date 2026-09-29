@@ -1,4 +1,4 @@
-export const PROVIDER_TYPES = ['VMWARE', 'FLASHCOPY', 'IBM_POWER'] as const
+export const PROVIDER_TYPES = ['VMWARE', 'FLASHCOPY', 'HITACHI', 'IBM_POWER'] as const satisfies readonly GeneratedProviderType[]
 
 export type ProviderType = (typeof PROVIDER_TYPES)[number]
 
@@ -25,7 +25,6 @@ export interface ProviderRecord {
   credentialId: string | null
   /** Present on current backend responses; optional internally for legacy fixtures. */
   role?: ProviderRole | undefined
-  defaultFlashcopyProviderId?: string | null | undefined
   orchestratorConnId?: string | null | undefined
   vmPrefix?: string | null | undefined
   vmTags?: string[] | undefined
@@ -36,21 +35,9 @@ export interface ProviderRecord {
   rawRecord?: ProviderRecordOutput | undefined
 }
 
-export interface ProviderSubmitData {
-  id: string
-  name: string
-  description: string
-  type: ProviderType
-  ipAddress: string
-  /** Optional management URL accepted when the backend supports it. */
-  url?: string | null | undefined
-  credentialId: string | null
-  role: ProviderRole
-  defaultFlashcopyProviderId?: string | null | undefined
-  orchestratorConnId?: string | null | undefined
-  vmPrefix?: string | null | undefined
-  vmTags?: string[] | undefined
-  notificationEmail?: string | null | undefined
-  cacheRefreshSeconds?: number | null | undefined
-}
-import type { ProviderRecordOutput } from '@/generated/api/zod.gen'
+export type ProviderSubmitData = Provider
+import type { Provider } from '@/generated/api/models/provider.gen'
+import type {
+  ProviderRecordOutput,
+  ProviderType as GeneratedProviderType,
+} from '@/generated/api/zod.gen'

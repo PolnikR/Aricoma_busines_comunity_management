@@ -15,7 +15,6 @@ let query: {
     url?: string | null
     credentialId: string | null
     role?: 'source' | 'target'
-    defaultFlashcopyProviderId?: string | null
     orchestratorConnId?: string | null
     credentialStatus: 'ok' | 'missing' | 'none'
   }[] | undefined
@@ -44,7 +43,6 @@ beforeEach(() => {
       url: 'https://10.0.0.1/ui/',
       credentialId: 'vcenter-admin',
       role: 'source',
-      defaultFlashcopyProviderId: 'flash-01',
       orchestratorConnId: 'airflow-01',
       credentialStatus: 'ok',
     }],
@@ -61,7 +59,6 @@ describe('ProviderDetailPage', () => {
     expect(screen.getByText('Primary')).toBeInTheDocument()
     expect(screen.getAllByText('VMware')).toHaveLength(2)
     expect(screen.getByText('Source')).toBeInTheDocument()
-    expect(screen.getByText('flash-01')).toBeInTheDocument()
     expect(screen.getByText('airflow-01')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'https://10.0.0.1/ui/' })).toHaveAttribute('href', 'https://10.0.0.1/ui/')
     expect(screen.getByRole('link', { name: 'https://10.0.0.1/ui/' })).toHaveAttribute('target', '_blank')

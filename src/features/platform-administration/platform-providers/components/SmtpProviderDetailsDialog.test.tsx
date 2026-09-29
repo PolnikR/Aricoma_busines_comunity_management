@@ -15,7 +15,6 @@ const rawSmtpProvider = {
   ipAddress: '10.99.99.53',
   credentialId: null,
   url: 'http://10.99.99.53:8025/',
-  defaultFlashcopyProviderId: null,
   orchestratorConnId: null,
   vmPrefix: null,
   vmTags: [],

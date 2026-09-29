@@ -7,6 +7,7 @@ import {
 import {
   ProvidersResponse,
   ProviderTestResponse,
+  SubmitProviderSubmitProviderPostBody,
   type ProviderRecordOutput as GeneratedProviderRecord,
 } from '@/generated/api/zod.gen'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
@@ -21,7 +22,6 @@ import {
   type ProviderType,
 } from '../model/providerTypes'
 import type { ProviderConnectionTestResult } from '../model/providerConnectionTestTypes'
-import { providerSubmitSchema } from './schemas/providersSchema'
 
 function isProviderType(value: string): value is ProviderType {
   return PROVIDER_TYPES.some(type => type === value)
@@ -39,7 +39,7 @@ function mapProviderRecord(provider: GeneratedProviderRecord): ProviderRecord {
     throw new Error(`Unsupported provider credential status: ${provider.credentialStatus}`)
   }
 
-  const validated = providerSubmitSchema.parse({
+  return {
     id: provider.id,
     name: provider.name,
     description: provider.description ?? '',
@@ -48,9 +48,6 @@ function mapProviderRecord(provider: GeneratedProviderRecord): ProviderRecord {
     credentialId: provider.credentialId ?? null,
     role: provider.role,
     ...(provider.url !== undefined ? { url: provider.url } : {}),
-    ...(provider.defaultFlashcopyProviderId !== undefined
-      ? { defaultFlashcopyProviderId: provider.defaultFlashcopyProviderId }
-      : {}),
     ...(provider.orchestratorConnId !== undefined
       ? { orchestratorConnId: provider.orchestratorConnId }
       : {}),
@@ -60,9 +57,6 @@ function mapProviderRecord(provider: GeneratedProviderRecord): ProviderRecord {
     ...(provider.cacheRefreshSeconds !== undefined
       ? { cacheRefreshSeconds: provider.cacheRefreshSeconds }
       : {}),
-  })
-  return {
-    ...validated,
     credentialStatus: provider.credentialStatus ?? 'none',
     rawRecord: provider,
   }
@@ -88,38 +82,10 @@ export async function fetchProviders(role: ProviderRoleFilter = 'all'): Promise<
 
 // Submit a single provider object. The backend upserts
 // by id (create when new, update when the id already exists).
-export function toProviderSubmitPayload(provider: ProviderSubmitData): ProviderSubmitData {
-  return providerSubmitSchema.parse(provider)
-}
-
 export async function submitProvider(provider: ProviderSubmitData): Promise<void> {
-  const validatedProvider = toProviderSubmitPayload(provider)
-  const generatedProvider = {
-    id: validatedProvider.id,
-    name: validatedProvider.name,
-    description: validatedProvider.description,
-    type: validatedProvider.type,
-    ipAddress: validatedProvider.ipAddress,
-    credentialId: validatedProvider.credentialId,
-    role: validatedProvider.role,
-    ...(validatedProvider.url !== undefined ? { url: validatedProvider.url } : {}),
-    ...(validatedProvider.defaultFlashcopyProviderId !== undefined
-      ? { defaultFlashcopyProviderId: validatedProvider.defaultFlashcopyProviderId }
-      : {}),
-    ...(validatedProvider.orchestratorConnId !== undefined
-      ? { orchestratorConnId: validatedProvider.orchestratorConnId }
-      : {}),
-    ...(validatedProvider.vmPrefix !== undefined ? { vmPrefix: validatedProvider.vmPrefix } : {}),
-    ...(validatedProvider.vmTags !== undefined ? { vmTags: validatedProvider.vmTags } : {}),
-    ...(validatedProvider.notificationEmail !== undefined
-      ? { notificationEmail: validatedProvider.notificationEmail }
-      : {}),
-    ...(validatedProvider.cacheRefreshSeconds !== undefined
-      ? { cacheRefreshSeconds: validatedProvider.cacheRefreshSeconds }
-      : {}),
-  }
+  const body = SubmitProviderSubmitProviderPostBody.parse(provider)
   try {
-    const payload = await submitProviderSubmitProviderPost(generatedProvider)
+    const payload = await submitProviderSubmitProviderPost(body)
     parseProviders(payload, 'POST /submit_provider')
   } catch (error) {
     if (error instanceof OrvalApiError) {
