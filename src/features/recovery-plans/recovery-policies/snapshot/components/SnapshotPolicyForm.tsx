@@ -10,11 +10,11 @@ export interface SnapshotPolicyFormData {
   name: string
   description: string
   level: string
-  frequencyValue: string
-  frequencyUnit: string
-  retentionValue: string
-  retentionUnit: string
-  maxSnapshots: string
+  frequency_value: string
+  frequency_unit: string
+  retention_value: string
+  retention_unit: string
+  max_snapshots: string
   enabled: boolean
 }
 
@@ -67,32 +67,32 @@ export function SnapshotPolicyForm({ data, errors, isSubmitting, idDisabled = fa
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="grid grid-cols-[1fr_1.2fr] gap-2">
           <Field label={t('snapshotPolicies.form.frequency')} htmlFor="snapshot-policy-frequency">
-            <Input id="snapshot-policy-frequency" type="number" min={1} step={1} value={data.frequencyValue} disabled={isSubmitting} invalid={Boolean(errors.frequencyValue)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('frequencyValue', event.target.value) }} />
+            <Input id="snapshot-policy-frequency" type="number" min={1} step={1} value={data.frequency_value} disabled={isSubmitting} invalid={Boolean(errors.frequency_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('frequency_value', event.target.value) }} />
           </Field>
           <Field label={t('snapshotPolicies.form.frequencyUnit')} htmlFor="snapshot-policy-frequency-unit">
-            <Select id="snapshot-policy-frequency-unit" value={data.frequencyUnit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('frequencyUnit', event.target.value) }}>
+            <Select id="snapshot-policy-frequency-unit" value={data.frequency_unit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('frequency_unit', event.target.value) }}>
               {SNAPSHOT_POLICY_TIME_UNITS.map(unit => <option key={unit} value={unit}>{t(`snapshotPolicies.unit.${unit}`)}</option>)}
             </Select>
           </Field>
-          {errors.frequencyValue ? <p className="col-span-2 text-xs text-red-600">{errors.frequencyValue}</p> : null}
+          {errors.frequency_value ? <p className="col-span-2 text-xs text-red-600">{errors.frequency_value}</p> : null}
         </div>
         <div className="grid grid-cols-[1fr_1.2fr] gap-2">
           <Field label={t('snapshotPolicies.form.retention')} htmlFor="snapshot-policy-retention">
-            <Input id="snapshot-policy-retention" type="number" min={1} step={1} value={data.retentionValue} disabled={isSubmitting} invalid={Boolean(errors.retentionValue)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('retentionValue', event.target.value) }} />
+            <Input id="snapshot-policy-retention" type="number" min={1} step={1} value={data.retention_value} disabled={isSubmitting} invalid={Boolean(errors.retention_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('retention_value', event.target.value) }} />
           </Field>
           <Field label={t('snapshotPolicies.form.retentionUnit')} htmlFor="snapshot-policy-retention-unit">
-            <Select id="snapshot-policy-retention-unit" value={data.retentionUnit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('retentionUnit', event.target.value) }}>
+            <Select id="snapshot-policy-retention-unit" value={data.retention_unit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('retention_unit', event.target.value) }}>
               {SNAPSHOT_POLICY_TIME_UNITS.map(unit => <option key={unit} value={unit}>{t(`snapshotPolicies.unit.${unit}`)}</option>)}
             </Select>
           </Field>
-          {errors.retentionValue ? <p className="col-span-2 text-xs text-red-600">{errors.retentionValue}</p> : null}
+          {errors.retention_value ? <p className="col-span-2 text-xs text-red-600">{errors.retention_value}</p> : null}
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-end">
         <Field label={t('snapshotPolicies.form.maxSnapshots')} htmlFor="snapshot-policy-max-snapshots">
-          <Input id="snapshot-policy-max-snapshots" type="number" min={1} step={1} value={data.maxSnapshots} placeholder={t('snapshotPolicies.form.noLimit')} disabled={isSubmitting} invalid={Boolean(errors.maxSnapshots)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('maxSnapshots', event.target.value) }} />
-          {errors.maxSnapshots ? <p className="mt-1 text-xs text-red-600">{errors.maxSnapshots}</p> : null}
+          <Input id="snapshot-policy-max-snapshots" type="number" min={1} step={1} value={data.max_snapshots} placeholder={t('snapshotPolicies.form.noLimit')} disabled={isSubmitting} invalid={Boolean(errors.max_snapshots)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('max_snapshots', event.target.value) }} />
+          {errors.max_snapshots ? <p className="mt-1 text-xs text-red-600">{errors.max_snapshots}</p> : null}
         </Field>
         <CheckboxField id="snapshot-policy-enabled" label={t('snapshotPolicies.form.enabled')} checked={data.enabled} disabled={isSubmitting} variant="bordered" onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('enabled', event.target.checked) }} />
       </div>

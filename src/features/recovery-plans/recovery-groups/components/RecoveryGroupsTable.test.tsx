@@ -22,16 +22,16 @@ vi.mock('@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
 function renderTable(ui: ReactElement) {
   return render(<MemoryRouter>{ui}</MemoryRouter>)
 }
-vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
-  usePolicySets: () => ({
+vi.mock('@/generated/query/policy-sets/policy-sets.gen', () => ({
+  useGetPolicySets: () => ({
     data: [
       {
         id: 'tier2-apps',
         name: 'Tier 2 applications',
         description: 'Policy set using the medium-tier, 6-hour cadence.',
-        snapshotPolicyId: 'medium-6h',
-        recoveryAppPolicyId: 'critical-daily-latest',
-        cleanRoomPolicyId: 'enforce-clean-target',
+        snapshot_policy_id: 'medium-6h',
+        recovery_app_policy_id: 'critical-daily-latest',
+        clean_room_policy_id: 'enforce-clean-target',
       },
     ],
   }),

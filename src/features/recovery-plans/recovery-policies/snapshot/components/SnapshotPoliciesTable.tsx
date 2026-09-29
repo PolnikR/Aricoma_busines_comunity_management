@@ -18,10 +18,11 @@ import { Field, Select } from '@/shared/components/form/FormControls'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
-import { toSnapshotPolicySubmitPayload } from '../api/snapshotPoliciesApi'
-import { useDeleteSnapshotPolicy } from '../hooks/useDeleteSnapshotPolicy'
-import type { SnapshotPolicy } from '../model/snapshotPolicyTypes'
+import { useDeletePolicy } from '@/generated/query/snapshot-policies/snapshot-policies.gen'
+import type { SnapshotPolicyRecord } from '@/generated/query/zod'
 import { SnapshotPolicyModal } from './SnapshotPolicyModal'
+
+type SnapshotPolicy = SnapshotPolicyRecord
 
 interface SnapshotPolicyFilters {
   level: string
@@ -59,28 +60,28 @@ function getColumns(
     {
       id: 'description',
       header: t('tables.snapshotPolicy.description'),
-      cell: policy => <span className="block max-w-md truncate" title={policy.description}>{policy.description || '-'}</span>,
+      cell: policy => <span className="block max-w-md truncate" title={policy.description ?? ''}>{policy.description ?? '-'}</span>,
     },
     {
       id: 'level',
       header: t('tables.snapshotPolicy.level'),
-      cell: policy => <Badge color={levelColor(policy.level)} size="sm">{policy.level}</Badge>,
+      cell: policy => <Badge color={levelColor(policy.level ?? '')} size="sm">{policy.level}</Badge>,
     },
     {
       id: 'frequency',
       header: t('tables.snapshotPolicy.frequency'),
-      cell: policy => t('snapshotPolicies.every').replace('{interval}', formatInterval(policy.frequencyValue, policy.frequencyUnit, t)),
+      cell: policy => t('snapshotPolicies.every').replace('{interval}', formatInterval(policy.frequency_value, policy.frequency_unit, t)),
     },
     {
       id: 'retention',
       header: t('tables.snapshotPolicy.retention'),
-      cell: policy => formatInterval(policy.retentionValue, policy.retentionUnit, t),
+      cell: policy => formatInterval(policy.retention_value, policy.retention_unit, t),
     },
     {
       id: 'maxSnapshots',
       header: t('tables.snapshotPolicy.maxSnapshots'),
       align: 'right',
-      cell: policy => policy.maxSnapshots ?? t('snapshotPolicies.noLimit'),
+      cell: policy => policy.max_snapshots ?? t('snapshotPolicies.noLimit'),
     },
     {
       id: 'status',
@@ -120,7 +121,7 @@ interface SnapshotPoliciesTableProps {
 
 export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, onRetry }: SnapshotPoliciesTableProps) {
   const { t } = useTranslation()
-  const deletePolicy = useDeleteSnapshotPolicy()
+  const deletePolicy = useDeletePolicy()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<SnapshotPolicy | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<SnapshotPolicy | null>(null)
@@ -128,7 +129,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
   const [filters, setFilters] = useState<SnapshotPolicyFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<SnapshotPolicyFilters>(EMPTY_FILTERS)
   const filterOptions = useMemo(() => ({
-    levels: Array.from(new Set(policies.map(policy => policy.level))).sort(),
+    levels: Array.from(new Set(policies.map(policy => policy.level ?? ''))).sort(),
   }), [policies])
   const rows = useMemo(() => policies.filter(policy => (
     (!filters.level || policy.level === filters.level)
@@ -260,7 +261,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
         eyebrow={t('snapshotPolicies.drawer.eyebrow')}
         title={selected?.name ?? ''}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerExtra={selected ? <Badge color={levelColor(selected.level)} size="sm">{selected.level}</Badge> : null}
+        headerExtra={selected ? <Badge color={levelColor(selected.level ?? '')} size="sm">{selected.level}</Badge> : null}
         ariaLabel={t('snapshotPolicies.drawer.label')}
         closeLabel={t('snapshotPolicies.drawer.close')}
         footer={selected ? (
@@ -273,11 +274,11 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
         {selected ? (
           <dl className="px-5 py-2">
             <DetailRow label={t('details.policyId')} value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label={t('details.description')} value={selected.description || '-'} />
-            <DetailRow label={t('details.level')} value={selected.level} />
-            <DetailRow label={t('details.frequency')} value={t('snapshotPolicies.every').replace('{interval}', formatInterval(selected.frequencyValue, selected.frequencyUnit, t))} />
-            <DetailRow label={t('details.retention')} value={formatInterval(selected.retentionValue, selected.retentionUnit, t)} />
-            <DetailRow label={t('details.maxSnapshots')} value={selected.maxSnapshots ?? t('snapshotPolicies.noLimit')} />
+            <DetailRow label={t('details.description')} value={selected.description ?? '-'} />
+            <DetailRow label={t('details.level')} value={selected.level ?? '-'} />
+            <DetailRow label={t('details.frequency')} value={t('snapshotPolicies.every').replace('{interval}', formatInterval(selected.frequency_value, selected.frequency_unit, t))} />
+            <DetailRow label={t('details.retention')} value={formatInterval(selected.retention_value, selected.retention_unit, t)} />
+            <DetailRow label={t('details.maxSnapshots')} value={selected.max_snapshots ?? t('snapshotPolicies.noLimit')} />
             <DetailRow label={t('details.status')} value={t(selected.enabled ? 'snapshotPolicies.enabled' : 'snapshotPolicies.disabled')} />
           </dl>
         ) : null}
@@ -297,7 +298,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
         onCancel={() => { setDeleteTarget(null) }}
         onConfirm={() => {
           if (!deleteTarget) return
-          deletePolicy.mutate(deleteTarget.id, {
+          deletePolicy.mutate({ params: { policy_id: deleteTarget.id } }, {
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
             onError: () => { setDeleteTarget(null) },
           })
@@ -333,23 +334,23 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
               },
               {
                 name: t('snapshotPolicies.description'),
-                detail: jsonViewed.description || '—',
+                detail: jsonViewed.description ?? '—',
                 status: 'ok' as const,
               },
               {
                 name: t('snapshotPolicies.level'),
-                detail: jsonViewed.level,
+                detail: jsonViewed.level ?? '',
                 status: 'ok' as const,
               },
               {
                 name: t('snapshotPolicies.frequency'),
-                detail: String(jsonViewed.frequencyValue) + ' ' + jsonViewed.frequencyUnit,
+                detail: String(jsonViewed.frequency_value) + ' ' + jsonViewed.frequency_unit,
                 status: 'ok' as const,
               },
             ]
             return items
           })()}
-          responseData={toSnapshotPolicySubmitPayload(jsonViewed)}
+          responseData={jsonViewed}
           responseSchemaType="SnapshotPolicy"
           onClose={() => { setJsonViewId(null) }}
         />

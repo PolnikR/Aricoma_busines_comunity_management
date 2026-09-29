@@ -17,10 +17,11 @@ import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
-import { toCleanRoomPolicySubmitPayload } from '../api/cleanRoomPoliciesApi'
-import { useDeleteCleanRoomPolicy } from '../hooks/useDeleteCleanRoomPolicy'
-import type { CleanRoomPolicy } from '../model/cleanRoomPolicyTypes'
+import { useDeleteCleanRoomPolicy } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
+import type { CleanRoomPolicyRecord } from '@/generated/query/zod'
 import { CleanRoomPolicyModal } from './CleanRoomPolicyModal'
+
+type CleanRoomPolicy = CleanRoomPolicyRecord
 
 function getColumns(
   t: ReturnType<typeof useTranslation>['t'],
@@ -40,7 +41,7 @@ function getColumns(
     {
       id: 'description',
       header: t('tables.cleanRoomPolicy.description'),
-      cell: policy => <span className="block max-w-3xl truncate" title={policy.description}>{policy.description || '-'}</span>,
+      cell: policy => <span className="block max-w-3xl truncate" title={policy.description ?? ''}>{policy.description ?? '-'}</span>,
     },
     {
       id: 'status',
@@ -167,7 +168,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
         {selected ? (
           <dl className="px-5 py-2">
             <DetailRow label={t('details.policyId')} value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label={t('details.description')} value={selected.description || '-'} />
+            <DetailRow label={t('details.description')} value={selected.description ?? '-'} />
             <DetailRow label={t('details.status')} value={t(selected.enabled ? 'cleanRoomPolicies.enabled' : 'cleanRoomPolicies.disabled')} />
           </dl>
         ) : null}
@@ -187,7 +188,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
         onCancel={() => { setDeleteTarget(null) }}
         onConfirm={() => {
           if (!deleteTarget) return
-          deletePolicy.mutate(deleteTarget.id, {
+          deletePolicy.mutate({ params: { policy_id: deleteTarget.id } }, {
             onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
             onError: () => { setDeleteTarget(null) },
           })
@@ -223,7 +224,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
               },
               {
                 name: t('cleanRoomPolicies.description'),
-                detail: jsonViewed.description || '—',
+                detail: jsonViewed.description ?? '—',
                 status: 'ok' as const,
               },
               {
@@ -234,7 +235,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
             ]
             return items
           })()}
-          responseData={toCleanRoomPolicySubmitPayload(jsonViewed)}
+          responseData={jsonViewed}
           responseSchemaType="CleanRoomPolicy"
           onClose={() => { setJsonViewId(null) }}
         />

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { RecoveryAppPolicy } from '../model/recoveryAppPolicyTypes'
+import type { RecoveryAppPolicyRecord } from '@/generated/query/zod'
 import { RecoveryAppPolicyModal } from './RecoveryAppPolicyModal'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -10,34 +10,34 @@ vi.mock('react-router', async importOriginal => ({
   useBlocker: () => ({ state: 'unblocked' as const }),
 }))
 
-const policy: RecoveryAppPolicy = {
+const policy: RecoveryAppPolicyRecord = {
   id: 'critical-daily-latest',
   name: 'Critical - Daily DR Test',
   description: 'Daily recovery test using the newest available snapshot.',
   level: 'critical',
-  frequencyValue: 1,
-  frequencyUnit: 'days',
-  retentionValue: 4,
-  retentionUnit: 'hours',
-  bootVerify: true,
-  snapshotSelectionMode: 'latest',
-  snapshotMaxAgeValue: null,
-  snapshotMaxAgeUnit: null,
-  snapshotTargetTime: null,
+  frequency_value: 1,
+  frequency_unit: 'days',
+  retention_value: 4,
+  retention_unit: 'hours',
+  boot_verify: true,
+  snapshot_selection_mode: 'latest',
+  snapshot_max_age_value: null,
+  snapshot_max_age_unit: null,
+  snapshot_target_time: null,
   enabled: true,
 }
 
-const exactTimePolicy: RecoveryAppPolicy = {
+const exactTimePolicy: RecoveryAppPolicyRecord = {
   ...policy,
   id: 'medium-monthly-exacttime',
   name: 'Medium - Monthly DR Test',
   description: 'Monthly recovery test using the snapshot closest to 02:00.',
   level: 'medium',
-  frequencyValue: 30,
-  retentionValue: 2,
-  retentionUnit: 'days',
-  snapshotSelectionMode: 'exact_time',
-  snapshotTargetTime: '02:00',
+  frequency_value: 30,
+  retention_value: 2,
+  retention_unit: 'days',
+  snapshot_selection_mode: 'exact_time',
+  snapshot_target_time: '02:00',
 }
 
 function renderModal(props: Partial<React.ComponentProps<typeof RecoveryAppPolicyModal>> = {}) {
@@ -139,9 +139,9 @@ describe('RecoveryAppPolicyModal', () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       recovery_app_policies: [{
         id: exactTimePolicy.id, name: exactTimePolicy.name, description: exactTimePolicy.description, level: exactTimePolicy.level,
-        frequency_value: exactTimePolicy.frequencyValue, frequency_unit: exactTimePolicy.frequencyUnit,
-        retention_value: exactTimePolicy.retentionValue, retention_unit: exactTimePolicy.retentionUnit,
-        boot_verify: exactTimePolicy.bootVerify, snapshot_selection_mode: 'exact_time',
+        frequency_value: exactTimePolicy.frequency_value, frequency_unit: exactTimePolicy.frequency_unit,
+        retention_value: exactTimePolicy.retention_value, retention_unit: exactTimePolicy.retention_unit,
+        boot_verify: exactTimePolicy.boot_verify, snapshot_selection_mode: 'exact_time',
         snapshot_max_age_value: null, snapshot_max_age_unit: null, snapshot_target_time: '02:00', enabled: true,
       }],
     }), { status: 200 }))

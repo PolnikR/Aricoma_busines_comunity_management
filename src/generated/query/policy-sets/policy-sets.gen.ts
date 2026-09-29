@@ -6,13 +6,15 @@
  */
 import {
   useMutation,
-  useQuery
+  useQuery,
+  useQueryClient
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
   MutationFunction,
+  MutationFunctionContext,
   QueryClient,
   QueryFunction,
   QueryKey,
@@ -196,7 +198,7 @@ return validatingMutator<PolicySetsResponse>(getSubmitPolicySetUrl(),
 export const getSubmitPolicySetMutationKey = () => ['submitPolicySet'] as const;
 
 export const getSubmitPolicySetMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitPolicySet>>, TError,SubmitPolicySetMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitPolicySet>>, TError,SubmitPolicySetMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitPolicySet>>, TError,SubmitPolicySetMutationVariables, TContext> => {
 
 const mutationKey = getSubmitPolicySetMutationKey();
@@ -215,12 +217,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  submitPolicySet(data,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof submitPolicySet>>, variables: SubmitPolicySetMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetPolicySetsQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type SubmitPolicySetMutationResult = NonNullable<Awaited<ReturnType<typeof submitPolicySet>>>
     export type SubmitPolicySetMutationBody = PolicySet
@@ -231,14 +238,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Submit Policy Set
  */
 export const useSubmitPolicySet = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitPolicySet>>, TError,SubmitPolicySetMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitPolicySet>>, TError,SubmitPolicySetMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitPolicySet>>,
         TError,
         SubmitPolicySetMutationVariables,
         TContext
       > => {
-      return useMutation(getSubmitPolicySetMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getSubmitPolicySetMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }
     export const getDeletePolicySetUrl = (params: DeletePolicySetParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -276,7 +284,7 @@ export const deletePolicySet = async (params: DeletePolicySetParams, options?: P
 export const getDeletePolicySetMutationKey = () => ['deletePolicySet'] as const;
 
 export const getDeletePolicySetMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePolicySet>>, TError,DeletePolicySetMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePolicySet>>, TError,DeletePolicySetMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deletePolicySet>>, TError,DeletePolicySetMutationVariables, TContext> => {
 
 const mutationKey = getDeletePolicySetMutationKey();
@@ -295,12 +303,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  deletePolicySet(params,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof deletePolicySet>>, variables: DeletePolicySetMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetPolicySetsQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type DeletePolicySetMutationResult = NonNullable<Awaited<ReturnType<typeof deletePolicySet>>>
 
@@ -311,12 +324,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Delete Policy Set Route
  */
 export const useDeletePolicySet = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePolicySet>>, TError,DeletePolicySetMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePolicySet>>, TError,DeletePolicySetMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deletePolicySet>>,
         TError,
         DeletePolicySetMutationVariables,
         TContext
       > => {
-      return useMutation(getDeletePolicySetMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getDeletePolicySetMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }

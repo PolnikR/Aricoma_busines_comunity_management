@@ -13,15 +13,15 @@ export interface RecoveryAppPolicyFormData {
   name: string
   description: string
   level: string
-  frequencyValue: string
-  frequencyUnit: string
-  retentionValue: string
-  retentionUnit: string
-  bootVerify: boolean
-  snapshotSelectionMode: string
-  snapshotMaxAgeValue: string
-  snapshotMaxAgeUnit: string
-  snapshotTargetTime: string
+  frequency_value: string
+  frequency_unit: string
+  retention_value: string
+  retention_unit: string
+  boot_verify: boolean
+  snapshot_selection_mode: string
+  snapshot_max_age_value: string
+  snapshot_max_age_unit: string
+  snapshot_target_time: string
   enabled: boolean
 }
 
@@ -49,7 +49,7 @@ export function RecoveryAppPolicyForm({
       onSubmit()
     }
   }
-  const selectionMode = data.snapshotSelectionMode
+  const selectionMode = data.snapshot_selection_mode
   const selectedLevelIsCustom = Boolean(data.level && !POLICY_LEVELS.some(level => level === data.level))
 
   return (
@@ -82,25 +82,25 @@ export function RecoveryAppPolicyForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="grid grid-cols-[1fr_1.2fr] gap-2">
           <Field label={t('recoveryAppPolicies.form.frequency')} htmlFor="recovery-app-policy-frequency">
-            <Input id="recovery-app-policy-frequency" type="number" min={1} step={1} value={data.frequencyValue} disabled={isSubmitting} invalid={Boolean(errors.frequencyValue)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('frequencyValue', event.target.value) }} />
+            <Input id="recovery-app-policy-frequency" type="number" min={1} step={1} value={data.frequency_value} disabled={isSubmitting} invalid={Boolean(errors.frequency_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('frequency_value', event.target.value) }} />
           </Field>
           <Field label={t('recoveryAppPolicies.form.frequencyUnit')} htmlFor="recovery-app-policy-frequency-unit">
-            <Select id="recovery-app-policy-frequency-unit" value={data.frequencyUnit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('frequencyUnit', event.target.value) }}>
+            <Select id="recovery-app-policy-frequency-unit" value={data.frequency_unit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('frequency_unit', event.target.value) }}>
               {RECOVERY_APP_POLICY_TIME_UNITS.map(unit => <option key={unit} value={unit}>{t(`recoveryAppPolicies.unit.${unit}`)}</option>)}
             </Select>
           </Field>
-          {errors.frequencyValue ? <p className="col-span-2 text-xs text-red-600">{errors.frequencyValue}</p> : null}
+          {errors.frequency_value ? <p className="col-span-2 text-xs text-red-600">{errors.frequency_value}</p> : null}
         </div>
         <div className="grid grid-cols-[1fr_1.2fr] gap-2">
           <Field label={t('recoveryAppPolicies.form.retention')} htmlFor="recovery-app-policy-retention">
-            <Input id="recovery-app-policy-retention" type="number" min={1} step={1} value={data.retentionValue} disabled={isSubmitting} invalid={Boolean(errors.retentionValue)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('retentionValue', event.target.value) }} />
+            <Input id="recovery-app-policy-retention" type="number" min={1} step={1} value={data.retention_value} disabled={isSubmitting} invalid={Boolean(errors.retention_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('retention_value', event.target.value) }} />
           </Field>
           <Field label={t('recoveryAppPolicies.form.retentionUnit')} htmlFor="recovery-app-policy-retention-unit">
-            <Select id="recovery-app-policy-retention-unit" value={data.retentionUnit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('retentionUnit', event.target.value) }}>
+            <Select id="recovery-app-policy-retention-unit" value={data.retention_unit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('retention_unit', event.target.value) }}>
               {RECOVERY_APP_POLICY_TIME_UNITS.map(unit => <option key={unit} value={unit}>{t(`recoveryAppPolicies.unit.${unit}`)}</option>)}
             </Select>
           </Field>
-          {errors.retentionValue ? <p className="col-span-2 text-xs text-red-600">{errors.retentionValue}</p> : null}
+          {errors.retention_value ? <p className="col-span-2 text-xs text-red-600">{errors.retention_value}</p> : null}
         </div>
       </div>
 
@@ -108,20 +108,20 @@ export function RecoveryAppPolicyForm({
         <h3 className="text-sm font-semibold text-text-primary">{t('recoveryAppPolicies.form.snapshotSection')}</h3>
         <div className="mt-3 space-y-4">
           <Field label={t('recoveryAppPolicies.form.snapshotSelection')} htmlFor="recovery-app-policy-selection">
-            <Select id="recovery-app-policy-selection" value={data.snapshotSelectionMode} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('snapshotSelectionMode', event.target.value) }}>
+            <Select id="recovery-app-policy-selection" value={data.snapshot_selection_mode} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('snapshot_selection_mode', event.target.value) }}>
               {RECOVERY_APP_POLICY_SELECTION_MODES.map(mode => <option key={mode} value={mode}>{t(`recoveryAppPolicies.selection.${mode}`)}</option>)}
             </Select>
-            {errors.snapshotSelectionMode ? <p className="mt-1 text-xs text-red-600">{errors.snapshotSelectionMode}</p> : null}
+            {errors.snapshot_selection_mode ? <p className="mt-1 text-xs text-red-600">{errors.snapshot_selection_mode}</p> : null}
           </Field>
 
           {selectionMode === 'time_range' ? (
             <div className="grid grid-cols-[1fr_1.2fr] gap-2">
               <Field label={t('recoveryAppPolicies.form.maxAge')} htmlFor="recovery-app-policy-max-age">
-                <Input id="recovery-app-policy-max-age" type="number" min={1} step={1} value={data.snapshotMaxAgeValue} disabled={isSubmitting} invalid={Boolean(errors.snapshotMaxAgeValue)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('snapshotMaxAgeValue', event.target.value) }} />
-                {errors.snapshotMaxAgeValue ? <p className="mt-1 text-xs text-red-600">{errors.snapshotMaxAgeValue}</p> : null}
+                <Input id="recovery-app-policy-max-age" type="number" min={1} step={1} value={data.snapshot_max_age_value} disabled={isSubmitting} invalid={Boolean(errors.snapshot_max_age_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('snapshot_max_age_value', event.target.value) }} />
+                {errors.snapshot_max_age_value ? <p className="mt-1 text-xs text-red-600">{errors.snapshot_max_age_value}</p> : null}
               </Field>
               <Field label={t('recoveryAppPolicies.form.maxAgeUnit')} htmlFor="recovery-app-policy-max-age-unit">
-                <Select id="recovery-app-policy-max-age-unit" value={data.snapshotMaxAgeUnit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('snapshotMaxAgeUnit', event.target.value) }}>
+                <Select id="recovery-app-policy-max-age-unit" value={data.snapshot_max_age_unit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('snapshot_max_age_unit', event.target.value) }}>
                   <option value="">{t('recoveryAppPolicies.form.selectUnit')}</option>
                   {RECOVERY_APP_POLICY_TIME_UNITS.map(unit => <option key={unit} value={unit}>{t(`recoveryAppPolicies.unit.${unit}`)}</option>)}
                 </Select>
@@ -131,15 +131,15 @@ export function RecoveryAppPolicyForm({
 
           {selectionMode === 'exact_time' ? (
             <Field label={t('recoveryAppPolicies.form.targetTime')} htmlFor="recovery-app-policy-target-time">
-              <Input id="recovery-app-policy-target-time" type="time" value={data.snapshotTargetTime} disabled={isSubmitting} invalid={Boolean(errors.snapshotTargetTime)} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('snapshotTargetTime', event.target.value) }} />
-              {errors.snapshotTargetTime ? <p className="mt-1 text-xs text-red-600">{errors.snapshotTargetTime}</p> : null}
+              <Input id="recovery-app-policy-target-time" type="time" value={data.snapshot_target_time} disabled={isSubmitting} invalid={Boolean(errors.snapshot_target_time)} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('snapshot_target_time', event.target.value) }} />
+              {errors.snapshot_target_time ? <p className="mt-1 text-xs text-red-600">{errors.snapshot_target_time}</p> : null}
             </Field>
           ) : null}
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <CheckboxField id="recovery-app-policy-boot-verify" label={t('recoveryAppPolicies.form.bootVerify')} checked={data.bootVerify} disabled={isSubmitting} variant="bordered" onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('bootVerify', event.target.checked) }} />
+        <CheckboxField id="recovery-app-policy-boot-verify" label={t('recoveryAppPolicies.form.bootVerify')} checked={data.boot_verify} disabled={isSubmitting} variant="bordered" onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('boot_verify', event.target.checked) }} />
         <CheckboxField id="recovery-app-policy-enabled" label={t('recoveryAppPolicies.form.enabled')} checked={data.enabled} disabled={isSubmitting} variant="bordered" onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('enabled', event.target.checked) }} />
       </div>
     </div>

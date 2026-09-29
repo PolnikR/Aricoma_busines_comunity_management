@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { SnapshotPolicy } from '../model/snapshotPolicyTypes'
+import type { SnapshotPolicyRecord } from '@/generated/query/zod'
 import { SnapshotPolicyModal } from './SnapshotPolicyModal'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -10,16 +10,16 @@ vi.mock('react-router', async (importOriginal) => ({
   useBlocker: () => ({ state: 'unblocked' as const }),
 }))
 
-const policy: SnapshotPolicy = {
+const policy: SnapshotPolicyRecord = {
   id: 'critical-15m',
   name: 'Critical — 15 min',
   description: 'Every 15 minutes, retained 3 hours.',
   level: 'critical',
-  frequencyValue: 15,
-  frequencyUnit: 'minutes',
-  retentionValue: 3,
-  retentionUnit: 'hours',
-  maxSnapshots: 12,
+  frequency_value: 15,
+  frequency_unit: 'minutes',
+  retention_value: 3,
+  retention_unit: 'hours',
+  max_snapshots: 12,
   enabled: true,
 }
 
@@ -99,7 +99,7 @@ describe('SnapshotPolicyModal', () => {
   })
 
   it('prefills edit data, locks the id and preserves a null snapshot limit', () => {
-    renderModal({ policy: { ...policy, maxSnapshots: null }, existingPolicies: [policy] })
+    renderModal({ policy: { ...policy, max_snapshots: null }, existingPolicies: [policy] })
 
     expect(screen.getByRole('heading', { name: 'Edit policy' })).toBeInTheDocument()
     expect(screen.getByLabelText('Policy ID')).toBeDisabled()

@@ -2,37 +2,38 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
-import type { SnapshotPolicy } from '../model/snapshotPolicyTypes'
+import type { SnapshotPolicyRecord } from '@/generated/query/zod'
 import { SnapshotPoliciesTable } from './SnapshotPoliciesTable'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../hooks/useDeleteSnapshotPolicy', () => ({
-  useDeleteSnapshotPolicy: () => ({ mutate: vi.fn(), isPending: false }),
+vi.mock('@/generated/query/snapshot-policies/snapshot-policies.gen', () => ({
+  useDeletePolicy: () => ({ mutate: vi.fn(), isPending: false }),
+  useSubmitPolicy: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 }))
 
-const policy: SnapshotPolicy = {
+const policy: SnapshotPolicyRecord = {
   id: 'critical-15m',
   name: 'Critical — 15 min',
   description: 'Every 15 minutes, retained 3 hours.',
   level: 'critical',
-  frequencyValue: 15,
-  frequencyUnit: 'minutes',
-  retentionValue: 3,
-  retentionUnit: 'hours',
-  maxSnapshots: 12,
+  frequency_value: 15,
+  frequency_unit: 'minutes',
+  retention_value: 3,
+  retention_unit: 'hours',
+  max_snapshots: 12,
   enabled: true,
 }
 
-const archivePolicy: SnapshotPolicy = {
+const archivePolicy: SnapshotPolicyRecord = {
   id: 'archive-24h',
   name: 'Archive — daily',
   description: 'Once a day, retained 90 days.',
   level: 'low',
-  frequencyValue: 24,
-  frequencyUnit: 'hours',
-  retentionValue: 90,
-  retentionUnit: 'days',
-  maxSnapshots: null,
+  frequency_value: 24,
+  frequency_unit: 'hours',
+  retention_value: 90,
+  retention_unit: 'days',
+  max_snapshots: null,
   enabled: false,
 }
 

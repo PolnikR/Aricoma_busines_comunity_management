@@ -2,46 +2,49 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
-import type { PolicySet } from '../model/policySetTypes'
+import type { PolicySetRecord } from '@/generated/query/zod'
 import { PolicySetsTable } from './PolicySetsTable'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 const { deleteMutation } = vi.hoisted(() => ({
   deleteMutation: { mutate: vi.fn(), isPending: false, error: null as Error | null },
 }))
-vi.mock('../hooks/useDeletePolicySet', () => ({ useDeletePolicySet: () => deleteMutation }))
-vi.mock('@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies', () => ({
-  useSnapshotPolicies: () => ({
+vi.mock('@/generated/query/policy-sets/policy-sets.gen', () => ({
+  useDeletePolicySet: () => deleteMutation,
+  useSubmitPolicySet: () => ({ mutate: vi.fn(), isPending: false, error: null }),
+}))
+vi.mock('@/generated/query/snapshot-policies/snapshot-policies.gen', () => ({
+  useGetPolicies: () => ({
     data: [{ id: 'medium-6h', name: 'Medium — 6h' }],
   }),
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies', () => ({
-  useRecoveryAppPolicies: () => ({
+vi.mock('@/generated/query/recovery-app-policies/recovery-app-policies.gen', () => ({
+  useGetRecoveryAppPolicies: () => ({
     data: [{ id: 'critical-daily-latest', name: 'Critical — Daily DR Test' }],
   }),
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies', () => ({
-  useCleanRoomPolicies: () => ({
+vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => ({
+  useGetCleanRoomPolicies: () => ({
     data: [{ id: 'enforce-clean-target', name: 'Enforce Clean Target' }],
   }),
 }))
 
-const policySet: PolicySet = {
+const policySet: PolicySetRecord = {
   id: 'tier2-apps',
   name: 'Tier 2 applications',
   description: 'Policy set using the medium-tier, 6-hour cadence.',
-  snapshotPolicyId: 'medium-6h',
-  recoveryAppPolicyId: 'critical-daily-latest',
-  cleanRoomPolicyId: 'enforce-clean-target',
+  snapshot_policy_id: 'medium-6h',
+  recovery_app_policy_id: 'critical-daily-latest',
+  clean_room_policy_id: 'enforce-clean-target',
 }
 
-const partialPolicySet: PolicySet = {
+const partialPolicySet: PolicySetRecord = {
   id: 'tier3-apps',
   name: 'Tier 3 applications',
   description: 'Policy set with only a snapshot policy assigned.',
-  snapshotPolicyId: 'medium-6h',
-  recoveryAppPolicyId: '',
-  cleanRoomPolicyId: '',
+  snapshot_policy_id: 'medium-6h',
+  recovery_app_policy_id: '',
+  clean_room_policy_id: '',
 }
 
 describe('PolicySetsTable', () => {
@@ -193,7 +196,7 @@ describe('PolicySetsTable', () => {
   it('closes the confirmation and shows backend detail when delete fails', async () => {
     const user = userEvent.setup()
     deleteMutation.error = null
-    deleteMutation.mutate.mockImplementation((_id: string, options: { onError?: (error: Error) => void }) => {
+    deleteMutation.mutate.mockImplementation((_vars: unknown, options: { onError?: (error: Error) => void }) => {
       const apiError = new OrvalApiError(409, 'Conflict', { detail: 'Policy set is still in use.' })
       const error = new Error('Delete policy set request failed with status 409', { cause: apiError })
       deleteMutation.error = error

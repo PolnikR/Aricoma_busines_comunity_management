@@ -7,45 +7,46 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useSubmitSnapshotPolicy } from '../hooks/useSubmitSnapshotPolicy'
-import type { SnapshotPolicy, SnapshotPolicySubmitData, SnapshotPolicyTimeUnit } from '../model/snapshotPolicyTypes'
+import { useSubmitPolicy } from '@/generated/query/snapshot-policies/snapshot-policies.gen'
+import type { SnapshotPolicyRecord } from '@/generated/query/zod'
+import type { SnapshotPolicyTimeUnit } from '../model/snapshotPolicyTypes'
 import { SnapshotPolicyForm } from './SnapshotPolicyForm'
 import type { SnapshotPolicyFormData } from './SnapshotPolicyForm'
 
 interface SnapshotPolicyModalProps {
   open: boolean
   onClose: () => void
-  existingPolicies: SnapshotPolicy[]
-  policy?: SnapshotPolicy
+  existingPolicies: SnapshotPolicyRecord[]
+  policy?: SnapshotPolicyRecord
 }
 
 const EMPTY_FORM: SnapshotPolicyFormData = {
-  id: '', name: '', description: '', level: '', frequencyValue: '1', frequencyUnit: 'minutes',
-  retentionValue: '1', retentionUnit: 'days', maxSnapshots: '', enabled: true,
+  id: '', name: '', description: '', level: '', frequency_value: '1', frequency_unit: 'minutes',
+  retention_value: '1', retention_unit: 'days', max_snapshots: '', enabled: true,
 }
 
-function toFormData(policy: SnapshotPolicy): SnapshotPolicyFormData {
+function toFormData(policy: SnapshotPolicyRecord): SnapshotPolicyFormData {
   return {
     id: policy.id,
     name: policy.name,
-    description: policy.description,
-    level: policy.level,
-    frequencyValue: String(policy.frequencyValue),
-    frequencyUnit: policy.frequencyUnit,
-    retentionValue: String(policy.retentionValue),
-    retentionUnit: policy.retentionUnit,
-    maxSnapshots: policy.maxSnapshots === null ? '' : String(policy.maxSnapshots),
-    enabled: policy.enabled,
+    description: policy.description ?? '',
+    level: policy.level ?? '',
+    frequency_value: String(policy.frequency_value),
+    frequency_unit: policy.frequency_unit,
+    retention_value: String(policy.retention_value),
+    retention_unit: policy.retention_unit,
+    max_snapshots: policy.max_snapshots == null ? '' : String(policy.max_snapshots),
+    enabled: policy.enabled ?? true,
   }
 }
 
-function initialForm(policy?: SnapshotPolicy) {
+function initialForm(policy?: SnapshotPolicyRecord) {
   return policy ? toFormData(policy) : EMPTY_FORM
 }
 
 export function SnapshotPolicyModal({ open, onClose, existingPolicies, policy }: SnapshotPolicyModalProps) {
   const { t } = useTranslation()
-  const submitPolicy = useSubmitSnapshotPolicy()
+  const submitPolicy = useSubmitPolicy()
   const isEdit = Boolean(policy)
   const [formData, setFormData] = useState<SnapshotPolicyFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof SnapshotPolicyFormData, string>>>({})
@@ -89,36 +90,37 @@ export function SnapshotPolicyModal({ open, onClose, existingPolicies, policy }:
 
   const validate = () => {
     const next: Partial<Record<keyof SnapshotPolicyFormData, string>> = {}
-    const frequency = Number(formData.frequencyValue)
-    const retention = Number(formData.retentionValue)
-    const maximum = formData.maxSnapshots === '' ? null : Number(formData.maxSnapshots)
+    const frequency = Number(formData.frequency_value)
+    const retention = Number(formData.retention_value)
+    const maximum = formData.max_snapshots === '' ? null : Number(formData.max_snapshots)
     if (!formData.id.trim()) next.id = t('snapshotPolicies.validation.idRequired')
     else if (!isEdit && existingPolicies.some(entry => entry.id === formData.id.trim())) next.id = t('snapshotPolicies.validation.idExists')
     if (!formData.name.trim()) next.name = t('snapshotPolicies.validation.nameRequired')
     if (!formData.description.trim()) next.description = t('snapshotPolicies.validation.descriptionRequired')
     if (!formData.level.trim()) next.level = t('snapshotPolicies.validation.levelRequired')
-    if (!Number.isInteger(frequency) || frequency < 1) next.frequencyValue = t('snapshotPolicies.validation.positiveInteger')
-    if (!Number.isInteger(retention) || retention < 1) next.retentionValue = t('snapshotPolicies.validation.positiveInteger')
-    if (maximum !== null && (!Number.isInteger(maximum) || maximum < 1)) next.maxSnapshots = t('snapshotPolicies.validation.positiveInteger')
+    if (!Number.isInteger(frequency) || frequency < 1) next.frequency_value = t('snapshotPolicies.validation.positiveInteger')
+    if (!Number.isInteger(retention) || retention < 1) next.retention_value = t('snapshotPolicies.validation.positiveInteger')
+    if (maximum !== null && (!Number.isInteger(maximum) || maximum < 1)) next.max_snapshots = t('snapshotPolicies.validation.positiveInteger')
     setErrors(next)
     return Object.keys(next).length === 0
   }
 
   const handleSubmit = () => {
     if (!validate()) return
-    const record: SnapshotPolicySubmitData = {
-      id: formData.id.trim(),
-      name: formData.name.trim(),
-      description: formData.description.trim(),
-      level: formData.level.trim(),
-      frequencyValue: Number(formData.frequencyValue),
-      frequencyUnit: formData.frequencyUnit as SnapshotPolicyTimeUnit,
-      retentionValue: Number(formData.retentionValue),
-      retentionUnit: formData.retentionUnit as SnapshotPolicyTimeUnit,
-      maxSnapshots: formData.maxSnapshots === '' ? null : Number(formData.maxSnapshots),
-      enabled: formData.enabled,
-    }
-    submitPolicy.mutate(record, {
+    submitPolicy.mutate({
+      data: {
+        id: formData.id.trim(),
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        level: formData.level.trim(),
+        frequency_value: Number(formData.frequency_value),
+        frequency_unit: formData.frequency_unit as SnapshotPolicyTimeUnit,
+        retention_value: Number(formData.retention_value),
+        retention_unit: formData.retention_unit as SnapshotPolicyTimeUnit,
+        max_snapshots: formData.max_snapshots === '' ? null : Number(formData.max_snapshots),
+        enabled: formData.enabled,
+      },
+    }, {
       onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
       onError: (error: unknown) => { setSubmitError(error) },
     })

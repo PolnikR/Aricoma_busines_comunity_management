@@ -6,13 +6,15 @@
  */
 import {
   useMutation,
-  useQuery
+  useQuery,
+  useQueryClient
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
   MutationFunction,
+  MutationFunctionContext,
   QueryClient,
   QueryFunction,
   QueryKey,
@@ -196,7 +198,7 @@ return validatingMutator<RecoveryAppPoliciesResponse>(getSubmitRecoveryAppPolicy
 export const getSubmitRecoveryAppPolicyMutationKey = () => ['submitRecoveryAppPolicy'] as const;
 
 export const getSubmitRecoveryAppPolicyMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryAppPolicy>>, TError,SubmitRecoveryAppPolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryAppPolicy>>, TError,SubmitRecoveryAppPolicyMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryAppPolicy>>, TError,SubmitRecoveryAppPolicyMutationVariables, TContext> => {
 
 const mutationKey = getSubmitRecoveryAppPolicyMutationKey();
@@ -215,12 +217,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  submitRecoveryAppPolicy(data,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof submitRecoveryAppPolicy>>, variables: SubmitRecoveryAppPolicyMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetRecoveryAppPoliciesQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type SubmitRecoveryAppPolicyMutationResult = NonNullable<Awaited<ReturnType<typeof submitRecoveryAppPolicy>>>
     export type SubmitRecoveryAppPolicyMutationBody = RecoveryAppPolicy
@@ -231,14 +238,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Submit Recovery App Policy
  */
 export const useSubmitRecoveryAppPolicy = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryAppPolicy>>, TError,SubmitRecoveryAppPolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryAppPolicy>>, TError,SubmitRecoveryAppPolicyMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitRecoveryAppPolicy>>,
         TError,
         SubmitRecoveryAppPolicyMutationVariables,
         TContext
       > => {
-      return useMutation(getSubmitRecoveryAppPolicyMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getSubmitRecoveryAppPolicyMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }
     export const getDeleteRecoveryAppPolicyUrl = (params: DeleteRecoveryAppPolicyParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -276,7 +284,7 @@ export const deleteRecoveryAppPolicy = async (params: DeleteRecoveryAppPolicyPar
 export const getDeleteRecoveryAppPolicyMutationKey = () => ['deleteRecoveryAppPolicy'] as const;
 
 export const getDeleteRecoveryAppPolicyMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryAppPolicy>>, TError,DeleteRecoveryAppPolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryAppPolicy>>, TError,DeleteRecoveryAppPolicyMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryAppPolicy>>, TError,DeleteRecoveryAppPolicyMutationVariables, TContext> => {
 
 const mutationKey = getDeleteRecoveryAppPolicyMutationKey();
@@ -295,12 +303,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  deleteRecoveryAppPolicy(params,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof deleteRecoveryAppPolicy>>, variables: DeleteRecoveryAppPolicyMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetRecoveryAppPoliciesQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type DeleteRecoveryAppPolicyMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRecoveryAppPolicy>>>
 
@@ -311,12 +324,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Delete Recovery App Policy Route
  */
 export const useDeleteRecoveryAppPolicy = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryAppPolicy>>, TError,DeleteRecoveryAppPolicyMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryAppPolicy>>, TError,DeleteRecoveryAppPolicyMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteRecoveryAppPolicy>>,
         TError,
         DeleteRecoveryAppPolicyMutationVariables,
         TContext
       > => {
-      return useMutation(getDeleteRecoveryAppPolicyMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getDeleteRecoveryAppPolicyMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }

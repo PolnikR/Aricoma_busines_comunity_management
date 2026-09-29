@@ -7,13 +7,16 @@ import { RecoveryPolicyPageShell } from '../../components/RecoveryPolicyPageShel
 import { getRecoveryPolicyPath, type RecoveryPolicyTab } from '../../model/recoveryPolicyNavigation'
 import { CleanRoomPoliciesTable } from '../components/CleanRoomPoliciesTable'
 import { CleanRoomPolicyModal } from '../components/CleanRoomPolicyModal'
-import { useCleanRoomPolicies } from '../hooks/useCleanRoomPolicies'
+import { useGetCleanRoomPolicies } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
+import { selectCleanRoomPolicies } from '../model/selectCleanRoomPolicies'
 
 export function CleanRoomPoliciesPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const { data: policies = [], isLoading, isFetching, error, refetch } = useCleanRoomPolicies()
+  const { data: policies = [], isLoading, isFetching, error, refetch } = useGetCleanRoomPolicies({
+    query: { select: selectCleanRoomPolicies },
+  })
   const policyTabs: readonly TabItem<RecoveryPolicyTab>[] = [
     { value: 'snapshot', label: t('recoveryPolicies.tabs.snapshot') },
     { value: 'application-recovery', label: t('recoveryPolicies.tabs.applicationRecovery') },

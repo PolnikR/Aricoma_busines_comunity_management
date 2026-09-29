@@ -18,10 +18,11 @@ import { Field, Select } from '@/shared/components/form/FormControls'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
-import { toRecoveryAppPolicyReadPayload } from '../api/recoveryAppPoliciesApi'
-import { useDeleteRecoveryAppPolicy } from '../hooks/useDeleteRecoveryAppPolicy'
-import type { RecoveryAppPolicy } from '../model/recoveryAppPolicyTypes'
+import { useDeleteRecoveryAppPolicy } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
+import type { RecoveryAppPolicyRecord } from '@/generated/query/zod'
 import { RecoveryAppPolicyModal } from './RecoveryAppPolicyModal'
+
+type RecoveryAppPolicy = RecoveryAppPolicyRecord
 
 interface RecoveryAppPolicyFilters {
   level: string
@@ -43,12 +44,12 @@ function formatInterval(value: number, unit: string, t: ReturnType<typeof useTra
 }
 
 function formatSelection(policy: RecoveryAppPolicy, t: ReturnType<typeof useTranslation>['t']) {
-  if (policy.snapshotSelectionMode === 'latest') return t('recoveryAppPolicies.selection.latest')
-  if (policy.snapshotSelectionMode === 'time_range') {
+  if (policy.snapshot_selection_mode === 'latest') return t('recoveryAppPolicies.selection.latest')
+  if (policy.snapshot_selection_mode === 'time_range') {
     return t('recoveryAppPolicies.selection.timeRangeSummary')
-      .replace('{age}', formatInterval(policy.snapshotMaxAgeValue ?? 0, policy.snapshotMaxAgeUnit ?? 'hours', t))
+      .replace('{age}', formatInterval(policy.snapshot_max_age_value ?? 0, policy.snapshot_max_age_unit ?? 'hours', t))
   }
-  return t('recoveryAppPolicies.selection.exactTimeSummary').replace('{time}', policy.snapshotTargetTime ?? '-')
+  return t('recoveryAppPolicies.selection.exactTimeSummary').replace('{time}', policy.snapshot_target_time ?? '-')
 }
 
 function getColumns(
@@ -69,17 +70,17 @@ function getColumns(
     {
       id: 'description',
       header: t('tables.recoveryAppPolicy.description'),
-      cell: policy => <span className="block max-w-md truncate" title={policy.description}>{policy.description || '-'}</span>,
+      cell: policy => <span className="block max-w-md truncate" title={policy.description ?? ''}>{policy.description ?? '-'}</span>,
     },
     {
       id: 'level',
       header: t('tables.recoveryAppPolicy.level'),
-      cell: policy => <Badge color={levelColor(policy.level)} size="sm">{policy.level}</Badge>,
+      cell: policy => <Badge color={levelColor(policy.level ?? '')} size="sm">{policy.level}</Badge>,
     },
     {
       id: 'frequency',
       header: t('tables.recoveryAppPolicy.frequency'),
-      cell: policy => t('recoveryAppPolicies.every').replace('{interval}', formatInterval(policy.frequencyValue, policy.frequencyUnit, t)),
+      cell: policy => t('recoveryAppPolicies.every').replace('{interval}', formatInterval(policy.frequency_value, policy.frequency_unit, t)),
     },
     {
       id: 'selection',
@@ -127,15 +128,15 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const [filters, setFilters] = useState<RecoveryAppPolicyFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<RecoveryAppPolicyFilters>(EMPTY_FILTERS)
-  const filterOptions = useMemo(() => ({ levels: Array.from(new Set(policies.map(policy => policy.level))).sort() }), [policies])
+  const filterOptions = useMemo(() => ({ levels: Array.from(new Set(policies.map(policy => policy.level ?? ''))).sort() }), [policies])
   const rows = useMemo(() => policies.filter(policy => (
     (!filters.level || policy.level === filters.level)
     && (!filters.status || (filters.status === 'enabled' ? policy.enabled : !policy.enabled))
-    && (!filters.selectionMode || policy.snapshotSelectionMode === filters.selectionMode)
+    && (!filters.selectionMode || policy.snapshot_selection_mode === filters.selectionMode)
   )), [filters, policies])
   const selected = rows.find(policy => policy.id === selectedId) ?? null
   const jsonViewed = rows.find(policy => policy.id === jsonViewId) ?? null
-  const table = useTableState(rows, { searchFields: ['name', 'id', 'description', 'level', 'snapshotSelectionMode'] })
+  const table = useTableState(rows, { searchFields: ['name', 'id', 'description', 'level', 'snapshot_selection_mode'] })
   const activeFilterCount = Number(Boolean(filters.level)) + Number(Boolean(filters.status)) + Number(Boolean(filters.selectionMode))
   const loadErrorDetail = extractBackendErrorDetail(error)
   const deleteErrorDetail = extractBackendErrorDetail(deletePolicy.error)
@@ -218,7 +219,7 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
         eyebrow={t('recoveryAppPolicies.drawer.eyebrow')}
         title={selected?.name ?? ''}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerExtra={selected ? <Badge color={levelColor(selected.level)} size="sm">{selected.level}</Badge> : null}
+        headerExtra={selected ? <Badge color={levelColor(selected.level ?? '')} size="sm">{selected.level}</Badge> : null}
         ariaLabel={t('recoveryAppPolicies.drawer.label')}
         closeLabel={t('recoveryAppPolicies.drawer.close')}
         footer={selected ? (
@@ -231,12 +232,12 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
         {selected ? (
           <dl className="px-5 py-2">
             <DetailRow label={t('details.policyId')} value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label={t('details.description')} value={selected.description || '-'} />
-            <DetailRow label={t('details.level')} value={selected.level} />
-            <DetailRow label={t('details.frequency')} value={t('recoveryAppPolicies.every').replace('{interval}', formatInterval(selected.frequencyValue, selected.frequencyUnit, t))} />
-            <DetailRow label={t('details.retention')} value={formatInterval(selected.retentionValue, selected.retentionUnit, t)} />
+            <DetailRow label={t('details.description')} value={selected.description ?? '-'} />
+            <DetailRow label={t('details.level')} value={selected.level ?? '-'} />
+            <DetailRow label={t('details.frequency')} value={t('recoveryAppPolicies.every').replace('{interval}', formatInterval(selected.frequency_value, selected.frequency_unit, t))} />
+            <DetailRow label={t('details.retention')} value={formatInterval(selected.retention_value, selected.retention_unit, t)} />
             <DetailRow label={t('details.snapshotSelection')} value={formatSelection(selected, t)} />
-            <DetailRow label={t('details.bootVerify')} value={t(selected.bootVerify ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no')} />
+            <DetailRow label={t('details.bootVerify')} value={t(selected.boot_verify ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no')} />
             <DetailRow label={t('details.status')} value={t(selected.enabled ? 'recoveryAppPolicies.enabled' : 'recoveryAppPolicies.disabled')} />
           </dl>
         ) : null}
@@ -256,7 +257,7 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
         onCancel={() => { setDeleteTarget(null) }}
         onConfirm={() => {
           if (!deleteTarget) return
-          deletePolicy.mutate(deleteTarget.id, { onSuccess: () => { setDeleteTarget(null); setSelectedId(null) }, onError: () => { setDeleteTarget(null) } })
+          deletePolicy.mutate({ params: { policy_id: deleteTarget.id } }, { onSuccess: () => { setDeleteTarget(null); setSelectedId(null) }, onError: () => { setDeleteTarget(null) } })
         }}
       />
 
@@ -274,12 +275,12 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
           },
           {
             name: t('recoveryAppPolicies.description'),
-            detail: jsonViewed.description || '—',
+            detail: jsonViewed.description ?? '—',
             status: 'ok' as const,
           },
           {
             name: t('recoveryAppPolicies.level'),
-            detail: jsonViewed.level,
+            detail: jsonViewed.level ?? '',
             status: 'ok' as const,
           },
         ]
@@ -299,7 +300,7 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
             totalCount: checks.length,
           }}
           checks={checks}
-          responseData={toRecoveryAppPolicyReadPayload(jsonViewed)}
+          responseData={jsonViewed}
           responseSchemaType="RecoveryAppPolicy"
           onClose={() => { setJsonViewId(null) }}
         />

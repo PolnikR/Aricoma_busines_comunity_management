@@ -2,28 +2,29 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
-import type { RecoveryAppPolicy } from '../model/recoveryAppPolicyTypes'
+import type { RecoveryAppPolicyRecord } from '@/generated/query/zod'
 import { RecoveryAppPoliciesTable } from './RecoveryAppPoliciesTable'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../hooks/useDeleteRecoveryAppPolicy', () => ({
+vi.mock('@/generated/query/recovery-app-policies/recovery-app-policies.gen', () => ({
   useDeleteRecoveryAppPolicy: () => ({ mutate: vi.fn(), isPending: false }),
+  useSubmitRecoveryAppPolicy: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 }))
 
-const policy: RecoveryAppPolicy = {
+const policy: RecoveryAppPolicyRecord = {
   id: 'medium-monthly-exacttime', name: 'Medium monthly', description: 'Monthly test.', level: 'medium',
-  frequencyValue: 30, frequencyUnit: 'days', retentionValue: 2, retentionUnit: 'days', bootVerify: false,
-  snapshotSelectionMode: 'exact_time', snapshotMaxAgeValue: null, snapshotMaxAgeUnit: null,
-  snapshotTargetTime: '02:00', enabled: true,
+  frequency_value: 30, frequency_unit: 'days', retention_value: 2, retention_unit: 'days', boot_verify: false,
+  snapshot_selection_mode: 'exact_time', snapshot_max_age_value: null, snapshot_max_age_unit: null,
+  snapshot_target_time: '02:00', enabled: true,
 }
 
-const latestPolicy: RecoveryAppPolicy = {
+const latestPolicy: RecoveryAppPolicyRecord = {
   ...policy,
   id: 'critical-latest',
   name: 'Critical latest',
   level: 'critical',
-  snapshotSelectionMode: 'latest',
-  snapshotTargetTime: null,
+  snapshot_selection_mode: 'latest',
+  snapshot_target_time: null,
 }
 
 describe('RecoveryAppPoliciesTable', () => {

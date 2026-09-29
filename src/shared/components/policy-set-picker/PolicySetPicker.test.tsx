@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { PolicySet } from '@/features/recovery-plans/policy-sets/model/policySetTypes'
+import type { PolicySetRecord } from '@/generated/query/zod'
 import { PolicySetPicker } from './PolicySetPicker'
 
 const {
@@ -15,32 +15,32 @@ const {
 }))
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies', () => ({
-  useSnapshotPolicies: useSnapshotPoliciesMock,
+vi.mock('@/generated/query/snapshot-policies/snapshot-policies.gen', () => ({
+  useGetPolicies: useSnapshotPoliciesMock,
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies', () => ({
-  useRecoveryAppPolicies: useRecoveryAppPoliciesMock,
+vi.mock('@/generated/query/recovery-app-policies/recovery-app-policies.gen', () => ({
+  useGetRecoveryAppPolicies: useRecoveryAppPoliciesMock,
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies', () => ({
-  useCleanRoomPolicies: useCleanRoomPoliciesMock,
+vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => ({
+  useGetCleanRoomPolicies: useCleanRoomPoliciesMock,
 }))
 
-const policySets: PolicySet[] = [
+const policySets: PolicySetRecord[] = [
   {
     id: 'tier2-apps',
     name: 'Tier 2 applications',
     description: 'Policy set using the medium-tier, 6-hour cadence.',
-    snapshotPolicyId: 'medium-6h',
-    recoveryAppPolicyId: 'critical-daily-latest',
-    cleanRoomPolicyId: 'enforce-clean-target',
+    snapshot_policy_id: 'medium-6h',
+    recovery_app_policy_id: 'critical-daily-latest',
+    clean_room_policy_id: 'enforce-clean-target',
   },
   {
     id: 'tier3-web',
     name: 'Tier 3 web',
     description: 'Low priority web tier.',
-    snapshotPolicyId: 'low-24h',
-    recoveryAppPolicyId: 'high-weekly-timerange',
-    cleanRoomPolicyId: 'block-on-conflict',
+    snapshot_policy_id: 'low-24h',
+    recovery_app_policy_id: 'high-weekly-timerange',
+    clean_room_policy_id: 'block-on-conflict',
   },
 ]
 
@@ -50,11 +50,11 @@ const snapshotPolicies = [
     name: 'Medium — 6h',
     description: 'Medium-tier snapshot cadence.',
     level: 'medium',
-    frequencyValue: 6,
-    frequencyUnit: 'hours',
-    retentionValue: 7,
-    retentionUnit: 'days',
-    maxSnapshots: null,
+    frequency_value: 6,
+    frequency_unit: 'hours',
+    retention_value: 7,
+    retention_unit: 'days',
+    max_snapshots: null,
     enabled: true,
   },
   {
@@ -62,11 +62,11 @@ const snapshotPolicies = [
     name: 'Low — 24h',
     description: 'Daily snapshot cadence.',
     level: 'low',
-    frequencyValue: 24,
-    frequencyUnit: 'hours',
-    retentionValue: 30,
-    retentionUnit: 'days',
-    maxSnapshots: null,
+    frequency_value: 24,
+    frequency_unit: 'hours',
+    retention_value: 30,
+    retention_unit: 'days',
+    max_snapshots: null,
     enabled: true,
   },
 ] as const
@@ -77,15 +77,15 @@ const recoveryAppPolicies = [
     name: 'Critical — Daily DR Test',
     description: 'Daily recovery validation.',
     level: 'critical',
-    frequencyValue: 1,
-    frequencyUnit: 'days',
-    retentionValue: 4,
-    retentionUnit: 'hours',
-    bootVerify: true,
-    snapshotSelectionMode: 'latest',
-    snapshotMaxAgeValue: null,
-    snapshotMaxAgeUnit: null,
-    snapshotTargetTime: null,
+    frequency_value: 1,
+    frequency_unit: 'days',
+    retention_value: 4,
+    retention_unit: 'hours',
+    boot_verify: true,
+    snapshot_selection_mode: 'latest',
+    snapshot_max_age_value: null,
+    snapshot_max_age_unit: null,
+    snapshot_target_time: null,
     enabled: true,
   },
   {
@@ -93,15 +93,15 @@ const recoveryAppPolicies = [
     name: 'High — Weekly DR Test',
     description: 'Weekly recovery validation.',
     level: 'high',
-    frequencyValue: 7,
-    frequencyUnit: 'days',
-    retentionValue: 1,
-    retentionUnit: 'days',
-    bootVerify: true,
-    snapshotSelectionMode: 'time_range',
-    snapshotMaxAgeValue: 2,
-    snapshotMaxAgeUnit: 'hours',
-    snapshotTargetTime: null,
+    frequency_value: 7,
+    frequency_unit: 'days',
+    retention_value: 1,
+    retention_unit: 'days',
+    boot_verify: true,
+    snapshot_selection_mode: 'time_range',
+    snapshot_max_age_value: 2,
+    snapshot_max_age_unit: 'hours',
+    snapshot_target_time: null,
     enabled: true,
   },
 ] as const

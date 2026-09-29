@@ -2,10 +2,12 @@ import type { ReactNode } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
 import { useTranslation } from '@/hooks/useTranslation'
 import { LayersIcon, RefreshIcon, ShieldIcon } from '@/shared/icons/Icons'
-import type { SnapshotPolicy } from '@/features/recovery-plans/recovery-policies/snapshot/model/snapshotPolicyTypes'
-import type { RecoveryAppPolicy } from '@/features/recovery-plans/recovery-policies/application-recovery/model/recoveryAppPolicyTypes'
-import type { CleanRoomPolicy } from '@/features/recovery-plans/recovery-policies/clean-room/model/cleanRoomPolicyTypes'
-import type { PolicySet } from '@/features/recovery-plans/policy-sets/model/policySetTypes'
+import type { CleanRoomPolicyRecord, PolicySetRecord, RecoveryAppPolicyRecord, SnapshotPolicyRecord } from '@/generated/query/zod'
+
+type SnapshotPolicy = SnapshotPolicyRecord
+type RecoveryAppPolicy = RecoveryAppPolicyRecord
+type CleanRoomPolicy = CleanRoomPolicyRecord
+type PolicySet = PolicySetRecord
 
 type Translate = ReturnType<typeof useTranslation>['t']
 
@@ -38,12 +40,12 @@ function formatInterval(value: number, unit: string, namespace: 'snapshotPolicie
 }
 
 function formatRecoverySelection(policy: RecoveryAppPolicy, t: Translate) {
-  if (policy.snapshotSelectionMode === 'latest') return t('recoveryAppPolicies.selection.latest')
-  if (policy.snapshotSelectionMode === 'time_range') {
-    const age = formatInterval(policy.snapshotMaxAgeValue ?? 0, policy.snapshotMaxAgeUnit ?? 'hours', 'recoveryAppPolicies', t)
+  if (policy.snapshot_selection_mode === 'latest') return t('recoveryAppPolicies.selection.latest')
+  if (policy.snapshot_selection_mode === 'time_range') {
+    const age = formatInterval(policy.snapshot_max_age_value ?? 0, policy.snapshot_max_age_unit ?? 'hours', 'recoveryAppPolicies', t)
     return t('recoveryAppPolicies.selection.timeRangeSummary').replace('{age}', age)
   }
-  return t('recoveryAppPolicies.selection.exactTimeSummary').replace('{time}', policy.snapshotTargetTime ?? '-')
+  return t('recoveryAppPolicies.selection.exactTimeSummary').replace('{time}', policy.snapshot_target_time ?? '-')
 }
 
 function FactField({ label, value }: { label: string; value: ReactNode }) {
@@ -64,21 +66,21 @@ function buildSections(
 ): PolicyDetailSection[] {
 
   const snapshotFacts: PolicyDetailFact[] = snapshotPolicy ? [
-    { label: t('details.frequency'), value: t('snapshotPolicies.every').replace('{interval}', formatInterval(snapshotPolicy.frequencyValue, snapshotPolicy.frequencyUnit, 'snapshotPolicies', t)) },
-    { label: t('details.retention'), value: formatInterval(snapshotPolicy.retentionValue, snapshotPolicy.retentionUnit, 'snapshotPolicies', t) },
+    { label: t('details.frequency'), value: t('snapshotPolicies.every').replace('{interval}', formatInterval(snapshotPolicy.frequency_value, snapshotPolicy.frequency_unit, 'snapshotPolicies', t)) },
+    { label: t('details.retention'), value: formatInterval(snapshotPolicy.retention_value, snapshotPolicy.retention_unit, 'snapshotPolicies', t) },
     { label: t('details.status'), value: t(snapshotPolicy.enabled ? 'snapshotPolicies.enabled' : 'snapshotPolicies.disabled') },
   ] : []
 
   const recoveryFacts: PolicyDetailFact[] = recoveryPolicy ? [
-    { label: t('details.frequency'), value: t('recoveryAppPolicies.every').replace('{interval}', formatInterval(recoveryPolicy.frequencyValue, recoveryPolicy.frequencyUnit, 'recoveryAppPolicies', t)) },
+    { label: t('details.frequency'), value: t('recoveryAppPolicies.every').replace('{interval}', formatInterval(recoveryPolicy.frequency_value, recoveryPolicy.frequency_unit, 'recoveryAppPolicies', t)) },
     { label: t('details.snapshotSelection'), value: formatRecoverySelection(recoveryPolicy, t) },
-    { label: t('details.retention'), value: formatInterval(recoveryPolicy.retentionValue, recoveryPolicy.retentionUnit, 'recoveryAppPolicies', t) },
-    { label: t('details.bootVerify'), value: t(recoveryPolicy.bootVerify ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no') },
+    { label: t('details.retention'), value: formatInterval(recoveryPolicy.retention_value, recoveryPolicy.retention_unit, 'recoveryAppPolicies', t) },
+    { label: t('details.bootVerify'), value: t(recoveryPolicy.boot_verify ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no') },
     { label: t('details.status'), value: t(recoveryPolicy.enabled ? 'recoveryAppPolicies.enabled' : 'recoveryAppPolicies.disabled') },
   ] : []
 
   const cleanRoomFacts: PolicyDetailFact[] = cleanRoomPolicy ? [
-    { label: t('details.description'), value: cleanRoomPolicy.description || '-' },
+    { label: t('details.description'), value: cleanRoomPolicy.description ?? '-' },
     { label: t('details.status'), value: t(cleanRoomPolicy.enabled ? 'cleanRoomPolicies.enabled' : 'cleanRoomPolicies.disabled') },
   ] : []
 
@@ -87,8 +89,8 @@ function buildSections(
       key: 'snapshot',
       icon: <LayersIcon className="h-5 w-5" />,
       categoryLabel: t('policySets.form.snapshotPolicy'),
-      name: snapshotPolicy?.name ?? policySet.snapshotPolicyId,
-      id: policySet.snapshotPolicyId,
+      name: snapshotPolicy?.name ?? policySet.snapshot_policy_id ?? '',
+      id: policySet.snapshot_policy_id ?? '',
       facts: snapshotFacts,
       isUnavailable: !snapshotPolicy,
     },
@@ -96,8 +98,8 @@ function buildSections(
       key: 'recovery',
       icon: <RefreshIcon className="h-5 w-5" />,
       categoryLabel: t('policySets.form.recoveryAppPolicy'),
-      name: recoveryPolicy?.name ?? policySet.recoveryAppPolicyId,
-      id: policySet.recoveryAppPolicyId,
+      name: recoveryPolicy?.name ?? policySet.recovery_app_policy_id ?? '',
+      id: policySet.recovery_app_policy_id ?? '',
       facts: recoveryFacts,
       isUnavailable: !recoveryPolicy,
     },
@@ -105,8 +107,8 @@ function buildSections(
       key: 'cleanroom',
       icon: <ShieldIcon className="h-5 w-5" />,
       categoryLabel: t('policySets.form.cleanRoomPolicy'),
-      name: cleanRoomPolicy?.name ?? policySet.cleanRoomPolicyId,
-      id: policySet.cleanRoomPolicyId,
+      name: cleanRoomPolicy?.name ?? policySet.clean_room_policy_id ?? '',
+      id: policySet.clean_room_policy_id ?? '',
       facts: cleanRoomFacts,
       isUnavailable: !cleanRoomPolicy,
     },

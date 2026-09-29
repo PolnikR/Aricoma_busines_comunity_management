@@ -2,9 +2,9 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
-import { useRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies'
-import { useCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies'
-import type { PolicySet } from '../model/policySetTypes'
+import { useGetRecoveryAppPolicies } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
+import { useGetCleanRoomPolicies } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
+import type { PolicySetRecord } from '@/generated/query/zod'
 import { PolicySetModal } from './PolicySetModal'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -12,47 +12,49 @@ vi.mock('react-router', async (importOriginal) => ({
   ...await importOriginal<typeof import('react-router')>(),
   useBlocker: () => ({ state: 'unblocked' as const }),
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies', () => ({
-  useSnapshotPolicies: () => ({
+vi.mock('@/generated/query/snapshot-policies/snapshot-policies.gen', () => ({
+  useGetPolicies: () => ({
     data: [
-      { id: 'medium-6h', name: 'Medium — 6h', description: '', level: 'medium', frequencyValue: 6, frequencyUnit: 'hours', retentionValue: 7, retentionUnit: 'days', maxSnapshots: null, enabled: true },
-      { id: 'low-24h', name: 'Low — 24h', description: '', level: 'low', frequencyValue: 24, frequencyUnit: 'hours', retentionValue: 30, retentionUnit: 'days', maxSnapshots: null, enabled: true },
+      { id: 'medium-6h', name: 'Medium — 6h', description: '', level: 'medium', frequency_value: 6, frequency_unit: 'hours', retention_value: 7, retention_unit: 'days', max_snapshots: null, enabled: true },
+      { id: 'low-24h', name: 'Low — 24h', description: '', level: 'low', frequency_value: 24, frequency_unit: 'hours', retention_value: 30, retention_unit: 'days', max_snapshots: null, enabled: true },
     ],
   }),
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies', () => ({
-  useRecoveryAppPolicies: vi.fn(),
+vi.mock('@/generated/query/recovery-app-policies/recovery-app-policies.gen', () => ({
+  useGetRecoveryAppPolicies: vi.fn(),
+  useSubmitRecoveryAppPolicy: vi.fn(),
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies', () => ({
-  useCleanRoomPolicies: vi.fn(),
+vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => ({
+  useGetCleanRoomPolicies: vi.fn(),
+  useSubmitCleanRoomPolicy: vi.fn(),
 }))
 
-const mockUseRecoveryAppPolicies = vi.mocked(useRecoveryAppPolicies)
-const mockUseCleanRoomPolicies = vi.mocked(useCleanRoomPolicies)
+const mockUseRecoveryAppPolicies = vi.mocked(useGetRecoveryAppPolicies)
+const mockUseCleanRoomPolicies = vi.mocked(useGetCleanRoomPolicies)
 const recoveryAppPolicy = {
   id: 'critical-daily-latest',
   name: 'Critical — Daily DR Test',
   description: '',
   level: 'critical',
-  frequencyValue: 1,
-  frequencyUnit: 'days' as const,
-  retentionValue: 4,
-  retentionUnit: 'hours' as const,
-  bootVerify: true,
-  snapshotSelectionMode: 'latest' as const,
-  snapshotMaxAgeValue: null,
-  snapshotMaxAgeUnit: null,
-  snapshotTargetTime: null,
+  frequency_value: 1,
+  frequency_unit: 'days' as const,
+  retention_value: 4,
+  retention_unit: 'hours' as const,
+  boot_verify: true,
+  snapshot_selection_mode: 'latest' as const,
+  snapshot_max_age_value: null,
+  snapshot_max_age_unit: null,
+  snapshot_target_time: null,
   enabled: true,
 }
 
-const policySet: PolicySet = {
+const policySet: PolicySetRecord = {
   id: 'tier2-apps',
   name: 'Tier 2 applications',
   description: 'Policy set using the medium-tier, 6-hour cadence.',
-  snapshotPolicyId: 'medium-6h',
-  recoveryAppPolicyId: 'critical-daily-latest',
-  cleanRoomPolicyId: 'enforce-clean-target',
+  snapshot_policy_id: 'medium-6h',
+  recovery_app_policy_id: 'critical-daily-latest',
+  clean_room_policy_id: 'enforce-clean-target',
 }
 
 function renderModal(props: Partial<React.ComponentProps<typeof PolicySetModal>> = {}) {
@@ -74,13 +76,13 @@ beforeEach(() => {
     isLoading: false,
     error: null,
     refetch: vi.fn(),
-  } as unknown as ReturnType<typeof useRecoveryAppPolicies>)
+  } as unknown as ReturnType<typeof useGetRecoveryAppPolicies>)
   mockUseCleanRoomPolicies.mockReturnValue({
     data: [{ id: 'enforce-clean-target', name: 'Enforce Clean Target', description: 'Remove conflicts.', enabled: true }],
     isLoading: false,
     error: null,
     refetch: vi.fn(),
-  } as unknown as ReturnType<typeof useCleanRoomPolicies>)
+  } as unknown as ReturnType<typeof useGetCleanRoomPolicies>)
 })
 
 describe('PolicySetModal', () => {
@@ -125,7 +127,7 @@ describe('PolicySetModal', () => {
       id: 'tier3-web',
       name: 'Tier 3 web',
       description: 'Low priority web tier.',
-        snapshot_policy_id: 'low-24h',
+      snapshot_policy_id: 'low-24h',
       recovery_app_policy_id: 'critical-daily-latest',
       clean_room_policy_id: 'enforce-clean-target',
     }))
@@ -160,7 +162,7 @@ describe('PolicySetModal', () => {
       isLoading: false,
       error: null,
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useRecoveryAppPolicies>)
+    } as unknown as ReturnType<typeof useGetRecoveryAppPolicies>)
     renderModal()
 
     fireEvent.change(screen.getByLabelText('Policy set ID'), { target: { value: 'missing-recovery-policy' } })
@@ -178,7 +180,7 @@ describe('PolicySetModal', () => {
       isLoading: false,
       error: null,
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useCleanRoomPolicies>)
+    } as unknown as ReturnType<typeof useGetCleanRoomPolicies>)
     renderModal()
 
     fireEvent.change(screen.getByLabelText('Policy set ID'), { target: { value: 'missing-clean-room-policy' } })
@@ -198,7 +200,7 @@ describe('PolicySetModal', () => {
       isLoading: false,
       error: new Error('private backend details'),
       refetch,
-    } as unknown as ReturnType<typeof useRecoveryAppPolicies>)
+    } as unknown as ReturnType<typeof useGetRecoveryAppPolicies>)
     renderModal()
 
     expect(screen.getByRole('alert')).toHaveTextContent('Recovery application policies could not be loaded.')
@@ -212,13 +214,13 @@ describe('PolicySetModal', () => {
       isLoading: false,
       error: new OrvalApiError(503, 'Unavailable', { detail: 'Recovery policy service is unavailable.' }),
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useRecoveryAppPolicies>)
+    } as unknown as ReturnType<typeof useGetRecoveryAppPolicies>)
     mockUseCleanRoomPolicies.mockReturnValue({
       data: [],
       isLoading: false,
       error: new OrvalApiError(503, 'Unavailable', { detail: 'Clean room policy service is unavailable.' }),
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useCleanRoomPolicies>)
+    } as unknown as ReturnType<typeof useGetCleanRoomPolicies>)
 
     renderModal()
 
@@ -246,7 +248,7 @@ describe('PolicySetModal', () => {
 
   it('keeps an unavailable recovery policy reference visible while editing', () => {
     renderModal({
-      policySet: { ...policySet, recoveryAppPolicyId: 'removed-policy' },
+      policySet: { ...policySet, recovery_app_policy_id: 'removed-policy' },
       existingPolicySets: [policySet],
     })
 

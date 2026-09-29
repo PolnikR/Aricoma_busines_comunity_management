@@ -8,7 +8,8 @@ import { isProgrammaticIdAvailable } from '@/shared/utils/programmaticId'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useProviders } from '@/features/providers-connectors/providers/hooks/useProviders'
 import { usePlatformProviders } from '@/features/platform-administration/platform-providers/hooks/usePlatformProviders'
-import { usePolicySets } from '@/features/recovery-plans/policy-sets/hooks/usePolicySets'
+import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
+import { selectPolicySets } from '@/features/recovery-plans/policy-sets/model/selectPolicySets'
 import { getRecoveryGroupResourceOption } from '../config/recoveryGroupResourceOptions'
 import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
 import type { RecoveryGroup, RecoveryGroupDraft, RecoveryGroupVmMetadata } from '../model/recoveryGroupTypes'
@@ -115,7 +116,7 @@ export function RecoveryGroupBuilder({
       && isCredentialOk(provider)
     )),
   )
-  const policySetQuery = usePolicySets()
+  const policySetQuery = useGetPolicySets({ query: { select: selectPolicySets } })
   const policySets = policySetQuery.data ?? []
   const policySetValid = Boolean(draftState.policySetId)
   const platformProvidersQuery = usePlatformProviders()

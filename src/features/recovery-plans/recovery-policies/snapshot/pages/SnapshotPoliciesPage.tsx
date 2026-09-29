@@ -7,13 +7,16 @@ import { RecoveryPolicyPageShell } from '../../components/RecoveryPolicyPageShel
 import { getRecoveryPolicyPath, type RecoveryPolicyTab } from '../../model/recoveryPolicyNavigation'
 import { SnapshotPoliciesTable } from '../components/SnapshotPoliciesTable'
 import { SnapshotPolicyModal } from '../components/SnapshotPolicyModal'
-import { useSnapshotPolicies } from '../hooks/useSnapshotPolicies'
+import { useGetPolicies } from '@/generated/query/snapshot-policies/snapshot-policies.gen'
+import { selectSnapshotPolicies } from '../model/selectSnapshotPolicies'
 
 export function SnapshotPoliciesPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const { data: policies = [], isLoading, isFetching, error, refetch } = useSnapshotPolicies()
+  const { data: policies = [], isLoading, isFetching, error, refetch } = useGetPolicies({
+    query: { select: selectSnapshotPolicies },
+  })
   const policyTabs: readonly TabItem<RecoveryPolicyTab>[] = [
     { value: 'snapshot', label: t('recoveryPolicies.tabs.snapshot') },
     { value: 'application-recovery', label: t('recoveryPolicies.tabs.applicationRecovery') },

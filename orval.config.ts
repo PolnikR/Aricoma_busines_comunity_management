@@ -68,6 +68,10 @@ export default defineConfig({
           version: 5,
           mutationInvalidates: [
             { onMutations: ['submitCredential', 'deleteCredential'], invalidates: ['getCredentials'] },
+            { onMutations: ['submitPolicySet', 'deletePolicySet'], invalidates: ['getPolicySets'] },
+            { onMutations: ['submitPolicy', 'deletePolicy'], invalidates: ['getPolicies'] },
+            { onMutations: ['submitCleanRoomPolicy', 'deleteCleanRoomPolicy'], invalidates: ['getCleanRoomPolicies'] },
+            { onMutations: ['submitRecoveryAppPolicy', 'deleteRecoveryAppPolicy'], invalidates: ['getRecoveryAppPolicies'] },
           ],
         },
         zod: { version: 4, variant: 'classic', exactOptional: true },

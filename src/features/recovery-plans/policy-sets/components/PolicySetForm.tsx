@@ -3,25 +3,23 @@ import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Input, RadioField, Textarea } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
-import type { SnapshotPolicy } from '@/features/recovery-plans/recovery-policies/snapshot/model/snapshotPolicyTypes'
-import type { RecoveryAppPolicy } from '@/features/recovery-plans/recovery-policies/application-recovery/model/recoveryAppPolicyTypes'
-import type { CleanRoomPolicy } from '@/features/recovery-plans/recovery-policies/clean-room/model/cleanRoomPolicyTypes'
+import type { CleanRoomPolicyRecord, RecoveryAppPolicyRecord, SnapshotPolicyRecord } from '@/generated/query/zod'
 
 export interface PolicySetFormData {
   id: string
   name: string
   description: string
-  snapshotPolicyId: string
-  recoveryAppPolicyId: string
-  cleanRoomPolicyId: string
+  snapshot_policy_id: string
+  recovery_app_policy_id: string
+  clean_room_policy_id: string
 }
 
 interface PolicySetFormProps {
   data: PolicySetFormData
   errors: Partial<Record<keyof PolicySetFormData, string>>
-  availableSnapshotPolicies: SnapshotPolicy[]
-  availableRecoveryAppPolicies: RecoveryAppPolicy[]
-  availableCleanRoomPolicies: CleanRoomPolicy[]
+  availableSnapshotPolicies: SnapshotPolicyRecord[]
+  availableRecoveryAppPolicies: RecoveryAppPolicyRecord[]
+  availableCleanRoomPolicies: CleanRoomPolicyRecord[]
   isRecoveryAppPoliciesLoading: boolean
   recoveryAppPoliciesError: Error | null
   onRetryRecoveryAppPolicies: () => void
@@ -61,13 +59,13 @@ export function PolicySetForm({
     }
   }
   const selectSnapshotPolicy = (policyId: string) => {
-    onChange('snapshotPolicyId', policyId)
+    onChange('snapshot_policy_id', policyId)
   }
   const selectRecoveryAppPolicy = (policyId: string) => {
-    onChange('recoveryAppPolicyId', policyId)
+    onChange('recovery_app_policy_id', policyId)
   }
   const selectCleanRoomPolicy = (policyId: string) => {
-    onChange('cleanRoomPolicyId', policyId)
+    onChange('clean_room_policy_id', policyId)
   }
 
   return (
@@ -100,7 +98,7 @@ export function PolicySetForm({
                 id={`policy-set-policy-${policy.id}`}
                 name="policy-set-policy"
                 label={`${policy.name} (${policy.id})`}
-                checked={data.snapshotPolicyId === policy.id}
+                checked={data.snapshot_policy_id === policy.id}
                 disabled={isSubmitting}
                 variant="bordered"
                 onChange={() => { selectSnapshotPolicy(policy.id) }}
@@ -108,7 +106,7 @@ export function PolicySetForm({
             ))}
           </div>
         )}
-        {errors.snapshotPolicyId ? <p className="mt-1 text-xs text-red-600">{errors.snapshotPolicyId}</p> : null}
+        {errors.snapshot_policy_id ? <p className="mt-1 text-xs text-red-600">{errors.snapshot_policy_id}</p> : null}
       </div>
 
       <div>
@@ -133,20 +131,20 @@ export function PolicySetForm({
                 id={`policy-set-recovery-app-policy-${policy.id}`}
                 name="policy-set-recovery-app-policy"
                 label={`${policy.name} (${policy.id})`}
-                checked={data.recoveryAppPolicyId === policy.id}
+                checked={data.recovery_app_policy_id === policy.id}
                 disabled={isSubmitting}
                 variant="bordered"
                 onChange={() => { selectRecoveryAppPolicy(policy.id) }}
               />
             ))}
-            {data.recoveryAppPolicyId && !availableRecoveryAppPolicies.some(policy => policy.id === data.recoveryAppPolicyId) ? (
+            {data.recovery_app_policy_id && !availableRecoveryAppPolicies.some(policy => policy.id === data.recovery_app_policy_id) ? (
               <p className="text-xs text-amber-700" role="status">
-                {t('policySets.form.unavailableRecoveryAppPolicy').replace('{id}', data.recoveryAppPolicyId)}
+                {t('policySets.form.unavailableRecoveryAppPolicy').replace('{id}', data.recovery_app_policy_id)}
               </p>
             ) : null}
           </div>
         )}
-        {errors.recoveryAppPolicyId ? <p className="mt-1 text-xs text-red-600">{errors.recoveryAppPolicyId}</p> : null}
+        {errors.recovery_app_policy_id ? <p className="mt-1 text-xs text-red-600">{errors.recovery_app_policy_id}</p> : null}
       </div>
 
       <div>
@@ -171,20 +169,20 @@ export function PolicySetForm({
                 id={`policy-set-clean-room-policy-${policy.id}`}
                 name="policy-set-clean-room-policy"
                 label={`${policy.name} (${policy.id})`}
-                checked={data.cleanRoomPolicyId === policy.id}
+                checked={data.clean_room_policy_id === policy.id}
                 disabled={isSubmitting}
                 variant="bordered"
                 onChange={() => { selectCleanRoomPolicy(policy.id) }}
               />
             ))}
-            {data.cleanRoomPolicyId && !availableCleanRoomPolicies.some(policy => policy.id === data.cleanRoomPolicyId) ? (
+            {data.clean_room_policy_id && !availableCleanRoomPolicies.some(policy => policy.id === data.clean_room_policy_id) ? (
               <p className="text-xs text-amber-700" role="status">
-                {t('policySets.form.unavailableCleanRoomPolicy').replace('{id}', data.cleanRoomPolicyId)}
+                {t('policySets.form.unavailableCleanRoomPolicy').replace('{id}', data.clean_room_policy_id)}
               </p>
             ) : null}
           </div>
         )}
-        {errors.cleanRoomPolicyId ? <p className="mt-1 text-xs text-red-600">{errors.cleanRoomPolicyId}</p> : null}
+        {errors.clean_room_policy_id ? <p className="mt-1 text-xs text-red-600">{errors.clean_room_policy_id}</p> : null}
       </div>
     </div>
   )

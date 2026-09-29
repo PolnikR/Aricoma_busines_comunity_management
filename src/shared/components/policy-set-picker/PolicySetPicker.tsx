@@ -1,13 +1,16 @@
 import { useMemo } from 'react'
-import { useSnapshotPolicies } from '@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies'
-import { useRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies'
-import { useCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies'
-import type { PolicySet } from '@/features/recovery-plans/policy-sets/model/policySetTypes'
+import { useGetPolicies } from '@/generated/query/snapshot-policies/snapshot-policies.gen'
+import { selectSnapshotPolicies } from '@/features/recovery-plans/recovery-policies/snapshot/model/selectSnapshotPolicies'
+import { useGetRecoveryAppPolicies } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
+import { selectRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/model/selectRecoveryAppPolicies'
+import { useGetCleanRoomPolicies } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
+import { selectCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/model/selectCleanRoomPolicies'
+import type { PolicySetRecord } from '@/generated/query/zod'
 import { PolicySetPickerList } from './PolicySetPickerList'
 import { PolicySetPickerDetails } from './PolicySetPickerDetails'
 
 interface PolicySetPickerProps {
-  policySets: PolicySet[]
+  policySets: PolicySetRecord[]
   selectedPolicySetId: string | null
   onSelect: (policySetId: string) => void
 }
@@ -21,9 +24,9 @@ export function PolicySetPicker({
   selectedPolicySetId,
   onSelect,
 }: PolicySetPickerProps) {
-  const snapshotQuery = useSnapshotPolicies()
-  const recoveryQuery = useRecoveryAppPolicies()
-  const cleanRoomQuery = useCleanRoomPolicies()
+  const snapshotQuery = useGetPolicies({ query: { select: selectSnapshotPolicies } })
+  const recoveryQuery = useGetRecoveryAppPolicies({ query: { select: selectRecoveryAppPolicies } })
+  const cleanRoomQuery = useGetCleanRoomPolicies({ query: { select: selectCleanRoomPolicies } })
   const selectedSet = policySets.find(policySet => policySet.id === selectedPolicySetId) ?? null
   const snapshotPoliciesById = useMemo(
     () => new Map((snapshotQuery.data ?? []).map(policy => [policy.id, policy])),
@@ -53,9 +56,9 @@ export function PolicySetPicker({
         <div className="min-h-0 min-w-0 flex-1 overflow-auto border-t border-border lg:border-l lg:border-t-0">
           <PolicySetPickerDetails
             policySet={selectedSet}
-            snapshotPolicy={snapshotPoliciesById.get(selectedSet.snapshotPolicyId)}
-            recoveryPolicy={recoveryPoliciesById.get(selectedSet.recoveryAppPolicyId)}
-            cleanRoomPolicy={cleanRoomPoliciesById.get(selectedSet.cleanRoomPolicyId)}
+            snapshotPolicy={snapshotPoliciesById.get(selectedSet.snapshot_policy_id ?? '')}
+            recoveryPolicy={recoveryPoliciesById.get(selectedSet.recovery_app_policy_id ?? '')}
+            cleanRoomPolicy={cleanRoomPoliciesById.get(selectedSet.clean_room_policy_id ?? '')}
             isLoading={snapshotQuery.isLoading || recoveryQuery.isLoading || cleanRoomQuery.isLoading}
             hasQueryError={Boolean(snapshotQuery.error ?? recoveryQuery.error ?? cleanRoomQuery.error)}
           />

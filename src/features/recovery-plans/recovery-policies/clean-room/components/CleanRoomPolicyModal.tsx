@@ -7,22 +7,24 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useSubmitCleanRoomPolicy } from '../hooks/useSubmitCleanRoomPolicy'
-import type { CleanRoomPolicy, CleanRoomPolicySubmitData } from '../model/cleanRoomPolicyTypes'
+import { useSubmitCleanRoomPolicy } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
+import type { CleanRoomPolicyRecord } from '@/generated/query/zod'
 import { CleanRoomPolicyForm } from './CleanRoomPolicyForm'
 import type { CleanRoomPolicyFormData } from './CleanRoomPolicyForm'
 
 interface CleanRoomPolicyModalProps {
   open: boolean
   onClose: () => void
-  existingPolicies: CleanRoomPolicy[]
-  policy?: CleanRoomPolicy
+  existingPolicies: CleanRoomPolicyRecord[]
+  policy?: CleanRoomPolicyRecord
 }
 
 const EMPTY_FORM: CleanRoomPolicyFormData = { id: '', name: '', description: '', enabled: true }
 
-function initialForm(policy?: CleanRoomPolicy): CleanRoomPolicyFormData {
-  return policy ? { ...policy } : EMPTY_FORM
+function initialForm(policy?: CleanRoomPolicyRecord): CleanRoomPolicyFormData {
+  return policy
+    ? { id: policy.id, name: policy.name, description: policy.description ?? '', enabled: policy.enabled ?? true }
+    : EMPTY_FORM
 }
 
 export function CleanRoomPolicyModal({ open, onClose, existingPolicies, policy }: CleanRoomPolicyModalProps) {
@@ -73,13 +75,14 @@ export function CleanRoomPolicyModal({ open, onClose, existingPolicies, policy }
 
   const handleSubmit = () => {
     if (!validate()) return
-    const record: CleanRoomPolicySubmitData = {
-      id: formData.id.trim(),
-      name: formData.name.trim(),
-      description: formData.description.trim(),
-      enabled: formData.enabled,
-    }
-    submitPolicy.mutate(record, {
+    submitPolicy.mutate({
+      data: {
+        id: formData.id.trim(),
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        enabled: formData.enabled,
+      },
+    }, {
       onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
       onError: (error: unknown) => { setSubmitError(error) },
     })

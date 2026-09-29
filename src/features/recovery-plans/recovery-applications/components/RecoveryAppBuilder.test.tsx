@@ -21,9 +21,9 @@ const policySetsQuery = vi.hoisted(() => ({
       id: 'critical-daily-latest',
       name: 'Critical - Daily DR Test',
       description: 'Daily recovery test',
-      snapshotPolicyId: 'daily-latest',
-      recoveryAppPolicyId: 'critical-daily-latest',
-      cleanRoomPolicyId: 'enforce-clean-target',
+      snapshot_policy_id: 'daily-latest',
+      recovery_app_policy_id: 'critical-daily-latest',
+      clean_room_policy_id: 'enforce-clean-target',
     }],
     isLoading: false,
     error: null as Error | null,
@@ -69,8 +69,8 @@ const recoveryGroupsQuery = vi.hoisted(() => ({
 vi.mock('@/features/platform-administration/platform-providers/hooks/usePlatformProviders', () => ({
   usePlatformProviders: () => platformProvidersQuery.current,
 }))
-vi.mock('@/features/recovery-plans/policy-sets/hooks/usePolicySets', () => ({
-  usePolicySets: () => policySetsQuery.current,
+vi.mock('@/generated/query/policy-sets/policy-sets.gen', () => ({
+  useGetPolicySets: () => policySetsQuery.current,
 }))
 vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
   useProviders: () => providersQuery.current,
@@ -78,14 +78,14 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
 vi.mock('../../recovery-groups/hooks/useRecoveryGroups', () => ({
   useRecoveryGroups: () => recoveryGroupsQuery.current,
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies', () => ({
-  useSnapshotPolicies: () => ({ data: [], isLoading: false, error: null }),
+vi.mock('@/generated/query/snapshot-policies/snapshot-policies.gen', () => ({
+  useGetPolicies: () => ({ data: [], isLoading: false, error: null }),
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies', () => ({
-  useRecoveryAppPolicies: () => ({ data: [], isLoading: false, error: null }),
+vi.mock('@/generated/query/recovery-app-policies/recovery-app-policies.gen', () => ({
+  useGetRecoveryAppPolicies: () => ({ data: [], isLoading: false, error: null }),
 }))
-vi.mock('@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies', () => ({
-  useCleanRoomPolicies: () => ({ data: [], isLoading: false, error: null }),
+vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => ({
+  useGetCleanRoomPolicies: () => ({ data: [], isLoading: false, error: null }),
 }))
 vi.mock('./TierCanvas', () => ({
   TierCanvas: ({

@@ -7,51 +7,54 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useSnapshotPolicies } from '@/features/recovery-plans/recovery-policies/snapshot/hooks/useSnapshotPolicies'
-import { useRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/hooks/useRecoveryAppPolicies'
-import { useCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/hooks/useCleanRoomPolicies'
-import { useSubmitPolicySet } from '../hooks/useSubmitPolicySet'
-import type { PolicySet, PolicySetSubmitData } from '../model/policySetTypes'
+import { useGetPolicies } from '@/generated/query/snapshot-policies/snapshot-policies.gen'
+import { selectSnapshotPolicies } from '@/features/recovery-plans/recovery-policies/snapshot/model/selectSnapshotPolicies'
+import { useGetRecoveryAppPolicies } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
+import { selectRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/model/selectRecoveryAppPolicies'
+import { useGetCleanRoomPolicies } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
+import { selectCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/model/selectCleanRoomPolicies'
+import { useSubmitPolicySet } from '@/generated/query/policy-sets/policy-sets.gen'
+import type { PolicySetRecord } from '@/generated/query/zod'
 import { PolicySetForm } from './PolicySetForm'
 import type { PolicySetFormData } from './PolicySetForm'
 
 interface PolicySetModalProps {
   open: boolean
   onClose: () => void
-  existingPolicySets: PolicySet[]
-  policySet?: PolicySet
+  existingPolicySets: PolicySetRecord[]
+  policySet?: PolicySetRecord
 }
 
 const EMPTY_FORM: PolicySetFormData = {
   id: '',
   name: '',
   description: '',
-  snapshotPolicyId: '',
-  recoveryAppPolicyId: '',
-  cleanRoomPolicyId: '',
+  snapshot_policy_id: '',
+  recovery_app_policy_id: '',
+  clean_room_policy_id: '',
 }
 
-function toFormData(policySet: PolicySet): PolicySetFormData {
+function toFormData(policySet: PolicySetRecord): PolicySetFormData {
   return {
     id: policySet.id,
     name: policySet.name,
-    description: policySet.description,
-    snapshotPolicyId: policySet.snapshotPolicyId,
-    recoveryAppPolicyId: policySet.recoveryAppPolicyId,
-    cleanRoomPolicyId: policySet.cleanRoomPolicyId,
+    description: policySet.description ?? '',
+    snapshot_policy_id: policySet.snapshot_policy_id ?? '',
+    recovery_app_policy_id: policySet.recovery_app_policy_id ?? '',
+    clean_room_policy_id: policySet.clean_room_policy_id ?? '',
   }
 }
 
-function initialForm(policySet?: PolicySet) {
+function initialForm(policySet?: PolicySetRecord) {
   return policySet ? toFormData(policySet) : EMPTY_FORM
 }
 
 export function PolicySetModal({ open, onClose, existingPolicySets, policySet }: PolicySetModalProps) {
   const { t } = useTranslation()
   const submitPolicySet = useSubmitPolicySet()
-  const snapshotPoliciesQuery = useSnapshotPolicies()
-  const recoveryAppPoliciesQuery = useRecoveryAppPolicies()
-  const cleanRoomPoliciesQuery = useCleanRoomPolicies()
+  const snapshotPoliciesQuery = useGetPolicies({ query: { select: selectSnapshotPolicies } })
+  const recoveryAppPoliciesQuery = useGetRecoveryAppPolicies({ query: { select: selectRecoveryAppPolicies } })
+  const cleanRoomPoliciesQuery = useGetCleanRoomPolicies({ query: { select: selectCleanRoomPolicies } })
   const isEdit = Boolean(policySet)
   const [formData, setFormData] = useState<PolicySetFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof PolicySetFormData, string>>>({})
@@ -99,24 +102,25 @@ export function PolicySetModal({ open, onClose, existingPolicySets, policySet }:
     else if (!isEdit && existingPolicySets.some(entry => entry.id === formData.id.trim())) next.id = t('policySets.validation.idExists')
     if (!formData.name.trim()) next.name = t('policySets.validation.nameRequired')
     if (!formData.description.trim()) next.description = t('policySets.validation.descriptionRequired')
-    if (!formData.snapshotPolicyId.trim()) next.snapshotPolicyId = t('policySets.validation.policiesRequired')
-    if (!formData.recoveryAppPolicyId.trim()) next.recoveryAppPolicyId = t('policySets.validation.recoveryAppPolicyRequired')
-    if (!formData.cleanRoomPolicyId.trim()) next.cleanRoomPolicyId = t('policySets.validation.cleanRoomPolicyRequired')
+    if (!formData.snapshot_policy_id.trim()) next.snapshot_policy_id = t('policySets.validation.policiesRequired')
+    if (!formData.recovery_app_policy_id.trim()) next.recovery_app_policy_id = t('policySets.validation.recoveryAppPolicyRequired')
+    if (!formData.clean_room_policy_id.trim()) next.clean_room_policy_id = t('policySets.validation.cleanRoomPolicyRequired')
     setErrors(next)
     return Object.keys(next).length === 0
   }
 
   const handleSubmit = () => {
     if (!validate()) return
-    const record: PolicySetSubmitData = {
-      id: formData.id.trim(),
-      name: formData.name.trim(),
-      description: formData.description.trim(),
-      snapshotPolicyId: formData.snapshotPolicyId,
-      recoveryAppPolicyId: formData.recoveryAppPolicyId.trim(),
-      cleanRoomPolicyId: formData.cleanRoomPolicyId.trim(),
-    }
-    submitPolicySet.mutate(record, {
+    submitPolicySet.mutate({
+      data: {
+        id: formData.id.trim(),
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        snapshot_policy_id: formData.snapshot_policy_id,
+        recovery_app_policy_id: formData.recovery_app_policy_id.trim(),
+        clean_room_policy_id: formData.clean_room_policy_id.trim(),
+      },
+    }, {
       onSuccess: () => { navigationGuard.runWithoutBlocking(close) },
       onError: (error: unknown) => {
         setSubmitError(error)

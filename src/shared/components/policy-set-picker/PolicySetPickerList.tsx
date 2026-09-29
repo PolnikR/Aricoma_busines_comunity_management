@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Input } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
-import type { PolicySet } from '@/features/recovery-plans/policy-sets/model/policySetTypes'
+import type { PolicySetRecord } from '@/generated/query/zod'
 
 interface PolicySetPickerListProps {
-  policySets: PolicySet[]
+  policySets: PolicySetRecord[]
   selectedPolicySetId: string | null
   recoveryPoliciesById: Map<string, { name: string }>
   onSelect: (policySetId: string) => void
@@ -23,8 +23,8 @@ export function PolicySetPickerList({
     const term = search.toLowerCase()
     return policySets.filter(set => {
       const matchesName = set.name.toLowerCase().includes(term)
-      const matchesDescription = set.description.toLowerCase().includes(term)
-      const recoveryPolicyName = recoveryPoliciesById.get(set.recoveryAppPolicyId)?.name ?? ''
+      const matchesDescription = (set.description ?? '').toLowerCase().includes(term)
+      const recoveryPolicyName = recoveryPoliciesById.get(set.recovery_app_policy_id ?? '')?.name ?? ''
       const matchesPolicy = recoveryPolicyName.toLowerCase().includes(term)
       return matchesName || matchesDescription || matchesPolicy
     })
@@ -52,7 +52,7 @@ export function PolicySetPickerList({
           <div className="divide-y divide-border-soft">
             {filteredSets.map(policySet => {
               const isSelected = policySet.id === selectedPolicySetId
-              const recoveryPolicyName = recoveryPoliciesById.get(policySet.recoveryAppPolicyId)?.name ?? policySet.recoveryAppPolicyId
+              const recoveryPolicyName = recoveryPoliciesById.get(policySet.recovery_app_policy_id ?? '')?.name ?? (policySet.recovery_app_policy_id ?? '')
               return (
                 <button
                   key={policySet.id}

@@ -2,15 +2,16 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
-import type { CleanRoomPolicy } from '../model/cleanRoomPolicyTypes'
+import type { CleanRoomPolicyRecord } from '@/generated/query/zod'
 import { CleanRoomPoliciesTable } from './CleanRoomPoliciesTable'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../hooks/useDeleteCleanRoomPolicy', () => ({
+vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => ({
   useDeleteCleanRoomPolicy: () => ({ mutate: vi.fn(), isPending: false }),
+  useSubmitCleanRoomPolicy: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 }))
 
-const policy: CleanRoomPolicy = {
+const policy: CleanRoomPolicyRecord = {
   id: 'enforce-clean-target',
   name: 'Enforce Clean Target',
   description: 'Remove conflicting target resources before recovery.',
