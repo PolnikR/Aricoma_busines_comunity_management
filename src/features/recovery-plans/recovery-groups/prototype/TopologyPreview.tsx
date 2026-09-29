@@ -34,6 +34,7 @@ export function TopologyPreview() {
   const [compute, setCompute] = useState(Boolean(previewTopology))
   const [vms, setVms] = useState<string[]>(previewTopology ? ['APP02'] : [])
   const [auxiliary, setAuxiliary] = useState<Record<string, string>>({})
+  const [volumeSelection, setVolumeSelection] = useState<{ key: string; names: string[] } | null>(null)
   const [policyId, setPolicyId] = useState<string | null>(null)
   const [orchestrator, setOrchestrator] = useState('')
   const [deploy, setDeploy] = useState(false)
@@ -42,7 +43,19 @@ export function TopologyPreview() {
   const source = storageProviders.find(provider => provider.id === sourceId)
   const partner = storageProviders.find(provider => provider.id === source?.partnerProviderId)
   const remote = topology === 'metro_mirror'
-  const volumes = [...new Set(vms.flatMap(vm => vmVolumes[sourceId]?.[vm] ?? []))]
+  const volumeKey = `${sourceId}|${[...vms].sort().join(',')}`
+  const discoveredVolumes = [...new Set(vms.flatMap(vm => vmVolumes[sourceId]?.[vm] ?? []))]
+  const availableVolumes = [...new Set(Object.values(vmVolumes[sourceId] ?? {}).flat())]
+  const volumes = volumeSelection?.key === volumeKey ? volumeSelection.names : discoveredVolumes
+  const addVolume = (name: string) => {
+    if (availableVolumes.includes(name) && !volumes.includes(name)) {
+      setVolumeSelection({ key: volumeKey, names: [...volumes, name] })
+    }
+  }
+  const removeVolume = (name: string) => {
+    setVolumeSelection({ key: volumeKey, names: volumes.filter(volume => volume !== name) })
+    setAuxiliary(current => Object.fromEntries(Object.entries(current).filter(([volume]) => volume !== name)))
+  }
   const mappedCount = volumes.filter(volume => auxiliary[volume]?.trim()).length
   const policy = policySets.find(item => item.id === policyId)
   const validations = [
@@ -166,13 +179,23 @@ export function TopologyPreview() {
                       <span>{volumes.length} source volumes · {vms.length} selected VMs{remote ? ` · Remote Copy group ${groupId}` : ''}</span>
                       <span role="status">{remote ? `${String(mappedCount)} of ${String(volumes.length)} auxiliary names entered` : 'Automatically discovered'}</span>
                     </div>
-                    <div className="min-w-0 overflow-hidden rounded-xl border border-border">
-                      <DataTable rows={volumes} rowKey={volume => volume} layout="fit" ariaLabel={remote ? 'Metro Mirror volume pairs' : 'Discovered source volumes'} density="comfortable" emptyContent={<EmptyState title="No related volumes" description="Select virtual machines with source volumes." />} columns={[
-                        { id: 'source', header: 'Source volume', cell: volume => <div className="py-2"><p className="break-all font-medium text-text-primary">{volume}</p><p className="mt-1 text-xs text-text-muted">{vms.filter(vm => vmVolumes[sourceId]?.[vm]?.includes(volume)).join(', ')} · Discovered</p></div> },
-                        remote
-                          ? { id: 'auxiliary', header: 'Auxiliary volume on partner', cell: volume => <div className="grid min-w-0 gap-2 py-2"><Input aria-label={`Auxiliary volume for ${volume}`} placeholder={`DR_${volume}`} value={auxiliary[volume] ?? ''} required invalid={auxiliary[volume] !== undefined && !auxiliary[volume].trim()} onChange={event => { setAuxiliary(current => ({ ...current, [volume]: event.target.value })) }} /><div><Badge color={auxiliary[volume]?.trim() ? 'info' : 'warning'} size="sm">{auxiliary[volume]?.trim() ? 'Name entered' : 'Required'}</Badge></div></div> }
-                          : { id: 'snapshot', header: 'Snapshot method', cell: () => <div><Badge color="light" size="sm">FlashCopy</Badge><p className="mt-1 text-xs text-text-muted">Point-in-time copy on Source</p></div> },
+                    <div className="grid min-w-0 gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
+                      <div className="h-64 min-h-0 overflow-hidden rounded-lg border border-border lg:h-auto">
+                        <ResourceSidebar items={availableVolumes} title="Available source volumes" searchPlaceholder="Search source volumes" loadingLabel="Loading volumes" noItemsLabel="No source volumes" noMatchesLabel="No matching volumes" dragDataKey="recovery-group-volume-name" errorTitle="Unable to load volumes" staleErrorTitle="Latest refresh failed" staleErrorDescription="Showing previous volumes" retryLabel="Retry" />
+                      </div>
+                      <div className="flex min-w-0 flex-col rounded-lg border-2 border-dashed border-border bg-surface p-4">
+                        <h3 className="text-sm font-semibold">Selected source volumes</h3>
+                        <p className="mt-1 text-xs leading-5 text-text-muted">Volumes discovered from VMs are preselected. Drag additional source volumes here.</p>
+                        <ResourceSelectionCard items={volumes} emptyText="Drop source volumes here." removeLabel="Remove volume" ariaLabel="Selected source volumes" dropDataKey="recovery-group-volume-name" onResourceDrop={addVolume} onResourceRemove={removeVolume} className="mt-3 rounded-lg border border-border" />
+                        {remote && volumes.length > 0 && <div className="mt-4 min-w-0">
+                          <h3 className="mb-2 text-sm font-semibold">Auxiliary mapping</h3>
+                          <p className="mb-3 text-xs text-text-muted">Existing replicas on {partner?.name}. One auxiliary name per selected source volume.</p>
+                      <DataTable rows={volumes} rowKey={volume => volume} layout="fit" ariaLabel="Metro Mirror volume pairs" density="comfortable" columns={[
+                        { id: 'source', header: 'Source volume', cell: volume => <div className="py-2"><p className="break-all font-medium text-text-primary">{volume}</p><p className="mt-1 text-xs text-text-muted">{discoveredVolumes.includes(volume) ? `${vms.filter(vm => vmVolumes[sourceId]?.[vm]?.includes(volume)).join(', ')} · Discovered` : 'Manually added'}</p></div> },
+                        { id: 'auxiliary', header: 'Auxiliary volume on partner', cell: volume => <div className="grid min-w-0 gap-2 py-2"><Input aria-label={`Auxiliary volume for ${volume}`} placeholder={`DR_${volume}`} value={auxiliary[volume] ?? ''} required invalid={auxiliary[volume] !== undefined && !auxiliary[volume].trim()} onChange={event => { setAuxiliary(current => ({ ...current, [volume]: event.target.value })) }} /><div><Badge color={auxiliary[volume]?.trim() ? 'info' : 'warning'} size="sm">{auxiliary[volume]?.trim() ? 'Name entered' : 'Required'}</Badge></div></div> },
                       ]} />
+                        </div>}
+                      </div>
                     </div>
                     <p className="text-xs leading-5 text-text-muted">{remote ? 'Enter the existing Metro Mirror replica name for each source volume. Auxiliary volumes are not snapshots; FlashCopy runs on the partner. Names are not checked against storage in this preview.' : 'Source volumes are discovered automatically. FlashCopy creates point-in-time copies on the same FlashSystem.'}</p>
                   </div>}
