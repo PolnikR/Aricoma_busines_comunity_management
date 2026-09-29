@@ -18,6 +18,27 @@ function renderWithQueryClient(initialEntry = '/providers-connectors/discovery-s
   )
 }
 
+const historyRuns = [
+  {
+    provider_id: 'vmware-01',
+    provider_type: 'VMWARE',
+    triggered_by: 'stale',
+    started_at: '2026-08-29T09:10:11Z',
+    duration_ms: 125,
+    success: true,
+    record_count: 42,
+  },
+  {
+    provider_id: 'power-01',
+    provider_type: 'IBM_POWER',
+    triggered_by: 'forced',
+    started_at: '2026-08-30T10:20:30Z',
+    duration_ms: 2400,
+    success: false,
+    record_count: null,
+  },
+]
+
 function stubFetch() {
   const configPayload = { defaults: { VMWARE: 300, CUSTOM_ENGINE: 600 }, history_retention: { retention_days: 30, max_records: 100 } }
   const mock = vi.fn((url: string, init?: RequestInit) => {
@@ -36,7 +57,13 @@ function stubFetch() {
       }))
     }
     if (url.startsWith('/api/discovery/cache/history')) {
-      return Promise.resolve(new Response(JSON.stringify({ runs: [] }), {
+      return Promise.resolve(new Response(JSON.stringify({ runs: historyRuns }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }))
+    }
+    if (url.startsWith('/api/get_providers')) {
+      return Promise.resolve(new Response(JSON.stringify({ providers: [] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       }))
@@ -64,6 +91,36 @@ describe('DiscoverySettingsPage against the real discovery-cache endpoints', () 
     await waitFor(() => {
       const configGets = fetchMock.mock.calls.filter(([url, init]) => url === '/api/discovery/cache/config' && (init?.method ?? 'GET') === 'GET')
       expect(configGets).toHaveLength(2)
+    })
+  })
+
+  it('renders discovery history rows fetched and selected through the real hook', async () => {
+    const fetchMock = stubFetch()
+    renderWithQueryClient('/providers-connectors/discovery-settings?tab=history')
+
+    const history = await screen.findByRole('region', { name: 'Discovery history' })
+    const table = await within(history).findByLabelText('Discovery history runs')
+
+    expect(await within(table).findByText('vmware-01')).toBeInTheDocument()
+    expect(within(table).getByText('power-01')).toBeInTheDocument()
+    expect(within(table).getByText('125 ms')).toBeInTheDocument()
+    expect(within(table).getByText('42')).toBeInTheDocument()
+
+    await waitFor(() => {
+      const historyGets = fetchMock.mock.calls.map(([url]) => url).filter(url => url.startsWith('/api/discovery/cache/history'))
+      expect(historyGets).toContain('/api/discovery/cache/history?limit=100')
+    })
+  })
+
+  it('requests discovery history filtered by the deep-linked provider id', async () => {
+    const fetchMock = stubFetch()
+    renderWithQueryClient('/providers-connectors/discovery-settings?tab=history&providerId=vmware-01')
+
+    await screen.findByRole('region', { name: 'Discovery history' })
+
+    await waitFor(() => {
+      const historyGets = fetchMock.mock.calls.map(([url]) => url).filter(url => url.startsWith('/api/discovery/cache/history'))
+      expect(historyGets).toContain('/api/discovery/cache/history?provider_id=vmware-01&limit=100')
     })
   })
 })

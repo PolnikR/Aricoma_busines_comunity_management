@@ -56,16 +56,16 @@ export function toDiscoveryCacheConfigPatch(draft: DiscoveryCacheConfigDraft, ba
       .map(([key, value]) => [key, Number(value)] as const)
       .filter(([key, value]) => baseline.defaults[key] !== value),
   )
-  const historyRetention: NonNullable<CacheConfigUpdate['history_retention']> = {}
+  const historyRetentionPatch: NonNullable<CacheConfigUpdate['history_retention']> = {}
   const retentionDays = Number(draft.historyRetention.retentionDays)
   const maxRecords = Number(draft.historyRetention.maxRecords)
-  if (baseline.history_retention.retention_days !== retentionDays) historyRetention.retention_days = retentionDays
-  if (baseline.history_retention.max_records !== maxRecords) historyRetention.max_records = maxRecords
+  if (baseline.history_retention.retention_days !== retentionDays) historyRetentionPatch.retention_days = retentionDays
+  if (baseline.history_retention.max_records !== maxRecords) historyRetentionPatch.max_records = maxRecords
 
-  if (Object.keys(changedDefaults).length === 0 && Object.keys(historyRetention).length === 0) return null
+  if (Object.keys(changedDefaults).length === 0 && Object.keys(historyRetentionPatch).length === 0) return null
   return {
     ...(Object.keys(changedDefaults).length > 0 ? { defaults: changedDefaults } : {}),
-    ...(Object.keys(historyRetention).length > 0 ? { history_retention: historyRetention } : {}),
+    ...(Object.keys(historyRetentionPatch).length > 0 ? { history_retention: historyRetentionPatch } : {}),
   }
 }
 
