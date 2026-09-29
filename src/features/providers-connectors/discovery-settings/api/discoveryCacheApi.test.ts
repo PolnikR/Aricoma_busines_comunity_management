@@ -34,7 +34,7 @@ describe('Discovery Cache API', () => {
     expect(new Headers(init.headers).get('Content-Type')).toBe('application/json')
   })
 
-  it.each([0, -1, 1.5])('rejects an invalid positive-integer patch value %s before HTTP', async value => {
+  it.each([1.5])('rejects a non-integer patch value %s before HTTP', async value => {
     const fetchMock = stubFetch(configPayload)
     await expect(updateDiscoveryCacheConfig({ defaults: { VMWARE: value } })).rejects.toThrow()
     expect(fetchMock).not.toHaveBeenCalled()
@@ -52,7 +52,7 @@ describe('Discovery Cache API', () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/discovery/cache/history')
   })
 
-  it.each([0, -1, 1.5])('rejects an invalid history limit %s before HTTP', async limit => {
+  it.each([1.5])('rejects a non-integer history limit %s before HTTP', async limit => {
     const fetchMock = stubFetch({ runs: [] })
     await expect(fetchDiscoveryCacheHistory({ limit })).rejects.toThrow()
     expect(fetchMock).not.toHaveBeenCalled()

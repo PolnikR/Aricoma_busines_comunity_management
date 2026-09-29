@@ -1,3 +1,5 @@
+import type { CacheRunRecordOutput } from '@/generated/api/zod.gen'
+
 export interface DiscoveryCacheConfig {
   defaults: Record<string, number>
   historyRetention: {
@@ -19,10 +21,7 @@ export interface DiscoveryCacheHistoryFilters {
   limit?: number
 }
 
-export type DiscoveryCacheRunTrigger =
-  | 'stale'
-  | 'forced'
-  | 'param_change'
+export type DiscoveryCacheRunTrigger = CacheRunRecordOutput['triggered_by']
 
 export interface DiscoveryCacheRun {
   providerId: string
