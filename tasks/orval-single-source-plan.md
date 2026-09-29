@@ -96,7 +96,7 @@ Tasks with acceptance criteria are in `tasks/orval-single-source-todo.md`.
 
 ### Phase 4: Guard and backend follow-up
 - [x] Task 14: ESLint guard against hand-written contract schemas
-- [ ] Task 15: Spec-gap report for backend
+- [x] Task 15: Spec-gap report for backend
 
 ### Phase 5: Recovery plans on the current spec
 - [x] Task 16: Regenerate client from the current spec (commit `2df865b`)
@@ -127,4 +127,4 @@ Tasks with acceptance criteria are in `tasks/orval-single-source-todo.md`.
 - **Tracker.** `CLAUDE.md` names GitHub Issues as the tracker. This plan follows the
   repo's existing `tasks/*-plan.md` / `*-todo.md` convention. Should the tasks also
   be created as GitHub issues?
-- **Spec gaps.** Who on backend receives the spec-gap report from Task 15?
+- **Spec gaps.** The report is in `docs/api/openapi-spec-gaps.md`. Who on backend receives it is still open.
