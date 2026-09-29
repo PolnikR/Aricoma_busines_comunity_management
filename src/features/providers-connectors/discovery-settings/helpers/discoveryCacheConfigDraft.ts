@@ -1,4 +1,4 @@
-import type { DiscoveryCacheConfig, DiscoveryCacheConfigPatch } from '../model/discoveryCacheTypes'
+import type { CacheConfigResponseOutput, CacheConfigUpdate } from '@/generated/query/zod'
 
 export interface DiscoveryCacheConfigDraft {
   defaults: Record<string, string>
@@ -23,12 +23,12 @@ const knownProviderTypes = ['VMWARE', 'FLASHCOPY', 'IBM_POWER'] as const
 const positiveWholeNumber = /^[1-9]\d*$/
 const positiveWholeNumberError = 'Enter a positive whole number.'
 
-export function createDiscoveryCacheConfigDraft(config: DiscoveryCacheConfig): DiscoveryCacheConfigDraft {
+export function createDiscoveryCacheConfigDraft(config: CacheConfigResponseOutput): DiscoveryCacheConfigDraft {
   return {
     defaults: Object.fromEntries(Object.entries(config.defaults).map(([key, value]) => [key, String(value)])),
     historyRetention: {
-      retentionDays: String(config.historyRetention.retentionDays),
-      maxRecords: String(config.historyRetention.maxRecords),
+      retentionDays: String(config.history_retention.retention_days),
+      maxRecords: String(config.history_retention.max_records),
     },
   }
 }
@@ -50,29 +50,29 @@ export function validateDiscoveryCacheConfigDraft(draft: DiscoveryCacheConfigDra
   return { isValid: Object.keys(errors.defaults).length === 0 && Object.keys(errors.historyRetention).length === 0, errors }
 }
 
-export function toDiscoveryCacheConfigPatch(draft: DiscoveryCacheConfigDraft, baseline: DiscoveryCacheConfig): DiscoveryCacheConfigPatch | null {
+export function toDiscoveryCacheConfigPatch(draft: DiscoveryCacheConfigDraft, baseline: CacheConfigResponseOutput): CacheConfigUpdate | null {
   const changedDefaults = Object.fromEntries(
     Object.entries(draft.defaults)
       .map(([key, value]) => [key, Number(value)] as const)
       .filter(([key, value]) => baseline.defaults[key] !== value),
   )
-  const historyRetention: NonNullable<DiscoveryCacheConfigPatch['historyRetention']> = {}
+  const historyRetention: NonNullable<CacheConfigUpdate['history_retention']> = {}
   const retentionDays = Number(draft.historyRetention.retentionDays)
   const maxRecords = Number(draft.historyRetention.maxRecords)
-  if (baseline.historyRetention.retentionDays !== retentionDays) historyRetention.retentionDays = retentionDays
-  if (baseline.historyRetention.maxRecords !== maxRecords) historyRetention.maxRecords = maxRecords
+  if (baseline.history_retention.retention_days !== retentionDays) historyRetention.retention_days = retentionDays
+  if (baseline.history_retention.max_records !== maxRecords) historyRetention.max_records = maxRecords
 
   if (Object.keys(changedDefaults).length === 0 && Object.keys(historyRetention).length === 0) return null
   return {
     ...(Object.keys(changedDefaults).length > 0 ? { defaults: changedDefaults } : {}),
-    ...(Object.keys(historyRetention).length > 0 ? { historyRetention } : {}),
+    ...(Object.keys(historyRetention).length > 0 ? { history_retention: historyRetention } : {}),
   }
 }
 
-export function isDiscoveryCacheConfigDraftDirty(draft: DiscoveryCacheConfigDraft, baseline: DiscoveryCacheConfig): boolean {
+export function isDiscoveryCacheConfigDraftDirty(draft: DiscoveryCacheConfigDraft, baseline: CacheConfigResponseOutput): boolean {
   const defaultKeys = Object.keys(baseline.defaults)
   if (Object.keys(draft.defaults).length !== defaultKeys.length) return true
   if (defaultKeys.some(key => draft.defaults[key] !== String(baseline.defaults[key]))) return true
-  return draft.historyRetention.retentionDays !== String(baseline.historyRetention.retentionDays)
-    || draft.historyRetention.maxRecords !== String(baseline.historyRetention.maxRecords)
+  return draft.historyRetention.retentionDays !== String(baseline.history_retention.retention_days)
+    || draft.historyRetention.maxRecords !== String(baseline.history_retention.max_records)
 }

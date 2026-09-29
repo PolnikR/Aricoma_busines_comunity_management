@@ -72,6 +72,7 @@ export default defineConfig({
             { onMutations: ['submitPolicy', 'deletePolicy'], invalidates: ['getPolicies'] },
             { onMutations: ['submitCleanRoomPolicy', 'deleteCleanRoomPolicy'], invalidates: ['getCleanRoomPolicies'] },
             { onMutations: ['submitRecoveryAppPolicy', 'deleteRecoveryAppPolicy'], invalidates: ['getRecoveryAppPolicies'] },
+            { onMutations: ['putDiscoveryCacheConfig'], invalidates: ['getDiscoveryCacheConfig'] },
           ],
         },
         zod: { version: 4, variant: 'classic', exactOptional: true },

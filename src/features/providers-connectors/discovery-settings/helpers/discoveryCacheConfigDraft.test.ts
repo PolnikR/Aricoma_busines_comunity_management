@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { DiscoveryCacheConfig } from '../model/discoveryCacheTypes'
+import type { CacheConfigResponseOutput } from '@/generated/query/zod'
 import {
   createDiscoveryCacheConfigDraft,
   getOrderedDiscoveryCacheDefaultKeys,
@@ -7,9 +7,9 @@ import {
   validateDiscoveryCacheConfigDraft,
 } from './discoveryCacheConfigDraft'
 
-const config: DiscoveryCacheConfig = {
+const config: CacheConfigResponseOutput = {
   defaults: { CUSTOM: 900, IBM_POWER: 300, VMWARE: 60, FLASHCOPY: 120 },
-  historyRetention: { retentionDays: 30, maxRecords: 100 },
+  history_retention: { retention_days: 30, max_records: 100 },
 }
 
 describe('discoveryCacheConfigDraft', () => {
@@ -49,7 +49,7 @@ describe('discoveryCacheConfigDraft', () => {
     const draft = createDiscoveryCacheConfigDraft(config)
     draft.historyRetention.maxRecords = '200'
 
-    expect(toDiscoveryCacheConfigPatch(draft, config)).toEqual({ historyRetention: { maxRecords: 200 } })
+    expect(toDiscoveryCacheConfigPatch(draft, config)).toEqual({ history_retention: { max_records: 200 } })
   })
 
   it('builds a mixed partial patch without unchanged values', () => {
@@ -59,7 +59,7 @@ describe('discoveryCacheConfigDraft', () => {
 
     expect(toDiscoveryCacheConfigPatch(draft, config)).toEqual({
       defaults: { CUSTOM: 1800 },
-      historyRetention: { retentionDays: 60 },
+      history_retention: { retention_days: 60 },
     })
   })
 })

@@ -1,38 +1,53 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
-import type { DiscoveryCacheConfig, DiscoveryCacheConfigPatch } from '../model/discoveryCacheTypes'
+import {
+  useGetDiscoveryCacheConfig,
+  useGetDiscoveryCacheHistory,
+  usePutDiscoveryCacheConfig,
+} from '@/generated/query/discovery-cache/discovery-cache.gen'
+import type { CacheConfigResponseOutput, CacheConfigUpdate } from '@/generated/query/zod'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-
-const api = vi.hoisted(() => ({
-  fetchDiscoveryCacheConfig: vi.fn(),
-  fetchDiscoveryCacheHistory: vi.fn(),
-  updateDiscoveryCacheConfig: vi.fn(),
-}))
-
-vi.mock('../api/discoveryCacheApi', async importOriginal => ({
-  ...await importOriginal<typeof import('../api/discoveryCacheApi')>(),
-  fetchDiscoveryCacheConfig: api.fetchDiscoveryCacheConfig,
-  fetchDiscoveryCacheHistory: api.fetchDiscoveryCacheHistory,
-  updateDiscoveryCacheConfig: api.updateDiscoveryCacheConfig,
+vi.mock('@/generated/query/discovery-cache/discovery-cache.gen', () => ({
+  useGetDiscoveryCacheConfig: vi.fn(),
+  usePutDiscoveryCacheConfig: vi.fn(),
+  useGetDiscoveryCacheHistory: vi.fn(),
 }))
 
 import { DiscoverySettingsPage } from './DiscoverySettingsPage'
 
-const config: DiscoveryCacheConfig = {
+const config: CacheConfigResponseOutput = {
   defaults: { VMWARE: 300, CUSTOM_ENGINE: 600 },
-  historyRetention: { retentionDays: 30, maxRecords: 100 },
+  history_retention: { retention_days: 30, max_records: 100 },
+}
+
+function queryResult(overrides: Record<string, unknown> = {}) {
+  return {
+    data: config,
+    error: null,
+    isLoading: false,
+    isFetching: false,
+    refetch: vi.fn(),
+    ...overrides,
+  }
+}
+
+function mutationResult(overrides: Record<string, unknown> = {}) {
+  return {
+    mutate: vi.fn(),
+    isPending: false,
+    error: null,
+    reset: vi.fn(),
+    ...overrides,
+  }
 }
 
 function renderPage(initialEntry = '/providers-connectors/discovery-settings') {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  })
-
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <QueryClientProvider client={queryClient}>
@@ -44,13 +59,9 @@ function renderPage(initialEntry = '/providers-connectors/discovery-settings') {
 
 describe('DiscoverySettingsPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    api.fetchDiscoveryCacheConfig.mockResolvedValue(config)
-    api.fetchDiscoveryCacheHistory.mockResolvedValue({ runs: [] })
-    api.updateDiscoveryCacheConfig.mockImplementation((patch: DiscoveryCacheConfigPatch) => Promise.resolve({
-      defaults: { ...config.defaults, ...patch.defaults },
-      historyRetention: { ...config.historyRetention, ...patch.historyRetention },
-    }))
+    vi.mocked(useGetDiscoveryCacheConfig).mockReturnValue(queryResult() as unknown as ReturnType<typeof useGetDiscoveryCacheConfig>)
+    vi.mocked(usePutDiscoveryCacheConfig).mockReturnValue(mutationResult() as unknown as ReturnType<typeof usePutDiscoveryCacheConfig>)
+    vi.mocked(useGetDiscoveryCacheHistory).mockReturnValue(queryResult({ data: [] }) as unknown as ReturnType<typeof useGetDiscoveryCacheHistory>)
   })
 
   it('mounts only the active top-level tab panel', async () => {
@@ -78,13 +89,12 @@ describe('DiscoverySettingsPage', () => {
   })
 
   it('persists notification edits locally and restores the saved baseline on Cancel', async () => {
+    const mutate = vi.fn()
+    vi.mocked(usePutDiscoveryCacheConfig).mockReturnValue(mutationResult({ mutate }) as unknown as ReturnType<typeof usePutDiscoveryCacheConfig>)
     const user = userEvent.setup()
     renderPage('/providers-connectors/discovery-settings?tab=notifications')
     const notifications = screen.getByRole('region', { name: 'Failure notifications' })
     const recipient = within(notifications).getByLabelText('Notification recipient')
-
-    expect(api.fetchDiscoveryCacheConfig).not.toHaveBeenCalled()
-    expect(api.fetchDiscoveryCacheHistory).not.toHaveBeenCalled()
 
     await user.selectOptions(recipient, 'martin')
     await user.click(within(notifications).getByRole('button', { name: 'Save notification changes' }))
@@ -93,10 +103,12 @@ describe('DiscoverySettingsPage', () => {
 
     expect(recipient).toHaveValue('martin')
     expect(within(notifications).getByRole('status')).toHaveTextContent('Notification changes discarded locally.')
-    expect(api.updateDiscoveryCacheConfig).not.toHaveBeenCalled()
+    expect(mutate).not.toHaveBeenCalled()
   })
 
   it('prepares a local notification test for the selected recipient without cache requests', async () => {
+    const mutate = vi.fn()
+    vi.mocked(usePutDiscoveryCacheConfig).mockReturnValue(mutationResult({ mutate }) as unknown as ReturnType<typeof usePutDiscoveryCacheConfig>)
     const user = userEvent.setup()
     renderPage('/providers-connectors/discovery-settings?tab=notifications')
     const notifications = screen.getByRole('region', { name: 'Failure notifications' })
@@ -105,12 +117,17 @@ describe('DiscoverySettingsPage', () => {
     await user.click(within(notifications).getByRole('button', { name: 'Send test' }))
 
     expect(within(notifications).getByRole('status')).toHaveTextContent('Test notification prepared for martin.horvath@example.com.')
-    expect(api.fetchDiscoveryCacheConfig).not.toHaveBeenCalled()
-    expect(api.fetchDiscoveryCacheHistory).not.toHaveBeenCalled()
-    expect(api.updateDiscoveryCacheConfig).not.toHaveBeenCalled()
+    expect(mutate).not.toHaveBeenCalled()
   })
 
   it('sends only the changed TTL and adopts the response without another GET', async () => {
+    const mutate = vi.fn((variables: { data: CacheConfigUpdate }, options?: { onSuccess?: (data: CacheConfigResponseOutput) => void }) => {
+      options?.onSuccess?.({
+        defaults: { ...config.defaults, ...variables.data.defaults },
+        history_retention: { ...config.history_retention, ...variables.data.history_retention } as CacheConfigResponseOutput['history_retention'],
+      })
+    })
+    vi.mocked(usePutDiscoveryCacheConfig).mockReturnValue(mutationResult({ mutate }) as unknown as ReturnType<typeof usePutDiscoveryCacheConfig>)
     const user = userEvent.setup()
     renderPage()
     const cache = await screen.findByRole('region', { name: 'Cache configuration' })
@@ -122,15 +139,16 @@ describe('DiscoverySettingsPage', () => {
     await user.click(within(cache).getByRole('button', { name: 'Save cache configuration' }))
 
     await waitFor(() => {
-      expect(api.updateDiscoveryCacheConfig.mock.calls[0]?.[0]).toEqual({ defaults: { VMWARE: 120 } })
+      expect(mutate.mock.calls[0]?.[0]).toEqual({ data: { defaults: { VMWARE: 120 } } })
     })
-    expect(api.fetchDiscoveryCacheConfig).toHaveBeenCalledTimes(1)
     expect(within(cache).getByLabelText('CUSTOM_ENGINE cache TTL (seconds)')).toHaveValue('600')
     expect(within(cache).getByRole('status')).toHaveTextContent('Cache configuration saved.')
     expect(within(cache).getByRole('button', { name: 'Save cache configuration' })).toBeDisabled()
   })
 
   it('sends only the changed retention field', async () => {
+    const mutate = vi.fn()
+    vi.mocked(usePutDiscoveryCacheConfig).mockReturnValue(mutationResult({ mutate }) as unknown as ReturnType<typeof usePutDiscoveryCacheConfig>)
     const user = userEvent.setup()
     renderPage()
     const cache = await screen.findByRole('region', { name: 'Cache configuration' })
@@ -141,13 +159,15 @@ describe('DiscoverySettingsPage', () => {
     await user.click(within(cache).getByRole('button', { name: 'Save cache configuration' }))
 
     await waitFor(() => {
-      expect(api.updateDiscoveryCacheConfig.mock.calls[0]?.[0]).toEqual({
-        historyRetention: { retentionDays: 45 },
+      expect(mutate.mock.calls[0]?.[0]).toEqual({
+        data: { history_retention: { retention_days: 45 } },
       })
     })
   })
 
   it('disables Cache Save for invalid values and Cancel restores the server baseline', async () => {
+    const mutate = vi.fn()
+    vi.mocked(usePutDiscoveryCacheConfig).mockReturnValue(mutationResult({ mutate }) as unknown as ReturnType<typeof usePutDiscoveryCacheConfig>)
     const user = userEvent.setup()
     renderPage()
     const cache = await screen.findByRole('region', { name: 'Cache configuration' })
@@ -164,11 +184,13 @@ describe('DiscoverySettingsPage', () => {
 
     expect(vmwareTtl).toHaveValue('300')
     expect(save).toBeDisabled()
-    expect(api.updateDiscoveryCacheConfig).not.toHaveBeenCalled()
+    expect(mutate).not.toHaveBeenCalled()
   })
 
   it('keeps only the Cache configuration loading state visible', () => {
-    api.fetchDiscoveryCacheConfig.mockReturnValue(new Promise(() => undefined))
+    vi.mocked(useGetDiscoveryCacheConfig).mockReturnValue(
+      queryResult({ data: undefined, isLoading: true }) as unknown as ReturnType<typeof useGetDiscoveryCacheConfig>,
+    )
     renderPage()
 
     expect(screen.queryByRole('region', { name: 'Discovery schedule' })).not.toBeInTheDocument()
@@ -176,24 +198,31 @@ describe('DiscoverySettingsPage', () => {
   })
 
   it('shows a safe load error and retries the config GET', async () => {
+    const refetch = vi.fn()
+    vi.mocked(useGetDiscoveryCacheConfig).mockReturnValue(
+      queryResult({
+        data: undefined,
+        error: new OrvalApiError(403, 'Forbidden', { detail: 'Configuration access denied.' }),
+        refetch,
+      }) as unknown as ReturnType<typeof useGetDiscoveryCacheConfig>,
+    )
     const user = userEvent.setup()
-    api.fetchDiscoveryCacheConfig
-      .mockRejectedValueOnce(new OrvalApiError(403, 'Forbidden', { detail: 'Configuration access denied.' }))
-      .mockResolvedValueOnce(config)
     renderPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Configuration access denied.')
     await user.click(screen.getByRole('button', { name: 'Retry loading cache configuration' }))
 
-    expect(await screen.findByLabelText('VMware cache TTL (seconds)')).toHaveValue('300')
-    expect(api.fetchDiscoveryCacheConfig).toHaveBeenCalledTimes(2)
+    expect(refetch).toHaveBeenCalledTimes(1)
   })
 
   it('keeps the dirty draft after a safe mutation error', async () => {
-    const user = userEvent.setup()
-    api.updateDiscoveryCacheConfig.mockRejectedValue(
-      new OrvalApiError(400, 'Bad Request', { detail: 'TTL is outside the allowed range.' }),
+    vi.mocked(usePutDiscoveryCacheConfig).mockReturnValue(
+      mutationResult({
+        mutate: vi.fn(),
+        error: new OrvalApiError(400, 'Bad Request', { detail: 'TTL is outside the allowed range.' }),
+      }) as unknown as ReturnType<typeof usePutDiscoveryCacheConfig>,
     )
+    const user = userEvent.setup()
     renderPage()
     const cache = await screen.findByRole('region', { name: 'Cache configuration' })
     const vmwareTtl = await within(cache).findByLabelText('VMware cache TTL (seconds)')

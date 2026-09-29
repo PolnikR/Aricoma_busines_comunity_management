@@ -3,12 +3,8 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
+import type { CacheRunRecordOutput, GetDiscoveryCacheHistoryParams } from '@/generated/query/zod'
 import type { ProviderRecord } from '../../providers/model/providerTypes'
-import type {
-  DiscoveryCacheHistory,
-  DiscoveryCacheHistoryFilters,
-  DiscoveryCacheRun,
-} from '../model/discoveryCacheTypes'
 
 const labels = vi.hoisted(() => ({
   'pages.discoverySettings.history.title': 'Discovery history',
@@ -61,12 +57,12 @@ vi.mock('@/hooks/useTranslation', () => ({
 }))
 
 const hooks = vi.hoisted(() => ({
-  useDiscoveryCacheHistory: vi.fn<(filters: DiscoveryCacheHistoryFilters) => unknown>(),
+  useGetDiscoveryCacheHistory: vi.fn<(params?: GetDiscoveryCacheHistoryParams, options?: unknown) => unknown>(),
   useProviders: vi.fn<(role: string) => unknown>(),
 }))
 
-vi.mock('../hooks/useDiscoveryCacheHistory', () => ({
-  useDiscoveryCacheHistory: hooks.useDiscoveryCacheHistory,
+vi.mock('@/generated/query/discovery-cache/discovery-cache.gen', () => ({
+  useGetDiscoveryCacheHistory: hooks.useGetDiscoveryCacheHistory,
 }))
 
 vi.mock('../../providers/hooks/useProviders', () => ({
@@ -74,6 +70,9 @@ vi.mock('../../providers/hooks/useProviders', () => ({
 }))
 
 import { DiscoveryHistoryCard } from './DiscoveryHistoryCard'
+import { selectDiscoveryCacheHistory } from '../model/selectDiscoveryCacheHistory'
+
+const selectOptions = { query: { select: selectDiscoveryCacheHistory } }
 
 const providers: ProviderRecord[] = [
   {
@@ -96,41 +95,41 @@ const providers: ProviderRecord[] = [
   },
 ]
 
-const runs: DiscoveryCacheRun[] = [
+const runs: CacheRunRecordOutput[] = [
   {
-    providerId: 'power-01',
-    providerType: 'IBM_POWER',
-    triggeredBy: 'forced',
-    startedAt: '2026-08-30T10:20:30.167838',
-    durationMs: 2400,
+    provider_id: 'power-01',
+    provider_type: 'IBM_POWER',
+    triggered_by: 'forced',
+    started_at: '2026-08-30T10:20:30.167838',
+    duration_ms: 2400,
     success: false,
-    recordCount: null,
+    record_count: null,
     error: 'Traceback: database password leaked',
   },
   {
-    providerId: 'vmware-01',
-    providerType: 'VMWARE',
-    triggeredBy: 'stale',
-    startedAt: '2026-08-29T09:10:11Z',
-    durationMs: 125,
+    provider_id: 'vmware-01',
+    provider_type: 'VMWARE',
+    triggered_by: 'stale',
+    started_at: '2026-08-29T09:10:11Z',
+    duration_ms: 125,
     success: true,
-    recordCount: 42,
+    record_count: 42,
   },
 ]
 
-const paginatedRuns: DiscoveryCacheRun[] = Array.from({ length: 60 }, (_, index) => ({
-  providerId: `provider-${String(index + 1).padStart(2, '0')}`,
-  providerType: 'VMWARE',
-  triggeredBy: 'stale',
-  startedAt: '2026-08-29T09:10:11Z',
-  durationMs: 125,
+const paginatedRuns: CacheRunRecordOutput[] = Array.from({ length: 60 }, (_, index) => ({
+  provider_id: `provider-${String(index + 1).padStart(2, '0')}`,
+  provider_type: 'VMWARE',
+  triggered_by: 'stale',
+  started_at: '2026-08-29T09:10:11Z',
+  duration_ms: 125,
   success: true,
-  recordCount: 42,
+  record_count: 42,
 }))
 
 function historyQuery(overrides: Record<string, unknown> = {}) {
   return {
-    data: { runs } satisfies DiscoveryCacheHistory,
+    data: runs,
     error: null,
     isLoading: false,
     isFetching: false,
@@ -164,7 +163,7 @@ function HistoryHarness({ initialProviderId }: { initialProviderId?: string }) {
 describe('DiscoveryHistoryCard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    hooks.useDiscoveryCacheHistory.mockReturnValue(historyQuery())
+    hooks.useGetDiscoveryCacheHistory.mockReturnValue(historyQuery())
     hooks.useProviders.mockReturnValue(providersQuery())
   })
 
@@ -172,7 +171,7 @@ describe('DiscoveryHistoryCard', () => {
     render(<HistoryHarness />)
 
     expect(hooks.useProviders).toHaveBeenCalledWith('all')
-    expect(hooks.useDiscoveryCacheHistory).toHaveBeenLastCalledWith({ limit: 100 })
+    expect(hooks.useGetDiscoveryCacheHistory).toHaveBeenLastCalledWith({ limit: 100 }, selectOptions)
     expect(screen.queryByLabelText('Latest runs')).not.toBeInTheDocument()
 
     const tableViewport = screen.getByLabelText('Discovery history runs')
@@ -207,15 +206,15 @@ describe('DiscoveryHistoryCard', () => {
     ])
 
     await user.selectOptions(providerSelect, 'vmware-01')
-    expect(hooks.useDiscoveryCacheHistory).toHaveBeenLastCalledWith({ providerId: 'vmware-01', limit: 100 })
+    expect(hooks.useGetDiscoveryCacheHistory).toHaveBeenLastCalledWith({ provider_id: 'vmware-01', limit: 100 }, selectOptions)
 
     await user.selectOptions(providerSelect, '')
-    expect(hooks.useDiscoveryCacheHistory).toHaveBeenLastCalledWith({ limit: 100 })
+    expect(hooks.useGetDiscoveryCacheHistory).toHaveBeenLastCalledWith({ limit: 100 }, selectOptions)
   })
 
   it('paginates the loaded rows client-side without changing server criteria', async () => {
     const user = userEvent.setup()
-    hooks.useDiscoveryCacheHistory.mockReturnValue(historyQuery({ data: { runs: paginatedRuns } }))
+    hooks.useGetDiscoveryCacheHistory.mockReturnValue(historyQuery({ data: paginatedRuns }))
     render(<HistoryHarness />)
 
     expect(screen.getByText('provider-01')).toBeInTheDocument()
@@ -228,12 +227,12 @@ describe('DiscoveryHistoryCard', () => {
     expect(screen.queryByText('provider-01')).not.toBeInTheDocument()
     expect(screen.getByText('provider-26')).toBeInTheDocument()
     expect(screen.getByText('Showing 26-50 of 60')).toBeInTheDocument()
-    expect(hooks.useDiscoveryCacheHistory).toHaveBeenLastCalledWith({ limit: 100 })
+    expect(hooks.useGetDiscoveryCacheHistory).toHaveBeenLastCalledWith({ limit: 100 }, selectOptions)
   })
 
   it('resets to page one when page size changes', async () => {
     const user = userEvent.setup()
-    hooks.useDiscoveryCacheHistory.mockReturnValue(historyQuery({ data: { runs: paginatedRuns } }))
+    hooks.useGetDiscoveryCacheHistory.mockReturnValue(historyQuery({ data: paginatedRuns }))
     render(<HistoryHarness />)
 
     await user.click(screen.getByRole('button', { name: 'Next page' }))
@@ -244,12 +243,12 @@ describe('DiscoveryHistoryCard', () => {
     expect(screen.getByLabelText('Rows per page')).toHaveValue('50')
     expect(screen.getByText('provider-01')).toBeInTheDocument()
     expect(screen.getByText('Showing 1-50 of 60')).toBeInTheDocument()
-    expect(hooks.useDiscoveryCacheHistory).toHaveBeenLastCalledWith({ limit: 100 })
+    expect(hooks.useGetDiscoveryCacheHistory).toHaveBeenLastCalledWith({ limit: 100 }, selectOptions)
   })
 
   it('resets to page one when provider criteria changes', async () => {
     const user = userEvent.setup()
-    hooks.useDiscoveryCacheHistory.mockReturnValue(historyQuery({ data: { runs: paginatedRuns } }))
+    hooks.useGetDiscoveryCacheHistory.mockReturnValue(historyQuery({ data: paginatedRuns }))
     render(<HistoryHarness />)
 
     await user.click(screen.getByRole('button', { name: 'Next page' }))
@@ -258,14 +257,14 @@ describe('DiscoveryHistoryCard', () => {
     await user.selectOptions(screen.getByLabelText('Provider'), 'vmware-01')
 
     expect(await screen.findByText('provider-01')).toBeInTheDocument()
-    expect(hooks.useDiscoveryCacheHistory).toHaveBeenLastCalledWith({ providerId: 'vmware-01', limit: 100 })
+    expect(hooks.useGetDiscoveryCacheHistory).toHaveBeenLastCalledWith({ provider_id: 'vmware-01', limit: 100 }, selectOptions)
   })
 
   it('preserves a deep-linked provider that is absent from the provider list', () => {
     render(<HistoryHarness initialProviderId="temporarily-missing" />)
 
     expect(screen.getByLabelText('Provider')).toHaveValue('temporarily-missing')
-    expect(hooks.useDiscoveryCacheHistory).toHaveBeenLastCalledWith({ providerId: 'temporarily-missing', limit: 100 })
+    expect(hooks.useGetDiscoveryCacheHistory).toHaveBeenLastCalledWith({ provider_id: 'temporarily-missing', limit: 100 }, selectOptions)
   })
 
   it('keeps successful History rows visible when the provider list fails and retries only that query', async () => {
@@ -289,7 +288,7 @@ describe('DiscoveryHistoryCard', () => {
   it('shows a safe first-load History error and retries the same criteria', async () => {
     const user = userEvent.setup()
     const retryHistory = vi.fn()
-    hooks.useDiscoveryCacheHistory.mockReturnValue(historyQuery({
+    hooks.useGetDiscoveryCacheHistory.mockReturnValue(historyQuery({
       data: undefined,
       error: new OrvalApiError(403, 'Forbidden', { detail: 'History access denied.' }),
       refetch: retryHistory,
@@ -303,13 +302,13 @@ describe('DiscoveryHistoryCard', () => {
     await user.click(screen.getByRole('button', { name: 'Retry loading discovery history' }))
 
     expect(retryHistory).toHaveBeenCalledTimes(1)
-    expect(hooks.useDiscoveryCacheHistory).toHaveBeenLastCalledWith({ providerId: 'vmware-01', limit: 100 })
+    expect(hooks.useGetDiscoveryCacheHistory).toHaveBeenLastCalledWith({ provider_id: 'vmware-01', limit: 100 }, selectOptions)
   })
 
   it('keeps cached History rows and pagination visible when a refetch fails', async () => {
     const user = userEvent.setup()
     const retryHistory = vi.fn()
-    hooks.useDiscoveryCacheHistory.mockReturnValue(historyQuery({
+    hooks.useGetDiscoveryCacheHistory.mockReturnValue(historyQuery({
       error: new OrvalApiError(503, 'Unavailable', { detail: 'History service unavailable.' }),
       refetch: retryHistory,
     }))
@@ -323,11 +322,11 @@ describe('DiscoveryHistoryCard', () => {
     await user.click(screen.getByRole('button', { name: 'Retry loading discovery history' }))
 
     expect(retryHistory).toHaveBeenCalledTimes(1)
-    expect(hooks.useDiscoveryCacheHistory).toHaveBeenLastCalledWith({ providerId: 'vmware-01', limit: 100 })
+    expect(hooks.useGetDiscoveryCacheHistory).toHaveBeenLastCalledWith({ provider_id: 'vmware-01', limit: 100 }, selectOptions)
   })
 
   it('renders shared table and pagination loading states without an empty-state message', () => {
-    hooks.useDiscoveryCacheHistory.mockReturnValue(historyQuery({
+    hooks.useGetDiscoveryCacheHistory.mockReturnValue(historyQuery({
       data: undefined,
       isLoading: true,
       isFetching: true,
@@ -341,10 +340,8 @@ describe('DiscoveryHistoryCard', () => {
   })
 
   it('leaves an unexpected started-at string unchanged', () => {
-    hooks.useDiscoveryCacheHistory.mockReturnValue(historyQuery({
-      data: {
-        runs: [{ ...runs[0], startedAt: 'NOT-A-TIMESTAMPZ' }],
-      },
+    hooks.useGetDiscoveryCacheHistory.mockReturnValue(historyQuery({
+      data: [{ ...runs[0], started_at: 'NOT-A-TIMESTAMPZ' }],
     }))
 
     render(<HistoryHarness />)
@@ -354,8 +351,8 @@ describe('DiscoveryHistoryCard', () => {
   it('refreshes the current query and renders an accessible empty success state', async () => {
     const user = userEvent.setup()
     const refreshHistory = vi.fn()
-    hooks.useDiscoveryCacheHistory.mockReturnValue(historyQuery({
-      data: { runs: [] },
+    hooks.useGetDiscoveryCacheHistory.mockReturnValue(historyQuery({
+      data: [],
       refetch: refreshHistory,
     }))
 
@@ -365,6 +362,6 @@ describe('DiscoveryHistoryCard', () => {
     await user.click(screen.getByRole('button', { name: 'Refresh history' }))
 
     expect(refreshHistory).toHaveBeenCalledTimes(1)
-    expect(hooks.useDiscoveryCacheHistory).toHaveBeenLastCalledWith({ providerId: 'power-01', limit: 100 })
+    expect(hooks.useGetDiscoveryCacheHistory).toHaveBeenLastCalledWith({ provider_id: 'power-01', limit: 100 }, selectOptions)
   })
 })

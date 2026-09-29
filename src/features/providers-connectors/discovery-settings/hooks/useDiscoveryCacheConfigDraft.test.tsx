@@ -1,11 +1,11 @@
 import { act, renderHook } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import type { DiscoveryCacheConfig } from '../model/discoveryCacheTypes'
+import type { CacheConfigResponseOutput } from '@/generated/query/zod'
 import { useDiscoveryCacheConfigDraft } from './useDiscoveryCacheConfigDraft'
 
-const initial: DiscoveryCacheConfig = {
+const initial: CacheConfigResponseOutput = {
   defaults: { VMWARE: 300, CUSTOM: 600 },
-  historyRetention: { retentionDays: 30, maxRecords: 100 },
+  history_retention: { retention_days: 30, max_records: 100 },
 }
 
 describe('useDiscoveryCacheConfigDraft', () => {
