@@ -1,6 +1,6 @@
 # Orval full integration: one generated API layer
 
-Status: draft for review, 2026-09-29.
+Status: approved, 2026-09-29.
 Supersedes the "hand-written API module + hand-written hooks" part of ADR 0001.
 
 ## Problem
@@ -176,9 +176,9 @@ Vertical slices, one feature per slice, each slice leaves the app working:
 - Changing cache timings.
 - UI redesign; screens keep their behavior, only the data layer changes.
 
-## Open points for review
+## Resolved review points
 
-- Decision 5 (no pure-rename view models) touches every component that reads
-  camelCase fields. It is the biggest part of the work and the one that removes the
-  silent-drop problem. Confirm or reject.
-- The `api-drift` CI job needs network access from the runner to the backend.
+- Decision 5 confirmed (2026-09-29): components use the field names exactly as in the
+  spec; pure-rename view models are removed.
+- The `api-drift` CI job can reach the backend: the backend runs on `10.99.99.53:8000`,
+  the same host as the GitLab runner (`BACKEND_URL` in `env.example`).
