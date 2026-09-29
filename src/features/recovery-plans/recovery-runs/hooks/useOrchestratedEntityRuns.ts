@@ -1,7 +1,7 @@
 import { useQueries } from '@tanstack/react-query'
 import { RECOVERY_RUNS_INTERVAL_MS } from '@/shared/query/cachePolicy'
-import { fetchOrchestratorRuns } from '../api/recoveryRunsApi'
-import { recoveryRunsKeys } from '../api/recoveryRunsQueryKeys'
+import { getGetOrchestratorRunsQueryOptions } from '@/generated/query/operations/operations.gen'
+import { latestRunParams, selectOrchestratorRuns } from '../model/orchestratorRunsQuery'
 import type { LatestRunRequestState, OrchestratedEntity } from '../model/recoveryRunTypes'
 
 export interface EntityLatestRun {
@@ -21,11 +21,10 @@ export interface OrchestratedEntityRunsResult {
 // useOrchestratedApps).
 export function useOrchestratedEntityRuns(entities: OrchestratedEntity[]): OrchestratedEntityRunsResult {
   const results = useQueries({
-    queries: entities.map(entity => ({
-      queryKey: recoveryRunsKeys.latest(entity.providerId, entity.dagId),
-      queryFn: () => fetchOrchestratorRuns(entity.providerId, entity.dagId, { limit: 1, orderBy: '-logical_date' }),
-      staleTime: RECOVERY_RUNS_INTERVAL_MS,
-    })),
+    queries: entities.map(entity => getGetOrchestratorRunsQueryOptions(
+      latestRunParams(entity.providerId, entity.dagId),
+      { query: { select: selectOrchestratorRuns, staleTime: RECOVERY_RUNS_INTERVAL_MS } },
+    )),
   })
 
   const getLatestRunState = (index: number): LatestRunRequestState => {
