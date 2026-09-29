@@ -3,9 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, test } from 'node:test'
-import { EXTERNAL_SERVICES } from '../../src/config/externalServices.ts'
 import {
-  DEFAULT_OPENAPI_URL,
   pullOpenApiSnapshot,
   resolveOpenApiUrl,
 } from './pull-openapi.mjs'
@@ -81,13 +79,23 @@ test('pullOpenApiSnapshot preserves the existing snapshot after an HTTP failure'
   assert.equal(await readFile(outputPath, 'utf8'), originalSnapshot)
 })
 
-test('resolveOpenApiUrl uses an environment override and rejects non-HTTP protocols', () => {
-  assert.equal(DEFAULT_OPENAPI_URL, EXTERNAL_SERVICES.openApi.sourceUrl)
+test('resolveOpenApiUrl builds the OpenAPI URL from BACKEND_URL', () => {
   assert.equal(
-    resolveOpenApiUrl({ ABCO_OPENAPI_URL: 'https://backend.example.test/openapi.json' }),
-    'https://backend.example.test/openapi.json',
+    resolveOpenApiUrl({ BACKEND_URL: 'http://backend.example.test:8000' }),
+    'http://backend.example.test:8000/openapi.json',
   )
-  assert.equal(resolveOpenApiUrl({}), DEFAULT_OPENAPI_URL)
+  assert.equal(
+    resolveOpenApiUrl({ BACKEND_URL: 'http://backend.example.test:8000/' }),
+    'http://backend.example.test:8000/openapi.json',
+  )
+})
+
+test('resolveOpenApiUrl supports an explicit URL override and rejects invalid configuration', () => {
+  assert.equal(
+    resolveOpenApiUrl({ BACKEND_URL: 'http://backend.example.test:8000', ABCO_OPENAPI_URL: 'https://override.example.test/schema.json' }),
+    'https://override.example.test/schema.json',
+  )
+  assert.throws(() => resolveOpenApiUrl({}), /BACKEND_URL must be configured/)
   assert.throws(
     () => resolveOpenApiUrl({ ABCO_OPENAPI_URL: 'file:///tmp/openapi.json' }),
     /must use HTTP or HTTPS/,

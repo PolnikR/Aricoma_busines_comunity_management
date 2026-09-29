@@ -2,9 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { mkdir, rename, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { EXTERNAL_SERVICES } from '../../src/config/externalServices.ts'
-
-export const DEFAULT_OPENAPI_URL = EXTERNAL_SERVICES.openApi.sourceUrl
+import { loadEnv } from 'vite'
 
 const DEFAULT_OUTPUT_PATH = path.resolve('openapi/abco-api.json')
 const DEFAULT_TIMEOUT_MS = 30_000
@@ -30,8 +28,15 @@ export function validateOpenApiDocument(document) {
   return document
 }
 
-export function resolveOpenApiUrl(environment = process.env) {
-  const configuredUrl = environment.ABCO_OPENAPI_URL?.trim() || DEFAULT_OPENAPI_URL
+export function resolveOpenApiUrl(environment = loadEnv('development', process.cwd(), '')) {
+  const explicitUrl = environment.ABCO_OPENAPI_URL?.trim()
+  const backendUrl = environment.BACKEND_URL?.trim().replace(/\/+$/, '')
+  const configuredUrl = explicitUrl || (backendUrl ? `${backendUrl}/openapi.json` : '')
+
+  if (!configuredUrl) {
+    throw new Error('BACKEND_URL must be configured to download the OpenAPI document.')
+  }
+
   let url
 
   try {
