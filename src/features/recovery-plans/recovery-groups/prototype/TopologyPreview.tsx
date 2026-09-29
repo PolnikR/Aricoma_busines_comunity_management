@@ -64,21 +64,21 @@ export function TopologyPreview() {
   return (
     <LanguageContext.Provider value={{ language: 'en', setLanguage: () => undefined, translations }}>
       <div className={dark ? 'dark' : undefined}>
-        <main className="min-h-screen bg-page p-4 text-text-primary sm:p-8">
-          <div className="mx-auto max-w-[1440px]">
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+        <main className="flex h-dvh min-h-0 overflow-hidden bg-page p-3 text-text-primary sm:p-4">
+          <div className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-col">
+            <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
               <p className="text-sm text-text-muted">Phase 1 · Interaktívny návrh · Mock dáta, bez ukladania</p>
               <Button size="sm" variant="outline" onClick={() => { setDark(!dark) }}>{dark ? 'Svetlý režim' : 'Tmavý režim'}</Button>
             </div>
             <PageHeader eyebrow="Recovery plans" title="Create Recovery Group" description="Define your workloads, storage topology and recovery policies." />
-            <div className="grid overflow-hidden rounded-[20px] border border-border bg-surface shadow-sm lg:grid-cols-[280px_minmax(0,1fr)]">
-              <aside className="min-w-0 border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
+            <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-[20px] border border-border bg-surface shadow-sm lg:grid-cols-[280px_minmax(0,1fr)] lg:grid-rows-1">
+              <aside className="custom-scrollbar min-h-0 min-w-0 overflow-y-auto border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
                 <WizardSteps items={stepLabels.map((label, index) => ({ id: label, label, disabled: !validThrough(index) }))} currentStep={step} ariaLabel="Recovery Group steps" onStepChange={value => { setStep(value); setReview(false) }} />
               </aside>
-              <div className="flex min-w-0 flex-col">
-                <div className="min-h-[540px] flex-1 p-5 sm:p-6">
+              <div className="flex min-h-0 min-w-0 flex-col">
+                <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
                   {step === 1 && <RecoveryGroupDetailsStep {...details} existingIds={[]} onChange={update => { setDetails(current => ({ ...current, ...update })) }} />}
-                  {step === 2 && <div className="grid max-w-3xl gap-5">
+                  {step === 2 && <div className="grid gap-4">
                     <div><h2 className="text-base font-semibold">Topology</h2><p className="mt-1 text-sm text-text-muted">Choose where FlashCopy point-in-time copies will be created.</p></div>
                     <Field label="Topology *" htmlFor="topology-mode">
                       <Select id="topology-mode" value={topology ?? ''} required onChange={event => {
@@ -91,19 +91,23 @@ export function TopologyPreview() {
                       </Select>
                     </Field>
                     {topology && <>
+                      <div className="grid min-w-0 gap-4 md:grid-cols-2">
                       <Field label="Source FlashSystem *" htmlFor="topology-source">
                         <Select id="topology-source" value={sourceId} onChange={event => { setSourceId(event.target.value); setGroupId(''); setAuxiliary({}) }}>
                           <option value="">Select source FlashSystem</option>
                           {storageProviders.map(provider => <option key={provider.id} value={provider.id}>{provider.name} · {provider.ip}</option>)}
                         </Select>
                       </Field>
+                      {remote && <div className="min-w-0">
+                        <Field label="Target FlashSystem · Read only" htmlFor="topology-target">
+                          <Input id="topology-target" readOnly value={partner?.name ?? ''} placeholder="Derived from Source" aria-describedby="target-help" />
+                        </Field>
+                        <p id="target-help" className="mt-1 text-xs text-text-muted">{partner ? `${partner.ip} · Configured partner of Source` : 'Automatically resolved from the selected Source.'}</p>
+                      </div>}
+                      </div>
                       {remote && <>
                         {source && !partner && <Alert variant="error" title="No Metro Mirror partner configured for this FlashSystem." />}
-                        {partner && <Card>
-                          <p className="text-xs font-medium text-text-muted">Target FlashSystem · Read only</p>
-                          <p className="mt-1 text-sm font-semibold">{partner.name}</p>
-                          <p className="mt-1 text-xs text-text-muted">{partner.ip} · Derived from partnerProviderId</p>
-                        </Card>}
+                        <div className="grid min-w-0 gap-4 md:grid-cols-2">
                         <Field label="Metro Mirror mode" htmlFor="metro-mirror-mode">
                           <Select id="metro-mirror-mode" value="existing" onChange={() => undefined}>
                             <option value="existing">Existing</option>
@@ -113,6 +117,7 @@ export function TopologyPreview() {
                         <div><Field label="Remote Copy Consistency Group ID *" htmlFor="topology-cg">
                           <Input id="topology-cg" value={groupId} placeholder="e.g. 1" required aria-describedby="cg-help" onChange={event => { setGroupId(event.target.value) }} />
                         </Field><p id="cg-help" className="mt-2 text-xs leading-5 text-text-muted">Existing IBM Remote Copy consistency group containing the Metro Mirror relationships used by this recovery group.</p></div>
+                        </div>
                       </>}
                       <p className="rounded-lg bg-accent-soft p-3 text-sm leading-6 text-accent">{remote ? 'Source volumes → Metro Mirror → Auxiliary volumes on Target → FlashCopy → Point-in-time copies on Target' : 'Source volumes → FlashCopy → Point-in-time copies on Source'}</p>
                     </>}
@@ -181,7 +186,7 @@ export function TopologyPreview() {
                     {review && <><Alert variant="success" title="Preview complete — nothing was submitted" description="This is the reference payload for design review. Orchestration was not executed." /><pre className="overflow-x-auto rounded-xl border border-border p-4 text-xs" aria-label="Reference payload">{JSON.stringify(payload, null, 2)}</pre></>}
                   </div>}
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-surface-subtle p-4">
+                <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-surface-subtle p-3 sm:p-4">
                   <Button variant="ghost" onClick={() => { setStep(1); setReview(false) }}>Back to Details</Button>
                   <div className="flex gap-3"><Button variant="outline" disabled={step === 1} onClick={() => { setStep(step - 1); setReview(false) }}>Back</Button>
                     <Button disabled={!validThrough(step)} onClick={() => { if (step < 8) setStep(step + 1); else setReview(true) }}>{step === 8 ? 'Preview payload' : 'Next'}</Button>
