@@ -9,7 +9,6 @@ import {
 import {
   RecoveryGroupInventoryResponse,
   RecoveryGroupsResponse,
-  type RecoveryGroupRecordOutput,
 } from '@/generated/api/zod.gen'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
 import { toOrvalRequestError } from '@/shared/api/orvalMutator'
@@ -17,12 +16,12 @@ import { toProgrammaticId } from '@/shared/utils/programmaticId'
 import {
   mapRecoveryGroupApiRecord,
   toRecoveryGroup,
+  toRecoveryGroupReadRecord,
   toRecoveryGroupSubmitPayload,
 } from '../helpers/mapRecoveryGroups'
 import type {
   RecoveryGroup,
   RecoveryGroupDraft,
-  RecoveryGroupReadRecord,
 } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsError } from './recoveryGroupsErrors'
 import { rollbackReportSchema } from './schemas/recoveryGroupsSchema'
@@ -41,20 +40,6 @@ export type DeleteRecoveryGroupRequest =
       rollbackFromOrchestrator: true
       providerId: string
     }
-
-function toRecoveryGroupReadRecord(record: RecoveryGroupRecordOutput): RecoveryGroupReadRecord {
-  return {
-    id: record.id,
-    name: record.name,
-    description: record.description ?? '',
-    provider_id_vm: record.provider_id_vm ?? '',
-    provider_id_volume: record.provider_id_volume ?? '',
-    policy_set_id: record.policy_set_id ?? '',
-    vms: record.vms,
-    volumes: record.volumes,
-    ...(record.orchestration !== undefined ? { orchestration: record.orchestration } : {}),
-  }
-}
 
 function parseRecoveryGroups(payload: unknown, operation: string) {
   return parseGeneratedResponse(RecoveryGroupsResponse, payload, operation)

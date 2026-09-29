@@ -1,4 +1,5 @@
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import type { RecoveryGroupRecordOutput } from '@/generated/api/zod.gen'
 import type {
   RecoveryGroup,
   RecoveryGroupReadRecord,
@@ -9,6 +10,18 @@ import type {
   RecoveryGroupSubmitPayload,
 } from '../api/schemas/recoveryGroupsSchema'
 import type { ValidatedRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
+
+// Takes every generated field as-is and only normalizes nullable fields the
+// mapper relies on, so new contract fields flow through without edits here.
+export function toRecoveryGroupReadRecord(record: RecoveryGroupRecordOutput): RecoveryGroupReadRecord {
+  return {
+    ...record,
+    description: record.description ?? '',
+    provider_id_vm: record.provider_id_vm ?? '',
+    provider_id_volume: record.provider_id_volume ?? '',
+    policy_set_id: record.policy_set_id ?? '',
+  }
+}
 
 function toVmMetadataByName(
   vms: RecoveryGroupReadRecord['vms'],
@@ -151,6 +164,9 @@ export function toRecoveryGroupJson(group: RecoveryGroup): RecoveryGroupReadReco
     provider_id_volume: isVmGroup
       ? (group.relatedVolumeProviderId ?? '')
       : (group.providerId ?? ''),
+    // Only groups created in this session lack rawRecord, and the builder creates
+    // local-topology groups only.
+    topology: 'local',
     policy_set_id: group.policySetId,
     vms: isVmGroup ? toVmsPayload(group.resources, group.vmMetadataByName) : [],
     volumes: isVmGroup

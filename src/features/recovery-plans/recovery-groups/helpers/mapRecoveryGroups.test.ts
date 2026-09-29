@@ -4,9 +4,17 @@ import {
   mapRecoveryGroupApiRecord,
   toRecoveryGroup,
   toRecoveryGroupJson,
+  toRecoveryGroupReadRecord,
   toRecoveryGroupSubmitPayload,
 } from './mapRecoveryGroups'
+import { RecoveryGroupRecord } from '@/generated/api/zod.gen'
 import type { ValidatedRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
+
+// Fixtures go through the generated schema so contract defaults (e.g. topology)
+// apply, exactly like a parsed GET response.
+function readRecord(input: RecoveryGroupRecord) {
+  return toRecoveryGroupReadRecord(RecoveryGroupRecord.parse(input))
+}
 
 const vmwareProvider: ProviderRecord = {
   id: 'vmware-vcenter-01',
@@ -102,18 +110,22 @@ describe('toRecoveryGroupJson', () => {
 
 describe('mapRecoveryGroupApiRecord', () => {
   it('round-trips VM metadata from a GET response into vmMetadataByName', () => {
+    // SPEC GAP: the generated RecoveryVM declares only `name`, so the metadata is
+    // added after parsing.
     const record = {
-      id: 'database_group',
-      name: 'Database group',
-      description: 'Database tier',
-      provider_id_vm: 'vmware-vcenter-01',
-      provider_id_volume: '',
-      policy_set_id: 'tier2-apps',
+      ...readRecord({
+        id: 'database_group',
+        name: 'Database group',
+        description: 'Database tier',
+        provider_id_vm: 'vmware-vcenter-01',
+        provider_id_volume: '',
+        policy_set_id: 'tier2-apps',
+        volumes: [],
+      }),
       vms: [
         { name: 'db-vm-01', order: 1, hostname: 'db01.sampleapp.local', ip_address: '192.168.10.11', os: 'Ubuntu 22.04', cpu: 4, memory_gb: 16, storage_gb: 200 },
         { name: 'db-vm-02' },
       ],
-      volumes: [],
     }
 
     const group = mapRecoveryGroupApiRecord(record, [vmwareProvider])
@@ -125,7 +137,7 @@ describe('mapRecoveryGroupApiRecord', () => {
   })
 
   it('carries orchestration run id and pushed flag through for a VM group', () => {
-    const record = {
+    const record = readRecord({
       id: 'database_group2',
       name: 'database_group2',
       description: 'Recovery group containing the database tier VMs',
@@ -135,7 +147,7 @@ describe('mapRecoveryGroupApiRecord', () => {
       vms: [{ name: 'TEST-DB01' }],
       volumes: [],
       orchestration: { run_id: '260805131217-6514c730', pushed: true },
-    }
+    })
 
     const group = mapRecoveryGroupApiRecord(record, [vmwareProvider])
 
@@ -144,7 +156,7 @@ describe('mapRecoveryGroupApiRecord', () => {
   })
 
   it('carries orchestration run id and pushed flag through for a volume-only group', () => {
-    const record = {
+    const record = readRecord({
       id: 'storage_group',
       name: 'Storage group',
       description: 'Storage volumes',
@@ -154,7 +166,7 @@ describe('mapRecoveryGroupApiRecord', () => {
       vms: [],
       volumes: [{ name: 'V5000_VOLUME01' }],
       orchestration: { run_id: null, pushed: false },
-    }
+    })
 
     const group = mapRecoveryGroupApiRecord(record, [flashSystemProvider])
 
@@ -163,7 +175,7 @@ describe('mapRecoveryGroupApiRecord', () => {
   })
 
   it('maps orchestration.provider_id to orchestrationProviderId for VM groups', () => {
-    const record = {
+    const record = readRecord({
       id: 'database_group',
       name: 'Database group',
       description: 'Database tier',
@@ -173,7 +185,7 @@ describe('mapRecoveryGroupApiRecord', () => {
       vms: [{ name: 'TEST-DB01' }],
       volumes: [],
       orchestration: { provider_id: 'airflow-01' },
-    }
+    })
 
     const group = mapRecoveryGroupApiRecord(record, [vmwareProvider])
 
@@ -181,7 +193,7 @@ describe('mapRecoveryGroupApiRecord', () => {
   })
 
   it('maps absent orchestration.provider_id to null orchestrationProviderId for VM groups', () => {
-    const record = {
+    const record = readRecord({
       id: 'database_group',
       name: 'Database group',
       description: 'Database tier',
@@ -190,7 +202,7 @@ describe('mapRecoveryGroupApiRecord', () => {
       policy_set_id: 'tier2-apps',
       vms: [{ name: 'TEST-DB01' }],
       volumes: [],
-    }
+    })
 
     const group = mapRecoveryGroupApiRecord(record, [vmwareProvider])
 
@@ -198,7 +210,7 @@ describe('mapRecoveryGroupApiRecord', () => {
   })
 
   it('maps orchestration.provider_id to orchestrationProviderId for volume-only groups', () => {
-    const record = {
+    const record = readRecord({
       id: 'storage_group',
       name: 'Storage group',
       description: 'Storage volumes',
@@ -208,7 +220,7 @@ describe('mapRecoveryGroupApiRecord', () => {
       vms: [],
       volumes: [{ name: 'V5000_VOLUME01' }],
       orchestration: { provider_id: 'airflow-01' },
-    }
+    })
 
     const group = mapRecoveryGroupApiRecord(record, [flashSystemProvider])
 
@@ -216,7 +228,7 @@ describe('mapRecoveryGroupApiRecord', () => {
   })
 
   it('maps absent orchestration.provider_id to null orchestrationProviderId for volume groups', () => {
-    const record = {
+    const record = readRecord({
       id: 'storage_group',
       name: 'Storage group',
       description: 'Storage volumes',
@@ -225,7 +237,7 @@ describe('mapRecoveryGroupApiRecord', () => {
       policy_set_id: 'tier2-apps',
       vms: [],
       volumes: [{ name: 'V5000_VOLUME01' }],
-    }
+    })
 
     const group = mapRecoveryGroupApiRecord(record, [flashSystemProvider])
 
@@ -233,7 +245,7 @@ describe('mapRecoveryGroupApiRecord', () => {
   })
 
   it('keeps a VM group when its provider is missing without guessing its platform', () => {
-    const record = {
+    const record = readRecord({
       id: 'orphan-vm-group',
       name: 'Orphan VM group',
       description: 'Provider was removed after discovery',
@@ -242,7 +254,7 @@ describe('mapRecoveryGroupApiRecord', () => {
       policy_set_id: 'tier2-apps',
       vms: [{ name: 'ORPHAN-VM-01' }],
       volumes: [],
-    }
+    })
 
     const group = mapRecoveryGroupApiRecord(record, [])
 
@@ -254,7 +266,7 @@ describe('mapRecoveryGroupApiRecord', () => {
   })
 
   it('keeps a volume group when its FlashSystem provider is missing', () => {
-    const record = {
+    const record = readRecord({
       id: 'orphan-volume-group',
       name: 'Orphan volume group',
       description: 'Provider was removed after discovery',
@@ -263,7 +275,7 @@ describe('mapRecoveryGroupApiRecord', () => {
       policy_set_id: 'tier2-apps',
       vms: [],
       volumes: [{ name: 'ORPHAN-VOLUME-01' }],
-    }
+    })
 
     const group = mapRecoveryGroupApiRecord(record, [])
 
