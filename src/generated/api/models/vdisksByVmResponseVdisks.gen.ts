@@ -4,5 +4,6 @@
  * ABCo API
  * OpenAPI spec version: 0.1.0
  */
+import type { StorageVolume } from './storageVolume.gen';
 
-export type VdisksByVmResponseVdisks = { [key: string]: unknown };
+export type VdisksByVmResponseVdisks = {[key: string]: StorageVolume};

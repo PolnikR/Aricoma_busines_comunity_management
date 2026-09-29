@@ -4,5 +4,6 @@
  * ABCo API
  * OpenAPI spec version: 0.1.0
  */
+import type { FlashSystemCluster } from './flashSystemCluster.gen';
 
-export type VolumesResponseClusters = { [key: string]: unknown };
+export type VolumesResponseClusters = {[key: string]: FlashSystemCluster};

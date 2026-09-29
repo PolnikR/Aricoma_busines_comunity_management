@@ -87,7 +87,11 @@ async function submitRecoveryGroup(
 
   try {
     const payload = await submitRecoveryGroupSubmitRecoveryGroupPost(
-      toRecoveryGroupSubmitPayload(validated, id),
+      // VM metadata fields are typed `| undefined` (exactOptionalPropertyTypes), while
+      // the generated schema now types the same optional fields without it.
+      toRecoveryGroupSubmitPayload(validated, id) as Parameters<
+        typeof submitRecoveryGroupSubmitRecoveryGroupPost
+      >[0],
       {
         provider_id: validated.orchestrationProviderId,
         push_to_orchestrator: validated.pushToOrchestrator,

@@ -17,3 +17,13 @@ export function schemaOf(spec, name) {
   if (!schema) throw new Error(`Spec patch target missing: components.schemas.${name}`)
   return schema
 }
+
+export const str = fallback => (fallback === undefined ? { type: 'string' } : { type: 'string', default: fallback })
+export const int = fallback => ({ type: 'integer', default: fallback })
+export const bool = fallback => ({ type: 'boolean', default: fallback })
+export const ref = name => ({ $ref: `#/components/schemas/${name}` })
+export const loose = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: true })
+
+export function withSchemas(spec, update) {
+  return { ...spec, components: { ...spec.components, schemas: { ...spec.components.schemas, ...update } } }
+}

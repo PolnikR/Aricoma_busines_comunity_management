@@ -4,12 +4,11 @@
  * ABCo API
  * OpenAPI spec version: 0.1.0
  */
-import type { PowerVmRecordLpar } from './powerVmRecordLpar.gen';
-import type { PowerVmRecordVios } from './powerVmRecordVios.gen';
+import type { PowerPartition } from './powerPartition.gen';
 
 export interface PowerVmRecord {
-  lpar?: PowerVmRecordLpar;
-  vios?: PowerVmRecordVios;
+  lpar?: PowerPartition;
+  vios?: PowerPartition;
   provider_id?: string | null;
   provider_type?: string | null;
   [key: string]: unknown;

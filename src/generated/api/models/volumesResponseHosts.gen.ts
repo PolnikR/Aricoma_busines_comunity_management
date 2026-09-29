@@ -4,5 +4,6 @@
  * ABCo API
  * OpenAPI spec version: 0.1.0
  */
+import type { FlashSystemHost } from './flashSystemHost.gen';
 
-export type VolumesResponseHosts = { [key: string]: unknown };
+export type VolumesResponseHosts = {[key: string]: FlashSystemHost};

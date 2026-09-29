@@ -4,14 +4,14 @@
  * ABCo API
  * OpenAPI spec version: 0.1.0
  */
+import type { FlashSystemVolume } from './flashSystemVolume.gen';
 import type { VolumesResponseClusters } from './volumesResponseClusters.gen';
 import type { VolumesResponseHosts } from './volumesResponseHosts.gen';
 import type { VolumesResponsePools } from './volumesResponsePools.gen';
-import type { VolumesResponseVolumesItem } from './volumesResponseVolumesItem.gen';
 
 export interface VolumesResponse {
   count: number;
-  volumes: VolumesResponseVolumesItem[];
+  volumes: FlashSystemVolume[];
   pools: VolumesResponsePools;
   hosts: VolumesResponseHosts;
   clusters: VolumesResponseClusters;

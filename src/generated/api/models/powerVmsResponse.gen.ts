@@ -11,4 +11,5 @@ export interface PowerVmsResponse {
   count: number;
   counts_by_type: PowerVmsResponseCountsByType;
   vms: PowerVmRecord[];
+  provider_id?: string;
 }

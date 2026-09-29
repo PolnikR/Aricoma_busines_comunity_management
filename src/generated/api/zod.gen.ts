@@ -294,12 +294,20 @@ export const PolicySetsResponse = zod.object({
 export type PolicySetsResponse = zod.input<typeof PolicySetsResponse>;
 export type PolicySetsResponseOutput = zod.output<typeof PolicySetsResponse>;
 
-export const powerVmRecordLparDefault = {};
-export const powerVmRecordViosDefault = {};
+export const PowerPartition = zod.object({
+  "PartitionUUID": zod.string().exactOptional(),
+  "PartitionName": zod.string().exactOptional(),
+  "PartitionType": zod.string().exactOptional(),
+  "PartitionState": zod.string().exactOptional(),
+  "SystemName": zod.string().exactOptional()
+});
+
+export type PowerPartition = zod.input<typeof PowerPartition>;
+export type PowerPartitionOutput = zod.output<typeof PowerPartition>;
 
 export const PowerVmRecord = zod.object({
-  "lpar": zod.record(zod.string(), zod.unknown()).default(powerVmRecordLparDefault),
-  "vios": zod.record(zod.string(), zod.unknown()).default(powerVmRecordViosDefault),
+  "lpar": PowerPartition.exactOptional(),
+  "vios": PowerPartition.exactOptional(),
   "provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "provider_type": zod.union([zod.string(),zod.null()]).exactOptional()
 });
@@ -307,10 +315,20 @@ export const PowerVmRecord = zod.object({
 export type PowerVmRecord = zod.input<typeof PowerVmRecord>;
 export type PowerVmRecordOutput = zod.output<typeof PowerVmRecord>;
 
+export const powerVmsResponseCountsByTypeLogicalPartitionMin = 0;
+
+export const powerVmsResponseCountsByTypeVirtualIOServerMin = 0;
+
+
+
 export const PowerVmsResponse = zod.object({
   "count": zod.int(),
-  "counts_by_type": zod.record(zod.string(), zod.int()),
-  "vms": zod.array(PowerVmRecord)
+  "counts_by_type": zod.object({
+  "LogicalPartition": zod.int().min(powerVmsResponseCountsByTypeLogicalPartitionMin),
+  "VirtualIOServer": zod.int().min(powerVmsResponseCountsByTypeVirtualIOServerMin)
+}),
+  "vms": zod.array(PowerVmRecord),
+  "provider_id": zod.string().exactOptional()
 });
 
 export type PowerVmsResponse = zod.input<typeof PowerVmsResponse>;
@@ -499,7 +517,14 @@ export type RecoveryAppPolicy = zod.input<typeof RecoveryAppPolicy>;
 export type RecoveryAppPolicyOutput = zod.output<typeof RecoveryAppPolicy>;
 
 export const RecoveryVM = zod.object({
-  "name": zod.string()
+  "name": zod.string(),
+  "order": zod.int().exactOptional(),
+  "hostname": zod.string().exactOptional(),
+  "ip_address": zod.string().exactOptional(),
+  "os": zod.string().exactOptional(),
+  "cpu": zod.number().exactOptional(),
+  "memory_gb": zod.number().exactOptional(),
+  "storage_gb": zod.number().exactOptional()
 });
 
 export type RecoveryVM = zod.input<typeof RecoveryVM>;
@@ -568,8 +593,33 @@ export const RecoveryAppSubmitResponse = zod.object({
 export type RecoveryAppSubmitResponse = zod.input<typeof RecoveryAppSubmitResponse>;
 export type RecoveryAppSubmitResponseOutput = zod.output<typeof RecoveryAppSubmitResponse>;
 
+export const RollbackAirflowSection = zod.object({
+  "status": zod.string(),
+  "dag_id": zod.string().exactOptional(),
+  "paused": zod.string().exactOptional(),
+  "failed_runs": zod.array(zod.unknown()).exactOptional(),
+  "dag_file": zod.string().exactOptional(),
+  "dag_record": zod.string().exactOptional()
+});
+
+export type RollbackAirflowSection = zod.input<typeof RollbackAirflowSection>;
+export type RollbackAirflowSectionOutput = zod.output<typeof RollbackAirflowSection>;
+
+export const RollbackIbmSection = zod.object({
+  "status": zod.string(),
+  "consistency_groups": zod.array(zod.unknown()).exactOptional(),
+  "fcmaps": zod.array(zod.unknown()).exactOptional(),
+  "volumes": zod.array(zod.unknown()).exactOptional(),
+  "errors": zod.array(zod.unknown()).exactOptional()
+});
+
+export type RollbackIbmSection = zod.input<typeof RollbackIbmSection>;
+export type RollbackIbmSectionOutput = zod.output<typeof RollbackIbmSection>;
+
 export const RollbackReport = zod.object({
-  "status": zod.enum(['ok', 'partial', 'failed', 'skipped'])
+  "status": zod.enum(['ok', 'partial', 'failed', 'skipped']),
+  "airflow": zod.union([RollbackAirflowSection,zod.null()]).exactOptional(),
+  "ibm": zod.union([RollbackIbmSection,zod.null()]).exactOptional()
 }).describe('recovery/rollback.py\'s report: shape varies a lot by status (see\nrollback_recovery_group\'s docstring), so only `status` is pinned down.');
 
 export type RollbackReport = zod.input<typeof RollbackReport>;
@@ -766,11 +816,89 @@ export const TagsResponse = zod.object({
 export type TagsResponse = zod.input<typeof TagsResponse>;
 export type TagsResponseOutput = zod.output<typeof TagsResponse>;
 
+export const storageVolumeMappingIdDefault = ``;
+export const storageVolumeMappingNameDefault = ``;
+export const storageVolumeMappingSourceVdiskIdDefault = ``;
+export const storageVolumeMappingSourceVdiskNameDefault = ``;
+export const storageVolumeMappingTargetVdiskIdDefault = ``;
+export const storageVolumeMappingTargetVdiskNameDefault = ``;
+export const storageVolumeMappingStatusDefault = `-`;
+export const storageVolumeMappingProgressDefault = `0`;
+export const storageVolumeMappingCopyRateDefault = `0`;
+export const storageVolumeMappingCleanProgressDefault = `0`;
+export const storageVolumeMappingStartTimeDefault = ``;
+
+export const StorageVolumeMapping = zod.object({
+  "id": zod.string().default(storageVolumeMappingIdDefault),
+  "name": zod.string().default(storageVolumeMappingNameDefault),
+  "source_vdisk_id": zod.string().default(storageVolumeMappingSourceVdiskIdDefault),
+  "source_vdisk_name": zod.string().default(storageVolumeMappingSourceVdiskNameDefault),
+  "target_vdisk_id": zod.string().default(storageVolumeMappingTargetVdiskIdDefault),
+  "target_vdisk_name": zod.string().default(storageVolumeMappingTargetVdiskNameDefault),
+  "status": zod.string().default(storageVolumeMappingStatusDefault),
+  "progress": zod.string().default(storageVolumeMappingProgressDefault),
+  "copy_rate": zod.string().default(storageVolumeMappingCopyRateDefault),
+  "clean_progress": zod.string().default(storageVolumeMappingCleanProgressDefault),
+  "start_time": zod.string().default(storageVolumeMappingStartTimeDefault)
+});
+
+export type StorageVolumeMapping = zod.input<typeof StorageVolumeMapping>;
+export type StorageVolumeMappingOutput = zod.output<typeof StorageVolumeMapping>;
+
+export const storageVolumeSnapshotsHasSnapshotsDefault = false;
+export const storageVolumeSnapshotsSnapshotCountDefault = 0;
+export const storageVolumeSnapshotsIsSnapshotDefault = false;
+export const storageVolumeSnapshotsSourceMappingsDefault = [];
+export const storageVolumeSnapshotsTargetMappingsDefault = [];
+
+export const StorageVolumeSnapshots = zod.object({
+  "has_snapshots": zod.boolean().default(storageVolumeSnapshotsHasSnapshotsDefault),
+  "snapshot_count": zod.int().default(storageVolumeSnapshotsSnapshotCountDefault),
+  "is_snapshot": zod.boolean().default(storageVolumeSnapshotsIsSnapshotDefault),
+  "source_mappings": zod.array(StorageVolumeMapping).default(storageVolumeSnapshotsSourceMappingsDefault),
+  "target_mappings": zod.array(StorageVolumeMapping).default(storageVolumeSnapshotsTargetMappingsDefault)
+});
+
+export type StorageVolumeSnapshots = zod.input<typeof StorageVolumeSnapshots>;
+export type StorageVolumeSnapshotsOutput = zod.output<typeof StorageVolumeSnapshots>;
+
+export const storageVolumeIdDefault = ``;
+export const storageVolumeNameDefault = ``;
+export const storageVolumeVolumeNameDefault = ``;
+export const storageVolumeCapacityDefault = `-`;
+export const storageVolumeStatusDefault = `-`;
+export const storageVolumeMdiskGrpNameDefault = `-`;
+export const storageVolumeTypeDefault = `-`;
+export const storageVolumeProtocolDefault = `-`;
+export const storageVolumeVdiskUIDDefault = ``;
+export const storageVolumeCopyCountDefault = `0`;
+export const storageVolumeFcMapCountDefault = `0`;
+
+export const StorageVolume = zod.object({
+  "id": zod.string().default(storageVolumeIdDefault),
+  "name": zod.string().default(storageVolumeNameDefault),
+  "volume_name": zod.string().default(storageVolumeVolumeNameDefault),
+  "capacity": zod.string().default(storageVolumeCapacityDefault),
+  "status": zod.string().default(storageVolumeStatusDefault),
+  "mdisk_grp_name": zod.string().default(storageVolumeMdiskGrpNameDefault),
+  "type": zod.string().default(storageVolumeTypeDefault),
+  "protocol": zod.string().default(storageVolumeProtocolDefault),
+  "vdisk_UID": zod.string().default(storageVolumeVdiskUIDDefault),
+  "copy_count": zod.string().default(storageVolumeCopyCountDefault),
+  "fc_map_count": zod.string().default(storageVolumeFcMapCountDefault),
+  "sanpshosts": StorageVolumeSnapshots.exactOptional()
+});
+
+export type StorageVolume = zod.input<typeof StorageVolume>;
+export type StorageVolumeOutput = zod.output<typeof StorageVolume>;
+
+export const vdisksByVmResponseVdisksDefault = {};
+
 export const VdisksByVmResponse = zod.object({
   "name": zod.string(),
   "count_vm": zod.int(),
   "count_ibm": zod.int(),
-  "vdisks": zod.record(zod.string(), zod.unknown())
+  "vdisks": zod.record(zod.string(), StorageVolume).default(vdisksByVmResponseVdisksDefault)
 });
 
 export type VdisksByVmResponse = zod.input<typeof VdisksByVmResponse>;
@@ -894,27 +1022,264 @@ export const VolumeTreeCounts = zod.object({
 export type VolumeTreeCounts = zod.input<typeof VolumeTreeCounts>;
 export type VolumeTreeCountsOutput = zod.output<typeof VolumeTreeCounts>;
 
-export const volumeTreeNodeDetailDefault = {};
+export const volumeTreePoolDetailIdDefault = ``;
+export const volumeTreePoolDetailParentMdiskGrpIdDefault = ``;
+export const volumeTreePoolDetailParentMdiskGrpNameDefault = ``;
+export const volumeTreePoolDetailSiteIdDefault = ``;
+export const volumeTreePoolDetailSiteNameDefault = ``;
+export const volumeTreePoolDetailMdiskCountDefault = `0`;
+export const volumeTreePoolDetailVdiskCountDefault = `0`;
+export const volumeTreePoolDetailChildMdiskGrpCountDefault = `0`;
+export const volumeTreePoolDetailNameDefault = `-`;
+export const volumeTreePoolDetailCapacityDefault = `-`;
+export const volumeTreePoolDetailExtentSizeDefault = `-`;
+export const volumeTreePoolDetailFreeCapacityDefault = `-`;
+export const volumeTreePoolDetailVirtualCapacityDefault = `-`;
+export const volumeTreePoolDetailUsedCapacityDefault = `-`;
+export const volumeTreePoolDetailRealCapacityDefault = `-`;
+export const volumeTreePoolDetailOverallocationDefault = `-`;
+export const volumeTreePoolDetailWarningDefault = `-`;
+export const volumeTreePoolDetailEasyTierDefault = `-`;
+export const volumeTreePoolDetailEasyTierStatusDefault = `-`;
+export const volumeTreePoolDetailCompressionActiveDefault = `-`;
+export const volumeTreePoolDetailCompressionVirtualCapacityDefault = `-`;
+export const volumeTreePoolDetailCompressionCompressedCapacityDefault = `-`;
+export const volumeTreePoolDetailCompressionUncompressedCapacityDefault = `-`;
+export const volumeTreePoolDetailChildMdiskGrpCapacityDefault = `-`;
+export const volumeTreePoolDetailTypeDefault = `-`;
+export const volumeTreePoolDetailEncryptDefault = `-`;
+export const volumeTreePoolDetailOwnerTypeDefault = `-`;
+export const volumeTreePoolDetailDataReductionDefault = `-`;
+export const volumeTreePoolDetailUsedCapacityBeforeReductionDefault = `-`;
+export const volumeTreePoolDetailUsedCapacityAfterReductionDefault = `-`;
+export const volumeTreePoolDetailOverheadCapacityDefault = `-`;
+export const volumeTreePoolDetailDeduplicationCapacitySavingDefault = `-`;
+export const volumeTreePoolDetailReclaimableCapacityDefault = `-`;
+export const volumeTreePoolDetailEasyTierFcmOverAllocationMaxDefault = `-`;
+export const volumeTreePoolDetailStatusDefault = `unknown`;
+export const volumeTreePoolDetailVolumeCountDefault = 0;
+
+export const VolumeTreePoolDetail = zod.object({
+  "id": zod.string().default(volumeTreePoolDetailIdDefault),
+  "parent_mdisk_grp_id": zod.string().default(volumeTreePoolDetailParentMdiskGrpIdDefault),
+  "parent_mdisk_grp_name": zod.string().default(volumeTreePoolDetailParentMdiskGrpNameDefault),
+  "site_id": zod.string().default(volumeTreePoolDetailSiteIdDefault),
+  "site_name": zod.string().default(volumeTreePoolDetailSiteNameDefault),
+  "mdisk_count": zod.string().default(volumeTreePoolDetailMdiskCountDefault),
+  "vdisk_count": zod.string().default(volumeTreePoolDetailVdiskCountDefault),
+  "child_mdisk_grp_count": zod.string().default(volumeTreePoolDetailChildMdiskGrpCountDefault),
+  "name": zod.string().default(volumeTreePoolDetailNameDefault),
+  "capacity": zod.string().default(volumeTreePoolDetailCapacityDefault),
+  "extent_size": zod.string().default(volumeTreePoolDetailExtentSizeDefault),
+  "free_capacity": zod.string().default(volumeTreePoolDetailFreeCapacityDefault),
+  "virtual_capacity": zod.string().default(volumeTreePoolDetailVirtualCapacityDefault),
+  "used_capacity": zod.string().default(volumeTreePoolDetailUsedCapacityDefault),
+  "real_capacity": zod.string().default(volumeTreePoolDetailRealCapacityDefault),
+  "overallocation": zod.string().default(volumeTreePoolDetailOverallocationDefault),
+  "warning": zod.string().default(volumeTreePoolDetailWarningDefault),
+  "easy_tier": zod.string().default(volumeTreePoolDetailEasyTierDefault),
+  "easy_tier_status": zod.string().default(volumeTreePoolDetailEasyTierStatusDefault),
+  "compression_active": zod.string().default(volumeTreePoolDetailCompressionActiveDefault),
+  "compression_virtual_capacity": zod.string().default(volumeTreePoolDetailCompressionVirtualCapacityDefault),
+  "compression_compressed_capacity": zod.string().default(volumeTreePoolDetailCompressionCompressedCapacityDefault),
+  "compression_uncompressed_capacity": zod.string().default(volumeTreePoolDetailCompressionUncompressedCapacityDefault),
+  "child_mdisk_grp_capacity": zod.string().default(volumeTreePoolDetailChildMdiskGrpCapacityDefault),
+  "type": zod.string().default(volumeTreePoolDetailTypeDefault),
+  "encrypt": zod.string().default(volumeTreePoolDetailEncryptDefault),
+  "owner_type": zod.string().default(volumeTreePoolDetailOwnerTypeDefault),
+  "data_reduction": zod.string().default(volumeTreePoolDetailDataReductionDefault),
+  "used_capacity_before_reduction": zod.string().default(volumeTreePoolDetailUsedCapacityBeforeReductionDefault),
+  "used_capacity_after_reduction": zod.string().default(volumeTreePoolDetailUsedCapacityAfterReductionDefault),
+  "overhead_capacity": zod.string().default(volumeTreePoolDetailOverheadCapacityDefault),
+  "deduplication_capacity_saving": zod.string().default(volumeTreePoolDetailDeduplicationCapacitySavingDefault),
+  "reclaimable_capacity": zod.string().default(volumeTreePoolDetailReclaimableCapacityDefault),
+  "easy_tier_fcm_over_allocation_max": zod.string().default(volumeTreePoolDetailEasyTierFcmOverAllocationMaxDefault),
+  "status": zod.string().default(volumeTreePoolDetailStatusDefault),
+  "volume_count": zod.int().default(volumeTreePoolDetailVolumeCountDefault)
+});
+
+export type VolumeTreePoolDetail = zod.input<typeof VolumeTreePoolDetail>;
+export type VolumeTreePoolDetailOutput = zod.output<typeof VolumeTreePoolDetail>;
+
+export const volumeTreeVolumeDetailIdDefault = ``;
+export const volumeTreeVolumeDetailIOGroupIdDefault = ``;
+export const volumeTreeVolumeDetailMdiskGrpIdDefault = ``;
+export const volumeTreeVolumeDetailFCIdDefault = ``;
+export const volumeTreeVolumeDetailFCNameDefault = ``;
+export const volumeTreeVolumeDetailRCIdDefault = ``;
+export const volumeTreeVolumeDetailRCNameDefault = ``;
+export const volumeTreeVolumeDetailVdiskUIDDefault = ``;
+export const volumeTreeVolumeDetailRCChangeDefault = ``;
+export const volumeTreeVolumeDetailParentMdiskGrpIdDefault = ``;
+export const volumeTreeVolumeDetailParentMdiskGrpNameDefault = ``;
+export const volumeTreeVolumeDetailVolumeIdDefault = ``;
+export const volumeTreeVolumeDetailVolumeNameDefault = ``;
+export const volumeTreeVolumeDetailFcMapCountDefault = `0`;
+export const volumeTreeVolumeDetailCopyCountDefault = `0`;
+export const volumeTreeVolumeDetailSeCopyCountDefault = `0`;
+export const volumeTreeVolumeDetailCompressedCopyCountDefault = `0`;
+export const volumeTreeVolumeDetailNameDefault = `-`;
+export const volumeTreeVolumeDetailIOGroupNameDefault = `-`;
+export const volumeTreeVolumeDetailMdiskGrpNameDefault = `-`;
+export const volumeTreeVolumeDetailCapacityDefault = `-`;
+export const volumeTreeVolumeDetailTypeDefault = `-`;
+export const volumeTreeVolumeDetailFastWriteStateDefault = `-`;
+export const volumeTreeVolumeDetailFormattingDefault = `-`;
+export const volumeTreeVolumeDetailEncryptDefault = `-`;
+export const volumeTreeVolumeDetailFunctionDefault = `-`;
+export const volumeTreeVolumeDetailProtocolDefault = `-`;
+export const volumeTreeVolumeDetailStatusDefault = `unknown`;
+export const volumeTreeVolumeDetailHostMapsItemHostIdDefault = ``;
+export const volumeTreeVolumeDetailHostMapsItemHostNameDefault = `-`;
+export const volumeTreeVolumeDetailHostMapsItemClusterNameDefault = ``;
+export const volumeTreeVolumeDetailHostMapsItemScsiIdDefault = ``;
+export const volumeTreeVolumeDetailHostMapsDefault = [];
+export const volumeTreeVolumeDetailIsSnapshotTargetDefault = false;
+export const volumeTreeVolumeDetailHasSnapshotsDefault = false;
+export const volumeTreeVolumeDetailSnapshotCountDefault = 0;
+export const volumeTreeVolumeDetailResolvedDefault = false;
+
+export const VolumeTreeVolumeDetail = zod.object({
+  "id": zod.string().default(volumeTreeVolumeDetailIdDefault),
+  "IO_group_id": zod.string().default(volumeTreeVolumeDetailIOGroupIdDefault),
+  "mdisk_grp_id": zod.string().default(volumeTreeVolumeDetailMdiskGrpIdDefault),
+  "FC_id": zod.string().default(volumeTreeVolumeDetailFCIdDefault),
+  "FC_name": zod.string().default(volumeTreeVolumeDetailFCNameDefault),
+  "RC_id": zod.string().default(volumeTreeVolumeDetailRCIdDefault),
+  "RC_name": zod.string().default(volumeTreeVolumeDetailRCNameDefault),
+  "vdisk_UID": zod.string().default(volumeTreeVolumeDetailVdiskUIDDefault),
+  "RC_change": zod.string().default(volumeTreeVolumeDetailRCChangeDefault),
+  "parent_mdisk_grp_id": zod.string().default(volumeTreeVolumeDetailParentMdiskGrpIdDefault),
+  "parent_mdisk_grp_name": zod.string().default(volumeTreeVolumeDetailParentMdiskGrpNameDefault),
+  "volume_id": zod.string().default(volumeTreeVolumeDetailVolumeIdDefault),
+  "volume_name": zod.string().default(volumeTreeVolumeDetailVolumeNameDefault),
+  "fc_map_count": zod.string().default(volumeTreeVolumeDetailFcMapCountDefault),
+  "copy_count": zod.string().default(volumeTreeVolumeDetailCopyCountDefault),
+  "se_copy_count": zod.string().default(volumeTreeVolumeDetailSeCopyCountDefault),
+  "compressed_copy_count": zod.string().default(volumeTreeVolumeDetailCompressedCopyCountDefault),
+  "name": zod.string().default(volumeTreeVolumeDetailNameDefault),
+  "IO_group_name": zod.string().default(volumeTreeVolumeDetailIOGroupNameDefault),
+  "mdisk_grp_name": zod.string().default(volumeTreeVolumeDetailMdiskGrpNameDefault),
+  "capacity": zod.string().default(volumeTreeVolumeDetailCapacityDefault),
+  "type": zod.string().default(volumeTreeVolumeDetailTypeDefault),
+  "fast_write_state": zod.string().default(volumeTreeVolumeDetailFastWriteStateDefault),
+  "formatting": zod.string().default(volumeTreeVolumeDetailFormattingDefault),
+  "encrypt": zod.string().default(volumeTreeVolumeDetailEncryptDefault),
+  "function": zod.string().default(volumeTreeVolumeDetailFunctionDefault),
+  "protocol": zod.string().default(volumeTreeVolumeDetailProtocolDefault),
+  "status": zod.string().default(volumeTreeVolumeDetailStatusDefault),
+  "host_maps": zod.array(zod.object({
+  "host_id": zod.string().default(volumeTreeVolumeDetailHostMapsItemHostIdDefault),
+  "host_name": zod.string().default(volumeTreeVolumeDetailHostMapsItemHostNameDefault),
+  "cluster_name": zod.string().default(volumeTreeVolumeDetailHostMapsItemClusterNameDefault),
+  "scsi_id": zod.string().default(volumeTreeVolumeDetailHostMapsItemScsiIdDefault)
+})).default(volumeTreeVolumeDetailHostMapsDefault),
+  "is_snapshot_target": zod.boolean().default(volumeTreeVolumeDetailIsSnapshotTargetDefault),
+  "has_snapshots": zod.boolean().default(volumeTreeVolumeDetailHasSnapshotsDefault),
+  "snapshot_count": zod.int().default(volumeTreeVolumeDetailSnapshotCountDefault),
+  "resolved": zod.boolean().default(volumeTreeVolumeDetailResolvedDefault),
+  "role": zod.enum(['source', 'target']).exactOptional()
+});
+
+export type VolumeTreeVolumeDetail = zod.input<typeof VolumeTreeVolumeDetail>;
+export type VolumeTreeVolumeDetailOutput = zod.output<typeof VolumeTreeVolumeDetail>;
+
+export const volumeTreeFcmapDetailIdDefault = ``;
+export const volumeTreeFcmapDetailSourceVdiskIdDefault = ``;
+export const volumeTreeFcmapDetailSourceVdiskNameDefault = ``;
+export const volumeTreeFcmapDetailTargetVdiskIdDefault = ``;
+export const volumeTreeFcmapDetailTargetVdiskNameDefault = ``;
+export const volumeTreeFcmapDetailGroupIdDefault = ``;
+export const volumeTreeFcmapDetailGroupNameDefault = ``;
+export const volumeTreeFcmapDetailPartnerFCIdDefault = ``;
+export const volumeTreeFcmapDetailPartnerFCNameDefault = ``;
+export const volumeTreeFcmapDetailStartTimeDefault = ``;
+export const volumeTreeFcmapDetailStartTimeIsoDefault = ``;
+export const volumeTreeFcmapDetailProgressDefault = `0`;
+export const volumeTreeFcmapDetailCopyRateDefault = `0`;
+export const volumeTreeFcmapDetailCleanProgressDefault = `0`;
+export const volumeTreeFcmapDetailNameDefault = `-`;
+export const volumeTreeFcmapDetailIncrementalDefault = `-`;
+export const volumeTreeFcmapDetailRestoringDefault = `-`;
+export const volumeTreeFcmapDetailRcControlledDefault = `-`;
+export const volumeTreeFcmapDetailStatusDefault = `unknown`;
+
+export const VolumeTreeFcmapDetail = zod.object({
+  "id": zod.string().default(volumeTreeFcmapDetailIdDefault),
+  "source_vdisk_id": zod.string().default(volumeTreeFcmapDetailSourceVdiskIdDefault),
+  "source_vdisk_name": zod.string().default(volumeTreeFcmapDetailSourceVdiskNameDefault),
+  "target_vdisk_id": zod.string().default(volumeTreeFcmapDetailTargetVdiskIdDefault),
+  "target_vdisk_name": zod.string().default(volumeTreeFcmapDetailTargetVdiskNameDefault),
+  "group_id": zod.string().default(volumeTreeFcmapDetailGroupIdDefault),
+  "group_name": zod.string().default(volumeTreeFcmapDetailGroupNameDefault),
+  "partner_FC_id": zod.string().default(volumeTreeFcmapDetailPartnerFCIdDefault),
+  "partner_FC_name": zod.string().default(volumeTreeFcmapDetailPartnerFCNameDefault),
+  "start_time": zod.string().default(volumeTreeFcmapDetailStartTimeDefault),
+  "start_time_iso": zod.string().default(volumeTreeFcmapDetailStartTimeIsoDefault),
+  "progress": zod.string().default(volumeTreeFcmapDetailProgressDefault),
+  "copy_rate": zod.string().default(volumeTreeFcmapDetailCopyRateDefault),
+  "clean_progress": zod.string().default(volumeTreeFcmapDetailCleanProgressDefault),
+  "name": zod.string().default(volumeTreeFcmapDetailNameDefault),
+  "incremental": zod.string().default(volumeTreeFcmapDetailIncrementalDefault),
+  "restoring": zod.string().default(volumeTreeFcmapDetailRestoringDefault),
+  "rc_controlled": zod.string().default(volumeTreeFcmapDetailRcControlledDefault),
+  "status": zod.string().default(volumeTreeFcmapDetailStatusDefault)
+});
+
+export type VolumeTreeFcmapDetail = zod.input<typeof VolumeTreeFcmapDetail>;
+export type VolumeTreeFcmapDetailOutput = zod.output<typeof VolumeTreeFcmapDetail>;
+
+export const volumeTreeConsistencyGroupDetailIdDefault = ``;
+export const volumeTreeConsistencyGroupDetailNameDefault = `-`;
+export const volumeTreeConsistencyGroupDetailStatusDefault = `unknown`;
+export const volumeTreeConsistencyGroupDetailStartTimeDefault = ``;
+export const volumeTreeConsistencyGroupDetailFcMappingCountDefault = 0;
+export const volumeTreeConsistencyGroupDetailPoolIdsDefault = [];
+export const volumeTreeConsistencyGroupDetailSpansPoolsDefault = false;
+export const volumeTreeConsistencyGroupDetailIsSyntheticDefault = false;
+
+export const VolumeTreeConsistencyGroupDetail = zod.object({
+  "id": zod.string().default(volumeTreeConsistencyGroupDetailIdDefault),
+  "name": zod.string().default(volumeTreeConsistencyGroupDetailNameDefault),
+  "status": zod.string().default(volumeTreeConsistencyGroupDetailStatusDefault),
+  "start_time": zod.string().default(volumeTreeConsistencyGroupDetailStartTimeDefault),
+  "fc_mapping_count": zod.int().default(volumeTreeConsistencyGroupDetailFcMappingCountDefault),
+  "pool_ids": zod.array(zod.string()).default(volumeTreeConsistencyGroupDetailPoolIdsDefault),
+  "spans_pools": zod.boolean().default(volumeTreeConsistencyGroupDetailSpansPoolsDefault),
+  "is_synthetic": zod.boolean().default(volumeTreeConsistencyGroupDetailIsSyntheticDefault)
+});
+
+export type VolumeTreeConsistencyGroupDetail = zod.input<typeof VolumeTreeConsistencyGroupDetail>;
+export type VolumeTreeConsistencyGroupDetailOutput = zod.output<typeof VolumeTreeConsistencyGroupDetail>;
+
 export const volumeTreeNodeChildrenDefault = [];
 
-export type VolumeTreeNodeDetail = { [key: string]: unknown };
+export type VolumeTreeNodeKind = typeof VolumeTreeNodeKind[keyof typeof VolumeTreeNodeKind];
+
+
+export const VolumeTreeNodeKind = {
+  pool: 'pool',
+  volume: 'volume',
+  fcmap: 'fcmap',
+  consistency_group: 'consistency_group',
+} as const;
 
 export type VolumeTreeNode = {
-  kind: string;
+  kind: VolumeTreeNodeKind;
   id?: string | null;
   name?: string | null;
   key: string;
-  detail?: VolumeTreeNodeDetail;
+  detail?: VolumeTreePoolDetail | VolumeTreeVolumeDetail | VolumeTreeFcmapDetail | VolumeTreeConsistencyGroupDetail;
   children?: VolumeTreeNode[];
   [key: string]: unknown;
  };
 
 export const VolumeTreeNode: zod.ZodType<VolumeTreeNode> = zod.object({
-  "kind": zod.string(),
+  "kind": zod.enum(['pool', 'volume', 'fcmap', 'consistency_group']),
   "id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "name": zod.union([zod.string(),zod.null()]).exactOptional(),
   "key": zod.string(),
-  "detail": zod.record(zod.string(), zod.unknown()).default(volumeTreeNodeDetailDefault),
+  "detail": zod.union([VolumeTreePoolDetail,VolumeTreeVolumeDetail,VolumeTreeFcmapDetail,VolumeTreeConsistencyGroupDetail]).exactOptional(),
   "children": zod.array(zod.lazy(() => VolumeTreeNode)).default(volumeTreeNodeChildrenDefault)
 });
 
@@ -930,12 +1295,121 @@ export const VolumeTreeResponse = zod.object({
 export type VolumeTreeResponse = zod.input<typeof VolumeTreeResponse>;
 export type VolumeTreeResponseOutput = zod.output<typeof VolumeTreeResponse>;
 
+export const flashSystemVolumeIdDefault = ``;
+export const flashSystemVolumeIOGroupIdDefault = ``;
+export const flashSystemVolumeIOGroupNameDefault = `-`;
+export const flashSystemVolumeStatusDefault = `unknown`;
+export const flashSystemVolumeMdiskGrpIdDefault = ``;
+export const flashSystemVolumeMdiskGrpNameDefault = `-`;
+export const flashSystemVolumeCapacityDefault = `-`;
+export const flashSystemVolumeTypeDefault = `-`;
+export const flashSystemVolumeFCIdDefault = ``;
+export const flashSystemVolumeFCNameDefault = ``;
+export const flashSystemVolumeRCIdDefault = ``;
+export const flashSystemVolumeRCNameDefault = ``;
+export const flashSystemVolumeVdiskUIDDefault = ``;
+export const flashSystemVolumeFcMapCountDefault = `0`;
+export const flashSystemVolumeCopyCountDefault = `0`;
+export const flashSystemVolumeFastWriteStateDefault = `-`;
+export const flashSystemVolumeSeCopyCountDefault = `0`;
+export const flashSystemVolumeRCChangeDefault = ``;
+export const flashSystemVolumeCompressedCopyCountDefault = `0`;
+export const flashSystemVolumeParentMdiskGrpIdDefault = ``;
+export const flashSystemVolumeParentMdiskGrpNameDefault = ``;
+export const flashSystemVolumeFormattingDefault = `-`;
+export const flashSystemVolumeEncryptDefault = `-`;
+export const flashSystemVolumeVolumeIdDefault = ``;
+export const flashSystemVolumeVolumeNameDefault = ``;
+export const flashSystemVolumeFunctionDefault = `-`;
+export const flashSystemVolumeProtocolDefault = `-`;
+export const flashSystemVolumeHostMapsDefault = [];
+
+export const FlashSystemVolume = zod.object({
+  "provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "id": zod.string().default(flashSystemVolumeIdDefault),
+  "name": zod.string().min(1),
+  "IO_group_id": zod.string().default(flashSystemVolumeIOGroupIdDefault),
+  "IO_group_name": zod.string().default(flashSystemVolumeIOGroupNameDefault),
+  "status": zod.string().default(flashSystemVolumeStatusDefault),
+  "mdisk_grp_id": zod.string().default(flashSystemVolumeMdiskGrpIdDefault),
+  "mdisk_grp_name": zod.string().default(flashSystemVolumeMdiskGrpNameDefault),
+  "capacity": zod.string().default(flashSystemVolumeCapacityDefault),
+  "type": zod.string().default(flashSystemVolumeTypeDefault),
+  "FC_id": zod.string().default(flashSystemVolumeFCIdDefault),
+  "FC_name": zod.string().default(flashSystemVolumeFCNameDefault),
+  "RC_id": zod.string().default(flashSystemVolumeRCIdDefault),
+  "RC_name": zod.string().default(flashSystemVolumeRCNameDefault),
+  "vdisk_UID": zod.string().default(flashSystemVolumeVdiskUIDDefault),
+  "fc_map_count": zod.string().default(flashSystemVolumeFcMapCountDefault),
+  "copy_count": zod.string().default(flashSystemVolumeCopyCountDefault),
+  "fast_write_state": zod.string().default(flashSystemVolumeFastWriteStateDefault),
+  "se_copy_count": zod.string().default(flashSystemVolumeSeCopyCountDefault),
+  "RC_change": zod.string().default(flashSystemVolumeRCChangeDefault),
+  "compressed_copy_count": zod.string().default(flashSystemVolumeCompressedCopyCountDefault),
+  "parent_mdisk_grp_id": zod.string().default(flashSystemVolumeParentMdiskGrpIdDefault),
+  "parent_mdisk_grp_name": zod.string().default(flashSystemVolumeParentMdiskGrpNameDefault),
+  "formatting": zod.string().default(flashSystemVolumeFormattingDefault),
+  "encrypt": zod.string().default(flashSystemVolumeEncryptDefault),
+  "volume_id": zod.string().default(flashSystemVolumeVolumeIdDefault),
+  "volume_name": zod.string().default(flashSystemVolumeVolumeNameDefault),
+  "function": zod.string().default(flashSystemVolumeFunctionDefault),
+  "protocol": zod.string().default(flashSystemVolumeProtocolDefault),
+  "host_maps": zod.array(zod.object({
+  "host_id": zod.string(),
+  "scsi_id": zod.string()
+})).default(flashSystemVolumeHostMapsDefault)
+});
+
+export type FlashSystemVolume = zod.input<typeof FlashSystemVolume>;
+export type FlashSystemVolumeOutput = zod.output<typeof FlashSystemVolume>;
+
+export const flashSystemPoolNameDefault = `-`;
+export const flashSystemPoolCapacityDefault = `-`;
+export const flashSystemPoolUsedCapacityDefault = `-`;
+export const flashSystemPoolFreeCapacityDefault = `-`;
+
+export const FlashSystemPool = zod.object({
+  "name": zod.string().default(flashSystemPoolNameDefault),
+  "capacity": zod.string().default(flashSystemPoolCapacityDefault),
+  "used_capacity": zod.string().default(flashSystemPoolUsedCapacityDefault),
+  "free_capacity": zod.string().default(flashSystemPoolFreeCapacityDefault)
+});
+
+export type FlashSystemPool = zod.input<typeof FlashSystemPool>;
+export type FlashSystemPoolOutput = zod.output<typeof FlashSystemPool>;
+
+export const flashSystemHostNameDefault = `-`;
+export const flashSystemHostClusterIdDefault = null;
+export const flashSystemHostClusterNameDefault = ``;
+
+export const FlashSystemHost = zod.object({
+  "name": zod.string().default(flashSystemHostNameDefault),
+  "cluster_id": zod.union([zod.string(),zod.null()]).default(flashSystemHostClusterIdDefault),
+  "cluster_name": zod.string().default(flashSystemHostClusterNameDefault)
+});
+
+export type FlashSystemHost = zod.input<typeof FlashSystemHost>;
+export type FlashSystemHostOutput = zod.output<typeof FlashSystemHost>;
+
+export const flashSystemClusterNameDefault = `-`;
+
+export const FlashSystemCluster = zod.object({
+  "name": zod.string().default(flashSystemClusterNameDefault)
+});
+
+export type FlashSystemCluster = zod.input<typeof FlashSystemCluster>;
+export type FlashSystemClusterOutput = zod.output<typeof FlashSystemCluster>;
+
+export const volumesResponsePoolsDefault = {};
+export const volumesResponseHostsDefault = {};
+export const volumesResponseClustersDefault = {};
+
 export const VolumesResponse = zod.object({
   "count": zod.int(),
-  "volumes": zod.array(zod.record(zod.string(), zod.unknown())),
-  "pools": zod.record(zod.string(), zod.unknown()),
-  "hosts": zod.record(zod.string(), zod.unknown()),
-  "clusters": zod.record(zod.string(), zod.unknown()),
+  "volumes": zod.array(FlashSystemVolume),
+  "pools": zod.record(zod.string(), FlashSystemPool).default(volumesResponsePoolsDefault),
+  "hosts": zod.record(zod.string(), FlashSystemHost).default(volumesResponseHostsDefault),
+  "clusters": zod.record(zod.string(), FlashSystemCluster).default(volumesResponseClustersDefault),
   "provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "provider_type": zod.union([zod.string(),zod.null()]).exactOptional()
 });

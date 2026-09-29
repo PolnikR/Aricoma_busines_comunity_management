@@ -7,4 +7,11 @@
 
 export interface RecoveryVM {
   name: string;
+  order?: number;
+  hostname?: string;
+  ip_address?: string;
+  os?: string;
+  cpu?: number;
+  memory_gb?: number;
+  storage_gb?: number;
 }

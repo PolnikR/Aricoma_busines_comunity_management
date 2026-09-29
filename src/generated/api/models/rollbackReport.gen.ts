@@ -4,6 +4,8 @@
  * ABCo API
  * OpenAPI spec version: 0.1.0
  */
+import type { RollbackAirflowSection } from './rollbackAirflowSection.gen';
+import type { RollbackIbmSection } from './rollbackIbmSection.gen';
 import type { RollbackReportStatus } from './rollbackReportStatus.gen';
 
 /**
@@ -12,5 +14,7 @@ import type { RollbackReportStatus } from './rollbackReportStatus.gen';
  */
 export interface RollbackReport {
   status: RollbackReportStatus;
+  airflow?: RollbackAirflowSection | null;
+  ibm?: RollbackIbmSection | null;
   [key: string]: unknown;
  }

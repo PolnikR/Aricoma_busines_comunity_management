@@ -30,3 +30,46 @@ test('fails with the patch name when a patch is obsolete', () => {
   const accessLogs = PATCHES.find(patch => patch.name === 'accessLogs')
   assert.throws(() => accessLogs.run(alreadyFixed), /Spec patch accessLogs is obsolete/)
 })
+
+const schemas = () => transform(rawSpec()).components.schemas
+
+test('types power LPAR and VIOS records', () => {
+  const s = schemas()
+  assert.equal(s.PowerVmRecord.properties.lpar.$ref, '#/components/schemas/PowerPartition')
+  assert.deepEqual(s.PowerVmsResponse.properties.counts_by_type.required, ['LogicalPartition', 'VirtualIOServer'])
+  assert.equal(s.PowerVmsResponse.properties.provider_id.type, 'string')
+})
+
+test('types FlashSystem inventory collections', () => {
+  const s = schemas()
+  assert.equal(s.VolumesResponse.properties.volumes.items.$ref, '#/components/schemas/FlashSystemVolume')
+  assert.equal(s.VolumesResponse.properties.pools.additionalProperties.$ref, '#/components/schemas/FlashSystemPool')
+})
+
+test('types vdisks by VM', () => {
+  assert.equal(schemas().VdisksByVmResponse.properties.vdisks.additionalProperties.$ref, '#/components/schemas/StorageVolume')
+})
+
+test('types volume tree node kind and detail', () => {
+  const node = schemas().VolumeTreeNode
+  assert.deepEqual(node.properties.kind.enum, ['pool', 'volume', 'fcmap', 'consistency_group'])
+  assert.equal(node.properties.detail.anyOf.length, 4)
+})
+
+test('types rollback report sections', () => {
+  const report = schemas().RollbackReport
+  assert.equal(report.properties.airflow.anyOf[0].$ref, '#/components/schemas/RollbackAirflowSection')
+  assert.equal(report.additionalProperties, true)
+})
+
+test('adds recovery VM metadata', () => {
+  assert.deepEqual(Object.keys(schemas().RecoveryVM.properties).sort(),
+    ['cpu', 'hostname', 'ip_address', 'memory_gb', 'name', 'order', 'os', 'storage_gb'])
+})
+
+for (const name of ['powerInventory', 'flashSystemVolumes', 'vdisksByVm', 'volumeTree', 'rollbackReport', 'recoveryVmMetadata']) {
+  test(`${name} fails once already applied`, () => {
+    const patch = PATCHES.find(p => p.name === name)
+    assert.throws(() => patch.run(transform(rawSpec())), new RegExp(`Spec patch ${name} is obsolete`))
+  })
+}

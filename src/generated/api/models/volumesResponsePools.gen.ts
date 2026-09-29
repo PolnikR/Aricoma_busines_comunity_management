@@ -4,5 +4,6 @@
  * ABCo API
  * OpenAPI spec version: 0.1.0
  */
+import type { FlashSystemPool } from './flashSystemPool.gen';
 
-export type VolumesResponsePools = { [key: string]: unknown };
+export type VolumesResponsePools = {[key: string]: FlashSystemPool};

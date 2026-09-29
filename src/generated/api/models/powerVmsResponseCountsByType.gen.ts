@@ -5,4 +5,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type PowerVmsResponseCountsByType = {[key: string]: number};
+export type PowerVmsResponseCountsByType = {
+  /** @minimum 0 */
+  LogicalPartition: number;
+  /** @minimum 0 */
+  VirtualIOServer: number;
+  [key: string]: unknown;
+ };
