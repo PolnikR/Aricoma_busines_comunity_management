@@ -7,7 +7,7 @@ import {
   toRecoveryGroupReadRecord,
   toRecoveryGroupSubmitPayload,
 } from './mapRecoveryGroups'
-import { RecoveryGroupRecord } from '@/generated/api/zod.gen'
+import { RecoveryGroupRecord } from '@/generated/query/zod'
 import type { ValidatedRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
 
 // Fixtures go through the generated schema so contract defaults (e.g. topology)

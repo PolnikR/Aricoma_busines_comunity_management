@@ -2,8 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 
 const snapshotPath = 'openapi/abco-api.json'
 const generatedFiles = [
-  'src/generated/api/client.gen.ts',
-  'src/generated/api/zod.gen.ts',
+  'src/generated/query/credentials/credentials.gen.ts',
   'src/generated/query/responseSchemas.gen.ts',
 ]
 

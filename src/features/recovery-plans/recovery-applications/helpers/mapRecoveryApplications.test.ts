@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { RecoveryAppRecordOutput, RecoveryAppsResponseOutput } from '@/generated/api/zod.gen'
+import type { RecoveryAppRecordOutput, RecoveryAppsResponseOutput } from '@/generated/query/zod'
 import { mapRecoveryApplications, toRecoveryApplicationJson } from './mapRecoveryApplications'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 
