@@ -8,22 +8,22 @@ import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useSubmitCleanRoomPolicy } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
-import type { CleanRoomPolicyRecord } from '@/generated/query/zod'
+import type { CleanRoomPolicyRecordOutput } from '@/generated/query/zod'
 import { CleanRoomPolicyForm } from './CleanRoomPolicyForm'
 import type { CleanRoomPolicyFormData } from './CleanRoomPolicyForm'
 
 interface CleanRoomPolicyModalProps {
   open: boolean
   onClose: () => void
-  existingPolicies: CleanRoomPolicyRecord[]
-  policy?: CleanRoomPolicyRecord
+  existingPolicies: CleanRoomPolicyRecordOutput[]
+  policy?: CleanRoomPolicyRecordOutput
 }
 
 const EMPTY_FORM: CleanRoomPolicyFormData = { id: '', name: '', description: '', enabled: true }
 
-function initialForm(policy?: CleanRoomPolicyRecord): CleanRoomPolicyFormData {
+function initialForm(policy?: CleanRoomPolicyRecordOutput): CleanRoomPolicyFormData {
   return policy
-    ? { id: policy.id, name: policy.name, description: policy.description ?? '', enabled: policy.enabled ?? true }
+    ? { id: policy.id, name: policy.name, description: policy.description ?? '', enabled: policy.enabled }
     : EMPTY_FORM
 }
 

@@ -1,3 +1,9 @@
-import type { RecoveryAppPoliciesResponse, RecoveryAppPolicyRecord } from '@/generated/query/zod'
+import type { RecoveryAppPoliciesResponse, RecoveryAppPoliciesResponseOutput, RecoveryAppPolicyRecordOutput } from '@/generated/query/zod'
 
-export const selectRecoveryAppPolicies = (response: RecoveryAppPoliciesResponse): RecoveryAppPolicyRecord[] => response.recovery_app_policies
+// validatingMutator parses the response through the zod schema before handing it to
+// react-query, so the value select actually receives has every default applied (the
+// Output shape) even though the generated hook's declared type is the pre-default
+// Input shape. Casting through the accurate Output type here keeps every consumer of
+// this select free of `?? <default>` fallbacks for fields the backend always fills in.
+export const selectRecoveryAppPolicies = ((response: RecoveryAppPoliciesResponseOutput): RecoveryAppPolicyRecordOutput[] =>
+  response.recovery_app_policies) as (response: RecoveryAppPoliciesResponse) => RecoveryAppPolicyRecordOutput[]

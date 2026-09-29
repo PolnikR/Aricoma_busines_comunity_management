@@ -8,7 +8,7 @@ import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useSubmitPolicy } from '@/generated/query/snapshot-policies/snapshot-policies.gen'
-import type { SnapshotPolicyRecord } from '@/generated/query/zod'
+import type { SnapshotPolicyRecordOutput } from '@/generated/query/zod'
 import type { SnapshotPolicyTimeUnit } from '../model/snapshotPolicyTypes'
 import { SnapshotPolicyForm } from './SnapshotPolicyForm'
 import type { SnapshotPolicyFormData } from './SnapshotPolicyForm'
@@ -16,8 +16,8 @@ import type { SnapshotPolicyFormData } from './SnapshotPolicyForm'
 interface SnapshotPolicyModalProps {
   open: boolean
   onClose: () => void
-  existingPolicies: SnapshotPolicyRecord[]
-  policy?: SnapshotPolicyRecord
+  existingPolicies: SnapshotPolicyRecordOutput[]
+  policy?: SnapshotPolicyRecordOutput
 }
 
 const EMPTY_FORM: SnapshotPolicyFormData = {
@@ -25,7 +25,7 @@ const EMPTY_FORM: SnapshotPolicyFormData = {
   retention_value: '1', retention_unit: 'days', max_snapshots: '', enabled: true,
 }
 
-function toFormData(policy: SnapshotPolicyRecord): SnapshotPolicyFormData {
+function toFormData(policy: SnapshotPolicyRecordOutput): SnapshotPolicyFormData {
   return {
     id: policy.id,
     name: policy.name,
@@ -36,11 +36,11 @@ function toFormData(policy: SnapshotPolicyRecord): SnapshotPolicyFormData {
     retention_value: String(policy.retention_value),
     retention_unit: policy.retention_unit,
     max_snapshots: policy.max_snapshots == null ? '' : String(policy.max_snapshots),
-    enabled: policy.enabled ?? true,
+    enabled: policy.enabled,
   }
 }
 
-function initialForm(policy?: SnapshotPolicyRecord) {
+function initialForm(policy?: SnapshotPolicyRecordOutput) {
   return policy ? toFormData(policy) : EMPTY_FORM
 }
 

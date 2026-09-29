@@ -19,10 +19,9 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useDeletePolicy } from '@/generated/query/snapshot-policies/snapshot-policies.gen'
-import type { SnapshotPolicyRecord } from '@/generated/query/zod'
+import type { SnapshotPolicyRecordOutput } from '@/generated/query/zod'
 import { SnapshotPolicyModal } from './SnapshotPolicyModal'
 
-type SnapshotPolicy = SnapshotPolicyRecord
 
 interface SnapshotPolicyFilters {
   level: string
@@ -45,7 +44,7 @@ function formatInterval(value: number, unit: string, t: ReturnType<typeof useTra
 function getColumns(
   t: ReturnType<typeof useTranslation>['t'],
   onViewJson: (policyId: string) => void,
-): ColumnDef<SnapshotPolicy>[] {
+): ColumnDef<SnapshotPolicyRecordOutput>[] {
   return [
     {
       id: 'name',
@@ -60,7 +59,10 @@ function getColumns(
     {
       id: 'description',
       header: t('tables.snapshotPolicy.description'),
-      cell: policy => <span className="block max-w-md truncate" title={policy.description ?? ''}>{policy.description ?? '-'}</span>,
+      cell: (policy) => {
+        const description = policy.description ?? ''
+        return <span className="block max-w-md truncate" title={description}>{description || '-'}</span>
+      },
     },
     {
       id: 'level',
@@ -112,7 +114,7 @@ function getColumns(
 }
 
 interface SnapshotPoliciesTableProps {
-  policies: SnapshotPolicy[]
+  policies: SnapshotPolicyRecordOutput[]
   isLoading: boolean
   error: Error | null
   isRetrying: boolean
@@ -123,8 +125,8 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
   const { t } = useTranslation()
   const deletePolicy = useDeletePolicy()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [editing, setEditing] = useState<SnapshotPolicy | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<SnapshotPolicy | null>(null)
+  const [editing, setEditing] = useState<SnapshotPolicyRecordOutput | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<SnapshotPolicyRecordOutput | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const [filters, setFilters] = useState<SnapshotPolicyFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<SnapshotPolicyFilters>(EMPTY_FILTERS)
@@ -274,8 +276,8 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
         {selected ? (
           <dl className="px-5 py-2">
             <DetailRow label={t('details.policyId')} value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label={t('details.description')} value={selected.description ?? '-'} />
-            <DetailRow label={t('details.level')} value={selected.level ?? '-'} />
+            <DetailRow label={t('details.description')} value={(selected.description ?? '') || '-'} />
+            <DetailRow label={t('details.level')} value={(selected.level ?? '') || '-'} />
             <DetailRow label={t('details.frequency')} value={t('snapshotPolicies.every').replace('{interval}', formatInterval(selected.frequency_value, selected.frequency_unit, t))} />
             <DetailRow label={t('details.retention')} value={formatInterval(selected.retention_value, selected.retention_unit, t)} />
             <DetailRow label={t('details.maxSnapshots')} value={selected.max_snapshots ?? t('snapshotPolicies.noLimit')} />
@@ -334,7 +336,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
               },
               {
                 name: t('snapshotPolicies.description'),
-                detail: jsonViewed.description ?? '—',
+                detail: (jsonViewed.description ?? '') || '—',
                 status: 'ok' as const,
               },
               {

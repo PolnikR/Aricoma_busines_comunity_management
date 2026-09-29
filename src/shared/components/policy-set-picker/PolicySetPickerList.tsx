@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Input } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
-import type { PolicySetRecord } from '@/generated/query/zod'
+import type { PolicySetRecordOutput } from '@/generated/query/zod'
 
 interface PolicySetPickerListProps {
-  policySets: PolicySetRecord[]
+  policySets: PolicySetRecordOutput[]
   selectedPolicySetId: string | null
   recoveryPoliciesById: Map<string, { name: string }>
   onSelect: (policySetId: string) => void

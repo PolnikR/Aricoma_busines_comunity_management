@@ -3,7 +3,7 @@ import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Input, RadioField, Textarea } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
-import type { CleanRoomPolicyRecord, RecoveryAppPolicyRecord, SnapshotPolicyRecord } from '@/generated/query/zod'
+import type { CleanRoomPolicyRecordOutput, RecoveryAppPolicyRecordOutput, SnapshotPolicyRecordOutput } from '@/generated/query/zod'
 
 export interface PolicySetFormData {
   id: string
@@ -17,9 +17,9 @@ export interface PolicySetFormData {
 interface PolicySetFormProps {
   data: PolicySetFormData
   errors: Partial<Record<keyof PolicySetFormData, string>>
-  availableSnapshotPolicies: SnapshotPolicyRecord[]
-  availableRecoveryAppPolicies: RecoveryAppPolicyRecord[]
-  availableCleanRoomPolicies: CleanRoomPolicyRecord[]
+  availableSnapshotPolicies: SnapshotPolicyRecordOutput[]
+  availableRecoveryAppPolicies: RecoveryAppPolicyRecordOutput[]
+  availableCleanRoomPolicies: CleanRoomPolicyRecordOutput[]
   isRecoveryAppPoliciesLoading: boolean
   recoveryAppPoliciesError: Error | null
   onRetryRecoveryAppPolicies: () => void

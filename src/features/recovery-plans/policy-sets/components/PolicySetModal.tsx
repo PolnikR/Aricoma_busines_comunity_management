@@ -14,15 +14,15 @@ import { selectRecoveryAppPolicies } from '@/features/recovery-plans/recovery-po
 import { useGetCleanRoomPolicies } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
 import { selectCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/model/selectCleanRoomPolicies'
 import { useSubmitPolicySet } from '@/generated/query/policy-sets/policy-sets.gen'
-import type { PolicySetRecord } from '@/generated/query/zod'
+import type { PolicySetRecordOutput } from '@/generated/query/zod'
 import { PolicySetForm } from './PolicySetForm'
 import type { PolicySetFormData } from './PolicySetForm'
 
 interface PolicySetModalProps {
   open: boolean
   onClose: () => void
-  existingPolicySets: PolicySetRecord[]
-  policySet?: PolicySetRecord
+  existingPolicySets: PolicySetRecordOutput[]
+  policySet?: PolicySetRecordOutput
 }
 
 const EMPTY_FORM: PolicySetFormData = {
@@ -34,7 +34,7 @@ const EMPTY_FORM: PolicySetFormData = {
   clean_room_policy_id: '',
 }
 
-function toFormData(policySet: PolicySetRecord): PolicySetFormData {
+function toFormData(policySet: PolicySetRecordOutput): PolicySetFormData {
   return {
     id: policySet.id,
     name: policySet.name,
@@ -45,7 +45,7 @@ function toFormData(policySet: PolicySetRecord): PolicySetFormData {
   }
 }
 
-function initialForm(policySet?: PolicySetRecord) {
+function initialForm(policySet?: PolicySetRecordOutput) {
   return policySet ? toFormData(policySet) : EMPTY_FORM
 }
 

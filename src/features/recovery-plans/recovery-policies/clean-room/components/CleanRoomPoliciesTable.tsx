@@ -18,15 +18,14 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useDeleteCleanRoomPolicy } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
-import type { CleanRoomPolicyRecord } from '@/generated/query/zod'
+import type { CleanRoomPolicyRecordOutput } from '@/generated/query/zod'
 import { CleanRoomPolicyModal } from './CleanRoomPolicyModal'
 
-type CleanRoomPolicy = CleanRoomPolicyRecord
 
 function getColumns(
   t: ReturnType<typeof useTranslation>['t'],
   onViewJson: (policyId: string) => void,
-): ColumnDef<CleanRoomPolicy>[] {
+): ColumnDef<CleanRoomPolicyRecordOutput>[] {
   return [
     {
       id: 'name',
@@ -41,7 +40,10 @@ function getColumns(
     {
       id: 'description',
       header: t('tables.cleanRoomPolicy.description'),
-      cell: policy => <span className="block max-w-3xl truncate" title={policy.description ?? ''}>{policy.description ?? '-'}</span>,
+      cell: (policy) => {
+        const description = policy.description ?? ''
+        return <span className="block max-w-3xl truncate" title={description}>{description || '-'}</span>
+      },
     },
     {
       id: 'status',
@@ -72,7 +74,7 @@ function getColumns(
 }
 
 interface CleanRoomPoliciesTableProps {
-  policies: CleanRoomPolicy[]
+  policies: CleanRoomPolicyRecordOutput[]
   isLoading: boolean
   error: Error | null
   isRetrying: boolean
@@ -83,8 +85,8 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
   const { t } = useTranslation()
   const deletePolicy = useDeleteCleanRoomPolicy()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [editing, setEditing] = useState<CleanRoomPolicy | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<CleanRoomPolicy | null>(null)
+  const [editing, setEditing] = useState<CleanRoomPolicyRecordOutput | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<CleanRoomPolicyRecordOutput | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const rows = useMemo(() => policies, [policies])
   const selected = rows.find(policy => policy.id === selectedId) ?? null
@@ -168,7 +170,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
         {selected ? (
           <dl className="px-5 py-2">
             <DetailRow label={t('details.policyId')} value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label={t('details.description')} value={selected.description ?? '-'} />
+            <DetailRow label={t('details.description')} value={(selected.description ?? '') || '-'} />
             <DetailRow label={t('details.status')} value={t(selected.enabled ? 'cleanRoomPolicies.enabled' : 'cleanRoomPolicies.disabled')} />
           </dl>
         ) : null}
@@ -224,7 +226,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
               },
               {
                 name: t('cleanRoomPolicies.description'),
-                detail: jsonViewed.description ?? '—',
+                detail: (jsonViewed.description ?? '') || '—',
                 status: 'ok' as const,
               },
               {

@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
-import type { CleanRoomPolicyRecord } from '@/generated/query/zod'
+import type { CleanRoomPolicyRecordOutput } from '@/generated/query/zod'
 import { CleanRoomPoliciesTable } from './CleanRoomPoliciesTable'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -11,7 +11,7 @@ vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => (
   useSubmitCleanRoomPolicy: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 }))
 
-const policy: CleanRoomPolicyRecord = {
+const policy: CleanRoomPolicyRecordOutput = {
   id: 'enforce-clean-target',
   name: 'Enforce Clean Target',
   description: 'Remove conflicting target resources before recovery.',
@@ -19,6 +19,21 @@ const policy: CleanRoomPolicyRecord = {
 }
 
 describe('CleanRoomPoliciesTable', () => {
+  it('renders an empty-string description as a dash', () => {
+    render(
+      <CleanRoomPoliciesTable
+        policies={[{ ...policy, description: '' }]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.getAllByText('-').length).toBeGreaterThan(0)
+  })
+
+
   it('keeps the toolbar and real column labels visible while rows load', () => {
     render(
       <CleanRoomPoliciesTable

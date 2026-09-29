@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { PolicySetRecord } from '@/generated/query/zod'
+import type { PolicySetRecordOutput } from '@/generated/query/zod'
 import { PolicySetPicker } from './PolicySetPicker'
 
 const {
@@ -25,7 +25,7 @@ vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => (
   useGetCleanRoomPolicies: useCleanRoomPoliciesMock,
 }))
 
-const policySets: PolicySetRecord[] = [
+const policySets: PolicySetRecordOutput[] = [
   {
     id: 'tier2-apps',
     name: 'Tier 2 applications',

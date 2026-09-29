@@ -2,12 +2,8 @@ import type { ReactNode } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
 import { useTranslation } from '@/hooks/useTranslation'
 import { LayersIcon, RefreshIcon, ShieldIcon } from '@/shared/icons/Icons'
-import type { CleanRoomPolicyRecord, PolicySetRecord, RecoveryAppPolicyRecord, SnapshotPolicyRecord } from '@/generated/query/zod'
+import type { CleanRoomPolicyRecordOutput, PolicySetRecordOutput, RecoveryAppPolicyRecordOutput, SnapshotPolicyRecordOutput } from '@/generated/query/zod'
 
-type SnapshotPolicy = SnapshotPolicyRecord
-type RecoveryAppPolicy = RecoveryAppPolicyRecord
-type CleanRoomPolicy = CleanRoomPolicyRecord
-type PolicySet = PolicySetRecord
 
 type Translate = ReturnType<typeof useTranslation>['t']
 
@@ -27,10 +23,10 @@ interface PolicyDetailSection {
 }
 
 interface PolicySetPickerDetailsProps {
-  policySet: PolicySet
-  snapshotPolicy: SnapshotPolicy | undefined
-  recoveryPolicy: RecoveryAppPolicy | undefined
-  cleanRoomPolicy: CleanRoomPolicy | undefined
+  policySet: PolicySetRecordOutput
+  snapshotPolicy: SnapshotPolicyRecordOutput | undefined
+  recoveryPolicy: RecoveryAppPolicyRecordOutput | undefined
+  cleanRoomPolicy: CleanRoomPolicyRecordOutput | undefined
   isLoading: boolean
   hasQueryError: boolean
 }
@@ -39,7 +35,7 @@ function formatInterval(value: number, unit: string, namespace: 'snapshotPolicie
   return `${String(value)} ${t(`${namespace}.unit.${unit}`)}`
 }
 
-function formatRecoverySelection(policy: RecoveryAppPolicy, t: Translate) {
+function formatRecoverySelection(policy: RecoveryAppPolicyRecordOutput, t: Translate) {
   if (policy.snapshot_selection_mode === 'latest') return t('recoveryAppPolicies.selection.latest')
   if (policy.snapshot_selection_mode === 'time_range') {
     const age = formatInterval(policy.snapshot_max_age_value ?? 0, policy.snapshot_max_age_unit ?? 'hours', 'recoveryAppPolicies', t)
@@ -58,10 +54,10 @@ function FactField({ label, value }: { label: string; value: ReactNode }) {
 }
 
 function buildSections(
-  policySet: PolicySet,
-  snapshotPolicy: SnapshotPolicy | undefined,
-  recoveryPolicy: RecoveryAppPolicy | undefined,
-  cleanRoomPolicy: CleanRoomPolicy | undefined,
+  policySet: PolicySetRecordOutput,
+  snapshotPolicy: SnapshotPolicyRecordOutput | undefined,
+  recoveryPolicy: RecoveryAppPolicyRecordOutput | undefined,
+  cleanRoomPolicy: CleanRoomPolicyRecordOutput | undefined,
   t: Translate,
 ): PolicyDetailSection[] {
 
@@ -80,7 +76,7 @@ function buildSections(
   ] : []
 
   const cleanRoomFacts: PolicyDetailFact[] = cleanRoomPolicy ? [
-    { label: t('details.description'), value: cleanRoomPolicy.description ?? '-' },
+    { label: t('details.description'), value: (cleanRoomPolicy.description ?? '') || '-' },
     { label: t('details.status'), value: t(cleanRoomPolicy.enabled ? 'cleanRoomPolicies.enabled' : 'cleanRoomPolicies.disabled') },
   ] : []
 

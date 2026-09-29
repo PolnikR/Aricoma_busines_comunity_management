@@ -7,7 +7,7 @@ import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useSubmitCredential } from '@/generated/query/credentials/credentials.gen'
-import type { CredentialRecord } from '@/generated/query/zod'
+import type { CredentialRecordOutput } from '@/generated/query/zod'
 import { createEncryptedCredentialPayload } from '../api/credentialsCrypto'
 import type { CredentialFormData } from '../model/credentialForm'
 import { CredentialCreateForm } from './CredentialCreateForm'
@@ -16,8 +16,8 @@ import type { CredentialCreateFormData } from './CredentialCreateForm'
 interface CredentialCreateModalProps {
   open: boolean
   onClose: () => void
-  existingCredentials: CredentialRecord[]
-  credential?: CredentialRecord
+  existingCredentials: CredentialRecordOutput[]
+  credential?: CredentialRecordOutput
 }
 
 const EMPTY_FORM: CredentialCreateFormData = {
@@ -29,7 +29,7 @@ const EMPTY_FORM: CredentialCreateFormData = {
   confirmPassword: '',
 }
 
-function createInitialForm(credential?: CredentialRecord): CredentialCreateFormData {
+function createInitialForm(credential?: CredentialRecordOutput): CredentialCreateFormData {
   return credential
     ? {
         id: credential.id,

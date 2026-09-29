@@ -19,10 +19,9 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useDeleteRecoveryAppPolicy } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
-import type { RecoveryAppPolicyRecord } from '@/generated/query/zod'
+import type { RecoveryAppPolicyRecordOutput } from '@/generated/query/zod'
 import { RecoveryAppPolicyModal } from './RecoveryAppPolicyModal'
 
-type RecoveryAppPolicy = RecoveryAppPolicyRecord
 
 interface RecoveryAppPolicyFilters {
   level: string
@@ -43,7 +42,7 @@ function formatInterval(value: number, unit: string, t: ReturnType<typeof useTra
   return `${String(value)} ${t(`recoveryAppPolicies.unit.${unit}`)}`
 }
 
-function formatSelection(policy: RecoveryAppPolicy, t: ReturnType<typeof useTranslation>['t']) {
+function formatSelection(policy: RecoveryAppPolicyRecordOutput, t: ReturnType<typeof useTranslation>['t']) {
   if (policy.snapshot_selection_mode === 'latest') return t('recoveryAppPolicies.selection.latest')
   if (policy.snapshot_selection_mode === 'time_range') {
     return t('recoveryAppPolicies.selection.timeRangeSummary')
@@ -55,7 +54,7 @@ function formatSelection(policy: RecoveryAppPolicy, t: ReturnType<typeof useTran
 function getColumns(
   t: ReturnType<typeof useTranslation>['t'],
   onViewJson: (policyId: string) => void,
-): ColumnDef<RecoveryAppPolicy>[] {
+): ColumnDef<RecoveryAppPolicyRecordOutput>[] {
   return [
     {
       id: 'name',
@@ -70,7 +69,10 @@ function getColumns(
     {
       id: 'description',
       header: t('tables.recoveryAppPolicy.description'),
-      cell: policy => <span className="block max-w-md truncate" title={policy.description ?? ''}>{policy.description ?? '-'}</span>,
+      cell: (policy) => {
+        const description = policy.description ?? ''
+        return <span className="block max-w-md truncate" title={description}>{description || '-'}</span>
+      },
     },
     {
       id: 'level',
@@ -112,7 +114,7 @@ function getColumns(
 }
 
 interface RecoveryAppPoliciesTableProps {
-  policies: RecoveryAppPolicy[]
+  policies: RecoveryAppPolicyRecordOutput[]
   isLoading: boolean
   error: Error | null
   isRetrying: boolean
@@ -123,8 +125,8 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
   const { t } = useTranslation()
   const deletePolicy = useDeleteRecoveryAppPolicy()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [editing, setEditing] = useState<RecoveryAppPolicy | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<RecoveryAppPolicy | null>(null)
+  const [editing, setEditing] = useState<RecoveryAppPolicyRecordOutput | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<RecoveryAppPolicyRecordOutput | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const [filters, setFilters] = useState<RecoveryAppPolicyFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<RecoveryAppPolicyFilters>(EMPTY_FILTERS)
@@ -232,8 +234,8 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
         {selected ? (
           <dl className="px-5 py-2">
             <DetailRow label={t('details.policyId')} value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label={t('details.description')} value={selected.description ?? '-'} />
-            <DetailRow label={t('details.level')} value={selected.level ?? '-'} />
+            <DetailRow label={t('details.description')} value={(selected.description ?? '') || '-'} />
+            <DetailRow label={t('details.level')} value={(selected.level ?? '') || '-'} />
             <DetailRow label={t('details.frequency')} value={t('recoveryAppPolicies.every').replace('{interval}', formatInterval(selected.frequency_value, selected.frequency_unit, t))} />
             <DetailRow label={t('details.retention')} value={formatInterval(selected.retention_value, selected.retention_unit, t)} />
             <DetailRow label={t('details.snapshotSelection')} value={formatSelection(selected, t)} />
@@ -275,7 +277,7 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
           },
           {
             name: t('recoveryAppPolicies.description'),
-            detail: jsonViewed.description ?? '—',
+            detail: (jsonViewed.description ?? '') || '—',
             status: 'ok' as const,
           },
           {

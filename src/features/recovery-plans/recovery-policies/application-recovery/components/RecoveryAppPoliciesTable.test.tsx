@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
-import type { RecoveryAppPolicyRecord } from '@/generated/query/zod'
+import type { RecoveryAppPolicyRecordOutput } from '@/generated/query/zod'
 import { RecoveryAppPoliciesTable } from './RecoveryAppPoliciesTable'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -11,14 +11,14 @@ vi.mock('@/generated/query/recovery-app-policies/recovery-app-policies.gen', () 
   useSubmitRecoveryAppPolicy: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 }))
 
-const policy: RecoveryAppPolicyRecord = {
+const policy: RecoveryAppPolicyRecordOutput = {
   id: 'medium-monthly-exacttime', name: 'Medium monthly', description: 'Monthly test.', level: 'medium',
   frequency_value: 30, frequency_unit: 'days', retention_value: 2, retention_unit: 'days', boot_verify: false,
   snapshot_selection_mode: 'exact_time', snapshot_max_age_value: null, snapshot_max_age_unit: null,
   snapshot_target_time: '02:00', enabled: true,
 }
 
-const latestPolicy: RecoveryAppPolicyRecord = {
+const latestPolicy: RecoveryAppPolicyRecordOutput = {
   ...policy,
   id: 'critical-latest',
   name: 'Critical latest',
@@ -28,6 +28,21 @@ const latestPolicy: RecoveryAppPolicyRecord = {
 }
 
 describe('RecoveryAppPoliciesTable', () => {
+  it('renders an empty-string description as a dash', () => {
+    render(
+      <RecoveryAppPoliciesTable
+        policies={[{ ...policy, description: '' }]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.getAllByText('-').length).toBeGreaterThan(0)
+  })
+
+
   it('keeps static table content visible and dependent filters disabled while rows load', async () => {
     const user = userEvent.setup()
     render(<RecoveryAppPoliciesTable policies={[]} isLoading error={null} isRetrying={false} onRetry={vi.fn()} />)

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { useGetRecoveryAppPolicies } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
 import { useGetCleanRoomPolicies } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
-import type { PolicySetRecord } from '@/generated/query/zod'
+import type { PolicySetRecordOutput } from '@/generated/query/zod'
 import { PolicySetModal } from './PolicySetModal'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -48,7 +48,7 @@ const recoveryAppPolicy = {
   enabled: true,
 }
 
-const policySet: PolicySetRecord = {
+const policySet: PolicySetRecordOutput = {
   id: 'tier2-apps',
   name: 'Tier 2 applications',
   description: 'Policy set using the medium-tier, 6-hour cadence.',

@@ -8,7 +8,7 @@ import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useSubmitRecoveryAppPolicy } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
-import type { RecoveryAppPolicyRecord } from '@/generated/query/zod'
+import type { RecoveryAppPolicyRecordOutput } from '@/generated/query/zod'
 import { toRecoveryAppPolicySubmitPayload } from '../model/recoveryAppPolicySubmit'
 import type { RecoveryAppPolicySelectionMode, RecoveryAppPolicyTimeUnit } from '../model/recoveryAppPolicyTypes'
 import { RecoveryAppPolicyForm } from './RecoveryAppPolicyForm'
@@ -17,8 +17,8 @@ import type { RecoveryAppPolicyFormData } from './RecoveryAppPolicyForm'
 interface RecoveryAppPolicyModalProps {
   open: boolean
   onClose: () => void
-  existingPolicies: RecoveryAppPolicyRecord[]
-  policy?: RecoveryAppPolicyRecord
+  existingPolicies: RecoveryAppPolicyRecordOutput[]
+  policy?: RecoveryAppPolicyRecordOutput
 }
 
 const EMPTY_FORM: RecoveryAppPolicyFormData = {
@@ -27,7 +27,7 @@ const EMPTY_FORM: RecoveryAppPolicyFormData = {
   snapshot_max_age_value: '', snapshot_max_age_unit: '', snapshot_target_time: '', enabled: true,
 }
 
-function toFormData(policy: RecoveryAppPolicyRecord): RecoveryAppPolicyFormData {
+function toFormData(policy: RecoveryAppPolicyRecordOutput): RecoveryAppPolicyFormData {
   return {
     id: policy.id,
     name: policy.name,
@@ -37,16 +37,16 @@ function toFormData(policy: RecoveryAppPolicyRecord): RecoveryAppPolicyFormData 
     frequency_unit: policy.frequency_unit,
     retention_value: String(policy.retention_value),
     retention_unit: policy.retention_unit,
-    boot_verify: policy.boot_verify ?? false,
-    snapshot_selection_mode: policy.snapshot_selection_mode ?? 'latest',
+    boot_verify: policy.boot_verify,
+    snapshot_selection_mode: policy.snapshot_selection_mode,
     snapshot_max_age_value: policy.snapshot_max_age_value == null ? '' : String(policy.snapshot_max_age_value),
     snapshot_max_age_unit: policy.snapshot_max_age_unit ?? '',
     snapshot_target_time: policy.snapshot_target_time ?? '',
-    enabled: policy.enabled ?? true,
+    enabled: policy.enabled,
   }
 }
 
-function initialForm(policy?: RecoveryAppPolicyRecord) {
+function initialForm(policy?: RecoveryAppPolicyRecordOutput) {
   return policy ? toFormData(policy) : EMPTY_FORM
 }
 

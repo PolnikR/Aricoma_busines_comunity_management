@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { RecoveryAppPolicyRecord } from '@/generated/query/zod'
+import type { RecoveryAppPolicyRecordOutput } from '@/generated/query/zod'
 import { RecoveryAppPolicyModal } from './RecoveryAppPolicyModal'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -10,7 +10,7 @@ vi.mock('react-router', async importOriginal => ({
   useBlocker: () => ({ state: 'unblocked' as const }),
 }))
 
-const policy: RecoveryAppPolicyRecord = {
+const policy: RecoveryAppPolicyRecordOutput = {
   id: 'critical-daily-latest',
   name: 'Critical - Daily DR Test',
   description: 'Daily recovery test using the newest available snapshot.',
@@ -27,7 +27,7 @@ const policy: RecoveryAppPolicyRecord = {
   enabled: true,
 }
 
-const exactTimePolicy: RecoveryAppPolicyRecord = {
+const exactTimePolicy: RecoveryAppPolicyRecordOutput = {
   ...policy,
   id: 'medium-monthly-exacttime',
   name: 'Medium - Monthly DR Test',

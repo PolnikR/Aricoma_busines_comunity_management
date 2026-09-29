@@ -5,12 +5,12 @@ import { useGetRecoveryAppPolicies } from '@/generated/query/recovery-app-polici
 import { selectRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/model/selectRecoveryAppPolicies'
 import { useGetCleanRoomPolicies } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
 import { selectCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/model/selectCleanRoomPolicies'
-import type { PolicySetRecord } from '@/generated/query/zod'
+import type { PolicySetRecordOutput } from '@/generated/query/zod'
 import { PolicySetPickerList } from './PolicySetPickerList'
 import { PolicySetPickerDetails } from './PolicySetPickerDetails'
 
 interface PolicySetPickerProps {
-  policySets: PolicySetRecord[]
+  policySets: PolicySetRecordOutput[]
   selectedPolicySetId: string | null
   onSelect: (policySetId: string) => void
 }

@@ -33,6 +33,7 @@ function stubFetch() {
       }))
     }
     if (url.startsWith('/api/delete_policy_set') && method === 'DELETE') {
+      expect(url).toBe(`/api/delete_policy_set?policy_set_id=${policySet.id}`)
       return Promise.resolve(new Response(JSON.stringify({ policy_sets: [] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },

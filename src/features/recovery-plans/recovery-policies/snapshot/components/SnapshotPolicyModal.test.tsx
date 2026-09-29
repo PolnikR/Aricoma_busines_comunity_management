@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { SnapshotPolicyRecord } from '@/generated/query/zod'
+import type { SnapshotPolicyRecordOutput } from '@/generated/query/zod'
 import { SnapshotPolicyModal } from './SnapshotPolicyModal'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -10,7 +10,7 @@ vi.mock('react-router', async (importOriginal) => ({
   useBlocker: () => ({ state: 'unblocked' as const }),
 }))
 
-const policy: SnapshotPolicyRecord = {
+const policy: SnapshotPolicyRecordOutput = {
   id: 'critical-15m',
   name: 'Critical — 15 min',
   description: 'Every 15 minutes, retained 3 hours.',

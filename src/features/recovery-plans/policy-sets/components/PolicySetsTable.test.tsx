@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
-import type { PolicySetRecord } from '@/generated/query/zod'
+import type { PolicySetRecordOutput } from '@/generated/query/zod'
 import { PolicySetsTable } from './PolicySetsTable'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -29,7 +29,7 @@ vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => (
   }),
 }))
 
-const policySet: PolicySetRecord = {
+const policySet: PolicySetRecordOutput = {
   id: 'tier2-apps',
   name: 'Tier 2 applications',
   description: 'Policy set using the medium-tier, 6-hour cadence.',
@@ -38,7 +38,7 @@ const policySet: PolicySetRecord = {
   clean_room_policy_id: 'enforce-clean-target',
 }
 
-const partialPolicySet: PolicySetRecord = {
+const partialPolicySet: PolicySetRecordOutput = {
   id: 'tier3-apps',
   name: 'Tier 3 applications',
   description: 'Policy set with only a snapshot policy assigned.',
@@ -48,6 +48,20 @@ const partialPolicySet: PolicySetRecord = {
 }
 
 describe('PolicySetsTable', () => {
+  it('renders an empty-string description as a dash', () => {
+    render(
+      <PolicySetsTable
+        policySets={[{ ...policySet, description: '' }]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    expect(screen.getAllByText('-').length).toBeGreaterThan(0)
+  })
+
   it('keeps its static toolbar and headers visible while policy-set rows load', () => {
     render(
       <PolicySetsTable

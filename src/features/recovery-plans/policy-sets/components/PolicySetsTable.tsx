@@ -23,12 +23,11 @@ import { selectRecoveryAppPolicies } from '@/features/recovery-plans/recovery-po
 import { useGetCleanRoomPolicies } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
 import { selectCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/model/selectCleanRoomPolicies'
 import { useDeletePolicySet } from '@/generated/query/policy-sets/policy-sets.gen'
-import type { PolicySetRecord } from '@/generated/query/zod'
+import type { PolicySetRecordOutput } from '@/generated/query/zod'
 import { PolicySetModal } from './PolicySetModal'
 
-type PolicySet = PolicySetRecord
 
-function countPolicies(policySet: PolicySet): number {
+function countPolicies(policySet: PolicySetRecordOutput): number {
   return [policySet.snapshot_policy_id, policySet.recovery_app_policy_id, policySet.clean_room_policy_id]
     .filter(Boolean).length
 }
@@ -36,7 +35,7 @@ function countPolicies(policySet: PolicySet): number {
 function getColumns(
   t: ReturnType<typeof useTranslation>['t'],
   onViewJson: (policySetId: string) => void,
-): ColumnDef<PolicySet>[] {
+): ColumnDef<PolicySetRecordOutput>[] {
   return [
     {
       id: 'name',
@@ -51,7 +50,10 @@ function getColumns(
     {
       id: 'description',
       header: t('tables.policySet.description'),
-      cell: policySet => <span className="block max-w-md truncate" title={policySet.description ?? ''}>{policySet.description ?? '-'}</span>,
+      cell: (policySet) => {
+        const description = policySet.description ?? ''
+        return <span className="block max-w-md truncate" title={description}>{description || '-'}</span>
+      },
     },
     {
       id: 'policies',
@@ -79,7 +81,7 @@ function getColumns(
 }
 
 interface PolicySetsTableProps {
-  policySets: PolicySet[]
+  policySets: PolicySetRecordOutput[]
   isLoading: boolean
   error: Error | null
   isRetrying: boolean
@@ -93,8 +95,8 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
   const { data: availableRecoveryAppPolicies = [] } = useGetRecoveryAppPolicies({ query: { select: selectRecoveryAppPolicies } })
   const { data: availableCleanRoomPolicies = [] } = useGetCleanRoomPolicies({ query: { select: selectCleanRoomPolicies } })
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [editing, setEditing] = useState<PolicySet | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<PolicySet | null>(null)
+  const [editing, setEditing] = useState<PolicySetRecordOutput | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<PolicySetRecordOutput | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const rows = useMemo(() => policySets, [policySets])
   const selected = rows.find(policySet => policySet.id === selectedId) ?? null
@@ -190,7 +192,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         {selected ? (
           <dl className="px-5 py-2">
             <DetailRow label={t('details.policySetId')} value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label={t('details.description')} value={selected.description ?? '-'} />
+            <DetailRow label={t('details.description')} value={(selected.description ?? '') || '-'} />
             <DetailRow label={t('details.snapshotPolicies')} value={selected.snapshot_policy_id ? policyName(selected.snapshot_policy_id) : '-'} />
             <DetailRow label={t('details.recoveryAppPolicy')} value={recoveryAppPolicyName(selected.recovery_app_policy_id ?? '')} />
             <DetailRow label={t('details.cleanRoomPolicy')} value={cleanRoomPolicyName(selected.clean_room_policy_id ?? '')} />

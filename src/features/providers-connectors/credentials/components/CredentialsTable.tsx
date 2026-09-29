@@ -16,11 +16,11 @@ import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useDeleteCredential } from '@/generated/query/credentials/credentials.gen'
-import type { CredentialRecord } from '@/generated/query/zod'
+import type { CredentialRecordOutput } from '@/generated/query/zod'
 import { CredentialCreateModal } from './CredentialCreateModal'
 
 interface CredentialsTableProps {
-  credentials: CredentialRecord[]
+  credentials: CredentialRecordOutput[]
   isLoading: boolean
   error: Error | null
   isRetrying: boolean
@@ -31,14 +31,14 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
   const { t } = useTranslation()
   const deleteCredential = useDeleteCredential()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [editing, setEditing] = useState<CredentialRecord | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<CredentialRecord | null>(null)
+  const [editing, setEditing] = useState<CredentialRecordOutput | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<CredentialRecordOutput | null>(null)
   const loadErrorDescription = extractBackendErrorDetail(error)
   const deleteErrorDescription = extractBackendErrorDetail(deleteCredential.error)
   const rows = useMemo(() => credentials, [credentials])
   const selected = rows.find(credential => credential.id === selectedId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'username'] })
-  const columns: ColumnDef<CredentialRecord>[] = [
+  const columns: ColumnDef<CredentialRecordOutput>[] = [
     {
       id: 'name',
       header: t('credentials.table.name'),
