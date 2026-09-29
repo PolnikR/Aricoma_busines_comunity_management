@@ -12,7 +12,7 @@ import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
 import { ResourceSelectionCard } from '@/shared/components/resource-selection/ResourceSelectionCard'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
 import { Card } from '@/shared/components/card/Card'
-import { DataTable } from '@/shared/components/data-table/DataTable'
+import { AuxiliaryVolumeDropZone } from './AuxiliaryVolumeDropZone'
 import { Badge } from '@/shared/components/badge/Badge'
 import { PolicySetPickerList } from '@/shared/components/policy-set-picker/PolicySetPickerList'
 import { Toggle } from '@/shared/components/toggle/Toggle'
@@ -186,15 +186,7 @@ export function TopologyPreview() {
                       <div className="flex min-w-0 flex-col rounded-lg border-2 border-dashed border-border bg-surface p-4">
                         <h3 className="text-sm font-semibold">Selected source volumes</h3>
                         <p className="mt-1 text-xs leading-5 text-text-muted">Volumes discovered from VMs are preselected. Drag additional source volumes here.</p>
-                        <ResourceSelectionCard items={volumes} emptyText="Drop source volumes here." removeLabel="Remove volume" ariaLabel="Selected source volumes" dropDataKey="recovery-group-volume-name" onResourceDrop={addVolume} onResourceRemove={removeVolume} className="mt-3 rounded-lg border border-border" />
-                        {remote && volumes.length > 0 && <div className="mt-4 min-w-0">
-                          <h3 className="mb-2 text-sm font-semibold">Auxiliary mapping</h3>
-                          <p className="mb-3 text-xs text-text-muted">Existing replicas on {partner?.name}. One auxiliary name per selected source volume.</p>
-                      <DataTable rows={volumes} rowKey={volume => volume} layout="fit" ariaLabel="Metro Mirror volume pairs" density="comfortable" columns={[
-                        { id: 'source', header: 'Source volume', cell: volume => <div className="py-2"><p className="break-all font-medium text-text-primary">{volume}</p><p className="mt-1 text-xs text-text-muted">{discoveredVolumes.includes(volume) ? `${vms.filter(vm => vmVolumes[sourceId]?.[vm]?.includes(volume)).join(', ')} · Discovered` : 'Manually added'}</p></div> },
-                        { id: 'auxiliary', header: 'Auxiliary volume on partner', cell: volume => <div className="grid min-w-0 gap-2 py-2"><Input aria-label={`Auxiliary volume for ${volume}`} placeholder={`DR_${volume}`} value={auxiliary[volume] ?? ''} required invalid={auxiliary[volume] !== undefined && !auxiliary[volume].trim()} onChange={event => { setAuxiliary(current => ({ ...current, [volume]: event.target.value })) }} /><div><Badge color={auxiliary[volume]?.trim() ? 'info' : 'warning'} size="sm">{auxiliary[volume]?.trim() ? 'Name entered' : 'Required'}</Badge></div></div> },
-                      ]} />
-                        </div>}
+                        {remote ? <AuxiliaryVolumeDropZone volumes={volumes} auxiliary={auxiliary} onAdd={addVolume} onRemove={removeVolume} onChange={(volume, value) => { setAuxiliary(current => ({ ...current, [volume]: value })) }} /> : <ResourceSelectionCard items={volumes} emptyText="Drop source volumes here." removeLabel="Remove volume" ariaLabel="Selected source volumes" dropDataKey="recovery-group-volume-name" onResourceDrop={addVolume} onResourceRemove={removeVolume} className="mt-3 rounded-lg border border-border" />}
                       </div>
                     </div>
                     <p className="text-xs leading-5 text-text-muted">{remote ? 'Enter the existing Metro Mirror replica name for each source volume. Auxiliary volumes are not snapshots; FlashCopy runs on the partner. Names are not checked against storage in this preview.' : 'Source volumes are discovered automatically. FlashCopy creates point-in-time copies on the same FlashSystem.'}</p>
