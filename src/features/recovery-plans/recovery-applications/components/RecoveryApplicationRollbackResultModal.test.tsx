@@ -21,7 +21,8 @@ function renderInLanguage(ui: ReactElement, language: Language) {
   )
 }
 
-const completeReport: RollbackReport = {
+// Shared by the application and group modals, so it keeps its literal type.
+const completeReport = {
   status: 'ok',
   airflow: {
     status: 'ok',
@@ -40,7 +41,7 @@ const completeReport: RollbackReport = {
     status: 'ok',
     removed_vms: ['finance-db-01'],
   },
-}
+} satisfies RollbackReport
 
 describe('RecoveryApplicationRollbackResultModal', () => {
   it('shows known checks and the complete rollback response', () => {

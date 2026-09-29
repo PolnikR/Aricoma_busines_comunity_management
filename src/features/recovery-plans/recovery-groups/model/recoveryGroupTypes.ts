@@ -1,4 +1,17 @@
-import type { RecoveryGroupRecordOutput } from '@/generated/api/zod.gen'
+import type { RecoveryGroup as GeneratedRecoveryGroup } from '@/generated/query/zod'
+import type {
+  RecoveryGroupInventoryResponse,
+  RecoveryGroupInventoryResponseOutput,
+  RecoveryGroupRecordOutput,
+  RecoveryVMOutput,
+  RollbackReportOutput,
+} from '@/generated/query/zod'
+
+// Rollback report of delete/rollback responses, typed by the patched spec.
+export type RollbackReport = RollbackReportOutput
+
+// Body of POST /submit_recovery_group, including per-VM metadata (patched spec).
+export type RecoveryGroupSubmitPayload = GeneratedRecoveryGroup
 
 export type RecoveryGroupSourceCategory = 'backup_system_workload' | 'storage_system'
 export type RecoveryGroupWorkloadType =
@@ -31,15 +44,7 @@ export type RecoveryGroupResourceConfiguration =
       resourceType: 'volume'
     }
 
-export interface RecoveryGroupVmMetadata {
-  order?: number | undefined
-  hostname?: string | undefined
-  ip_address?: string | undefined
-  os?: string | undefined
-  cpu?: number | undefined
-  memory_gb?: number | undefined
-  storage_gb?: number | undefined
-}
+export type RecoveryGroupVmMetadata = Omit<RecoveryVMOutput, 'name'>
 
 interface RecoveryGroupBase {
   id: string
@@ -72,13 +77,12 @@ export type RecoveryGroup = RecoveryGroupListItem & {
 // metadata is a SPEC GAP: the generated RecoveryVM declares only `name`.
 export type RecoveryGroupReadRecord = Omit<
   RecoveryGroupRecordOutput,
-  'description' | 'provider_id_vm' | 'provider_id_volume' | 'policy_set_id' | 'vms'
+  'description' | 'provider_id_vm' | 'provider_id_volume' | 'policy_set_id'
 > & {
   description: string
   provider_id_vm: string
   provider_id_volume: string
   policy_set_id: string
-  vms: ({ name: string } & RecoveryGroupVmMetadata)[]
 }
 
 export interface RecoveryGroupDraft {
@@ -97,3 +101,8 @@ export interface RecoveryGroupDraft {
   orchestrationProviderId: string | null
   pushToOrchestrator: boolean
 }
+
+// validatingMutator hands select the parsed Output shape (defaults applied, e.g.
+// empty relation lists); the generated hook declares the Input shape.
+export const selectRecoveryGroupInventory = (response: RecoveryGroupInventoryResponse) =>
+  response as RecoveryGroupInventoryResponseOutput

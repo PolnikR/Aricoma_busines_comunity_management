@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { useRecoveryGroupInventory } from '../hooks/useRecoveryGroups'
+import { useGetRecoveryGroupInventory } from '@/generated/query/recovery-groups/recovery-groups.gen'
 import { RecoveryGroupInventory } from './RecoveryGroupInventory'
 
-vi.mock('../hooks/useRecoveryGroups', () => ({ useRecoveryGroupInventory: vi.fn() }))
+vi.mock('@/generated/query/recovery-groups/recovery-groups.gen', () => ({ useGetRecoveryGroupInventory: vi.fn() }))
 vi.mock('@/hooks/useTranslation', () => ({
   useTranslation: () => ({
     t: (key: string) => ({
@@ -18,10 +18,10 @@ vi.mock('@/hooks/useTranslation', () => ({
 
 describe('RecoveryGroupInventory', () => {
   it('renders summary metrics and compact source-to-target volume disclosures', () => {
-    vi.mocked(useRecoveryGroupInventory).mockReturnValue({
+    vi.mocked(useGetRecoveryGroupInventory).mockReturnValue({
       data: { recovery_group_id: 'group-1', recovery_group_name: 'Database', run_id: 'run-2', provider_id_volume: 'flash-1', volumes: { 'volume-1': { found: true, relations: [{ role: 'target', mapping: { id: 'map-1' }, paired_volume: { name: 'source-1' } }] } } },
       isLoading: false, isFetching: false, error: null, refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useRecoveryGroupInventory>)
+    } as unknown as ReturnType<typeof useGetRecoveryGroupInventory>)
 
     render(<RecoveryGroupInventory runId="run-2" active />)
     expect(screen.getByText('recoveryInventory.volumes')).toBeInTheDocument()
@@ -40,10 +40,10 @@ describe('RecoveryGroupInventory', () => {
       mapping: { id: `map-${String(index + 1)}` },
       paired_volume: { name: `target-volume-with-a-long-name-${String(index + 1)}` },
     }))
-    vi.mocked(useRecoveryGroupInventory).mockReturnValue({
+    vi.mocked(useGetRecoveryGroupInventory).mockReturnValue({
       data: { recovery_group_id: 'group-1', recovery_group_name: 'Database', run_id: 'run-2', provider_id_volume: 'flash-1', volumes: { 'source-volume-with-a-long-name': { found: true, relations } } },
       isLoading: false, isFetching: false, error: null, refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useRecoveryGroupInventory>)
+    } as unknown as ReturnType<typeof useGetRecoveryGroupInventory>)
 
     render(<RecoveryGroupInventory runId="run-2" active />)
 

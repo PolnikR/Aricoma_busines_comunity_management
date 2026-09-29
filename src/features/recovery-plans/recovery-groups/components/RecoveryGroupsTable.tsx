@@ -39,7 +39,7 @@ import {
   getWorkloadTypeLabelKey,
 } from '../utils/recoveryGroupTypeLabels'
 
-import type { RollbackReport } from '../api/schemas/recoveryGroupsSchema'
+import type { RollbackReport } from '../model/recoveryGroupTypes'
 
 interface RecoveryGroupsTableProps {
   groups: RecoveryGroup[]

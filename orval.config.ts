@@ -79,6 +79,7 @@ export default defineConfig({
             { onMutations: ['putDiscoveryCacheConfig'], invalidates: ['getDiscoveryCacheConfig'] },
             { onMutations: ['submitProvider', 'deleteProvider'], invalidates: ['getProviders'] },
             { onMutations: ['submitPlatformProvider', 'deletePlatformProvider'], invalidates: ['getPlatformProviders'] },
+            { onMutations: ['submitRecoveryGroup', 'deleteRecoveryGroup', 'rollbackGroupFromOrchestrator'], invalidates: ['getRecoveryGroups'] },
           ],
         },
         zod: { version: 4, variant: 'classic', exactOptional: true },

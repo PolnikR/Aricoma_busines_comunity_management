@@ -6,13 +6,15 @@
  */
 import {
   useMutation,
-  useQuery
+  useQuery,
+  useQueryClient
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
   MutationFunction,
+  MutationFunctionContext,
   QueryClient,
   QueryFunction,
   QueryKey,
@@ -208,7 +210,7 @@ return validatingMutator<RecoveryGroupsResponse>(getSubmitRecoveryGroupUrl(param
 export const getSubmitRecoveryGroupMutationKey = () => ['submitRecoveryGroup'] as const;
 
 export const getSubmitRecoveryGroupMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryGroup>>, TError,SubmitRecoveryGroupMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryGroup>>, TError,SubmitRecoveryGroupMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryGroup>>, TError,SubmitRecoveryGroupMutationVariables, TContext> => {
 
 const mutationKey = getSubmitRecoveryGroupMutationKey();
@@ -227,12 +229,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  submitRecoveryGroup(data,params,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof submitRecoveryGroup>>, variables: SubmitRecoveryGroupMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetRecoveryGroupsQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type SubmitRecoveryGroupMutationResult = NonNullable<Awaited<ReturnType<typeof submitRecoveryGroup>>>
     export type SubmitRecoveryGroupMutationBody = RecoveryGroup
@@ -243,14 +250,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Submit Recovery Group
  */
 export const useSubmitRecoveryGroup = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryGroup>>, TError,SubmitRecoveryGroupMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitRecoveryGroup>>, TError,SubmitRecoveryGroupMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof submitRecoveryGroup>>,
         TError,
         SubmitRecoveryGroupMutationVariables,
         TContext
       > => {
-      return useMutation(getSubmitRecoveryGroupMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getSubmitRecoveryGroupMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }
     export const getGetRecoveryGroupInventoryUrl = (params: GetRecoveryGroupInventoryParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -398,7 +406,7 @@ export const rollbackGroupFromOrchestrator = async (params: RollbackGroupFromOrc
 export const getRollbackGroupFromOrchestratorMutationKey = () => ['rollbackGroupFromOrchestrator'] as const;
 
 export const getRollbackGroupFromOrchestratorMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rollbackGroupFromOrchestrator>>, TError,RollbackGroupFromOrchestratorMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rollbackGroupFromOrchestrator>>, TError,RollbackGroupFromOrchestratorMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof rollbackGroupFromOrchestrator>>, TError,RollbackGroupFromOrchestratorMutationVariables, TContext> => {
 
 const mutationKey = getRollbackGroupFromOrchestratorMutationKey();
@@ -417,12 +425,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  rollbackGroupFromOrchestrator(params,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof rollbackGroupFromOrchestrator>>, variables: RollbackGroupFromOrchestratorMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetRecoveryGroupsQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type RollbackGroupFromOrchestratorMutationResult = NonNullable<Awaited<ReturnType<typeof rollbackGroupFromOrchestrator>>>
 
@@ -433,14 +446,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Rollback Group From Orchestrator
  */
 export const useRollbackGroupFromOrchestrator = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rollbackGroupFromOrchestrator>>, TError,RollbackGroupFromOrchestratorMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rollbackGroupFromOrchestrator>>, TError,RollbackGroupFromOrchestratorMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof rollbackGroupFromOrchestrator>>,
         TError,
         RollbackGroupFromOrchestratorMutationVariables,
         TContext
       > => {
-      return useMutation(getRollbackGroupFromOrchestratorMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getRollbackGroupFromOrchestratorMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }
     export const getDeleteRecoveryGroupUrl = (params: DeleteRecoveryGroupParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -478,7 +492,7 @@ export const deleteRecoveryGroup = async (params: DeleteRecoveryGroupParams, opt
 export const getDeleteRecoveryGroupMutationKey = () => ['deleteRecoveryGroup'] as const;
 
 export const getDeleteRecoveryGroupMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryGroup>>, TError,DeleteRecoveryGroupMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(queryClient: QueryClient, options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryGroup>>, TError,DeleteRecoveryGroupMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryGroup>>, TError,DeleteRecoveryGroupMutationVariables, TContext> => {
 
 const mutationKey = getDeleteRecoveryGroupMutationKey();
@@ -497,12 +511,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  deleteRecoveryGroup(params,requestOptions)
         }
 
+  const onSuccess = (data: Awaited<ReturnType<typeof deleteRecoveryGroup>>, variables: DeleteRecoveryGroupMutationVariables, onMutateResult: TContext, context: MutationFunctionContext) => {
+        if (!options?.skipInvalidation) {
+        queryClient.invalidateQueries({ queryKey: getGetRecoveryGroupsQueryKey() });
+        }
+        mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
+      };
 
 
 
 
-
-  return  { mutationFn, ...mutationOptions }}
+  return  { ...mutationOptions, mutationFn, onSuccess }}
 
     export type DeleteRecoveryGroupMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRecoveryGroup>>>
 
@@ -513,12 +532,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Delete Recovery Group Route
  */
 export const useDeleteRecoveryGroup = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryGroup>>, TError,DeleteRecoveryGroupMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRecoveryGroup>>, TError,DeleteRecoveryGroupMutationVariables, TContext>, skipInvalidation?: boolean, request?: SecondParameter<typeof validatingMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteRecoveryGroup>>,
         TError,
         DeleteRecoveryGroupMutationVariables,
         TContext
       > => {
-      return useMutation(getDeleteRecoveryGroupMutationOptions(options), queryClient);
+      const backupQueryClient = useQueryClient();
+      return useMutation(getDeleteRecoveryGroupMutationOptions(queryClient ?? backupQueryClient, options), queryClient);
     }
