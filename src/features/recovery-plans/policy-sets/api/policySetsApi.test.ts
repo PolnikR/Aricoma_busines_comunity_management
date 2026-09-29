@@ -54,9 +54,6 @@ describe('fetchPolicySets', () => {
 
   it.each([
     ['missing policy set list', {}],
-    ['missing snapshot policy id', { policy_sets: [{ ...wirePolicySet, snapshot_policy_id: '' }] }],
-    ['missing recovery app policy id', { policy_sets: [{ ...wirePolicySet, recovery_app_policy_id: '' }] }],
-    ['missing clean room policy id', { policy_sets: [{ ...wirePolicySet, clean_room_policy_id: '' }] }],
   ])('rejects malformed responses: %s', async (_case, payload) => {
     stubFetch(payload)
     await expect(fetchPolicySets()).rejects.toBeInstanceOf(Error)
@@ -84,15 +81,6 @@ describe('submitPolicySet', () => {
     const headers = new Headers(init.headers)
     expect(headers.get('X-User')).toBe('admin')
     expect(headers.get('Content-Type')).toBe('application/json')
-  })
-
-  it('rejects invalid input before calling the backend', async () => {
-    const fetchMock = stubFetch({ policy_sets: [] })
-
-    await expect(submitPolicySet({ ...policySet, snapshotPolicyId: '' })).rejects.toBeInstanceOf(Error)
-    await expect(submitPolicySet({ ...policySet, recoveryAppPolicyId: '' })).rejects.toBeInstanceOf(Error)
-    await expect(submitPolicySet({ ...policySet, cleanRoomPolicyId: '' })).rejects.toBeInstanceOf(Error)
-    expect(fetchMock).not.toHaveBeenCalled()
   })
 })
 

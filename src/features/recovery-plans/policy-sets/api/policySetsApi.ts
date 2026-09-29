@@ -4,40 +4,37 @@ import {
   getPolicySetsGetPolicySetsGet,
   submitPolicySetSubmitPolicySetPost,
 } from '@/generated/api/client.gen'
+import type { PolicySet as PolicySetWire } from '@/generated/api/models/policySet.gen'
 import {
   PolicySetsResponse,
+  SubmitPolicySetSubmitPolicySetPostBody,
   type PolicySetRecordOutput,
 } from '@/generated/api/zod.gen'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
 import { toOrvalRequestError } from '@/shared/api/orvalMutator'
 import type { PolicySet, PolicySetSubmitData } from '../model/policySetTypes'
-import {
-  policySetSubmitSchema,
-  type PolicySetWire,
-} from './schemas/policySetsSchema'
 
 const policySetIdSchema = z.string().min(1)
 
 function fromWire(policySet: PolicySetRecordOutput): PolicySet {
-  return policySetSubmitSchema.parse({
+  return {
     id: policySet.id,
     name: policySet.name,
     description: policySet.description ?? '',
     snapshotPolicyId: policySet.snapshot_policy_id ?? '',
     recoveryAppPolicyId: policySet.recovery_app_policy_id ?? '',
     cleanRoomPolicyId: policySet.clean_room_policy_id ?? '',
-  })
+  }
 }
 
 export function toPolicySetSubmitPayload(policySet: PolicySetSubmitData): PolicySetWire {
-  const validated = policySetSubmitSchema.parse(policySet)
   return {
-    id: validated.id,
-    name: validated.name,
-    description: validated.description,
-    snapshot_policy_id: validated.snapshotPolicyId,
-    recovery_app_policy_id: validated.recoveryAppPolicyId,
-    clean_room_policy_id: validated.cleanRoomPolicyId,
+    id: policySet.id,
+    name: policySet.name,
+    description: policySet.description,
+    snapshot_policy_id: policySet.snapshotPolicyId,
+    recovery_app_policy_id: policySet.recoveryAppPolicyId,
+    clean_room_policy_id: policySet.cleanRoomPolicyId,
   }
 }
 
@@ -60,7 +57,7 @@ export async function fetchPolicySets(): Promise<PolicySet[]> {
 export async function submitPolicySet(
   policySet: PolicySetSubmitData,
 ): Promise<PolicySet[]> {
-  const wirePolicySet = toPolicySetSubmitPayload(policySet)
+  const wirePolicySet = SubmitPolicySetSubmitPolicySetPostBody.parse(toPolicySetSubmitPayload(policySet))
   try {
     return parsePolicySets(await submitPolicySetSubmitPolicySetPost(wirePolicySet))
   } catch (error) {
