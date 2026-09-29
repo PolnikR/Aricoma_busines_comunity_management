@@ -95,7 +95,7 @@ Tasks with acceptance criteria are in `tasks/orval-single-source-todo.md`.
 ### Checkpoint C: after Tasks 10-13
 
 ### Phase 4: Guard and backend follow-up
-- [ ] Task 14: ESLint guard against hand-written contract schemas
+- [x] Task 14: ESLint guard against hand-written contract schemas
 - [ ] Task 15: Spec-gap report for backend
 
 ### Phase 5: Recovery plans on the current spec
