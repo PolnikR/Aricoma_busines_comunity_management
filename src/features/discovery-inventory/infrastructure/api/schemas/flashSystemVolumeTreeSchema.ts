@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { VolumeTreeResponse } from '@/generated/api/zod.gen'
 import type { FlashSystemTreeNode } from '../../model/flashSystemVolumeTreeTypes'
 
 const poolDetailSchema = z.object({
@@ -154,20 +155,11 @@ const flashSystemTreeNodeSchema: z.ZodType<FlashSystemTreeNode> = z.lazy(() => (
   ])
 ))
 
-export const flashSystemVolumeTreeResponseSchema = z.object({
-  counts: z.object({
-    pools: z.number().catch(0),
-    volumes: z.number().catch(0),
-    fcmaps: z.number().catch(0),
-    consistency_groups: z.number().catch(0),
-  }),
-  views: z.object({
-    flat: z.array(flashSystemTreeNodeSchema).optional(),
-    snapshot: z.array(flashSystemTreeNodeSchema).optional(),
-    consistency_group: z.array(flashSystemTreeNodeSchema).optional(),
-  }),
-  provider_id: z.string().catch(''),
-  provider_type: z.literal('FLASHCOPY'),
+// SPEC GAP: the generated VolumeTreeNode has an open `kind` and an untyped
+// `detail` record. Counts and the envelope come from the generated schema; only
+// the tree nodes are typed locally for the topology UI.
+export const flashSystemVolumeTreeResponseSchema = VolumeTreeResponse.extend({
+  views: z.record(z.string(), z.array(flashSystemTreeNodeSchema)),
 })
 
 export type FlashSystemVolumeTreePayload = z.infer<typeof flashSystemVolumeTreeResponseSchema>
