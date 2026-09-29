@@ -124,7 +124,7 @@ describe('mapRecoveryGroupApiRecord', () => {
     })
   })
 
-  it('carries airflow_run_id and push_to_orchestrator through for a VM group', () => {
+  it('carries orchestration run id and pushed flag through for a VM group', () => {
     const record = {
       id: 'database_group2',
       name: 'database_group2',
@@ -134,8 +134,7 @@ describe('mapRecoveryGroupApiRecord', () => {
       policy_set_id: 'tier2-apps',
       vms: [{ name: 'TEST-DB01' }],
       volumes: [],
-      airflow_run_id: '260805131217-6514c730',
-      push_to_orchestrator: true,
+      orchestration: { run_id: '260805131217-6514c730', pushed: true },
     }
 
     const group = mapRecoveryGroupApiRecord(record, [vmwareProvider])
@@ -144,7 +143,7 @@ describe('mapRecoveryGroupApiRecord', () => {
     expect(group.pushToOrchestrator).toBe(true)
   })
 
-  it('carries airflow_run_id and push_to_orchestrator through for a volume-only group', () => {
+  it('carries orchestration run id and pushed flag through for a volume-only group', () => {
     const record = {
       id: 'storage_group',
       name: 'Storage group',
@@ -154,8 +153,7 @@ describe('mapRecoveryGroupApiRecord', () => {
       policy_set_id: 'tier2-apps',
       vms: [],
       volumes: [{ name: 'V5000_VOLUME01' }],
-      airflow_run_id: null,
-      push_to_orchestrator: false,
+      orchestration: { run_id: null, pushed: false },
     }
 
     const group = mapRecoveryGroupApiRecord(record, [flashSystemProvider])
@@ -164,7 +162,7 @@ describe('mapRecoveryGroupApiRecord', () => {
     expect(group.pushToOrchestrator).toBe(false)
   })
 
-  it('maps orchestration_provider_id to orchestrationProviderId for VM groups', () => {
+  it('maps orchestration.provider_id to orchestrationProviderId for VM groups', () => {
     const record = {
       id: 'database_group',
       name: 'Database group',
@@ -174,7 +172,7 @@ describe('mapRecoveryGroupApiRecord', () => {
       policy_set_id: 'tier2-apps',
       vms: [{ name: 'TEST-DB01' }],
       volumes: [],
-      orchestration_provider_id: 'airflow-01',
+      orchestration: { provider_id: 'airflow-01' },
     }
 
     const group = mapRecoveryGroupApiRecord(record, [vmwareProvider])
@@ -182,7 +180,7 @@ describe('mapRecoveryGroupApiRecord', () => {
     expect(group.orchestrationProviderId).toBe('airflow-01')
   })
 
-  it('maps absent orchestration_provider_id to null orchestrationProviderId for VM groups', () => {
+  it('maps absent orchestration.provider_id to null orchestrationProviderId for VM groups', () => {
     const record = {
       id: 'database_group',
       name: 'Database group',
@@ -199,7 +197,7 @@ describe('mapRecoveryGroupApiRecord', () => {
     expect(group.orchestrationProviderId).toBeNull()
   })
 
-  it('maps orchestration_provider_id to orchestrationProviderId for volume-only groups', () => {
+  it('maps orchestration.provider_id to orchestrationProviderId for volume-only groups', () => {
     const record = {
       id: 'storage_group',
       name: 'Storage group',
@@ -209,7 +207,7 @@ describe('mapRecoveryGroupApiRecord', () => {
       policy_set_id: 'tier2-apps',
       vms: [],
       volumes: [{ name: 'V5000_VOLUME01' }],
-      orchestration_provider_id: 'airflow-01',
+      orchestration: { provider_id: 'airflow-01' },
     }
 
     const group = mapRecoveryGroupApiRecord(record, [flashSystemProvider])
@@ -217,7 +215,7 @@ describe('mapRecoveryGroupApiRecord', () => {
     expect(group.orchestrationProviderId).toBe('airflow-01')
   })
 
-  it('maps absent orchestration_provider_id to null orchestrationProviderId for volume groups', () => {
+  it('maps absent orchestration.provider_id to null orchestrationProviderId for volume groups', () => {
     const record = {
       id: 'storage_group',
       name: 'Storage group',

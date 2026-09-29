@@ -63,9 +63,9 @@ export function mapRecoveryGroupApiRecord(
     policySetId: record.policy_set_id,
     resourceCount: 0,
     status: 'Draft' as const,
-    airflowRunId: record.airflow_run_id,
-    pushToOrchestrator: record.push_to_orchestrator,
-    orchestrationProviderId: record.orchestration_provider_id ?? null,
+    airflowRunId: record.orchestration?.run_id,
+    pushToOrchestrator: record.orchestration?.pushed ?? undefined,
+    orchestrationProviderId: record.orchestration?.provider_id ?? null,
     rawRecord: record,
   }
 

@@ -101,7 +101,7 @@ Tasks with acceptance criteria are in `tasks/orval-single-source-todo.md`.
 ### Phase 5: Recovery plans on the current spec
 - [x] Task 16: Regenerate client from the current spec (commit `2df865b`)
 - [x] Task 17: Replace default FlashCopy provider resolution
-- [ ] Task 18: Recovery groups on generated schemas
+- [x] Task 18: Recovery groups on generated schemas
 - [ ] Task 19: Recovery applications on generated schemas
 
 ### Checkpoint D: complete

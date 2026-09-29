@@ -97,8 +97,8 @@ describe('createRecoveryGroup', () => {
     vi.spyOn(apiFetchModule, 'apiFetch').mockResolvedValue(
       new Response(JSON.stringify({
         recovery_groups: [
-          { ...orphanGroup, id: 'another-group', airflow_run_id: 'wrong-run' },
-          { ...orphanGroup, id: 'target_group', airflow_run_id: 'matching-run' },
+          { ...orphanGroup, id: 'another-group', orchestration: { run_id: 'wrong-run' } },
+          { ...orphanGroup, id: 'target_group', orchestration: { run_id: 'matching-run' } },
         ],
       }), { status: 200 }),
     )

@@ -1,3 +1,5 @@
+import type { RecoveryGroupRecordOutput } from '@/generated/api/zod.gen'
+
 export type RecoveryGroupSourceCategory = 'backup_system_workload' | 'storage_system'
 export type RecoveryGroupWorkloadType =
   | 'vmware_virtual_machines'
@@ -66,18 +68,17 @@ export type RecoveryGroup = RecoveryGroupListItem & {
   rawRecord?: RecoveryGroupReadRecord | undefined
 }
 
-export interface RecoveryGroupReadRecord {
-  id: string
-  name: string
+// Read record with non-null defaults for the fields the mapper relies on. VM
+// metadata is a SPEC GAP: the generated RecoveryVM declares only `name`.
+export type RecoveryGroupReadRecord = Omit<
+  RecoveryGroupRecordOutput,
+  'description' | 'provider_id_vm' | 'provider_id_volume' | 'policy_set_id' | 'vms'
+> & {
   description: string
   provider_id_vm: string
   provider_id_volume: string
   policy_set_id: string
   vms: ({ name: string } & RecoveryGroupVmMetadata)[]
-  volumes: { name: string }[]
-  airflow_run_id?: string | null | undefined
-  push_to_orchestrator?: boolean | undefined
-  orchestration_provider_id?: string | undefined
 }
 
 export interface RecoveryGroupDraft {

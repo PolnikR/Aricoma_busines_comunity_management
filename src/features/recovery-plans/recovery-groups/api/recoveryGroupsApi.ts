@@ -52,13 +52,7 @@ function toRecoveryGroupReadRecord(record: RecoveryGroupRecordOutput): RecoveryG
     policy_set_id: record.policy_set_id ?? '',
     vms: record.vms,
     volumes: record.volumes,
-    ...(record.airflow_run_id !== undefined ? { airflow_run_id: record.airflow_run_id } : {}),
-    ...(record.push_to_orchestrator != null
-      ? { push_to_orchestrator: record.push_to_orchestrator }
-      : {}),
-    ...(record.orchestration_provider_id != null
-      ? { orchestration_provider_id: record.orchestration_provider_id }
-      : {}),
+    ...(record.orchestration !== undefined ? { orchestration: record.orchestration } : {}),
   }
 }
 
@@ -124,7 +118,7 @@ async function submitRecoveryGroup(
 function extractAirflowRunId(payload: unknown, requestedId: string): string | null {
   const parsed = parseRecoveryGroups(payload, 'POST /submit_recovery_group')
   const matchingRecord = parsed.recovery_groups.find(record => record.id === requestedId)
-  return matchingRecord?.airflow_run_id ?? null
+  return matchingRecord?.orchestration?.run_id ?? null
 }
 
 export async function createRecoveryGroup(draft: RecoveryGroupDraft): Promise<RecoveryGroup> {
