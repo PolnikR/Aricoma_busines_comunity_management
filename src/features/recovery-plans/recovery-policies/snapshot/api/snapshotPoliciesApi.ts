@@ -4,8 +4,10 @@ import {
   getPoliciesGetPoliciesGet,
   submitPolicySubmitPolicyPost,
 } from '@/generated/api/client.gen'
+import type { SnapshotPolicy as SnapshotPolicyWire } from '@/generated/api/models/snapshotPolicy.gen'
 import {
   SnapshotPoliciesResponse,
+  SubmitPolicySubmitPolicyPostBody,
   type SnapshotPolicyRecordOutput,
 } from '@/generated/api/zod.gen'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
@@ -14,10 +16,6 @@ import type {
   SnapshotPolicy,
   SnapshotPolicySubmitData,
 } from '../model/snapshotPolicyTypes'
-import {
-  snapshotPolicySubmitSchema,
-  type SnapshotPolicyWire,
-} from './schemas/snapshotPoliciesSchema'
 
 const policyIdSchema = z.string().min(1)
 
@@ -39,18 +37,17 @@ function fromWire(policy: SnapshotPolicyRecordOutput): SnapshotPolicy {
 export function toSnapshotPolicySubmitPayload(
   policy: SnapshotPolicySubmitData,
 ): SnapshotPolicyWire {
-  const validated = snapshotPolicySubmitSchema.parse(policy)
   return {
-    id: validated.id,
-    name: validated.name,
-    description: validated.description,
-    level: validated.level,
-    frequency_value: validated.frequencyValue,
-    frequency_unit: validated.frequencyUnit,
-    retention_value: validated.retentionValue,
-    retention_unit: validated.retentionUnit,
-    max_snapshots: validated.maxSnapshots,
-    enabled: validated.enabled,
+    id: policy.id,
+    name: policy.name,
+    description: policy.description,
+    level: policy.level,
+    frequency_value: policy.frequencyValue,
+    frequency_unit: policy.frequencyUnit,
+    retention_value: policy.retentionValue,
+    retention_unit: policy.retentionUnit,
+    max_snapshots: policy.maxSnapshots,
+    enabled: policy.enabled,
   }
 }
 
@@ -73,7 +70,7 @@ export async function fetchSnapshotPolicies(): Promise<SnapshotPolicy[]> {
 export async function submitSnapshotPolicy(
   policy: SnapshotPolicySubmitData,
 ): Promise<SnapshotPolicy[]> {
-  const wirePolicy = toSnapshotPolicySubmitPayload(policy)
+  const wirePolicy = SubmitPolicySubmitPolicyPostBody.parse(toSnapshotPolicySubmitPayload(policy))
   try {
     return parsePolicies(await submitPolicySubmitPolicyPost(wirePolicy))
   } catch (error) {

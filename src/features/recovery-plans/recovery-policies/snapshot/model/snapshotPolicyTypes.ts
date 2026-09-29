@@ -1,4 +1,6 @@
-export const SNAPSHOT_POLICY_TIME_UNITS = ['minutes', 'hours', 'days'] as const
+import type { SnapshotPolicyOutput } from '@/generated/api/zod.gen'
+
+export const SNAPSHOT_POLICY_TIME_UNITS = ['minutes', 'hours', 'days'] as const satisfies readonly SnapshotPolicyOutput['frequency_unit'][]
 
 export type SnapshotPolicyTimeUnit = (typeof SNAPSHOT_POLICY_TIME_UNITS)[number]
 
