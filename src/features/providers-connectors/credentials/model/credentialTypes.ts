@@ -1,8 +1,8 @@
-export interface CredentialRecord {
-  id: string
-  name: string
+import type { Credential } from '@/generated/api/models/credential.gen'
+import type { CredentialRecordOutput } from '@/generated/api/zod.gen'
+
+export type CredentialRecord = Omit<CredentialRecordOutput, 'description'> & {
   description: string
-  username: string
 }
 
 export interface CredentialFormData {
@@ -13,7 +13,4 @@ export interface CredentialFormData {
   password: string
 }
 
-export interface CredentialSubmitPayload extends Omit<CredentialFormData, 'password'> {
-  password: string
-  password_encrypted: true
-}
+export type CredentialSubmitPayload = Credential

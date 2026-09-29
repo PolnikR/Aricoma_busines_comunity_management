@@ -3,7 +3,11 @@ import {
   getCredentialsRouteGetCredentialsGet,
   submitCredentialSubmitCredentialPost,
 } from '@/generated/api/client.gen'
-import { CredentialsResponse } from '@/generated/api/zod.gen'
+import {
+  CredentialsResponse,
+  SubmitCredentialSubmitCredentialPostBody,
+} from '@/generated/api/zod.gen'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type {
@@ -12,9 +16,6 @@ import type {
   CredentialSubmitPayload,
 } from '../model/credentialTypes'
 import { encryptCredentialPassword } from './credentialsCrypto'
-import {
-  apiErrorResponseSchema,
-} from './schemas/credentialsSchema'
 
 function parseCredentials(payload: unknown, operation: string): CredentialRecord[] {
   return parseGeneratedResponse(CredentialsResponse, payload, operation).credentials
@@ -28,8 +29,7 @@ function parseCredentials(payload: unknown, operation: string): CredentialRecord
 
 function credentialError(error: unknown, fallback: string): Error {
   if (error instanceof OrvalApiError) {
-    const parsed = apiErrorResponseSchema.safeParse(error.body)
-    return new Error(parsed.success ? parsed.data.detail : fallback, { cause: error })
+    return new Error(extractBackendErrorDetail(error) ?? fallback, { cause: error })
   }
   return error instanceof Error ? error : new Error(fallback)
 }
@@ -60,7 +60,9 @@ export async function submitCredential(
   payload: CredentialSubmitPayload,
 ): Promise<CredentialRecord[]> {
   try {
-    const result = await submitCredentialSubmitCredentialPost(payload)
+    const result = await submitCredentialSubmitCredentialPost(
+      SubmitCredentialSubmitCredentialPostBody.parse(payload),
+    )
     return parseCredentials(result, 'POST /submit_credential')
   } catch (error) {
     throw credentialError(error, `Submit credential request failed with status ${String(error instanceof OrvalApiError ? error.status : 0)}`)

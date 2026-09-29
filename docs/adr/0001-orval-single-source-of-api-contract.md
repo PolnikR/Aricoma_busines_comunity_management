@@ -21,7 +21,10 @@ had to be found and fixed twice, and the duplicated copies drifted from the spec
 2. **UI model types derive from generated types.** Use
    `Omit<GeneratedOutput, K> & { overrides }`, where the overrides are only narrowed
    enums, non-null defaults and UI-only fields. Submit types are the generated input
-   types directly.
+   types directly. When a UI model renames wire fields (for example snake_case to
+   camelCase), it may stay a hand-written view model, but its mapper must take the
+   generated output type as input, so a contract change fails at compile time in
+   the mapper.
 3. **Form rules stay in forms.** "Required", "valid email" or "positive integer"
    live in the form's validation, or in `Generated.extend({...})` when a form uses a
    schema.
