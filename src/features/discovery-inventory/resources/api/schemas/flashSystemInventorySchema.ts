@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { VolumesResponse } from '@/generated/api/zod.gen'
 
 const flashSystemPoolSchema = z.object({
   name: z.string().catch('-'),
@@ -53,13 +54,14 @@ const flashSystemVolumeSchema = z.object({
   }).loose()).catch([]),
 }).loose()
 
-export const flashSystemInventoryResponseSchema = z.object({
-  provider_id: z.string().nullable().optional(),
-  count: z.number().int().nonnegative(),
+// SPEC GAP: the generated VolumesResponse types volumes, pools, hosts and
+// clusters only as `record<string, unknown>`. Count and provider id come from the
+// generated schema; the untyped collections are typed locally.
+export const flashSystemInventoryResponseSchema = VolumesResponse.extend({
   volumes: z.array(flashSystemVolumeSchema),
   pools: z.record(z.string(), flashSystemPoolSchema).catch({}),
   hosts: z.record(z.string(), flashSystemHostSchema).catch({}),
   clusters: z.record(z.string(), flashSystemRelatedResourceSchema).catch({}),
-}).loose()
+})
 
 export type FlashSystemInventoryPayload = z.infer<typeof flashSystemInventoryResponseSchema>
