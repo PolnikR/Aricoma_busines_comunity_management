@@ -1,4 +1,4 @@
-import type { RolesPermissionsResponse, RolesPermissionsResponseOutput } from '@/generated/query/zod'
+import type { RolesPermissionsResponseOutput } from '@/generated/query/zod'
 
 export interface IdentityRoleRecord {
   id: string
@@ -24,7 +24,6 @@ export function mapRolesPermissions(payload: RolesPermissionsResponseOutput): Id
   }
 }
 
-// validatingMutator parses the response through the zod schema before handing it to
-// react-query, so select receives the Output shape even though the generated hook
-// declares the Input shape. The cast keeps the accurate Output types.
-export const selectRolesPermissions = mapRolesPermissions as (response: RolesPermissionsResponse) => IdentityRolesPermissions
+// validatingMutator hands select the parsed Output shape; for this schema it is
+// identical to the Input shape the generated hook declares.
+export const selectRolesPermissions = mapRolesPermissions

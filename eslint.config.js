@@ -51,38 +51,50 @@ export default defineConfig([
       'import-x/no-unresolved': 'error',
     },
   },
-  // ADR 0001: the Orval-generated schemas are the single source of the API
-  // contract. Feature API modules must not hand-write contract object schemas.
+  // ADR 0002: the API layer is generated. Features call the generated hooks and
+  // schemas; a backend gap is patched in scripts/orval/specPatches.
   {
-    files: ['src/features/**/api/**/*.ts'],
+    files: ['src/features/**/*.{ts,tsx}'],
     ignores: [
-      '**/*.test.ts',
-      // SPEC GAP files: extend a generated schema only for fields the spec leaves
-      // untyped. Remove an entry once the backend types the field.
-      'src/features/discovery-inventory/infrastructure/api/schemas/flashSystemVolumeTreeSchema.ts',
-      'src/features/discovery-inventory/resources/api/schemas/flashSystemInventorySchema.ts',
-      'src/features/discovery-inventory/resources/api/schemas/powerInventorySchema.ts',
-      'src/features/discovery-inventory/resources/api/schemas/vmStorageVolumesSchema.ts',
-      'src/features/recovery-plans/recovery-applications/api/schemas/recoveryApplicationsSchema.ts',
-      'src/features/recovery-plans/recovery-groups/api/schemas/recoveryGroupsSchema.ts',
-      // Domain validation of the builder draft, not a copy of the API contract.
-      'src/features/recovery-plans/recovery-groups/api/recoveryGroupsValidation.ts',
+      '**/*.test.{ts,tsx}',
+      '**/test/**',
+      // Composite hooks: they combine or post-process generated query options
+      // (getXQueryOptions, generated fetchers and keys) and cannot be one call
+      // of a generated hook.
+      'src/features/discovery-inventory/infrastructure/hooks/useInfrastructureInventory.ts',
+      'src/features/discovery-inventory/resources/hooks/useResourceInventoryQueries.ts',
+      'src/features/discovery-inventory/resources/hooks/useVmStorageVolumes.ts',
+      'src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts',
+      'src/features/discovery-inventory/resources/hooks/useVmwareTags.ts',
+      'src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroupRelatedVolumes.ts',
+      'src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroupResourceInventory.ts',
+      'src/features/recovery-plans/recovery-runs/hooks/useOrchestratedEntityRuns.ts',
+      // Mutation facades: they validate input and reshape the generated
+      // response before the page uses it.
+      'src/features/recovery-plans/recovery-applications/hooks/useDeleteRecoveryApplication.ts',
+      'src/features/recovery-plans/recovery-applications/hooks/useRecoveryApplications.ts',
+      // SPEC GAP: the spec leaves the FlashSystem volume tree untyped, so its
+      // recursive nodes are parsed locally. Remove once the backend types it.
+      'src/features/discovery-inventory/infrastructure/helpers/parseVolumeTreeNodes.ts',
+      // Not an API contract: validates node positions read from localStorage.
+      'src/features/discovery-inventory/infrastructure/hooks/useTopologyNodePositionOverrides.ts',
     ],
     rules: {
-      'no-restricted-syntax': ['error', {
-        selector: "CallExpression[callee.object.name='z'][callee.property.name=/^(object|looseObject|strictObject)$/]",
-        message: 'Use the Orval-generated schema from @/generated/api/zod.gen (extend it for SPEC GAP fields). See docs/adr/0001-orval-single-source-of-api-contract.md.',
-      }],
-    },
-  },
-  {
-    files: ['src/features/**/model/**/*.ts'],
-    ignores: ['**/*.test.ts'],
-    rules: {
       'no-restricted-imports': ['error', {
-        paths: [{
-          name: 'zod',
-          message: 'Model types derive from generated types; do not declare contract schemas in model files. See docs/adr/0001-orval-single-source-of-api-contract.md.',
+        paths: [
+          {
+            name: 'zod',
+            message: 'Schemas come from @/generated/query/zod (patch the spec in scripts/orval/specPatches). See docs/adr/0002-generated-react-query-api-layer.md.',
+          },
+          {
+            name: '@tanstack/react-query',
+            importNames: ['useQuery', 'useQueries', 'useMutation'],
+            message: 'Use the generated hooks from @/generated/query. See docs/adr/0002-generated-react-query-api-layer.md.',
+          },
+        ],
+        patterns: [{
+          group: ['@/generated/api', '@/generated/api/*'],
+          message: 'The legacy generated client was removed; use @/generated/query.',
         }],
       }],
     },
