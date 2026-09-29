@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import type { VirtualMachine } from '../../types/virtualMachineTypes'
-import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
 import { formatStartTime } from '@/shared/utils/dateFormat'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -33,27 +32,21 @@ function truncateFilePath(path: string): string {
 
 interface VirtualMachineDetailPanelProps {
   virtualMachine: VirtualMachine | null
-  providers?: ProviderRecord[]
   open: boolean
   onClose: () => void
 }
 
 export function VirtualMachineDetailPanel({
   virtualMachine,
-  providers = [],
   open,
   onClose,
 }: VirtualMachineDetailPanelProps) {
   const { t } = useTranslation()
   const [selectedTab, setSelectedTab] = useState<'overview' | 'disks' | 'snapshots'>('overview')
-  const vmProvider = providers.find(
-    (provider) => provider.id === virtualMachine?.providerId && provider.type === 'VMWARE',
-  )
-  const flashSystemProviderId = providers.find((provider) => (
-    provider.id === vmProvider?.defaultFlashcopyProviderId
-    && provider.type === 'FLASHCOPY'
-    && provider.credentialStatus === 'ok'
-  ))?.id
+  // ibm_provider_id is intentionally not sent, so the backend falls back to its
+  // default FlashSystem (ibm-flashsystem-01). The API no longer links a vCenter to
+  // a FlashSystem (defaultFlashcopyProviderId was removed), and nothing on the VM
+  // tells us which FlashSystem holds its disks.
   const {
     data: vdisks,
     isLoading: vdisksLoading,
@@ -63,7 +56,6 @@ export function VirtualMachineDetailPanel({
   } = useVdisksByVm(
     virtualMachine?.name ?? '',
     virtualMachine?.providerId,
-    flashSystemProviderId,
   )
   const snapshotVolumes = vdisks?.volumes ?? []
   const snapshotMappings = snapshotVolumes.flatMap(volume => volume.snapshots.sourceMappings)

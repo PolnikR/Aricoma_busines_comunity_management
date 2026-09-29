@@ -10,6 +10,6 @@ export function useVdisksByVm(
   return useQuery({
     queryKey: discoveryInventoryKeys.vdisksByVm(vmName, providerId, ibmProviderId),
     queryFn: () => fetchVdisksByVm(vmName, providerId, ibmProviderId),
-    enabled: !!vmName && !!providerId && !!ibmProviderId,
+    enabled: !!vmName && !!providerId,
   })
 }

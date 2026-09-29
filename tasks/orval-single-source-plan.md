@@ -118,9 +118,11 @@ Tasks with acceptance criteria are in `tasks/orval-single-source-todo.md`.
 
 ## Open Questions
 
-- **FlashCopy provider resolution (Task 17).** Proposed: VM detail uses the first
-  FLASHCOPY provider with `credentialStatus === 'ok'`; the recovery group builder
-  uses the group's `provider_id_volume`. Needs your confirmation.
+- **FlashCopy provider resolution (Task 17).** Decided for VM detail: send no
+  `ibm_provider_id` and rely on the backend default `ibm-flashsystem-01`, because
+  nothing identifies which FlashSystem holds a VM's disks. Recovery group builder:
+  use the group's `provider_id_volume`. Backend follow-up: resolve the FlashSystem
+  from the disks' `naa` so the FE does not depend on a default.
 - **Tracker.** `CLAUDE.md` names GitHub Issues as the tracker. This plan follows the
   repo's existing `tasks/*-plan.md` / `*-todo.md` convention. Should the tasks also
   be created as GitHub issues?

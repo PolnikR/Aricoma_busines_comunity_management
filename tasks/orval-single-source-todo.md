@@ -187,12 +187,14 @@ Standard verification for every migration task:
 **Scope:** S
 
 ### Task 17: Replace default FlashCopy provider resolution
-**Description:** `defaultFlashcopyProviderId` no longer exists. VM detail picks the first FLASHCOPY provider with ok credentials; the recovery group builder uses the group's `provider_id_volume`. Pending your confirmation (see plan, Open Questions).
+**Description:** `defaultFlashcopyProviderId` no longer exists. VM detail is done: it no longer sends `ibm_provider_id`, so the backend default `ibm-flashsystem-01` applies, with a code comment explaining why. The recovery group builder uses the group's `provider_id_volume`.
 **Acceptance criteria:**
+- [x] VM detail does not send `ibm_provider_id` and documents the backend default
+- [ ] Recovery group builder resolves related volumes from the group's `provider_id_volume`
 - [ ] No reference to `defaultFlashcopyProviderId` remains in `src/features`
 - [ ] VM detail and related-volumes tests pass
 **Dependencies:** Task 16
-**Files:** `VirtualMachineDetailPanel.tsx`, `useRecoveryGroupRelatedVolumes.ts`, their tests
+**Files:** `useRecoveryGroupRelatedVolumes.ts`, `RecoveryGroupBuilder.tsx`, their tests
 **Scope:** S
 
 ### Task 18: Recovery groups on generated schemas

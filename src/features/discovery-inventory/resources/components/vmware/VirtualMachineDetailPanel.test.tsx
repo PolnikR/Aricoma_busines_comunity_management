@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
 import type { VirtualMachine } from '../../types/virtualMachineTypes'
 import type { VmStorageVolumes } from '../../model/vmStorageVolumesTypes'
-import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 const useVdisksByVmMock = vi.hoisted(() => vi.fn<() => {
@@ -22,29 +21,6 @@ const useVdisksByVmMock = vi.hoisted(() => vi.fn<() => {
   refetch: vi.fn().mockResolvedValue(undefined),
 })))
 vi.mock('../../hooks/useVmStorageVolumes', () => ({ useVdisksByVm: useVdisksByVmMock }))
-
-const vmwareProvider = {
-  id: 'vmware-vcenter-01',
-  name: 'Production vCenter',
-  description: '',
-  type: 'VMWARE',
-  ipAddress: '10.0.0.10',
-  port: 22,
-  credentialId: 'vcenter-admin',
-  credentialStatus: 'ok',
-  defaultFlashcopyProviderId: 'ibm-flashsystem-01',
-} as ProviderRecord
-
-const flashProvider: ProviderRecord = {
-  id: 'ibm-flashsystem-01',
-  name: 'Production FlashSystem',
-  description: '',
-  type: 'FLASHCOPY',
-  ipAddress: '10.0.0.20',
-  port: 22,
-  credentialId: 'flash-admin',
-  credentialStatus: 'ok',
-}
 
 const vm = {
   name: 'app-server-01',
@@ -105,11 +81,10 @@ describe('VirtualMachineDetailPanel resize', () => {
     })
   })
 
-  it('loads related volumes with the VM and selected FlashSystem provider', () => {
+  it('loads related volumes with the VM and its vCenter provider only', () => {
     renderWithQueryClient(
       <VirtualMachineDetailPanel
         virtualMachine={vm}
-        providers={[vmwareProvider, flashProvider]}
         open
         onClose={vi.fn()}
       />,
@@ -118,11 +93,10 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(useVdisksByVmMock).toHaveBeenCalledWith(
       'app-server-01',
       'vmware-vcenter-01',
-      'ibm-flashsystem-01',
     )
   })
 
-  it('shows an empty snapshots table when the VM provider has no linked FlashSystem', async () => {
+  it('shows an empty snapshots table when no volumes are returned', async () => {
     const user = userEvent.setup()
 
     renderWithQueryClient(
@@ -135,11 +109,6 @@ describe('VirtualMachineDetailPanel resize', () => {
 
     await user.click(screen.getByRole('tab', { name: 'Snapshots' }))
 
-    expect(useVdisksByVmMock).toHaveBeenCalledWith(
-      'app-server-01',
-      'vmware-vcenter-01',
-      undefined,
-    )
     expect(screen.getByRole('table')).toBeInTheDocument()
   })
 
@@ -156,7 +125,6 @@ describe('VirtualMachineDetailPanel resize', () => {
     renderWithQueryClient(
       <VirtualMachineDetailPanel
         virtualMachine={vm}
-        providers={[vmwareProvider, flashProvider]}
         open
         onClose={vi.fn()}
       />,
@@ -184,7 +152,6 @@ describe('VirtualMachineDetailPanel resize', () => {
     renderWithQueryClient(
       <VirtualMachineDetailPanel
         virtualMachine={vm}
-        providers={[vmwareProvider, flashProvider]}
         open
         onClose={vi.fn()}
       />,
@@ -211,7 +178,6 @@ describe('VirtualMachineDetailPanel resize', () => {
     renderWithQueryClient(
       <VirtualMachineDetailPanel
         virtualMachine={vm}
-        providers={[vmwareProvider, flashProvider]}
         open
         onClose={vi.fn()}
       />,
@@ -273,7 +239,6 @@ describe('VirtualMachineDetailPanel resize', () => {
     renderWithQueryClient(
       <VirtualMachineDetailPanel
         virtualMachine={vm}
-        providers={[vmwareProvider, flashProvider]}
         open
         onClose={vi.fn()}
       />,
