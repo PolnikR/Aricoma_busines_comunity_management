@@ -176,15 +176,10 @@ Standard verification for every migration task:
 **Files:** `docs/` or a GitHub issue
 **Scope:** XS
 
-## Phase 5: Blocked on the new OpenAPI spec
+## Phase 5: Recovery plans on the current spec
 
-### Task 16: Regenerate client from the new spec
-**Description:** `npm run api:pull`, `npm run api:generate`, restore access-log schemas if the spec drops them again, commit the regen on its own.
-**Acceptance criteria:**
-- [ ] Regen commit contains only `openapi/` and `src/generated/api`
-- [ ] `check-generated` and `verify-output` scripts pass
-**Dependencies:** new spec from backend
-**Scope:** S
+### Task 16: Regenerate client from the current spec
+**Status:** Done in commit `2df865b` (access-log schemas kept).
 
 ### Task 17: Replace default FlashCopy provider resolution
 **Description:** `defaultFlashcopyProviderId` no longer exists. VM detail is done: it no longer sends `ibm_provider_id`, so the backend default `ibm-flashsystem-01` applies, with a code comment explaining why. The recovery group builder uses the group's `provider_id_volume`.
@@ -198,7 +193,7 @@ Standard verification for every migration task:
 **Scope:** S
 
 ### Task 18: Recovery groups on generated schemas
-**Description:** Migrate recovery groups to the new generated `RecoveryGroupRecord`, including `orchestration`, `topology`, `metro_mirror` and `peer_name` if the new spec contains them. Fold `recoveryGroupsValidation.ts` into the form or into an extension of the generated schema. Keep the rollback report as a documented spec-gap extension.
+**Description:** Migrate recovery groups to the new generated `RecoveryGroupRecord`, including `orchestration`. `topology`, `metro_mirror` and `peer_name` are not in the current spec and come with the next regen. Fold `recoveryGroupsValidation.ts` into the form or into an extension of the generated schema. Keep the rollback report as a documented spec-gap extension.
 **Acceptance criteria:**
 - [ ] `recoveryGroupsSchema.ts` reduced to the rollback spec-gap extension or deleted
 - [ ] `recoveryGroupTypes.ts` derived from generated types

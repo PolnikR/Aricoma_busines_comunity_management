@@ -10,8 +10,9 @@ UI model types are derived from generated types, and only genuine UI concerns ar
 hand-written. After the migration a backend change means regenerate, typecheck, and
 fix only the places that actually use the changed field.
 
-Recovery groups and recovery applications are deferred until the new OpenAPI spec
-arrives, so they are migrated once against the final contract.
+Everything, including recovery groups and recovery applications, is migrated now
+against the current spec (regen commit `2df865b`). When the backend ships a new spec,
+it goes through the normal flow: regenerate, typecheck, fix the reported places.
 
 ## Target pattern (per feature)
 
@@ -59,15 +60,15 @@ arrives, so they are migrated once against the final contract.
 | flashsystem inventory | `flashSystemInventorySchema` | `VolumesResponse` (records untyped) | spec gap |
 | vm storage volumes | `vmStorageVolumesSchema` | `VdisksByVmResponse` (`vdisks` untyped) | spec gap |
 | power inventory | `powerInventorySchema` | `PowerVmsResponse` (`lpar`/`vios` untyped) | spec gap |
-| recovery groups | `recoveryGroupsSchema`, `recoveryGroupsValidation` | `RecoveryGroupsResponse`, `RollbackReport` (only `status` typed) | deferred, spec gap on rollback |
-| recovery applications | `recoveryApplicationsSchema` | `RecoveryAppsResponse`, `RollbackReport` | deferred, spec gap on rollback |
+| recovery groups | `recoveryGroupsSchema`, `recoveryGroupsValidation` | `RecoveryGroupsResponse`, `RollbackReport` (only `status` typed) | spec gap on rollback |
+| recovery applications | `recoveryApplicationsSchema` | `RecoveryAppsResponse`, `RollbackReport` | spec gap on rollback |
 
 ## Task List
 
 Tasks with acceptance criteria are in `tasks/orval-single-source-todo.md`.
 
 ### Phase 0: Convention
-- [ ] Task 1: Record the Orval usage convention as an ADR
+- [x] Task 1: Record the Orval usage convention as an ADR
 
 ### Phase 1: Pure duplicates
 - [ ] Task 2: Credentials error envelope to shared API
@@ -97,8 +98,8 @@ Tasks with acceptance criteria are in `tasks/orval-single-source-todo.md`.
 - [ ] Task 14: ESLint guard against hand-written contract schemas
 - [ ] Task 15: Spec-gap report for backend
 
-### Phase 5: Blocked on the new OpenAPI spec
-- [ ] Task 16: Regenerate client from the new spec
+### Phase 5: Recovery plans on the current spec
+- [x] Task 16: Regenerate client from the current spec (commit `2df865b`)
 - [ ] Task 17: Replace default FlashCopy provider resolution
 - [ ] Task 18: Recovery groups on generated schemas
 - [ ] Task 19: Recovery applications on generated schemas
@@ -113,8 +114,8 @@ Tasks with acceptance criteria are in `tasks/orval-single-source-todo.md`.
 | Spec gaps make the FE lose typing on untyped records | Medium | Extend the generated schema only for the untyped field and report the gap (Task 15) |
 | Removing schema tests hides a lost validation rule | Medium | Before deleting a schema test, check that the rule is either in the form or intentionally dropped, and say so in the commit |
 | Key order and default values change in submitted JSON | Low | Assert on parsed objects, not raw JSON strings |
-| Repo typecheck is red until Phase 5 (recovery groups/apps, FlashCopy resolution) | Medium | Filter typecheck output by the migrated feature path; Phase 5 restores a fully green typecheck |
-| New spec changes recovery groups again | Low | Recovery groups/apps are deferred to Phase 5 |
+| Repo typecheck is red until Phase 5 is done (recovery groups/apps, FlashCopy resolution) | Medium | Filter typecheck output by the migrated feature path; Phase 5 restores a fully green typecheck |
+| New spec changes recovery groups again (topology, metro_mirror, peer_name are announced) | Medium | Accepted: migrate now on the current spec, handle the new spec as a normal regen afterwards |
 
 ## Open Questions
 
