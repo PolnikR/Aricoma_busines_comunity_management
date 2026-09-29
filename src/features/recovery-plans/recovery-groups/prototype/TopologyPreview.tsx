@@ -1,4 +1,4 @@
-// Throwaway Phase 1 prototype. Run npm.cmd run dev -- --host 127.0.0.1 --port 5176
+// Throwaway Phase 1 prototype. Run npm.cmd run dev -- --host 127.0.0.1 --port 5177
 // and open /topology-preview.html. Never submit to a backend.
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -10,6 +10,9 @@ import { PageHeader } from '@/shared/components/page/PageHeader'
 import { SelectableCard } from '@/shared/components/selectable-card/SelectableCard'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
 import { ResourceSelectionCard } from '@/shared/components/resource-selection/ResourceSelectionCard'
+import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
+import { Card } from '@/shared/components/card/Card'
+import { DataTable } from '@/shared/components/data-table/DataTable'
 import { PolicySetPickerList } from '@/shared/components/policy-set-picker/PolicySetPickerList'
 import { Toggle } from '@/shared/components/toggle/Toggle'
 import { Alert } from '@/shared/components/alert/Alert'
@@ -77,10 +80,16 @@ export function TopologyPreview() {
                   {step === 1 && <RecoveryGroupDetailsStep {...details} existingIds={[]} onChange={update => { setDetails(current => ({ ...current, ...update })) }} />}
                   {step === 2 && <div className="grid max-w-3xl gap-5">
                     <div><h2 className="text-base font-semibold">Topology</h2><p className="mt-1 text-sm text-text-muted">Choose where FlashCopy point-in-time copies will be created.</p></div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <SelectableCard title="Local" description="FlashCopy on the source FlashSystem." meta="Point-in-time copies on Source" selected={topology === 'local'} onClick={() => { selectTopology('local') }} />
-                      <SelectableCard title="Metro Mirror" description="FlashCopy on existing auxiliary volumes on the partner FlashSystem." meta="Point-in-time copies on Target" selected={remote} onClick={() => { selectTopology('metro_mirror') }} />
-                    </div>
+                    <Field label="Topology *" htmlFor="topology-mode">
+                      <Select id="topology-mode" value={topology ?? ''} required onChange={event => {
+                        const value = event.target.value
+                        if (value === 'local' || value === 'metro_mirror') selectTopology(value)
+                      }}>
+                        <option value="" disabled>Select topology</option>
+                        <option value="local">Local</option>
+                        <option value="metro_mirror">Metro Mirror</option>
+                      </Select>
+                    </Field>
                     {topology && <>
                       <Field label="Source FlashSystem *" htmlFor="topology-source">
                         <Select id="topology-source" value={sourceId} onChange={event => { setSourceId(event.target.value); setGroupId(''); setAuxiliary({}) }}>
@@ -90,17 +99,17 @@ export function TopologyPreview() {
                       </Field>
                       {remote && <>
                         {source && !partner && <Alert variant="error" title="No Metro Mirror partner configured for this FlashSystem." />}
-                        {partner && <div className="rounded-xl border border-border bg-surface-subtle p-4">
+                        {partner && <Card>
                           <p className="text-xs font-medium text-text-muted">Target FlashSystem · Read only</p>
                           <p className="mt-1 text-sm font-semibold">{partner.name}</p>
                           <p className="mt-1 text-xs text-text-muted">{partner.ip} · Derived from partnerProviderId</p>
-                        </div>}
-                        <fieldset><legend className="mb-3 text-xs font-medium text-text-secondary">Metro Mirror mode</legend>
-                          <div className="grid gap-3 sm:grid-cols-2">
-                            <SelectableCard title="Existing" description="Use existing Metro Mirror relationships." selected onClick={() => undefined} />
-                            <SelectableCard title="Managed" description="Automatically manage Metro Mirror relationships." meta="Coming soon" selected={false} disabled />
-                          </div>
-                        </fieldset>
+                        </Card>}
+                        <Field label="Metro Mirror mode" htmlFor="metro-mirror-mode">
+                          <Select id="metro-mirror-mode" value="existing" onChange={() => undefined}>
+                            <option value="existing">Existing</option>
+                            <option value="managed" disabled>Managed — Coming soon</option>
+                          </Select>
+                        </Field>
                         <div><Field label="Remote Copy Consistency Group ID *" htmlFor="topology-cg">
                           <Input id="topology-cg" value={groupId} placeholder="e.g. 1" required aria-describedby="cg-help" onChange={event => { setGroupId(event.target.value) }} />
                         </Field><p id="cg-help" className="mt-2 text-xs leading-5 text-text-muted">Existing IBM Remote Copy consistency group containing the Metro Mirror relationships used by this recovery group.</p></div>
@@ -119,21 +128,30 @@ export function TopologyPreview() {
                   </div>}
                   {step === 5 && <div className="grid gap-5">
                     <div><h2 className="text-base font-semibold">Virtual machines</h2><p className="mt-1 text-sm text-text-muted">Select workloads from VMware vCenter Production.</p></div>
-                    <div className="grid gap-4 xl:grid-cols-2">
-                      <ResourceSelectionCard title="Available virtual machines" items={['APP01', 'APP02', 'DB01']} selectedItems={vms} emptyText="No virtual machines" removeLabel="Remove" ariaLabel="Available virtual machines" onResourceSelectionChange={(vm, selected) => {
-                        setVms(current => selected ? [...new Set([...current, vm])] : current.filter(item => item !== vm))
-                        setAuxiliary({})
-                      }} />
-                      <ResourceSelectionCard title="Selected virtual machines" items={vms} emptyText="Select virtual machines from the inventory." removeLabel="Remove" ariaLabel="Selected virtual machines" onResourceRemove={vm => { setVms(current => current.filter(item => item !== vm)); setAuxiliary({}) }} />
+                    <div className="grid min-h-0 gap-4 lg:h-96 lg:grid-cols-[280px_minmax(0,1fr)]">
+                      <div className="h-72 min-h-0 overflow-hidden rounded-lg border border-border lg:h-full">
+                        <ResourceSidebar items={['APP01', 'APP02', 'DB01']} title="Available virtual machines" searchPlaceholder="Search virtual machines" loadingLabel="Loading virtual machines" noItemsLabel="No virtual machines" noMatchesLabel="No matching virtual machines" dragDataKey="recovery-group-resource-name" errorTitle="Unable to load resources" staleErrorTitle="Latest refresh failed" staleErrorDescription="Showing previous resources" retryLabel="Retry" />
+                      </div>
+                      <div className="flex h-72 min-h-0 flex-col rounded-lg border-2 border-dashed border-border bg-surface p-4 lg:h-full">
+                        <h2 className="text-base font-semibold text-text-primary">Selected virtual machines</h2>
+                        <p className="mt-1 text-sm text-text-muted">Drag virtual machines from the inventory into this group.</p>
+                        <ResourceSelectionCard items={vms} emptyText="Drop virtual machines here." removeLabel="Remove" ariaLabel="Selected virtual machines" dropDataKey="recovery-group-resource-name" onResourceDrop={vm => {
+                          if (['APP01', 'APP02', 'DB01'].includes(vm) && !vms.includes(vm)) {
+                            setVms(current => [...current, vm])
+                            setAuxiliary({})
+                          }
+                        }} onResourceRemove={vm => { setVms(current => current.filter(item => item !== vm)); setAuxiliary({}) }} className="mt-4 h-auto min-h-0 flex-1 rounded-lg border border-border" />
+                      </div>
                     </div>
                   </div>}
                   {step === 6 && <div className="grid gap-5">
                     <div><h2 className="text-base font-semibold">Related storage</h2><p className="mt-1 text-sm text-text-muted">Source volumes discovered from {vms.join(', ')} on {source?.name}.</p></div>
                     {remote && <Alert title="Existing Metro Mirror volumes" description="Enter the existing auxiliary volume on the partner FlashSystem for every source volume. An auxiliary volume is a replica, not a FlashCopy snapshot." />}
                     {volumes.length === 0 ? <EmptyState title="No related volumes" description="Select virtual machines with source volumes." /> : remote ? <div className="overflow-x-auto rounded-xl border border-border">
-                      <table className="w-full text-left text-sm"><thead className="bg-surface-subtle text-text-muted"><tr><th className="p-4">Source volume</th><th className="p-4">Auxiliary volume · {partner?.name}</th></tr></thead>
-                        <tbody>{volumes.map(volume => <tr key={volume} className="border-t border-border"><td className="p-4 font-medium">{volume}</td><td className="min-w-56 p-4"><Input aria-label={`Auxiliary volume for ${volume}`} placeholder={`DR_${volume}`} value={auxiliary[volume] ?? ''} required invalid={auxiliary[volume] !== undefined && !auxiliary[volume].trim()} onChange={event => { setAuxiliary(current => ({ ...current, [volume]: event.target.value })) }} /></td></tr>)}</tbody>
-                      </table>
+                      <DataTable rows={volumes} rowKey={volume => volume} ariaLabel="Metro Mirror volume pairs" density="comfortable" columns={[
+                        { id: 'source', header: 'Source volume', cell: volume => volume },
+                        { id: 'auxiliary', header: `Auxiliary volume · ${partner?.name ?? ''}`, cellClassName: 'min-w-56', cell: volume => <Input aria-label={`Auxiliary volume for ${volume}`} placeholder={`DR_${volume}`} value={auxiliary[volume] ?? ''} required invalid={auxiliary[volume] !== undefined && !auxiliary[volume].trim()} onChange={event => { setAuxiliary(current => ({ ...current, [volume]: event.target.value })) }} /> },
+                      ]} />
                     </div> : <ResourceSelectionCard title="Related volumes" items={volumes} emptyText="No related volumes" removeLabel="Remove" ariaLabel="Related volumes" />}
                     <p className="text-xs text-text-muted">{remote ? 'Every source volume requires an auxiliary name before continuing.' : 'FlashCopy will create point-in-time copies on the source FlashSystem.'}</p>
                   </div>}
@@ -148,7 +166,7 @@ export function TopologyPreview() {
                     <div><h2 className="text-base font-semibold">Orchestration</h2><p className="mt-1 text-sm text-text-muted">Choose your orchestration settings.</p></div>
                     <div className="flex items-center gap-3 rounded-lg border border-border p-4"><Toggle checked={deploy} onChange={setDeploy} label="Deploy to orchestrator" /><span className="text-sm font-semibold">Deploy to orchestrator</span></div>
                     <Field label="Orchestration provider *" htmlFor="topology-orchestrator"><Select id="topology-orchestrator" value={orchestrator} onChange={event => { setOrchestrator(event.target.value); setReview(false) }}><option value="">Select provider</option><option value="airflow-01">Primary Airflow</option></Select></Field>
-                    <div className="rounded-xl border border-border bg-surface-subtle p-5">
+                    <Card>
                       <h3 className="text-sm font-semibold">Review configuration</h3>
                       <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[160px_minmax(0,1fr)]">
                         <dt className="text-text-muted">Topology</dt><dd>{remote ? 'Metro Mirror' : 'Local'}</dd>
@@ -159,7 +177,7 @@ export function TopologyPreview() {
                         <dt className="text-text-muted">Storage</dt><dd>{volumes.map(volume => <p key={volume} className="break-words">{volume}{remote ? ` → ${auxiliary[volume] ?? ''}` : ''}</p>)}</dd>
                         <dt className="text-text-muted">Policy</dt><dd>{policy?.name}</dd>
                       </dl>
-                    </div>
+                    </Card>
                     {review && <><Alert variant="success" title="Preview complete — nothing was submitted" description="This is the reference payload for design review. Orchestration was not executed." /><pre className="overflow-x-auto rounded-xl border border-border p-4 text-xs" aria-label="Reference payload">{JSON.stringify(payload, null, 2)}</pre></>}
                   </div>}
                 </div>
