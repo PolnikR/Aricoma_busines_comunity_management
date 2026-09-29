@@ -5,9 +5,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface RecoveryAppInventoryVm {
-  name: string;
-  found: boolean;
-  datastores?: string[];
+export interface RecoveredDatastore {
+  datastore: string;
+  target_vdisk?: string | null;
+  vms?: string[];
   [key: string]: unknown;
  }

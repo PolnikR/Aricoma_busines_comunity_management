@@ -23,7 +23,11 @@ rollback_orphans?: boolean;
  */
 provider_id?: string | null;
 /**
- * VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped; its own defaultFlashcopyProviderId supplies the IBM FlashSystem provider for that unmap step.
+ * VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped.
  */
 compute_provider_id?: string | null;
+/**
+ * FLASHCOPY provider for the orphaned volume(s) - required only when rollback_orphans=true; ignored otherwise, since the recovery app's own tiers/recovery groups supply it per tier
+ */
+provider_id_volume?: string | null;
 };

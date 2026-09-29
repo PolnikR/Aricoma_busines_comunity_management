@@ -10,6 +10,5 @@ export interface RecoveryAppInventoryTier {
   tier_name: string;
   recovery_group_id: string;
   recovery_group_name: string;
-  provider_id_vm?: string | null;
   vms: RecoveryAppInventoryVm[];
 }

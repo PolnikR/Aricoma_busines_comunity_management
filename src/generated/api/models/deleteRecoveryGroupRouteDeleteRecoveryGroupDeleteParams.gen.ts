@@ -25,5 +25,5 @@ provider_id?: string | null;
 /**
  * FLASHCOPY provider holding the orphaned objects — only used with rollback_orphans
  */
-volume_provider_id?: string;
+provider_id_volume?: string;
 };

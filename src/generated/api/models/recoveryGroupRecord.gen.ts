@@ -4,6 +4,7 @@
  * ABCo API
  * OpenAPI spec version: 0.1.0
  */
+import type { GroupOrchestrationState } from './groupOrchestrationState.gen';
 import type { RecoveryVM } from './recoveryVM.gen';
 import type { RecoveryVolume } from './recoveryVolume.gen';
 
@@ -17,8 +18,6 @@ export interface RecoveryGroupRecord {
   vms?: RecoveryVM[];
   volumes?: RecoveryVolume[];
   notificationEmail?: string | null;
-  airflow_run_id?: string | null;
-  push_to_orchestrator?: boolean | null;
-  orchestration_provider_id?: string | null;
+  orchestration?: GroupOrchestrationState | null;
   [key: string]: unknown;
  }

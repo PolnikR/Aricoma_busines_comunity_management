@@ -121,6 +121,15 @@ export const CredentialsResponse = zod.object({
 export type CredentialsResponse = zod.input<typeof CredentialsResponse>;
 export type CredentialsResponseOutput = zod.output<typeof CredentialsResponse>;
 
+export const GroupOrchestrationState = zod.object({
+  "run_id": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "pushed": zod.union([zod.boolean(),zod.null()]).exactOptional(),
+  "provider_id": zod.union([zod.string(),zod.null()]).exactOptional()
+});
+
+export type GroupOrchestrationState = zod.input<typeof GroupOrchestrationState>;
+export type GroupOrchestrationStateOutput = zod.output<typeof GroupOrchestrationState>;
+
 export const ValidationError = zod.object({
   "loc": zod.array(zod.union([zod.string(),zod.int()])),
   "msg": zod.string(),
@@ -148,7 +157,7 @@ export const HealthResponse = zod.object({
 export type HealthResponse = zod.input<typeof HealthResponse>;
 export type HealthResponseOutput = zod.output<typeof HealthResponse>;
 
-export const ProviderType = zod.enum(['VMWARE', 'FLASHCOPY', 'IBM_POWER', 'AIRFLOW', 'SMTP', 'BACKEND', 'KEYCLOAK']);
+export const ProviderType = zod.enum(['VMWARE', 'FLASHCOPY', 'HITACHI', 'IBM_POWER', 'AIRFLOW', 'SMTP', 'BACKEND', 'KEYCLOAK']);
 
 export type ProviderType = zod.input<typeof ProviderType>;
 export type ProviderTypeOutput = zod.output<typeof ProviderType>;
@@ -165,7 +174,6 @@ export const OrchestrationProvider = zod.object({
   "ipAddress": zod.union([zod.string(),zod.null()]).exactOptional(),
   "credentialId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "url": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "defaultFlashcopyProviderId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmTags": zod.array(zod.string()).exactOptional(),
@@ -198,7 +206,6 @@ export const OrchestrationProviderRecord = zod.object({
   "ipAddress": zod.union([zod.string(),zod.null()]).exactOptional(),
   "credentialId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "url": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "defaultFlashcopyProviderId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmTags": zod.array(zod.string()).exactOptional(),
@@ -310,7 +317,6 @@ export const Provider = zod.object({
   "ipAddress": zod.union([zod.string(),zod.null()]).exactOptional(),
   "credentialId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "url": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "defaultFlashcopyProviderId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmTags": zod.array(zod.string()).exactOptional(),
@@ -341,7 +347,6 @@ export const ProviderRecord = zod.object({
   "ipAddress": zod.union([zod.string(),zod.null()]).exactOptional(),
   "credentialId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "url": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "defaultFlashcopyProviderId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmTags": zod.array(zod.string()).exactOptional(),
@@ -370,13 +375,23 @@ export const ProvidersResponse = zod.object({
 export type ProvidersResponse = zod.input<typeof ProvidersResponse>;
 export type ProvidersResponseOutput = zod.output<typeof ProvidersResponse>;
 
+export const recoveredDatastoreVmsDefault = [];
+
+export const RecoveredDatastore = zod.object({
+  "datastore": zod.string(),
+  "target_vdisk": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "vms": zod.array(zod.string()).default(recoveredDatastoreVmsDefault)
+});
+
+export type RecoveredDatastore = zod.input<typeof RecoveredDatastore>;
+export type RecoveredDatastoreOutput = zod.output<typeof RecoveredDatastore>;
+
 export const recoveryAppInventoryVmDatastoresDefault = [];
 
 export const RecoveryAppInventoryVm = zod.object({
   "name": zod.string(),
   "found": zod.boolean(),
-  "datastores": zod.array(zod.string()).default(recoveryAppInventoryVmDatastoresDefault),
-  "error": zod.union([zod.string(),zod.null()]).exactOptional()
+  "datastores": zod.array(zod.string()).default(recoveryAppInventoryVmDatastoresDefault)
 });
 
 export type RecoveryAppInventoryVm = zod.input<typeof RecoveryAppInventoryVm>;
@@ -386,7 +401,6 @@ export const RecoveryAppInventoryTier = zod.object({
   "tier_name": zod.string(),
   "recovery_group_id": zod.string(),
   "recovery_group_name": zod.string(),
-  "provider_id_vm": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vms": zod.array(RecoveryAppInventoryVm)
 });
 
@@ -397,6 +411,8 @@ export const RecoveryAppInventoryResponse = zod.object({
   "recovery_app_id": zod.string(),
   "recovery_app_name": zod.string(),
   "run_id": zod.string(),
+  "compute_provider_id": zod.string(),
+  "recovered_datastores": zod.array(RecoveredDatastore),
   "tiers": zod.array(RecoveryAppInventoryTier)
 });
 
@@ -625,9 +641,7 @@ export const RecoveryGroupRecord = zod.object({
   "vms": zod.array(RecoveryVM).default(recoveryGroupRecordVmsDefault),
   "volumes": zod.array(RecoveryVolume).default(recoveryGroupRecordVolumesDefault),
   "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "airflow_run_id": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "push_to_orchestrator": zod.union([zod.boolean(),zod.null()]).exactOptional(),
-  "orchestration_provider_id": zod.union([zod.string(),zod.null()]).exactOptional()
+  "orchestration": zod.union([GroupOrchestrationState,zod.null()]).exactOptional()
 });
 
 export type RecoveryGroupRecord = zod.input<typeof RecoveryGroupRecord>;
@@ -742,13 +756,16 @@ export const VdisksByVmResponse = zod.object({
 export type VdisksByVmResponse = zod.input<typeof VdisksByVmResponse>;
 export type VdisksByVmResponseOutput = zod.output<typeof VdisksByVmResponse>;
 
+export const vmDiskNaaDefault = [];
+
 export const VmDisk = zod.object({
   "label": zod.string(),
   "capacity_gb": zod.number(),
   "file": zod.string(),
   "datastore": zod.union([zod.string(),zod.null()]).exactOptional(),
   "thin_provisioned": zod.union([zod.boolean(),zod.null()]).exactOptional(),
-  "uuid": zod.union([zod.string(),zod.null()]).exactOptional()
+  "uuid": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "naa": zod.array(zod.string()).default(vmDiskNaaDefault)
 });
 
 export type VmDisk = zod.input<typeof VmDisk>;
@@ -942,10 +959,8 @@ export const HealthHealthGetResponse = HealthResponse
 /**
  * @summary Get Roles Permissions
  */
-export const getRolesPermissionsGetRolesPermissionsGetHeaderXUserDefault = `admin`;
-
 export const GetRolesPermissionsGetRolesPermissionsGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getRolesPermissionsGetRolesPermissionsGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetRolesPermissionsGetRolesPermissionsGetResponse = RolesPermissionsResponse
@@ -960,10 +975,8 @@ export const GetProvidersGetProvidersGetQueryParams = zod.object({
   "role": zod.enum(['source', 'target', 'all']).default(getProvidersGetProvidersGetQueryRoleDefault).describe('filter providers by role; \'all\' returns both')
 })
 
-export const getProvidersGetProvidersGetHeaderXUserDefault = `admin`;
-
 export const GetProvidersGetProvidersGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getProvidersGetProvidersGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetProvidersGetProvidersGetResponse = ProvidersResponse
@@ -972,10 +985,8 @@ export const GetProvidersGetProvidersGetResponse = ProvidersResponse
 /**
  * @summary Submit Provider
  */
-export const submitProviderSubmitProviderPostHeaderXUserDefault = `admin`;
-
 export const SubmitProviderSubmitProviderPostHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(submitProviderSubmitProviderPostHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const SubmitProviderSubmitProviderPostBody = Provider
@@ -990,10 +1001,8 @@ export const TestProviderTestProviderGetQueryParams = zod.object({
   "provider_id": zod.string().describe('id of the provider to test connectivity for')
 })
 
-export const testProviderTestProviderGetHeaderXUserDefault = `admin`;
-
 export const TestProviderTestProviderGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(testProviderTestProviderGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const TestProviderTestProviderGetResponse = ProviderTestResponse
@@ -1006,10 +1015,8 @@ export const DeleteProviderRouteDeleteProviderDeleteQueryParams = zod.object({
   "provider_id": zod.string().describe('id of the provider to delete')
 })
 
-export const deleteProviderRouteDeleteProviderDeleteHeaderXUserDefault = `admin`;
-
 export const DeleteProviderRouteDeleteProviderDeleteHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(deleteProviderRouteDeleteProviderDeleteHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const DeleteProviderRouteDeleteProviderDeleteResponse = ProvidersResponse
@@ -1024,10 +1031,8 @@ export const GetPlatformProvidersGetPlatformProvidersGetQueryParams = zod.object
   "type": zod.string().default(getPlatformProvidersGetPlatformProvidersGetQueryTypeDefault).describe('filter platform providers by type; \'all\' returns every type')
 })
 
-export const getPlatformProvidersGetPlatformProvidersGetHeaderXUserDefault = `admin`;
-
 export const GetPlatformProvidersGetPlatformProvidersGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getPlatformProvidersGetPlatformProvidersGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetPlatformProvidersGetPlatformProvidersGetResponse = PlatformProvidersResponse
@@ -1036,10 +1041,8 @@ export const GetPlatformProvidersGetPlatformProvidersGetResponse = PlatformProvi
 /**
  * @summary Submit Platform Provider
  */
-export const submitPlatformProviderSubmitPlatformProviderPostHeaderXUserDefault = `admin`;
-
 export const SubmitPlatformProviderSubmitPlatformProviderPostHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(submitPlatformProviderSubmitPlatformProviderPostHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const SubmitPlatformProviderSubmitPlatformProviderPostBody = OrchestrationProvider
@@ -1054,10 +1057,8 @@ export const DeletePlatformProviderDeletePlatformProviderDeleteQueryParams = zod
   "provider_id": zod.string().describe('id of the orchestration provider to delete')
 })
 
-export const deletePlatformProviderDeletePlatformProviderDeleteHeaderXUserDefault = `admin`;
-
 export const DeletePlatformProviderDeletePlatformProviderDeleteHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(deletePlatformProviderDeletePlatformProviderDeleteHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const DeletePlatformProviderDeletePlatformProviderDeleteResponse = PlatformProvidersResponse
@@ -1066,10 +1067,8 @@ export const DeletePlatformProviderDeletePlatformProviderDeleteResponse = Platfo
 /**
  * @summary Get Credentials Route
  */
-export const getCredentialsRouteGetCredentialsGetHeaderXUserDefault = `admin`;
-
 export const GetCredentialsRouteGetCredentialsGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getCredentialsRouteGetCredentialsGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetCredentialsRouteGetCredentialsGetResponse = CredentialsResponse
@@ -1078,10 +1077,8 @@ export const GetCredentialsRouteGetCredentialsGetResponse = CredentialsResponse
 /**
  * @summary Submit Credential
  */
-export const submitCredentialSubmitCredentialPostHeaderXUserDefault = `admin`;
-
 export const SubmitCredentialSubmitCredentialPostHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(submitCredentialSubmitCredentialPostHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const SubmitCredentialSubmitCredentialPostBody = Credential
@@ -1096,10 +1093,8 @@ export const DeleteCredentialRouteDeleteCredentialDeleteQueryParams = zod.object
   "credential_id": zod.string().describe('id of the credential to delete')
 })
 
-export const deleteCredentialRouteDeleteCredentialDeleteHeaderXUserDefault = `admin`;
-
 export const DeleteCredentialRouteDeleteCredentialDeleteHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(deleteCredentialRouteDeleteCredentialDeleteHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const DeleteCredentialRouteDeleteCredentialDeleteResponse = CredentialsResponse
@@ -1114,10 +1109,8 @@ export const VmsSearchVmsSearchPostQueryParams = zod.object({
   "provider_id": zod.string().default(vmsSearchVmsSearchPostQueryProviderIdDefault).describe('id of the vCenter provider to use')
 })
 
-export const vmsSearchVmsSearchPostHeaderXUserDefault = `admin`;
-
 export const VmsSearchVmsSearchPostHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(vmsSearchVmsSearchPostHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const VmsSearchVmsSearchPostBody = zod.union([VmSearchFilter,zod.null()])
@@ -1139,10 +1132,8 @@ export const VmsInFolderVmsInFolderGetQueryParams = zod.object({
   "force_refresh": zod.boolean().default(vmsInFolderVmsInFolderGetQueryForceRefreshDefault).describe('bypass cache and fetch live')
 })
 
-export const vmsInFolderVmsInFolderGetHeaderXUserDefault = `admin`;
-
 export const VmsInFolderVmsInFolderGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(vmsInFolderVmsInFolderGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const VmsInFolderVmsInFolderGetResponse = VmsResponse
@@ -1160,10 +1151,8 @@ export const VmsVmsGetQueryParams = zod.object({
   "force_refresh": zod.boolean().default(vmsVmsGetQueryForceRefreshDefault).describe('bypass cache and fetch live')
 })
 
-export const vmsVmsGetHeaderXUserDefault = `admin`;
-
 export const VmsVmsGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(vmsVmsGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const VmsVmsGetResponse = VmsResponse
@@ -1183,10 +1172,8 @@ export const VmsByTagVmsByTagGetQueryParams = zod.object({
   "force_refresh": zod.boolean().default(vmsByTagVmsByTagGetQueryForceRefreshDefault).describe('bypass cache and fetch live')
 })
 
-export const vmsByTagVmsByTagGetHeaderXUserDefault = `admin`;
-
 export const VmsByTagVmsByTagGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(vmsByTagVmsByTagGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const VmsByTagVmsByTagGetResponse = VmsResponse
@@ -1206,10 +1193,8 @@ export const VmsByNameVmsByNameGetQueryParams = zod.object({
   "force_refresh": zod.boolean().default(vmsByNameVmsByNameGetQueryForceRefreshDefault).describe('bypass cache and fetch live')
 })
 
-export const vmsByNameVmsByNameGetHeaderXUserDefault = `admin`;
-
 export const VmsByNameVmsByNameGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(vmsByNameVmsByNameGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const VmsByNameVmsByNameGetResponse = VmsResponse
@@ -1224,10 +1209,8 @@ export const TagsTagsGetQueryParams = zod.object({
   "provider_id": zod.string().default(tagsTagsGetQueryProviderIdDefault).describe('id of the vCenter provider to use')
 })
 
-export const tagsTagsGetHeaderXUserDefault = `admin`;
-
 export const TagsTagsGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(tagsTagsGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const TagsTagsGetResponse = TagsResponse
@@ -1246,10 +1229,8 @@ export const VdisksByVmVdisksByVmGetQueryParams = zod.object({
   "ibm_provider_id": zod.string().default(vdisksByVmVdisksByVmGetQueryIbmProviderIdDefault).describe('id of the IBM FlashSystem provider to use')
 })
 
-export const vdisksByVmVdisksByVmGetHeaderXUserDefault = `admin`;
-
 export const VdisksByVmVdisksByVmGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(vdisksByVmVdisksByVmGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const VdisksByVmVdisksByVmGetResponse = VdisksByVmResponse
@@ -1266,10 +1247,8 @@ export const GetVolumesRouteGetVolumesGetQueryParams = zod.object({
   "force_refresh": zod.boolean().default(getVolumesRouteGetVolumesGetQueryForceRefreshDefault).describe('bypass cache and fetch live')
 })
 
-export const getVolumesRouteGetVolumesGetHeaderXUserDefault = `admin`;
-
 export const GetVolumesRouteGetVolumesGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getVolumesRouteGetVolumesGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetVolumesRouteGetVolumesGetResponse = VolumesResponse
@@ -1290,10 +1269,8 @@ export const GetVolumeTreeRouteGetVolumeTreeGetQueryParams = zod.object({
   "force_refresh": zod.boolean().default(getVolumeTreeRouteGetVolumeTreeGetQueryForceRefreshDefault).describe('bypass cache and fetch live')
 })
 
-export const getVolumeTreeRouteGetVolumeTreeGetHeaderXUserDefault = `admin`;
-
 export const GetVolumeTreeRouteGetVolumeTreeGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getVolumeTreeRouteGetVolumeTreeGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetVolumeTreeRouteGetVolumeTreeGetResponse = VolumeTreeResponse
@@ -1310,10 +1287,8 @@ export const GetPowerVmGetPowerVmGetQueryParams = zod.object({
   "force_refresh": zod.boolean().default(getPowerVmGetPowerVmGetQueryForceRefreshDefault).describe('bypass cache and fetch live')
 })
 
-export const getPowerVmGetPowerVmGetHeaderXUserDefault = `admin`;
-
 export const GetPowerVmGetPowerVmGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getPowerVmGetPowerVmGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetPowerVmGetPowerVmGetResponse = PowerVmsResponse
@@ -1322,10 +1297,8 @@ export const GetPowerVmGetPowerVmGetResponse = PowerVmsResponse
 /**
  * @summary Get Cache Config
  */
-export const getCacheConfigDiscoveryCacheConfigGetHeaderXUserDefault = `admin`;
-
 export const GetCacheConfigDiscoveryCacheConfigGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getCacheConfigDiscoveryCacheConfigGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetCacheConfigDiscoveryCacheConfigGetResponse = CacheConfigResponse
@@ -1334,10 +1307,8 @@ export const GetCacheConfigDiscoveryCacheConfigGetResponse = CacheConfigResponse
 /**
  * @summary Update Cache Config
  */
-export const updateCacheConfigDiscoveryCacheConfigPutHeaderXUserDefault = `admin`;
-
 export const UpdateCacheConfigDiscoveryCacheConfigPutHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(updateCacheConfigDiscoveryCacheConfigPutHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const UpdateCacheConfigDiscoveryCacheConfigPutBody = CacheConfigUpdate
@@ -1353,10 +1324,8 @@ export const GetCacheHistoryDiscoveryCacheHistoryGetQueryParams = zod.object({
   "limit": zod.union([zod.int(),zod.null()]).exactOptional().describe('cap the number of returned runs')
 })
 
-export const getCacheHistoryDiscoveryCacheHistoryGetHeaderXUserDefault = `admin`;
-
 export const GetCacheHistoryDiscoveryCacheHistoryGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getCacheHistoryDiscoveryCacheHistoryGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetCacheHistoryDiscoveryCacheHistoryGetResponse = CacheHistoryResponse
@@ -1377,10 +1346,8 @@ export const GetAccessLogsGetAccessLogsGetQueryParams = zod.object({
   "path_contains": zod.union([zod.string(),zod.null()]).exactOptional().describe('filter by substring of the request path')
 })
 
-export const getAccessLogsGetAccessLogsGetHeaderXUserDefault = `admin`;
-
 export const GetAccessLogsGetAccessLogsGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getAccessLogsGetAccessLogsGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetAccessLogsGetAccessLogsGetResponse = AccessLogsResponse
@@ -1401,10 +1368,8 @@ export const GetOrchestratorRunsGetOrchestratorRunsGetQueryParams = zod.object({
   "order_by": zod.string().default(getOrchestratorRunsGetOrchestratorRunsGetQueryOrderByDefault).describe('Airflow order_by field, e.g. -logical_date')
 })
 
-export const getOrchestratorRunsGetOrchestratorRunsGetHeaderXUserDefault = `admin`;
-
 export const GetOrchestratorRunsGetOrchestratorRunsGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getOrchestratorRunsGetOrchestratorRunsGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetOrchestratorRunsGetOrchestratorRunsGetResponse = OrchestratorRunsResponse
@@ -1413,10 +1378,8 @@ export const GetOrchestratorRunsGetOrchestratorRunsGetResponse = OrchestratorRun
 /**
  * @summary Get Recovery Apps
  */
-export const getRecoveryAppsGetRecoveryAppsGetHeaderXUserDefault = `admin`;
-
 export const GetRecoveryAppsGetRecoveryAppsGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getRecoveryAppsGetRecoveryAppsGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetRecoveryAppsGetRecoveryAppsGetResponse = RecoveryAppsResponse
@@ -1433,10 +1396,8 @@ export const SubmitRecoveryDagSubmitRecoveryDagPostQueryParams = zod.object({
   "push_to_orchestrator": zod.boolean().default(submitRecoveryDagSubmitRecoveryDagPostQueryPushToOrchestratorDefault).describe('if true, also push the DAG to the Airflow target')
 })
 
-export const submitRecoveryDagSubmitRecoveryDagPostHeaderXUserDefault = `admin`;
-
 export const SubmitRecoveryDagSubmitRecoveryDagPostHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(submitRecoveryDagSubmitRecoveryDagPostHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const SubmitRecoveryDagSubmitRecoveryDagPostBody = RecoveryAppSubmission
@@ -1445,16 +1406,22 @@ export const SubmitRecoveryDagSubmitRecoveryDagPostResponse = RecoveryAppSubmitR
 
 
 /**
+ * What this run actually recovered on the target vCenter - not the source
+ * tiers' vms[] definitions. recover_vm registers each recovered VM under its
+ * original name (apache_airflow/dags/recovery_app_template.py), so a tier's
+ * expected VMs are matched by name against what list_recovered_inventory
+ * finds live via this run's RUN_UUID-named datastores.
  * @summary Get Recovery App Inventory
  */
+export const getRecoveryAppInventoryGetRecoveryAppInventoryGetQueryComputeProviderIdDefault = `vmware-vcenter-02`;
+
 export const GetRecoveryAppInventoryGetRecoveryAppInventoryGetQueryParams = zod.object({
-  "run_id": zod.string().describe('the recovery app\'s own airflow_run_id')
+  "run_id": zod.string().describe('the recovery app\'s own airflow_run_id'),
+  "compute_provider_id": zod.string().default(getRecoveryAppInventoryGetRecoveryAppInventoryGetQueryComputeProviderIdDefault).describe('VMWARE provider with role=target - where recover_vm actually registers this run\'s recovered VMs. Each recovered datastore\'s IBM target vdisk name is resolved using the storage provider of whichever tier\'s recovery group the datastore\'s VMs belong to.')
 })
 
-export const getRecoveryAppInventoryGetRecoveryAppInventoryGetHeaderXUserDefault = `admin`;
-
 export const GetRecoveryAppInventoryGetRecoveryAppInventoryGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getRecoveryAppInventoryGetRecoveryAppInventoryGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetRecoveryAppInventoryGetRecoveryAppInventoryGetResponse = RecoveryAppInventoryResponse
@@ -1467,19 +1434,19 @@ export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryRollbackFromOrche
 export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryRollbackOrphansDefault = false;
 export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryProviderIdDefault = `airflow-01`;
 export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryComputeProviderIdDefault = `vmware-vcenter-02`;
+export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryProviderIdVolumeDefault = `ibm-flashsystem-01`;
 
 export const DeleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryParams = zod.object({
   "recovery_app_id": zod.string().describe('id of the recovery app to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed).'),
   "rollback_from_orchestrator": zod.boolean().default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryRollbackFromOrchestratorDefault).describe('if true, tear down the app\'s Airflow DAG, then unmap (unpresent) its IBM target volumes from their host. Does not delete the FlashCopy mapping or the volume itself.'),
   "rollback_orphans": zod.boolean().default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryRollbackOrphansDefault).describe('if true, recovery_app_id is read as an airflow_run_id: skip the recovery_applications.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_PLAN.'),
   "provider_id": zod.union([zod.string(),zod.null()]).default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryProviderIdDefault).describe('orchestration (AIRFLOW) provider - required when rollback_from_orchestrator'),
-  "compute_provider_id": zod.union([zod.string(),zod.null()]).default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryComputeProviderIdDefault).describe('VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app\'s recovered datastore before its IBM target volume is unmapped; its own defaultFlashcopyProviderId supplies the IBM FlashSystem provider for that unmap step.')
+  "compute_provider_id": zod.union([zod.string(),zod.null()]).default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryComputeProviderIdDefault).describe('VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app\'s recovered datastore before its IBM target volume is unmapped.'),
+  "provider_id_volume": zod.union([zod.string(),zod.null()]).default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteQueryProviderIdVolumeDefault).describe('FLASHCOPY provider for the orphaned volume(s) - required only when rollback_orphans=true; ignored otherwise, since the recovery app\'s own tiers/recovery groups supply it per tier')
 })
 
-export const deleteRecoveryAppRouteDeleteRecoveryAppDeleteHeaderXUserDefault = `admin`;
-
 export const DeleteRecoveryAppRouteDeleteRecoveryAppDeleteHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(deleteRecoveryAppRouteDeleteRecoveryAppDeleteHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const DeleteRecoveryAppRouteDeleteRecoveryAppDeleteResponse = RecoveryAppsResponse
@@ -1488,10 +1455,8 @@ export const DeleteRecoveryAppRouteDeleteRecoveryAppDeleteResponse = RecoveryApp
 /**
  * @summary Get Recovery Groups
  */
-export const getRecoveryGroupsGetRecoveryGroupsGetHeaderXUserDefault = `admin`;
-
 export const GetRecoveryGroupsGetRecoveryGroupsGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getRecoveryGroupsGetRecoveryGroupsGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetRecoveryGroupsGetRecoveryGroupsGetResponse = RecoveryGroupsResponse
@@ -1508,10 +1473,8 @@ export const SubmitRecoveryGroupSubmitRecoveryGroupPostQueryParams = zod.object(
   "push_to_orchestrator": zod.boolean().default(submitRecoveryGroupSubmitRecoveryGroupPostQueryPushToOrchestratorDefault).describe('if true, also push the group\'s policy-enforcement DAG')
 })
 
-export const submitRecoveryGroupSubmitRecoveryGroupPostHeaderXUserDefault = `admin`;
-
 export const SubmitRecoveryGroupSubmitRecoveryGroupPostHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(submitRecoveryGroupSubmitRecoveryGroupPostHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const SubmitRecoveryGroupSubmitRecoveryGroupPostBody = RecoveryGroup
@@ -1526,10 +1489,8 @@ export const GetRecoveryGroupInventoryGetRecoveryGroupInventoryGetQueryParams = 
   "run_id": zod.string().describe('the recovery group\'s own airflow_run_id')
 })
 
-export const getRecoveryGroupInventoryGetRecoveryGroupInventoryGetHeaderXUserDefault = `admin`;
-
 export const GetRecoveryGroupInventoryGetRecoveryGroupInventoryGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getRecoveryGroupInventoryGetRecoveryGroupInventoryGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetRecoveryGroupInventoryGetRecoveryGroupInventoryGetResponse = RecoveryGroupInventoryResponse
@@ -1546,10 +1507,8 @@ export const RollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostQuery
   "provider_id": zod.string().describe('orchestration (AIRFLOW) provider the group was pushed to')
 })
 
-export const rollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostHeaderXUserDefault = `admin`;
-
 export const RollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(rollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const RollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostResponse = RecoveryGroupsResponse
@@ -1561,20 +1520,18 @@ export const RollbackGroupFromOrchestratorRollbackGroupFromOrchestratorPostRespo
 export const deleteRecoveryGroupRouteDeleteRecoveryGroupDeleteQueryRollbackFromOrchestratorDefault = false;
 export const deleteRecoveryGroupRouteDeleteRecoveryGroupDeleteQueryRollbackOrphansDefault = false;
 export const deleteRecoveryGroupRouteDeleteRecoveryGroupDeleteQueryProviderIdDefault = `airflow-01`;
-export const deleteRecoveryGroupRouteDeleteRecoveryGroupDeleteQueryVolumeProviderIdDefault = `ibm-flashsystem-01`;
+export const deleteRecoveryGroupRouteDeleteRecoveryGroupDeleteQueryProviderIdVolumeDefault = `ibm-flashsystem-01`;
 
 export const DeleteRecoveryGroupRouteDeleteRecoveryGroupDeleteQueryParams = zod.object({
   "recovery_group_id": zod.string().describe('id of the recovery group to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed).'),
   "rollback_from_orchestrator": zod.boolean().default(deleteRecoveryGroupRouteDeleteRecoveryGroupDeleteQueryRollbackFromOrchestratorDefault).describe('if true, tear down the group\'s Airflow DAG + IBM FlashCopy objects first'),
   "rollback_orphans": zod.boolean().default(deleteRecoveryGroupRouteDeleteRecoveryGroupDeleteQueryRollbackOrphansDefault).describe('if true, recovery_group_id is read as an airflow_run_id: skip the recovery_groups.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) and IBM FlashCopy objects (g|m|t <run_id[-8:]>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_GROUP.'),
   "provider_id": zod.union([zod.string(),zod.null()]).default(deleteRecoveryGroupRouteDeleteRecoveryGroupDeleteQueryProviderIdDefault).describe('orchestration (AIRFLOW) provider — required when rollback_from_orchestrator'),
-  "volume_provider_id": zod.string().default(deleteRecoveryGroupRouteDeleteRecoveryGroupDeleteQueryVolumeProviderIdDefault).describe('FLASHCOPY provider holding the orphaned objects — only used with rollback_orphans')
+  "provider_id_volume": zod.string().default(deleteRecoveryGroupRouteDeleteRecoveryGroupDeleteQueryProviderIdVolumeDefault).describe('FLASHCOPY provider holding the orphaned objects — only used with rollback_orphans')
 })
 
-export const deleteRecoveryGroupRouteDeleteRecoveryGroupDeleteHeaderXUserDefault = `admin`;
-
 export const DeleteRecoveryGroupRouteDeleteRecoveryGroupDeleteHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(deleteRecoveryGroupRouteDeleteRecoveryGroupDeleteHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const DeleteRecoveryGroupRouteDeleteRecoveryGroupDeleteResponse = RecoveryGroupsResponse
@@ -1583,10 +1540,8 @@ export const DeleteRecoveryGroupRouteDeleteRecoveryGroupDeleteResponse = Recover
 /**
  * @summary Get Policies
  */
-export const getPoliciesGetPoliciesGetHeaderXUserDefault = `admin`;
-
 export const GetPoliciesGetPoliciesGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getPoliciesGetPoliciesGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetPoliciesGetPoliciesGetResponse = SnapshotPoliciesResponse
@@ -1595,10 +1550,8 @@ export const GetPoliciesGetPoliciesGetResponse = SnapshotPoliciesResponse
 /**
  * @summary Submit Policy
  */
-export const submitPolicySubmitPolicyPostHeaderXUserDefault = `admin`;
-
 export const SubmitPolicySubmitPolicyPostHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(submitPolicySubmitPolicyPostHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const SubmitPolicySubmitPolicyPostBody = SnapshotPolicy
@@ -1613,10 +1566,8 @@ export const DeletePolicyDeletePolicyDeleteQueryParams = zod.object({
   "policy_id": zod.string().describe('id of the snapshot policy to delete')
 })
 
-export const deletePolicyDeletePolicyDeleteHeaderXUserDefault = `admin`;
-
 export const DeletePolicyDeletePolicyDeleteHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(deletePolicyDeletePolicyDeleteHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const DeletePolicyDeletePolicyDeleteResponse = SnapshotPoliciesResponse
@@ -1625,10 +1576,8 @@ export const DeletePolicyDeletePolicyDeleteResponse = SnapshotPoliciesResponse
 /**
  * @summary Get Policy Sets
  */
-export const getPolicySetsGetPolicySetsGetHeaderXUserDefault = `admin`;
-
 export const GetPolicySetsGetPolicySetsGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getPolicySetsGetPolicySetsGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetPolicySetsGetPolicySetsGetResponse = PolicySetsResponse
@@ -1637,10 +1586,8 @@ export const GetPolicySetsGetPolicySetsGetResponse = PolicySetsResponse
 /**
  * @summary Submit Policy Set
  */
-export const submitPolicySetSubmitPolicySetPostHeaderXUserDefault = `admin`;
-
 export const SubmitPolicySetSubmitPolicySetPostHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(submitPolicySetSubmitPolicySetPostHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const SubmitPolicySetSubmitPolicySetPostBody = PolicySet
@@ -1655,10 +1602,8 @@ export const DeletePolicySetRouteDeletePolicySetDeleteQueryParams = zod.object({
   "policy_set_id": zod.string().describe('id of the policy set to delete')
 })
 
-export const deletePolicySetRouteDeletePolicySetDeleteHeaderXUserDefault = `admin`;
-
 export const DeletePolicySetRouteDeletePolicySetDeleteHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(deletePolicySetRouteDeletePolicySetDeleteHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const DeletePolicySetRouteDeletePolicySetDeleteResponse = PolicySetsResponse
@@ -1667,10 +1612,8 @@ export const DeletePolicySetRouteDeletePolicySetDeleteResponse = PolicySetsRespo
 /**
  * @summary Get Recovery App Policies
  */
-export const getRecoveryAppPoliciesGetRecoveryAppPoliciesGetHeaderXUserDefault = `admin`;
-
 export const GetRecoveryAppPoliciesGetRecoveryAppPoliciesGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getRecoveryAppPoliciesGetRecoveryAppPoliciesGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetRecoveryAppPoliciesGetRecoveryAppPoliciesGetResponse = RecoveryAppPoliciesResponse
@@ -1679,10 +1622,8 @@ export const GetRecoveryAppPoliciesGetRecoveryAppPoliciesGetResponse = RecoveryA
 /**
  * @summary Submit Recovery App Policy
  */
-export const submitRecoveryAppPolicySubmitRecoveryAppPolicyPostHeaderXUserDefault = `admin`;
-
 export const SubmitRecoveryAppPolicySubmitRecoveryAppPolicyPostHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(submitRecoveryAppPolicySubmitRecoveryAppPolicyPostHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const SubmitRecoveryAppPolicySubmitRecoveryAppPolicyPostBody = RecoveryAppPolicy
@@ -1697,10 +1638,8 @@ export const DeleteRecoveryAppPolicyRouteDeleteRecoveryAppPolicyDeleteQueryParam
   "policy_id": zod.string().describe('id of the recovery app policy to delete')
 })
 
-export const deleteRecoveryAppPolicyRouteDeleteRecoveryAppPolicyDeleteHeaderXUserDefault = `admin`;
-
 export const DeleteRecoveryAppPolicyRouteDeleteRecoveryAppPolicyDeleteHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(deleteRecoveryAppPolicyRouteDeleteRecoveryAppPolicyDeleteHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const DeleteRecoveryAppPolicyRouteDeleteRecoveryAppPolicyDeleteResponse = RecoveryAppPoliciesResponse
@@ -1709,10 +1648,8 @@ export const DeleteRecoveryAppPolicyRouteDeleteRecoveryAppPolicyDeleteResponse =
 /**
  * @summary Get Clean Room Policies
  */
-export const getCleanRoomPoliciesGetCleanRoomPoliciesGetHeaderXUserDefault = `admin`;
-
 export const GetCleanRoomPoliciesGetCleanRoomPoliciesGetHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(getCleanRoomPoliciesGetCleanRoomPoliciesGetHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const GetCleanRoomPoliciesGetCleanRoomPoliciesGetResponse = CleanRoomPoliciesResponse
@@ -1721,10 +1658,8 @@ export const GetCleanRoomPoliciesGetCleanRoomPoliciesGetResponse = CleanRoomPoli
 /**
  * @summary Submit Clean Room Policy
  */
-export const submitCleanRoomPolicySubmitCleanRoomPolicyPostHeaderXUserDefault = `admin`;
-
 export const SubmitCleanRoomPolicySubmitCleanRoomPolicyPostHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(submitCleanRoomPolicySubmitCleanRoomPolicyPostHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const SubmitCleanRoomPolicySubmitCleanRoomPolicyPostBody = CleanRoomPolicy
@@ -1739,10 +1674,8 @@ export const DeleteCleanRoomPolicyRouteDeleteCleanRoomPolicyDeleteQueryParams = 
   "policy_id": zod.string().describe('id of the clean room policy to delete')
 })
 
-export const deleteCleanRoomPolicyRouteDeleteCleanRoomPolicyDeleteHeaderXUserDefault = `admin`;
-
 export const DeleteCleanRoomPolicyRouteDeleteCleanRoomPolicyDeleteHeader = zod.object({
-  "X-User": zod.union([zod.string(),zod.null()]).default(deleteCleanRoomPolicyRouteDeleteCleanRoomPolicyDeleteHeaderXUserDefault)
+  "X-User": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export const DeleteCleanRoomPolicyRouteDeleteCleanRoomPolicyDeleteResponse = CleanRoomPoliciesResponse

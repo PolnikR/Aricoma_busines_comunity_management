@@ -43,6 +43,7 @@ export * from './getRecoveryGroupInventoryGetRecoveryGroupInventoryGetParams.gen
 export * from './getVolumesRouteGetVolumesGetParams.gen';
 export * from './getVolumeTreeRouteGetVolumeTreeGetParams.gen';
 export * from './getVolumeTreeRouteGetVolumeTreeGetView.gen';
+export * from './groupOrchestrationState.gen';
 export * from './healthResponse.gen';
 export * from './hTTPValidationError.gen';
 export * from './orchestrationProvider.gen';
@@ -70,6 +71,7 @@ export * from './providersResponse.gen';
 export * from './providerTestResponse.gen';
 export * from './providerType.gen';
 export * from './rawAccessLogEntry.gen';
+export * from './recoveredDatastore.gen';
 export * from './recoveryAppInventoryResponse.gen';
 export * from './recoveryAppInventoryTier.gen';
 export * from './recoveryAppInventoryVm.gen';

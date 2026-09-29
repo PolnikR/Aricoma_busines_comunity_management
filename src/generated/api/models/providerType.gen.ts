@@ -11,6 +11,7 @@ export type ProviderType = typeof ProviderType[keyof typeof ProviderType];
 export const ProviderType = {
   VMWARE: 'VMWARE',
   FLASHCOPY: 'FLASHCOPY',
+  HITACHI: 'HITACHI',
   IBM_POWER: 'IBM_POWER',
   AIRFLOW: 'AIRFLOW',
   SMTP: 'SMTP',

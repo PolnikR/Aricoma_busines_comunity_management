@@ -1018,6 +1018,11 @@ export const getGetRecoveryAppInventoryGetRecoveryAppInventoryGetUrl = (params: 
 }
 
 /**
+ * What this run actually recovered on the target vCenter - not the source
+ * tiers' vms[] definitions. recover_vm registers each recovered VM under its
+ * original name (apache_airflow/dags/recovery_app_template.py), so a tier's
+ * expected VMs are matched by name against what list_recovered_inventory
+ * finds live via this run's RUN_UUID-named datastores.
  * @summary Get Recovery App Inventory
  */
 export const getRecoveryAppInventoryGetRecoveryAppInventoryGet = async (params: GetRecoveryAppInventoryGetRecoveryAppInventoryGetParams, options?: Parameters<typeof orvalMutator>[1]): Promise<RecoveryAppInventoryResponse> => {

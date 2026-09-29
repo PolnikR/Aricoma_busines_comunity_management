@@ -52,7 +52,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -124,7 +123,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -179,7 +177,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -255,7 +252,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -321,7 +317,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -388,7 +383,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -443,7 +437,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -519,7 +512,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -574,7 +566,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -629,7 +620,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -705,7 +695,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -796,7 +785,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -905,7 +893,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -985,7 +972,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -1077,7 +1063,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -1169,7 +1154,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -1236,7 +1220,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -1327,7 +1310,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -1406,7 +1388,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -1504,7 +1485,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -1583,7 +1563,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -1638,7 +1617,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -1691,7 +1669,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -1792,7 +1769,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -1915,7 +1891,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -2028,7 +2003,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -2083,7 +2057,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -2162,7 +2135,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -2207,6 +2179,7 @@
           "Recovery Apps"
         ],
         "summary": "Get Recovery App Inventory",
+        "description": "What this run actually recovered on the target vCenter - not the source\ntiers' vms[] definitions. recover_vm registers each recovered VM under its\noriginal name (apache_airflow/dags/recovery_app_template.py), so a tier's\nexpected VMs are matched by name against what list_recovered_inventory\nfinds live via this run's RUN_UUID-named datastores.",
         "operationId": "get_recovery_app_inventory_get_recovery_app_inventory_get",
         "security": [
           {
@@ -2226,6 +2199,18 @@
             "description": "the recovery app's own airflow_run_id"
           },
           {
+            "name": "compute_provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "VMWARE provider with role=target - where recover_vm actually registers this run's recovered VMs. Each recovered datastore's IBM target vdisk name is resolved using the storage provider of whichever tier's recovery group the datastore's VMs belong to.",
+              "default": "vmware-vcenter-02",
+              "title": "Compute Provider Id"
+            },
+            "description": "VMWARE provider with role=target - where recover_vm actually registers this run's recovered VMs. Each recovered datastore's IBM target vdisk name is resolved using the storage provider of whichever tier's recovery group the datastore's VMs belong to."
+          },
+          {
             "name": "X-User",
             "in": "header",
             "required": false,
@@ -2238,7 +2223,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -2347,11 +2331,30 @@
                   "type": "null"
                 }
               ],
-              "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped; its own defaultFlashcopyProviderId supplies the IBM FlashSystem provider for that unmap step.",
+              "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped.",
               "default": "vmware-vcenter-02",
               "title": "Compute Provider Id"
             },
-            "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped; its own defaultFlashcopyProviderId supplies the IBM FlashSystem provider for that unmap step."
+            "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped."
+          },
+          {
+            "name": "provider_id_volume",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "FLASHCOPY provider for the orphaned volume(s) - required only when rollback_orphans=true; ignored otherwise, since the recovery app's own tiers/recovery groups supply it per tier",
+              "default": "ibm-flashsystem-01",
+              "title": "Provider Id Volume"
+            },
+            "description": "FLASHCOPY provider for the orphaned volume(s) - required only when rollback_orphans=true; ignored otherwise, since the recovery app's own tiers/recovery groups supply it per tier"
           },
           {
             "name": "X-User",
@@ -2366,7 +2369,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -2421,7 +2423,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -2500,7 +2501,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -2576,7 +2576,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -2654,7 +2653,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -2761,14 +2759,14 @@
             "description": "orchestration (AIRFLOW) provider — required when rollback_from_orchestrator"
           },
           {
-            "name": "volume_provider_id",
+            "name": "provider_id_volume",
             "in": "query",
             "required": false,
             "schema": {
               "type": "string",
               "description": "FLASHCOPY provider holding the orphaned objects — only used with rollback_orphans",
               "default": "ibm-flashsystem-01",
-              "title": "Volume Provider Id"
+              "title": "Provider Id Volume"
             },
             "description": "FLASHCOPY provider holding the orphaned objects — only used with rollback_orphans"
           },
@@ -2785,7 +2783,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -2840,7 +2837,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -2895,7 +2891,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -2971,7 +2966,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -3026,7 +3020,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -3081,7 +3074,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -3157,7 +3149,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -3212,7 +3203,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -3267,7 +3257,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -3343,7 +3332,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -3398,7 +3386,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -3453,7 +3440,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -3529,7 +3515,6 @@
                   "type": "null"
                 }
               ],
-              "default": "admin",
               "title": "X-User"
             }
           }
@@ -3918,6 +3903,45 @@
         ],
         "title": "CredentialsResponse"
       },
+      "GroupOrchestrationState": {
+        "properties": {
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "pushed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pushed"
+          },
+          "provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Id"
+          }
+        },
+        "type": "object",
+        "title": "GroupOrchestrationState"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -4009,17 +4033,6 @@
               }
             ],
             "title": "Url"
-          },
-          "defaultFlashcopyProviderId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Defaultflashcopyproviderid"
           },
           "orchestratorConnId": {
             "anyOf": [
@@ -4250,17 +4263,6 @@
               }
             ],
             "title": "Url"
-          },
-          "defaultFlashcopyProviderId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Defaultflashcopyproviderid"
           },
           "orchestratorConnId": {
             "anyOf": [
@@ -4813,17 +4815,6 @@
             ],
             "title": "Url"
           },
-          "defaultFlashcopyProviderId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Defaultflashcopyproviderid"
-          },
           "orchestratorConnId": {
             "anyOf": [
               {
@@ -4973,17 +4964,6 @@
             ],
             "title": "Url"
           },
-          "defaultFlashcopyProviderId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Defaultflashcopyproviderid"
-          },
           "orchestratorConnId": {
             "anyOf": [
               {
@@ -5092,6 +5072,7 @@
         "enum": [
           "VMWARE",
           "FLASHCOPY",
+          "HITACHI",
           "IBM_POWER",
           "AIRFLOW",
           "SMTP",
@@ -5116,6 +5097,39 @@
         ],
         "title": "ProvidersResponse"
       },
+      "RecoveredDatastore": {
+        "properties": {
+          "datastore": {
+            "type": "string",
+            "title": "Datastore"
+          },
+          "target_vdisk": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Vdisk"
+          },
+          "vms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Vms",
+            "default": []
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "datastore"
+        ],
+        "title": "RecoveredDatastore"
+      },
       "RecoveryAppInventoryResponse": {
         "properties": {
           "recovery_app_id": {
@@ -5130,6 +5144,17 @@
             "type": "string",
             "title": "Run Id"
           },
+          "compute_provider_id": {
+            "type": "string",
+            "title": "Compute Provider Id"
+          },
+          "recovered_datastores": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveredDatastore"
+            },
+            "type": "array",
+            "title": "Recovered Datastores"
+          },
           "tiers": {
             "items": {
               "$ref": "#/components/schemas/RecoveryAppInventoryTier"
@@ -5143,6 +5168,8 @@
           "recovery_app_id",
           "recovery_app_name",
           "run_id",
+          "compute_provider_id",
+          "recovered_datastores",
           "tiers"
         ],
         "title": "RecoveryAppInventoryResponse"
@@ -5160,17 +5187,6 @@
           "recovery_group_name": {
             "type": "string",
             "title": "Recovery Group Name"
-          },
-          "provider_id_vm": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Provider Id Vm"
           },
           "vms": {
             "items": {
@@ -5206,17 +5222,6 @@
             "type": "array",
             "title": "Datastores",
             "default": []
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error"
           }
         },
         "additionalProperties": true,
@@ -5921,38 +5926,15 @@
             ],
             "title": "Notificationemail"
           },
-          "airflow_run_id": {
+          "orchestration": {
             "anyOf": [
               {
-                "type": "string"
+                "$ref": "#/components/schemas/GroupOrchestrationState"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Airflow Run Id"
-          },
-          "push_to_orchestrator": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Push To Orchestrator"
-          },
-          "orchestration_provider_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Orchestration Provider Id"
+            ]
           }
         },
         "additionalProperties": true,
@@ -6557,6 +6539,14 @@
               }
             ],
             "title": "Uuid"
+          },
+          "naa": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Naa",
+            "default": []
           }
         },
         "additionalProperties": true,

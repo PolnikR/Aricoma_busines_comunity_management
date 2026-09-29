@@ -12,5 +12,6 @@ export interface VmDisk {
   datastore?: string | null;
   thin_provisioned?: boolean | null;
   uuid?: string | null;
+  naa?: string[];
   [key: string]: unknown;
  }

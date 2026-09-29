@@ -10,4 +10,8 @@ export type GetRecoveryAppInventoryGetRecoveryAppInventoryGetParams = {
  * the recovery app's own airflow_run_id
  */
 run_id: string;
+/**
+ * VMWARE provider with role=target - where recover_vm actually registers this run's recovered VMs. Each recovered datastore's IBM target vdisk name is resolved using the storage provider of whichever tier's recovery group the datastore's VMs belong to.
+ */
+compute_provider_id?: string;
 };

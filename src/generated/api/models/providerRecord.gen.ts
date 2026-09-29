@@ -16,7 +16,6 @@ export interface ProviderRecord {
   ipAddress?: string | null;
   credentialId?: string | null;
   url?: string | null;
-  defaultFlashcopyProviderId?: string | null;
   orchestratorConnId?: string | null;
   vmPrefix?: string | null;
   vmTags?: string[];
