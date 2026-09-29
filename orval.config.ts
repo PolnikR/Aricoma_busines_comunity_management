@@ -3,7 +3,7 @@ import { defineConfig } from 'orval'
 const input = {
   target: './openapi/abco-api.json',
   override: {
-    transformer: './scripts/orval/omitPubkey.mjs',
+    transformer: './scripts/orval/specPatches/index.mjs',
   },
 } as const
 

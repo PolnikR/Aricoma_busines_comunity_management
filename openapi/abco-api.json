@@ -1900,9 +1900,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccessLogsResponse"
-                }
+                "schema": {}
               }
             }
           },
@@ -7171,95 +7169,6 @@
           "clusters"
         ],
         "title": "VolumesResponse"
-      },
-      "AccessLogEntry": {
-        "additionalProperties": true,
-        "properties": {
-          "timestamp": {
-            "type": "string",
-            "title": "Timestamp"
-          },
-          "user": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User"
-          },
-          "method": {
-            "type": "string",
-            "title": "Method"
-          },
-          "path": {
-            "type": "string",
-            "title": "Path"
-          },
-          "status": {
-            "type": "integer",
-            "title": "Status"
-          },
-          "duration_ms": {
-            "type": "number",
-            "title": "Duration Ms"
-          },
-          "request_body": {
-            "title": "Request Body"
-          },
-          "response_body": {
-            "title": "Response Body"
-          }
-        },
-        "type": "object",
-        "required": [
-          "timestamp",
-          "method",
-          "path",
-          "status",
-          "duration_ms",
-          "request_body",
-          "response_body"
-        ],
-        "title": "AccessLogEntry"
-      },
-      "RawAccessLogEntry": {
-        "properties": {
-          "raw": {
-            "type": "string",
-            "title": "Raw"
-          }
-        },
-        "type": "object",
-        "required": [
-          "raw"
-        ],
-        "title": "RawAccessLogEntry"
-      },
-      "AccessLogsResponse": {
-        "properties": {
-          "entries": {
-            "items": {
-              "anyOf": [
-                {
-                    "$ref": "#/components/schemas/AccessLogEntry"
-                },
-                {
-                    "$ref": "#/components/schemas/RawAccessLogEntry"
-                }
-              ]
-            },
-            "type": "array",
-            "title": "Entries"
-          }
-        },
-        "type": "object",
-        "required": [
-          "entries"
-        ],
-        "title": "AccessLogsResponse"
       }
     },
     "securitySchemes": {
