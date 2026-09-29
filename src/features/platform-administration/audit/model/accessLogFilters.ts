@@ -1,4 +1,5 @@
-import type { AccessLogFilters } from '../model/accessLogTypes'
+import type { GetAccessLogsParams } from '@/generated/query/zod'
+import type { AccessLogFilters } from './accessLogTypes'
 
 export const DEFAULT_ACCESS_LOG_LINES = 200
 export const MIN_ACCESS_LOG_LINES = 1
@@ -38,17 +39,13 @@ export function normalizeAccessLogFilters(
   }
 }
 
-export const accessLogKeys = {
-  all: ['access-logs'] as const,
-  list: (filters: AccessLogFilters = {}) => {
-    const normalized = normalizeAccessLogFilters(filters)
-    return [
-      ...accessLogKeys.all,
-      'list',
-      normalized.lines,
-      normalized.status ?? null,
-      normalized.method ?? null,
-      normalized.pathContains ?? null,
-    ] as const
-  },
+// Complete, normalized request params, so equal filters always share one cache entry.
+export function toAccessLogParams(filters: AccessLogFilters = {}): GetAccessLogsParams {
+  const normalized = normalizeAccessLogFilters(filters)
+  return {
+    lines: normalized.lines,
+    ...(normalized.status !== undefined ? { status: normalized.status } : {}),
+    ...(normalized.method ? { method: normalized.method } : {}),
+    ...(normalized.pathContains ? { path_contains: normalized.pathContains } : {}),
+  }
 }

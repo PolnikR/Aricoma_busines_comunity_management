@@ -4,12 +4,12 @@ import { PermissionsSection } from './PermissionsSection'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
-const useRolesPermissionsMock = vi.hoisted(() => ({ useRolesPermissions: vi.fn() }))
-vi.mock('../hooks/useRolesPermissions', () => useRolesPermissionsMock)
+const useRolesPermissionsMock = vi.hoisted(() => ({ useGetRolesPermissions: vi.fn() }))
+vi.mock('@/generated/query/identity-access/identity-access.gen', () => useRolesPermissionsMock)
 
 describe('PermissionsSection', () => {
   it('keeps permission column labels visible while API rows load', () => {
-    useRolesPermissionsMock.useRolesPermissions.mockReturnValue({ data: undefined, isLoading: true, error: null, refetch: vi.fn() })
+    useRolesPermissionsMock.useGetRolesPermissions.mockReturnValue({ data: undefined, isLoading: true, error: null, refetch: vi.fn() })
     const { container } = render(<PermissionsSection />)
 
     expect(screen.getByRole('columnheader', { name: 'Permission' })).toBeVisible()
@@ -19,7 +19,7 @@ describe('PermissionsSection', () => {
   })
 
   it('renders API permissions and roles without reusing ABCO permission mocks', () => {
-    useRolesPermissionsMock.useRolesPermissions.mockReturnValue({
+    useRolesPermissionsMock.useGetRolesPermissions.mockReturnValue({
       data: { roles: [{ id: 'platform-admin', name: 'platform-admin', permissions: ['providers.read'] }], permissions: ['providers.read'] },
       isLoading: false, error: null, refetch: vi.fn(),
     })
@@ -32,7 +32,7 @@ describe('PermissionsSection', () => {
   })
 
   it('does not render redundant top-level section header', () => {
-    useRolesPermissionsMock.useRolesPermissions.mockReturnValue({ data: { roles: [], permissions: [] }, isLoading: false, error: null, refetch: vi.fn() })
+    useRolesPermissionsMock.useGetRolesPermissions.mockReturnValue({ data: { roles: [], permissions: [] }, isLoading: false, error: null, refetch: vi.fn() })
     render(<PermissionsSection />)
     expect(screen.queryByRole('heading', { name: 'Permissions' })).not.toBeInTheDocument()
   })

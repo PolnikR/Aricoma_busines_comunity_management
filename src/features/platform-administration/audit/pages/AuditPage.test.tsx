@@ -2,17 +2,15 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest'
 import { LanguageProvider } from '@/contexts/LanguageProvider'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
-import { fetchAccessLogs } from '../api/accessLogsApi'
+import { installAccessLogsFetch, type AccessLogsHandler } from '../test/accessLogsFetch'
 import { AuditPage } from './AuditPage'
 
-vi.mock('../api/accessLogsApi', () => ({
-  fetchAccessLogs: vi.fn(),
-}))
 
-const fetchAccessLogsMock = vi.mocked(fetchAccessLogs)
+const fetchAccessLogsMock: AccessLogsHandler = vi.fn()
+beforeEach(() => { installAccessLogsFetch(fetchAccessLogsMock) })
 
 function renderPage(initialEntry = '/platform-administration/audit-retention') {
   const queryClient = new QueryClient({

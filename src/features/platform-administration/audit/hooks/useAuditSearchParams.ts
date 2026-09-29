@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router'
 import {
   DEFAULT_ACCESS_LOG_LINES,
   normalizeAccessLogFilters,
-} from '../api/accessLogQueryKeys'
+} from '../model/accessLogFilters'
 import type { AccessLogFilters } from '../model/accessLogTypes'
 
 const LINES_PARAM = 'lines'

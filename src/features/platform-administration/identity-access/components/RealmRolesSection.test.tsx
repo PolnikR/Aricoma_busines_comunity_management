@@ -2,18 +2,18 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { RealmRolesSection } from './RealmRolesSection'
-import { useRolesPermissions } from '../hooks/useRolesPermissions'
+import { useGetRolesPermissions } from '@/generated/query/identity-access/identity-access.gen'
 import { useUsers } from '../hooks/useUsers'
 import type { IdentityRoleRecord } from '../model/rolesPermissionsTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-vi.mock('../hooks/useRolesPermissions', () => ({ useRolesPermissions: vi.fn() }))
+vi.mock('@/generated/query/identity-access/identity-access.gen', () => ({ useGetRolesPermissions: vi.fn() }))
 vi.mock('../hooks/useUsers', () => ({ useUsers: vi.fn() }))
 
 const role: IdentityRoleRecord = { id: 'role-admin', name: 'Administrator', permissions: ['providers.read'] }
 
 function mockLoadedRoles(roles: IdentityRoleRecord[] = [role]) {
-  vi.mocked(useRolesPermissions).mockReturnValue({ data: { roles, permissions: ['providers.read'] }, isLoading: false, error: null, refetch: vi.fn() } as never)
+  vi.mocked(useGetRolesPermissions).mockReturnValue({ data: { roles, permissions: ['providers.read'] }, isLoading: false, error: null, refetch: vi.fn() } as never)
   vi.mocked(useUsers).mockReturnValue({ data: [{ id: 'user-1', email: 'admin@example.com', name: 'Admin User', organizationId: 'org-1', roleIds: ['role-admin'], status: 'active', createdAt: new Date(), updatedAt: new Date() }], isLoading: false, error: null, refetch: vi.fn() })
 }
 
@@ -25,7 +25,7 @@ function renderSection(overrides?: Partial<Parameters<typeof RealmRolesSection>[
 
 describe('RealmRolesSection', () => {
   it('keeps role search and column labels visible while API rows load', () => {
-    vi.mocked(useRolesPermissions).mockReturnValue({ data: undefined, isLoading: true, error: null, refetch: vi.fn() } as never)
+    vi.mocked(useGetRolesPermissions).mockReturnValue({ data: undefined, isLoading: true, error: null, refetch: vi.fn() } as never)
     vi.mocked(useUsers).mockReturnValue({ data: [], isLoading: false, error: null, refetch: vi.fn() })
     renderSection()
 
@@ -85,14 +85,14 @@ describe('RealmRolesSection', () => {
     expect(screen.getByText('No roles found')).toBeInTheDocument()
 
     const refetch = vi.fn()
-    vi.mocked(useRolesPermissions).mockReturnValue({ data: undefined, isLoading: false, error: new Error('roles unavailable'), refetch } as never)
+    vi.mocked(useGetRolesPermissions).mockReturnValue({ data: undefined, isLoading: false, error: new Error('roles unavailable'), refetch } as never)
     rerender(<RealmRolesSection entityId={null} tabId={null} onEntityChange={vi.fn()} onTabChange={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(refetch).toHaveBeenCalledOnce()
   })
 
   it('keeps pagination available when cached roles remain after a refresh error', () => {
-    vi.mocked(useRolesPermissions).mockReturnValue({
+    vi.mocked(useGetRolesPermissions).mockReturnValue({
       data: { roles: [role], permissions: ['providers.read'] },
       isLoading: false,
       error: new Error('background refresh failed'),
