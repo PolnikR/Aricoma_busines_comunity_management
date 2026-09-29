@@ -15,7 +15,7 @@
     "test:watch": "vitest",
     "check": "npm run build",
     "api:pull": "node scripts/orval/pull-openapi.mjs",
-    "api:pull:test": "node --test scripts/orval/pull-openapi.test.mjs scripts/orval/specPatches/specPatches.test.mjs",
+    "api:pull:test": "node --test scripts/orval/pull-openapi.test.mjs scripts/orval/specPatches/specPatches.test.mjs scripts/orval/operationName.test.mjs",
     "api:generated:test": "node --test scripts/orval/check-generated.test.mjs",
     "api:generate": "orval --config orval.config.ts",
     "api:update": "npm run api:pull && npm run api:generate",
