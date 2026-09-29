@@ -1,9 +1,10 @@
 # OpenAPI spec gaps
 
 Fields the frontend needs typed that `openapi/abco-api.json` leaves untyped or
-incomplete. Each gap forces a local schema in the frontend (marked `// SPEC GAP:`,
-allowlisted in `eslint.config.js`, see ADR 0001). When backend types a field, the
-frontend deletes the local part and the allowlist entry.
+incomplete. Each gap is fixed by a spec patch in `scripts/orval/specPatches/` (see
+ADR 0002), named in the "Patched by" column. When backend types a field, the patch
+throws `Spec patch <name> is obsolete` during `npm run api:generate`; delete the
+patch and its row here.
 
 State: spec from regen commit `2df865b`.
 
@@ -11,21 +12,25 @@ State: spec from regen commit `2df865b`.
 
 | Endpoint | Field in spec | Spec type | Shape the frontend relies on | Frontend file | Patched by |
 |---|---|---|---|---|---|
-| `GET /get_power_vm` | `PowerVmRecord.lpar`, `PowerVmRecord.vios` | `record<string, unknown>` | `{ PartitionUUID?, PartitionName?, PartitionType?, PartitionState?, SystemName? }` plus scalar extras | `resources/api/schemas/powerInventorySchema.ts` | `powerInventory` |
+| `GET /get_power_vm` | `PowerVmRecord.lpar`, `PowerVmRecord.vios` | `record<string, unknown>` | `{ PartitionUUID?, PartitionName?, PartitionType?, PartitionState?, SystemName? }` plus scalar extras | `resources/helpers/mapPowerInventory.ts` | `powerInventory` |
 | `GET /get_power_vm` | `PowerVmsResponse.counts_by_type` | `record<string, int>` | fixed keys `LogicalPartition`, `VirtualIOServer` | same | `powerInventory` |
 | `GET /get_power_vm` | top-level `provider_id` | missing | `string`, optional | same | `powerInventory` |
-| `GET /get_volumes` | `VolumesResponse.volumes[]` | `record<string, unknown>` | IBM vdisk record: `id`, `name`, `IO_group_*`, `status`, `mdisk_grp_*`, `capacity`, `type`, `FC_*`, `RC_*`, `vdisk_UID`, counts, `host_maps[{ host_id, scsi_id }]`, ... | `resources/api/schemas/flashSystemInventorySchema.ts` | `flashSystemVolumes` |
+| `GET /get_volumes` | `VolumesResponse.volumes[]` | `record<string, unknown>` | IBM vdisk record: `id`, `name`, `IO_group_*`, `status`, `mdisk_grp_*`, `capacity`, `type`, `FC_*`, `RC_*`, `vdisk_UID`, counts, `host_maps[{ host_id, scsi_id }]`, ... | `resources/helpers/mapFlashSystemInventory.ts` | `flashSystemVolumes` |
 | `GET /get_volumes` | `pools`, `hosts`, `clusters` | `record<string, unknown>` | pool `{ name, capacity, used_capacity, free_capacity }`, host `{ name, cluster_id, cluster_name }`, cluster `{ name }` | same | `flashSystemVolumes` |
-| `GET /vdisks_by_vm` | `VdisksByVmResponse.vdisks` | `record<string, unknown>` | volume record with `sanpshosts` (sic) `{ has_snapshots, snapshot_count, is_snapshot, source_mappings[], target_mappings[] }` | `resources/api/schemas/vmStorageVolumesSchema.ts` | `vdisksByVm` |
+| `GET /vdisks_by_vm` | `VdisksByVmResponse.vdisks` | `record<string, unknown>` | volume record with `sanpshosts` (sic) `{ has_snapshots, snapshot_count, is_snapshot, source_mappings[], target_mappings[] }` | `resources/helpers/mapVmStorageVolumes.ts` | `vdisksByVm` |
 | `GET /get_volume_tree` | `VolumeTreeNode.kind` | `string` | enum `pool` \| `volume` \| `fcmap` \| `consistency_group` | `infrastructure/helpers/parseVolumeTreeNodes.ts` | not patched (see below) |
 | `GET /get_volume_tree` | `VolumeTreeNode.detail` | `record<string, unknown>` | one detail shape per `kind` (pool, volume, fcmap, consistency group) | same | not patched (see below) |
-| `DELETE /delete_recovery_group`, `POST /rollback_group_from_orchestrator`, `DELETE /delete_recovery_app` | `RollbackReport` | only `status` | `airflow { status, dag_id?, paused?, failed_runs?, dag_file?, dag_record? }`, `ibm { status, consistency_groups?, fcmaps?, volumes?, errors? }` | `recovery-groups/api/schemas/recoveryGroupsSchema.ts`, `recovery-applications/api/schemas/recoveryApplicationsSchema.ts` | `rollbackReport` |
+| `DELETE /delete_recovery_group`, `POST /rollback_group_from_orchestrator`, `DELETE /delete_recovery_app` | `RollbackReport` | only `status` | `airflow { status, dag_id?, paused?, failed_runs?, dag_file?, dag_record? }`, `ibm { status, consistency_groups?, fcmaps?, volumes?, errors? }` | `recovery-groups/utils/rollbackReport.ts`, `recovery-applications/utils/rollbackReport.ts` | `rollbackReport` |
 
 The volume tree is the one gap handled in the feature: Orval 8.33 generates neither
 recursive schemas (grandchildren become `unknown`) nor a `kind`-discriminated union for
 `detail` from this spec shape, so a spec patch would validate the tree incorrectly. The
 generated schema validates the response envelope; `parseVolumeTreeNodes.ts` validates
-the nodes.
+the nodes. It is the only feature file allowed to import `zod` for API data.
+
+`GET /get_orchestrator_runs` is not a gap: the spec declares `OrchestratorRunsResponse`
+permissive on purpose (Airflow's own fields). The frontend reads `dag_runs` and
+`total_entries` as unlisted keys that `validatingMutator` keeps.
 
 ## Incomplete request/response models
 
