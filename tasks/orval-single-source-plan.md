@@ -87,10 +87,10 @@ Tasks with acceptance criteria are in `tasks/orval-single-source-todo.md`.
 ### Checkpoint B: after Tasks 7-9
 
 ### Phase 3: Discovery inventory (duplicates and spec gaps)
-- [ ] Task 10: Volume tree on generated schema
-- [ ] Task 11: Power inventory, generated base plus spec-gap extension
-- [ ] Task 12: FlashSystem inventory, generated base plus spec-gap extension
-- [ ] Task 13: VM storage volumes, generated base plus spec-gap extension
+- [x] Task 10: Volume tree on generated schema
+- [x] Task 11: Power inventory, generated base plus spec-gap extension
+- [x] Task 12: FlashSystem inventory, generated base plus spec-gap extension
+- [x] Task 13: VM storage volumes, generated base plus spec-gap extension
 
 ### Checkpoint C: after Tasks 10-13
 

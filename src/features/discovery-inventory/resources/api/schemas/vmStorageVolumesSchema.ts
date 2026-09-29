@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { VdisksByVmResponse } from '@/generated/api/zod.gen'
 
 export const storageVolumeMappingSchema = z.object({
   id: z.string().catch(''),
@@ -38,10 +39,9 @@ export const storageVolumeSchema = z.object({
   sanpshosts: storageVolumeSnapshotsSchema.optional(),
 })
 
-export const vdisksResponseSchema = z.object({
-  name: z.string().catch(''),
-  count_vm: z.number().catch(0),
-  count_ibm: z.number().catch(0),
+// SPEC GAP: the generated VdisksByVmResponse types `vdisks` only as
+// `record<string, unknown>`; name and counts come from the generated schema.
+export const vdisksResponseSchema = VdisksByVmResponse.extend({
   vdisks: z.record(z.string(), storageVolumeSchema).catch({}),
 })
 
