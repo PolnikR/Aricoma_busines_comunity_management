@@ -2168,6 +2168,7 @@
   "recoveryInventory.virtualMachines": "Virtuální stroje",
   "recoveryInventory.volumeInventory": "Inventář svazků",
   "recoveryInventory.tierInventory": "Inventář vrstev",
+  "recoveryInventory.recoveredDatastores": "Obnovené datastory",
   "recoveryInventory.mappingRelations": "mapovací vazby",
   "recoveryInventory.noRelations": "Nebyly vráceny žádné mapovací vazby.",
   "recoveryInventory.sourceVolume": "Zdrojový svazek",

@@ -2205,6 +2205,7 @@
   "recoveryInventory.virtualMachines": "Virtual machines",
   "recoveryInventory.volumeInventory": "Volume inventory",
   "recoveryInventory.tierInventory": "Tier inventory",
+  "recoveryInventory.recoveredDatastores": "Recovered datastores",
   "recoveryInventory.mappingRelations": "mapping relations",
   "recoveryInventory.noRelations": "No mapping relations were returned.",
   "recoveryInventory.sourceVolume": "Source volume",

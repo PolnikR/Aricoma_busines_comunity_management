@@ -2168,6 +2168,7 @@
   "recoveryInventory.virtualMachines": "Virtuálne stroje",
   "recoveryInventory.volumeInventory": "Inventár volumes",
   "recoveryInventory.tierInventory": "Inventár vrstiev",
+  "recoveryInventory.recoveredDatastores": "Obnovené datastory",
   "recoveryInventory.mappingRelations": "mapovacie väzby",
   "recoveryInventory.noRelations": "Neboli vrátené žiadne mapovacie väzby.",
   "recoveryInventory.sourceVolume": "Zdrojový volume",

@@ -30,7 +30,7 @@ export function RecoveryApplicationInventory({ runId, active }: RecoveryApplicat
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-text-primary">{query.data.recovery_app_name}</p>
-            <p className="mt-1 truncate font-mono text-[11px] text-text-subtle">{query.data.recovery_app_id} · {query.data.run_id}</p>
+            <p className="mt-1 truncate font-mono text-[11px] text-text-subtle">{query.data.recovery_app_id} · {query.data.run_id} · {query.data.compute_provider_id}</p>
           </div>
           <Badge color={foundCount === vmCount ? 'success' : 'warning'} size="sm">
             {foundCount}/{vmCount} {t('recoveryInventory.found').toLowerCase()}
@@ -50,6 +50,19 @@ export function RecoveryApplicationInventory({ runId, active }: RecoveryApplicat
         </div>
       </div>
 
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-text-subtle">{t('recoveryInventory.recoveredDatastores')}</p>
+      {query.data.recovered_datastores.length === 0 ? <p className="text-sm text-text-subtle">{t('recoveryInventory.empty')}</p> : (
+        <div className="space-y-2">
+          {query.data.recovered_datastores.map(datastore => (
+            <div key={datastore.datastore} className="rounded-md border border-border bg-surface px-2.5 py-2">
+              <span className="block truncate text-xs font-semibold text-text-primary">{datastore.datastore}</span>
+              <p className="mt-1 truncate font-mono text-[10px] text-text-subtle">{t('recoveryInventory.targetVolume')}: {datastore.target_vdisk ?? '—'}</p>
+              <p className="mt-1 truncate text-[10px] text-text-subtle">{t('recoveryInventory.virtualMachines')}: {datastore.vms.join(', ') || '—'}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       <p className="text-[10px] font-semibold uppercase tracking-wider text-text-subtle">{t('recoveryInventory.tierInventory')}</p>
       {query.data.tiers.length === 0 ? <p className="text-sm text-text-subtle">{t('recoveryInventory.empty')}</p> : query.data.tiers.map(tier => {
         const tierFoundCount = tier.vms.filter(vm => vm.found).length
@@ -64,7 +77,6 @@ export function RecoveryApplicationInventory({ runId, active }: RecoveryApplicat
               <ChevronDownIcon className="size-4 text-text-muted transition-transform group-open:rotate-180" />
             </summary>
             <div className="space-y-2 border-t border-border bg-surface-subtle px-3 py-3">
-              {tier.provider_id_vm ? <p className="font-mono text-[10px] text-text-subtle">{tier.provider_id_vm}</p> : null}
               {tier.vms.map(vm => (
                 <div key={vm.name} className="rounded-md border border-border bg-surface px-2.5 py-2">
                   <div className="flex items-center justify-between gap-2">
@@ -72,7 +84,6 @@ export function RecoveryApplicationInventory({ runId, active }: RecoveryApplicat
                     <Badge color={vm.found ? 'success' : 'error'} size="sm">{t(vm.found ? 'recoveryInventory.found' : 'recoveryInventory.notFound')}</Badge>
                   </div>
                   <p className="mt-1 truncate text-[10px] text-text-subtle">{t('recoveryInventory.datastores')}: {vm.datastores.join(', ') || '—'}</p>
-                  {vm.error ? <p className="mt-1 text-[10px] text-error-700">{vm.error}</p> : null}
                 </div>
               ))}
               <div aria-label={t('recoveryInventory.showTechnicalJson')}>

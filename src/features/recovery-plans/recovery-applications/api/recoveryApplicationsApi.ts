@@ -39,6 +39,9 @@ export async function fetchRecoveryApplications(): Promise<RecoveryApplicationLi
   }
 }
 
+// compute_provider_id is intentionally not sent, so the backend falls back to its
+// default target vCenter. A recovery application does not store which compute
+// provider its run recovered to, so the frontend cannot choose it.
 export async function fetchRecoveryApplicationInventory(runId: string) {
   try {
     const payload = await getRecoveryAppInventoryGetRecoveryAppInventoryGet({ run_id: runId })

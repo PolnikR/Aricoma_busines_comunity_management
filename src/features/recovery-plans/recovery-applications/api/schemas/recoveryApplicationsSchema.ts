@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { RollbackReport as GeneratedRollbackReport } from '@/generated/api/zod.gen'
 
 const rollbackAirflowSchema = z.looseObject({
   status: z.string(),
@@ -17,10 +18,11 @@ const rollbackIbmSchema = z.looseObject({
   errors: z.array(z.unknown()).optional(),
 })
 
-export const rollbackReportSchema = z.looseObject({
-  status: z.string(),
+// SPEC GAP: the generated RollbackReport pins down only `status`; the airflow and
+// ibm sections the UI reports on are typed locally.
+export const rollbackReportSchema = GeneratedRollbackReport.extend({
   airflow: rollbackAirflowSchema.optional(),
   ibm: rollbackIbmSchema.optional(),
-})
+}).loose()
 
 export type RollbackReport = z.infer<typeof rollbackReportSchema>

@@ -59,6 +59,8 @@ describe('recoveryApplicationsApi', () => {
       recovery_app_id: 'app-1',
       recovery_app_name: 'Finance',
       run_id: 'run-app-1',
+      compute_provider_id: 'vmware-vcenter-02',
+      recovered_datastores: [],
       tiers: [],
     }), { status: 200 })))
 

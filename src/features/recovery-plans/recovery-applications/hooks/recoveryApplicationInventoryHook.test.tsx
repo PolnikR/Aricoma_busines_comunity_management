@@ -19,7 +19,7 @@ describe('useRecoveryApplicationInventory', () => {
   beforeEach(() => { vi.clearAllMocks() })
 
   it('loads only when the inventory tab is active and a run ID exists', async () => {
-    vi.mocked(fetchRecoveryApplicationInventory).mockResolvedValue({ recovery_app_id: 'app', recovery_app_name: 'App', run_id: 'run-1', tiers: [] })
+    vi.mocked(fetchRecoveryApplicationInventory).mockResolvedValue({ recovery_app_id: 'app', recovery_app_name: 'App', run_id: 'run-1', compute_provider_id: 'vmware-vcenter-02', recovered_datastores: [], tiers: [] })
     const { rerender } = renderHook(({ active, runId }) => useRecoveryApplicationInventory(runId, active), {
       wrapper,
       initialProps: { active: false, runId: 'run-1' },
