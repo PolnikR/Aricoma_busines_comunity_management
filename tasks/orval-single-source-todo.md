@@ -186,9 +186,9 @@ Standard verification for every migration task:
 **Description:** `defaultFlashcopyProviderId` no longer exists. VM detail is done: it no longer sends `ibm_provider_id`, so the backend default `ibm-flashsystem-01` applies, with a code comment explaining why. The recovery group builder uses the group's `provider_id_volume`.
 **Acceptance criteria:**
 - [x] VM detail does not send `ibm_provider_id` and documents the backend default
-- [ ] Recovery group builder resolves related volumes from the group's `provider_id_volume`
-- [ ] No reference to `defaultFlashcopyProviderId` remains in `src/features`
-- [ ] VM detail and related-volumes tests pass
+- [x] Recovery group builder: the user selects the FlashSystem in the related-storage step (preselected from the group's `provider_id_volume`); discovery runs on that FlashSystem
+- [x] No reference to `defaultFlashcopyProviderId` remains in `src/features` (only an explanatory comment)
+- [x] VM detail and related-volumes tests pass
 **Dependencies:** Task 16
 **Files:** `useRecoveryGroupRelatedVolumes.ts`, `RecoveryGroupBuilder.tsx`, their tests
 **Scope:** S

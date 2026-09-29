@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { Spinner } from '@/shared/components/spinner/Spinner'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { Field, Select } from '@/shared/components/form/FormControls'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
 import { isProgrammaticIdAvailable } from '@/shared/utils/programmaticId'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -134,10 +135,11 @@ export function RecoveryGroupBuilder({
     orchestrationStepIndex,
     lastStep,
   } = calculateRecoveryGroupStepIndices(hasRelatedStorageStep)
+  const flashcopyProviders = providers.filter(provider => provider.type === 'FLASHCOPY')
   const relatedVolumesDiscovery = useRecoveryGroupRelatedVolumes(
     draftState.providerId,
     draftState.resources,
-    providers,
+    draftState.relatedVolumeProviderId ?? null,
     hasRelatedStorageStep && step === relatedStorageStepIndex,
   )
 
@@ -345,6 +347,21 @@ export function RecoveryGroupBuilder({
                     </Button>
                   ) : null}
                 </div>
+                <Field label={t('pages.recoveryGroupBuilder.relatedStorage.provider')} htmlFor="related-storage-provider">
+                  <Select
+                    id="related-storage-provider"
+                    value={draft.relatedVolumeProviderId ?? ''}
+                    onChange={event => {
+                      updateDraft({ relatedVolumeProviderId: event.target.value || null, relatedVolumes: [] })
+                      setHiddenDiscoveryKey(null)
+                    }}
+                  >
+                    <option value="">{t('forms.optionalSelect')}</option>
+                    {flashcopyProviders.map(provider => (
+                      <option key={provider.id} value={provider.id}>{provider.name} — {provider.id}</option>
+                    ))}
+                  </Select>
+                </Field>
                 {relatedVolumesDiscovery.flashcopyProviderId ? (
                   <div className="min-h-0 flex-1">
                     <RecoveryGroupResourcesStep

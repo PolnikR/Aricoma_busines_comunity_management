@@ -1,20 +1,6 @@
 import { useQueries } from '@tanstack/react-query'
 import { discoveryInventoryKeys } from '@/features/discovery-inventory/resources/api/resourceInventoryQueryKeys'
 import { fetchVdisksByVm } from '@/features/discovery-inventory/resources/api/vmStorageVolumesApi'
-import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-
-export function resolveDefaultFlashcopyProviderId(
-  vmProviderId: string | null,
-  providers: ProviderRecord[],
-): string | null {
-  const vmProvider = providers.find(provider => provider.id === vmProviderId)
-  const flashcopyProvider = providers.find(provider => (
-    provider.id === vmProvider?.defaultFlashcopyProviderId
-    && provider.type === 'FLASHCOPY'
-    && provider.credentialStatus === 'ok'
-  ))
-  return flashcopyProvider?.id ?? null
-}
 
 interface RecoveryGroupRelatedVolumes {
   flashcopyProviderId: string | null
@@ -22,13 +8,15 @@ interface RecoveryGroupRelatedVolumes {
   isLoading: boolean
 }
 
+// The FlashSystem is chosen explicitly by the user: the providers contract no
+// longer links a vCenter to a default FlashSystem, and with several FlashSystems
+// the one holding the VMs' disks cannot be derived.
 export function useRecoveryGroupRelatedVolumes(
   vmProviderId: string | null,
   vmNames: string[],
-  providers: ProviderRecord[],
+  flashcopyProviderId: string | null,
   enabled: boolean,
 ): RecoveryGroupRelatedVolumes {
-  const flashcopyProviderId = resolveDefaultFlashcopyProviderId(vmProviderId, providers)
   const queryEnabled = enabled && Boolean(vmProviderId) && Boolean(flashcopyProviderId)
 
   const results = useQueries({

@@ -20,7 +20,6 @@ vi.mock('@/features/providers-connectors/providers/hooks/useProviders', () => ({
         port: 22,
         credentialId: 'vcenter-admin',
         role: 'source',
-        defaultFlashcopyProviderId: 'ibm-flashsystem-01',
         credentialStatus: 'ok',
       },
       {
@@ -337,6 +336,28 @@ describe('RecoveryGroupBuilder', () => {
       orchestrationProviderId: 'airflow-01',
       pushToOrchestrator: true,
     }))
+  })
+
+  it('discovers related storage on the FlashSystem the user selects', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <RecoveryGroupBuilder
+        initialData={existingGroup}
+        onCreate={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Related storage' }))
+    await user.selectOptions(screen.getByLabelText('FlashSystem provider'), 'ibm-flashsystem-01')
+
+    expect(vi.mocked(useRecoveryGroupRelatedVolumes)).toHaveBeenLastCalledWith(
+      existingGroup.providerId,
+      existingGroup.resources,
+      'ibm-flashsystem-01',
+      true,
+    )
   })
 
   it('lets the user add FlashSystem volumes beyond what was auto-discovered', async () => {
