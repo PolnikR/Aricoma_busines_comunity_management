@@ -81,8 +81,8 @@ Tasks with acceptance criteria are in `tasks/orval-single-source-todo.md`.
 
 ### Phase 2: Partial duplicates and UI model derivation
 - [x] Task 7: Discovery cache on generated schemas
-- [ ] Task 8: Platform providers and audit review
-- [ ] Task 9: Derive `ProviderRecord` from the generated type
+- [x] Task 8: Platform providers and audit review
+- [x] Task 9: Derive `ProviderRecord` from the generated type
 
 ### Checkpoint B: after Tasks 7-9
 

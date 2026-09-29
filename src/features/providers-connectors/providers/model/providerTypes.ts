@@ -12,26 +12,22 @@ export const PROVIDER_CREDENTIAL_STATUSES = ['ok', 'missing', 'none'] as const
 
 export type ProviderCredentialStatus = (typeof PROVIDER_CREDENTIAL_STATUSES)[number]
 
-export interface ProviderRecord {
-  id: string
-  name: string
+// UI read model derived from the generated record. Only fields whose UI shape
+// differs from the wire shape are overridden here.
+export type ProviderRecord = Omit<
+  ProviderRecordOutput,
+  'type' | 'role' | 'description' | 'ipAddress' | 'credentialId' | 'credentialStatus'
+> & {
   description: string
   type: ProviderType
   ipAddress: string
-  /** Optional management URL exposed by the providers backend. */
-  url?: string | null | undefined
-  /** Optional until the providers backend exposes port in its contract. */
-  port?: number | undefined
   credentialId: string | null
   /** Present on current backend responses; optional internally for legacy fixtures. */
   role?: ProviderRole | undefined
-  orchestratorConnId?: string | null | undefined
-  vmPrefix?: string | null | undefined
-  vmTags?: string[] | undefined
-  notificationEmail?: string | null | undefined
-  cacheRefreshSeconds?: number | null | undefined
   credentialStatus: ProviderCredentialStatus
-  /** Validated GET record before UI normalization; unknown API fields are removed by Zod. */
+  /** UI-only: not part of the providers contract; the form defaults it to 22. */
+  port?: number | undefined
+  /** Validated GET record before UI normalization. */
   rawRecord?: ProviderRecordOutput | undefined
 }
 

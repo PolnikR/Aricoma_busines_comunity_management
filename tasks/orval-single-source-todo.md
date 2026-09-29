@@ -89,6 +89,7 @@ Standard verification for every migration task:
 **Scope:** M
 
 ### Task 8: Platform providers and audit review
+**Status:** Reviewed, no code change needed. Platform providers extend the generated `OrchestrationProvider` for the email rule and use a UI discriminated union typed against the generated record; audit only aliases generated schemas.
 **Description:** Both schemas already build on generated ones. Confirm no duplicated fields remain in `platformProviderTypes.ts` and `accessLogTypes.ts`; derive what is still hand-written. Access-log schemas stay as they are in the spec.
 **Acceptance criteria:**
 - [ ] Remaining hand-written types are only UI concerns, each with a one-line reason
