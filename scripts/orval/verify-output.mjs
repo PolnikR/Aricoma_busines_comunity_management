@@ -4,6 +4,7 @@ const snapshotPath = 'openapi/abco-api.json'
 const generatedFiles = [
   'src/generated/api/client.gen.ts',
   'src/generated/api/zod.gen.ts',
+  'src/generated/query/responseSchemas.gen.ts',
 ]
 
 const snapshot = readFileSync(snapshotPath, 'utf8')

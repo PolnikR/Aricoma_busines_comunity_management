@@ -1,4 +1,5 @@
 import { defineConfig } from 'orval'
+import operationName from './scripts/orval/operationName.mjs'
 
 const input = {
   target: './openapi/abco-api.json',
@@ -46,6 +47,25 @@ export default defineConfig({
           generateReusableSchemas: true,
           exactOptional: true,
         },
+      },
+    },
+  },
+  abcoQuery: {
+    input,
+    output: {
+      target: './src/generated/query/index.gen.ts',
+      schemas: { path: './src/generated/query/zod', type: 'zod' },
+      mode: 'tags-split',
+      client: 'react-query',
+      httpClient: 'fetch',
+      indexFiles: true,
+      fileExtension: '.gen.ts',
+      override: {
+        mutator: { path: 'src/shared/api/validatingMutator.ts', name: 'validatingMutator' },
+        operationName,
+        fetch: { includeHttpResponseReturnType: false },
+        query: { version: 5, mutationInvalidates: [] },
+        zod: { version: 4, variant: 'classic', exactOptional: true },
       },
     },
   },

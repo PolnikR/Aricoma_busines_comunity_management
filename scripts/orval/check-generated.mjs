@@ -108,8 +108,13 @@ function isCommandLineEntryPoint() {
     && import.meta.url === pathToFileURL(path.resolve(entryPoint)).href
 }
 
+async function checkAllGeneratedDirectories() {
+  await assertGeneratedApiIsCurrent()
+  await assertGeneratedApiIsCurrent({ generatedDirectory: path.resolve('src/generated/query') })
+}
+
 if (isCommandLineEntryPoint()) {
-  assertGeneratedApiIsCurrent().catch((error) => {
+  checkAllGeneratedDirectories().catch((error) => {
     const message = error instanceof Error ? error.message : String(error)
     process.stderr.write(`${message}\n`)
     process.exitCode = 1
