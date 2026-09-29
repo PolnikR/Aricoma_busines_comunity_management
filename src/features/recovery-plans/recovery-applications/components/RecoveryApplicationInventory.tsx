@@ -3,7 +3,8 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { ResponseBodyViewer } from '@/shared/components/response-body/ResponseBodyViewer'
 import { ChevronDownIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useRecoveryApplicationInventory } from '../hooks/useRecoveryApplications'
+import { useGetRecoveryAppInventory } from '@/generated/query/recovery-apps/recovery-apps.gen'
+import { selectRecoveryApplicationInventory } from '../model/selectRecoveryApplications'
 
 interface RecoveryApplicationInventoryProps {
   runId: string | null
@@ -12,7 +13,12 @@ interface RecoveryApplicationInventoryProps {
 
 export function RecoveryApplicationInventory({ runId, active }: RecoveryApplicationInventoryProps) {
   const { t } = useTranslation()
-  const query = useRecoveryApplicationInventory(runId, active)
+  // compute_provider_id is intentionally not sent (backend default target vCenter):
+  // a recovery application does not store the compute provider of its run.
+  const query = useGetRecoveryAppInventory(
+    { run_id: runId ?? '' },
+    { query: { select: selectRecoveryApplicationInventory, enabled: active && Boolean(runId) } },
+  )
 
   if (!runId) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.noRun')}</p>
   if (query.isLoading) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.loading')}</p>

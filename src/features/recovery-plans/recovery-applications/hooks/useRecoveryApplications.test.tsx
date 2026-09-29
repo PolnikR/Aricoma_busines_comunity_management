@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   useSubmitRecoveryApplication,
 } from './useRecoveryApplications'
-import { recoveryApplicationsQueryKey } from '../api/recoveryApplicationQueryKeys'
+import { getGetRecoveryAppsQueryKey } from '@/generated/query/recovery-apps/recovery-apps.gen'
 import type { RecoveryApplicationData } from '../model/recoveryApplicationTypes'
 
 const data: RecoveryApplicationData = {
@@ -43,7 +43,7 @@ describe('recovery application hooks', () => {
     }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
     const { queryClient, wrapper } = setup()
-    queryClient.setQueryData(recoveryApplicationsQueryKey, [])
+    queryClient.setQueryData(getGetRecoveryAppsQueryKey(), { applications: [] })
     const { result } = renderHook(() => useSubmitRecoveryApplication(), { wrapper })
 
     result.current.mutate({
@@ -60,6 +60,6 @@ describe('recovery application hooks', () => {
       '/api/submit_recovery_dag?provider_id=airflow-01&push_to_orchestrator=false',
       expect.objectContaining({ method: 'POST', body: JSON.stringify(data) }),
     )
-    expect(queryClient.getQueryState(recoveryApplicationsQueryKey)?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryState(getGetRecoveryAppsQueryKey())?.isInvalidated).toBe(true)
   })
 })

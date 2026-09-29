@@ -28,7 +28,7 @@ import { selectPlatformProviders } from '@/features/platform-administration/plat
 import { normalizeAirflowDagId } from '@/config/externalServices'
 import { AirflowDagLink } from '@/shared/components/airflow/AirflowDagLink'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
-import type { RollbackReport } from '../api/schemas/recoveryApplicationsSchema'
+import type { RollbackReport } from '../model/recoveryApplicationTypes'
 import { toRecoveryApplicationJson } from '../helpers/mapRecoveryApplications'
 import { RecoveryApplicationRollbackResultModal } from './RecoveryApplicationRollbackResultModal'
 import { RecoveryApplicationInventory } from './RecoveryApplicationInventory'

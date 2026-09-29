@@ -2,7 +2,7 @@ import type {
   RecoveryAppRecordOutput,
   RecoveryAppsResponseOutput,
   RecoveryTierOutput,
-} from '@/generated/api/zod.gen'
+} from '@/generated/query/zod'
 import type {
   RecoveryApplicationListItem,
   RecoveryTier,

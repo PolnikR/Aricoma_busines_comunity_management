@@ -5,7 +5,7 @@ import { LanguageContext, type Language } from '@/contexts/LanguageContext'
 import en from '@/locales/en.json'
 import cs from '@/locales/cs.json'
 import sk from '@/locales/sk.json'
-import type { RollbackReport } from '../api/schemas/recoveryApplicationsSchema'
+import type { RollbackReport } from '../model/recoveryApplicationTypes'
 import { RecoveryGroupRollbackResultModal } from '../../recovery-groups/components/RecoveryGroupRollbackResultModal'
 import { RecoveryApplicationRollbackResultModal } from './RecoveryApplicationRollbackResultModal'
 
@@ -41,7 +41,7 @@ const completeReport = {
     status: 'ok',
     removed_vms: ['finance-db-01'],
   },
-} satisfies RollbackReport
+} satisfies RollbackReport & { vmware: unknown }
 
 describe('RecoveryApplicationRollbackResultModal', () => {
   it('shows known checks and the complete rollback response', () => {
