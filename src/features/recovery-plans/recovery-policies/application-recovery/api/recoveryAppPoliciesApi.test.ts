@@ -267,20 +267,6 @@ describe('submitRecoveryAppPolicy', () => {
     ).rejects.toBeInstanceOf(Error)
     expect(fetchMock).not.toHaveBeenCalled()
   })
-
-  it('rejects mode-specific fields that do not belong to latest', async () => {
-    const fetchMock = stubFetch({ recovery_app_policies: [] })
-
-    await expect(
-      submitRecoveryAppPolicy({
-        ...latestPolicy,
-        snapshotMaxAgeValue: 2,
-        snapshotMaxAgeUnit: 'hours',
-        snapshotTargetTime: '02:00',
-      } as unknown as RecoveryAppPolicySubmitData),
-    ).rejects.toBeInstanceOf(Error)
-    expect(fetchMock).not.toHaveBeenCalled()
-  })
 })
 
 describe('deleteRecoveryAppPolicy', () => {

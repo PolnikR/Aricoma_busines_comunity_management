@@ -4,8 +4,10 @@ import {
   getRecoveryAppPoliciesGetRecoveryAppPoliciesGet,
   submitRecoveryAppPolicySubmitRecoveryAppPolicyPost,
 } from '@/generated/api/client.gen'
+import type { RecoveryAppPolicy as RecoveryAppPolicyWire } from '@/generated/api/models/recoveryAppPolicy.gen'
 import {
   RecoveryAppPoliciesResponse,
+  SubmitRecoveryAppPolicySubmitRecoveryAppPolicyPostBody,
   type RecoveryAppPolicyRecordOutput,
 } from '@/generated/api/zod.gen'
 import { parseGeneratedResponse } from '@/shared/api/generatedResponse'
@@ -14,11 +16,6 @@ import type {
   RecoveryAppPolicy,
   RecoveryAppPolicySubmitData,
 } from '../model/recoveryAppPolicyTypes'
-import {
-  recoveryAppPolicySubmitSchema,
-  type RecoveryAppPolicySubmitWire,
-  type RecoveryAppPolicyWire,
-} from './schemas/recoveryAppPoliciesSchema'
 
 const policyIdSchema = z.string().min(1)
 
@@ -41,90 +38,36 @@ function fromWire(policy: RecoveryAppPolicyRecordOutput): RecoveryAppPolicy {
   }
 }
 
+// Sends only the fields that belong to the selected snapshot mode. Mode-specific
+// required fields and the HH:MM target time are validated by the policy form.
 export function toRecoveryAppPolicySubmitPayload(
-  policy: RecoveryAppPolicy | RecoveryAppPolicySubmitData,
-): RecoveryAppPolicySubmitWire {
-  const policyWithReadFields = policy as RecoveryAppPolicy
-  const runtimeSelectionMode: unknown = (
-    policy as { snapshotSelectionMode: unknown }
-  ).snapshotSelectionMode
-  if (
-    runtimeSelectionMode !== 'latest'
-    && runtimeSelectionMode !== 'time_range'
-    && runtimeSelectionMode !== 'exact_time'
-  ) {
-    recoveryAppPolicySubmitSchema.parse(policy)
-  }
-
-  const hasUnexpectedSelectionFields = policy.snapshotSelectionMode === 'latest'
-    ? policyWithReadFields.snapshotMaxAgeValue != null
-      || policyWithReadFields.snapshotMaxAgeUnit != null
-      || policyWithReadFields.snapshotTargetTime != null
-    : policy.snapshotSelectionMode === 'time_range'
-      ? policyWithReadFields.snapshotTargetTime != null
-      : policyWithReadFields.snapshotMaxAgeValue != null
-        || policyWithReadFields.snapshotMaxAgeUnit != null
-
-  if (hasUnexpectedSelectionFields) {
-    recoveryAppPolicySubmitSchema.parse(policy)
-  }
-
-  const submitCommon = {
+  policy: RecoveryAppPolicySubmitData,
+): RecoveryAppPolicyWire {
+  const common = {
     id: policy.id,
     name: policy.name,
     description: policy.description,
     level: policy.level,
-    frequencyValue: policy.frequencyValue,
-    frequencyUnit: policy.frequencyUnit,
-    retentionValue: policy.retentionValue,
-    retentionUnit: policy.retentionUnit,
-    bootVerify: policy.bootVerify,
+    frequency_value: policy.frequencyValue,
+    frequency_unit: policy.frequencyUnit,
+    retention_value: policy.retentionValue,
+    retention_unit: policy.retentionUnit,
+    boot_verify: policy.bootVerify,
+    snapshot_selection_mode: policy.snapshotSelectionMode,
     enabled: policy.enabled,
   }
-  const submitPolicy = policy.snapshotSelectionMode === 'time_range'
-    ? {
-        ...submitCommon,
-        snapshotSelectionMode: 'time_range' as const,
-        snapshotMaxAgeValue: policy.snapshotMaxAgeValue,
-        snapshotMaxAgeUnit: policy.snapshotMaxAgeUnit,
-      }
-    : policy.snapshotSelectionMode === 'exact_time'
-      ? {
-          ...submitCommon,
-          snapshotSelectionMode: 'exact_time' as const,
-          snapshotTargetTime: policy.snapshotTargetTime,
-        }
-      : { ...submitCommon, snapshotSelectionMode: 'latest' as const }
-  const validated = recoveryAppPolicySubmitSchema.parse(submitPolicy)
-  const common = {
-    id: validated.id,
-    name: validated.name,
-    description: validated.description,
-    level: validated.level,
-    frequency_value: validated.frequencyValue,
-    frequency_unit: validated.frequencyUnit,
-    retention_value: validated.retentionValue,
-    retention_unit: validated.retentionUnit,
-    boot_verify: validated.bootVerify,
-    enabled: validated.enabled,
-  }
 
-  switch (validated.snapshotSelectionMode) {
-    case 'latest':
-      return { ...common, snapshot_selection_mode: 'latest' }
+  switch (policy.snapshotSelectionMode) {
     case 'time_range':
       return {
         ...common,
-        snapshot_selection_mode: 'time_range',
-        snapshot_max_age_value: validated.snapshotMaxAgeValue,
-        snapshot_max_age_unit: validated.snapshotMaxAgeUnit,
+        snapshot_max_age_value: policy.snapshotMaxAgeValue,
+        snapshot_max_age_unit: policy.snapshotMaxAgeUnit,
       }
     case 'exact_time':
-      return {
-        ...common,
-        snapshot_selection_mode: 'exact_time',
-        snapshot_target_time: validated.snapshotTargetTime,
-      }
+      return { ...common, snapshot_target_time: policy.snapshotTargetTime }
+    default:
+      return common
   }
 }
 
@@ -167,7 +110,9 @@ export async function submitRecoveryAppPolicy(
   policy: RecoveryAppPolicySubmitData,
 ): Promise<RecoveryAppPolicy[]> {
   try {
-    return parsePolicies(await submitRecoveryAppPolicySubmitRecoveryAppPolicyPost(toRecoveryAppPolicySubmitPayload(policy)))
+    return parsePolicies(await submitRecoveryAppPolicySubmitRecoveryAppPolicyPost(
+      SubmitRecoveryAppPolicySubmitRecoveryAppPolicyPostBody.parse(toRecoveryAppPolicySubmitPayload(policy)),
+    ))
   } catch (error) {
     throw toOrvalRequestError(error, 'Submit recovery app policy')
   }

@@ -73,9 +73,9 @@ Tasks with acceptance criteria are in `tasks/orval-single-source-todo.md`.
 ### Phase 1: Pure duplicates
 - [x] Task 2: Credentials error envelope to shared API
 - [x] Task 3: Policy sets on generated schemas
-- [ ] Task 4: Snapshot policies on generated schemas
-- [ ] Task 5: Clean-room policies on generated schemas
-- [ ] Task 6: Recovery-app policies on generated schemas
+- [x] Task 4: Snapshot policies on generated schemas
+- [x] Task 5: Clean-room policies on generated schemas
+- [x] Task 6: Recovery-app policies on generated schemas
 
 ### Checkpoint A: after Tasks 1-6
 

@@ -1,11 +1,13 @@
-export const RECOVERY_APP_POLICY_TIME_UNITS = ['minutes', 'hours', 'days'] as const
+import type { RecoveryAppPolicyOutput } from '@/generated/api/zod.gen'
+
+export const RECOVERY_APP_POLICY_TIME_UNITS = ['minutes', 'hours', 'days'] as const satisfies readonly RecoveryAppPolicyOutput['frequency_unit'][]
 export type RecoveryAppPolicyTimeUnit = (typeof RECOVERY_APP_POLICY_TIME_UNITS)[number]
 
 export const RECOVERY_APP_POLICY_SELECTION_MODES = [
   'latest',
   'time_range',
   'exact_time',
-] as const
+] as const satisfies readonly RecoveryAppPolicyOutput['snapshot_selection_mode'][]
 export type RecoveryAppPolicySelectionMode =
   (typeof RECOVERY_APP_POLICY_SELECTION_MODES)[number]
 
