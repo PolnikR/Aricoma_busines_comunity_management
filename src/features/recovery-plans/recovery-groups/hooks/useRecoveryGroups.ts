@@ -19,6 +19,7 @@ import {
 import type { RecoveryGroup, RecoveryGroupDraft, RollbackReport } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsError } from '../api/recoveryGroupsErrors'
 import { validateRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
+import { getRecoveryGroupTopologyError } from '../utils/recoveryGroupTopology'
 
 function toRecoveryGroups(response: RecoveryGroupsResponse, providers: ProviderRecord[]): RecoveryGroup[] {
   // validatingMutator hands select the parsed Output shape.
@@ -59,6 +60,28 @@ export function useRecoveryGroups() {
     const validated = validateRecoveryGroupDraft(draft)
     const id = toProgrammaticId(requestedId ?? validated.id)
     if (!id) throw new RecoveryGroupsError('invalid_draft', 'Recovery group ID is required')
+    if (!providerQuery.isSuccess || providerQuery.isFetching || !providers) {
+      throw new RecoveryGroupsError('invalid_draft', 'Providers are unavailable')
+    }
+    const existing = requestedId === undefined ? undefined : query.data?.find(group => group.id === id)
+    const allowLegacyLocal = existing?.topology === 'local'
+      && existing.resourceType === 'vm'
+      && !existing.relatedVolumeProviderId
+      && existing.relatedVolumes.length === 0
+      && validated.configuration.resourceType === 'vm'
+      && !validated.relatedVolumeProviderId
+      && validated.relatedVolumes.length === 0
+    const topologyError = getRecoveryGroupTopologyError({
+      topology: validated.topology,
+      relatedVolumeProviderId: validated.configuration.resourceType === 'vm'
+        ? validated.relatedVolumeProviderId
+        : validated.providerId,
+      metroMirrorMode: validated.metroMirrorMode,
+      consistencyGroupId: validated.consistencyGroupId,
+    }, providers, allowLegacyLocal)
+    if (topologyError) {
+      throw new RecoveryGroupsError('invalid_draft', `Recovery group topology is invalid: ${topologyError}`)
+    }
     const response = await mutation.mutateAsync({
       data: toRecoveryGroupSubmitPayload(validated, id),
       params: {
@@ -66,9 +89,11 @@ export function useRecoveryGroups() {
         push_to_orchestrator: validated.pushToOrchestrator,
       },
     })
-    const airflowRunId = (response as RecoveryGroupsResponseOutput).recovery_groups
-      .find(record => record.id === id)?.orchestration?.run_id ?? null
-    return { ...toRecoveryGroup(validated, id), airflowRunId }
+    const returnedRecord = (response as RecoveryGroupsResponseOutput).recovery_groups
+      .find(record => record.id === id)
+    return returnedRecord
+      ? mapRecoveryGroupApiRecord(toRecoveryGroupReadRecord(returnedRecord), providers)
+      : toRecoveryGroup(validated, id)
   }
 
   const remove = async (group: RecoveryGroup): Promise<RollbackReport | null> => {
