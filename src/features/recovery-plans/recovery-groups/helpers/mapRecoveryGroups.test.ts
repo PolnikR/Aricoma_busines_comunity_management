@@ -66,6 +66,21 @@ const validatedVmDraft: ValidatedRecoveryGroupDraft = {
 }
 
 describe('toRecoveryGroupSubmitPayload', () => {
+  it('round-trips manually corrected Metro values without UI provenance', () => {
+    const corrected = { ...validatedVmDraft, topology: 'metro_mirror' as const, metroMirrorMode: 'existing' as const,
+      consistencyGroupId: '009', auxiliaryNamesByVolume: { 'VOL-01': 'MANUAL-AUX' },
+      relatedVolumeProviderId: flashSystemProvider.id, relatedVolumes: ['VOL-01'] }
+    const payload = toRecoveryGroupSubmitPayload(corrected, corrected.id)
+    expect(payload.metro_mirror).toEqual({ mode: 'existing', consistency_group_id: '009' })
+    expect(payload.volumes).toEqual([{ name: 'VOL-01', auxiliary_name: 'MANUAL-AUX' }])
+    expect(payload.provider_id_volume).toBe(flashSystemProvider.id)
+    expect(payload).not.toHaveProperty('hasConsistencyOverride')
+    expect(payload).not.toHaveProperty('auxiliaryNamesByVolume')
+    const loaded = mapRecoveryGroupApiRecord(toRecoveryGroupReadRecord(RecoveryGroupRecord.parse(payload)), [vmwareProvider, flashSystemProvider])
+    expect(loaded.consistencyGroupId).toBe('009')
+    expect(loaded.auxiliaryNamesByVolume).toEqual({ 'VOL-01': 'MANUAL-AUX' })
+  })
+
   it('serializes Local without stale Metro fields', () => {
     const payload = toRecoveryGroupSubmitPayload({
       ...validatedVmDraft,
