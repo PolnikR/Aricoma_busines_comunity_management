@@ -1,5 +1,6 @@
 import type {
   RecoveryGroupDraft,
+  RecoveryGroupTopology,
   RecoveryGroupResourceConfiguration,
   RecoveryGroupVmMetadata,
 } from '../model/recoveryGroupTypes'
@@ -29,6 +30,10 @@ export interface ValidatedRecoveryGroupDraft {
   resources: string[]
   relatedVolumeProviderId: string | null
   relatedVolumes: string[]
+  topology: RecoveryGroupTopology
+  metroMirrorMode: 'existing' | null
+  consistencyGroupId: string | null
+  auxiliaryNamesByVolume: Record<string, string>
   configuration: RecoveryGroupResourceConfiguration
   vmMetadataByName?: Record<string, RecoveryGroupVmMetadata> | undefined
   orchestrationProviderId: string
@@ -46,6 +51,16 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     ? normalizedRelatedVolumeProviderId
     : null
   const relatedVolumes = (draft.relatedVolumes ?? []).map(resource => resource.trim())
+  const topology = draft.topology === undefined ? 'local' : draft.topology
+  const isMetroMirror = topology === 'metro_mirror'
+  const sourceVolumes = draft.resourceType === 'vm' ? (draft.relatedVolumes ?? []) : draft.resources
+  const auxiliaryNamesByVolume = isMetroMirror
+    ? Object.fromEntries(sourceVolumes.map(volume => [
+      volume.trim(),
+      (draft.auxiliaryNamesByVolume?.[volume] ?? draft.auxiliaryNamesByVolume?.[volume.trim()] ?? '').trim(),
+    ]))
+    : {}
+  const consistencyGroupId = isMetroMirror ? (draft.consistencyGroupId?.trim() ?? '') : null
   const orchestrationProviderId = draft.orchestrationProviderId?.trim() ?? ''
   const configuration = findSubmittableConfiguration(draft)
 
@@ -63,6 +78,15 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     || (relatedVolumes.length > 0 && !relatedVolumeProviderId)
     || !configuration
     || !orchestrationProviderId
+    || !topology
+    || draft.metroMirrorMode === 'managed'
+    || (isMetroMirror && (
+      draft.metroMirrorMode !== 'existing'
+      || !consistencyGroupId
+      || sourceVolumes.length === 0
+      || (draft.resourceType === 'vm' && !relatedVolumeProviderId)
+      || Object.values(auxiliaryNamesByVolume).some(name => !name)
+    ))
   ) {
     throw new RecoveryGroupsError('invalid_draft', 'Recovery group data is invalid')
   }
@@ -76,6 +100,10 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     resources,
     relatedVolumeProviderId,
     relatedVolumes,
+    topology,
+    metroMirrorMode: isMetroMirror ? 'existing' : null,
+    consistencyGroupId,
+    auxiliaryNamesByVolume,
     configuration: { ...configuration },
     vmMetadataByName: draft.vmMetadataByName,
     orchestrationProviderId,

@@ -9,6 +9,8 @@ import {
 } from './mapRecoveryGroups'
 import { RecoveryGroupRecord } from '@/generated/query/zod'
 import type { ValidatedRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
+import { validateRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
+import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 
 // Fixtures go through the generated schema so contract defaults (e.g. topology)
 // apply, exactly like a parsed GET response.
@@ -47,6 +49,10 @@ const validatedVmDraft: ValidatedRecoveryGroupDraft = {
   resources: ['db-vm-01', 'db-vm-02'],
   relatedVolumeProviderId: null,
   relatedVolumes: [],
+  topology: 'local',
+  metroMirrorMode: null,
+  consistencyGroupId: null,
+  auxiliaryNamesByVolume: {},
   configuration: {
     sourceCategory: 'backup_system_workload',
     workloadType: 'vmware_virtual_machines',
@@ -60,6 +66,52 @@ const validatedVmDraft: ValidatedRecoveryGroupDraft = {
 }
 
 describe('toRecoveryGroupSubmitPayload', () => {
+  it('serializes Local without stale Metro fields', () => {
+    const payload = toRecoveryGroupSubmitPayload({
+      ...validatedVmDraft,
+      topology: 'local',
+      metroMirrorMode: null,
+      consistencyGroupId: null,
+      auxiliaryNamesByVolume: {},
+      relatedVolumeProviderId: 'ibm-flashsystem-01',
+      relatedVolumes: ['VOL-01'],
+    }, 'database_group')
+
+    expect(payload).toMatchObject({ topology: 'local', provider_id_volume: 'ibm-flashsystem-01', volumes: [{ name: 'VOL-01' }] })
+    expect(payload).not.toHaveProperty('metro_mirror')
+    expect(payload.volumes).toEqual([{ name: 'VOL-01' }])
+  })
+
+  it.each(['vm', 'volume'] as const)('serializes Metro Mirror %s volumes with trimmed auxiliary names', resourceType => {
+    const draft: RecoveryGroupDraft = {
+      id: 'metro-group', name: 'Metro group', description: 'Metro recovery',
+      sourceCategory: resourceType === 'vm' ? 'backup_system_workload' : 'storage_system',
+      workloadType: resourceType === 'vm' ? 'vmware_virtual_machines' : 'ibm_flashsystem',
+      resourceType,
+      providerId: resourceType === 'vm' ? 'vmware-vcenter-01' : 'ibm-flashsystem-01',
+      policySetId: 'tier2-apps',
+      resources: resourceType === 'vm' ? ['db-vm-01'] : [' VOL-01 '],
+      relatedVolumeProviderId: resourceType === 'vm' ? 'ibm-flashsystem-01' : null,
+      relatedVolumes: resourceType === 'vm' ? [' VOL-01 '] : [],
+      topology: 'metro_mirror', metroMirrorMode: 'existing', consistencyGroupId: ' 001 ',
+      auxiliaryNamesByVolume: { ' VOL-01 ': ' AUX-01 ' },
+      vmMetadataByName: validatedVmDraft.vmMetadataByName,
+      orchestrationProviderId: 'airflow-01', pushToOrchestrator: false,
+    }
+
+    const validated = validateRecoveryGroupDraft(draft)
+    const payload = toRecoveryGroupSubmitPayload(validated, draft.id)
+    expect(payload).toMatchObject({
+      topology: 'metro_mirror',
+      metro_mirror: { mode: 'existing', consistency_group_id: '001' },
+      provider_id_vm: resourceType === 'vm' ? 'vmware-vcenter-01' : '',
+      provider_id_volume: 'ibm-flashsystem-01',
+      volumes: [{ name: 'VOL-01', auxiliary_name: 'AUX-01' }],
+    })
+    const group = toRecoveryGroup(validated, draft.id)
+    expect(toRecoveryGroupJson(group)).toMatchObject(payload)
+  })
+
   it('embeds captured VM metadata and assigns order by array position', () => {
     const payload = toRecoveryGroupSubmitPayload(validatedVmDraft, 'database_group')
 

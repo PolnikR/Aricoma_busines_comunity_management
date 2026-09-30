@@ -40,6 +40,16 @@ function toVmsPayload(
   }))
 }
 
+function toVolumesPayload(
+  names: string[],
+  topology: 'local' | 'metro_mirror',
+  auxiliaryNamesByVolume: Record<string, string>,
+) {
+  return names.map(name => topology === 'metro_mirror'
+    ? { name, auxiliary_name: auxiliaryNamesByVolume[name] ?? '' }
+    : { name })
+}
+
 function vmConfiguration(provider: ProviderRecord): RecoveryGroupResourceConfiguration {
   if (provider.type === 'VMWARE') {
     return {
@@ -143,6 +153,7 @@ export function toRecoveryGroupSubmitPayload(
   id: string,
 ): RecoveryGroupSubmitPayload {
   const isVmGroup = draft.configuration.resourceType === 'vm'
+  const topology = draft.topology
   return {
     id,
     name: draft.name,
@@ -151,11 +162,17 @@ export function toRecoveryGroupSubmitPayload(
     provider_id_volume: isVmGroup
       ? (draft.relatedVolumeProviderId ?? '')
       : draft.providerId,
+    topology,
+    ...(topology === 'metro_mirror' ? {
+      metro_mirror: { mode: 'existing' as const, consistency_group_id: draft.consistencyGroupId ?? '' },
+    } : {}),
     policy_set_id: draft.policySetId,
     vms: isVmGroup ? toVmsPayload(draft.resources, draft.vmMetadataByName) : [],
-    volumes: isVmGroup
-      ? draft.relatedVolumes.map(name => ({ name }))
-      : draft.resources.map(name => ({ name })),
+    volumes: toVolumesPayload(
+      isVmGroup ? draft.relatedVolumes : draft.resources,
+      topology,
+      draft.auxiliaryNamesByVolume,
+    ),
   }
 }
 
@@ -163,6 +180,7 @@ export function toRecoveryGroupJson(group: RecoveryGroup): RecoveryGroupReadReco
   if (group.rawRecord) return group.rawRecord
 
   const isVmGroup = group.resourceType === 'vm'
+  const topology = group.topology ?? 'local'
   return {
     id: group.id,
     name: group.name,
@@ -171,14 +189,22 @@ export function toRecoveryGroupJson(group: RecoveryGroup): RecoveryGroupReadReco
     provider_id_volume: isVmGroup
       ? (group.relatedVolumeProviderId ?? '')
       : (group.providerId ?? ''),
-    // Only groups created in this session lack rawRecord, and the builder creates
-    // local-topology groups only.
-    topology: 'local',
+    topology,
+    ...(topology === 'metro_mirror' ? {
+      metro_mirror: { mode: group.metroMirrorMode ?? 'existing', consistency_group_id: group.consistencyGroupId ?? null },
+    } : {}),
     policy_set_id: group.policySetId,
     vms: isVmGroup ? toVmsPayload(group.resources, group.vmMetadataByName) : [],
-    volumes: isVmGroup
-      ? group.relatedVolumes.map(name => ({ name }))
-      : group.resources.map(name => ({ name })),
+    volumes: toVolumesPayload(
+      isVmGroup ? group.relatedVolumes : group.resources,
+      topology,
+      group.auxiliaryNamesByVolume ?? {},
+    ),
+    orchestration: {
+      provider_id: group.orchestrationProviderId ?? null,
+      pushed: group.pushToOrchestrator ?? null,
+      run_id: group.airflowRunId ?? null,
+    },
   }
 }
 
@@ -198,6 +224,10 @@ export function toRecoveryGroup(
     resources: draft.resources,
     relatedVolumeProviderId: isVmGroup ? draft.relatedVolumeProviderId : null,
     relatedVolumes: isVmGroup ? draft.relatedVolumes : [],
+    topology: draft.topology,
+    metroMirrorMode: draft.metroMirrorMode,
+    consistencyGroupId: draft.consistencyGroupId,
+    auxiliaryNamesByVolume: draft.auxiliaryNamesByVolume,
     resourceCount: draft.resources.length,
     status: 'Active',
     vmMetadataByName: isVmGroup ? draft.vmMetadataByName : undefined,
