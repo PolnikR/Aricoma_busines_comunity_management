@@ -22,6 +22,5 @@ export function getRecoveryGroupTopologyError(
   if (!target) return 'partnerMissing'
   if (target.type !== 'FLASHCOPY' || target.credentialStatus !== 'ok') return 'partnerInvalid'
   if (draft.metroMirrorMode !== 'existing') return 'modeRequired'
-  if (!draft.consistencyGroupId?.trim()) return 'consistencyRequired'
   return null
 }

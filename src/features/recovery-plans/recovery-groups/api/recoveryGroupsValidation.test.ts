@@ -96,6 +96,8 @@ describe('validateRecoveryGroupDraft topology', () => {
       resources: ['VOL-01'],
       auxiliaryNamesByVolume: { 'VOL-01': 'AUX-01' },
     })
+    expect(() => validateRecoveryGroupDraft({ ...volumeDraft, consistencyGroupId: '' })).toThrow()
+    expect(() => validateRecoveryGroupDraft({ ...volumeDraft, auxiliaryNamesByVolume: {} })).toThrow()
     expect(() => validateRecoveryGroupDraft({ ...volumeDraft, resources: [' VOL-01 ', 'VOL-01'] })).toThrow()
   })
 })

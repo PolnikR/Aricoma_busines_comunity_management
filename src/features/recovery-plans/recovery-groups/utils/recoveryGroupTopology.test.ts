@@ -28,8 +28,8 @@ describe('getRecoveryGroupTopologyError', () => {
   ])('rejects unusable source or partner: %j', (...providers) => {
     expect(getRecoveryGroupTopologyError(metro, providers as ProviderRecord[])).not.toBeNull()
   })
-  it('rejects managed mode and a blank consistency group', () => {
+  it('rejects managed mode but defers consistency group validation to storage', () => {
     expect(getRecoveryGroupTopologyError({ ...metro, metroMirrorMode: 'managed' }, [source, target])).toBe('managed')
-    expect(getRecoveryGroupTopologyError({ ...metro, consistencyGroupId: ' ' }, [source, target])).toBe('consistencyRequired')
+    expect(getRecoveryGroupTopologyError({ ...metro, consistencyGroupId: ' ' }, [source, target])).toBeNull()
   })
 })
