@@ -66,6 +66,11 @@ export function mapRecoveryGroupApiRecord(
   const volumeProviderId = record.provider_id_volume.trim()
   const vmResources = record.vms.map(resource => resource.name)
   const volumeResources = record.volumes.map(resource => resource.name)
+  const auxiliaryNamesByVolume = Object.fromEntries(
+    record.volumes
+      .filter((volume): volume is typeof volume & { auxiliary_name: string } => typeof volume.auxiliary_name === 'string')
+      .map(volume => [volume.name, volume.auxiliary_name]),
+  )
 
   const common = {
     id: record.id,
@@ -77,6 +82,10 @@ export function mapRecoveryGroupApiRecord(
     airflowRunId: record.orchestration?.run_id,
     pushToOrchestrator: record.orchestration?.pushed ?? undefined,
     orchestrationProviderId: record.orchestration?.provider_id ?? null,
+    topology: record.topology,
+    metroMirrorMode: record.metro_mirror?.mode ?? null,
+    consistencyGroupId: record.metro_mirror?.consistency_group_id ?? null,
+    auxiliaryNamesByVolume,
     rawRecord: record,
   }
 

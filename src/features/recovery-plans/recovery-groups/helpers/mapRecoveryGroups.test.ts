@@ -109,6 +109,72 @@ describe('toRecoveryGroupJson', () => {
 })
 
 describe('mapRecoveryGroupApiRecord', () => {
+  it('defaults a legacy VM record to local topology without losing VM metadata', () => {
+    const record = readRecord({
+      id: 'legacy-vm',
+      name: 'Legacy VM',
+      provider_id_vm: 'vmware-vcenter-01',
+      vms: [{ name: 'db-vm-01', hostname: 'db01.sampleapp.local' }],
+    })
+
+    const group = mapRecoveryGroupApiRecord(record, [vmwareProvider])
+
+    expect(group.topology).toBe('local')
+    expect(group.metroMirrorMode).toBeNull()
+    expect(group.consistencyGroupId).toBeNull()
+    expect(group.auxiliaryNamesByVolume).toEqual({})
+    expect(group.vmMetadataByName?.['db-vm-01']).toEqual({ hostname: 'db01.sampleapp.local' })
+    expect(group.rawRecord).toBe(record)
+  })
+
+  it('keeps Metro Mirror topology and auxiliary names for a VM group', () => {
+    const record = readRecord({
+      id: 'metro-vm',
+      name: 'Metro VM',
+      provider_id_vm: 'vmware-vcenter-01',
+      provider_id_volume: 'ibm-flashsystem-01',
+      topology: 'metro_mirror',
+      metro_mirror: { mode: 'existing', consistency_group_id: '001' },
+      vms: [{ name: 'db-vm-01', hostname: 'db01.sampleapp.local' }],
+      volumes: [{ name: 'VOL-01', auxiliary_name: 'AUX-01' }, { name: 'VOL-02', auxiliary_name: null }],
+    })
+
+    const group = mapRecoveryGroupApiRecord(record, [vmwareProvider, flashSystemProvider])
+
+    expect(group).toMatchObject({
+      topology: 'metro_mirror',
+      metroMirrorMode: 'existing',
+      consistencyGroupId: '001',
+      relatedVolumeProviderId: 'ibm-flashsystem-01',
+      relatedVolumes: ['VOL-01', 'VOL-02'],
+      auxiliaryNamesByVolume: { 'VOL-01': 'AUX-01' },
+    })
+    expect(toRecoveryGroupJson(group)).toBe(record)
+  })
+
+  it('keeps managed mode and auxiliary names for a volume group', () => {
+    const record = readRecord({
+      id: 'metro-volume',
+      name: 'Metro Volume',
+      provider_id_volume: 'ibm-flashsystem-01',
+      topology: 'metro_mirror',
+      metro_mirror: { mode: 'managed', consistency_group_id: 'CG-7' },
+      volumes: [{ name: 'VOL-01', auxiliary_name: 'AUX-01' }],
+    })
+
+    const group = mapRecoveryGroupApiRecord(record, [flashSystemProvider])
+
+    expect(group).toMatchObject({
+      topology: 'metro_mirror',
+      metroMirrorMode: 'managed',
+      consistencyGroupId: 'CG-7',
+      providerId: 'ibm-flashsystem-01',
+      resources: ['VOL-01'],
+      auxiliaryNamesByVolume: { 'VOL-01': 'AUX-01' },
+    })
+    expect(group.rawRecord).toBe(record)
+  })
+
   it('round-trips VM metadata from a GET response into vmMetadataByName', () => {
     // SPEC GAP: the generated RecoveryVM declares only `name`, so the metadata is
     // added after parsing.

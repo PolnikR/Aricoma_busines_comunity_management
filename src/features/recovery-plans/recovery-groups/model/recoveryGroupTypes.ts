@@ -45,6 +45,8 @@ export type RecoveryGroupResourceConfiguration =
     }
 
 export type RecoveryGroupVmMetadata = Omit<RecoveryVMOutput, 'name'>
+export type RecoveryGroupTopology = RecoveryGroupRecordOutput['topology']
+export type RecoveryGroupMetroMirrorMode = NonNullable<RecoveryGroupRecordOutput['metro_mirror']>['mode']
 
 interface RecoveryGroupBase {
   id: string
@@ -63,6 +65,10 @@ export type RecoveryGroup = RecoveryGroupListItem & {
   resources: string[]
   relatedVolumeProviderId: string | null
   relatedVolumes: string[]
+  topology?: RecoveryGroupTopology | undefined
+  metroMirrorMode?: RecoveryGroupMetroMirrorMode | null | undefined
+  consistencyGroupId?: string | null | undefined
+  auxiliaryNamesByVolume?: Record<string, string> | undefined
   vmMetadataByName?: Record<string, RecoveryGroupVmMetadata> | undefined
   // Server-assigned DAG run id from the last orchestrator push. Read-only:
   // this is a run identifier, not the orchestration provider's id.
@@ -97,6 +103,10 @@ export interface RecoveryGroupDraft {
   resources: string[]
   relatedVolumeProviderId?: string | null
   relatedVolumes?: string[]
+  topology?: RecoveryGroupTopology | null | undefined
+  metroMirrorMode?: RecoveryGroupMetroMirrorMode | null | undefined
+  consistencyGroupId?: string | null | undefined
+  auxiliaryNamesByVolume?: Record<string, string> | undefined
   vmMetadataByName?: Record<string, RecoveryGroupVmMetadata> | undefined
   orchestrationProviderId: string | null
   pushToOrchestrator: boolean
