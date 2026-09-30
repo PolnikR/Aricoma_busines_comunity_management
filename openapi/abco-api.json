@@ -1267,11 +1267,11 @@
             "required": false,
             "schema": {
               "type": "string",
-              "description": "name of VM",
+              "description": "name of the VM or LPAR",
               "default": "TEST-WEB02",
               "title": "Vm Name"
             },
-            "description": "name of VM"
+            "description": "name of the VM or LPAR"
           },
           {
             "name": "provider_id",
@@ -1279,11 +1279,11 @@
             "required": false,
             "schema": {
               "type": "string",
-              "description": "id of the vCenter provider to use",
+              "description": "id of the vCenter or IBM Power provider to use",
               "default": "vmware-vcenter-01",
               "title": "Provider Id"
             },
-            "description": "id of the vCenter provider to use"
+            "description": "id of the vCenter or IBM Power provider to use"
           },
           {
             "name": "X-User",
