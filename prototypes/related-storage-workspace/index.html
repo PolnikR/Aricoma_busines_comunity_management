@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Related storage — stable workspace proposal</title>
+<style>
+:root{font:14px/1.5 "Segoe UI",Arial,sans-serif;color:var(--text);background:var(--page);--page:#f7f9fc;--surface:#fff;--subtle:#fbfdff;--muted-bg:#f1f6fb;--text:#17233d;--secondary:#3b4763;--muted:#71819a;--border:#dbe7f2;--strong:#c8d7e7;--accent:#0d91d7;--accent-soft:#e8f6fd;--error:#b42318;--warning:#93370d}
+*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{cursor:pointer;color:var(--secondary);background:var(--surface);border:1px solid var(--strong);border-radius:6px;min-height:32px;padding:4px 12px}button:hover{background:var(--accent-soft)}button:disabled{cursor:default;opacity:.55}button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}input,select{min-width:0;border:1px solid var(--strong);border-radius:6px;color:var(--secondary);background:var(--subtle);padding:4px 8px;height:32px}input[aria-invalid=true]{border-color:#f04438}input::placeholder{color:#71819a}h1,h2,h3,p{margin:0}h1{font-size:26px;line-height:1.25}h2{font-size:16px}h3{font-size:13px}small{font-size:11px}.demo{display:flex;align-items:center;gap:16px;padding:10px 24px;border-bottom:1px solid var(--border);background:var(--surface);font-size:12px}.demo strong{color:var(--accent)}.demo>span{color:var(--secondary)}.demo label{margin-left:auto;display:flex;align-items:center;gap:8px}.demo select{font-size:12px}.page{padding:24px 32px 20px;max-width:1760px;margin:auto}.eyebrow{color:var(--accent);font-size:10px;font-weight:650;letter-spacing:2px;margin-bottom:8px}.intro{margin-top:8px;color:var(--muted);font-size:13px}.wizard{margin-top:24px;display:grid;grid-template-columns:216px minmax(0,1fr);height:calc(100dvh - 200px);min-height:440px;background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 1px 3px #17233d15}.steps{padding:20px 14px;background:var(--subtle);border-right:1px solid var(--border)}.steps ol{list-style:none;padding:0;margin:0}.steps li{display:flex;align-items:center;gap:10px;padding:9px 10px;color:var(--muted);margin-bottom:4px;border-radius:8px;font-size:13px}.steps li span{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#12b76a;color:white;flex-shrink:0}.steps li[aria-current]{background:var(--accent-soft);color:var(--accent);font-weight:650}.steps li[aria-current] span{background:var(--accent)}.steps li[aria-current]~li span{background:var(--muted-bg);color:var(--muted)}.work{display:flex;flex-direction:column;min-width:0;min-height:0}.heading{padding:16px 20px 12px;flex-shrink:0}.heading p{font-size:12px;color:var(--muted);margin-top:4px}.config{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 20px 12px;padding:10px 12px;background:var(--subtle);border:1px solid var(--border);border-radius:8px;flex-shrink:0}.config label{font-size:12px;font-weight:500;display:flex;align-items:center;gap:12px}.config input{width:132px}.tag{font-size:11px;color:var(--secondary);border-left:1px solid var(--border);padding-left:12px}.issues{margin-left:auto;white-space:nowrap;color:var(--warning);border-color:#fedf89;background:#fffaeb;font-size:12px}.issues.ready{color:#067647;border-color:#abefc6;background:#ecfdf3}.picker{display:grid;grid-template-columns:224px minmax(0,1fr);gap:16px;padding:0 20px 16px;flex:1;min-height:0}.panel{border:1px solid var(--border);border-radius:8px;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}.panel-header{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:6px 12px;flex-shrink:0}.count{font-size:11px;color:var(--muted);margin-left:6px;font-weight:400}.search{padding:0 10px 10px}.search input{width:100%;font-size:12px}.list{overflow:auto;min-height:0;flex:1;scrollbar-width:thin;scrollbar-color:var(--strong) transparent}.available-row{display:flex;align-items:center;gap:8px;min-height:36px;padding:2px 10px;border-top:1px solid var(--border);font-size:12px;cursor:grab}.available-row:hover{background:var(--muted-bg)}.name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.available-row button{width:26px;min-height:26px;padding:0;color:var(--accent)}.selected .panel-header{border-bottom:1px solid var(--border)}.text-button{border:0;color:var(--accent);background:transparent;font-size:12px;white-space:nowrap;padding-inline:4px}.columns,.volume-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) 28px;align-items:center;gap:12px;padding:0 12px}.columns{min-height:30px;flex-shrink:0;background:var(--muted-bg);font-size:11px;color:var(--secondary);border-bottom:1px solid var(--border)}.volume-row{height:40px;border-bottom:1px solid var(--border);font-size:12px}.volume-row input{width:100%;height:28px;font-size:12px}.volume-row button{width:28px;min-height:28px;padding:0;border:0;background:transparent;color:var(--muted);font-size:18px}.volume-row button:hover{background:#fef3f2;color:var(--error)}.drop{outline-offset:-3px}.drop.over{outline:2px dashed var(--accent);background:var(--accent-soft)}.drop-hint{margin:12px;border:1px dashed var(--strong);border-radius:6px;padding:16px;text-align:center;font-size:12px;color:var(--muted)}.panel-foot{padding:8px 12px;min-height:34px;background:var(--subtle);border-top:1px solid var(--border);color:var(--muted);font-size:11px;flex-shrink:0}.panel-foot strong{color:var(--secondary);font-weight:500}.footer{display:flex;align-items:center;gap:12px;flex-shrink:0;padding:12px 20px;border-top:1px solid var(--border);background:var(--subtle)}.footer .status{margin-left:auto;color:var(--secondary);font-size:12px}.primary{background:var(--accent);border-color:var(--accent);color:white}.primary:hover{background:#087fca}.primary:disabled{background:#c8d7e7;border-color:#c8d7e7;color:white;opacity:1}.drawer{position:fixed;inset:0 0 0 auto;margin:0;width:min(400px,100%);height:100dvh;max-height:100dvh;max-width:100%;border:0;border-left:1px solid var(--border);padding:24px;color:var(--text);background:var(--surface);box-shadow:-8px 0 32px #17233d18;overflow:auto}.drawer::backdrop{background:#17233d25}.drawer header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}.drawer header button{font-size:20px;min-width:32px;padding:0}.drawer>p{color:var(--secondary);font-size:12px}.check{padding:18px 0;border-bottom:1px solid var(--border)}.check h3{margin-bottom:6px}.check p{font-size:12px;color:var(--secondary);line-height:1.7}.check button{margin-top:10px;font-size:12px}.drawer .note{margin-top:20px;color:var(--muted)}.empty{padding:16px;color:var(--muted);font-size:12px}[hidden]{display:none!important}
+@media(max-width:1100px){.steps{padding:16px 8px}.wizard{grid-template-columns:180px minmax(0,1fr)}.picker{grid-template-columns:190px minmax(0,1fr)}.tag{display:none}.page{padding-inline:20px}}
+@media(max-width:800px){.wizard{grid-template-columns:minmax(0,1fr)}.steps{display:none}.page{padding-inline:12px}.demo{padding-inline:12px;flex-wrap:wrap;gap:8px}.demo>span{display:none}.picker{padding-inline:12px;gap:12px}.heading{padding-inline:12px}.config{margin-inline:12px}.config label{gap:8px}.config input{width:104px}.wizard{height:calc(100dvh - 200px)}}
+@media(max-width:540px){.page{padding-top:16px}h1{font-size:22px}.wizard{height:auto;margin-top:16px}.config{gap:8px}.issues{margin-left:0}.picker{display:flex;flex-direction:column}.available{height:200px}.selected{height:360px}.columns,.volume-row{grid-template-columns:minmax(0,.9fr) minmax(0,1.2fr) 24px;gap:6px;padding-inline:8px}.columns{font-size:10px}.volume-row{font-size:11px}.volume-row input{font-size:11px}.footer{padding:12px;flex-wrap:wrap}.footer .status{font-size:11px}.demo label{margin-left:0}.intro{font-size:12px}}
+</style>
+</head>
+<body>
+<div class="demo"><strong>NÁVRH / Stabilná pracovná plocha</strong><span>Detaily upozornení sa otvárajú mimo layoutu.</span><label>Ukážkové dáta <select id="scenario"><option value="1">1 volume · 2 problémy</option><option value="20">20 volumes</option><option value="100">100 volumes</option><option value="ready">Vyplnené údaje</option></select></label></div>
+<main class="page">
+  <p class="eyebrow">RECOVERY PLANS</p><h1>Create Recovery Group</h1><p class="intro">Define a reusable resource group for recovery application tiers.</p>
+  <div class="wizard">
+    <aside class="steps" aria-label="Recovery group progress"><ol><li><span>✓</span>Details</li><li><span>✓</span>Storage topology</li><li><span>✓</span>Resource type</li><li><span>✓</span>Provider</li><li><span>✓</span>Resources</li><li aria-current="step"><span>6</span>Related storage</li><li><span>7</span>Policy Set</li><li><span>8</span>Orchestration</li></ol></aside>
+    <section class="work" aria-labelledby="storage-heading">
+      <header class="heading"><h2 id="storage-heading">Related FlashSystem storage</h2><p>Volumes discovered from your virtual machines. Review the selection and target names.</p></header>
+      <div class="config"><label for="group-id">Consistency group ID <input id="group-id" aria-describedby="group-help" placeholder="Required" autocomplete="off"></label><span class="tag">Metro Mirror · ibm-flashsystem-02</span><button id="issues" class="issues" aria-haspopup="dialog">ⓘ 2 items to review</button></div>
+      <div class="picker">
+        <section class="panel available" aria-labelledby="available-heading"><header class="panel-header"><h3 id="available-heading">Available volumes</h3><span id="available-count" class="count"></span></header><div class="search"><input id="search" type="search" aria-label="Search volumes" placeholder="Search volumes…"></div><div id="available-list" class="list" tabindex="0" aria-label="Available volumes"></div><div class="panel-foot">Drag a volume or use + to add</div></section>
+        <section class="panel selected" aria-labelledby="selected-heading"><header class="panel-header"><h3 id="selected-heading">Selected volumes <span id="selected-count" class="count"></span></h3><button id="clear" class="text-button">Clear selection</button></header><div class="columns"><span>Source volume</span><span>Auxiliary volume name *</span><span></span></div><div id="drop" class="list drop" tabindex="0" aria-label="Selected volumes drop zone"><div id="rows"></div><div class="drop-hint">＋ Drop volumes here</div></div><div class="panel-foot"><strong id="mapping-status" role="status"></strong> · Target names are editable.</div></section>
+      </div>
+      <footer class="footer"><button class="text-button" id="reset">Reset demo</button><span class="status" id="status" role="status"></span><button id="next" class="primary" disabled>Next →</button></footer>
+    </section>
+  </div>
+</main>
+<dialog id="review" class="drawer" aria-labelledby="review-title"><header><h2 id="review-title">Configuration review</h2><button id="close-review" aria-label="Close configuration review">×</button></header><p>Values are prefilled when available. You can correct them manually.</p><section class="check"><h3>Consistency group</h3><p id="group-help"></p><button id="fix-group">Edit group ID →</button></section><section class="check"><h3>Auxiliary volume names</h3><p id="aux-help"></p><button id="fix-name">Go to first missing name →</button></section><p class="note">Ukážkový návrh. Kontroly zobrazujú len vyplnenie polí; neoverujú pripojenie k backendu.</p></dialog>
+<script>
+const $ = selector => document.querySelector(selector);
+const names = ['V5000_VOLUME01','IBU_source','RDM_DISK01','RDM_DISK02','TEST_MIRRORER','V5000_VOLUME02',...Array.from({length:100},(_,i)=>`FS_VOLUME_${String(i+1).padStart(3,'0')}`)];
+let selected = new Map();
+function update() {
+  const missing = [...selected.values()].filter(value => !value.trim()).length;
+  const groupMissing = !$('#group-id').value.trim();
+  const issues = missing + Number(groupMissing);
+  $('#group-id').setAttribute('aria-invalid', String(groupMissing));
+  $('#issues').textContent = issues ? `ⓘ ${issues} ${issues === 1 ? 'item' : 'items'} to review` : '✓ Fields complete';
+  $('#issues').classList.toggle('ready', !issues);
+  $('#selected-count').textContent = selected.size;
+  $('#mapping-status').textContent = `${selected.size - missing} of ${selected.size} names entered`;
+  $('#status').textContent = !selected.size ? 'Select at least one volume' : issues ? `${issues} required ${issues === 1 ? 'field' : 'fields'} remaining` : 'Ready to continue';
+  $('#next').disabled = Boolean(issues || !selected.size);
+  $('#clear').disabled = !selected.size;
+  $('#group-help').textContent = groupMissing ? 'No common consistency group was returned. Enter the group ID manually.' : `Group ID: ${$('#group-id').value}. Your manually entered value is retained.`;
+  $('#aux-help').textContent = missing ? `${missing} selected volumes need an auxiliary name. Enter each name in the right-hand column.` : 'All selected volumes have an auxiliary name.';
+  $('#fix-name').disabled = !missing;
+}
+function available() {
+  const matches = names.filter(name => name.toLowerCase().includes($('#search').value.toLowerCase()));
+  $('#available-count').textContent = matches.length;
+  $('#available-list').replaceChildren();
+  matches.forEach(name => {
+    const row = document.createElement('div'); row.className = 'available-row'; row.draggable = !selected.has(name);
+    const label = document.createElement('span'); label.className = 'name'; label.textContent = name; label.title = name;
+    const add = document.createElement('button'); add.textContent = selected.has(name) ? '✓' : '+'; add.disabled = selected.has(name); add.setAttribute('aria-label', `Add ${name}`);
+    add.onclick = () => { addVolume(name); $('#rows').lastElementChild.querySelector('input').focus(); };
+    row.ondragstart = event => { event.dataTransfer.setData('text/plain',name); event.dataTransfer.effectAllowed = 'copy'; };
+    row.append(label,add); $('#available-list').append(row);
+  });
+  if (!matches.length) { const empty = document.createElement('p'); empty.className='empty'; empty.textContent='No matching volumes'; $('#available-list').append(empty); }
+}
+function render() {
+  $('#rows').replaceChildren();
+  selected.forEach((value,name) => {
+    const row=document.createElement('div'); row.className='volume-row';
+    const label=document.createElement('span'); label.className='name'; label.textContent=name; label.title=name;
+    const input=document.createElement('input'); input.value=value; input.placeholder='Required target name'; input.required=true; input.setAttribute('aria-label',`Auxiliary name: ${name}`); input.setAttribute('aria-invalid',String(!value.trim()));
+    input.oninput=()=>{selected.set(name,input.value);input.setAttribute('aria-invalid',String(!input.value.trim()));update();};
+    const remove=document.createElement('button');remove.textContent='×';remove.setAttribute('aria-label',`Remove ${name}`);remove.onclick=()=>{selected.delete(name);render();$('#drop').focus();};
+    row.append(label,input,remove);$('#rows').append(row);
+  }); available(); update();
+}
+function addVolume(name) { if (!names.includes(name)||selected.has(name)) return;selected.set(name,'');render(); }
+function reset() {
+  const ready=$('#scenario').value==='ready'; const count=ready?6:Number($('#scenario').value);
+  selected=new Map(names.slice(0,count).map((name,i)=>[name,ready||i>0?`${name}_aux`:'']));
+  $('#group-id').value=ready?'12':'';$('#search').value='';render();
+}
+$('#scenario').onchange=reset;$('#reset').onclick=reset;$('#search').oninput=available;$('#group-id').oninput=update;
+$('#clear').onclick=()=>{selected.clear();render();};
+$('#issues').onclick=()=>$('#review').showModal();$('#close-review').onclick=()=>$('#review').close();
+$('#fix-group').onclick=()=>{$('#review').close();$('#group-id').focus();};
+$('#fix-name').onclick=()=>{$('#review').close();$('#rows input[aria-invalid="true"]')?.focus();};
+$('#next').onclick=()=>{$('#status').textContent='Demo complete — ready for Policy Set';};
+$('#drop').ondragover=event=>{event.preventDefault();event.dataTransfer.dropEffect='copy';$('#drop').classList.add('over');};
+$('#drop').ondragleave=event=>{if(!$('#drop').contains(event.relatedTarget))$('#drop').classList.remove('over');};
+$('#drop').ondrop=event=>{event.preventDefault();$('#drop').classList.remove('over');addVolume(event.dataTransfer.getData('text/plain'));};
+reset();
+</script>
+</body>
+</html>
