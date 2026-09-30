@@ -1,10 +1,21 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { RESOURCE_METRICS_COLLAPSED_KEY } from '../../state/resourceMetricsPreference'
 import { VirtualMachineMetrics } from './VirtualMachineMetrics'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 describe('VirtualMachineMetrics', () => {
+  beforeEach(() => { localStorage.setItem(RESOURCE_METRICS_COLLAPSED_KEY, 'false') })
+
+  it('shows the collapsed summary when no preference is stored', () => {
+    localStorage.clear()
+    render(<VirtualMachineMetrics metrics={{ total: 8, poweredOn: 6, clusters: 2, totalCpu: 32, totalMemoryGb: 128 }} />)
+
+    expect(screen.getByRole('button', { name: /8 Discovered VMs.*6 Powered on.*2 Clusters.*128 GB Allocated memory/ })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('article')).not.toBeInTheDocument()
+  })
+
   it('keeps metric labels and icons visible while only remote values load', () => {
     render(<VirtualMachineMetrics isLoading />)
 

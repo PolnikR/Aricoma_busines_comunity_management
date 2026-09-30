@@ -1,6 +1,7 @@
 import { CpuIcon, LayersIcon, MemoryIcon, ServerIcon } from '@/shared/icons/Icons'
-import { StatCard } from '@/shared/components/stat-card/StatCard'
+import { CollapsibleMetrics } from '@/shared/components/stat-card/CollapsibleMetrics'
 import { useTranslation } from '@/hooks/useTranslation'
+import { RESOURCE_METRICS_COLLAPSED_KEY } from '../../state/resourceMetricsPreference'
 import type { VirtualMachineMetricsData } from '../../types/virtualMachineTypes'
 
 interface VirtualMachineMetricsProps {
@@ -18,11 +19,5 @@ export function VirtualMachineMetrics({ metrics, isLoading = false }: VirtualMac
     { label: t('vm.metrics.allocatedMemory'), value: `${values.totalMemoryGb.toLocaleString()} GB`, helper: `${values.totalCpu.toLocaleString()} ${t('vm.metrics.totalVcpu')}`, isHelperLoading: isLoading, icon: <MemoryIcon className="size-4" /> },
   ]
 
-  return (
-    <div className="grid shrink-0 grid-cols-2 gap-2.5 xl:grid-cols-4">
-      {metricItems.map((metric) => (
-        <StatCard key={metric.label} size="sm" isLoading={isLoading} {...metric} />
-      ))}
-    </div>
-  )
+  return <CollapsibleMetrics items={metricItems} storageKey={RESOURCE_METRICS_COLLAPSED_KEY} isLoading={isLoading} />
 }
