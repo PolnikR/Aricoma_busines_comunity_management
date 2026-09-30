@@ -26,7 +26,7 @@ export function createVmwareColumns(t: Translate, showDetail: boolean): ColumnDe
       header: t('tables.vm.name'),
       cell: (vm) => (
         <>
-          <span className="block max-w-65 truncate text-[13px] font-semibold text-text-primary" title={vm.name}>{vm.name}</span>
+          <span className="block max-w-65 truncate font-semibold text-text-primary" title={vm.name}>{vm.name}</span>
           {showDetail ? (
             <span className="mt-0.5 block max-w-65 truncate font-mono text-[11px] text-text-subtle" title={`${vm.hostname} / ${vm.ipAddress}`}>
               {vm.ipAddress || vm.hostname || '-'}
@@ -81,6 +81,7 @@ export function createVmwareColumns(t: Translate, showDetail: boolean): ColumnDe
     {
       id: 'compute',
       header: t('tables.vm.compute'),
+      cellClassName: 'whitespace-nowrap',
       cell: (vm) => (
         <div className="flex flex-col gap-0.5 tabular-nums">
           <span>{vm.vcpu} vCPU · {vm.memoryGb} GB</span>
@@ -91,11 +92,13 @@ export function createVmwareColumns(t: Translate, showDetail: boolean): ColumnDe
     {
       id: 'connection',
       header: t('tables.vm.connection'),
+      cellClassName: 'whitespace-nowrap',
       cell: (vm) => <StateCell {...connectionState(vm.connectionState, t)} title={vm.connectionState} />,
     },
     {
       id: 'power',
       header: t('tables.vm.power'),
+      cellClassName: 'whitespace-nowrap',
       cell: (vm) => <StateCell {...powerState(vm.powerState, t)} title={vm.powerState} />,
     },
   ]

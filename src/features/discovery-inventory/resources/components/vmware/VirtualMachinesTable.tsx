@@ -20,21 +20,23 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, density, onS
   const columns = createVmwareColumns(t, showDetail)
 
   return (
-    <DataTable<VirtualMachine>
-      columns={columns}
-      rows={virtualMachines}
-      isLoading={isLoading}
-      loadingRowCount={Math.max(virtualMachines.length, 3)}
-      rowKey={(vm: VirtualMachine, index: number) => `${vm.id}-${String(index)}`}
-      rowSelectionKey={(vm: VirtualMachine): string => vm.id}
-      rowAriaLabel={(vm: VirtualMachine): string => `${t('vm.showDetails')} ${vm.name}`}
-      density={density}
-      selectedRowKey={selectedId}
-      onRowClick={onSelect}
-      minWidthClassName="min-w-260"
-      ariaLabel={isLoading ? t('pages.virtualMachines.loading') : t('vm.tableLabel')}
-      headerCellClassName="whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle"
-      cellClassName={`px-3 ${density === 'compact' ? 'py-1.5' : 'py-2.5'} text-[13px] text-text-secondary align-top`}
-    />
+    <div className="@container/vm-table w-full min-w-0">
+      <DataTable<VirtualMachine>
+        columns={columns}
+        rows={virtualMachines}
+        isLoading={isLoading}
+        loadingRowCount={Math.max(virtualMachines.length, 3)}
+        rowKey={(vm: VirtualMachine, index: number) => `${vm.id}-${String(index)}`}
+        rowSelectionKey={(vm: VirtualMachine): string => vm.id}
+        rowAriaLabel={(vm: VirtualMachine): string => `${t('vm.showDetails')} ${vm.name}`}
+        density={density}
+        selectedRowKey={selectedId}
+        onRowClick={onSelect}
+        minWidthClassName="min-w-260"
+        ariaLabel={isLoading ? t('pages.virtualMachines.loading') : t('vm.tableLabel')}
+        headerCellClassName="whitespace-nowrap px-2 @min-[80rem]/vm-table:px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle"
+        cellClassName={`px-2 @min-[80rem]/vm-table:px-3 ${density === 'compact' ? 'py-1.5' : 'py-2.5'} text-[12px] @min-[80rem]/vm-table:text-[13px] text-text-secondary align-top`}
+      />
+    </div>
   )
 }
