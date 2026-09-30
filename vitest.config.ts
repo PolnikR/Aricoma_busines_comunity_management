@@ -3,6 +3,7 @@ import { defineConfig } from 'vitest/config'
 
 const domTypescriptTests = [
   'src/shared/hooks/useResizablePanel.test.ts',
+  'src/shared/hooks/useStoredBoolean.test.ts',
   'src/shared/hooks/useUnsavedChangesGuard.test.ts',
   'src/shared/components/data-table/useTableState.test.ts',
   'src/features/discovery-inventory/infrastructure/hooks/useTooltipHover.test.ts',

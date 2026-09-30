@@ -246,6 +246,8 @@
   "metrics.clusters.helper": "Aktívne umiestnenia",
   "metrics.memory": "Pridelená pamäť",
   "metrics.memory.helper": "Celkový počet vCPU",
+  "metrics.hide": "Skryť štatistiky",
+  "metrics.showDetails": "Zobraziť detaily",
   "tables.vm.name": "Virtuálny stroj",
   "tables.vm.os": "Operačný systém",
   "tables.vm.placement": "Umiestnenie",

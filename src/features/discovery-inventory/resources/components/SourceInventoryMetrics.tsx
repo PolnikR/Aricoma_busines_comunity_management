@@ -1,6 +1,7 @@
 import { CpuIcon, LayersIcon, MemoryIcon, ServerIcon } from '@/shared/icons/Icons'
-import { StatCard } from '@/shared/components/stat-card/StatCard'
+import { CollapsibleMetrics } from '@/shared/components/stat-card/CollapsibleMetrics'
 import type { ReactNode } from 'react'
+import { RESOURCE_METRICS_COLLAPSED_KEY } from '../state/resourceMetricsPreference'
 import { formatCapacityBytes, parseCapacityBytes } from '../helpers/parseCapacity'
 import type {
   FlashSystemInventory,
@@ -72,8 +73,10 @@ interface MetricItem {
 
 function MetricGrid({ items, isLoading, dynamicHelperIndexes = [] }: { items: MetricItem[]; isLoading: boolean; dynamicHelperIndexes?: number[] }) {
   return (
-    <div className="grid shrink-0 grid-cols-2 gap-2.5 xl:grid-cols-4">
-      {items.map((item, index) => <StatCard key={item.label} size="sm" isLoading={isLoading} isHelperLoading={isLoading && dynamicHelperIndexes.includes(index)} {...item} />)}
-    </div>
+    <CollapsibleMetrics
+      items={items.map((item, index) => ({ ...item, isHelperLoading: isLoading && dynamicHelperIndexes.includes(index) }))}
+      storageKey={RESOURCE_METRICS_COLLAPSED_KEY}
+      isLoading={isLoading}
+    />
   )
 }
