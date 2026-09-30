@@ -335,7 +335,7 @@ describe('RecoveryGroupBuilder', () => {
     expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ resources: ['DB-01', 'VM-02'], relatedVolumes: ['MANUAL'], auxiliaryNamesByVolume: { MANUAL: 'AUX-MANUAL' } }))
   })
 
-  it('drops only volumes and auxiliary names exclusive to a removed VM', async () => {
+  it.each(['add', 'remove'])('drops discovered volumes after a manual %s and removal of their VM', async operation => {
     vi.mocked(useRecoveryGroupRelatedVolumes).mockImplementation((_vmProvider, vmNames, flashcopyProviderId) => ({
       flashcopyProviderId,
       discoveredVolumeNames: vmNames.flatMap(name => name === 'VM-A' ? ['DISK-A'] : name === 'VM-B' ? ['DISK-B'] : []),
@@ -357,12 +357,26 @@ describe('RecoveryGroupBuilder', () => {
     await user.click(screen.getByRole('button', { name: 'Related storage' }))
     expect(screen.getByLabelText('Auxiliary volume name: DISK-A')).toHaveValue('AUX-A')
     expect(screen.getByLabelText('Auxiliary volume name: DISK-B')).toHaveValue('AUX-B')
+    fireEvent.drop(screen.getByLabelText('Selected recovery group volumes'), { dataTransfer: { getData: () => 'EXTRA' } })
+    if (operation === 'remove') {
+      await user.click(screen.getByRole('button', { name: 'Remove volume: EXTRA' }))
+    }
     await user.click(screen.getByRole('button', { name: 'Resources' }))
     await user.click(screen.getByRole('button', { name: 'Remove virtual machine: VM-A' }))
     await user.click(screen.getByRole('button', { name: 'Related storage' }))
     expect(screen.queryByLabelText('Auxiliary volume name: DISK-A')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Auxiliary volume name: DISK-B')).toHaveValue('AUX-B')
     expect(screen.getByLabelText('Auxiliary volume name: MANUAL')).toHaveValue('AUX-MANUAL')
+  })
+
+  it('clears auxiliary when a volume-only resource is removed and added again', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, topology: 'metro_mirror', metroMirrorMode: 'existing', consistencyGroupId: '001', auxiliaryNamesByVolume: { 'VOL-01': 'AUX-01' } }} onCreate={vi.fn()} onCancel={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+    await user.click(screen.getByRole('button', { name: 'Remove volume: VOL-01' }))
+    fireEvent.drop(screen.getByLabelText('Selected recovery group volumes'), { dataTransfer: { getData: () => 'VOL-01' } })
+    expect(screen.getByLabelText('Auxiliary volume name: VOL-01')).toHaveValue('')
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
   })
 
   it('never silently converts an existing managed group', async () => {

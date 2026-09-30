@@ -347,7 +347,10 @@ export function RecoveryGroupBuilder({
                   }
                 }}
                 onRemove={resource => {
-                  updateDraft({ resources: draft.resources.filter(item => item !== resource) })
+                  updateDraft({
+                    resources: draft.resources.filter(item => item !== resource),
+                    ...(draft.resourceType === 'volume' ? { auxiliaryNamesByVolume: removeAuxiliary(resource) } : {}),
+                  })
                 }}
                 onMetadataAvailable={handleMetadataAvailable}
               />
@@ -390,14 +393,14 @@ export function RecoveryGroupBuilder({
                       onAdd={resource => {
                         const relatedVolumes = draft.relatedVolumes
                         if (!relatedVolumes.includes(resource)) {
-                          updateDraft({ relatedVolumes: [...relatedVolumes, resource] })
+                          updateDraft({ relatedVolumes: [...(draftState.relatedVolumes ?? []), resource] })
                         }
                       }}
                       onRemove={resource => {
                         setDiscoveryExclusions(current => ({ key: discoveryKey, all: current.key === discoveryKey && current.all,
                           removed: [...(current.key === discoveryKey ? current.removed : []), resource] }))
                         updateDraft({
-                          relatedVolumes: draft.relatedVolumes.filter(item => item !== resource),
+                          relatedVolumes: (draftState.relatedVolumes ?? []).filter(item => item !== resource),
                           auxiliaryNamesByVolume: removeAuxiliary(resource),
                         })
                       }}
