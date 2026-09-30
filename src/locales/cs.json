@@ -460,6 +460,7 @@
   "pages.recoveryGroupBuilder.topology.lookup.missingGroup": "Nebyla vrácena společná konzistenční skupina. Zadejte její ID ručně.",
   "pages.recoveryGroupBuilder.topology.lookup.mismatch": "Vaše hodnoty se liší od zjištěných údajů. Vaše úpravy zůstaly zachovány.",
   "pages.recoveryGroupBuilder.topology.auxiliary": "Název pomocného svazku",
+  "pages.recoveryGroupBuilder.topology.auxiliaryRequired": "Zadejte název pomocného svazku pro každý vybraný svazek Metro Mirror.",
   "pages.recoveryGroupBuilder.topology.discoveryError": "Související svazky FlashSystem se nepodařilo najít",
   "pages.recoveryGroupBuilder.topology.errors.required": "Vyberte režim topologie.",
   "pages.recoveryGroupBuilder.topology.errors.managed": "Spravované vztahy Metro Mirror nejsou podporovány.",

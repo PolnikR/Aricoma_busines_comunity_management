@@ -481,6 +481,7 @@
   "pages.recoveryGroupBuilder.topology.lookup.missingGroup": "No common consistency group was returned. Enter the group ID manually.",
   "pages.recoveryGroupBuilder.topology.lookup.mismatch": "Your values differ from discovery. Your edits have been kept.",
   "pages.recoveryGroupBuilder.topology.auxiliary": "Auxiliary volume name",
+  "pages.recoveryGroupBuilder.topology.auxiliaryRequired": "Enter an auxiliary name for every selected Metro Mirror volume.",
   "pages.recoveryGroupBuilder.topology.discoveryError": "Related FlashSystem volumes could not be discovered",
   "pages.recoveryGroupBuilder.topology.errors.required": "Select a topology mode.",
   "pages.recoveryGroupBuilder.topology.errors.managed": "Managed Metro Mirror relationships are not supported.",
