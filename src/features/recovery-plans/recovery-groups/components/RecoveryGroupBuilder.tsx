@@ -458,10 +458,11 @@ export function RecoveryGroupBuilder({
               />
             ) : null}
           </div>
-          <div className="sticky bottom-0 z-10 flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-surface-subtle p-3 sm:p-4 lg:static">
-            <Button variant="ghost" onClick={onCancel}>{t('buttons.cancel')}</Button>
-            <div className="flex gap-3">
+          <div className="sticky bottom-0 z-10 flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-border bg-surface-subtle px-3 py-2 sm:px-4 lg:static">
+            <Button size="sm" variant="ghost" onClick={onCancel}>{t('buttons.cancel')}</Button>
+            <div className="flex gap-2">
               <Button
+                size="sm"
                 variant="outline"
                 disabled={step === 1}
                 onClick={() => { setStep(current => Math.max(1, current - 1)) }}
@@ -470,6 +471,7 @@ export function RecoveryGroupBuilder({
               </Button>
               {step < lastStep ? (
                 <Button
+                  size="sm"
                   disabled={!canContinue}
                   onClick={() => { setStep(current => Math.min(lastStep, current + 1)) }}
                 >
@@ -477,6 +479,7 @@ export function RecoveryGroupBuilder({
                 </Button>
               ) : (
                 <Button
+                  size="sm"
                   disabled={!canCreate || isSaving}
                   startIcon={isSaving ? <Spinner /> : undefined}
                   onClick={() => { if (canCreate) onCreate(draft) }}
