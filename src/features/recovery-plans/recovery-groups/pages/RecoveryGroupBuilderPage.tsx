@@ -75,7 +75,7 @@ export function RecoveryGroupBuilderPage() {
         actions={<Button size="sm" variant="outline" onClick={requestBack}>{t('buttons.back')}</Button>}
       />
       <div className="flex flex-1 flex-col lg:min-h-0">
-        {error ? <Alert variant="error" className="mx-4 mt-4" title={error} /> : null}
+        {error ? <Alert variant="error" size="sm" className="mx-4 mt-4 shrink-0" title={error} /> : null}
         {loadError ? (
           <div className="p-4">
             <FetchErrorAlert

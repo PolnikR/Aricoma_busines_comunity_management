@@ -7,6 +7,7 @@ interface AlertProps {
   title: string
   description?: ReactNode
   variant?: AlertVariant
+  size?: 'sm' | 'md'
   className?: string
 }
 
@@ -35,6 +36,7 @@ export function Alert({
   title,
   description,
   variant = 'info',
+  size = 'md',
   className,
 }: AlertProps) {
   const role = variant === 'error' || variant === 'warning' ? 'alert' : 'status'
@@ -42,19 +44,20 @@ export function Alert({
   return (
     <div
       className={cn(
-        'flex items-start gap-3 rounded-xl border px-4 py-3 shadow-theme-xs',
+        'flex items-start rounded-xl border shadow-theme-xs',
+        size === 'sm' ? 'gap-2 px-3 py-2' : 'gap-3 px-4 py-3',
         variantClassNames[variant],
         className,
       )}
       role={role}
     >
       <span
-        className={cn('mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold', iconClassNames[variant])}
+        className={cn('mt-0.5 flex shrink-0 items-center justify-center rounded-full text-sm font-bold', size === 'sm' ? 'size-5' : 'size-8', iconClassNames[variant])}
         aria-hidden="true"
       >
         {symbols[variant]}
       </span>
-      <div className="min-w-0">
+      <div className="min-w-0 [overflow-wrap:anywhere]">
         <p className="text-sm font-semibold">{title}</p>
         {description ? <div className="mt-1 break-words text-xs leading-5">{description}</div> : null}
       </div>
