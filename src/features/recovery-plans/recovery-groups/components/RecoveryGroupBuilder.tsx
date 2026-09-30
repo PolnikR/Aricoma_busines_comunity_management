@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useId, useMemo, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { Spinner } from '@/shared/components/spinner/Spinner'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
@@ -74,6 +74,7 @@ export function RecoveryGroupBuilder({
   isInitialLoading = false,
 }: RecoveryGroupBuilderProps) {
   const { t } = useTranslation()
+  const auxiliaryHintId = useId()
   const providerQuery = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const allProviders = providerQuery.data ?? []
   const providers = initialData
@@ -229,10 +230,12 @@ export function RecoveryGroupBuilder({
     } else updateDraft(update)
   }
   const removeAuxiliary = (name: string) => Object.fromEntries(Object.entries(draftState.auxiliaryNamesByVolume ?? {}).filter(([key]) => key !== name))
+  const showAuxiliaryHint = hasRelatedStorageStep && step === relatedStorageStepIndex && draft.topology === 'metro_mirror' && !storageValid
   const renderVolumeContent = draft.topology === 'metro_mirror' ? (name: string) => (
     <div className="grid min-w-0 grid-cols-[minmax(0,0.7fr)_minmax(0,1fr)] items-center gap-3">
       <TruncatedText text={name} />
       <Input size="sm" aria-label={t('pages.recoveryGroupBuilder.topology.auxiliary') + ': ' + name}
+        aria-describedby={showAuxiliaryHint ? auxiliaryHintId : undefined}
         placeholder={t('pages.recoveryGroupBuilder.topology.auxiliary')}
         value={draft.auxiliaryNamesByVolume[name] ?? ''}
         invalid={!draft.auxiliaryNamesByVolume[name]?.trim()}
@@ -383,7 +386,7 @@ export function RecoveryGroupBuilder({
             ) : null}
             {step === relatedStorageStepIndex && hasRelatedStorageStep ? (
               <div className="flex min-h-80 min-w-0 flex-col gap-3 lg:h-full">
-                <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex shrink-0 flex-wrap items-start justify-between gap-3">
                   <div>
                     <h2 className="text-base font-semibold text-text-primary">
                       {t('pages.recoveryGroupBuilder.relatedStorage.title')}
@@ -410,11 +413,13 @@ export function RecoveryGroupBuilder({
                 {relatedVolumesDiscovery.isLoading ? <ListSkeleton rowCount={1} ariaLabel={t('pages.recoveryGroupBuilder.resources.volumes.loading')} /> : null}
                 {metroFields}
                 {draft.relatedVolumeProviderId ? (
-                  <div className="min-h-64 min-w-0 flex-1">
+                  <div className="flex min-h-64 min-w-0 flex-1 flex-col">
                     <RecoveryGroupResourcesStep
+                      compact
                       workloadType="ibm_flashsystem"
                       providerId={draft.relatedVolumeProviderId}
                       resources={draft.relatedVolumes}
+                      selectionHint={showAuxiliaryHint ? <p id={auxiliaryHintId} role="status" className="mt-1 text-xs text-text-secondary">{t('pages.recoveryGroupBuilder.topology.auxiliaryRequired')}</p> : undefined}
                       renderItemContent={renderVolumeContent}
                       onAdd={resource => {
                         const relatedVolumes = draft.relatedVolumes

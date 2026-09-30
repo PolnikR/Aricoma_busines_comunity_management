@@ -26,11 +26,19 @@ vi.mock('../hooks/useRecoveryGroupResourceInventory', () => ({
 }))
 
 describe('RecoveryGroupResourcesStep', () => {
-  it('composes the editable auxiliary row inside the existing shared selection card', async () => {
+  it.each([false, true])('composes the editable auxiliary row with compact=%s', async (compact) => {
     const remove = vi.fn()
-    render(<RecoveryGroupResourcesStep workloadType="ibm_flashsystem" providerId="source" resources={['VOL-01']}
+    render(<RecoveryGroupResourcesStep compact={compact} selectionHint={<p id="aux-hint">Auxiliary names required</p>} workloadType="ibm_flashsystem" providerId="source" resources={['VOL-01']}
       onAdd={vi.fn()} onRemove={remove} renderItemContent={name => <input aria-label={`Auxiliary: ${name}`} defaultValue="AUX-01" />} />)
     expect(screen.getByLabelText('Auxiliary: VOL-01')).toHaveValue('AUX-01')
+    expect(screen.getByText('Auxiliary names required')).toBeInTheDocument()
+    const selection = screen.getByLabelText('Selected recovery group volumes').closest('section')
+    if (compact) {
+      expect(selection).not.toHaveClass('border')
+      expect(screen.getByRole('button', { name: 'Remove volume: VOL-01' })).toHaveClass('size-6')
+    } else {
+      expect(selection).toHaveClass('border')
+    }
     await userEvent.setup().click(screen.getByRole('button', { name: 'Remove volume: VOL-01' }))
     expect(remove).toHaveBeenCalledWith('VOL-01')
   })

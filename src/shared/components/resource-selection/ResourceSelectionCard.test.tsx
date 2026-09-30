@@ -4,9 +4,9 @@ import { describe, expect, it, vi } from 'vitest'
 import { ResourceSelectionCard } from './ResourceSelectionCard'
 
 describe('ResourceSelectionCard', () => {
-  it('renders editable content for 100 rows while retaining remove and drop controls', async () => {
+  it.each(['default', 'compact'] as const)('renders editable content for 100 rows with %s density', async (density) => {
     const remove = vi.fn()
-    render(<ResourceSelectionCard items={Array.from({ length: 100 }, (_, i) => `VOL-${String(i)}`)}
+    render(<ResourceSelectionCard density={density} items={Array.from({ length: 100 }, (_, i) => `VOL-${String(i)}`)}
       emptyText="Drop" removeLabel="Remove" ariaLabel="Volumes" onResourceRemove={remove}
       renderItemContent={name => <input aria-label={`Auxiliary: ${name}`} defaultValue="" />} />)
     expect(screen.getAllByRole('textbox')).toHaveLength(100)
@@ -17,12 +17,13 @@ describe('ResourceSelectionCard', () => {
     expect(remove).toHaveBeenCalledWith('VOL-99')
   })
 
-  it('accepts a dropped resource and removes an existing resource', async () => {
+  it.each(['default', 'compact'] as const)('accepts a dropped resource and removes an existing resource with %s density', async (density) => {
     const user = userEvent.setup()
     const onResourceDrop = vi.fn()
     const onResourceRemove = vi.fn()
     render(
       <ResourceSelectionCard
+        density={density}
         items={['DB-01']}
         emptyText="Drop here"
         removeLabel="Remove"
@@ -37,6 +38,10 @@ describe('ResourceSelectionCard', () => {
     const dropZone = list.closest('section')
     expect(dropZone).not.toBeNull()
     expect(list).toHaveClass('custom-scrollbar', 'min-h-0', 'flex-1', 'overflow-y-auto')
+    if (density === 'compact') {
+      expect(screen.getByRole('button', { name: 'Remove: DB-01' })).toHaveClass('opacity-100', 'size-6')
+      expect(list).toHaveClass('space-y-1')
+    }
     if (!dropZone) return
 
     fireEvent.drop(dropZone, {

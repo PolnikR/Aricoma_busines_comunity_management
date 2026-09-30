@@ -320,6 +320,22 @@ describe('RecoveryGroupBuilder', () => {
     expect(screen.queryByLabelText('Consistency group ID')).not.toBeInTheDocument()
   })
 
+  it('describes related auxiliary inputs with inline guidance only while names are missing', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryGroupBuilder initialData={{ ...existingGroup, topology: 'metro_mirror', metroMirrorMode: 'existing', consistencyGroupId: '001', relatedVolumeProviderId: 'ibm-flashsystem-01', relatedVolumes: ['VOL-01'], auxiliaryNamesByVolume: {} }} onCreate={vi.fn()} onCancel={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: 'Related storage' }))
+    const input = screen.getByLabelText('Auxiliary volume name: VOL-01')
+    expect(input).toHaveAccessibleDescription('Enter an auxiliary name for every selected Metro Mirror volume.')
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+    await user.type(input, 'AUX-01')
+    expect(input).not.toHaveAttribute('aria-describedby')
+    expect(screen.queryByText('Enter an auxiliary name for every selected Metro Mirror volume.')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+    await user.click(screen.getByRole('button', { name: 'Related storage' }))
+    expect(screen.getByLabelText('Auxiliary volume name: VOL-01')).toHaveValue('AUX-01')
+  })
+
   it('requires auxiliary for every Metro volume and clears it when switched to Local', async () => {
     const user = userEvent.setup()
     const onCreate = vi.fn()

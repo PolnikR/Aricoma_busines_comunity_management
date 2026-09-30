@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
 import { ResourceSelectionCard } from '@/shared/components/resource-selection/ResourceSelectionCard'
 import { useTranslation } from '@/hooks/useTranslation'
+import { cn } from '@/shared/utils/cn'
 import { useRecoveryGroupResourceInventory } from '../hooks/useRecoveryGroupResourceInventory'
 import type { RecoveryGroupVmMetadata, RecoveryGroupWorkloadType } from '../model/recoveryGroupTypes'
 
@@ -14,6 +15,8 @@ interface RecoveryGroupResourcesStepProps {
   onRemove: (resource: string) => void
   onMetadataAvailable?: (metadata: Record<string, RecoveryGroupVmMetadata>) => void
   renderItemContent?: ((resource: string) => ReactNode) | undefined
+  selectionHint?: ReactNode
+  compact?: boolean
 }
 
 export function RecoveryGroupResourcesStep(props: RecoveryGroupResourcesStepProps) {
@@ -33,6 +36,8 @@ function RecoveryGroupResourcesStepContent({
   onRemove,
   onMetadataAvailable,
   renderItemContent,
+  selectionHint,
+  compact = false,
 }: RecoveryGroupResourcesStepProps) {
   const { t } = useTranslation()
   const [vmwareNamePrefix, setVmwareNamePrefix] = useState('')
@@ -50,7 +55,7 @@ function RecoveryGroupResourcesStepContent({
   const key = (suffix: string) => `pages.recoveryGroupBuilder.resources.${resourceKind}.${suffix}`
 
   return (
-    <div className="grid min-h-64 min-w-0 gap-4 lg:h-full lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
+    <div className={cn('grid min-h-64 min-w-0 gap-4', compact ? 'flex-1 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]' : 'lg:h-full lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]')}>
       <div className="h-72 min-h-0 min-w-0 overflow-hidden rounded-lg border border-border lg:h-full">
         <ResourceSidebar
           items={availableResources}
@@ -75,10 +80,12 @@ function RecoveryGroupResourcesStepContent({
           } : {})}
         />
       </div>
-      <div className="flex h-72 min-h-0 min-w-0 flex-col rounded-lg border-2 border-dashed border-border bg-surface p-4 lg:h-full">
+      <div className={cn('flex h-72 min-h-0 min-w-0 flex-col rounded-lg border-2 border-dashed border-border bg-surface lg:h-full', compact ? 'p-2' : 'p-4')}>
         <h2 className="text-base font-semibold text-text-primary">{t(key('selectedTitle'))}</h2>
-        <p className="mt-1 text-sm text-text-muted">{t(key('description'))}</p>
+        <p className={cn('mt-1 text-text-muted', compact ? 'text-xs' : 'text-sm')}>{t(key('description'))}</p>
+        {selectionHint}
         <ResourceSelectionCard
+          density={compact ? 'compact' : 'default'}
           items={resources}
           emptyText={t(key('empty'))}
           removeLabel={t(key('remove'))}
@@ -87,7 +94,7 @@ function RecoveryGroupResourcesStepContent({
           onResourceDrop={onAdd}
           onResourceRemove={onRemove}
           renderItemContent={renderItemContent}
-          className="mt-4 h-auto min-h-0 flex-1 rounded-lg border border-border"
+          className={compact ? 'mt-2 flex-1 rounded-lg' : 'mt-4 h-auto min-h-0 flex-1 rounded-lg border border-border'}
         />
       </div>
     </div>

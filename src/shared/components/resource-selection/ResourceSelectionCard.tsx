@@ -19,6 +19,7 @@ interface ResourceSelectionCardProps {
   onClear?: () => void
   clearLabel?: string
   className?: string
+  density?: 'default' | 'compact'
   renderItemContent?: ((resource: string) => ReactNode) | undefined
 }
 
@@ -39,10 +40,12 @@ export function ResourceSelectionCard({
   onClear,
   clearLabel,
   className,
+  density = 'default',
   renderItemContent,
 }: ResourceSelectionCardProps) {
   const [isDragOver, setIsDragOver] = useState(false)
   const isSelectionMode = selectedItems !== undefined && onResourceSelectionChange !== undefined
+  const isCompact = density === 'compact' && !isSelectionMode
   const selectedItemSet = new Set(selectedItems)
 
   return (
@@ -61,8 +64,9 @@ export function ResourceSelectionCard({
         if (resource) onResourceDrop(resource)
       } : undefined}
       className={cn(
-        'flex flex-col gap-2 bg-surface-subtle p-3 transition',
-        isSelectionMode ? 'h-52 min-h-52' : 'h-44 min-h-44',
+        'flex flex-col gap-2 bg-surface-subtle transition',
+        isCompact ? 'h-auto min-h-0 p-1' : 'p-3',
+        !isCompact && (isSelectionMode ? 'h-52 min-h-52' : 'h-44 min-h-44'),
         isDragOver ? 'bg-surface-muted ring-1 ring-inset ring-focus' : undefined,
         className,
       )}
@@ -98,7 +102,7 @@ export function ResourceSelectionCard({
         </div>
       ) : (
         <div
-          className="custom-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto pr-2"
+          className={cn('custom-scrollbar min-h-0 flex-1 overflow-y-auto', isCompact ? 'space-y-1 p-1' : 'space-y-2 pr-2')}
           tabIndex={isSelectionMode ? undefined : 0}
           role={isSelectionMode ? 'group' : undefined}
           aria-label={ariaLabel}
@@ -133,14 +137,14 @@ export function ResourceSelectionCard({
             return (
               <div
                 key={item}
-                className="group flex items-center justify-between rounded-md border border-border bg-surface p-2 text-xs text-text-primary hover:border-border-strong"
+                className={cn('group flex items-center justify-between rounded-md border border-border bg-surface text-xs text-text-primary hover:border-border-strong', isCompact ? 'min-h-10 px-2 py-0.5' : 'p-2')}
               >
                 {renderItemContent ? <div className="min-w-0 flex-1">{renderItemContent(item)}</div> : <span className="min-w-0 truncate">{item}</span>}
                 {onResourceRemove ? (
                   <button
                     type="button"
                     onClick={() => { onResourceRemove(item) }}
-                    className={cn('ml-2 shrink-0 text-text-subtle transition-opacity hover:text-error-600 group-hover:opacity-100 focus:opacity-100', renderItemContent ? 'opacity-100' : 'opacity-0')}
+                    className={cn('ml-2 shrink-0 text-text-subtle transition-opacity hover:text-error-600 group-hover:opacity-100 focus:opacity-100', renderItemContent || isCompact ? 'opacity-100' : 'opacity-0', isCompact && 'flex size-6 items-center justify-center rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus')}
                     aria-label={`${removeLabel}: ${item}`}
                     title={removeLabel}
                   >
@@ -154,7 +158,7 @@ export function ResourceSelectionCard({
       )}
       {selectionSummary ? (
         <p
-          className="-mx-3 -mb-3 shrink-0 border-t border-border bg-surface-subtle px-3 py-2 text-xs text-text-muted"
+          className={cn('shrink-0 border-t border-border bg-surface-subtle px-3 py-2 text-xs text-text-muted', isCompact ? '-mx-1 -mb-1' : '-mx-3 -mb-3')}
           aria-live="polite"
         >
           {selectionSummary}
