@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { cn } from '@/shared/utils/cn'
 
 interface ResourceSelectionCardProps {
@@ -18,6 +19,7 @@ interface ResourceSelectionCardProps {
   onClear?: () => void
   clearLabel?: string
   className?: string
+  renderItemContent?: ((resource: string) => ReactNode) | undefined
 }
 
 export function ResourceSelectionCard({
@@ -37,6 +39,7 @@ export function ResourceSelectionCard({
   onClear,
   clearLabel,
   className,
+  renderItemContent,
 }: ResourceSelectionCardProps) {
   const [isDragOver, setIsDragOver] = useState(false)
   const isSelectionMode = selectedItems !== undefined && onResourceSelectionChange !== undefined
@@ -132,7 +135,7 @@ export function ResourceSelectionCard({
                 key={item}
                 className="group flex items-center justify-between rounded-md border border-border bg-surface p-2 text-xs text-text-primary hover:border-border-strong"
               >
-                <span className="min-w-0 truncate">{item}</span>
+                {renderItemContent ? <div className="min-w-0 flex-1">{renderItemContent(item)}</div> : <span className="min-w-0 truncate">{item}</span>}
                 {onResourceRemove ? (
                   <button
                     type="button"

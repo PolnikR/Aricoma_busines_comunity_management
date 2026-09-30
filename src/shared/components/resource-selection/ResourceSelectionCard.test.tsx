@@ -4,6 +4,18 @@ import { describe, expect, it, vi } from 'vitest'
 import { ResourceSelectionCard } from './ResourceSelectionCard'
 
 describe('ResourceSelectionCard', () => {
+  it('renders editable content for 100 rows while retaining remove and drop controls', async () => {
+    const remove = vi.fn()
+    render(<ResourceSelectionCard items={Array.from({ length: 100 }, (_, i) => `VOL-${String(i)}`)}
+      emptyText="Drop" removeLabel="Remove" ariaLabel="Volumes" onResourceRemove={remove}
+      renderItemContent={name => <input aria-label={`Auxiliary: ${name}`} defaultValue="" />} />)
+    expect(screen.getAllByRole('textbox')).toHaveLength(100)
+    await userEvent.setup().type(screen.getByLabelText('Auxiliary: VOL-99'), 'AUX-99')
+    expect(screen.getByLabelText('Auxiliary: VOL-99')).toHaveValue('AUX-99')
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Remove: VOL-99' }))
+    expect(remove).toHaveBeenCalledWith('VOL-99')
+  })
+
   it('accepts a dropped resource and removes an existing resource', async () => {
     const user = userEvent.setup()
     const onResourceDrop = vi.fn()
