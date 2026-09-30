@@ -1,10 +1,15 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { VolumesResponse } from '@/generated/query/zod'
 import { parseWireResponse } from '@/test-utils/parseWireResponse'
 import { mapFlashSystemInventory } from '../helpers/mapFlashSystemInventory'
+import { RESOURCE_METRICS_COLLAPSED_KEY } from '../state/resourceMetricsPreference'
 import { FlashSystemMetrics, PowerMetrics } from './SourceInventoryMetrics'
+
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
+beforeEach(() => { localStorage.setItem(RESOURCE_METRICS_COLLAPSED_KEY, 'false') })
 
 function provider(id: string): ProviderRecord {
   return {
@@ -80,5 +85,13 @@ describe('PowerMetrics', () => {
     render(<PowerMetrics resources={[]} isLoading labels={{ total: 'Partitions', active: 'Running', third: 'LPAR', fourth: 'VIOS', validated: 'Validated' }} />)
     for (const label of ['Partitions', 'Running', 'LPAR', 'VIOS']) expect(screen.getByText(label)).toBeVisible()
     expect(screen.getAllByRole('article').every(card => card.getAttribute('aria-busy') === 'true')).toBe(true)
+  })
+
+  it('follows the shared collapsed Resources preference', () => {
+    localStorage.setItem(RESOURCE_METRICS_COLLAPSED_KEY, 'true')
+    render(<PowerMetrics resources={[]} labels={{ total: 'Partitions', active: 'Running', third: 'LPAR', fourth: 'VIOS', validated: 'Validated' }} />)
+
+    expect(screen.getByRole('button', { name: /0 Partitions.*0 VIOS.*Show details/ })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('article')).not.toBeInTheDocument()
   })
 })
