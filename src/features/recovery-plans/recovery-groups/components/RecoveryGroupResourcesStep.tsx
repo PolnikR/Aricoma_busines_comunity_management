@@ -4,6 +4,7 @@ import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSi
 import { ResourceSelectionCard } from '@/shared/components/resource-selection/ResourceSelectionCard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { cn } from '@/shared/utils/cn'
+import { Button } from '@/shared/components/button/Button'
 import { useRecoveryGroupResourceInventory } from '../hooks/useRecoveryGroupResourceInventory'
 import type { RecoveryGroupVmMetadata, RecoveryGroupWorkloadType } from '../model/recoveryGroupTypes'
 
@@ -17,6 +18,7 @@ interface RecoveryGroupResourcesStepProps {
   renderItemContent?: ((resource: string) => ReactNode) | undefined
   selectionHint?: ReactNode
   compact?: boolean
+  onClear?: () => void
 }
 
 export function RecoveryGroupResourcesStep(props: RecoveryGroupResourcesStepProps) {
@@ -38,6 +40,7 @@ function RecoveryGroupResourcesStepContent({
   renderItemContent,
   selectionHint,
   compact = false,
+  onClear,
 }: RecoveryGroupResourcesStepProps) {
   const { t } = useTranslation()
   const [vmwareNamePrefix, setVmwareNamePrefix] = useState('')
@@ -74,16 +77,24 @@ function RecoveryGroupResourcesStepContent({
           staleErrorDescription={t('pages.recoveryGroupBuilder.resources.error.showingPrevious')}
           retryLabel={t('buttons.retry')}
           onRetry={() => { void query.refetch() }}
+          {...(compact ? { renderItemAction: (resource: string) => <button type="button" disabled={resources.includes(resource)} aria-label={`${t('buttons.add')}: ${resource}`} onClick={() => { onAdd(resource) }} className="flex size-6 shrink-0 items-center justify-center rounded border border-border text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:text-text-muted">{resources.includes(resource) ? '✓' : '+'}</button> } : {})}
           {...(isVmware ? {
             searchValue: vmwareNamePrefix,
             onSearchChange: setVmwareNamePrefix,
           } : {})}
         />
       </div>
-      <div className={cn('flex h-72 min-h-0 min-w-0 flex-col rounded-lg border-2 border-dashed border-border bg-surface lg:h-full', compact ? 'p-2' : 'p-4')}>
-        <h2 className="text-base font-semibold text-text-primary">{t(key('selectedTitle'))}</h2>
-        <p className={cn('mt-1 text-text-muted', compact ? 'text-xs' : 'text-sm')}>{t(key('description'))}</p>
-        {selectionHint}
+      <div className={cn('flex h-72 min-h-0 min-w-0 flex-col rounded-lg border-border bg-surface lg:h-full', compact ? 'overflow-hidden border' : 'border-2 border-dashed p-4')}>
+        <div className={cn('flex shrink-0 items-center justify-between gap-2', compact && 'border-b border-border px-3 py-2')}>
+          <h2 className={cn('min-w-0 font-semibold text-text-primary', compact ? 'text-sm' : 'text-base')}>{t(key('selectedTitle'))}{compact ? <span className="ml-2 text-xs font-normal text-text-muted">{resources.length}</span> : null}</h2>
+          {onClear ? <Button variant="ghost" size="xs" className="shrink-0 whitespace-nowrap" disabled={resources.length === 0} onClick={onClear}>{t('pages.recoveryGroupBuilder.resources.clearSelection')}</Button> : null}
+        </div>
+        {compact && renderItemContent ? (
+          <div className="grid shrink-0 grid-cols-[minmax(0,0.7fr)_minmax(0,1fr)_2rem] gap-3 border-b border-border bg-surface-muted px-3 py-1.5 text-xs text-text-secondary">
+            <span>{t('pages.recoveryGroupBuilder.resources.sourceVolume')}</span><span>{t('pages.recoveryGroupBuilder.topology.auxiliary')} *</span>
+          </div>
+        ) : null}
+        {!compact ? <><p className="mt-1 text-sm text-text-muted">{t(key('description'))}</p>{selectionHint}</> : null}
         <ResourceSelectionCard
           density={compact ? 'compact' : 'default'}
           items={resources}
@@ -94,8 +105,9 @@ function RecoveryGroupResourcesStepContent({
           onResourceDrop={onAdd}
           onResourceRemove={onRemove}
           renderItemContent={renderItemContent}
-          className={compact ? 'mt-2 flex-1 rounded-lg' : 'mt-4 h-auto min-h-0 flex-1 rounded-lg border border-border'}
+          className={compact ? 'flex-1' : 'mt-4 h-auto min-h-0 flex-1 rounded-lg border border-border'}
         />
+        {compact ? <div className="shrink-0 border-t border-border bg-surface-subtle px-3 py-2 text-xs text-text-muted">{selectionHint ?? t(key('description'))}</div> : null}
       </div>
     </div>
   )

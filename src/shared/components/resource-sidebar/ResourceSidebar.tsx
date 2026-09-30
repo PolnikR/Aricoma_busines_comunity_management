@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
+import type { ReactNode } from 'react'
+import { cn } from '@/shared/utils/cn'
 import { Input } from '@/shared/components/form/FormControls'
 import { ListSkeleton } from '@/shared/components/list-skeleton'
 
@@ -23,6 +25,7 @@ interface ResourceSidebarProps {
   onRetry?: () => void
   searchValue?: string
   onSearchChange?: (value: string) => void
+  renderItemAction?: (item: string) => ReactNode
 }
 
 export function ResourceSidebar({
@@ -45,6 +48,7 @@ export function ResourceSidebar({
   onRetry,
   searchValue,
   onSearchChange,
+  renderItemAction,
 }: ResourceSidebarProps) {
   const [search, setSearch] = useState('')
   const isServerSearch = searchValue !== undefined && onSearchChange !== undefined
@@ -122,12 +126,15 @@ export function ResourceSidebar({
                   onDragStart={event => {
                     event.dataTransfer.setData(dragDataKey, item)
                   }}
-                  className="mb-1 w-full cursor-grab rounded-md border border-border bg-surface-muted p-2 text-left text-xs text-text-primary transition-all hover:border-border-strong hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  className={cn('mb-1 w-full cursor-grab rounded-md border border-border bg-surface-muted text-left text-xs text-text-primary transition-all hover:border-border-strong hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus', renderItemAction ? 'flex min-h-9 items-center justify-between gap-2 px-2 py-1' : 'p-2')}
                 >
-                  <span className="block font-medium">{itemLabels[item] ?? item}</span>
-                  {itemLabels[item] && itemLabels[item] !== item ? (
-                    <span className="mt-0.5 block font-mono text-[10px] text-text-muted">{item}</span>
-                  ) : null}
+                  <div className="min-w-0">
+                    <span className="block break-words font-medium">{itemLabels[item] ?? item}</span>
+                    {itemLabels[item] && itemLabels[item] !== item ? (
+                      <span className="mt-0.5 block font-mono text-[10px] text-text-muted">{item}</span>
+                    ) : null}
+                  </div>
+                  {renderItemAction?.(item)}
                 </div>
                 ))}
               </div>

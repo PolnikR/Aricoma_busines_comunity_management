@@ -26,6 +26,20 @@ vi.mock('../hooks/useRecoveryGroupResourceInventory', () => ({
 }))
 
 describe('RecoveryGroupResourcesStep', () => {
+  it('offers keyboard add and clear controls next to the compact selection', async () => {
+    const onAdd = vi.fn()
+    const onClear = vi.fn()
+    useRecoveryGroupResourceInventory.mockReturnValue({ data: { resourceNames: ['VOL-01', 'VOL-02'] }, error: null, isLoading: false, isSearching: false, isFetching: false, refetch: vi.fn() })
+    render(<RecoveryGroupResourcesStep compact workloadType="ibm_flashsystem" providerId="source" resources={['VOL-01']} onAdd={onAdd} onRemove={vi.fn()} onClear={onClear} />)
+    expect(screen.getByRole('button', { name: 'Add: VOL-01' })).toBeDisabled()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Add: VOL-02' }))
+    expect(onAdd).toHaveBeenCalledWith('VOL-02')
+    const clear = screen.getByRole('button', { name: 'Clear selection' })
+    expect(clear.parentElement).toHaveTextContent('Selected volumes')
+    await userEvent.setup().click(clear)
+    expect(onClear).toHaveBeenCalledOnce()
+  })
+
   it.each([false, true])('composes the editable auxiliary row with compact=%s', async (compact) => {
     const remove = vi.fn()
     render(<RecoveryGroupResourcesStep compact={compact} selectionHint={<p id="aux-hint">Auxiliary names required</p>} workloadType="ibm_flashsystem" providerId="source" resources={['VOL-01']}

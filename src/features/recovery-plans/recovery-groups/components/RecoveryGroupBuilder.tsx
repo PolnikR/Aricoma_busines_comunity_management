@@ -244,6 +244,8 @@ export function RecoveryGroupBuilder({
   ) : undefined
 
   const metroFields = metroExisting ? <RecoveryGroupMetroMirrorFields
+    missingNamesCount={selectedVolumes.filter(name => !draft.auxiliaryNamesByVolume[name]?.trim()).length}
+    providerName={allProviders.find(provider => provider.id === draft.relatedVolumeProviderId)?.name}
     value={draft.consistencyGroupId}
     onChange={value => { setHasConsistencyOverride(true); updateDraft({ consistencyGroupId: value }) }}
     loading={relationships.isLoading} error={relationships.error instanceof Error ? relationships.error : null}
@@ -386,24 +388,11 @@ export function RecoveryGroupBuilder({
             ) : null}
             {step === relatedStorageStepIndex && hasRelatedStorageStep ? (
               <div className="flex min-h-80 min-w-0 flex-col gap-3 lg:h-full">
-                <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1">
+                <div className="shrink-0">
                   <h2 className="min-w-0 text-base font-semibold text-text-primary">
                     {t('pages.recoveryGroupBuilder.relatedStorage.title')}
                   </h2>
-                  {draft.relatedVolumes.length > 0 ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="col-start-2 row-start-1 whitespace-nowrap"
-                      onClick={() => {
-                        updateDraft({ relatedVolumes: [], auxiliaryNamesByVolume: {} })
-                        setDiscoveryExclusions({ key: discoveryKey, removed: [], all: true })
-                      }}
-                    >
-                      {t('pages.recoveryGroupBuilder.relatedStorage.clear')}
-                    </Button>
-                  ) : null}
-                  <p className="col-span-2 text-sm text-text-muted">
+                  <p className="mt-1 text-xs text-text-muted">
                     {t('pages.recoveryGroupBuilder.relatedStorage.description')}
                   </p>
                 </div>
@@ -415,6 +404,10 @@ export function RecoveryGroupBuilder({
                   <div className="flex min-h-64 min-w-0 flex-1 flex-col">
                     <RecoveryGroupResourcesStep
                       compact
+                      onClear={() => {
+                        updateDraft({ relatedVolumes: [], auxiliaryNamesByVolume: {} })
+                        setDiscoveryExclusions({ key: discoveryKey, removed: [], all: true })
+                      }}
                       workloadType="ibm_flashsystem"
                       providerId={draft.relatedVolumeProviderId}
                       resources={draft.relatedVolumes}
