@@ -1,5 +1,94 @@
 # Plán: Recovery Group topology UI a backend integrácia
 
+## Aktívne rozšírenie — Metro Mirror lookup (2026-09-30)
+
+Nasledujúca fáza MM1–MM7 rozširuje pôvodnú implementáciu. Je autoritatívna pre umiestnenie Consistency Group ID, automatické predvyplnenie a ručné opravy; pre tieto body nahrádza staršie rozhodnutia nižšie. Pôvodné úlohy a nedokončené browserové overenie zostávajú zachované. Tento dodatok je plán, nie vykonaná implementácia.
+
+### Schválený výsledok
+
+- Topology obsahuje iba topology, Source, odvodený Target a Metro Mirror mode. Consistency Group ID sa tu nezobrazuje ani nevyžaduje pre Next.
+- Pri VM skupine sa editable Consistency Group ID zobrazí nad vybranými volumes v Related storage. Pri samostatných volumes sa zobrazí v Resources. Existujúce auxiliary inputy zostanú priamo v kompaktných drag-and-drop riadkoch.
+- Pre `metro_mirror` / `existing` API automaticky predvyplní CG a auxiliary names. Používateľ môže každú hodnotu opraviť vrátane vymazania. Ručné zmeny ani hodnoty načítané z uloženej skupiny nesmie background refetch prepísať.
+- Local zostáva bez lookupu a Metro polí. Počet krokov, automatický volume provider, VM → volume discovery, payload a orchestration sa nemenia.
+
+### Overený integračný bod
+
+Generated `useGetMetroMirrorRelationships` už existuje v `src/generated/query/storage-volumes/storage-volumes.gen.ts`. Parametre sú `provider_id: string` a `volume_names: string[]`. Posiela sa Source FlashSystem a názvy aktuálne vybraných source volumes: `relatedVolumes` pri VM, `resources` pri volume-only. Neposiela sa compute provider ani Target. Generated serializácia rieši opakované `volume_names` parametre aj abort signal.
+
+Response obsahuje `provider_id`, `volumes[]` s `name`, `status: ok | not_mirrored | ambiguous`, voliteľnými `auxiliary_name` a `consistency_group_id`, plus spoločné `consistency_group_id` a `warning`. Spoločný CG sa berie z top-level hodnoty, nikdy svojvoľne z prvého volume. Aktuálna generated schéma stačí; Orval regenerovať iba pri preukázanej zmene kontraktu, neupravovať generated súbory ručne.
+
+### Pravidlá predvyplnenia a validácie
+
+1. Query je enabled iba pri Existing Metro Mirror, validnom Source a neprázdnom aktuálnom výbere. Počas nevyriešeného VM discovery počká; chyba discovery naďalej používa existujúcu blokujúcu validáciu. Názvy pre query deduplikovať a zoradiť, nemení sa poradie UI.
+2. Auxiliary doplniť iba pre presnú zhodu vybraného názvu, `status=ok` a neprázdnu hodnotu. Chýbajúci alebo nejednoznačný záznam zostáva označený na ručné doplnenie. `warning` zobraziť ako text, nie HTML.
+3. Pôvod hodnôt evidovať lokálne vo FE: automatický, ručne upravený alebo načítaný zo záznamu. Nepridávať tieto metadáta do backend payloadu. Úmyselne vymazané pole je ručná úprava a nesmie sa okamžite znovu vyplniť.
+4. Pri zmene výberu prepočítať automatický spoločný CG a odstrániť automatické hodnoty, ktoré nový výsledok už nepotvrdzuje. Ručné/persistované hodnoty zachovaných volumes a CG pri rovnakom Source zachovať; upozorniť, ak sa líšia od discovery. Odstránený volume stratí mapping aj príznak ručnej úpravy. Pri zmene Source alebo opustení Metro režimu resetovať celý Metro kontext. Zmeny compute/workload rešpektujú existujúci reset výberu a odstránia príslušnú provenance.
+5. Odpoveď pre starý Source alebo starý výber nesmie meniť aktuálny draft. Overiť aj response `provider_id`; pri zmene kontextu nezobraziť staré výsledky ako aktuálne. Použiť generated query key/cancellation a explicitnú identitu kontextu, bez časovačov na synchronizáciu stavu.
+6. Topology gate overuje topology, source/partner a Existing mode. Storage gate vyžaduje vybrané volumes, neprázdny trimmed CG a auxiliary pre každý vybraný volume. Submit aj edit save musia stále overiť kompletný draft; presun poľa nesmie oslabiť doménovú validáciu ani umožniť obísť ju cez sidebar.
+7. Navrhnuté správanie pri zlyhaní lookupu: zobraziť chybu a Retry, ponechať ručnú opravu. Samotná lookup chyba neblokuje validne ručne vyplnený draft; existujúce discovery/provider chyby zostávajú blokujúce. Loading neblokuje už kompletné ručné hodnoty. Lookup je pomoc s predvyplnením, nie záruka funkčnej replikácie. Chýbajúci spoločný CG alebo rozdielne skupiny sa nesmú potichu považovať za úspech; zobraziť upozornenie a vyžadovať explicitné ručné doplnenie chýbajúcej hodnoty.
+
+### Implementačné úlohy
+
+Všetky cesty nižšie sú relatívne k `src/features/recovery-plans/recovery-groups`, pokiaľ nie je uvedené inak. Každá úloha končí focused overením, `git diff --check` a atomickým commitom na `prototype/recovery-group-topology`. Žiadny automatický merge/push.
+
+#### MM1 — Lookup cez generated hook (malá; bez závislosti)
+
+Súbory: nový `hooks/useRecoveryGroupMetroMirrorRelationships.ts` a jeho test.
+
+- Tenký feature hook používa existujúci generated hook, Source a normalizovaný výber; nevytvára paralelný HTTP klient ani cache.
+- Testy pokrývajú enabled podmienky, správne parametre, zmenu Source/výberu, loading/error/retry a nesprávny provider odpovede.
+- Overenie: `npm exec vitest run src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroupMetroMirrorRelationships.test.tsx` a ESLint týchto súborov.
+
+#### MM2 — Pravidlá vlastníctva predvyplnených hodnôt (stredná; MM1)
+
+Súbory: nový úzky `utils/reconcileMetroMirrorPrefill.ts` a test; prípadné lokálne typy držať pri helperi.
+
+- Čistá funkcia pre zlúčenie výsledku s aktuálnymi hodnotami a ich pôvodom; žiadny všeobecný form framework ani nové wire polia.
+- Testy: ok/missing/ambiguous/not_mirrored, spoločný CG/null/rozdielne CG, ručná oprava a vymazanie, edit prefill, refetch, odstránenie/pridanie volume, zmena Source a oneskorená odpoveď. Zachovať string ID `001`.
+- Overenie: focused Vitest helpera a ESLint. Kontrolný bod MM-A: jasné reset pravidlá a žiadne prepísanie ručných hodnôt.
+
+#### MM3 — Oddelenie topology a storage validácie (stredná; MM2)
+
+Súbory: `utils/recoveryGroupTopology.ts`, jeho test, `api/recoveryGroupsValidation.test.ts`, `hooks/useRecoveryGroups.test.tsx` (produkčnú submit validáciu meniť iba ak test odhalí medzeru).
+
+- Topology helper už nevyžaduje CG; platnosť Source/Target, Existing mode a legacy Local správanie zachová.
+- Doménová submit validácia ďalej odmieta chýbajúci CG alebo auxiliary v oboch flow; Local ich nevyžaduje. Overiť save aj mimo wizard Next.
+- Overenie: uvedené tri testové súbory a focused lint. Do integrácie MM5 neposudzovať zmenu ako hotovú funkciu.
+
+#### MM4 — Presun polí a shared UI (stredná; MM3)
+
+Súbory: `components/RecoveryGroupTopologyStep.tsx`, jeho test, nový `components/RecoveryGroupMetroMirrorFields.tsx` a test.
+
+- Odstrániť CG z Topology. Nový controlled feature komponent zobrazuje spoločný editable CG, stručný loading/warning/error stav a Retry; používa existujúce shared Input/Field/Alert/Button podľa reálne dostupných exportov.
+- Zachovať flexibilné rozmery, labely a prístupnosť; nepridávať vlastný dizajnový systém. Shared komponent doplniť iba ak chýba skutočne opakovateľný primitív; vtedy ho oddeliť do malej úlohy s vlastným testom.
+- Overenie: oba component testy a lint. Kontrolný bod MM-B: Topology ide ďalej bez CG; panel je controlled a nezavádza ďalší zdroj formulárového stavu.
+
+#### MM5 — Zapojenie do oboch wizard flow (stredná; MM1–MM4)
+
+Súbory: `components/RecoveryGroupBuilder.tsx`, jeho test, podľa potreby `components/RecoveryGroupResourcesStep.tsx` a jeho test.
+
+- VM panel je v Related storage, volume-only panel v Resources; rovnaká funkcionalita bez nového kroku. Auxiliary zostáva v existujúcom row slote, editácia označuje hodnotu ako ručnú.
+- Zapojenie query a reconciliácie rešpektuje efektívny výber vrátane automatického discovery a exclusions. Next/sidebar/create/save používajú správne oddelené gates, reset aj edit initialization čistia alebo zachovávajú provenance podľa pravidiel vyššie.
+- Overenie: Builder/Resources component testy vrátane oboch flow, návratu medzi krokmi, Local regresie, stale odpovede, retry a user edit počas requestu; focused lint. Ak rozsah prekročí približne päť súborov, rozdeliť integráciu VM a volume-only bez rozširovania scope.
+
+#### MM6 — Preklady a uloženie ručných opráv (stredná; MM5)
+
+Súbory: príslušné recoveryGroups locales en/sk/cs, `locales/recoveryGroupTopologyTranslations.test.ts`, `helpers/mapRecoveryGroups.test.ts`.
+
+- Lokalizovať CG, stav predvyplnenia, nejednoznačnosť, nenájdený relationship, nesúlad ručných hodnôt a Retry; použiť existujúce kľúče, kde význam sedí. Odstrániť len kľúče osirelé touto zmenou.
+- Contract test dokazuje uloženie ručne opraveného CG/auxiliary bez provenance, správny Source a zachovanie hodnoty pri opätovnej editácii. Local payload bez Metro polí.
+- Overenie: locale a mapper testy, JSON parsing upravených locales, focused lint. Kontrolný bod MM-C: frontend → generated submit payload zachová presné ručné opravy.
+
+#### MM7 — Browser a read-only backend overenie (stredná; MM6)
+
+- Browser: VM aj volume-only, Local aj Metro, create aj edit; 0/1/100 volumes, dlhé názvy, warning/error/retry, úprava počas lookupu. Rozlíšenia 1920×1080, 1366×768, 1280×720, 768×1024, 390×844 a zoom 200 %. Žiadny horizontálny overflow; footer dostupný, zoznam má riadený vnútorný scroll. Na malej výške nevyžadovať nemožnú nulovú vertikálnu scroll plochu.
+- V autorizovanej prihlásenej session overiť read-only request: Source ID, aktuálne source názvy, skutočné statusy a spoločný CG. Nevytvárať mirroring, nespúšťať orchestration. Živý CRUD round-trip iba v samostatne autorizovanom testovacom prostredí; inak doložiť component/contract testom a uviesť limit.
+- Spustiť len dotknuté testové súbory z MM1–MM6 a existujúce BuilderPage/EditorPage testy; focused lint a typecheck vzhľadom na hook/model integráciu. Celý suite ani production build nie sú default. Chýbajúci browser/prístup zaznamenať ako neoverené, nie ako úspech. Výsledky a zostávajúce obmedzenia doplniť do checklistu; uzavrieť aj prekrývajúce sa staršie T8/C iba pri reálnom overení.
+
+### Mimo rozsahu a riziká
+
+Backend kontrakt, tvorba Metro vzťahov, Managed, Airflow, FlashCopy execution, nové VM mapovanie, provider formuláre a merge do test nie sú súčasťou. Najväčšie riziká sú prepísanie ručného vstupu, race medzi discovery a lookupom a oslabenie submit validácie presunom CG. Preto sú tieto prípady explicitné testy pred vizuálnym overením. Ak živý backend ukáže iný kontrakt, zaznamenať konkrétny rozdiel a upraviť plán/generovanie pred implementáciou obchádzky.
+
 ## Rozsah a pracovisko
 
 Realizovať schválený návrh Local / Metro Mirror Existing v produkčnom Recovery Group wizarde, vrátane načítania, editácie a uloženia cez existujúce Orval-generated hooks. Zachovať vzhľad aplikácie a kompaktný drag-and-drop výber s auxiliary inputom priamo v riadku volume.

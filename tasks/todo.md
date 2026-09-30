@@ -1,5 +1,24 @@
 # Úlohy: Recovery Group topology UI + backend
 
+## Aktívne rozšírenie: Metro Mirror predvyplnenie (2026-09-30)
+
+Plán: `tasks/plan.md`, fáza MM1–MM7. Zatiaľ iba naplánované; pôvodná implementačná história nižšie zostáva zachovaná.
+
+- [ ] MM1: Generated relationship lookup hook a focused testy.
+- [ ] MM2: Reconciliácia automatických, ručných a uložených hodnôt.
+- [ ] Kontrolný bod MM-A: Reset pravidlá a ochrana ručných úprav.
+- [ ] MM3: Oddeliť Topology gate od úplnej storage/submit validácie.
+- [ ] MM4: Presun CG do controlled storage panelu zo shared komponentov.
+- [ ] Kontrolný bod MM-B: Topology bez CG a jediný zdroj draft stavu.
+- [ ] MM5: Integrácia do Related storage aj volume-only Resources.
+- [ ] MM6: en/sk/cs a contract test uloženia ručných opráv.
+- [ ] Kontrolný bod MM-C: Payload a edit round-trip bez provenance.
+- [ ] MM7: Responzívny browser smoke a autorizovaný read-only backend lookup.
+- [ ] Focused testy/lint/typecheck podľa plánu, výsledky a limity zaznamenané.
+- [ ] Overené implementačné zmeny atomicky commitnuté na prototype; bez merge/push.
+
+## Pôvodná fáza — historický stav
+
 Autoritatívny plán: tasks/plan.md. Pracovisko: .worktrees/topology-preview, vetva prototype/recovery-group-topology. Implementácia prebieha v tejto konverzácii.
 
 - [x] T1: Read model a Local/Metro round-trip fixture mapovanie.
