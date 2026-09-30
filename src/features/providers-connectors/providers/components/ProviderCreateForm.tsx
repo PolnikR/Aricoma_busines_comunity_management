@@ -219,31 +219,33 @@ export function ProviderCreateForm({
         </Field>
       ) : null}
 
-      {data.type === 'VMWARE' ? (
-        <Field label={t('forms.backingStorageProviders')} htmlFor="create-backingStorageProviders">
-          <MultiSelect id="create-backingStorageProviders" label={t('forms.backingStorageProviders')}
-            options={storageOptions} value={data.backingStorageProviderIds}
-            onChange={onBackingStorageChange} disabled={isSubmitting}
-            placeholder={t('forms.backingStorageProvidersSelect')} emptyText={t('forms.backingStorageProvidersEmpty')} />
-          <p className="mt-1 text-xs text-text-muted">{t('forms.backingStorageProvidersHelper')}</p>
-        </Field>
-      ) : null}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {data.type === 'VMWARE' ? (
+          <Field label={t('forms.backingStorageProviders')} htmlFor="create-backingStorageProviders">
+            <MultiSelect id="create-backingStorageProviders" label={t('forms.backingStorageProviders')}
+              options={storageOptions} value={data.backingStorageProviderIds}
+              onChange={onBackingStorageChange} disabled={isSubmitting}
+              placeholder={t('forms.backingStorageProvidersSelect')} emptyText={t('forms.backingStorageProvidersEmpty')} />
+            <p className="mt-1 text-xs text-text-muted">{t('forms.backingStorageProvidersHelper')}</p>
+          </Field>
+        ) : null}
 
-      <Field label={t('forms.cacheRefreshSeconds')} htmlFor="create-cacheRefreshSeconds">
-        <Input
-          id="create-cacheRefreshSeconds"
-          type="number"
-          min={1}
-          step={1}
-          value={data.cacheRefreshSeconds}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('cacheRefreshSeconds', event.target.value) }}
-          onKeyDown={handleKeyDown}
-          disabled={isSubmitting}
-          aria-invalid={Boolean(errors.cacheRefreshSeconds)}
-        />
-        <p className="mt-1 text-xs text-text-muted">{t('forms.cacheRefreshSecondsHelper')}</p>
-        {errors.cacheRefreshSeconds ? <p className="mt-1 text-xs text-red-600">{errors.cacheRefreshSeconds}</p> : null}
-      </Field>
+        <Field label={t('forms.cacheRefreshSeconds')} htmlFor="create-cacheRefreshSeconds">
+          <Input
+            id="create-cacheRefreshSeconds"
+            type="number"
+            min={1}
+            step={1}
+            value={data.cacheRefreshSeconds}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('cacheRefreshSeconds', event.target.value) }}
+            onKeyDown={handleKeyDown}
+            disabled={isSubmitting}
+            aria-invalid={Boolean(errors.cacheRefreshSeconds)}
+          />
+          <p className="mt-1 text-xs text-text-muted">{t('forms.cacheRefreshSecondsHelper')}</p>
+          {errors.cacheRefreshSeconds ? <p className="mt-1 text-xs text-red-600">{errors.cacheRefreshSeconds}</p> : null}
+        </Field>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label={t('forms.vmPrefix')} htmlFor="create-vmPrefix">
@@ -317,6 +319,18 @@ export function ProviderCreateForm({
           ) : null}
         </Field>
 
+        <Field label={t('forms.orchestratorConnId')} htmlFor="create-orchestratorConnId">
+          <Input
+            id="create-orchestratorConnId"
+            type="text"
+            placeholder={t('forms.orchestratorConnIdExample')}
+            value={data.orchestratorConnId}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('orchestratorConnId', event.target.value) }}
+            onKeyDown={handleKeyDown}
+            disabled={isSubmitting}
+          />
+        </Field>
+
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -333,31 +347,21 @@ export function ProviderCreateForm({
           {errors.url ? <p className="mt-1 text-xs text-red-600">{errors.url}</p> : null}
         </Field>
 
-        <Field label={t('forms.orchestratorConnId')} htmlFor="create-orchestratorConnId">
+        <Field label={t('forms.notificationEmail')} htmlFor="create-notificationEmail">
           <Input
-            id="create-orchestratorConnId"
-            type="text"
-            placeholder={t('forms.orchestratorConnIdExample')}
-            value={data.orchestratorConnId}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('orchestratorConnId', event.target.value) }}
+            id="create-notificationEmail"
+            type="email"
+            value={data.notificationEmail}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('notificationEmail', event.target.value) }}
             onKeyDown={handleKeyDown}
             disabled={isSubmitting}
+            aria-invalid={Boolean(errors.notificationEmail)}
           />
+          {errors.notificationEmail ? <p className="mt-1 text-xs text-red-600">{errors.notificationEmail}</p> : null}
         </Field>
+
       </div>
 
-      <Field label={t('forms.notificationEmail')} htmlFor="create-notificationEmail">
-        <Input
-          id="create-notificationEmail"
-          type="email"
-          value={data.notificationEmail}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('notificationEmail', event.target.value) }}
-          onKeyDown={handleKeyDown}
-          disabled={isSubmitting}
-          aria-invalid={Boolean(errors.notificationEmail)}
-        />
-        {errors.notificationEmail ? <p className="mt-1 text-xs text-red-600">{errors.notificationEmail}</p> : null}
-      </Field>
     </div>
   )
 }
