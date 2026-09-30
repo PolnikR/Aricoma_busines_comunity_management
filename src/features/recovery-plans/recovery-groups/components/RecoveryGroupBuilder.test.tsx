@@ -373,6 +373,39 @@ describe('RecoveryGroupBuilder', () => {
     expect(props.onCreate).toHaveBeenCalledWith(expect.objectContaining({ resources: ['VOL-01'] }))
   })
 
+  it('offers and automatically selects only credential-valid Airflow providers', async () => {
+    usePlatformProvidersMock.mockReturnValue({ ...defaultPlatformProvidersResult, data: [
+      ...defaultPlatformProvidersResult.data,
+      { ...defaultPlatformProvidersResult.data[0], id: 'smtp-01', name: 'Mail provider', type: 'SMTP' },
+      { ...defaultPlatformProvidersResult.data[0], id: 'backend-01', name: 'Backend provider', type: 'BACKEND' },
+      { ...defaultPlatformProvidersResult.data[0], id: 'keycloak-01', name: 'Identity provider', type: 'KEYCLOAK' },
+      { ...defaultPlatformProvidersResult.data[0], id: 'airflow-invalid', name: 'Invalid Airflow', credentialStatus: 'invalid' },
+    ] })
+    const onCreate = vi.fn()
+    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, pushToOrchestrator: true }} onCreate={onCreate} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    expect(screen.getByRole('combobox')).toHaveValue('airflow-01')
+    expect(screen.getAllByRole('option')).toHaveLength(2)
+    expect(screen.getByRole('option', { name: 'Primary Airflow - AIRFLOW' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ orchestrationProviderId: 'airflow-01' }))
+  })
+
+  it('does not allow a previously selected non-Airflow platform provider to be submitted', async () => {
+    usePlatformProvidersMock.mockReturnValue({ ...defaultPlatformProvidersResult, data: [
+      { ...defaultPlatformProvidersResult.data[0], id: 'smtp-01', type: 'SMTP' },
+    ] })
+    const onCreate = vi.fn()
+    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, orchestrationProviderId: 'smtp-01', pushToOrchestrator: true }} onCreate={onCreate} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    expect(screen.getByText('No platform provider available')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    expect(onCreate).not.toHaveBeenCalled()
+  })
+
   it('keeps removed discovered volumes out after refetch and re-adds with an empty auxiliary input', async () => {
     vi.mocked(useRecoveryGroupRelatedVolumes).mockImplementation((_vmProvider, _vms, flashcopyProviderId) => ({ flashcopyProviderId, discoveredVolumeNames: ['VOL-01'], isLoading: false, isResolved: true }))
     const user = userEvent.setup()

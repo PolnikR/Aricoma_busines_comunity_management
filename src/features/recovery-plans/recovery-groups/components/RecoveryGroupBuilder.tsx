@@ -141,6 +141,7 @@ export function RecoveryGroupBuilder({
   const policySetValid = Boolean(draftState.policySetId)
   const platformProvidersQuery = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
   const eligiblePlatformProviders = filterByPlatformProviderCredentialStatus(platformProvidersQuery.data ?? [])
+    .filter(provider => provider.type === 'AIRFLOW')
   const soleEligibleProviderId = eligiblePlatformProviders.length === 1
     ? (eligiblePlatformProviders[0]?.id ?? null)
     : null
