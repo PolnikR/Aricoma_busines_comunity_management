@@ -1,14 +1,15 @@
 # Checklist: Responzívne písmo v shared DataTable
 
 Autoritatívny plán: [datatable-responsive-font-plan.md](datatable-responsive-font-plan.md).
-Stav: implementované, automatické kontroly prešli. Browser overenie ostáva nevykonané, lebo prehliadač nie je dostupný.
+Stav: implementované, automatické kontroly prešli. Správanie container query overené v headless Edge na statickej stránke. Kontrola reálnych stránok aplikácie ostáva nevykonaná.
 
 - [x] T1: Prejsť konzumentov `DataTable`, zapísať rodičovské kontexty a rizikové miesta do plánu.
 - [x] T2: Pridať `@container/data-table` a responzívny default buniek a hlavičky (scroll aj fit).
 - [x] T2: Upraviť rodičov označených v T1 (nebolo treba).
 - [x] T3: Zosúladiť `AccessLogsTable`, `RecoveryApplicationsTable` a `VirtualMachineDetailPanel` (panel s vlastným kontajnerom `vm-detail`, pozri plán).
 - [x] Kontrolný bod: Overiť generované CSS cez lokálny Tailwind `compile` (bez browsera).
-- [ ] T4: Browser kontrola pri 1024/1280/1440/1920 px na vybraných stránkach, oboch hustotách.
+- [x] T4: Browser meranie prahu (headless Edge, statická stránka) pri kontajneri 1000–1896 px.
+- [ ] T4: Kontrola reálnych stránok aplikácie v oboch hustotách (vyžaduje Keycloak a backend).
 - [x] T4: Spustiť focused Vitest, cielený ESLint a `git diff --check` podľa plánu.
 - [x] T4: Zapísať výsledky a vytvoriť atomický commit.
 
@@ -19,4 +20,16 @@ Stav: implementované, automatické kontroly prešli. Browser overenie ostáva n
 - Inline Node skript s `compile` z lokálneho `tailwindcss`: overené `container-type: inline-size`, názvy kontajnerov `data-table` a `vm-detail`, podmienka `width >= 80rem` a veľkosti 12/13 px. Nie je to browser layout test.
 - `git diff --check` na zmenených súboroch: prešlo.
 - Kompletná sada, typecheck a build neboli spustené.
-- Nevykonané: screenshoty, meranie reálnych šírok a zoomu, vizuálna kontrola stránok a roztiahnutého detail drawera.
+- Headless Edge na statickej stránke (scratchpad, mimo repozitára). Stránka mala rovnakú DOM štruktúru a triedy ako `DataTable` a detail VM, skopírované zo zdrojákov, a CSS skompilované lokálnym Tailwindom. Vypočítané `font-size` a `padding-left` buniek:
+
+  | Šírka kontajnera | DataTable na plnú šírku | DataTable v 400 px | vm-detail 1400 px | vm-detail 420 px |
+  |---|---|---|---|---|
+  | 1000 px | 12 / 8 px | 12 / 8 px | 13 / 12 px | 12 / 8 px |
+  | 1246 px | 12 / 8 px | 12 / 8 px | 13 / 12 px | 12 / 8 px |
+  | 1266 px | 12 / 8 px | 12 / 8 px | 13 / 12 px | 12 / 8 px |
+  | 1296 px | 13 / 16 px | 12 / 8 px | 13 / 12 px | 12 / 8 px |
+  | 1416 px | 13 / 16 px | 12 / 8 px | 13 / 12 px | 12 / 8 px |
+  | 1896 px | 13 / 16 px | 12 / 8 px | 13 / 12 px | 12 / 8 px |
+
+  Prepnutie nastáva medzi 1266 a 1296 px, teda na prahu 80rem = 1280 px. Od prahu platí pôvodný vzhľad (13 px, `px-4`). Úzky kontajner ostáva na 12 px aj pri širokom okne, ako sa rozhodlo vo variante A.
+- Nevykonané: kontrola skutočných stránok aplikácie, pretože vyžaduje Keycloak a backend dáta. Neoverené ostáva aj posúvanie, zoom 125 % a roztiahnutý detail drawer v aplikácii.
