@@ -8,7 +8,8 @@ import * as zod from 'zod';
 
 export const MetroMirrorConfig = zod.object({
   "mode": zod.enum(['existing', 'managed']),
-  "consistency_group_id": zod.union([zod.string(),zod.null()]).exactOptional()
+  "consistency_group_id": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "target_pool": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export type MetroMirrorConfig = zod.input<typeof MetroMirrorConfig>;

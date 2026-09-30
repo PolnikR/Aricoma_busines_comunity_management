@@ -23,6 +23,7 @@ export const OrchestrationProviderRecord = zod.object({
   "vmTags": zod.array(zod.string()).exactOptional(),
   "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
   "cacheRefreshSeconds": zod.union([zod.int(),zod.null()]).exactOptional(),
+  "backingStorageProviderIds": zod.array(zod.string()).exactOptional(),
   "port": zod.int().default(orchestrationProviderRecordPortDefault),
   "dagDir": zod.union([zod.string(),zod.null()]).exactOptional(),
   "fromEmail": zod.union([zod.string(),zod.null()]).exactOptional(),

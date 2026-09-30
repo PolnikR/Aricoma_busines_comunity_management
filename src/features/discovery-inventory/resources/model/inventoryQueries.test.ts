@@ -62,7 +62,7 @@ describe('discovery inventory queries', () => {
     expect(inventory.volumes[0]).toMatchObject({ vendor_flag: 'x', status: 'unknown' })
   })
 
-  it('requests vdisks without ibm_provider_id so the backend default applies', async () => {
+  it('requests vdisks using only the VM and compute provider from the current contract', async () => {
     const mock = stubFetch({ name: 'VM-01', count_vm: 0, count_ibm: 0, vdisks: {} })
     const response = await vdisksByVmQuery('VM-01', 'vcenter-01').queryFn({ signal })
 

@@ -6,6 +6,7 @@ import { CacheHistoryResponse } from './zod/cacheHistoryResponse.gen'
 import { CleanRoomPoliciesResponse } from './zod/cleanRoomPoliciesResponse.gen'
 import { CredentialsResponse } from './zod/credentialsResponse.gen'
 import { HealthResponse } from './zod/healthResponse.gen'
+import { MetroMirrorRelationshipsResponse } from './zod/metroMirrorRelationshipsResponse.gen'
 import { OrchestratorRunsResponse } from './zod/orchestratorRunsResponse.gen'
 import { PlatformProvidersResponse } from './zod/platformProvidersResponse.gen'
 import { PolicySetsResponse } from './zod/policySetsResponse.gen'
@@ -48,6 +49,7 @@ export const responseSchemas: Record<string, z.ZodType> = {
   'GET /vdisks_by_vm': VdisksByVmResponse,
   'GET /get_volumes': VolumesResponse,
   'GET /get_volume_tree': VolumeTreeResponse,
+  'GET /get_metro_mirror_relationships': MetroMirrorRelationshipsResponse,
   'GET /get_power_vm': PowerVmsResponse,
   'GET /discovery/cache/config': CacheConfigResponse,
   'PUT /discovery/cache/config': CacheConfigResponse,

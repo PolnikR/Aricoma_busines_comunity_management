@@ -20,9 +20,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  GetMetroMirrorRelationshipsParams,
   GetVolumeTreeParams,
   GetVolumesParams,
   HTTPValidationError,
+  MetroMirrorRelationshipsResponse,
   VolumeTreeResponse,
   VolumesResponse
 } from '../zod';
@@ -255,6 +257,125 @@ export function useGetVolumeTree<TData = Awaited<ReturnType<typeof getVolumeTree
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetVolumeTreeQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getGetMetroMirrorRelationshipsUrl = (params: GetMetroMirrorRelationshipsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["volume_names"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/get_metro_mirror_relationships?${stringifiedParams}` : `/get_metro_mirror_relationships`
+}
+
+/**
+ * Existing IBM Metro Mirror relationship state for the given master vdisk names, so the
+ * frontend can pre-fill a topology=metro_mirror, mode=existing recovery group's
+ * auxiliary_name/consistency_group_id instead of the user typing them off the array's own
+ * GUI/CLI. See docs/superpowers/specs/2026-09-29-metro-mirror-relationship-lookup-design.md.
+ * @summary Get Metro Mirror Relationships Route
+ */
+export const getMetroMirrorRelationships = async (params: GetMetroMirrorRelationshipsParams, options?: Parameters<typeof validatingMutator>[1]): Promise<MetroMirrorRelationshipsResponse> => {
+
+  return validatingMutator<MetroMirrorRelationshipsResponse>(getGetMetroMirrorRelationshipsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMetroMirrorRelationshipsQueryKey = (params?: GetMetroMirrorRelationshipsParams,) => {
+    return [
+    `/get_metro_mirror_relationships`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetMetroMirrorRelationshipsQueryOptions = <TData = Awaited<ReturnType<typeof getMetroMirrorRelationships>>, TError = ErrorType<HTTPValidationError>>(params: GetMetroMirrorRelationshipsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMetroMirrorRelationships>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMetroMirrorRelationshipsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMetroMirrorRelationships>>> = ({ signal }) => getMetroMirrorRelationships(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMetroMirrorRelationships>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMetroMirrorRelationshipsQueryResult = NonNullable<Awaited<ReturnType<typeof getMetroMirrorRelationships>>>
+export type GetMetroMirrorRelationshipsQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetMetroMirrorRelationships<TData = Awaited<ReturnType<typeof getMetroMirrorRelationships>>, TError = ErrorType<HTTPValidationError>>(
+ params: GetMetroMirrorRelationshipsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMetroMirrorRelationships>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMetroMirrorRelationships>>,
+          TError,
+          Awaited<ReturnType<typeof getMetroMirrorRelationships>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMetroMirrorRelationships<TData = Awaited<ReturnType<typeof getMetroMirrorRelationships>>, TError = ErrorType<HTTPValidationError>>(
+ params: GetMetroMirrorRelationshipsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMetroMirrorRelationships>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMetroMirrorRelationships>>,
+          TError,
+          Awaited<ReturnType<typeof getMetroMirrorRelationships>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMetroMirrorRelationships<TData = Awaited<ReturnType<typeof getMetroMirrorRelationships>>, TError = ErrorType<HTTPValidationError>>(
+ params: GetMetroMirrorRelationshipsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMetroMirrorRelationships>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Metro Mirror Relationships Route
+ */
+
+export function useGetMetroMirrorRelationships<TData = Awaited<ReturnType<typeof getMetroMirrorRelationships>>, TError = ErrorType<HTTPValidationError>>(
+ params: GetMetroMirrorRelationshipsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMetroMirrorRelationships>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMetroMirrorRelationshipsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -14,22 +14,22 @@ const response = (name: string) => new Response(JSON.stringify({ name: 'VM', cou
 
 describe('useRecoveryGroupRelatedVolumes', () => {
   afterEach(() => { vi.unstubAllGlobals() })
-  it('uses the explicit Source and ignores a late result for the previous Source', async () => {
+  it('uses the current compute provider and ignores a late result for the previous provider', async () => {
     let finishOld: (value: Response) => void = () => { throw new Error('Request not started') }
     const fetch = vi.fn((input: string) => {
       const url = new URL(input, 'http://localhost')
-      expect(url.searchParams.get('provider_id')).toBe('compute')
+      expect(url.searchParams.has('ibm_provider_id')).toBe(false)
       expect(url.searchParams.get('vm_name')).toBe('VM')
-      return url.searchParams.get('ibm_provider_id') === 'source-a'
+      return url.searchParams.get('provider_id') === 'compute-a'
         ? new Promise<Response>(resolve => { finishOld = resolve }) : Promise.resolve(response('VOLUME-B'))
     })
     vi.stubGlobal('fetch', fetch)
-    const { result, rerender } = renderHook(({ source }) => useRecoveryGroupRelatedVolumes('compute', ['VM'], source, true), { initialProps: { source: 'source-a' }, wrapper: wrapper() })
+    const { result, rerender } = renderHook(({ compute }) => useRecoveryGroupRelatedVolumes(compute, ['VM'], 'source', true), { initialProps: { compute: 'compute-a' }, wrapper: wrapper() })
     await waitFor(() => { expect(fetch).toHaveBeenCalled() })
-    rerender({ source: 'source-b' })
+    rerender({ compute: 'compute-b' })
     await waitFor(() => { expect(result.current.discoveredVolumeNames).toEqual(['VOLUME-B']) })
     await act(async () => { finishOld(response('VOLUME-A')); await Promise.resolve() })
-    expect(result.current.flashcopyProviderId).toBe('source-b')
+    expect(result.current.flashcopyProviderId).toBe('source')
     expect(result.current.discoveredVolumeNames).toEqual(['VOLUME-B'])
   })
 

@@ -10,9 +10,8 @@ interface RecoveryGroupRelatedVolumes {
   refetch?: () => void
 }
 
-// The FlashSystem is chosen explicitly by the user: the providers contract no
-// longer links a vCenter to a default FlashSystem, and with several FlashSystems
-// the one holding the VMs' disks cannot be derived.
+// Source remains the wizard's storage context. The discovery endpoint now accepts
+// only the VM and compute provider; storage resolution belongs to the backend.
 export function useRecoveryGroupRelatedVolumes(
   vmProviderId: string | null,
   vmNames: string[],
@@ -23,7 +22,7 @@ export function useRecoveryGroupRelatedVolumes(
 
   const results = useQueries({
     queries: vmNames.map(vmName => ({
-      ...vdisksByVmQuery(vmName, vmProviderId ?? undefined, flashcopyProviderId ?? undefined),
+      ...vdisksByVmQuery(vmName, vmProviderId ?? undefined),
       select: selectVdisks,
       enabled: queryEnabled,
     })),

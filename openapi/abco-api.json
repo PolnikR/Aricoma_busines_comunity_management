@@ -1286,18 +1286,6 @@
             "description": "id of the vCenter provider to use"
           },
           {
-            "name": "ibm_provider_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "id of the IBM FlashSystem provider to use",
-              "default": "ibm-flashsystem-01",
-              "title": "Ibm Provider Id"
-            },
-            "description": "id of the IBM FlashSystem provider to use"
-          },
-          {
             "name": "X-User",
             "in": "header",
             "required": false,
@@ -1496,6 +1484,86 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VolumeTreeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_metro_mirror_relationships": {
+      "get": {
+        "tags": [
+          "Storage Volumes"
+        ],
+        "summary": "Get Metro Mirror Relationships Route",
+        "description": "Existing IBM Metro Mirror relationship state for the given master vdisk names, so the\nfrontend can pre-fill a topology=metro_mirror, mode=existing recovery group's\nauxiliary_name/consistency_group_id instead of the user typing them off the array's own\nGUI/CLI. See docs/superpowers/specs/2026-09-29-metro-mirror-relationship-lookup-design.md.",
+        "operationId": "get_metro_mirror_relationships_route_get_metro_mirror_relationships_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the master FLASHCOPY provider (provider_id_volume)",
+              "title": "Provider Id"
+            },
+            "description": "id of the master FLASHCOPY provider (provider_id_volume)"
+          },
+          {
+            "name": "volume_names",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "master vdisk names to look up",
+              "title": "Volume Names"
+            },
+            "description": "master vdisk names to look up"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetroMirrorRelationshipsResponse"
                 }
               }
             }
@@ -3986,6 +4054,17 @@
               }
             ],
             "title": "Consistency Group Id"
+          },
+          "target_pool": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Pool"
           }
         },
         "type": "object",
@@ -3993,6 +4072,95 @@
           "mode"
         ],
         "title": "MetroMirrorConfig"
+      },
+      "MetroMirrorRelationship": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "not_mirrored",
+              "ambiguous"
+            ],
+            "title": "Status"
+          },
+          "auxiliary_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auxiliary Name"
+          },
+          "consistency_group_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consistency Group Id"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "name",
+          "status"
+        ],
+        "title": "MetroMirrorRelationship"
+      },
+      "MetroMirrorRelationshipsResponse": {
+        "properties": {
+          "provider_id": {
+            "type": "string",
+            "title": "Provider Id"
+          },
+          "volumes": {
+            "items": {
+              "$ref": "#/components/schemas/MetroMirrorRelationship"
+            },
+            "type": "array",
+            "title": "Volumes"
+          },
+          "consistency_group_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consistency Group Id"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning"
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider_id",
+          "volumes"
+        ],
+        "title": "MetroMirrorRelationshipsResponse"
       },
       "OrchestrationProvider": {
         "properties": {
@@ -4121,6 +4289,13 @@
               }
             ],
             "title": "Cacherefreshseconds"
+          },
+          "backingStorageProviderIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Backingstorageproviderids"
           },
           "port": {
             "type": "integer",
@@ -4362,6 +4537,13 @@
               }
             ],
             "title": "Cacherefreshseconds"
+          },
+          "backingStorageProviderIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Backingstorageproviderids"
           },
           "port": {
             "type": "integer",
@@ -4924,6 +5106,13 @@
               }
             ],
             "title": "Cacherefreshseconds"
+          },
+          "backingStorageProviderIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Backingstorageproviderids"
           }
         },
         "type": "object",
@@ -5084,6 +5273,13 @@
               }
             ],
             "title": "Cacherefreshseconds"
+          },
+          "backingStorageProviderIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Backingstorageproviderids"
           },
           "credentialStatus": {
             "anyOf": [
@@ -6611,6 +6807,13 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Vdisks"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
           }
         },
         "additionalProperties": true,

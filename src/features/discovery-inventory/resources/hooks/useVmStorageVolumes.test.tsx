@@ -37,7 +37,7 @@ describe('useVdisksByVm', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('loads vdisks without a FlashSystem provider so the backend default applies', async () => {
+  it('loads vdisks using backend storage resolution', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       name: 'VM-01',
       count_vm: 1,
@@ -57,7 +57,7 @@ describe('useVdisksByVm', () => {
     )
   })
 
-  it('loads vdisks for the selected VM and both providers', async () => {
+  it('does not send the removed FlashSystem query parameter', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       name: 'VM-01',
       count_vm: 1,
@@ -66,13 +66,13 @@ describe('useVdisksByVm', () => {
     }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
     const { result } = renderHook(
-      () => useVdisksByVm('VM-01', 'provider-1', 'flash-1'),
+      () => useVdisksByVm('VM-01', 'provider-1'),
       setup(),
     )
 
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/vdisks_by_vm?vm_name=VM-01&provider_id=provider-1&ibm_provider_id=flash-1',
+      '/api/vdisks_by_vm?vm_name=VM-01&provider_id=provider-1',
       expect.any(Object),
     )
   })

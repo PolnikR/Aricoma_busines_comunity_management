@@ -23,6 +23,7 @@ export const SubmitPlatformProviderBody = zod.object({
   "vmTags": zod.array(zod.string()).exactOptional(),
   "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
   "cacheRefreshSeconds": zod.union([zod.int(),zod.null()]).exactOptional(),
+  "backingStorageProviderIds": zod.array(zod.string()).exactOptional(),
   "port": zod.int().default(submitPlatformProviderBodyPortDefault),
   "dagDir": zod.union([zod.string(),zod.null()]).exactOptional(),
   "fromEmail": zod.union([zod.string(),zod.null()]).exactOptional(),

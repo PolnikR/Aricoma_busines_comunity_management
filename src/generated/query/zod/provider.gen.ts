@@ -21,7 +21,8 @@ export const Provider = zod.object({
   "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmTags": zod.array(zod.string()).exactOptional(),
   "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "cacheRefreshSeconds": zod.union([zod.int(),zod.null()]).exactOptional()
+  "cacheRefreshSeconds": zod.union([zod.int(),zod.null()]).exactOptional(),
+  "backingStorageProviderIds": zod.array(zod.string()).exactOptional()
 })
 
 export type Provider = zod.input<typeof Provider>;

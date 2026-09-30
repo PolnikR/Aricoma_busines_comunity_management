@@ -96,11 +96,10 @@ export function flashSystemInventoryQuery(providerId?: string) {
 export const createFlashSystemInventorySelect = (providerId?: string) =>
   (response: VolumesResponse) => mapFlashSystemInventory(response as VolumesResponseOutput, providerId)
 
-export function vdisksByVmQuery(vmName: string, providerId?: string, ibmProviderId?: string) {
+export function vdisksByVmQuery(vmName: string, providerId?: string) {
   const params = {
     vm_name: vmName,
     ...(providerId ? { provider_id: providerId } : {}),
-    ...(ibmProviderId ? { ibm_provider_id: ibmProviderId } : {}),
   }
   return {
     queryKey: getGetVdisksByVmQueryKey(params),

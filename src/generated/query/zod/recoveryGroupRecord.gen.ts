@@ -18,7 +18,8 @@ export const RecoveryGroupRecord = zod.object({
   "topology": zod.enum(['local', 'metro_mirror']).default(recoveryGroupRecordTopologyDefault),
   "metro_mirror": zod.union([zod.object({
   "mode": zod.enum(['existing', 'managed']),
-  "consistency_group_id": zod.union([zod.string(),zod.null()]).exactOptional()
+  "consistency_group_id": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "target_pool": zod.union([zod.string(),zod.null()]).exactOptional()
 }),zod.null()]).exactOptional(),
   "policy_set_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vms": zod.array(zod.object({

@@ -8,11 +8,9 @@ import * as zod from 'zod';
 
 export const getVdisksByVmParamsVmNameDefault = `TEST-WEB02`;
 export const getVdisksByVmParamsProviderIdDefault = `vmware-vcenter-01`;
-export const getVdisksByVmParamsIbmProviderIdDefault = `ibm-flashsystem-01`;
 export const GetVdisksByVmParams = zod.object({
   "vm_name": zod.string().default(getVdisksByVmParamsVmNameDefault).describe('name of VM'),
-  "provider_id": zod.string().default(getVdisksByVmParamsProviderIdDefault).describe('id of the vCenter provider to use'),
-  "ibm_provider_id": zod.string().default(getVdisksByVmParamsIbmProviderIdDefault).describe('id of the IBM FlashSystem provider to use')
+  "provider_id": zod.string().default(getVdisksByVmParamsProviderIdDefault).describe('id of the vCenter provider to use')
 })
 
 export type GetVdisksByVmParams = zod.input<typeof GetVdisksByVmParams>;

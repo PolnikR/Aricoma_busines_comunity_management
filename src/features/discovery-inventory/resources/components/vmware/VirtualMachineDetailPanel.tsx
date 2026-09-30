@@ -43,10 +43,7 @@ export function VirtualMachineDetailPanel({
 }: VirtualMachineDetailPanelProps) {
   const { t } = useTranslation()
   const [selectedTab, setSelectedTab] = useState<'overview' | 'disks' | 'snapshots'>('overview')
-  // ibm_provider_id is intentionally not sent, so the backend falls back to its
-  // default FlashSystem (ibm-flashsystem-01). The API no longer links a vCenter to
-  // a FlashSystem (defaultFlashcopyProviderId was removed), and nothing on the VM
-  // tells us which FlashSystem holds its disks.
+  // The backend resolves backing storage from the VM and compute provider.
   const {
     data: vdisks,
     isLoading: vdisksLoading,

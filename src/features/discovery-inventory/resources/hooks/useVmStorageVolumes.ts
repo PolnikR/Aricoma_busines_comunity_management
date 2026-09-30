@@ -4,10 +4,9 @@ import { selectVdisks, vdisksByVmQuery } from '../model/inventoryQueries'
 export function useVdisksByVm(
   vmName: string,
   providerId?: string,
-  ibmProviderId?: string,
 ) {
   return useQuery({
-    ...vdisksByVmQuery(vmName, providerId, ibmProviderId),
+    ...vdisksByVmQuery(vmName, providerId),
     select: selectVdisks,
     enabled: !!vmName && !!providerId,
   })

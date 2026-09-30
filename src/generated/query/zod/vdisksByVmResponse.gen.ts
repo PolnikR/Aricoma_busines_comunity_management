@@ -92,7 +92,8 @@ export const VdisksByVmResponse = zod.object({
   "start_time": zod.string().default(vdisksByVmResponseVdisksSanpshostsTargetMappingsItemStartTimeDefault)
 })).default(vdisksByVmResponseVdisksSanpshostsTargetMappingsDefault)
 }).exactOptional()
-})).default(vdisksByVmResponseVdisksDefault)
+})).default(vdisksByVmResponseVdisksDefault),
+  "warnings": zod.array(zod.string()).exactOptional()
 })
 
 export type VdisksByVmResponse = zod.input<typeof VdisksByVmResponse>;
