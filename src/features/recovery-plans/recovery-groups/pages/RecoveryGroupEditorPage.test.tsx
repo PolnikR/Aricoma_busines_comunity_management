@@ -89,12 +89,24 @@ vi.mock('../components/RecoveryGroupBuilder', () => ({
     <fieldset disabled={isInitialLoading} aria-busy={isInitialLoading}>
       <span>Group details</span>
       <span>{initialData?.name}</span>
+      <output data-testid="initial-group">{JSON.stringify(initialData)}</output>
       <span>{submitLabel}</span>
       <button type="button" onClick={() => { onCreate(buildUpdateDraft(false)) }}>
         Submit edit
       </button>
       <button type="button" onClick={() => { onCreate(buildUpdateDraft(true)) }}>
         Submit edit with orchestration
+      </button>
+      <button type="button" onClick={() => { onCreate({
+        ...buildUpdateDraft(false),
+        topology: 'metro_mirror',
+        metroMirrorMode: 'existing',
+        consistencyGroupId: 'CG-7',
+        relatedVolumeProviderId: 'ibm-flashsystem-01',
+        relatedVolumes: ['VOL-01'],
+        auxiliaryNamesByVolume: { 'VOL-01': 'AUX-01' },
+      }) }}>
+        Submit Metro edit
       </button>
     </fieldset>
   ),
@@ -106,6 +118,45 @@ describe('RecoveryGroupEditorPage', () => {
     recoveryGroupsState.groups = [group]
     recoveryGroupsState.error = null
     recoveryGroupsState.isLoading = false
+  })
+
+  it('prefills Metro fields and keeps the editor open after a failed update', async () => {
+    const user = userEvent.setup()
+    recoveryGroupsState.groups = [{
+      ...group,
+      topology: 'metro_mirror',
+      metroMirrorMode: 'existing',
+      consistencyGroupId: 'CG-7',
+      relatedVolumeProviderId: 'ibm-flashsystem-01',
+      relatedVolumes: ['VOL-01'],
+      auxiliaryNamesByVolume: { 'VOL-01': 'AUX-01' },
+    }]
+    update.mockRejectedValue(new RecoveryGroupsError('invalid_draft', 'Metro group rejected'))
+    render(<RecoveryGroupEditorPage />)
+
+    expect(JSON.parse(screen.getByTestId('initial-group').textContent)).toEqual(expect.objectContaining({
+      topology: 'metro_mirror',
+      metroMirrorMode: 'existing',
+      consistencyGroupId: 'CG-7',
+      relatedVolumeProviderId: 'ibm-flashsystem-01',
+      relatedVolumes: ['VOL-01'],
+      auxiliaryNamesByVolume: { 'VOL-01': 'AUX-01' },
+    }))
+
+    await user.click(screen.getByRole('button', { name: 'Submit Metro edit' }))
+
+    expect(update).toHaveBeenCalledWith('database_group', expect.objectContaining({
+      topology: 'metro_mirror',
+      metroMirrorMode: 'existing',
+      consistencyGroupId: 'CG-7',
+      relatedVolumeProviderId: 'ibm-flashsystem-01',
+      relatedVolumes: ['VOL-01'],
+      auxiliaryNamesByVolume: { 'VOL-01': 'AUX-01' },
+    }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Complete all required recovery group fields.')
+    expect(screen.getByRole('button', { name: 'Submit Metro edit' })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(navigate).not.toHaveBeenCalled()
   })
 
   it('gives the builder a constrained body region for nested resource scrolling', () => {

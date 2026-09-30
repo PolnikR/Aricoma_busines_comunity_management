@@ -1,8 +1,12 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { Spinner } from '@/shared/components/spinner/Spinner'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
-import { Field, Select } from '@/shared/components/form/FormControls'
+import { Field, Input } from '@/shared/components/form/FormControls'
+import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
+import { TruncatedText } from '@/shared/components/truncated-text/TruncatedText'
+import { Alert } from '@/shared/components/alert/Alert'
+import { ListSkeleton } from '@/shared/components/list-skeleton/ListSkeleton'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
 import { isProgrammaticIdAvailable } from '@/shared/utils/programmaticId'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -23,6 +27,8 @@ import { RecoveryGroupPolicySetStep } from './RecoveryGroupPolicySetStep'
 import { RecoveryGroupProviderStep } from './RecoveryGroupProviderStep'
 import { RecoveryGroupResourcesStep } from './RecoveryGroupResourcesStep'
 import { RecoveryGroupTypeStep } from './RecoveryGroupTypeStep'
+import { RecoveryGroupTopologyStep } from './RecoveryGroupTopologyStep'
+import { getRecoveryGroupTopologyError } from '../utils/recoveryGroupTopology'
 
 interface RecoveryGroupBuilderProps {
   onCreate: (draft: RecoveryGroupDraft) => void
@@ -49,6 +55,10 @@ const INITIAL_DRAFT: RecoveryGroupDraft = {
   relatedVolumes: [],
   orchestrationProviderId: null,
   pushToOrchestrator: false,
+  topology: null,
+  metroMirrorMode: null,
+  consistencyGroupId: '',
+  auxiliaryNamesByVolume: {},
 }
 
 export function RecoveryGroupBuilder({
@@ -79,11 +89,15 @@ export function RecoveryGroupBuilder({
         providerId: initialData.providerId,
         policySetId: initialData.policySetId,
         resources: [...initialData.resources],
-        relatedVolumeProviderId: initialData.relatedVolumeProviderId ?? null,
+        relatedVolumeProviderId: initialData.resourceType === 'volume' ? initialData.providerId : initialData.relatedVolumeProviderId ?? null,
         relatedVolumes: [...initialData.relatedVolumes],
         vmMetadataByName: initialData.vmMetadataByName,
         orchestrationProviderId: initialData.orchestrationProviderId ?? null,
         pushToOrchestrator: initialData.pushToOrchestrator ?? false,
+        topology: initialData.topology ?? 'local',
+        metroMirrorMode: initialData.metroMirrorMode ?? null,
+        consistencyGroupId: initialData.consistencyGroupId ?? '',
+        auxiliaryNamesByVolume: { ...initialData.auxiliaryNamesByVolume },
       }
     : INITIAL_DRAFT)
   const updateDraft = (update: Partial<RecoveryGroupDraft>) => {
@@ -112,7 +126,7 @@ export function RecoveryGroupBuilder({
   const providerValid = Boolean(
     draftState.providerId
     && selectedOption
-    && providers.some(provider => (
+    && (draftState.resourceType === 'volume' ? allProviders : providers).some(provider => (
       provider.id === draftState.providerId
       && provider.type === selectedOption.providerType
       && isCredentialOk(provider)
@@ -138,7 +152,6 @@ export function RecoveryGroupBuilder({
     orchestrationStepIndex,
     lastStep,
   } = calculateRecoveryGroupStepIndices(hasRelatedStorageStep)
-  const flashcopyProviders = providers.filter(provider => provider.type === 'FLASHCOPY')
   const relatedVolumesDiscovery = useRecoveryGroupRelatedVolumes(
     draftState.providerId,
     draftState.resources,
@@ -146,92 +159,99 @@ export function RecoveryGroupBuilder({
     hasRelatedStorageStep && step === relatedStorageStepIndex,
   )
 
-  const discoveryKey = hasRelatedStorageStep
-    && relatedVolumesDiscovery.flashcopyProviderId
-    ? `${relatedVolumesDiscovery.flashcopyProviderId}|${relatedVolumesDiscovery.discoveredVolumeNames.join(',')}`
-    : null
-  const [hiddenDiscoveryKey, setHiddenDiscoveryKey] = useState<string | null>(null)
+  const discoveryKey = JSON.stringify([draftState.relatedVolumeProviderId, draftState.providerId, [...draftState.resources].sort()])
+  const [discoveryExclusions, setDiscoveryExclusions] = useState<{ key: string; removed: string[]; all: boolean }>({ key: '', removed: [], all: false })
   const draft = useMemo(() => {
     const orchestrationProviderId = draftState.orchestrationProviderId ?? soleEligibleProviderId
-    const shouldApplyDiscovery = Boolean(discoveryKey && discoveryKey !== hiddenDiscoveryKey)
-    if (!shouldApplyDiscovery || !relatedVolumesDiscovery.flashcopyProviderId) {
-      return orchestrationProviderId === draftState.orchestrationProviderId
-        ? draftState
-        : { ...draftState, orchestrationProviderId }
-    }
-
-    const currentVolumes = draftState.relatedVolumes ?? []
-    const relatedVolumes = relatedVolumesDiscovery.discoveredVolumeNames.reduce<string[]>(
-      (volumes, name) => (volumes.includes(name) ? volumes : [...volumes, name]),
-      currentVolumes,
-    )
-
+    const exclusions = discoveryExclusions.key === discoveryKey ? discoveryExclusions : null
+    const discovered = hasRelatedStorageStep
+      && draftState.relatedVolumeProviderId
+      && relatedVolumesDiscovery.flashcopyProviderId === draftState.relatedVolumeProviderId
+      && !relatedVolumesDiscovery.error && !relatedVolumesDiscovery.isLoading && !exclusions?.all
+      ? relatedVolumesDiscovery.discoveredVolumeNames.filter(name => !exclusions?.removed.includes(name)) : []
     return {
       ...draftState,
       orchestrationProviderId,
-      relatedVolumeProviderId: relatedVolumesDiscovery.flashcopyProviderId,
-      relatedVolumes,
+      relatedVolumes: [...new Set([...(draftState.relatedVolumes ?? []), ...discovered])],
     }
-  }, [discoveryKey, draftState, hiddenDiscoveryKey, relatedVolumesDiscovery.discoveredVolumeNames, relatedVolumesDiscovery.flashcopyProviderId, soleEligibleProviderId])
+  }, [draftState, soleEligibleProviderId, discoveryKey, discoveryExclusions, hasRelatedStorageStep, relatedVolumesDiscovery])
+
+  useEffect(() => {
+    if (!hasRelatedStorageStep || !relatedVolumesDiscovery.isResolved || relatedVolumesDiscovery.isLoading || relatedVolumesDiscovery.error) return
+    const activeVolumes = new Set(draft.relatedVolumes)
+    const nextAuxiliaryNames = Object.fromEntries(Object.entries(draftState.auxiliaryNamesByVolume ?? [])
+      .filter(([name]) => activeVolumes.has(name)))
+    const previousAuxiliaryNames = draftState.auxiliaryNamesByVolume ?? {}
+    if (Object.keys(nextAuxiliaryNames).length !== Object.keys(previousAuxiliaryNames).length) {
+      const timeout = window.setTimeout(() => {
+        setDraft(current => {
+          return { ...current, auxiliaryNamesByVolume: nextAuxiliaryNames }
+        })
+      }, 0)
+      return () => {
+        window.clearTimeout(timeout)
+      }
+    }
+    return undefined
+  }, [draft, draftState.auxiliaryNamesByVolume, hasRelatedStorageStep, relatedVolumesDiscovery.error, relatedVolumesDiscovery.isLoading, relatedVolumesDiscovery.isResolved])
+
+  const allowLegacyLocal = (initialData?.resourceType === 'vm'
+    && (initialData.topology ?? 'local') === 'local'
+    && !initialData.relatedVolumeProviderId && initialData.relatedVolumes.length === 0
+    && !draft.relatedVolumeProviderId && draft.relatedVolumes.length === 0)
+  const topologyValid = !providerQuery.isLoading && !providerQuery.isFetching && !providerQuery.error
+    && initialData?.metroMirrorMode !== 'managed'
+    && getRecoveryGroupTopologyError(draft, allProviders, allowLegacyLocal) === null
+  const selectedVolumes = draft.resourceType === 'volume' ? draft.resources : draft.relatedVolumes
+  const storageValid = draft.topology !== 'metro_mirror' || (selectedVolumes.length > 0
+    && selectedVolumes.every(name => draft.auxiliaryNamesByVolume?.[name]?.trim()))
+  const discoveryValid = !hasRelatedStorageStep || (!relatedVolumesDiscovery.isLoading && !relatedVolumesDiscovery.error)
+  const baseValid = detailsValid && topologyValid && typeValid && providerValid
+  const resourcesValid = draft.resources.length > 0 && (hasRelatedStorageStep || storageValid)
+  const downstreamValid = baseValid && resourcesValid && storageValid && discoveryValid
+  const changeSource = (update: Partial<RecoveryGroupDraft>) => {
+    if ('relatedVolumeProviderId' in update && update.relatedVolumeProviderId !== draft.relatedVolumeProviderId) {
+      setDiscoveryExclusions({ key: '', removed: [], all: false })
+      updateDraft({ ...update, relatedVolumes: [], auxiliaryNamesByVolume: {}, consistencyGroupId: '',
+        ...(draft.resourceType === 'volume' ? { providerId: update.relatedVolumeProviderId ?? null, resources: [] } : {}) })
+    } else updateDraft(update)
+  }
+  const removeAuxiliary = (name: string) => Object.fromEntries(Object.entries(draft.auxiliaryNamesByVolume ?? {}).filter(([key]) => key !== name))
+  const renderVolumeContent = draft.topology === 'metro_mirror' ? (name: string) => (
+    <div className="grid min-w-0 grid-cols-[minmax(0,0.7fr)_minmax(0,1fr)] items-center gap-3">
+      <TruncatedText text={name} />
+      <Input size="sm" aria-label={t('pages.recoveryGroupBuilder.topology.auxiliary') + ': ' + name}
+        placeholder={t('pages.recoveryGroupBuilder.topology.auxiliary')}
+        value={draft.auxiliaryNamesByVolume?.[name] ?? ''}
+        invalid={!draft.auxiliaryNamesByVolume?.[name]?.trim()}
+        onChange={event => { updateDraft({ auxiliaryNamesByVolume: { ...draft.auxiliaryNamesByVolume, [name]: event.target.value } }) }} />
+    </div>
+  ) : undefined
 
   const steps = [
     { id: 'details', label: t('pages.recoveryGroupBuilder.steps.details') },
-    { id: 'type', label: t('pages.recoveryGroupBuilder.steps.type'), disabled: !detailsValid },
-    {
-      id: 'provider',
-      label: t('pages.recoveryGroupBuilder.steps.provider'),
-      disabled: !detailsValid || !typeValid,
-    },
-    {
-      id: 'resources',
-      label: t('pages.recoveryGroupBuilder.steps.resources'),
-      disabled: !detailsValid || !typeValid || !providerValid,
-    },
-    ...(hasRelatedStorageStep ? [{
-      id: 'related-storage',
-      label: t('pages.recoveryGroupBuilder.steps.relatedStorage'),
-      disabled: !detailsValid || !typeValid || !providerValid || draft.resources.length === 0,
-    }] : []),
-    {
-      id: 'policy-set',
-      label: t('pages.recoveryGroupBuilder.steps.policySet'),
-      disabled: !detailsValid || !typeValid || !providerValid || draft.resources.length === 0,
-    },
-    {
-      id: 'orchestration',
-      label: t('pages.recoveryGroupBuilder.steps.orchestration'),
-      disabled: !detailsValid || !typeValid || !providerValid || draft.resources.length === 0 || !policySetValid,
-    },
+    { id: 'topology', label: t('pages.recoveryGroupBuilder.steps.topology'), disabled: !detailsValid },
+    { id: 'type', label: t('pages.recoveryGroupBuilder.steps.type'), disabled: !detailsValid || !topologyValid },
+    { id: 'provider', label: t('pages.recoveryGroupBuilder.steps.provider'), disabled: !detailsValid || !topologyValid || !typeValid },
+    { id: 'resources', label: t('pages.recoveryGroupBuilder.steps.resources'), disabled: !baseValid },
+    ...(hasRelatedStorageStep ? [{ id: 'related-storage', label: t('pages.recoveryGroupBuilder.steps.relatedStorage'), disabled: !baseValid || !resourcesValid }] : []),
+    { id: 'policy-set', label: t('pages.recoveryGroupBuilder.steps.policySet'), disabled: !downstreamValid },
+    { id: 'orchestration', label: t('pages.recoveryGroupBuilder.steps.orchestration'), disabled: !downstreamValid || !policySetValid },
   ]
-
-  const canContinue = step === 1
-    ? detailsValid
-    : step === 2
-      ? typeValid
-      : step === 3
-        ? providerValid
-        : step === policySetStepIndex
-          ? policySetValid
-          : draft.resources.length > 0
-  const canCreate = Boolean(
-    draft.name.trim()
-    && draft.id
-    && idAvailable
-    && draft.description.trim()
-    && draft.sourceCategory
-    && draft.workloadType
-    && draft.resourceType
-    && providerValid
-    && draft.resources.length > 0
-    && policySetValid
-    && orchestrationValid,
-  )
+  const canContinue = step === 1 ? detailsValid
+    : step === 2 ? detailsValid && topologyValid
+      : step === 3 ? detailsValid && topologyValid && typeValid
+        : step === 4 ? baseValid
+          : step === resourcesStepIndex ? baseValid && resourcesValid
+            : step === policySetStepIndex ? downstreamValid && policySetValid
+              : downstreamValid
+  const canCreate = downstreamValid && policySetValid && orchestrationValid
 
   return (
     <fieldset className="contents" disabled={isInitialLoading} aria-busy={isInitialLoading}>
-    <div className="flex min-h-0 flex-1 p-4">
-      <div className="grid min-h-0 flex-1 overflow-hidden rounded-[20px] border border-border bg-surface shadow-sm lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="custom-scrollbar min-h-0 overflow-y-auto border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
+    <div className="flex min-h-0 min-w-0 flex-1 p-2 sm:p-4">
+      <div className="grid min-h-0 min-w-0 flex-1 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-[20px] border border-border bg-surface shadow-sm lg:grid-cols-[240px_minmax(0,1fr)] lg:grid-rows-1">
+        <aside className="custom-scrollbar min-h-0 min-w-0 overflow-y-auto border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
           <WizardSteps
             items={steps}
             currentStep={step}
@@ -239,10 +259,8 @@ export function RecoveryGroupBuilder({
             onStepChange={setStep}
           />
         </aside>
-        <div className="flex min-h-0 flex-col">
-          <div className={`custom-scrollbar min-h-0 flex-1 p-5 sm:p-6 ${
-            step === resourcesStepIndex || step === relatedStorageStepIndex || step === policySetStepIndex ? 'overflow-hidden' : 'overflow-y-auto'
-          }`}>
+        <div className="flex min-h-0 min-w-0 flex-col">
+          <div className="custom-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto p-3 sm:p-5">
             {step === 1 ? (
               <RecoveryGroupDetailsStep
                 id={draft.id}
@@ -253,7 +271,10 @@ export function RecoveryGroupBuilder({
                 onChange={updateDraft}
               />
             ) : null}
-            {step === 2 ? (
+            {step === 2 ? <RecoveryGroupTopologyStep draft={draft} providers={allProviders}
+              isLoading={providerQuery.isLoading || providerQuery.isFetching} error={providerQuery.error instanceof Error ? providerQuery.error : null}
+              onRetry={() => { void providerQuery.refetch() }} onChange={changeSource} allowLegacyLocal={allowLegacyLocal} /> : null}
+            {step === 3 ? (
               <RecoveryGroupTypeStep
                 sourceCategory={draft.sourceCategory}
                 selected={draft.workloadType}
@@ -270,7 +291,7 @@ export function RecoveryGroupBuilder({
                     providerId: null,
                     resources: [],
                     vmMetadataByName: {},
-                    relatedVolumeProviderId: null,
+                    auxiliaryNamesByVolume: {},
                     relatedVolumes: [],
                   })
                 }}
@@ -279,23 +300,25 @@ export function RecoveryGroupBuilder({
                     sourceCategory,
                     workloadType,
                     resourceType,
-                    providerId: draft.workloadType === workloadType ? draft.providerId : null,
+                    providerId: resourceType === 'volume' ? draft.relatedVolumeProviderId ?? null : draft.workloadType === workloadType ? draft.providerId : null,
                     resources: draft.workloadType === workloadType ? draft.resources : [],
                     vmMetadataByName: draft.workloadType === workloadType
                       ? draft.vmMetadataByName
                       : {},
-                    relatedVolumeProviderId: draft.workloadType === workloadType
-                      ? (draft.relatedVolumeProviderId ?? null)
-                      : null,
+                    auxiliaryNamesByVolume: draft.workloadType === workloadType ? draft.auxiliaryNamesByVolume : {},
                     relatedVolumes: draft.workloadType === workloadType
-                      ? (draft.relatedVolumes ?? [])
+                      ? draft.relatedVolumes
                       : [],
                   })
                 }}
               />
             ) : null}
-            {step === 3 ? (
-              draft.workloadType ? (
+            {step === 4 ? (
+              draft.resourceType === 'volume' ? (
+                <Field label={t('pages.recoveryGroupBuilder.topology.source')} htmlFor="volume-source-readonly">
+                  <Input id="volume-source-readonly" readOnly value={allProviders.find(provider => provider.id === draft.relatedVolumeProviderId)?.name ?? ''} />
+                </Field>
+              ) : draft.workloadType ? (
                 <RecoveryGroupProviderStep
                   workloadType={draft.workloadType}
                   providers={providers}
@@ -305,6 +328,8 @@ export function RecoveryGroupBuilder({
                       providerId,
                       resources: draft.providerId === providerId ? draft.resources : [],
                       vmMetadataByName: draft.providerId === providerId ? draft.vmMetadataByName : {},
+                      relatedVolumes: draft.providerId === providerId ? draft.relatedVolumes : [],
+                      auxiliaryNamesByVolume: draft.providerId === providerId ? draft.auxiliaryNamesByVolume : {},
                     })
                   }}
                 />
@@ -315,6 +340,7 @@ export function RecoveryGroupBuilder({
                 workloadType={draft.workloadType}
                 providerId={draft.providerId}
                 resources={draft.resources}
+                renderItemContent={draft.resourceType === 'volume' ? renderVolumeContent : undefined}
                 onAdd={resource => {
                   if (!draft.resources.includes(resource)) {
                     updateDraft({ resources: [...draft.resources, resource] })
@@ -327,7 +353,7 @@ export function RecoveryGroupBuilder({
               />
             ) : null}
             {step === relatedStorageStepIndex && hasRelatedStorageStep ? (
-              <div className="flex h-full min-h-0 flex-col gap-6">
+              <div className="flex min-h-80 min-w-0 flex-col gap-3 lg:h-full">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h2 className="text-base font-semibold text-text-primary">
@@ -337,49 +363,42 @@ export function RecoveryGroupBuilder({
                       {t('pages.recoveryGroupBuilder.relatedStorage.description')}
                     </p>
                   </div>
-                  {(draft.relatedVolumes ?? []).length > 0 ? (
+                  {draft.relatedVolumes.length > 0 ? (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        updateDraft({ relatedVolumeProviderId: null, relatedVolumes: [] })
-                        setHiddenDiscoveryKey(discoveryKey)
+                        updateDraft({ relatedVolumes: [], auxiliaryNamesByVolume: {} })
+                        setDiscoveryExclusions({ key: discoveryKey, removed: [], all: true })
                       }}
                     >
                       {t('pages.recoveryGroupBuilder.relatedStorage.clear')}
                     </Button>
                   ) : null}
                 </div>
-                <Field label={t('pages.recoveryGroupBuilder.relatedStorage.provider')} htmlFor="related-storage-provider">
-                  <Select
-                    id="related-storage-provider"
-                    value={draft.relatedVolumeProviderId ?? ''}
-                    onChange={event => {
-                      updateDraft({ relatedVolumeProviderId: event.target.value || null, relatedVolumes: [] })
-                      setHiddenDiscoveryKey(null)
-                    }}
-                  >
-                    <option value="">{t('forms.optionalSelect')}</option>
-                    {flashcopyProviders.map(provider => (
-                      <option key={provider.id} value={provider.id}>{provider.name} — {provider.id}</option>
-                    ))}
-                  </Select>
-                </Field>
-                {relatedVolumesDiscovery.flashcopyProviderId ? (
-                  <div className="min-h-0 flex-1">
+                {relatedVolumesDiscovery.error ? <FetchErrorAlert title={t('pages.recoveryGroupBuilder.topology.discoveryError')}
+                  onRetry={() => { relatedVolumesDiscovery.refetch?.() }} retryLabel={t('buttons.retry')} /> : null}
+                {relatedVolumesDiscovery.isLoading ? <ListSkeleton rowCount={1} ariaLabel={t('pages.recoveryGroupBuilder.resources.volumes.loading')} /> : null}
+                {draft.topology === 'metro_mirror' && !storageValid ? <Alert variant="info" title={t('pages.recoveryGroupBuilder.topology.auxiliaryRequired')} /> : null}
+                {draft.relatedVolumeProviderId ? (
+                  <div className="min-h-64 min-w-0 flex-1">
                     <RecoveryGroupResourcesStep
                       workloadType="ibm_flashsystem"
-                      providerId={relatedVolumesDiscovery.flashcopyProviderId}
-                      resources={draft.relatedVolumes ?? []}
+                      providerId={draft.relatedVolumeProviderId}
+                      resources={draft.relatedVolumes}
+                      renderItemContent={renderVolumeContent}
                       onAdd={resource => {
-                        const relatedVolumes = draft.relatedVolumes ?? []
+                        const relatedVolumes = draft.relatedVolumes
                         if (!relatedVolumes.includes(resource)) {
                           updateDraft({ relatedVolumes: [...relatedVolumes, resource] })
                         }
                       }}
                       onRemove={resource => {
+                        setDiscoveryExclusions(current => ({ key: discoveryKey, all: current.key === discoveryKey && current.all,
+                          removed: [...(current.key === discoveryKey ? current.removed : []), resource] }))
                         updateDraft({
-                          relatedVolumes: (draft.relatedVolumes ?? []).filter(item => item !== resource),
+                          relatedVolumes: draft.relatedVolumes.filter(item => item !== resource),
+                          auxiliaryNamesByVolume: removeAuxiliary(resource),
                         })
                       }}
                     />
@@ -413,7 +432,7 @@ export function RecoveryGroupBuilder({
               />
             ) : null}
           </div>
-          <div className="flex flex-col-reverse gap-3 border-t border-border bg-surface-subtle p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="sticky bottom-0 z-10 flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-surface-subtle p-3 sm:p-4 lg:static">
             <Button variant="ghost" onClick={onCancel}>{t('buttons.cancel')}</Button>
             <div className="flex gap-3">
               <Button
@@ -434,7 +453,7 @@ export function RecoveryGroupBuilder({
                 <Button
                   disabled={!canCreate || isSaving}
                   startIcon={isSaving ? <Spinner /> : undefined}
-                  onClick={() => { onCreate(draft) }}
+                  onClick={() => { if (canCreate) onCreate(draft) }}
                 >
                   {isSaving ? t('messages.saving') : (submitLabel ?? t('pages.recoveryGroupBuilder.createButton'))}
                 </Button>

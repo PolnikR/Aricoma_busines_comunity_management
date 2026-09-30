@@ -38,7 +38,7 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
           const topology = event.target.value === 'metro_mirror' ? 'metro_mirror' : 'local'
           onChange({ topology, metroMirrorMode: topology === 'metro_mirror' ? 'existing' : null, consistencyGroupId: '', auxiliaryNamesByVolume: {} })
         }}>
-          <option value="" disabled>{t('forms.select')}</option>
+          <option value="" disabled>{t(key('choose'))}</option>
           <option value="local">{t(key('local'))}</option>
           <option value="metro_mirror">{t(key('metroMirror'))}</option>
         </Select>
@@ -47,7 +47,7 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
         <Field label={t(key('source'))} htmlFor="topology-source">
           <Select id="topology-source" value={draft.relatedVolumeProviderId ?? ''} disabled={isLoading || Boolean(error) || managed}
             onChange={event => { onChange({ relatedVolumeProviderId: event.target.value || null }) }}>
-            <option value="">{t('forms.select')}</option>
+            <option value="">{t(key('choose'))}</option>
             {draft.relatedVolumeProviderId && !sources.some(provider => provider.id === draft.relatedVolumeProviderId)
               ? <option value={draft.relatedVolumeProviderId} disabled>{source?.name ?? draft.relatedVolumeProviderId}</option> : null}
             {sources.map(provider => <option key={provider.id} value={provider.id}>{provider.name}</option>)}

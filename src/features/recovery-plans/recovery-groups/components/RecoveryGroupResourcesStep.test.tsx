@@ -26,6 +26,14 @@ vi.mock('../hooks/useRecoveryGroupResourceInventory', () => ({
 }))
 
 describe('RecoveryGroupResourcesStep', () => {
+  it('composes the editable auxiliary row inside the existing shared selection card', async () => {
+    const remove = vi.fn()
+    render(<RecoveryGroupResourcesStep workloadType="ibm_flashsystem" providerId="source" resources={['VOL-01']}
+      onAdd={vi.fn()} onRemove={remove} renderItemContent={name => <input aria-label={`Auxiliary: ${name}`} defaultValue="AUX-01" />} />)
+    expect(screen.getByLabelText('Auxiliary: VOL-01')).toHaveValue('AUX-01')
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Remove volume: VOL-01' }))
+    expect(remove).toHaveBeenCalledWith('VOL-01')
+  })
   beforeEach(() => {
     vi.clearAllMocks()
     useRecoveryGroupResourceInventory.mockReturnValue({

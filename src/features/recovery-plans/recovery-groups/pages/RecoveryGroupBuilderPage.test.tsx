@@ -74,6 +74,17 @@ vi.mock('../components/RecoveryGroupBuilder', () => ({
       <button type="button" onClick={() => { onCreate(buildDraft(false)) }}>
         Create without orchestration
       </button>
+      <button type="button" onClick={() => { onCreate({
+        ...buildDraft(false),
+        topology: 'metro_mirror',
+        metroMirrorMode: 'existing',
+        consistencyGroupId: 'CG-7',
+        relatedVolumeProviderId: 'ibm-flashsystem-01',
+        relatedVolumes: ['VOL-01'],
+        auxiliaryNamesByVolume: { 'VOL-01': 'AUX-01' },
+      }) }}>
+        Create Metro group
+      </button>
     </fieldset>
   ),
 }))
@@ -85,6 +96,27 @@ beforeEach(() => {
 })
 
 describe('RecoveryGroupBuilderPage', () => {
+  it('forwards the Metro draft and keeps the builder open after a failed create', async () => {
+    const user = userEvent.setup()
+    create.mockRejectedValue(new RecoveryGroupsError('invalid_draft', 'Metro group rejected'))
+    render(<RecoveryGroupBuilderPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Create Metro group' }))
+
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({
+      topology: 'metro_mirror',
+      metroMirrorMode: 'existing',
+      consistencyGroupId: 'CG-7',
+      relatedVolumeProviderId: 'ibm-flashsystem-01',
+      relatedVolumes: ['VOL-01'],
+      auxiliaryNamesByVolume: { 'VOL-01': 'AUX-01' },
+    }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Complete all required recovery group fields.')
+    expect(screen.getByRole('button', { name: 'Create Metro group' })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
   it('gives the builder a constrained body region for nested resource scrolling', () => {
     const { container } = render(<RecoveryGroupBuilderPage />)
 

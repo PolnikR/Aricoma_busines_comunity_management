@@ -10,6 +10,7 @@ describe('ResourceSelectionCard', () => {
       emptyText="Drop" removeLabel="Remove" ariaLabel="Volumes" onResourceRemove={remove}
       renderItemContent={name => <input aria-label={`Auxiliary: ${name}`} defaultValue="" />} />)
     expect(screen.getAllByRole('textbox')).toHaveLength(100)
+    expect(screen.getByRole('button', { name: 'Remove: VOL-99' })).toHaveClass('opacity-100')
     await userEvent.setup().type(screen.getByLabelText('Auxiliary: VOL-99'), 'AUX-99')
     expect(screen.getByLabelText('Auxiliary: VOL-99')).toHaveValue('AUX-99')
     await userEvent.setup().click(screen.getByRole('button', { name: 'Remove: VOL-99' }))

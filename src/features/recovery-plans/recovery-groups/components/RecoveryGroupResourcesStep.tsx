@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
 import { ResourceSelectionCard } from '@/shared/components/resource-selection/ResourceSelectionCard'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -12,6 +13,7 @@ interface RecoveryGroupResourcesStepProps {
   onAdd: (resource: string) => void
   onRemove: (resource: string) => void
   onMetadataAvailable?: (metadata: Record<string, RecoveryGroupVmMetadata>) => void
+  renderItemContent?: ((resource: string) => ReactNode) | undefined
 }
 
 export function RecoveryGroupResourcesStep(props: RecoveryGroupResourcesStepProps) {
@@ -30,6 +32,7 @@ function RecoveryGroupResourcesStepContent({
   onAdd,
   onRemove,
   onMetadataAvailable,
+  renderItemContent,
 }: RecoveryGroupResourcesStepProps) {
   const { t } = useTranslation()
   const [vmwareNamePrefix, setVmwareNamePrefix] = useState('')
@@ -47,8 +50,8 @@ function RecoveryGroupResourcesStepContent({
   const key = (suffix: string) => `pages.recoveryGroupBuilder.resources.${resourceKind}.${suffix}`
 
   return (
-    <div className="grid h-full min-h-0 gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-      <div className="h-72 min-h-0 overflow-hidden rounded-lg border border-border lg:h-full">
+    <div className="grid min-h-64 min-w-0 gap-4 lg:h-full lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
+      <div className="h-72 min-h-0 min-w-0 overflow-hidden rounded-lg border border-border lg:h-full">
         <ResourceSidebar
           items={availableResources}
           title={t(key('available'))}
@@ -72,7 +75,7 @@ function RecoveryGroupResourcesStepContent({
           } : {})}
         />
       </div>
-      <div className="flex h-72 min-h-0 flex-col rounded-lg border-2 border-dashed border-border bg-surface p-4 lg:h-full">
+      <div className="flex h-72 min-h-0 min-w-0 flex-col rounded-lg border-2 border-dashed border-border bg-surface p-4 lg:h-full">
         <h2 className="text-base font-semibold text-text-primary">{t(key('selectedTitle'))}</h2>
         <p className="mt-1 text-sm text-text-muted">{t(key('description'))}</p>
         <ResourceSelectionCard
@@ -83,6 +86,7 @@ function RecoveryGroupResourcesStepContent({
           dropDataKey="recovery-group-resource-name"
           onResourceDrop={onAdd}
           onResourceRemove={onRemove}
+          renderItemContent={renderItemContent}
           className="mt-4 h-auto min-h-0 flex-1 rounded-lg border border-border"
         />
       </div>

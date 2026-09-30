@@ -9,10 +9,10 @@ export interface RecoveryGroupStepIndices {
 export function calculateRecoveryGroupStepIndices(
   hasRelatedStorageStep: boolean,
 ): RecoveryGroupStepIndices {
-  const resourcesStepIndex = 4
-  const relatedStorageStepIndex = 5
-  const policySetStepIndex = hasRelatedStorageStep ? 6 : 5
-  const orchestrationStepIndex = hasRelatedStorageStep ? 7 : 6
+  const resourcesStepIndex = 5
+  const relatedStorageStepIndex = 6
+  const policySetStepIndex = hasRelatedStorageStep ? 7 : 6
+  const orchestrationStepIndex = hasRelatedStorageStep ? 8 : 7
   const lastStep = orchestrationStepIndex
 
   return {

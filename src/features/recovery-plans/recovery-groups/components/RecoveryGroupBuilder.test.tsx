@@ -6,6 +6,7 @@ import { RecoveryGroupBuilder } from './RecoveryGroupBuilder'
 import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
 
 const { usePlatformProvidersMock } = vi.hoisted(() => ({ usePlatformProvidersMock: vi.fn() }))
+const providerStatus = vi.hoisted(() => ({ isFetching: false }))
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => ({
@@ -47,6 +48,7 @@ vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => (
       },
       {
         id: 'ibm-flashsystem-01',
+        partnerProviderId: 'ibm-flashsystem-target',
         name: 'IBM FlashSystem Source',
         description: 'Primary FlashSystem provider',
         type: 'FLASHCOPY',
@@ -56,10 +58,12 @@ vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => (
         role: 'source',
         credentialStatus: 'ok',
       },
+      { id: 'ibm-flashsystem-target', name: 'Target FlashSystem', type: 'FLASHCOPY', role: 'target', credentialStatus: 'ok' },
     ],
     isLoading: false,
     error: null,
     refetch: vi.fn(),
+    ...providerStatus,
   }),
 }))
 vi.mock('../hooks/useRecoveryGroupResourceInventory', () => ({
@@ -76,6 +80,7 @@ vi.mock('../hooks/useRecoveryGroupRelatedVolumes', () => ({
     flashcopyProviderId: null,
     discoveredVolumeNames: [],
     isLoading: false,
+    isResolved: true,
   })),
 }))
 vi.mock('@/generated/query/policy-sets/policy-sets.gen', () => ({
@@ -209,8 +214,163 @@ const existingStorageGroup: RecoveryGroup = {
 }
 
 describe('RecoveryGroupBuilder', () => {
+  it('requires Topology and Source before allowing later steps for a new group', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryGroupBuilder onCreate={vi.fn()} onCancel={vi.fn()} />)
+    await user.type(screen.getByLabelText('Group name *'), 'New group')
+    await user.type(screen.getByLabelText('Description *'), 'Description')
+    await user.click(screen.getByRole('button', { name: 'Storage topology' }))
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Resource type' })).toBeDisabled()
+    await user.selectOptions(screen.getByLabelText('Topology mode'), 'local')
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+    await user.selectOptions(screen.getByLabelText('Source FlashSystem provider'), 'ibm-flashsystem-01')
+    expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
+  })
+
+  it('preserves Topology and Source when the workload category changes', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryGroupBuilder onCreate={vi.fn()} onCancel={vi.fn()} />)
+    await user.type(screen.getByLabelText('Group name *'), 'New group')
+    await user.type(screen.getByLabelText('Description *'), 'Description')
+    await user.click(screen.getByRole('button', { name: 'Storage topology' }))
+    await user.selectOptions(screen.getByLabelText('Topology mode'), 'metro_mirror')
+    await user.selectOptions(screen.getByLabelText('Source FlashSystem provider'), 'ibm-flashsystem-01')
+    await user.type(screen.getByLabelText('Consistency group ID'), '001')
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(screen.getByRole('tab', { name: /Storage systems/i }))
+    await user.click(screen.getByRole('button', { name: /IBM FlashSystemGroup storage volumes/i }))
+    await user.click(screen.getByRole('button', { name: 'Storage topology' }))
+    expect(screen.getByLabelText('Topology mode')).toHaveValue('metro_mirror')
+    expect(screen.getByLabelText('Source FlashSystem provider')).toHaveValue('ibm-flashsystem-01')
+    expect(screen.getByLabelText('Consistency group ID')).toHaveValue('001')
+  })
+
+  it('requires auxiliary for every Metro volume and clears it when switched to Local', async () => {
+    const user = userEvent.setup()
+    const onCreate = vi.fn()
+    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, topology: 'metro_mirror', metroMirrorMode: 'existing', consistencyGroupId: '001' }} onCreate={onCreate} onCancel={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+    await user.type(screen.getByLabelText('Auxiliary volume name: VOL-01'), 'AUX-01')
+    expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Storage topology' }))
+    await user.selectOptions(screen.getByLabelText('Topology mode'), 'local')
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ topology: 'local', relatedVolumeProviderId: 'ibm-flashsystem-01', consistencyGroupId: '', auxiliaryNamesByVolume: {} }))
+  })
+
   beforeEach(() => {
+    providerStatus.isFetching = false
     usePlatformProvidersMock.mockReturnValue(defaultPlatformProvidersResult)
+    vi.mocked(useRecoveryGroupRelatedVolumes).mockImplementation((_vmProvider, _vms, flashcopyProviderId) => ({ flashcopyProviderId, discoveredVolumeNames: [], isLoading: false, isResolved: true }))
+  })
+
+  it('blocks save during provider refresh without discarding the current draft', async () => {
+    const props = { initialData: existingStorageGroup, onCreate: vi.fn(), onCancel: vi.fn() }
+    const { rerender } = render(<RecoveryGroupBuilder {...props} />)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Orchestration' }))
+    expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeEnabled()
+    providerStatus.isFetching = true
+    rerender(<RecoveryGroupBuilder {...props} />)
+    expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeDisabled()
+    providerStatus.isFetching = false
+    rerender(<RecoveryGroupBuilder {...props} />)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    expect(props.onCreate).toHaveBeenCalledWith(expect.objectContaining({ resources: ['VOL-01'] }))
+  })
+
+  it('keeps removed discovered volumes out after refetch and re-adds with an empty auxiliary input', async () => {
+    vi.mocked(useRecoveryGroupRelatedVolumes).mockImplementation((_vmProvider, _vms, flashcopyProviderId) => ({ flashcopyProviderId, discoveredVolumeNames: ['VOL-01'], isLoading: false, isResolved: true }))
+    const user = userEvent.setup()
+    const initialData: RecoveryGroup = { ...existingGroup, topology: 'metro_mirror', metroMirrorMode: 'existing', consistencyGroupId: '001', relatedVolumeProviderId: 'ibm-flashsystem-01', relatedVolumes: ['VOL-01'], auxiliaryNamesByVolume: { 'VOL-01': 'AUX-01' } }
+    const props = { initialData, onCreate: vi.fn(), onCancel: vi.fn() }
+    const { rerender } = render(<RecoveryGroupBuilder {...props} />)
+    await user.click(screen.getByRole('button', { name: 'Related storage' }))
+    await user.click(screen.getByRole('button', { name: 'Remove volume: VOL-01' }))
+    rerender(<RecoveryGroupBuilder {...props} />)
+    expect(screen.queryByLabelText('Auxiliary volume name: VOL-01')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Policy Set' })).toBeDisabled()
+    fireEvent.drop(screen.getByLabelText('Selected recovery group volumes'), { dataTransfer: { getData: () => 'VOL-01' } })
+    expect(screen.getByLabelText('Auxiliary volume name: VOL-01')).toHaveValue('')
+    await user.type(screen.getByLabelText('Auxiliary volume name: VOL-01'), 'NEW-AUX')
+    fireEvent.drop(screen.getByLabelText('Selected recovery group volumes'), { dataTransfer: { getData: () => 'VOL-01' } })
+    expect(screen.getAllByLabelText('Auxiliary volume name: VOL-01')).toHaveLength(1)
+    await user.click(screen.getByRole('button', { name: 'Clear related storage' }))
+    rerender(<RecoveryGroupBuilder {...props} />)
+    expect(screen.queryByLabelText('Auxiliary volume name: VOL-01')).not.toBeInTheDocument()
+  })
+
+  it('clears storage context on Source change while preserving the VM and policy selection', async () => {
+    const user = userEvent.setup()
+    const onCreate = vi.fn()
+    render(<RecoveryGroupBuilder initialData={{ ...existingGroup, topology: 'local', relatedVolumeProviderId: 'ibm-flashsystem-01', relatedVolumes: ['VOL-01'] }} onCreate={onCreate} onCancel={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: 'Storage topology' }))
+    await user.selectOptions(screen.getByLabelText('Source FlashSystem provider'), 'ibm-flashsystem-target')
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ resources: ['DB-01'], providerId: existingGroup.providerId, policySetId: existingGroup.policySetId, relatedVolumeProviderId: 'ibm-flashsystem-target', relatedVolumes: [], auxiliaryNamesByVolume: {} }))
+  })
+
+  it('blocks save and later navigation when discovery fails, and offers retry', async () => {
+    const retry = vi.fn()
+    vi.mocked(useRecoveryGroupRelatedVolumes).mockReturnValue({ flashcopyProviderId: 'ibm-flashsystem-01', discoveredVolumeNames: [], isLoading: false, isResolved: true, error: new Error('Offline'), refetch: retry })
+    render(<RecoveryGroupBuilder initialData={{ ...existingGroup, relatedVolumeProviderId: 'ibm-flashsystem-01' }} onCreate={vi.fn()} onCancel={vi.fn()} />)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Related storage' }))
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Retry' }))
+    expect(retry).toHaveBeenCalled()
+  })
+
+  it('preserves explicitly selected source volumes and auxiliary names when adding a VM', async () => {
+    const user = userEvent.setup()
+    const onCreate = vi.fn()
+    render(<RecoveryGroupBuilder initialData={{ ...existingGroup, topology: 'metro_mirror', metroMirrorMode: 'existing', consistencyGroupId: '001', relatedVolumeProviderId: 'ibm-flashsystem-01', relatedVolumes: ['MANUAL'], auxiliaryNamesByVolume: { MANUAL: 'AUX-MANUAL' } }} onCreate={onCreate} onCancel={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+    fireEvent.drop(screen.getByLabelText('Selected recovery group virtual machines'), { dataTransfer: { getData: () => 'VM-02' } })
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ resources: ['DB-01', 'VM-02'], relatedVolumes: ['MANUAL'], auxiliaryNamesByVolume: { MANUAL: 'AUX-MANUAL' } }))
+  })
+
+  it('drops only volumes and auxiliary names exclusive to a removed VM', async () => {
+    vi.mocked(useRecoveryGroupRelatedVolumes).mockImplementation((_vmProvider, vmNames, flashcopyProviderId) => ({
+      flashcopyProviderId,
+      discoveredVolumeNames: vmNames.flatMap(name => name === 'VM-A' ? ['DISK-A'] : name === 'VM-B' ? ['DISK-B'] : []),
+      isLoading: false,
+      isResolved: true,
+    }))
+    const user = userEvent.setup()
+    const initialData: RecoveryGroup = {
+      ...existingGroup,
+      resources: ['VM-A', 'VM-B'],
+      relatedVolumeProviderId: 'ibm-flashsystem-01',
+      relatedVolumes: ['MANUAL'],
+      topology: 'metro_mirror', metroMirrorMode: 'existing', consistencyGroupId: '001',
+      auxiliaryNamesByVolume: { 'DISK-A': 'AUX-A', 'DISK-B': 'AUX-B', MANUAL: 'AUX-MANUAL' },
+    }
+    const onCreate = vi.fn()
+    render(<RecoveryGroupBuilder initialData={initialData} onCreate={onCreate} onCancel={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+    await user.click(screen.getByRole('button', { name: 'Related storage' }))
+    expect(screen.getByLabelText('Auxiliary volume name: DISK-A')).toHaveValue('AUX-A')
+    expect(screen.getByLabelText('Auxiliary volume name: DISK-B')).toHaveValue('AUX-B')
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+    await user.click(screen.getByRole('button', { name: 'Remove virtual machine: VM-A' }))
+    await user.click(screen.getByRole('button', { name: 'Related storage' }))
+    expect(screen.queryByLabelText('Auxiliary volume name: DISK-A')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Auxiliary volume name: DISK-B')).toHaveValue('AUX-B')
+    expect(screen.getByLabelText('Auxiliary volume name: MANUAL')).toHaveValue('AUX-MANUAL')
+  })
+
+  it('never silently converts an existing managed group', async () => {
+    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, topology: 'metro_mirror', metroMirrorMode: 'managed', consistencyGroupId: '001' }} onCreate={vi.fn()} onCancel={vi.fn()} />)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Storage topology' }))
+    expect(screen.getByLabelText('Topology mode')).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
   })
 
   it('preserves the existing orchestration provider when multiple providers are available', async () => {
@@ -279,6 +439,7 @@ describe('RecoveryGroupBuilder', () => {
       flashcopyProviderId: null,
       discoveredVolumeNames: [],
       isLoading: false,
+    isResolved: true,
     })
     const user = userEvent.setup()
     const onCreate = vi.fn()
@@ -311,13 +472,14 @@ describe('RecoveryGroupBuilder', () => {
       flashcopyProviderId: 'ibm-flashsystem-01',
       discoveredVolumeNames: ['VOL-01'],
       isLoading: false,
+    isResolved: true,
     })
     const user = userEvent.setup()
     const onCreate = vi.fn()
 
     render(
       <RecoveryGroupBuilder
-        initialData={existingGroup}
+        initialData={{ ...existingGroup, relatedVolumeProviderId: 'ibm-flashsystem-01' }}
         onCreate={onCreate}
         onCancel={vi.fn()}
       />,
@@ -351,8 +513,9 @@ describe('RecoveryGroupBuilder', () => {
       />,
     )
 
+    await user.click(screen.getByRole('button', { name: 'Storage topology' }))
+    await user.selectOptions(screen.getByLabelText('Source FlashSystem provider'), 'ibm-flashsystem-01')
     await user.click(screen.getByRole('button', { name: 'Related storage' }))
-    await user.selectOptions(screen.getByLabelText('FlashSystem provider'), 'ibm-flashsystem-01')
 
     expect(vi.mocked(useRecoveryGroupRelatedVolumes)).toHaveBeenLastCalledWith(
       existingGroup.providerId,
@@ -367,13 +530,14 @@ describe('RecoveryGroupBuilder', () => {
       flashcopyProviderId: 'ibm-flashsystem-01',
       discoveredVolumeNames: [],
       isLoading: false,
+    isResolved: true,
     })
     const user = userEvent.setup()
     const onCreate = vi.fn()
 
     render(
       <RecoveryGroupBuilder
-        initialData={existingGroup}
+        initialData={{ ...existingGroup, relatedVolumeProviderId: 'ibm-flashsystem-01' }}
         onCreate={onCreate}
         onCancel={vi.fn()}
       />,
@@ -417,7 +581,7 @@ describe('RecoveryGroupBuilder', () => {
     expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeEnabled()
   })
 
-  it('keeps a FlashSystem volume group on the six-step flow', async () => {
+  it('keeps a FlashSystem volume group on the seven-step flow', async () => {
     const user = userEvent.setup()
 
     render(
@@ -444,6 +608,7 @@ describe('RecoveryGroupBuilder', () => {
       flashcopyProviderId: null,
       discoveredVolumeNames: [],
       isLoading: false,
+    isResolved: true,
     })
     const user = userEvent.setup()
     const onCreate = vi.fn()
@@ -467,7 +632,7 @@ describe('RecoveryGroupBuilder', () => {
     await completeOrchestrationAndCreate(user)
 
     expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
-      relatedVolumeProviderId: null,
+      relatedVolumeProviderId: 'ibm-flashsystem-01',
       relatedVolumes: [],
       policySetId: 'tier2-apps',
       orchestrationProviderId: 'airflow-01',
@@ -522,6 +687,9 @@ describe('RecoveryGroupBuilder', () => {
 
     await user.type(screen.getByLabelText('Group name *'), 'Database group')
     await user.type(screen.getByLabelText('Description *'), 'Production databases')
+    await user.click(screen.getByRole('button', { name: 'Storage topology' }))
+    await user.selectOptions(screen.getByLabelText('Topology mode'), 'local')
+    await user.selectOptions(screen.getByLabelText('Source FlashSystem provider'), 'ibm-flashsystem-01')
     await user.click(screen.getByRole('button', { name: 'Resource type' }))
     await user.click(screen.getByRole('button', { name: /VMware virtual machines/i }))
 
@@ -546,6 +714,9 @@ describe('RecoveryGroupBuilder', () => {
 
     await user.type(screen.getByLabelText('Group name *'), 'Database group')
     await user.type(screen.getByLabelText('Description *'), 'Production databases')
+    await user.click(screen.getByRole('button', { name: 'Storage topology' }))
+    await user.selectOptions(screen.getByLabelText('Topology mode'), 'local')
+    await user.selectOptions(screen.getByLabelText('Source FlashSystem provider'), 'ibm-flashsystem-01')
     await user.click(screen.getByRole('button', { name: 'Resource type' }))
     await user.click(screen.getByRole('button', { name: /VMware virtual machines/i }))
     await user.click(screen.getByRole('button', { name: 'Provider' }))

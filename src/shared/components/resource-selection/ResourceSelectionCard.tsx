@@ -140,7 +140,7 @@ export function ResourceSelectionCard({
                   <button
                     type="button"
                     onClick={() => { onResourceRemove(item) }}
-                    className="ml-2 shrink-0 text-text-subtle opacity-0 transition-opacity hover:text-error-600 group-hover:opacity-100 focus:opacity-100"
+                    className={cn('ml-2 shrink-0 text-text-subtle transition-opacity hover:text-error-600 group-hover:opacity-100 focus:opacity-100', renderItemContent ? 'opacity-100' : 'opacity-0')}
                     aria-label={`${removeLabel}: ${item}`}
                     title={removeLabel}
                   >

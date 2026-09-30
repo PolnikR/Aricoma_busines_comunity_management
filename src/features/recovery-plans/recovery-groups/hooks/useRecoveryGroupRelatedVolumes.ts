@@ -5,6 +5,9 @@ interface RecoveryGroupRelatedVolumes {
   flashcopyProviderId: string | null
   discoveredVolumeNames: string[]
   isLoading: boolean
+  isResolved: boolean
+  error?: Error | null
+  refetch?: () => void
 }
 
 // The FlashSystem is chosen explicitly by the user: the providers contract no
@@ -36,5 +39,8 @@ export function useRecoveryGroupRelatedVolumes(
     flashcopyProviderId,
     discoveredVolumeNames,
     isLoading: queryEnabled && results.some(result => result.isLoading),
+    isResolved: results.every(result => result.isFetched || result.isError),
+    error: results.find(result => result.error)?.error ?? null,
+    refetch: () => { results.forEach(result => { void result.refetch() }) },
   }
 }
