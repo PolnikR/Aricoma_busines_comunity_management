@@ -155,6 +155,12 @@ export function ProviderDetailPage() {
                     </Badge> : null}
               </dd>
             </div>
+            {provider?.type === 'FLASHCOPY' ? (
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('forms.partnerProvider')}</dt>
+                <dd className="mt-1 break-words font-mono text-sm text-text-primary">{textOrFallback(provider.partnerProviderId, t('forms.partnerProviderNone'))}</dd>
+              </div>
+            ) : null}
           </dl>
         </Card>
       </div>

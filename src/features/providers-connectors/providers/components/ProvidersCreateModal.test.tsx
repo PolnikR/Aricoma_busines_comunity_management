@@ -57,6 +57,38 @@ function fillValidForm() {
 describe('ProvidersCreateModal', () => {
   const flashA: ProviderRecord = { ...mockProviderA, id: 'flash-a', name: 'Array A', type: 'FLASHCOPY' }
   const flashB: ProviderRecord = { ...mockProviderA, id: 'flash-b', name: 'Array B', type: 'FLASHCOPY', role: 'target' }
+  it.each(['create', 'edit', 'clear'])('submits the FlashSystem partner on %s', async mode => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const provider = { ...flashA, partnerProviderId: 'flash-b' }
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[provider, flashB, mockProviderA]}
+      {...(mode !== 'create' ? { provider } : {})} />)
+    if (mode === 'create') {
+      fillValidForm()
+      fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'FLASHCOPY' } })
+    } else {
+      expect(screen.getByLabelText('Partner FlashSystem provider')).toHaveValue('flash-b')
+      expect(screen.queryByRole('option', { name: 'Array A — flash-a' })).not.toBeInTheDocument()
+    }
+    expect(screen.queryByRole('option', { name: /Production vCenter/ })).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Partner FlashSystem provider'), { target: { value: mode === 'clear' ? '' : 'flash-b' } })
+    fireEvent.click(screen.getByRole('button', { name: mode === 'create' ? 'Create provider' : 'Edit provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalled() })
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit
+    expect(JSON.parse(init.body as string)).toMatchObject({ partnerProviderId: mode === 'clear' ? null : 'flash-b' })
+    vi.unstubAllGlobals()
+  })
+
+  it('blocks saving a legacy self-partner until corrected', () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[flashA, flashB]}
+      provider={{ ...flashA, partnerProviderId: flashA.id }} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Edit provider' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('A provider cannot be its own partner.')
+    expect(fetchMock).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
 
   it.each(['create', 'edit', 'clear'])('submits backing storage IDs on %s', async mode => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))

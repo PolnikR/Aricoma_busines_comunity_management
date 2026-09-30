@@ -354,6 +354,10 @@ export function ProvidersCatalogueTable({
           <dl className="px-5 py-2">
             <DetailRow label={t('details.providerId')} value={<span className="font-mono">{selected.id}</span>} />
             <DetailRow label={t('details.type')} value={providerTypeLabel(selected.type)} />
+            {selected.type === 'FLASHCOPY' ? <DetailRow label={t('forms.partnerProvider')}
+              value={selected.partnerProviderId
+                ? (allProviders.find(provider => provider.id === selected.partnerProviderId)?.name ?? selected.partnerProviderId) + ' (' + selected.partnerProviderId + ')'
+                : t('forms.partnerProviderNone')} /> : null}
             <DetailRow
               label={t('details.role')}
               value={(() => {

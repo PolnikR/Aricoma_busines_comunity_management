@@ -19,6 +19,7 @@ export interface ProviderCreateFormData {
   vmPrefix: string
   vmTags: string[]
   backingStorageProviderIds: string[]
+  partnerProviderId: string
   notificationEmail: string
   cacheRefreshSeconds: string
 }
@@ -72,6 +73,8 @@ export function ProviderCreateForm({
   onSubmit,
 }: ProviderCreateFormProps) {
   const { t } = useTranslation()
+  const partnerProviders = storageProviders.filter(provider => provider.id !== data.id)
+  const partnerMissing = data.partnerProviderId && !partnerProviders.some(provider => provider.id === data.partnerProviderId)
   const storageOptions = [
     ...storageProviders.map(provider => ({ value: provider.id, label: provider.name + ' — ' + provider.id })),
     ...data.backingStorageProviderIds.filter(id => !storageProviders.some(provider => provider.id === id))
@@ -201,6 +204,20 @@ export function ProviderCreateForm({
           {errors.port ? <p className="mt-1 text-xs text-red-600">{errors.port}</p> : null}
         </Field>
       </div>
+
+      {data.type === 'FLASHCOPY' ? (
+        <Field label={t('forms.partnerProvider')} htmlFor="create-partnerProviderId">
+          <Select id="create-partnerProviderId" value={data.partnerProviderId} aria-label={t('forms.partnerProvider')}
+            disabled={isSubmitting} aria-invalid={Boolean(errors.partnerProviderId)}
+            onChange={event => { onChange('partnerProviderId', event.target.value) }}>
+            <option value="">{t('forms.partnerProviderNone')}</option>
+            {partnerMissing ? <option value={data.partnerProviderId} disabled>{data.partnerProviderId} ({t('forms.partnerProviderUnavailable')})</option> : null}
+            {partnerProviders.map(provider => <option key={provider.id} value={provider.id}>{provider.name} — {provider.id}</option>)}
+          </Select>
+          <p className="mt-1 text-xs text-text-muted">{t('forms.partnerProviderHelper')}</p>
+          {errors.partnerProviderId ? <p role="alert" className="mt-1 text-xs text-red-600">{errors.partnerProviderId}</p> : null}
+        </Field>
+      ) : null}
 
       {data.type === 'VMWARE' ? (
         <Field label={t('forms.backingStorageProviders')} htmlFor="create-backingStorageProviders">

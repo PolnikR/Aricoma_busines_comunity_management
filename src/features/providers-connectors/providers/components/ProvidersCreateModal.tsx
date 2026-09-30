@@ -38,6 +38,7 @@ const EMPTY_FORM: ProviderCreateFormData = {
   vmPrefix: '',
   vmTags: [],
   backingStorageProviderIds: [],
+  partnerProviderId: '',
   notificationEmail: '',
   cacheRefreshSeconds: '',
 }
@@ -58,6 +59,7 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         vmPrefix: provider.vmPrefix ?? '',
         vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
         backingStorageProviderIds: [...(provider.backingStorageProviderIds ?? [])],
+        partnerProviderId: provider.partnerProviderId ?? '',
         notificationEmail: provider.notificationEmail ?? '',
         cacheRefreshSeconds: provider.cacheRefreshSeconds === null || provider.cacheRefreshSeconds === undefined
           ? ''
@@ -95,6 +97,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     || formData.notificationEmail !== initialForm.notificationEmail
     || formData.cacheRefreshSeconds !== initialForm.cacheRefreshSeconds
     || formData.vmPrefix !== initialForm.vmPrefix
+    || formData.partnerProviderId !== initialForm.partnerProviderId
     || formData.vmTags.length !== initialForm.vmTags.length
     || formData.vmTags.some((tag, index) => tag !== initialForm.vmTags[index])
     || formData.backingStorageProviderIds.length !== initialForm.backingStorageProviderIds.length
@@ -135,7 +138,10 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
         }
       }
 
-      return { ...prev, [field]: value, ...(field === 'type' && value !== 'VMWARE' ? { backingStorageProviderIds: [] } : {}) }
+      return { ...prev, [field]: value,
+        ...(field === 'type' && value !== 'VMWARE' ? { backingStorageProviderIds: [] } : {}),
+        ...(field === 'type' && value !== 'FLASHCOPY' ? { partnerProviderId: '' } : {}),
+      }
     })
     if (field in errors && errors[field]) {
       setErrors((prev) => {
@@ -173,6 +179,9 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     if (!formData.description.trim()) newErrors.description = t('forms.descriptionRequired')
     if (!formData.type) newErrors.type = t('forms.typeRequired')
     if (!formData.role) newErrors.role = t('forms.roleRequired')
+    if (formData.partnerProviderId && formData.partnerProviderId === (isEdit ? formData.id.trim() : normalizedId)) {
+      newErrors.partnerProviderId = t('forms.partnerProviderSelf')
+    }
     if (!formData.ipAddress.trim()) newErrors.ipAddress = t('forms.ipRequired')
     const notificationEmail = formData.notificationEmail.trim()
     if (notificationEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notificationEmail)) {
@@ -203,6 +212,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
       ipAddress: formData.ipAddress.trim(),
       credentialId: formData.credentialId || null,
       role: formData.role as ProviderRole,
+      partnerProviderId: formData.partnerProviderId.trim() || null,
     }
     const url = formData.url.trim()
     if (url) record.url = url

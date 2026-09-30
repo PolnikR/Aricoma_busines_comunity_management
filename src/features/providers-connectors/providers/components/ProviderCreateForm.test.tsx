@@ -19,6 +19,7 @@ const data = {
   vmPrefix: 'prod-',
   vmTags: ['saved-tag'],
   backingStorageProviderIds: [],
+  partnerProviderId: '',
   notificationEmail: 'provider-alerts@example.test',
   cacheRefreshSeconds: '120',
 }

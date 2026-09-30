@@ -1,4 +1,9 @@
 {
+  "forms.partnerProvider": "Partnerský FlashSystem provider",
+  "forms.partnerProviderNone": "Bez partnera",
+  "forms.partnerProviderUnavailable": "Nedostupný",
+  "forms.partnerProviderHelper": "Vyberte partnerský FlashSystem pro Metro Mirror. Tento výběr nenastavuje replikaci.",
+  "forms.partnerProviderSelf": "Provider nemůže být sám sobě partnerem.",
   "forms.backingStorageProviders": "Podkladové FlashSystem providery",
   "forms.backingStorageProvidersSelect": "Vyberte FlashSystem providery",
   "forms.backingStorageProvidersEmpty": "Nejsou dostupné žádné FlashSystem providery",

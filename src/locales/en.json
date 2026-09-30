@@ -1,4 +1,9 @@
 {
+  "forms.partnerProvider": "Partner FlashSystem provider",
+  "forms.partnerProviderNone": "No partner",
+  "forms.partnerProviderUnavailable": "Unavailable",
+  "forms.partnerProviderHelper": "Select the partner FlashSystem used for Metro Mirror. This does not configure replication.",
+  "forms.partnerProviderSelf": "A provider cannot be its own partner.",
   "forms.backingStorageProviders": "Backing FlashSystem providers",
   "forms.backingStorageProvidersSelect": "Select FlashSystem providers",
   "forms.backingStorageProvidersEmpty": "No FlashSystem providers available",
