@@ -1,5 +1,6 @@
 import type { ChangeEvent } from 'react'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
+import { MultiSelect } from '@/shared/components/form/MultiSelect'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PROVIDER_ROLES, PROVIDER_TYPES } from '../model/providerTypes'
 import type { CredentialRecord } from '@/generated/query/zod'
@@ -17,6 +18,7 @@ export interface ProviderCreateFormData {
   orchestratorConnId: string
   vmPrefix: string
   vmTags: string[]
+  backingStorageProviderIds: string[]
   notificationEmail: string
   cacheRefreshSeconds: string
 }
@@ -30,6 +32,8 @@ interface ProviderCreateFormProps {
   idDisabled?: boolean
   typeDisabled?: boolean
   credentials: CredentialRecord[]
+  storageProviders?: { id: string; name: string }[]
+  onBackingStorageChange: (ids: string[]) => void
   credentialsLoading: boolean
   credentialsError: boolean
   onRetryCredentials: () => void
@@ -52,6 +56,8 @@ export function ProviderCreateForm({
   idDisabled = false,
   typeDisabled = false,
   credentials,
+  storageProviders = [],
+  onBackingStorageChange,
   credentialsLoading,
   credentialsError,
   onRetryCredentials,
@@ -66,6 +72,11 @@ export function ProviderCreateForm({
   onSubmit,
 }: ProviderCreateFormProps) {
   const { t } = useTranslation()
+  const storageOptions = [
+    ...storageProviders.map(provider => ({ value: provider.id, label: provider.name + ' — ' + provider.id })),
+    ...data.backingStorageProviderIds.filter(id => !storageProviders.some(provider => provider.id === id))
+      .map(id => ({ value: id, label: t('providers.credentials.unavailable').replace('{id}', id) })),
+  ]
   const selectedCredentialIsMissing = Boolean(
     data.credentialId && !credentials.some(credential => credential.id === data.credentialId),
   )
@@ -190,6 +201,16 @@ export function ProviderCreateForm({
           {errors.port ? <p className="mt-1 text-xs text-red-600">{errors.port}</p> : null}
         </Field>
       </div>
+
+      {data.type === 'VMWARE' ? (
+        <Field label={t('forms.backingStorageProviders')} htmlFor="create-backingStorageProviders">
+          <MultiSelect id="create-backingStorageProviders" label={t('forms.backingStorageProviders')}
+            options={storageOptions} value={data.backingStorageProviderIds}
+            onChange={onBackingStorageChange} disabled={isSubmitting}
+            placeholder={t('forms.backingStorageProvidersSelect')} emptyText={t('forms.backingStorageProvidersEmpty')} />
+          <p className="mt-1 text-xs text-text-muted">{t('forms.backingStorageProvidersHelper')}</p>
+        </Field>
+      ) : null}
 
       <Field label={t('forms.cacheRefreshSeconds')} htmlFor="create-cacheRefreshSeconds">
         <Input

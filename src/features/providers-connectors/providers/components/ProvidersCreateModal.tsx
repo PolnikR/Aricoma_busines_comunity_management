@@ -37,6 +37,7 @@ const EMPTY_FORM: ProviderCreateFormData = {
   orchestratorConnId: '',
   vmPrefix: '',
   vmTags: [],
+  backingStorageProviderIds: [],
   notificationEmail: '',
   cacheRefreshSeconds: '',
 }
@@ -56,6 +57,7 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         orchestratorConnId: provider.orchestratorConnId ?? '',
         vmPrefix: provider.vmPrefix ?? '',
         vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
+        backingStorageProviderIds: [...(provider.backingStorageProviderIds ?? [])],
         notificationEmail: provider.notificationEmail ?? '',
         cacheRefreshSeconds: provider.cacheRefreshSeconds === null || provider.cacheRefreshSeconds === undefined
           ? ''
@@ -95,6 +97,8 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     || formData.vmPrefix !== initialForm.vmPrefix
     || formData.vmTags.length !== initialForm.vmTags.length
     || formData.vmTags.some((tag, index) => tag !== initialForm.vmTags[index])
+    || formData.backingStorageProviderIds.length !== initialForm.backingStorageProviderIds.length
+    || formData.backingStorageProviderIds.some(id => !initialForm.backingStorageProviderIds.includes(id))
   )
   const navigationGuard = useUnsavedChangesGuard(isDirty)
 
@@ -131,7 +135,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
         }
       }
 
-      return { ...prev, [field]: value }
+      return { ...prev, [field]: value, ...(field === 'type' && value !== 'VMWARE' ? { backingStorageProviderIds: [] } : {}) }
     })
     if (field in errors && errors[field]) {
       setErrors((prev) => {
@@ -206,6 +210,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     if (orchestratorConnId) record.orchestratorConnId = orchestratorConnId
     record.vmPrefix = formData.vmPrefix.trim() || null
     record.vmTags = [...formData.vmTags]
+    if (formData.type === 'VMWARE') record.backingStorageProviderIds = [...formData.backingStorageProviderIds]
     record.notificationEmail = formData.notificationEmail.trim() || null
     record.cacheRefreshSeconds = formData.cacheRefreshSeconds.trim() ? Number(formData.cacheRefreshSeconds) : null
 
@@ -263,6 +268,11 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
 
         <ProviderCreateForm
           data={formData}
+          storageProviders={existingProviders.filter(entry => entry.type === 'FLASHCOPY')}
+          onBackingStorageChange={backingStorageProviderIds => {
+            setFormData(prev => ({ ...prev, backingStorageProviderIds }))
+            setSubmitError(null)
+          }}
           errors={errors}
           isSubmitting={upsert.isPending}
           idDisabled={isEdit}

@@ -18,6 +18,7 @@ const data = {
   orchestratorConnId: '',
   vmPrefix: 'prod-',
   vmTags: ['saved-tag'],
+  backingStorageProviderIds: [],
   notificationEmail: 'provider-alerts@example.test',
   cacheRefreshSeconds: '120',
 }
@@ -44,6 +45,7 @@ describe('ProviderCreateForm', () => {
         credentialsError={false}
         onRetryCredentials={vi.fn()}
         onTagsChange={vi.fn()}
+        onBackingStorageChange={vi.fn()}
         onChange={onChange}
         onSubmit={onSubmit}
       />,
@@ -69,6 +71,7 @@ describe('ProviderCreateForm', () => {
         idDisabled
         typeDisabled
         onTagsChange={vi.fn()}
+        onBackingStorageChange={vi.fn()}
         onChange={vi.fn()}
         onSubmit={vi.fn()}
       />,
@@ -91,6 +94,7 @@ describe('ProviderCreateForm', () => {
         credentialsError={false}
         onRetryCredentials={vi.fn()}
         onTagsChange={vi.fn()}
+        onBackingStorageChange={vi.fn()}
         onChange={onChange}
         onSubmit={vi.fn()}
       />,
@@ -115,6 +119,7 @@ describe('ProviderCreateForm', () => {
         credentialsError={false}
         onRetryCredentials={vi.fn()}
         onTagsChange={vi.fn()}
+        onBackingStorageChange={vi.fn()}
         onChange={onChange}
         onSubmit={vi.fn()}
       />,
@@ -147,6 +152,7 @@ describe('ProviderCreateForm', () => {
         tagsDisabled={false}
         onRetryTags={vi.fn()}
         onTagsChange={onTagsChange}
+        onBackingStorageChange={vi.fn()}
         onChange={vi.fn()}
         onSubmit={vi.fn()}
       />,

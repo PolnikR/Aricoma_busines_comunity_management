@@ -17,6 +17,7 @@ const vcenter = {
   ipAddress: '10.99.99.40',
   credentialId: 'vcenter-admin',
   credentialStatus: 'ok',
+  backingStorageProviderIds: ['flash-a', 'flash-b'],
 }
 const airflow = { id: 'airflow-01', name: 'Airflow', type: 'AIRFLOW', role: 'source' }
 
@@ -63,6 +64,7 @@ describe('providers wire contract', () => {
     expect(calls(mock)[0]?.url).toBe('/api/get_providers?role=source')
     expect(result.current.data?.map(provider => provider.id)).toEqual(['vmware-vcenter-01'])
     expect(result.current.data?.[0]?.credentialStatus).toBe('ok')
+    expect(result.current.data?.[0]?.backingStorageProviderIds).toEqual(['flash-a', 'flash-b'])
   })
 
   it('submits the provider body and refetches the list', async () => {

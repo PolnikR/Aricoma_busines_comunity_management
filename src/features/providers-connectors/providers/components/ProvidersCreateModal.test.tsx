@@ -55,6 +55,46 @@ function fillValidForm() {
 }
 
 describe('ProvidersCreateModal', () => {
+  const flashA: ProviderRecord = { ...mockProviderA, id: 'flash-a', name: 'Array A', type: 'FLASHCOPY' }
+  const flashB: ProviderRecord = { ...mockProviderA, id: 'flash-b', name: 'Array B', type: 'FLASHCOPY', role: 'target' }
+
+  it.each(['create', 'edit', 'clear'])('submits backing storage IDs on %s', async mode => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const provider = { ...mockProviderA, backingStorageProviderIds: ['flash-a', 'flash-b'] }
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[flashA, flashB, provider]}
+      {...(mode !== 'create' ? { provider } : {})} />)
+    if (mode === 'create') fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Backing FlashSystem providers' }))
+    const a = screen.getByRole('checkbox', { name: 'Array A — flash-a' })
+    const b = screen.getByRole('checkbox', { name: 'Array B — flash-b' })
+    expect(screen.getAllByRole('checkbox')).toHaveLength(2)
+    if (mode === 'create' || mode === 'clear') {
+      fireEvent.click(a)
+      fireEvent.click(b)
+    } else {
+      expect(a).toBeChecked()
+      expect(b).toBeChecked()
+    }
+    fireEvent.click(screen.getByRole('button', { name: mode === 'create' ? 'Create provider' : 'Edit provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalled() })
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit
+    expect(JSON.parse(init.body as string)).toMatchObject({ backingStorageProviderIds: mode === 'clear' ? [] : ['flash-a', 'flash-b'] })
+    vi.unstubAllGlobals()
+  })
+
+  it('hides and clears backing storage when switching away from VMware', () => {
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[flashA]} />)
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Backing FlashSystem providers' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Array A — flash-a' }))
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'FLASHCOPY' } })
+    expect(screen.queryByRole('button', { name: 'Backing FlashSystem providers' })).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'VMWARE' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Backing FlashSystem providers' }))
+    expect(screen.getByRole('checkbox', { name: 'Array A — flash-a' })).not.toBeChecked()
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
     useTagsMock.mockReturnValue({ data: [], isLoading: false, error: null, refetch: vi.fn() })

@@ -1,4 +1,8 @@
 {
+  "forms.backingStorageProviders": "Backing FlashSystem providers",
+  "forms.backingStorageProvidersSelect": "Select FlashSystem providers",
+  "forms.backingStorageProvidersEmpty": "No FlashSystem providers available",
+  "forms.backingStorageProvidersHelper": "Select the FlashSystems that store the virtual machine disks.",
   "language.en": "English",
   "language.sk": "Slovak",
   "language.cs": "Czech",

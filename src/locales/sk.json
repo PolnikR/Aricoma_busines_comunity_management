@@ -1,4 +1,8 @@
 {
+  "forms.backingStorageProviders": "Podkladové FlashSystem providery",
+  "forms.backingStorageProvidersSelect": "Vyberte FlashSystem providery",
+  "forms.backingStorageProvidersEmpty": "Nie sú dostupné žiadne FlashSystem providery",
+  "forms.backingStorageProvidersHelper": "Vyberte FlashSystemy, na ktorých sú uložené disky virtuálnych strojov.",
   "language.en": "Angličtina",
   "language.sk": "Slovenčina",
   "language.cs": "Čeština",
