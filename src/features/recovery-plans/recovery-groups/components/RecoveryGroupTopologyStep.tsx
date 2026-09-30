@@ -65,10 +65,6 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
             <option value="managed" disabled>{t(key('managed'))}</option>
           </Select>
         </Field>
-        <Field label={t(key('consistencyGroup'))} htmlFor="consistency-group">
-          <Input id="consistency-group" value={draft.consistencyGroupId ?? ''} disabled={managed}
-            onChange={event => { onChange({ consistencyGroupId: event.target.value }) }} />
-        </Field>
       </div> : null}
       {problem && draft.topology && !isLoading && !error ? <Alert variant="warning" title={t(key(`errors.${problem}`))} /> : null}
     </div>

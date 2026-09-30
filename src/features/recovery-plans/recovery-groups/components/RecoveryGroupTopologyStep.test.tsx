@@ -17,6 +17,7 @@ describe('RecoveryGroupTopologyStep', () => {
   })
   it('shows a derived read-only target, disables Managed and clears Metro values for Local', async () => {
     render(<RecoveryGroupTopologyStep {...props} draft={{ topology: 'metro_mirror', relatedVolumeProviderId: 'source', metroMirrorMode: 'existing', consistencyGroupId: '001' }} />)
+    expect(screen.queryByLabelText('Consistency group ID')).not.toBeInTheDocument()
     expect(screen.getByDisplayValue('Target FS')).toHaveAttribute('readonly')
     expect(screen.getByRole('option', { name: /managed/i })).toBeDisabled()
     await userEvent.setup().selectOptions(screen.getByLabelText('Topology mode'), 'local')
