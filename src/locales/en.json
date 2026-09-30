@@ -505,7 +505,7 @@
   "pages.recoveryGroupBuilder.type.note": "After assigning a specific resource type to a recovery group, you can only add resources of that type to the group. You cannot change this later.",
   "pages.recoveryGroupBuilder.type.categories.ariaLabel": "Resource categories",
   "pages.recoveryGroupBuilder.type.categories.backupWorkload": "Compute workloads",
-  "pages.recoveryGroupBuilder.type.categories.storageSystem": "Storage systems",
+  "pages.recoveryGroupBuilder.type.categories.storageSystem": "Storage volumes",
   "pages.recoveryGroupBuilder.type.workloads.vmware.title": "VMware virtual machines",
   "pages.recoveryGroupBuilder.type.workloads.vmware.description": "Group virtual machines discovered from VMware providers.",
   "pages.recoveryGroupBuilder.type.workloads.ibmPower.title": "IBM Power virtual machines",

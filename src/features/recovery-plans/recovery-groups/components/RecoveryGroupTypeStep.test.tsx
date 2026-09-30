@@ -121,7 +121,7 @@ describe('RecoveryGroupTypeStep', () => {
       />,
     )
 
-    expect(screen.getByRole('tab', { name: 'Storage systems' })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: 'Storage volumes' })).toHaveAttribute(
       'aria-selected',
       'true',
     )
@@ -145,7 +145,7 @@ describe('RecoveryGroupTypeStep', () => {
       />,
     )
 
-    await user.click(screen.getByRole('tab', { name: 'Storage systems' }))
+    await user.click(screen.getByRole('tab', { name: 'Storage volumes' }))
     expect(onCategoryChange).toHaveBeenCalledWith('storage_system')
 
     rerender(

@@ -238,7 +238,7 @@ describe('RecoveryGroupBuilder', () => {
     await user.selectOptions(screen.getByLabelText('Source FlashSystem provider'), 'ibm-flashsystem-01')
     await user.type(screen.getByLabelText('Consistency group ID'), '001')
     await user.click(screen.getByRole('button', { name: 'Next' }))
-    await user.click(screen.getByRole('tab', { name: /Storage systems/i }))
+    await user.click(screen.getByRole('tab', { name: /Storage volumes/i }))
     await user.click(screen.getByRole('button', { name: /IBM FlashSystemGroup storage volumes/i }))
     await user.click(screen.getByRole('button', { name: 'Storage topology' }))
     expect(screen.getByLabelText('Topology mode')).toHaveValue('metro_mirror')
@@ -685,7 +685,7 @@ describe('RecoveryGroupBuilder', () => {
     await user.click(screen.getByRole('button', { name: 'Resource type' }))
 
     expect(screen.getByRole('button', { name: /VMware virtual machines/i })).toBeDisabled()
-    await user.click(screen.getByRole('tab', { name: 'Storage systems' }))
+    await user.click(screen.getByRole('tab', { name: 'Storage volumes' }))
     expect(screen.getByRole('button', { name: /VMware virtual machines/i })).toBeInTheDocument()
   })
 

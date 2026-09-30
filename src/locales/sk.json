@@ -484,7 +484,7 @@
   "pages.recoveryGroupBuilder.type.note": "Po priradení konkrétneho typu zdroja ku skupine obnovy môžete do skupiny pridávať iba zdroje daného typu. Neskôr ho už nebude možné zmeniť.",
   "pages.recoveryGroupBuilder.type.categories.ariaLabel": "Kategórie zdrojov",
   "pages.recoveryGroupBuilder.type.categories.backupWorkload": "Výpočtové workloady",
-  "pages.recoveryGroupBuilder.type.categories.storageSystem": "Storage systémy",
+  "pages.recoveryGroupBuilder.type.categories.storageSystem": "Úložné zväzky",
   "pages.recoveryGroupBuilder.type.workloads.vmware.title": "Virtuálne stroje VMware",
   "pages.recoveryGroupBuilder.type.workloads.vmware.description": "Zoskupte virtuálne stroje objavené z VMware providerov.",
   "pages.recoveryGroupBuilder.type.workloads.ibmPower.title": "Virtuálne stroje IBM Power",
