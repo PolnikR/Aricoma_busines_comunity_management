@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { Spinner } from '@/shared/components/spinner/Spinner'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { Field, Input } from '@/shared/components/form/FormControls'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { TruncatedText } from '@/shared/components/truncated-text/TruncatedText'
-import { Alert } from '@/shared/components/alert/Alert'
 import { ListSkeleton } from '@/shared/components/list-skeleton/ListSkeleton'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
 import { isProgrammaticIdAvailable } from '@/shared/utils/programmaticId'
@@ -28,6 +27,9 @@ import { RecoveryGroupProviderStep } from './RecoveryGroupProviderStep'
 import { RecoveryGroupResourcesStep } from './RecoveryGroupResourcesStep'
 import { RecoveryGroupTypeStep } from './RecoveryGroupTypeStep'
 import { RecoveryGroupTopologyStep } from './RecoveryGroupTopologyStep'
+import { RecoveryGroupMetroMirrorFields } from './RecoveryGroupMetroMirrorFields'
+import { useRecoveryGroupMetroMirrorRelationships } from '../hooks/useRecoveryGroupMetroMirrorRelationships'
+import { reconcileMetroMirrorPrefill } from '../utils/reconcileMetroMirrorPrefill'
 import { getRecoveryGroupTopologyError } from '../utils/recoveryGroupTopology'
 
 interface RecoveryGroupBuilderProps {
@@ -100,6 +102,7 @@ export function RecoveryGroupBuilder({
         auxiliaryNamesByVolume: { ...initialData.auxiliaryNamesByVolume },
       }
     : INITIAL_DRAFT)
+  const [hasConsistencyOverride, setHasConsistencyOverride] = useState(Boolean(initialData?.consistencyGroupId?.trim()))
   const updateDraft = (update: Partial<RecoveryGroupDraft>) => {
     setDraft(current => ({ ...current, ...update }))
     onDirtyChange?.(true)
@@ -161,7 +164,7 @@ export function RecoveryGroupBuilder({
 
   const discoveryKey = JSON.stringify([draftState.relatedVolumeProviderId, draftState.providerId, [...draftState.resources].sort()])
   const [discoveryExclusions, setDiscoveryExclusions] = useState<{ key: string; removed: string[]; all: boolean }>({ key: '', removed: [], all: false })
-  const draft = useMemo(() => {
+  const selectionDraft = useMemo(() => {
     const orchestrationProviderId = draftState.orchestrationProviderId ?? soleEligibleProviderId
     const exclusions = discoveryExclusions.key === discoveryKey ? discoveryExclusions : null
     const discovered = hasRelatedStorageStep
@@ -176,57 +179,75 @@ export function RecoveryGroupBuilder({
     }
   }, [draftState, soleEligibleProviderId, discoveryKey, discoveryExclusions, hasRelatedStorageStep, relatedVolumesDiscovery])
 
-  useEffect(() => {
-    if (!hasRelatedStorageStep || !relatedVolumesDiscovery.isResolved || relatedVolumesDiscovery.isLoading || relatedVolumesDiscovery.error) return
-    const activeVolumes = new Set(draft.relatedVolumes)
-    const nextAuxiliaryNames = Object.fromEntries(Object.entries(draftState.auxiliaryNamesByVolume ?? [])
-      .filter(([name]) => activeVolumes.has(name)))
-    const previousAuxiliaryNames = draftState.auxiliaryNamesByVolume ?? {}
-    if (Object.keys(nextAuxiliaryNames).length !== Object.keys(previousAuxiliaryNames).length) {
-      const timeout = window.setTimeout(() => {
-        setDraft(current => {
-          return { ...current, auxiliaryNamesByVolume: nextAuxiliaryNames }
-        })
-      }, 0)
-      return () => {
-        window.clearTimeout(timeout)
-      }
+  const selectedVolumes = selectionDraft.resourceType === 'volume' ? selectionDraft.resources : selectionDraft.relatedVolumes
+  // Prune only after discovery settles, so temporary loading never deletes saved corrections.
+  const selectionKey = JSON.stringify([...selectedVolumes].sort())
+  const [previousSelectionKey, setPreviousSelectionKey] = useState<string | null>(null)
+  const discoverySettled = !hasRelatedStorageStep || (relatedVolumesDiscovery.isResolved && !relatedVolumesDiscovery.isLoading && !relatedVolumesDiscovery.error)
+  if (discoverySettled && previousSelectionKey !== selectionKey) {
+    setPreviousSelectionKey(selectionKey)
+    const activeNames = new Set(selectedVolumes)
+    const overrides = draftState.auxiliaryNamesByVolume ?? {}
+    if (Object.keys(overrides).some(name => !activeNames.has(name))) {
+      setDraft({ ...draftState, auxiliaryNamesByVolume: Object.fromEntries(Object.entries(overrides).filter(([name]) => activeNames.has(name))) })
     }
-    return undefined
-  }, [draft, draftState.auxiliaryNamesByVolume, hasRelatedStorageStep, relatedVolumesDiscovery.error, relatedVolumesDiscovery.isLoading, relatedVolumesDiscovery.isResolved])
+  }
 
   const allowLegacyLocal = (initialData?.resourceType === 'vm'
     && (initialData.topology ?? 'local') === 'local'
     && !initialData.relatedVolumeProviderId && initialData.relatedVolumes.length === 0
-    && !draft.relatedVolumeProviderId && draft.relatedVolumes.length === 0)
+    && !selectionDraft.relatedVolumeProviderId && selectionDraft.relatedVolumes.length === 0)
   const topologyValid = !providerQuery.isLoading && !providerQuery.isFetching && !providerQuery.error
     && initialData?.metroMirrorMode !== 'managed'
-    && getRecoveryGroupTopologyError(draft, allProviders, allowLegacyLocal) === null
-  const selectedVolumes = draft.resourceType === 'volume' ? draft.resources : draft.relatedVolumes
-  const storageValid = draft.topology !== 'metro_mirror' || (selectedVolumes.length > 0
-    && selectedVolumes.every(name => draft.auxiliaryNamesByVolume?.[name]?.trim()))
+    && getRecoveryGroupTopologyError(selectionDraft, allProviders, allowLegacyLocal) === null
+  const metroExisting = draftState.topology === 'metro_mirror' && draftState.metroMirrorMode === 'existing'
+  const relationships = useRecoveryGroupMetroMirrorRelationships(
+    draftState.relatedVolumeProviderId ?? null, selectedVolumes, metroExisting && topologyValid && discoverySettled,
+  )
+  const prefill = reconcileMetroMirrorPrefill(selectedVolumes, draftState.auxiliaryNamesByVolume ?? {},
+    hasConsistencyOverride ? draftState.consistencyGroupId ?? '' : undefined, relationships.data)
+  const draft = {
+    ...selectionDraft,
+    consistencyGroupId: metroExisting ? prefill.consistencyGroupId : '',
+    auxiliaryNamesByVolume: metroExisting ? prefill.auxiliaryNamesByVolume : {},
+  }
+  const storageValid = draft.topology !== 'metro_mirror' || (selectedVolumes.length > 0 && Boolean(draft.consistencyGroupId.trim())
+    && selectedVolumes.every(name => draft.auxiliaryNamesByVolume[name]?.trim()))
   const discoveryValid = !hasRelatedStorageStep || (!relatedVolumesDiscovery.isLoading && !relatedVolumesDiscovery.error)
   const baseValid = detailsValid && topologyValid && typeValid && providerValid
   const resourcesValid = draft.resources.length > 0 && (hasRelatedStorageStep || storageValid)
   const downstreamValid = baseValid && resourcesValid && storageValid && discoveryValid
   const changeSource = (update: Partial<RecoveryGroupDraft>) => {
+    if (('topology' in update && update.topology !== draftState.topology)
+      || ('relatedVolumeProviderId' in update && update.relatedVolumeProviderId !== draftState.relatedVolumeProviderId)) {
+      setHasConsistencyOverride(false)
+    }
     if ('relatedVolumeProviderId' in update && update.relatedVolumeProviderId !== draft.relatedVolumeProviderId) {
       setDiscoveryExclusions({ key: '', removed: [], all: false })
       updateDraft({ ...update, relatedVolumes: [], auxiliaryNamesByVolume: {}, consistencyGroupId: '',
         ...(draft.resourceType === 'volume' ? { providerId: update.relatedVolumeProviderId ?? null, resources: [] } : {}) })
     } else updateDraft(update)
   }
-  const removeAuxiliary = (name: string) => Object.fromEntries(Object.entries(draft.auxiliaryNamesByVolume ?? {}).filter(([key]) => key !== name))
+  const removeAuxiliary = (name: string) => Object.fromEntries(Object.entries(draftState.auxiliaryNamesByVolume ?? {}).filter(([key]) => key !== name))
   const renderVolumeContent = draft.topology === 'metro_mirror' ? (name: string) => (
     <div className="grid min-w-0 grid-cols-[minmax(0,0.7fr)_minmax(0,1fr)] items-center gap-3">
       <TruncatedText text={name} />
       <Input size="sm" aria-label={t('pages.recoveryGroupBuilder.topology.auxiliary') + ': ' + name}
         placeholder={t('pages.recoveryGroupBuilder.topology.auxiliary')}
-        value={draft.auxiliaryNamesByVolume?.[name] ?? ''}
-        invalid={!draft.auxiliaryNamesByVolume?.[name]?.trim()}
-        onChange={event => { updateDraft({ auxiliaryNamesByVolume: { ...draft.auxiliaryNamesByVolume, [name]: event.target.value } }) }} />
+        value={draft.auxiliaryNamesByVolume[name] ?? ''}
+        invalid={!draft.auxiliaryNamesByVolume[name]?.trim()}
+        onChange={event => { updateDraft({ auxiliaryNamesByVolume: { ...draftState.auxiliaryNamesByVolume, [name]: event.target.value } }) }} />
     </div>
   ) : undefined
+
+  const metroFields = metroExisting ? <RecoveryGroupMetroMirrorFields
+    value={draft.consistencyGroupId}
+    onChange={value => { setHasConsistencyOverride(true); updateDraft({ consistencyGroupId: value }) }}
+    loading={relationships.isLoading} error={relationships.error instanceof Error ? relationships.error : null}
+    onRetry={() => { void relationships.refetch() }} warning={relationships.data?.warning ?? ''}
+    unresolvedCount={prefill.unresolvedVolumes.length}
+    missingGroup={Boolean(relationships.data && !relationships.data.consistency_group_id?.trim())}
+    mismatch={prefill.hasMismatch} /> : null
 
   const steps = [
     { id: 'details', label: t('pages.recoveryGroupBuilder.steps.details') },
@@ -305,7 +326,7 @@ export function RecoveryGroupBuilder({
                     vmMetadataByName: draft.workloadType === workloadType
                       ? draft.vmMetadataByName
                       : {},
-                    auxiliaryNamesByVolume: draft.workloadType === workloadType ? draft.auxiliaryNamesByVolume : {},
+                    auxiliaryNamesByVolume: draft.workloadType === workloadType ? draftState.auxiliaryNamesByVolume : {},
                     relatedVolumes: draft.workloadType === workloadType
                       ? draft.relatedVolumes
                       : [],
@@ -329,31 +350,36 @@ export function RecoveryGroupBuilder({
                       resources: draft.providerId === providerId ? draft.resources : [],
                       vmMetadataByName: draft.providerId === providerId ? draft.vmMetadataByName : {},
                       relatedVolumes: draft.providerId === providerId ? draft.relatedVolumes : [],
-                      auxiliaryNamesByVolume: draft.providerId === providerId ? draft.auxiliaryNamesByVolume : {},
+                      auxiliaryNamesByVolume: draft.providerId === providerId ? draftState.auxiliaryNamesByVolume : {},
                     })
                   }}
                 />
               ) : null
             ) : null}
             {step === resourcesStepIndex ? (
-              <RecoveryGroupResourcesStep
-                workloadType={draft.workloadType}
-                providerId={draft.providerId}
-                resources={draft.resources}
-                renderItemContent={draft.resourceType === 'volume' ? renderVolumeContent : undefined}
-                onAdd={resource => {
-                  if (!draft.resources.includes(resource)) {
-                    updateDraft({ resources: [...draft.resources, resource] })
-                  }
-                }}
-                onRemove={resource => {
-                  updateDraft({
-                    resources: draft.resources.filter(item => item !== resource),
-                    ...(draft.resourceType === 'volume' ? { auxiliaryNamesByVolume: removeAuxiliary(resource) } : {}),
-                  })
-                }}
-                onMetadataAvailable={handleMetadataAvailable}
-              />
+              <div className="flex min-h-80 min-w-0 flex-col gap-3 lg:h-full">
+                {draft.resourceType === 'volume' ? metroFields : null}
+                <div className="min-h-64 min-w-0 flex-1">
+                  <RecoveryGroupResourcesStep
+                    workloadType={draft.workloadType}
+                    providerId={draft.providerId}
+                    resources={draft.resources}
+                    renderItemContent={draft.resourceType === 'volume' ? renderVolumeContent : undefined}
+                    onAdd={resource => {
+                      if (!draft.resources.includes(resource)) {
+                        updateDraft({ resources: [...draft.resources, resource] })
+                      }
+                    }}
+                    onRemove={resource => {
+                      updateDraft({
+                        resources: draft.resources.filter(item => item !== resource),
+                        ...(draft.resourceType === 'volume' ? { auxiliaryNamesByVolume: removeAuxiliary(resource) } : {}),
+                      })
+                    }}
+                    onMetadataAvailable={handleMetadataAvailable}
+                  />
+                </div>
+              </div>
             ) : null}
             {step === relatedStorageStepIndex && hasRelatedStorageStep ? (
               <div className="flex min-h-80 min-w-0 flex-col gap-3 lg:h-full">
@@ -382,7 +408,7 @@ export function RecoveryGroupBuilder({
                 {relatedVolumesDiscovery.error ? <FetchErrorAlert title={t('pages.recoveryGroupBuilder.topology.discoveryError')}
                   onRetry={() => { relatedVolumesDiscovery.refetch?.() }} retryLabel={t('buttons.retry')} /> : null}
                 {relatedVolumesDiscovery.isLoading ? <ListSkeleton rowCount={1} ariaLabel={t('pages.recoveryGroupBuilder.resources.volumes.loading')} /> : null}
-                {draft.topology === 'metro_mirror' && !storageValid ? <Alert variant="info" title={t('pages.recoveryGroupBuilder.topology.auxiliaryRequired')} /> : null}
+                {metroFields}
                 {draft.relatedVolumeProviderId ? (
                   <div className="min-h-64 min-w-0 flex-1">
                     <RecoveryGroupResourcesStep

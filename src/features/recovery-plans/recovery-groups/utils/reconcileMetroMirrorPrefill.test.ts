@@ -23,6 +23,6 @@ describe('reconcileMetroMirrorPrefill', () => {
   it('replaces automatic values on refetch without modifying manual values', () => {
     const result = reconcileMetroMirrorPrefill(['A'], { A: 'CUSTOM' }, undefined, { ...data, consistency_group_id: '002' })
     expect(result.consistencyGroupId).toBe('002')
-    expect(result.auxiliaryNamesByVolume.A).toBe('CUSTOM')
+    expect(result.auxiliaryNamesByVolume['A']).toBe('CUSTOM')
   })
 })

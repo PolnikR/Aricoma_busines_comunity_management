@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupBuilder } from './RecoveryGroupBuilder'
+import { useRecoveryGroupMetroMirrorRelationships } from '../hooks/useRecoveryGroupMetroMirrorRelationships'
 import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
 
 const { usePlatformProvidersMock } = vi.hoisted(() => ({ usePlatformProvidersMock: vi.fn() }))
@@ -75,6 +76,7 @@ vi.mock('../hooks/useRecoveryGroupResourceInventory', () => ({
     refetch: vi.fn(),
   }),
 }))
+vi.mock('../hooks/useRecoveryGroupMetroMirrorRelationships', () => ({ useRecoveryGroupMetroMirrorRelationships: vi.fn() }))
 vi.mock('../hooks/useRecoveryGroupRelatedVolumes', () => ({
   useRecoveryGroupRelatedVolumes: vi.fn(() => ({
     flashcopyProviderId: null,
@@ -214,6 +216,78 @@ const existingStorageGroup: RecoveryGroup = {
 }
 
 describe('RecoveryGroupBuilder', () => {
+  it('disables lookup for Local and waits for VM discovery before looking up selected source volumes', async () => {
+    const mock = vi.mocked(useRecoveryGroupMetroMirrorRelationships)
+    const props = { initialData: { ...existingGroup, relatedVolumeProviderId: 'ibm-flashsystem-01' }, onCreate: vi.fn(), onCancel: vi.fn() }
+    const { rerender } = render(<RecoveryGroupBuilder {...props} />)
+    expect(mock).toHaveBeenLastCalledWith('ibm-flashsystem-01', [], false)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Storage topology' }))
+    await user.selectOptions(screen.getByLabelText('Topology mode'), 'metro_mirror')
+    vi.mocked(useRecoveryGroupRelatedVolumes).mockReturnValue({ flashcopyProviderId: 'ibm-flashsystem-01', discoveredVolumeNames: [], isLoading: true, isResolved: false })
+    rerender(<RecoveryGroupBuilder {...props} />)
+    expect(mock).toHaveBeenLastCalledWith('ibm-flashsystem-01', [], false)
+    vi.mocked(useRecoveryGroupRelatedVolumes).mockReturnValue({ flashcopyProviderId: 'ibm-flashsystem-01', discoveredVolumeNames: ['VOL-01'], isLoading: false, isResolved: true })
+    rerender(<RecoveryGroupBuilder {...props} />)
+    expect(mock).toHaveBeenLastCalledWith('ibm-flashsystem-01', ['VOL-01'], true)
+  })
+
+  it('preserves saved values during refetch but resets overrides after changing Source', async () => {
+    const lookup = { provider_id: 'ibm-flashsystem-01', consistency_group_id: 'AUTO-CG', volumes: [{ name: 'VOL-01', status: 'ok' as const, auxiliary_name: 'AUTO-AUX' }] }
+    vi.mocked(useRecoveryGroupMetroMirrorRelationships).mockReturnValue({ data: lookup, error: null, isLoading: false, refetch: vi.fn() })
+    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, topology: 'metro_mirror', metroMirrorMode: 'existing', consistencyGroupId: 'SAVED-CG', auxiliaryNamesByVolume: { 'VOL-01': 'SAVED-AUX' } }} onCreate={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+    expect(screen.getByLabelText('Consistency group ID')).toHaveValue('SAVED-CG')
+    expect(screen.getByLabelText('Auxiliary volume name: VOL-01')).toHaveValue('SAVED-AUX')
+    await user.click(screen.getByRole('button', { name: 'Storage topology' }))
+    await user.selectOptions(screen.getByLabelText('Source FlashSystem provider'), 'ibm-flashsystem-target')
+    await user.selectOptions(screen.getByLabelText('Source FlashSystem provider'), 'ibm-flashsystem-01')
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+    fireEvent.drop(screen.getByLabelText('Selected recovery group volumes'), { dataTransfer: { getData: () => 'VOL-01' } })
+    expect(screen.getByLabelText('Consistency group ID')).toHaveValue('AUTO-CG')
+    expect(screen.getByLabelText('Auxiliary volume name: VOL-01')).toHaveValue('AUTO-AUX')
+  })
+
+  it.each(['vm', 'volume'] as const)('prefills %s storage and retains manual changes on refetch and submit', async kind => {
+    const lookup = { provider_id: 'ibm-flashsystem-01', consistency_group_id: '001', volumes: [{ name: 'VOL-01', status: 'ok' as const, auxiliary_name: 'AUTO-AUX' }] }
+    const mock = vi.mocked(useRecoveryGroupMetroMirrorRelationships)
+    mock.mockReturnValue({ data: lookup, error: null, isLoading: false, refetch: vi.fn() })
+    const initialData: RecoveryGroup = { ...(kind === 'vm' ? existingGroup : existingStorageGroup), topology: 'metro_mirror', metroMirrorMode: 'existing', relatedVolumeProviderId: 'ibm-flashsystem-01', relatedVolumes: ['VOL-01'] }
+    const props = { initialData, onCreate: vi.fn(), onCancel: vi.fn() }
+    const { rerender } = render(<RecoveryGroupBuilder {...props} />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: kind === 'vm' ? 'Related storage' : 'Resources' }))
+    expect(screen.getByLabelText('Consistency group ID')).toHaveValue('001')
+    expect(screen.getByLabelText('Auxiliary volume name: VOL-01')).toHaveValue('AUTO-AUX')
+    fireEvent.change(screen.getByLabelText('Consistency group ID'), { target: { value: '' } })
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Consistency group ID'), { target: { value: '009' } })
+    fireEvent.change(screen.getByLabelText('Auxiliary volume name: VOL-01'), { target: { value: '' } })
+    mock.mockReturnValue({ data: { ...lookup, consistency_group_id: '002' }, error: null, isLoading: false, refetch: vi.fn() })
+    rerender(<RecoveryGroupBuilder {...props} />)
+    expect(screen.getByLabelText('Consistency group ID')).toHaveValue('009')
+    expect(screen.getByLabelText('Auxiliary volume name: VOL-01')).toHaveValue('')
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Auxiliary volume name: VOL-01'), { target: { value: 'MANUAL-AUX' } })
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    expect(props.onCreate).toHaveBeenCalledWith(expect.objectContaining({ consistencyGroupId: '009', auxiliaryNamesByVolume: { 'VOL-01': 'MANUAL-AUX' } }))
+  })
+
+  it('allows complete manual input when relationship lookup fails', async () => {
+    const retry = vi.fn()
+    vi.mocked(useRecoveryGroupMetroMirrorRelationships).mockReturnValue({ data: undefined, error: new Error('Offline'), isLoading: false, refetch: retry })
+    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, topology: 'metro_mirror', metroMirrorMode: 'existing' }} onCreate={vi.fn()} onCancel={vi.fn()} />)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Resources' }))
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Consistency group ID'), { target: { value: '001' } })
+    fireEvent.change(screen.getByLabelText('Auxiliary volume name: VOL-01'), { target: { value: 'AUX' } })
+    expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(retry).toHaveBeenCalled()
+  })
+
   it('requires Topology and Source before allowing later steps for a new group', async () => {
     const user = userEvent.setup()
     render(<RecoveryGroupBuilder onCreate={vi.fn()} onCancel={vi.fn()} />)
@@ -236,14 +310,14 @@ describe('RecoveryGroupBuilder', () => {
     await user.click(screen.getByRole('button', { name: 'Storage topology' }))
     await user.selectOptions(screen.getByLabelText('Topology mode'), 'metro_mirror')
     await user.selectOptions(screen.getByLabelText('Source FlashSystem provider'), 'ibm-flashsystem-01')
-    await user.type(screen.getByLabelText('Consistency group ID'), '001')
+    expect(screen.queryByLabelText('Consistency group ID')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Next' }))
     await user.click(screen.getByRole('tab', { name: /Storage volumes/i }))
     await user.click(screen.getByRole('button', { name: /IBM FlashSystemGroup storage volumes/i }))
     await user.click(screen.getByRole('button', { name: 'Storage topology' }))
     expect(screen.getByLabelText('Topology mode')).toHaveValue('metro_mirror')
     expect(screen.getByLabelText('Source FlashSystem provider')).toHaveValue('ibm-flashsystem-01')
-    expect(screen.getByLabelText('Consistency group ID')).toHaveValue('001')
+    expect(screen.queryByLabelText('Consistency group ID')).not.toBeInTheDocument()
   })
 
   it('requires auxiliary for every Metro volume and clears it when switched to Local', async () => {
@@ -262,6 +336,7 @@ describe('RecoveryGroupBuilder', () => {
   })
 
   beforeEach(() => {
+    vi.mocked(useRecoveryGroupMetroMirrorRelationships).mockReturnValue({ data: undefined, error: null, isLoading: false, refetch: vi.fn() })
     providerStatus.isFetching = false
     usePlatformProvidersMock.mockReturnValue(defaultPlatformProvidersResult)
     vi.mocked(useRecoveryGroupRelatedVolumes).mockImplementation((_vmProvider, _vms, flashcopyProviderId) => ({ flashcopyProviderId, discoveredVolumeNames: [], isLoading: false, isResolved: true }))

@@ -220,6 +220,17 @@ describe('useRecoveryGroups', () => {
     expect(result.current.groups[0]?.topology).toBe(topology)
   })
 
+  it.each(['create', 'update'] as const)('rejects missing Metro storage values before %s mutation', async operation => {
+    const mock = stubFetch()
+    const { result } = renderHook(() => useRecoveryGroups(), { wrapper: createWrapper() })
+    await waitFor(() => { expect(result.current.groups).toHaveLength(1) })
+    const metro = { ...draft, topology: 'metro_mirror' as const, metroMirrorMode: 'existing' as const,
+      relatedVolumes: ['VOL-01'], auxiliaryNamesByVolume: { 'VOL-01': 'AUX' }, consistencyGroupId: '' }
+    const save = () => operation === 'create' ? result.current.create(metro) : result.current.update(draft.id, metro)
+    await expect(save()).rejects.toMatchObject({ code: 'invalid_draft' })
+    expect(calls(mock, '/api/submit_recovery_group')).toHaveLength(0)
+  })
+
   it('rejects an invalid Source or unavailable provider query before mutation', async () => {
     const mock = stubFetch()
     const { result } = renderHook(() => useRecoveryGroups(), { wrapper: createWrapper() })
