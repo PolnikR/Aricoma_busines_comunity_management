@@ -4,11 +4,11 @@ Plan: `tasks/collapsible-kpi-variant-a-plan.md`
 
 ## Global constraints
 
-- [ ] Do not change `InventoryShell` or any page outside Discovery & Inventory → Resources.
-- [ ] Do not change metric computation (`mapInventoryToVirtualMachines`, item builders).
-- [ ] Default state (no stored preference) is collapsed; the choice is shared by all Resources tabs.
-- [ ] All new strings in `en.json`, `cs.json` and `sk.json`.
-- [ ] Focused tests and focused lint only; no full suite or production build unless asked.
+- [x] Do not change `InventoryShell` or any page outside Discovery & Inventory → Resources.
+- [x] Do not change metric computation (`mapInventoryToVirtualMachines`, item builders).
+- [x] Default state (no stored preference) is collapsed; the choice is shared by all Resources tabs.
+- [x] All new strings in `en.json`, `cs.json` and `sk.json`.
+- [x] Focused tests and focused lint only; no full suite or production build unless asked.
 
 ## Phase 1 — Foundation
 
@@ -18,13 +18,13 @@ Plan: `tasks/collapsible-kpi-variant-a-plan.md`
 the `SidebarContext` pattern.
 
 **Acceptance criteria:**
-- [ ] `useStoredBoolean(key, defaultValue)` returns `[value, setValue]`; initial value read lazily.
-- [ ] Writes `'true'`/`'false'` on change; unknown stored values fall back to the default.
-- [ ] When `localStorage` throws on read or write, the hook still works in memory.
+- [x] `useStoredBoolean(key, defaultValue)` returns `[value, setValue]`; initial value read lazily.
+- [x] Writes `'true'`/`'false'` on change; unknown stored values fall back to the default.
+- [x] When `localStorage` throws on read or write, the hook still works in memory.
 
 **Verification:**
-- [ ] `npm exec vitest run src/shared/hooks/useStoredBoolean.test.ts`
-- [ ] `npx eslint src/shared/hooks/useStoredBoolean.ts src/shared/hooks/useStoredBoolean.test.ts`
+- [x] `npm exec vitest run src/shared/hooks/useStoredBoolean.test.ts`
+- [x] `npx eslint src/shared/hooks/useStoredBoolean.ts src/shared/hooks/useStoredBoolean.test.ts`
 
 **Dependencies:** None
 
@@ -41,17 +41,17 @@ button) or as a one-line summary strip button ("Show details"). Collapsed state 
 `useStoredBoolean(storageKey, true)` (collapsed by default).
 
 **Acceptance criteria:**
-- [ ] Expanded: same grid classes and `StatCard size="sm"` output as today, plus a "Hide stats"
+- [x] Expanded: same grid classes and `StatCard size="sm"` output as today, plus a "Hide stats"
       button with `aria-expanded="true"` and `aria-controls`.
-- [ ] Collapsed: single strip button listing `value label` for every item, `aria-expanded="false"`;
+- [x] Collapsed: single strip button listing `value label` for every item, `aria-expanded="false"`;
       click expands. Loading state shows value skeletons in the strip.
-- [ ] With empty storage the strip is rendered; state persists across remounts under the given
+- [x] With empty storage the strip is rendered; state persists across remounts under the given
       `storageKey`; strip wraps on narrow widths.
 
 **Verification:**
-- [ ] `npm exec vitest run src/shared/components/stat-card/CollapsibleMetrics.test.tsx src/shared/components/stat-card/StatCard.test.tsx`
-- [ ] `npx eslint src/shared/components/stat-card/`
-- [ ] Locale JSON parses (covered by any test importing locales) and `git diff --check`
+- [x] `npm exec vitest run src/shared/components/stat-card/CollapsibleMetrics.test.tsx src/shared/components/stat-card/StatCard.test.tsx`
+- [x] `npx eslint src/shared/components/stat-card/`
+- [x] Locale JSON parses (covered by any test importing locales) and `git diff --check`
 
 **Dependencies:** Task 1
 
@@ -65,9 +65,9 @@ button) or as a one-line summary strip button ("Show details"). Collapsed state 
 
 ### Checkpoint A
 
-- [ ] Task 1–2 tests pass together.
-- [ ] No production page uses the component yet.
-- [ ] Commit.
+- [x] Task 1–2 tests pass together.
+- [x] No production page uses the component yet.
+- [x] Commit.
 
 ## Phase 2 — Resources pages
 
@@ -78,15 +78,15 @@ button) or as a one-line summary strip button ("Show details"). Collapsed state 
 `abcm-fe.discovery-inventory.metrics-collapsed.v1` (constant in the resources feature).
 
 **Acceptance criteria:**
-- [ ] VMware page shows the toggle; collapsing shows the strip, reload keeps it collapsed.
-- [ ] Resources ISE page (role `target`) behaves the same, sharing the preference.
-- [ ] Loading state (`isLoading`) renders correctly in both modes.
-- [ ] Existing tests that assert tile labels/helpers are updated for the collapsed default
+- [x] VMware page shows the toggle; collapsing shows the strip, reload keeps it collapsed.
+- [x] Resources ISE page (role `target`) behaves the same, sharing the preference.
+- [x] Loading state (`isLoading`) renders correctly in both modes.
+- [x] Existing tests that assert tile labels/helpers are updated for the collapsed default
       (or seed the expanded preference); storage is cleared between tests.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/discovery-inventory/resources/components/vmware/VirtualMachineMetrics.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx`
-- [ ] `npx eslint` on changed files
+- [x] `npm exec vitest run src/features/discovery-inventory/resources/components/vmware/VirtualMachineMetrics.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx`
+- [x] `npx eslint` on changed files
 - [ ] Manual: Resources → VMware VMs, collapse, reload, switch to Resources ISE.
 
 **Dependencies:** Task 2
@@ -104,14 +104,14 @@ button) or as a one-line summary strip button ("Show details"). Collapsed state 
 `CollapsibleMetrics` with the same key, keeping `dynamicHelperIndexes` behaviour.
 
 **Acceptance criteria:**
-- [ ] FlashSystem Volumes and IBM Power Partitions tabs show the same toggle and strip.
-- [ ] Collapsing on any Resources tab applies to all tabs.
-- [ ] Helper-loading behaviour for FlashSystem items 3–4 is unchanged when expanded; tests
+- [x] FlashSystem Volumes and IBM Power Partitions tabs show the same toggle and strip.
+- [x] Collapsing on any Resources tab applies to all tabs.
+- [x] Helper-loading behaviour for FlashSystem items 3–4 is unchanged when expanded; tests
       updated for the collapsed default.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/discovery-inventory/resources/components/SourceInventoryMetrics.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx`
-- [ ] `npx eslint` on changed files
+- [x] `npm exec vitest run src/features/discovery-inventory/resources/components/SourceInventoryMetrics.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx`
+- [x] `npx eslint` on changed files
 
 **Dependencies:** Task 2 (can run in parallel with Task 3)
 
@@ -123,7 +123,7 @@ button) or as a one-line summary strip button ("Show details"). Collapsed state 
 
 ### Checkpoint B — Complete
 
-- [ ] All focused tests from Tasks 1–4 pass together.
-- [ ] `npm run typecheck` passes (shared component touched).
+- [x] All focused tests from Tasks 1–4 pass together.
+- [x] `npm run typecheck` passes (shared component touched).
 - [ ] Manual check of all four Resources tabs in light and dark theme, at `xl` and below.
 - [ ] Human review of the look; commit.

@@ -59,18 +59,18 @@ Tasks: `tasks/collapsible-kpi-variant-a-todo.md`.
 ## Task list
 
 ### Phase 1: Foundation
-- [ ] Task 1: `useStoredBoolean` hook (S)
-- [ ] Task 2: `CollapsibleMetrics` shared component + i18n keys (M)
+- [x] Task 1: `useStoredBoolean` hook (S)
+- [x] Task 2: `CollapsibleMetrics` shared component + i18n keys (M)
 
 ### Checkpoint A
-- [ ] Hook and component tests pass; no page uses the component yet.
+- [x] Hook and component tests pass; no page uses the component yet.
 
 ### Phase 2: Resources pages
-- [ ] Task 3: VMware / Resources ISE metrics use `CollapsibleMetrics` (S)
-- [ ] Task 4: FlashSystem and IBM Power metrics use `CollapsibleMetrics` (S)
+- [x] Task 3: VMware / Resources ISE metrics use `CollapsibleMetrics` (S)
+- [x] Task 4: FlashSystem and IBM Power metrics use `CollapsibleMetrics` (S)
 
 ### Checkpoint B (complete)
-- [ ] Focused tests, focused lint and typecheck pass.
+- [x] Focused tests, focused lint and typecheck pass.
 - [ ] Manual check on all four Resources pages in light and dark theme.
 - [ ] Human review of the look before merge.
 
@@ -89,3 +89,15 @@ Tasks: `tasks/collapsible-kpi-variant-a-todo.md`.
 1. Preference is shared across all Resources providers and Resources ISE: **yes**.
 2. Toggle placement: **inside the metrics block**, as planned.
 3. Default state without a stored preference: **collapsed**.
+
+## Implementation notes (2026-09-30)
+
+- `useStoredBoolean` writes to `localStorage` only on an explicit change, never on mount, so a
+  later change of the default still reaches users who never toggled.
+- `src/shared/hooks/useStoredBoolean.test.ts` was added to `domTypescriptTests` in
+  `vitest.config.ts` (it needs jsdom `localStorage`).
+- Locale keys added: `metrics.hide`, `metrics.showDetails`. The planned `metrics.summaryLabel`
+  was not needed: the strip button's accessible name is its visible text.
+- The expanded state shows a chevron icon button (aria-label "Hide stats") beside the grid,
+  so expanding adds no extra row.
+- Storage key constant: `resources/state/resourceMetricsPreference.ts`.
