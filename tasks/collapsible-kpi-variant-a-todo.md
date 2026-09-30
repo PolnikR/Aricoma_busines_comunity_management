@@ -6,7 +6,7 @@ Plan: `tasks/collapsible-kpi-variant-a-plan.md`
 
 - [ ] Do not change `InventoryShell` or any page outside Discovery & Inventory → Resources.
 - [ ] Do not change metric computation (`mapInventoryToVirtualMachines`, item builders).
-- [ ] Default state is expanded; existing DOM is unchanged until the user collapses.
+- [ ] Default state (no stored preference) is collapsed; the choice is shared by all Resources tabs.
 - [ ] All new strings in `en.json`, `cs.json` and `sk.json`.
 - [ ] Focused tests and focused lint only; no full suite or production build unless asked.
 
@@ -38,14 +38,15 @@ the `SidebarContext` pattern.
 
 **Description:** Renders metric items either as the existing StatCard grid (with a "Hide stats"
 button) or as a one-line summary strip button ("Show details"). Collapsed state comes from
-`useStoredBoolean(storageKey, false)`.
+`useStoredBoolean(storageKey, true)` (collapsed by default).
 
 **Acceptance criteria:**
 - [ ] Expanded: same grid classes and `StatCard size="sm"` output as today, plus a "Hide stats"
       button with `aria-expanded="true"` and `aria-controls`.
 - [ ] Collapsed: single strip button listing `value label` for every item, `aria-expanded="false"`;
       click expands. Loading state shows value skeletons in the strip.
-- [ ] State persists across remounts under the given `storageKey`; strip wraps on narrow widths.
+- [ ] With empty storage the strip is rendered; state persists across remounts under the given
+      `storageKey`; strip wraps on narrow widths.
 
 **Verification:**
 - [ ] `npm exec vitest run src/shared/components/stat-card/CollapsibleMetrics.test.tsx src/shared/components/stat-card/StatCard.test.tsx`
@@ -80,6 +81,8 @@ button) or as a one-line summary strip button ("Show details"). Collapsed state 
 - [ ] VMware page shows the toggle; collapsing shows the strip, reload keeps it collapsed.
 - [ ] Resources ISE page (role `target`) behaves the same, sharing the preference.
 - [ ] Loading state (`isLoading`) renders correctly in both modes.
+- [ ] Existing tests that assert tile labels/helpers are updated for the collapsed default
+      (or seed the expanded preference); storage is cleared between tests.
 
 **Verification:**
 - [ ] `npm exec vitest run src/features/discovery-inventory/resources/components/vmware/VirtualMachineMetrics.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx`
@@ -103,7 +106,8 @@ button) or as a one-line summary strip button ("Show details"). Collapsed state 
 **Acceptance criteria:**
 - [ ] FlashSystem Volumes and IBM Power Partitions tabs show the same toggle and strip.
 - [ ] Collapsing on any Resources tab applies to all tabs.
-- [ ] Helper-loading behaviour for FlashSystem items 3–4 is unchanged when expanded.
+- [ ] Helper-loading behaviour for FlashSystem items 3–4 is unchanged when expanded; tests
+      updated for the collapsed default.
 
 **Verification:**
 - [ ] `npm exec vitest run src/features/discovery-inventory/resources/components/SourceInventoryMetrics.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx`

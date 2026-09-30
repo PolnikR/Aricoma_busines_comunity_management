@@ -5,8 +5,9 @@
 Resources pages (VMware VMs, FlashSystem volumes, IBM Power partitions and Resources ISE,
 which reuses the VMware page) render four KPI tiles above the inventory table. Variant A lets
 the user collapse those tiles into a single-line summary strip ("36 VMs · 34 powered on ·
-2 clusters · 424 GB memory") and expand them again. The choice is remembered in the browser,
-so the table gets roughly 45–50 px more height on every visit once the user has collapsed it.
+2 clusters · 424 GB memory") and expand them again. The strip is the default; the choice is
+remembered in the browser, so the table gets roughly 45–50 px more height unless the user has
+expanded the tiles.
 
 Nothing else on the page changes: page header, "Inventory records" header, provider tabs,
 toolbar and table stay as they are. Mockup: https://claude.ai/artifact/KXh17DNikRSbUgWTyT6vWy
@@ -42,13 +43,14 @@ Tasks: `tasks/collapsible-kpi-variant-a-todo.md`.
    "Show stats" next to Refresh; that would require lifting state into four page components and
    `TableToolbar`. Instead: collapsed strip is itself a `<button aria-expanded>`, expanded grid
    has a small "Hide stats" text button aligned right above/next to the grid. Self-contained,
-   no page-level wiring. (Open question 2 if the header placement is preferred.)
+   no page-level wiring. (Confirmed by user 2026-09-30.)
 3. **Persistence via a small hook with an explicit key.** `useStoredBoolean(key, default)` in
    `src/shared/hooks/` following the SidebarContext pattern (lazy init, write in effect,
    try/catch, in-memory fallback). Resources pages share one key:
    `abcm-fe.discovery-inventory.metrics-collapsed.v1`, so collapsing on VMware also collapses
    FlashSystem/Power/ISE. Other features can adopt the component later with their own key.
-4. **Default is expanded.** Existing users see no change until they click.
+4. **Default is collapsed.** Without a stored preference the summary strip is shown; users
+   who want the tiles click once and the choice is remembered. (Confirmed by user 2026-09-30.)
 5. **`InventoryShell` is not modified.** The collapse is fully inside the `metrics` node.
 6. **Accessibility.** Toggle buttons expose `aria-expanded` and `aria-controls` pointing at the
    grid/strip region; the strip lists the same values the cards show, so no information is
@@ -80,11 +82,10 @@ Tasks: `tasks/collapsible-kpi-variant-a-todo.md`.
 | Loading state looks broken when collapsed | Med | Strip renders the same skeleton widths as `StatCard` value placeholders when `isLoading` |
 | Shared key collapses metrics on a page where user wanted them | Low | Documented as intended; per-page keys are a one-line change if requested |
 | `localStorage` unavailable (private mode, blocked) | Low | try/catch with in-memory state, covered by a hook test |
-| Existing page tests assert on tile labels | Low | Default expanded keeps current DOM; run the page tests listed in each task |
+| Existing tests assert on tile labels/helpers | Med | Default collapsed changes the DOM: update assertions to the strip, or seed `localStorage` with the expanded value in tests that check tile details; clear storage in `beforeEach` |
 
-## Open questions
+## Resolved questions (user, 2026-09-30)
 
-1. Should the preference be shared across all Resources providers (planned) or per provider tab?
-2. Toggle placement: inside the metrics block (planned) or as "Show/Hide stats" in the page
-   header next to Refresh, as in the mockup?
-3. Default state for new users: expanded (planned) or collapsed?
+1. Preference is shared across all Resources providers and Resources ISE: **yes**.
+2. Toggle placement: **inside the metrics block**, as planned.
+3. Default state without a stored preference: **collapsed**.
