@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Related storage — návrhy restylingu</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./preview.js" defer></script>
+</head>
+<body data-layout="split">
+  <header class="preview-bar">
+    <div class="preview-brand"><span class="brand-mark">a</span><div><strong>Related storage</strong><small>Interaktívny návrh · ukážkové dáta</small></div></div>
+    <nav aria-label="Variant návrhu" class="variants">
+      <button data-layout="split" aria-pressed="true">A <span>Kompaktný split</span></button>
+      <button data-layout="workspace" aria-pressed="false">B <span>Pracovná plocha</span></button>
+      <button data-layout="inspector" aria-pressed="false">C <span>Kontextový panel</span></button>
+    </nav>
+    <label class="scenario">Scenár <select id="scenario"><option value="2">2 upozornenia</option><option value="1">1 upozornenie</option><option value="0">Bez upozornení</option></select></label>
+  </header>
+  <div class="design-note"><strong id="design-title">A / Najmenší zásah do existujúceho rozhrania</strong><span id="design-description">Bočné kroky, 40 px riadky a pomocný text priamo pri poli.</span></div>
+  <main>
+    <div class="page-title"><div><p class="eyebrow">RECOVERY PLANS / RECOVERY GROUPS</p><h1>Create Recovery Group</h1></div><span class="draft">Unsaved draft</span></div>
+    <div class="wizard">
+      <aside class="steps" aria-label="Recovery group progress"><p class="steps-title">GROUP SETUP</p><ol>
+        <li><span>✓</span>Details</li><li><span>✓</span>Storage topology</li><li><span>✓</span>Resource type</li><li><span>✓</span>Provider</li><li><span>✓</span>Resources</li><li aria-current="step"><span>6</span>Related storage</li><li><span>7</span>Policy Set</li><li><span>8</span>Orchestration</li>
+      </ol><div class="steps-foot">STEP 6 OF 8<div class="progress"><i></i></div></div></aside>
+      <section class="workspace" aria-labelledby="storage-title">
+        <header class="section-heading"><div><h2 id="storage-title">Related FlashSystem storage</h2><p>Volumes discovered from your selected virtual machines.</p></div><span class="provider">▤ &nbsp; ibm-flashsystem-02</span></header>
+        <div class="work-content">
+          <aside class="notice-panel" aria-label="Configuration issues">
+            <h3>Configuration check</h3>
+            <details class="provider-notice"><summary><span class="error-icon">!</span><strong>Provider connection missing</strong><span class="details-label">Details</span></summary><p>Provider <b>ibm-flashsystem-02</b> has no <code>orchestratorConnId</code>. Set the Airflow connection name in the provider configuration before continuing.</p></details>
+            <div class="mapping-notice"><span class="info-icon">i</span><p><strong>Auxiliary names required</strong><span>Enter a target name for each selected Metro Mirror volume.</span></p></div>
+            <div class="context-facts"><h3>Storage topology</h3><p>Metro Mirror <span>Synchronous</span></p><h3>Selection</h3><p>Automatically discovered volumes. Remove any volume you do not need.</p></div>
+          </aside>
+          <div class="picker">
+            <section class="available" aria-labelledby="available-title"><header><div class="panel-title"><h3 id="available-title">Available volumes</h3><span class="count" id="available-count"></span></div><input type="search" id="search" placeholder="Search volumes…" aria-label="Search volumes"></header><div id="available-list" class="scroll-list" tabindex="0" aria-label="Available volumes"></div><footer>Drag a volume or use + to add</footer></section>
+            <section class="selected" aria-labelledby="selected-title"><header><div class="panel-title"><h3 id="selected-title">Selected volumes <span class="count" id="selected-count"></span></h3><button class="text-button" id="clear">Clear selection</button></div><p class="field-hint" id="field-hint">ⓘ Metro Mirror requires an auxiliary name for each volume.</p></header><div class="column-head"><span>Source volume</span><span>Auxiliary volume name <b>*</b></span><span></span></div><div id="dropzone" class="dropzone" tabindex="0" aria-label="Selected volumes drop zone"><div id="selected-list"></div><div class="drop-hint"><span>＋</span><strong>Drop volumes here</strong><small>or add them from the available list</small></div></div><footer><span id="mapping-status" role="status"></span><span>Metro Mirror</span></footer></section>
+          </div>
+        </div>
+        <footer class="wizard-footer"><button id="reset" class="text-button">Reset demo</button><span id="continue-hint"></span><button id="next" class="primary" disabled>Next: Policy Set →</button></footer>
+      </section>
+    </div>
+  </main>
+  <dialog id="complete"><h2>Ready for Policy Set</h2><p>Ukážka: všetky vybrané volumes majú pomocný názov a provider nemá chybu pripojenia.</p><form method="dialog"><button class="primary">Späť na návrh</button></form></dialog>
+</body>
+</html>
