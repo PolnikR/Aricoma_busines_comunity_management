@@ -258,6 +258,8 @@
   "metrics.clusters.helper": "Active placements",
   "metrics.memory": "Allocated memory",
   "metrics.memory.helper": "total vCPU",
+  "metrics.hide": "Hide stats",
+  "metrics.showDetails": "Show details",
 
   "tables.vm.name": "Virtual machine",
   "tables.vm.os": "Operating system",
