@@ -94,12 +94,12 @@ function getBaseColumns(t: ReturnType<typeof useTranslation>['t'], providers?: {
   {
     id: 'platform',
     header: t('tables.recovery.platform'),
-    cell: (app) => <span className="text-[13px] text-text-secondary">{getProviderLabel(app.data.application.platform, providers)}</span>,
+    cell: (app) => <span className="text-text-secondary">{getProviderLabel(app.data.application.platform, providers)}</span>,
   },
   {
     id: 'tiers',
     header: t('tables.recovery.tiers'),
-    cell: (app) => <span className="text-[13px] text-text-secondary text-right">{Object.keys(app.data.application.tiers).length}</span>,
+    cell: (app) => <span className="text-text-secondary text-right">{Object.keys(app.data.application.tiers).length}</span>,
   },
   {
     id: 'status',

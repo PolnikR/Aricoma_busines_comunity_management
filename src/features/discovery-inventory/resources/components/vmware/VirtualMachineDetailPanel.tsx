@@ -64,8 +64,8 @@ export function VirtualMachineDetailPanel({
     { source: 0, target: 0 },
   )
 
-  const headerCell = 'whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle'
-  const cell = 'px-3 py-2.5 text-[13px] text-text-secondary align-top'
+  const headerCell = 'whitespace-nowrap px-2 @min-[80rem]/vm-detail:px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle'
+  const cell = 'px-2 @min-[80rem]/vm-detail:px-3 py-2.5 text-[12px] @min-[80rem]/vm-detail:text-[13px] text-text-secondary align-top'
   const num = `${cell} text-right tabular-nums`
   const overviewFields = createVmwareDetailFields(t)
   const snapshotColumns: ColumnDef<StorageVolumeMapping>[] = [
@@ -138,7 +138,7 @@ export function VirtualMachineDetailPanel({
               className="[&>button]:flex-1"
             />
 
-            <div className="custom-scrollbar flex-1 overflow-y-auto">
+            <div className="@container/vm-detail custom-scrollbar flex-1 overflow-y-auto">
               {selectedTab === 'overview' && (
                 <>
                   <div className="grid grid-cols-2 border-b border-border">
@@ -208,13 +208,13 @@ export function VirtualMachineDetailPanel({
                                 {truncateFilePath(disk.filePath)}
                               </span>
                             </TableCell>
-                            <TableCell className="px-3 py-2.5 text-[13px] text-text-secondary align-top whitespace-nowrap text-right">{disk.thinProvisioned ? t('pages.virtualMachines.detail.yes') : t('pages.virtualMachines.detail.no')}</TableCell>
+                            <TableCell className={`${cell} whitespace-nowrap text-right`}>{disk.thinProvisioned ? t('pages.virtualMachines.detail.yes') : t('pages.virtualMachines.detail.no')}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   ) : (
-                    <p className="p-4 text-[13px] text-text-subtle">{t('pages.virtualMachines.detail.noDisks')}</p>
+                    <p className="p-4 text-[12px] @min-[80rem]/vm-detail:text-[13px] text-text-subtle">{t('pages.virtualMachines.detail.noDisks')}</p>
                   )}
                 </div>
               )}

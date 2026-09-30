@@ -25,6 +25,12 @@ Rozsah je iba text v tabuľkách. Toolbary, nadpisy, filtre, sidebar ani globál
 5. VMware tabuľku nemeniť. Jej kontajner `vm-table` s rovnakými hodnotami funguje ďalej.
 6. Nepridávať testy, ktoré iba porovnávajú reťazce CSS tried. jsdom nedokazuje rozloženie.
 
+## Implementácia a zistenia
+
+- **T1:** Konzumenti ležia v `DataTableSurface` (grid), `DataTableRequestState`, `IdentityContentPanel` a `IdentityResourceDetailPage` (flex stĺpce), prípadne v blokovom `div`. Všetky tieto kontexty roztiahnu `DataTable` na plnú šírku a `DataTable` má `w-full`. Kontext, ktorý by sa zmršťoval na obsah, sa nenašiel, takže žiadny rodič nepotrebuje úpravu. `RecoveryRunHistoryDrawer` `DataTable` nepoužíva.
+- **Odchýlka v T3:** Trieda `cell` v `VirtualMachineDetailPanel` sa používa aj v ručne písanej tabuľke diskov mimo `DataTable`, kde by dotaz na `data-table` nikdy nesedel. `DetailDrawer` má nastaviteľnú šírku a dá sa roztiahnuť nad 80rem. Panel preto dostal vlastný kontajner `@container/vm-detail` na scroll oblasti. Tabuľka diskov, snapshot tabuľka aj text prázdneho stavu diskov sa riadia ním. Riadok 211 teraz používa spoločnú triedu `cell`.
+- VMware tabuľka a jej kontajner `vm-table` ostali bez zmeny.
+
 ## Poradie implementácie
 
 ### T1: Preveriť konzumentov a kontexty rozloženia (S)

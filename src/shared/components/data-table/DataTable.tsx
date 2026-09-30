@@ -56,18 +56,18 @@ export function DataTable<T>({
   const rowPad = density === 'compact' ? 'py-1.5' : 'py-2.5'
   const isFitLayout = layout === 'fit'
   const headerCell = headerCellClassName ?? (isFitLayout
-    ? 'whitespace-normal break-words px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle'
-    : 'whitespace-nowrap px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle')
+    ? 'whitespace-normal break-words px-2 @min-[80rem]/data-table:px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle'
+    : 'whitespace-nowrap px-2 @min-[80rem]/data-table:px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle')
   const bodyCell = cellClassName ?? (isFitLayout
-    ? `whitespace-normal break-words px-3 ${rowPad} text-[13px] text-text-secondary align-middle`
-    : `px-4 ${rowPad} text-[13px] text-text-secondary align-middle`)
+    ? `whitespace-normal break-words px-2 @min-[80rem]/data-table:px-3 ${rowPad} text-[12px] @min-[80rem]/data-table:text-[13px] text-text-secondary align-middle`
+    : `px-2 @min-[80rem]/data-table:px-4 ${rowPad} text-[12px] @min-[80rem]/data-table:text-[13px] text-text-secondary align-middle`)
   const isInteractive = Boolean(onRowClick)
 
   return (
     <div
       className={isFitLayout
-        ? 'w-full min-w-0 overflow-x-hidden'
-        : 'custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain'}
+        ? '@container/data-table w-full min-w-0 overflow-x-hidden'
+        : '@container/data-table custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain'}
       tabIndex={isFitLayout || isLoading ? undefined : 0}
       role={isLoading ? 'status' : undefined}
       aria-busy={isLoading ? true : undefined}
