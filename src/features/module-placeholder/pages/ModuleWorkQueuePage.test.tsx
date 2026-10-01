@@ -8,7 +8,6 @@ describe('ModuleWorkQueuePage', () => {
     render(
       <LanguageProvider>
         <ModuleWorkQueuePage
-          eyebrow="Module"
           title="Work queue"
           description="Description"
           excelSource="Sheet 1"

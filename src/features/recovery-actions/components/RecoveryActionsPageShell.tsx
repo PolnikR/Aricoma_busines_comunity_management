@@ -52,7 +52,6 @@ export function RecoveryActionsPageShell({ activeTab, children }: RecoveryAction
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow={t('pages.recoveryActions.eyebrow')}
         title={t('pages.recoveryActions.title')}
         description={t('pages.recoveryActions.description')}
         actions={<Button size="sm" variant="outline" onClick={() => { window.location.reload() }}>{t('common.refresh')}</Button>}

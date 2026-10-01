@@ -3,7 +3,6 @@ import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 
 interface ModuleWorkQueuePageProps {
-  eyebrow: string
   title: string
   description: string
   excelSource: string
@@ -12,7 +11,6 @@ interface ModuleWorkQueuePageProps {
 }
 
 export function ModuleWorkQueuePage({
-  eyebrow,
   title,
   description,
   excelSource,
@@ -22,7 +20,7 @@ export function ModuleWorkQueuePage({
   const { t } = useTranslation()
   return (
     <>
-      <PageHeader eyebrow={eyebrow} title={title} description={description} />
+      <PageHeader title={title} description={description} />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <Card className="min-w-0">

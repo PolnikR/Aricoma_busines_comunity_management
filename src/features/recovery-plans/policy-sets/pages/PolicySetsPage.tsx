@@ -18,7 +18,6 @@ export function PolicySetsPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow={t('pages.policySets.eyebrow')}
         title={t('pages.policySets.title')}
         description={t('pages.policySets.description')}
         isFetching={isFetching}

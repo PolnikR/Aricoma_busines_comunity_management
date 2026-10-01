@@ -29,7 +29,7 @@ describe('PolicySetsPage', () => {
   it('renders the shared inventory layout without category tabs', () => {
     render(<PolicySetsPage />)
 
-    expect(screen.getByRole('heading', { name: 'Policy Sets', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Policy sets', level: 1 })).toBeInTheDocument()
     expect(screen.getByText('Policy set catalogue')).toBeInTheDocument()
     expect(screen.queryByRole('tab')).not.toBeInTheDocument()
   })
@@ -46,7 +46,7 @@ describe('PolicySetsPage', () => {
   it('opens the create modal with cached policy sets', async () => {
     render(<PolicySetsPage />)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Add Policy Set' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add policy set' }))
     expect(screen.getByText('Policy set modal with 1 existing')).toBeInTheDocument()
   })
 

@@ -2,7 +2,6 @@ import { routes } from './routes'
 
 export interface ModulePageConfig {
   path: string
-  eyebrow: string
   title: string
   description: string
   excelSource: string
@@ -13,7 +12,6 @@ export interface ModulePageConfig {
 export const platformAdministrationPages: ModulePageConfig[] = [
   {
     path: routes.platformProviders,
-    eyebrow: 'Platform Administration',
     title: 'Platform providers',
     description: 'Administration of orchestration and platform-level provider connections.',
     excelSource: 'Platform provider registry',
@@ -22,7 +20,6 @@ export const platformAdministrationPages: ModulePageConfig[] = [
   },
   {
     path: routes.platformConfiguration,
-    eyebrow: 'Platform Administration',
     title: 'Configuration',
     description: 'Central configuration workspace for application-wide settings, validation, versioning, maintenance mode, and time localization.',
     excelSource: '10 PA Requirements: System configuration; Time and localization',
@@ -31,7 +28,6 @@ export const platformAdministrationPages: ModulePageConfig[] = [
   },
   {
     path: routes.platformIdentityAccess,
-    eyebrow: 'Platform Administration',
     title: 'Identity & access',
     description: 'Administration workspace for emergency access, roles, sessions, and internal service identities.',
     excelSource: '10 PA Requirements: Identity and access; Internal API security; Service identities',
@@ -43,7 +39,6 @@ export const platformAdministrationPages: ModulePageConfig[] = [
 export const providersConnectorsPages: ModulePageConfig[] = [
   {
     path: routes.providersConnectors,
-    eyebrow: 'Providers & Connectors',
     title: 'Providers',
     description: 'Provider registry workspace for provider identity, lifecycle state, metadata, ownership, tags, and supported provider types.',
     excelSource: '21 PC Requirements: Provider Registry',
@@ -52,7 +47,6 @@ export const providersConnectorsPages: ModulePageConfig[] = [
   },
   {
     path: routes.providerCredentials,
-    eyebrow: 'Providers & Connectors',
     title: 'Credentials',
     description: 'Credential reference workspace for provider credential type, rotation, validation, masking, and credential use audit.',
     excelSource: '21 PC Requirements: Credentials',
@@ -61,7 +55,6 @@ export const providersConnectorsPages: ModulePageConfig[] = [
   },
   {
     path: routes.providerDiscoverySettings,
-    eyebrow: 'Providers & Connectors',
     title: 'Discovery settings',
     description: 'Provider discovery settings for manual discovery, scheduled discovery, scope exclusions, pagination, throttling, and partial results.',
     excelSource: '21 PC Requirements: Discovery',
@@ -73,7 +66,6 @@ export const providersConnectorsPages: ModulePageConfig[] = [
 export const discoveryInventoryPlaceholderPages: ModulePageConfig[] = [
   {
     path: routes.discoveryJobs,
-    eyebrow: 'Discovery & Inventory',
     title: 'Discovery jobs',
     description: 'Workspace for manual discovery, scheduled jobs, cancellation, retry, and progress across discovery phases.',
     excelSource: '32 DI Requirements: Discovery Management; Direct Discovery',
@@ -85,8 +77,7 @@ export const discoveryInventoryPlaceholderPages: ModulePageConfig[] = [
 export const remainingEpicPages: ModulePageConfig[] = [
   {
     path: routes.storageOrchestration,
-    eyebrow: 'EP-04',
-    title: 'Storage Orchestration',
+    title: 'Storage orchestration',
     description: 'Prepared frontend boundary for storage orchestration workflows defined by a future detailed specification.',
     excelSource: 'Epics row 5: EP-04 Storage Orchestration',
     apiBoundary: 'Pending backend API contract for EP-04',
@@ -94,8 +85,7 @@ export const remainingEpicPages: ModulePageConfig[] = [
   },
   {
     path: routes.recoveryPlans,
-    eyebrow: 'EP-07',
-    title: 'Recovery Plans',
+    title: 'Recovery plans',
     description: 'Prepared frontend boundary for recovery planning workflows defined by a future detailed specification.',
     excelSource: 'Epics row 8: EP-07 Recovery Plans',
     apiBoundary: 'Pending backend API contract for EP-07',
