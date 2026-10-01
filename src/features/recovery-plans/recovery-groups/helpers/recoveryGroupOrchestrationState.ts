@@ -1,4 +1,7 @@
+import { formatRunDuration } from '@/features/recovery-plans/recovery-runs/helpers/formatRecoveryRun'
 import type { OrchestratorRun } from '@/features/recovery-plans/recovery-runs/model/recoveryRunTypes'
+
+type Translate = (key: string, params?: Record<string, string | number>) => string
 
 interface OrchestrationFields {
   pushToOrchestrator?: boolean | undefined
@@ -54,4 +57,42 @@ export function getRecoveryGroupOrchestrationState(
   if (latest.error) return { kind: 'runFailed', providerName }
   if (!latest.latestRun) return { kind: 'noRuns', providerName }
   return { kind: 'lastRun', providerName, run: latest.latestRun }
+}
+
+// Short fact for the drawer meta row; null leaves the fact out (pending or failed data).
+export function orchestrationMetaText(state: OrchestrationState, t: Translate): string | null {
+  switch (state.kind) {
+    case 'notOrchestrated': return t('recoveryGroups.drawer.notOrchestrated')
+    case 'incomplete': return t('recoveryGroups.drawer.orchestrationIncomplete')
+    case 'orchestratorUnavailable': return t('recoveryGroups.drawer.orchestratorUnavailable')
+    case 'noRunId': return t('recoveryGroups.drawer.noRunId')
+    case 'noRuns': return t('recoveryRuns.table.noRuns')
+    case 'lastRun': return t('recoveryGroups.drawer.lastRun', {
+      status: state.run.status,
+      duration: formatRunDuration(state.run.durationSeconds),
+    })
+    case 'providersPending':
+    case 'providersFailed':
+    case 'runPending':
+    case 'runFailed':
+      return null
+  }
+}
+
+// Summary for the Orchestration section header; undefined shows none.
+export function orchestrationSummaryText(state: OrchestrationState, t: Translate): string | undefined {
+  switch (state.kind) {
+    case 'notOrchestrated': return t('recoveryGroups.drawer.notConfigured')
+    case 'incomplete': return t('recoveryGroups.drawer.orchestrationIncomplete')
+    case 'orchestratorUnavailable': return t('recoveryGroups.drawer.orchestratorUnavailable')
+    case 'providersPending':
+    case 'providersFailed':
+      return undefined
+    case 'noRunId':
+    case 'runPending':
+    case 'runFailed':
+    case 'noRuns':
+    case 'lastRun':
+      return state.providerName
+  }
 }

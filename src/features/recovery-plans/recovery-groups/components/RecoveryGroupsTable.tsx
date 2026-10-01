@@ -31,7 +31,7 @@ import { selectPlatformProviders } from '@/features/platform-administration/plat
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
 import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/features/recovery-plans/recovery-runs/helpers/formatRecoveryRun'
 import { toRecoveryGroupJson } from '../helpers/mapRecoveryGroups'
-import { getRecoveryGroupOrchestrationState } from '../helpers/recoveryGroupOrchestrationState'
+import { getRecoveryGroupOrchestrationState, orchestrationMetaText, orchestrationSummaryText } from '../helpers/recoveryGroupOrchestrationState'
 import type { OrchestrationState } from '../helpers/recoveryGroupOrchestrationState'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupRollbackResultModal } from './RecoveryGroupRollbackResultModal'
@@ -135,40 +135,6 @@ export function RecoveryGroupsTable({
         latestRunState,
       )
     : null
-  const orchestrationMetaText = (state: OrchestrationState): string | null => {
-    switch (state.kind) {
-      case 'notOrchestrated': return t('recoveryGroups.drawer.notOrchestrated')
-      case 'incomplete': return t('recoveryGroups.drawer.orchestrationIncomplete')
-      case 'orchestratorUnavailable': return t('recoveryGroups.drawer.orchestratorUnavailable')
-      case 'noRunId': return t('recoveryGroups.drawer.noRunId')
-      case 'noRuns': return t('recoveryRuns.table.noRuns')
-      case 'lastRun': return t('recoveryGroups.drawer.lastRun', {
-        status: state.run.status,
-        duration: formatRunDuration(state.run.durationSeconds),
-      })
-      case 'providersPending':
-      case 'providersFailed':
-      case 'runPending':
-      case 'runFailed':
-        return null
-    }
-  }
-  const orchestrationSummaryText = (state: OrchestrationState): string | undefined => {
-    switch (state.kind) {
-      case 'notOrchestrated': return t('recoveryGroups.drawer.notConfigured')
-      case 'incomplete': return t('recoveryGroups.drawer.orchestrationIncomplete')
-      case 'orchestratorUnavailable': return t('recoveryGroups.drawer.orchestratorUnavailable')
-      case 'providersPending':
-      case 'providersFailed':
-        return undefined
-      case 'noRunId':
-      case 'runPending':
-      case 'runFailed':
-      case 'noRuns':
-      case 'lastRun':
-        return state.providerName
-    }
-  }
   const inventorySummaryText = (group: RecoveryGroup) => {
     if (group.resourceCount === 0) return t('recoveryGroups.drawer.noResources')
     return t(group.resourceType === 'vm' ? 'recoveryGroups.drawer.vmCount' : 'recoveryGroups.drawer.volumeCount', {
@@ -448,7 +414,7 @@ export function RecoveryGroupsTable({
           selected.providerResolution === 'unresolved' ? (
             <Badge key="provider" color="warning" size="sm">{t('pages.recoveryGroups.providerUnavailable')}</Badge>
           ) : null,
-          orchestrationState ? orchestrationMetaText(orchestrationState) : null,
+          orchestrationState ? orchestrationMetaText(orchestrationState, t) : null,
         ] : []}
         ariaLabel={t('drawer.recoveryGroupDetail')}
         closeLabel={t('drawer.closeRecoveryGroup')}
@@ -528,7 +494,7 @@ export function RecoveryGroupsTable({
             </DetailDrawerSection>
             <DetailDrawerSection
               title={t('details.tabs.orchestration')}
-              summary={orchestrationState ? orchestrationSummaryText(orchestrationState) : undefined}
+              summary={orchestrationState ? orchestrationSummaryText(orchestrationState, t) : undefined}
             >
               <dl>
                 <DetailRow

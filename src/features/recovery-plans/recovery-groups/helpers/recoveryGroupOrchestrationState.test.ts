@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getRecoveryGroupOrchestrationState } from './recoveryGroupOrchestrationState'
+import { getRecoveryGroupOrchestrationState, orchestrationMetaText, orchestrationSummaryText } from './recoveryGroupOrchestrationState'
 
 const providers = { providers: [{ id: 'airflow-01', name: 'Airflow PROD' }], isLoading: false, isError: false }
 const noLatest = { latestRun: null, isLoading: false, error: null }
@@ -56,5 +56,42 @@ describe('getRecoveryGroupOrchestrationState', () => {
   it('E4: last run when a latest run exists', () => {
     expect(getRecoveryGroupOrchestrationState(configured, providers, { ...noLatest, latestRun: run }))
       .toEqual({ kind: 'lastRun', providerName: 'Airflow PROD', run })
+  })
+})
+
+describe('orchestration texts', () => {
+  const t = (key: string, params?: Record<string, string | number>) => (params ? `${key} ${JSON.stringify(params)}` : key)
+
+  it('uses Not orchestrated / Not configured only for state A', () => {
+    expect(orchestrationMetaText({ kind: 'notOrchestrated' }, t)).toBe('recoveryGroups.drawer.notOrchestrated')
+    expect(orchestrationSummaryText({ kind: 'notOrchestrated' }, t)).toBe('recoveryGroups.drawer.notConfigured')
+    for (const state of [
+      { kind: 'incomplete' },
+      { kind: 'orchestratorUnavailable' },
+      { kind: 'noRunId', providerName: 'Airflow PROD' },
+      { kind: 'noRuns', providerName: 'Airflow PROD' },
+      { kind: 'lastRun', providerName: 'Airflow PROD', run },
+    ] as const) {
+      expect(orchestrationMetaText(state, t)).not.toMatch(/notOrchestrated|notConfigured/)
+      expect(orchestrationSummaryText(state, t)).not.toMatch(/notOrchestrated|notConfigured/)
+    }
+  })
+
+  it('maps each state to its meta fact and section summary', () => {
+    expect(orchestrationMetaText({ kind: 'incomplete' }, t)).toBe('recoveryGroups.drawer.orchestrationIncomplete')
+    expect(orchestrationMetaText({ kind: 'orchestratorUnavailable' }, t)).toBe('recoveryGroups.drawer.orchestratorUnavailable')
+    expect(orchestrationMetaText({ kind: 'noRunId', providerName: 'P' }, t)).toBe('recoveryGroups.drawer.noRunId')
+    expect(orchestrationMetaText({ kind: 'noRuns', providerName: 'P' }, t)).toBe('recoveryRuns.table.noRuns')
+    expect(orchestrationMetaText({ kind: 'lastRun', providerName: 'P', run }, t)).toBe('recoveryGroups.drawer.lastRun {"status":"success","duration":"7s"}')
+    for (const kind of ['providersPending', 'providersFailed'] as const) {
+      expect(orchestrationMetaText({ kind }, t)).toBeNull()
+      expect(orchestrationSummaryText({ kind }, t)).toBeUndefined()
+    }
+    for (const kind of ['runPending', 'runFailed'] as const) {
+      expect(orchestrationMetaText({ kind, providerName: 'P' }, t)).toBeNull()
+      expect(orchestrationSummaryText({ kind, providerName: 'P' }, t)).toBe('P')
+    }
+    expect(orchestrationSummaryText({ kind: 'incomplete' }, t)).toBe('recoveryGroups.drawer.orchestrationIncomplete')
+    expect(orchestrationSummaryText({ kind: 'orchestratorUnavailable' }, t)).toBe('recoveryGroups.drawer.orchestratorUnavailable')
   })
 })
