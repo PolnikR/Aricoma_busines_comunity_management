@@ -1,4 +1,4 @@
-import type { RolesPermissionsResponseOutput } from '@/generated/query/zod'
+import type { RolesPermissionsResponse } from '@/generated/query/zod'
 
 export interface IdentityRoleRecord {
   id: string
@@ -13,17 +13,18 @@ export interface IdentityRolesPermissions {
 }
 
 // Roles have no id on the wire; the UI keys them by name.
-export function mapRolesPermissions(payload: RolesPermissionsResponseOutput): IdentityRolesPermissions {
+export function mapRolesPermissions(payload: RolesPermissionsResponse): IdentityRolesPermissions {
   return {
-    ...payload,
+    permissions: payload.permissions,
     roles: payload.roles.map(role => ({
-      ...role,
       id: role.name,
+      name: role.name,
+      permissions: role.permissions,
       description: role.description ?? '',
     })),
   }
 }
 
-// validatingMutator hands select the parsed Output shape; for this schema it is
-// identical to the Input shape the generated hook declares.
+// The generated hook declares the schema Input shape for select; validatingMutator
+// hands it the parsed Output, which only adds defaulted fields this mapper ignores.
 export const selectRolesPermissions = mapRolesPermissions
