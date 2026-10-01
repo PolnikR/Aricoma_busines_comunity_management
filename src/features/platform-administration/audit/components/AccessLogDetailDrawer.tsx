@@ -1,4 +1,4 @@
-import { DetailDrawer, DetailRow } from '@/shared/components/data-table'
+import { DetailDrawer, DetailDrawerSection, DetailRow } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { AccessLogRecord } from '../model/accessLogTypes'
 
@@ -21,14 +21,13 @@ function formatBody(value: unknown) {
   }
 }
 
-function BodySection({ label, value }: { label: string; value: unknown }) {
+function BodySection({ label, value, defaultOpen = false }: { label: string; value: unknown; defaultOpen?: boolean }) {
   return (
-    <section className="border-t border-border px-5 py-4">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-text-subtle">{label}</h3>
-      <pre className="custom-scrollbar mt-2 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-surface-subtle p-3 font-mono text-xs text-text-secondary">
+    <DetailDrawerSection title={label} defaultOpen={defaultOpen}>
+      <pre className="custom-scrollbar max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-surface-subtle p-3 font-mono text-xs text-text-secondary">
         {formatBody(value)}
       </pre>
-    </section>
+    </DetailDrawerSection>
   )
 }
 
@@ -42,24 +41,35 @@ export function AccessLogDetailDrawer({ record, onClose }: AccessLogDetailDrawer
       open={record !== null}
       onClose={onClose}
       resizable
-      eyebrow={t('audit.accessLogs.detail.eyebrow')}
       title={title}
+      meta={[
+        t('audit.accessLogs.detail.entity'),
+        isRequest ? `${t('audit.accessLogs.detail.status')} ${String(record.status)}` : null,
+      ]}
       ariaLabel={t('audit.accessLogs.detail.ariaLabel')}
       closeLabel={t('audit.accessLogs.detail.close')}
+      resizeLabel={t('drawer.resize')}
     >
       {isRequest ? (
         <>
-          <dl className="px-5 py-2">
-            <DetailRow label={t('audit.accessLogs.detail.method')} value={<span className="font-mono">{record.method}</span>} />
-            <DetailRow label={t('audit.accessLogs.detail.path')} value={<span className="font-mono">{record.path}</span>} />
-            <DetailRow label={t('audit.accessLogs.detail.status')} value={String(record.status)} />
-            <DetailRow label={t('audit.accessLogs.detail.duration')} value={`${String(record.durationMs)} ms`} />
-          </dl>
+          <DetailDrawerSection
+            title={t('audit.accessLogs.detail.request')}
+            summary={`${record.method} · ${String(record.status)}`}
+            defaultOpen
+          >
+            <dl>
+              <DetailRow label={t('audit.accessLogs.detail.method')} value={<span className="font-mono">{record.method}</span>} />
+              <DetailRow label={t('audit.accessLogs.detail.path')} value={<span className="font-mono">{record.path}</span>} />
+              <DetailRow label={t('audit.accessLogs.detail.status')} value={String(record.status)} />
+              <DetailRow label={t('audit.accessLogs.detail.duration')} value={`${String(record.durationMs)} ms`} />
+            </dl>
+          </DetailDrawerSection>
           <BodySection label={t('audit.accessLogs.detail.requestBody')} value={record.requestBody} />
           <BodySection label={t('audit.accessLogs.detail.responseBody')} value={record.responseBody} />
         </>
       ) : record ? (
-        <BodySection label={t('audit.accessLogs.detail.rawEntry')} value={record.raw} />
+        // The raw entry is the drawer's only content, so it starts open.
+        <BodySection label={t('audit.accessLogs.detail.rawEntry')} value={record.raw} defaultOpen />
       ) : null}
     </DetailDrawer>
   )
