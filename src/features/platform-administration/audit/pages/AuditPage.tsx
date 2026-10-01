@@ -20,7 +20,6 @@ export function AuditPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
       <TableToolbar
-        eyebrow={t('audit.accessLogs.page.eyebrow')}
         title={t('audit.accessLogs.page.title')}
         description={t('audit.accessLogs.page.description')}
         isFetching={isFetching}

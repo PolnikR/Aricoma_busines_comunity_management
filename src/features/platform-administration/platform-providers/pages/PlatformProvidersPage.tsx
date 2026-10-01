@@ -22,7 +22,6 @@ export function PlatformProvidersPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow={t('pages.platformProviders.eyebrow')}
         title={t('pages.platformProviders.title')}
         description={t('pages.platformProviders.description')}
         isFetching={isFetching}

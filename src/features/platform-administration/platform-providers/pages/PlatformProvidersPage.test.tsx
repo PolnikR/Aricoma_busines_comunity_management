@@ -34,7 +34,7 @@ describe('PlatformProvidersPage', () => {
     expect(screen.getByText('Platform provider catalogue ready')).toBeInTheDocument()
     expect(screen.queryByRole('tab')).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Add Platform Provider' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add provider' }))
     expect(screen.getByText('Platform provider modal with 1 existing')).toBeInTheDocument()
   })
 
@@ -64,8 +64,8 @@ describe('PlatformProvidersPage', () => {
 
     render(<PlatformProvidersPage />)
 
-    expect(screen.getByRole('heading', { name: 'Platform Providers' })).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Add Platform Provider' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Platform providers' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Add provider' })).toBeVisible()
     expect(screen.getByText('Platform provider catalogue loading')).toBeVisible()
   })
 })
