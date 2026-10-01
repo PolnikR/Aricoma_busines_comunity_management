@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Badge } from '@/shared/components/badge/Badge'
@@ -8,6 +8,8 @@ import {
   DataTableRequestState,
   DataTableSurface,
   DataTableToolbar,
+  DetailDrawer,
+  DetailRow,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
@@ -40,11 +42,41 @@ function UserStatusBadge({ status }: { status: UserRecord['status'] }) {
   )
 }
 
+function UserDetail({ user }: { user: UserRecord }) {
+  const { t, language } = useTranslation()
+  let emailVerified = '—'
+  if (user.emailVerified === true) emailVerified = t('common.yes')
+  if (user.emailVerified === false) emailVerified = t('common.no')
+
+  return (
+    <dl className="px-5 py-2">
+      <DetailRow label={t('identity.users.fields.id')} value={<span className="font-mono">{user.id}</span>} />
+      <DetailRow label={t('identity.users.fields.user')} value={user.user || '—'} />
+      <DetailRow label={t('identity.users.fields.username')} value={user.username || '—'} />
+      <DetailRow label={t('identity.users.fields.email')} value={(user.email ?? '') || '—'} />
+      <DetailRow label={t('identity.users.fields.emailVerified')} value={emailVerified} />
+      <DetailRow label={t('identity.users.fields.createdAt')} value={formatUserTimestamp(user.createdAt, language)} />
+      <DetailRow
+        label={t('identity.users.fields.roles')}
+        value={user.roles.length > 0 ? (
+          <span className="flex flex-wrap justify-end gap-1">
+            {user.roles.map(role => <Badge key={role} color="info" size="sm">{role}</Badge>)}
+          </span>
+        ) : '—'}
+      />
+      <DetailRow label={t('identity.users.fields.status')} value={<UserStatusBadge status={user.status} />} />
+      <DetailRow label={t('identity.users.fields.activeSessionStart')} value={formatUserTimestamp(user.activeSessionStart, language)} />
+    </dl>
+  )
+}
+
 export function UsersSection() {
   const { t, language } = useTranslation()
   const { data, isLoading, isFetching, error, refetch } = useGetUsers()
   const users = useMemo(() => data?.users ?? [], [data?.users])
   const table = useTableState(users, { searchFields: USER_SEARCH_FIELDS })
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const selected = users.find(user => user.id === selectedId) ?? null
   const loadErrorDescription = extractBackendErrorDetail(error)
 
   const columns = useMemo<ColumnDef<UserRecord>[]>(() => [
@@ -65,55 +97,74 @@ export function UsersSection() {
   ], [language, t])
 
   return (
-    <DataTableSurface
-      ariaLabel={t('identity.navigation.sections.users')}
-      toolbar={(
-        <DataTableToolbar
-          searchValue={table.search}
-          onSearchChange={table.setSearch}
-          searchPlaceholder={t('identity.users.search')}
-          searchLabel={t('identity.users.search')}
-          density={table.density}
-          onDensityChange={table.setDensity}
-        />
-      )}
-      pagination={(!error || users.length > 0) ? (
-        <DataTablePagination
-          page={table.page}
-          pageSize={table.pageSize}
-          total={table.total}
-          onPageChange={table.setPage}
-          onPageSizeChange={table.setPageSize}
-          isLoading={isLoading}
-        />
-      ) : null}
-    >
-      <DataTableRequestState
-        hasCachedData={users.length > 0}
-        error={error ? {
-          title: t('identity.users.loadFailed'),
-          ...(loadErrorDescription ? { description: loadErrorDescription } : {}),
-          retryLabel: t('identity.common.actions.retry'),
-          isRetrying: isFetching,
-          onRetry: () => { void refetch() },
-        } : null}
+    <>
+      <DataTableSurface
+        ariaLabel={t('identity.navigation.sections.users')}
+        toolbar={(
+          <DataTableToolbar
+            searchValue={table.search}
+            onSearchChange={table.setSearch}
+            searchPlaceholder={t('identity.users.search')}
+            searchLabel={t('identity.users.search')}
+            density={table.density}
+            onDensityChange={table.setDensity}
+          />
+        )}
+        pagination={(!error || users.length > 0) ? (
+          <DataTablePagination
+            page={table.page}
+            pageSize={table.pageSize}
+            total={table.total}
+            onPageChange={table.setPage}
+            onPageSizeChange={table.setPageSize}
+            isLoading={isLoading}
+          />
+        ) : null}
       >
-        <DataTable
-          layout="fit"
-          columns={columns}
-          rows={table.pageItems}
-          rowKey={user => user.id}
-          density={table.density}
-          ariaLabel={t('identity.navigation.sections.users')}
-          isLoading={isLoading}
-          emptyContent={users.length > 0 ? t('common.noResults') : (
-            <EmptyState
-              title={t('identity.users.empty.title')}
-              description={t('identity.users.empty.description')}
-            />
-          )}
-        />
-      </DataTableRequestState>
-    </DataTableSurface>
+        <DataTableRequestState
+          hasCachedData={users.length > 0}
+          error={error ? {
+            title: t('identity.users.loadFailed'),
+            ...(loadErrorDescription ? { description: loadErrorDescription } : {}),
+            retryLabel: t('identity.common.actions.retry'),
+            isRetrying: isFetching,
+            onRetry: () => { void refetch() },
+          } : null}
+        >
+          <DataTable
+            layout="fit"
+            columns={columns}
+            rows={table.pageItems}
+            rowKey={user => user.id}
+            density={table.density}
+            ariaLabel={t('identity.navigation.sections.users')}
+            isLoading={isLoading}
+            rowAriaLabel={user => t('identity.users.rowAriaLabel', { name: user.user })}
+            onRowClick={user => { setSelectedId(user.id) }}
+            selectedRowKey={selectedId}
+            emptyContent={users.length > 0 ? t('common.noResults') : (
+              <EmptyState
+                title={t('identity.users.empty.title')}
+                description={t('identity.users.empty.description')}
+              />
+            )}
+          />
+        </DataTableRequestState>
+      </DataTableSurface>
+
+      <DetailDrawer
+        open={selected !== null}
+        onClose={() => { setSelectedId(null) }}
+        resizable
+        eyebrow={t('identity.users.drawer.eyebrow')}
+        title={selected?.user ?? ''}
+        subtitle={selected?.username}
+        headerExtra={selected ? <UserStatusBadge status={selected.status} /> : null}
+        ariaLabel={t('identity.users.drawer.ariaLabel')}
+        closeLabel={t('identity.users.drawer.close')}
+      >
+        {selected ? <UserDetail user={selected} /> : null}
+      </DetailDrawer>
+    </>
   )
 }

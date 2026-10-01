@@ -124,6 +124,62 @@ describe('UsersSection', () => {
     expect(screen.getByText('No users found')).toBeInTheDocument()
   })
 
+  it('opens a read-only DetailDrawer with every returned user field on row click', async () => {
+    mockUsers({ users: [alice, bob] })
+    render(<UsersSection />)
+
+    await userEvent.click(screen.getByRole('row', { name: 'Open user Alice Smith' }))
+
+    const drawer = within(screen.getByRole('dialog', { name: 'User detail' }))
+    expect(drawer.getByText('Selected user')).toBeInTheDocument()
+    expect(drawer.getByRole('heading', { name: 'Alice Smith' })).toBeInTheDocument()
+    const fields = Object.fromEntries(drawer.getAllByRole('term').map(term => [term.textContent, term.nextElementSibling?.textContent]))
+    expect(fields).toEqual({
+      ID: 'kc-alice',
+      User: 'Alice Smith',
+      Username: 'alice',
+      Email: 'alice@example.com',
+      'Email verified': 'Yes',
+      'Created at': expectedTimestamp('2026-01-02T10:00:00Z'),
+      Roles: 'platform-adminrecovery-operator',
+      Status: 'Active',
+      'Active session start': expectedTimestamp(SESSION_START),
+    })
+    expect(drawer.getByText('platform-admin')).toBeInTheDocument()
+    expect(drawer.getByText('recovery-operator')).toBeInTheDocument()
+  })
+
+  it('renders missing user fields as an em dash in the drawer', async () => {
+    mockUsers({ users: [alice, bob] })
+    render(<UsersSection />)
+
+    await userEvent.click(screen.getByRole('row', { name: 'Open user Bob Jones' }))
+
+    const drawer = within(screen.getByRole('dialog', { name: 'User detail' }))
+    const fields = Object.fromEntries(drawer.getAllByRole('term').map(term => [term.textContent, term.nextElementSibling?.textContent]))
+    expect(fields).toMatchObject({
+      Email: '—',
+      'Email verified': '—',
+      'Created at': '—',
+      Roles: '—',
+      Status: 'Disabled',
+      'Active session start': '—',
+    })
+  })
+
+  it('keeps the user drawer free of Edit/Delete actions and closes it', async () => {
+    mockUsers({ users: [alice] })
+    render(<UsersSection />)
+
+    await userEvent.click(screen.getByRole('row', { name: 'Open user Alice Smith' }))
+    const dialog = screen.getByRole('dialog', { name: 'User detail' })
+    expect(within(dialog).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Close user detail'])
+    expect(within(dialog).queryByRole('button', { name: /edit|delete/i })).not.toBeInTheDocument()
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close user detail' }))
+    expect(screen.queryByRole('dialog', { name: 'User detail' })).not.toBeInTheDocument()
+  })
+
   it('exposes no user management actions', () => {
     mockUsers({ users: [alice, bob] })
     render(<UsersSection />)
