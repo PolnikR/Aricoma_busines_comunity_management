@@ -93,7 +93,7 @@ Expected gain is about 42 px of vertical space per page on desktop. The table st
 - [x] Task 13: Browser fit matrix across monitor sizes
 
 ### Checkpoint C
-- [ ] All acceptance criteria met; measurements recorded; ready for review
+- [x] All acceptance criteria met; measurements recorded; approved 2026-10-01
 
 ## Risks and mitigations
 

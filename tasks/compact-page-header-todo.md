@@ -220,5 +220,6 @@ Record the y-position where the table starts and whether a scrollbar appears, in
 **Scope:** S (fix-ups become their own tasks)
 
 ## Checkpoint C
-- [ ] All acceptance criteria met, measurements recorded, focused suites green
-- [ ] Ready for review
+- [x] All acceptance criteria met, measurements recorded, focused suites green
+- [x] Reviewed and approved by the user (2026-10-01)
+- Out of scope: the short-viewport squeeze on contained routes (Resources, Infrastructure) predates this change and is handled separately
