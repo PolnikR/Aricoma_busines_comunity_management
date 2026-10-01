@@ -40,7 +40,7 @@ function renderPage(initialEntries: string[] = ['/']) {
 }
 
 describe('RecoveryRunsPage', () => {
-  it('shows the bounded scope note and one row per orchestrated entity across both types by default', () => {
+  it('shows a static surface header and one row per orchestrated entity across both types by default', () => {
     vi.mocked(useOrchestratedEntities).mockReturnValue({
       entities,
       isLoading: false,
@@ -60,7 +60,11 @@ describe('RecoveryRunsPage', () => {
 
     renderPage()
 
-    expect(screen.getByText('Showing 2 orchestrated entities — entities never pushed to orchestration have no runs and aren\'t queried.')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Recovery runs' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Orchestrated entities' })).toBeInTheDocument()
+    expect(screen.getByText('Latest run per orchestrated entity. Entities never pushed to orchestration aren\'t queried.')).toBeInTheDocument()
+    expect(screen.getAllByText('Execution history and status of recovery runs.')).toHaveLength(1)
+    expect(screen.queryByText(/^Showing \d+ orchestrated entities/)).not.toBeInTheDocument()
     expect(screen.getByText('Finance Recovery')).toBeInTheDocument()
     expect(screen.getByText('Billing Group')).toBeInTheDocument()
   })

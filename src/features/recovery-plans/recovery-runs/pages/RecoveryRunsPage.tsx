@@ -73,19 +73,17 @@ export function RecoveryRunsPage() {
       />
 
       <InventoryShell
-        notice={!isLoading ? (
-          <p className="px-1 text-xs text-text-muted">
-            {t('recoveryRuns.scopeNote').replace('{count}', String(visibleEntities.length))}
-          </p>
-        ) : null}
-        inventoryTitle={t('recoveryRuns.tableLabel')}
-        inventoryDescription={t('pages.recoveryRuns.description')}
+        inventoryTitle={t('recoveryRuns.inventoryTitle')}
+        inventoryDescription={t('recoveryRuns.inventoryDescription')}
         tabs={(
           <Tabs<RecoveryRunTab>
             items={tabItems}
             value={tab}
             onChange={setTab}
             ariaLabel={t('recoveryRuns.tabs.ariaLabel')}
+            indicator="inset"
+            compact
+            className="w-full shrink-0 border-b-0 bg-surface px-0 sm:w-auto"
           />
         )}
       >

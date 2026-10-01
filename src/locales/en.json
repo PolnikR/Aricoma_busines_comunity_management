@@ -224,7 +224,8 @@
 
   "pages.recoveryRuns.title": "Recovery runs",
   "pages.recoveryRuns.description": "Execution history and status of recovery runs.",
-  "recoveryRuns.scopeNote": "Showing {count} orchestrated entities — entities never pushed to orchestration have no runs and aren't queried.",
+  "recoveryRuns.inventoryTitle": "Orchestrated entities",
+  "recoveryRuns.inventoryDescription": "Latest run per orchestrated entity. Entities never pushed to orchestration aren't queried.",
   "recoveryRuns.tabs.ariaLabel": "Recovery runs entity type",
   "recoveryRuns.tabs.all": "All",
   "recoveryRuns.tabs.applications": "Applications",
