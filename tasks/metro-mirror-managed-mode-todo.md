@@ -95,12 +95,13 @@ mode means a new Recovery Group) and keeps topology/source locked for a managed 
 shows a short hint that ABCO provisions the Metro Mirror infrastructure.
 
 **Acceptance criteria:**
-- [ ] New group: Managed option is not disabled; selecting it calls `onChange({ metroMirrorMode: 'managed', consistencyGroupId: '', auxiliaryNamesByVolume: {} })`; selecting Metro topology still defaults to `existing`
-- [ ] With `isEditing` the mode select is disabled for Existing and Managed (no Existing ↔ Managed switch); topology/source disabled only for a managed draft
-- [ ] Locales en/cs/sk: Managed label without "(unavailable)", `errors.managed` removed, `managedHint` added; translation test updated
+- [x] New group: Managed option is not disabled; selecting it calls `onChange({ metroMirrorMode: 'managed', consistencyGroupId: '', auxiliaryNamesByVolume: {} })`; selecting Metro topology still defaults to `existing`
+- [x] With `isEditing` the mode select is disabled for Existing and Managed (no Existing ↔ Managed switch); topology/source disabled only for a managed draft
+- [x] Locales en/cs/sk: Managed label without "(unavailable)", `errors.managed` removed, `managedHint` added; translation test updated
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupTopologyStep.test.tsx src/locales/recoveryGroupTopologyTranslations.test.ts`
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupTopologyStep.test.tsx src/locales/recoveryGroupTopologyTranslations.test.ts`
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx` (because of the `isEditing` wiring)
 
 **Dependencies:** Task 1, 2 (FE domain checkpoint confirmed)
 
@@ -108,11 +109,16 @@ shows a short hint that ABCO provisions the Metro Mirror infrastructure.
 - `src/features/recovery-plans/recovery-groups/components/RecoveryGroupTopologyStep.tsx` (+ test)
 - `src/locales/en.json`, `src/locales/cs.json`, `src/locales/sk.json`
 - `src/locales/recoveryGroupTopologyTranslations.test.ts`
+- `src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.tsx` – only passes
+  `isEditing={Boolean(initialData)}` to the topology step (gap found during Task 3: without it the
+  enabled Managed option would allow an Existing → Managed switch in edit). No lifecycle-lock or
+  Managed-flow changes (Tasks 4–5); covered by the existing Builder test
+  `never silently converts an existing managed group`.
 
 **Estimated scope:** Medium
 
 **Completion checkpoint:**
-- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
+- [x] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
 
 ## Task 4: Builder – global lifecycle lock for pushed groups
 

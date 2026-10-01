@@ -9,11 +9,11 @@ const requiredKeys = [
   ...[
     'title', 'description', 'loadError', 'loading', 'mode', 'choose',
     'local', 'metroMirror', 'source', 'target', 'targetPlaceholder',
-    'metroMode', 'existing', 'managed', 'consistencyGroup',
+    'metroMode', 'existing', 'managed', 'managedHint', 'consistencyGroup',
     'auxiliary', 'discoveryError',
     'lookup.loading', 'lookup.hint', 'lookup.error', 'lookup.incomplete',
     'lookup.unresolved', 'lookup.missingGroup', 'lookup.mismatch',
-    'errors.required', 'errors.managed', 'errors.sourceRequired',
+    'errors.required', 'errors.sourceRequired',
     'errors.sourceInvalid', 'errors.partnerMissing', 'errors.partnerSame',
     'errors.partnerInvalid', 'errors.modeRequired',
   ].map(suffix => `${prefix}${suffix}`),

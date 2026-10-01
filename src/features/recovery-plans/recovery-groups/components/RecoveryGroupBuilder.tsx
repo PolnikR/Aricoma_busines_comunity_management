@@ -300,7 +300,7 @@ export function RecoveryGroupBuilder({
             ) : null}
             {step === 2 ? <RecoveryGroupTopologyStep draft={draft} providers={allProviders}
               isLoading={providerQuery.isLoading || providerQuery.isFetching} error={providerQuery.error instanceof Error ? providerQuery.error : null}
-              onRetry={() => { void providerQuery.refetch() }} onChange={changeSource} allowLegacyLocal={allowLegacyLocal} /> : null}
+              onRetry={() => { void providerQuery.refetch() }} onChange={changeSource} allowLegacyLocal={allowLegacyLocal} isEditing={Boolean(initialData)} /> : null}
             {step === 3 ? (
               <RecoveryGroupTypeStep
                 sourceCategory={draft.sourceCategory}

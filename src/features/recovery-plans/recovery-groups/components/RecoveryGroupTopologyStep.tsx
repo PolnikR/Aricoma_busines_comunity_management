@@ -15,9 +15,11 @@ interface RecoveryGroupTopologyStepProps {
   onRetry: () => void
   onChange: (update: Partial<RecoveryGroupDraft>) => void
   allowLegacyLocal?: boolean
+  // Metro Mirror mode is chosen only on create; edit keeps the persisted mode.
+  isEditing?: boolean
 }
 
-export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, onRetry, onChange, allowLegacyLocal = false }: RecoveryGroupTopologyStepProps) {
+export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, onRetry, onChange, allowLegacyLocal = false, isEditing = false }: RecoveryGroupTopologyStepProps) {
   const { t } = useTranslation()
   const key = (suffix: string) => `pages.recoveryGroupBuilder.topology.${suffix}`
   const source = providers.find(provider => provider.id === draft.relatedVolumeProviderId)
@@ -26,6 +28,7 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
   const problem = getRecoveryGroupTopologyError(draft, providers, allowLegacyLocal)
   const managed = draft.metroMirrorMode === 'managed'
   const remote = draft.topology === 'metro_mirror'
+  const lockedManaged = isEditing && managed
 
   return (
     <div className="min-w-0 space-y-4">
@@ -34,7 +37,7 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
       {error ? <FetchErrorAlert title={t(key('loadError'))} onRetry={onRetry} retryLabel={t('buttons.retry')} /> : null}
       {isLoading ? <ListSkeleton rowCount={2} ariaLabel={t(key('loading'))} /> : null}
       <Field label={t(key('mode'))} htmlFor="group-topology">
-        <Select id="group-topology" value={draft.topology ?? ''} disabled={managed} onChange={event => {
+        <Select id="group-topology" value={draft.topology ?? ''} disabled={lockedManaged} onChange={event => {
           const topology = event.target.value === 'metro_mirror' ? 'metro_mirror' : 'local'
           onChange({ topology, metroMirrorMode: topology === 'metro_mirror' ? 'existing' : null, consistencyGroupId: '', auxiliaryNamesByVolume: {} })
         }}>
@@ -45,7 +48,7 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
       </Field>
       <div className={`grid min-w-0 gap-4 ${remote ? 'sm:grid-cols-2' : ''}`}>
         <Field label={t(key('source'))} htmlFor="topology-source">
-          <Select id="topology-source" value={draft.relatedVolumeProviderId ?? ''} disabled={isLoading || Boolean(error) || managed}
+          <Select id="topology-source" value={draft.relatedVolumeProviderId ?? ''} disabled={isLoading || Boolean(error) || lockedManaged}
             onChange={event => { onChange({ relatedVolumeProviderId: event.target.value || null }) }}>
             <option value="">{t(key('choose'))}</option>
             {draft.relatedVolumeProviderId && !sources.some(provider => provider.id === draft.relatedVolumeProviderId)
@@ -59,13 +62,16 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
       </div>
       {remote ? <div className="grid min-w-0 gap-4 sm:grid-cols-2">
         <Field label={t(key('metroMode'))} htmlFor="metro-mode">
-          <Select id="metro-mode" value={draft.metroMirrorMode ?? 'existing'} disabled={managed}
-            onChange={() => { onChange({ metroMirrorMode: 'existing' }) }}>
+          <Select id="metro-mode" value={draft.metroMirrorMode ?? 'existing'} disabled={isEditing}
+            onChange={event => {
+              onChange({ metroMirrorMode: event.target.value === 'managed' ? 'managed' : 'existing', consistencyGroupId: '', auxiliaryNamesByVolume: {} })
+            }}>
             <option value="existing">{t(key('existing'))}</option>
-            <option value="managed" disabled>{t(key('managed'))}</option>
+            <option value="managed">{t(key('managed'))}</option>
           </Select>
         </Field>
       </div> : null}
+      {remote && managed ? <p className="text-xs text-text-muted">{t(key('managedHint'))}</p> : null}
       {problem && draft.topology && !isLoading && !error ? <Alert variant="warning" title={t(key(`errors.${problem}`))} /> : null}
     </div>
   )
