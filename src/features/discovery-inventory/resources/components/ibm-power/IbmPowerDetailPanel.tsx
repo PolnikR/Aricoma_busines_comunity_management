@@ -1,4 +1,4 @@
-import { DetailDrawer, DetailRow } from '@/shared/components/data-table'
+import { DetailDrawer, DetailDrawerSection, DetailRow } from '@/shared/components/data-table'
 import type { PowerPartitionData, PowerPartitionResource } from '../../model/discoveryTypes'
 
 type SectionKey = 'summary' | 'processorMemory' | 'network' | 'storage' | 'virtualIo'
@@ -32,9 +32,10 @@ interface IbmPowerDetailPanelProps {
   open: boolean
   onClose: () => void
   labels: {
-    selected: string
+    entity: string
     detail: string
     close: string
+    resize: string
     yes: string
     no: string
     sections: Record<SectionKey, string>
@@ -49,23 +50,23 @@ interface IbmPowerDetailPanelProps {
   }
 }
 
-interface DetailSectionProps {
+interface PartitionSectionProps {
   title: string
   rows: { label: string; value: string }[]
 }
 
-function DetailSection({ title, rows }: DetailSectionProps) {
+// A shared drawer section that hides rows without a value, and itself when none is left.
+function PartitionSection({ title, rows }: PartitionSectionProps) {
   const visibleRows = rows.filter((row) => row.value !== '-')
   if (visibleRows.length === 0) return null
   return (
-    <section>
-      <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-primary">{title}</h3>
+    <DetailDrawerSection title={title} defaultOpen>
       <dl>
         {visibleRows.map((row) => (
           <DetailRow key={row.label} label={row.label} value={row.value} />
         ))}
       </dl>
-    </section>
+    </DetailDrawerSection>
   )
 }
 
@@ -120,16 +121,16 @@ export function IbmPowerDetailPanel({ partition, open, onClose, labels }: IbmPow
     <DetailDrawer
       open={open}
       onClose={onClose}
-      eyebrow={labels.selected}
       title={partition?.partitionName ?? '-'}
-      subtitle=""
+      meta={[labels.entity]}
       ariaLabel={labels.detail}
       closeLabel={labels.close}
+      resizeLabel={labels.resize}
       resizable
     >
       {partition && data ? (
-        <div className="space-y-5 p-5">
-          <DetailSection
+        <>
+          <PartitionSection
             title={labels.sections.summary}
             rows={[
               { label: labels.fields.partitionUuid, value: display(raw(data, 'PartitionUUID'), yes, no) },
@@ -139,7 +140,7 @@ export function IbmPowerDetailPanel({ partition, open, onClose, labels }: IbmPow
               { label: labels.fields.bootable, value: display(raw(data, 'IsBootable'), yes, no) },
             ]}
           />
-          <DetailSection
+          <PartitionSection
             title={labels.sections.processorMemory}
             rows={[
               { label: labels.fields.processors, value: combine([raw(data, 'CurrentProcessors'), raw(data, 'DesiredProcessors')], yes, no, ' / ') },
@@ -152,7 +153,7 @@ export function IbmPowerDetailPanel({ partition, open, onClose, labels }: IbmPow
               { label: labels.fields.memoryLimits, value: combine([raw(data, 'MinimumMemory'), raw(data, 'MaximumMemory')], yes, no, ' – ') },
             ]}
           />
-          <DetailSection
+          <PartitionSection
             title={labels.sections.network}
             rows={[
               { label: labels.fields.interface, value: combine([raw(data, 'InterfaceName'), raw(data, 'DeviceName')], yes, no) },
@@ -161,7 +162,7 @@ export function IbmPowerDetailPanel({ partition, open, onClose, labels }: IbmPow
               { label: labels.fields.monitoring, value: combine([raw(data, 'ResourceMonitoringControlState'), raw(data, 'ResourceMonitoringIPAddress')], yes, no) },
             ]}
           />
-          <DetailSection
+          <PartitionSection
             title={labels.sections.storage}
             rows={[
               { label: labels.fields.volume, value: combine([raw(data, 'VolumeName'), raw(data, 'VolumeState')], yes, no) },
@@ -180,7 +181,7 @@ export function IbmPowerDetailPanel({ partition, open, onClose, labels }: IbmPow
                 : []),
             ]}
           />
-          <DetailSection
+          <PartitionSection
             title={labels.sections.virtualIo}
             rows={[
               { label: labels.fields.virtualIoSlots, value: display(raw(data, 'MaximumVirtualIOSlots'), yes, no) },
@@ -193,7 +194,7 @@ export function IbmPowerDetailPanel({ partition, open, onClose, labels }: IbmPow
               },
             ]}
           />
-        </div>
+        </>
       ) : null}
     </DetailDrawer>
   )

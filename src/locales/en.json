@@ -1286,7 +1286,7 @@
   "resources.power.filters.allVolumeStates": "All volume states",
   "resources.power.empty.title": "No partitions found",
   "resources.power.empty.description": "No IBM Power partitions match the current search and filters.",
-  "resources.power.detail.selected": "Selected partition",
+  "resources.power.detail.entity": "Partition",
   "resources.power.detail.ariaLabel": "IBM Power partition detail",
   "resources.power.detail.close": "Close partition detail",
   "resources.power.detail.summary": "Summary",

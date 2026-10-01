@@ -108,7 +108,8 @@ describe('PowerInventoryView', () => {
 
     fireEvent.click(screen.getByText('vios1'))
     const dialog = screen.getByRole('dialog', { name: 'IBM Power partition detail' })
-    expect(within(dialog).getByText('Summary')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Summary' })).toHaveAttribute('aria-expanded', 'true')
+    expect(within(dialog).getByRole('heading', { name: 'vios1' }).parentElement?.nextElementSibling).toHaveTextContent('Partition')
     expect(within(dialog).getByText('Processor and memory')).toBeInTheDocument()
     expect(within(dialog).getByText('Network and monitoring')).toBeInTheDocument()
     expect(within(dialog).getByText('Storage')).toBeInTheDocument()

@@ -1249,7 +1249,7 @@
   "resources.power.filters.allVolumeStates": "Všechny stavy svazků",
   "resources.power.empty.title": "Nebyly nalezeny žádné oddíly",
   "resources.power.empty.description": "Aktuálnímu hledání a filtrům neodpovídají žádné IBM Power oddíly.",
-  "resources.power.detail.selected": "Vybraný oddíl",
+  "resources.power.detail.entity": "Oddíl",
   "resources.power.detail.ariaLabel": "Detail IBM Power oddílu",
   "resources.power.detail.close": "Zavřít detail oddílu",
   "resources.power.detail.summary": "Provozní souhrn",

@@ -1249,7 +1249,7 @@
   "resources.power.filters.allVolumeStates": "Všetky stavy zväzkov",
   "resources.power.empty.title": "Nenašli sa žiadne partície",
   "resources.power.empty.description": "Aktuálnemu vyhľadávaniu a filtrom nezodpovedajú žiadne IBM Power partície.",
-  "resources.power.detail.selected": "Vybraná partícia",
+  "resources.power.detail.entity": "Partícia",
   "resources.power.detail.ariaLabel": "Detail IBM Power partície",
   "resources.power.detail.close": "Zavrieť detail partície",
   "resources.power.detail.summary": "Súhrn",

@@ -113,7 +113,8 @@ export function PowerInventoryView({
         open={selected !== null}
         onClose={() => { setSelected(null) }}
         labels={{
-          selected: t('resources.power.detail.selected'),
+          entity: t('resources.power.detail.entity'),
+          resize: t('drawer.resize'),
           detail: t('resources.power.detail.ariaLabel'),
           close: t('resources.power.detail.close'),
           yes: t('common.yes'),
