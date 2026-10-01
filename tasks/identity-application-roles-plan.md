@@ -33,7 +33,8 @@ endpoint returns application RBAC roles synced as Keycloak client roles, not gen
   matching the Users section, where Add user was removed. Other sections' header actions are unchanged.
 - **Internal ids unchanged**: section id `realm-roles`, locale key `identity.navigation.sections.realm-roles`,
   component name `RealmRolesSection`, endpoint and generated types all keep their names. Only the visible copy changes.
-  The `identityAccessSections.ts` static label isn't rendered, so it is left unchanged.
+  The `identityAccessSections.ts` static `label` isn't rendered, but page/registry tests use it as the English copy,
+  so it is updated to "Application roles" too (corrected after Task 2; the original plan wrongly left it unchanged).
 - **Selection is local state** (`useState<string | null>` keyed by role id = name), exactly like Users.
   `RealmRolesSection` takes no props. The `realm-roles` entry in `identityAccessSections.ts` (entity/tabs metadata)
   is left as it is, matching the Users decision, so a stale `?entity=` has no effect.

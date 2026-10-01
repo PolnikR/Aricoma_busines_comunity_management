@@ -33,7 +33,7 @@ describe('useIdentityAccessSection', () => {
           { id: 'organizations', label: 'Organizations' },
           { id: 'clients', label: 'Clients' },
           { id: 'client-scopes', label: 'Client scopes' },
-          { id: 'realm-roles', label: 'Realm roles' },
+          { id: 'realm-roles', label: 'Application roles' },
           { id: 'users', label: 'Users' },
           { id: 'groups', label: 'Groups' },
           { id: 'sessions', label: 'Sessions' },
