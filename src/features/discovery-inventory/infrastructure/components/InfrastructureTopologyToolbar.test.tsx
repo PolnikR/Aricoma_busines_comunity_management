@@ -47,6 +47,27 @@ describe('InfrastructureTopologyToolbar', () => {
     expect(onFitView).toHaveBeenCalledOnce()
   })
 
+  it('keeps the search/host grid at its column minimum so wrapped controls cannot overlap it', () => {
+    render(
+      <InfrastructureTopologyToolbar
+        platform="vmware"
+        filters={filters}
+        options={options}
+        isLayouting={false}
+        onFiltersChange={vi.fn()}
+        onAutoLayout={vi.fn()}
+        onResetPositions={vi.fn()}
+        onFitView={vi.fn()}
+      />,
+    )
+
+    const grid = screen.getByLabelText('Search infrastructure topology').closest('.grid')
+    const controls = screen.getByRole('tablist', { name: 'Power state filter' }).parentElement
+    expect(grid).toHaveClass('flex-1', 'sm:grid-cols-[minmax(220px,1fr)_220px]', 'xl:max-w-2xl')
+    expect(grid).not.toHaveClass('min-w-0')
+    expect(controls).toHaveClass('flex', 'min-w-0', 'flex-wrap')
+  })
+
   it('disables position actions while layouting', () => {
     render(
       <InfrastructureTopologyToolbar

@@ -64,7 +64,8 @@ export function InfrastructureTopologyToolbar({
 
   return (
     <div className="flex flex-col gap-3 border-b border-border bg-surface p-3.5 xl:flex-row xl:items-center xl:justify-between">
-      <div className="grid min-w-0 flex-1 grid-cols-1 gap-2.5 sm:grid-cols-[minmax(220px,1fr)_220px] xl:max-w-2xl">
+      {/* No min-w-0: in the xl row the search/select grid keeps its 220px columns and the control group wraps instead of being overlapped. */}
+      <div className="grid flex-1 grid-cols-1 gap-2.5 sm:grid-cols-[minmax(220px,1fr)_220px] xl:max-w-2xl">
         <Input
           aria-label={t('topology.searchLabel')}
           type="search"
