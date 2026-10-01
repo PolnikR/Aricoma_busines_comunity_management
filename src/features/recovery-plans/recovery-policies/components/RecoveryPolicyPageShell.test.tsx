@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { RecoveryPolicyPageShell } from './RecoveryPolicyPageShell'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
 const tabs = [
   { value: 'snapshot', label: 'Snapshot' },
   { value: 'application-recovery', label: 'Application Recovery' },
