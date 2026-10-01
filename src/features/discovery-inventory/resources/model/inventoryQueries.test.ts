@@ -53,7 +53,7 @@ describe('discovery inventory queries', () => {
   })
 
   it('loads FlashSystem volumes for a provider and keeps vendor volume fields', async () => {
-    const mock = stubFetch({ count: 1, volumes: [{ name: 'VOL-01', vendor_flag: 'x' }], pools: {}, hosts: {}, clusters: {} })
+    const mock = stubFetch({ count: 1, volumes: [{ name: 'VOL-01', vendor_flag: 'x' }], pools: {}, hosts: {}, clusters: {}, consistency_groups: {} })
     const response = await flashSystemInventoryQuery('flash-01').queryFn({ signal })
     const inventory = createFlashSystemInventorySelect('flash-01')(response)
 

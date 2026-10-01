@@ -42,6 +42,7 @@ function inventory(providerId: string, capacity: string) {
       0: { name: 'HOST_esx', cluster_id: null, cluster_name: '' },
     },
     clusters: {},
+    consistency_groups: {},
   }), providerId)
 }
 

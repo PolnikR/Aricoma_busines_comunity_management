@@ -22,7 +22,7 @@ describe('validatingMutator', () => {
   })
 
   it('applies schema defaults in nested records without dropping vendor fields', async () => {
-    stubFetch({ count: 1, volumes: [{ name: 'VOL-01', vendor_flag: 'x' }], pools: {}, hosts: {}, clusters: {} })
+    stubFetch({ count: 1, volumes: [{ name: 'VOL-01', vendor_flag: 'x' }], pools: {}, hosts: {}, clusters: {}, consistency_groups: {} })
     const result = await validatingMutator<{ volumes: Record<string, unknown>[] }>('/get_volumes', { method: 'GET' })
 
     expect(result.volumes[0]).toMatchObject({ name: 'VOL-01', vendor_flag: 'x', status: 'unknown', host_maps: [] })

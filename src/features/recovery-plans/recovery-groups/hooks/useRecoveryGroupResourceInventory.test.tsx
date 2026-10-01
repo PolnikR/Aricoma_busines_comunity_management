@@ -43,7 +43,7 @@ describe('useRecoveryGroupResourceInventory', () => {
       vms: [{ lpar: { PartitionName: 'LPAR-01' }, vios: {} }],
     })
     fetchFlashSystemInventory.mockReturnValue({
-      count: 1, volumes: [{ name: 'VOL-01' }], pools: {}, hosts: {}, clusters: {},
+      count: 1, volumes: [{ name: 'VOL-01' }], pools: {}, hosts: {}, clusters: {}, consistency_groups: {},
     })
   })
 
@@ -273,7 +273,7 @@ describe('useRecoveryGroupResourceInventory', () => {
       'ibm_flashsystem',
       'flash-1',
       flashSystemInventoryQuery('flash-1').queryKey,
-      parseWireResponse(VolumesResponse, { count: 1, volumes: [{ name: 'CACHED-VOL' }], pools: {}, hosts: {}, clusters: {} }),
+      parseWireResponse(VolumesResponse, { count: 1, volumes: [{ name: 'CACHED-VOL' }], pools: {}, hosts: {}, clusters: {}, consistency_groups: {} }),
       ['CACHED-VOL'],
     ],
   ] as const)('reuses the discovery cache for %s', async (

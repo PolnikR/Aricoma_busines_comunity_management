@@ -14,7 +14,7 @@ export interface VmwareSearchCall {
   forceRefresh?: boolean
 }
 
-export const emptyVolumesResponse = { count: 0, volumes: [], pools: {}, hosts: {}, clusters: {} }
+export const emptyVolumesResponse = { count: 0, volumes: [], pools: {}, hosts: {}, clusters: {}, consistency_groups: {} }
 export const emptyPowerResponse = { count: 0, counts_by_type: { LogicalPartition: 0, VirtualIOServer: 0 }, vms: [] }
 export const emptyVmsResponse = { count: 0, vms: [] }
 
