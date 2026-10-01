@@ -760,7 +760,7 @@
   "drawer.vmSections": "Sekcie podrobností virtuálneho stroja",
   "drawer.tabs.overview": "Prehľad",
   "drawer.tabs.disks": "Disky",
-  "drawer.tabs.snapshots": "Snímky",
+  "drawer.tabs.snapshots": "Backing storage info",
   "pages.providers.detail.loading": "Načítava sa poskytovateľ",
   "pages.providers.detail.loadError": "Poskytovateľa sa nepodarilo načítať",
   "pages.providers.detail.requestFailed": "Požiadavka na poskytovateľa zlyhala.",

@@ -107,7 +107,7 @@ describe('VirtualMachineDetailPanel resize', () => {
       />,
     )
 
-    await user.click(screen.getByRole('tab', { name: 'Snapshots' }))
+    await user.click(screen.getByRole('tab', { name: 'Backing storage info' }))
 
     expect(screen.getByRole('table')).toBeInTheDocument()
   })
@@ -130,7 +130,7 @@ describe('VirtualMachineDetailPanel resize', () => {
       />,
     )
 
-    await user.click(screen.getByRole('tab', { name: 'Snapshots' }))
+    await user.click(screen.getByRole('tab', { name: 'Backing storage info' }))
 
     expect(screen.getByRole('status', { name: 'Loading snapshots...' })).toBeInTheDocument()
     expect(screen.getByText('source mappings')).toBeVisible()
@@ -157,7 +157,7 @@ describe('VirtualMachineDetailPanel resize', () => {
       />,
     )
 
-    await user.click(screen.getByRole('tab', { name: 'Snapshots' }))
+    await user.click(screen.getByRole('tab', { name: 'Backing storage info' }))
 
     expect(screen.getByRole('alert')).toHaveTextContent('Resource inventory could not be loaded')
     expect(screen.queryByLabelText('Snapshot mappings table')).not.toBeInTheDocument()
@@ -183,7 +183,7 @@ describe('VirtualMachineDetailPanel resize', () => {
       />,
     )
 
-    await user.click(screen.getByRole('tab', { name: 'Snapshots' }))
+    await user.click(screen.getByRole('tab', { name: 'Backing storage info' }))
 
     expect(screen.getByRole('button', { name: 'Retrying' })).toBeDisabled()
     expect(screen.queryByLabelText('Snapshot mappings table')).not.toBeInTheDocument()
@@ -244,7 +244,7 @@ describe('VirtualMachineDetailPanel resize', () => {
       />,
     )
 
-    await user.click(screen.getByRole('tab', { name: 'Snapshots' }))
+    await user.click(screen.getByRole('tab', { name: 'Backing storage info' }))
 
     expect(screen.getByLabelText('Snapshot mappings table')).toBeInTheDocument()
     expect(screen.getByText('source-volume')).toBeInTheDocument()

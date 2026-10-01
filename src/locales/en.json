@@ -785,7 +785,7 @@
   "drawer.vmSections": "Virtual machine detail sections",
   "drawer.tabs.overview": "Overview",
   "drawer.tabs.disks": "Disks",
-  "drawer.tabs.snapshots": "Snapshots",
+  "drawer.tabs.snapshots": "Backing storage info",
   "pages.providers.detail.loading": "Loading provider",
   "pages.providers.detail.loadError": "Failed to load provider",
   "pages.providers.detail.requestFailed": "The provider request failed.",
