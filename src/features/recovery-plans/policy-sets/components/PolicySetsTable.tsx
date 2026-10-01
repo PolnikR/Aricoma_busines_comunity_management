@@ -177,16 +177,19 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
-        eyebrow={t('policySets.drawer.eyebrow')}
         title={selected?.name ?? ''}
+        meta={selected ? [
+          t('policySets.drawer.entity'),
+        ] : []}
         subtitle={<span className="font-mono">{selected?.id}</span>}
         ariaLabel={t('policySets.drawer.label')}
         closeLabel={t('policySets.drawer.close')}
+        resizeLabel={t('drawer.resize')}
+        footerStart={selected ? (
+          <Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger">{t('buttons.delete')}</Button>
+        ) : null}
         footer={selected ? (
-          <>
-            <Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger" className="flex-1">{t('buttons.delete')}</Button>
-            <Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm" className="flex-1">{t('buttons.edit')}</Button>
-          </>
+          <Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">{t('buttons.edit')}</Button>
         ) : null}
       >
         {selected ? (

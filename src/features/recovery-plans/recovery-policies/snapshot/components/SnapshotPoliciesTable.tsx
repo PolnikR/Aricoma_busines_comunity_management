@@ -260,17 +260,20 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
-        eyebrow={t('snapshotPolicies.drawer.eyebrow')}
         title={selected?.name ?? ''}
+        meta={selected ? [
+          t('snapshotPolicies.drawer.entity'),
+          <Badge key="badge" color={levelColor(selected.level ?? '')} size="sm">{selected.level}</Badge>,
+        ] : []}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerExtra={selected ? <Badge color={levelColor(selected.level ?? '')} size="sm">{selected.level}</Badge> : null}
         ariaLabel={t('snapshotPolicies.drawer.label')}
         closeLabel={t('snapshotPolicies.drawer.close')}
+        resizeLabel={t('drawer.resize')}
+        footerStart={selected ? (
+          <Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger">{t('buttons.delete')}</Button>
+        ) : null}
         footer={selected ? (
-          <>
-            <Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger" className="flex-1">{t('buttons.delete')}</Button>
-            <Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm" className="flex-1">{t('buttons.edit')}</Button>
-          </>
+          <Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">{t('buttons.edit')}</Button>
         ) : null}
       >
         {selected ? (

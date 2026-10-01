@@ -119,6 +119,12 @@ describe('PolicySetsTable', () => {
     expect(within(detail).getByText('Medium — 6h')).toBeInTheDocument()
     expect(within(detail).getByText('Critical — Daily DR Test')).toBeInTheDocument()
     expect(within(detail).getByText('Enforce Clean Target')).toBeInTheDocument()
+    const modelCDrawer = screen.getByRole('dialog', { name: 'Policy set detail' })
+    const modelCMeta = within(modelCDrawer).getByRole('heading', { name: 'Tier 2 applications' }).parentElement?.nextElementSibling
+    expect(modelCMeta).toHaveTextContent(/^Policy set/)
+    const modelCDelete = within(modelCDrawer).getByRole('button', { name: 'Delete' })
+    expect(modelCDelete.parentElement?.parentElement?.children[0]).toContainElement(modelCDelete)
+    expect(modelCDelete.parentElement?.parentElement?.children[1]).toContainElement(within(modelCDrawer).getByRole('button', { name: 'Edit' }))
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
   })

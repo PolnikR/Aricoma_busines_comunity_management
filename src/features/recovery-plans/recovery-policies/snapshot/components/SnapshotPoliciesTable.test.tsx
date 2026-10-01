@@ -82,6 +82,12 @@ describe('SnapshotPoliciesTable', () => {
 
     await userEvent.click(screen.getByText('Critical — 15 min'))
     expect(screen.getByRole('dialog', { name: 'Snapshot policy detail' })).toBeInTheDocument()
+    const modelCDrawer = screen.getByRole('dialog', { name: 'Snapshot policy detail' })
+    const modelCMeta = within(modelCDrawer).getByRole('heading', { name: 'Critical — 15 min' }).parentElement?.nextElementSibling
+    expect(modelCMeta).toHaveTextContent(/^Snapshot policy/)
+    const modelCDelete = within(modelCDrawer).getByRole('button', { name: 'Delete' })
+    expect(modelCDelete.parentElement?.parentElement?.children[0]).toContainElement(modelCDelete)
+    expect(modelCDelete.parentElement?.parentElement?.children[1]).toContainElement(within(modelCDrawer).getByRole('button', { name: 'Edit' }))
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
   })
