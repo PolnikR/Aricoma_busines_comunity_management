@@ -126,6 +126,25 @@ afterEach(cleanup)
   })
 })
 
+describe('DetailDrawer focus trap', () => {
+  it('wraps from the last tabbable element even when a tabindex=-1 element follows it', () => {
+    render(
+      <DetailDrawer open title="X" closeLabel="Close detail" onClose={vi.fn()}>
+        <button type="button">Overview tab</button>
+        <button type="button" tabIndex={-1}>Inactive tab</button>
+      </DetailDrawer>,
+    )
+    const close = screen.getByRole('button', { name: 'Close detail' })
+    screen.getByRole('button', { name: 'Overview tab' }).focus()
+
+    fireEvent.keyDown(window, { key: 'Tab' })
+    expect(close).toHaveFocus()
+
+    fireEvent.keyDown(window, { key: 'Tab', shiftKey: true })
+    expect(screen.getByRole('button', { name: 'Overview tab' })).toHaveFocus()
+  })
+})
+
 describe('DetailDrawer header', () => {
   it('renders meta items in order, skips falsy ones and hides the separators from assistive tech', () => {
     render(

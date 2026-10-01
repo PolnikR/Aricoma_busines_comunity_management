@@ -71,7 +71,9 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, meta = [
 
       const focusable = [...(drawerRef.current?.querySelectorAll<HTMLElement>(
         'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      ) ?? [])].filter((element) => !element.hasAttribute('hidden') && isVisible(element))
+      // tabIndex < 0 drops roving-tabindex items (e.g. inactive tabs) that Tab never reaches,
+      // so `first` / `last` are the real ends of the tab order.
+      ) ?? [])].filter((element) => !element.hasAttribute('hidden') && element.tabIndex >= 0 && isVisible(element))
       if (focusable.length === 0) {
         event.preventDefault()
         drawerRef.current?.focus()
