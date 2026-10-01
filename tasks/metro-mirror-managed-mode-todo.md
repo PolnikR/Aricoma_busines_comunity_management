@@ -27,12 +27,12 @@ requiring them for `existing`. `getRecoveryGroupTopologyError` accepts `managed`
 source/partner checks as `existing`.
 
 **Acceptance criteria:**
-- [ ] Managed (vm and volume) without `consistencyGroupId` / `auxiliaryNamesByVolume` validates; result has `metroMirrorMode: 'managed'`, `consistencyGroupId: null`, `auxiliaryNamesByVolume: {}` even if the draft carried persisted values
-- [ ] Managed still requires source provider (vm) and ≥1 source volume; Existing still requires CG id + every auxiliary; `managed` with `local` topology normalises to `metroMirrorMode: null`
-- [ ] Topology util returns `null` for valid managed, partner errors as for existing, `modeRequired` for null mode
+- [x] Managed (vm and volume) without `consistencyGroupId` / `auxiliaryNamesByVolume` validates; result has `metroMirrorMode: 'managed'`, `consistencyGroupId: null`, `auxiliaryNamesByVolume: {}` even if the draft carried persisted values
+- [x] Managed still requires source provider (vm) and ≥1 source volume; Existing still requires CG id + every auxiliary; `managed` with `local` topology normalises to `metroMirrorMode: null`
+- [x] Topology util returns `null` for valid managed, partner errors as for existing, `modeRequired` for null mode
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-groups/api/recoveryGroupsValidation.test.ts src/features/recovery-plans/recovery-groups/utils/recoveryGroupTopology.test.ts`
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-groups/api/recoveryGroupsValidation.test.ts src/features/recovery-plans/recovery-groups/utils/recoveryGroupTopology.test.ts`
 
 **Dependencies:** None
 
@@ -43,7 +43,7 @@ source/partner checks as `existing`.
 **Estimated scope:** Small
 
 **Completion checkpoint:**
-- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
+- [x] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
 
 ## Task 2: Mode-aware submit mapper and read-back
 

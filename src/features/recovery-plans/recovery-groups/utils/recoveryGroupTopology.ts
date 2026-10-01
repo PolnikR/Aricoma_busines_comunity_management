@@ -9,7 +9,6 @@ export function getRecoveryGroupTopologyError(
   allowLegacyLocal = false,
 ) {
   if (!draft.topology) return 'required'
-  if (draft.metroMirrorMode === 'managed') return 'managed'
   if (!draft.relatedVolumeProviderId) {
     return allowLegacyLocal && draft.topology === 'local' ? null : 'sourceRequired'
   }
@@ -21,6 +20,6 @@ export function getRecoveryGroupTopologyError(
   const target = providers.find(provider => provider.id === source.partnerProviderId)
   if (!target) return 'partnerMissing'
   if (target.type !== 'FLASHCOPY' || target.credentialStatus !== 'ok') return 'partnerInvalid'
-  if (draft.metroMirrorMode !== 'existing') return 'modeRequired'
+  if (draft.metroMirrorMode !== 'existing' && draft.metroMirrorMode !== 'managed') return 'modeRequired'
   return null
 }
