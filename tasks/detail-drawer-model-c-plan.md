@@ -472,6 +472,10 @@ Task 18 zmaže `eyebrow` a `headerExtra` z `DetailDrawerProps`. Ak niekto zostal
     `first` a Shift+Tab z close tlačidla by vyhodil focus z drawera.
   - jsdom `checkVisibility` nemá, preto sa tam prvky nefiltrujú. Test simuluje skrytý handle
     stubom `checkVisibility: () => false`.
+- **Focus trap vynecháva aj prvky s `tabIndex < 0` (oprava z Checkpointu A, commit `a274d142`):**
+  roving `tabindex=-1` položky (neaktívne taby) sa predtým počítali ako `last`. Tab z reálne
+  posledného prvku potom opustil drawer (zistené vo VMware drawerovi). Chyba existovala už pred
+  Model C.
 - **Escape** zatvorí drawer. Vnorený popover (help) musí Escape zachytiť a zastaviť
   (`stopPropagation`). Shell sa nemení.
 - **Close button** má `aria-label={closeLabel}` a ikona `aria-hidden`.

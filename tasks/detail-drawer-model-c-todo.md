@@ -137,7 +137,9 @@ odchýlky v pomenovaní regiónu (pozri kritériá).
 **Závislosti:** T1 (`ChevronRightIcon` už existuje, závislosť je iba poradie commitov).
 **Rozsah / riziko:** S / nízke. **Commit:** `feat: shared DetailDrawerSection`.
 
-### Task 3: `DetailRow` restyle a footer
+### Task 3: `DetailRow` restyle a footer ✅
+
+**Stav:** hotovo, commit `1f0bc403` (`feat: lighter DetailRow and split footer slots`).
 
 **Cieľ:** Ľahší riadok vhodný do sekcií a footer so slotmi `footerStart` a `footer`.
 
@@ -148,18 +150,18 @@ odchýlky v pomenovaní regiónu (pozri kritériá).
 
 **Akceptačné kritériá:**
 
-- [ ] `DetailRow` je grid `minmax(7rem,35%) / 1fr`, `py-2`, bez `border-b`, `dd` s
+- [x] `DetailRow` je grid `minmax(7rem,35%) / 1fr`, `py-2`, bez `border-b`, `dd` s
       `wrap-anywhere`, zachováva `div > dt + dd`.
-- [ ] Footer podľa plánu §4:
+- [x] Footer podľa plánu §4:
   - vonkajší `flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3`
   - `footerStart` v ľavej skupine
   - `footer` v end kontajneri `flex min-w-0 flex-1 flex-wrap items-center justify-end gap-3`
   - footer sa nerenderuje, keď chýbajú oba sloty
-- [ ] **Legacy:** bez `footerStart` je end kontajner jediné dieťa a má celú šírku. Dve tlačidlá s
+- [x] **Legacy:** bez `footerStart` je end kontajner jediné dieťa a má celú šírku. Dve tlačidlá s
       `className="flex-1"` sa delia na polovice ako dnes. Mení sa iba padding `p-4` →
       `px-5 py-3`.
-- [ ] **Model C:** s `footerStart` je deštruktívna akcia vľavo a primárna skupina vpravo.
-- [ ] Na 359px sa footer zalomí bez orezania a bez horizontálneho scrollu (overí Checkpoint A).
+- [x] **Model C:** s `footerStart` je deštruktívna akcia vľavo a primárna skupina vpravo.
+- [x] Na 359px sa footer zalomí bez orezania a bez horizontálneho scrollu (overí Checkpoint A).
 
 **Testy:**
 
@@ -171,12 +173,15 @@ odchýlky v pomenovaní regiónu (pozri kritériá).
   - absencia footera, `secondary` text v riadku
 - V + celá **SC** (FlashSystem `closest('div')` a `nextElementSibling` musia prejsť bez úprav).
 
+**Výsledok verifikácie (commit `1f0bc403`):** SC 22/22 súborov, 227/227 testov (FlashSystem
+`closest('div')` a `nextElementSibling` bez úprav); eslint, tsc a `git diff --check` OK.
+
 **Závislosti:** T1. **Rozsah / riziko:** S / stredné (R1, R6). **Commit:**
 `feat: lighter DetailRow and split footer slots`.
 
-## Checkpoint A: shared základ
+## Checkpoint A: shared základ (testy ✅, browser čiastočne)
 
-- [ ] V + celá **SC** sú zelené.
+- [x] V + celá **SC** sú zelené (po T3: 22/22, 227/227; po fixe `a274d142`: 22/22, 246/246).
 - [ ] Browser 1366×768, 1024×768 a 390×844 na **nemigrovaných** draweroch:
   - Providers (`headerExtra` s Test connection, eyebrow v meta, legacy footer)
   - VMware (tabs, 3 badge, `bodyClassName`)
@@ -187,11 +192,34 @@ odchýlky v pomenovaní regiónu (pozri kritériá).
   - Resizer: na 390×844 handle nie je viditeľný ani dosiahnuteľný Tabom a šírka je 92vw. Na
     1024×768 a 1366×768 funguje myšou aj šípkami a `aria-valuenow` sedí so zmeranou šírkou.
   - Zúženie okna z 1366 na 1000 pri roztiahnutom draweri vráti šírku `min(420px,92vw)`.
-- [ ] Review s človekom (vizuál headera a riadkov) pred T4.
+
+  **Výsledok browser behu (2026-10-01, Edge cez CDP, dev server `localhost:5173` tohto repa):**
+
+  | Drawer | Veľkosť | Výsledok |
+  |---|---|---|
+  | Providers | 1366×768 | šírka 420; handle viditeľný; ArrowLeft×2 → 452 = `aria-valuenow`; roztiahnuté na 580 a zúžené okno na 1000 → 420 a handle skrytý; legacy footer Delete 185px / Edit 183px (50/50); footer pripnutý (0px od spodku); bez overflow; Escape zavrie |
+  | Providers | 1024×768 | šírka 420; handle aktívny, resize 452 = `aria-valuenow`; legacy footer 50/50; bez overflow |
+  | Providers | 390×844 | šírka 359 (92vw); handle `display: none`; Shift+Tab z close → Edit (focus trap vynecháva skrytý handle); Tab cyklus ostáva v draweri a nikdy nepadne na handle; footer 154/152px; bez overflow |
+  | VMware | 390×844, 1024×768 | šírka 359 / 420; handle skrytý / aktívny (resize 452 = `aria-valuenow`); 3 badge v `headerExtra`; bez overflow |
+
+  - **Nájdená chyba (existovala pred T1):** pri VMware drawerovi Tab cyklus opustil drawer.
+    Trap počítal roving `tabindex=-1` taby za posledný prvok. Opravené v `a274d142`
+    (`fix: detail drawer focus trap ignores tabindex=-1 elements`) s unit testom.
+  - **Nedokončené:** VMware 1366×768 (drawer sa v behu neotvoril) a Audit (riadok sa
+    nenašiel). Beh bol prerušený (pozri blocker nižšie) a tieto drawery sa overia v Task 19.
+  - **Blocker browser behu:** merania vyššie bežali v Edge na CDP porte 9222, ktorý patril
+    **inej paralelnej session** (profil `454c7d31`). Po zistení som ho prestal ovládať a
+    spustil vlastný Edge na porte 9333, ten však čaká na manuálny Keycloak login. Zvyšné
+    browser checky (Checkpointy B–E a Task 19) sú **pending**, kým sa niekto neprihlási v okne
+    „Sign in to aricoma“ (Edge s profilom `…/4c3e5949-…/scratchpad/edge-profile`).
+- [x] Review s človekom: na pokyn používateľa (2026-10-01) prebieha plán autonómne a review je
+      vo finálnom reporte.
 
 ## Fáza 2: Referencia
 
-### Task 4: Recovery Groups → Model C
+### Task 4: Recovery Groups → Model C ✅
+
+**Stav:** hotovo, commit `0468f329` (`feat: Recovery groups drawer uses Model C sections`).
 
 **Cieľ:** Prvý consumer. Tabs nahradia tri `DetailDrawerSection`, header dostane meta riadok a
 footer nové sloty.
@@ -208,37 +236,37 @@ footer nové sloty.
 
 **Akceptačné kritériá:**
 
-- [ ] Tabs a `detailTab` sú preč. Overview je otvorený, Orchestration a Inventory zatvorené,
+- [x] Tabs a `detailTab` sú preč. Overview je otvorený, Orchestration a Inventory zatvorené,
       sekcie sú nezávislé a telo má `key={selected.id}`.
-- [ ] Meta a summary podľa plánu §5:
+- [x] Meta a summary podľa plánu §5:
   - entity, status, resource „Provider unavailable“ badge
   - orchestration fakt a summary sekcie Orchestration podľa tabuľky stavov A, B, C0, C1, C, D,
     E1–E4
   - workload label, „VMs: N“, „Volumes: N“, „No resources“
-- [ ] „Not orchestrated“ a „Not configured“ sa zobrazia **iba** pri `pushToOrchestrator === false`
+- [x] „Not orchestrated“ a „Not configured“ sa zobrazia **iba** pri `pushToOrchestrator === false`
       (stav A).
   - Nekompletná orchestrácia (B), nedostupný orchestrátor (C) a chýbajúce run ID (D) majú
     vlastné texty.
   - Počas načítania alebo chyby providerov (C0, C1) sa fakt nezobrazí.
-- [ ] Mapovanie je čistá funkcia `getRecoveryGroupOrchestrationState`. Čítajú sa iba existujúce
+- [x] Mapovanie je čistá funkcia `getRecoveryGroupOrchestrationState`. Čítajú sa iba existujúce
       polia a existujúce `isLoading` a `isError` z `useGetPlatformProviders` a
       `useLatestOrchestratorRun`.
-- [ ] Žiadny nový query a žiadna zmena `enabled` ani parametrov. Viditeľnosť riadkov Latest
+- [x] Žiadny nový query a žiadna zmena `enabled` ani parametrov. Viditeľnosť riadkov Latest
       run, Last executed, Duration a „View recovery runs →“ ostáva pod dnešnou podmienkou
       `isSelectedOrchestrated`.
 
   Žiadny natvrdo zapísaný text, všetko pochádza z existujúcich dát.
-- [ ] `footerStart` = Delete. `footer` = Edit so zachovaným disabled stavom, `title`,
+- [x] `footerStart` = Delete. `footer` = Edit so zachovaným disabled stavom, `title`,
       `aria-describedby` a sr-only hintom.
-- [ ] Nové kľúče sú v L:
+- [x] Nové kľúče sú v L:
   - `drawer.entity.recoveryGroup`, `drawer.resize`
   - `recoveryGroups.drawer.notOrchestrated`, `.notConfigured`, `.orchestrationIncomplete`
   - `recoveryGroups.drawer.orchestratorUnavailable`, `.noRunId`, `.lastRun`
   - `recoveryGroups.drawer.vmCount`, `.volumeCount`, `.noResources`
   - Existujúce kľúče sa znovu použijú: `recoveryRuns.table.noRuns`,
     `pages.recoveryGroups.providerUnavailable`.
-- [ ] `drawer.selectedRecoveryGroup` je zmazaný, ak osirie.
-- [ ] Žiadna zmena query, routing, dátového modelu ani orchestration logiky.
+- [x] `drawer.selectedRecoveryGroup` je zmazaný, ak osirie.
+- [x] Žiadna zmena query, routing, dátového modelu ani orchestration logiky.
 
 **Testy:**
 
@@ -270,10 +298,20 @@ footer nové sloty.
   - close, reset sekcií po výbere iného záznamu
 - V + `RecoveryGroupInventory.test.tsx` + `recoveryGroupOrchestrationState.test.ts`.
 
+**Výsledok verifikácie (commit `0468f329`):**
+
+- `RecoveryGroupsTable.test.tsx` 38/38 (18 nových Model C testov), `recoveryGroupOrchestrationState.test.ts`
+  10/10, `RecoveryGroupInventory.test.tsx` zelený, locale testy 4/4.
+- eslint, tsc a `git diff --check` OK.
+- Render test pokrýva E1. E2 (chyba latest run) pokrýva unit test, lebo meta pri E1 aj E2 iba
+  vynechá fakt.
+
 **Závislosti:** T1–T3. **Rozsah / riziko:** M / stredné. **Commit:**
 `feat: Recovery groups drawer uses Model C sections`.
 
-### Task 5 (voliteľný, iba so súhlasom): shared `HelpPopover` + relation help
+### Task 5 (voliteľný, iba so súhlasom): shared `HelpPopover` + relation help ⏭️
+
+**Stav:** preskočené ako voliteľné (pokyn používateľa 2026-10-01). Model C funguje bez neho.
 
 **Cieľ:** Preniesť `HelpPopover` a `RecoveryGroupRelationHelp` z prototypu `3eb0fd0a` do
 `headerActions` Recovery Groups.
@@ -299,9 +337,9 @@ test v RecoveryGroupsTable. V.
 **Závislosti:** T4. **Rozsah / riziko:** M / nízke. **Commit:**
 `feat: relation help in the recovery group drawer`.
 
-## Checkpoint B: referencia
+## Checkpoint B: referencia (testy ✅, browser pending)
 
-- [ ] V + celá **SC**.
+- [x] V + celá **SC** (+ `DetailDrawerSection` a stavový unit test): 24/24 súborov, 266/266 testov.
 - [ ] Browser matica (390×844, 1024×768, 1366×768, 1920×1080) na Recovery Groups:
   - šírka a resize: na 390×844 handle chýba a šírka je 92vw; od 1024×768 funguje myšou aj
     šípkami
@@ -310,7 +348,10 @@ test v RecoveryGroupsTable. V.
   - Draft, unresolved provider
   - orchestračné stavy, ktoré dáta umožnia: A, B, C, D a E (run existuje alebo žiadne runy)
   - inventory obsah, dark mode
-- [ ] Review s človekom. Odpovede na otvorené otázky 1–5 zapísať do plánu pred T6.
+  **Browser:** pending, viď blocker v Checkpointe A. Overí sa v Task 19.
+- [x] Review s človekom: presunuté do finálneho reportu (autonómny režim). Otvorené otázky 1–5
+      ostávajú podľa odporúčaní plánu: hodnota vľavo, riadok Status ostáva, Task 5 preskočený,
+      mobil 92vw, run fakt = dĺžka behu.
 
 ## Fáza 3: Rollout
 
