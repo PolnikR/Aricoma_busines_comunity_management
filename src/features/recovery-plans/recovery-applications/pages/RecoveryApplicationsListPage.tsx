@@ -45,6 +45,8 @@ export function RecoveryApplicationsListPage() {
       />
 
       <InventoryShell
+        inventoryTitle={t('pages.recovery.inventoryTitle')}
+        inventoryDescription={t('pages.recovery.inventoryDescription')}
         notice={deleteError ? (
           <Alert
             variant="error"

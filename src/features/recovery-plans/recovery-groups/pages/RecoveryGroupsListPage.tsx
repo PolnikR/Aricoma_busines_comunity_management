@@ -34,6 +34,8 @@ export function RecoveryGroupsListPage() {
       />
 
       <InventoryShell
+        inventoryTitle={t('pages.recoveryGroups.inventoryTitle')}
+        inventoryDescription={t('pages.recoveryGroups.inventoryDescription')}
         notice={mutationError ? (
           <Alert
             variant="error"

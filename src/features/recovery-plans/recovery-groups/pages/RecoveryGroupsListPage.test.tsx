@@ -49,6 +49,7 @@ describe('RecoveryGroupsListPage', () => {
     expect(screen.getByRole('columnheader', { name: 'tables.recoveryGroups.group' })).toBeVisible()
     expect(await screen.findByRole('heading', { name: 'Recovery groups' })).toBeInTheDocument()
     expect(screen.getByText(/Manage reusable groups of resources/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Recovery group records' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Create group' })).toBeEnabled()
     expect(await screen.findByRole('button', { name: 'Create Your First Recovery Group' })).toBeEnabled()
     expect(screen.getByRole('region', { name: 'Recovery groups table' })).toBeInTheDocument()

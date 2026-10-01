@@ -172,6 +172,8 @@
 
   "pages.recovery.title": "Recovery apps",
   "pages.recovery.description": "Manage disaster recovery application definitions and test recovery workflows.",
+  "pages.recovery.inventoryTitle": "Recovery application records",
+  "pages.recovery.inventoryDescription": "Browse and manage recovery application definitions.",
   "pages.recovery.createButton": "Create app",
   "pages.recovery.loading": "Loading recovery applications...",
   "pages.recovery.error.title": "Recovery applications could not be loaded",
@@ -182,6 +184,8 @@
   "pages.recovery.empty.createButton": "Create Your First Application",
   "pages.recoveryGroups.title": "Recovery groups",
   "pages.recoveryGroups.description": "Manage reusable groups of resources that can be assigned to recovery application tiers.",
+  "pages.recoveryGroups.inventoryTitle": "Recovery group records",
+  "pages.recoveryGroups.inventoryDescription": "Browse and manage resource groups available to recovery applications.",
   "pages.recoveryGroups.createButton": "Create group",
   "pages.recoveryGroups.empty.title": "No recovery groups defined yet",
   "pages.recoveryGroups.empty.description": "Create your first recovery group to organize VMware virtual machines or IBM FlashSystem resources.",
