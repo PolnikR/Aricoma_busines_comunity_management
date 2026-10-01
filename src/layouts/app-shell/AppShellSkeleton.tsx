@@ -15,7 +15,7 @@ export function AppShellSkeleton() {
     >
       <div className="flex min-h-screen w-full gap-3 lg:h-full lg:min-h-0 xl:gap-4" aria-hidden="true">
         <aside className="hidden flex-col rounded-[22px] border border-border bg-surface px-3 shadow-sm lg:flex lg:w-[272px] lg:shrink-0 xl:w-[min(352px,32vw)]">
-          <div className="flex h-[72px] items-center gap-2.5 border-b border-border px-2">
+          <div className="flex h-14 items-center gap-2.5 border-b border-border px-2">
             <div className="size-9 animate-pulse rounded-lg bg-surface-muted" />
             <div className="space-y-2">
               <div className="h-3 w-24 animate-pulse rounded bg-surface-muted" />
@@ -35,18 +35,16 @@ export function AppShellSkeleton() {
         </aside>
 
         <section className="flex min-w-0 flex-1 flex-col bg-surface lg:min-h-0 lg:overflow-hidden lg:rounded-[28px] lg:border lg:border-border lg:shadow-sm">
-          <header className="flex h-16 shrink-0 items-center border-b border-border bg-surface/95 px-4 sm:px-6 lg:h-[72px] lg:px-7">
+          <header className="flex h-14 shrink-0 items-center border-b border-border bg-surface/95 px-4 sm:px-6 lg:px-7">
             <div className="h-10 w-10 animate-pulse rounded-xl bg-surface-muted sm:hidden" />
-            <div className="hidden h-10 w-[min(42vw,420px)] animate-pulse rounded-xl bg-surface-muted sm:block" />
             <div className="ml-auto size-9 animate-pulse rounded-full bg-surface-muted" />
           </header>
 
           <main className="flex flex-1 flex-col px-4 py-5 sm:px-6 lg:min-h-0 lg:overflow-hidden lg:px-6 lg:py-5 xl:px-8">
-            <div data-testid="skeleton-page-heading" className="mb-5 flex shrink-0 flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div className="space-y-2">
-                <div className="h-3 w-24 animate-pulse rounded bg-surface-muted" />
-                <div className="h-8 w-56 max-w-[70vw] animate-pulse rounded-md bg-surface-muted sm:w-72" />
-                <div className="h-4 w-72 max-w-[80vw] animate-pulse rounded bg-surface-muted sm:w-96" />
+            <div data-testid="skeleton-page-heading" className="mb-4 flex shrink-0 flex-col items-start gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+              <div>
+                <div className="flex h-9 items-center"><div className="h-6 w-56 max-w-[70vw] animate-pulse rounded-md bg-surface-muted sm:w-72" /></div>
+                <div className="flex h-5 items-center"><div className="h-3.5 w-72 max-w-[80vw] animate-pulse rounded bg-surface-muted sm:w-96" /></div>
               </div>
               <div className="h-9 w-24 shrink-0 animate-pulse rounded-lg bg-surface-muted sm:w-28" />
             </div>

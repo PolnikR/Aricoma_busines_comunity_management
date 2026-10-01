@@ -16,6 +16,15 @@ describe('AppShellSkeleton', () => {
   it('stacks the page heading and action placeholders below the small breakpoint', () => {
     render(<AppShellSkeleton />)
 
-    expect(screen.getByTestId('skeleton-page-heading')).toHaveClass('flex-col', 'items-start', 'sm:flex-row', 'sm:items-end')
+    expect(screen.getByTestId('skeleton-page-heading')).toHaveClass('flex-col', 'items-start', 'sm:flex-row', 'sm:items-start', 'mb-4')
+  })
+
+  it('mirrors the compact shell: 56px header and brand row, no search placeholder', () => {
+    const { container } = render(<AppShellSkeleton />)
+
+    expect(container.querySelector('header')).toHaveClass('h-14')
+    expect(container.querySelector('header')?.className).not.toMatch(/lg:h-/)
+    expect(container.querySelector('aside > div')).toHaveClass('h-14')
+    expect(container.querySelector('[class*="420px"]')).toBeNull()
   })
 })

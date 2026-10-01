@@ -25,4 +25,14 @@ describe('RouteLoadingSkeleton', () => {
     expect(screen.getByLabelText('Loading')).toHaveAttribute('aria-busy', 'true')
     expect(container.querySelector('.lg\\:grid-cols-\\[280px_minmax\\(0\\,1fr\\)\\]')).toBeInTheDocument()
   })
+
+  it.each(['table', 'builder'] as const)('mirrors the compact PageHeader heading in the %s variant', (variant) => {
+    render(<RouteLoadingSkeleton variant={variant} />)
+
+    const heading = screen.getByTestId('route-skeleton-heading')
+    expect(heading).toHaveClass('mb-4', 'items-start')
+    expect(heading.querySelector('.h-9')).toBeInTheDocument()
+    expect(heading.querySelector('.h-5')).toBeInTheDocument()
+    expect(heading.querySelector('.h-3.w-24')).toBeNull()
+  })
 })
