@@ -88,8 +88,8 @@ Expected gain is about 42 px of vertical space per page on desktop. The table st
 - [x] All touched page tests green
 
 ### Phase 3: Lock-in and verification
-- [ ] Task 11: Delete the `eyebrow` prop from the types
-- [ ] Task 12: Sidebar nav labels in sentence case
+- [x] Task 11: Delete the `eyebrow` prop from the types
+- [x] Task 12: Sidebar nav labels in sentence case
 - [ ] Task 13: Browser fit matrix across monitor sizes
 
 ### Checkpoint C

@@ -179,7 +179,10 @@ RecoveryRuns and ModuleWorkQueuePage tests, `resourcesContainedRoutes.test.tsx`
 **Description:** Remove `eyebrow` from `PageHeaderProps` and `TableToolbarProps`, and remove it from the test fixtures
 (`TableToolbar.test.tsx`, `ModuleWorkQueuePage.test.tsx`, `RecoveryPolicyPageShell.test.tsx`).
 
-**Acceptance criteria:** `tsc` clean; zero `eyebrow` references in `src` outside the unrelated `IdentityResourceLayout`
+**Acceptance criteria:**
+- [x] `tsc` clean; no `eyebrow` left in `src/shared/components/page` or `src/shared/components/table`
+- [x] Dead keys `pages.snapshotPolicies.eyebrow` and `pages.recoveryAppPolicies.eyebrow` removed (added on review)
+- Note: `DetailDrawer` / `IdentityResourceLayout` eyebrows are a different component and stay
 **Dependencies:** Tasks 4–10
 **Scope:** S
 
@@ -187,6 +190,7 @@ RecoveryRuns and ModuleWorkQueuePage tests, `resourcesContainedRoutes.test.tsx`
 
 **Description:** Change the en `nav.*` labels to sentence case so they match the page titles, for example
 `Platform providers` and `Recovery apps`. Update `AppSidebar.test.tsx` and `SidebarFlyout.test.tsx`.
+**Done:** en `nav.*` labels in sentence case; `AppSidebar.test.tsx` updated. `SidebarFlyout.test.tsx` uses its own fixture strings and needed no change.
 **Dependencies:** Task 11
 **Scope:** S
 
