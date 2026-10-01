@@ -357,50 +357,56 @@ test v RecoveryGroupsTable. V.
 
 Spoločné kritériá pre T6–T17, platia ku kritériám jednotlivých taskov:
 
-- [ ] `eyebrow` → prvá `meta` položka s typom objektu, nový kľúč `<feature>.drawer.entity` v L.
+- [x] `eyebrow` → prvá `meta` položka s typom objektu, nový kľúč `<feature>.drawer.entity` v L.
       Starý kľúč sa zmaže, ak osirie.
-- [ ] Badge z `headerExtra` → `meta`, tlačidlá a odkazy → `headerActions`. `headerExtra` už
+- [x] Badge z `headerExtra` → `meta`, tlačidlá a odkazy → `headerActions`. `headerExtra` už
       nepoužívať.
-- [ ] Footer: `footerStart` = Delete, `footer` = ostatné, bez `flex-1`.
-- [ ] Odovzdať `resizeLabel={t('drawer.resize')}`, ak je drawer resizable.
-- [ ] Asercie naviazané na štruktúru upraviť v tom istom commite. Žiadny test sa nemaže bez
+- [x] Footer: `footerStart` = Delete, `footer` = ostatné, bez `flex-1`.
+- [x] Odovzdať `resizeLabel={t('drawer.resize')}`, ak je drawer resizable.
+- [x] Asercie naviazané na štruktúru upraviť v tom istom commite. Žiadny test sa nemaže bez
       náhrady.
 
-### Task 6: Recovery Applications
+### Task 6: Recovery Applications ✅
+
+**Stav:** hotovo, commit `9f2912ea` (`feat: Recovery apps drawer uses Model C sections`). Verifikácia: RecoveryApplicationsTable 18/18 (5 nových), RecoveryApplicationInventory zelený. Pred T6 refactor `860447f1` presunul texty stavov A–E do helpera, aby ich T6 nekopíroval. eslint, tsc a `git diff --check` OK.
 
 **Súbory:** `recovery-applications/components/RecoveryApplicationsTable.tsx` + test, L.
 
 **Akceptačné kritériá:**
 
-- [ ] Tabs → sekcie:
+- [x] Tabs → sekcie:
   - Overview (open, summary platform)
   - Orchestration (closed, summary podľa stavovej tabuľky A–E z plánu §5 nad poľami aplikácie;
     ak sa polia aplikácie líšia, rozšíriť mapovanie v tomto tasku, nie kopírovať)
   - Inventory (closed, `flush`, „Tiers: N“)
-- [ ] Meta: entity • status • orchestration fakt (stavy A–E ako T4, „Not orchestrated“ iba pri
+- [x] Meta: entity • status • orchestration fakt (stavy A–E ako T4, „Not orchestrated“ iba pri
       A).
-- [ ] Delete a Edit sa zobrazia iba pri dostupných handleroch (bez zmeny).
+- [x] Delete a Edit sa zobrazia iba pri dostupných handleroch (bez zmeny).
 
 **Testy:** tab → sekcia (:270, :288), summary, meta. V + `RecoveryApplicationInventory.test.tsx`.
 
 **Závislosti:** T4. **Rozsah:** M. **Commit:** `feat: Recovery apps drawer uses Model C sections`.
 
-### Task 7: Platform Providers
+### Task 7: Platform Providers ✅
+
+**Stav:** hotovo, commit `8e11fc87` (`feat: Platform providers drawer uses Model C header`). Verifikácia: PlatformProvidersTable 18/18 (3 nové; SMTP trieda z :119-125 nezmenená). eslint, tsc a `git diff --check` OK.
 
 **Súbory:** `platform-providers/components/PlatformProvidersTable.tsx` + test, L.
 
 **Akceptačné kritériá:**
 
-- [ ] Meta: entity • type badge • credential status (AIRFLOW a KEYCLOAK).
-- [ ] SMTP tlačidlo → `headerActions` (outline/sm, trieda z testu :119-125 ostáva).
-- [ ] Subtitle = mono id.
-- [ ] Bez sekcií.
+- [x] Meta: entity • type badge • credential status (AIRFLOW a KEYCLOAK).
+- [x] SMTP tlačidlo → `headerActions` (outline/sm, trieda z testu :119-125 ostáva).
+- [x] Subtitle = mono id.
+- [x] Bez sekcií.
 
 **Testy:** existujúce + nová kontrola meta. V.
 
 **Závislosti:** Checkpoint B. **Rozsah:** S. **Commit:** `feat: Platform providers drawer uses Model C header`.
 
-### Task 8: Providers + Credentials
+### Task 8: Providers + Credentials ✅
+
+**Stav:** hotovo, commit `df83e506` (`feat: Providers and Credentials drawers use Model C header`). Verifikácia: ProvidersCatalogueTable + CredentialsTable 20/20; Test connection triedy (:278), disabled stav a hint nezmenené. Osirelé `drawer.selectedProvider` a `credentials.detail.eyebrow` zmazané. eslint, tsc a `git diff --check` OK.
 
 **Súbory:**
 
@@ -410,54 +416,60 @@ Spoločné kritériá pre T6–T17, platia ku kritériám jednotlivých taskov:
 
 **Akceptačné kritériá:**
 
-- [ ] Providers: Test connection → `headerActions` (triedy z :278, disabled stav a sr-only hint
+- [x] Providers: Test connection → `headerActions` (triedy z :278, disabled stav a sr-only hint
       ostávajú), meta: entity • role • credential status.
-- [ ] Credentials: meta entity, subtitle id.
+- [x] Credentials: meta entity, subtitle id.
 
 **Testy:** V.
 
 **Závislosti:** T7. **Rozsah:** M. **Commit:** `feat: Providers and Credentials drawers use Model C header`.
 
-### Task 9: Users + Application roles
+### Task 9: Users + Application roles ✅
+
+**Stav:** hotovo, commit `34f785d9` (`feat: Identity users and roles drawers use Model C header`). Verifikácia: UsersSection + RealmRolesSection 27/27; „only close button“ asercie ostávajú pravdivé. eslint, tsc a `git diff --check` OK.
 
 **Súbory:** `identity-access/components/UsersSection.tsx` + test, `RealmRolesSection.tsx` + test, L.
 
 **Akceptačné kritériá:**
 
-- [ ] Meta: entity • status badge (Users), entity • clientId badge (Roles).
-- [ ] Eyebrow asercie (:140, :143) prejdú na meta text.
-- [ ] „Only close button“ (:181, :182) ostáva pravdou.
+- [x] Meta: entity • status badge (Users), entity • clientId badge (Roles).
+- [x] Eyebrow asercie (:140, :143) prejdú na meta text.
+- [x] „Only close button“ (:181, :182) ostáva pravdou.
 
 **Testy:** V.
 
 **Závislosti:** T7. **Rozsah:** M. **Commit:** `feat: Identity users and roles drawers use Model C header`.
 
-### Task 10: Clients
+### Task 10: Clients ✅
+
+**Stav:** hotovo, commit `1137f78b` (`feat: Identity clients drawer uses Model C header`). Verifikácia: ClientsSection 16/16. eslint, tsc a `git diff --check` OK.
 
 **Súbory:** `identity-access/components/ClientsSection.tsx` + test, L.
 
 **Akceptačné kritériá:**
 
-- [ ] Meta: entity • status • preview badge.
-- [ ] Asercie :201 (eyebrow), :278 (no tabs) a :279 (only button) ostávajú zelené.
-- [ ] Skeleton riadky s `aria-busy` fungujú.
+- [x] Meta: entity • status • preview badge.
+- [x] Asercie :201 (eyebrow), :278 (no tabs) a :279 (only button) ostávajú zelené.
+- [x] Skeleton riadky s `aria-busy` fungujú.
 
 **Testy:** V.
 
 **Závislosti:** T9. **Rozsah:** S. **Commit:** `feat: Identity clients drawer uses Model C header`.
 
-### Task 11: Audit
+### Task 11: Audit ✅
+
+**Stav:** hotovo, commit `67680e2e` (`feat: Access log drawer uses Model C sections`). Verifikácia: Audit 36/36. Odchýlka: telá požiadavky a odpovede používajú bežný padding sekcie (nie `flush`), lebo `<pre>` potrebuje okraj; raw záznam je jediná sekcia a je preto predvolene otvorený. eslint, tsc a `git diff --check` OK.
 
 **Súbory:** `audit/components/AccessLogDetailDrawer.tsx`, `AccessLogsTable.test.tsx`,
 `audit/pages/AuditPage.test.tsx`, L.
 
 **Akceptačné kritériá:**
 
-- [ ] Sekcie:
+- [x] Sekcie:
   - Request (open, summary method · status)
   - Request body, Response body, Raw entry (closed, `flush`, `<pre>` ostáva)
-- [ ] Meta: entity • status code.
-- [ ] cs asercie (:151–156) sú upravené na meta.
+- [x] Meta: entity • status code.
+- [x] cs asercie (:151–156) sú upravené na meta.
 
 **Testy:** sekcie sa otvárajú a body sa mountnú až po otvorení. V.
 
@@ -465,42 +477,51 @@ Spoločné kritériá pre T6–T17, platia ku kritériám jednotlivých taskov:
 
 ## Checkpoint C
 
-- [ ] V + celá **SC**.
+- [x] V + celá **SC**. (po T11: 24/24 súborov, 278/278 testov)
 - [ ] Browser 1366×768 a 390×844: Platform providers, Providers (Test connection v
       `headerActions` s dlhým názvom), Credentials, Users, Roles, Clients, Audit.
-- [ ] Grep brána: zoznam zostávajúcich `eyebrow=` a `headerExtra=` zapísaný sem.
+      Vykoná sa vo finálnej matici Task 19, lebo browser bol prihlásený až po T17.
+- [x] Grep brána po T11: zostávali `eyebrow=` v IBM Power, FlashSystem, VMware, Policy sets,
+      3× Recovery policies, Run history a Recovery actions history; `headerExtra=` v VMware,
+      Snapshot, App recovery, Clean room, Run history a Recovery actions history.
 
-### Task 12: IBM Power
+### Task 12: IBM Power ✅
+
+**Stav:** hotovo, commit `3e05c935` (`feat: IBM Power drawer uses shared sections`). Verifikácia: IBM Power 5/5. Lokálny helper sa volá `PartitionSection` a iba obaľuje shared `DetailDrawerSection` (skrýva prázdne riadky a sekcie). eslint, tsc a `git diff --check` OK.
 
 **Súbory:** `ibm-power/IbmPowerDetailPanel.tsx`, `PowerInventoryView.tsx` (labels),
 `PowerInventoryView.test.tsx`, L.
 
 **Akceptačné kritériá:**
 
-- [ ] Lokálny `DetailSection` je zmazaný a nahradený `DetailDrawerSection`. Všetkých 5 sekcií
+- [x] Lokálny `DetailSection` je zmazaný a nahradený `DetailDrawerSection`. Všetkých 5 sekcií
       je predvolene otvorených.
-- [ ] Skrývanie riadkov s hodnotou „-“ ostáva.
-- [ ] Prázdny `subtitle=""` je preč.
+- [x] Skrývanie riadkov s hodnotou „-“ ostáva.
+- [x] Prázdny `subtitle=""` je preč.
 
 **Testy:** :110–120, :172, :176. V.
 
 **Závislosti:** T4. **Rozsah:** M. **Commit:** `feat: IBM Power drawer uses shared sections`.
 
-### Task 13: FlashSystem
+### Task 13: FlashSystem ✅
+
+**Stav:** hotovo, commit `8eb60e9a` (`feat: FlashSystem volume drawer uses shared sections`). Verifikácia: FlashSystem 11/11; :189-197 naviazané na `region` a `term`, zbalené sekcie test otvára helperom `expandAll`. Sekcie sa pri zmene zväzku resetujú (`key={volume.id}`), CG chips zarovnané vľavo ako hodnota riadku. eslint, tsc a `git diff --check` OK.
 
 **Súbory:** `flash-system/FlashSystemVolumeDetailPanel.tsx`, `FlashSystemInventoryView.tsx`
 (labels), `FlashSystemInventoryView.test.tsx`, L.
 
 **Akceptačné kritériá:**
 
-- [ ] 4 skupiny polí a pool → sekcie, prvé dve otvorené.
-- [ ] CG chip zoznam ostáva.
+- [x] 4 skupiny polí a pool → sekcie, prvé dve otvorené.
+- [x] CG chip zoznam ostáva.
 
 **Testy:** :189–197 naviazať na nový markup (`within(region)`). V.
 
 **Závislosti:** T12. **Rozsah:** M. **Commit:** `feat: FlashSystem volume drawer uses shared sections`.
 
-### Task 14: VMware
+### Task 14: VMware ✅
+
+**Stav:** hotovo, commit `f33bb5ed` (`feat: VMware VM drawer uses Model C sections`). Verifikácia: VMware 32/32 + VmwareResourcesPage 5/5. Sticky `TableHeader` je v `overflow-x-auto` kontajneri, ktorý vertikálne nescrolluje, takže s hlavičkou sekcie nekoliduje (R5). `useVdisksByVm` beží s panelom ako predtým (R4). `bodyClassName` už VMware nepoužíva. Osirelý `drawer.vmSections` zmazaný. eslint, tsc a `git diff --check` OK.
 
 **Súbory:**
 
@@ -510,14 +531,14 @@ Spoločné kritériá pre T6–T17, platia ku kritériám jednotlivých taskov:
 
 **Akceptačné kritériá:**
 
-- [ ] Tabs → sekcie:
+- [x] Tabs → sekcie:
   - Overview (open; `DetailStat` a tagy ostávajú)
   - Disks (closed, `flush`, „Disks: N“)
   - Backing storage info (closed, `flush`)
-- [ ] 3 status badge → `meta`. Subtitle hostname/IP.
-- [ ] `bodyClassName="flex flex-col overflow-hidden"` je preč a scroll rieši shared telo.
-- [ ] Sticky `TableHeader` v Disks nekoliduje s hlavičkou sekcie (R5, rozhodnúť v browseri).
-- [ ] Fetchovanie disks a snapshots sa spúšťa rovnako ako pri tabs (R4).
+- [x] 3 status badge → `meta`. Subtitle hostname/IP.
+- [x] `bodyClassName="flex flex-col overflow-hidden"` je preč a scroll rieši shared telo.
+- [x] Sticky `TableHeader` v Disks nekoliduje s hlavičkou sekcie (R5, rozhodnúť v browseri).
+- [x] Fetchovanie disks a snapshots sa spúšťa rovnako ako pri tabs (R4).
 
 **Testy:** tab „Backing storage info“ (:110, :133, :160, :186, :247) → sekcia; šírky resize
 (:256–288, od T1 cez `--detail-drawer-width`) ostávajú. V.
@@ -527,45 +548,52 @@ Spoločné kritériá pre T6–T17, platia ku kritériám jednotlivých taskov:
 
 ## Checkpoint D
 
-- [ ] V + celá **SC**.
+- [x] V + celá **SC**. (po T14: 24/24 súborov, 279/279 testov)
 - [ ] Browser matica (4 veľkosti) na VMware, FlashSystem a IBM Power:
   - sticky hlavičky a tabuľky
   - 3 badge v meta
   - dlhé hostname a ID
   - pinned footer (ak nie je, telo ide až dole)
   - dark mode
+  Vykoná sa vo finálnej matici Task 19, lebo browser bol prihlásený až po T17.
 
-### Task 15: Policy sets + Snapshot policies
+### Task 15: Policy sets + Snapshot policies ✅
+
+**Stav:** hotovo, commit `1f736ece` (`feat: Policy set and snapshot policy drawers use Model C header`). Verifikácia: PolicySetsTable + Snapshot 29/29. eslint, tsc a `git diff --check` OK.
 
 **Súbory:** `policy-sets/components/PolicySetsTable.tsx` + test,
 `recovery-policies/snapshot/components/SnapshotPoliciesTable.tsx` + test, L.
 
 **Akceptačné kritériá:**
 
-- [ ] Meta: entity (Policy sets), entity • level badge (Snapshot).
-- [ ] Subtitle id. Nové footer sloty.
+- [x] Meta: entity (Policy sets), entity • level badge (Snapshot).
+- [x] Subtitle id. Nové footer sloty.
 
 **Testy:** V.
 
 **Závislosti:** Checkpoint D. **Rozsah:** M. **Commit:**
 `feat: Policy set and snapshot policy drawers use Model C header`.
 
-### Task 16: App recovery + Clean room policies
+### Task 16: App recovery + Clean room policies ✅
+
+**Stav:** hotovo, commit `658a0c1d` (`feat: App recovery and clean room policy drawers use Model C header`). Verifikácia: Recovery policies 53/53. eslint, tsc a `git diff --check` OK.
 
 **Súbory:** `recovery-policies/application-recovery/components/RecoveryAppPoliciesTable.tsx` + test,
 `recovery-policies/clean-room/components/CleanRoomPoliciesTable.tsx` + test, L.
 
 **Akceptačné kritériá:**
 
-- [ ] Meta: entity • level badge, alebo entity • enabled badge.
-- [ ] Nové footer sloty.
+- [x] Meta: entity • level badge, alebo entity • enabled badge.
+- [x] Nové footer sloty.
 
 **Testy:** V.
 
 **Závislosti:** T15. **Rozsah:** M. **Commit:**
 `feat: App recovery and clean room policy drawers use Model C header`.
 
-### Task 17: Recovery runs history, Recovery actions history, Metro mirror review
+### Task 17: Recovery runs history, Recovery actions history, Metro mirror review ✅
+
+**Stav:** hotovo, commit `4d36eee4` (`feat: Run and action history drawers use Model C header`). Verifikácia: RecoveryRunHistoryDrawer + Recovery actions (nový `RecoveryActionsHistoryPage.test.tsx`) + MetroMirror 15/15. Metro mirror review nemal prechodné props, preto bez zmeny. eslint, tsc a `git diff --check` OK.
 
 **Súbory:**
 
@@ -577,10 +605,10 @@ Spoločné kritériá pre T6–T17, platia ku kritériám jednotlivých taskov:
 
 **Akceptačné kritériá:**
 
-- [ ] Runs: Airflow link → `headerActions`, meta entity, subtitle id.
-- [ ] Actions history: meta entity • status, subtitle dátum.
-- [ ] Portál a `parentElement === document.body` pri Metro mirror ostávajú.
-- [ ] Pribudne render test drawera Recovery actions history (dnes nemá test).
+- [x] Runs: Airflow link → `headerActions`, meta entity, subtitle id.
+- [x] Actions history: meta entity • status, subtitle dátum.
+- [x] Portál a `parentElement === document.body` pri Metro mirror ostávajú.
+- [x] Pribudne render test drawera Recovery actions history (dnes nemá test).
 
 **Testy:** V + `RecoveryGroupMetroMirrorFields.test.tsx`.
 
@@ -589,10 +617,12 @@ Spoločné kritériá pre T6–T17, platia ku kritériám jednotlivých taskov:
 
 ## Checkpoint E
 
-- [ ] V + celá **SC**.
-- [ ] Grep brána je **prázdna**:
-      `rg -n "eyebrow=|headerExtra=" src --glob "*.tsx" --glob "!*.test.tsx"`.
-- [ ] Žiadny drawer nepoužíva `Tabs`.
+- [x] V + celá **SC**. (po T17: 25/25 súborov, 280/280 testov)
+- [x] Grep brána je **prázdna pre `DetailDrawer`**:
+      `rg -n "eyebrow=|headerExtra=" src --glob "*.tsx" --glob "!*.test.tsx"`. Zostali iba 4
+      `eyebrow=` na `IdentityResourceDetailPage` (UserFederation, Organizations,
+      IdentityProviders, ClientScopes). To je stránka, nie drawer, a je mimo scope.
+- [x] Žiadny drawer nepoužíva `Tabs`: žiadny súbor s `<DetailDrawer` neimportuje `tabs/Tabs`.
 
 ## Fáza 4: Cleanup
 
