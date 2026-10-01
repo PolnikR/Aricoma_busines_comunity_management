@@ -134,6 +134,133 @@
         }
       }
     },
+    "/get_identity_clients": {
+      "get": {
+        "tags": [
+          "Identity & Access"
+        ],
+        "summary": "Get Identity Clients",
+        "operationId": "get_identity_clients_get_identity_clients_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "include_builtin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Builtin"
+            }
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityClientsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_identity_client/{client_uuid}": {
+      "get": {
+        "tags": [
+          "Identity & Access"
+        ],
+        "summary": "Get Identity Client",
+        "operationId": "get_identity_client_get_identity_client__client_uuid__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "client_uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Client Uuid"
+            }
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityClient"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/get_providers": {
       "get": {
         "tags": [
@@ -4087,6 +4214,115 @@
           "status"
         ],
         "title": "HealthResponse"
+      },
+      "IdentityClient": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "clientId": {
+            "type": "string",
+            "title": "Clientid"
+          },
+          "displayName": {
+            "type": "string",
+            "title": "Displayname"
+          },
+          "protocol": {
+            "type": "string",
+            "title": "Protocol"
+          },
+          "rootUrl": {
+            "type": "string",
+            "title": "Rooturl"
+          },
+          "homeUrl": {
+            "type": "string",
+            "title": "Homeurl"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "isPublicClient": {
+            "type": "boolean",
+            "title": "Ispublicclient"
+          },
+          "isPreview": {
+            "type": "boolean",
+            "title": "Ispreview",
+            "default": false
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/IdentityRole"
+            },
+            "type": "array",
+            "title": "Roles",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "clientId",
+          "displayName",
+          "protocol",
+          "rootUrl",
+          "homeUrl",
+          "enabled",
+          "isPublicClient"
+        ],
+        "title": "IdentityClient",
+        "description": "Built from a Keycloak ClientRepresentation (api/routers/identity.py's\n_map_keycloak_client) - not a Keycloak type, so no extra=\"allow\"."
+      },
+      "IdentityClientsResponse": {
+        "properties": {
+          "clients": {
+            "items": {
+              "$ref": "#/components/schemas/IdentityClient"
+            },
+            "type": "array",
+            "title": "Clients"
+          }
+        },
+        "type": "object",
+        "required": [
+          "clients"
+        ],
+        "title": "IdentityClientsResponse"
+      },
+      "IdentityRole": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "capabilityIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Capabilityids",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "IdentityRole"
       },
       "MetroMirrorConfig": {
         "properties": {

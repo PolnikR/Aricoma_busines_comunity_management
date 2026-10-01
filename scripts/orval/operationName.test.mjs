@@ -11,6 +11,8 @@ for (const [route, verb, expected] of [
   ['/vms/search', 'post', 'postVmsSearch'],
   ['/discovery/cache/config', 'put', 'putDiscoveryCacheConfig'],
   ['/health', 'get', 'getHealth'],
+  ['/get_identity_client/{client_uuid}', 'get', 'getIdentityClientClientUuid'],
+  ['/get_identity_client/${clientUuid}', 'get', 'getIdentityClientClientUuid'],
 ]) {
   test(`${verb} ${route} -> ${expected}`, () => {
     assert.equal(operationName({}, route, verb), expected)

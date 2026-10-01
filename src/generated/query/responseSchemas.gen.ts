@@ -6,6 +6,8 @@ import { CacheHistoryResponse } from './zod/cacheHistoryResponse.gen'
 import { CleanRoomPoliciesResponse } from './zod/cleanRoomPoliciesResponse.gen'
 import { CredentialsResponse } from './zod/credentialsResponse.gen'
 import { HealthResponse } from './zod/healthResponse.gen'
+import { IdentityClient } from './zod/identityClient.gen'
+import { IdentityClientsResponse } from './zod/identityClientsResponse.gen'
 import { MetroMirrorRelationshipsResponse } from './zod/metroMirrorRelationshipsResponse.gen'
 import { OrchestratorRunsResponse } from './zod/orchestratorRunsResponse.gen'
 import { PlatformProvidersResponse } from './zod/platformProvidersResponse.gen'
@@ -32,6 +34,8 @@ export const responseSchemas: Record<string, z.ZodType> = {
   'GET /health': HealthResponse,
   'GET /get_roles_permissions': RolesPermissionsResponse,
   'GET /get_users': UsersResponse,
+  'GET /get_identity_clients': IdentityClientsResponse,
+  'GET /get_identity_client/{client_uuid}': IdentityClient,
   'GET /get_providers': ProvidersResponse,
   'POST /submit_provider': ProvidersResponse,
   'GET /test_provider': ProviderTestResponse,

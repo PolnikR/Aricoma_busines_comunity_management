@@ -20,7 +20,10 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  GetIdentityClientsParams,
   HTTPValidationError,
+  IdentityClient,
+  IdentityClientsResponse,
   RolesPermissionsResponse,
   UsersResponse
 } from '../zod';
@@ -237,6 +240,213 @@ export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetUsersQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getGetIdentityClientsUrl = (params?: GetIdentityClientsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/get_identity_clients?${stringifiedParams}` : `/get_identity_clients`
+}
+
+/**
+ * @summary Get Identity Clients
+ */
+export const getIdentityClients = async (params?: GetIdentityClientsParams, options?: Parameters<typeof validatingMutator>[1]): Promise<IdentityClientsResponse> => {
+
+  return validatingMutator<IdentityClientsResponse>(getGetIdentityClientsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetIdentityClientsQueryKey = (params?: GetIdentityClientsParams,) => {
+    return [
+    `/get_identity_clients`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetIdentityClientsQueryOptions = <TData = Awaited<ReturnType<typeof getIdentityClients>>, TError = ErrorType<HTTPValidationError>>(params?: GetIdentityClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdentityClients>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetIdentityClientsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getIdentityClients>>> = ({ signal }) => getIdentityClients(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getIdentityClients>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetIdentityClientsQueryResult = NonNullable<Awaited<ReturnType<typeof getIdentityClients>>>
+export type GetIdentityClientsQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetIdentityClients<TData = Awaited<ReturnType<typeof getIdentityClients>>, TError = ErrorType<HTTPValidationError>>(
+ params: undefined |  GetIdentityClientsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdentityClients>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getIdentityClients>>,
+          TError,
+          Awaited<ReturnType<typeof getIdentityClients>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetIdentityClients<TData = Awaited<ReturnType<typeof getIdentityClients>>, TError = ErrorType<HTTPValidationError>>(
+ params?: GetIdentityClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdentityClients>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getIdentityClients>>,
+          TError,
+          Awaited<ReturnType<typeof getIdentityClients>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetIdentityClients<TData = Awaited<ReturnType<typeof getIdentityClients>>, TError = ErrorType<HTTPValidationError>>(
+ params?: GetIdentityClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdentityClients>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Identity Clients
+ */
+
+export function useGetIdentityClients<TData = Awaited<ReturnType<typeof getIdentityClients>>, TError = ErrorType<HTTPValidationError>>(
+ params?: GetIdentityClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdentityClients>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetIdentityClientsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getGetIdentityClientClientUuidUrl = (clientUuid: string,) => {
+
+
+
+
+  return `/get_identity_client/${clientUuid}`
+}
+
+/**
+ * @summary Get Identity Client
+ */
+export const getIdentityClientClientUuid = async (clientUuid: string, options?: Parameters<typeof validatingMutator>[1]): Promise<IdentityClient> => {
+
+  return validatingMutator<IdentityClient>(getGetIdentityClientClientUuidUrl(clientUuid),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetIdentityClientClientUuidQueryKey = (clientUuid: string,) => {
+    return [
+    `/get_identity_client/${clientUuid}`
+    ] as const;
+    }
+
+
+export const getGetIdentityClientClientUuidQueryOptions = <TData = Awaited<ReturnType<typeof getIdentityClientClientUuid>>, TError = ErrorType<HTTPValidationError>>(clientUuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdentityClientClientUuid>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetIdentityClientClientUuidQueryKey(clientUuid);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getIdentityClientClientUuid>>> = ({ signal }) => getIdentityClientClientUuid(clientUuid, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: clientUuid !== null && clientUuid !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getIdentityClientClientUuid>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetIdentityClientClientUuidQueryResult = NonNullable<Awaited<ReturnType<typeof getIdentityClientClientUuid>>>
+export type GetIdentityClientClientUuidQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetIdentityClientClientUuid<TData = Awaited<ReturnType<typeof getIdentityClientClientUuid>>, TError = ErrorType<HTTPValidationError>>(
+ clientUuid: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdentityClientClientUuid>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getIdentityClientClientUuid>>,
+          TError,
+          Awaited<ReturnType<typeof getIdentityClientClientUuid>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetIdentityClientClientUuid<TData = Awaited<ReturnType<typeof getIdentityClientClientUuid>>, TError = ErrorType<HTTPValidationError>>(
+ clientUuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdentityClientClientUuid>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getIdentityClientClientUuid>>,
+          TError,
+          Awaited<ReturnType<typeof getIdentityClientClientUuid>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetIdentityClientClientUuid<TData = Awaited<ReturnType<typeof getIdentityClientClientUuid>>, TError = ErrorType<HTTPValidationError>>(
+ clientUuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdentityClientClientUuid>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Identity Client
+ */
+
+export function useGetIdentityClientClientUuid<TData = Awaited<ReturnType<typeof getIdentityClientClientUuid>>, TError = ErrorType<HTTPValidationError>>(
+ clientUuid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIdentityClientClientUuid>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetIdentityClientClientUuidQueryOptions(clientUuid,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
