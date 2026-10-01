@@ -5,6 +5,8 @@ import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupBuilder } from './RecoveryGroupBuilder'
 import { useRecoveryGroupMetroMirrorRelationships } from '../hooks/useRecoveryGroupMetroMirrorRelationships'
 import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
+import { validateRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
+import { toRecoveryGroupSubmitPayload } from '../helpers/mapRecoveryGroups'
 
 const { usePlatformProvidersMock } = vi.hoisted(() => ({ usePlatformProvidersMock: vi.fn() }))
 const providerStatus = vi.hoisted(() => ({ isFetching: false }))
@@ -181,6 +183,23 @@ async function completeOrchestrationAndCreate(user: ReturnType<typeof userEvent.
   await user.click(screen.getByRole('button', { name: 'Next' }))
   await user.click(screen.getByRole('switch', { name: 'Deploy to orchestrator' }))
   await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+}
+
+async function startNewMetroVolumeGroup(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByLabelText('Group name *'), 'New group')
+  await user.type(screen.getByLabelText('Description *'), 'Description')
+  await user.click(screen.getByRole('button', { name: 'Storage topology' }))
+  await user.selectOptions(screen.getByLabelText('Topology mode'), 'metro_mirror')
+  await user.selectOptions(screen.getByLabelText('Source FlashSystem provider'), 'ibm-flashsystem-01')
+}
+
+async function selectFlashSystemVolumes(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Next' }))
+  await user.click(screen.getByRole('tab', { name: /Storage volumes/i }))
+  await user.click(screen.getByRole('button', { name: /IBM FlashSystemGroup storage volumes/i }))
+  await user.click(screen.getByRole('button', { name: 'Next' }))
+  await user.click(screen.getByRole('button', { name: 'Next' }))
+  fireEvent.drop(screen.getByLabelText('Selected recovery group volumes'), { dataTransfer: { getData: () => 'VOL-01' } })
 }
 
 const existingGroup: RecoveryGroup = {
@@ -554,12 +573,95 @@ describe('RecoveryGroupBuilder', () => {
     expect(screen.getByLabelText('Group name *')).toBeEnabled()
   })
 
-  it('never silently converts an existing managed group', async () => {
-    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, topology: 'metro_mirror', metroMirrorMode: 'managed', consistencyGroupId: '001' }} onCreate={vi.fn()} onCancel={vi.fn()} />)
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Storage topology' }))
+  it('never silently converts a provisioned Managed group left by a partial rollback', async () => {
+    const onCreate = vi.fn()
+    const user = userEvent.setup()
+    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, topology: 'metro_mirror', metroMirrorMode: 'managed', consistencyGroupId: '55', auxiliaryNamesByVolume: { 'VOL-01': 'aux_VOL-01' }, pushToOrchestrator: false }} onCreate={onCreate} onCancel={vi.fn()} />)
+    expect(screen.getByText(/still has backend-generated Metro Mirror identifiers from a partial rollback/)).toBeInTheDocument()
+    expect(screen.queryByText(/pushed to the orchestrator and is read-only/)).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Group name *')).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Storage topology' }))
     expect(screen.getByLabelText('Topology mode')).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
+    expect(screen.getByLabelText('Metro Mirror configuration')).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+    expect(screen.getByText('Consistency group ID: 55')).toBeInTheDocument()
+    expect(screen.getByLabelText('Auxiliary volume name: VOL-01')).toHaveTextContent('aux_VOL-01')
+    expect(screen.queryByRole('textbox', { name: 'Auxiliary volume name: VOL-01' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Review configuration' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    const create = screen.getByRole('button', { name: 'Create Recovery Group' })
+    expect(create).toBeDisabled()
+    await user.click(create)
+    expect(onCreate).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Back' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled()
+  })
+
+  it('creates a new Managed group without consistency group, auxiliary names or relationship lookup', async () => {
+    const lookup = vi.mocked(useRecoveryGroupMetroMirrorRelationships)
+    const onCreate = vi.fn()
+    const user = userEvent.setup()
+    render(<RecoveryGroupBuilder onCreate={onCreate} onCancel={vi.fn()} />)
+    await startNewMetroVolumeGroup(user)
+    await user.selectOptions(screen.getByLabelText('Metro Mirror configuration'), 'managed')
+    lookup.mockClear()
+    await selectFlashSystemVolumes(user)
+    expect(screen.getByRole('button', { name: 'Remove volume: VOL-01' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Consistency group ID')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Auxiliary volume name: VOL-01')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
+    await completeOrchestrationAndCreate(user)
+    expect(lookup).not.toHaveBeenCalledWith(expect.anything(), expect.anything(), true)
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ topology: 'metro_mirror', metroMirrorMode: 'managed', resources: ['VOL-01'] }))
+    const draft = onCreate.mock.calls[0]?.[0] as Parameters<typeof validateRecoveryGroupDraft>[0]
+    const payload = toRecoveryGroupSubmitPayload(validateRecoveryGroupDraft(draft), draft.id)
+    expect(payload.metro_mirror).toEqual({ mode: 'managed' })
+    expect(payload.volumes).toEqual([{ name: 'VOL-01' }])
+  })
+
+  it('saves a clean Managed VM group after a successful rollback without Existing inputs', async () => {
+    const onCreate = vi.fn()
+    vi.mocked(useRecoveryGroupMetroMirrorRelationships).mockClear()
+    const user = userEvent.setup()
+    render(<RecoveryGroupBuilder initialData={{ ...existingGroup, topology: 'metro_mirror', metroMirrorMode: 'managed', consistencyGroupId: null, auxiliaryNamesByVolume: {}, relatedVolumeProviderId: 'ibm-flashsystem-01', relatedVolumes: ['VOL-01'], pushToOrchestrator: false }} onCreate={onCreate} onCancel={vi.fn()} />)
+    expect(screen.queryByText(/is read-only/)).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Group name *')).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Related storage' }))
+    expect(screen.getByRole('button', { name: 'Remove volume: VOL-01' })).toBeEnabled()
+    expect(screen.queryByLabelText('Consistency group ID')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Auxiliary volume name: VOL-01')).not.toBeInTheDocument()
+    expect(screen.queryByText('Enter an auxiliary name for every selected Metro Mirror volume.')).not.toBeInTheDocument()
+    expect(vi.mocked(useRecoveryGroupMetroMirrorRelationships)).not.toHaveBeenCalledWith(expect.anything(), expect.anything(), true)
+    await user.click(screen.getByRole('button', { name: 'Policy Set' }))
+    await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
+    await completeOrchestrationAndCreate(user)
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ metroMirrorMode: 'managed', relatedVolumes: ['VOL-01'] }))
+  })
+
+  it('does not lock an Existing group only because it has a consistency group and auxiliary names', () => {
+    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, topology: 'metro_mirror', metroMirrorMode: 'existing', consistencyGroupId: '001', auxiliaryNamesByVolume: { 'VOL-01': 'AUX-01' }, pushToOrchestrator: false }} onCreate={vi.fn()} onCancel={vi.fn()} />)
+    expect(screen.queryByText(/is read-only/)).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Group name *')).toBeEnabled()
+  })
+
+  it('lets the Existing lookup prefill the consistency group again after switching through Managed', async () => {
+    const lookup = { provider_id: 'ibm-flashsystem-01', consistency_group_id: 'AUTO-CG', volumes: [{ name: 'VOL-01', status: 'ok' as const, auxiliary_name: 'AUTO-AUX' }] }
+    vi.mocked(useRecoveryGroupMetroMirrorRelationships).mockReturnValue({ data: lookup, error: null, isLoading: false, refetch: vi.fn() })
+    const user = userEvent.setup()
+    render(<RecoveryGroupBuilder onCreate={vi.fn()} onCancel={vi.fn()} />)
+    await startNewMetroVolumeGroup(user)
+    await selectFlashSystemVolumes(user)
+    expect(screen.getByLabelText('Consistency group ID')).toHaveValue('AUTO-CG')
+    fireEvent.change(screen.getByLabelText('Consistency group ID'), { target: { value: 'MANUAL-CG' } })
+    expect(screen.getByLabelText('Consistency group ID')).toHaveValue('MANUAL-CG')
+    await user.click(screen.getByRole('button', { name: 'Storage topology' }))
+    await user.selectOptions(screen.getByLabelText('Metro Mirror configuration'), 'managed')
+    await user.selectOptions(screen.getByLabelText('Metro Mirror configuration'), 'existing')
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+    expect(screen.getByLabelText('Consistency group ID')).toHaveValue('AUTO-CG')
+    expect(screen.getByLabelText('Auxiliary volume name: VOL-01')).toHaveValue('AUTO-AUX')
   })
 
   it('preserves the existing orchestration provider when multiple providers are available', async () => {

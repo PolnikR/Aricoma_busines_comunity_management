@@ -164,14 +164,20 @@ backend-derived auxiliary names read-only when present. Replace the blanket mana
 - Successful rollback → pushed=false, CG id and auxiliary names cleared by backend → clean, editable; next push re-provisions.
 - Partial rollback → pushed=false but derived CG id or auxiliary name remain → read-only.
 
+Approved additions (follow-ups from Task 3):
+- Reset `hasConsistencyOverride` when the mode changes (Existing → Managed → Existing), so the Existing lookup can prefill the CG again.
+- `topology.errors.modeRequired` text becomes neutral ("Select a Metro Mirror configuration.") in en/cs/sk.
+
 **Acceptance criteria:**
-- [ ] New group: choose Metro → Managed, pick source + volumes, finish wizard and `onCreate` gets `metroMirrorMode: 'managed'`; relationship hook is called with `enabled=false`; no CG / auxiliary inputs rendered; volume list is not filtered on FE
-- [ ] Clean managed group (pushed=false, no derived ids – successful rollback) can be saved; managed group with derived ids and pushed=false (partial rollback) is read-only with `lifecycleLock.managedProvisioned` warning
-- [ ] All existing Existing-mode Builder tests pass unchanged
+- [x] New group: choose Metro → Managed, pick source + volumes, finish wizard and `onCreate` gets `metroMirrorMode: 'managed'`; relationship hook is called with `enabled=false`; no CG / auxiliary inputs rendered; volume list is not filtered on FE
+- [x] Clean managed group (pushed=false, no derived ids – successful rollback) can be saved; managed group with derived ids and pushed=false (partial rollback) is read-only with `lifecycleLock.managedProvisioned` warning
+- [x] All existing Existing-mode Builder tests pass unchanged
+  – the Managed-only test `never silently converts an existing managed group` (old blanket Managed block) was rewritten for the partial-rollback read-only semantics
+- [x] Existing → Managed → Existing lets the Existing lookup prefill the CG again (focused test); `modeRequired` text is neutral in en/cs/sk
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx`
-- [ ] `npx tsc --noEmit -p .` and eslint on changed files
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx`
+- [x] `npx tsc --noEmit -p tsconfig.app.json` and eslint on changed files
 
 **Dependencies:** Task 1, 2, 3, 4
 
@@ -182,12 +188,12 @@ backend-derived auxiliary names read-only when present. Replace the blanket mana
 **Estimated scope:** Small–Medium
 
 **Completion checkpoint:**
-- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
+- [x] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
 
 ## Checkpoint: FE implementation complete on feature branch (NOT production-ready)
-- [ ] All FE focused tests above pass; full suite / production build not run unless requested
-- [ ] Final Managed request JSON shown to the user with list of changed files
-- [ ] Status reported as "FE implementation complete on feature branch" – **not** "Managed feature complete / production-ready" (Release Gate)
+- [x] All FE focused tests above pass; full suite / production build not run unless requested
+- [x] Final Managed request JSON shown to the user with list of changed files
+- [x] Status reported as "FE implementation complete on feature branch" – **not** "Managed feature complete / production-ready" (Release Gate)
 
 ## Task 6: Analyse relationship discovery contract and decide endpoint/contract (BE)
 
