@@ -428,6 +428,7 @@
   "pages.recoveryGroupBuilder.title": "Vytvoriť skupinu obnovy",
   "pages.recoveryGroupBuilder.description": "Definujte opakovane použiteľnú skupinu zdrojov pre úrovne aplikácií obnovy.",
   "pages.recoveryGroupBuilder.createButton": "Vytvoriť skupinu obnovy",
+  "pages.recoveryGroupBuilder.lifecycleLock.pushed": "Táto skupina obnovy bola odoslaná do orchestrátora a je len na čítanie. Pred úpravou vykonajte rollback.",
   "pages.recoveryGroupBuilder.steps.ariaLabel": "Kroky vytvorenia skupiny obnovy",
   "pages.recoveryGroupBuilder.steps.details": "Podrobnosti",
   "pages.recoveryGroupBuilder.steps.topology": "Topológia úložiska",

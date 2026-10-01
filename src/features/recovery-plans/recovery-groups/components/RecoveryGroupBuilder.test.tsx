@@ -382,7 +382,7 @@ describe('RecoveryGroupBuilder', () => {
       { ...defaultPlatformProvidersResult.data[0], id: 'airflow-invalid', name: 'Invalid Airflow', credentialStatus: 'invalid' },
     ] })
     const onCreate = vi.fn()
-    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, pushToOrchestrator: true }} onCreate={onCreate} onCancel={vi.fn()} />)
+    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, pushToOrchestrator: false }} onCreate={onCreate} onCancel={vi.fn()} />)
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: 'Orchestration' }))
     expect(screen.getByRole('combobox')).toHaveValue('airflow-01')
@@ -502,6 +502,56 @@ describe('RecoveryGroupBuilder', () => {
     fireEvent.drop(screen.getByLabelText('Selected recovery group volumes'), { dataTransfer: { getData: () => 'VOL-01' } })
     expect(screen.getByLabelText('Auxiliary volume name: VOL-01')).toHaveValue('')
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+  })
+
+  it.each([
+    ['Local', { ...existingStorageGroup, topology: 'local' as const, pushToOrchestrator: true }],
+    ['Existing', { ...existingStorageGroup, topology: 'metro_mirror' as const, metroMirrorMode: 'existing' as const, consistencyGroupId: '001', auxiliaryNamesByVolume: { 'VOL-01': 'AUX-01' }, pushToOrchestrator: true }],
+  ])('keeps a pushed %s group read-only while its steps stay viewable', async (_label, initialData) => {
+    const onCreate = vi.fn()
+    const onCancel = vi.fn()
+    const onDirtyChange = vi.fn()
+    const user = userEvent.setup()
+    render(<RecoveryGroupBuilder initialData={initialData} onCreate={onCreate} onCancel={onCancel} onDirtyChange={onDirtyChange} />)
+    expect(screen.getByText('This recovery group has been pushed to the orchestrator and is read-only. Roll it back before editing.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Group name *')).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Group name *'), { target: { value: 'Changed' } })
+    expect(screen.getByLabelText('Group name *')).toHaveValue('Storage group')
+    expect(onDirtyChange).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    expect(screen.getByLabelText('Topology mode')).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByLabelText('Group name *')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+    expect(screen.getByRole('button', { name: 'Remove volume: VOL-01' })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    expect(screen.getByRole('switch', { name: 'Deploy to orchestrator' })).toBeDisabled()
+    const create = screen.getByRole('button', { name: 'Create Recovery Group' })
+    expect(create).toBeDisabled()
+    await user.click(create)
+    expect(onCreate).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onCancel).toHaveBeenCalled()
+  })
+
+  it('keeps a pushed Managed group read-only', async () => {
+    const onCreate = vi.fn()
+    const user = userEvent.setup()
+    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, topology: 'metro_mirror', metroMirrorMode: 'managed', consistencyGroupId: '55', auxiliaryNamesByVolume: { 'VOL-01': 'aux_VOL-01' }, pushToOrchestrator: true }} onCreate={onCreate} onCancel={vi.fn()} />)
+    expect(screen.getByText('This recovery group has been pushed to the orchestrator and is read-only. Roll it back before editing.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Group name *')).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Storage topology' }))
+    expect(screen.getByLabelText('Metro Mirror configuration')).toBeDisabled()
+    expect(screen.getByLabelText('Topology mode')).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Back' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled()
+    expect(onCreate).not.toHaveBeenCalled()
+  })
+
+  it('does not show the pushed lock for a group that is not pushed', () => {
+    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, pushToOrchestrator: false }} onCreate={vi.fn()} onCancel={vi.fn()} />)
+    expect(screen.queryByText(/pushed to the orchestrator and is read-only/)).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Group name *')).toBeEnabled()
   })
 
   it('never silently converts an existing managed group', async () => {

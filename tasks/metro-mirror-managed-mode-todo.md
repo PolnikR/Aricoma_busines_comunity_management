@@ -131,13 +131,14 @@ the step content in a disabled `<fieldset>`, keeps step navigation / Back / Next
 for viewing and disables Save.
 
 **Acceptance criteria:**
-- [ ] Pushed Local, Existing and Managed groups: warning shown, step inputs disabled, Save disabled, `onCreate` never called
-- [ ] Not-pushed groups and new groups behave as today
-- [ ] Builder tests that save a group with `initialData.pushToOrchestrator: true` (~376, ~395, ~515) use `pushToOrchestrator: false`; their other assertions are unchanged
-- [ ] Locales en/cs/sk: `lifecycleLock.pushed` added
+- [x] Pushed Local, Existing and Managed groups: warning shown, step inputs disabled, Save disabled, `onCreate` never called
+- [x] Not-pushed groups and new groups behave as today
+- [x] Builder tests that save a group with `initialData.pushToOrchestrator: true` (~376, ~395, ~515) use `pushToOrchestrator: false`; their other assertions are unchanged
+  – only ~376 actually saves and needed the change; ~395 and ~515 do not save, pass with the lock and were left unchanged
+- [x] Locales en/cs/sk: `lifecycleLock.pushed` added
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx`
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx`
 
 **Dependencies:** Task 3
 
@@ -148,7 +149,7 @@ for viewing and disables Save.
 **Estimated scope:** Small–Medium
 
 **Completion checkpoint:**
-- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
+- [x] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
 
 ## Task 5: Builder – Managed flow without Existing data, managed rollback lock
 

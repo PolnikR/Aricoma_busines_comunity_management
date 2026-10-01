@@ -449,6 +449,7 @@
   "pages.recoveryGroupBuilder.title": "Create Recovery Group",
   "pages.recoveryGroupBuilder.description": "Define a reusable resource group for recovery application tiers.",
   "pages.recoveryGroupBuilder.createButton": "Create Recovery Group",
+  "pages.recoveryGroupBuilder.lifecycleLock.pushed": "This recovery group has been pushed to the orchestrator and is read-only. Roll it back before editing.",
   "pages.recoveryGroupBuilder.steps.ariaLabel": "Recovery group creation steps",
   "pages.recoveryGroupBuilder.steps.details": "Details",
   "pages.recoveryGroupBuilder.steps.topology": "Storage topology",

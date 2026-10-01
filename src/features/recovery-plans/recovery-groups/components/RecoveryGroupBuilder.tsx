@@ -1,4 +1,5 @@
 import { useCallback, useId, useMemo, useState } from 'react'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import { Spinner } from '@/shared/components/spinner/Spinner'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
@@ -104,7 +105,10 @@ export function RecoveryGroupBuilder({
       }
     : INITIAL_DRAFT)
   const [hasConsistencyOverride, setHasConsistencyOverride] = useState(Boolean(initialData?.consistencyGroupId?.trim()))
+  // The backend rejects any update of a pushed group; it is read-only until rolled back.
+  const pushedLock = initialData?.pushToOrchestrator === true
   const updateDraft = (update: Partial<RecoveryGroupDraft>) => {
+    if (pushedLock) return
     setDraft(current => ({ ...current, ...update }))
     onDirtyChange?.(true)
   }
@@ -272,7 +276,7 @@ export function RecoveryGroupBuilder({
           : step === resourcesStepIndex ? baseValid && resourcesValid
             : step === policySetStepIndex ? downstreamValid && policySetValid
               : downstreamValid
-  const canCreate = downstreamValid && policySetValid && orchestrationValid
+  const canCreate = !pushedLock && downstreamValid && policySetValid && orchestrationValid
 
   return (
     <fieldset className="contents" disabled={isInitialLoading} aria-busy={isInitialLoading}>
@@ -288,6 +292,8 @@ export function RecoveryGroupBuilder({
         </aside>
         <div className="flex min-h-0 min-w-0 flex-col">
           <div className="custom-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto p-3 sm:p-5">
+            {pushedLock ? <Alert variant="warning" className="mb-4" title={t('pages.recoveryGroupBuilder.lifecycleLock.pushed')} /> : null}
+            <fieldset className="contents" disabled={pushedLock}>
             {step === 1 ? (
               <RecoveryGroupDetailsStep
                 id={draft.id}
@@ -458,6 +464,7 @@ export function RecoveryGroupBuilder({
                 onProviderSelect={providerId => { updateDraft({ orchestrationProviderId: providerId }) }}
               />
             ) : null}
+            </fieldset>
           </div>
           <div className="sticky bottom-0 z-10 flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-border bg-surface-subtle px-3 py-2 sm:px-4 lg:static">
             <Button size="sm" variant="ghost" onClick={onCancel}>{t('buttons.cancel')}</Button>
