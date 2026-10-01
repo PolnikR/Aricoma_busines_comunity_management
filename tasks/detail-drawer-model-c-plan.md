@@ -212,7 +212,7 @@ Markup:
       <Chevron/> <span id=titleId>Title</span> {badge} <span id=summaryId>summary</span>
     </button>
   </h3>
-  <div id=panelId role="region" aria-labelledby=btnId class="px-5 pb-4">…</div>  // iba keď open
+  <div id=panelId role="region" aria-labelledby=titleId class="px-5 pb-4">…</div>  // iba keď open
 </section>
 ```
 
@@ -479,7 +479,8 @@ Task 18 zmaže `eyebrow` a `headerExtra` z `DetailDrawerProps`. Ak niekto zostal
   - Skutočné `<button>` vnútri `<h3>`, takže Enter a Space fungujú natívne.
   - `aria-expanded`, `aria-controls` (iba keď existuje panel), `aria-labelledby` (nadpis) a
     `aria-describedby` (summary).
-  - Panel má `role="region"` a `aria-labelledby`. Drawer má maximálne 5 sekcií, čo je v
+  - Panel má `role="region"` a `aria-labelledby={titleId}` (schválená odchýlka z T2, commit
+    `c2664c43`: nie button id, aby meno regiónu bolo iba nadpis bez badge a summary). Drawer má maximálne 5 sekcií, čo je v
     hraniciach APG.
   - Hlavička sekcie nesmie obsahovať interaktívne prvky (`badge` a `summary` sú iba text).
   - Interaktívny obsah je iba v tele sekcie.

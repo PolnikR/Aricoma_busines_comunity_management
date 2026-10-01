@@ -90,7 +90,10 @@ funkčné.
 **Závislosti:** žiadne. **Rozsah / riziko:** M / vysoké (R1). **Commit:**
 `feat: Model C header for the shared detail drawer`.
 
-### Task 2: `DetailDrawerSection`
+### Task 2: `DetailDrawerSection` ✅
+
+**Stav:** hotovo, commit `c2664c43` (`feat: shared DetailDrawerSection`). Schválené vrátane
+odchýlky v pomenovaní regiónu (pozri kritériá).
 
 **Cieľ:** Shared rozbaľovacia sekcia, **iba uncontrolled** (`defaultOpen`), bez zmeny consumerov.
 
@@ -102,15 +105,16 @@ funkčné.
 
 **Akceptačné kritériá:**
 
-- [ ] API podľa plánu §2: `title`, `summary`, `badge`, `defaultOpen = false`, `flush`,
+- [x] API podľa plánu §2: `title`, `summary`, `badge`, `defaultOpen = false`, `flush`,
       `children`. Zbalený obsah sa unmountne.
-- [ ] Komponent **nemá** props `open` ani `onToggle`. Controlled režim sa pridá neskôr iba ako
+- [x] Komponent **nemá** props `open` ani `onToggle`. Controlled režim sa pridá neskôr iba ako
       discriminated union (plán §2, budúce rozšírenie).
-- [ ] Markup podľa plánu:
+- [x] Markup podľa plánu:
   - `h3 > button` s `aria-expanded` a `aria-controls` (iba keď je otvorená)
   - `aria-labelledby` = title, `aria-describedby` = summary
-  - panel s `role="region"`
-- [ ] Hlavička je sticky, chevron sa otáča s `motion-reduce:transition-none` a focus ring je
+  - panel s `role="region"` a **`aria-labelledby={titleId}`** (schválená odchýlka: plán mal
+    button id; región sa tak volá iba podľa nadpisu sekcie, bez badge a summary)
+- [x] Hlavička je sticky, chevron sa otáča s `motion-reduce:transition-none` a focus ring je
       `ring-inset`.
 
 **Testy:**
@@ -121,6 +125,14 @@ funkčné.
   - `defaultOpen` + následný klik (vlastný stav), viac otvorených naraz
   - `// @ts-expect-error` pri odovzdaní `open` (typový kontrakt)
 - V.
+
+**Výsledok verifikácie (commit `c2664c43`):**
+
+- [x] `npx vitest run src/shared/components/data-table/DetailDrawerSection.test.tsx`: 11/11.
+- [x] `npx eslint --max-warnings 0` na 3 zmenených súboroch: OK.
+- [x] `npx tsc -p tsconfig.app.json --noEmit`: OK (testy sú v `include`, takže overí aj
+      `@ts-expect-error`).
+- [x] `git diff --check`: OK.
 
 **Závislosti:** T1 (`ChevronRightIcon` už existuje, závislosť je iba poradie commitov).
 **Rozsah / riziko:** S / nízke. **Commit:** `feat: shared DetailDrawerSection`.
