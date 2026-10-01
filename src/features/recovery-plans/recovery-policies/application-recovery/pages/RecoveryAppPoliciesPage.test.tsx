@@ -25,7 +25,7 @@ beforeEach(() => {
 describe('RecoveryAppPoliciesPage', () => {
   it('renders the shared inventory layout', () => {
     render(<MemoryRouter><RecoveryAppPoliciesPage /></MemoryRouter>)
-    expect(screen.getByRole('heading', { name: 'Recovery Policies', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Recovery policies', level: 1 })).toBeInTheDocument()
     expect(screen.getByText('Recovery app policy catalogue')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Application Recovery Policies' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Clean Room Policies' })).toBeInTheDocument()
@@ -33,7 +33,7 @@ describe('RecoveryAppPoliciesPage', () => {
 
   it('opens the create modal with cached policies', async () => {
     render(<MemoryRouter><RecoveryAppPoliciesPage /></MemoryRouter>)
-    await userEvent.click(screen.getByRole('button', { name: 'Add Policy' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add policy' }))
     expect(screen.getByText('Recovery app policy modal with 1 existing')).toBeInTheDocument()
   })
 })

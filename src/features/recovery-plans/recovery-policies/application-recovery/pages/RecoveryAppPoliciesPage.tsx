@@ -30,7 +30,6 @@ export function RecoveryAppPoliciesPage() {
         tabs={policyTabs}
         onTabChange={(tab) => { void navigate(getRecoveryPolicyPath(tab)) }}
         tabsAriaLabel={t('recoveryPolicies.tabs.label')}
-        eyebrow={t('recoveryPolicies.eyebrow')}
         title={t('recoveryPolicies.title')}
         description={t('recoveryPolicies.description')}
         isFetching={isFetching}

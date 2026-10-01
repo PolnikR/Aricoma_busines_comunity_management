@@ -9,7 +9,6 @@ interface RecoveryPolicyPageShellProps {
   activeTab: RecoveryPolicyTab
   tabs: readonly TabItem<RecoveryPolicyTab>[]
   onTabChange: (tab: RecoveryPolicyTab) => void
-  eyebrow: string
   title: string
   description: string
   isFetching?: boolean
@@ -25,7 +24,6 @@ export function RecoveryPolicyPageShell({
   activeTab,
   tabs,
   onTabChange,
-  eyebrow,
   title,
   description,
   isFetching,
@@ -39,7 +37,6 @@ export function RecoveryPolicyPageShell({
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow={eyebrow}
         title={title}
         description={description}
         isFetching={isFetching ?? false}

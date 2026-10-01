@@ -18,7 +18,6 @@ describe('RecoveryPolicyPageShell', () => {
         activeTab="snapshot"
         tabs={tabs}
         onTabChange={onTabChange}
-        eyebrow="Recovery Plans"
         title="Recovery Policies"
         description="Manage recovery policies"
         inventoryTitle="Snapshot policies"

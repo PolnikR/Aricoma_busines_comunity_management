@@ -32,7 +32,7 @@ describe('CleanRoomPoliciesPage', () => {
     } as unknown as ReturnType<typeof useGetCleanRoomPolicies>)
     render(<MemoryRouter><CleanRoomPoliciesPage /></MemoryRouter>)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Add Clean Room Policy' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add policy' }))
     expect(screen.getByText('Clean room policy modal')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Refresh' }))
     expect(refetch).toHaveBeenCalledOnce()

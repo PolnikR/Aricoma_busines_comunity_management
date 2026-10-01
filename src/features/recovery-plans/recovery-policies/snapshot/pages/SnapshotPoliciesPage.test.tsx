@@ -30,7 +30,7 @@ describe('SnapshotPoliciesPage', () => {
   it('renders the shared inventory layout without category tabs', () => {
     render(<MemoryRouter><SnapshotPoliciesPage /></MemoryRouter>)
 
-    expect(screen.getByRole('heading', { name: 'Recovery Policies', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Recovery policies', level: 1 })).toBeInTheDocument()
     expect(screen.getByText('Snapshot policy catalogue')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Snapshot policies' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Application Recovery Policies' })).toBeInTheDocument()
@@ -40,7 +40,7 @@ describe('SnapshotPoliciesPage', () => {
   it('opens the create modal with cached policies', async () => {
     render(<MemoryRouter><SnapshotPoliciesPage /></MemoryRouter>)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Add Policy' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add policy' }))
     expect(screen.getByText('Policy modal with 1 existing')).toBeInTheDocument()
   })
 
