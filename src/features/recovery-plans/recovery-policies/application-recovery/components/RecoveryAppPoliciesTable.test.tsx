@@ -69,6 +69,12 @@ describe('RecoveryAppPoliciesTable', () => {
 
     await userEvent.click(screen.getByText('Medium monthly'))
     expect(screen.getByRole('dialog', { name: 'Recovery app policy detail' })).toBeInTheDocument()
+    const modelCDrawer = screen.getByRole('dialog', { name: 'Recovery app policy detail' })
+    const modelCMeta = within(modelCDrawer).getByRole('heading', { name: 'Medium monthly' }).parentElement?.nextElementSibling
+    expect(modelCMeta).toHaveTextContent(/^Recovery app policy/)
+    const modelCDelete = within(modelCDrawer).getByRole('button', { name: 'Delete' })
+    expect(modelCDelete.parentElement?.parentElement?.children[0]).toContainElement(modelCDelete)
+    expect(modelCDelete.parentElement?.parentElement?.children[1]).toContainElement(within(modelCDrawer).getByRole('button', { name: 'Edit' }))
   })
 
   it('shows the complete recovery policy GET payload without opening the drawer', async () => {

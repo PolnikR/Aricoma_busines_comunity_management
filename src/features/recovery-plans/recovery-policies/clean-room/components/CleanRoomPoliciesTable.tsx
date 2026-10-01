@@ -154,17 +154,20 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
-        eyebrow={t('cleanRoomPolicies.drawer.eyebrow')}
         title={selected?.name ?? ''}
+        meta={selected ? [
+          t('cleanRoomPolicies.drawer.entity'),
+          <Badge key="badge" color={selected.enabled ? 'success' : 'light'} size="sm">{t(selected.enabled ? 'cleanRoomPolicies.enabled' : 'cleanRoomPolicies.disabled')}</Badge>,
+        ] : []}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerExtra={selected ? <Badge color={selected.enabled ? 'success' : 'light'} size="sm">{t(selected.enabled ? 'cleanRoomPolicies.enabled' : 'cleanRoomPolicies.disabled')}</Badge> : null}
         ariaLabel={t('cleanRoomPolicies.drawer.label')}
         closeLabel={t('cleanRoomPolicies.drawer.close')}
+        resizeLabel={t('drawer.resize')}
+        footerStart={selected ? (
+          <Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger">{t('buttons.delete')}</Button>
+        ) : null}
         footer={selected ? (
-          <>
-            <Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger" className="flex-1">{t('buttons.delete')}</Button>
-            <Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm" className="flex-1">{t('buttons.edit')}</Button>
-          </>
+          <Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">{t('buttons.edit')}</Button>
         ) : null}
       >
         {selected ? (

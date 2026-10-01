@@ -70,6 +70,12 @@ describe('CleanRoomPoliciesTable', () => {
     await userEvent.click(screen.getByText('Enforce Clean Target'))
     const drawer = screen.getByRole('dialog', { name: 'Clean room policy detail' })
     expect(within(drawer).getByText('Remove conflicting target resources before recovery.')).toBeInTheDocument()
+    const modelCDrawer = screen.getByRole('dialog', { name: 'Clean room policy detail' })
+    const modelCMeta = within(modelCDrawer).getByRole('heading', { name: 'Enforce Clean Target' }).parentElement?.nextElementSibling
+    expect(modelCMeta).toHaveTextContent(/^Clean room policy/)
+    const modelCDelete = within(modelCDrawer).getByRole('button', { name: 'Delete' })
+    expect(modelCDelete.parentElement?.parentElement?.children[0]).toContainElement(modelCDelete)
+    expect(modelCDelete.parentElement?.parentElement?.children[1]).toContainElement(within(modelCDrawer).getByRole('button', { name: 'Edit' }))
     expect(within(drawer).getByRole('button', { name: 'Edit' })).toBeInTheDocument()
     expect(within(drawer).getByRole('button', { name: 'Delete' })).toBeInTheDocument()
   })
