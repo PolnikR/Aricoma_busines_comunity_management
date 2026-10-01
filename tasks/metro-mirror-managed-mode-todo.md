@@ -206,9 +206,9 @@ per-volume `auxiliary_name`, single `consistency_group_id`, ambiguity handling) 
 endpoint. The result must be server-driven; no client-side filtering, not even as a stopgap.
 
 **Acceptance criteria:**
-- [ ] Written decision (A or B) with the request/response contract: mode input, per-volume eligibility + reason, per-volume CG id for Existing
-- [ ] Contract covers Existing rules, Managed rules, ambiguous exclusion and Existing same-CG compatibility
-- [ ] Backend files and focused test commands identified
+- [x] Written decision (A or B) with the request/response contract: mode input, per-volume eligibility + reason, per-volume CG id for Existing
+- [x] Contract covers Existing rules, Managed rules, ambiguous exclusion and Existing same-CG compatibility
+- [x] Backend files and focused test commands identified
 
 **Verification:**
 - [ ] Decision reviewed and approved by human
@@ -220,8 +220,10 @@ endpoint. The result must be server-driven; no client-side filtering, not even a
 
 **Estimated scope:** Small (analysis)
 
+**Result:** `tasks/metro-mirror-managed-mode-task6-contract.md` – proposes Option B (separate candidates endpoint). Status PROPOSED; the human-approval checkbox above stays open until approved.
+
 **Completion checkpoint:**
-- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
+- [x] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
 
 ## Task 7: Existing candidate rules, ambiguous exclusion, same-CG compatibility (BE)
 
@@ -237,6 +239,8 @@ Recovery Group must share one CG.
 
 **Verification:**
 - [ ] Backend focused tests (command from Task 6)
+
+**Proposed by Task 6 (pending approval):** match relationships on master **and** auxiliary side; new reason `mirrored_as_auxiliary`; `no_consistency_group` / `missing_auxiliary_name` as machine-readable reasons; selection verdict (`selection.valid`, `problems`).
 
 **Dependencies:** **Task 6 approval**
 
@@ -283,6 +287,11 @@ relationships, auxiliary names and the single CG still match storage.
 - [ ] State is revalidated immediately before write operations (no write when revalidation fails)
 - [ ] Managed provisioning is not started for a volume that gained a Metro Mirror relationship after discovery
 - [ ] Existing submit is rejected when declared relationships / CG no longer match storage, including mixed CGs
+
+**Proposed by Task 6 (pending approval):**
+- Existing revalidation in `submit_recovery_group` after `validate_recovery_group` and before the first `upsert_recovery_group` (before persist/push), fail closed when the array is unreachable.
+- Managed: persist-time eligibility check before `upsert`, plus a read-only preflight in `provision_managed_metro_mirror` (relationship re-read, master volumes, pools) before the first write (G8).
+- Partial-rollback guard: reject submit of a persisted Managed group with `pushed=false` and derived ids (G9).
 
 **Verification:**
 - [ ] Backend focused tests (command from Task 6)
