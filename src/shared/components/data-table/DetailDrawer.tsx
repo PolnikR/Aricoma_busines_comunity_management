@@ -19,7 +19,11 @@ interface DetailDrawerProps {
   // Transitional (detail-drawer-model-c): removed in Task 18.
   headerExtra?: ReactNode
   children?: ReactNode
+  // Right-hand (primary) footer group. It always takes the remaining width, so legacy
+  // `flex-1` buttons still split the full footer when no `footerStart` is given.
   footer?: ReactNode
+  // Left-hand footer group, typically the destructive action.
+  footerStart?: ReactNode
   // The width is only user-resizable from `lg`; below it the drawer keeps the fixed width.
   resizable?: boolean
   ariaLabel?: string
@@ -40,7 +44,7 @@ function isVisible(element: HTMLElement) {
 // wider/narrower from `lg` up for the current view only — it resets to the
 // default width whenever it closes. The width goes through a CSS variable so
 // below `lg` the fixed width wins and the hidden handle reports nothing.
-export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, meta = [], headerActions, headerExtra, children, footer, resizable = false, ariaLabel = 'Detail', closeLabel = 'Close detail', resizeLabel = 'Resize panel', bodyClassName }: DetailDrawerProps) {
+export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, meta = [], headerActions, headerExtra, children, footer, footerStart, resizable = false, ariaLabel = 'Detail', closeLabel = 'Close detail', resizeLabel = 'Resize panel', bodyClassName }: DetailDrawerProps) {
   const { width, handleProps } = useResizablePanel({ open, resizeLabel })
   const metaItems = [eyebrow, ...meta].filter(Boolean)
   const drawerRef = useRef<HTMLElement>(null)
@@ -148,7 +152,12 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, meta = [
           {headerExtra ? <div className="mt-3 w-full">{headerExtra}</div> : null}
         </div>
         <div className={cn('custom-scrollbar flex-1', bodyClassName ?? 'overflow-y-auto')}>{children}</div>
-        {footer ? <div className="flex gap-3 border-t border-border p-4">{footer}</div> : null}
+        {footer || footerStart ? (
+          <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-t border-border px-5 py-3">
+            {footerStart ? <div className="flex flex-wrap items-center gap-3">{footerStart}</div> : null}
+            {footer ? <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-3">{footer}</div> : null}
+          </div>
+        ) : null}
       </aside>
     </>
   )
@@ -160,14 +169,16 @@ interface DetailRowProps {
   secondary?: ReactNode
 }
 
-// A label/value row for a definition list inside the drawer body.
+// A label/value row for a definition list inside the drawer body. The label
+// column is fixed-ish and the value column wraps long text and IDs, with no
+// separator lines; drawer sections provide the grouping borders.
 export function DetailRow({ label, value, secondary }: DetailRowProps) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-border py-3 last:border-b-0">
-      <dt className="shrink-0 text-xs text-text-muted">{label}</dt>
-      <dd className="min-w-0 text-right text-sm font-medium text-text-primary">
-        <div className="wrap-break-word">{value}</div>
-        {secondary ? <div className="mt-0.5 wrap-break-word text-xs font-normal text-text-muted">{secondary}</div> : null}
+    <div className="grid grid-cols-[minmax(7rem,35%)_minmax(0,1fr)] items-start gap-x-4 py-2">
+      <dt className="text-sm text-text-muted">{label}</dt>
+      <dd className="min-w-0 text-sm font-medium text-text-primary wrap-anywhere">
+        <div>{value}</div>
+        {secondary ? <div className="mt-0.5 text-xs font-normal text-text-muted">{secondary}</div> : null}
       </dd>
     </div>
   )

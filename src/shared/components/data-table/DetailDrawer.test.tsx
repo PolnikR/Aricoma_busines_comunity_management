@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { DetailDrawer } from './DetailDrawer'
+import { DetailDrawer, DetailRow } from './DetailDrawer'
 
 afterEach(cleanup)
 
@@ -231,5 +231,81 @@ describe('DetailDrawer resizer', () => {
     close.focus()
     fireEvent.keyDown(window, { key: 'Tab', shiftKey: true })
     expect(action).toHaveFocus()
+  })
+})
+
+describe('DetailDrawer footer', () => {
+  it('keeps a legacy footer full-width so two flex-1 buttons still split it', () => {
+    render(
+      <DetailDrawer
+        open
+        title="X"
+        onClose={vi.fn()}
+        footer={<><button type="button" className="flex-1">Delete</button><button type="button" className="flex-1">Edit</button></>}
+      >
+        body
+      </DetailDrawer>,
+    )
+    const deleteButton = screen.getByRole('button', { name: 'Delete' })
+    const endGroup = deleteButton.parentElement
+    const footer = endGroup?.parentElement
+
+    expect(endGroup).toContainElement(screen.getByRole('button', { name: 'Edit' }))
+    expect(endGroup).toHaveClass('flex-1')
+    expect(footer?.children).toHaveLength(1)
+    expect(footer).toHaveClass('shrink-0', 'flex-wrap', 'border-t')
+  })
+
+  it('puts footerStart on the left and the footer group on the right', () => {
+    render(
+      <DetailDrawer
+        open
+        title="X"
+        onClose={vi.fn()}
+        footerStart={<button type="button">Delete</button>}
+        footer={<button type="button">Edit</button>}
+      >
+        body
+      </DetailDrawer>,
+    )
+    const deleteButton = screen.getByRole('button', { name: 'Delete' })
+    const editButton = screen.getByRole('button', { name: 'Edit' })
+    const footer = deleteButton.parentElement?.parentElement
+
+    expect(footer?.children).toHaveLength(2)
+    expect(footer?.children[0]).toContainElement(deleteButton)
+    expect(footer?.children[1]).toContainElement(editButton)
+    expect(footer?.children[1]).toHaveClass('flex-1', 'justify-end')
+    expect(deleteButton.compareDocumentPosition(editButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('renders footerStart alone without an empty end group', () => {
+    render(<DetailDrawer open title="X" onClose={vi.fn()} footerStart={<button type="button">Delete</button>}>body</DetailDrawer>)
+    expect(screen.getByRole('button', { name: 'Delete' }).parentElement?.parentElement?.children).toHaveLength(1)
+  })
+
+  it('renders no footer without footer or footerStart', () => {
+    const { container } = render(<DetailDrawer open title="X" onClose={vi.fn()}>body</DetailDrawer>)
+    expect(container.querySelector('.border-t')).not.toBeInTheDocument()
+  })
+})
+
+describe('DetailRow', () => {
+  it('pairs the label and value as dt + dd in a two-column grid without separators', () => {
+    render(<dl><DetailRow label="Provider ID" value="vc-brno-01-7f3a" secondary="vCenter Brno" /></dl>)
+    const term = screen.getByRole('term')
+    const row = term.parentElement
+
+    expect(term).toHaveTextContent('Provider ID')
+    expect(term.nextElementSibling).toHaveTextContent('vc-brno-01-7f3avCenter Brno')
+    expect(row).toHaveClass('grid')
+    expect(row).not.toHaveClass('border-b')
+    expect(term.nextElementSibling).toHaveClass('wrap-anywhere')
+    expect(term.nextElementSibling).not.toHaveClass('text-right')
+  })
+
+  it('renders the secondary text as its own muted line', () => {
+    render(<dl><DetailRow label="Memory" value="16 GB" secondary="2 sockets" /></dl>)
+    expect(screen.getByText('2 sockets')).toHaveClass('text-xs', 'text-text-muted')
   })
 })
