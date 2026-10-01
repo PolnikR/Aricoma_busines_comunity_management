@@ -61,7 +61,7 @@ describe('IdentityAccessPage', () => {
   it('renders the Keycloak explorer navigation with Users selected by default', () => {
     renderPage()
 
-    expect(screen.getByRole('heading', { name: 'Identity & Access', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Identity & access', level: 1 })).toBeInTheDocument()
     expect(screen.queryByTestId('identity-access-realm-context')).not.toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Keycloak realm navigation' })).toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Manage' })).not.toBeInTheDocument()

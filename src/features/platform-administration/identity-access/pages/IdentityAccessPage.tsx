@@ -93,7 +93,6 @@ export function IdentityAccessPage() {
   return (
     <div className="flex min-h-full min-w-0 flex-col overflow-hidden lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow={t('identity.page.eyebrow')}
         title={t('identity.page.title')}
         description={t('identity.page.description')}
         actions={getSectionAction({

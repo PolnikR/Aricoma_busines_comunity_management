@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { PageHeader } from '@/shared/components/page/PageHeader'
+import { useTranslation } from '@/hooks/useTranslation'
 import { RuntimeConfigurationPanel } from '../components/RuntimeConfigurationPanel'
 import { DEFAULT_RUNTIME_CONFIGURATION } from '../mocks/platformProviderConfigMocks'
 import type { RuntimeConfiguration } from '../mocks/platformProviderConfigMocks'
 
 export function ConfigurationPage() {
+  const { t } = useTranslation()
   const [configuration, setConfiguration] = useState<RuntimeConfiguration>(DEFAULT_RUNTIME_CONFIGURATION)
   const [savedConfiguration, setSavedConfiguration] = useState<RuntimeConfiguration>(DEFAULT_RUNTIME_CONFIGURATION)
 
@@ -40,9 +42,8 @@ export function ConfigurationPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow="Platform Administration"
-        title="Configuration"
-        description="Runtime directories and session behaviour for the recovery platform."
+        title={t('pages.configuration.title')}
+        description={t('pages.configuration.description')}
       />
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
