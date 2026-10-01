@@ -89,7 +89,7 @@ Expected gain is about 42 px of vertical space per page on desktop. The table st
 
 ### Phase 3: Lock-in and verification
 - [ ] Task 11: Delete the `eyebrow` prop from the types
-- [ ] Task 12: Sidebar nav labels in sentence case *(only if approved, see Open questions)*
+- [ ] Task 12: Sidebar nav labels in sentence case
 - [ ] Task 13: Browser fit matrix across monitor sizes
 
 ### Checkpoint C
@@ -106,12 +106,8 @@ Expected gain is about 42 px of vertical space per page on desktop. The table st
 | Removing Ctrl K breaks someone's habit | Low | Explicitly requested; mention it in the commit message |
 | A missed caller still passes `eyebrow` | Low | Task 11 deletes the prop, so `tsc` fails on any leftover |
 
-## Open questions
+## Decisions (2026-10-01)
 
-1. Should the sidebar nav labels also move to sentence case ("Platform providers", "Recovery apps")?
-   If not, the page titles and the sidebar differ in casing. Recommendation: yes (Task 12).
-2. `TableToolbar` defaults `Refresh` and `Updating` are hardcoded English, so cs/sk users see English
-   on 11 pages. Fix in Task 1 (use `common.refresh` / `status.updating`)? Recommendation: yes. It is a
-   one-line change in the same file.
-3. Task tracking: CLAUDE.md names GitHub Issues, but this repo's practice is `tasks/*-todo.md`.
-   This plan follows the repo practice unless you want issues created.
+1. Sidebar nav labels move to sentence case to match the page titles. Task 12 is in scope.
+2. `TableToolbar` Refresh/Updating defaults switch to `common.refresh` / `status.updating` in Task 1.
+3. Tasks are tracked in `tasks/compact-page-header-todo.md`. No GitHub issues.

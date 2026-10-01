@@ -22,7 +22,7 @@ title, optional one-line description, and actions on the title row that wrap bel
 **Acceptance criteria:**
 - [ ] `PageHeader` renders `h1` + optional `p` + optional actions, and nothing uppercase
 - [ ] `description` is optional; the DOM nesting root > text block > h1 is unchanged
-- [ ] *(if Open question 2 is approved)* `TableToolbar` Refresh/Updating come from `common.refresh` / `status.updating`
+- [ ] `TableToolbar` Refresh/Updating come from `common.refresh` / `status.updating`
 
 **Verification:**
 - [ ] New `src/shared/components/page/PageHeader.test.tsx`, existing `TableToolbar.test.tsx` green
@@ -30,6 +30,7 @@ title, optional one-line description, and actions on the title row that wrap bel
 
 **Dependencies:** None
 **Files:** `PageHeader.tsx`, `PageHeader.test.tsx` (new), `TableToolbar.tsx`, `TableToolbar.test.tsx`
+**Note:** `TableToolbar.test.tsx` renders without the translation mock, so mock `@/hooks/useTranslation` with `@/test-utils/mockUseTranslation` the way the page tests do
 **Scope:** S
 
 ## Task 2: Remove global search; 56 px top bar and sidebar brand row
@@ -177,7 +178,7 @@ RecoveryRuns and ModuleWorkQueuePage tests, `resourcesContainedRoutes.test.tsx`
 **Dependencies:** Tasks 4–10
 **Scope:** S
 
-## Task 12: Sidebar nav in sentence case *(only if Open question 1 is approved)*
+## Task 12: Sidebar nav in sentence case
 
 **Description:** Change the en `nav.*` labels to sentence case so they match the page titles, for example
 `Platform providers` and `Recovery apps`. Update `AppSidebar.test.tsx` and `SidebarFlyout.test.tsx`.
