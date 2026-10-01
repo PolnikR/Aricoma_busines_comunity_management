@@ -24,14 +24,15 @@ export function IdentityAccessNavigation({
   const activeGroupLabel = t(`identity.navigation.groups.${activeGroup.id}`)
 
   return (
-    <nav aria-label={t('identity.navigation.ariaLabel')} className="shrink-0 min-w-0 border-b border-border bg-surface">
+    <nav aria-label={t('identity.navigation.ariaLabel')} className="w-full min-w-0 sm:w-auto">
       <Tabs
         items={visibleSections.map(section => ({ value: section.id, label: t(`identity.navigation.sections.${section.id}`) }))}
         value={sectionId}
         onChange={onSectionChange}
         ariaLabel={t('identity.navigation.sections.ariaLabel', { group: activeGroupLabel })}
         indicator="inset"
-        className="px-2 sm:px-3"
+        compact
+        className="w-full shrink-0 border-b-0 bg-surface px-0 sm:w-auto"
         scrollControls={{
           previousLabel: t('identity.navigation.scroll.previous', { group: activeGroupLabel }),
           nextLabel: t('identity.navigation.scroll.next', { group: activeGroupLabel }),

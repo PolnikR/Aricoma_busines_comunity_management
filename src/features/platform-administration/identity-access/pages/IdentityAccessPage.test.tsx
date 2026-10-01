@@ -1,4 +1,4 @@
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen, cleanup, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -59,7 +59,7 @@ function renderPage(entry = '/platform-administration/identity-access') {
 
 describe('IdentityAccessPage', () => {
   it('renders the Keycloak explorer navigation with Users selected by default', () => {
-    const { container } = renderPage()
+    renderPage()
 
     expect(screen.getByRole('heading', { name: 'Identity & Access', level: 1 })).toBeInTheDocument()
     expect(screen.queryByTestId('identity-access-realm-context')).not.toBeInTheDocument()
@@ -70,9 +70,11 @@ describe('IdentityAccessPage', () => {
     expect(screen.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Users content')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Add user' })).not.toBeInTheDocument()
-    expect(container.querySelector('.gap-4')).not.toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Keycloak realm navigation' })).toHaveClass('shrink-0')
-    expect(screen.getByRole('navigation', { name: 'Keycloak realm navigation' }).nextElementSibling).toHaveClass('min-h-0', 'flex-1', 'overflow-hidden')
+    const shell = screen.getByRole('region', { name: 'Identity records' })
+    const header = within(shell).getByRole('heading', { name: 'Identity records', level: 2 }).closest('.border-b')
+    expect(header).toContainElement(screen.getByRole('navigation', { name: 'Keycloak realm navigation' }))
+    expect(header).not.toContainElement(screen.getByText('Users content'))
+    expect(within(shell).getByText('Users content')).toBeInTheDocument()
   })
 
   it('changes the active section through the URL-backed navigation', async () => {

@@ -1839,6 +1839,7 @@
   "identity.page.title": "Identity & Access",
   "identity.page.description": "Spravujte identity, aplikácie, prístupové politiky, relácie, autentifikáciu a konfiguráciu realm-u v Keycloak.",
   "identity.navigation.ariaLabel": "Navigácia Keycloak realm-u",
+  "identity.navigation.title": "Záznamy identít",
   "identity.navigation.groups.manage": "Správa",
   "identity.navigation.groups.configure": "Konfigurácia",
   "identity.navigation.sections.ariaLabel": "Sekcie: {{group}}",

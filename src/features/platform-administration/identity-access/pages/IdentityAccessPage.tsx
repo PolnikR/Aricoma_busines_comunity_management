@@ -1,5 +1,6 @@
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
+import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { UsersSection } from '../components/UsersSection'
 import { RealmRolesSection } from '../components/RealmRolesSection'
@@ -106,13 +107,17 @@ export function IdentityAccessPage() {
         })}
       />
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-        <IdentityAccessNavigation
-          groupId={groupId}
-          sectionId={sectionId}
-          onSectionChange={setSectionId}
-        />
-        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-surface-subtle p-3" aria-live="polite">
+      <InventoryShell
+        inventoryTitle={t('identity.navigation.title')}
+        tabs={(
+          <IdentityAccessNavigation
+            groupId={groupId}
+            sectionId={sectionId}
+            onSectionChange={setSectionId}
+          />
+        )}
+      >
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden" aria-live="polite">
           <IdentityAccessSectionContent
             sectionId={sectionId}
             entityId={entityId}
@@ -121,8 +126,8 @@ export function IdentityAccessPage() {
             onTabChange={setTabId}
             onOpenEventSettings={() => { setSectionTab('realm-settings', 'events') }}
           />
-        </section>
-      </div>
+        </div>
+      </InventoryShell>
     </div>
   )
 }
