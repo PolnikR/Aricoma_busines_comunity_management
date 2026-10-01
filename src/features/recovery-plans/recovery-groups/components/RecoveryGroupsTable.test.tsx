@@ -2,7 +2,8 @@ import type { ReactElement } from 'react'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsTable } from './RecoveryGroupsTable'
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
@@ -396,7 +397,7 @@ describe('RecoveryGroupsTable', () => {
     await user.click(screen.getByText('Database group'))
 
     const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
-    await user.click(within(detail).getByRole('tab', { name: 'Orchestration' }))
+    await user.click(within(detail).getByRole('button', { name: 'Orchestration' }))
     expect(within(detail).getByRole('link', { name: /260812103627_4c06f9c8/ })).toHaveAttribute(
       'href',
       'https://airflow.dynamic.test:8443/dags/dag_260812103627_4c06f9c8',
@@ -418,7 +419,7 @@ describe('RecoveryGroupsTable', () => {
     await user.click(screen.getByText('Database group'))
 
     const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
-    await user.click(within(detail).getByRole('tab', { name: 'Orchestration' }))
+    await user.click(within(detail).getByRole('button', { name: 'Orchestration' }))
     expect(within(detail).getByRole('link', { name: /run-123/ })).toHaveAttribute(
       'href',
       'http://10.99.99.55:8080/dags/dag_run-123',
@@ -434,7 +435,7 @@ describe('RecoveryGroupsTable', () => {
     await user.click(screen.getByText('Database group'))
 
     const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
-    await user.click(within(detail).getByRole('tab', { name: 'Orchestration' }))
+    await user.click(within(detail).getByRole('button', { name: 'Orchestration' }))
     expect(within(detail).queryByRole('link')).not.toBeInTheDocument()
   })
 
@@ -457,7 +458,7 @@ describe('RecoveryGroupsTable', () => {
 
     await user.click(screen.getByText('Database group'))
     const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
-    await user.click(within(detail).getByRole('tab', { name: 'Orchestration' }))
+    await user.click(within(detail).getByRole('button', { name: 'Orchestration' }))
 
     expect(within(detail).getByText('success')).toBeInTheDocument()
 
@@ -473,7 +474,7 @@ describe('RecoveryGroupsTable', () => {
 
     await user.click(screen.getByText('Database group'))
     const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
-    await user.click(within(detail).getByRole('tab', { name: 'Orchestration' }))
+    await user.click(within(detail).getByRole('button', { name: 'Orchestration' }))
 
     expect(within(detail).queryByRole('button', { name: 'View recovery runs →' })).not.toBeInTheDocument()
   })
@@ -517,4 +518,191 @@ describe('RecoveryGroupsTable', () => {
     expect(within(detail).getByRole('button', { name: 'Delete' })).toBeEnabled()
   })
 
+  describe('Model C drawer', () => {
+    beforeEach(() => {
+      vi.mocked(useLatestOrchestratorRun).mockReturnValue({ latestRun: null, isLoading: false, error: null })
+    })
+
+    const openDetail = async (group: RecoveryGroup) => {
+      const user = userEvent.setup()
+      renderTable(<RecoveryGroupsTable groups={[group]} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />)
+      await user.click(screen.getByText(group.name))
+      const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+      return { user, detail }
+    }
+    const metaRow = (detail: HTMLElement) => {
+      const row = within(detail).getByText('Recovery group').parentElement
+      if (!row) throw new Error('Expected the meta row')
+      return row
+    }
+    const orchestrationToggle = (detail: HTMLElement) => within(detail).getByRole('button', { name: 'Orchestration' })
+
+    it('replaces the tabs with Overview open and Orchestration and Inventory collapsed', async () => {
+      const { detail } = await openDetail(getDatabaseGroup())
+
+      expect(within(detail).queryByRole('tab')).not.toBeInTheDocument()
+      expect(within(detail).queryByRole('tablist')).not.toBeInTheDocument()
+      expect(within(detail).getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-expanded', 'true')
+      expect(orchestrationToggle(detail)).toHaveAttribute('aria-expanded', 'false')
+      expect(within(detail).getByRole('button', { name: 'Inventory' })).toHaveAttribute('aria-expanded', 'false')
+      expect(within(detail).getByRole('region', { name: 'Overview' })).toHaveTextContent('Tier 2 applications')
+    })
+
+    it('toggles sections independently', async () => {
+      const { user, detail } = await openDetail(getDatabaseGroup())
+
+      await user.click(orchestrationToggle(detail))
+      expect(within(detail).getByRole('region', { name: 'Overview' })).toBeInTheDocument()
+      expect(within(detail).getByRole('region', { name: 'Orchestration' })).toBeInTheDocument()
+
+      await user.click(within(detail).getByRole('button', { name: 'Overview' }))
+      expect(within(detail).queryByRole('region', { name: 'Overview' })).not.toBeInTheDocument()
+      expect(within(detail).getByRole('region', { name: 'Orchestration' })).toBeInTheDocument()
+    })
+
+    it('summarises the workload and the resource count', async () => {
+      const { detail } = await openDetail(getDatabaseGroup())
+
+      expect(within(detail).getByRole('button', { name: 'Overview' })).toHaveAccessibleDescription('VMware virtual machines')
+      expect(within(detail).getByRole('button', { name: 'Inventory' })).toHaveAccessibleDescription('VMs: 2')
+    })
+
+    it('summarises volume groups and empty groups', async () => {
+      const volumeGroup: RecoveryGroup = {
+        ...getDatabaseGroup(),
+        id: 'volume-group',
+        name: 'Volume group',
+        sourceCategory: 'storage_system',
+        workloadType: 'ibm_flashsystem',
+        resourceType: 'volume',
+        resourceCount: 3,
+      }
+      const { detail } = await openDetail(volumeGroup)
+      expect(within(detail).getByRole('button', { name: 'Inventory' })).toHaveAccessibleDescription('Volumes: 3')
+    })
+
+    it('says "No resources" for an empty group', async () => {
+      const { detail } = await openDetail({ ...getDatabaseGroup(), resources: [], resourceCount: 0 })
+      expect(within(detail).getByRole('button', { name: 'Inventory' })).toHaveAccessibleDescription('No resources')
+    })
+
+    it('mounts the inventory only once the section is opened', async () => {
+      const user = userEvent.setup()
+      render(
+        <QueryClientProvider client={new QueryClient()}>
+          <MemoryRouter>
+            <RecoveryGroupsTable groups={[getDatabaseGroup()]} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />
+          </MemoryRouter>
+        </QueryClientProvider>,
+      )
+      await user.click(screen.getByText('Database group'))
+      const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+
+      expect(within(detail).queryByText('Inventory is available after an orchestrated run.')).not.toBeInTheDocument()
+      await user.click(within(detail).getByRole('button', { name: 'Inventory' }))
+      expect(within(detail).getByRole('region', { name: 'Inventory' })).toHaveTextContent('Inventory is available after an orchestrated run.')
+    })
+
+    it('shows the entity, the status badge and the draft state in the meta row', async () => {
+      const { detail } = await openDetail({ ...getDatabaseGroup(), status: 'Draft' })
+      expect(metaRow(detail)).toHaveTextContent('Recovery group')
+      expect(within(metaRow(detail)).getByText('Draft')).toBeInTheDocument()
+    })
+
+    it('A: not orchestrated and not configured only when push is off', async () => {
+      const { detail } = await openDetail({ ...getDatabaseGroup(), pushToOrchestrator: false, orchestrationProviderId: 'airflow-01' })
+      expect(metaRow(detail)).toHaveTextContent('Not orchestrated')
+      expect(orchestrationToggle(detail)).toHaveAccessibleDescription('Not configured')
+    })
+
+    it('B: orchestration incomplete without an orchestration provider', async () => {
+      const { detail } = await openDetail({ ...getDatabaseGroup(), pushToOrchestrator: true, orchestrationProviderId: null })
+      expect(metaRow(detail)).toHaveTextContent('Orchestration incomplete')
+      expect(orchestrationToggle(detail)).toHaveAccessibleDescription('Orchestration incomplete')
+      expect(detail).not.toHaveTextContent('Not orchestrated')
+      expect(detail).not.toHaveTextContent('Not configured')
+    })
+
+    it('C: orchestrator unavailable when the provider is not in the list', async () => {
+      const { detail } = await openDetail({ ...getDatabaseGroup(), pushToOrchestrator: true, orchestrationProviderId: 'airflow-gone', airflowRunId: 'run-1' })
+      expect(metaRow(detail)).toHaveTextContent('Orchestrator unavailable')
+      expect(orchestrationToggle(detail)).toHaveAccessibleDescription('Orchestrator unavailable')
+      expect(detail).not.toHaveTextContent('Not orchestrated')
+      expect(detail).not.toHaveTextContent('Not configured')
+    })
+
+    it('D: no run ID yet when the provider exists without a run id', async () => {
+      const { detail } = await openDetail({ ...getDatabaseGroup(), pushToOrchestrator: true, orchestrationProviderId: 'airflow-01', airflowRunId: null })
+      expect(metaRow(detail)).toHaveTextContent('No run ID yet')
+      expect(orchestrationToggle(detail)).toHaveAccessibleDescription('Dynamic Airflow')
+      expect(detail).not.toHaveTextContent('Not orchestrated')
+      expect(detail).not.toHaveTextContent('Not configured')
+    })
+
+    it('E3: no runs yet when the orchestrator has no run', async () => {
+      const { detail } = await openDetail({ ...getDatabaseGroup(), pushToOrchestrator: true, orchestrationProviderId: 'airflow-01', airflowRunId: 'run-1' })
+      expect(metaRow(detail)).toHaveTextContent('No runs yet')
+      expect(orchestrationToggle(detail)).toHaveAccessibleDescription('Dynamic Airflow')
+      expect(detail).not.toHaveTextContent('Not orchestrated')
+    })
+
+    it('E4: last run status and duration from the latest run', async () => {
+      vi.mocked(useLatestOrchestratorRun).mockReturnValue({
+        latestRun: { runId: 'r1', status: 'success', startedAt: '2026-08-19T08:51:00Z', endedAt: '2026-08-19T08:51:07Z', durationSeconds: 7.45 },
+        isLoading: false,
+        error: null,
+      })
+      const { detail } = await openDetail({ ...getDatabaseGroup(), pushToOrchestrator: true, orchestrationProviderId: 'airflow-01', airflowRunId: 'run-1' })
+      expect(metaRow(detail)).toHaveTextContent('Last run: success · 7s')
+      expect(orchestrationToggle(detail)).toHaveAccessibleDescription('Dynamic Airflow')
+    })
+
+    it('E1: leaves the run fact out while the latest run loads (E2 is covered by the state unit test)', async () => {
+      vi.mocked(useLatestOrchestratorRun).mockReturnValue({ latestRun: null, isLoading: true, error: null })
+      const { detail } = await openDetail({ ...getDatabaseGroup(), pushToOrchestrator: true, orchestrationProviderId: 'airflow-01', airflowRunId: 'run-1' })
+      expect(metaRow(detail)).not.toHaveTextContent('No runs yet')
+      expect(metaRow(detail)).not.toHaveTextContent('Last run')
+    })
+
+    it('puts Delete in the left footer group and Edit on the right', async () => {
+      const { detail } = await openDetail(getDatabaseGroup())
+      const deleteButton = within(detail).getByRole('button', { name: 'Delete' })
+      const editButton = within(detail).getByRole('button', { name: 'Edit' })
+      const footer = deleteButton.parentElement?.parentElement
+
+      expect(footer?.children[0]).toContainElement(deleteButton)
+      expect(footer?.children[1]).toContainElement(editButton)
+      expect(deleteButton).not.toHaveClass('flex-1')
+      expect(editButton).not.toHaveClass('flex-1')
+    })
+
+    it('shows the resource provider unavailable badge in the meta row for unresolved groups', async () => {
+      const { detail } = await openDetail({ ...getDatabaseGroup(), providerResolution: 'unresolved' })
+      expect(within(metaRow(detail)).getByText('Provider unavailable')).toBeInTheDocument()
+      expect(within(detail).getByRole('button', { name: 'Edit' })).toHaveAccessibleDescription(
+        'Editing is unavailable until the configured provider is restored.',
+      )
+    })
+
+    it('closes the drawer from the close button', async () => {
+      const { user, detail } = await openDetail(getDatabaseGroup())
+      await user.click(within(detail).getByRole('button', { name: 'Close recovery group detail' }))
+      expect(screen.queryByRole('dialog', { name: 'Recovery group detail' })).not.toBeInTheDocument()
+    })
+
+    it('resets the sections when another group is opened', async () => {
+      const user = userEvent.setup()
+      renderTable(<RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />)
+
+      await user.click(screen.getByText('Database group'))
+      let detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+      await user.click(orchestrationToggle(detail))
+      expect(orchestrationToggle(detail)).toHaveAttribute('aria-expanded', 'true')
+      await user.click(within(detail).getByRole('button', { name: 'Close recovery group detail' }))
+
+      await user.click(screen.getByText('Power group'))
+      detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+      expect(orchestrationToggle(detail)).toHaveAttribute('aria-expanded', 'false')
+    })
+  })
 })

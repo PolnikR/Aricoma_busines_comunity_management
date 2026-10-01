@@ -11,6 +11,7 @@ import {
   DataTableRequestState,
   DataTableToolbar,
   DetailDrawer,
+  DetailDrawerSection,
   DetailRow,
   RowActionsMenu,
   useTableState,
@@ -19,7 +20,6 @@ import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { RecoveryGroupInventory } from './RecoveryGroupInventory'
-import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useTranslation } from '@/hooks/useTranslation'
 import { normalizeAirflowDagId } from '@/config/externalServices'
 import { AirflowDagLink } from '@/shared/components/airflow/AirflowDagLink'
@@ -31,6 +31,8 @@ import { selectPlatformProviders } from '@/features/platform-administration/plat
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
 import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/features/recovery-plans/recovery-runs/helpers/formatRecoveryRun'
 import { toRecoveryGroupJson } from '../helpers/mapRecoveryGroups'
+import { getRecoveryGroupOrchestrationState } from '../helpers/recoveryGroupOrchestrationState'
+import type { OrchestrationState } from '../helpers/recoveryGroupOrchestrationState'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupRollbackResultModal } from './RecoveryGroupRollbackResultModal'
 import {
@@ -78,7 +80,11 @@ export function RecoveryGroupsTable({
 }: RecoveryGroupsTableProps) {
   const { t } = useTranslation()
   const { data: policySets = [] } = useGetPolicySets({ query: { select: selectPolicySets } })
-  const { data: platformProviders = [] } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
+  const {
+    data: platformProviders = [],
+    isLoading: isPlatformProvidersLoading,
+    isError: isPlatformProvidersError,
+  } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const [filters, setFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)
@@ -88,7 +94,6 @@ export function RecoveryGroupsTable({
   const [rollbackResult, setRollbackResult] = useState<{ groupName: string; report: RollbackReport } | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [isRollingBack, setIsRollingBack] = useState(false)
-  const [detailTab, setDetailTab] = useState<'overview' | 'orchestration' | 'inventory'>('overview')
 
   const filterOptions = useMemo(() => ({
     workloadTypes: Array.from(new Set(groups.map(group => group.workloadType ?? 'unresolved'))).sort(),
@@ -118,10 +123,58 @@ export function RecoveryGroupsTable({
   const selectedDagId = isSelectedOrchestrated && selected?.airflowRunId
     ? normalizeAirflowDagId(selected.airflowRunId)
     : null
-  const { latestRun } = useLatestOrchestratorRun(
+  const latestRunState = useLatestOrchestratorRun(
     isSelectedOrchestrated ? (selected?.orchestrationProviderId ?? null) : null,
     selectedDagId,
   )
+  const { latestRun } = latestRunState
+  const orchestrationState: OrchestrationState | null = selected
+    ? getRecoveryGroupOrchestrationState(
+        selected,
+        { providers: platformProviders, isLoading: isPlatformProvidersLoading, isError: isPlatformProvidersError },
+        latestRunState,
+      )
+    : null
+  const orchestrationMetaText = (state: OrchestrationState): string | null => {
+    switch (state.kind) {
+      case 'notOrchestrated': return t('recoveryGroups.drawer.notOrchestrated')
+      case 'incomplete': return t('recoveryGroups.drawer.orchestrationIncomplete')
+      case 'orchestratorUnavailable': return t('recoveryGroups.drawer.orchestratorUnavailable')
+      case 'noRunId': return t('recoveryGroups.drawer.noRunId')
+      case 'noRuns': return t('recoveryRuns.table.noRuns')
+      case 'lastRun': return t('recoveryGroups.drawer.lastRun', {
+        status: state.run.status,
+        duration: formatRunDuration(state.run.durationSeconds),
+      })
+      case 'providersPending':
+      case 'providersFailed':
+      case 'runPending':
+      case 'runFailed':
+        return null
+    }
+  }
+  const orchestrationSummaryText = (state: OrchestrationState): string | undefined => {
+    switch (state.kind) {
+      case 'notOrchestrated': return t('recoveryGroups.drawer.notConfigured')
+      case 'incomplete': return t('recoveryGroups.drawer.orchestrationIncomplete')
+      case 'orchestratorUnavailable': return t('recoveryGroups.drawer.orchestratorUnavailable')
+      case 'providersPending':
+      case 'providersFailed':
+        return undefined
+      case 'noRunId':
+      case 'runPending':
+      case 'runFailed':
+      case 'noRuns':
+      case 'lastRun':
+        return state.providerName
+    }
+  }
+  const inventorySummaryText = (group: RecoveryGroup) => {
+    if (group.resourceCount === 0) return t('recoveryGroups.drawer.noResources')
+    return t(group.resourceType === 'vm' ? 'recoveryGroups.drawer.vmCount' : 'recoveryGroups.drawer.volumeCount', {
+      count: group.resourceCount,
+    })
+  }
   const policySetName = (policySetId: string) => (
     policySets.find(policySet => policySet.id === policySetId)?.name ?? policySetId
   )
@@ -335,7 +388,7 @@ export function RecoveryGroupsTable({
           density={table.density}
           minWidthClassName="min-w-200"
           ariaLabel={isLoading ? t('pages.recoveryGroups.loading') : t('pages.recoveryGroups.tableAriaLabel')}
-          onRowClick={group => { setSelectedId(group.id); setDetailTab('overview') }}
+          onRowClick={group => { setSelectedId(group.id) }}
           selectedRowKey={selectedId}
           emptyContent={groups.length > 0 ? t('pages.recoveryGroups.empty.noGroups') : (
             <div className="space-y-3">
@@ -386,23 +439,33 @@ export function RecoveryGroupsTable({
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
-        eyebrow={t('drawer.selectedRecoveryGroup')}
         title={selected?.name ?? ''}
+        meta={selected ? [
+          t('drawer.entity.recoveryGroup'),
+          <Badge key="status" color={selected.status === 'Active' ? 'success' : 'warning'} size="sm">
+            {t(selected.status === 'Active' ? 'tables.recoveryGroups.active' : 'tables.recoveryGroups.draft')}
+          </Badge>,
+          selected.providerResolution === 'unresolved' ? (
+            <Badge key="provider" color="warning" size="sm">{t('pages.recoveryGroups.providerUnavailable')}</Badge>
+          ) : null,
+          orchestrationState ? orchestrationMetaText(orchestrationState) : null,
+        ] : []}
         ariaLabel={t('drawer.recoveryGroupDetail')}
         closeLabel={t('drawer.closeRecoveryGroup')}
+        resizeLabel={t('drawer.resize')}
+        footerStart={selected ? (
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={() => { setDeleteTarget(selected) }}
+          >
+            {t('buttons.delete')}
+          </Button>
+        ) : null}
         footer={selected ? (
           <>
             <Button
               size="sm"
-              variant="danger"
-              className="flex-1"
-              onClick={() => { setDeleteTarget(selected) }}
-            >
-              {t('buttons.delete')}
-            </Button>
-            <Button
-              size="sm"
-              className="flex-1"
               disabled={selected.providerResolution === 'unresolved'}
               title={selected.providerResolution === 'unresolved'
                 ? t('pages.recoveryGroups.providerUnavailableEdit')
@@ -427,22 +490,18 @@ export function RecoveryGroupsTable({
         ) : null}
       >
         {selected ? (
-          <>
-            <Tabs
-              items={[
-                { value: 'overview' as const, label: t('details.tabs.overview') },
-                { value: 'orchestration' as const, label: t('details.tabs.orchestration') },
-                { value: 'inventory' as const, label: t('details.tabs.inventory') },
-              ]}
-              value={detailTab}
-              onChange={setDetailTab}
-              ariaLabel={t('drawer.recoveryGroupDetail')}
-              indicator="inset"
-              className="px-5"
-            />
-            {detailTab === 'overview' ? (
-              <dl className="space-y-3 px-5 py-4">
+          // Keyed by group so each newly opened group starts with the default sections.
+          <div key={selected.id}>
+            <DetailDrawerSection
+              title={t('details.tabs.overview')}
+              summary={t(selected.workloadType
+                ? getWorkloadTypeLabelKey(selected.workloadType)
+                : getResourceTypeLabelKey(selected.resourceType))}
+              defaultOpen
+            >
+              <dl>
                 <DetailRow label={t('details.description')} value={selected.description || '—'} />
+                <DetailRow label={t('tables.recoveryGroups.policySet')} value={policySetName(selected.policySetId)} />
                 <DetailRow label={t('details.providerId')} value={<span className="font-mono">{selected.providerId ?? '—'}</span>} />
                 <DetailRow
                   label={t('tables.recoveryGroups.sourceCategory')}
@@ -456,10 +515,6 @@ export function RecoveryGroupsTable({
                   label={t('tables.recoveryGroups.resourceType')}
                   value={t(getResourceTypeLabelKey(selected.resourceType))}
                 />
-                <DetailRow
-                  label={t('tables.recoveryGroups.policySet')}
-                  value={policySetName(selected.policySetId)}
-                />
                 <DetailRow label={t('tables.recoveryGroups.resources')} value={String(selected.resourceCount)} />
                 <DetailRow
                   label={t('tables.recoveryGroups.status')}
@@ -470,8 +525,12 @@ export function RecoveryGroupsTable({
                   }
                 />
               </dl>
-            ) : detailTab === 'orchestration' ? (
-              <dl className="space-y-3 px-5 py-4">
+            </DetailDrawerSection>
+            <DetailDrawerSection
+              title={t('details.tabs.orchestration')}
+              summary={orchestrationState ? orchestrationSummaryText(orchestrationState) : undefined}
+            >
+              <dl>
                 <DetailRow
                   label={t('tables.recoveryGroups.orchestration')}
                   value={
@@ -505,23 +564,30 @@ export function RecoveryGroupsTable({
                     />
                     <DetailRow label={t('details.lastExecuted')} value={formatRunTimestamp(latestRun?.startedAt ?? null)} />
                     <DetailRow label={t('details.duration')} value={formatRunDuration(latestRun?.durationSeconds ?? null)} />
-                    <Button
-                      size="sm"
-                      variant="soft"
-                      className="w-full"
-                      onClick={() => {
-                        void navigate(`${routes.recoveryRuns}?tab=groups&entityType=group&entityId=${encodeURIComponent(selected.id)}`)
-                      }}
-                    >
-                      {t('buttons.viewRecoveryRuns')}
-                    </Button>
                   </>
                 ) : null}
               </dl>
-            ) : (
+              {isSelectedOrchestrated ? (
+                <Button
+                  size="sm"
+                  variant="soft"
+                  className="mt-3 w-full"
+                  onClick={() => {
+                    void navigate(`${routes.recoveryRuns}?tab=groups&entityType=group&entityId=${encodeURIComponent(selected.id)}`)
+                  }}
+                >
+                  {t('buttons.viewRecoveryRuns')}
+                </Button>
+              ) : null}
+            </DetailDrawerSection>
+            <DetailDrawerSection
+              title={t('details.tabs.inventory')}
+              summary={inventorySummaryText(selected)}
+              flush
+            >
               <RecoveryGroupInventory runId={selected.airflowRunId ?? null} active />
-            )}
-          </>
+            </DetailDrawerSection>
+          </div>
         ) : null}
       </DetailDrawer>
 
