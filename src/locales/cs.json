@@ -2018,6 +2018,7 @@
   "identity.users.columns.roles": "Role",
   "identity.users.columns.status": "Stav",
   "identity.users.columns.lastLogin": "Poslední přihlášení",
+  "identity.users.columns.activeSessionStart": "Začátek aktivní relace",
   "identity.users.status.active": "aktivní",
   "identity.users.status.inactive": "neaktivní",
   "identity.users.tabs.details": "Detaily",

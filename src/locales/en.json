@@ -2055,6 +2055,7 @@
   "identity.users.columns.roles": "Roles",
   "identity.users.columns.status": "Status",
   "identity.users.columns.lastLogin": "Last login",
+  "identity.users.columns.activeSessionStart": "Active session start",
   "identity.users.status.active": "active",
   "identity.users.status.inactive": "inactive",
   "identity.users.tabs.details": "Details",

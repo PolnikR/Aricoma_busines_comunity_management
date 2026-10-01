@@ -1,28 +1,105 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { UsersSection } from './UsersSection'
-import { IdentityAdminGatewayProvider } from '../services/IdentityAdminGatewayProvider'
-import { createMockIdentityAdminGateway } from '../services/mockIdentityAdminGateway'
-import type { IdentityAdminPreview } from '../services/identityAdminGateway'
+import { useGetUsers } from '@/generated/query/identity-access/identity-access.gen'
+import type { UserRecord } from '@/generated/query/zod'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+vi.mock('@/generated/query/identity-access/identity-access.gen', () => ({ useGetUsers: vi.fn() }))
 
-function renderSection(
-  overrides?: Partial<Parameters<typeof UsersSection>[0]>,
-  gateway = createMockIdentityAdminGateway(),
-) {
-  const props: Parameters<typeof UsersSection>[0] = { entityId: null, tabId: null, onEntityChange: vi.fn(), onTabChange: vi.fn(), ...overrides }
-  const view = render(<IdentityAdminGatewayProvider gateway={gateway}><UsersSection {...props} /></IdentityAdminGatewayProvider>)
-  return { ...props, ...view }
+const SESSION_START = '2026-09-30T08:15:00Z'
+const alice: UserRecord = {
+  id: 'kc-alice',
+  user: 'Alice Smith',
+  username: 'alice',
+  email: 'alice@example.com',
+  emailVerified: true,
+  createdAt: '2026-01-02T10:00:00Z',
+  roles: ['platform-admin', 'recovery-operator'],
+  status: 'Active',
+  activeSessionStart: SESSION_START,
+}
+const bob: UserRecord = {
+  id: 'kc-bob',
+  user: 'Bob Jones',
+  username: 'bob',
+  email: null,
+  roles: [],
+  status: 'Disabled',
+  activeSessionStart: null,
+}
+
+function expectedTimestamp(value: string) {
+  return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+}
+
+function mockUsers(state: { users?: UserRecord[], isLoading?: boolean, isFetching?: boolean, error?: Error | null, refetch?: () => void }) {
+  vi.mocked(useGetUsers).mockReturnValue({
+    data: state.users ? { users: state.users } : undefined,
+    isLoading: state.isLoading ?? false,
+    isFetching: state.isFetching ?? false,
+    error: state.error ?? null,
+    refetch: state.refetch ?? vi.fn(),
+  } as never)
+}
+
+function rowFor(name: string) {
+  const row = screen.getByText(name).closest('tr')
+  if (!row) throw new Error(`Expected a table row for ${name}`)
+  return within(row)
 }
 
 describe('UsersSection', () => {
-  it('keeps table chrome visible and skeletonizes only user records during initial loading', () => {
-    const gateway = createMockIdentityAdminGateway()
-    gateway.getPreview = vi.fn(() => new Promise<IdentityAdminPreview>(() => undefined))
+  beforeEach(() => { vi.mocked(useGetUsers).mockReset() })
 
-    const { container } = renderSection(undefined, gateway)
+  it('renders users returned by GET /get_users with the read-only columns', () => {
+    mockUsers({ users: [alice, bob] })
+    render(<UsersSection />)
+
+    expect(screen.getAllByRole('columnheader').map(header => header.textContent)).toEqual(['User', 'Username', 'Roles', 'Status', 'Active session start'])
+    expect(screen.queryByRole('columnheader', { name: 'Last login' })).not.toBeInTheDocument()
+    const aliceRow = rowFor('Alice Smith')
+    expect(aliceRow.getByText('alice@example.com')).toBeInTheDocument()
+    expect(aliceRow.getByText('alice')).toBeInTheDocument()
+    expect(aliceRow.getByText('Active')).toBeInTheDocument()
+    expect(rowFor('Bob Jones').getByText('Disabled')).toBeInTheDocument()
+  })
+
+  it('renders roles as a list and an em dash when the user has none', () => {
+    mockUsers({ users: [alice, bob] })
+    render(<UsersSection />)
+
+    expect(rowFor('Alice Smith').getByText('platform-admin, recovery-operator')).toBeInTheDocument()
+    expect(rowFor('Bob Jones').getAllByText('—')).toHaveLength(2)
+  })
+
+  it('formats the active session start and shows an em dash when it is null', () => {
+    mockUsers({ users: [alice, bob] })
+    render(<UsersSection />)
+
+    expect(rowFor('Alice Smith').getByText(expectedTimestamp(SESSION_START))).toBeInTheDocument()
+    const bobCells = rowFor('Bob Jones').getAllByRole('cell')
+    expect(bobCells.at(-1)).toHaveTextContent('—')
+  })
+
+  it('filters users with the shared table search', async () => {
+    mockUsers({ users: [alice, bob] })
+    render(<UsersSection />)
+
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search users' }), 'bob')
+    expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument()
+    expect(screen.getByText('Bob Jones')).toBeInTheDocument()
+
+    await userEvent.clear(screen.getByRole('searchbox', { name: 'Search users' }))
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search users' }), 'recovery-operator')
+    expect(screen.getByText('Alice Smith')).toBeInTheDocument()
+    expect(screen.queryByText('Bob Jones')).not.toBeInTheDocument()
+  })
+
+  it('keeps table chrome visible and skeletonizes rows while loading', () => {
+    mockUsers({ isLoading: true, isFetching: true })
+    const { container } = render(<UsersSection />)
 
     expect(screen.getByRole('searchbox', { name: 'Search users' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'User' })).toBeInTheDocument()
@@ -30,97 +107,27 @@ describe('UsersSection', () => {
     expect(screen.queryByText('No users found')).not.toBeInTheDocument()
   })
 
-  it('keeps the selected-user shell and field labels visible during initial loading', () => {
-    const gateway = createMockIdentityAdminGateway()
-    gateway.getPreview = vi.fn(() => new Promise<IdentityAdminPreview>(() => undefined))
+  it('shows a load error with a working retry', async () => {
+    const refetch = vi.fn()
+    mockUsers({ error: new Error('Keycloak unavailable'), refetch })
+    render(<UsersSection />)
 
-    const { container } = renderSection({ entityId: 'user-1', tabId: 'details' }, gateway)
-
-    expect(screen.getByRole('button', { name: 'Users' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Details' })).toBeInTheDocument()
-    expect(screen.getByText('Username')).toBeInTheDocument()
-    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(2)
-    expect(screen.queryByText('Reading identity adapter data')).not.toBeInTheDocument()
+    expect(screen.getByText('Users could not be loaded')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(refetch).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps cached user details visible while a post-mutation refresh is pending', async () => {
-    const gateway = createMockIdentityAdminGateway()
-    const preview = await gateway.getPreview()
-    const getPreview = vi.fn()
-      .mockResolvedValueOnce(preview)
-      .mockImplementation(() => new Promise<IdentityAdminPreview>(() => undefined))
-    gateway.getPreview = getPreview
+  it('shows the empty state when the API returns no users', () => {
+    mockUsers({ users: [] })
+    render(<UsersSection />)
 
-    renderSection({ entityId: 'user-1', tabId: 'credentials' }, gateway)
-    const checkbox = await screen.findByRole('checkbox', { name: 'Require Verify Email' })
-    await userEvent.click(checkbox)
-    await waitFor(() => { expect(getPreview).toHaveBeenCalledTimes(2) })
-
-    expect(screen.getByText('No credential values are stored or displayed in this preview.')).toBeInTheDocument()
-    expect(screen.getByRole('checkbox', { name: 'Require Verify Email' })).toBeInTheDocument()
+    expect(screen.getByText('No users found')).toBeInTheDocument()
   })
 
+  it('exposes no user management actions', () => {
+    mockUsers({ users: [alice, bob] })
+    render(<UsersSection />)
 
-  it('keeps shared table search and opens a user through the URL entity callback', async () => {
-    const props = renderSection()
-
-    const [usersSurface, usersTable] = await screen.findAllByLabelText('Users')
-    if (!usersSurface || !usersTable) throw new Error('Expected users surface and table')
-    expect(await screen.findByText('Alice Smith')).toBeInTheDocument()
-    const scrollRegion = usersTable.parentElement
-    if (!scrollRegion) throw new Error('Expected users table scroll region')
-    expect(usersSurface).toHaveClass('grid', 'grid-rows-[auto_minmax(0,1fr)_auto]')
-    expect(usersTable).toBeInTheDocument()
-    expect(scrollRegion).toHaveClass('custom-scrollbar', 'min-h-0', 'overflow-y-auto')
-    expect(scrollRegion.parentElement).toBe(usersSurface)
-    expect(scrollRegion).not.toContainElement(screen.getByLabelText('Rows per page'))
-    expect(screen.queryByText('Search and manage users')).not.toBeInTheDocument()
-    await userEvent.type(screen.getByRole('searchbox', { name: 'Search users' }), 'bob@')
-    expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('row', { name: 'Open user Bob Jones' }))
-    expect(props.onEntityChange).toHaveBeenCalledWith('user-2')
-  })
-
-  it('opens a Keycloak-style full user management page with nested tabs', async () => {
-    const props = renderSection({ entityId: 'user-1', tabId: 'details' })
-
-    expect(await screen.findByRole('heading', { name: 'Alice Smith' })).toBeInTheDocument()
-    const tabs = within(screen.getByRole('tablist', { name: 'User management sections' }))
-    expect(tabs.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Details', 'Credentials', 'Role mappings'])
-    expect(screen.getByRole('tab', { name: 'Details' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.queryByText('Engineering')).not.toBeInTheDocument()
-    expect(screen.getByText('active')).toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole('tab', { name: 'Credentials' }))
-    expect(props.onTabChange).toHaveBeenCalledWith('credentials')
-    await userEvent.click(screen.getByRole('button', { name: 'Users' }))
-    expect(props.onEntityChange).toHaveBeenCalledWith(null)
-  })
-
-  it('shows safe credential and required-action preview controls', async () => {
-    renderSection({ entityId: 'user-1', tabId: 'credentials' })
-    expect(await screen.findByText('No credential values are stored or displayed in this preview.')).toBeInTheDocument()
-    expect(screen.queryByRole('textbox', { name: /password/i })).not.toBeInTheDocument()
-    expect(screen.getByRole('checkbox', { name: 'Require Update Password' })).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Require Verify Email' }))
-    expect(screen.getByRole('checkbox', { name: 'Require Verify Email' })).toBeChecked()
-  })
-
-  it('shows assigned and available ABCO roles with an effective capability summary', async () => {
-    renderSection({ entityId: 'user-1', tabId: 'role-mappings' })
-    expect(await screen.findByRole('heading', { name: 'Assigned ABCO client roles' })).toBeInTheDocument()
-    expect(screen.getByText('Administrator')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Available ABCO client roles' })).toBeInTheDocument()
-    expect(screen.getByText('Recovery Manager')).toBeInTheDocument()
-    expect(screen.getByText('Effective ABCO application capabilities')).toBeInTheDocument()
-    expect(screen.getByText(/Manage users and application access/)).toBeInTheDocument()
-  })
-
-  it('keeps the canonical hidden user Sessions deep link functional', async () => {
-    renderSection({ entityId: 'user-1', tabId: 'sessions' })
-
-    expect(await screen.findByLabelText('User sessions')).toBeInTheDocument()
-    expect(await screen.findByText('192.168.1.100')).toBeInTheDocument()
-    expect(screen.getByText('active')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /add user|edit|delete/i })).not.toBeInTheDocument()
   })
 })

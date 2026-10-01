@@ -1,169 +1,68 @@
 import { useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
-import { Alert } from '@/shared/components/alert/Alert'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Badge } from '@/shared/components/badge/Badge'
-import { Button } from '@/shared/components/button/Button'
-import { DataTable, DataTablePagination, DataTableSurface, DataTableToolbar, SkeletonBlock, useTableState } from '@/shared/components/data-table'
+import {
+  DataTable,
+  DataTablePagination,
+  DataTableRequestState,
+  DataTableSurface,
+  DataTableToolbar,
+  useTableState,
+} from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
-import { CheckboxField, Field, Input } from '@/shared/components/form/FormControls'
-import { useIdentityAdminPreview } from '../hooks/useIdentityAdminPreview'
-import { useSessions } from '../hooks/useSessions'
-import type { IdentityAccessTabId } from '../models/identityAccessSections'
-import type { Session } from '../models/identityTypes'
-import type { IdentityCapabilityView, IdentityRoleView, IdentityUserView, RequiredActionView } from '../services/identityAdminGateway'
-import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection } from './IdentityResourceLayout'
+import { useGetUsers } from '@/generated/query/identity-access/identity-access.gen'
+import type { UserRecord } from '@/generated/query/zod'
 
-const CANONICAL_USER_TABS = ['details', 'attributes', 'credentials', 'role-mappings', 'groups', 'consents', 'sessions', 'identity-provider-links'] as const
-const VISIBLE_USER_TABS = ['details', 'credentials', 'role-mappings'] as const
-type UserTabId = (typeof CANONICAL_USER_TABS)[number]
+const USER_SEARCH_FIELDS: (keyof UserRecord)[] = ['user', 'username', 'email', 'roles']
 
-interface UsersSectionProps {
-  entityId: string | null
-  tabId: IdentityAccessTabId | null
-  onEntityChange: (entityId: string | null) => void
-  onTabChange: (tabId: IdentityAccessTabId) => void
+function dateLocale(language: string) {
+  if (language === 'sk') return 'sk-SK'
+  if (language === 'cs') return 'cs-CZ'
+  return 'en-GB'
 }
 
-function isUserTab(tabId: IdentityAccessTabId | null): tabId is UserTabId {
-  return CANONICAL_USER_TABS.some(tab => tab === tabId)
+// Locale-aware; no timeZone option, so the browser's timezone applies.
+function formatUserTimestamp(value: string | null | undefined, language: string) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return new Intl.DateTimeFormat(dateLocale(language), { dateStyle: 'medium', timeStyle: 'short' }).format(date)
 }
 
-function userDisplayName(user: IdentityUserView) {
-  return `${user.firstName} ${user.lastName}`.trim() || user.username
-}
-
-export function UsersSection(props: UsersSectionProps) {
+function UserStatusBadge({ status }: { status: UserRecord['status'] }) {
   const { t } = useTranslation()
-  const { entityId, tabId, onEntityChange, onTabChange } = props
-  const { data, error, isLoading, isMutating, mutationError, gateway, mutate, refresh } = useIdentityAdminPreview()
-  const users = data?.users ?? []
-  const roles = useMemo(() => data?.roles ?? [], [data?.roles])
-  const selectedUser = users.find(user => user.id === entityId) ?? null
-  const { data: userSessions = [] } = useSessions(selectedUser ? { userId: selectedUser.id } : undefined)
-  const table = useTableState(users, { searchFields: ['username', 'email', 'firstName', 'lastName'] })
-  const columns = useMemo<ColumnDef<IdentityUserView>[]>(() => [
+  return (
+    <Badge color={status === 'Active' ? 'success' : 'light'} size="sm">
+      {status === 'Active' ? t('identity.common.status.active') : t('identity.common.status.disabled')}
+    </Badge>
+  )
+}
+
+export function UsersSection() {
+  const { t, language } = useTranslation()
+  const { data, isLoading, isFetching, error, refetch } = useGetUsers()
+  const users = useMemo(() => data?.users ?? [], [data?.users])
+  const table = useTableState(users, { searchFields: USER_SEARCH_FIELDS })
+  const loadErrorDescription = extractBackendErrorDetail(error)
+
+  const columns = useMemo<ColumnDef<UserRecord>[]>(() => [
     {
       id: 'user',
       header: t('identity.users.columns.user'),
       cell: user => (
         <>
-          <span className="block font-semibold text-text-primary">{userDisplayName(user)}</span>
-          <span className="mt-0.5 block text-[11px] text-text-subtle">{user.email}</span>
+          <span className="block font-semibold text-text-primary">{user.user}</span>
+          {user.email ? <span className="mt-0.5 block text-[11px] text-text-subtle">{user.email}</span> : null}
         </>
       ),
     },
     { id: 'username', header: t('identity.users.columns.username'), cell: user => user.username },
-    { id: 'roles', header: t('identity.users.columns.roles'), cell: user => user.roleIds.map(roleId => roles.find(role => role.id === roleId)?.name ?? roleId).join(', ') || '—' },
-    {
-      id: 'status',
-      header: t('identity.users.columns.status'),
-      cell: user => (
-        <Badge color={user.enabled ? 'success' : 'light'} size="sm">
-          {user.enabled ? t('identity.users.status.active') : t('identity.users.status.inactive')}
-        </Badge>
-      ),
-    },
-    { id: 'lastLogin', header: t('identity.users.columns.lastLogin'), cell: user => user.lastLoginLabel },
-  ], [roles, t])
-  const tabs = VISIBLE_USER_TABS.map(value => ({ value, label: t(`identity.users.tabs.${value}`) }))
-
-  if (entityId) {
-    const activeTab: UserTabId = isUserTab(tabId) ? tabId : 'details'
-    if (!selectedUser && !isLoading) {
-      return (
-        <div>
-          <IdentityResourceHeader
-            title={t('identity.users.notFound.title')}
-            backLabel={t('identity.navigation.sections.users')}
-            onBack={() => { onEntityChange(null) }}
-          />
-          <div className="p-4">
-            <EmptyState
-              title={t('identity.users.notFound.title')}
-              description={t('identity.users.notFound.description')}
-            />
-          </div>
-        </div>
-      )
-    }
-    if (!selectedUser) {
-      return (
-        <IdentityResourceDetailPage
-          eyebrow={t('identity.navigation.groups.manage')}
-          title={<SkeletonBlock className="h-6 w-40" />}
-          description={<SkeletonBlock className="h-3 w-56" />}
-          backLabel={t('identity.navigation.sections.users')}
-          onBack={() => { onEntityChange(null) }}
-          tabs={tabs}
-          tabId={activeTab}
-          onTabChange={nextTab => { onTabChange(nextTab) }}
-          tabAriaLabel={t('identity.users.tabs.ariaLabel')}
-        >
-          <LoadingUserDetails />
-        </IdentityResourceDetailPage>
-      )
-    }
-
-    let detailContent
-    if (activeTab === 'details') {
-      detailContent = <UserDetails user={selectedUser} />
-    } else if (activeTab === 'credentials') {
-      detailContent = (
-        <UserCredentials
-          user={selectedUser}
-          actions={data?.requiredActions ?? []}
-          disabled={isMutating}
-          onToggle={(actionId, isRequired) => mutate(() => gateway.setUserRequiredAction(selectedUser.id, actionId, isRequired))}
-        />
-      )
-    } else if (activeTab === 'role-mappings') {
-      detailContent = (
-        <UserRoleMappings
-          user={selectedUser}
-          roles={roles}
-          capabilities={data?.capabilities ?? []}
-          disabled={isMutating}
-          onToggle={(roleId, isAssigned) => mutate(() => gateway.setUserRole(selectedUser.id, roleId, isAssigned))}
-        />
-      )
-    } else if (activeTab === 'sessions') {
-      detailContent = <UserSessions sessions={userSessions} />
-    } else {
-      detailContent = (
-        <div className="p-4">
-          <EmptyState
-            title={t('identity.common.integration.title')}
-            description={t('identity.common.integration.description', { tab: activeTab })}
-          />
-        </div>
-      )
-    }
-
-    return (
-      <IdentityResourceDetailPage
-        eyebrow={t('identity.navigation.groups.manage')}
-        title={userDisplayName(selectedUser)}
-        description={selectedUser.email}
-        backLabel={t('identity.navigation.sections.users')}
-        onBack={() => { onEntityChange(null) }}
-        tabs={tabs}
-        tabId={activeTab}
-        onTabChange={nextTab => { onTabChange(nextTab) }}
-        tabAriaLabel={t('identity.users.tabs.ariaLabel')}
-      >
-        {mutationError ? (
-          <Alert
-            className="m-4"
-            variant="error"
-            title={t('identity.users.mutationFailed')}
-            description={mutationError.message}
-          />
-        ) : null}
-        {detailContent}
-      </IdentityResourceDetailPage>
-    )
-  }
+    { id: 'roles', header: t('identity.users.columns.roles'), cell: user => user.roles.join(', ') || '—' },
+    { id: 'status', header: t('identity.users.columns.status'), cell: user => <UserStatusBadge status={user.status} /> },
+    { id: 'activeSessionStart', header: t('identity.users.columns.activeSessionStart'), cell: user => formatUserTimestamp(user.activeSessionStart, language) },
+  ], [language, t])
 
   return (
     <DataTableSurface
@@ -178,231 +77,43 @@ export function UsersSection(props: UsersSectionProps) {
           onDensityChange={table.setDensity}
         />
       )}
-      pagination={!error ? (
+      pagination={(!error || users.length > 0) ? (
         <DataTablePagination
           page={table.page}
           pageSize={table.pageSize}
           total={table.total}
           onPageChange={table.setPage}
           onPageSizeChange={table.setPageSize}
-          isLoading={isLoading && users.length === 0}
+          isLoading={isLoading}
         />
       ) : null}
     >
-        {error ? (
-          <div className="p-4">
-            <EmptyState
-              title={t('identity.users.loadFailed')}
-              description={error.message}
-              action={<Button size="sm" onClick={() => { void refresh() }}>{t('identity.common.actions.retry')}</Button>}
-            />
-          </div>
-        ) : (
-          <DataTable
-            layout="fit"
-            columns={columns}
-            rows={table.pageItems}
-            rowKey={user => user.id}
+      <DataTableRequestState
+        hasCachedData={users.length > 0}
+        error={error ? {
+          title: t('identity.users.loadFailed'),
+          ...(loadErrorDescription ? { description: loadErrorDescription } : {}),
+          retryLabel: t('identity.common.actions.retry'),
+          isRetrying: isFetching,
+          onRetry: () => { void refetch() },
+        } : null}
+      >
+        <DataTable
+          layout="fit"
+          columns={columns}
+          rows={table.pageItems}
+          rowKey={user => user.id}
           density={table.density}
-            ariaLabel={t('identity.navigation.sections.users')}
-            rowAriaLabel={user => t('identity.users.rowAriaLabel', { name: userDisplayName(user) })}
-            onRowClick={user => { onEntityChange(user.id) }}
-            isLoading={isLoading && users.length === 0}
-            emptyContent={(
-              <EmptyState
-                title={isLoading ? t('identity.users.loading') : t('identity.users.empty.title')}
-                description={t('identity.users.empty.description')}
-              />
-            )}
-          />
-        )}
+          ariaLabel={t('identity.navigation.sections.users')}
+          isLoading={isLoading}
+          emptyContent={users.length > 0 ? t('common.noResults') : (
+            <EmptyState
+              title={t('identity.users.empty.title')}
+              description={t('identity.users.empty.description')}
+            />
+          )}
+        />
+      </DataTableRequestState>
     </DataTableSurface>
-  )
-}
-
-function LoadingUserDetails() {
-  const { t } = useTranslation()
-  return (
-    <IdentitySettingsSection title={t('identity.users.details.title')} description={t('identity.users.details.description')}>
-      <div className="grid min-w-0 gap-4 md:grid-cols-2" aria-busy="true">
-        {[
-          t('identity.users.fields.username'),
-          t('identity.users.fields.email'),
-          t('identity.users.fields.firstName'),
-          t('identity.users.fields.lastName'),
-        ].map(label => (
-          <div key={label}>
-            <span className="mb-1.5 block text-xs font-medium text-text-secondary">{label}</span>
-            <SkeletonBlock className="h-10 w-full rounded-lg" />
-          </div>
-        ))}
-      </div>
-    </IdentitySettingsSection>
-  )
-}
-
-interface UserDetailsProps {
-  user: IdentityUserView
-}
-
-function UserDetails({ user }: UserDetailsProps) {
-  const { t } = useTranslation()
-  return (
-    <IdentitySettingsSection title={t('identity.users.details.title')} description={t('identity.users.details.description')}>
-      <div className="grid min-w-0 gap-4 md:grid-cols-2">
-        <Field label={t('identity.users.fields.username')} htmlFor="identity-user-username">
-          <Input id="identity-user-username" value={user.username} readOnly />
-        </Field>
-        <Field label={t('identity.users.fields.email')} htmlFor="identity-user-email">
-          <Input id="identity-user-email" value={user.email} readOnly />
-        </Field>
-        <Field label={t('identity.users.fields.firstName')} htmlFor="identity-user-first-name">
-          <Input id="identity-user-first-name" value={user.firstName} readOnly />
-        </Field>
-        <Field label={t('identity.users.fields.lastName')} htmlFor="identity-user-last-name">
-          <Input id="identity-user-last-name" value={user.lastName} readOnly />
-        </Field>
-        <div>
-          <span className="mb-1.5 block text-xs font-medium text-text-secondary">{t('identity.users.fields.enabledStatus')}</span>
-          <Badge color={user.enabled ? 'success' : 'light'}>
-            {user.enabled ? t('identity.users.status.active') : t('identity.users.status.inactive')}
-          </Badge>
-        </div>
-      </div>
-    </IdentitySettingsSection>
-  )
-}
-
-interface UserCredentialsProps {
-  user: IdentityUserView
-  actions: RequiredActionView[]
-  disabled: boolean
-  onToggle: (actionId: string, isRequired: boolean) => Promise<unknown>
-}
-
-function UserCredentials({ user, actions, disabled, onToggle }: UserCredentialsProps) {
-  const { t } = useTranslation()
-  return (
-    <IdentitySettingsSection title={t('identity.users.credentials.title')} description={t('identity.users.credentials.description')}>
-      <p className="mb-4 text-sm text-text-secondary">{t('identity.users.credentials.noValues')}</p>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {actions.map(action => (
-          <CheckboxField
-            key={action.id}
-            label={t('identity.users.credentials.requireAction', { action: action.name })}
-            checked={user.requiredActionIds.includes(action.id)}
-            disabled={disabled}
-            onChange={event => { void onToggle(action.id, event.currentTarget.checked) }}
-          />
-        ))}
-      </div>
-    </IdentitySettingsSection>
-  )
-}
-
-interface UserRoleMappingsProps {
-  user: IdentityUserView
-  roles: IdentityRoleView[]
-  capabilities: IdentityCapabilityView[]
-  disabled: boolean
-  onToggle: (roleId: string, isAssigned: boolean) => Promise<unknown>
-}
-
-function UserRoleMappings({ user, roles, capabilities, disabled, onToggle }: UserRoleMappingsProps) {
-  const { t } = useTranslation()
-  const assigned = roles.filter(role => user.roleIds.includes(role.id))
-  const available = roles.filter(role => !user.roleIds.includes(role.id))
-  const effectiveCapabilityIds = new Set(assigned.flatMap(role => role.capabilityIds))
-  const effectiveCapabilities = capabilities.filter(capability => effectiveCapabilityIds.has(capability.id))
-  return (
-    <div className="space-y-4 p-4">
-      <RoleList
-        title={t('identity.users.roles.assignedTitle')}
-        roles={assigned}
-        actionLabel={t('identity.common.actions.remove')}
-        disabled={disabled}
-        onAction={role => onToggle(role.id, false)}
-        empty={t('identity.users.roles.assignedEmpty')}
-      />
-      <RoleList
-        title={t('identity.users.roles.availableTitle')}
-        roles={available}
-        actionLabel={t('identity.common.actions.assign')}
-        disabled={disabled}
-        onAction={role => onToggle(role.id, true)}
-        empty={t('identity.users.roles.availableEmpty')}
-      />
-      <section className="rounded-lg border border-border bg-surface p-4">
-        <h3 className="text-sm font-semibold text-text-primary">{t('identity.users.roles.capabilitiesTitle')}</h3>
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-text-secondary">
-          {effectiveCapabilities.map(capability => (
-            <li key={capability.id}>
-              <span className="font-medium text-text-primary">{capability.label}:</span> {capability.description}
-            </li>
-          ))}
-        </ul>
-      </section>
-    </div>
-  )
-}
-
-interface RoleListProps {
-  title: string
-  roles: IdentityRoleView[]
-  actionLabel: string
-  disabled: boolean
-  onAction: (role: IdentityRoleView) => Promise<unknown>
-  empty: string
-}
-
-function RoleList({ title, roles, actionLabel, disabled, onAction, empty }: RoleListProps) {
-  return (
-    <section className="rounded-lg border border-border bg-surface p-4">
-      <h3 className="text-sm font-semibold text-text-primary">{title}</h3>
-      {roles.length === 0 ? (
-        <p className="mt-3 text-sm text-text-muted">{empty}</p>
-      ) : (
-        <ul className="mt-3 divide-y divide-border">
-          {roles.map(role => (
-            <li key={role.id} className="flex min-w-0 items-center justify-between gap-3 py-3">
-              <div className="min-w-0">
-                <p className="font-medium text-text-primary">{role.name}</p>
-                <p className="text-xs text-text-muted">{role.description}</p>
-              </div>
-              <Button size="sm" variant="outline" disabled={disabled} onClick={() => { void onAction(role) }}>
-                {actionLabel}
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  )
-}
-
-interface UserSessionsProps {
-  sessions: Session[]
-}
-
-function UserSessions({ sessions }: UserSessionsProps) {
-  const { t } = useTranslation()
-  const columns = useMemo<ColumnDef<Session>[]>(() => [
-    { id: 'login', header: t('identity.users.sessions.columns.loginTime'), cell: session => new Date(session.loginTime).toLocaleString() },
-    { id: 'ip', header: t('identity.users.sessions.columns.ipAddress'), cell: session => <span className="font-mono text-xs">{session.ipAddress}</span> },
-    { id: 'status', header: t('identity.users.sessions.columns.status'), cell: session => session.status },
-  ], [t])
-
-  return sessions.length ? (
-    <DataTable
-      layout="fit"
-      columns={columns}
-      rows={sessions}
-      rowKey={session => session.id}
-      ariaLabel={t('identity.users.sessions.ariaLabel')}
-    />
-  ) : (
-    <div className="p-4">
-      <EmptyState title={t('identity.users.sessions.emptyTitle')} description={t('identity.users.sessions.emptyDescription')} />
-    </div>
   )
 }
