@@ -63,12 +63,12 @@ It never emits `consistency_group_id`, `auxiliary_name` or `target_pool`, whatev
 Persisted backend-generated values are preserved only on read-back via `mapRecoveryGroupApiRecord`.
 
 **Acceptance criteria:**
-- [ ] Existing payload unchanged: `{ mode: 'existing', consistency_group_id }` + `auxiliary_name` per volume
-- [ ] Managed payload: `metro_mirror` equals exactly `{ mode: 'managed' }` and volumes equal bare `{ name }` – also when the source draft/group carries a CG id and auxiliary names
-- [ ] Persisted managed record with backend CG id + auxiliary names maps to `metroMirrorMode: 'managed'`, `consistencyGroupId`, `auxiliaryNamesByVolume` (read-back test)
+- [x] Existing payload unchanged: `{ mode: 'existing', consistency_group_id }` + `auxiliary_name` per volume
+- [x] Managed payload: `metro_mirror` equals exactly `{ mode: 'managed' }` and volumes equal bare `{ name }` – also when the source draft/group carries a CG id and auxiliary names
+- [x] Persisted managed record with backend CG id + auxiliary names maps to `metroMirrorMode: 'managed'`, `consistencyGroupId`, `auxiliaryNamesByVolume` (read-back test)
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-groups/helpers/mapRecoveryGroups.test.ts`
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-groups/helpers/mapRecoveryGroups.test.ts`
 
 **Dependencies:** Task 1
 
@@ -78,7 +78,7 @@ Persisted backend-generated values are preserved only on read-back via `mapRecov
 **Estimated scope:** Small
 
 **Completion checkpoint:**
-- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
+- [x] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
 
 ## Checkpoint: FE domain
 - [ ] Task 1 + 2 focused tests pass
