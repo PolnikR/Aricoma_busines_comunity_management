@@ -26,8 +26,32 @@ Use the results to confirm or lower the tentative floors (440 px card, 280 px ca
 1366×768 and taller must stay unchanged.
 
 **Acceptance criteria:**
-- [ ] Baseline numbers recorded for both routes at every size
-- [ ] Final floor values chosen, and the headroom at 1366×768 stated
+- [x] Baseline numbers recorded for both routes at every size (HEAD `84f48d14`; same layout code as `9aed7488`)
+- [x] Final floor values chosen, and the headroom at 1366×768 stated
+
+**Baseline (px):**
+
+| Viewport | Resources section | Resources visible row band (fully visible rows) | Infra toolbar | Infra canvas | Infra card |
+|---|---|---|---|---|---|
+| 1280×600 | 353 | 26 (0/2) | 69 | 143 | 291 |
+| 1366×600 | 353 | 26 (0/2) | 69 | 143 | 291 |
+| 1366×768 | 521 | 149 (2/2) | 69 | 311 | 459 |
+| 1024×768 | 529 | 149 (2/2) | 167 | 221 | 467 |
+| 1536×864 | 617 | 65 (2/2) | 69 | 407 | 555 |
+| 1920×1080 | 833 | 65 (2/2) | 69 | 623 | 771 |
+| 390×844 | 607 | 149 (2/2) | 267 | 457 | 844 |
+
+No route or page scrollbar and no horizontal overflow at any size. A wrapped row is about 62 px at 1366 px wide
+and about 32 px at 1536 px and wider.
+
+**Chosen floors:**
+- Resources section `lg:min-h-[480px]` (raised from the tentative 440, which would only add 1 wrapped row):
+  - row band at 600 px height becomes ≈153 px (2 full wrapped rows, or 4–5 compact rows)
+  - headroom at 1366×768 is 41 px
+- Infrastructure canvas `lg:min-h-[280px]`:
+  - headroom at 1366×768 is 31 px
+  - 1024×768 grows by about 59 px and scrolls
+  - 1280/1366×600 grows by about 137 px and scrolls
 
 **Dependencies:** None
 **Files:** none in the repo (results go into the Task 4 doc)

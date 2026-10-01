@@ -89,7 +89,7 @@ does not. That rule (normal desktop unchanged) is fixed; the numbers are not.
 ## Task list
 
 ### Phase 1: Baseline
-- [ ] Task 1: Measure the current card, row-region and canvas heights in the browser (no code)
+- [x] Task 1: Measure the current card, row-region and canvas heights in the browser (no code)
 
 ### Phase 2: Fix (one commit per route)
 - [ ] Task 2: Resources floor plus route-frame scroll
