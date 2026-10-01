@@ -58,18 +58,18 @@ Client ID (`—`) and Users count (`—` when clientId null). Then a Permissions
 edits: render `<RealmRolesSection />` and remove the `realm-roles` case (disabled `Create role`) from `getSectionAction`. Add the needed EN/CS/SK keys (drawer eyebrow/ariaLabel/close, fields clientId/userCount/users, users empty value; column header "Role").
 
 **Acceptance criteria:**
-- [ ] Table shows only API data; Permissions column is a count; Users column uses `userCount` / `—`; search, density, pagination, loading, error + Retry, empty and filtered-empty all work
-- [ ] Row click opens the drawer and highlights the row; drawer shows all 6 fields with the null/empty rules; no buttons other than close
-- [ ] No full-page workspace, no role tabs, no Actions button; `useUsers` not imported or called; section takes no props
-- [ ] No Add/Create/Edit/Delete/Assign/Remove action anywhere in Application roles, including the page header (`Create role` gone); other sections' header actions unchanged
+- [x] Table shows only API data; Permissions column is a count; Users column uses `userCount` / `—`; search, density, pagination, loading, error + Retry, empty and filtered-empty all work
+- [x] Row click opens the drawer and highlights the row; drawer shows all 6 fields with the null/empty rules; no buttons other than close
+- [x] No full-page workspace, no role tabs, no Actions button; `useUsers` not imported or called; section takes no props
+- [x] No Add/Create/Edit/Delete/Assign/Remove action anywhere in Application roles, including the page header (`Create role` gone); other sections' header actions unchanged
 
 **Verification:**
-- [ ] Rewritten `src/features/platform-administration/identity-access/components/RealmRolesSection.test.tsx` covers: API rows + description; permission count (full list absent); `userCount`; clientId null → `—`; search; loading; error + Retry; empty; drawer open + `aria-selected`/selected row; all drawer fields; permission and user badges; clientId null → `—` (Client ID, count, users); known-empty users value; no Edit/Delete/Actions buttons; no tablist; `useUsers` mock never called
-- [ ] `src/features/platform-administration/identity-access/pages/IdentityAccessPage.test.tsx`: assert no `Create role` button for `?section=realm-roles` (a targeted addition next to the existing `Add user` assertion pattern)
-- [ ] `npm exec vitest run src/features/platform-administration/identity-access/components/RealmRolesSection.test.tsx src/features/platform-administration/identity-access/pages/IdentityAccessPage.test.tsx src/features/platform-administration/identity-access/components/IdentityAccessLocalization.test.tsx`
-- [ ] `npm run typecheck`; eslint on changed files
-- [ ] `git diff --cached` reviewed: only this task's changes; `package-lock.json` not staged
-- [ ] Manual: if a dev server and a logged-in API are available, open Application roles, click a role and check a 50+ permission list wraps readably
+- [x] Rewritten `src/features/platform-administration/identity-access/components/RealmRolesSection.test.tsx` covers: API rows + description; permission count (full list absent); `userCount`; clientId null → `—`; search; loading; error + Retry; empty; drawer open + `aria-selected`/selected row; all drawer fields; permission and user badges; clientId null → `—` (Client ID, count, users); known-empty users value; no Edit/Delete/Actions buttons; no tablist; `useUsers` mock never called
+- [x] `src/features/platform-administration/identity-access/pages/IdentityAccessPage.test.tsx`: assert no `Create role` button for `?section=realm-roles` (a targeted addition next to the existing `Add user` assertion pattern)
+- [x] `npm exec vitest run src/features/platform-administration/identity-access/components/RealmRolesSection.test.tsx src/features/platform-administration/identity-access/pages/IdentityAccessPage.test.tsx src/features/platform-administration/identity-access/components/IdentityAccessLocalization.test.tsx`
+- [x] `npm run typecheck`; eslint on changed files
+- [x] `git diff --cached` reviewed: only this task's changes; `package-lock.json` not staged
+- [ ] Manual (not done: no dev server with a logged-in API in this session): if a dev server and a logged-in API are available, open Application roles, click a role and check a 50+ permission list wraps readably
 
 **Dependencies:** Task 1, Task 2
 **Files:** `src/features/platform-administration/identity-access/components/RealmRolesSection.tsx`, `src/features/platform-administration/identity-access/components/RealmRolesSection.test.tsx`, `src/features/platform-administration/identity-access/pages/IdentityAccessPage.tsx`, `src/features/platform-administration/identity-access/pages/IdentityAccessPage.test.tsx`, `src/locales/{en,cs,sk}.json`
@@ -80,7 +80,7 @@ edits: render `<RealmRolesSection />` and remove the `realm-roles` case (disable
 
 ## Task 4: Remove orphaned role-workspace locale keys
 **Description:** Delete `identity.roles.*` keys no longer referenced: `userColumns.*`, `tabs.*`, `notFound.*`, `details.*`, `fields.permissions` if replaced,
-`usersInRole.ariaLabel/emptyTitle/emptyDescription` if replaced, `permissions.description`, `integration.description`, `detailDescription`, `actions`.
+`usersInRole.ariaLabel/emptyTitle/emptyDescription` if replaced, `permissions.description`, `integration.description`, `detailDescription`, `actions`, plus `identity.actions.createRole` (orphaned by removing the header action in Task 3).
 Do this in EN/CS/SK, after `grep`-confirming each key has no remaining references in `src/`.
 
 **Acceptance criteria:**

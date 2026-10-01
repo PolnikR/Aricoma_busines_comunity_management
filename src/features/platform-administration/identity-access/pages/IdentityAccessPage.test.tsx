@@ -88,6 +88,13 @@ describe('IdentityAccessPage', () => {
     expect(screen.queryByRole('button', { name: 'Create client' })).not.toBeInTheDocument()
   })
 
+  it('keeps Application roles read-only without a top-level Create role action', () => {
+    renderPage('/platform-administration/identity-access?section=realm-roles')
+
+    expect(screen.getByText('Realm roles content')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Create role' })).not.toBeInTheDocument()
+  })
+
   it('navigates from Events to Realm settings > Events atomically', async () => {
     renderPage('/platform-administration/identity-access?section=events&tab=admin-events&keep=visible')
 

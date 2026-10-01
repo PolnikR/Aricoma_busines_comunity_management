@@ -68,7 +68,7 @@ endpoint returns application RBAC roles synced as Keycloak client roles, not gen
 - [x] Mapper + localization/navigation tests green, typecheck green
 
 ### Phase 2: Core
-- [ ] Task 3: API-only table and read-only role DetailDrawer replace the full-page workspace; remove top-level `Create role`
+- [x] Task 3: API-only table and read-only role DetailDrawer replace the full-page workspace; remove top-level `Create role`
 
 ### Checkpoint B
 - [ ] Focused section/page tests, typecheck and eslint green; review with human

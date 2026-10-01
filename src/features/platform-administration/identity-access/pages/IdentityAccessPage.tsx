@@ -33,8 +33,6 @@ function getSectionAction({ sectionId, entityId, tabId, onOpenEventSettings, t }
 
   // Preserve top-level section actions so later agents can safely remove duplicate IdentityResourceHeader actions.
   switch (sectionId) {
-    case 'realm-roles':
-      return <Button size="sm" disabled title={t('identity.actions.requires.keycloak')}>{t('identity.actions.createRole')}</Button>
     case 'client-scopes':
       return <Button size="sm" disabled title={t('identity.actions.requires.clientScopes')}>{t('identity.actions.createClientScope')}</Button>
     case 'organizations':
@@ -72,7 +70,7 @@ interface IdentityAccessSectionContentProps {
 function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChange, onTabChange, onOpenEventSettings }: IdentityAccessSectionContentProps) {
   const { t } = useTranslation()
   if (sectionId === 'users') return <UsersSection />
-  if (sectionId === 'realm-roles') return <RealmRolesSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
+  if (sectionId === 'realm-roles') return <RealmRolesSection />
   if (sectionId === 'groups') return <GroupsSection />
   if (sectionId === 'clients') return <ClientsSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'client-scopes') return <ClientScopesSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
