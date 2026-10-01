@@ -122,7 +122,10 @@ describe('CredentialsTable', () => {
 
     await user.click(screen.getByText('vCenter admin'))
 
-    expect(screen.getByRole('dialog', { name: 'Credential details' })).toBeInTheDocument()
+    const drawer = screen.getByRole('dialog', { name: 'Credential details' })
+    expect(within(drawer).getByText('Credential').parentElement?.nextElementSibling).toHaveTextContent('vcenter-admin')
+    const deleteButton = within(drawer).getByRole('button', { name: 'Delete' })
+    expect(deleteButton.parentElement?.parentElement?.children[1]).toContainElement(within(drawer).getByRole('button', { name: 'Edit' }))
     expect(screen.getByText('Stored securely and never displayed')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Edit' }))
     expect(screen.getByText('Editing vcenter-admin')).toBeInTheDocument()

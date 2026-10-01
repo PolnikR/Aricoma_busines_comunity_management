@@ -303,51 +303,54 @@ export function ProvidersCatalogueTable({
         open={selected !== null && !isConnectionTestOpen}
         onClose={() => { setSelectedId(null) }}
         resizable
-        eyebrow={t('drawer.selectedProvider')}
         title={selected?.name ?? ''}
+        meta={selected ? [
+          t('drawer.entity.provider'),
+          <Badge key="type" color="info" size="sm">{providerTypeLabel(selected.type)}</Badge>,
+          <Badge key="role" color={roleColor(selected.role)} size="sm">{t(`forms.role.${selected.role}`)}</Badge>,
+          <Badge key="credential" color={credentialStatusColor(selected.credentialStatus)} size="sm">
+            {credentialStatusLabel(selected.credentialStatus, t)}
+          </Badge>,
+        ] : []}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerExtra={selected ? (
-          <div className="flex min-w-0 items-center justify-between gap-3">
-            <Badge color="info" size="sm">{providerTypeLabel(selected.type)}</Badge>
-            <div className="flex min-w-0 flex-col items-end gap-1">
-              <Button
-                size="xs"
-                variant="soft"
-                className="border border-accent/30 bg-accent-soft text-accent shadow-none hover:border-accent hover:bg-accent-soft hover:text-accent"
-                startIcon={<PlugIcon className="size-3.5" />}
-                onClick={openConnectionTest}
-                disabled={selected.credentialStatus !== 'ok'}
-                aria-describedby={selected.credentialStatus !== 'ok' ? 'provider-test-credential-hint' : undefined}
-                title={selected.credentialStatus !== 'ok' ? t('providers.connectionTest.credentialRequired') : undefined}
-              >
-                {t('providers.connectionTest.button')}
-              </Button>
-              {selected.credentialStatus !== 'ok' ? (
-                <span id="provider-test-credential-hint" className="sr-only">{t('providers.connectionTest.credentialRequired')}</span>
-              ) : null}
-            </div>
-          </div>
+        headerActions={selected ? (
+          <>
+            <Button
+              size="xs"
+              variant="soft"
+              className="border border-accent/30 bg-accent-soft text-accent shadow-none hover:border-accent hover:bg-accent-soft hover:text-accent"
+              startIcon={<PlugIcon className="size-3.5" />}
+              onClick={openConnectionTest}
+              disabled={selected.credentialStatus !== 'ok'}
+              aria-describedby={selected.credentialStatus !== 'ok' ? 'provider-test-credential-hint' : undefined}
+              title={selected.credentialStatus !== 'ok' ? t('providers.connectionTest.credentialRequired') : undefined}
+            >
+              {t('providers.connectionTest.button')}
+            </Button>
+            {selected.credentialStatus !== 'ok' ? (
+              <span id="provider-test-credential-hint" className="sr-only">{t('providers.connectionTest.credentialRequired')}</span>
+            ) : null}
+          </>
         ) : null}
         ariaLabel={t('drawer.providerDetail')}
         closeLabel={t('drawer.closeProvider')}
+        resizeLabel={t('drawer.resize')}
+        footerStart={selected ? (
+          <Button
+            onClick={() => { setDeleteTarget(selected) }}
+            size="sm"
+            variant="danger"
+          >
+            {t('buttons.delete')}
+          </Button>
+        ) : null}
         footer={selected ? (
-          <>
-            <Button
-              onClick={() => { setDeleteTarget(selected) }}
-              size="sm"
-              variant="danger"
-              className="flex-1"
-            >
-              {t('buttons.delete')}
-            </Button>
-            <Button
-              onClick={() => { setEditing(selected); setSelectedId(null) }}
-              size="sm"
-              className="flex-1"
-            >
-              {t('buttons.edit')}
-            </Button>
-          </>
+          <Button
+            onClick={() => { setEditing(selected); setSelectedId(null) }}
+            size="sm"
+          >
+            {t('buttons.edit')}
+          </Button>
         ) : null}
       >
         {selected ? (

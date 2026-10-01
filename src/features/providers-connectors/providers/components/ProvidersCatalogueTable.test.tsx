@@ -280,6 +280,22 @@ describe('ProvidersCatalogueTable', () => {
     expect(screen.getByText('provider-alerts@example.test')).toBeInTheDocument()
   })
 
+  it('shows the Model C header: meta badges, Test connection in the title row, Delete left and Edit right', async () => {
+    renderTable()
+    fireEvent.click(await screen.findByText('Production vCenter'))
+    const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
+    const meta = within(drawer).getByText('Provider').parentElement
+    const titleRow = within(drawer).getByRole('heading', { name: 'Production vCenter' }).parentElement
+    const deleteButton = within(drawer).getByRole('button', { name: 'Delete' })
+    const footer = deleteButton.parentElement?.parentElement
+
+    expect(meta).toHaveTextContent('Source')
+    expect(meta).toHaveTextContent('Available')
+    expect(titleRow).toContainElement(within(drawer).getByRole('button', { name: 'Test connection' }))
+    expect(footer?.children[0]).toContainElement(deleteButton)
+    expect(footer?.children[1]).toContainElement(within(drawer).getByRole('button', { name: 'Edit' }))
+  })
+
   it('opens the connection test for the selected provider and shows the real result', async () => {
     renderTable()
     fireEvent.click(await screen.findByText('Production vCenter'))

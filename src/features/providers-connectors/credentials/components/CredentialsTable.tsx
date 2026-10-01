@@ -132,32 +132,31 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
-        eyebrow={t('credentials.detail.eyebrow')}
         title={selected?.name ?? ''}
+        meta={[t('drawer.entity.credential')]}
         subtitle={<span className="font-mono">{selected?.id}</span>}
         ariaLabel={t('credentials.detail.ariaLabel')}
         closeLabel={t('credentials.detail.close')}
+        resizeLabel={t('drawer.resize')}
+        footerStart={selected ? (
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={() => { setDeleteTarget(selected) }}
+          >
+            {t('buttons.delete')}
+          </Button>
+        ) : null}
         footer={selected ? (
-          <>
-            <Button
-              size="sm"
-              variant="danger"
-              className="flex-1"
-              onClick={() => { setDeleteTarget(selected) }}
-            >
-              {t('buttons.delete')}
-            </Button>
-            <Button
-              size="sm"
-              className="flex-1"
-              onClick={() => {
-                setEditing(selected)
-                setSelectedId(null)
-              }}
-            >
-              {t('buttons.edit')}
-            </Button>
-          </>
+          <Button
+            size="sm"
+            onClick={() => {
+              setEditing(selected)
+              setSelectedId(null)
+            }}
+          >
+            {t('buttons.edit')}
+          </Button>
         ) : null}
       >
         {selected ? (
