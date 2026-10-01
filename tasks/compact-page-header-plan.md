@@ -75,17 +75,17 @@ Expected gain is about 42 px of vertical space per page on desktop. The table st
 - [x] Browser: Platform providers and Resources at 1366×768 and 1920×1080; no clipping, no extra scrollbar (user-verified 2026-10-01)
 
 ### Phase 2: Callers (remove eyebrow, rename, update tests)
-- [ ] Task 4: Platform providers and Audit
-- [ ] Task 5: Identity & access and Configuration
-- [ ] Task 6: Providers, Provider detail, Credentials and Discovery settings
-- [ ] Task 7: Infrastructure and the Resources pages (VMware, FlashSystem, IBM Power)
-- [ ] Task 8: Recovery apps (list, builder, editor)
-- [ ] Task 9: Recovery groups (list, builder, editor, topology prototype)
-- [ ] Task 10: Recovery policies, Policy sets, Recovery runs, Recovery actions and the module placeholder
+- [x] Task 4: Platform providers and Audit
+- [x] Task 5: Identity & access and Configuration
+- [x] Task 6: Providers, Provider detail, Credentials and Discovery settings
+- [x] Task 7: Infrastructure and the Resources pages (VMware, FlashSystem, IBM Power)
+- [x] Task 8: Recovery apps (list, builder, editor)
+- [x] Task 9: Recovery groups (list, builder, editor, topology prototype)
+- [x] Task 10: Recovery policies, Policy sets, Recovery runs, Recovery actions and the module placeholder
 
 ### Checkpoint B
-- [ ] `grep eyebrow src` shows only the `PageHeader`/`TableToolbar` prop definitions
-- [ ] All touched page tests green
+- [x] No caller passes `eyebrow` to `PageHeader`/`TableToolbar`; only prop definitions and their test fixtures remain
+- [x] All touched page tests green
 
 ### Phase 3: Lock-in and verification
 - [ ] Task 11: Delete the `eyebrow` prop from the types

@@ -84,8 +84,8 @@ drop the eyebrow bar, and use a `h-9` title bar with `mb-4`. Apply the same head
 Remove the orphaned keys `pages.platformProviders.eyebrow` and `audit.accessLogs.page.eyebrow`.
 
 **Acceptance criteria:**
-- [ ] Neither page passes `eyebrow`
-- [ ] The en/cs/sk strings match the naming table
+- [x] Neither page passes `eyebrow`
+- [x] The en/cs/sk strings match the naming table
 
 **Verification:** `PlatformProvidersPage.test.tsx` (update the names at :37, :67, :68), `AuditPage.test.tsx`
 **Dependencies:** Task 1
@@ -99,8 +99,8 @@ nav translation (`Identita a přístup` / `Identity a prístupy`). Move Configur
 title to i18n (title only). Check that the two-action row (Add LDAP + Add Kerberos) fits at 1024 px.
 
 **Acceptance criteria:**
-- [ ] No hardcoded `Platform Administration` string is left in `ConfigurationPage`
-- [ ] `identity.page.eyebrow` is removed
+- [x] No hardcoded `Platform Administration` string is left in `ConfigurationPage`
+- [x] `identity.page.eyebrow` is removed
 
 **Verification:** `IdentityAccessPage.test.tsx` (h1 at :64), `ConfigurationPage.test.tsx`
 **Dependencies:** Task 1
@@ -164,8 +164,13 @@ RecoveryRuns and ModuleWorkQueuePage tests, `resourcesContainedRoutes.test.tsx`
 **Scope:** M + M
 
 ## Checkpoint B
-- [ ] `grep -rn "eyebrow" src` lists only the two prop definitions
-- [ ] Every page test touched in Tasks 4–10 is green
+- [x] No caller passes `eyebrow` to `PageHeader` / `TableToolbar` / `RecoveryPolicyPageShell` / `ModuleWorkQueuePage`;
+      only the two prop definitions and their test fixtures remain (Task 11). `DetailDrawer` and
+      `IdentityResourceLayout` eyebrows are a different component and out of scope.
+- [x] Every page test touched in Tasks 4–10 is green (`vitest related` on the 28 changed source files: 34 files / 173 tests)
+- [x] Every changed en key is used only by the page that was updated in the same task
+- Note: `pages.snapshotPolicies.eyebrow` and `pages.recoveryAppPolicies.eyebrow` were already unused before
+  this plan (dead at `dd2d6de1`); left in place, can be removed in Task 11 if wanted
 
 ---
 
