@@ -156,8 +156,8 @@ describe('RecoveryApplicationsListPage', () => {
       </QueryClientProvider>,
     )
     expect(screen.getByRole('status', { name: 'Loading recovery applications...' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Recovery Applications' })).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Create Application' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Recovery apps' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Create app' })).toBeVisible()
     expect(screen.getByRole('searchbox', { name: 'Search applications' })).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Application' })).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Environment' })).toBeVisible()
@@ -200,7 +200,7 @@ describe('RecoveryApplicationsListPage', () => {
       }],
     }
     renderListPage()
-    await user.click(screen.getByRole('button', { name: 'Create Application' }))
+    await user.click(screen.getByRole('button', { name: 'Create app' }))
     expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications/create')
     await user.click(screen.getByText('Finance'))
     await user.click(screen.getByRole('button', { name: 'Edit' }))

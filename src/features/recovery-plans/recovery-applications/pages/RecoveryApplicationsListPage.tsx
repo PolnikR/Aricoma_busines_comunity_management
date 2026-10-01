@@ -33,7 +33,6 @@ export function RecoveryApplicationsListPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow={t('pages.recovery.eyebrow')}
         title={t('pages.recovery.title')}
         description={t('pages.recovery.description')}
         isFetching={isFetching}

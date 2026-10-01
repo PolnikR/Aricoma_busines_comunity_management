@@ -79,7 +79,6 @@ export function RecoveryApplicationEditorPage() {
     return (
       <div className="flex min-h-full flex-col">
         <PageHeader
-          eyebrow={t('pages.recoveryEditor.eyebrow')}
           title={t('pages.recoveryEditor.title')}
           description={t('pages.recoveryEditor.loadDescription')}
           actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
@@ -102,7 +101,6 @@ export function RecoveryApplicationEditorPage() {
     return (
       <div className="flex min-h-full flex-col">
         <PageHeader
-          eyebrow={t('pages.recoveryEditor.eyebrow')}
           title={t('pages.recoveryEditor.notFound')}
           description={t('pages.recoveryEditor.notFoundDescription')}
           actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
@@ -114,7 +112,6 @@ export function RecoveryApplicationEditorPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow={t('pages.recoveryEditor.eyebrow')}
         title={isLoading
           ? <span className="flex items-center gap-2">{t('buttons.edit')} <SkeletonBlock className="h-7 w-44" /></span>
           : `${t('buttons.edit')} ${initialData?.name ?? ''}`}

@@ -61,7 +61,6 @@ export function RecoveryApplicationBuilderPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow={t('pages.recoveryBuilder.eyebrow')}
         title={t('pages.recoveryBuilder.title')}
         description={t('pages.recoveryBuilder.description')}
         actions={<Button size="sm" variant="outline" onClick={handleBackClick}>{t('buttons.back')}</Button>}
