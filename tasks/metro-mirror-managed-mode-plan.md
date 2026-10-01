@@ -7,6 +7,8 @@ Existing keeps today's behaviour (CG id + auxiliary names, relationship lookup/p
 Managed sends only `metro_mirror: { mode: "managed" }` and volumes with `name`; the backend
 provisions auxiliary volumes, relationships and the consistency group and may persist
 `consistency_group_id` / `auxiliary_name`, which FE reads back but never submits.
+The Builder also gets a lifecycle lock that mirrors the backend: a pushed Recovery Group
+(any topology / mode) is read-only until it is rolled back.
 No backend, generated Orval or `target_pool` changes.
 
 ## Current flow (analysis)
@@ -19,10 +21,14 @@ No backend, generated Orval or `target_pool` changes.
   requires CG id + every auxiliary for any metro_mirror.
 - `mapRecoveryGroups.ts` – `toRecoveryGroupSubmitPayload` hardcodes `mode: 'existing'`;
   `toVolumesPayload` always emits `auxiliary_name` (fallback `''`) for metro_mirror.
-  `mapRecoveryGroupApiRecord` already reads mode / CG / auxiliary names (keep as is).
+  `mapRecoveryGroupApiRecord` already reads mode / CG / auxiliary names (keep as is);
+  `pushToOrchestrator` comes from `orchestration.pushed`.
 - `RecoveryGroupBuilder.tsx` – `metroExisting` gates lookup + `RecoveryGroupMetroMirrorFields`;
   `storageValid`, `renderVolumeContent`, `showAuxiliaryHint` key on `topology === 'metro_mirror'`
-  only; `topologyValid` is false for any persisted managed group.
+  only; `topologyValid` is false for any persisted managed group. A pushed group can be
+  edited and saved today, although the backend rejects it.
+- Backend `recovery/groups.py::_validate_not_pushed()` rejects any submit/update of an existing
+  group with `orchestration.pushed === true`, regardless of topology or Metro Mirror mode.
 - `useRecoveryGroups.ts` – create and update both go through `validate → topology check →
   toRecoveryGroupSubmitPayload`; no change needed beyond what validation/topology provide.
 
@@ -37,15 +43,24 @@ No backend, generated Orval or `target_pool` changes.
   emits bare `{ name }`; the JSON view of a read-back managed group still shows the backend values.
 - **Mode switching only for new groups** (user decision). In edit, the mode select is locked;
   topology/source stay locked for a persisted managed group (as today).
-- **Managed lifecycle lock** (user decision). A persisted managed group is editable only when it
-  is clean: `pushToOrchestrator !== true` and no backend-generated CG id / auxiliary name.
-  Pushed → read-only until rollback. Partial rollback (pushed=false but derived ids left) →
-  still read-only. Implemented by replacing the current `initialData?.metroMirrorMode !== 'managed'`
-  condition in the Builder with this lock and showing a warning in the topology step.
+- **Global lifecycle lock (all Recovery Groups)** – mirrors backend `_validate_not_pushed()`:
+  - `initialData?.pushToOrchestrator === true` → the whole group is read-only, for every
+    topology and mode (Local, Existing, Managed). Editing is possible only after a successful rollback.
+  - Additionally for Managed: a persisted managed group with backend-generated
+    `consistencyGroupId` or any `auxiliaryNamesByVolume` value is read-only even when
+    `pushToOrchestrator` is false (partial rollback leaves derived ids for leftover objects).
+  - A clean managed group (not pushed, no derived ids) is editable; its submit carries no
+    `consistency_group_id` / `auxiliary_name`.
+  - Read-only in the Builder means: a builder-level warning alert; step content wrapped in a
+    disabled `<fieldset>` so no field, picker or remove button can change the draft; wizard step
+    navigation, Back/Next and Cancel stay usable for viewing; Save/Create is disabled.
+  - Replaces the current blanket `initialData?.metroMirrorMode !== 'managed'` condition in
+    `topologyValid`.
 - **Lookup stays Existing-only.** `useRecoveryGroupMetroMirrorRelationships` is already enabled
   only for `metroExisting`; Managed renders no `RecoveryGroupMetroMirrorFields` and no auxiliary inputs.
 - **Locales:** drop "(unavailable)" from the Managed label; remove the now-unused
-  `topology.errors.managed`; add `topology.managedHint` and `topology.managedLocked` (en/cs/sk).
+  `topology.errors.managed`; add `topology.managedHint` and the lifecycle-lock messages
+  (`lifecycleLock.pushed`, `lifecycleLock.managedProvisioned`) in en/cs/sk.
 
 ## Task List
 
@@ -58,23 +73,23 @@ No backend, generated Orval or `target_pool` changes.
 
 ### Phase 2: UI
 - [ ] Task 3: Topology step – selectable Managed, edit lock, locales
-- [ ] Task 4: Builder – Managed flow without Existing data, lifecycle lock
+- [ ] Task 4: Builder – global lifecycle lock for pushed groups
+- [ ] Task 5: Builder – Managed flow without Existing data, managed provisioned lock
 
 ### Checkpoint: Complete
 - [ ] Focused tests for TopologyStep, Builder, locales pass; tsc/eslint on changed files clean
-- [ ] Managed payload matches the expected JSON; Existing tests unchanged and green
+- [ ] Managed payload matches the expected JSON; Existing tests green (only pushed-fixture adjustments from Task 4)
 
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Existing regression via shared conditions in Builder | High | Keep every existing Builder/validation/mapper test untouched and green; only add Managed cases |
+| Existing regression via shared conditions in Builder | High | Keep existing Builder/validation/mapper tests green; only add Managed cases |
 | Backend-derived ids submitted on managed update | High | Validation drops them for managed; mapper test asserts no `consistency_group_id` / `auxiliary_name` |
-| Pushed managed group edited and re-provisioned | Med | Lifecycle lock in Builder + Builder test for pushed and partial-rollback states |
+| Pushed group edited and saved (rejected by backend / re-provisioned) | High | Global lifecycle lock in Builder + tests for pushed Local, Existing and Managed |
+| Existing Builder tests save a group with `initialData.pushToOrchestrator: true` (orchestration provider tests at `RecoveryGroupBuilder.test.tsx` ~376, ~395, ~515) | Med | Switch those fixtures to `pushToOrchestrator: false`; their intent (Airflow provider selection) is unchanged. No other assertions change |
 
 ## Open Questions / Assumptions
 
-- The "pushed=true → read-only" rule is applied to **Managed groups only**; Existing edit
-  behaviour stays as today. Say if it should apply to all groups.
-- The lock is enforced in the Builder (same place as today). The table's Edit action and
-  `useRecoveryGroups.update` are not changed.
+- The lock is enforced in the Builder (edit flow). The table's Edit action and
+  `useRecoveryGroups.update` are not changed; the backend remains the final guard.
