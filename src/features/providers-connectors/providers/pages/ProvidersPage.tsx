@@ -21,7 +21,6 @@ export function ProvidersPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow={t('pages.providers.eyebrow')}
         title={t('pages.providers.title')}
         description={t('pages.providers.description')}
         isFetching={visibleProvidersQuery.isFetching}

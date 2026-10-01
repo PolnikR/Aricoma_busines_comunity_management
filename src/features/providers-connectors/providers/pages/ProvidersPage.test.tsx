@@ -50,7 +50,7 @@ describe('ProvidersPage', () => {
     expect(screen.queryByRole('tab')).not.toBeInTheDocument()
     expect(screen.queryByText('Platform provider catalogue')).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Add Provider' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add provider' }))
     expect(screen.getByText('Provider modal with 1 existing')).toBeInTheDocument()
   })
 
@@ -130,7 +130,7 @@ describe('ProvidersPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Apply target role' }))
     expect(screen.getByText('Role: target')).toBeInTheDocument()
     expect(screen.queryByText('Source provider')).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Add Provider' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add provider' }))
 
     expect(screen.getByText('Provider modal with 2 existing')).toBeInTheDocument()
   })

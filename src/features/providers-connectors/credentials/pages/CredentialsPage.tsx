@@ -18,7 +18,6 @@ export function CredentialsPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow={t('credentials.page.eyebrow')}
         title={t('credentials.page.title')}
         description={t('credentials.page.description')}
         isFetching={isFetching}

@@ -40,7 +40,6 @@ export function ProviderDetailPage() {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader
-          eyebrow={t('pages.providers.eyebrow')}
           title={t('pages.providers.title')}
           description={t('pages.providers.description')}
           actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
@@ -62,7 +61,6 @@ export function ProviderDetailPage() {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader
-          eyebrow={t('pages.providers.eyebrow')}
           title={t('pages.providers.detail.notFound')}
           description={t('pages.providers.detail.notFoundDesc')}
           actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
@@ -77,7 +75,6 @@ export function ProviderDetailPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow={t('pages.providers.eyebrow')}
         title={isLoading ? <SkeletonBlock className="h-8 w-48" /> : provider?.name ?? ''}
         description={isLoading ? <SkeletonBlock className="h-4 w-72" /> : textOrFallback(provider?.description, t('pages.providers.description'))}
         actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}

@@ -160,7 +160,6 @@ export function DiscoverySettingsPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
       <PageHeader
-        eyebrow={t('pages.discoverySettings.eyebrow')}
         title={t('pages.discoverySettings.title')}
         description={t('pages.discoverySettings.description')}
       />
