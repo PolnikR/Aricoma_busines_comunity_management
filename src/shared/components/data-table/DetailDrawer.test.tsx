@@ -11,24 +11,6 @@ afterEach(cleanup)
     expect(screen.getByText('Body content')).toBeInTheDocument()
   })
 
-  it('lets the header action row share the drawer content axis with the close control', () => {
-    render(
-      <DetailDrawer
-        open
-        title="My Item"
-        closeLabel="Close detail"
-        onClose={vi.fn()}
-        headerExtra={<span data-testid="header-action">Test connection</span>}
-      >
-        body
-      </DetailDrawer>,
-    )
-
-    const action = screen.getByTestId('header-action')
-    const close = screen.getByRole('button', { name: 'Close detail' })
-    expect(action.parentElement?.parentElement).toContainElement(close)
-  })
-
   it('calls onClose when the close button is clicked', () => {
     const onClose = vi.fn()
     render(<DetailDrawer open title="X" closeLabel="Close provider" onClose={onClose}>body</DetailDrawer>)
@@ -158,11 +140,6 @@ describe('DetailDrawer header', () => {
     expect(row?.querySelectorAll('[aria-hidden="true"]')).toHaveLength(2)
   })
 
-  it('shows the transitional eyebrow as the first meta item', () => {
-    render(<DetailDrawer open eyebrow="Selected provider" title="X" meta={['Active']} onClose={vi.fn()}>body</DetailDrawer>)
-    expect(screen.getByText('Selected provider').parentElement).toHaveTextContent('Selected providerActive')
-  })
-
   it('renders the subtitle on its own line below the meta row', () => {
     render(<DetailDrawer open title="X" meta={['Provider']} subtitle="vc-brno-01" onClose={vi.fn()}>body</DetailDrawer>)
     const subtitle = screen.getByText('vc-brno-01')
@@ -171,7 +148,7 @@ describe('DetailDrawer header', () => {
     expect(metaRow?.nextElementSibling).toBe(subtitle)
   })
 
-  it('renders no meta row without meta, eyebrow or subtitle', () => {
+  it('renders no meta row without meta or subtitle', () => {
     render(<DetailDrawer open title="Only title" onClose={vi.fn()}>body</DetailDrawer>)
     const header = screen.getByRole('heading', { name: 'Only title' }).parentElement?.parentElement
     expect(header?.children).toHaveLength(1)

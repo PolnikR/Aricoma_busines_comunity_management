@@ -747,7 +747,6 @@
   "dialogs.deleteRecoveryApplicationMessage": "Naozaj chcete odstrániť aplikáciu obnovy „{name}\"? Túto akciu nie je možné vrátiť späť.",
   "dialogs.deleteRecoveryApplicationOrchestratedMessage": "Táto aplikácia obnovy je nasadená do orchestrátora. Pri odstránení sa najskôr vykoná rollback jej zdrojov Airflow a IBM. Aplikácia obnovy „{name}\" sa potom natrvalo odstráni. Túto akciu nie je možné vrátiť späť.",
   "dialogs.applicationJson": "JSON aplikácie",
-  "drawer.selectedVm": "Vybraný virtuálny stroj",
   "drawer.vmDetail": "Podrobnosti virtuálneho stroja",
   "drawer.providerDetail": "Podrobnosti poskytovateľa",
   "drawer.applicationDetail": "Podrobnosti aplikácie",

@@ -7,8 +7,6 @@ import { cn } from '@/shared/utils/cn'
 interface DetailDrawerProps {
   open: boolean
   onClose: () => void
-  // Transitional (detail-drawer-model-c): removed in Task 18.
-  eyebrow?: string
   title: ReactNode
   // One line under the meta row, e.g. a mono ID.
   subtitle?: ReactNode
@@ -16,11 +14,9 @@ interface DetailDrawerProps {
   meta?: readonly ReactNode[]
   // Small actions in the title row, before the close button.
   headerActions?: ReactNode
-  // Transitional (detail-drawer-model-c): removed in Task 18.
-  headerExtra?: ReactNode
   children?: ReactNode
-  // Right-hand (primary) footer group. It always takes the remaining width, so legacy
-  // `flex-1` buttons still split the full footer when no `footerStart` is given.
+  // Right-hand (primary) footer group. It always takes the remaining width, so `flex-1`
+  // buttons split the full footer when no `footerStart` is given.
   footer?: ReactNode
   // Left-hand footer group, typically the destructive action.
   footerStart?: ReactNode
@@ -29,7 +25,6 @@ interface DetailDrawerProps {
   ariaLabel?: string
   closeLabel?: string
   resizeLabel?: string
-  bodyClassName?: string
 }
 
 // Elements hidden by CSS (the resize handle below `lg`) are not tabbable, so the
@@ -44,9 +39,9 @@ function isVisible(element: HTMLElement) {
 // wider/narrower from `lg` up for the current view only — it resets to the
 // default width whenever it closes. The width goes through a CSS variable so
 // below `lg` the fixed width wins and the hidden handle reports nothing.
-export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, meta = [], headerActions, headerExtra, children, footer, footerStart, resizable = false, ariaLabel = 'Detail', closeLabel = 'Close detail', resizeLabel = 'Resize panel', bodyClassName }: DetailDrawerProps) {
+export function DetailDrawer({ open, onClose, title, subtitle, meta = [], headerActions, children, footer, footerStart, resizable = false, ariaLabel = 'Detail', closeLabel = 'Close detail', resizeLabel = 'Resize panel' }: DetailDrawerProps) {
   const { width, handleProps } = useResizablePanel({ open, resizeLabel })
-  const metaItems = [eyebrow, ...meta].filter(Boolean)
+  const metaItems = meta.filter(Boolean)
   const drawerRef = useRef<HTMLElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const openerRef = useRef<HTMLElement | null>(null)
@@ -151,9 +146,8 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, meta = [
             </div>
           ) : null}
           {subtitle ? <div className="mt-0.5 truncate text-xs text-text-muted">{subtitle}</div> : null}
-          {headerExtra ? <div className="mt-3 w-full">{headerExtra}</div> : null}
         </div>
-        <div className={cn('custom-scrollbar flex-1', bodyClassName ?? 'overflow-y-auto')}>{children}</div>
+        <div className="custom-scrollbar flex-1 overflow-y-auto">{children}</div>
         {footer || footerStart ? (
           <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-t border-border px-5 py-3">
             {footerStart ? <div className="flex flex-wrap items-center gap-3">{footerStart}</div> : null}
