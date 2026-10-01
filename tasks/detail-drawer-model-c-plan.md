@@ -83,6 +83,7 @@ interface DetailDrawerProps {
   footer?: ReactNode
   /** Ľavá skupina footer akcií, typicky deštruktívna. */
   footerStart?: ReactNode
+  /** Resizer je aktívny iba od `lg`, pod `lg` má drawer fixnú šírku (viď Šírka a resizer). */
   resizable?: boolean
   ariaLabel?: string
   closeLabel?: string
@@ -117,6 +118,49 @@ Layout headera:
 └──────────────────────────────────────────────────────┘
 ```
 
+#### Šírka a resizer (rozhodnutie)
+
+**Resizer je aktívny iba od breakpointu `lg` (1024px). Pod `lg` drawer nie je resizable**,
+ani keď má consumer `resizable`.
+
+Problém, ktorý to rieši:
+
+- Hook pracuje s 360–720px, ale CSS drawer obmedzuje na `max-width: 92vw`.
+- Pri 390px viewporte je to 359px. Hook by hlásil `aria-valuenow=420` a `aria-valuemin=360`,
+  zatiaľ čo drawer by bol fyzicky užší.
+- Rovnaký nesúlad by vznikol pri `aria-valuemax=720` medzi 640 a 783px (92vw je tam menej ako
+  720px).
+- Pri `lg` je 92vw = 942px, čo je viac ako 720. Rozsah hooku sa teda vždy zmestí a hodnoty
+  `aria-value*` zodpovedajú skutočnej šírke.
+- Prah `sm` by preto nestačil. Bez viewport JS logiky (clamp podľa `window.innerWidth`) je jediný
+  konzistentný prah `lg`.
+
+Riešenie iba cez CSS a render, bez viewport JS:
+
+- **Šírka ide cez CSS premennú, nie cez inline `width`:**
+  - `style={{ '--detail-drawer-width': `${width}px` }}`
+  - triedy `w-[min(420px,92vw)] lg:w-(--detail-drawer-width) lg:max-w-[92vw]`
+  - Pod `lg` tak platí rovnaká šírka ako pri neresizable draweri a hodnota hooku sa na šírku
+    vôbec neaplikuje.
+- **Handle sa renderuje iba pri `resizable`, s triedou `hidden lg:block`:**
+  - `display: none` ho pod `lg` vyradí z tab poradia aj z accessibility tree.
+  - Jeho `role="separator"` a `aria-value*` tak existujú pre asistenčné technológie iba vtedy,
+    keď je resizer naozaj aktívny.
+  - Myšou ani klávesnicou sa nedá chytiť.
+- **Neresizable drawer:** `w-[min(420px,92vw)]` na všetkých šírkach, bez handle (ako dnes).
+- **`useResizablePanel`:** API sa nemení okrem voliteľného `resizeLabel`. Nepotrebuje `enabled`,
+  lebo gating rieši render a CSS v `DetailDrawer`. Reset šírky pri zatvorení ostáva.
+- **Testovateľnosť:** jsdom media queries nevyhodnocuje, preto testy overia:
+  - separator má triedu `hidden lg:block`
+  - aside má `lg:w-(--detail-drawer-width)` a premennú `--detail-drawer-width` (nie
+    `style.width`)
+  - pri neresizable draweri separator neexistuje
+
+  Fyzické správanie na 390, 1024 a 1366 overí browser checkpoint.
+- **Dopad na testy:** existujúce asercie na `drawer.style.width` sa prepíšu na
+  `drawer.style.getPropertyValue('--detail-drawer-width')` v T1. Ide o `DetailDrawer.test.tsx`
+  a `VirtualMachineDetailPanel.test.tsx` :256–288.
+
 ### 2. `DetailDrawerSection`
 
 ```ts
@@ -126,24 +170,30 @@ interface DetailDrawerSectionProps {
   summary?: ReactNode
   /** Neinteraktívny badge hneď za nadpisom (počet, varovanie). */
   badge?: ReactNode
-  /** Uncontrolled režim. Predvolene false. */
+  /** Počiatočný stav. Predvolene false. Sekcia drží stav sama. */
   defaultOpen?: boolean
-  /** Controlled režim. Ak je zadané, komponent nedrží vlastný stav. */
-  open?: boolean
-  onToggle?: (open: boolean) => void
   /** Bez paddingu tela, pre obsah s vlastným paddingom (inventory, tabuľky). */
   flush?: boolean
   children: ReactNode
 }
 ```
 
-- **Oba režimy, jedno pravidlo:**
-  - Keď je `open` zadané, je to controlled režim a `onToggle` dostane nový stav.
-  - Inak je to uncontrolled režim s `defaultOpen` a `onToggle` sa volá len ako notifikácia.
-  - Interne to rieši malý hook v tom istom súbore, nebude exportovaný.
-  - Recovery Groups vystačia s uncontrolled režimom. Controlled je pripravený pre prípady, keď
-    feature potrebuje otvoriť sekciu zvonka. Žiadny prípad ho dnes nevyžaduje, preto bude
-    pokrytý iba testom.
+- **Iba uncontrolled režim (rozhodnutie).** Komponent nemá props `open` ani `onToggle`.
+  - **Dôvod:** žiadny z 19 consumerov ani žiadny plánovaný task (T4–T17) nepotrebuje otvárať
+    sekciu zvonka ani čítať jej stav.
+  - Reset pri zmene záznamu rieši `key={selected.id}` a stav sa nikam neukladá.
+  - Discriminated union `open + onToggle | defaultOpen` by pridal kód aj testy bez consumera
+    (CLAUDE.md §2) a voľný kontrakt `open? + onToggle?` by umožnil neplatný stav.
+- **Budúce rozšírenie:** keď vznikne reálny use case (napr. „otvor Inventory po akcii“), pridá sa
+  controlled režim **ako discriminated union**, nie ako dva voľné optional props:
+
+  ```ts
+  type Controlled = { open: boolean; onToggle: (open: boolean) => void; defaultOpen?: never }
+  type Uncontrolled = { open?: never; onToggle?: never; defaultOpen?: boolean }
+  type DetailDrawerSectionProps = BaseProps & (Controlled | Uncontrolled)
+  ```
+
+  Rozšírenie je aditívne, takže existujúci consumeri sa nemenia.
 - **`defaultOpen = false`.** Otvorenie je explicitné a drahý obsah sa predvolene nemountuje.
 - **Zbalený obsah sa unmountne.** Inventory a ďalšie panely, ktoré si dáta načítavajú samé,
   sa tak správajú rovnako ako dnes pri tabs: query sa spustí až pri zobrazení. Query
@@ -186,7 +236,7 @@ dd  min-w-0 text-sm font-medium text-text-primary wrap-anywhere
   odporúčanie a otázka #1 nižšie ponecháva možnosť `text-right`.
 - `wrap-anywhere` láme aj dlhé ID bez medzier. Mono hodnoty ostávajú na consumerovi
   (`<span className="font-mono">`).
-- **Úzky drawer:** pri minime 360px ostane po `px-5` 320px. Label stĺpec má 112px, gap 16px,
+- **Úzky drawer:** pri 390px viewporte (92vw = 359px) ostane po `px-5` 319px. Label stĺpec má 112px, gap 16px,
   hodnota asi 190px, takže stohovanie nie je potrebné.
 - **Poradie `dt` a `dd` ostáva.** Testy používajú `getAllByRole('term')` a
   `nextElementSibling`, preto sa nesmie zmeniť.
@@ -195,26 +245,48 @@ dd  min-w-0 text-sm font-medium text-text-primary wrap-anywhere
 
 ### 4. Footer
 
-Footer layout patrí do `DetailDrawer`, consumer dodá iba tlačidlá:
+Footer layout patrí do `DetailDrawer`, consumer dodá iba tlačidlá. Platí jedno pravidlo bez
+režimov. **End kontajner (`footer`) vždy rastie do zvyšnej šírky a obsah zarovnáva vpravo.**
 
 ```
-<div class="flex flex-wrap items-center gap-2 border-t border-border px-5 py-3">
-  <div class="mr-auto flex items-center gap-2">{footerStart}</div>   // iba ak je zadané
-  <div class="flex items-center gap-2">{footer}</div>
+<div class="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-t border-border px-5 py-3">
+  {footerStart ?
+    <div class="flex flex-wrap items-center gap-3">{footerStart}</div> : null}
+  {footer ?
+    <div class="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-3">{footer}</div> : null}
 </div>
 ```
 
+Footer sa nerenderuje, keď chýba `footerStart` aj `footer`.
+
+- **Legacy, bez `footerStart`, tlačidlá s `className="flex-1"`:**
+  - End kontajner má `flex-1` a je jediné dieťa, takže vyplní **celú šírku** footera.
+  - Tlačidlá s `flex-1` v ňom rastú a rozdelia šírku na polovice ako dnes. `justify-end` sa pri
+    rastúcich deťoch neprejaví.
+  - `gap-3` zodpovedá dnešnému `flex gap-3`.
+  - **Zmení sa iba padding** (`p-4` → `px-5 py-3`), aby footer sedel s headerom a telom na
+    `px-5`. Rozloženie a šírka tlačidiel sa nemenia.
+  - Overí to explicitný test a browser Checkpoint A.
+- **Model C, s `footerStart`:**
+  - Start skupina je vľavo.
+  - End kontajner vyplní zvyšok a tlačidlá bez `flex-1` sú vpravo.
+- **Iba primárna akcia, bez `footerStart`, bez `flex-1`:** tlačidlo je vpravo (napr. Recovery
+  Apps bez `onDelete`).
 - **Deštruktívna akcia** je v `footerStart` ako `Button variant="danger" size="sm"`. Existujúci
   `danger` je už outline (červený text, surface pozadie), takže je slabší ako primárna akcia.
   Nový variant tlačidla netreba.
 - **Primárna akcia** je v `footer` ako `Button size="sm"` bez `flex-1`. Sekundárne akcie (napr.
   „View runs“) idú do `footer` pred primárnu.
-- **Kompatibilita:** starí consumeri dávajú obe tlačidlá do `footer` s `flex-1`. Vnútorný
-  `flex` kontajner ich roztiahne rovnako ako dnes, takže vzhľad sa nezmení, kým sa nemigrujú.
-- **Pinned:** footer ostáva súrodenec scrollujúceho tela v `flex-col` shell, takže je stále
-  pripnutý dole.
-- **Mobil:** `flex-wrap`. Pri 359px sa Delete, View runs aj Edit (`sm`) zmestia do jedného
-  riadku. Ak by sa nezmestili, `footer` skupina sa zalomí pod `footerStart`, nič sa neoreže.
+- **Pinned:** footer ostáva súrodenec scrollujúceho tela v `flex-col` shell (`shrink-0`), takže je
+  stále pripnutý dole. Scrolluje iba telo.
+- **Mobil a zalamovanie:**
+  - Vonkajší kontajner aj obe skupiny majú `flex-wrap`, end skupina `min-w-0`.
+  - Pri 359px sa Delete, View runs aj Edit (`size="sm"`, asi 70 až 90px) zmestia do jedného
+    riadku.
+  - Ak sa nezmestia, end skupina sa zalomí na nový riadok. Tam má celú šírku (`flex-1`) a
+    tlačidlá ostanú vpravo (`justify-end`).
+  - Legacy `flex-1` tlačidlá sa zalomia v rámci end kontajnera.
+  - Nič sa neoreže a nevznikne horizontálny scroll.
 
 ### 5. Recovery Groups: referenčná migrácia (Task 4)
 
@@ -227,25 +299,60 @@ Header:
   2. Status badge: `Active` → success, `Draft` → warning (existujúce kľúče).
   3. `providerResolution === 'unresolved'`: warning badge `pages.recoveryGroups.providerUnavailable`
      (existuje, „Provider unavailable“).
-  4. Run fakt, podľa dát, ktoré `useLatestOrchestratorRun` už načítava (žiadny nový query):
+  4. Orchestration fakt podľa stavov nižšie.
 
-     | Stav | Text |
-     |---|---|
-     | `!pushToOrchestrator` | `recoveryGroups.drawer.notOrchestrated` (nový, „Not orchestrated“) |
-     | orchestrated, hook `isLoading` | položka sa vynechá (žiadne blikanie) |
-     | orchestrated, hook `error` | položka sa vynechá, detail je v sekcii Orchestration |
-     | orchestrated, `latestRun === null` | `recoveryRuns.table.noRuns` (existuje, „No runs yet“) |
-     | `latestRun` | `recoveryGroups.drawer.lastRun` = „Last run: {{status}} · {{duration}}“, duration z `formatRunDuration` |
+#### Stavy orchestrácie (rovnaké pre meta fakt aj summary sekcie Orchestration)
 
-     `pushToOrchestrator` bez `airflowRunId` alebo bez providera (`isSelectedOrchestrated` je
-     false): zobrazí sa „Not orchestrated“, rovnako ako dnešná podmienka v kóde.
+Mapujú sa iba existujúce polia. Nevzniká žiadny nový backend stav ani nový query. Vstupy:
+
+- `pushToOrchestrator`, `orchestrationProviderId`, `airflowRunId` z `RecoveryGroup`
+- `platformProviders` z už existujúceho `useGetPlatformProviders`
+  - Z toho istého volania sa navyše čítajú `isLoading` a `isError`.
+  - Query, parametre ani `enabled` sa nemenia.
+- `latestRun`, `isLoading` a `error` z už existujúceho `useLatestOrchestratorRun`
+  - Hook beží ako dnes iba pri `pushToOrchestrator && orchestrationProviderId && airflowRunId`.
+
+Stavy sa vyhodnocujú v poradí, platí prvý vyhovujúci:
+
+| # | Podmienka | Meta fakt | Summary sekcie Orchestration |
+|---|---|---|---|
+| A | `!pushToOrchestrator` | „Not orchestrated“ `recoveryGroups.drawer.notOrchestrated` | „Not configured“ `recoveryGroups.drawer.notConfigured` |
+| B | push, `orchestrationProviderId` chýba | „Orchestration incomplete“ `recoveryGroups.drawer.orchestrationIncomplete` | „Orchestration incomplete“ (rovnaký kľúč) |
+| C0 | push + providerId, `platformProviders` sa ešte načítavajú | vynechať | vynechať (žiadne blikanie) |
+| C1 | push + providerId, `platformProviders` skončili chybou | vynechať (nepotvrdená nedostupnosť sa nehlási) | vynechať |
+| C | push + providerId, provider sa v načítaných `platformProviders` nenájde | „Orchestrator unavailable“ `recoveryGroups.drawer.orchestratorUnavailable` | „Orchestrator unavailable“ (rovnaký kľúč) |
+| D | provider nájdený, `airflowRunId` chýba | „No run ID yet“ `recoveryGroups.drawer.noRunId` | názov providera |
+| E1 | provider + `airflowRunId`, latest run `isLoading` | vynechať | názov providera |
+| E2 | provider + `airflowRunId`, latest run `error` | vynechať (chyba ostáva v sekcii) | názov providera |
+| E3 | provider + `airflowRunId`, `latestRun === null` | „No runs yet“ `recoveryRuns.table.noRuns` (existuje) | názov providera |
+| E4 | provider + `airflowRunId`, `latestRun` existuje | „Last run: {{status}} · {{duration}}“ `recoveryGroups.drawer.lastRun`, duration z `formatRunDuration` | názov providera |
+
+Poznámky:
+
+- **Prečo „Orchestrator unavailable“ a nie „Provider unavailable“:** meta riadok môže zároveň
+  ukázať badge `pages.recoveryGroups.providerUnavailable`. Ten sa týka **resource** providera
+  (`providerResolution === 'unresolved'`), nie orchestrátora. Dva rovnaké texty s rôznym
+  významom vedľa seba by boli zavádzajúce.
+- **D znamená, že orchestrácia je nakonfigurovaná a provider existuje**, ale chýba
+  server-assigned run ID z pushu. To nie je „Not orchestrated“ ani „No runs yet“, lebo bez run
+  ID sa runy nedajú dohľadať. Preto vlastný text „No run ID yet“.
+- **Stav B, C alebo D nie je „Not orchestrated“.** Ten text patrí iba stavu A.
+- **Telo sekcie Orchestration ostáva vecne rovnaké:** Orchestration yes/no a Airflow run ID
+  (alebo „—“). Riadky Latest run, Last executed, Duration a tlačidlo „View recovery runs →“
+  ostávajú pod **dnešnou** podmienkou `isSelectedOrchestrated` (push + providerId + run ID) a
+  ich viditeľnosť sa nemení. Mení sa iba text v meta riadku a v summary, nie business logika.
+- **Pomocná funkcia:** mapovanie bude čistá funkcia
+  `getRecoveryGroupOrchestrationState(...)` v
+  `recovery-groups/helpers/recoveryGroupOrchestrationState.ts` s vlastným unit testom. Vracia
+  diskriminovaný stav `A | B | C0 | C1 | C | D | E1–E4`. Komponent iba mapuje stav na text, takže
+  stavová matica sa testuje bez renderu.
 
 Sekcie (uncontrolled, telo `key={selected.id}`):
 
 | Sekcia | defaultOpen | summary | Obsah |
 |---|---|---|---|
 | Overview | **true** | `t(getWorkloadTypeLabelKey(...))`, ak `workloadType` nie je null, inak `t(getResourceTypeLabelKey(...))` | Description, Policy set, Provider ID (mono), Source category, Workload type, Resource type, Resources, Status |
-| Orchestration | **false** | názov orchestration providera z `platformProviders` (dáta už sú v komponente), inak `recoveryGroups.drawer.notConfigured` (nový, „Not configured“) | Orchestration yes/no, Airflow run ID (`AirflowDagLink`), Latest run status, Last executed, Duration, `View recovery runs →` (Button `soft`, mimo `<dl>`) |
+| Orchestration | **false** | podľa tabuľky stavov orchestrácie (stĺpec Summary) | Orchestration yes/no, Airflow run ID (`AirflowDagLink`), Latest run status, Last executed, Duration, `View recovery runs →` (Button `soft`, mimo `<dl>`) |
 | Inventory | **false**, `flush` | `resourceType === 'vm'` → `recoveryGroups.drawer.vmCount` „VMs: {{count}}“, `volume` → `…volumeCount` „Volumes: {{count}}“, `resourceCount === 0` → `recoveryGroups.drawer.noResources` „No resources“ | `RecoveryGroupInventory` bez zmeny |
 
 Prečo je Orchestration predvolene zatvorená: stav posledného runu je už v meta riadku a provider
@@ -263,7 +370,7 @@ providerovi, so zachovaným `title`, `aria-describedby` a sr-only hintom).
 | Skupina / drawer | Sekcie? | Sekcie a summary | Footer | Header meta / actions | Môže ostať na starom API |
 |---|---|---|---|---|---|
 | **Recovery Groups** (T4) | áno | viď vyššie | Delete / Edit | entity • status • provider unavailable • run fakt | nie, je to referencia |
-| **Recovery Applications** (T6) | áno | Overview (summary: platform), Orchestration (provider alebo „Not configured“), Inventory (počet tierov „Tiers: {{count}}“) | Delete / Edit iba ak sú handlery | entity • status • run fakt | – |
+| **Recovery Applications** (T6) | áno | Overview (summary: platform), Orchestration (summary podľa rovnakej stavovej tabuľky A–E ako Recovery Groups, nad poľami aplikácie), Inventory (počet tierov „Tiers: {{count}}“) | Delete / Edit iba ak sú handlery | entity • status • orchestration fakt (stavy A–E) | – |
 | **Platform Providers** (T7) | nie (4 až 10 riadkov) | – | Delete / Edit | entity • type badge • credential status; SMTP tlačidlo → `headerActions`; subtitle = mono id | až do T7 `headerExtra` |
 | **Providers** (T8) | nie | – | Delete / Edit | entity • role badge • credential status; Test connection → `headerActions` (trieda testovaná v :278 ostáva) | až do T8 |
 | **Credentials** (T8) | nie | – | Delete / Edit | entity; subtitle = id | až do T8 |
@@ -294,7 +401,8 @@ Pri migrácii každého drawera sa:
 | `eyebrow` | prechodný, renderuje sa ako prvá meta položka | consumer → `meta` | **zmazať z typu** |
 | `headerExtra` | prechodný, renderuje sa pod meta | consumer → `meta` / `headerActions` | **zmazať z typu** |
 | `meta`, `headerActions`, `footerStart`, `resizeLabel` | nové, voliteľné | – | ostávajú |
-| `footer` | pravá skupina, staré `flex-1` vyzerajú ako dnes | bez `flex-1` | ostáva |
+| `resizable` | od `lg` aktívny resizer, pod `lg` fixná šírka `min(420px,92vw)` a skrytý handle. Inline `style.width` → CSS premenná `--detail-drawer-width`. | – | ostáva |
+| `footer` | end kontajner vždy `flex-1 justify-end`. Bez `footerStart` je to jediné dieťa a má celú šírku, takže staré `flex-1` tlačidlá sa delia ako dnes (explicitný test + Checkpoint A). Mení sa iba padding `p-4` → `px-5 py-3`. | tlačidlá bez `flex-1`, deštruktívne do `footerStart` | ostáva |
 | `DetailRow` | nový vzhľad, rovnaké API | – | ostáva |
 | `DetailStat` | bez zmeny | – | ostáva (VM) |
 
@@ -327,9 +435,9 @@ Task 18 zmaže `eyebrow` a `headerExtra` z `DetailDrawerProps`. Ak niekto zostal
 
 | Prvok | Pravidlo |
 |---|---|
-| Šírka default | 420px (`useResizablePanel` default, bez zmeny) |
-| Resizable | 360–720px, krok 16px, `maxWidth: 92vw` (bez zmeny) |
-| Mobil | `max-width: 92vw`, pri 390px je to 359px (CSS max vyhráva nad min 360). Backdrop ostáva viditeľný na zatvorenie ťuknutím. Full-width pod `sm` je otázka #4. |
+| Šírka default | `w-[min(420px,92vw)]` na všetkých šírkach pre neresizable drawer a pod `lg` aj pre resizable |
+| Resizable | **iba od `lg` (≥1024px):** `lg:w-(--detail-drawer-width) lg:max-w-[92vw]`, 360–720px, krok 16px, default 420px. Pri `lg` je 92vw ≥ 942px, takže rozsah hooku vždy sedí so skutočnou šírkou. |
+| Pod `lg` (mobil, tablet) | **Nie je resizable.** Šírka `min(420px,92vw)` (pri 390px je to 359px), handle `hidden lg:block`, takže nie je viditeľný, fokusovateľný ani v accessibility tree. Backdrop ostáva viditeľný na zatvorenie ťuknutím. 92vw vs. 100vw pod `sm` je iba vizuálna voľba (otázka #4). |
 | Backdrop | `bg-black/45`, fade 200ms (bez zmeny) |
 | Tieň a hrana | `border-l border-border shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)]` (bez zmeny) |
 | Header | `px-5 pt-4 pb-3 border-b border-border` |
@@ -371,7 +479,11 @@ Task 18 zmaže `eyebrow` a `headerExtra` z `DetailDrawerProps`. Ak niekto zostal
   inventory) prejdú na `h4`, ak sú v sekcii.
 - **Focus-visible:** každý interaktívny prvok má ring, žiadny `outline-none` bez náhrady.
 - **Resizer:**
-  - `role="separator"`, `aria-orientation`, `aria-valuenow/min/max` a ovládanie šípkami
+  - **Aktívny iba od `lg`.** Handle sa renderuje iba pri `resizable` a má `hidden lg:block`.
+  - Pod `lg` je `display: none`. Nie je v tab poradí ani v accessibility tree, takže jeho
+    `aria-valuenow/min/max` sa nikde nehlásia a nemôžu odporovať skutočnej šírke.
+  - Od `lg` platí `role="separator"`, `aria-orientation="vertical"`, `aria-valuenow/min/max`
+    zhodné so skutočnou šírkou (360–720 sa vždy zmestí do 92vw) a ovládanie šípkami
     (bez zmeny).
   - `aria-label` bude lokalizovaný cez `resizeLabel`, predvolene „Resize panel“ kvôli
     kompatibilite.
@@ -389,8 +501,21 @@ restore, resize, reset šírky, footer). Pribudnú tieto:
 - **Prechodné props:** `eyebrow` sa zobrazí ako prvá meta položka. `headerExtra` ostáva
   (pôvodný test na :27 ostáva do T18).
 - **`headerActions`:** sú v riadku nadpisu pred close a patria do focus trapu.
-- **Footer:** `footerStart` je pred `footer` a footer chýba, keď nie je zadaný ani jeden.
-- **Resizer:** `resizeLabel` sa prenesie do `aria-label` separatora.
+- **Footer, legacy:** bez `footerStart` s dvoma `<button className="flex-1">` v `footer`. Rodič
+  tlačidiel (end kontajner) má `flex-1` a je jediné dieťa footera, teda full-width. Obe tlačidlá
+  sú v ňom v pôvodnom poradí.
+- **Footer, Model C:** s `footerStart` (Delete) a `footer` (Edit).
+  - Prvé dieťa footera obsahuje Delete, druhé (end kontajner s `flex-1 justify-end`) obsahuje
+    Edit.
+  - Delete je v DOM poradí pred Edit, takže je vľavo.
+- **Footer, absencia:** footer chýba, keď nie je zadaný ani `footerStart` ani `footer`.
+- **Resizer, gating:**
+  - `resizable`: separator má triedy `hidden lg:block`. Aside má `lg:w-(--detail-drawer-width)` a
+    `style.getPropertyValue('--detail-drawer-width') === '420px'`, nie `style.width`.
+  - Bez `resizable`: separator neexistuje a aside má `w-[min(420px,92vw)]`.
+- **Resizer, hodnoty:** existujúce testy šírky (ArrowLeft 436, drag 480, reset 420) sa prepíšu z
+  `style.width` na CSS premennú.
+- **Resizer, label:** `resizeLabel` sa prenesie do `aria-label` separatora.
 
 **Shared, `DetailDrawerSection.test.tsx`:**
 
@@ -400,8 +525,9 @@ restore, resize, reset šírky, footer). Pribudnú tieto:
 - `summary` a `badge` sa vyrenderujú. Prístupné meno je iba `title`, summary je v
   `aria-describedby`.
 - `flush` vynechá padding.
-- Uncontrolled: `defaultOpen` a `onToggle` notifikácia.
-- Controlled: `open` + `onToggle`, bez vlastného stavu (rerender s `open={false}` sekciu zbalí).
+- `defaultOpen` otvorí sekciu pri mounte, potom ju klik zbalí (vlastný stav).
+- Typový kontrakt: komponent neprijíma `open` ani `onToggle`. V teste ich hlási
+  `// @ts-expect-error`, takže neplatný controlled stav sa nedá skompilovať.
 - Viac sekcií otvorených naraz je nezávislých.
 - Reduced motion: overí sa iba prítomnosť triedy `motion-reduce:transition-none`. CSS media sa v
   jsdom netestuje.
@@ -413,10 +539,16 @@ restore, resize, reset šírky, footer). Pribudnú tieto:
 - `queryByRole('tab')` je null.
 - Overview má `aria-expanded="true"`, Orchestration a Inventory `false`.
 - Prepínanie sekcií a ich nezávislosť.
-- Summary: workload label, provider name alebo „Not configured“, „VMs: N“, „Volumes: N“ a
-  „No resources“.
-- Meta: entity, Active alebo Draft badge, „Provider unavailable“, run fakt vo všetkých 5 stavoch
-  (mock `useLatestOrchestratorRun` už v teste existuje).
+- Summary: workload label, „VMs: N“, „Volumes: N“ a „No resources“.
+- **Stavová matica orchestrácie:**
+  - Unit test `recoveryGroupOrchestrationState.test.ts` pokrýva každý stav A, B, C0, C1, C, D a
+    E1–E4.
+  - Render test v `RecoveryGroupsTable.test.tsx` overí aspoň A, B, C, D, E3 a E4 v meta riadku
+    aj v summary sekcie Orchestration.
+  - Žiadny stav okrem A neukáže „Not orchestrated“.
+  - Mock `useLatestOrchestratorRun` už v teste existuje. Platform providers sa mockujú cez
+    existujúci setup testu.
+- Meta: entity, Active alebo Draft badge, resource „Provider unavailable“ badge pri unresolved.
 - Orchestration dáta a Airflow link. Existujúcich 5 testov dnes klikne na tab, po novom
   klikne na tlačidlo sekcie s rovnakým menom.
 - Inventory sa mountne až po otvorení.
@@ -483,7 +615,11 @@ headeri):
 
 - **Matica:** 390×844, 1024×768, 1366×768, 1920×1080.
 - **Kontroluje sa:**
-  - šírka drawera a resize handle (myš aj šípky)
+  - šírka drawera a resize handle:
+    - 390×844: handle neexistuje vizuálne ani pre Tab, šírka 92vw
+    - 1024×768 a viac: handle funguje myšou aj šípkami a `aria-valuenow` zodpovedá zmeranej
+      šírke
+    - zúženie okna z 1366 na 1000 pri roztiahnutom draweri vráti šírku `min(420px,92vw)`
   - overflow obsahu, orezanie a pinned footer
   - rozbaľovanie sekcií a sticky hlavičky
   - dlhé názvy (truncate, akcie ostanú viditeľné) a dlhé ID (zalamovanie)
@@ -497,10 +633,11 @@ Detailné kritériá, súbory a commit hranice sú v `tasks/detail-drawer-model-
 ### Fáza 1: Shared základ
 
 - Task 1: `DetailDrawer` header shell a API (meta, subtitle, headerActions, CloseIcon,
-  resizeLabel, prechodné eyebrow a headerExtra)
+  resizeLabel, resizer iba od `lg`, prechodné eyebrow a headerExtra)
 - Task 2: `DetailDrawerSection`
-- Task 3: `DetailRow` restyle a footer (`footerStart`)
-- **Checkpoint A:** celá sada consumerov, tsc, browser na nemigrovaných drawerov
+- Task 3: `DetailRow` restyle a footer (`footerStart`, legacy full-width end kontajner)
+- **Checkpoint A:** celá sada consumerov, tsc, browser na nemigrovaných draweroch (legacy footer,
+  resizer gating 390 / 1024 / 1366)
 
 ### Fáza 2: Referencia
 
@@ -537,14 +674,14 @@ Detailné kritériá, súbory a commit hranice sú v `tasks/detail-drawer-model-
 
 | # | Riziko | Dopad | Mitigácia |
 |---|---|---|---|
-| R1 | T1 a T3 menia vzhľad všetkých 19 drawerov naraz | Vysoký | Prechodné renderovanie `eyebrow` a `headerExtra`, staré footery vyzerajú rovnako, celá sada consumerov a browser Checkpoint A pred T4 |
+| R1 | T1 a T3 menia vzhľad všetkých 19 drawerov naraz | Vysoký | Prechodné renderovanie `eyebrow` a `headerExtra`. Legacy footer má full-width end kontajner, overený explicitným testom. Celá sada consumerov a browser Checkpoint A pred T4. |
 | R2 | `no-deprecated` + `--max-warnings 0` | Stredný | Žiadny JSDoc `@deprecated`, obyčajný komentár + grep brána, `tsc` v T18 |
 | R3 | Prístupné meno tlačidla sekcie by obsahovalo summary a rozbilo testy aj čitateľnosť | Stredný | `aria-labelledby` (title) + `aria-describedby` (summary) |
 | R4 | Unmount zbalenej sekcie zmení, kedy bežia query | Stredný | Rovnaká sémantika ako dnešné tabs (render iba keď viditeľné). Pri každej migrácii overiť, či obsah nefetchuje inak (VMware snapshots/disks, inventory). Hook `useLatestOrchestratorRun` ostáva na úrovni tabuľky. |
 | R5 | Sticky hlavička sekcie vs. sticky `TableHeader` vo VM disks | Stredný | V T14 je Disks `flush` a sticky header tabuľky dostane `top-11` (výška hlavičky sekcie) alebo sticky stratí. Rozhodne browser. |
 | R6 | Testy viazané na DOM (FlashSystem `nextElementSibling` a `closest('div')`, Clients a Users „only button“) | Stredný | T3 zachová `div > dt + dd`. Konkrétne asercie sa upravia v tasku daného consumera. |
 | R7 | Dlhý nadpis + `headerActions` v jednom riadku (Test connection) | Nízky | `min-w-0 truncate` na h2, `shrink-0` na akciách, browser s dlhými názvami |
-| R8 | Mobil 390: `maxWidth 92vw` (359) < `minWidth 360` | Nízky | CSS max vyhráva a resize handle na mobile nemá zmysel. Overiť v matici. Otázka #4. |
+| R8 | Nesúlad hook a CSS: pri 390px je 92vw = 359px < `minWidth` 360 a medzi 640 a 783px je 92vw < `maxWidth` 720, takže `aria-value*` by klamali | Stredný | **Rozhodnuté:** resizer je aktívny iba od `lg` (92vw ≥ 942). Pod `lg` je handle `hidden` (mimo a11y tree a tab poradia) a šírka je CSS `min(420px,92vw)` cez premennú, nie inline `width`. Bez viewport JS. Overí browser matica (390 / 1024 / 1366 a zúženie okna). |
 | R9 | Prototyp `3eb0fd0a` na vetve `test` sa rozchádza (iné mená) | Stredný | Nemergovať do spike. Pri merge `test` vynechať alebo revertnúť, kód brať iba ako referenciu. |
 | R10 | Locale súbory zdieľa takmer každý task | Nízky | Tasky idú sekvenčne, nie paralelne. Kľúče sa pridávajú v rovnakom bloku `drawer.*` / `<feature>.drawer.*`. |
 | R11 | cs/sk plurály | Nízky | Tvar „VMs: {{count}}“ bez plurálu |
@@ -557,6 +694,7 @@ Detailné kritériá, súbory a commit hranice sú v `tasks/detail-drawer-model-
 2. **Recovery Groups Overview:** ponechať riadok Status, keď je status už v meta? Plán ho
    ponecháva podľa zadania.
 3. **Task 5:** preniesť `HelpPopover` a relation help z prototypu, alebo ho riešiť samostatne?
-4. **Mobil:** full-width drawer pod `sm` namiesto 92vw?
+4. **Mobil, iba vizuálna voľba:** pod `sm` 92vw (plán, backdrop ostáva viditeľný) alebo 100vw?
+   Resizer je pod `lg` vypnutý v oboch prípadoch.
 5. **Run fakt v meta:** dĺžka behu (plán) alebo relatívny čas spustenia („pred 14 min“)? Na
    relatívny čas dnes nie je helper.
