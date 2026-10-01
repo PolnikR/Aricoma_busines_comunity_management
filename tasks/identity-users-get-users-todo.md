@@ -13,7 +13,7 @@ Plan: `tasks/identity-users-get-users-plan.md`. Base path below: `src/features/p
 - [ ] `git show --stat HEAD` lists only the files above
 - [ ] `npx tsc --noEmit -p .` (or project typecheck script) passes
 
-**Dependencies:** None (needs user approval — Open Question 1)
+**Dependencies:** None
 **Files:** `openapi/abco-api.json`, `src/generated/query/**`
 **Scope:** XS
 
@@ -43,15 +43,21 @@ Roles (joined / `—`), Status (Badge), Active session start (formatted / `—`)
 error+retry, keep skeleton loading, empty/no-match states, search, density, pagination. Remove the
 `entityId`/`tabId` detail path (`UserDetails`, `UserCredentials`, `UserRoleMappings`, `RoleList`,
 `UserSessions`, `LoadingUserDetails`) and the `useIdentityAdminPreview`/`useSessions` imports; `UsersSection`
-takes no props. Add EN/CS/SK keys: `identity.users.columns.activeSessionStart`, `identity.users.status.disabled`.
+takes no props. This removes every Users-UI call to `gateway.setUserRole` / `gateway.setUserRequiredAction`;
+the shared gateway contract, mock and their tests stay unchanged. Add `formatUserTimestamp(value, language)`:
+`Intl.DateTimeFormat` with the app-language locale (`sk-SK` / `cs-CZ` / `en-GB`),
+`{ dateStyle: 'medium', timeStyle: 'short' }`, no `timeZone` (browser timezone), `—` for null/undefined/invalid.
+Add EN/CS/SK keys: `identity.users.columns.activeSessionStart`, `identity.users.status.disabled`.
 
 **Acceptance criteria:**
-- [ ] Rows come from `useGetUsers()`; no `useIdentityAdminPreview` import in `UsersSection`
-- [ ] Roles/status/`activeSessionStart` (value and `null` → `—`) render as specified; no `Last login` column
+- [ ] Rows come from `useGetUsers()`; `UsersSection` does not import `useIdentityAdminPreview` and calls no gateway mutation
+- [ ] Roles/status/`activeSessionStart` render as specified; `activeSessionStart` null/undefined → `—`; no `Last login` column and no derived last-login value
+- [ ] Timestamps are locale-aware with no hard-coded timezone
 - [ ] Loading skeleton, error + Retry (calls `refetch`), empty and search-no-match states work
 
 **Verification:**
-- [ ] Rewritten `UsersSection.test.tsx` (mock `@/generated/query/identity-access/identity-access.gen` like `RealmRolesSection.test.tsx`): renders API users, search filters, roles render, session start renders, null → `—`, loading/error/retry/empty
+- [ ] Rewritten `UsersSection.test.tsx` (mock `@/generated/query/identity-access/identity-access.gen` like `RealmRolesSection.test.tsx`): renders API users, search filters, roles render, session start renders (expected text built with the same `Intl.DateTimeFormat('en-GB', …)` call so the test does not depend on the runner's timezone), null → `—`, loading/error/retry/empty
+- [ ] `git diff` shows no changes to `IA/services/identityAdminGateway.ts`, `IA/services/mockIdentityAdminGateway*.ts`
 - [ ] `npm exec vitest run IA/components/UsersSection.test.tsx IA/pages/IdentityAccessPage.test.tsx`
 - [ ] Typecheck passes; `npx eslint` on changed files
 - [ ] Manual: Users tab against running API shows real users
@@ -68,8 +74,8 @@ No footer. Add EN/CS/SK keys for eyebrow/aria/close labels and field labels (`id
 `identity.users.fields.*`, Yes/No).
 
 **Acceptance criteria:**
-- [ ] Clicking a row opens the drawer with all 9 fields; null/undefined → `—`; dates formatted
-- [ ] No navigation (`onEntityChange` gone); no Edit/Delete or any footer buttons; close/Escape work
+- [ ] Clicking a row opens the drawer with all 9 fields; null/undefined → `—`; `createdAt`/`activeSessionStart` via `formatUserTimestamp`
+- [ ] Strictly read-only: no navigation (`onEntityChange` gone), no Edit/Delete/footer buttons, no role or required-action controls; close/Escape work
 - [ ] All new labels exist in EN/CS/SK
 
 **Verification:**

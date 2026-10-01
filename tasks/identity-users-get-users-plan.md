@@ -36,14 +36,20 @@ Providers pattern) instead of the full-page editable user detail. All user creat
   as Realm Roles does with `permissions`).
 - **Status badge**: `Active` → `success`, `Disabled` → `light`; labels localized
   (`identity.users.status.active` / new `identity.users.status.disabled`).
-- **Timestamps**: small local `formatUserTimestamp` in the Users feature using the same `Intl` options as
-  `AccessLogsTable` (Platform Administration precedent), `—` for null/invalid. No changes to audit code.
+- **Timestamps**: small local `formatUserTimestamp(value, language)` in the Users feature, locale-aware via
+  `Intl.DateTimeFormat`. Locale follows the existing app convention (`RecoveryActionsPageShell`):
+  `useTranslation().language` → `sk` ⇒ `sk-SK`, `cs` ⇒ `cs-CZ`, otherwise `en-GB`; options
+  `{ dateStyle: 'medium', timeStyle: 'short' }`. **No `timeZone` option** — the browser's timezone is used;
+  `Europe/Bratislava` is not hard-coded. null/undefined/invalid → `—`. Applies to `createdAt` and
+  `activeSessionStart`. No Last login value is invented or derived. No changes to audit code.
 - **Empty-ish values**: one helper `valueOrDash` for null/undefined/empty string → `—`; booleans for
   `emailVerified` rendered as localized Yes/No (`—` when null).
 - **Roles**: table cell = comma-joined (`—` when empty); drawer = one small `Badge` per role (clear list).
-- **Gateway contract untouched**: `createUser` / `setUserRole` / `setUserRequiredAction` / `users` in
-  `identityAdminGateway.ts` and the mock remain (shared service with its own tests). Flagged as follow-up.
-- **Generated files are not edited.** They are committed as-is in Task 0 (prerequisite) if approved.
+- **Shared gateway contract is kept (decided)**: `createUser` / `setUserRole` / `setUserRequiredAction` / `users`
+  stay in `identityAdminGateway.ts` and `mockIdentityAdminGateway.ts`, and their tests are unchanged, because
+  other Identity & Access sections and tests may still use them. Only their **usage from the Users UI** is removed.
+  The Users UI becomes strictly read-only: no Add user, no Edit, no Delete, no role mutation, no required-action mutation.
+- **Generated files are not edited.** They are committed as-is in Task 0 (prerequisite).
 
 ## Task List
 
@@ -80,13 +86,8 @@ Providers pattern) instead of the full-page editable user detail. All user creat
 
 ## Out of scope (noted, not changed)
 - `RealmRolesSection` still counts members via mock `useUsers()`.
-- Users-specific methods in the shared `IdentityAdminGateway` contract / mock.
+- `createUser` / `setUserRole` / `setUserRequiredAction` in the shared `IdentityAdminGateway` contract / mock (kept by decision).
 - `users` tab metadata in `models/identityAccessSections.ts`.
 
 ## Open Questions
-1. Commit the pre-existing generated client changes (openapi + generated + 3 new zod files, **excluding**
-   `package-lock.json`) as Task 0, or will you commit them yourself?
-2. Timestamp format: local copy of the Access Logs format (`dd.mm.yyyy HH:mm:ss`, Europe/Bratislava) —
-   or locale-aware `Intl.DateTimeFormat(language, { dateStyle: 'medium', timeStyle: 'short' })`?
-3. OK to leave the gateway's `createUser`/`setUserRole`/`setUserRequiredAction` in place (shared contract),
-   or remove them now too?
+None. Resolved: Task 0 proceeds as planned; timestamps are locale-aware with the browser timezone; shared gateway methods are kept.
