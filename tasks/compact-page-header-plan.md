@@ -66,12 +66,12 @@ Expected gain is about 42 px of vertical space per page on desktop. The table st
 ## Task list
 
 ### Phase 1: Foundation (shell and template)
-- [ ] Task 1: Compact `PageHeader` template
-- [ ] Task 2: Remove global search; 56 px top bar and sidebar brand row
-- [ ] Task 3: Skeletons mirror the new geometry
+- [x] Task 1: Compact `PageHeader` template
+- [x] Task 2: Remove global search; 56 px top bar and sidebar brand row
+- [x] Task 3: Skeletons mirror the new geometry
 
 ### Checkpoint A
-- [ ] Focused tests green, `tsc` clean
+- [x] Focused tests green, `tsc` clean
 - [ ] Browser: Platform providers and Resources at 1366×768 and 1920×1080; no clipping, no extra scrollbar
 
 ### Phase 2: Callers (remove eyebrow, rename, update tests)

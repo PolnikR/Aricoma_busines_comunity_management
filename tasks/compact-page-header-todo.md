@@ -20,13 +20,13 @@ title, optional one-line description, and actions on the title row that wrap bel
 `eyebrow` stays as an optional prop that is ignored. `TableToolbar.eyebrow` becomes optional.
 
 **Acceptance criteria:**
-- [ ] `PageHeader` renders `h1` + optional `p` + optional actions, and nothing uppercase
-- [ ] `description` is optional; the DOM nesting root > text block > h1 is unchanged
-- [ ] `TableToolbar` Refresh/Updating come from `common.refresh` / `status.updating`
+- [x] `PageHeader` renders `h1` + optional `p` + optional actions, and nothing uppercase
+- [x] `description` is optional; the DOM nesting root > text block > h1 is unchanged
+- [x] `TableToolbar` Refresh/Updating come from `common.refresh` / `status.updating`
 
 **Verification:**
-- [ ] New `src/shared/components/page/PageHeader.test.tsx`, existing `TableToolbar.test.tsx` green
-- [ ] `tsc` clean
+- [x] New `src/shared/components/page/PageHeader.test.tsx`, existing `TableToolbar.test.tsx` green
+- [x] `tsc` clean
 
 **Dependencies:** None
 **Files:** `PageHeader.tsx`, `PageHeader.test.tsx` (new), `TableToolbar.tsx`, `TableToolbar.test.tsx`
@@ -40,13 +40,13 @@ title, optional one-line description, and actions on the title row that wrap bel
 borders stay aligned. Add an `AppHeader` test, since none exists.
 
 **Acceptance criteria:**
-- [ ] No `input[type=search]` in the top bar; the user menu and the mobile sidebar toggle are still present
-- [ ] The header and the sidebar brand row are both `h-14`
-- [ ] The search keys are gone from all three locales
+- [x] No `input[type=search]` in the top bar; the user menu and the mobile sidebar toggle are still present
+- [x] The header and the sidebar brand row are both `h-14`
+- [x] The search keys are gone from all three locales
 
 **Verification:**
-- [ ] New `src/layouts/app-shell/AppHeader.test.tsx`, plus `AppSidebar.test.tsx` and `AppShell.test.tsx` green
-- [ ] Locales parse (`node -e JSON.parse`)
+- [x] New `src/layouts/app-shell/AppHeader.test.tsx`, plus `AppSidebar.test.tsx` and `AppShell.test.tsx` green
+- [x] Locales parse (`node -e JSON.parse`)
 
 **Dependencies:** None
 **Files:** `AppHeader.tsx`, `AppHeader.test.tsx` (new), `AppSidebar.tsx`, `src/locales/{en,cs,sk}.json`
@@ -59,18 +59,18 @@ drop the eyebrow bar, and use a `h-9` title bar with `mb-4`. Apply the same head
 `RouteLoadingSkeleton` (table and builder variants).
 
 **Acceptance criteria:**
-- [ ] No eyebrow placeholder bar in either skeleton
-- [ ] The heading placeholder is the same height as the real `PageHeader` (36 + 20 + 16 px)
+- [x] No eyebrow placeholder bar in either skeleton
+- [x] The heading placeholder is the same height as the real `PageHeader` (36 + 20 + 16 px)
 
 **Verification:**
-- [ ] `AppShellSkeleton.test.tsx` (update the class assertion at :19) and `RouteLoadingSkeleton.test.tsx` green
+- [x] `AppShellSkeleton.test.tsx` (update the class assertion at :19) and `RouteLoadingSkeleton.test.tsx` green
 
 **Dependencies:** Task 1, Task 2
 **Files:** `AppShellSkeleton.tsx`, `AppShellSkeleton.test.tsx`, `RouteLoadingSkeleton.tsx`, `RouteLoadingSkeleton.test.tsx`
 **Scope:** S
 
 ## Checkpoint A
-- [ ] Tasks 1–3 focused tests green, `tsc` clean
+- [x] Tasks 1–3 focused tests green, `tsc` clean (`vitest related`: 43 files / 214 tests)
 - [ ] Browser (`run` skill, `http://localhost:5173`): Platform providers and Resources at 1366×768 and 1920×1080.
       No clipping, no new page scrollbar, and no jump from skeleton to loaded page
 - [ ] Get a review from the user before Phase 2
