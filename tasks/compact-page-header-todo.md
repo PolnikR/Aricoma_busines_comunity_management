@@ -71,9 +71,9 @@ drop the eyebrow bar, and use a `h-9` title bar with `mb-4`. Apply the same head
 
 ## Checkpoint A
 - [x] Tasks 1–3 focused tests green, `tsc` clean (`vitest related`: 43 files / 214 tests)
-- [ ] Browser (`run` skill, `http://localhost:5173`): Platform providers and Resources at 1366×768 and 1920×1080.
+- [x] Browser (`run` skill, `http://localhost:5173`): Platform providers and Resources at 1366×768 and 1920×1080.
       No clipping, no new page scrollbar, and no jump from skeleton to loaded page
-- [ ] Get a review from the user before Phase 2
+- [x] Get a review from the user before Phase 2
 
 ---
 

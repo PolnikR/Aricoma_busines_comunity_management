@@ -72,7 +72,7 @@ Expected gain is about 42 px of vertical space per page on desktop. The table st
 
 ### Checkpoint A
 - [x] Focused tests green, `tsc` clean
-- [ ] Browser: Platform providers and Resources at 1366×768 and 1920×1080; no clipping, no extra scrollbar
+- [x] Browser: Platform providers and Resources at 1366×768 and 1920×1080; no clipping, no extra scrollbar (user-verified 2026-10-01)
 
 ### Phase 2: Callers (remove eyebrow, rename, update tests)
 - [ ] Task 4: Platform providers and Audit
