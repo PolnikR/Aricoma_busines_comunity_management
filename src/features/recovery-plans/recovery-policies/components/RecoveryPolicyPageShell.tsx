@@ -14,8 +14,8 @@ interface RecoveryPolicyPageShellProps {
   isFetching?: boolean
   onRefresh?: () => void
   actions?: ReactNode
-  inventoryTitle?: string
-  inventoryDescription?: string
+  inventoryTitle: string
+  inventoryDescription: string
   tabsAriaLabel: string
   children: ReactNode
 }
@@ -45,8 +45,8 @@ export function RecoveryPolicyPageShell({
       />
 
       <InventoryShell
-        {...(inventoryTitle !== undefined ? { inventoryTitle } : {})}
-        {...(inventoryDescription !== undefined ? { inventoryDescription } : {})}
+        inventoryTitle={inventoryTitle}
+        inventoryDescription={inventoryDescription}
         tabs={(
           <Tabs
             items={tabs}
@@ -54,6 +54,8 @@ export function RecoveryPolicyPageShell({
             onChange={onTabChange}
             ariaLabel={tabsAriaLabel}
             indicator="inset"
+            compact
+            className="w-full shrink-0 border-b-0 bg-surface px-0 sm:w-auto"
           />
         )}
       >

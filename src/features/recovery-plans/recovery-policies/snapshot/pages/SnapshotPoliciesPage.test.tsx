@@ -31,6 +31,8 @@ describe('SnapshotPoliciesPage', () => {
     render(<MemoryRouter><SnapshotPoliciesPage /></MemoryRouter>)
 
     expect(screen.getByRole('heading', { name: 'Recovery policies', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Snapshot policy records', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText('Browse and manage snapshot schedules returned by the backend.')).toBeInTheDocument()
     expect(screen.getByText('Snapshot policy catalogue')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Snapshot policies' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Application Recovery Policies' })).toBeInTheDocument()

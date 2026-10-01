@@ -35,4 +35,29 @@ describe('RecoveryPolicyPageShell', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Application Recovery' }))
     expect(onTabChange).toHaveBeenCalledWith('application-recovery')
   })
+
+  it('renders tabs with the surface-header recipe', () => {
+    render(
+      <RecoveryPolicyPageShell
+        activeTab="snapshot"
+        tabs={tabs}
+        onTabChange={vi.fn()}
+        title="Recovery Policies"
+        description="Manage recovery policies"
+        inventoryTitle="Snapshot policies"
+        inventoryDescription="Snapshot policy records"
+        tabsAriaLabel="Recovery policy types"
+      >
+        <div>Policy content</div>
+      </RecoveryPolicyPageShell>,
+    )
+
+    const tabList = screen.getByRole('tablist', { name: 'Recovery policy types' })
+    // cn() only joins classes, so these overrides sit next to the Tabs base `border-b px-3`.
+    expect(tabList).toHaveClass('w-full', 'shrink-0', 'border-b-0', 'bg-surface', 'px-0', 'sm:w-auto')
+
+    const selectedTab = screen.getByRole('tab', { name: 'Snapshot' })
+    expect(selectedTab).toHaveClass('after:inset-x-4', 'border-transparent')
+    expect(selectedTab).toHaveClass('text-xs', 'py-2.5')
+  })
 })
