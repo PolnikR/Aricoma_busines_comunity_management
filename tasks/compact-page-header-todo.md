@@ -211,7 +211,11 @@ Record the y-position where the table starts and whether a scrollbar appears, in
 | 1024×768 | Actions stay on the title row or wrap cleanly; nothing overlaps |
 | 390×844 mobile | Actions wrap below the title; sidebar toggle works |
 
-**Acceptance criteria:** no clipping or overlap at any size; skeleton → loaded with no jump; results recorded
+**Acceptance criteria:**
+- [x] No clipping or overlap at any size (48/48 combinations: no overlap, no page or horizontal scrollbar)
+- [x] Skeleton → loaded: no jump in settled samples. A direct skeleton comparison was not measurable (the skeleton has no h1); unit tests cover the geometry
+- [x] Results recorded in `tasks/compact-page-header-measurements.md` (+1366×600 for the real 768p laptop)
+- Finding (not caused by this change): contained routes squeeze the table on short viewports (Resources 1 row at 1280/1366×600; Infrastructure canvas ~170 px at 1024×768)
 **Dependencies:** Tasks 1–12
 **Scope:** S (fix-ups become their own tasks)
 
