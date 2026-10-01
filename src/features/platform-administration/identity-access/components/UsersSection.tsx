@@ -91,7 +91,7 @@ export function UsersSection() {
       ),
     },
     { id: 'username', header: t('identity.users.columns.username'), cell: user => user.username },
-    { id: 'roles', header: t('identity.users.columns.roles'), cell: user => user.roles.join(', ') || '—' },
+    { id: 'roles', header: t('identity.users.columns.roles'), cell: user => (user.roles.length > 0 ? String(user.roles.length) : '—') },
     { id: 'status', header: t('identity.users.columns.status'), cell: user => <UserStatusBadge status={user.status} /> },
     { id: 'activeSessionStart', header: t('identity.users.columns.activeSessionStart'), cell: user => formatUserTimestamp(user.activeSessionStart, language) },
   ], [language, t])

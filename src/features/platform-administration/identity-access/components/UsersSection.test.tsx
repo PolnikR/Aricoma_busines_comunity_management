@@ -66,12 +66,18 @@ describe('UsersSection', () => {
     expect(rowFor('Bob Jones').getByText('Disabled')).toBeInTheDocument()
   })
 
-  it('renders roles as a list and an em dash when the user has none', () => {
-    mockUsers({ users: [alice, bob] })
+  it('summarizes roles as a count in the table without rendering role names', () => {
+    const carol: UserRecord = { id: 'kc-carol', user: 'Carol White', username: 'carol', roles: ['auditor'], status: 'Active', activeSessionStart: null }
+    mockUsers({ users: [alice, bob, carol] })
     render(<UsersSection />)
 
-    expect(rowFor('Alice Smith').getByText('platform-admin, recovery-operator')).toBeInTheDocument()
-    expect(rowFor('Bob Jones').getAllByText('—')).toHaveLength(2)
+    const rolesCell = (name: string) => rowFor(name).getAllByRole('cell')[2]
+    expect(rolesCell('Alice Smith')).toHaveTextContent(/^2$/)
+    expect(rolesCell('Carol White')).toHaveTextContent(/^1$/)
+    expect(rolesCell('Bob Jones')).toHaveTextContent(/^—$/)
+    for (const role of [...alice.roles, ...carol.roles]) {
+      expect(screen.queryByText(role, { exact: false })).not.toBeInTheDocument()
+    }
   })
 
   it('formats the active session start and shows an em dash when it is null', () => {
