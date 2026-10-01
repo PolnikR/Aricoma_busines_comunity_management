@@ -29,7 +29,7 @@ describe('AppSidebar', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByRole('link', { name: 'Recovery Groups' }, { timeout: 5000 })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Recovery groups' }, { timeout: 5000 })).toHaveAttribute(
       'href',
       '/recovery-plans/recovery-groups',
     )
@@ -46,7 +46,7 @@ describe('AppSidebar', () => {
       </MemoryRouter>,
     )
 
-    const link = await screen.findByRole('link', { name: 'Recovery Runs' }, { timeout: 5000 })
+    const link = await screen.findByRole('link', { name: 'Recovery runs' }, { timeout: 5000 })
     expect(link).toHaveAttribute('href', '/recovery-plans/recovery-runs')
     expect(link).toHaveClass('bg-accent-soft', 'text-accent')
   })
@@ -62,7 +62,7 @@ describe('AppSidebar', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByRole('link', { name: 'Recovery Policies' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Recovery policies' })).toHaveAttribute(
       'href',
       '/recovery-plans/recovery-policies',
     )
@@ -79,7 +79,7 @@ describe('AppSidebar', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByRole('link', { name: 'Recovery Policies' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Recovery policies' })).toHaveAttribute(
       'href',
       '/recovery-plans/recovery-policies',
     )
@@ -129,7 +129,7 @@ describe('AppSidebar', () => {
       </MemoryRouter>,
     )
 
-    const link = await screen.findByRole('link', { name: 'Platform Providers' })
+    const link = await screen.findByRole('link', { name: 'Platform providers' })
     expect(link).toHaveAttribute('href', '/platform-administration/platform-providers')
     expect(link).toHaveClass('bg-accent-soft', 'text-accent')
   })
@@ -147,7 +147,7 @@ describe('AppSidebar', () => {
 
     const applications = await screen.findByRole(
       'link',
-      { name: 'Recovery Applications' },
+      { name: 'Recovery apps' },
       { timeout: 5000 },
     )
     expect(applications).toHaveClass('bg-accent-soft', 'text-accent')
@@ -187,7 +187,7 @@ describe('AppSidebar', () => {
 
       await user.click(await screen.findByRole('button', { name: 'Collapse menu' }, { timeout: 5000 }))
 
-      expect(screen.getByRole('link', { name: 'Recovery Groups' })).toHaveAttribute(
+      expect(screen.getByRole('link', { name: 'Recovery groups' })).toHaveAttribute(
         'href',
         '/recovery-plans/recovery-groups',
       )
