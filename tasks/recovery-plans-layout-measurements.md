@@ -3,7 +3,7 @@
 **Plan:** `tasks/recovery-plans-layout-alignment-plan.md`, Task 4 (human gate).
 **Code under test:** commits `f35e3d73` (Apps + Groups), `fef4faa0` (Runs), `354e58d0` (Policies).
 
-**Status:** vykonané 2026-10-01 v autentifikovanom prehliadači (pozri *Evidence*). 8 z 9 invariantov splnených; 1 nesplnený (výška surface headera s tabs vs Resources, obsahovo podmienené); follow-up gate pre 1366×600 spustený.
+**Status:** vykonané 2026-10-01 v autentifikovanom prehliadači (pozri *Evidence*). 8 z 9 invariantov splnených; 1 **ACCEPTED DEVIATION** (výška surface headera s tabs vs Resources — content-driven difference, nie bug; akceptoval používateľ 2026-10-01). Follow-up gate pre 1366×600 spustený → `tasks/short-viewport-table-floor-plan.md`. Plán uzavretý.
 
 ## Ako merať
 
@@ -120,7 +120,7 @@ URL po prepnutí: `?tab=applications`, `?tab=groups`, bez parametra; policy tabs
 | R11 Policy Sets load error (mock 503) | 337/165/981/566 | nič | nie |
 | R4 Groups delete error (`notice`, mock 409) | 337/250/981/481 | `role="alert"` 337/165/981/70 | nie |
 
-Nemerané: Runs loading, Apps/Snapshot empty, Apps delete `notice`.
+Nemerané: Runs loading, Apps/Snapshot empty, Apps delete `notice`. Nie je blocker (rozhodnutie používateľa): ekvivalentné slot topológie sú overené na iných pages/states (Groups empty/error/notice, Apps/Policy Sets error) a focused testy tieto stavy pokrývajú.
 
 ### Text
 
@@ -133,10 +133,10 @@ title (ľavý blok prítomný na R1–R11). V normal stave nie je nad Card žiad
 - [x] Card Y = R1 (165) v normal stave bez `notice`/`metrics` (zhoda 0 px).
 - [x] S `notice` sa Card posunie nadol o 85 px (alert 70 + gap 16, zaokrúhlené na celé px); očakávané.
 - [x] `notice` nemení X/W Card (337/981) a nevytvára horizontálny overflow.
-- [ ] **Nesplnené:** surface header s tabs (R5–R10: 58 px) ≠ R2 (62 px na V1, 85 px na V2/V3).
+- [x] **ACCEPTED DEVIATION — content-driven difference, nie bug** (akceptoval používateľ 2026-10-01; Recovery ani shared komponenty sa nemenia): surface header s tabs (R5–R10: 58 px) ≠ R2 (62 px na V1, 85 px na V2/V3).
   Recept je rovnaký (tablist `border-bottom` 0 px na oboch). Rozdiel spôsobuje obsah R2: provider badge
   v tab labeloch (tablist 40 vs 38 px), scroll controls a na V2/V3 zalomený provider-filter description.
-  Recovery tabbed headery (58) sú o 1 px vyššie než canonical headery bez tabs (57).
+  Recovery tabbed headery (58) sú o 1 px vyššie než canonical headery bez tabs (57). Absolútna zhoda s R2 sa nevynucuje.
 - [x] Žiadny prázdny surface header, žiadny duplikovaný text.
 - [x] Žiadny voľný informačný text mimo Card; jediný element nad Card je `notice` alert.
 - [x] Prepínanie tabov nemení X/W/H Card (zhoda 0 px).
@@ -144,7 +144,7 @@ title (ľavý blok prítomný na R1–R11). V normal stave nie je nad Card žiad
 
 **Follow-up gate — spustený:** na V3 1366×600 má data viewport Recovery stránok 135–137 px; R8 ukazuje
 1 z 5 riadkov, R9 0 z 3 plne viditeľných. Rovnaký stav má reference R1 Platform Providers (137 px, 2 zo 4).
-R2 Resources drží `lg:min-h-[480px]` a route scrolluje. → Podľa plánu samostatný follow-up plán
+R2 Resources drží `lg:min-h-[480px]` a route scrolluje. → Samostatný follow-up plán `tasks/short-viewport-table-floor-plan.md`
 (cross-feature: Recovery + Providers + Platform Providers + Policy Sets), nie súčasť tohto plánu.
 
 ### Pre-existing pozorovania (mimo scope, bez zmeny)

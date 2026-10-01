@@ -1,7 +1,7 @@
 # Implementačný plán: Zjednotenie layoutu Recovery Plans stránok
 
 Tasks: `tasks/recovery-plans-layout-alignment-todo.md`.
-Revízia: 2026-10-01 (r3; Tasks 1–3 implementované, Task 4 čaká na človeka) — rozhodnutia zapracované; short-viewport floor mimo scope; concurrency protocol kontroluje aj zmenu HEAD.
+Revízia: 2026-10-01 (r3; **uzavretý** — Tasks 1–4 dokončené, 1 accepted deviation, short-viewport follow-up v `tasks/short-viewport-table-floor-plan.md`) — rozhodnutia zapracované; short-viewport floor mimo scope; concurrency protocol kontroluje aj zmenu HEAD.
 
 ## Stav repozitára — iba snapshot pri poslednej revízii
 
