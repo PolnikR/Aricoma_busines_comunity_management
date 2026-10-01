@@ -72,7 +72,7 @@ function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChan
   if (sectionId === 'users') return <UsersSection />
   if (sectionId === 'realm-roles') return <RealmRolesSection />
   if (sectionId === 'groups') return <GroupsSection />
-  if (sectionId === 'clients') return <ClientsSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
+  if (sectionId === 'clients') return <ClientsSection />
   if (sectionId === 'client-scopes') return <ClientScopesSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'realm-settings') return <RealmSettingsSection tabId={tabId} onTabChange={onTabChange} />
   if (sectionId === 'authentication') return <AuthenticationSection tabId={tabId} onTabChange={onTabChange} />
