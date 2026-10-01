@@ -778,6 +778,7 @@
   "drawer.applicationDetail": "Application detail",
   "drawer.closeVm": "Close detail",
   "drawer.closeProvider": "Close provider",
+  "drawer.entity.platformProvider": "Platform provider",
   "drawer.closeApplication": "Close application",
   "drawer.entity.recoveryApplication": "Recovery app",
   "recoveryApplications.drawer.tierCount": "Tiers: {{count}}",

@@ -753,6 +753,7 @@
   "drawer.applicationDetail": "Podrobnosti aplikácie",
   "drawer.closeVm": "Zavrieť podrobnosti virtuálneho stroja",
   "drawer.closeProvider": "Zavrieť podrobnosti poskytovateľa",
+  "drawer.entity.platformProvider": "Platformový poskytovateľ",
   "drawer.closeApplication": "Zavrieť podrobnosti aplikácie",
   "drawer.entity.recoveryApplication": "Aplikácia obnovy",
   "recoveryApplications.drawer.tierCount": "Tiery: {{count}}",

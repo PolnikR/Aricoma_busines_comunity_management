@@ -753,6 +753,7 @@
   "drawer.applicationDetail": "Podrobnosti aplikace",
   "drawer.closeVm": "Zavřít podrobnosti",
   "drawer.closeProvider": "Zavřít poskytovatele",
+  "drawer.entity.platformProvider": "Platformní poskytovatel",
   "drawer.closeApplication": "Zavřít aplikaci",
   "drawer.entity.recoveryApplication": "Aplikace obnovy",
   "recoveryApplications.drawer.tierCount": "Tiery: {{count}}",

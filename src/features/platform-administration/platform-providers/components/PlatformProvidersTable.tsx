@@ -251,30 +251,34 @@ export function PlatformProvidersTable({
         open={selected !== null && !isSmtpDialogOpen}
         onClose={() => { setSelectedId(null) }}
         resizable
-        eyebrow={t('drawer.selectedProvider')}
         title={selected?.name ?? ''}
+        meta={selected ? [
+          t('drawer.entity.platformProvider'),
+          <Badge key="type" color="info" size="sm">{selected.type}</Badge>,
+          selected.type === 'AIRFLOW' || selected.type === 'KEYCLOAK' ? (
+            <Badge key="credential" color={credentialStatusColor(selected.credentialStatus)} size="sm">
+              {t(`providers.credentials.status.${selected.credentialStatus}`)}
+            </Badge>
+          ) : null,
+        ] : []}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerExtra={selected ? (
-          <div className="flex min-w-0 items-center justify-between gap-3">
-            <Badge color="info" size="sm">{selected.type}</Badge>
-            {selected.type === 'SMTP' ? (
-              <Button size="sm" variant="outline" onClick={() => { setIsSmtpDialogOpen(true) }}>
-                {t('platformProviders.smtpDialog.button')}
-              </Button>
-            ) : null}
-          </div>
+        headerActions={selected?.type === 'SMTP' ? (
+          <Button size="sm" variant="outline" onClick={() => { setIsSmtpDialogOpen(true) }}>
+            {t('platformProviders.smtpDialog.button')}
+          </Button>
         ) : null}
         ariaLabel={t('drawer.providerDetail')}
         closeLabel={t('drawer.closeProvider')}
+        resizeLabel={t('drawer.resize')}
+        footerStart={selected ? (
+          <Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger">
+            {t('buttons.delete')}
+          </Button>
+        ) : null}
         footer={selected ? (
-          <>
-            <Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger" className="flex-1">
-              {t('buttons.delete')}
-            </Button>
-            <Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm" className="flex-1">
-              {t('buttons.edit')}
-            </Button>
-          </>
+          <Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">
+            {t('buttons.edit')}
+          </Button>
         ) : null}
       >
         {selected ? <PlatformProviderDetail provider={selected} /> : null}

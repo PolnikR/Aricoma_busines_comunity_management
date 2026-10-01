@@ -419,4 +419,43 @@ describe('PlatformProvidersTable', () => {
     expect(dialog).toHaveTextContent('"url": null')
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
   })
+  describe('Model C drawer', () => {
+    const renderTable = (providers: PlatformProviderRecord[]) => render(
+      <PlatformProvidersTable providers={providers} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} />,
+    )
+
+    it('shows entity, type and credential status in the meta row and the id as subtitle', async () => {
+      const user = userEvent.setup()
+      renderTable([baseProvider])
+      await user.click(screen.getByText('Primary Airflow'))
+      const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
+      const meta = within(drawer).getByText('Platform provider').parentElement
+
+      expect(meta).toHaveTextContent('Platform providerAIRFLOWAvailable')
+      expect(meta?.nextElementSibling).toHaveTextContent('airflow-01')
+    })
+
+    it('puts the SMTP action in the title row', async () => {
+      const user = userEvent.setup()
+      renderTable([smtpProvider])
+      await user.click(screen.getByText('Test SMTP'))
+      const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
+      const titleRow = within(drawer).getByRole('heading', { name: 'Test SMTP' }).parentElement
+
+      expect(titleRow).toContainElement(within(drawer).getByRole('button', { name: 'SMTP' }))
+      expect(within(drawer).getByText('Platform provider').parentElement).not.toHaveTextContent('Available')
+    })
+
+    it('puts Delete left and Edit right', async () => {
+      const user = userEvent.setup()
+      renderTable([baseProvider])
+      await user.click(screen.getByText('Primary Airflow'))
+      const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
+      const deleteButton = within(drawer).getByRole('button', { name: 'Delete' })
+      const footer = deleteButton.parentElement?.parentElement
+
+      expect(footer?.children[0]).toContainElement(deleteButton)
+      expect(footer?.children[1]).toContainElement(within(drawer).getByRole('button', { name: 'Edit' }))
+    })
+  })
 })
