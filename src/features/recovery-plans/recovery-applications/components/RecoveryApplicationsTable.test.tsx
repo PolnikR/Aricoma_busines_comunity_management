@@ -1,8 +1,8 @@
-import type { ReactElement } from 'react'
+import type { ComponentProps, ReactElement } from 'react'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { RecoveryApplicationsTable } from './RecoveryApplicationsTable'
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
@@ -267,7 +267,7 @@ describe('RecoveryApplicationsTable', () => {
 
     await user.click(screen.getByText('Finance Recovery'))
     const drawer = screen.getByRole('dialog', { name: 'Application detail' })
-    await user.click(within(drawer).getByRole('tab', { name: 'Orchestration' }))
+    await user.click(within(drawer).getByRole('button', { name: 'Orchestration' }))
 
     expect(within(drawer).getByRole('link', { name: /dag_260811133132_fbffbefb/ })).toHaveAttribute(
       'href',
@@ -285,9 +285,65 @@ describe('RecoveryApplicationsTable', () => {
 
     await user.click(screen.getByText('Development Recovery'))
     const drawer = screen.getByRole('dialog', { name: 'Application detail' })
-    await user.click(within(drawer).getByRole('tab', { name: 'Orchestration' }))
+    await user.click(within(drawer).getByRole('button', { name: 'Orchestration' }))
 
     expect(within(drawer).queryByText('Airflow DAG ID')).not.toBeInTheDocument()
     expect(within(drawer).queryByRole('button', { name: 'View recovery runs →' })).not.toBeInTheDocument()
+  })
+  describe('Model C drawer', () => {
+    beforeEach(() => {
+      vi.mocked(useLatestOrchestratorRun).mockReturnValue({ latestRun: null, isLoading: false, error: null })
+    })
+
+    const openDetail = async (app: RecoveryApplicationListItem, props: Pick<ComponentProps<typeof RecoveryApplicationsTable>, 'onEdit' | 'onDelete'> = {}) => {
+      const user = userEvent.setup()
+      renderTable(<RecoveryApplicationsTable applications={[app]} {...props} />)
+      await user.click(screen.getByText(app.data.application.name))
+      return { user, drawer: screen.getByRole('dialog', { name: 'Application detail' }) }
+    }
+    const metaRow = (drawer: HTMLElement) => {
+      const row = within(drawer).getByText('Recovery app').parentElement
+      if (!row) throw new Error('Expected the meta row')
+      return row
+    }
+
+    it('replaces the tabs with Overview open and Orchestration and Inventory collapsed', async () => {
+      const { drawer } = await openDetail(application)
+
+      expect(within(drawer).queryByRole('tab')).not.toBeInTheDocument()
+      expect(within(drawer).getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-expanded', 'true')
+      expect(within(drawer).getByRole('button', { name: 'Orchestration' })).toHaveAttribute('aria-expanded', 'false')
+      expect(within(drawer).getByRole('button', { name: 'Inventory' })).toHaveAttribute('aria-expanded', 'false')
+      expect(within(drawer).getByRole('button', { name: 'Inventory' })).toHaveAccessibleDescription('Tiers: 1')
+    })
+
+    it('shows entity, status and the no-runs fact in the meta row and the provider as summary', async () => {
+      const { drawer } = await openDetail(application)
+      expect(metaRow(drawer)).toHaveTextContent('Recovery app')
+      expect(metaRow(drawer)).toHaveTextContent('No runs yet')
+      expect(within(drawer).getByRole('button', { name: 'Orchestration' })).toHaveAccessibleDescription('Dynamic Airflow')
+    })
+
+    it('says Not orchestrated / Not configured only when the app was never pushed', async () => {
+      const { drawer } = await openDetail(developmentApplication)
+      expect(metaRow(drawer)).toHaveTextContent('Not orchestrated')
+      expect(within(drawer).getByRole('button', { name: 'Orchestration' })).toHaveAccessibleDescription('Not configured')
+    })
+
+    it('reports an incomplete orchestration instead of Not orchestrated', async () => {
+      const { drawer } = await openDetail({ ...application, orchestrationProviderId: null })
+      expect(metaRow(drawer)).toHaveTextContent('Orchestration incomplete')
+      expect(drawer).not.toHaveTextContent('Not orchestrated')
+      expect(drawer).not.toHaveTextContent('Not configured')
+    })
+
+    it('puts Delete left and Edit right, and shows only the handlers that exist', async () => {
+      const { drawer } = await openDetail(application, { onEdit: vi.fn(), onDelete: vi.fn().mockResolvedValue({ applications: [], rollback: null }) })
+      const deleteButton = within(drawer).getByRole('button', { name: 'Delete' })
+      const editButton = within(drawer).getByRole('button', { name: 'Edit' })
+      const footer = deleteButton.parentElement?.parentElement
+      expect(footer?.children[0]).toContainElement(deleteButton)
+      expect(footer?.children[1]).toContainElement(editButton)
+    })
   })
 })

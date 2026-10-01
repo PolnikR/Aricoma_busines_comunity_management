@@ -14,13 +14,13 @@ import {
   DataTablePagination,
   DataTableRequestState,
   DetailDrawer,
+  DetailDrawerSection,
   DetailRow,
   RowActionsMenu,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
-import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
 import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/features/recovery-plans/recovery-runs/helpers/formatRecoveryRun'
 import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
@@ -32,6 +32,11 @@ import type { RollbackReport } from '../model/recoveryApplicationTypes'
 import { toRecoveryApplicationJson } from '../helpers/mapRecoveryApplications'
 import { RecoveryApplicationRollbackResultModal } from './RecoveryApplicationRollbackResultModal'
 import { RecoveryApplicationInventory } from './RecoveryApplicationInventory'
+import {
+  getRecoveryGroupOrchestrationState,
+  orchestrationMetaText,
+  orchestrationSummaryText,
+} from '@/features/recovery-plans/recovery-groups/helpers/recoveryGroupOrchestrationState'
 
 interface RecoveryApplicationsTableProps {
   applications: RecoveryApplicationListItem[]
@@ -139,7 +144,6 @@ export function RecoveryApplicationsTable({
   const [deleteTarget, setDeleteTarget] = useState<RecoveryApplicationListItem | null>(null)
   const [rollbackResult, setRollbackResult] = useState<{ appName: string; report: RollbackReport } | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
-  const [detailTab, setDetailTab] = useState<'overview' | 'orchestration' | 'inventory'>('overview')
   const errorDescription = resolveUserFacingErrorMessage(error, '')
 
   const filterOptions = useMemo(() => ({
@@ -163,7 +167,11 @@ export function RecoveryApplicationsTable({
   const activeFilterCount = Number(Boolean(filters.environment)) + Number(Boolean(filters.platform))
 
   const navigate = useNavigate()
-  const { data: platformProviders = [] } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
+  const {
+    data: platformProviders = [],
+    isLoading: isPlatformProvidersLoading,
+    isError: isPlatformProvidersError,
+  } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
   const selectedOrchestrationProviderUrl = platformProviders.find(
     provider => provider.id === selected?.orchestrationProviderId,
   )?.url
@@ -172,10 +180,18 @@ export function RecoveryApplicationsTable({
     selectedAirflowRunId && selected?.orchestrationProviderId,
   )
   const selectedDagId = selectedAirflowRunId ? normalizeAirflowDagId(selectedAirflowRunId) : null
-  const { latestRun } = useLatestOrchestratorRun(
+  const latestRunState = useLatestOrchestratorRun(
     isSelectedOrchestrated ? (selected?.orchestrationProviderId ?? null) : null,
     selectedDagId,
   )
+  const { latestRun } = latestRunState
+  const orchestrationState = selected
+    ? getRecoveryGroupOrchestrationState(
+        selected,
+        { providers: platformProviders, isLoading: isPlatformProvidersLoading, isError: isPlatformProvidersError },
+        latestRunState,
+      )
+    : null
 
   const columns = useMemo(() => [
     ...getBaseColumns(t, providers),
@@ -366,7 +382,7 @@ export function RecoveryApplicationsTable({
           density={table.density}
           minWidthClassName="min-w-250"
           ariaLabel={isLoading ? t('pages.recovery.loading') : t('pages.recovery.tableAriaLabel')}
-          onRowClick={(app) => { setSelectedId(app.id); setDetailTab('overview') }}
+          onRowClick={(app) => { setSelectedId(app.id) }}
           selectedRowKey={selectedId}
           emptyContent={applications.length > 0 ? t('messages.noResults') : t('pages.recovery.empty.noApplications')}
         />
@@ -396,50 +412,44 @@ export function RecoveryApplicationsTable({
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
-        eyebrow={t('drawer.selectedApplication')}
         title={selected?.data.application.name ?? ''}
+        meta={selected ? [
+          t('drawer.entity.recoveryApplication'),
+          <Badge key="status" color={getStatusBadgeColor(getApplicationStatus(selected))} size="sm">
+            {t(getApplicationStatus(selected) === 'Active' ? 'details.statusActive' : 'details.statusDraft')}
+          </Badge>,
+          orchestrationState ? orchestrationMetaText(orchestrationState, t) : null,
+        ] : []}
         ariaLabel={t('drawer.applicationDetail')}
         closeLabel={t('drawer.closeApplication')}
-        footer={selected ? (
-          <>
-            {onDelete ? (
-              <Button
-                size="sm"
-                variant="danger"
-                className="flex-1"
-                onClick={() => { setDeleteTarget(selected) }}
-              >
-                {t('buttons.delete')}
-              </Button>
-            ) : null}
-            {onEdit ? (
-              <Button
-                size="sm"
-                className="flex-1"
-                onClick={() => { onEdit(selected.id); setSelectedId(null) }}
-              >
-                {t('buttons.edit')}
-              </Button>
-            ) : null}
-          </>
+        resizeLabel={t('drawer.resize')}
+        footerStart={selected && onDelete ? (
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={() => { setDeleteTarget(selected) }}
+          >
+            {t('buttons.delete')}
+          </Button>
+        ) : null}
+        footer={selected && onEdit ? (
+          <Button
+            size="sm"
+            onClick={() => { onEdit(selected.id); setSelectedId(null) }}
+          >
+            {t('buttons.edit')}
+          </Button>
         ) : null}
       >
         {selected ? (
-          <>
-            <Tabs
-              items={[
-                { value: 'overview' as const, label: t('details.tabs.overview') },
-                { value: 'orchestration' as const, label: t('details.tabs.orchestration') },
-                { value: 'inventory' as const, label: t('details.tabs.inventory') },
-              ]}
-              value={detailTab}
-              onChange={setDetailTab}
-              ariaLabel={t('drawer.applicationDetail')}
-              indicator="inset"
-              className="px-5"
-            />
-            {detailTab === 'overview' ? (
-              <dl className="px-5 py-4 space-y-3">
+          // Keyed by application so each newly opened app starts with the default sections.
+          <div key={selected.id}>
+            <DetailDrawerSection
+              title={t('details.tabs.overview')}
+              summary={getProviderLabel(selected.data.application.platform)}
+              defaultOpen
+            >
+              <dl>
                 <DetailRow label={t('details.description')} value={selected.data.application.description ?? '-'} />
                 <DetailRow label={t('details.environment')} value={selected.data.application.environment} />
                 <DetailRow label={t('details.platform')} value={getProviderLabel(selected.data.application.platform)} />
@@ -460,8 +470,12 @@ export function RecoveryApplicationsTable({
                   />
                 )}
               </dl>
-            ) : detailTab === 'orchestration' ? (
-              <dl className="px-5 py-4 space-y-3">
+            </DetailDrawerSection>
+            <DetailDrawerSection
+              title={t('details.tabs.orchestration')}
+              summary={orchestrationState ? orchestrationSummaryText(orchestrationState, t) : undefined}
+            >
+              <dl>
                 <DetailRow
                   label={t('details.orchestration')}
                   value={
@@ -495,25 +509,32 @@ export function RecoveryApplicationsTable({
                     />
                     <DetailRow label={t('details.lastExecuted')} value={formatRunTimestamp(latestRun?.startedAt ?? null)} />
                     <DetailRow label={t('details.duration')} value={formatRunDuration(latestRun?.durationSeconds ?? null)} />
-                    <Button
-                      size="sm"
-                      variant="soft"
-                      className="w-full"
-                      onClick={() => {
-                        void navigate(`${routes.recoveryRuns}?tab=applications&entityType=application&entityId=${encodeURIComponent(selected.id)}`)
-                      }}
-                    >
-                      {t('buttons.viewRecoveryRuns')}
-                    </Button>
                   </>
-                ) : (
-                  <p className="text-xs text-text-subtle">{t('details.notOrchestrated')}</p>
-                )}
+                ) : null}
               </dl>
-            ) : (
+              {isSelectedOrchestrated ? (
+                <Button
+                  size="sm"
+                  variant="soft"
+                  className="mt-3 w-full"
+                  onClick={() => {
+                    void navigate(`${routes.recoveryRuns}?tab=applications&entityType=application&entityId=${encodeURIComponent(selected.id)}`)
+                  }}
+                >
+                  {t('buttons.viewRecoveryRuns')}
+                </Button>
+              ) : (
+                <p className="mt-2 text-xs text-text-subtle">{t('details.notOrchestrated')}</p>
+              )}
+            </DetailDrawerSection>
+            <DetailDrawerSection
+              title={t('details.tabs.inventory')}
+              summary={t('recoveryApplications.drawer.tierCount', { count: Object.keys(selected.data.application.tiers).length })}
+              flush
+            >
               <RecoveryApplicationInventory runId={selectedAirflowRunId ?? null} active />
-            )}
-          </>
+            </DetailDrawerSection>
+          </div>
         ) : null}
       </DetailDrawer>
 
