@@ -80,6 +80,60 @@
         }
       }
     },
+    "/get_users": {
+      "get": {
+        "tags": [
+          "Identity & Access"
+        ],
+        "summary": "Get Users",
+        "operationId": "get_users_get_users_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/get_providers": {
       "get": {
         "tags": [
@@ -6438,6 +6492,30 @@
               }
             ],
             "title": "Description"
+          },
+          "users": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Users",
+            "default": []
+          },
+          "userCount": {
+            "type": "integer",
+            "title": "Usercount",
+            "default": 0
+          },
+          "clientId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clientid"
           }
         },
         "type": "object",
@@ -6748,6 +6826,107 @@
           "tags"
         ],
         "title": "TagsResponse"
+      },
+      "UserRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "user": {
+            "type": "string",
+            "title": "User"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "emailVerified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emailverified"
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Createdat"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Roles"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Active",
+              "Disabled"
+            ],
+            "title": "Status"
+          },
+          "activeSessionStart": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activesessionstart"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user",
+          "username",
+          "roles",
+          "status"
+        ],
+        "title": "UserRecord",
+        "description": "Built from a Keycloak UserRepresentation plus role-mappings/sessions lookups\n(api/routers/identity.py's _build_user_record) - not a Keycloak type, so no\nextra=\"allow\"; unmapped Keycloak fields are intentionally dropped."
+      },
+      "UsersResponse": {
+        "properties": {
+          "users": {
+            "items": {
+              "$ref": "#/components/schemas/UserRecord"
+            },
+            "type": "array",
+            "title": "Users"
+          }
+        },
+        "type": "object",
+        "required": [
+          "users"
+        ],
+        "title": "UsersResponse"
       },
       "ValidationError": {
         "properties": {
@@ -7339,6 +7518,11 @@
             "type": "object",
             "title": "Clusters"
           },
+          "consistency_groups": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Consistency Groups"
+          },
           "provider_id": {
             "anyOf": [
               {
@@ -7369,7 +7553,8 @@
           "volumes",
           "pools",
           "hosts",
-          "clusters"
+          "clusters",
+          "consistency_groups"
         ],
         "title": "VolumesResponse"
       }

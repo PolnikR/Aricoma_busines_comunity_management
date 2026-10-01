@@ -6,12 +6,17 @@
  */
 import * as zod from 'zod';
 
+export const rolesPermissionsResponseRolesItemUsersDefault = [];
+export const rolesPermissionsResponseRolesItemUserCountDefault = 0;
 export const RolesPermissionsResponse = zod.object({
   "permissions": zod.array(zod.string()),
   "roles": zod.array(zod.object({
   "name": zod.string(),
   "permissions": zod.array(zod.string()),
-  "description": zod.union([zod.string(),zod.null()]).exactOptional()
+  "description": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "users": zod.array(zod.string()).default(rolesPermissionsResponseRolesItemUsersDefault),
+  "userCount": zod.int().default(rolesPermissionsResponseRolesItemUserCountDefault),
+  "clientId": zod.union([zod.string(),zod.null()]).exactOptional()
 }))
 })
 

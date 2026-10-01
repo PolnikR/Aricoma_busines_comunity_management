@@ -96,6 +96,7 @@ export const VolumesResponse = zod.object({
   "clusters": zod.record(zod.string(), zod.object({
   "name": zod.string().default(volumesResponseClustersNameDefault)
 })).default(volumesResponseClustersDefault),
+  "consistency_groups": zod.record(zod.string(), zod.unknown()),
   "provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "provider_type": zod.union([zod.string(),zod.null()]).exactOptional()
 })

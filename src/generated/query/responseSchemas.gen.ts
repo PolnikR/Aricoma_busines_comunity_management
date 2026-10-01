@@ -22,6 +22,7 @@ import { RecoveryGroupsResponse } from './zod/recoveryGroupsResponse.gen'
 import { RolesPermissionsResponse } from './zod/rolesPermissionsResponse.gen'
 import { SnapshotPoliciesResponse } from './zod/snapshotPoliciesResponse.gen'
 import { TagsResponse } from './zod/tagsResponse.gen'
+import { UsersResponse } from './zod/usersResponse.gen'
 import { VdisksByVmResponse } from './zod/vdisksByVmResponse.gen'
 import { VmsResponse } from './zod/vmsResponse.gen'
 import { VolumeTreeResponse } from './zod/volumeTreeResponse.gen'
@@ -30,6 +31,7 @@ import { VolumesResponse } from './zod/volumesResponse.gen'
 export const responseSchemas: Record<string, z.ZodType> = {
   'GET /health': HealthResponse,
   'GET /get_roles_permissions': RolesPermissionsResponse,
+  'GET /get_users': UsersResponse,
   'GET /get_providers': ProvidersResponse,
   'POST /submit_provider': ProvidersResponse,
   'GET /test_provider': ProviderTestResponse,

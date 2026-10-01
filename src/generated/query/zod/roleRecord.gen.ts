@@ -6,10 +6,15 @@
  */
 import * as zod from 'zod';
 
+export const roleRecordUsersDefault = [];
+export const roleRecordUserCountDefault = 0;
 export const RoleRecord = zod.object({
   "name": zod.string(),
   "permissions": zod.array(zod.string()),
-  "description": zod.union([zod.string(),zod.null()]).exactOptional()
+  "description": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "users": zod.array(zod.string()).default(roleRecordUsersDefault),
+  "userCount": zod.int().default(roleRecordUserCountDefault),
+  "clientId": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export type RoleRecord = zod.input<typeof RoleRecord>;
