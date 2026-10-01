@@ -84,11 +84,11 @@ edits: render `<RealmRolesSection />` and remove the `realm-roles` case (disable
 Do this in EN/CS/SK, after `grep`-confirming each key has no remaining references in `src/`.
 
 **Acceptance criteria:**
-- [ ] Each removed key has zero references in `src/`; all three locales have the same `identity.roles.*` key set
+- [x] Each removed key has zero references in `src/`; all three locales have the same `identity.roles.*` key set
 
 **Verification:**
-- [ ] `grep -rn` per key; JSON parse; `npm exec vitest run src/features/platform-administration/identity-access/components/RealmRolesSection.test.tsx src/features/platform-administration/identity-access/components/IdentityAccessLocalization.test.tsx`; `git diff --check`
-- [ ] `git diff --cached` reviewed: only removed `identity.roles.*` lines
+- [x] `grep -rn` per key; JSON parse; `npm exec vitest run src/features/platform-administration/identity-access/components/RealmRolesSection.test.tsx src/features/platform-administration/identity-access/components/IdentityAccessLocalization.test.tsx`; `git diff --check`
+- [x] `git diff --cached` reviewed: only removed `identity.roles.*` lines
 
 **Dependencies:** Task 3
 **Files:** `src/locales/{en,cs,sk}.json`

@@ -74,7 +74,7 @@ endpoint returns application RBAC roles synced as Keycloak client roles, not gen
 - [ ] Focused section/page tests, typecheck and eslint green; review with human
 
 ### Phase 3: Cleanup
-- [ ] Task 4: Remove orphaned role-workspace locale keys (EN/CS/SK)
+- [x] Task 4: Remove orphaned role-workspace locale keys (EN/CS/SK)
 
 ### Checkpoint C
 - [ ] All acceptance criteria met; `git diff --check` clean; every task committed
