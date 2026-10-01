@@ -1,7 +1,7 @@
 # TODO: Zjednotenie layoutu Recovery Plans stránok
 
 Plán: `tasks/recovery-plans-layout-alignment-plan.md` (revízia r3, 2026-10-01).
-Stav: Tasks 1–3 hotové (`f35e3d73`, `fef4faa0`, `354e58d0`); Task 4 čaká na kontrolu človekom.
+Stav: Tasks 1–3 hotové (`f35e3d73`, `fef4faa0`, `354e58d0`); Task 4 vykonaný — evidence v `tasks/recovery-plans-layout-measurements.md`; čaká na rozhodnutie o 1 nesplnenom invariante a short-viewport follow-upe.
 
 ## Safety
 
@@ -135,10 +135,10 @@ Copy (en; sk/cs v rovnakom štýle ako existujúce `*.inventoryTitle/Description
 - [x] Pripraví checklist do `tasks/recovery-plans-layout-measurements.md`: routes, viewporty, čo merať, očakávané invarianty.
 
 **Človek:**
-- [ ] Vykoná kontrolu v autentifikovanom prehliadači (`http://localhost:5173`) a dodá screenshots alebo merania.
+- [x] Prihlásil agentov prehliadač do Keycloak; meranie a screenshots vykonal skript agenta v tomto autentifikovanom okne.
 
 **Agent (až potom):**
-- [ ] Zapíše **iba dodané** výsledky do evidence súboru. Žiadne vymyslené merania.
+- [x] Zapíše **iba dodané** výsledky do evidence súboru. Žiadne vymyslené merania.
 
 **Routes:** Recovery Apps, Recovery Groups, Recovery Runs (All / Applications / Recovery Groups),
 Snapshot / Application Recovery / Clean Room policies, Policy Sets; referencie Platform Providers, Resources VMware.
@@ -150,17 +150,17 @@ výška data viewportu a počet viditeľných riadkov; pozícia pagination; empt
 X/W/H Card pri prepínaní tabov (Runs, Policies); horizontálny page scroll.
 
 **Očakávané invarianty:**
-- [ ] Card X/W všetkých Recovery stránok = canonical Platform Providers layout (±1 px).
-- [ ] Card top/Y porovnávať iba pri rovnakej slot topológii — normálny stav bez `notice`/`metrics` — voči Platform Providers normal state (±1 px).
-- [ ] Ak je prítomný `notice` (napr. mutation/error alert), posun Card nadol je očakávaný, nie regresia; error/mutation states sa merajú, ale nevyžaduje sa rovnaké Card Y ako pri Platform Providers normal state.
-- [ ] `notice` nemení X/W Card a nevytvára horizontálny overflow.
-- [ ] Surface header s tabs má rovnakú výšku ako Resources VMware.
-- [ ] Žiadny prázdny surface header, žiadny duplikovaný text.
-- [ ] Žiadny voľný informačný text mimo Card; explicitný `InventoryShell.notice` (napr. error/mutation Alert) je povolený a zámerne sa renderuje nad Card.
-- [ ] Prepínanie tabov nemení X/W/H Card.
-- [ ] Žiadny horizontálny page scroll.
+- [x] Card X/W všetkých Recovery stránok = canonical Platform Providers layout (±1 px).
+- [x] Card top/Y porovnávať iba pri rovnakej slot topológii — normálny stav bez `notice`/`metrics` — voči Platform Providers normal state (±1 px).
+- [x] Ak je prítomný `notice` (napr. mutation/error alert), posun Card nadol je očakávaný, nie regresia; error/mutation states sa merajú, ale nevyžaduje sa rovnaké Card Y ako pri Platform Providers normal state.
+- [x] `notice` nemení X/W Card a nevytvára horizontálny overflow.
+- [ ] Surface header s tabs má rovnakú výšku ako Resources VMware. _(Nesplnené: 58 vs 62/85 px — obsah Resources tabov; pozri evidence.)_
+- [x] Žiadny prázdny surface header, žiadny duplikovaný text.
+- [x] Žiadny voľný informačný text mimo Card; explicitný `InventoryShell.notice` (napr. error/mutation Alert) je povolený a zámerne sa renderuje nad Card.
+- [x] Prepínanie tabov nemení X/W/H Card.
+- [x] Žiadny horizontálny page scroll.
 
-**Follow-up gate:** ak 1366×600 ukáže kolaps tabuľky, vznikne **samostatný** plán pre short-viewport floor —
+**Follow-up gate (spustený — evidence):** ak 1366×600 ukáže kolaps tabuľky, vznikne **samostatný** plán pre short-viewport floor —
 nie súčasť tohto TODO.
 
 **Dependencies:** Tasks 1–3 + Checkpoint
