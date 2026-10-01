@@ -1,30 +1,48 @@
-import { useEffect, useRef } from 'react'
-import type { ReactNode } from 'react'
+import { Fragment, useEffect, useRef } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { useResizablePanel } from '@/shared/hooks/useResizablePanel'
+import { CloseIcon } from '@/shared/icons/Icons'
 import { cn } from '@/shared/utils/cn'
 
 interface DetailDrawerProps {
   open: boolean
   onClose: () => void
+  // Transitional (detail-drawer-model-c): removed in Task 18.
   eyebrow?: string
   title: ReactNode
+  // One line under the meta row, e.g. a mono ID.
   subtitle?: ReactNode
+  // Meta row under the title: object type, status badges, short facts. Falsy items are skipped.
+  meta?: readonly ReactNode[]
+  // Small actions in the title row, before the close button.
+  headerActions?: ReactNode
+  // Transitional (detail-drawer-model-c): removed in Task 18.
   headerExtra?: ReactNode
   children?: ReactNode
   footer?: ReactNode
+  // The width is only user-resizable from `lg`; below it the drawer keeps the fixed width.
   resizable?: boolean
   ariaLabel?: string
   closeLabel?: string
+  resizeLabel?: string
   bodyClassName?: string
+}
+
+// Elements hidden by CSS (the resize handle below `lg`) are not tabbable, so the
+// focus trap must skip them too. jsdom has no checkVisibility and keeps them.
+function isVisible(element: HTMLElement) {
+  return typeof element.checkVisibility !== 'function' || element.checkVisibility()
 }
 
 // Right-hand slide-over for showing details of a selected row, lifted from the
 // Virtual Machines detail panel. Feature supplies the header info and body, and
 // optionally a pinned footer. When `resizable` is set the panel can be dragged
-// wider/narrower for the current view only — it resets to the default width
-// whenever it closes.
-export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerExtra, children, footer, resizable = false, ariaLabel = 'Detail', closeLabel = 'Close detail', bodyClassName }: DetailDrawerProps) {
-  const { width, handleProps } = useResizablePanel({ open })
+// wider/narrower from `lg` up for the current view only — it resets to the
+// default width whenever it closes. The width goes through a CSS variable so
+// below `lg` the fixed width wins and the hidden handle reports nothing.
+export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, meta = [], headerActions, headerExtra, children, footer, resizable = false, ariaLabel = 'Detail', closeLabel = 'Close detail', resizeLabel = 'Resize panel', bodyClassName }: DetailDrawerProps) {
+  const { width, handleProps } = useResizablePanel({ open, resizeLabel })
+  const metaItems = [eyebrow, ...meta].filter(Boolean)
   const drawerRef = useRef<HTMLElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const openerRef = useRef<HTMLElement | null>(null)
@@ -49,7 +67,7 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
 
       const focusable = [...(drawerRef.current?.querySelectorAll<HTMLElement>(
         'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      ) ?? [])].filter((element) => !element.hasAttribute('hidden'))
+      ) ?? [])].filter((element) => !element.hasAttribute('hidden') && isVisible(element))
       if (focusable.length === 0) {
         event.preventDefault()
         drawerRef.current?.focus()
@@ -85,8 +103,12 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
         tabIndex={-1}
         inert={!open}
         aria-hidden={!open}
-        className={`fixed inset-y-0 right-0 z-50 flex flex-col border-l border-border bg-surface shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)] transition-transform duration-200 ease-out ${resizable ? '' : 'w-[min(420px,92vw)]'} ${open ? 'translate-x-0' : 'translate-x-full'}`}
-        style={resizable ? { width: `${String(width)}px`, maxWidth: '92vw' } : undefined}
+        className={cn(
+          'fixed inset-y-0 right-0 z-50 flex w-[min(420px,92vw)] flex-col border-l border-border bg-surface shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)] transition-transform duration-200 ease-out',
+          resizable ? 'lg:w-(--detail-drawer-width) lg:max-w-[92vw]' : undefined,
+          open ? 'translate-x-0' : 'translate-x-full',
+        )}
+        style={resizable ? { '--detail-drawer-width': `${String(width)}px` } as CSSProperties : undefined}
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
@@ -94,26 +116,35 @@ export function DetailDrawer({ open, onClose, eyebrow, title, subtitle, headerEx
         {resizable ? (
           <div
             {...handleProps}
-            className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize bg-transparent transition hover:bg-accent/30 focus:bg-accent/40 focus:outline-none"
+            className="absolute inset-y-0 left-0 z-10 hidden w-1.5 cursor-col-resize bg-transparent transition hover:bg-accent/30 focus:bg-accent/40 focus:outline-none lg:block"
           />
         ) : null}
-        <div className="border-b border-border p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              {eyebrow ? <p className="text-xs font-medium text-text-subtle">{eyebrow}</p> : null}
-              <h2 className="mt-1 truncate text-base font-semibold text-text-primary">{title}</h2>
-              {subtitle ? <div className="mt-1 truncate text-xs text-text-muted">{subtitle}</div> : null}
-            </div>
+        <div className="border-b border-border px-5 pt-4 pb-3">
+          <div className="flex items-center gap-2">
+            <h2 className="min-w-0 flex-1 truncate text-base font-semibold leading-8 text-text-primary">{title}</h2>
+            {headerActions ? <div className="flex shrink-0 items-center gap-1">{headerActions}</div> : null}
             <button
               ref={closeRef}
               type="button"
               onClick={onClose}
               aria-label={closeLabel}
-              className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border text-text-muted transition hover:border-accent hover:text-accent"
+              className="flex size-8 shrink-0 items-center justify-center rounded-lg text-text-muted transition hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
             >
-              ✕
+              <CloseIcon className="size-4" />
             </button>
           </div>
+          {metaItems.length > 0 ? (
+            <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-text-muted">
+              {metaItems.map((item, index) => (
+                // Meta items are positional and rendered in the given order, so the index is their identity.
+                <Fragment key={index}>
+                  {index > 0 ? <span aria-hidden="true" className="size-0.75 shrink-0 rounded-full bg-text-subtle" /> : null}
+                  <span className="min-w-0 truncate">{item}</span>
+                </Fragment>
+              ))}
+            </div>
+          ) : null}
+          {subtitle ? <div className="mt-0.5 truncate text-xs text-text-muted">{subtitle}</div> : null}
           {headerExtra ? <div className="mt-3 w-full">{headerExtra}</div> : null}
         </div>
         <div className={cn('custom-scrollbar flex-1', bodyClassName ?? 'overflow-y-auto')}>{children}</div>

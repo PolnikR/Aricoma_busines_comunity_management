@@ -25,6 +25,16 @@ describe('useResizablePanel', () => {
     expect(result.current.width).toBe(720)
   })
 
+  it('labels the handle with the default or the given resize label', () => {
+    const { result, rerender } = renderHook(({ resizeLabel }: { resizeLabel?: string }) => (
+      useResizablePanel(resizeLabel ? { open: true, resizeLabel } : { open: true })
+    ), { initialProps: {} })
+    expect(result.current.handleProps['aria-label']).toBe('Resize panel')
+
+    rerender({ resizeLabel: 'Změnit šířku panelu' })
+    expect(result.current.handleProps['aria-label']).toBe('Změnit šířku panelu')
+  })
+
   it('resets to the default width when the panel closes', () => {
     const { result, rerender } = renderHook(({ open }) => useResizablePanel({ open }), { initialProps: { open: true } })
     act(() => { result.current.handleProps.onKeyDown({ key: 'ArrowLeft', preventDefault: () => undefined } as React.KeyboardEvent) })

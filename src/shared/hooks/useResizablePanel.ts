@@ -6,6 +6,7 @@ interface UseResizablePanelOptions {
   minWidth?: number
   maxWidth?: number
   step?: number
+  resizeLabel?: string
 }
 
 interface ResizeHandleProps {
@@ -35,6 +36,7 @@ export function useResizablePanel({
   minWidth = 360,
   maxWidth = 720,
   step = 16,
+  resizeLabel = 'Resize panel',
 }: UseResizablePanelOptions): UseResizablePanelResult {
   const [width, setWidth] = useState(defaultWidth)
 
@@ -76,7 +78,7 @@ export function useResizablePanel({
     handleProps: {
       role: 'separator',
       'aria-orientation': 'vertical',
-      'aria-label': 'Resize panel',
+      'aria-label': resizeLabel,
       'aria-valuenow': width,
       'aria-valuemin': minWidth,
       'aria-valuemax': maxWidth,

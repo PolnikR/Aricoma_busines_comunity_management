@@ -254,15 +254,15 @@ describe('VirtualMachineDetailPanel resize', () => {
   it('resizes the panel via the drag handle and keyboard', () => {
     renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
     const panel = screen.getByRole('dialog')
-    expect(panel.style.width).toBe('420px')
+    expect(panel.style.getPropertyValue('--detail-drawer-width')).toBe('420px')
 
     fireEvent.keyDown(screen.getByRole('separator'), { key: 'ArrowLeft' })
-    expect(panel.style.width).toBe('436px')
+    expect(panel.style.getPropertyValue('--detail-drawer-width')).toBe('436px')
 
     fireEvent.mouseDown(screen.getByRole('separator'), { clientX: 500 })
     fireEvent.mouseMove(window, { clientX: 460 })
     fireEvent.mouseUp(window)
-    expect(panel.style.width).toBe('476px')
+    expect(panel.style.getPropertyValue('--detail-drawer-width')).toBe('476px')
   })
 
   it('resets to the default width after closing and reopening', () => {
@@ -273,7 +273,7 @@ describe('VirtualMachineDetailPanel resize', () => {
       </QueryClientProvider>
     )
     fireEvent.keyDown(screen.getByRole('separator'), { key: 'ArrowLeft' })
-    expect(screen.getByRole('dialog').style.width).toBe('436px')
+    expect(screen.getByRole('dialog').style.getPropertyValue('--detail-drawer-width')).toBe('436px')
 
     rerender(
       <QueryClientProvider client={queryClient}>
@@ -285,6 +285,6 @@ describe('VirtualMachineDetailPanel resize', () => {
         <VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />
       </QueryClientProvider>
     )
-    expect(screen.getByRole('dialog').style.width).toBe('420px')
+    expect(screen.getByRole('dialog').style.getPropertyValue('--detail-drawer-width')).toBe('420px')
   })
 })
