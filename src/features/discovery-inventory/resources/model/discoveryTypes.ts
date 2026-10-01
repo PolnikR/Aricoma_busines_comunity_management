@@ -117,6 +117,7 @@ export interface FlashSystemVolume {
   function: string
   protocol: string
   host_maps: FlashSystemHostMap[]
+  consistency_group_ids: string[]
 }
 
 export interface FlashSystemPool {
@@ -145,12 +146,19 @@ export interface ResolvedFlashSystemHostMap extends FlashSystemHostMap {
   clusterName: string
 }
 
+export interface ResolvedFlashSystemConsistencyGroup {
+  id: string
+  name: string
+  status: string
+}
+
 export interface FlashSystemVolumeResource extends FlashSystemVolume {
   resourceId: string
   providerId: string
   providerType: 'FLASHCOPY'
   pool: FlashSystemPool | null
   resolvedHostMaps: ResolvedFlashSystemHostMap[]
+  resolvedConsistencyGroups: ResolvedFlashSystemConsistencyGroup[]
   capacityBytes: number | null
 }
 

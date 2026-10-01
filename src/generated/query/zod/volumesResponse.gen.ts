@@ -34,6 +34,7 @@ export const volumesResponseVolumesItemVolumeNameDefault = ``;
 export const volumesResponseVolumesItemFunctionDefault = `-`;
 export const volumesResponseVolumesItemProtocolDefault = `-`;
 export const volumesResponseVolumesItemHostMapsDefault = [];
+export const volumesResponseVolumesItemConsistencyGroupIdsDefault = [];
 export const volumesResponsePoolsNameDefault = `-`;
 export const volumesResponsePoolsCapacityDefault = `-`;
 export const volumesResponsePoolsUsedCapacityDefault = `-`;
@@ -45,6 +46,9 @@ export const volumesResponseHostsClusterNameDefault = ``;
 export const volumesResponseHostsDefault = {};
 export const volumesResponseClustersNameDefault = `-`;
 export const volumesResponseClustersDefault = {};
+export const volumesResponseConsistencyGroupsNameDefault = `-`;
+export const volumesResponseConsistencyGroupsStatusDefault = ``;
+export const volumesResponseConsistencyGroupsDefault = {};
 export const VolumesResponse = zod.object({
   "count": zod.int(),
   "volumes": zod.array(zod.object({
@@ -80,7 +84,8 @@ export const VolumesResponse = zod.object({
   "host_maps": zod.array(zod.object({
   "host_id": zod.string(),
   "scsi_id": zod.string()
-})).default(volumesResponseVolumesItemHostMapsDefault)
+})).default(volumesResponseVolumesItemHostMapsDefault),
+  "consistency_group_ids": zod.array(zod.string()).default(volumesResponseVolumesItemConsistencyGroupIdsDefault)
 })),
   "pools": zod.record(zod.string(), zod.object({
   "name": zod.string().default(volumesResponsePoolsNameDefault),
@@ -96,7 +101,10 @@ export const VolumesResponse = zod.object({
   "clusters": zod.record(zod.string(), zod.object({
   "name": zod.string().default(volumesResponseClustersNameDefault)
 })).default(volumesResponseClustersDefault),
-  "consistency_groups": zod.record(zod.string(), zod.unknown()),
+  "consistency_groups": zod.record(zod.string(), zod.object({
+  "name": zod.string().default(volumesResponseConsistencyGroupsNameDefault),
+  "status": zod.string().default(volumesResponseConsistencyGroupsStatusDefault)
+})).default(volumesResponseConsistencyGroupsDefault),
   "provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "provider_type": zod.union([zod.string(),zod.null()]).exactOptional()
 })

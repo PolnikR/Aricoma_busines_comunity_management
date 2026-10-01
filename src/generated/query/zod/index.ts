@@ -38,6 +38,7 @@ export * from './deleteRecoveryAppPolicyParams.gen';
 export * from './deleteRecoveryGroupHeaders.gen';
 export * from './deleteRecoveryGroupParams.gen';
 export * from './flashSystemCluster.gen';
+export * from './flashSystemConsistencyGroup.gen';
 export * from './flashSystemHost.gen';
 export * from './flashSystemPool.gen';
 export * from './flashSystemVolume.gen';

@@ -57,6 +57,10 @@ export function mapFlashSystemInventory(
           clusterName: host?.cluster_name ?? '',
         }
       }),
+      resolvedConsistencyGroups: volume.consistency_group_ids.map((groupId) => {
+        const group = payload.consistency_groups[groupId]
+        return { id: groupId, name: group?.name ?? groupId, status: group?.status ?? '' }
+      }),
       capacityBytes: parseCapacityBytes(volume.capacity),
     }
   })

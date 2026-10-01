@@ -1212,6 +1212,7 @@
   "resources.flash.detail.pool": "Súvisiaci pool",
   "resources.flash.detail.used": "Využitá kapacita",
   "resources.flash.detail.free": "Voľná kapacita",
+  "resources.flash.detail.consistencyGroups": "Skupiny konzistencie",
   "resources.flash.detail.hostMappings": "Mapovania hostiteľov",
   "resources.flash.detail.cluster": "Klaster",
   "resources.flash.detail.noMappings": "Žiadne mapovania hostiteľov",

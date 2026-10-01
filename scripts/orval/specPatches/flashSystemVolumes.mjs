@@ -9,6 +9,7 @@ const volume = loose({
   RC_change: str(''), compressed_copy_count: str('0'), parent_mdisk_grp_id: str(''), parent_mdisk_grp_name: str(''),
   formatting: str('-'), encrypt: str('-'), volume_id: str(''), volume_name: str(''), function: str('-'), protocol: str('-'),
   host_maps: { type: 'array', default: [], items: loose({ host_id: str(), scsi_id: str() }, ['host_id', 'scsi_id']) },
+  consistency_group_ids: { type: 'array', default: [], items: str() },
 }, ['name'])
 
 export default definePatch({
@@ -22,6 +23,7 @@ export default definePatch({
       FlashSystemPool: loose({ name: str('-'), capacity: str('-'), used_capacity: str('-'), free_capacity: str('-') }),
       FlashSystemHost: loose({ name: str('-'), cluster_id: { anyOf: [{ type: 'string' }, { type: 'null' }], default: null }, cluster_name: str('') }),
       FlashSystemCluster: loose({ name: str('-') }),
+      FlashSystemConsistencyGroup: loose({ name: str('-'), status: str('') }),
       VolumesResponse: {
         ...response,
         properties: {
@@ -30,6 +32,7 @@ export default definePatch({
           pools: map('FlashSystemPool'),
           hosts: map('FlashSystemHost'),
           clusters: map('FlashSystemCluster'),
+          consistency_groups: map('FlashSystemConsistencyGroup'),
         },
       },
     })

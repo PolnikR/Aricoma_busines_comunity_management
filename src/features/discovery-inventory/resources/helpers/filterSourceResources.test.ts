@@ -63,6 +63,8 @@ function flashResource(providerId: string, name: string): FlashSystemVolumeResou
     function: 'generic',
     protocol: 'scsi',
     host_maps: [{ host_id: '0', scsi_id: '0' }],
+    consistency_group_ids: [],
+    resolvedConsistencyGroups: [],
     pool: { name: 'Pool0', capacity: '1TB', used_capacity: '0', free_capacity: '1TB' },
     resolvedHostMaps: [{
       host_id: '0', scsi_id: '0', hostName: 'HOST_esx', clusterId: null, clusterName: '',

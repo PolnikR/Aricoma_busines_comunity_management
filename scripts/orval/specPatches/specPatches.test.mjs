@@ -44,6 +44,8 @@ test('types FlashSystem inventory collections', () => {
   const s = schemas()
   assert.equal(s.VolumesResponse.properties.volumes.items.$ref, '#/components/schemas/FlashSystemVolume')
   assert.equal(s.VolumesResponse.properties.pools.additionalProperties.$ref, '#/components/schemas/FlashSystemPool')
+  assert.equal(s.VolumesResponse.properties.consistency_groups.additionalProperties.$ref, '#/components/schemas/FlashSystemConsistencyGroup')
+  assert.equal(s.FlashSystemVolume.properties.consistency_group_ids.items.type, 'string')
 })
 
 test('types vdisks by VM', () => {

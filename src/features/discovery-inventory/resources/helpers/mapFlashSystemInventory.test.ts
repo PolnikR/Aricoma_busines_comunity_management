@@ -14,6 +14,7 @@ describe('mapFlashSystemInventory', () => {
       pools: {},
       hosts: {},
       clusters: {},
+      consistency_groups: {},
     })
 
     const inventory = mapFlashSystemInventory(payload)
@@ -42,6 +43,7 @@ describe('mapFlashSystemInventory', () => {
       pools: { '0': { name: 'Pool0', capacity: '6.98TB', used_capacity: '6.02TB', free_capacity: '898.00GB' } },
       hosts: { '0': { name: 'HOST_esx', cluster_id: null, cluster_name: '' } },
       clusters: {},
+      consistency_groups: {},
     })
     const inventory = mapFlashSystemInventory(payload, 'flash-01')
     expect(inventory.resources[0]).toMatchObject({
@@ -55,6 +57,34 @@ describe('mapFlashSystemInventory', () => {
     })
   })
 
+  it('resolves consistency group ids against the top-level consistency_groups map', () => {
+    const payload = parseWireResponse(VolumesResponse, {
+      count: 3,
+      volumes: [
+        { id: '0', name: 'source', consistency_group_ids: ['5', '6'] },
+        { id: '1', name: 'orphan-ref', consistency_group_ids: ['9'] },
+        { id: '2', name: 'ungrouped' },
+      ],
+      pools: {},
+      hosts: {},
+      clusters: {},
+      consistency_groups: {
+        '5': { name: 'cg_daily', status: 'copying' },
+        '6': { name: 'cg_weekly', status: 'idle_or_copied' },
+      },
+    })
+
+    const [source, orphan, ungrouped] = mapFlashSystemInventory(payload, 'flash-01').resources
+
+    expect(source?.resolvedConsistencyGroups).toEqual([
+      { id: '5', name: 'cg_daily', status: 'copying' },
+      { id: '6', name: 'cg_weekly', status: 'idle_or_copied' },
+    ])
+    expect(orphan?.resolvedConsistencyGroups).toEqual([{ id: '9', name: '9', status: '' }])
+    expect(ungrouped?.consistency_group_ids).toEqual([])
+    expect(ungrouped?.resolvedConsistencyGroups).toEqual([])
+  })
+
   it('accepts missing IDs and creates unique stable resource identifiers', () => {
     const payload = parseWireResponse(VolumesResponse, {
       count: 2,
@@ -65,6 +95,7 @@ describe('mapFlashSystemInventory', () => {
       pools: {},
       hosts: {},
       clusters: {},
+      consistency_groups: {},
     })
 
     const inventory = mapFlashSystemInventory(payload, 'flash-01')

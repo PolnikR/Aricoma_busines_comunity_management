@@ -55,6 +55,7 @@ describe('FlashSystemInventoryView', () => {
         0: { name: 'HOST_esx', cluster_id: null, cluster_name: '' },
       },
       clusters: {},
+      consistency_groups: {},
     }), provider.id)
     const { t } = useTranslation()
 
@@ -119,6 +120,7 @@ describe('FlashSystemInventoryView', () => {
       pools: {},
       hosts: {},
       clusters: {},
+      consistency_groups: {},
     }), provider.id)
 
     render(<MemoryRouter><FlashSystemInventoryView
@@ -147,6 +149,7 @@ describe('FlashSystemInventoryView', () => {
       pools: {},
       hosts: {},
       clusters: {},
+      consistency_groups: {},
     }), provider.id)
     const view = render(<MemoryRouter><FlashSystemInventoryView resources={inventory.resources} providers={[provider]} t={t} /></MemoryRouter>)
 
@@ -156,5 +159,58 @@ describe('FlashSystemInventoryView', () => {
     view.rerender(<MemoryRouter><FlashSystemInventoryView resources={[]} providers={[provider]} t={t} /></MemoryRouter>)
 
     await waitFor(() => { expect(screen.queryByRole('dialog', { name: 'FlashSystem volume detail' })).not.toBeInTheDocument() })
+  })
+
+  it('shows consistency groups from get_volumes between FlashCopy and Remote Copy fields without fetching', () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    const { t } = useTranslation()
+    const inventory = mapFlashSystemInventory(parseWireResponse(VolumesResponse, {
+      count: 3,
+      volumes: [
+        {
+          id: '0', name: 'multi', FC_id: 'many', FC_name: 'many', RC_id: '7', RC_name: 'rcrel0', RC_change: 'no',
+          consistency_group_ids: ['5', '6'],
+        },
+        { id: '1', name: 'single', consistency_group_ids: ['5'] },
+        { id: '2', name: 'ungrouped' },
+      ],
+      pools: {},
+      hosts: {},
+      clusters: {},
+      consistency_groups: {
+        '5': { name: 'cg_daily', status: 'copying' },
+        '6': { name: 'cg_weekly', status: 'idle_or_copied' },
+      },
+    }), provider.id)
+
+    render(<MemoryRouter><FlashSystemInventoryView resources={inventory.resources} providers={[provider]} t={t} /></MemoryRouter>)
+
+    const consistencyRow = () => within(screen.getByRole('dialog', { name: 'FlashSystem volume detail' }))
+      .getByText('Consistency groups').closest('div') as HTMLElement
+
+    fireEvent.click(screen.getByRole('row', { name: 'Show details for multi' }))
+    const dialog = screen.getByRole('dialog', { name: 'FlashSystem volume detail' })
+    const copyLabels = within(dialog).getByText('Copy relationships').nextElementSibling?.querySelectorAll('dt') ?? []
+    expect([...copyLabels].map((label) => label.textContent)).toEqual([
+      'FlashCopy ID', 'FlashCopy name', 'Consistency groups', 'Remote Copy ID', 'Remote Copy name',
+      'Space-efficient copy count', 'Compressed copy count', 'Remote Copy change',
+    ])
+    expect(within(consistencyRow()).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      'cg_dailycopying', 'cg_weeklyidle_or_copied',
+    ])
+    expect(within(dialog).getAllByText('many')).toHaveLength(2)
+    expect(within(dialog).getByText('rcrel0')).toBeInTheDocument()
+    expect(within(dialog).getByText('no')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('row', { name: 'Show details for single' }))
+    expect(within(consistencyRow()).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['cg_dailycopying'])
+
+    fireEvent.click(screen.getByRole('row', { name: 'Show details for ungrouped' }))
+    expect(within(consistencyRow()).queryByRole('listitem')).not.toBeInTheDocument()
+    expect(within(consistencyRow()).getByText('-')).toBeInTheDocument()
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
   })
 })

@@ -64,6 +64,8 @@ function volume(hostIds: string[]): FlashSystemVolumeResource {
     function: '',
     protocol: 'scsi',
     host_maps: hostIds.map((hostId) => ({ host_id: hostId, scsi_id: hostId })),
+    consistency_group_ids: [],
+    resolvedConsistencyGroups: [],
     resourceId: 'flash-01:volume-01',
     providerId: 'flash-01',
     providerType: 'FLASHCOPY',

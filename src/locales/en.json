@@ -1249,6 +1249,7 @@
   "resources.flash.detail.pool": "Related pool",
   "resources.flash.detail.used": "Used capacity",
   "resources.flash.detail.free": "Free capacity",
+  "resources.flash.detail.consistencyGroups": "Consistency groups",
   "resources.flash.detail.hostMappings": "Host mappings",
   "resources.flash.detail.cluster": "Cluster",
   "resources.flash.detail.noMappings": "No host mappings",

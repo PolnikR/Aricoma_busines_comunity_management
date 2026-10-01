@@ -13,6 +13,7 @@ interface FlashSystemVolumeDetailPanelProps {
     capacity: string
     usedCapacity: string
     freeCapacity: string
+    consistencyGroups: string
     groups: Record<'identity' | 'placement' | 'state' | 'copies', string>
     fieldLabels: Record<string, string>
   }
@@ -33,7 +34,7 @@ const fieldGroups = [
   },
   {
     key: 'copies' as const,
-    fields: ['FC_id', 'FC_name', 'RC_id', 'RC_name', 'se_copy_count', 'compressed_copy_count', 'RC_change'] as const,
+    fields: ['FC_id', 'FC_name', 'consistency_groups', 'RC_id', 'RC_name', 'se_copy_count', 'compressed_copy_count', 'RC_change'] as const,
   },
 ]
 
@@ -41,6 +42,20 @@ function display(value: unknown): string {
   if (value === null || value === undefined || value === '') return '-'
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value)
   return JSON.stringify(value)
+}
+
+function ConsistencyGroups({ groups }: { groups: FlashSystemVolumeResource['resolvedConsistencyGroups'] }) {
+  if (groups.length === 0) return '-'
+  return (
+    <ul className="flex flex-wrap justify-end gap-1">
+      {groups.map((group) => (
+        <li key={group.id} title={group.id} className="inline-flex items-center gap-1 rounded-lg border border-border-strong bg-surface px-2 py-0.5 text-[11px] font-semibold text-text-secondary">
+          <span>{group.name}</span>
+          {group.status ? <span className="font-normal text-text-muted">{group.status}</span> : null}
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 export function FlashSystemVolumeDetailPanel({ volume, open, onClose, labels }: FlashSystemVolumeDetailPanelProps) {
@@ -59,7 +74,9 @@ export function FlashSystemVolumeDetailPanel({ volume, open, onClose, labels }: 
           {fieldGroups.map((group) => (
             <section key={group.key}>
               <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-primary">{labels.groups[group.key]}</h3>
-              <dl>{group.fields.map((field) => <DetailRow key={field} label={labels.fieldLabels[field] ?? field} value={display(volume[field])} />)}</dl>
+              <dl>{group.fields.map((field) => field === 'consistency_groups'
+                ? <DetailRow key={field} label={labels.consistencyGroups} value={<ConsistencyGroups groups={volume.resolvedConsistencyGroups} />} />
+                : <DetailRow key={field} label={labels.fieldLabels[field] ?? field} value={display(volume[field])} />)}</dl>
             </section>
           ))}
           <section>

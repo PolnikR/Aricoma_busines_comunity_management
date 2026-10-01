@@ -34,6 +34,7 @@ export const flashSystemVolumeVolumeNameDefault = ``;
 export const flashSystemVolumeFunctionDefault = `-`;
 export const flashSystemVolumeProtocolDefault = `-`;
 export const flashSystemVolumeHostMapsDefault = [];
+export const flashSystemVolumeConsistencyGroupIdsDefault = [];
 export const FlashSystemVolume = zod.object({
   "provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "id": zod.string().default(flashSystemVolumeIdDefault),
@@ -67,7 +68,8 @@ export const FlashSystemVolume = zod.object({
   "host_maps": zod.array(zod.object({
   "host_id": zod.string(),
   "scsi_id": zod.string()
-})).default(flashSystemVolumeHostMapsDefault)
+})).default(flashSystemVolumeHostMapsDefault),
+  "consistency_group_ids": zod.array(zod.string()).default(flashSystemVolumeConsistencyGroupIdsDefault)
 })
 
 export type FlashSystemVolume = zod.input<typeof FlashSystemVolume>;
