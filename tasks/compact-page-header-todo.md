@@ -203,7 +203,7 @@ Record the y-position where the table starts and whether a scrollbar appears, in
 | 390×844 mobile | Actions wrap below the title; sidebar toggle works |
 
 **Acceptance criteria:** no clipping or overlap at any size; skeleton → loaded with no jump; results recorded
-**Dependencies:** Tasks 1–11
+**Dependencies:** Tasks 1–12
 **Scope:** S (fix-ups become their own tasks)
 
 ## Checkpoint C
