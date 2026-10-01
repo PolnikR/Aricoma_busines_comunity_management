@@ -1,4 +1,5 @@
 import { useCallback, useId, useMemo, useState } from 'react'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import { Spinner } from '@/shared/components/spinner/Spinner'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
@@ -104,7 +105,15 @@ export function RecoveryGroupBuilder({
       }
     : INITIAL_DRAFT)
   const [hasConsistencyOverride, setHasConsistencyOverride] = useState(Boolean(initialData?.consistencyGroupId?.trim()))
+  // The backend rejects any update of a pushed group; it is read-only until rolled back.
+  const pushedLock = initialData?.pushToOrchestrator === true
+  // A Managed group keeps backend-generated ids after a partial rollback; only a clean one is editable.
+  const managedProvisionedLock = !pushedLock && initialData?.metroMirrorMode === 'managed'
+    && (Boolean(initialData.consistencyGroupId?.trim())
+      || Object.values(initialData.auxiliaryNamesByVolume ?? {}).some(name => name.trim()))
+  const readOnly = pushedLock || managedProvisionedLock
   const updateDraft = (update: Partial<RecoveryGroupDraft>) => {
+    if (readOnly) return
     setDraft(current => ({ ...current, ...update }))
     onDirtyChange?.(true)
   }
@@ -200,9 +209,10 @@ export function RecoveryGroupBuilder({
     && !initialData.relatedVolumeProviderId && initialData.relatedVolumes.length === 0
     && !selectionDraft.relatedVolumeProviderId && selectionDraft.relatedVolumes.length === 0)
   const topologyValid = !providerQuery.isLoading && !providerQuery.isFetching && !providerQuery.error
-    && initialData?.metroMirrorMode !== 'managed'
     && getRecoveryGroupTopologyError(selectionDraft, allProviders, allowLegacyLocal) === null
   const metroExisting = draftState.topology === 'metro_mirror' && draftState.metroMirrorMode === 'existing'
+  // Managed CG id and auxiliary names are backend-generated and only shown read-only.
+  const metroManaged = draftState.topology === 'metro_mirror' && draftState.metroMirrorMode === 'managed'
   const relationships = useRecoveryGroupMetroMirrorRelationships(
     draftState.relatedVolumeProviderId ?? null, selectedVolumes, metroExisting && topologyValid && discoverySettled,
   )
@@ -210,17 +220,18 @@ export function RecoveryGroupBuilder({
     hasConsistencyOverride ? draftState.consistencyGroupId ?? '' : undefined, relationships.data)
   const draft = {
     ...selectionDraft,
-    consistencyGroupId: metroExisting ? prefill.consistencyGroupId : '',
-    auxiliaryNamesByVolume: metroExisting ? prefill.auxiliaryNamesByVolume : {},
+    consistencyGroupId: metroExisting ? prefill.consistencyGroupId : metroManaged ? draftState.consistencyGroupId ?? '' : '',
+    auxiliaryNamesByVolume: metroExisting ? prefill.auxiliaryNamesByVolume : metroManaged ? draftState.auxiliaryNamesByVolume ?? {} : {},
   }
-  const storageValid = draft.topology !== 'metro_mirror' || (selectedVolumes.length > 0 && Boolean(draft.consistencyGroupId.trim())
-    && selectedVolumes.every(name => draft.auxiliaryNamesByVolume[name]?.trim()))
+  const storageValid = draft.topology !== 'metro_mirror' || (selectedVolumes.length > 0 && (metroManaged
+    || (Boolean(draft.consistencyGroupId.trim()) && selectedVolumes.every(name => draft.auxiliaryNamesByVolume[name]?.trim()))))
   const discoveryValid = !hasRelatedStorageStep || (!relatedVolumesDiscovery.isLoading && !relatedVolumesDiscovery.error)
   const baseValid = detailsValid && topologyValid && typeValid && providerValid
   const resourcesValid = draft.resources.length > 0 && (hasRelatedStorageStep || storageValid)
   const downstreamValid = baseValid && resourcesValid && storageValid && discoveryValid
   const changeSource = (update: Partial<RecoveryGroupDraft>) => {
     if (('topology' in update && update.topology !== draftState.topology)
+      || ('metroMirrorMode' in update && update.metroMirrorMode !== draftState.metroMirrorMode)
       || ('relatedVolumeProviderId' in update && update.relatedVolumeProviderId !== draftState.relatedVolumeProviderId)) {
       setHasConsistencyOverride(false)
     }
@@ -231,8 +242,16 @@ export function RecoveryGroupBuilder({
     } else updateDraft(update)
   }
   const removeAuxiliary = (name: string) => Object.fromEntries(Object.entries(draftState.auxiliaryNamesByVolume ?? {}).filter(([key]) => key !== name))
-  const showAuxiliaryHint = hasRelatedStorageStep && step === relatedStorageStepIndex && draft.topology === 'metro_mirror' && !storageValid
-  const renderVolumeContent = draft.topology === 'metro_mirror' ? (name: string) => (
+  const showAuxiliaryHint = hasRelatedStorageStep && step === relatedStorageStepIndex && metroExisting && !storageValid
+  const managedAuxiliaryNames = metroManaged ? draft.auxiliaryNamesByVolume : {}
+  const renderVolumeContent = metroManaged ? (Object.keys(managedAuxiliaryNames).length > 0 ? (name: string) => (
+    <div className="grid min-w-0 grid-cols-[minmax(0,0.7fr)_minmax(0,1fr)] items-center gap-3">
+      <TruncatedText text={name} />
+      <span className="min-w-0 text-xs text-text-muted" aria-label={t('pages.recoveryGroupBuilder.topology.auxiliary') + ': ' + name}>
+        <TruncatedText text={managedAuxiliaryNames[name] ?? ''} />
+      </span>
+    </div>
+  ) : undefined) : metroExisting ? (name: string) => (
     <div className="grid min-w-0 grid-cols-[minmax(0,0.7fr)_minmax(0,1fr)] items-center gap-3">
       <TruncatedText text={name} />
       <Input size="sm" aria-label={t('pages.recoveryGroupBuilder.topology.auxiliary') + ': ' + name}
@@ -244,6 +263,11 @@ export function RecoveryGroupBuilder({
     </div>
   ) : undefined
 
+  const managedInfo = metroManaged && draft.consistencyGroupId.trim() ? (
+    <p className="shrink-0 text-xs text-text-muted">
+      {t('pages.recoveryGroupBuilder.topology.consistencyGroup')}: {draft.consistencyGroupId}
+    </p>
+  ) : null
   const metroFields = metroExisting ? <RecoveryGroupMetroMirrorFields
     missingNamesCount={selectedVolumes.filter(name => !draft.auxiliaryNamesByVolume[name]?.trim()).length}
     providerName={allProviders.find(provider => provider.id === draft.relatedVolumeProviderId)?.name}
@@ -253,7 +277,7 @@ export function RecoveryGroupBuilder({
     onRetry={() => { void relationships.refetch() }} warning={relationships.data?.warning ?? ''}
     unresolvedCount={prefill.unresolvedVolumes.length}
     missingGroup={Boolean(relationships.data && !relationships.data.consistency_group_id?.trim())}
-    mismatch={prefill.hasMismatch} /> : null
+    mismatch={prefill.hasMismatch} /> : managedInfo
 
   const steps = [
     { id: 'details', label: t('pages.recoveryGroupBuilder.steps.details') },
@@ -272,7 +296,7 @@ export function RecoveryGroupBuilder({
           : step === resourcesStepIndex ? baseValid && resourcesValid
             : step === policySetStepIndex ? downstreamValid && policySetValid
               : downstreamValid
-  const canCreate = downstreamValid && policySetValid && orchestrationValid
+  const canCreate = !readOnly && downstreamValid && policySetValid && orchestrationValid
 
   return (
     <fieldset className="contents" disabled={isInitialLoading} aria-busy={isInitialLoading}>
@@ -288,6 +312,9 @@ export function RecoveryGroupBuilder({
         </aside>
         <div className="flex min-h-0 min-w-0 flex-col">
           <div className="custom-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto p-3 sm:p-5">
+            {readOnly ? <Alert variant="warning" className="mb-4"
+              title={t(pushedLock ? 'pages.recoveryGroupBuilder.lifecycleLock.pushed' : 'pages.recoveryGroupBuilder.lifecycleLock.managedProvisioned')} /> : null}
+            <fieldset className="contents" disabled={readOnly}>
             {step === 1 ? (
               <RecoveryGroupDetailsStep
                 id={draft.id}
@@ -300,7 +327,7 @@ export function RecoveryGroupBuilder({
             ) : null}
             {step === 2 ? <RecoveryGroupTopologyStep draft={draft} providers={allProviders}
               isLoading={providerQuery.isLoading || providerQuery.isFetching} error={providerQuery.error instanceof Error ? providerQuery.error : null}
-              onRetry={() => { void providerQuery.refetch() }} onChange={changeSource} allowLegacyLocal={allowLegacyLocal} /> : null}
+              onRetry={() => { void providerQuery.refetch() }} onChange={changeSource} allowLegacyLocal={allowLegacyLocal} isEditing={Boolean(initialData)} /> : null}
             {step === 3 ? (
               <RecoveryGroupTypeStep
                 sourceCategory={draft.sourceCategory}
@@ -458,6 +485,7 @@ export function RecoveryGroupBuilder({
                 onProviderSelect={providerId => { updateDraft({ orchestrationProviderId: providerId }) }}
               />
             ) : null}
+            </fieldset>
           </div>
           <div className="sticky bottom-0 z-10 flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-border bg-surface-subtle px-3 py-2 sm:px-4 lg:static">
             <Button size="sm" variant="ghost" onClick={onCancel}>{t('buttons.cancel')}</Button>

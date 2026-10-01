@@ -40,14 +40,15 @@ function toVmsPayload(
   }))
 }
 
+// Volumes get auxiliary_name only when auxiliaryNameFor returns a value.
 function toVolumesPayload(
   names: string[],
-  topology: 'local' | 'metro_mirror',
-  auxiliaryNamesByVolume: Record<string, string>,
+  auxiliaryNameFor?: (name: string) => string | undefined,
 ) {
-  return names.map(name => topology === 'metro_mirror'
-    ? { name, auxiliary_name: auxiliaryNamesByVolume[name] ?? '' }
-    : { name })
+  return names.map(name => {
+    const auxiliaryName = auxiliaryNameFor?.(name)
+    return auxiliaryName === undefined ? { name } : { name, auxiliary_name: auxiliaryName }
+  })
 }
 
 function vmConfiguration(provider: ProviderRecord): RecoveryGroupResourceConfiguration {
@@ -154,6 +155,8 @@ export function toRecoveryGroupSubmitPayload(
 ): RecoveryGroupSubmitPayload {
   const isVmGroup = draft.configuration.resourceType === 'vm'
   const topology = draft.topology
+  // Managed CG id and auxiliary names are backend-generated: never submitted.
+  const isExisting = topology === 'metro_mirror' && draft.metroMirrorMode !== 'managed'
   return {
     id,
     name: draft.name,
@@ -164,14 +167,15 @@ export function toRecoveryGroupSubmitPayload(
       : draft.providerId,
     topology,
     ...(topology === 'metro_mirror' ? {
-      metro_mirror: { mode: 'existing' as const, consistency_group_id: draft.consistencyGroupId ?? '' },
+      metro_mirror: isExisting
+        ? { mode: 'existing' as const, consistency_group_id: draft.consistencyGroupId ?? '' }
+        : { mode: 'managed' as const },
     } : {}),
     policy_set_id: draft.policySetId,
     vms: isVmGroup ? toVmsPayload(draft.resources, draft.vmMetadataByName) : [],
     volumes: toVolumesPayload(
       isVmGroup ? draft.relatedVolumes : draft.resources,
-      topology,
-      draft.auxiliaryNamesByVolume,
+      isExisting ? name => draft.auxiliaryNamesByVolume[name] ?? '' : undefined,
     ),
   }
 }
@@ -181,6 +185,7 @@ export function toRecoveryGroupJson(group: RecoveryGroup): RecoveryGroupReadReco
 
   const isVmGroup = group.resourceType === 'vm'
   const topology = group.topology ?? 'local'
+  const auxiliaryNamesByVolume = group.auxiliaryNamesByVolume ?? {}
   return {
     id: group.id,
     name: group.name,
@@ -197,8 +202,10 @@ export function toRecoveryGroupJson(group: RecoveryGroup): RecoveryGroupReadReco
     vms: isVmGroup ? toVmsPayload(group.resources, group.vmMetadataByName) : [],
     volumes: toVolumesPayload(
       isVmGroup ? group.relatedVolumes : group.resources,
-      topology,
-      group.auxiliaryNamesByVolume ?? {},
+      topology !== 'metro_mirror' ? undefined
+        // Managed shows backend-generated names only when they exist.
+        : group.metroMirrorMode === 'managed' ? name => auxiliaryNamesByVolume[name]
+          : name => auxiliaryNamesByVolume[name] ?? '',
     ),
     orchestration: {
       provider_id: group.orchestrationProviderId ?? null,

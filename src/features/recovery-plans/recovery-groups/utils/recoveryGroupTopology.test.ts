@@ -28,8 +28,20 @@ describe('getRecoveryGroupTopologyError', () => {
   ])('rejects unusable source or partner: %j', (...providers) => {
     expect(getRecoveryGroupTopologyError(metro, providers as ProviderRecord[])).not.toBeNull()
   })
-  it('rejects managed mode but defers consistency group validation to storage', () => {
-    expect(getRecoveryGroupTopologyError({ ...metro, metroMirrorMode: 'managed' }, [source, target])).toBe('managed')
+  it('accepts managed mode with a valid partner and defers consistency group validation to storage', () => {
+    expect(getRecoveryGroupTopologyError({ ...metro, metroMirrorMode: 'managed', consistencyGroupId: null }, [source, target])).toBeNull()
     expect(getRecoveryGroupTopologyError({ ...metro, consistencyGroupId: ' ' }, [source, target])).toBeNull()
+  })
+  it.each([
+    [{ ...source, credentialStatus: 'invalid' }, target],
+    [source, { ...target, type: 'VMWARE' }],
+    [{ ...source, partnerProviderId: 'source' }, target],
+    [{ ...source, partnerProviderId: null }, target],
+    [source],
+  ])('rejects managed mode with an unusable source or partner: %j', (...providers) => {
+    expect(getRecoveryGroupTopologyError({ ...metro, metroMirrorMode: 'managed' }, providers as ProviderRecord[])).not.toBeNull()
+  })
+  it('requires a Metro Mirror mode', () => {
+    expect(getRecoveryGroupTopologyError({ ...metro, metroMirrorMode: null }, [source, target])).toBe('modeRequired')
   })
 })

@@ -1,5 +1,6 @@
 import type {
   RecoveryGroupDraft,
+  RecoveryGroupMetroMirrorMode,
   RecoveryGroupTopology,
   RecoveryGroupResourceConfiguration,
   RecoveryGroupVmMetadata,
@@ -31,7 +32,7 @@ export interface ValidatedRecoveryGroupDraft {
   relatedVolumeProviderId: string | null
   relatedVolumes: string[]
   topology: RecoveryGroupTopology
-  metroMirrorMode: 'existing' | null
+  metroMirrorMode: RecoveryGroupMetroMirrorMode | null
   consistencyGroupId: string | null
   auxiliaryNamesByVolume: Record<string, string>
   configuration: RecoveryGroupResourceConfiguration
@@ -53,14 +54,16 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
   const relatedVolumes = (draft.relatedVolumes ?? []).map(resource => resource.trim())
   const topology = draft.topology === undefined ? 'local' : draft.topology
   const isMetroMirror = topology === 'metro_mirror'
+  // Managed CG id and auxiliary names are backend-generated, never user input.
+  const isExistingMetroMirror = isMetroMirror && draft.metroMirrorMode === 'existing'
   const sourceVolumes = draft.resourceType === 'vm' ? (draft.relatedVolumes ?? []) : draft.resources
-  const auxiliaryNamesByVolume = isMetroMirror
+  const auxiliaryNamesByVolume = isExistingMetroMirror
     ? Object.fromEntries(sourceVolumes.map(volume => [
       volume.trim(),
       (draft.auxiliaryNamesByVolume?.[volume] ?? draft.auxiliaryNamesByVolume?.[volume.trim()] ?? '').trim(),
     ]))
     : {}
-  const consistencyGroupId = isMetroMirror ? (draft.consistencyGroupId?.trim() ?? '') : null
+  const consistencyGroupId = isExistingMetroMirror ? (draft.consistencyGroupId?.trim() ?? '') : null
   const orchestrationProviderId = draft.orchestrationProviderId?.trim() ?? ''
   const configuration = findSubmittableConfiguration(draft)
 
@@ -79,12 +82,13 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     || !configuration
     || !orchestrationProviderId
     || !topology
-    || draft.metroMirrorMode === 'managed'
     || (isMetroMirror && (
-      draft.metroMirrorMode !== 'existing'
-      || !consistencyGroupId
+      (draft.metroMirrorMode !== 'existing' && draft.metroMirrorMode !== 'managed')
       || sourceVolumes.length === 0
       || (draft.resourceType === 'vm' && !relatedVolumeProviderId)
+    ))
+    || (isExistingMetroMirror && (
+      !consistencyGroupId
       || Object.values(auxiliaryNamesByVolume).some(name => !name)
     ))
   ) {
@@ -101,7 +105,7 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
     relatedVolumeProviderId,
     relatedVolumes,
     topology,
-    metroMirrorMode: isMetroMirror ? 'existing' : null,
+    metroMirrorMode: isMetroMirror ? (draft.metroMirrorMode ?? null) : null,
     consistencyGroupId,
     auxiliaryNamesByVolume,
     configuration: { ...configuration },

@@ -127,6 +127,56 @@ describe('toRecoveryGroupSubmitPayload', () => {
     expect(toRecoveryGroupJson(group)).toMatchObject(payload)
   })
 
+  it.each(['vm', 'volume'] as const)('serializes Managed Metro Mirror %s groups without derived values', resourceType => {
+    const draft: RecoveryGroupDraft = {
+      id: 'aaa', name: 'aa', description: 'aa',
+      sourceCategory: resourceType === 'vm' ? 'backup_system_workload' : 'storage_system',
+      workloadType: resourceType === 'vm' ? 'vmware_virtual_machines' : 'ibm_flashsystem',
+      resourceType,
+      providerId: resourceType === 'vm' ? 'vmware-vcenter-01' : 'ibm-flashsystem-01',
+      policySetId: 'test_1_hour_ps',
+      resources: resourceType === 'vm' ? ['TEST-WEB01'] : ['IBU_source'],
+      relatedVolumeProviderId: resourceType === 'vm' ? 'ibm-flashsystem-01' : null,
+      relatedVolumes: resourceType === 'vm' ? ['IBU_source'] : [],
+      topology: 'metro_mirror', metroMirrorMode: 'managed',
+      orchestrationProviderId: 'airflow-01', pushToOrchestrator: false,
+    }
+
+    const payload = toRecoveryGroupSubmitPayload(validateRecoveryGroupDraft(draft), draft.id)
+
+    expect(payload).toEqual({
+      id: 'aaa',
+      name: 'aa',
+      description: 'aa',
+      provider_id_vm: resourceType === 'vm' ? 'vmware-vcenter-01' : '',
+      provider_id_volume: 'ibm-flashsystem-01',
+      topology: 'metro_mirror',
+      metro_mirror: { mode: 'managed' },
+      policy_set_id: 'test_1_hour_ps',
+      vms: resourceType === 'vm' ? [{ name: 'TEST-WEB01', order: 1 }] : [],
+      volumes: [{ name: 'IBU_source' }],
+    })
+  })
+
+  it('never submits a consistency group, auxiliary names or target pool for Managed', () => {
+    const payload = toRecoveryGroupSubmitPayload({
+      ...validatedVmDraft,
+      resources: ['TEST-WEB01'],
+      relatedVolumeProviderId: 'ibm-flashsystem-01',
+      relatedVolumes: ['IBU_source'],
+      topology: 'metro_mirror',
+      metroMirrorMode: 'managed',
+      consistencyGroupId: '55',
+      auxiliaryNamesByVolume: { IBU_source: 'auxe6d1bdad_IBU_source' },
+      vmMetadataByName: undefined,
+    }, 'aaa')
+
+    expect(payload.metro_mirror).toEqual({ mode: 'managed' })
+    expect(payload.metro_mirror).not.toHaveProperty('consistency_group_id')
+    expect(payload.metro_mirror).not.toHaveProperty('target_pool')
+    expect(payload.volumes).toEqual([{ name: 'IBU_source' }])
+  })
+
   it('embeds captured VM metadata and assigns order by array position', () => {
     const payload = toRecoveryGroupSubmitPayload(validatedVmDraft, 'database_group')
 
@@ -240,6 +290,54 @@ describe('mapRecoveryGroupApiRecord', () => {
       auxiliaryNamesByVolume: { 'VOL-01': 'AUX-01' },
     })
     expect(group.rawRecord).toBe(record)
+    expect(toRecoveryGroupJson(group)).toBe(record)
+  })
+
+  it('reads back backend-generated Managed values without resubmitting them', () => {
+    const record = readRecord({
+      id: 'aaa',
+      name: 'aa',
+      description: 'aa',
+      provider_id_vm: 'vmware-vcenter-01',
+      provider_id_volume: 'ibm-flashsystem-01',
+      topology: 'metro_mirror',
+      metro_mirror: { mode: 'managed', consistency_group_id: '55' },
+      policy_set_id: 'test_1_hour_ps',
+      vms: [{ name: 'TEST-WEB01' }],
+      volumes: [{ name: 'IBU_source', auxiliary_name: 'auxe6d1bdad_IBU_source' }],
+    })
+    const group = mapRecoveryGroupApiRecord(record, [vmwareProvider, flashSystemProvider])
+
+    expect(group).toMatchObject({
+      metroMirrorMode: 'managed',
+      consistencyGroupId: '55',
+      relatedVolumes: ['IBU_source'],
+      auxiliaryNamesByVolume: { IBU_source: 'auxe6d1bdad_IBU_source' },
+    })
+    expect(toRecoveryGroupJson({ ...group, rawRecord: undefined })).toMatchObject({
+      metro_mirror: { mode: 'managed', consistency_group_id: '55' },
+      volumes: [{ name: 'IBU_source', auxiliary_name: 'auxe6d1bdad_IBU_source' }],
+    })
+
+    const payload = toRecoveryGroupSubmitPayload(validateRecoveryGroupDraft({
+      ...group,
+      orchestrationProviderId: 'airflow-01',
+      pushToOrchestrator: false,
+    }), group.id)
+    expect(payload.metro_mirror).toEqual({ mode: 'managed' })
+    expect(payload.volumes).toEqual([{ name: 'IBU_source' }])
+  })
+
+  it('does not invent empty auxiliary names in the JSON view of a Managed group', () => {
+    const group = toRecoveryGroup(validateRecoveryGroupDraft({
+      id: 'aaa', name: 'aa', description: 'aa',
+      sourceCategory: 'storage_system', workloadType: 'ibm_flashsystem', resourceType: 'volume',
+      providerId: 'ibm-flashsystem-01', policySetId: 'test_1_hour_ps', resources: ['IBU_source'],
+      topology: 'metro_mirror', metroMirrorMode: 'managed',
+      orchestrationProviderId: 'airflow-01', pushToOrchestrator: false,
+    }), 'aaa')
+
+    expect(toRecoveryGroupJson(group).volumes).toEqual([{ name: 'IBU_source' }])
   })
 
   it('round-trips VM metadata from a GET response into vmMetadataByName', () => {

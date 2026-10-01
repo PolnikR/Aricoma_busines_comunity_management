@@ -29,10 +29,54 @@ describe('validateRecoveryGroupDraft topology', () => {
     })
   })
 
-  it('rejects an explicit unselected topology and managed mode', () => {
+  it('rejects an explicit unselected topology', () => {
     expect(() => validateRecoveryGroupDraft({ ...vmDraft, topology: null })).toThrow()
-    expect(() => validateRecoveryGroupDraft({ ...vmDraft, topology: 'metro_mirror', metroMirrorMode: 'managed' })).toThrow()
-    expect(() => validateRecoveryGroupDraft({ ...vmDraft, topology: 'local', metroMirrorMode: 'managed' })).toThrow()
+  })
+
+  it('normalizes managed mode with Local topology to no Metro mode', () => {
+    expect(validateRecoveryGroupDraft({ ...vmDraft, topology: 'local', metroMirrorMode: 'managed' })).toMatchObject({
+      topology: 'local',
+      metroMirrorMode: null,
+      consistencyGroupId: null,
+      auxiliaryNamesByVolume: {},
+    })
+  })
+
+  it.each(['vm', 'volume'] as const)('accepts managed %s groups without consistency group or auxiliary names', resourceType => {
+    const managed: RecoveryGroupDraft = resourceType === 'vm'
+      ? { ...vmDraft, topology: 'metro_mirror', metroMirrorMode: 'managed', relatedVolumeProviderId: 'source-01', relatedVolumes: ['VOL-01'] }
+      : {
+          ...vmDraft,
+          sourceCategory: 'storage_system',
+          workloadType: 'ibm_flashsystem',
+          resourceType: 'volume',
+          providerId: 'source-01',
+          resources: ['VOL-01'],
+          topology: 'metro_mirror',
+          metroMirrorMode: 'managed',
+        }
+    const expected = { topology: 'metro_mirror', metroMirrorMode: 'managed', consistencyGroupId: null, auxiliaryNamesByVolume: {} }
+    expect(validateRecoveryGroupDraft(managed)).toMatchObject(expected)
+    expect(validateRecoveryGroupDraft({ ...managed, consistencyGroupId: '', auxiliaryNamesByVolume: {} })).toMatchObject(expected)
+  })
+
+  it('drops persisted backend-generated values from a managed draft', () => {
+    expect(validateRecoveryGroupDraft({
+      ...vmDraft,
+      topology: 'metro_mirror',
+      metroMirrorMode: 'managed',
+      relatedVolumeProviderId: 'source-01',
+      relatedVolumes: ['VOL-01'],
+      consistencyGroupId: '55',
+      auxiliaryNamesByVolume: { 'VOL-01': 'auxe6d1bdad_VOL-01' },
+    })).toMatchObject({ metroMirrorMode: 'managed', consistencyGroupId: null, auxiliaryNamesByVolume: {} })
+  })
+
+  it('still requires a source provider and a source volume for managed mode', () => {
+    const managed = { ...vmDraft, topology: 'metro_mirror' as const, metroMirrorMode: 'managed' as const }
+    expect(() => validateRecoveryGroupDraft(managed)).toThrow()
+    expect(() => validateRecoveryGroupDraft({ ...managed, relatedVolumeProviderId: 'source-01' })).toThrow()
+    expect(() => validateRecoveryGroupDraft({ ...managed, relatedVolumes: ['VOL-01'] })).toThrow()
   })
 
   it('clears stale Metro data when Local is selected', () => {
