@@ -89,7 +89,7 @@ function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChan
 
 export function IdentityAccessPage() {
   const { t } = useTranslation()
-  const { sectionId, groupId, entityId, tabId, setSectionId, setSectionTab, setGroupId, setEntityId, setTabId } = useIdentityAccessSection()
+  const { sectionId, groupId, entityId, tabId, setSectionId, setSectionTab, setEntityId, setTabId } = useIdentityAccessSection()
 
   return (
     <div className="flex min-h-full min-w-0 flex-col overflow-hidden lg:h-full lg:min-h-0">
@@ -110,7 +110,6 @@ export function IdentityAccessPage() {
         <IdentityAccessNavigation
           groupId={groupId}
           sectionId={sectionId}
-          onGroupChange={setGroupId}
           onSectionChange={setSectionId}
         />
         <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-surface-subtle p-3" aria-live="polite">

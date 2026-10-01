@@ -9,7 +9,6 @@ function renderNavigation(overrides?: Partial<Parameters<typeof IdentityAccessNa
   const props: Parameters<typeof IdentityAccessNavigation>[0] = {
     groupId: 'manage',
     sectionId: 'users',
-    onGroupChange: vi.fn(),
     onSectionChange: vi.fn(),
     ...overrides,
   }
@@ -22,19 +21,17 @@ describe('IdentityAccessNavigation', () => {
   it('renders only visible Manage sections using shared tab semantics', () => {
     renderNavigation()
 
-    expect(screen.getByRole('tab', { name: 'Manage' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('tab', { name: 'Configure' })).toHaveAttribute('aria-selected', 'false')
     const sectionTabs = within(screen.getByRole('tablist', { name: 'Manage sections' }))
     expect(sectionTabs.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Users', 'Clients', 'Realm roles'])
     expect(screen.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true')
   })
 
-  it('delegates group switching to the URL-backed selection contract', async () => {
-    const props = renderNavigation()
+  it('hides the Manage/Configure group switcher', () => {
+    renderNavigation()
 
-    await userEvent.click(screen.getByRole('tab', { name: 'Configure' }))
-
-    expect(props.onGroupChange).toHaveBeenCalledWith('configure')
+    expect(screen.queryByRole('tablist', { name: 'Keycloak navigation groups' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Manage' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Configure' })).not.toBeInTheDocument()
   })
 
   it('renders only visible Configure sections and delegates their selection', async () => {

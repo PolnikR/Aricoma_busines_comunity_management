@@ -1876,7 +1876,6 @@
   "identity.page.title": "Identity & Access",
   "identity.page.description": "Manage Keycloak identities, applications, access policies, sessions, authentication, and realm configuration.",
   "identity.navigation.ariaLabel": "Keycloak realm navigation",
-  "identity.navigation.groups.ariaLabel": "Keycloak navigation groups",
   "identity.navigation.groups.manage": "Manage",
   "identity.navigation.groups.configure": "Configure",
   "identity.navigation.sections.ariaLabel": "{{group}} sections",

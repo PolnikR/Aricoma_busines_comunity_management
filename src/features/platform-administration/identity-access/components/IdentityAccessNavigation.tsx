@@ -1,10 +1,8 @@
-import { FilterTabs } from '@/shared/components/filters/FilterTabs'
 import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useTranslation } from '@/hooks/useTranslation'
 import {
   getIdentityAccessGroup,
   getVisibleIdentityAccessSections,
-  identityAccessSectionGroups,
   type IdentityAccessSectionGroupId,
   type IdentityAccessSectionId,
 } from '../models/identityAccessSections'
@@ -12,14 +10,12 @@ import {
 interface IdentityAccessNavigationProps {
   groupId: IdentityAccessSectionGroupId
   sectionId: IdentityAccessSectionId
-  onGroupChange: (groupId: IdentityAccessSectionGroupId) => void
   onSectionChange: (sectionId: IdentityAccessSectionId) => void
 }
 
 export function IdentityAccessNavigation({
   groupId,
   sectionId,
-  onGroupChange,
   onSectionChange,
 }: IdentityAccessNavigationProps) {
   const { t } = useTranslation()
@@ -29,17 +25,6 @@ export function IdentityAccessNavigation({
 
   return (
     <nav aria-label={t('identity.navigation.ariaLabel')} className="shrink-0 min-w-0 border-b border-border bg-surface">
-      <div className="px-4 py-3">
-        <div className="w-fit max-w-full">
-          <FilterTabs
-            ariaLabel={t('identity.navigation.groups.ariaLabel')}
-            tabs={identityAccessSectionGroups.map(group => ({ value: group.id, label: t(`identity.navigation.groups.${group.id}`) }))}
-            value={groupId}
-            onChange={(nextGroupId) => { onGroupChange(nextGroupId as IdentityAccessSectionGroupId) }}
-          />
-        </div>
-      </div>
-
       <Tabs
         items={visibleSections.map(section => ({ value: section.id, label: t(`identity.navigation.sections.${section.id}`) }))}
         value={sectionId}

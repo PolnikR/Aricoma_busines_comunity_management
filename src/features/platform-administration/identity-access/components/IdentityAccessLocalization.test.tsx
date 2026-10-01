@@ -16,7 +16,6 @@ function renderNavigation(language: 'sk' | 'cs') {
       <IdentityAccessNavigation
         groupId="manage"
         sectionId="users"
-        onGroupChange={vi.fn()}
         onSectionChange={vi.fn()}
       />
     </LanguageProvider>,
@@ -32,9 +31,7 @@ describe('IdentityAccessNavigation localization', () => {
   it('renders Slovak navigation from the real language provider', async () => {
     renderNavigation('sk')
 
-    expect(await screen.findByRole('tab', { name: 'Správa' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Konfigurácia' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Používatelia' })).toHaveAttribute('aria-selected', 'true')
+    expect(await screen.findByRole('tab', { name: 'Používatelia' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Klienti' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Realm roly' })).toBeInTheDocument()
   })
@@ -42,9 +39,7 @@ describe('IdentityAccessNavigation localization', () => {
   it('renders Czech navigation from the real language provider', async () => {
     renderNavigation('cs')
 
-    expect(await screen.findByRole('tab', { name: 'Správa' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Konfigurace' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Uživatelé' })).toHaveAttribute('aria-selected', 'true')
+    expect(await screen.findByRole('tab', { name: 'Uživatelé' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Klienti' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Realm role' })).toBeInTheDocument()
   })
@@ -57,20 +52,17 @@ describe('IdentityAccessNavigation localization', () => {
         <IdentityAccessNavigation
           groupId="manage"
           sectionId="users"
-          onGroupChange={vi.fn()}
-          onSectionChange={vi.fn()}
+            onSectionChange={vi.fn()}
         />
       </LanguageProvider>,
     )
 
-    expect(await screen.findByRole('tab', { name: 'Manage' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Users' })).toBeInTheDocument()
+    expect(await screen.findByRole('tab', { name: 'Users' })).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Switch to Slovak' }))
 
-    expect(await screen.findByRole('tab', { name: 'Správa' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Používatelia' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.queryByRole('tab', { name: 'Manage' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('tab', { name: 'Používatelia' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByRole('tab', { name: 'Users' })).not.toBeInTheDocument()
     expect(localStorage.getItem('app-language')).toBe('sk')
   })
 })

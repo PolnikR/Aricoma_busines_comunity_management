@@ -64,8 +64,9 @@ describe('IdentityAccessPage', () => {
     expect(screen.getByRole('heading', { name: 'Identity & Access', level: 1 })).toBeInTheDocument()
     expect(screen.queryByTestId('identity-access-realm-context')).not.toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Keycloak realm navigation' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Manage' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('tab', { name: 'Configure' })).toHaveAttribute('aria-selected', 'false')
+    expect(screen.queryByRole('tab', { name: 'Manage' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Configure' })).not.toBeInTheDocument()
+    expect(screen.getByRole('tablist', { name: 'Manage sections' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Users content')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Add user' })).not.toBeInTheDocument()
@@ -99,7 +100,7 @@ describe('IdentityAccessPage', () => {
   it.each(registeredSections)('renders the registered $sectionId section in its $groupLabel group', ({ groupLabel, sectionId, sectionLabel }) => {
     renderPage(`/platform-administration/identity-access?section=${sectionId}`)
 
-    expect(screen.getByRole('tab', { name: groupLabel })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tablist', { name: `${groupLabel} sections` })).toBeInTheDocument()
     const visibleSectionIds = identityAccessVisibleSectionIds[groupLabel === 'Manage' ? 'manage' : 'configure']
     if (visibleSectionIds.some(visibleSectionId => visibleSectionId === sectionId)) {
       expect(screen.getByRole('tab', { name: sectionLabel })).toHaveAttribute('aria-selected', 'true')
