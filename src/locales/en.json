@@ -1244,7 +1244,7 @@
   "resources.flash.filters.allStatuses": "All statuses",
   "resources.flash.empty.title": "No volumes found",
   "resources.flash.empty.description": "No FlashSystem volumes match the current search and filters.",
-  "resources.flash.detail.selected": "Selected volume",
+  "resources.flash.detail.entity": "Volume",
   "resources.flash.detail.ariaLabel": "FlashSystem volume detail",
   "resources.flash.detail.close": "Close volume detail",
   "resources.flash.detail.pool": "Related pool",

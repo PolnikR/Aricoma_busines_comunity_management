@@ -1,4 +1,5 @@
-import { DetailDrawer, DetailRow } from '@/shared/components/data-table'
+import { Fragment } from 'react'
+import { DetailDrawer, DetailDrawerSection, DetailRow } from '@/shared/components/data-table'
 import type { FlashSystemVolumeResource } from '../../model/discoveryTypes'
 
 interface FlashSystemVolumeDetailPanelProps {
@@ -6,9 +7,10 @@ interface FlashSystemVolumeDetailPanelProps {
   open: boolean
   onClose: () => void
   labels: {
-    selected: string
+    entity: string
     detail: string
     close: string
+    resize: string
     pool: string
     capacity: string
     usedCapacity: string
@@ -47,7 +49,7 @@ function display(value: unknown): string {
 function ConsistencyGroups({ groups }: { groups: FlashSystemVolumeResource['resolvedConsistencyGroups'] }) {
   if (groups.length === 0) return '-'
   return (
-    <ul className="flex flex-wrap justify-end gap-1">
+    <ul className="flex flex-wrap gap-1">
       {groups.map((group) => (
         <li key={group.id} title={group.id} className="inline-flex items-center gap-1 rounded-lg border border-border-strong bg-surface px-2 py-0.5 text-[11px] font-semibold text-text-secondary">
           <span>{group.name}</span>
@@ -63,31 +65,32 @@ export function FlashSystemVolumeDetailPanel({ volume, open, onClose, labels }: 
     <DetailDrawer
       open={open}
       onClose={onClose}
-      eyebrow={labels.selected}
       title={volume?.name ?? '-'}
+      meta={[labels.entity]}
       ariaLabel={labels.detail}
       closeLabel={labels.close}
+      resizeLabel={labels.resize}
       resizable
     >
       {volume ? (
-        <div className="space-y-5 p-5">
-          {fieldGroups.map((group) => (
-            <section key={group.key}>
-              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-primary">{labels.groups[group.key]}</h3>
+        // Keyed by volume so each newly opened volume starts with the default sections.
+        <Fragment key={volume.id}>
+          {fieldGroups.map((group, index) => (
+            // Identity and placement start open; state and copies are one click away.
+            <DetailDrawerSection key={group.key} title={labels.groups[group.key]} defaultOpen={index < 2}>
               <dl>{group.fields.map((field) => field === 'consistency_groups'
                 ? <DetailRow key={field} label={labels.consistencyGroups} value={<ConsistencyGroups groups={volume.resolvedConsistencyGroups} />} />
                 : <DetailRow key={field} label={labels.fieldLabels[field] ?? field} value={display(volume[field])} />)}</dl>
-            </section>
+            </DetailDrawerSection>
           ))}
-          <section>
-            <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-primary">{labels.pool}</h3>
+          <DetailDrawerSection title={labels.pool}>
             <dl>
               <DetailRow label={labels.capacity} value={display(volume.pool?.capacity)} />
               <DetailRow label={labels.usedCapacity} value={display(volume.pool?.used_capacity)} />
               <DetailRow label={labels.freeCapacity} value={display(volume.pool?.free_capacity)} />
             </dl>
-          </section>
-        </div>
+          </DetailDrawerSection>
+        </Fragment>
       ) : null}
     </DetailDrawer>
   )

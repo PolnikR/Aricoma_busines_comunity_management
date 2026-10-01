@@ -27,6 +27,11 @@ const secondProvider: ProviderRecord = {
   name: 'Flash 02',
 }
 
+// Opens every collapsed drawer section so all detail rows can be asserted.
+function expandAll(dialog: HTMLElement) {
+  for (const toggle of within(dialog).queryAllByRole('button', { expanded: false })) fireEvent.click(toggle)
+}
+
 describe('FlashSystemInventoryView', () => {
   it('renders relevant columns and localized detail relationships', () => {
     const inventory = mapFlashSystemInventory(parseWireResponse(VolumesResponse, {
@@ -82,6 +87,10 @@ describe('FlashSystemInventoryView', () => {
 
     fireEvent.click(screen.getByRole('row', { name: 'Show details for V5000_Volume1' }))
     const dialog = screen.getByRole('dialog', { name: 'FlashSystem volume detail' })
+    expect(within(dialog).getByRole('button', { name: 'Identity' })).toHaveAttribute('aria-expanded', 'true')
+    expect(within(dialog).getByRole('button', { name: 'Placement and capacity' })).toHaveAttribute('aria-expanded', 'true')
+    expect(within(dialog).getByRole('button', { name: 'Copy relationships' })).toHaveAttribute('aria-expanded', 'false')
+    expandAll(dialog)
     expect(within(dialog).getByText('Placement and capacity')).toBeInTheDocument()
     expect(within(dialog).getByText('Virtual disk UID')).toBeInTheDocument()
     expect(within(dialog).getByText('Protocol')).toBeInTheDocument()
@@ -191,7 +200,8 @@ describe('FlashSystemInventoryView', () => {
 
     fireEvent.click(screen.getByRole('row', { name: 'Show details for multi' }))
     const dialog = screen.getByRole('dialog', { name: 'FlashSystem volume detail' })
-    const copyLabels = within(dialog).getByText('Copy relationships').nextElementSibling?.querySelectorAll('dt') ?? []
+    expandAll(dialog)
+    const copyLabels = within(within(dialog).getByRole('region', { name: 'Copy relationships' })).getAllByRole('term')
     expect([...copyLabels].map((label) => label.textContent)).toEqual([
       'FlashCopy ID', 'FlashCopy name', 'Consistency groups', 'Remote Copy ID', 'Remote Copy name',
       'Space-efficient copy count', 'Compressed copy count', 'Remote Copy change',
@@ -204,9 +214,11 @@ describe('FlashSystemInventoryView', () => {
     expect(within(dialog).getByText('no')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('row', { name: 'Show details for single' }))
+    expandAll(screen.getByRole('dialog', { name: 'FlashSystem volume detail' }))
     expect(within(consistencyRow()).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['cg_dailycopying'])
 
     fireEvent.click(screen.getByRole('row', { name: 'Show details for ungrouped' }))
+    expandAll(screen.getByRole('dialog', { name: 'FlashSystem volume detail' }))
     expect(within(consistencyRow()).queryByRole('listitem')).not.toBeInTheDocument()
     expect(within(consistencyRow()).getByText('-')).toBeInTheDocument()
 

@@ -1207,7 +1207,7 @@
   "resources.flash.filters.allStatuses": "Všechny stavy",
   "resources.flash.empty.title": "Nebyly nalezeny žádné svazky",
   "resources.flash.empty.description": "Aktuálnímu hledání a filtrům neodpovídají žádné FlashSystem svazky.",
-  "resources.flash.detail.selected": "Vybraný svazek",
+  "resources.flash.detail.entity": "Svazek",
   "resources.flash.detail.ariaLabel": "Detail FlashSystem svazku",
   "resources.flash.detail.close": "Zavřít detail svazku",
   "resources.flash.detail.pool": "Související pool",

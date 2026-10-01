@@ -1207,7 +1207,7 @@
   "resources.flash.filters.allStatuses": "Všetky stavy",
   "resources.flash.empty.title": "Nenašli sa žiadne zväzky",
   "resources.flash.empty.description": "Aktuálnemu vyhľadávaniu a filtrom nezodpovedajú žiadne FlashSystem zväzky.",
-  "resources.flash.detail.selected": "Vybraný zväzok",
+  "resources.flash.detail.entity": "Zväzok",
   "resources.flash.detail.ariaLabel": "Detail FlashSystem zväzku",
   "resources.flash.detail.close": "Zavrieť detail zväzku",
   "resources.flash.detail.pool": "Súvisiaci pool",
