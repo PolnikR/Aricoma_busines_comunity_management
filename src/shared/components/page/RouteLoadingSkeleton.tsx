@@ -10,12 +10,12 @@ interface RouteLoadingSkeletonProps {
 // Mirrors PageHeader: a 36px title line, a 20px description line and mb-4.
 function PageHeadingSkeleton({ actionWidth }: { actionWidth: string }) {
   return (
-    <div data-testid="route-skeleton-heading" className="mb-4 flex shrink-0 items-start justify-between gap-4" aria-hidden="true">
-      <div>
+    <div data-testid="route-skeleton-heading" className="mb-4 flex shrink-0 flex-col items-start gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4" aria-hidden="true">
+      <div className="min-w-0">
         <div className="flex h-9 items-center"><div className="h-6 w-72 max-w-[70vw] animate-pulse rounded-md bg-surface-muted" /></div>
         <div className="flex h-5 items-center"><div className="h-3.5 w-96 max-w-[80vw] animate-pulse rounded bg-surface-muted" /></div>
       </div>
-      <div className={`h-9 ${actionWidth} animate-pulse rounded-lg bg-surface-muted`} />
+      <div className={`h-9 ${actionWidth} shrink-0 animate-pulse rounded-lg bg-surface-muted`} />
     </div>
   )
 }

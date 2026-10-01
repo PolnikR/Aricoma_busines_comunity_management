@@ -30,7 +30,7 @@ describe('RouteLoadingSkeleton', () => {
     render(<RouteLoadingSkeleton variant={variant} />)
 
     const heading = screen.getByTestId('route-skeleton-heading')
-    expect(heading).toHaveClass('mb-4', 'items-start')
+    expect(heading).toHaveClass('mb-4', 'flex-col', 'items-start', 'gap-2', 'sm:flex-row', 'sm:justify-between', 'sm:gap-4')
     expect(heading.querySelector('.h-9')).toBeInTheDocument()
     expect(heading.querySelector('.h-5')).toBeInTheDocument()
     expect(heading.querySelector('.h-3.w-24')).toBeNull()
