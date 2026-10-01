@@ -2,7 +2,25 @@
 
 Plan: `tasks/metro-mirror-managed-mode-plan.md`
 
+Execute strictly Task 1 → Task 2 → … one task at a time (see plan "Execution Rules" and
+"Release Gate"). Re-read the relevant plan sections before each task. No client-side Metro Mirror
+eligibility filtering in any task.
+
+**Task completion checkpoint** – after every task, report all of the following before starting
+the next task:
+
+- Changed files:
+- What changed:
+- Acceptance criteria status:
+- Verification command(s):
+- Verification result:
+- Commit:
+- Any discovered follow-up / blocker:
+
 ## Task 1: Mode-split validation and topology check
+
+**Scope:** only validation + topology util. No UI enablement (Managed option stays disabled).
+No backend changes.
 
 **Description:** `validateRecoveryGroupDraft` accepts `managed` without CG id / auxiliary names and keeps
 requiring them for `existing`. `getRecoveryGroupTopologyError` accepts `managed` with the same
@@ -24,11 +42,25 @@ source/partner checks as `existing`.
 
 **Estimated scope:** Small
 
+**Completion checkpoint:**
+- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
+
 ## Task 2: Mode-aware submit mapper and read-back
 
-**Description:** `toRecoveryGroupSubmitPayload` emits `metro_mirror` per mode. The Managed submit
-mapper never emits `auxiliary_name`, `consistency_group_id` or `target_pool`, whatever the draft
-holds. Persisted backend-generated values are preserved only on read-back via `mapRecoveryGroupApiRecord`.
+**Scope:** only mapper / read-back contract. No UI changes.
+
+**Description:** `toRecoveryGroupSubmitPayload` emits `metro_mirror` per mode. Managed submit is exactly:
+
+```json
+{
+  "topology": "metro_mirror",
+  "metro_mirror": { "mode": "managed" },
+  "volumes": [{ "name": "SOURCE_VOLUME" }]
+}
+```
+
+It never emits `consistency_group_id`, `auxiliary_name` or `target_pool`, whatever the draft holds.
+Persisted backend-generated values are preserved only on read-back via `mapRecoveryGroupApiRecord`.
 
 **Acceptance criteria:**
 - [ ] Existing payload unchanged: `{ mode: 'existing', consistency_group_id }` + `auxiliary_name` per volume
@@ -45,10 +77,16 @@ holds. Persisted backend-generated values are preserved only on read-back via `m
 
 **Estimated scope:** Small
 
-## Checkpoint: Domain
+**Completion checkpoint:**
+- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
+
+## Checkpoint: FE domain
 - [ ] Task 1 + 2 focused tests pass
+- [ ] Task 1–2 verified with the user – **stop here; do not continue to Task 3 automatically**
 
 ## Task 3: Topology step – selectable Managed, mode immutable in edit, locales
+
+**Scope:** Managed selectable only on CREATE; mode immutable on EDIT; no candidate filtering.
 
 **Description:** Managed option enabled for new groups; mode select stores the chosen value and
 clears CG/aux; topology/source no longer disabled for a new managed draft. New `isEditing` prop
@@ -64,7 +102,7 @@ shows a short hint that ABCO provisions the Metro Mirror infrastructure.
 **Verification:**
 - [ ] `npm exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupTopologyStep.test.tsx src/locales/recoveryGroupTopologyTranslations.test.ts`
 
-**Dependencies:** Task 1
+**Dependencies:** Task 1, 2 (FE domain checkpoint confirmed)
 
 **Files likely touched:**
 - `src/features/recovery-plans/recovery-groups/components/RecoveryGroupTopologyStep.tsx` (+ test)
@@ -73,7 +111,12 @@ shows a short hint that ABCO provisions the Metro Mirror infrastructure.
 
 **Estimated scope:** Medium
 
+**Completion checkpoint:**
+- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
+
 ## Task 4: Builder – global lifecycle lock for pushed groups
+
+**Scope:** pushed=true → read-only for Local, Existing and Managed.
 
 **Description:** Mirror backend `_validate_not_pushed()`: when `initialData?.pushToOrchestrator === true`
 the whole Recovery Group is read-only, for every topology and mode (Local, Existing, Managed).
@@ -90,7 +133,7 @@ for viewing and disables Save.
 **Verification:**
 - [ ] `npm exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx`
 
-**Dependencies:** None
+**Dependencies:** Task 3
 
 **Files likely touched:**
 - `src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.tsx` (+ test)
@@ -98,7 +141,13 @@ for viewing and disables Save.
 
 **Estimated scope:** Small–Medium
 
+**Completion checkpoint:**
+- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
+
 ## Task 5: Builder – Managed flow without Existing data, managed rollback lock
+
+**Scope:** Managed wizard works without CG/aux inputs; clean-rollback Managed editable;
+partial-rollback Managed read-only; no Existing regression; no client-side eligibility filter.
 
 **Description:** Split Builder conditions by mode: `storageValid`, auxiliary inputs, hint and
 `RecoveryGroupMetroMirrorFields` only for existing; managed needs only ≥1 selected volume and shows
@@ -109,7 +158,7 @@ backend-derived auxiliary names read-only when present. Replace the blanket mana
 - Partial rollback → pushed=false but derived CG id or auxiliary name remain → read-only.
 
 **Acceptance criteria:**
-- [ ] New group: choose Metro → Managed, pick source + volumes, finish wizard and `onCreate` gets `metroMirrorMode: 'managed'`; relationship hook is called with `enabled=false`; no CG / auxiliary inputs rendered
+- [ ] New group: choose Metro → Managed, pick source + volumes, finish wizard and `onCreate` gets `metroMirrorMode: 'managed'`; relationship hook is called with `enabled=false`; no CG / auxiliary inputs rendered; volume list is not filtered on FE
 - [ ] Clean managed group (pushed=false, no derived ids – successful rollback) can be saved; managed group with derived ids and pushed=false (partial rollback) is read-only with `lifecycleLock.managedProvisioned` warning
 - [ ] All existing Existing-mode Builder tests pass unchanged
 
@@ -125,11 +174,18 @@ backend-derived auxiliary names read-only when present. Replace the blanket mana
 
 **Estimated scope:** Small–Medium
 
-## Checkpoint: FE complete
+**Completion checkpoint:**
+- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
+
+## Checkpoint: FE implementation complete on feature branch (NOT production-ready)
 - [ ] All FE focused tests above pass; full suite / production build not run unless requested
 - [ ] Final Managed request JSON shown to the user with list of changed files
+- [ ] Status reported as "FE implementation complete on feature branch" – **not** "Managed feature complete / production-ready" (Release Gate)
 
 ## Task 6: Analyse relationship discovery contract and decide endpoint/contract (BE)
+
+**Scope:** analysis / API contract decision only. No implementation.
+**Human approval required before Tasks 7–10 start.**
 
 **Description:** Analyse the current `/get_metro_mirror_relationships` contract (statuses,
 per-volume `auxiliary_name`, single `consistency_group_id`, ambiguity handling) and decide between
@@ -139,17 +195,20 @@ endpoint. The result must be server-driven; no client-side filtering, not even a
 **Acceptance criteria:**
 - [ ] Written decision (A or B) with the request/response contract: mode input, per-volume eligibility + reason, per-volume CG id for Existing
 - [ ] Contract covers Existing rules, Managed rules, ambiguous exclusion and Existing same-CG compatibility
-- [ ] Backend files and focused test commands identified; human review before Tasks 7–10
+- [ ] Backend files and focused test commands identified
 
 **Verification:**
 - [ ] Decision reviewed and approved by human
 
-**Dependencies:** None
+**Dependencies:** FE checkpoint after Task 5
 
 **Files likely touched:**
 - Backend repo: `recovery/groups.py`, relationship discovery module (TBD); decision note/ADR
 
 **Estimated scope:** Small (analysis)
+
+**Completion checkpoint:**
+- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
 
 ## Task 7: Existing candidate rules, ambiguous exclusion, same-CG compatibility (BE)
 
@@ -166,12 +225,15 @@ Recovery Group must share one CG.
 **Verification:**
 - [ ] Backend focused tests (command from Task 6)
 
-**Dependencies:** Task 6
+**Dependencies:** **Task 6 approval**
 
 **Files likely touched:**
 - Backend repo (TBD in Task 6)
 
 **Estimated scope:** Medium
+
+**Completion checkpoint:**
+- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
 
 ## Task 8: Managed candidate rules, ambiguous exclusion (BE)
 
@@ -187,12 +249,15 @@ an existing Metro Mirror relationship (equivalent to `status=not_mirrored`). `ex
 **Verification:**
 - [ ] Backend focused tests (command from Task 6)
 
-**Dependencies:** Task 6
+**Dependencies:** **Task 6 approval**, Task 7
 
 **Files likely touched:**
 - Backend repo (TBD in Task 6)
 
 **Estimated scope:** Small–Medium
+
+**Completion checkpoint:**
+- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
 
 ## Task 9: Submit-time revalidation before storage write operations (BE)
 
@@ -209,18 +274,22 @@ relationships, auxiliary names and the single CG still match storage.
 **Verification:**
 - [ ] Backend focused tests (command from Task 6)
 
-**Dependencies:** Task 6 (rules shared with Tasks 7–8)
+**Dependencies:** **Task 6 contract**, Task 8 (rules shared with Tasks 7–8)
 
 **Files likely touched:**
 - Backend repo: `recovery/groups.py` and provisioning module (TBD in Task 6)
 
 **Estimated scope:** Medium
 
+**Completion checkpoint:**
+- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
+
 ## Task 10: FE consumes the server-driven candidate contract
 
+**Scope:** FE only consumes server-driven candidates; no own eligibility logic.
+
 **Description:** After Task 6 is decided and the backend is available, regenerate the API client
-and have the volume pickers show only server-provided candidates for the selected mode. No
-client-side eligibility logic.
+and have the volume pickers show only server-provided candidates for the selected mode.
 
 **Acceptance criteria:**
 - [ ] Existing and Managed pickers list exactly the backend-eligible volumes for the chosen mode
@@ -230,14 +299,17 @@ client-side eligibility logic.
 **Verification:**
 - [ ] Focused tests for the affected hook/components (paths TBD after Task 6)
 
-**Dependencies:** Task 6, 7, 8 (backend deployed), Task 5
+**Dependencies:** **Tasks 6, 7, 8** (backend deployed), Task 5; Task 9 should be available before final release
 
 **Files likely touched:**
 - Generated API (regenerated, not hand-edited), recovery group hooks/components (TBD)
 
 **Estimated scope:** Medium
 
-## Checkpoint: Eligibility complete
+**Completion checkpoint:**
+- [ ] Changed files / What changed / Acceptance criteria status / Verification command(s) / Verification result / Commit / Follow-up or blocker reported
+
+## Checkpoint: Managed Metro Mirror production-ready
 - [ ] Backend acceptance tests from Tasks 7–9 pass
 - [ ] FE pickers driven by backend candidates; human review
-- [ ] Commit per task
+- [ ] All Feature Complete Criteria in the plan met; all focused tests from Tasks 1–10 passed
