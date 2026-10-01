@@ -88,7 +88,6 @@
   "pages.virtualMachines.tabs.vmware": "VMware VMs",
   "pages.virtualMachines.tabs.flashSystem": "FlashSystem Volumes",
   "pages.virtualMachines.tabs.ibmPower": "IBM Power Partitions",
-  "pages.virtualMachines.eyebrow": "Discovery & Inventory",
   "pages.virtualMachines.error.title": "Virtual machines could not be loaded",
   "pages.virtualMachines.error.unknown": "Unknown discovery error.",
   "pages.virtualMachines.error.retryButton": "Retry loading",
@@ -129,13 +128,11 @@
   "pages.virtualMachines.detail.yes": "Yes",
   "pages.virtualMachines.detail.no": "No",
 
-  "pages.resourcesIse.eyebrow": "Discovery & Inventory · Target",
   "pages.resourcesIse.title": "Resources ISE",
   "pages.resourcesIse.description": "Target role resource inventory overview.",
 
-  "pages.infrastructure.title": "Infrastructure Topology",
+  "pages.infrastructure.title": "Infrastructure topology",
   "pages.infrastructure.description": "Explore discovered cluster, host, virtual machine, and datastore relationships.",
-  "pages.infrastructure.eyebrow": "Discovery & Inventory",
   "pages.infrastructure.error.title": "Infrastructure topology could not be loaded",
   "pages.infrastructure.error.retryButton": "Retry loading",
   "pages.infrastructure.error.latestFailed": "Latest request failed",

@@ -98,7 +98,6 @@ export function FlashSystemResourcesPage(props: SourceResourcesPageProps) {
   return (
     <ResourceViewportFrame>
       <TableToolbar
-        eyebrow={t(role === 'target' ? 'pages.resourcesIse.eyebrow' : 'pages.virtualMachines.eyebrow')}
         title={t('resources.flash.title')}
         description={t('resources.flash.description')}
         isFetching={providersFetching || sourceQuery.isFetching}

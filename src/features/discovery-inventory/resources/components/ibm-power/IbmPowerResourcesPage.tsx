@@ -92,7 +92,6 @@ export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
   return (
     <ResourceViewportFrame>
       <TableToolbar
-        eyebrow={t(role === 'target' ? 'pages.resourcesIse.eyebrow' : 'pages.virtualMachines.eyebrow')}
         title={t('resources.power.title')}
         description={t('resources.power.description')}
         isFetching={providersFetching || sourceQuery.isFetching}
