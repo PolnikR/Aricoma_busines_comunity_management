@@ -464,6 +464,14 @@ Task 18 zmaže `eyebrow` a `headerExtra` z `DetailDrawerProps`. Ak niekto zostal
 - **Focus:** pri otvorení ide na close button (bez zmeny). Trap Tab/Shift+Tab beží cez všetky
   fokusovateľné prvky vrátane `headerActions` a tlačidiel sekcií. Pri zatvorení sa focus vráti
   na opener.
+- **Focus trap vynecháva prvky skryté cez CSS (schválený implementačný detail z T1, commit
+  `36409336`):**
+  - Zoznam prvkov trapu sa filtruje cez `element.checkVisibility()`, keď ho prehliadač podporuje.
+  - Týka sa to najmä resize handle pod `lg` (`hidden lg:block`, teda `display: none`). Bol by
+    prvým fokusovateľným prvkom, prehliadač ho pri Tab preskočí, ale trap by ho bral ako
+    `first` a Shift+Tab z close tlačidla by vyhodil focus z drawera.
+  - jsdom `checkVisibility` nemá, preto sa tam prvky nefiltrujú. Test simuluje skrytý handle
+    stubom `checkVisibility: () => false`.
 - **Escape** zatvorí drawer. Vnorený popover (help) musí Escape zachytiť a zastaviť
   (`stopPropagation`). Shell sa nemení.
 - **Close button** má `aria-label={closeLabel}` a ikona `aria-hidden`.
@@ -501,6 +509,8 @@ restore, resize, reset šírky, footer). Pribudnú tieto:
 - **Prechodné props:** `eyebrow` sa zobrazí ako prvá meta položka. `headerExtra` ostáva
   (pôvodný test na :27 ostáva do T18).
 - **`headerActions`:** sú v riadku nadpisu pred close a patria do focus trapu.
+- **Focus trap a skryté prvky:** keď `checkVisibility()` vráti false, handle sa z trapu vynechá
+  a Shift+Tab z close tlačidla zabalí focus na posledný prvok drawera.
 - **Footer, legacy:** bez `footerStart` s dvoma `<button className="flex-1">` v `footer`. Rodič
   tlačidiel (end kontajner) má `flex-1` a je jediné dieťa footera, teda full-width. Obe tlačidlá
   sú v ňom v pôvodnom poradí.

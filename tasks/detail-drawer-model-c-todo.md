@@ -22,7 +22,10 @@ dostane kľúč vo všetkých troch.
 
 ## Fáza 1: Shared základ
 
-### Task 1: `DetailDrawer` header shell a API
+### Task 1: `DetailDrawer` header shell a API ✅
+
+**Stav:** hotovo, commit `36409336` (`feat: Model C header for the shared detail drawer`).
+Schválené vrátane implementačného detailu focus trapu (pozri posledné kritérium).
 
 **Cieľ:** Nový header (nadpis, meta riadok, subtitle, header akcie, ikonové zatvorenie),
 lokalizovateľný resizer aktívny iba od `lg`. Prechodné `eyebrow` a `headerExtra` ostávajú
@@ -40,23 +43,27 @@ funkčné.
 
 **Akceptačné kritériá:**
 
-- [ ] Props `meta`, `subtitle`, `headerActions` a `resizeLabel` fungujú podľa plánu (§1 a
+- [x] Props `meta`, `subtitle`, `headerActions` a `resizeLabel` fungujú podľa plánu (§1 a
       vizuálne pravidlá).
-- [ ] Resizer podľa plánu §1 „Šírka a resizer“:
+- [x] Resizer podľa plánu §1 „Šírka a resizer“:
   - Šírka ide cez `--detail-drawer-width` a triedy `w-[min(420px,92vw)]
     lg:w-(--detail-drawer-width) lg:max-w-[92vw]`. Inline `style.width` sa už nepoužíva.
   - Handle sa renderuje iba pri `resizable` a má `hidden lg:block`. Pod `lg` nie je viditeľný,
     fokusovateľný ani v accessibility tree.
   - Bez viewport JS logiky a bez nového `enabled` v hooku.
-- [ ] Zatvorenie je `CloseIcon` bez rámika a s `aria-label={closeLabel}`.
-- [ ] `eyebrow` sa renderuje ako prvá meta položka a `headerExtra` pod meta. Oba majú komentár
+- [x] Zatvorenie je `CloseIcon` bez rámika a s `aria-label={closeLabel}`.
+- [x] `eyebrow` sa renderuje ako prvá meta položka a `headerExtra` pod meta. Oba majú komentár
       `// Transitional (detail-drawer-model-c): removed in Task 18.` a **nemajú** JSDoc
       `@deprecated`.
-- [ ] Focus trap, Escape, restore focus, `inert`, resize (od `lg`) a reset šírky fungujú ako
+- [x] Focus trap, Escape, restore focus, `inert`, resize (od `lg`) a reset šírky fungujú ako
       predtým.
-- [ ] Existujúce testy sú zelené. Jediné povolené úpravy sú asercie šírky `style.width` →
+- [x] Existujúce testy sú zelené. Jediné povolené úpravy sú asercie šírky `style.width` →
       `style.getPropertyValue('--detail-drawer-width')` v `DetailDrawer.test.tsx` a
       `VirtualMachineDetailPanel.test.tsx`, s rovnakými hodnotami 420, 436, 476 a 480.
+- [x] **Schválený implementačný detail:** focus trap vynecháva fokusovateľné prvky skryté cez
+      CSS (`checkVisibility()`, keď ho prehliadač podporuje). Ide najmä o resize handle pod
+      `lg`, takže Shift+Tab z close tlačidla neopustí drawer. jsdom `checkVisibility` nemá a
+      prvky v ňom ostávajú. Test to simuluje stubom.
 
 **Testy:**
 
@@ -66,7 +73,19 @@ funkčné.
   - `resizable` → separator má `hidden lg:block`, aside má `lg:w-(--detail-drawer-width)` a
     premennú 420px
   - bez `resizable` → separator neexistuje a aside má `w-[min(420px,92vw)]`
+- Nové, focus trap: skrytý handle (`checkVisibility: () => false`) sa vynechá a Shift+Tab z
+  close prejde na posledný prvok.
 - V + celá **SC**.
+
+**Výsledok verifikácie (commit `36409336`):**
+
+- [x] `npx vitest run` na `DetailDrawer.test.tsx` a `useResizablePanel.test.ts`: 2 súbory,
+      27/27 testov.
+- [x] `npx vitest run` na celú **SC** (22 súborov): 22/22 súborov, 221/221 testov.
+- [x] `npx eslint --max-warnings 0` na 6 zmenených súboroch: OK.
+- [x] `npx tsc -p tsconfig.app.json --noEmit`: OK.
+- [x] `git diff --check`: OK.
+- Celá suita ani build sa nespúšťali. Browser kontrola je naplánovaná v Checkpointe A.
 
 **Závislosti:** žiadne. **Rozsah / riziko:** M / vysoké (R1). **Commit:**
 `feat: Model C header for the shared detail drawer`.
