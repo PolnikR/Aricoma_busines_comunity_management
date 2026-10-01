@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Card } from '@/shared/components/card/Card'
 import { DataTableSkeleton } from '@/shared/components/data-table'
 import { MetricsSkeleton } from '@/shared/components/stat-card/StatCard'
+import { cn } from '@/shared/utils/cn'
 
 interface InventoryShellProps {
   metrics?: ReactNode
@@ -9,6 +10,11 @@ interface InventoryShellProps {
   inventoryDescription?: ReactNode
   tabs?: ReactNode
   notice?: ReactNode
+  /**
+   * lg+ lower bound for the inventory card, e.g. `lg:min-h-[480px]`. It replaces the default
+   * `lg:min-h-0`, so on short viewports the card stops shrinking and the route frame scrolls instead.
+   */
+  surfaceMinHeightClassName?: string
   children: ReactNode
 }
 
@@ -18,15 +24,16 @@ export function InventoryShell({
   inventoryDescription,
   tabs,
   notice,
+  surfaceMinHeightClassName,
   children,
 }: InventoryShellProps) {
   return (
-  <div className="flex flex-1 flex-col gap-4 lg:min-h-0">
+  <div className={cn('flex flex-1 flex-col gap-4', !surfaceMinHeightClassName && 'lg:min-h-0')}>
     {metrics}
     {notice}
 
     <section
-      className="flex flex-1 flex-col lg:min-h-0"
+      className={cn('flex flex-1 flex-col', surfaceMinHeightClassName ?? 'lg:min-h-0')}
       aria-label={inventoryTitle}
     >
       <Card className="relative flex flex-1 flex-col overflow-hidden p-0 sm:p-0 lg:min-h-0">
