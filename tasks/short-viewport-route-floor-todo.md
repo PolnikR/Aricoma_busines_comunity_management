@@ -136,4 +136,8 @@ Record before/after results in `tasks/short-viewport-route-floor-measurements.md
 **Scope:** S. Commit: docs only
 
 ## Checkpoint B
-- [ ] All acceptance criteria met; user review
+- [x] All acceptance criteria met; user review (approved 2026-10-01, accepted as implemented)
+
+## Follow-ups (out of scope, track separately)
+- Slovak topology toolbar overlap at about 1366 px: the search and host fields cover the All / Powered on / Powered off toggle (`InfrastructureTopologyToolbar`). This predates the fix.
+- `InfrastructureTopologySkeleton` has no floor and is still squeezed on short viewports while loading.

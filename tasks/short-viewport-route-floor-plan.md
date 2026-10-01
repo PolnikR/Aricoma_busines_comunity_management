@@ -102,7 +102,7 @@ does not. That rule (normal desktop unchanged) is fixed; the numbers are not.
 - [x] Task 4: Browser matrix before/after and a measurements doc
 
 ### Checkpoint B
-- [ ] All acceptance criteria met; user review
+- [x] All acceptance criteria met; user review (approved 2026-10-01). Follow-ups: see the todo file.
 
 ## Risks and mitigations
 
