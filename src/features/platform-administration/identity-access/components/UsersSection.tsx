@@ -156,12 +156,15 @@ export function UsersSection() {
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
-        eyebrow={t('identity.users.drawer.eyebrow')}
         title={selected?.user ?? ''}
+        meta={selected ? [
+          t('identity.users.drawer.entity'),
+          <UserStatusBadge key="status" status={selected.status} />,
+        ] : []}
         subtitle={selected?.username}
-        headerExtra={selected ? <UserStatusBadge status={selected.status} /> : null}
         ariaLabel={t('identity.users.drawer.ariaLabel')}
         closeLabel={t('identity.users.drawer.close')}
+        resizeLabel={t('drawer.resize')}
       >
         {selected ? <UserDetail user={selected} /> : null}
       </DetailDrawer>

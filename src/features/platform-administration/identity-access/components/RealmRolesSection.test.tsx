@@ -140,7 +140,7 @@ describe('RealmRolesSection', () => {
 
     expect(screen.getByRole('row', { name: 'Open application role platform-admin' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('row', { name: 'Open application role viewer' })).toHaveAttribute('aria-selected', 'false')
-    expect(drawer.getByText('Application role')).toBeInTheDocument()
+    expect(drawer.getByRole('heading', { name: 'platform-admin' }).parentElement?.nextElementSibling).toHaveTextContent(/^Application role/)
     expect(drawer.getByRole('heading', { name: 'platform-admin' })).toBeInTheDocument()
     expect(drawerFields()).toEqual({
       'Role name': 'platform-admin',

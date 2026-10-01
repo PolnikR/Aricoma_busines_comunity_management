@@ -130,12 +130,15 @@ export function RealmRolesSection() {
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
-        eyebrow={t('identity.roles.drawer.eyebrow')}
         title={selected?.name ?? ''}
+        meta={selected ? [
+          t('identity.roles.drawer.entity'),
+          selected.clientId ? <Badge key="client" color="light" size="sm">{selected.clientId}</Badge> : null,
+        ] : []}
         subtitle={(selected?.description?.trim() ?? '') || undefined}
-        headerExtra={selected?.clientId ? <Badge color="light" size="sm">{selected.clientId}</Badge> : null}
         ariaLabel={t('identity.roles.drawer.ariaLabel')}
         closeLabel={t('identity.roles.drawer.close')}
+        resizeLabel={t('drawer.resize')}
       >
         {selected ? <RoleDetail role={selected} /> : null}
       </DetailDrawer>

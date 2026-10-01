@@ -137,7 +137,7 @@ describe('UsersSection', () => {
     await userEvent.click(screen.getByRole('row', { name: 'Open user Alice Smith' }))
 
     const drawer = within(screen.getByRole('dialog', { name: 'User detail' }))
-    expect(drawer.getByText('Selected user')).toBeInTheDocument()
+    expect(drawer.getByRole('heading', { name: 'Alice Smith' }).parentElement?.nextElementSibling).toHaveTextContent('UserActive')
     expect(drawer.getByRole('heading', { name: 'Alice Smith' })).toBeInTheDocument()
     const fields = Object.fromEntries(drawer.getAllByRole('term').map(term => [term.textContent, term.nextElementSibling?.textContent]))
     expect(fields).toEqual({
