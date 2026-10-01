@@ -22,7 +22,7 @@ describe('IdentityAccessNavigation', () => {
     renderNavigation()
 
     const sectionTabs = within(screen.getByRole('tablist', { name: 'Manage sections' }))
-    expect(sectionTabs.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Users', 'Clients', 'Realm roles'])
+    expect(sectionTabs.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Users', 'Clients', 'Application roles'])
     expect(screen.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true')
   })
 

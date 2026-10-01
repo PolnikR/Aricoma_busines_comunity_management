@@ -13,13 +13,13 @@ Every task ends with focused verification, `git diff --check` and an atomic comm
 and `clientId` (default `null`). Keep synthetic `id = name` and `description ?? ''`.
 
 **Acceptance criteria:**
-- [ ] Mapped role = `{ id, name, description, permissions, users, userCount, clientId }`
-- [ ] Missing `users`/`userCount`/`clientId` map to `[]` / `0` / `null`; `clientId: null` passes through
-- [ ] `PermissionsSection` unchanged and still compiles
+- [x] Mapped role = `{ id, name, description, permissions, users, userCount, clientId }`
+- [x] Missing `users`/`userCount`/`clientId` map to `[]` / `0` / `null`; `clientId: null` passes through
+- [x] `PermissionsSection` unchanged and still compiles
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/platform-administration/identity-access/model/rolesPermissionsTypes.test.ts src/features/platform-administration/identity-access/model/rolesPermissionsWire.test.tsx src/features/platform-administration/identity-access/components/PermissionsSection.test.tsx`
-- [ ] `npm run typecheck`; eslint on changed files
+- [x] `npm exec vitest run src/features/platform-administration/identity-access/model/rolesPermissionsTypes.test.ts src/features/platform-administration/identity-access/model/rolesPermissionsWire.test.tsx src/features/platform-administration/identity-access/components/PermissionsSection.test.tsx`
+- [x] `npm run typecheck`; eslint on changed files
 
 **Dependencies:** None
 **Files:** `src/features/platform-administration/identity-access/model/rolesPermissionsTypes.ts`, `src/features/platform-administration/identity-access/model/rolesPermissionsTypes.test.ts` (+ `RealmRolesSection.test.tsx` fixture type, if typecheck requires it)
@@ -32,20 +32,20 @@ SK "Aplikačné roly". Update role copy that still says "realm role" in values t
 expectations. Keys and ids stay unchanged.
 
 **Acceptance criteria:**
-- [ ] No visible "Realm role(s)/roly/role" copy remains for this section in EN/CS/SK
-- [ ] Section id `realm-roles` and locale key names unchanged
+- [x] No visible "Realm role(s)/roly/role" copy remains for this section in EN/CS/SK
+- [x] Section id `realm-roles` and locale key names unchanged
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/platform-administration/identity-access/components/IdentityAccessNavigation.test.tsx src/features/platform-administration/identity-access/components/IdentityAccessLocalization.test.tsx src/features/platform-administration/identity-access/components/RealmRolesSection.test.tsx`
-- [ ] JSON parse of the 3 locale files; `git diff --check`
-- [ ] `git diff --cached` reviewed: only this task's changes
+- [x] `npm exec vitest run src/features/platform-administration/identity-access/components/IdentityAccessNavigation.test.tsx src/features/platform-administration/identity-access/components/IdentityAccessLocalization.test.tsx src/features/platform-administration/identity-access/components/RealmRolesSection.test.tsx`
+- [x] JSON parse of the 3 locale files; `git diff --check`
+- [x] `git diff --cached` reviewed: only this task's changes
 
 **Dependencies:** None
 **Files:** `src/locales/{en,cs,sk}.json`, `src/features/platform-administration/identity-access/components/IdentityAccessNavigation.test.tsx`, `src/features/platform-administration/identity-access/components/IdentityAccessLocalization.test.tsx`, `src/features/platform-administration/identity-access/components/RealmRolesSection.test.tsx` (label strings only)
 **Scope:** S
 
 ## Checkpoint A
-- [ ] Tasks 1–2 green and committed
+- [x] Tasks 1–2 green and committed
 
 ## Task 3: API-only table, read-only role DetailDrawer, no Create role
 **Description:** Rewrite `RealmRolesSection` on the `UsersSection` pattern. Remove `useUsers`, `User`, `userColumns`, `usersInRole`,

@@ -39,10 +39,10 @@ describe('RealmRolesSection', () => {
     mockLoadedRoles([role, { ...role, id: 'role-viewer', name: 'Viewer', permissions: [] }])
     const props = renderSection()
 
-    const [rolesSurface, rolesTable] = screen.getAllByLabelText('Realm roles')
-    if (!rolesSurface || !rolesTable) throw new Error('Expected realm roles surface and table')
+    const [rolesSurface, rolesTable] = screen.getAllByLabelText('Application roles')
+    if (!rolesSurface || !rolesTable) throw new Error('Expected application roles surface and table')
     const scrollRegion = rolesTable.parentElement
-    if (!scrollRegion) throw new Error('Expected realm roles table scroll region')
+    if (!scrollRegion) throw new Error('Expected application roles table scroll region')
     expect(rolesTable).toBeInTheDocument()
     expect(rolesSurface).toHaveClass('grid', 'grid-rows-[auto_minmax(0,1fr)_auto]')
     expect(scrollRegion).toHaveClass('custom-scrollbar', 'min-h-0', 'overflow-y-auto')
@@ -51,7 +51,7 @@ describe('RealmRolesSection', () => {
     expect(screen.queryByText('Manage realm-level roles')).not.toBeInTheDocument()
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search roles' }), 'viewer')
     expect(screen.queryByText('Administrator')).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('row', { name: 'Open realm role Viewer' }))
+    await userEvent.click(screen.getByRole('row', { name: 'Open application role Viewer' }))
     expect(props.onEntityChange).toHaveBeenCalledWith('role-viewer')
   })
 

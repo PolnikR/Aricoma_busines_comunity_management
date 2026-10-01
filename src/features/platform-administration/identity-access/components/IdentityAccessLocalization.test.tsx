@@ -33,7 +33,7 @@ describe('IdentityAccessNavigation localization', () => {
 
     expect(await screen.findByRole('tab', { name: 'Používatelia' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Klienti' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Realm roly' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Aplikačné roly' })).toBeInTheDocument()
   })
 
   it('renders Czech navigation from the real language provider', async () => {
@@ -41,7 +41,7 @@ describe('IdentityAccessNavigation localization', () => {
 
     expect(await screen.findByRole('tab', { name: 'Uživatelé' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Klienti' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Realm role' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Aplikační role' })).toBeInTheDocument()
   })
 
   it('updates the mounted Identity navigation when the language changes from English to Slovak', async () => {

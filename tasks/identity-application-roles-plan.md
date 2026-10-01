@@ -60,11 +60,11 @@ endpoint returns application RBAC roles synced as Keycloak client roles, not gen
 ## Task List
 
 ### Phase 1: Foundation
-- [ ] Task 1: Mapper exposes `users`, `userCount`, `clientId`
-- [ ] Task 2: Rename visible copy to "Application roles" (EN/CS/SK + navigation tests)
+- [x] Task 1: Mapper exposes `users`, `userCount`, `clientId`
+- [x] Task 2: Rename visible copy to "Application roles" (EN/CS/SK + navigation tests)
 
 ### Checkpoint A
-- [ ] Mapper + localization/navigation tests green, typecheck green
+- [x] Mapper + localization/navigation tests green, typecheck green
 
 ### Phase 2: Core
 - [ ] Task 3: API-only table and read-only role DetailDrawer replace the full-page workspace; remove top-level `Create role`
