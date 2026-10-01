@@ -211,7 +211,7 @@ describe('RecoveryGroupBuilderPage', () => {
 
     const { container } = render(<RecoveryGroupBuilderPage />)
 
-    expect(screen.getByText('Create Recovery Group')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Create recovery group', level: 1 })).toBeInTheDocument()
     expect(screen.getByText('Group type')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Create without orchestration' })).toBeDisabled()
     expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument()

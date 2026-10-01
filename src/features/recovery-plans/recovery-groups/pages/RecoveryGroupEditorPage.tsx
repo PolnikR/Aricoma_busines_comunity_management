@@ -79,7 +79,6 @@ export function RecoveryGroupEditorPage() {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader
-          eyebrow={t('pages.recoveryGroupEditor.eyebrow')}
           title={t('pages.recoveryGroupEditor.title')}
           description={t('pages.recoveryGroupEditor.description')}
           actions={<Button size="sm" variant="outline" onClick={requestBack}>{t('buttons.back')}</Button>}
@@ -101,7 +100,6 @@ export function RecoveryGroupEditorPage() {
     return (
       <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
         <PageHeader
-          eyebrow={t('pages.recoveryGroupEditor.eyebrow')}
           title={t('pages.recoveryGroupEditor.title')}
           description={t('pages.recoveryGroupEditor.description')}
           actions={<Button size="sm" variant="outline" onClick={requestBack}>{t('buttons.back')}</Button>}
@@ -116,7 +114,6 @@ export function RecoveryGroupEditorPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow={t('pages.recoveryGroupEditor.eyebrow')}
         title={t('pages.recoveryGroupEditor.title')}
         description={t('pages.recoveryGroupEditor.description')}
         actions={<Button size="sm" variant="outline" onClick={requestBack}>{t('buttons.back')}</Button>}

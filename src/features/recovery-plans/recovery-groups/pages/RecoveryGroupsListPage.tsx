@@ -22,7 +22,6 @@ export function RecoveryGroupsListPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
-        eyebrow={t('pages.recoveryGroups.eyebrow')}
         title={t('pages.recoveryGroups.title')}
         description={t('pages.recoveryGroups.description')}
         isFetching={isFetching}

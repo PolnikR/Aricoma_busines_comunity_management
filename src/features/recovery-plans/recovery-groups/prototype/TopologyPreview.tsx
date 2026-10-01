@@ -87,7 +87,7 @@ export function TopologyPreview() {
               <p className="text-sm text-text-muted">Phase 1 · Interaktívny návrh · Mock dáta, bez ukladania</p>
               <Button size="sm" variant="outline" onClick={() => { setDark(!dark) }}>{dark ? 'Svetlý režim' : 'Tmavý režim'}</Button>
             </div>
-            <PageHeader eyebrow="Recovery plans" title="Create Recovery Group" description="Define your workloads, storage topology and recovery policies." />
+            <PageHeader title="Create recovery group" description="Define your workloads, storage topology and recovery policies." />
             <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-[20px] border border-border bg-surface shadow-sm lg:grid-cols-[280px_minmax(0,1fr)] lg:grid-rows-1">
               <aside className="custom-scrollbar min-h-0 min-w-0 overflow-y-auto border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
                 <WizardSteps items={stepLabels.map((label, index) => ({ id: label, label, disabled: !validThrough(index) }))} currentStep={step} ariaLabel="Recovery Group steps" onStepChange={value => { setStep(value); setReview(false) }} />

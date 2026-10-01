@@ -69,7 +69,6 @@ export function RecoveryGroupBuilderPage() {
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <PageHeader
-        eyebrow={t('pages.recoveryGroupBuilder.eyebrow')}
         title={t('pages.recoveryGroupBuilder.title')}
         description={t('pages.recoveryGroupBuilder.description')}
         actions={<Button size="sm" variant="outline" onClick={requestBack}>{t('buttons.back')}</Button>}

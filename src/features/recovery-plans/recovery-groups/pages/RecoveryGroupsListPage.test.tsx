@@ -47,9 +47,9 @@ describe('RecoveryGroupsListPage', () => {
     expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true')
     expect(screen.getByRole('searchbox', { name: 'pages.recoveryGroups.searchLabel' })).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'tables.recoveryGroups.group' })).toBeVisible()
-    expect(await screen.findByRole('heading', { name: 'Recovery Groups' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Recovery groups' })).toBeInTheDocument()
     expect(screen.getByText(/Manage reusable groups of resources/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Create group' })).toBeEnabled()
     expect(await screen.findByRole('button', { name: 'Create Your First Recovery Group' })).toBeEnabled()
     expect(screen.getByRole('region', { name: 'Recovery groups table' })).toBeInTheDocument()
   })
@@ -172,7 +172,7 @@ describe('RecoveryGroupsListPage', () => {
       </QueryClientProvider>,
     )
 
-    await screen.findByRole('heading', { name: 'Recovery Groups' })
+    await screen.findByRole('heading', { name: 'Recovery groups' })
     await screen.findByRole('button', { name: 'Create Your First Recovery Group' })
     const initialGroupFetches = fetchMock.mock.calls.filter(([input]) => input === '/api/get_recovery_groups').length
 

@@ -248,7 +248,7 @@ describe('RecoveryGroupEditorPage', () => {
 
     const { container } = render(<RecoveryGroupEditorPage />)
 
-    expect(screen.getByText('Edit Recovery Group')).toBeInTheDocument()
+    expect(screen.getByText('Edit recovery group')).toBeInTheDocument()
     expect(screen.getByText('Group details')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Submit edit' })).toBeDisabled()
