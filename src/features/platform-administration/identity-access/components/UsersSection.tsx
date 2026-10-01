@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Alert } from '@/shared/components/alert/Alert'
 import { Badge } from '@/shared/components/badge/Badge'
@@ -7,12 +7,11 @@ import { DataTable, DataTablePagination, DataTableSurface, DataTableToolbar, Ske
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { CheckboxField, Field, Input } from '@/shared/components/form/FormControls'
-import { Modal } from '@/shared/components/modal/Modal'
 import { useIdentityAdminPreview } from '../hooks/useIdentityAdminPreview'
 import { useSessions } from '../hooks/useSessions'
 import type { IdentityAccessTabId } from '../models/identityAccessSections'
 import type { Session } from '../models/identityTypes'
-import type { CreateIdentityUserInput, IdentityCapabilityView, IdentityRoleView, IdentityUserView, RequiredActionView } from '../services/identityAdminGateway'
+import type { IdentityCapabilityView, IdentityRoleView, IdentityUserView, RequiredActionView } from '../services/identityAdminGateway'
 import { IdentityResourceDetailPage, IdentityResourceHeader, IdentitySettingsSection } from './IdentityResourceLayout'
 
 const CANONICAL_USER_TABS = ['details', 'attributes', 'credentials', 'role-mappings', 'groups', 'consents', 'sessions', 'identity-provider-links'] as const
@@ -24,8 +23,6 @@ interface UsersSectionProps {
   tabId: IdentityAccessTabId | null
   onEntityChange: (entityId: string | null) => void
   onTabChange: (tabId: IdentityAccessTabId) => void
-  isAddUserOpen: boolean
-  onSetAddUserOpen: (open: boolean) => void
 }
 
 function isUserTab(tabId: IdentityAccessTabId | null): tabId is UserTabId {
@@ -38,8 +35,8 @@ function userDisplayName(user: IdentityUserView) {
 
 export function UsersSection(props: UsersSectionProps) {
   const { t } = useTranslation()
-  const { entityId, tabId, onEntityChange, onTabChange, isAddUserOpen, onSetAddUserOpen } = props
-  const { data, error, isLoading, isMutating, mutationError, clearMutationError, gateway, mutate, refresh } = useIdentityAdminPreview()
+  const { entityId, tabId, onEntityChange, onTabChange } = props
+  const { data, error, isLoading, isMutating, mutationError, gateway, mutate, refresh } = useIdentityAdminPreview()
   const users = data?.users ?? []
   const roles = useMemo(() => data?.roles ?? [], [data?.roles])
   const selectedUser = users.find(user => user.id === entityId) ?? null
@@ -70,10 +67,6 @@ export function UsersSection(props: UsersSectionProps) {
     { id: 'lastLogin', header: t('identity.users.columns.lastLogin'), cell: user => user.lastLoginLabel },
   ], [roles, t])
   const tabs = VISIBLE_USER_TABS.map(value => ({ value, label: t(`identity.users.tabs.${value}`) }))
-
-  useEffect(() => {
-    if (isAddUserOpen) clearMutationError()
-  }, [clearMutationError, isAddUserOpen])
 
   if (entityId) {
     const activeTab: UserTabId = isUserTab(tabId) ? tabId : 'details'
@@ -173,28 +166,17 @@ export function UsersSection(props: UsersSectionProps) {
   }
 
   return (
-    <>
     <DataTableSurface
       ariaLabel={t('identity.navigation.sections.users')}
       toolbar={(
-        <>
-          {mutationError && !isAddUserOpen ? (
-            <Alert
-              className="m-4 mb-0"
-              variant="error"
-              title={t('identity.users.mutationFailed')}
-              description={mutationError.message}
-            />
-          ) : null}
-          <DataTableToolbar
-            searchValue={table.search}
-            onSearchChange={table.setSearch}
-            searchPlaceholder={t('identity.users.search')}
-            searchLabel={t('identity.users.search')}
-            density={table.density}
-            onDensityChange={table.setDensity}
-          />
-        </>
+        <DataTableToolbar
+          searchValue={table.search}
+          onSearchChange={table.setSearch}
+          searchPlaceholder={t('identity.users.search')}
+          searchLabel={t('identity.users.search')}
+          density={table.density}
+          onDensityChange={table.setDensity}
+        />
       )}
       pagination={!error ? (
         <DataTablePagination
@@ -221,7 +203,7 @@ export function UsersSection(props: UsersSectionProps) {
             columns={columns}
             rows={table.pageItems}
             rowKey={user => user.id}
-            density={table.density}
+          density={table.density}
             ariaLabel={t('identity.navigation.sections.users')}
             rowAriaLabel={user => t('identity.users.rowAriaLabel', { name: userDisplayName(user) })}
             onRowClick={user => { onEntityChange(user.id) }}
@@ -235,21 +217,6 @@ export function UsersSection(props: UsersSectionProps) {
           />
         )}
     </DataTableSurface>
-      <AddUserModal
-        open={isAddUserOpen}
-        isCreating={isMutating}
-        error={mutationError}
-        onClose={() => {
-          clearMutationError()
-          onSetAddUserOpen(false)
-        }}
-        onCreate={async input => {
-          const created = await mutate(() => gateway.createUser(input))
-          if (created) onSetAddUserOpen(false)
-          return created
-        }}
-      />
-    </>
   )
 }
 
@@ -437,70 +404,5 @@ function UserSessions({ sessions }: UserSessionsProps) {
     <div className="p-4">
       <EmptyState title={t('identity.users.sessions.emptyTitle')} description={t('identity.users.sessions.emptyDescription')} />
     </div>
-  )
-}
-
-const EMPTY_USER_INPUT: CreateIdentityUserInput = { username: '', email: '', firstName: '', lastName: '', enabled: true }
-
-interface AddUserModalProps {
-  open: boolean
-  isCreating: boolean
-  error: Error | null
-  onClose: () => void
-  onCreate: (input: CreateIdentityUserInput) => Promise<boolean>
-}
-
-function AddUserModal({ open, isCreating, error, onClose, onCreate }: AddUserModalProps) {
-  const { t } = useTranslation()
-  const [input, setInput] = useState(EMPTY_USER_INPUT)
-  const isValid = [input.username, input.email, input.firstName, input.lastName].every(value => value.trim().length > 0)
-  const setField = (field: keyof CreateIdentityUserInput, value: string | boolean) => { setInput(current => ({ ...current, [field]: value })) }
-  const resetAndClose = () => {
-    if (isCreating) return
-    setInput({ ...EMPTY_USER_INPUT })
-    onClose()
-  }
-  const create = async () => {
-    if (!isValid || isCreating) return
-    if (await onCreate(input)) setInput({ ...EMPTY_USER_INPUT })
-  }
-  const footer = (
-    <>
-      <Button size="sm" variant="ghost" disabled={isCreating} onClick={resetAndClose}>
-        {t('identity.common.actions.cancel')}
-      </Button>
-      <Button size="sm" disabled={!isValid || isCreating} onClick={() => { void create() }}>
-        {isCreating ? t('identity.users.add.creating') : t('identity.users.add.create')}
-      </Button>
-    </>
-  )
-
-  return (
-    <Modal open={open} onClose={resetAndClose} title={t('identity.actions.addUser')} footer={footer}>
-      <div className="space-y-4 px-6 py-4">
-        {error ? <Alert variant="error" title={t('identity.users.add.failed')} description={error.message} /> : null}
-        <p className="text-xs text-text-muted">{t('identity.users.add.description')}</p>
-        <Field label={t('identity.users.fields.username')} htmlFor="new-user-username">
-          <Input id="new-user-username" value={input.username} disabled={isCreating} onChange={event => { setField('username', event.currentTarget.value) }} />
-        </Field>
-        <Field label={t('identity.users.fields.email')} htmlFor="new-user-email">
-          <Input id="new-user-email" type="email" value={input.email} disabled={isCreating} onChange={event => { setField('email', event.currentTarget.value) }} />
-        </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t('identity.users.fields.firstName')} htmlFor="new-user-first-name">
-            <Input id="new-user-first-name" value={input.firstName} disabled={isCreating} onChange={event => { setField('firstName', event.currentTarget.value) }} />
-          </Field>
-          <Field label={t('identity.users.fields.lastName')} htmlFor="new-user-last-name">
-            <Input id="new-user-last-name" value={input.lastName} disabled={isCreating} onChange={event => { setField('lastName', event.currentTarget.value) }} />
-          </Field>
-        </div>
-        <CheckboxField
-          label={t('identity.common.status.enabled')}
-          checked={input.enabled}
-          disabled={isCreating}
-          onChange={event => { setField('enabled', event.currentTarget.checked) }}
-        />
-      </div>
-    </Modal>
   )
 }

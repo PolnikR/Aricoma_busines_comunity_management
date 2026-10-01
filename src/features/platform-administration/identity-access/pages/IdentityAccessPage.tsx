@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { PageHeader } from '@/shared/components/page/PageHeader'
@@ -24,18 +23,15 @@ interface SectionActionContext {
   sectionId: IdentityAccessSectionId
   entityId: string | null
   tabId: import('../models/identityAccessSections').IdentityAccessTabId | null
-  onSetAddUserOpen: (open: boolean) => void
   onOpenEventSettings: () => void
   t: ReturnType<typeof useTranslation>['t']
 }
 
-function getSectionAction({ sectionId, entityId, tabId, onSetAddUserOpen, onOpenEventSettings, t }: SectionActionContext) {
+function getSectionAction({ sectionId, entityId, tabId, onOpenEventSettings, t }: SectionActionContext) {
   if (entityId) return null
 
   // Preserve top-level section actions so later agents can safely remove duplicate IdentityResourceHeader actions.
   switch (sectionId) {
-    case 'users':
-      return <Button size="sm" onClick={() => { onSetAddUserOpen(true) }}>{t('identity.actions.addUser')}</Button>
     case 'realm-roles':
       return <Button size="sm" disabled title={t('identity.actions.requires.keycloak')}>{t('identity.actions.createRole')}</Button>
     case 'client-scopes':
@@ -57,7 +53,7 @@ function getSectionAction({ sectionId, entityId, tabId, onSetAddUserOpen, onOpen
           <Button size="sm" variant="outline" disabled title={t('identity.actions.requires.federation')}>{t('identity.actions.addKerberos')}</Button>
         </div>
       )
-    // identity-providers, permissions, and other sections intentionally have no top-level action
+    // users (managed in Keycloak), identity-providers, permissions, and other sections intentionally have no top-level action
     default:
       return null
   }
@@ -70,13 +66,11 @@ interface IdentityAccessSectionContentProps {
   onEntityChange: (entityId: string | null) => void
   onTabChange: (tabId: import('../models/identityAccessSections').IdentityAccessTabId) => void
   onOpenEventSettings: () => void
-  isAddUserOpen: boolean
-  onSetAddUserOpen: (open: boolean) => void
 }
 
-function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChange, onTabChange, onOpenEventSettings, isAddUserOpen, onSetAddUserOpen }: IdentityAccessSectionContentProps) {
+function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChange, onTabChange, onOpenEventSettings }: IdentityAccessSectionContentProps) {
   const { t } = useTranslation()
-  if (sectionId === 'users') return <UsersSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} isAddUserOpen={isAddUserOpen} onSetAddUserOpen={onSetAddUserOpen} />
+  if (sectionId === 'users') return <UsersSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'realm-roles') return <RealmRolesSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
   if (sectionId === 'groups') return <GroupsSection />
   if (sectionId === 'clients') return <ClientsSection entityId={entityId} tabId={tabId} onEntityChange={onEntityChange} onTabChange={onTabChange} />
@@ -96,7 +90,6 @@ function IdentityAccessSectionContent({ sectionId, entityId, tabId, onEntityChan
 export function IdentityAccessPage() {
   const { t } = useTranslation()
   const { sectionId, groupId, entityId, tabId, setSectionId, setSectionTab, setGroupId, setEntityId, setTabId } = useIdentityAccessSection()
-  const [isAddUserOpen, setIsAddUserOpen] = useState(false)
 
   return (
     <div className="flex min-h-full min-w-0 flex-col overflow-hidden lg:h-full lg:min-h-0">
@@ -108,7 +101,6 @@ export function IdentityAccessPage() {
           sectionId,
           entityId,
           tabId,
-          onSetAddUserOpen: setIsAddUserOpen,
           onOpenEventSettings: () => { setSectionTab('realm-settings', 'events') },
           t,
         })}
@@ -129,8 +121,6 @@ export function IdentityAccessPage() {
             onEntityChange={setEntityId}
             onTabChange={setTabId}
             onOpenEventSettings={() => { setSectionTab('realm-settings', 'events') }}
-            isAddUserOpen={isAddUserOpen}
-            onSetAddUserOpen={setIsAddUserOpen}
           />
         </section>
       </div>

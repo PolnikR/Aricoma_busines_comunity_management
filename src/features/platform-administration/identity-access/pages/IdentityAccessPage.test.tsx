@@ -68,7 +68,7 @@ describe('IdentityAccessPage', () => {
     expect(screen.getByRole('tab', { name: 'Configure' })).toHaveAttribute('aria-selected', 'false')
     expect(screen.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Users content')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Add user' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add user' })).not.toBeInTheDocument()
     expect(container.querySelector('.gap-4')).not.toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Keycloak realm navigation' })).toHaveClass('shrink-0')
     expect(screen.getByRole('navigation', { name: 'Keycloak realm navigation' }).nextElementSibling).toHaveClass('min-h-0', 'flex-1', 'overflow-hidden')
