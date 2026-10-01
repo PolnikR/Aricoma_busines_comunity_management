@@ -25,12 +25,7 @@ endpoint returns application RBAC roles synced as Keycloak client roles, not gen
   It is asserted in `IdentityAccessNavigation.test.tsx` and `IdentityAccessLocalization.test.tsx`.
 - Reference pattern: `UsersSection.tsx` (local `selectedId`, `selectedRowKey`, `DetailDrawer` + `DetailRow`, `Badge`
   lists, `DataTableRequestState` with `extractBackendErrorDetail` and `isRetrying: isFetching`).
-- The worktree has unrelated uncommitted changes (re-checked 2026-10-01), see "Worktree safety and staging" below:
-  - `package-lock.json`
-  - the Manage/Configure group-navigation removal: `components/IdentityAccessNavigation.tsx`,
-    `pages/IdentityAccessPage.tsx` (drops `setGroupId` / `onGroupChange`), plus the tests and locales that belong to it:
-    `components/IdentityAccessNavigation.test.tsx`, `components/IdentityAccessLocalization.test.tsx`,
-    `pages/IdentityAccessPage.test.tsx`, and `src/locales/{en,cs,sk}.json` (each removes `identity.navigation.groups.ariaLabel`).
+- The Manage/Configure group switcher removal is committed (`ba4e0f87`) and is the base for this plan.
 
 ## Architecture Decisions
 - **Strictly read-only (decided)**: the final Application roles UI has no Add/Create/Edit/Delete/Assign/Remove actions.
@@ -56,28 +51,11 @@ endpoint returns application RBAC roles synced as Keycloak client roles, not gen
   readable option. No footer and no buttons.
 - **Generated files are not edited.**
 
-## Worktree safety and staging (required for every task)
-The unrelated Manage/Configure navigation change is someone else's uncommitted work. Application roles tasks must
-build on top of it and must never revert, overwrite or commit it.
-
-- **Overlapping files**: Task 2 touches `src/locales/{en,cs,sk}.json`, `IdentityAccessNavigation.test.tsx` and
-  `IdentityAccessLocalization.test.tsx`. Task 3 touches `IdentityAccessPage.tsx`, `IdentityAccessPage.test.tsx` and the locales.
-  Task 4 touches the locales. All of these already contain unrelated uncommitted hunks.
-- **Before editing** an overlapping file: re-read its current content and save `git diff -- <file>` to the scratchpad
-  as a baseline. Edit with targeted replacements on top of the current content. Never rewrite the whole file, never
-  `git checkout`/`git restore`/`git stash` it, and never reintroduce `setGroupId`, `onGroupChange`, the group switcher or
-  `identity.navigation.groups.ariaLabel`.
-- **Explicit-path staging only**: never `git add .`, `git add -A` or `git commit -a`. Never stage `package-lock.json`
-  or `IdentityAccessNavigation.tsx`.
-- **Partial staging of overlapping files**: if the unrelated change is still uncommitted when a task commits, stage only
-  the Application roles hunks. To do that, write a patch with just those hunks and apply it to the index with
-  `git apply --cached` (interactive `git add -p` is unavailable). If the unrelated change has been committed separately
-  by then, stage the file normally by path.
-- **Before every commit**: review `git diff --cached`. It must contain only Application roles hunks. Then review
-  `git diff` for each overlapping file and confirm the unrelated hunks match the saved baseline exactly.
-  If hunks are adjacent and can't be separated cleanly, stop and report instead of committing a mixed commit.
-- **Verification note**: focused tests run against the working tree, which includes the unrelated change. This is
-  expected: the Application roles changes are verified on top of the existing navigation change.
+## Staging (required for every task)
+- Stage by explicit path. Never `git add .`, `git add -A` or `git commit -a`. Never stage `package-lock.json`.
+- Run `git status --short` before each task. Other sessions commit on this branch. If a file the task must edit already
+  has uncommitted changes that aren't from this plan, don't revert, overwrite or stage them. Stop and ask before editing that file.
+- Before each commit, review `git diff --cached`: it must contain only this task's changes.
 
 ## Task List
 
@@ -108,14 +86,11 @@ build on top of it and must never revert, overwrite or commit it.
 | 54+ permission badges overflow the drawer | Low | Full-width wrapping block; drawer is `resizable` |
 | Removing locale keys still referenced elsewhere | Med | `grep` each key across `src/` before deleting (Task 4) |
 | Bookmarked `?section=realm-roles&entity=…` links | Low | Section just shows the table; documented |
-| Staging unrelated worktree changes | High | Explicit-path staging only; never `package-lock.json` / `IdentityAccessNavigation.tsx`; review `git diff --cached` before each commit |
-| Overwriting or reverting the uncommitted navigation change in shared files | High | Re-read and save a baseline before editing; targeted edits only; after editing, compare the `git diff` unrelated hunks with the baseline |
-| Mixed commit when Application roles and navigation hunks are adjacent | Med | Stage hunks with `git apply --cached`; stop and report if they can't be separated |
+| Staging unrelated worktree changes | Med | Explicit-path staging only; never `package-lock.json`; `git status` before each task; stop and ask if a target file holds someone else's uncommitted changes; review `git diff --cached` before each commit |
 
 ## Open Questions
 - Confirm translations: CS "Aplikační role", SK "Aplikačné roly" (default if unanswered: use these).
 
 ## Out of scope
-- The unrelated Manage/Configure navigation change (preserved, not committed by this plan).
 - Other Identity & Access sections and their header actions, `PermissionsSection` UI, `useUsers`/mock gateway, internal ids/routes,
   generated client, backend.
