@@ -81,7 +81,7 @@ main (AppShell)            lg:overflow-hidden                     ← contained 
 | Route | Element | Floor | Why |
 |---|---|---|---|
 | Resources | inventory card section | `lg:min-h-[440px]` | The card holds the inventory header, toolbar, table header and pagination (about 320 px at 1366 width, from the Task 13 screenshots). 440 px leaves about 3–4 compact rows. It is below the card height at 1366×768 (≈520 px), so 768p-and-up viewports stay unchanged. |
-| Infrastructure | canvas region | `lg:min-h-[280px]` | About 1.6× today's 170 px at 1024×768. It is at or below the canvas height at 1366×768 and up, so those stay unchanged. |
+| Infrastructure | canvas region | `lg:min-h-[280px]` → **260 px** (Slovak canvas at 1366×768 is 265 px) | About 1.6× today's 170 px at 1024×768. It is at or below the canvas height at 1366×768 and up, so those stay unchanged. |
 
 If the baseline in Task 1 shows either floor would change 1366×768 or 1920×1080, the value is lowered until it
 does not. That rule (normal desktop unchanged) is fixed; the numbers are not.
@@ -92,14 +92,14 @@ does not. That rule (normal desktop unchanged) is fixed; the numbers are not.
 - [x] Task 1: Measure the current card, row-region and canvas heights in the browser (no code)
 
 ### Phase 2: Fix (one commit per route)
-- [ ] Task 2: Resources floor plus route-frame scroll
-- [ ] Task 3: Infrastructure canvas floor plus page-root scroll
+- [x] Task 2: Resources floor plus route-frame scroll
+- [x] Task 3: Infrastructure canvas floor plus page-root scroll
 
 ### Checkpoint A
-- [ ] Focused tests, `tsc`, eslint and `git diff --check` green for Tasks 2–3
+- [x] Focused tests, `tsc`, eslint and `git diff --check` green for Tasks 2–3
 
 ### Phase 3: Verify
-- [ ] Task 4: Browser matrix before/after and a measurements doc
+- [x] Task 4: Browser matrix before/after and a measurements doc
 
 ### Checkpoint B
 - [ ] All acceptance criteria met; user review

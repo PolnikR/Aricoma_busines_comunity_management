@@ -48,7 +48,7 @@ and about 32 px at 1536 px and wider.
 - Resources section `lg:min-h-[480px]` (raised from the tentative 440, which would only add 1 wrapped row):
   - row band at 600 px height becomes ≈153 px (2 full wrapped rows, or 4–5 compact rows)
   - headroom at 1366×768 is 41 px
-- Infrastructure canvas `lg:min-h-[280px]`:
+- Infrastructure canvas `lg:min-h-[280px]`, **lowered to 260 px in Task 3** because the Slovak canvas at 1366×768 is 265 px:
   - headroom at 1366×768 is 31 px
   - 1024×768 grows by about 59 px and scrolls
   - 1280/1366×600 grows by about 137 px and scrolls
@@ -66,19 +66,19 @@ and about 32 px at 1536 px and wider.
 - `ContainedViewportFrame` changes `lg:overflow-hidden` to `lg:overflow-y-auto`.
 
 **Acceptance criteria:**
-- [ ] Without the prop, `InventoryShell` renders exactly today's classes
-- [ ] VMware, FlashSystem, IBM Power and Resources ISE pick the floor up through `ResourceInventoryShell`
-- [ ] The frame scrolls only when the floor does not fit (browser check in Task 4)
+- [x] Without the prop, `InventoryShell` renders exactly today's classes
+- [x] VMware, FlashSystem, IBM Power and Resources ISE pick the floor up through `ResourceInventoryShell`
+- [x] The frame scrolls only when the floor does not fit (browser check in Task 4)
 
 **Verification:**
-- [ ] Tests:
+- [x] Tests:
   - `src/shared/components/inventory-shell/InventoryShell.test.tsx` (new): the default classes are unchanged, and the
     prop replaces the section `lg:min-h-0` and drops the root `lg:min-h-0`
   - `ContainedViewportFrame.test.tsx` and `ResourceViewportFrame.test.tsx`: class contract updated to
     `lg:overflow-y-auto`
   - a `ResourceInventoryShell` test: the floor class is applied
   - the related resource page tests via `npx vitest related --run`
-- [ ] `tsc`, eslint, `git diff --check`
+- [x] `tsc`, eslint, `git diff --check`
 
 **Dependencies:** Task 1
 **Files:**
@@ -98,22 +98,22 @@ and about 32 px at 1536 px and wider.
 - The toolbar is untouched.
 
 **Acceptance criteria:**
-- [ ] The toolbar still wraps and every control stays visible
-- [ ] At lg the canvas region is never smaller than the floor; mobile classes are unchanged
+- [x] The toolbar still wraps and every control stays visible
+- [x] At lg the canvas region is never smaller than the floor; mobile classes are unchanged
 
 **Verification:**
-- [ ] Tests:
+- [x] Tests:
   - `InfrastructureTopologyWorkspace.test.tsx`: card has `lg:min-h-min`, canvas region has `lg:min-h-[<floor>px]`,
     and the mobile `h-dvh` is unchanged
   - `InfrastructurePage.test.tsx`: root has `lg:overflow-y-auto` and keeps `overflow-hidden`
-- [ ] `tsc`, eslint, `git diff --check`
+- [x] `tsc`, eslint, `git diff --check`
 
 **Dependencies:** Task 1
 **Files:** `InfrastructurePage.tsx` + test, `InfrastructureTopologyWorkspace.tsx` + test
 **Scope:** S. Commit: `fix: keep a usable topology canvas height on short Infrastructure viewports`
 
 ## Checkpoint A
-- [ ] Tasks 2–3 focused tests, `tsc`, eslint and `git diff --check` green
+- [x] Tasks 2–3 focused tests, `tsc`, eslint and `git diff --check` green
 
 ---
 
@@ -131,6 +131,7 @@ Record before/after results in `tasks/short-viewport-route-floor-measurements.md
 | All | No horizontal overflow; the VM detail drawer opens correctly at 1366×600 |
 
 **Acceptance criteria:** every row in the table above is met, and the results are recorded
+- [x] Met. See `tasks/short-viewport-route-floor-measurements.md` (en + sk; commits `94bbf09c`, `d9eca4df`)
 **Dependencies:** Tasks 2–3
 **Scope:** S. Commit: docs only
 
