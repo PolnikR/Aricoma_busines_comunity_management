@@ -8,10 +8,9 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 describe('TableToolbar', () => {
   afterEach(cleanup)
 
-  it('renders PageHeader with title, eyebrow, and description', () => {
+  it('renders PageHeader with title and description', () => {
     render(
       <TableToolbar
-        eyebrow="Test"
         title="Test Title"
         description="Test Description"
       />
@@ -25,7 +24,6 @@ describe('TableToolbar', () => {
     const onRefresh = vi.fn()
     render(
       <TableToolbar
-        eyebrow="Test"
         title="Title"
         description="Description"
         onRefresh={onRefresh}
@@ -41,7 +39,6 @@ describe('TableToolbar', () => {
   it('shows Updating indicator when isFetching is true', () => {
     render(
       <TableToolbar
-        eyebrow="Test"
         title="Title"
         description="Description"
         isFetching={true}
@@ -54,7 +51,6 @@ describe('TableToolbar', () => {
   it('renders custom actions when provided', () => {
     render(
       <TableToolbar
-        eyebrow="Test"
         title="Title"
         description="Description"
         actions={<button>Custom Action</button>}
@@ -67,7 +63,6 @@ describe('TableToolbar', () => {
   it('keeps page-header content and actions in the top-level toolbar slot', () => {
     render(
       <TableToolbar
-        eyebrow="Resources"
         title="Resource inventory"
         description="Manage discovered resources"
         actions={<button type="button">Add resource</button>}

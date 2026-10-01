@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react'
 
 interface PageHeaderProps {
-  // Ignored: no longer rendered. Kept until every caller stops passing it.
-  eyebrow?: string
   title: ReactNode
   description?: ReactNode
   actions?: ReactNode

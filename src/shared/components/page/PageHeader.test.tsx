@@ -20,18 +20,12 @@ describe('PageHeader', () => {
     expect(header).toContainElement(screen.getByRole('button', { name: 'Add provider' }))
   })
 
-  it('does not render the eyebrow', () => {
-    const { container } = render(<PageHeader eyebrow="Platform Administration" title="Platform providers" />)
-
-    expect(screen.queryByText('Platform Administration')).not.toBeInTheDocument()
-    expect(container.querySelector('.uppercase')).toBeNull()
-  })
-
   it('renders only the title when description and actions are omitted', () => {
     const { container } = render(<PageHeader title="Recovery groups" />)
 
     expect(screen.getByRole('heading', { name: 'Recovery groups', level: 1 })).toBeInTheDocument()
     expect(container.querySelector('p')).toBeNull()
+    expect(container.querySelector('.uppercase')).toBeNull()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 })

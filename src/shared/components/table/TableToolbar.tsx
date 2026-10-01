@@ -4,8 +4,6 @@ import { Button } from '@/shared/components/button/Button'
 import { useTranslation } from '@/hooks/useTranslation'
 
 interface TableToolbarProps {
-  // Ignored: no longer rendered. Kept until every caller stops passing it.
-  eyebrow?: string
   title: string
   description: string
   isFetching?: boolean
