@@ -166,6 +166,14 @@ describe('InfrastructurePage', () => {
     expect(refetch).toHaveBeenCalledOnce()
   })
 
+  it('scrolls the route on short desktop viewports instead of clipping the topology', async () => {
+    renderPage()
+
+    expect(await screen.findByText(/Topology vmware:/)).toBeInTheDocument()
+    const root = screen.getByRole('heading', { name: 'Infrastructure topology', level: 1 }).parentElement?.parentElement?.parentElement
+    expect(root).toHaveClass('flex', 'min-h-full', 'flex-col', 'overflow-hidden', 'lg:h-full', 'lg:min-h-0', 'lg:overflow-y-auto')
+  })
+
   it('keeps cached provider data usable when its refresh fails', async () => {
     providerQueryOverrides = { error: new Error('provider refresh failed') }
     renderPage()

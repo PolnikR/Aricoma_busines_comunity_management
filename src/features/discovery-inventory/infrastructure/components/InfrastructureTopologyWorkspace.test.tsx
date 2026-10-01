@@ -68,6 +68,27 @@ describe('InfrastructureTopologyWorkspace', () => {
     expect(screen.getByText('Visible nodes: 1')).toBeInTheDocument()
   })
 
+  it('keeps a desktop floor for the canvas while the mobile card stays viewport-sized', async () => {
+    vi.mocked(layoutInfrastructureTopology).mockResolvedValue({
+      nodes: [{
+        node: virtualMachineNode,
+        position: { x: 0, y: 0 },
+        size: { width: 260, height: 132 },
+      }],
+      edges: [],
+      size: { width: 260, height: 132 },
+    })
+
+    render(<InfrastructureTopologyWorkspace platform="vmware" topology={topology} />)
+    const canvasRegion = (await screen.findByText('Topology canvas')).parentElement
+    const card = screen.getByText('Topology toolbar').parentElement
+
+    expect(canvasRegion).toHaveClass('relative', 'min-h-0', 'flex-1', 'overflow-hidden', 'lg:min-h-[260px]')
+    // min-content keeps toolbar + canvas floor + legend; the overflow-hidden card would otherwise shrink to 0.
+    expect(card).toHaveClass('h-dvh', 'min-h-0', 'overflow-hidden', 'lg:h-auto', 'lg:flex-1', 'lg:min-h-min')
+    expect(card).not.toHaveClass('lg:min-h-0')
+  })
+
   it('shows layout failures', async () => {
     vi.mocked(layoutInfrastructureTopology).mockRejectedValue(new Error('ELK failed'))
     render(<InfrastructureTopologyWorkspace platform="vmware" topology={topology} />)

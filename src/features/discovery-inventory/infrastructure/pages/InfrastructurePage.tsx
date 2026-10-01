@@ -104,7 +104,7 @@ export function InfrastructurePage() {
   const activeErrorDetail = extractBackendErrorDetail(activeQuery.error)
 
   return (
-    <div className="flex min-h-full min-w-0 flex-1 flex-col overflow-hidden lg:h-full lg:min-h-0">
+    <div className="flex min-h-full min-w-0 flex-1 flex-col overflow-hidden lg:h-full lg:min-h-0 lg:overflow-y-auto">
       <PageHeader
         title={t('pages.infrastructure.title')}
         description={t('pages.infrastructure.description')}
