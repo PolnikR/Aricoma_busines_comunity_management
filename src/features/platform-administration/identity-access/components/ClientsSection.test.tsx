@@ -198,7 +198,7 @@ describe('ClientsSection', () => {
     expect(screen.getByRole('row', { name: 'Open client abco-be' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('row', { name: 'Open client abco-portal' })).toHaveAttribute('aria-selected', 'false')
     expect(screen.getByText('ABCO Portal')).toBeInTheDocument()
-    expect(drawer.getByText('Selected client')).toBeInTheDocument()
+    expect(drawer.getByRole('heading', { name: 'ABCO Backend' }).parentElement?.nextElementSibling).toHaveTextContent(/^ClientEnabled/)
     expect(drawer.getByRole('heading', { name: 'ABCO Backend' })).toBeInTheDocument()
     expect(fieldsOf(drawer.element)).toEqual({
       ID: backend.id,

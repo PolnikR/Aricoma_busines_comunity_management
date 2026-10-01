@@ -187,12 +187,15 @@ export function ClientsSection() {
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
-        eyebrow={t('identity.clients.drawer.eyebrow')}
         title={selected ? (selected.displayName || selected.clientId) : ''}
+        meta={selected ? [
+          t('identity.clients.drawer.entity'),
+          <ClientStatusBadge key="status" client={selected} />,
+        ] : []}
         subtitle={selected ? <span className="font-mono">{selected.clientId}</span> : undefined}
-        headerExtra={selected ? <ClientStatusBadge client={selected} /> : null}
         ariaLabel={t('identity.clients.drawer.ariaLabel')}
         closeLabel={t('identity.clients.drawer.close')}
+        resizeLabel={t('drawer.resize')}
       >
         {selected ? <ClientDetail clientUuid={selected.id} /> : null}
       </DetailDrawer>
