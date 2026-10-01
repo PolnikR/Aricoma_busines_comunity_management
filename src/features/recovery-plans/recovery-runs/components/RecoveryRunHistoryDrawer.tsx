@@ -46,12 +46,12 @@ export function RecoveryRunHistoryDrawer({ entity, onClose }: RecoveryRunHistory
     <DetailDrawer
       open={entity !== null}
       onClose={() => { setPage(1); onClose() }}
-      eyebrow={t('recoveryRuns.drawer.eyebrow')}
       title={entity?.name ?? ''}
+      meta={[t('recoveryRuns.drawer.entity')]}
       subtitle={<span className="font-mono">{entity?.id}</span>}
       ariaLabel={t('recoveryRuns.drawer.label')}
       closeLabel={t('recoveryRuns.drawer.close')}
-      headerExtra={entity ? (
+      headerActions={entity ? (
         <a
           href={buildAirflowDagUrl(entity.dagId, providerUrl)}
           target="_blank"

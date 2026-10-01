@@ -57,6 +57,9 @@ describe('RecoveryRunHistoryDrawer', () => {
       'https://airflow.dynamic.test:8443/dags/dag_260818094526_2918dccb',
     )
     expect(screen.queryByRole('combobox', { name: 'Rows per page' })).not.toBeInTheDocument()
+    const titleRow = screen.getByRole('heading', { name: 'Finance Recovery' }).parentElement
+    expect(titleRow).toContainElement(screen.getByRole('link', { name: /View in Airflow/ }))
+    expect(titleRow?.nextElementSibling).toHaveTextContent('Run history')
   })
 
   it('shows a retryable error instead of treating a failed history lookup as empty history', () => {
