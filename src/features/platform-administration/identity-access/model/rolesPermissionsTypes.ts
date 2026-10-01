@@ -5,6 +5,10 @@ export interface IdentityRoleRecord {
   name: string
   permissions: string[]
   description?: string
+  users: string[]
+  userCount: number
+  // null when the backend's best-effort Keycloak membership lookup failed; users/userCount are then unknown.
+  clientId: string | null
 }
 
 export interface IdentityRolesPermissions {
@@ -21,6 +25,9 @@ export function mapRolesPermissions(payload: RolesPermissionsResponse): Identity
       name: role.name,
       permissions: role.permissions,
       description: role.description ?? '',
+      users: role.users ?? [],
+      userCount: role.userCount ?? 0,
+      clientId: role.clientId ?? null,
     })),
   }
 }

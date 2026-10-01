@@ -10,7 +10,7 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 vi.mock('@/generated/query/identity-access/identity-access.gen', () => ({ useGetRolesPermissions: vi.fn() }))
 vi.mock('../hooks/useUsers', () => ({ useUsers: vi.fn() }))
 
-const role: IdentityRoleRecord = { id: 'role-admin', name: 'Administrator', permissions: ['providers.read'] }
+const role: IdentityRoleRecord = { id: 'role-admin', name: 'Administrator', permissions: ['providers.read'], users: [], userCount: 0, clientId: null }
 
 function mockLoadedRoles(roles: IdentityRoleRecord[] = [role]) {
   vi.mocked(useGetRolesPermissions).mockReturnValue({ data: { roles, permissions: ['providers.read'] }, isLoading: false, error: null, refetch: vi.fn() } as never)

@@ -36,8 +36,9 @@ describe('roles and permissions wire contract', () => {
     await waitFor(() => { expect(first.result.current.isSuccess).toBe(true) })
     const second = renderHook(useRolesPermissions, { wrapper })
 
+    // Membership fields are absent on the wire here: the schema defaults users/userCount, the mapper defaults clientId.
     expect(second.result.current.data).toEqual({
-      roles: [{ id: 'platform-admin', name: 'platform-admin', permissions: ['providers.read'], description: 'Manages platform configuration.' }],
+      roles: [{ id: 'platform-admin', name: 'platform-admin', permissions: ['providers.read'], description: 'Manages platform configuration.', users: [], userCount: 0, clientId: null }],
       permissions: ['providers.read'],
     })
     expect(fetchMock).toHaveBeenCalledTimes(1)
