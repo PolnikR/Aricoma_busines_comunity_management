@@ -20,8 +20,6 @@
   "header.language": "Language",
   "header.userMenu.settings": "Settings",
   "header.userMenu.logout": "Logout",
-  "header.search": "Search or type a command...",
-  "header.searchHint": "Ctrl K",
   "header.appName": "Aricoma",
   "header.tagline": "Business Continuity Management",
   "header.sidebarTagline": "Business continuity",

@@ -132,7 +132,7 @@ export function AppSidebar() {
     <aside
       className={`fixed inset-y-0 left-0 z-50 flex w-[256px] flex-col border-r border-border bg-surface px-3 text-text-primary shadow-2xl transition-transform duration-300 ease-out lg:static lg:h-full lg:shrink-0 lg:translate-x-0 lg:rounded-[22px] lg:border lg:border-border lg:shadow-[0_14px_35px_-28px_rgba(37,72,112,0.4)] ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} ${isCollapsed ? 'lg:w-18 lg:min-w-18 lg:max-w-18 lg:px-2' : 'lg:w-max lg:min-w-[272px] lg:max-w-[min(352px,32vw)]'}`}
     >
-      <div className={`flex h-[72px] shrink-0 items-center border-b border-border ${isCollapsed ? 'justify-center px-0' : 'px-2'}`}>
+      <div className={`flex h-14 shrink-0 items-center border-b border-border ${isCollapsed ? 'justify-center px-0' : 'px-2'}`}>
         {isCollapsed ? null : (
           <NavLink to={routes.resources} className="flex min-w-0 items-center gap-2.5" aria-label="Aricoma home">
             <img src="/aricoma-logo.png" alt="Aricoma" className="size-9 shrink-0 rounded-lg" />

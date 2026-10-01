@@ -210,5 +210,11 @@ describe('AppSidebar', () => {
 
       expect(screen.getByRole('link', { name: 'Aricoma home' })).toBeInTheDocument()
     })
+
+    it('keeps the brand row as tall as the 56px app header so their borders align', async () => {
+      renderAt(1440)
+
+      expect((await screen.findByRole('link', { name: 'Aricoma home' })).parentElement).toHaveClass('h-14')
+    })
   })
 })
