@@ -96,6 +96,23 @@ describe('VirtualMachineDetailPanel resize', () => {
     )
   })
 
+  it('shows Overview open and Disks and Backing storage info collapsed instead of tabs', async () => {
+    const user = userEvent.setup()
+    renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
+    const dialog = screen.getByRole('dialog')
+
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: 'Disks' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: 'Disks' })).toHaveAccessibleDescription('Disks: 2')
+    expect(screen.getByRole('button', { name: 'Backing storage info' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('heading', { name: 'app-server-01' }).parentElement?.nextElementSibling).toHaveTextContent(/^Virtual machine/)
+    expect(dialog).not.toHaveTextContent('Hard disk 1')
+
+    await user.click(screen.getByRole('button', { name: 'Disks' }))
+    expect(screen.getByRole('region', { name: 'Disks' })).toHaveTextContent('Hard disk 1')
+  })
+
   it('shows an empty snapshots table when no volumes are returned', async () => {
     const user = userEvent.setup()
 
@@ -107,7 +124,7 @@ describe('VirtualMachineDetailPanel resize', () => {
       />,
     )
 
-    await user.click(screen.getByRole('tab', { name: 'Backing storage info' }))
+    await user.click(screen.getByRole('button', { name: 'Backing storage info' }))
 
     expect(screen.getByRole('table')).toBeInTheDocument()
   })
@@ -130,7 +147,7 @@ describe('VirtualMachineDetailPanel resize', () => {
       />,
     )
 
-    await user.click(screen.getByRole('tab', { name: 'Backing storage info' }))
+    await user.click(screen.getByRole('button', { name: 'Backing storage info' }))
 
     expect(screen.getByRole('status', { name: 'Loading snapshots...' })).toBeInTheDocument()
     expect(screen.getByText('source mappings')).toBeVisible()
@@ -157,7 +174,7 @@ describe('VirtualMachineDetailPanel resize', () => {
       />,
     )
 
-    await user.click(screen.getByRole('tab', { name: 'Backing storage info' }))
+    await user.click(screen.getByRole('button', { name: 'Backing storage info' }))
 
     expect(screen.getByRole('alert')).toHaveTextContent('Resource inventory could not be loaded')
     expect(screen.queryByLabelText('Snapshot mappings table')).not.toBeInTheDocument()
@@ -183,7 +200,7 @@ describe('VirtualMachineDetailPanel resize', () => {
       />,
     )
 
-    await user.click(screen.getByRole('tab', { name: 'Backing storage info' }))
+    await user.click(screen.getByRole('button', { name: 'Backing storage info' }))
 
     expect(screen.getByRole('button', { name: 'Retrying' })).toBeDisabled()
     expect(screen.queryByLabelText('Snapshot mappings table')).not.toBeInTheDocument()
@@ -244,7 +261,7 @@ describe('VirtualMachineDetailPanel resize', () => {
       />,
     )
 
-    await user.click(screen.getByRole('tab', { name: 'Backing storage info' }))
+    await user.click(screen.getByRole('button', { name: 'Backing storage info' }))
 
     expect(screen.getByLabelText('Snapshot mappings table')).toBeInTheDocument()
     expect(screen.getByText('source-volume')).toBeInTheDocument()

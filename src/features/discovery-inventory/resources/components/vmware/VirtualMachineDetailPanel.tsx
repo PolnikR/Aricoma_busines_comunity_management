@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { VirtualMachine } from '../../types/virtualMachineTypes'
 import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
 import { formatStartTime } from '@/shared/utils/dateFormat'
@@ -12,11 +11,11 @@ import {
   DataTableRequestState,
   SkeletonBlock,
   DetailDrawer,
+  DetailDrawerSection,
   DetailRow,
   DetailStat,
   type ColumnDef,
 } from '@/shared/components/data-table'
-import { Tabs } from '@/shared/components/tabs/Tabs'
 import { createVmwareDetailFields } from '../../config/vmwareDetailFields'
 
 function truncateFilePath(path: string): string {
@@ -42,7 +41,6 @@ export function VirtualMachineDetailPanel({
   onClose,
 }: VirtualMachineDetailPanelProps) {
   const { t } = useTranslation()
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'disks' | 'snapshots'>('overview')
   // The backend resolves backing storage from the VM and compute provider.
   const {
     data: vdisks,
@@ -106,41 +104,26 @@ export function VirtualMachineDetailPanel({
       open={open}
       onClose={onClose}
       resizable
-      eyebrow={t('pages.virtualMachines.detail.selected')}
       title={virtualMachine?.name ?? ''}
+      meta={virtualMachine ? [
+        t('pages.virtualMachines.detail.entity'),
+        <VirtualMachineStatusBadge key="power" value={virtualMachine.powerState} kind="power" />,
+        <VirtualMachineStatusBadge key="connection" value={virtualMachine.connectionState} kind="connection" />,
+        <VirtualMachineStatusBadge key="tools" value={virtualMachine.toolsStatus} kind="tools" />,
+      ] : []}
       subtitle={virtualMachine ? (
         <span className="font-mono" title={`${virtualMachine.hostname} / ${virtualMachine.ipAddress}`}>
           {virtualMachine.hostname || '-'} / {virtualMachine.ipAddress || '-'}
         </span>
       ) : null}
-      headerExtra={virtualMachine ? (
-        <>
-          <VirtualMachineStatusBadge value={virtualMachine.powerState} kind="power" />
-          <VirtualMachineStatusBadge value={virtualMachine.connectionState} kind="connection" />
-          <VirtualMachineStatusBadge value={virtualMachine.toolsStatus} kind="tools" />
-        </>
-      ) : null}
       ariaLabel={t('drawer.vmDetail')}
       closeLabel={t('drawer.closeVm')}
-      bodyClassName="flex flex-col overflow-hidden"
+      resizeLabel={t('drawer.resize')}
     >
       {virtualMachine ? (
-        <>
-            <Tabs
-              items={[
-                { value: 'overview', label: t('drawer.tabs.overview') },
-                { value: 'disks', label: t('drawer.tabs.disks') },
-                { value: 'snapshots', label: t('drawer.tabs.snapshots') },
-              ]}
-              value={selectedTab}
-              onChange={setSelectedTab}
-              ariaLabel={t('drawer.vmSections')}
-              className="[&>button]:flex-1"
-            />
-
-            <div className="@container/vm-detail custom-scrollbar flex-1 overflow-y-auto">
-              {selectedTab === 'overview' && (
-                <>
+        // Keyed by VM so each newly opened VM starts with the default sections.
+        <div key={virtualMachine.id} className="@container/vm-detail">
+              <DetailDrawerSection title={t('drawer.tabs.overview')} defaultOpen flush>
                   <div className="grid grid-cols-2 border-b border-border">
                     <div className="border-r border-border">
                       <DetailStat
@@ -179,11 +162,14 @@ export function VirtualMachineDetailPanel({
                       />
                     ))}
                   </dl>
-                </>
-              )}
+              </DetailDrawerSection>
 
-              {selectedTab === 'disks' && (
-                <div key={`disks-${virtualMachine.id}`} className="custom-scrollbar overflow-x-auto cursor-grab active:cursor-grabbing">
+              <DetailDrawerSection
+                title={t('drawer.tabs.disks')}
+                summary={t('pages.virtualMachines.detail.diskCount', { count: virtualMachine.vdisks.length })}
+                flush
+              >
+                <div className="custom-scrollbar overflow-x-auto cursor-grab active:cursor-grabbing">
                   {virtualMachine.vdisks.length > 0 ? (
                     <Table className="min-w-full">
                       <TableHeader className="sticky top-0 border-b border-border bg-surface-subtle">
@@ -217,10 +203,10 @@ export function VirtualMachineDetailPanel({
                     <p className="p-4 text-[12px] @min-[80rem]/vm-detail:text-[13px] text-text-subtle">{t('pages.virtualMachines.detail.noDisks')}</p>
                   )}
                 </div>
-              )}
+              </DetailDrawerSection>
 
-              {selectedTab === 'snapshots' && (
-                <div className="flex flex-col" key={`snapshots-${virtualMachine.id}`}>
+              <DetailDrawerSection title={t('drawer.tabs.snapshots')} flush>
+                <div className="flex flex-col">
                   <DataTableRequestState
                       error={vdisksError ? {
                         title: t('resources.common.loadFailed'),
@@ -255,9 +241,8 @@ export function VirtualMachineDetailPanel({
                       </>
                   </DataTableRequestState>
                 </div>
-              )}
-            </div>
-        </>
+              </DetailDrawerSection>
+        </div>
       ) : null}
     </DetailDrawer>
   )
