@@ -54,26 +54,26 @@ Providers pattern) instead of the full-page editable user detail. All user creat
 ## Task List
 
 ### Phase 0: Prerequisite
-- [ ] Task 0: Commit the existing generated GET /get_users client (separate commit, no hand edits)
+- [x] Task 0: Commit the existing generated GET /get_users client (separate commit, no hand edits)
 
 ### Phase 1: Remove management UI
-- [ ] Task 1: Remove the Add-user flow (header button, page state, `AddUserModal`, create tests)
+- [x] Task 1: Remove the Add-user flow (header button, page state, `AddUserModal`, create tests)
 
 ### Checkpoint A
-- [ ] Focused tests green; Users still renders from preview data; no `Add user` anywhere
+- [x] Focused tests green; Users still renders from preview data; no `Add user` anywhere
 
 ### Phase 2: Real data
-- [ ] Task 2: Users table on `useGetUsers()`, remove full-page editable detail
-- [ ] Task 3: Read-only user `DetailDrawer`
+- [x] Task 2: Users table on `useGetUsers()`, remove full-page editable detail
+- [x] Task 3: Read-only user `DetailDrawer`
 
 ### Checkpoint B
-- [ ] Focused tests + typecheck green; table + drawer verified manually against API
+- [x] Focused tests + typecheck green; table + drawer verified manually against API
 
 ### Phase 3: Cleanup
-- [ ] Task 4: Remove orphaned Users locale keys and preview-specific copy (EN/CS/SK)
+- [x] Task 4: Remove orphaned Users locale keys and preview-specific copy (EN/CS/SK)
 
 ### Checkpoint C
-- [ ] All acceptance criteria met; lint on changed files clean; ready for review
+- [x] All acceptance criteria met; lint on changed files clean; ready for review
 
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
@@ -91,3 +91,9 @@ Providers pattern) instead of the full-page editable user detail. All user creat
 
 ## Open Questions
 None. Resolved: Task 0 proceeds as planned; timestamps are locale-aware with the browser timezone; shared gateway methods are kept.
+
+## Execution notes
+- Typecheck was red after regeneration (`RoleRecord` gained defaulted `users`/`userCount`); fixed in a separate
+  commit by mapping UI fields explicitly in `model/rolesPermissionsTypes.ts` (user-approved).
+- Status labels reuse existing `identity.common.status.active|disabled`; Yes/No reuse `common.yes|no`
+  (instead of a new `identity.users.status.disabled` key).

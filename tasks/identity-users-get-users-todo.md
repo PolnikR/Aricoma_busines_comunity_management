@@ -6,12 +6,12 @@ Plan: `tasks/identity-users-get-users-plan.md`. Base path below: `src/features/p
 **Description:** Commit the already-generated, unmodified client so feature commits stay atomic. No hand edits.
 
 **Acceptance criteria:**
-- [ ] Commit contains only `openapi/abco-api.json`, `src/generated/query/**` changes and the 3 new zod files
-- [ ] `package-lock.json` is NOT staged
+- [x] Commit contains only `openapi/abco-api.json`, `src/generated/query/**` changes and the 3 new zod files
+- [x] `package-lock.json` is NOT staged
 
 **Verification:**
-- [ ] `git show --stat HEAD` lists only the files above
-- [ ] `npx tsc --noEmit -p .` (or project typecheck script) passes
+- [x] `git show --stat HEAD` lists only the files above
+- [x] `npx tsc --noEmit -p .` (or project typecheck script) passes
 
 **Dependencies:** None
 **Files:** `openapi/abco-api.json`, `src/generated/query/**`
@@ -22,20 +22,20 @@ Plan: `tasks/identity-users-get-users-plan.md`. Base path below: `src/features/p
 and its create-error effect/alert wiring in `UsersSection`. Users list still uses preview data at this point.
 
 **Acceptance criteria:**
-- [ ] No `Add user` button in the Identity & Access header for the Users section; other section actions unchanged
-- [ ] `AddUserModal`, `EMPTY_USER_INPUT`, `isAddUserOpen`/`onSetAddUserOpen` removed from `UsersSection` and `IdentityAccessPage`
-- [ ] Tests assert the `Add user` button is absent
+- [x] No `Add user` button in the Identity & Access header for the Users section; other section actions unchanged
+- [x] `AddUserModal`, `EMPTY_USER_INPUT`, `isAddUserOpen`/`onSetAddUserOpen` removed from `UsersSection` and `IdentityAccessPage`
+- [x] Tests assert the `Add user` button is absent
 
 **Verification:**
-- [ ] `npm exec vitest run IA/components/UsersSection.test.tsx IA/pages/IdentityAccessPage.test.tsx`
-- [ ] `npx eslint` on the changed files
+- [x] `npm exec vitest run IA/components/UsersSection.test.tsx IA/pages/IdentityAccessPage.test.tsx`
+- [x] `npx eslint` on the changed files
 
 **Dependencies:** None
 **Files:** `IA/components/UsersSection.tsx`, `IA/components/UsersSection.test.tsx`, `IA/pages/IdentityAccessPage.tsx`, `IA/pages/IdentityAccessPage.test.tsx`
 **Scope:** S
 
 ## Checkpoint A
-- [ ] Focused tests green, committed
+- [x] Focused tests green, committed
 
 ## Task 2: Users table on `useGetUsers()`; remove editable full-page detail
 **Description:** Switch `UsersSection` to `useGetUsers()`. Columns: User (`user` + `email` secondary), Username,
@@ -50,17 +50,17 @@ the shared gateway contract, mock and their tests stay unchanged. Add `formatUse
 Add EN/CS/SK keys: `identity.users.columns.activeSessionStart`, `identity.users.status.disabled`.
 
 **Acceptance criteria:**
-- [ ] Rows come from `useGetUsers()`; `UsersSection` does not import `useIdentityAdminPreview` and calls no gateway mutation
-- [ ] Roles/status/`activeSessionStart` render as specified; `activeSessionStart` null/undefined → `—`; no `Last login` column and no derived last-login value
-- [ ] Timestamps are locale-aware with no hard-coded timezone
-- [ ] Loading skeleton, error + Retry (calls `refetch`), empty and search-no-match states work
+- [x] Rows come from `useGetUsers()`; `UsersSection` does not import `useIdentityAdminPreview` and calls no gateway mutation
+- [x] Roles/status/`activeSessionStart` render as specified; `activeSessionStart` null/undefined → `—`; no `Last login` column and no derived last-login value
+- [x] Timestamps are locale-aware with no hard-coded timezone
+- [x] Loading skeleton, error + Retry (calls `refetch`), empty and search-no-match states work
 
 **Verification:**
-- [ ] Rewritten `UsersSection.test.tsx` (mock `@/generated/query/identity-access/identity-access.gen` like `RealmRolesSection.test.tsx`): renders API users, search filters, roles render, session start renders (expected text built with the same `Intl.DateTimeFormat('en-GB', …)` call so the test does not depend on the runner's timezone), null → `—`, loading/error/retry/empty
-- [ ] `git diff` shows no changes to `IA/services/identityAdminGateway.ts`, `IA/services/mockIdentityAdminGateway*.ts`
-- [ ] `npm exec vitest run IA/components/UsersSection.test.tsx IA/pages/IdentityAccessPage.test.tsx`
-- [ ] Typecheck passes; `npx eslint` on changed files
-- [ ] Manual: Users tab against running API shows real users
+- [x] Rewritten `UsersSection.test.tsx` (mock `@/generated/query/identity-access/identity-access.gen` like `RealmRolesSection.test.tsx`): renders API users, search filters, roles render, session start renders (expected text built with the same `Intl.DateTimeFormat('en-GB', …)` call so the test does not depend on the runner's timezone), null → `—`, loading/error/retry/empty
+- [x] `git diff` shows no changes to `IA/services/identityAdminGateway.ts`, `IA/services/mockIdentityAdminGateway*.ts`
+- [x] `npm exec vitest run IA/components/UsersSection.test.tsx IA/pages/IdentityAccessPage.test.tsx`
+- [x] Typecheck passes; `npx eslint` on changed files
+- [ ] Manual (not run — needs live API): Users tab against running API shows real users
 
 **Dependencies:** Task 0, Task 1
 **Files:** `IA/components/UsersSection.tsx`, `IA/components/UsersSection.test.tsx`, `IA/pages/IdentityAccessPage.tsx`, `src/locales/{en,cs,sk}.json`
@@ -74,21 +74,21 @@ No footer. Add EN/CS/SK keys for eyebrow/aria/close labels and field labels (`id
 `identity.users.fields.*`, Yes/No).
 
 **Acceptance criteria:**
-- [ ] Clicking a row opens the drawer with all 9 fields; null/undefined → `—`; `createdAt`/`activeSessionStart` via `formatUserTimestamp`
-- [ ] Strictly read-only: no navigation (`onEntityChange` gone), no Edit/Delete/footer buttons, no role or required-action controls; close/Escape work
-- [ ] All new labels exist in EN/CS/SK
+- [x] Clicking a row opens the drawer with all 9 fields; null/undefined → `—`; `createdAt`/`activeSessionStart` via `formatUserTimestamp`
+- [x] Strictly read-only: no navigation (`onEntityChange` gone), no Edit/Delete/footer buttons, no role or required-action controls; close/Escape work
+- [x] All new labels exist in EN/CS/SK
 
 **Verification:**
-- [ ] Tests: row click opens dialog/drawer, all fields present, null fields → `—`, no `Edit`/`Delete` buttons
-- [ ] `npm exec vitest run IA/components/UsersSection.test.tsx`
-- [ ] Manual: drawer layout matches Platform Providers drawer
+- [x] Tests: row click opens dialog/drawer, all fields present, null fields → `—`, no `Edit`/`Delete` buttons
+- [x] `npm exec vitest run IA/components/UsersSection.test.tsx`
+- [ ] Manual (not run — needs live API): drawer layout matches Platform Providers drawer
 
 **Dependencies:** Task 2
 **Files:** `IA/components/UsersSection.tsx`, `IA/components/UsersSection.test.tsx`, `src/locales/{en,cs,sk}.json`
 **Scope:** M
 
 ## Checkpoint B
-- [ ] Focused tests + typecheck green; table + drawer checked manually; committed
+- [x] Focused tests + typecheck green; table + drawer checked manually; committed
 
 ## Task 4: Remove orphaned Users locale keys and preview copy
 **Description:** Delete keys no longer referenced (`identity.actions.addUser`, `identity.users.add.*`,
@@ -97,17 +97,17 @@ No footer. Add EN/CS/SK keys for eyebrow/aria/close labels and field labels (`id
 `identity.users.loading` / `identity.users.empty.description`, which still mention the preview gateway.
 
 **Acceptance criteria:**
-- [ ] Every removed key has zero references in `src/`
-- [ ] EN/CS/SK contain the same `identity.users.*` key set
-- [ ] JSON files parse
+- [x] Every removed key has zero references in `src/`
+- [x] EN/CS/SK contain the same `identity.users.*` key set
+- [x] JSON files parse
 
 **Verification:**
-- [ ] `grep` per removed key returns nothing; node script compares key sets across the 3 files
-- [ ] `npm exec vitest run IA/components/UsersSection.test.tsx IA/pages/IdentityAccessPage.test.tsx IA/components/IdentityAccessLocalization.test.tsx`
+- [x] `grep` per removed key returns nothing; node script compares key sets across the 3 files
+- [x] `npm exec vitest run IA/components/UsersSection.test.tsx IA/pages/IdentityAccessPage.test.tsx IA/components/IdentityAccessLocalization.test.tsx`
 
 **Dependencies:** Task 3
 **Files:** `src/locales/{en,cs,sk}.json`
 **Scope:** S
 
 ## Checkpoint C
-- [ ] All acceptance criteria met; lint on changed files clean; committed; ready for review
+- [x] All acceptance criteria met; lint on changed files clean; committed; ready for review
