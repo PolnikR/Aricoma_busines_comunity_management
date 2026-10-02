@@ -26,6 +26,39 @@
           "type": "string",
           "title": "Path"
         },
+        "query_string": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Query String"
+        },
+        "user_agent": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "User Agent"
+        },
+        "referer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Referer"
+        },
         "status": {
           "type": "integer",
           "title": "Status"
