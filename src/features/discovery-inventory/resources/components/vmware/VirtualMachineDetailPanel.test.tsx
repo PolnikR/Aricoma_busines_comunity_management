@@ -111,6 +111,9 @@ describe('VirtualMachineDetailPanel resize', () => {
 
     await user.click(screen.getByRole('button', { name: 'Disks' }))
     expect(screen.getByRole('region', { name: 'Disks' })).toHaveTextContent('Hard disk 1')
+
+    await user.click(screen.getByRole('button', { name: 'Virtual machine help' }))
+    expect(screen.getByRole('dialog', { name: 'What this virtual machine view shows' })).toHaveTextContent('Backing storage info')
   })
 
   it('shows an empty snapshots table when no volumes are returned', async () => {

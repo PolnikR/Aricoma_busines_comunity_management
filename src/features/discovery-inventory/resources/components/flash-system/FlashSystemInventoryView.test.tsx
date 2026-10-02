@@ -28,8 +28,11 @@ const secondProvider: ProviderRecord = {
 }
 
 // Opens every collapsed drawer section so all detail rows can be asserted.
+// The help "?" also reports aria-expanded, so only section toggles (h3 > button) are clicked.
 function expandAll(dialog: HTMLElement) {
-  for (const toggle of within(dialog).queryAllByRole('button', { expanded: false })) fireEvent.click(toggle)
+  for (const toggle of within(dialog).queryAllByRole('button', { expanded: false })) {
+    if (toggle.parentElement?.tagName === 'H3') fireEvent.click(toggle)
+  }
 }
 
 describe('FlashSystemInventoryView', () => {
@@ -90,6 +93,9 @@ describe('FlashSystemInventoryView', () => {
     expect(within(dialog).getByRole('button', { name: 'Identity' })).toHaveAttribute('aria-expanded', 'true')
     expect(within(dialog).getByRole('button', { name: 'Placement and capacity' })).toHaveAttribute('aria-expanded', 'true')
     expect(within(dialog).getByRole('button', { name: 'Copy relationships' })).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'FlashSystem volume help' }))
+    expect(within(dialog).getByRole('dialog', { name: 'What this volume view shows' })).toHaveTextContent('Remote Copy')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close help' }))
     expandAll(dialog)
     expect(within(dialog).getByText('Placement and capacity')).toBeInTheDocument()
     expect(within(dialog).getByText('Virtual disk UID')).toBeInTheDocument()

@@ -1,4 +1,5 @@
 import { DetailDrawer, DetailDrawerSection, DetailRow } from '@/shared/components/data-table'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import type { PowerPartitionData, PowerPartitionResource } from '../../model/discoveryTypes'
 
 type SectionKey = 'summary' | 'processorMemory' | 'network' | 'storage' | 'virtualIo'
@@ -123,6 +124,7 @@ export function IbmPowerDetailPanel({ partition, open, onClose, labels }: IbmPow
       onClose={onClose}
       title={partition?.partitionName ?? '-'}
       meta={[labels.entity]}
+      headerActions={<KeyedHelpPopover helpKey="resources.power.help" sections={['processor', 'storage', 'virtualIo']} />}
       ariaLabel={labels.detail}
       closeLabel={labels.close}
       resizeLabel={labels.resize}

@@ -2,6 +2,7 @@ import type { VirtualMachine } from '../../types/virtualMachineTypes'
 import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
 import { formatStartTime } from '@/shared/utils/dateFormat'
 import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useVdisksByVm } from '../../hooks/useVmStorageVolumes'
 import type { StorageVolumeMapping } from '../../model/vmStorageVolumesTypes'
 import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
@@ -116,6 +117,7 @@ export function VirtualMachineDetailPanel({
           {virtualMachine.hostname || '-'} / {virtualMachine.ipAddress || '-'}
         </span>
       ) : null}
+      headerActions={<KeyedHelpPopover helpKey="pages.virtualMachines.help" sections={['status', 'disks', 'backing']} />}
       ariaLabel={t('drawer.vmDetail')}
       closeLabel={t('drawer.closeVm')}
       resizeLabel={t('drawer.resize')}

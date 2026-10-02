@@ -1,5 +1,6 @@
 import { Fragment } from 'react'
 import { DetailDrawer, DetailDrawerSection, DetailRow } from '@/shared/components/data-table'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import type { FlashSystemVolumeResource } from '../../model/discoveryTypes'
 
 interface FlashSystemVolumeDetailPanelProps {
@@ -67,6 +68,7 @@ export function FlashSystemVolumeDetailPanel({ volume, open, onClose, labels }: 
       onClose={onClose}
       title={volume?.name ?? '-'}
       meta={[labels.entity]}
+      headerActions={<KeyedHelpPopover helpKey="resources.flash.help" sections={['pool', 'flashCopy', 'remoteCopy', 'consistencyGroups']} />}
       ariaLabel={labels.detail}
       closeLabel={labels.close}
       resizeLabel={labels.resize}
