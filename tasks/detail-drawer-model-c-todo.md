@@ -365,9 +365,15 @@ test v RecoveryGroupsTable. V.
 - [x] `src/features/recovery-plans/recovery-groups` + `src/shared/components/data-table` +
       `help-popover`: 38/38 súborov, 356/356 testov; locale testy 4/4.
 - [x] eslint (6 súborov), `npx tsc -p tsconfig.app.json --noEmit`, `git diff --check`: OK.
-- [ ] **Browser (390×844, 1366×768, light a dark): pending.** Keycloak session v Edge (CDP
-      9333) cez noc vypršala a prihlásenie je manuálne. Po prihlásení spustiť
-      `node help.mjs` a `node help.mjs --dark` zo scratchpadu session `4c3e5949-…`.
+- [x] **Browser (2026-10-02, Edge CDP 9333 po manuálnom prihlásení): 390×844 a 1366×768,
+      light aj dark, všetko OK.**
+  - Panel 352×562 px: pri 390 posunutý na `left: 8` (`right: 360`), pri 1366 pod otáznikom,
+    vždy celý vo viewporte a bez orezania.
+  - Otáznik je medzi nadpisom a close tlačidlom bez prekryvu. Dlhý názov sa skracuje.
+  - Focus po otvorení je v paneli, Tab ostáva v draweri.
+  - Escape zavrie iba help (drawer ostáva otvorený) a focus sa vráti na otáznik.
+  - Klik mimo (do tela drawera) zavrie help a drawer ostáva otvorený.
+  - Potom drawer normálne zatvorí Escape. Bez horizontálneho scrollu stránky.
 
 **Závislosti:** T4. **Rozsah / riziko:** M / nízke. **Commit:**
 `feat: relation help in the recovery group drawer`.
