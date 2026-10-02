@@ -39,6 +39,8 @@ export function ProvidersPage() {
         <ProvidersCatalogueTable
           providers={providers}
           allProviders={allProviders}
+          allProvidersLoading={allProvidersQuery.isLoading}
+          allProvidersError={Boolean(allProvidersQuery.error)}
           roleFilter={roleFilter}
           onRoleFilterChange={setRoleFilter}
           isLoading={visibleProvidersQuery.isLoading}

@@ -307,7 +307,14 @@ describe('ProvidersCatalogueTable', () => {
     expect(footer?.children[0]).toContainElement(deleteButton)
     expect(footer?.children[1]).toContainElement(within(drawer).getByRole('button', { name: 'Edit' }))
     fireEvent.click(within(drawer).getByRole('button', { name: 'Provider help' }))
-    expect(within(drawer).getByRole('dialog', { name: 'What an infrastructure provider is' })).toHaveTextContent('Role')
+    const help = within(drawer).getByRole('dialog', { name: 'What an infrastructure provider is' })
+    expect(help).toHaveTextContent('Role')
+    expect(help).toHaveTextContent('Credential')
+    expect(within(help).getByRole('heading', { name: 'Provider relationships' })).toBeInTheDocument()
+    expect(within(help).queryByRole('heading', { name: 'Partner provider' })).not.toBeInTheDocument()
+    expect(within(help).getByText('Recovery vCenter')).toBeInTheDocument()
+    expect(within(help).getAllByText('No backing storage provider')).toHaveLength(2)
+    expect(screen.queryByRole('dialog', { name: 'Provider relationships' })).not.toBeInTheDocument()
   })
 
   it('opens the connection test for the selected provider and shows the real result', async () => {

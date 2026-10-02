@@ -31,6 +31,7 @@ import { ProviderConnectionTestDialog } from './ProviderConnectionTestDialog'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
 import { isComputeProviderType, isPartnerProviderType } from '../model/providerCategory'
 import { BackingStorageValue } from './BackingStorageValue'
+import { ProviderRelationshipsContent } from './ProviderRelationshipsContent'
 import type { ProviderRecord, ProviderRoleFilter } from '../model/providerTypes'
 
 function credentialStatusLabel(
@@ -122,6 +123,9 @@ function getColumns(
 interface ProvidersCatalogueTableProps {
   providers: ProviderRecord[]
   allProviders: ProviderRecord[]
+  // State of the all-providers query, shown by the relationships in the drawer help.
+  allProvidersLoading?: boolean
+  allProvidersError?: boolean
   roleFilter: ProviderRoleFilter
   onRoleFilterChange: (role: ProviderRoleFilter) => void
   isLoading: boolean
@@ -133,6 +137,8 @@ interface ProvidersCatalogueTableProps {
 export function ProvidersCatalogueTable({
   providers,
   allProviders,
+  allProvidersLoading = false,
+  allProvidersError = false,
   roleFilter,
   onRoleFilterChange,
   isLoading,
@@ -333,7 +339,9 @@ export function ProvidersCatalogueTable({
             {selected.credentialStatus !== 'ok' ? (
               <span id="provider-test-credential-hint" className="sr-only">{t('providers.connectionTest.credentialRequired')}</span>
             ) : null}
-            <KeyedHelpPopover helpKey="providers.help" sections={['role', 'credential', 'partner']} />
+            <KeyedHelpPopover helpKey="providers.help" sections={['role', 'credential']} width="wide">
+              <ProviderRelationshipsContent providers={allProviders} isLoading={allProvidersLoading} isError={allProvidersError} />
+            </KeyedHelpPopover>
           </>
         ) : null}
         ariaLabel={t('drawer.providerDetail')}
