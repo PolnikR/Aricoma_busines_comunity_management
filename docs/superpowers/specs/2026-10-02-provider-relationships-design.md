@@ -1,4 +1,4 @@
-# Spec: Provider Relationships (classifier, form alignment, drawer help)
+# Spec: Provider Relationships (classifier, form alignment, hover/focus help)
 
 ## Objective
 
@@ -11,7 +11,7 @@ The frontend narrows these relationships more than the backend contract does, ne
 
 1. Introduces one FE classification of provider types and one resolver that builds the relationship topology from the provider list by id.
 2. Aligns the provider form, the drawer and the detail page with the verified backend contract.
-3. Extends the existing **"?" help in the provider DetailDrawer header** into one hover/focus helper. It keeps the Role and Credential help and adds the relationship model explanation plus the approved relationship visualization.
+3. Makes the shared detail help (`HelpPopover`, and through it `KeyedHelpPopover`) open on **hover and focus** everywhere it is used. The provider drawer's help keeps Role and Credential and adds the relationship model explanation plus the approved relationship visualization.
 
 **Users:** operators configuring infrastructure providers who need to understand how compute and storage providers are connected.
 
@@ -20,9 +20,8 @@ The frontend narrows these relationships more than the backend contract does, ne
 - Metro Mirror logic in recovery groups.
 - Per-vendor discovery and inventory logic.
 - VMware VM tags.
-- The shared click-to-open `HelpPopover` / `KeyedHelpPopover` used by other drawers.
 - A full topology or network viewer.
-- Any click-to-open modal for this content.
+- Any modal, link or second popover implementation for this content.
 
 ## Verified backend contract (source of truth)
 
@@ -162,51 +161,72 @@ Every hardcoded type condition in the Providers feature that concerns relationsh
 - `forms.partnerProvider*` keep their FlashSystem / Metro Mirror wording, which matches the current contract.
 - New keys: `details.backingStorage`, `details.backingStorageNone`, `details.backingStorageUnavailable`, `details.relationshipMismatch`.
 
-## Part 3: Drawer help (hover/focus helper)
+## Part 3: Shared hover/focus help and provider help content
 
-### Placement and interaction
+### 3a. Shared `HelpPopover` interaction (global)
 
-- **Trigger:** the existing "?" icon button in the provider DetailDrawer header, at the same position and with the same look. The `<KeyedHelpPopover helpKey="providers.help" …>` there is replaced by `ProviderHelpHoverCard`. No separate button, link or modal is added. Other drawers keep the shared click-to-open `HelpPopover` unchanged.
-- **Open:** after about 150 ms of pointer hover on the trigger, or immediately when the trigger receives keyboard focus. A touch tap focuses the trigger, so it also opens the helper.
-- **Stay open:** while the pointer is over the trigger or the panel, or while focus is inside the trigger or the panel. Moving from the trigger to the panel does not close it; a grace delay of about 200 ms bridges the gap.
-- **Close:** when pointer and focus have both left the trigger and panel area (after the grace delay), or on Escape.
-- **Escape** closes only the helper, never the DetailDrawer. The drawer listens for Escape on `window` in the bubble phase. While the helper is open, it registers a `window` keydown listener in the **capture** phase that closes it and calls `stopPropagation()`. This works whether the helper was opened by hover (focus elsewhere in the drawer) or by focus. After an Escape, focus stays where it was (on the trigger if it opened by focus).
-- **Keyboard reading:** the panel's scroll container is focusable (`tabIndex={0}`) and follows the trigger directly in DOM order. Tab therefore moves from the trigger into the panel, keeps the helper open, and lets the arrow keys and PageUp/PageDown scroll it. Tabbing out of the panel closes it.
-- **No click toggle:** a click only focuses the trigger, which opens the helper. Nothing else is clickable inside the panel.
-- **ARIA:**
-  - The trigger is a `button` with `aria-label` from `providers.help.trigger`, `aria-expanded`, and `aria-controls` pointing to the panel id.
-  - The panel is a non-modal `role="dialog"` labelled by its title, like the existing HelpPopover.
-  - The arrow glyphs are `aria-hidden`, and each connector carries visually hidden text.
-- **Known deviation:** the other drawers' "?" stays click-only, as the shared HelpPopover documents. This drawer's helper is hover/focus by product decision.
+The interaction changes in `src/shared/components/help-popover/HelpPopover.tsx` and applies to **every** existing "?" help. All `KeyedHelpPopover` usages (about 20 drawers and panels) inherit it with no change at their call sites. No feature gets its own hover, focus, positioning or Escape logic.
 
-### Rendering and placement
+| Interaction | Behavior |
+|---|---|
+| Pointer hover on "?" (`pointerType !== 'touch'`) | Opens after about 150 ms |
+| Pointer moves from trigger to panel | Stays open; a grace delay of about 200 ms bridges the gap |
+| Pointer leaves both trigger and panel | Closes after the grace delay, **unless focus is inside the trigger or panel** |
+| Keyboard focus on "?" | Opens immediately |
+| Focus moves within trigger or panel (Tab into the panel) | Stays open |
+| Focus leaves trigger and panel | Closes, **unless the pointer is over the trigger or panel** |
+| Hover opening | Never moves focus. The panel no longer auto-focuses on open, whatever opened it. |
+| Click or tap on "?" | Fallback: opens if closed and does nothing if already open. It **no longer toggles closed**, because a desktop click arrives after hover/focus has already opened the panel. |
+| Close button in panel | Closes and returns focus to the trigger |
+| Pointer down outside | Closes (existing behavior) |
+| Escape | Closes only the help, never an enclosing `DetailDrawer` or `Modal`. While open, the help registers a `window` keydown listener in the **capture** phase that closes it and calls `stopPropagation()`, so the drawer's bubble-phase `window` listener never sees the key. This works whether the help was opened by hover (focus elsewhere) or by focus. Focus returns to the trigger only if focus was inside the panel; otherwise it stays where it is. |
+| After an explicit dismissal (Escape or close button) | The help does not reopen just because focus is on, or returns to, the trigger. Reopening requires focus to leave and come back, or the pointer to re-enter the trigger (WCAG 1.4.13: dismissible). |
 
-- The panel renders **in place**, as a child of the trigger wrapper inside the drawer. This mirrors the existing HelpPopover rationale: it stays inside the drawer's `aria-modal` subtree and focus trap, and the drawer sets no `overflow`, so nothing clips it.
-- It is positioned absolutely under the trigger and right-aligned to it, so it extends leftwards over the page. A horizontal shift keeps it inside the viewport, the same technique `HelpPopover` uses.
-- Width: `min(880px, 100vw − 2rem)`. Max height: the space below the trigger minus a viewport gap.
-- The panel title stays fixed and the content scrolls.
-- Portalling to `document.body` is approved as a fallback, but only if in-place rendering cannot satisfy clipping or positioning. If used, the Escape and focus-trap behavior above must still hold.
+What stays the same:
 
-### Content (top to bottom)
+- **Rendering:** in place, absolutely positioned under the trigger, right-aligned, with the horizontal viewport shift and a max height capped to the space below. The help stays inside the drawer's `aria-modal` subtree and focus trap.
+- **ARIA:** the trigger keeps `aria-haspopup="dialog"`, `aria-expanded` and `aria-controls`. The panel stays a non-modal `role="dialog"` labelled by its title.
 
-1. **Title and intro**: the existing `providers.help.title` and `providers.help.intro`.
-2. **Role**: the existing `providers.help.role.title` / `.text`.
-3. **Credential**: the existing `providers.help.credential.title` / `.text`.
-4. **Provider relationships**: the approved v2 template content, rendered by `ProviderRelationshipsContent`:
-   - A section heading, then three short intro sentences:
+The panel becomes focusable in tab order (`tabIndex={0}`), so keyboard users can scroll long content. The file's header comment is updated: "never on hover" is replaced by the new contract.
+
+**New generic width prop.** `width?: 'default' | 'wide'` on `HelpPopover`, passed through by `KeyedHelpPopover`:
+
+- `default` (the default) is today's compact `w-[min(22rem,calc(100vw-2rem))]`.
+- `wide` is `w-[min(55rem,calc(100vw-2rem))]` (about 880 px), used by the provider help.
+
+**New optional `children` on `KeyedHelpPopover`.** They render after the key-driven intro and sections, so a feature can append custom content while keeping the shared locale-key convention.
+
+### 3b. Provider drawer help content
+
+In `ProvidersCatalogueTable.tsx` the trigger stays the existing "?" in the DetailDrawer header:
+
+```tsx
+<KeyedHelpPopover helpKey="providers.help" sections={['role', 'credential']} width="wide">
+  <ProviderRelationshipsContent providers={allProviders} isLoading={…} isError={…} />
+</KeyedHelpPopover>
+```
+
+Content, top to bottom:
+
+1. `providers.help.title` / `providers.help.intro` (existing).
+2. **Role** (existing `providers.help.role.*`).
+3. **Credential** (existing `providers.help.credential.*`).
+4. **Provider relationships**, rendered by `ProviderRelationshipsContent`:
+   - a section heading
+   - three short intro sentences:
      - "Compute providers run workloads such as virtual machines or LPARs. They can use one or more storage providers as backing storage."
      - "IBM FlashSystem providers can additionally reference another FlashSystem as their replication partner."
      - "Relationships shown below are built from the current provider configuration." (muted)
-   - A one-line legend: `Compute → Backing storage → Storage` (blue) and `Storage ↔ Partner ↔ Storage` (orange).
-   - The relationship rows, as described below.
+   - a one-line legend: `Compute → Backing storage → Storage` (blue) and `Storage ↔ Partner ↔ Storage` (orange)
+   - the relationship rows
 
-This section replaces the old `providers.help.partner.*` section. Those keys become unused and are removed.
+The old `partner` section is dropped from the `sections` list, and its `providers.help.partner.*` keys become unused and are removed. The relationship texts live under `providers.relationships.*`, not under `providers.help.*`, because `src/locales/detailDrawerHelpTranslations.test.ts` requires every `*.help.*.title` to have a `.text`.
 
-The rows use the **whole `allProviders` dataset** and show the full relevant relationship topology, not only the selected provider. The selected provider gets no special treatment.
+The rows use the **whole `allProviders` dataset** and show the full relevant topology, not only the selected provider. The selected provider gets no special treatment.
 
 ### Relationship rows (approved template v2)
 
-Visual reference: [2026-10-02-provider-relationships-helper-template.html](2026-10-02-provider-relationships-helper-template.html). Only its *content* applies (intro, legend, rows, states). Its modal shell is superseded by this helper panel.
+Visual reference: [2026-10-02-provider-relationships-helper-template.html](2026-10-02-provider-relationships-helper-template.html). Only its *content* applies (intro, legend, rows, states). Its modal shell is superseded: the content renders inside the shared `HelpPopover` panel with `width="wide"`.
 
 - **"Compute providers" list**: one row per compute provider, in API order, read left to right: `[compute card] → Backing storage → [storage card] → Partner → [partner card]`.
   - Several backing targets stack vertically inside the same row. Each target carries its own partner, if it has one.
@@ -224,7 +244,7 @@ Visual reference: [2026-10-02-provider-relationships-helper-template.html](2026-
   - A one-way partner has a single tip in the declared direction: `→` when the row's storage is the source, `←` when it is the target.
   - Visually hidden text: "backing storage", "mutual partner", "partner of" / "partnered by".
 - **Partner repetition**: the first time a partner relationship appears in reading order, it renders as connector + full card. Later occurrences render as a compact one-line reference, `↔ Partner {name} {id}` (`→` / `←` when one-way).
-- **Panel width**: inside the panel the rows use the template column widths. Below about 760 px of panel width they collapse into a vertical stack with vertical connectors. No horizontal scroll.
+- **Panel width**: inside the wide panel the rows use the template column widths. When the panel is narrower than about 760 px (a small viewport), they collapse into a vertical stack with vertical connectors. No horizontal scroll.
 
 ### States
 
@@ -244,9 +264,9 @@ There are no aggressive error panels and no red colors for the mismatch or unres
 
 ### Structure
 
-- `helpers/buildRelationshipRows.ts`: a pure view model from `ProviderTopology` to rows. It owns ordering, the first-full-then-compact partner logic and the "Other storage relationships" selection.
+- `helpers/buildRelationshipRows.ts`: a pure view model from `ProviderTopology` to rows. It owns the ordering, the logic that renders a partner in full the first time and compact afterwards, and the selection for "Other storage relationships".
 - `components/ProviderRelationshipsContent.tsx`: renders the approved v2 content (intro, legend, rows, states) from the view model, with no business rules. Small subcomponents (card, connector) go into sibling files if a file would exceed about 200 lines.
-- `components/ProviderHelpHoverCard.tsx`: the "?" trigger, the hover/focus/Escape behavior, in-place placement, and the Role and Credential sections plus `ProviderRelationshipsContent`. It receives `allProviders` (plus loading and error state) from `ProvidersCatalogueTable`.
+- Shared `HelpPopover` / `KeyedHelpPopover`: hold the interaction and the `width` / `children` props (3a). There is no Providers-specific popover component.
 
 ## Tech Stack
 
@@ -258,7 +278,7 @@ React 19 + TypeScript, Tailwind v4 tokens from `src/index.css`, TanStack Query v
 Focused tests: npm exec vitest run <changed test files>
 Focused lint:  npx eslint <changed files> --max-warnings 0
 Layout check:  node scripts/orval/check-feature-layout.mjs
-Typecheck:     npm run typecheck   (ProviderCreateForm props and drawer props change)
+Typecheck:     npm run typecheck   (ProviderCreateForm, HelpPopover and KeyedHelpPopover props change)
 Whitespace:    git diff --check
 ```
 
@@ -268,19 +288,20 @@ The full suite (`npm test`) and the production build are not run by default (CLA
 
 ```
 src/features/providers-connectors/providers/
-  model/providerCategory.ts(+.test.ts)                  Part 1
-  helpers/resolveProviderTopology.ts(+.test.ts)         Part 1
-  components/ProviderCreateForm.tsx(+.test.tsx)         Part 2
-  components/ProvidersCreateModal.tsx(+.test.tsx)       Part 2
-  components/ProvidersCatalogueTable.tsx(+.test.tsx)    Parts 2 and 3 (backing row, helper trigger)
-  pages/ProviderDetailPage.tsx(+.test.tsx)              Part 2
-  helpers/buildRelationshipRows.ts(+.test.ts)           Part 3
-  components/ProviderRelationshipsContent.tsx(+.test.tsx) Part 3
-  components/ProviderHelpHoverCard.tsx(+.test.tsx)      Part 3
-src/locales/{en,sk,cs}.json                             Parts 2 and 3
+  model/providerCategory.ts(+.test.ts)                     Part 1
+  helpers/resolveProviderTopology.ts(+.test.ts)            Part 1
+  components/ProviderCreateForm.tsx(+.test.tsx)            Part 2
+  components/ProvidersCreateModal.tsx(+.test.tsx)          Part 2
+  components/ProvidersCatalogueTable.tsx(+.test.tsx)       Parts 2 and 3b (backing row, help content)
+  pages/ProviderDetailPage.tsx(+.test.tsx)                 Part 2
+  pages/ProvidersPage.tsx                                  Part 3b (pass all-providers loading/error state)
+  helpers/buildRelationshipRows.ts(+.test.ts)              Part 3b
+  components/ProviderRelationshipsContent.tsx(+.test.tsx)  Part 3b
+src/shared/components/help-popover/HelpPopover.tsx(+.test.tsx)       Part 3a
+src/shared/components/help-popover/KeyedHelpPopover.tsx(+.test.tsx)  Part 3a
+src/features/**/*.test.tsx (help "?" interactions)                   Part 3a, only where the new contract requires it
+src/locales/{en,sk,cs}.json                                          Parts 2 and 3b
 ```
-
-`ProvidersCatalogueTable` needs the loading and error state of the all-providers query for the helper. `ProvidersPage` passes them down (a prop addition only, with no new query).
 
 ## Code Style
 
@@ -347,17 +368,30 @@ Vitest unit and component tests are colocated with the code. Each slice is writt
   - Each state shows its text label: Unavailable, Mismatch, No backing storage provider.
   - The connectors' hidden text conveys direction.
   - Loading, error and empty states render.
-- **`ProviderHelpHoverCard.test.tsx`** (fake timers)
-  - Opens after a hover delay.
-  - Stays open while the pointer moves from the trigger to the panel.
-  - Closes after the pointer leaves both.
-  - Opens on focus, and Tab into the panel keeps it open.
-  - Tabbing out closes it.
-  - Role, Credential and relationships content are all present.
-  - The old Partner section is gone.
+- **`HelpPopover.test.tsx`** (shared; fake timers for the delays):
+  - Hover opens the help.
+  - Moving the pointer from trigger to panel keeps it open.
+  - Leaving both closes it.
+  - Focus opens it.
+  - Tab or focus inside the panel keeps it open.
+  - Focus moving outside closes it.
+  - Opening by hover does not move focus.
+  - Escape closes only the help and not the enclosing `DetailDrawer`, both when hover-opened (focus elsewhere in the drawer) and when focus-opened. A second Escape closes the drawer.
+  - Click/tap fallback opens the help, and a click on an already open trigger keeps it open.
+  - After Escape or the close button, focus on the trigger does not reopen it until focus leaves or the pointer re-enters.
+  - The close button returns focus to the trigger.
+  - Pointer down outside closes the help.
+  - `width="wide"` applies the wide width, and the default width is unchanged.
+  - Existing tests that assert "moves focus into the panel" or "closes on a second trigger click" are replaced, because the contract changes.
+- **`KeyedHelpPopover.test.tsx`**
+  - `children` render after the sections.
+  - `width` passes through.
+- **Feature tests that open "?" by click** (about 20 files, for example `CredentialsTable`, `RecoveryGroupsTable`, `PowerInventoryView` and `ProvidersCatalogueTable`):
+  - Run them unchanged first. The click fallback is designed to keep them passing.
+  - Adjust only those that fail because of the new contract, such as a second click expected to close, or focus expected inside the panel. Do not rewrite passing tests.
 - **`ProvidersCatalogueTable.test.tsx`**
-  - Escape while the helper is open closes the helper and leaves the DetailDrawer open, both for hover-opened and focus-opened helpers.
-  - No click-to-open modal exists.
+  - The provider help contains Role, Credential and the relationship content, and no Partner section.
+  - No modal is rendered.
 
 ## Implementation Order and Commits
 
@@ -365,15 +399,15 @@ Each step is verified with focused tests, focused lint and, where needed, typech
 
 1. **Commit 1:** classifier and resolver, plus their unit tests.
 2. **Commit 2:** form and create modal, drawer and detail backing storage row, form and detail translations, plus their tests.
-3. **Commit 3:** drawer help:
+3. **Commit 3:** shared `HelpPopover` hover/focus contract, the `width` prop and `KeyedHelpPopover` `children` / `width`, plus shared tests and any feature help tests the new contract requires.
+4. **Commit 4:** provider help content:
    - `buildRelationshipRows`
    - `ProviderRelationshipsContent`
-   - `ProviderHelpHoverCard`
    - wiring in `ProvidersCatalogueTable` / `ProvidersPage`
-   - translations, including removal of the now-unused `providers.help.partner.*` keys
+   - translations, including removal of `providers.help.partner.*`
    - tests
 
-The implementation plan is written after this spec revision.
+Commit 3 is cross-cutting (every detail help). Its verification runs every test file that interacts with a "?" help, not only the shared tests.
 
 ## Boundaries
 
@@ -385,7 +419,8 @@ The implementation plan is written after this spec revision.
 - **Ask first:**
   - Any change to `src/generated/**`, OpenAPI or the backend.
   - Changes to Metro Mirror, discovery or VM tag logic.
-  - Changes to the shared `HelpPopover`, `KeyedHelpPopover`, `DetailDrawer` or `Modal`.
+  - Changes to the shared `DetailDrawer` or `Modal`.
+  - Changes to `HelpPopover` / `KeyedHelpPopover` beyond the contract in Part 3a.
   - New dependencies.
 - **Never:**
   - Hardcode links between concrete provider ids.
@@ -393,7 +428,7 @@ The implementation plan is written after this spec revision.
   - Auto-correct or create reverse relationships.
   - Add a backend `category` or `capabilities` field.
   - Build a global graph with crossing lines.
-  - Add a click-to-open modal or link for this content.
+  - Add a modal, a link, or a second hover/focus/positioning/Escape implementation outside the shared `HelpPopover`.
 
 ## Success Criteria
 
@@ -401,18 +436,23 @@ The implementation plan is written after this spec revision.
 - The partner field and its candidates follow FLASHCOPY → FLASHCOPY only, never self and never `HITACHI`, matching the backend contract.
 - Type changes keep or clear backing storage and partner exactly as listed in Part 2.
 - The drawer and detail page show backing storage for compute providers without an extra API call.
-- Hovering or focusing the drawer "?" opens one helper containing Role, Credential and the approved relationship content, built from the full `allProviders` dataset.
-- The helper stays open while it is hovered or focused, and closes when hover and focus leave it.
-- Escape closes only the helper, never the drawer.
-- No modal exists for this content.
+- Every existing "?" help (the shared `HelpPopover`, including all `KeyedHelpPopover` usages) behaves as follows:
+  - Hover and focus open it.
+  - It stays open while the trigger or panel is hovered or focused, and closes when both pointer and focus leave.
+  - Opening by hover never moves focus.
+  - Escape closes only the help, never the enclosing drawer.
+  - On touch, a click or tap still opens it.
+- The provider drawer "?" opens one wide help containing Role, Credential and the approved relationship content, built from the full `allProviders` dataset. No modal exists for this content.
 - The relationship content matches template v2 in every listed state, uses `↔` only for mutual partners, and reads left to right.
 - No changes under `src/generated/**`, OpenAPI or the backend.
 - Metro Mirror, discovery and VM tag behavior is unchanged.
-- Other drawers' help popovers are unchanged.
+- Feature tests that open "?" by click are changed only where the new contract requires it.
 
 ## Resolved decisions
 
-- **Trigger:** the existing "?" in the provider DetailDrawer header, opening on hover or focus. No modal and no extra button.
-- **Content:** a single helper holding Role, Credential and Provider relationships (template v2 content).
+- **Trigger:** the existing "?" in the provider DetailDrawer header. No modal and no extra button.
+- **Interaction:** hover/focus changes **globally** in the shared `HelpPopover`, and every `KeyedHelpPopover` usage inherits it. Click/tap stays as an open-only fallback.
+- **Content:** a single wide help holding Role, Credential and Provider relationships (template v2 content), appended via `KeyedHelpPopover` `children`.
+- **Width:** a generic `width: 'default' | 'wide'` prop on the shared popover.
 - **Type label:** the existing `providerTypeLabel` ("FlashCopy") is used unchanged.
-- **Portal:** in place by default. Portalling is approved if needed.
+- **Portal:** in place by default. Portalling is approved only if it becomes necessary, and the Escape and focus-trap contract must hold.

@@ -3,193 +3,243 @@
 Spec: [2026-10-02-provider-relationships-design.md](../specs/2026-10-02-provider-relationships-design.md)
 Template (content only): [2026-10-02-provider-relationships-helper-template.html](../specs/2026-10-02-provider-relationships-helper-template.html)
 
-All paths below are relative to `src/features/providers-connectors/providers/` unless stated otherwise. Every task is test-first: write or adjust the failing test, then implement, then re-run.
+Feature paths below are relative to `src/features/providers-connectors/providers/` unless they start with `src/`. Every task is test-first: write or adjust the failing test, implement, then re-run it.
 
 ## Dependency graph
 
 ```
 T1 providerCategory ──┬─> T2 resolveProviderTopology ──┬─> T5 drawer/detail backing row
-                      │                                └─> T6 buildRelationshipRows ─> T7 ProviderRelationshipsContent ─> T8 ProviderHelpHoverCard ─> T9 wiring
-                      ├─> T3 ProviderCreateForm ─> T4 ProvidersCreateModal
+                      │                                └─> T9 buildRelationshipRows ─> T10 ProviderRelationshipsContent ─┐
+                      └─> T3 ProviderCreateForm ─> T4 ProvidersCreateModal                                             ├─> T11 provider help wiring
+T6 HelpPopover hover/focus + width ─> T7 KeyedHelpPopover children/width ─> T8 feature help test sweep ──────────────────┘
 ```
 
-Commit boundaries follow the approved order: **C1** = T1–T2, **C2** = T3–T5, **C3** = T6–T9.
+T6–T8 do not depend on T1–T5 and could run in parallel. They are scheduled after C2 so that each commit stays focused.
+
+Commits: **C1** = T1–T2, **C2** = T3–T5, **C3** = T6–T8 (shared help contract), **C4** = T9–T11 (provider help content).
 
 ---
 
-## Commit 1: classifier and resolver
+## C1: Classifier and resolver
 
 ### T1. `model/providerCategory.ts`
 - **Do:**
-  - Add `COMPUTE_PROVIDER_TYPES`, `STORAGE_PROVIDER_TYPES` and `PARTNER_PROVIDER_TYPES`, each typed `as const satisfies readonly ProviderType[]`.
+  - Add `COMPUTE_PROVIDER_TYPES`, `STORAGE_PROVIDER_TYPES` and `PARTNER_PROVIDER_TYPES` (`as const satisfies readonly ProviderType[]`).
   - Add the three `is…ProviderType(type: string)` predicates.
-  - Add a module comment that a backend category, when added, replaces this classification.
+  - Add a module comment saying that a backend category, when added, replaces this.
 - **Acceptance:**
-  - The four infrastructure types classify as the spec table says.
+  - The four types classify as in the spec table.
   - `HITACHI` is storage but not partner-capable.
-  - `''` and unknown types are false everywhere.
+  - `''` and unknown types return false everywhere.
 - **Files:** `model/providerCategory.ts`, `model/providerCategory.test.ts`
 
 ### T2. `helpers/resolveProviderTopology.ts`
-- **Do:** implement the types and `resolveProviderTopology`, following the spec's Part 1 rules exactly.
-- **Acceptance:** every resolver case listed in the spec's testing strategy:
-  - resolved, unresolved and mismatch, for both backing storage and partner
-  - mutual merge and one-way partners
-  - no reverse relationship is ever created
-  - order is preserved
-  - fixtures use arbitrary ids
+- **Do:** implement the types and `resolveProviderTopology` exactly as in spec Part 1.
+- **Acceptance:** all resolver cases from the spec testing strategy pass:
+  - backing and partner relationships in each state: resolved, unresolved, mismatch
+  - mutual merge and one-way
+  - no reverse relationship
+  - order preserved
+  - arbitrary ids
 - **Files:** `helpers/resolveProviderTopology.ts`, `helpers/resolveProviderTopology.test.ts`
 
-**Verify C1:**
-
+**Verify C1**
 ```
 npm exec vitest run src/features/providers-connectors/providers/model/providerCategory.test.ts src/features/providers-connectors/providers/helpers/resolveProviderTopology.test.ts
-npx eslint src/features/providers-connectors/providers/model/providerCategory.ts src/features/providers-connectors/providers/model/providerCategory.test.ts src/features/providers-connectors/providers/helpers/resolveProviderTopology.ts src/features/providers-connectors/providers/helpers/resolveProviderTopology.test.ts --max-warnings 0
+npx eslint <the four files> --max-warnings 0
 node scripts/orval/check-feature-layout.mjs
 git diff --check
 ```
-
-Commit message: `feat: add provider category classifier and relationship resolver`
+Commit: `feat: add provider category classifier and relationship resolver`
 
 ---
 
-## Commit 2: form, drawer and detail aligned with the backend contract
+## C2: Form, drawer and detail aligned with the backend contract
 
 ### T3. `components/ProviderCreateForm.tsx`
 - **Do:**
   - Replace the `storageProviders` prop with `backingStorageProviders` and `partnerProviders`.
-  - Gate the backing field with `isComputeProviderType(data.type)`.
-  - Gate the partner field with `isPartnerProviderType(data.type)`.
-  - Keep excluding self from partner options inside the form (existing logic).
+  - Gate the backing field with `isComputeProviderType` and the partner field with `isPartnerProviderType`.
+  - Keep excluding self from the partner options.
 - **Acceptance:**
   - `IBM_POWER` shows the backing field.
   - `HITACHI` shows neither the partner nor the backing field.
-  - Backing options come from `backingStorageProviders` and partner options from `partnerProviders`.
-  - The "unavailable" options still render.
-- **Files:** `components/ProviderCreateForm.tsx`, `components/ProviderCreateForm.test.tsx`
+  - Options come from the matching props.
+  - "Unavailable" options still render.
+- **Files:** `components/ProviderCreateForm.tsx` (+test)
 
 ### T4. `components/ProvidersCreateModal.tsx`
 - **Do:**
-  - Pass `backingStorageProviders = existingProviders.filter(p => isStorageProviderType(p.type))`.
-  - Pass `partnerProviders = existingProviders.filter(p => isPartnerProviderType(p.type))`.
-  - On a type change, clear backing storage when `!isComputeProviderType(value)` and clear the partner on any change of type.
-  - Submit `backingStorageProviderIds` when `isComputeProviderType(type)`.
+  - Pass storage-type candidates for backing and partner-type candidates for the partner.
+  - On type change, clear backing when the new type is not compute, and clear the partner on any type change.
+  - Submit `backingStorageProviderIds` for compute types.
 - **Acceptance (tests):**
   - `IBM_POWER` submits its backing ids.
   - Hitachi appears in backing candidates and not in partner candidates.
-  - `VMWARE` → `IBM_POWER` keeps backing storage.
-  - `IBM_POWER` → `VMWARE` keeps backing storage.
-  - Compute → `FLASHCOPY` and compute → `HITACHI` clear backing storage, and the submitted body has no backing ids.
-  - `FLASHCOPY` → `HITACHI` clears the partner.
-  - The existing tests are updated for the new vendor-neutral labels ("Backing storage providers"). Partner labels are unchanged.
-- **Files:** `components/ProvidersCreateModal.tsx`, `components/ProvidersCreateModal.test.tsx`
+  - Type changes:
+    - `VMWARE` → `IBM_POWER` keeps backing.
+    - `IBM_POWER` → `VMWARE` keeps backing.
+    - Compute → `FLASHCOPY` and compute → `HITACHI` clear backing, and no backing ids are submitted.
+    - `FLASHCOPY` → `HITACHI` clears the partner.
+  - Existing tests are updated to the vendor-neutral backing labels.
+- **Files:** `components/ProvidersCreateModal.tsx` (+test)
 
 ### T5. Backing storage row and translations
 - **Do:**
-  - **Drawer** (`ProvidersCatalogueTable.tsx`):
-    - Switch the partner row condition to `isPartnerProviderType`.
-    - Add a "Backing storage" `DetailRow` for compute providers, built from a memoized `resolveProviderTopology(allProviders)`.
-  - **Detail page** (`ProviderDetailPage.tsx`): same backing item, built from the loaded `providers`.
-  - **Locales** (en/sk/cs):
-    - Rewrite `forms.backingStorageProviders*` to vendor-neutral texts.
-    - Add `details.backingStorage`, `details.backingStorageNone`, `details.backingStorageUnavailable` and `details.relationshipMismatch`.
+  - In the drawer (`ProvidersCatalogueTable.tsx`), gate the partner row with `isPartnerProviderType` and add a "Backing storage" `DetailRow` for compute providers, using a memoized `resolveProviderTopology(allProviders)`.
+  - Add the same item to `ProviderDetailPage.tsx`.
+  - In en, sk and cs, rewrite `forms.backingStorageProviders*` as vendor-neutral and add the `details.backingStorage*` and `details.relationshipMismatch` keys.
 - **Acceptance:**
-  - Resolved targets show `Name (id)`, unresolved show `id (Unavailable)`, a mismatch shows the mismatch marker, and an empty list shows `None`.
+  - The row shows resolved targets as `Name (id)`, unresolved ones as `id (Unavailable)`, mismatches with the marker, and `None` when there are none.
   - The row is absent for storage providers.
   - The partner row is unchanged.
 - **Files:** `components/ProvidersCatalogueTable.tsx` (+test), `pages/ProviderDetailPage.tsx` (+test), `src/locales/{en,sk,cs}.json`
 
-**Verify C2:**
-
+**Verify C2**
 ```
 npm exec vitest run src/features/providers-connectors/providers/components/ProviderCreateForm.test.tsx src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx src/features/providers-connectors/providers/components/ProvidersCatalogueTable.test.tsx src/features/providers-connectors/providers/pages/ProviderDetailPage.test.tsx src/locales/detailDrawerHelpTranslations.test.ts
 npx eslint <changed .ts/.tsx files> --max-warnings 0
 npm run typecheck
 git diff --check
 ```
-
-Commit message: `feat: align provider backing storage and partner fields with backend contract`
+Commit: `feat: align provider backing storage and partner fields with backend contract`
 
 ---
 
-## Commit 3: drawer hover/focus help with relationship content
+## C3: Shared hover/focus help contract (cross-cutting)
 
-### T6. `helpers/buildRelationshipRows.ts`
-- **Do:** write a pure view model from `ProviderTopology` covering:
-  - compute rows in API order, with stacked targets
-  - each target's partner as `full` on first occurrence and `compact` afterwards
-  - direction `both`, `out` or `in`
-  - the `otherStorageRows` selection
-- **Acceptance:**
-  - Every case in the spec's `buildRelationshipRows` tests passes.
-  - No React imports.
-- **Files:** `helpers/buildRelationshipRows.ts`, `helpers/buildRelationshipRows.test.ts`
+### T6. `src/shared/components/help-popover/HelpPopover.tsx`
+- **Do:** implement the spec 3a interaction inside the existing component, reusing its placement code. There is no second implementation anywhere.
+  - Pointer handling (`pointerType !== 'touch'`):
+    - Open after about 150 ms.
+    - Use a shared close timer of about 200 ms, cancelled on enter, for both trigger and panel.
+  - Focus handling:
+    - Open on trigger focus.
+    - Close on `focusout` when the new focus target is outside the wrapper and the pointer is not over it.
+  - Remove the auto-focus of the panel on open, and add `tabIndex={0}` on the panel.
+  - Click opens only; it no longer toggles.
+  - Escape: while open, add a capture-phase `window` keydown listener that closes the help, calls `stopPropagation()`, and returns focus to the trigger only if focus was inside the panel. This replaces today's `onKeyDown` handler.
+  - After a dismissal (Escape or close button), suppress reopen on trigger focus until focus leaves the wrapper or the pointer re-enters.
+  - Keep "pointer down outside closes".
+  - Add `width?: 'default' | 'wide'`, where `wide` is `w-[min(55rem,calc(100vw-2rem))]`.
+  - Update the header comment to the new contract.
+- **Acceptance (fake timers):** all shared tests listed in the spec testing strategy pass:
+  - hover opens
+  - the bridge from trigger to panel keeps it open
+  - leaving both closes it
+  - focus opens
+  - Tab into the panel keeps it open
+  - focus moving out closes it
+  - hover never moves focus
+  - Escape closes only the help, whether it was opened by hover or by focus, and a second Escape closes the drawer
+  - click fallback, with no toggle
+  - no reopen after dismissal
+  - the close button returns focus
+  - pointer down outside closes it
+  - `width`
 
-### T7. `components/ProviderRelationshipsContent.tsx`
-- **Do:**
-  - Render the template v2 content from the view model: section heading, three intro sentences, legend, the "Compute providers" list and "Other storage relationships".
-  - Render the card and connector states. Hidden direction text goes on connectors and `aria-hidden` on arrows.
-  - Accept `isLoading` and `isError`, showing skeleton rows and muted text for them.
-  - Add locale keys under `providers.relationships.*` in en, sk and cs.
-- **Locale key placement:** the keys must **not** go under `providers.help.*`. `src/locales/detailDrawerHelpTranslations.test.ts` requires every `*.help.*.title` key to have a matching `.text` key.
-- **Layout:** the rows use the template widths, and a container-width breakpoint (about 760 px) collapses them into a vertical stack. Split the card and connector into sibling files if a file would exceed about 200 lines.
+  The two obsolete tests ("moves focus into it", "closes on a second trigger click") are replaced.
+- **Files:** `src/shared/components/help-popover/HelpPopover.tsx` (+test)
+
+### T7. `src/shared/components/help-popover/KeyedHelpPopover.tsx`
+- **Do:** add an optional `children` prop, rendered after the sections, and pass `width` through.
 - **Acceptance:**
-  - Each state renders its text label: Unavailable, Mismatch, No backing storage provider.
+  - Children render after the sections.
+  - `width` reaches `HelpPopover`.
+  - The existing key-reading test still passes.
+- **Files:** `src/shared/components/help-popover/KeyedHelpPopover.tsx` (+test)
+
+### T8. Feature help test sweep
+- **Do:** run every test file that interacts with a "?" help without changing it first (list below). Fix only the files that fail because of the new contract, and record each change in the commit body.
+
+  Expected to pass unchanged, because a click still opens the help and Escape and the close button behave as before:
+  - `src/features/providers-connectors/credentials/components/CredentialsTable.test.tsx`
+  - `src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDrawer.test.tsx`
+  - `src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.test.tsx`
+  - `src/features/recovery-plans/recovery-policies/clean-room/components/CleanRoomPoliciesTable.test.tsx`
+  - `src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPoliciesTable.test.tsx`
+  - `src/features/platform-administration/platform-providers/components/PlatformProvidersTable.test.tsx`
+  - `src/features/platform-administration/audit/components/AccessLogsTable.test.tsx`
+  - `src/features/platform-administration/identity-access/components/ClientsSection.test.tsx`
+  - `src/features/platform-administration/identity-access/components/RealmRolesSection.test.tsx`
+  - `src/features/platform-administration/identity-access/components/UsersSection.test.tsx`
+  - `src/features/discovery-inventory/resources/components/vmware/VirtualMachineDetailPanel.test.tsx`
+  - `src/features/discovery-inventory/resources/components/ibm-power/PowerInventoryView.test.tsx`
+  - `src/features/discovery-inventory/resources/components/flash-system/FlashSystemInventoryView.test.tsx`
+  - `src/features/recovery-plans/policy-sets/components/PolicySetsTable.test.tsx`
+  - `src/features/recovery-actions/pages/RecoveryActionsHistoryPage.test.tsx`
+  - `src/features/recovery-plans/recovery-groups/components/RecoveryGroupMetroMirrorFields.test.tsx`
+  - `src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.test.tsx` (Escape → focus stays on the trigger and the help does not reopen)
+  - `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx`
+  - `src/features/providers-connectors/providers/components/ProvidersCatalogueTable.test.tsx`
+  - `src/shared/components/data-table/DetailDrawer.test.tsx`
+- **Acceptance:** every file above passes, and the diff touches only the assertions that the new contract invalidates.
+
+**Verify C3**
+```
+npm exec vitest run src/shared/components/help-popover <all T8 files> src/locales/detailDrawerHelpTranslations.test.ts
+npx eslint <changed files> --max-warnings 0
+npm run typecheck
+git diff --check
+```
+Manual check (`npm run dev`):
+- In three different drawers (Providers, Credentials, Recovery groups), confirm hover, focus, the trigger-to-panel bridge, Escape and touch emulation in DevTools.
+- Confirm the drawer never closes on the first Escape.
+
+Commit: `feat: open detail help on hover and focus`
+
+---
+
+## C4: Provider help content
+
+### T9. `helpers/buildRelationshipRows.ts`
+- **Do:** a pure view model built from `ProviderTopology`. It covers:
+  - compute rows in API order, with their targets stacked
+  - each partner shown `full` the first time and `compact` after that
+  - the direction: `both`, `out` or `in`
+  - the selection of `otherStorageRows`
+- **Acceptance:**
+  - All cases from the spec's `buildRelationshipRows` tests pass.
+  - The module imports nothing from React.
+- **Files:** `helpers/buildRelationshipRows.ts` (+test)
+
+### T10. `components/ProviderRelationshipsContent.tsx`
+- **Do:** render the template v2 content:
+  - section heading, intro, legend
+  - the "Compute providers" and "Other storage relationships" lists
+  - card and connector states, with hidden direction text and `aria-hidden` arrows
+  - `isLoading` and `isError` states
+
+  Add locale keys under `providers.relationships.*` in en, sk and cs. Columns collapse into a stack below about 760 px of container width. Split card and connector into sibling files if a file would exceed about 200 lines.
+- **Acceptance:**
+  - Every state renders its text label.
   - `↔` appears only for mutual partners.
   - Loading, error and empty states render.
-- **Files:** `components/ProviderRelationshipsContent.tsx` (+test, plus optional `ProviderRelationshipCard.tsx` and `ProviderRelationshipConnector.tsx`), `src/locales/{en,sk,cs}.json`
+- **Files:** `components/ProviderRelationshipsContent.tsx` (+test, optional `ProviderRelationshipCard.tsx` / `ProviderRelationshipConnector.tsx`), `src/locales/{en,sk,cs}.json`
 
-### T8. `components/ProviderHelpHoverCard.tsx`
+### T11. Provider help wiring and cleanup
 - **Do:**
-  - The "?" trigger reuses the existing icon and button styling from `HelpPopover`.
-  - Pointer handling:
-    - Open after a hover delay of about 150 ms.
-    - Bridge the move between trigger and panel with a grace delay of about 200 ms.
-  - Focus handling:
-    - Open immediately on focus.
-    - Keep the panel open while focus is within the wrapper.
-    - Close on `focusout` to outside.
-  - While open, a capture-phase `window` keydown listener closes the panel on Escape with `stopPropagation()`.
-  - Render the panel in place: right-aligned, shifted horizontally into the viewport, height capped below the trigger.
-  - Panel layout:
-    - Width `min(880px, 100vw - 2rem)`.
-    - Fixed title.
-    - A focusable scroll body containing the intro, Role, Credential and `ProviderRelationshipsContent`.
-- **Acceptance (fake timers):**
-  - Hover opens the panel.
-  - Moving from the trigger to the panel keeps it open.
-  - Leaving both closes it.
-  - Focus opens the panel.
-  - Tab into the panel keeps it open, and tabbing out closes it.
-  - Role, Credential and relationship content are all present, and no Partner section remains.
-  - The ARIA attributes match the spec.
-- **Files:** `components/ProviderHelpHoverCard.tsx`, `components/ProviderHelpHoverCard.test.tsx`
-
-### T9. Wiring and cleanup
-- **Do:**
-  - In `ProvidersCatalogueTable.tsx`, replace `<KeyedHelpPopover helpKey="providers.help" …>` with `<ProviderHelpHoverCard providers={allProviders} isLoading=… isError=… />`, and remove the import if it becomes unused.
+  - In `ProvidersCatalogueTable.tsx`, render `<KeyedHelpPopover helpKey="providers.help" sections={['role', 'credential']} width="wide"><ProviderRelationshipsContent providers={allProviders} isLoading=… isError=… /></KeyedHelpPopover>`.
   - In `ProvidersPage.tsx`, pass the all-providers query's loading and error state down.
   - Remove `providers.help.partner.title` and `providers.help.partner.text` from en, sk and cs.
 - **Acceptance:**
-  - With the drawer open, Escape on a hover-opened helper and on a focus-opened helper closes only the helper; the drawer stays open.
-  - A second Escape closes the drawer.
+  - The provider help contains Role, Credential and the relationship content, and no Partner section.
+  - Its content is built from all providers.
   - No modal is rendered.
-  - The other drawers' `KeyedHelpPopover` usages are untouched.
-- **Files:** `components/ProvidersCatalogueTable.tsx` (+test), `pages/ProvidersPage.tsx` (+test if props change is asserted), `src/locales/{en,sk,cs}.json`
+  - `detailDrawerHelpTranslations.test.ts` passes.
+- **Files:** `components/ProvidersCatalogueTable.tsx` (+test), `pages/ProvidersPage.tsx`, `src/locales/{en,sk,cs}.json`
 
-**Verify C3:**
-
+**Verify C4**
 ```
-npm exec vitest run src/features/providers-connectors/providers/helpers/buildRelationshipRows.test.ts src/features/providers-connectors/providers/components/ProviderRelationshipsContent.test.tsx src/features/providers-connectors/providers/components/ProviderHelpHoverCard.test.tsx src/features/providers-connectors/providers/components/ProvidersCatalogueTable.test.tsx src/features/providers-connectors/providers/pages/ProvidersPage.test.tsx src/locales/detailDrawerHelpTranslations.test.ts src/shared/components/help-popover
-npx eslint <changed .ts/.tsx files> --max-warnings 0
+npm exec vitest run src/features/providers-connectors/providers/helpers/buildRelationshipRows.test.ts src/features/providers-connectors/providers/components/ProviderRelationshipsContent.test.tsx src/features/providers-connectors/providers/components/ProvidersCatalogueTable.test.tsx src/features/providers-connectors/providers/pages/ProvidersPage.test.tsx src/locales/detailDrawerHelpTranslations.test.ts
+npx eslint <changed files> --max-warnings 0
 node scripts/orval/check-feature-layout.mjs
 npm run typecheck
 git diff --check
 ```
+Manual check: compare the Providers drawer help with the template content in the light and dark themes. Check the wide placement and scrolling, and the Edge-case-like data where it is available.
 
-Manual check: run `npm run dev`, open the Providers drawer, and confirm the helper's hover, focus, Escape, placement and scrolling against the template content in both light and dark themes.
-
-Commit message: `feat: show provider relationships in drawer hover help`
+Commit: `feat: show provider relationships in drawer help`
 
 ---
 
@@ -197,13 +247,15 @@ Commit message: `feat: show provider relationships in drawer hover help`
 
 | Risk | Mitigation |
 |---|---|
-| Escape also closes the drawer (both listen on `window`) | Capture-phase listener with `stopPropagation()` while the helper is open, plus an explicit test in `ProvidersCatalogueTable.test.tsx` |
-| The panel is constrained by the drawer's `transform` | In-place absolute positioning (as with `HelpPopover`) extends past the drawer because the drawer has no `overflow`. Fall back to a portal only if this fails in the manual check. |
-| A hover helper is unreachable by keyboard | A focusable scroll body directly after the trigger in DOM order, so it stays inside the drawer's focus trap |
-| A wide panel on small screens | The width is capped to the viewport, and a container breakpoint stacks the rows |
-| The `detailDrawerHelpTranslations` invariant | Relationship keys live under `providers.relationships.*`, and the removed `providers.help.partner.*` keys are dropped from all three locales together |
-| Parallel sessions in the working tree | Stage and commit explicit paths only |
+| A global behavior change breaks feature tests that click "?" | Click stays an open-only fallback and dismissal suppresses reopening. T8 runs all 20 files and fixes only real contract breaks. |
+| `userEvent.click` = hover + focus + click: a click toggle would close the help instantly | Click no longer toggles (spec 3a) |
+| Escape also closes the drawer, since both listen on `window` | A capture-phase listener with `stopPropagation()`, tested for both hover-opened and focus-opened help |
+| Focus returns to the trigger after Escape or Close and immediately reopens the help | Reopen suppression after dismissal, with a test |
+| Hover close timers flake in tests | Fake timers in the shared tests. Feature tests rely on click and focus, not hover timing. |
+| The wide panel is constrained by the drawer's `transform` | In-place absolute positioning works because the drawer has no `overflow`. The manual check in C4 confirms it, and portalling is the approved fallback only if needed. |
+| `detailDrawerHelpTranslations` invariant | Relationship keys go under `providers.relationships.*`, and `providers.help.partner.*` is removed from all three locales at once. |
+| Parallel sessions in the working tree | Stage and commit explicit paths only. |
 
 ## Not run by default
 
-The full `npm test` and `npm run build` are not part of this plan (CLAUDE.md §5) unless requested.
+The full `npm test` and `npm run build` are not run (CLAUDE.md §5). C3 is cross-cutting, so its scope is every file that interacts with a "?" help (T8 list) instead of the full suite. The full suite runs only if the T8 list proves incomplete or on request.
