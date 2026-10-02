@@ -7,14 +7,14 @@ Plan: `tasks/access-log-request-metadata-plan.md`
 **Description:** Add `query_string`, `user_agent` and `referer` to `AccessLogEntry` in the Orval spec patch data as optional `string | null` properties (not in `required`), then regenerate the Orval/Zod output.
 
 **Acceptance criteria:**
-- [ ] `accessLogs.json` defines the three properties as `anyOf: [string, null]`, absent from `required`.
-- [ ] Regenerated `AccessLogEntry` / `AccessLogsResponse` Zod objects include the three fields as optional nullable strings.
-- [ ] An entry without the three fields still validates.
+- [x] `accessLogs.json` defines the three properties as `anyOf: [string, null]`, absent from `required`.
+- [x] Regenerated `AccessLogEntry` / `AccessLogsResponse` Zod objects include the three fields as optional nullable strings.
+- [x] An entry without the three fields still validates.
 
 **Verification:**
-- [ ] `npm run api:generate`
-- [ ] `npm run api:check`
-- [ ] `git diff --check`
+- [x] `npm run api:generate`
+- [x] `npm run api:check`
+- [x] `git diff --check`
 
 **Dependencies:** None
 
@@ -31,13 +31,13 @@ Plan: `tasks/access-log-request-metadata-plan.md`
 **Description:** Add optional `queryString`, `userAgent`, `referer` to `AccessLogRequestRecord`; map them in `selectAccessLogs` (omit when `null`, like `user`); extend `toWireEntry` in the test fetch stub so tests can send them over the wire.
 
 **Acceptance criteria:**
-- [ ] A wire entry with the three fields yields a record with `queryString`, `userAgent`, `referer`.
-- [ ] A wire entry with `null` or missing fields yields a record without those keys.
-- [ ] `toWireEntry` emits `query_string`, `user_agent`, `referer` when the record has them.
+- [x] A wire entry with the three fields yields a record with `queryString`, `userAgent`, `referer`.
+- [x] A wire entry with `null` or missing fields yields a record without those keys.
+- [x] `toWireEntry` emits `query_string`, `user_agent`, `referer` when the record has them.
 
 **Verification:**
-- [ ] Tests pass: `npm exec vitest run src/features/platform-administration/audit/pages/AuditPage.test.tsx src/features/platform-administration/audit/hooks/accessLogHooks.test.tsx`
-- [ ] Focused lint: `npm exec eslint src/features/platform-administration/audit`
+- [x] Tests pass: `npm exec vitest run src/features/platform-administration/audit/pages/AuditPage.test.tsx src/features/platform-administration/audit/hooks/accessLogHooks.test.tsx`
+- [x] Focused lint: `npm exec eslint src/features/platform-administration/audit`
 
 **Dependencies:** Task 1
 
@@ -53,15 +53,15 @@ Plan: `tasks/access-log-request-metadata-plan.md`
 **Description:** In `AccessLogDetailDrawer`, add Query string (after Path), User agent and Referer (after Duration) rows. Missing, `null` or empty values render `—`. Add `audit.accessLogs.detail.queryString`, `.userAgent`, `.referer` labels in en/cs/sk. Table stays unchanged.
 
 **Acceptance criteria:**
-- [ ] Drawer shows the three values for a request that has them (Query string and Referer monospace, User agent wraps).
-- [ ] Drawer shows `—` for each field the request lacks.
-- [ ] Access Logs table columns and cells are unchanged (existing table tests pass without modification).
-- [ ] Labels exist in en, cs and sk.
+- [x] Drawer shows the three values for a request that has them (Query string and Referer monospace, User agent wraps).
+- [x] Drawer shows `—` for each field the request lacks.
+- [x] Access Logs table columns and cells are unchanged (existing table tests pass without modification).
+- [x] Labels exist in en, cs and sk.
 
 **Verification:**
-- [ ] Tests pass: `npm exec vitest run src/features/platform-administration/audit/components/AccessLogsTable.test.tsx src/features/platform-administration/audit/pages/AuditPage.test.tsx`
-- [ ] Focused lint: `npm exec eslint src/features/platform-administration/audit`
-- [ ] Locale JSON parses (`node -e "for (const l of ['en','cs','sk']) JSON.parse(require('fs').readFileSync('src/locales/'+l+'.json','utf8'))"`)
+- [x] Tests pass: `npm exec vitest run src/features/platform-administration/audit/components/AccessLogsTable.test.tsx src/features/platform-administration/audit/pages/AuditPage.test.tsx`
+- [x] Focused lint: `npm exec eslint src/features/platform-administration/audit`
+- [x] Locale JSON parses (`node -e "for (const l of ['en','cs','sk']) JSON.parse(require('fs').readFileSync('src/locales/'+l+'.json','utf8'))"`)
 - [ ] Manual check: open Platform Administration → Audit, open a request with a query string and one without; confirm values and `—`; confirm table unchanged.
 
 **Dependencies:** Task 2
@@ -75,6 +75,6 @@ Plan: `tasks/access-log-request-metadata-plan.md`
 
 ## Checkpoint: Complete
 
-- [ ] All focused audit tests pass.
+- [x] All focused audit tests pass.
 - [ ] Browser check done.
-- [ ] Each task committed atomically; `git diff --cached` reviewed before every commit so unrelated locale changes stay unstaged.
+- [x] Each task committed atomically; `git diff --cached` reviewed before every commit so unrelated locale changes stay unstaged.

@@ -37,26 +37,26 @@ Observed backend sample (2026-10-01):
 
 ### Phase 1: Contract
 
-- [ ] Task 1: Extend the `AccessLogEntry` spec patch with `query_string`, `user_agent`, `referer` and regenerate Orval/Zod.
+- [x] Task 1: Extend the `AccessLogEntry` spec patch with `query_string`, `user_agent`, `referer` and regenerate Orval/Zod.
 
 ### Checkpoint: Contract
 
-- [ ] `npm run api:check` passes.
-- [ ] Generated `accessLogEntry.gen.ts` / `accessLogsResponse.gen.ts` contain the three fields as optional nullable strings; no hand edits.
+- [x] `npm run api:check` passes.
+- [x] Generated `accessLogEntry.gen.ts` / `accessLogsResponse.gen.ts` contain the three fields as optional nullable strings; no hand edits.
 
 ### Phase 2: Domain model
 
-- [ ] Task 2: Map the new wire fields into `AccessLogRequestRecord` and the test wire stub.
+- [x] Task 2: Map the new wire fields into `AccessLogRequestRecord` and the test wire stub.
 
 ### Phase 3: Drawer UI
 
-- [ ] Task 3: Show Query string, User agent and Referer in the drawer Request section with `—` fallback and en/cs/sk labels.
+- [x] Task 3: Show Query string, User agent and Referer in the drawer Request section with `—` fallback and en/cs/sk labels.
 
 ### Checkpoint: Complete
 
-- [ ] Focused audit tests pass.
+- [x] Focused audit tests pass.
 - [ ] Browser check: drawer shows the three values for a real request, `—` for a request without query string; table columns unchanged.
-- [ ] Each task committed atomically; unrelated pre-existing locale changes are not staged.
+- [x] Each task committed atomically; unrelated pre-existing locale changes are not staged.
 
 ## Risks and Mitigations
 
