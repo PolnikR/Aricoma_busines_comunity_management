@@ -197,3 +197,13 @@ export function CloseIcon(props: IconProps) {
     </svg>
   )
 }
+
+export function HelpIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M7.75 7.9a2.3 2.3 0 0 1 4.5.6c0 1.6-2.25 1.95-2.25 3.3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="10" cy="14.4" r=".9" fill="currentColor" />
+    </svg>
+  )
+}

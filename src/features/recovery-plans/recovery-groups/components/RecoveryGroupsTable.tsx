@@ -19,6 +19,7 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
+import { RecoveryGroupHelp } from './RecoveryGroupHelp'
 import { RecoveryGroupInventory } from './RecoveryGroupInventory'
 import { useTranslation } from '@/hooks/useTranslation'
 import { normalizeAirflowDagId } from '@/config/externalServices'
@@ -416,6 +417,7 @@ export function RecoveryGroupsTable({
           ) : null,
           orchestrationState ? orchestrationMetaText(orchestrationState, t) : null,
         ] : []}
+        headerActions={selected ? <RecoveryGroupHelp /> : null}
         ariaLabel={t('drawer.recoveryGroupDetail')}
         closeLabel={t('drawer.closeRecoveryGroup')}
         resizeLabel={t('drawer.resize')}

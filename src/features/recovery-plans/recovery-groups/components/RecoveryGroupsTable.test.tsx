@@ -690,6 +690,28 @@ describe('RecoveryGroupsTable', () => {
       expect(screen.queryByRole('dialog', { name: 'Recovery group detail' })).not.toBeInTheDocument()
     })
 
+    it('opens the recovery group help from the header actions and closes only the help on Escape', async () => {
+      const { user, detail } = await openDetail(getDatabaseGroup())
+      const titleRow = within(detail).getByRole('heading', { name: 'Database group' }).parentElement
+      const trigger = within(detail).getByRole('button', { name: 'Recovery group help' })
+
+      expect(titleRow).toContainElement(trigger)
+      await user.click(trigger)
+      const help = within(detail).getByRole('dialog', { name: 'How a recovery group works' })
+      expect(help).toHaveTextContent('Local protection')
+      expect(help).toHaveTextContent('Remote protection')
+      expect(help).toHaveTextContent('Metro Mirror')
+      expect(help).toHaveTextContent('Airflow')
+
+      await user.keyboard('{Escape}')
+      expect(within(detail).queryByRole('dialog', { name: 'How a recovery group works' })).not.toBeInTheDocument()
+      expect(screen.getByRole('dialog', { name: 'Recovery group detail' })).toBeInTheDocument()
+      expect(trigger).toHaveFocus()
+
+      await user.click(within(detail).getByRole('button', { name: 'Close recovery group detail' }))
+      expect(screen.queryByRole('dialog', { name: 'Recovery group detail' })).not.toBeInTheDocument()
+    })
+
     it('resets the sections when another group is opened', async () => {
       const user = userEvent.setup()
       renderTable(<RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />)
