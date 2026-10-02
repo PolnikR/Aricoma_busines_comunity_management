@@ -57,11 +57,6 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    name: 'Storage Orchestration',
-    icon: <LayersIcon />,
-    path: routes.storageOrchestration,
-  },
-  {
     name: 'Recovery Plans',
     icon: <LayersIcon />,
     subItems: [
@@ -94,7 +89,6 @@ const navKeyMap: Record<string, string> = {
   'Resources ISE': 'nav.discovery.resourcesIse',
   'Infrastructure Topology': 'nav.discovery.infrastructure',
   'Discovery Jobs': 'nav.discovery.jobs',
-  'Storage Orchestration': 'nav.storage',
   'Recovery Plans': 'nav.recovery',
   'Recovery Applications': 'nav.recovery.applications',
   'Recovery Groups': 'nav.recovery.groups',
