@@ -378,6 +378,28 @@ test v RecoveryGroupsTable. V.
 **Závislosti:** T4. **Rozsah / riziko:** M / nízke. **Commit:**
 `feat: relation help in the recovery group drawer`.
 
+### Rozšírenie T5 (2026-10-02): help vo všetkých detail draweroch ✅
+
+Na požiadavku používateľa má otáznik každý z 19 detail drawerov.
+
+- `98eeec47`: shared `KeyedHelpPopover` (texty podľa konvencie `<prefix>.help.trigger|title|intro`
+  a `<prefix>.help.<sekcia>.title|text`, zdieľaný `help.close`). Recovery Groups prešli naň,
+  `RecoveryGroupHelp.tsx` je zmazaný. Locale test `detailDrawerHelpTranslations.test.ts`
+  stráži úplnosť en/cs/sk.
+- `90b4eca2`: Recovery apps, Policy sets, Snapshot, App recovery, Clean room, Run history,
+  Recovery test history, Metro Mirror review.
+- `37badf3f`: Platform providers, Providers (vedľa Test connection), Credentials.
+- `6597c383`: Users, Application roles, Clients, Access log. Read-only testy uvádzajú help
+  trigger vedľa close; Clients help nespomína Root/Home URL, ktoré iná session odstránila
+  (`f6c13c24`).
+- `0f1fbee0`: VMware, FlashSystem, IBM Power.
+- **Testy:** každý drawer má test, ktorý help otvorí; skupiny 104 + 217 + 166 + 212 testov
+  zelené; eslint, tsc a `git diff --check` OK.
+- **Browser (Edge CDP 9333):** 19 drawerov (bez Recovery apps, ktoré nemajú dáta, a Metro
+  Mirror review, ktorý je v builderi), 390×844 a 1366×768, plus dark pre Providers a VMware.
+  38/38 OK: panel vo viewporte, otáznik bez prekryvu s nadpisom a close, Escape a klik mimo
+  zatvoria iba help, focus sa vráti na otáznik, Tab ostáva v draweri.
+
 ## Checkpoint B: referencia ✅
 
 - [x] V + celá **SC** (+ `DetailDrawerSection` a stavový unit test): 24/24 súborov, 266/266 testov.
