@@ -1046,8 +1046,6 @@
   "platformProviders.noMatches": "Vyhľadávaniu nezodpovedajú žiadni platformoví poskytovatelia.",
   "platformProviders.empty": "Backend nevrátil žiadnych platformových poskytovateľov.",
   "platformProviders.dialogs.delete": "Odstrániť platformového poskytovateľa",
-  "platformProviders.smtpDialog.button": "SMTP",
-  "platformProviders.smtpDialog.title": "Detaily SMTP providera",
   "pages.recovery.submitFailed": "Aplikáciu obnovy sa nepodarilo odoslať.",
   "pages.recoveryEditor.loadDescription": "Načítať aplikáciu obnovy z backendu.",
   "pages.recoveryEditor.requestFailed": "Požiadavka na aplikáciu obnovy zlyhala.",

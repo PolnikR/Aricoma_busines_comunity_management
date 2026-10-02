@@ -20,7 +20,6 @@ import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useDeletePlatformProvider } from '@/generated/query/platform-providers/platform-providers.gen'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
-import { SmtpProviderDetailsDialog } from './SmtpProviderDetailsDialog'
 import { PlatformProvidersModal } from './PlatformProvidersModal'
 
 function credentialStatusColor(status: PlatformProviderRecord['credentialStatus']) {
@@ -174,7 +173,6 @@ export function PlatformProvidersTable({
   const [editing, setEditing] = useState<PlatformProviderRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<PlatformProviderRecord | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
-  const [isSmtpDialogOpen, setIsSmtpDialogOpen] = useState(false)
   const loadErrorDescription = extractBackendErrorDetail(error)
   const deleteErrorDescription = extractBackendErrorDetail(deleteProvider.error)
   const rows = useMemo(() => providers, [providers])
@@ -248,7 +246,7 @@ export function PlatformProvidersTable({
       </DataTableSurface>
 
       <DetailDrawer
-        open={selected !== null && !isSmtpDialogOpen}
+        open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
         title={selected?.name ?? ''}
@@ -262,11 +260,6 @@ export function PlatformProvidersTable({
           ) : null,
         ] : []}
         subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerActions={selected?.type === 'SMTP' ? (
-          <Button size="sm" variant="outline" onClick={() => { setIsSmtpDialogOpen(true) }}>
-            {t('platformProviders.smtpDialog.button')}
-          </Button>
-        ) : null}
         ariaLabel={t('drawer.providerDetail')}
         closeLabel={t('drawer.closeProvider')}
         resizeLabel={t('drawer.resize')}
@@ -283,14 +276,6 @@ export function PlatformProvidersTable({
       >
         {selected ? <PlatformProviderDetail provider={selected} /> : null}
       </DetailDrawer>
-
-      {selected?.type === 'SMTP' ? (
-        <SmtpProviderDetailsDialog
-          open={isSmtpDialogOpen}
-          provider={selected}
-          onClose={() => { setIsSmtpDialogOpen(false) }}
-        />
-      ) : null}
 
       {editing ? (
         <PlatformProvidersModal

@@ -101,31 +101,7 @@ describe('PlatformProvidersTable', () => {
     expect(screen.getByRole('combobox', { name: 'Rows per page' })).toBeDisabled()
   })
 
-  it('shows the SMTP action only for a selected SMTP provider', async () => {
-    const user = userEvent.setup()
-    render(
-      <PlatformProvidersTable
-        providers={[smtpProvider]}
-        isLoading={false}
-        error={null}
-        isRetrying={false}
-        onRetry={vi.fn()}
-      />,
-    )
-
-    expect(screen.queryByRole('button', { name: 'SMTP' })).not.toBeInTheDocument()
-    await user.click(screen.getByText('Test SMTP'))
-
-    expect(screen.getByRole('button', { name: 'SMTP' })).toHaveClass(
-      'h-9',
-      'border',
-      'border-border-strong',
-      'bg-surface',
-      'shadow-sm',
-    )
-  })
-
-  it('opens SMTP details for the selected provider without a second modal', async () => {
+  it('does not show an SMTP header action in the SMTP provider drawer', async () => {
     const user = userEvent.setup()
     render(
       <PlatformProvidersTable
@@ -138,33 +114,9 @@ describe('PlatformProvidersTable', () => {
     )
 
     await user.click(screen.getByText('Test SMTP'))
-    await user.click(screen.getByRole('button', { name: 'SMTP' }))
 
-    expect(screen.getAllByRole('dialog')).toHaveLength(1)
-    const dialog = screen.getByRole('dialog', { name: 'SMTP provider details' })
-    expect(dialog).toHaveTextContent('Test SMTP')
-    expect(dialog.querySelector('pre')?.textContent).toBe(JSON.stringify(smtpProvider, null, 2))
-    expect(deleteMutation.mutate).not.toHaveBeenCalled()
-  })
-
-  it('returns to the selected provider drawer when SMTP details close', async () => {
-    const user = userEvent.setup()
-    render(
-      <PlatformProvidersTable
-        providers={[smtpProvider]}
-        isLoading={false}
-        error={null}
-        isRetrying={false}
-        onRetry={vi.fn()}
-      />,
-    )
-
-    await user.click(screen.getByText('Test SMTP'))
-    await user.click(screen.getByRole('button', { name: 'SMTP' }))
-    await user.click(screen.getByRole('button', { name: 'Close' }))
-
-    expect(screen.queryByRole('dialog', { name: 'SMTP provider details' })).not.toBeInTheDocument()
     expect(screen.getByRole('dialog', { name: 'Provider detail' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'SMTP' })).not.toBeInTheDocument()
   })
 
   it('displays an SMTP provider and its OpenAPI fields', async () => {
@@ -435,14 +387,12 @@ describe('PlatformProvidersTable', () => {
       expect(meta?.nextElementSibling).toHaveTextContent('airflow-01')
     })
 
-    it('puts the SMTP action in the title row', async () => {
+    it('omits the credential badge for an SMTP provider', async () => {
       const user = userEvent.setup()
       renderTable([smtpProvider])
       await user.click(screen.getByText('Test SMTP'))
       const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
-      const titleRow = within(drawer).getByRole('heading', { name: 'Test SMTP' }).parentElement
 
-      expect(titleRow).toContainElement(within(drawer).getByRole('button', { name: 'SMTP' }))
       expect(within(drawer).getByText('Platform provider').parentElement).not.toHaveTextContent('Available')
     })
 
