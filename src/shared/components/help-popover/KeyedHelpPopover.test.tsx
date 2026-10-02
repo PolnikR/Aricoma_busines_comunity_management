@@ -25,4 +25,21 @@ describe('KeyedHelpPopover', () => {
     expect(dialog).toHaveTextContent('t(providers.help.credential.text)')
     expect(screen.getByRole('button', { name: 't(help.close)' })).toBeInTheDocument()
   })
+
+  it('appends custom content after the sections and passes the width through', async () => {
+    const user = userEvent.setup()
+    render(
+      <KeyedHelpPopover helpKey="providers.help" sections={['role']} width="wide">
+        <p>Custom relationships</p>
+      </KeyedHelpPopover>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 't(providers.help.trigger)' }))
+    const dialog = screen.getByRole('dialog', { name: 't(providers.help.title)' })
+    const section = screen.getByRole('heading', { level: 4, name: 't(providers.help.role.title)' })
+    const custom = screen.getByText('Custom relationships')
+
+    expect(dialog).toHaveClass('w-[min(55rem,calc(100vw-2rem))]')
+    expect(section.compareDocumentPosition(custom) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
 })

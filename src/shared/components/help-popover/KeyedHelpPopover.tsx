@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { HelpPopover } from './HelpPopover'
 
@@ -6,6 +7,9 @@ interface KeyedHelpPopoverProps {
   helpKey: string
   // Section ids rendered in order under the intro.
   sections: readonly string[]
+  width?: 'default' | 'wide'
+  // Feature-specific content rendered after the key-driven sections.
+  children?: ReactNode
 }
 
 // A HelpPopover whose texts follow one locale key convention, so every detail
@@ -15,7 +19,7 @@ interface KeyedHelpPopoverProps {
 //   `${helpKey}.intro`    first paragraph
 //   `${helpKey}.${section}.title` / `.text`  one short section each
 // The close button uses the shared `help.close`.
-export function KeyedHelpPopover({ helpKey, sections }: KeyedHelpPopoverProps) {
+export function KeyedHelpPopover({ helpKey, sections, width, children }: KeyedHelpPopoverProps) {
   const { t } = useTranslation()
 
   return (
@@ -23,6 +27,7 @@ export function KeyedHelpPopover({ helpKey, sections }: KeyedHelpPopoverProps) {
       triggerLabel={t(`${helpKey}.trigger`)}
       title={t(`${helpKey}.title`)}
       closeLabel={t('help.close')}
+      {...(width ? { width } : {})}
     >
       <p>{t(`${helpKey}.intro`)}</p>
       {sections.map(section => (
@@ -31,6 +36,7 @@ export function KeyedHelpPopover({ helpKey, sections }: KeyedHelpPopoverProps) {
           <p>{t(`${helpKey}.${section}.text`)}</p>
         </section>
       ))}
+      {children}
     </HelpPopover>
   )
 }
