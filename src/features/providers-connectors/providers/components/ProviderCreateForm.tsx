@@ -3,6 +3,7 @@ import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import { MultiSelect } from '@/shared/components/form/MultiSelect'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PROVIDER_ROLES, PROVIDER_TYPES } from '../model/providerTypes'
+import { isComputeProviderType, isPartnerProviderType } from '../model/providerCategory'
 import type { CredentialRecord } from '@/generated/query/zod'
 
 export interface ProviderCreateFormData {
@@ -33,7 +34,10 @@ interface ProviderCreateFormProps {
   idDisabled?: boolean
   typeDisabled?: boolean
   credentials: CredentialRecord[]
-  storageProviders?: { id: string; name: string }[]
+  // Storage-type providers that may back a compute provider.
+  backingStorageProviders?: { id: string; name: string }[]
+  // Partner-capable providers; the edited provider itself is excluded here.
+  partnerProviders?: { id: string; name: string }[]
   onBackingStorageChange: (ids: string[]) => void
   credentialsLoading: boolean
   credentialsError: boolean
@@ -57,7 +61,8 @@ export function ProviderCreateForm({
   idDisabled = false,
   typeDisabled = false,
   credentials,
-  storageProviders = [],
+  backingStorageProviders = [],
+  partnerProviders = [],
   onBackingStorageChange,
   credentialsLoading,
   credentialsError,
@@ -73,11 +78,11 @@ export function ProviderCreateForm({
   onSubmit,
 }: ProviderCreateFormProps) {
   const { t } = useTranslation()
-  const partnerProviders = storageProviders.filter(provider => provider.id !== data.id)
-  const partnerMissing = data.partnerProviderId && !partnerProviders.some(provider => provider.id === data.partnerProviderId)
+  const partnerOptions = partnerProviders.filter(provider => provider.id !== data.id)
+  const partnerMissing = data.partnerProviderId && !partnerOptions.some(provider => provider.id === data.partnerProviderId)
   const storageOptions = [
-    ...storageProviders.map(provider => ({ value: provider.id, label: provider.name + ' — ' + provider.id })),
-    ...data.backingStorageProviderIds.filter(id => !storageProviders.some(provider => provider.id === id))
+    ...backingStorageProviders.map(provider => ({ value: provider.id, label: provider.name + ' — ' + provider.id })),
+    ...data.backingStorageProviderIds.filter(id => !backingStorageProviders.some(provider => provider.id === id))
       .map(id => ({ value: id, label: t('providers.credentials.unavailable').replace('{id}', id) })),
   ]
   const selectedCredentialIsMissing = Boolean(
@@ -205,14 +210,14 @@ export function ProviderCreateForm({
         </Field>
       </div>
 
-      {data.type === 'FLASHCOPY' ? (
+      {isPartnerProviderType(data.type) ? (
         <Field label={t('forms.partnerProvider')} htmlFor="create-partnerProviderId">
           <Select id="create-partnerProviderId" value={data.partnerProviderId} aria-label={t('forms.partnerProvider')}
             disabled={isSubmitting} aria-invalid={Boolean(errors.partnerProviderId)}
             onChange={event => { onChange('partnerProviderId', event.target.value) }}>
             <option value="">{t('forms.partnerProviderNone')}</option>
             {partnerMissing ? <option value={data.partnerProviderId} disabled>{data.partnerProviderId} ({t('forms.partnerProviderUnavailable')})</option> : null}
-            {partnerProviders.map(provider => <option key={provider.id} value={provider.id}>{provider.name} — {provider.id}</option>)}
+            {partnerOptions.map(provider => <option key={provider.id} value={provider.id}>{provider.name} — {provider.id}</option>)}
           </Select>
           <p className="mt-1 text-xs text-text-muted">{t('forms.partnerProviderHelper')}</p>
           {errors.partnerProviderId ? <p role="alert" className="mt-1 text-xs text-red-600">{errors.partnerProviderId}</p> : null}
@@ -220,7 +225,7 @@ export function ProviderCreateForm({
       ) : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {data.type === 'VMWARE' ? (
+        {isComputeProviderType(data.type) ? (
           <Field label={t('forms.backingStorageProviders')} htmlFor="create-backingStorageProviders">
             <MultiSelect id="create-backingStorageProviders" label={t('forms.backingStorageProviders')}
               options={storageOptions} value={data.backingStorageProviderIds}

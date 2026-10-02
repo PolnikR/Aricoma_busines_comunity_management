@@ -10,6 +10,8 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { useGetProviders } from '@/generated/query/providers/providers.gen'
 import { selectProviders } from '../model/selectProviders'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
+import { isComputeProviderType, isPartnerProviderType } from '../model/providerCategory'
+import { BackingStorageValue } from '../components/BackingStorageValue'
 import type { ProviderRecord } from '../model/providerTypes'
 
 function credentialStatusColor(status: ProviderRecord['credentialStatus']) {
@@ -152,10 +154,16 @@ export function ProviderDetailPage() {
                     </Badge> : null}
               </dd>
             </div>
-            {provider?.type === 'FLASHCOPY' ? (
+            {provider && isPartnerProviderType(provider.type) ? (
               <div>
                 <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('forms.partnerProvider')}</dt>
                 <dd className="mt-1 break-words font-mono text-sm text-text-primary">{textOrFallback(provider.partnerProviderId, t('forms.partnerProviderNone'))}</dd>
+              </div>
+            ) : null}
+            {provider && isComputeProviderType(provider.type) ? (
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{t('details.backingStorage')}</dt>
+                <dd className="mt-1 break-words text-sm text-text-primary"><BackingStorageValue providerId={provider.id} providers={providers ?? []} /></dd>
               </div>
             ) : null}
           </dl>

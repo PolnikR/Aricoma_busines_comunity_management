@@ -29,6 +29,8 @@ import {
 import { ProvidersCreateModal } from './ProvidersCreateModal'
 import { ProviderConnectionTestDialog } from './ProviderConnectionTestDialog'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
+import { isComputeProviderType, isPartnerProviderType } from '../model/providerCategory'
+import { BackingStorageValue } from './BackingStorageValue'
 import type { ProviderRecord, ProviderRoleFilter } from '../model/providerTypes'
 
 function credentialStatusLabel(
@@ -359,10 +361,12 @@ export function ProvidersCatalogueTable({
           <dl className="px-5 py-2">
             <DetailRow label={t('details.providerId')} value={<span className="font-mono">{selected.id}</span>} />
             <DetailRow label={t('details.type')} value={providerTypeLabel(selected.type)} />
-            {selected.type === 'FLASHCOPY' ? <DetailRow label={t('forms.partnerProvider')}
+            {isPartnerProviderType(selected.type) ? <DetailRow label={t('forms.partnerProvider')}
               value={selected.partnerProviderId
                 ? (allProviders.find(provider => provider.id === selected.partnerProviderId)?.name ?? selected.partnerProviderId) + ' (' + selected.partnerProviderId + ')'
                 : t('forms.partnerProviderNone')} /> : null}
+            {isComputeProviderType(selected.type) ? <DetailRow label={t('details.backingStorage')}
+              value={<BackingStorageValue providerId={selected.id} providers={allProviders} />} /> : null}
             <DetailRow
               label={t('details.role')}
               value={(() => {

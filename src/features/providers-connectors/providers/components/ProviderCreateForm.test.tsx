@@ -134,6 +134,38 @@ describe('ProviderCreateForm', () => {
     expect(onChange).toHaveBeenCalledWith('cacheRefreshSeconds', '60')
   })
 
+  it.each([
+    ['VMWARE', true, false],
+    ['IBM_POWER', true, false],
+    ['FLASHCOPY', false, true],
+    ['HITACHI', false, false],
+  ])('shows the relationship fields that %s supports (backing=%s, partner=%s)', (type, backing, partner) => {
+    render(
+      <ProviderCreateForm
+        data={{ ...data, type }}
+        errors={{}}
+        isSubmitting={false}
+        credentials={credentials}
+        credentialsLoading={false}
+        credentialsError={false}
+        onRetryCredentials={vi.fn()}
+        backingStorageProviders={[{ id: 'hitachi-a', name: 'Hitachi A' }]}
+        partnerProviders={[{ id: 'provider-1', name: 'Self' }, { id: 'flash-b', name: 'Array B' }]}
+        onTagsChange={vi.fn()}
+        onBackingStorageChange={vi.fn()}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByRole('button', { name: 'Backing storage providers' }) !== null).toBe(backing)
+    const partnerSelect = screen.queryByLabelText('Partner FlashSystem provider')
+    expect(partnerSelect !== null).toBe(partner)
+    if (partnerSelect) {
+      expect([...partnerSelect.querySelectorAll('option')].map(option => option.value)).toEqual(['', 'flash-b'])
+    }
+  })
+
   it('renders VM settings and reports a single selected tag', async () => {
     const user = userEvent.setup()
     const onTagsChange = vi.fn()

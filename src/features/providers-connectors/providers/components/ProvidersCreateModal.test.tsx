@@ -97,7 +97,7 @@ describe('ProvidersCreateModal', () => {
     renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[flashA, flashB, provider]}
       {...(mode !== 'create' ? { provider } : {})} />)
     if (mode === 'create') fillValidForm()
-    fireEvent.click(screen.getByRole('button', { name: 'Backing FlashSystem providers' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Backing storage providers' }))
     const a = screen.getByRole('checkbox', { name: 'Array A — flash-a' })
     const b = screen.getByRole('checkbox', { name: 'Array B — flash-b' })
     expect(screen.getAllByRole('checkbox')).toHaveLength(2)
@@ -115,16 +115,74 @@ describe('ProvidersCreateModal', () => {
     vi.unstubAllGlobals()
   })
 
-  it('hides and clears backing storage when switching away from VMware', () => {
+  const hitachi: ProviderRecord = { ...mockProviderA, id: 'hitachi-a', name: 'Hitachi A', type: 'HITACHI' }
+
+  it('offers FlashSystem and Hitachi as backing storage for IBM Power and submits them', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[flashA, hitachi, mockProviderA]} />)
+    fillValidForm()
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'IBM_POWER' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Backing storage providers' }))
+    expect(screen.getAllByRole('checkbox').map(box => box.getAttribute('aria-label') ?? box.closest('label')?.textContent))
+      .toEqual(['Array A — flash-a', 'Hitachi A — hitachi-a'])
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Array A — flash-a' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Hitachi A — hitachi-a' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalled() })
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit
+    expect(JSON.parse(init.body as string)).toMatchObject({ type: 'IBM_POWER', backingStorageProviderIds: ['flash-a', 'hitachi-a'] })
+    vi.unstubAllGlobals()
+  })
+
+  it.each([['VMWARE', 'IBM_POWER'], ['IBM_POWER', 'VMWARE']])('keeps backing storage when switching from %s to %s', (from, to) => {
     renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[flashA]} />)
     fillValidForm()
-    fireEvent.click(screen.getByRole('button', { name: 'Backing FlashSystem providers' }))
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: from } })
+    fireEvent.click(screen.getByRole('button', { name: 'Backing storage providers' }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'Array A — flash-a' }))
-    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'FLASHCOPY' } })
-    expect(screen.queryByRole('button', { name: 'Backing FlashSystem providers' })).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: to } })
+    expect(screen.getByRole('checkbox', { name: 'Array A — flash-a' })).toBeChecked()
+  })
+
+  it.each(['FLASHCOPY', 'HITACHI'])('hides and clears backing storage when switching from compute to %s', async (storageType) => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[flashA]} />)
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Backing storage providers' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Array A — flash-a' }))
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: storageType } })
+    expect(screen.queryByRole('button', { name: 'Backing storage providers' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Create provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalled() })
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit
+    expect(JSON.parse(init.body as string)).not.toHaveProperty('backingStorageProviderIds')
+    vi.unstubAllGlobals()
+    cleanup()
+
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[flashA]} />)
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Backing storage providers' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Array A — flash-a' }))
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: storageType } })
     fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'VMWARE' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Backing FlashSystem providers' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Backing storage providers' }))
     expect(screen.getByRole('checkbox', { name: 'Array A — flash-a' })).not.toBeChecked()
+  })
+
+  it('offers only other FlashSystems as partner and clears the partner when switching to Hitachi', () => {
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[flashA, flashB, hitachi]} />)
+    fillValidForm()
+    fireEvent.change(screen.getByLabelText('ID'), { target: { value: 'flash-a' } })
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'FLASHCOPY' } })
+    const partner = screen.getByLabelText('Partner FlashSystem provider')
+    expect([...partner.querySelectorAll('option')].map(option => option.value)).toEqual(['', 'flash-b'])
+    fireEvent.change(partner, { target: { value: 'flash-b' } })
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'HITACHI' } })
+    expect(screen.queryByLabelText('Partner FlashSystem provider')).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'FLASHCOPY' } })
+    expect(screen.getByLabelText('Partner FlashSystem provider')).toHaveValue('')
   })
 
   beforeEach(() => {

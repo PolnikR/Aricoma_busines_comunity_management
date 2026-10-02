@@ -13,6 +13,7 @@ import { selectCredentials } from '../../credentials/model/selectCredentials'
 import { useSubmitProvider } from '@/generated/query/providers/providers.gen'
 import { ProviderCreateForm } from './ProviderCreateForm'
 import type { ProviderRecord, ProviderRole, ProviderSubmitData, ProviderType } from '../model/providerTypes'
+import { isComputeProviderType, isPartnerProviderType, isStorageProviderType } from '../model/providerCategory'
 import type { ProviderCreateFormData } from './ProviderCreateForm'
 
 interface ProvidersCreateModalProps {
@@ -139,8 +140,9 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
       }
 
       return { ...prev, [field]: value,
-        ...(field === 'type' && value !== 'VMWARE' ? { backingStorageProviderIds: [] } : {}),
-        ...(field === 'type' && value !== 'FLASHCOPY' ? { partnerProviderId: '' } : {}),
+        // Backing storage survives a switch between compute types; a partner never survives a type change.
+        ...(field === 'type' && !isComputeProviderType(value) ? { backingStorageProviderIds: [] } : {}),
+        ...(field === 'type' ? { partnerProviderId: '' } : {}),
       }
     })
     if (field in errors && errors[field]) {
@@ -220,7 +222,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     if (orchestratorConnId) record.orchestratorConnId = orchestratorConnId
     record.vmPrefix = formData.vmPrefix.trim() || null
     record.vmTags = [...formData.vmTags]
-    if (formData.type === 'VMWARE') record.backingStorageProviderIds = [...formData.backingStorageProviderIds]
+    if (isComputeProviderType(formData.type)) record.backingStorageProviderIds = [...formData.backingStorageProviderIds]
     record.notificationEmail = formData.notificationEmail.trim() || null
     record.cacheRefreshSeconds = formData.cacheRefreshSeconds.trim() ? Number(formData.cacheRefreshSeconds) : null
 
@@ -278,7 +280,8 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
 
         <ProviderCreateForm
           data={formData}
-          storageProviders={existingProviders.filter(entry => entry.type === 'FLASHCOPY')}
+          backingStorageProviders={existingProviders.filter(entry => isStorageProviderType(entry.type))}
+          partnerProviders={existingProviders.filter(entry => isPartnerProviderType(entry.type))}
           onBackingStorageChange={backingStorageProviderIds => {
             setFormData(prev => ({ ...prev, backingStorageProviderIds }))
             setSubmitError(null)

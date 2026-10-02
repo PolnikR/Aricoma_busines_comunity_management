@@ -10,13 +10,14 @@ let query: {
     id: string
     name: string
     description: string
-    type: 'VMWARE'
+    type: 'VMWARE' | 'HITACHI'
     ipAddress: string
     url?: string | null
     credentialId: string | null
     role?: 'source' | 'target'
     orchestratorConnId?: string | null
     credentialStatus: 'ok' | 'missing' | 'none'
+    backingStorageProviderIds?: string[]
   }[] | undefined
   isLoading: boolean
   error: Error | null
@@ -65,6 +66,19 @@ describe('ProviderDetailPage', () => {
     expect(screen.getByRole('link', { name: 'https://10.0.0.1/ui/' })).toHaveAttribute('target', '_blank')
     await user.click(screen.getByRole('button', { name: 'Back' }))
     expect(navigate).toHaveBeenCalledWith('/providers-connectors/providers')
+  })
+
+  it('shows the backing storage of a compute provider resolved from the provider list', () => {
+    const [primary] = query.data ?? []
+    if (!primary) throw new Error('fixture missing')
+    query.data = [
+      { ...primary, backingStorageProviderIds: ['hitachi-1', 'missing-1'] },
+      { ...primary, id: 'hitachi-1', name: 'Hitachi One', type: 'HITACHI' },
+    ]
+    render(<ProviderDetailPage />)
+    const value = screen.getByText('Backing storage').nextElementSibling
+    expect(value).toHaveTextContent('Hitachi One (hitachi-1)')
+    expect(value).toHaveTextContent('missing-1 (Unavailable)')
   })
 
   it('renders loading, error, and missing states', () => {

@@ -280,6 +280,18 @@ describe('ProvidersCatalogueTable', () => {
     expect(screen.getByText('provider-alerts@example.test')).toBeInTheDocument()
   })
 
+  it('shows backing storage only for compute providers in the drawer', async () => {
+    renderTable()
+    fireEvent.click(await screen.findByText('Production vCenter'))
+    const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
+    expect(within(drawer).getByText('Backing storage').nextElementSibling).toHaveTextContent('None')
+    fireEvent.click(screen.getByText('Backup FlashSystem'))
+    const storageDrawer = screen.getByRole('dialog', { name: 'Provider detail' })
+    await within(storageDrawer).findByRole('heading', { name: 'Backup FlashSystem' })
+    expect(within(storageDrawer).queryByText('Backing storage')).not.toBeInTheDocument()
+    expect(within(storageDrawer).getByText('Partner FlashSystem provider')).toBeInTheDocument()
+  })
+
   it('shows the Model C header: meta badges, Test connection in the title row, Delete left and Edit right', async () => {
     renderTable()
     fireEvent.click(await screen.findByText('Production vCenter'))
