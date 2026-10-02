@@ -18,6 +18,7 @@ import { Field, Select } from '@/shared/components/form/FormControls'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useDeleteRecoveryAppPolicy } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
 import type { RecoveryAppPolicyRecordOutput } from '@/generated/query/zod'
 import { RecoveryAppPolicyModal } from './RecoveryAppPolicyModal'
@@ -224,6 +225,7 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
           <Badge key="badge" color={levelColor(selected.level ?? '')} size="sm">{selected.level}</Badge>,
         ] : []}
         subtitle={<span className="font-mono">{selected?.id}</span>}
+        headerActions={<KeyedHelpPopover helpKey="recoveryAppPolicies.help" sections={['schedule', 'selection', 'bootVerify']} />}
         ariaLabel={t('recoveryAppPolicies.drawer.label')}
         closeLabel={t('recoveryAppPolicies.drawer.close')}
         resizeLabel={t('drawer.resize')}

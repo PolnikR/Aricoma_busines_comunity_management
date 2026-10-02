@@ -18,6 +18,7 @@ import { Field, Select } from '@/shared/components/form/FormControls'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useDeletePolicy } from '@/generated/query/snapshot-policies/snapshot-policies.gen'
 import type { SnapshotPolicyRecordOutput } from '@/generated/query/zod'
 import { SnapshotPolicyModal } from './SnapshotPolicyModal'
@@ -266,6 +267,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
           <Badge key="badge" color={levelColor(selected.level ?? '')} size="sm">{selected.level}</Badge>,
         ] : []}
         subtitle={<span className="font-mono">{selected?.id}</span>}
+        headerActions={<KeyedHelpPopover helpKey="snapshotPolicies.help" sections={['frequency', 'retention', 'usage']} />}
         ariaLabel={t('snapshotPolicies.drawer.label')}
         closeLabel={t('snapshotPolicies.drawer.close')}
         resizeLabel={t('drawer.resize')}

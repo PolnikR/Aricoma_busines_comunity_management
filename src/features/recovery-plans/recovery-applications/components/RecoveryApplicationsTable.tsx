@@ -7,6 +7,7 @@ import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import {
   DataTable,
   DataTableSurface,
@@ -420,6 +421,7 @@ export function RecoveryApplicationsTable({
           </Badge>,
           orchestrationState ? orchestrationMetaText(orchestrationState, t) : null,
         ] : []}
+        headerActions={<KeyedHelpPopover helpKey="recoveryApplications.help" sections={['tiers', 'policySet', 'orchestration']} />}
         ariaLabel={t('drawer.applicationDetail')}
         closeLabel={t('drawer.closeApplication')}
         resizeLabel={t('drawer.resize')}

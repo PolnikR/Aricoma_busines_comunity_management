@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { Badge } from '@/shared/components/badge/Badge'
 import { DataTablePagination, DetailDrawer } from '@/shared/components/data-table'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
@@ -52,6 +53,7 @@ export function RecoveryRunHistoryDrawer({ entity, onClose }: RecoveryRunHistory
       ariaLabel={t('recoveryRuns.drawer.label')}
       closeLabel={t('recoveryRuns.drawer.close')}
       headerActions={entity ? (
+        <>
         <a
           href={buildAirflowDagUrl(entity.dagId, providerUrl)}
           target="_blank"
@@ -61,6 +63,8 @@ export function RecoveryRunHistoryDrawer({ entity, onClose }: RecoveryRunHistory
           {t('recoveryRuns.drawer.viewInAirflow')}
           <ExternalLinkIcon className="size-3.5 shrink-0" />
         </a>
+        <KeyedHelpPopover helpKey="recoveryRuns.help" sections={['source', 'refresh', 'airflow']} />
+        </>
       ) : null}
     >
       <div className="px-5 py-3">

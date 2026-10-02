@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryRunHistoryDrawer } from './RecoveryRunHistoryDrawer'
 import { useAppRunHistory } from '../hooks/useAppRunHistory'
@@ -60,6 +60,9 @@ describe('RecoveryRunHistoryDrawer', () => {
     const titleRow = screen.getByRole('heading', { name: 'Finance Recovery' }).parentElement
     expect(titleRow).toContainElement(screen.getByRole('link', { name: /View in Airflow/ }))
     expect(titleRow?.nextElementSibling).toHaveTextContent('Run history')
+    const drawer = screen.getByRole('dialog', { name: 'Run history detail' })
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Run history help' }))
+    expect(within(drawer).getByRole('dialog', { name: 'Where the run history comes from' })).toHaveTextContent('Source')
   })
 
   it('shows a retryable error instead of treating a failed history lookup as empty history', () => {

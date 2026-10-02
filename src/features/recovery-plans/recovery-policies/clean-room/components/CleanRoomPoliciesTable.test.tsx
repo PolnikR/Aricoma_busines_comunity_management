@@ -76,6 +76,8 @@ describe('CleanRoomPoliciesTable', () => {
     const modelCDelete = within(modelCDrawer).getByRole('button', { name: 'Delete' })
     expect(modelCDelete.parentElement?.parentElement?.children[0]).toContainElement(modelCDelete)
     expect(modelCDelete.parentElement?.parentElement?.children[1]).toContainElement(within(modelCDrawer).getByRole('button', { name: 'Edit' }))
+    await userEvent.click(within(modelCDrawer).getByRole('button', { name: 'Clean room policy help' }))
+    expect(within(modelCDrawer).getByRole('dialog', { name: 'How a clean room policy works' })).toHaveTextContent('Conflicting resources')
     expect(within(drawer).getByRole('button', { name: 'Edit' })).toBeInTheDocument()
     expect(within(drawer).getByRole('button', { name: 'Delete' })).toBeInTheDocument()
   })

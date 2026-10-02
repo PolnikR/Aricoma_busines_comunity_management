@@ -1,4 +1,5 @@
 ﻿import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useId, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Input } from '@/shared/components/form/FormControls'
@@ -43,7 +44,7 @@ export function RecoveryGroupMetroMirrorFields({ value, onChange, loading, error
         </Button>
       </div>
       {reviewOpen ? createPortal(
-        <DetailDrawer open onClose={() => { setReviewOpen(false) }} title={t(key('reviewTitle'))} ariaLabel={t(key('reviewTitle'))} closeLabel={t('buttons.close')}>
+        <DetailDrawer open onClose={() => { setReviewOpen(false) }} title={t(key('reviewTitle'))} headerActions={<KeyedHelpPopover helpKey="pages.recoveryGroupBuilder.topology.lookup.help" sections={['existing', 'managed', 'auxiliary', 'consistencyGroup']} />} ariaLabel={t(key('reviewTitle'))} closeLabel={t('buttons.close')}>
           <div className="space-y-4 p-5 text-sm text-text-secondary [overflow-wrap:anywhere]">
             <p>{t(key('hint'))}</p>
             {loading ? <p role="status">{t(key('loading'))}</p> : null}

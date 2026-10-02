@@ -125,6 +125,8 @@ describe('PolicySetsTable', () => {
     const modelCDelete = within(modelCDrawer).getByRole('button', { name: 'Delete' })
     expect(modelCDelete.parentElement?.parentElement?.children[0]).toContainElement(modelCDelete)
     expect(modelCDelete.parentElement?.parentElement?.children[1]).toContainElement(within(modelCDrawer).getByRole('button', { name: 'Edit' }))
+    await userEvent.click(within(modelCDrawer).getByRole('button', { name: 'Policy set help' }))
+    expect(within(modelCDrawer).getByRole('dialog', { name: 'How a policy set works' })).toHaveTextContent('Snapshot policies')
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
   })

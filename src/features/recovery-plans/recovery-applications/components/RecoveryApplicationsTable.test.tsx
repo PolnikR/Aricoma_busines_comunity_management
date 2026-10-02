@@ -337,6 +337,12 @@ describe('RecoveryApplicationsTable', () => {
       expect(drawer).not.toHaveTextContent('Not configured')
     })
 
+    it('opens the recovery app help from the header', async () => {
+      const { user, drawer } = await openDetail(application)
+      await user.click(within(drawer).getByRole('button', { name: 'Recovery app help' }))
+      expect(within(drawer).getByRole('dialog', { name: 'How a recovery app works' })).toHaveTextContent('Tiers')
+    })
+
     it('puts Delete left and Edit right, and shows only the handlers that exist', async () => {
       const { drawer } = await openDetail(application, { onEdit: vi.fn(), onDelete: vi.fn().mockResolvedValue({ applications: [], rollback: null }) })
       const deleteButton = within(drawer).getByRole('button', { name: 'Delete' })

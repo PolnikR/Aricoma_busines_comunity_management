@@ -1,4 +1,4 @@
-﻿import { fireEvent, render, screen } from '@testing-library/react'
+﻿import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { RecoveryGroupMetroMirrorFields } from './RecoveryGroupMetroMirrorFields'
@@ -24,6 +24,10 @@ describe('RecoveryGroupMetroMirrorFields', () => {
     expect(screen.getByText(/Volumes without an unambiguous auxiliary name: 5/)).toBeVisible()
     expect(screen.getByText('Your values differ from discovery. Your edits have been kept.')).toBeVisible()
     expect(screen.getByLabelText('Consistency group ID')).toHaveValue('001')
+    await user.click(within(drawer).getByRole('button', { name: 'Metro Mirror review help' }))
+    expect(within(drawer).getByRole('dialog', { name: 'What this review checks' })).toHaveTextContent('Use existing relationship')
+    await user.keyboard('{Escape}')
+    expect(screen.getByRole('dialog', { name: 'Configuration review' })).toBeInTheDocument()
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(summary).toHaveFocus()

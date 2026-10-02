@@ -17,6 +17,7 @@ import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useDeleteCleanRoomPolicy } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
 import type { CleanRoomPolicyRecordOutput } from '@/generated/query/zod'
 import { CleanRoomPolicyModal } from './CleanRoomPolicyModal'
@@ -160,6 +161,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
           <Badge key="badge" color={selected.enabled ? 'success' : 'light'} size="sm">{t(selected.enabled ? 'cleanRoomPolicies.enabled' : 'cleanRoomPolicies.disabled')}</Badge>,
         ] : []}
         subtitle={<span className="font-mono">{selected?.id}</span>}
+        headerActions={<KeyedHelpPopover helpKey="cleanRoomPolicies.help" sections={['conflicts', 'usage']} />}
         ariaLabel={t('cleanRoomPolicies.drawer.label')}
         closeLabel={t('cleanRoomPolicies.drawer.close')}
         resizeLabel={t('drawer.resize')}

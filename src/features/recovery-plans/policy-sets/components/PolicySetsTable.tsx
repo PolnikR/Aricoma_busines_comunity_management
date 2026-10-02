@@ -16,6 +16,7 @@ import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useGetPolicies } from '@/generated/query/snapshot-policies/snapshot-policies.gen'
 import { selectSnapshotPolicies } from '@/features/recovery-plans/recovery-policies/snapshot/model/selectSnapshotPolicies'
 import { useGetRecoveryAppPolicies } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
@@ -182,6 +183,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
           t('policySets.drawer.entity'),
         ] : []}
         subtitle={<span className="font-mono">{selected?.id}</span>}
+        headerActions={<KeyedHelpPopover helpKey="policySets.help" sections={['snapshot', 'recoveryApp', 'cleanRoom', 'reference']} />}
         ariaLabel={t('policySets.drawer.label')}
         closeLabel={t('policySets.drawer.close')}
         resizeLabel={t('drawer.resize')}

@@ -75,6 +75,8 @@ describe('RecoveryAppPoliciesTable', () => {
     const modelCDelete = within(modelCDrawer).getByRole('button', { name: 'Delete' })
     expect(modelCDelete.parentElement?.parentElement?.children[0]).toContainElement(modelCDelete)
     expect(modelCDelete.parentElement?.parentElement?.children[1]).toContainElement(within(modelCDrawer).getByRole('button', { name: 'Edit' }))
+    await userEvent.click(within(modelCDrawer).getByRole('button', { name: 'Recovery app policy help' }))
+    expect(within(modelCDrawer).getByRole('dialog', { name: 'How a recovery app policy works' })).toHaveTextContent('Schedule')
   })
 
   it('shows the complete recovery policy GET payload without opening the drawer', async () => {
