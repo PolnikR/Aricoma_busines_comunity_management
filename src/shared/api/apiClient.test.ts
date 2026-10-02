@@ -28,7 +28,6 @@ describe('apiFetch', () => {
     const result = await apiFetch('/api/example', {
       headers: {
         Authorization: 'Bearer caller-token',
-        'X-User': 'spoofed-user',
       },
     })
 
@@ -39,7 +38,7 @@ describe('apiFetch', () => {
     const headers = new Headers(init.headers)
     expect(headers.get('Accept')).toBe('application/json')
     expect(headers.get('Authorization')).toBe('Bearer new-access-token')
-    expect(headers.get('X-User')).toBe('admin')
+    expect(headers.get('X-User')).toBeNull()
   })
 
   it('preserves request options and caller headers that are not locked', async () => {

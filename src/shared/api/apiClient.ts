@@ -5,7 +5,7 @@ function reauthenticate() {
 }
 
 // Single choke point for backend calls. Refreshes the in-memory Keycloak token,
-// injects locked authentication/identity headers, then delegates to fetch.
+// injects the locked Authorization header, then delegates to fetch.
 // Returns the raw Response — callers keep their own .ok checks, status branching,
 // and Zod parsing unchanged.
 export async function apiFetch(input: string, init: RequestInit = {}): Promise<Response> {
@@ -27,10 +27,8 @@ export async function apiFetch(input: string, init: RequestInit = {}): Promise<R
   new Headers(init.headers).forEach((value, key) => {
     headers.set(key, value)
   })
-  // Authentication and legacy identity headers are set LAST so callers cannot
-  // override either migration contract.
+  // Authorization is set LAST so callers cannot override it.
   headers.set('Authorization', `Bearer ${token}`)
-  headers.set('X-User', 'admin')
 
   return fetch(input, { ...init, headers })
 }
