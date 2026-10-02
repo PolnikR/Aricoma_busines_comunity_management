@@ -62,8 +62,11 @@ export function AccessLogDetailDrawer({ record, onClose }: AccessLogDetailDrawer
             <dl>
               <DetailRow label={t('audit.accessLogs.detail.method')} value={<span className="font-mono">{record.method}</span>} />
               <DetailRow label={t('audit.accessLogs.detail.path')} value={<span className="font-mono">{record.path}</span>} />
+              <DetailRow label={t('audit.accessLogs.detail.queryString')} value={<span className="font-mono">{record.queryString ?? '—'}</span>} />
               <DetailRow label={t('audit.accessLogs.detail.status')} value={String(record.status)} />
               <DetailRow label={t('audit.accessLogs.detail.duration')} value={`${String(record.durationMs)} ms`} />
+              <DetailRow label={t('audit.accessLogs.detail.userAgent')} value={record.userAgent ?? '—'} />
+              <DetailRow label={t('audit.accessLogs.detail.referer')} value={<span className="font-mono">{record.referer ?? '—'}</span>} />
             </dl>
           </DetailDrawerSection>
           <BodySection label={t('audit.accessLogs.detail.requestBody')} value={record.requestBody} />

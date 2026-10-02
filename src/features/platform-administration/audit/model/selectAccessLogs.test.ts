@@ -31,12 +31,16 @@ describe('selectAccessLogs', () => {
     })
   })
 
-  it('omits request metadata the entry lacks or sends as null', () => {
-    const [missing, nulls] = selectAccessLogs({
-      entries: [wireEntry, { ...wireEntry, query_string: null, user_agent: null, referer: null }],
+  it('omits request metadata the entry lacks or sends as null or empty', () => {
+    const records = selectAccessLogs({
+      entries: [
+        wireEntry,
+        { ...wireEntry, query_string: null, user_agent: null, referer: null },
+        { ...wireEntry, query_string: '', user_agent: '', referer: '' },
+      ],
     })
 
-    for (const record of [missing, nulls]) {
+    for (const record of records) {
       expect(record).not.toHaveProperty('queryString')
       expect(record).not.toHaveProperty('userAgent')
       expect(record).not.toHaveProperty('referer')

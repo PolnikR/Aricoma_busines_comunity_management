@@ -188,6 +188,39 @@ describe('AccessLogsTable', () => {
     expect(drawer).toHaveTextContent('null')
   })
 
+  it('shows query string, user agent and referer in the request details, with a dash when missing', async () => {
+    const user = userEvent.setup()
+    fetchAccessLogsMock.mockResolvedValue([
+      {
+        ...requestEntry,
+        method: 'GET',
+        path: '/get_providers',
+        queryString: 'role=all',
+        userAgent: 'Mozilla/5.0 Edg/154.0.0.0',
+        referer: 'http://localhost:5173/discovery-inventory/resources',
+      },
+      { ...requestEntry, method: 'GET', path: '/tags', queryString: '' },
+    ])
+
+    renderTable()
+
+    const detailValue = (drawer: HTMLElement, label: string) =>
+      within(drawer).getByText(label, { selector: 'dt' }).nextElementSibling
+
+    await user.click(await screen.findByRole('row', { name: 'GET /get_providers' }))
+    let drawer = screen.getByRole('dialog', { name: 'Access log details' })
+    expect(detailValue(drawer, 'Query string')).toHaveTextContent('role=all')
+    expect(detailValue(drawer, 'User agent')).toHaveTextContent('Mozilla/5.0 Edg/154.0.0.0')
+    expect(detailValue(drawer, 'Referer')).toHaveTextContent('http://localhost:5173/discovery-inventory/resources')
+    expect(screen.queryByRole('columnheader', { name: 'Query string' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('row', { name: 'GET /tags' }))
+    drawer = screen.getByRole('dialog', { name: 'Access log details' })
+    expect(detailValue(drawer, 'Query string')).toHaveTextContent(/^—$/)
+    expect(detailValue(drawer, 'User agent')).toHaveTextContent(/^—$/)
+    expect(detailValue(drawer, 'Referer')).toHaveTextContent(/^—$/)
+  })
+
   it('opens raw fallback entries safely in the detail drawer', async () => {
     const user = userEvent.setup()
     fetchAccessLogsMock.mockResolvedValue([{ kind: 'raw', raw: 'malformed access log line' }])
