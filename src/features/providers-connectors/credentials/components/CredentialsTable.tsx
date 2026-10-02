@@ -15,6 +15,7 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useDeleteCredential } from '@/generated/query/credentials/credentials.gen'
 import type { CredentialRecordOutput } from '@/generated/query/zod'
 import { CredentialCreateModal } from './CredentialCreateModal'
@@ -135,6 +136,7 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
         title={selected?.name ?? ''}
         meta={[t('drawer.entity.credential')]}
         subtitle={<span className="font-mono">{selected?.id}</span>}
+        headerActions={<KeyedHelpPopover helpKey="credentials.help" sections={['secret', 'usage']} />}
         ariaLabel={t('credentials.detail.ariaLabel')}
         closeLabel={t('credentials.detail.close')}
         resizeLabel={t('drawer.resize')}

@@ -19,6 +19,7 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { PlugIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import {
   getTestProviderQueryKey,
@@ -330,6 +331,7 @@ export function ProvidersCatalogueTable({
             {selected.credentialStatus !== 'ok' ? (
               <span id="provider-test-credential-hint" className="sr-only">{t('providers.connectionTest.credentialRequired')}</span>
             ) : null}
+            <KeyedHelpPopover helpKey="providers.help" sections={['role', 'credential', 'partner']} />
           </>
         ) : null}
         ariaLabel={t('drawer.providerDetail')}

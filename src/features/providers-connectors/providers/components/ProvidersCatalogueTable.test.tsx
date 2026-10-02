@@ -294,6 +294,8 @@ describe('ProvidersCatalogueTable', () => {
     expect(titleRow).toContainElement(within(drawer).getByRole('button', { name: 'Test connection' }))
     expect(footer?.children[0]).toContainElement(deleteButton)
     expect(footer?.children[1]).toContainElement(within(drawer).getByRole('button', { name: 'Edit' }))
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Provider help' }))
+    expect(within(drawer).getByRole('dialog', { name: 'What an infrastructure provider is' })).toHaveTextContent('Role')
   })
 
   it('opens the connection test for the selected provider and shows the real result', async () => {

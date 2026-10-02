@@ -385,6 +385,8 @@ describe('PlatformProvidersTable', () => {
 
       expect(meta).toHaveTextContent('Platform providerAIRFLOWAvailable')
       expect(meta?.nextElementSibling).toHaveTextContent('airflow-01')
+      await user.click(within(drawer).getByRole('button', { name: 'Platform provider help' }))
+      expect(within(drawer).getByRole('dialog', { name: 'What a platform provider is' })).toHaveTextContent('Airflow')
     })
 
     it('omits the credential badge for an SMTP provider', async () => {
