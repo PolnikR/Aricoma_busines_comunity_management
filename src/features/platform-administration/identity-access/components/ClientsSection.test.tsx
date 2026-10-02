@@ -205,8 +205,6 @@ describe('ClientsSection', () => {
       'Client ID': 'abco-be',
       'Display name': 'ABCO Backend',
       Protocol: 'openid-connect',
-      'Root URL': 'https://abco.example.com',
-      'Home URL': 'https://abco.example.com/home',
       Status: 'Enabled',
       'Client type': 'Confidential',
       Roles: 'platform-adminrecovery-operator',
@@ -226,11 +224,11 @@ describe('ClientsSection', () => {
 
   it('renders empty detail values as an em dash and empty roles as No roles', async () => {
     mockClients({ data: [portal] })
-    mockDetail({ data: portal })
+    mockDetail({ data: { ...portal, displayName: '' } })
     render(<ClientsSection />)
 
     const drawer = await openClient('abco-portal')
-    expect(fieldsOf(drawer.element)).toMatchObject({ 'Root URL': '—', 'Home URL': '—', Status: 'Disabled', 'Client type': 'Public', Roles: 'No roles' })
+    expect(fieldsOf(drawer.element)).toMatchObject({ 'Display name': '—', Status: 'Disabled', 'Client type': 'Public', Roles: 'No roles' })
   })
 
   it('shows a detail skeleton inside the drawer while the detail loads', async () => {
@@ -240,7 +238,9 @@ describe('ClientsSection', () => {
 
     const drawer = await openClient('abco-be')
     expect(drawer.getByLabelText('Loading client detail')).toHaveAttribute('aria-busy', 'true')
-    expect(drawer.getByText('Root URL')).toBeInTheDocument()
+    expect(drawer.getByText('Protocol')).toBeInTheDocument()
+    expect(drawer.queryByText('Root URL')).not.toBeInTheDocument()
+    expect(drawer.queryByText('Home URL')).not.toBeInTheDocument()
     expect(screen.getByText('ABCO Backend', { selector: 'span' })).toBeInTheDocument()
   })
 

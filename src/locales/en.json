@@ -2097,8 +2097,6 @@
   "identity.clients.fields.clientId": "Client ID",
   "identity.clients.fields.displayName": "Display name",
   "identity.clients.fields.protocol": "Protocol",
-  "identity.clients.fields.rootUrl": "Root URL",
-  "identity.clients.fields.homeUrl": "Home URL",
   "identity.roles.columns.name": "Role",
   "identity.roles.columns.permissions": "Permissions",
   "identity.roles.columns.users": "Users",

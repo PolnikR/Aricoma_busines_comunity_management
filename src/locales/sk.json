@@ -2060,8 +2060,6 @@
   "identity.clients.fields.clientId": "ID klienta",
   "identity.clients.fields.displayName": "Zobrazovaný názov",
   "identity.clients.fields.protocol": "Protokol",
-  "identity.clients.fields.rootUrl": "Root URL",
-  "identity.clients.fields.homeUrl": "Domovská URL",
   "identity.roles.columns.name": "Rola",
   "identity.roles.columns.permissions": "Oprávnenia",
   "identity.roles.columns.users": "Používatelia",

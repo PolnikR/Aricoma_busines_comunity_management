@@ -56,8 +56,6 @@ function ClientDetailRows({ client }: { client: ClientRecord }) {
       <DetailRow label={t('identity.clients.fields.clientId')} value={<span className="font-mono">{client.clientId}</span>} />
       <DetailRow label={t('identity.clients.fields.displayName')} value={client.displayName || '—'} />
       <DetailRow label={t('identity.clients.fields.protocol')} value={client.protocol || '—'} />
-      <DetailRow label={t('identity.clients.fields.rootUrl')} value={client.rootUrl ? <span className="font-mono">{client.rootUrl}</span> : '—'} />
-      <DetailRow label={t('identity.clients.fields.homeUrl')} value={client.homeUrl ? <span className="font-mono">{client.homeUrl}</span> : '—'} />
       <DetailRow label={t('identity.clients.fields.status')} value={<ClientStatusBadge client={client} />} />
       <DetailRow label={t('identity.clients.fields.type')} value={<ClientTypeBadge isPublicClient={client.isPublicClient} />} />
       <DetailRow
@@ -74,7 +72,7 @@ function ClientDetailRows({ client }: { client: ClientRecord }) {
 
 function ClientDetailLoading() {
   const { t } = useTranslation()
-  const labels = ['id', 'clientId', 'displayName', 'protocol', 'rootUrl', 'homeUrl', 'status', 'type', 'roles']
+  const labels = ['id', 'clientId', 'displayName', 'protocol', 'status', 'type', 'roles']
   return (
     <dl className="px-5 py-2" aria-busy="true" aria-label={t('identity.clients.detail.loading')}>
       {labels.map(field => (
