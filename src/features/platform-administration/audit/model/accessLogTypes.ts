@@ -11,6 +11,9 @@ export interface AccessLogRequestRecord {
   timestamp?: string
   method: string
   path: string
+  queryString?: string
+  userAgent?: string
+  referer?: string
   status: number
   durationMs: number
   requestBody: unknown
