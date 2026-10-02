@@ -179,7 +179,11 @@ describe('UsersSection', () => {
 
     await userEvent.click(screen.getByRole('row', { name: 'Open user Alice Smith' }))
     const dialog = screen.getByRole('dialog', { name: 'User detail' })
-    expect(within(dialog).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Close user detail'])
+    expect(within(dialog).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['User help', 'Close user detail'])
+    await userEvent.click(within(dialog).getByRole('button', { name: 'User help' }))
+    expect(within(dialog).getByRole('dialog', { name: 'Where users come from' })).toHaveTextContent('Roles')
+    await userEvent.keyboard('{Escape}')
+    expect(screen.getByRole('dialog', { name: 'User detail' })).toBeInTheDocument()
     expect(within(dialog).queryByRole('button', { name: /edit|delete/i })).not.toBeInTheDocument()
 
     await userEvent.click(within(dialog).getByRole('button', { name: 'Close user detail' }))

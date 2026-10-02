@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Badge } from '@/shared/components/badge/Badge'
 import {
@@ -162,6 +163,7 @@ export function UsersSection() {
           <UserStatusBadge key="status" status={selected.status} />,
         ] : []}
         subtitle={selected?.username}
+        headerActions={<KeyedHelpPopover helpKey="identity.users.help" sections={['roles', 'status']} />}
         ariaLabel={t('identity.users.drawer.ariaLabel')}
         closeLabel={t('identity.users.drawer.close')}
         resizeLabel={t('drawer.resize')}

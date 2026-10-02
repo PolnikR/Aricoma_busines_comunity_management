@@ -1,5 +1,6 @@
 import { DetailDrawer, DetailDrawerSection, DetailRow } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import type { AccessLogRecord } from '../model/accessLogTypes'
 
 interface AccessLogDetailDrawerProps {
@@ -46,6 +47,7 @@ export function AccessLogDetailDrawer({ record, onClose }: AccessLogDetailDrawer
         t('audit.accessLogs.detail.entity'),
         isRequest ? `${t('audit.accessLogs.detail.status')} ${String(record.status)}` : null,
       ]}
+      headerActions={<KeyedHelpPopover helpKey="audit.accessLogs.help" sections={['status', 'bodies', 'raw']} />}
       ariaLabel={t('audit.accessLogs.detail.ariaLabel')}
       closeLabel={t('audit.accessLogs.detail.close')}
       resizeLabel={t('drawer.resize')}

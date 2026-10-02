@@ -183,6 +183,8 @@ describe('AccessLogsTable', () => {
     await user.click(within(drawer).getByRole('button', { name: 'Request body' }))
     await user.click(within(drawer).getByRole('button', { name: 'Response body' }))
     expect(drawer).toHaveTextContent('force=true')
+    await user.click(within(drawer).getByRole('button', { name: 'Access log help' }))
+    expect(within(drawer).getByRole('dialog', { name: 'What an access log entry is' })).toHaveTextContent('Raw entry')
     expect(drawer).toHaveTextContent('null')
   })
 

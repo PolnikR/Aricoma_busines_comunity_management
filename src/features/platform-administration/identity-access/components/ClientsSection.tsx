@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Badge } from '@/shared/components/badge/Badge'
 import {
@@ -191,6 +192,7 @@ export function ClientsSection() {
           <ClientStatusBadge key="status" client={selected} />,
         ] : []}
         subtitle={selected ? <span className="font-mono">{selected.clientId}</span> : undefined}
+        headerActions={<KeyedHelpPopover helpKey="identity.clients.help" sections={['roles', 'type']} />}
         ariaLabel={t('identity.clients.drawer.ariaLabel')}
         closeLabel={t('identity.clients.drawer.close')}
         resizeLabel={t('drawer.resize')}

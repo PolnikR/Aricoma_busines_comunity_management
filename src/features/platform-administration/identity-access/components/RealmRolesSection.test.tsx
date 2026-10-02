@@ -178,7 +178,9 @@ describe('RealmRolesSection', () => {
     expect(screen.queryByRole('button', { name: /create|add|edit|delete|assign|remove|actions/i })).not.toBeInTheDocument()
     const drawer = await openRole('platform-admin')
     const dialog = screen.getByRole('dialog', { name: 'Application role detail' })
-    expect(drawer.getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Close application role detail'])
+    expect(drawer.getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Application role help', 'Close application role detail'])
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Application role help' }))
+    expect(within(dialog).getByRole('dialog', { name: 'What an application role is' })).toHaveTextContent('Permissions')
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: /associated roles|attributes|users in role/i })).not.toBeInTheDocument()
 

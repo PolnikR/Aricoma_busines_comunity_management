@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Badge } from '@/shared/components/badge/Badge'
 import {
@@ -136,6 +137,7 @@ export function RealmRolesSection() {
           selected.clientId ? <Badge key="client" color="light" size="sm">{selected.clientId}</Badge> : null,
         ] : []}
         subtitle={(selected?.description?.trim() ?? '') || undefined}
+        headerActions={<KeyedHelpPopover helpKey="identity.roles.help" sections={['permissions', 'users', 'client']} />}
         ariaLabel={t('identity.roles.drawer.ariaLabel')}
         closeLabel={t('identity.roles.drawer.close')}
         resizeLabel={t('drawer.resize')}
