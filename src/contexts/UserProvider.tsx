@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
-import { setCurrentUser } from '@/shared/api/currentUser'
+import { useState } from 'react'
 import { UserContext, type User } from './UserContext'
 
 // No auth yet: a single hardcoded admin user. When auth lands, seed this from
@@ -13,11 +12,6 @@ interface UserProviderProps {
 
 export function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<User>(DEFAULT_USER)
-
-  // Write through to the non-React bridge so apiFetch sees the current user.
-  useEffect(() => {
-    setCurrentUser(user)
-  }, [user])
 
   return (
     <UserContext.Provider value={{ user, setUser }}>
