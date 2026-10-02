@@ -657,7 +657,7 @@ Detailné kritériá, súbory a commit hranice sú v `tasks/detail-drawer-model-
 ### Fáza 2: Referencia
 
 - Task 4: Recovery Groups → Model C
-- Task 5 (voliteľný, vyžaduje súhlas): shared `HelpPopover` + help v Recovery Groups (z prototypu)
+- Task 5 (voliteľný, vyžaduje súhlas): shared `HelpPopover` + help v Recovery Groups (z prototypu) — doplnený 2026-10-02 (`ad40ceb7`), nemodálny dialog renderovaný v DOM drawera
 - **Checkpoint B:** browser matica na Recovery Groups, review s človekom
 
 ### Fáza 3: Rollout

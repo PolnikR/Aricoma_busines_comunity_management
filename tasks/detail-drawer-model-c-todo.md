@@ -311,9 +311,31 @@ footer nové sloty.
 **Závislosti:** T1–T3. **Rozsah / riziko:** M / stredné. **Commit:**
 `feat: Recovery groups drawer uses Model C sections`.
 
-### Task 5 (voliteľný, iba so súhlasom): shared `HelpPopover` + relation help ⏭️
+### Task 5 (voliteľný, iba so súhlasom): shared `HelpPopover` + relation help ✅
 
-**Stav:** preskočené ako voliteľné (pokyn používateľa 2026-10-01). Model C funguje bez neho.
+**Stav:** pôvodne preskočený ako voliteľný (2026-10-01). Doplnený na výslovnú požiadavku
+používateľa 2026-10-02, commit `ad40ceb7` (`feat: add Recovery Group help popover`). Jediný
+consumer je Recovery Groups drawer, iné drawery otáznik nemajú.
+
+**Implementácia:**
+
+- `src/shared/components/help-popover/HelpPopover.tsx` + test, `HelpIcon` v
+  `src/shared/icons/Icons.tsx`. Bez barrelu, rovnako ako `modal`, `badge` a `button`.
+- `RecoveryGroupHelp.tsx` dodáva iba obsah do shared shellu. Je zapojený cez `headerActions`
+  v `RecoveryGroupsTable.tsx`.
+- 14 nových kľúčov `recoveryGroups.help.*` v en/cs/sk: trigger label, title, close, intro,
+  Local protection, Remote protection, FlashCopy, Metro Mirror, Orchestration.
+- **Accessibility pattern:** nemodálny `role="dialog"` s `aria-labelledby` na nadpis.
+  - Otvára sa kliknutím, ostáva otvorený a obsahuje close tlačidlo, takže nejde o `tooltip`
+    (ten je hover/focus a bez interaktívneho obsahu).
+  - Trigger má `aria-haspopup="dialog"`, `aria-expanded` a `aria-controls`.
+  - Po otvorení ide focus na panel. Escape, close tlačidlo a druhý klik na trigger vrátia focus
+    na trigger. Klik mimo zatvorí panel.
+  - Escape je zastavený, takže drawer ostáva otvorený.
+- **Pozícia:** render v DOM drawera (bez portálu) s `absolute` pod triggerom. Ostáva tak vo
+  focus trape aj v `aria-modal` podstrome. Drawer nemá `overflow`, takže panel neoreže.
+  Horizontálne sa posunie do viewportu (8 px okraj) a výška sa obmedzí na priestor pod
+  triggerom. Portál do `body` (vzor `FlashSystemHostBadge`) by panel vyňal z focus trapu.
 
 **Cieľ:** Preniesť `HelpPopover` a `RecoveryGroupRelationHelp` z prototypu `3eb0fd0a` do
 `headerActions` Recovery Groups.
@@ -328,13 +350,24 @@ footer nové sloty.
 
 **Akceptačné kritériá:**
 
-- [ ] Popover sa otvára kliknutím.
-- [ ] Escape zavrie iba popover a nie drawer, focus sa vráti na otáznik a klik mimo popover
+- [x] Popover sa otvára kliknutím.
+- [x] Escape zavrie iba popover a nie drawer, focus sa vráti na otáznik a klik mimo popover
       zavrie.
-- [ ] Texty sú v L.
+- [x] Texty sú v L.
 
 **Testy:** HelpPopover (otvorenie, zatvorenie, outside click, Escape nezavrie drawer) + jeden
 test v RecoveryGroupsTable. V.
+
+**Výsledok verifikácie (commit `ad40ceb7`):**
+
+- [x] `HelpPopover.test.tsx` 9/9, `RecoveryGroupsTable.test.tsx` 39/39 (nový test: otáznik v
+      title row, otvorenie, obsah, Escape zavrie iba help, focus na trigger, close drawera).
+- [x] `src/features/recovery-plans/recovery-groups` + `src/shared/components/data-table` +
+      `help-popover`: 38/38 súborov, 356/356 testov; locale testy 4/4.
+- [x] eslint (6 súborov), `npx tsc -p tsconfig.app.json --noEmit`, `git diff --check`: OK.
+- [ ] **Browser (390×844, 1366×768, light a dark): pending.** Keycloak session v Edge (CDP
+      9333) cez noc vypršala a prihlásenie je manuálne. Po prihlásení spustiť
+      `node help.mjs` a `node help.mjs --dark` zo scratchpadu session `4c3e5949-…`.
 
 **Závislosti:** T4. **Rozsah / riziko:** M / nízke. **Commit:**
 `feat: relation help in the recovery group drawer`.
