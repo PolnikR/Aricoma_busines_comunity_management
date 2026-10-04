@@ -12,6 +12,7 @@ ktoré používajú sekcie:
    sekcie, nie stav**. Používa sa malá spoločná paleta 6 akcentov s pevným významom.
 
 Schválený vizuál: prototyp `drawer-sections-proposal.html`, variant A (2026-10-04).
+Plán schválený používateľom s úpravami 1–5 (2026-10-04), zapracované nižšie.
 Backend, API ani `src/generated/**` sa nemenia.
 
 ## Rozhodnutia
@@ -28,8 +29,12 @@ Backend, API ani `src/generated/**` sa nemenia.
   na jednom mieste.
 - **Iba existujúce tokeny, žiadne hex:** `accent`, `brand-*`, `theme-purple-500`,
   `theme-pink-500`, `orange-*`, `gray-*` z `src/index.css`. Statusové rodiny `success`,
-  `warning` a `error` sa nepoužijú.
-- **Ikony iba z `src/shared/icons/Icons.tsx`,** žiadna nová knižnica. Prop `icon` je
+  `warning` a `error` sa nepoužijú; `warning-*` tokeny sú zakázané.
+- **Orange iba štrukturálne:** `configuration` je orange výhradne ako akcentový pruh
+  a chip ikony, nikdy ako text, status ani warning badge. Gray je iba pre `technical`.
+- **Ikony iba z `src/shared/icons/Icons.tsx`,** žiadna nová knižnica. Doplnia sa tam
+  `DiskIcon`, `CopyIcon` a `NetworkIcon` v rovnakom štýle ako existujúce ikony (`viewBox 0 0
+  20 20`, `fill="none"`, `stroke="currentColor"`, `strokeWidth 1.5`, `aria-hidden`). Prop `icon` je
   komponent (`ComponentType<SVGProps<SVGSVGElement>>`), aby veľkosť a farbu určoval shared
   komponent.
 - **Fallback:** sekcia bez `accent` a `icon` vyzerá ako dnes (bez pruhu a chipu). Ikona bez
@@ -54,37 +59,35 @@ výšku čitateľne (pozri riziká).
 | `accent` | Význam | Token (light / dark) | Sekcie |
 |---|---|---|---|
 | `overview` | identita, súhrn, všeobecné údaje | `accent` | VM Overview, Flash Identity, Power Summary, Access log Request, Recovery Overview ×2 |
-| `compute` | výpočtové a workload zdroje | `brand-500` / `brand-400` | Power Processor & memory, Power Network, Power Virtual I/O, Recovery Inventory ×2 |
+| `infrastructure` | výpočtové, sieťové a workload zdroje | `brand-500` / `brand-400` | Power Processor & memory, Power Network, Power Virtual I/O, Recovery Inventory ×2 |
 | `storage` | disky, volumes, pooly, umiestnenie | `theme-purple-500` | VM Disks, VM Backing Storage Info, Flash Placement and capacity, Flash Pool, Power Storage |
 | `protection` | kópie, snapshoty, replikácia | `theme-pink-500` | Flash Copy relationships |
-| `configuration` | konfigurácia, správanie, orchestrácia | `orange-500` / `orange-400` | Flash State and behavior, Recovery Orchestration ×2 |
-| `technical` | raw / technické dáta | `gray-500` / `gray-400` | Access log Request body, Response body, Raw entry |
+| `configuration` | konfigurácia, správanie, orchestrácia (iba pruh a chip) | `orange-500` / `orange-400` | Flash State and behavior, Recovery Orchestration ×2 |
+| `technical` | raw / technické dáta (jediné použitie gray) | `gray-500` / `gray-400` | Access log Request body, Response body, Raw entry |
 
-Ikony (všetky existujú v `Icons.tsx`):
+Ikony (z `Icons.tsx`; *nové* sa doplnia v Task 1):
 
 | Sekcia | Ikona |
 |---|---|
 | Overview, Summary, Identity, Request | `GridIcon` |
 | Processor & memory | `CpuIcon` |
-| Network | `PlugIcon` |
+| Network | *`NetworkIcon`* |
 | Virtual I/O | `ServerIcon` |
 | Recovery Inventory | `ServerIcon` |
-| Disks | `ServerIcon` |
+| Disks | *`DiskIcon`* |
 | Backing Storage Info, Placement and capacity, Pool, Power Storage | `LayersIcon` |
-| Copy relationships | `RefreshIcon` |
+| Copy relationships | *`CopyIcon`* |
 | State and behavior | `SettingsIcon` |
 | Orchestration | `ExecutionIcon` |
 | Request body, Response body, Raw entry | `ApiIcon` |
 
-V `Icons.tsx` chýbajú ikony disku, databázy, kópie a siete. Mapovanie vyššie preto používa
-najbližšie existujúce ikony (otvorená otázka 1).
 
 ## 3. Zmena API
 
 ```ts
 // DetailDrawerSection.tsx
 export type DetailDrawerSectionAccent =
-  | 'overview' | 'compute' | 'storage' | 'protection' | 'configuration' | 'technical'
+  | 'overview' | 'infrastructure' | 'storage' | 'protection' | 'configuration' | 'technical'
 
 interface DetailDrawerSectionProps {
   title: string
@@ -113,16 +116,20 @@ Implementácia:
   Pri sekcii je `data-accent` kvôli testom a debugovaniu.
 - Ikona je `aria-hidden` v chipe 24×24, samotná ikona má 14 px. Accessible name tlačidla
   ostáva iba `title`.
-- Sekcia je vždy `flex min-h-0 flex-col`: zatvorená `shrink-0`, otvorená `shrink`. Panel
-  má `min-h-0 overflow-y-auto custom-scrollbar`. V starom (blokovom) tele sa tieto triedy
-  neprejavia.
-- Pri `bodyLayout="sections"` je telo `flex min-h-0 flex-1 flex-col overflow-y-auto`.
-  Sekcie sa zmenšia do dostupnej výšky. `overflow-y-auto` na tele ostáva iba ako poistka,
-  ak sa hlavičky nezmestia.
-- Wrappery v telách drawerov musia byť súčasťou flex reťazca:
-  - VM `<div key className="@container/vm-detail">` dostane `flex min-h-0 flex-col`
-    (container query musí ostať).
-  - Recovery `<div key>` sa zmení na `Fragment key`.
+- **Flex contract** (cieľ: hlavička sekcie je vždy viditeľná, skroluje iba jej obsah):
+
+  | Prvok | Triedy |
+  |---|---|
+  | telo draweru pri `bodyLayout="sections"` | `flex min-h-0 flex-1 flex-col overflow-y-auto` |
+  | sekcia (`section`) | `flex min-h-0 flex-col`; zatvorená `shrink-0`, otvorená `shrink` |
+  | hlavička (`h3`) | `shrink-0` |
+  | otvorený panel (`role="region"`) | `flex-1 min-h-0 overflow-y-auto custom-scrollbar` |
+  | VMware wrapper `@container/vm-detail` | `flex min-h-0 flex-1 flex-col` (container query ostáva) |
+  | Recovery wrapper `<div key>` | nahradiť `Fragment key` |
+
+  `overflow-y-auto` na tele je iba poistka pre prípad, keď sa nezmestia ani hlavičky.
+  V default (blokovom) tele sa flex triedy sekcie neprejavia, takže 13 drawerov bez
+  `bodyLayout="sections"` sa správa ako dnes.
 
 ## 4. Testy
 
@@ -143,8 +150,13 @@ Feature (iba kde test súbor existuje):
 
 - `VirtualMachineDetailPanel.test.tsx`, `RecoveryApplicationsTable.test.tsx`,
   `RecoveryGroupsTable.test.tsx`: sekcie majú očakávaný `data-accent`
-- FlashSystem, IBM Power a Access log nemajú test súbor drawera. Overia sa cez typecheck a
-  v prehliadači; nové test súbory sa iba kvôli akcentom nezakladajú (otvorená otázka 2).
+- Nové malé focused test súbory, ktoré overia `bodyLayout="sections"` (telo je flex
+  stĺpec) a očakávané `data-accent` sekcií:
+  - `FlashSystemVolumeDetailPanel.test.tsx`
+  - `IbmPowerDetailPanel.test.tsx`
+  - `AccessLogDetailDrawer.test.tsx`
+- `Icons.tsx`: nové ikony sa overia typecheckom a renderom v testoch sekcií (`aria-hidden`
+  SVG v chipe).
 
 Prehliadač: 1366×768 a 390 px, light aj dark. Overiť VM s viacerými volumes, IBM Power
 s 5 otvorenými sekciami a Access log s veľkým body.
@@ -156,15 +168,11 @@ s 5 otvorenými sekciami a Access log s veľkým body.
 | IBM Power má 5 sekcií otvorených naraz, na nízkom viewporte budú tesné | Stredný | Proporcionálne zmenšenie a poistka v podobe scrollu tela; v prehliadači zvážiť menej `defaultOpen` |
 | Access log `pre` má vlastné `max-h-80 overflow-auto`, takže vznikne vnorený scroll | Nízky | Ponechať; prípadne odstrániť `max-h-80` až po kontrole v prehliadači |
 | Sticky `TableHeader` vo VM Disks je teraz relatívny k panelu | Nízky | Je to žiaduce; overiť v prehliadači |
-| `orange` je vizuálne blízko `warning` | Stredný | Iba pruh a chip, nikdy text ani badge; alternatíva `gray` (otvorená otázka 3) |
+| `orange` je vizuálne blízko `warning` | Stredný | Rozhodnuté: orange ostáva, iba pruh a chip, nikdy text ani badge; `warning-*` zakázané |
 | Tailwind nevygeneruje dynamické triedy | Stredný | Iba statická mapa celých class stringov |
 | Wrapper bez flex triedy rozbije layout sekcií | Stredný | Test `DetailDrawer` a kontrola všetkých 6 drawerov v prehliadači |
 
 ## Otvorené otázky
 
-1. Doplniť do `Icons.tsx` 3 chýbajúce ikony v rovnakom štýle (`DiskIcon` pre Disks,
-   `CopyIcon` pre Copy relationships, `NetworkIcon` pre Network)? Je to ten istý icon
-   systém, nie nová knižnica. Inak ostane mapovanie iba z existujúcich ikon.
-2. Stačí pri FlashSystem, IBM Power a Access log overenie typecheckom a v prehliadači, alebo
-   pre ne založiť malé test súbory?
-3. `configuration` = `orange`, alebo radšej `gray` (a `technical` tiež `gray`)?
+Žiadne. Odpovede z 2026-10-04: ikony doplniť (1), test súbory pre tri drawery založiť (2),
+`configuration` ostáva orange (3).
