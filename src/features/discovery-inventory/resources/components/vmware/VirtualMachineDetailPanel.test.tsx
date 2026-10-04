@@ -83,7 +83,9 @@ function snapshots(overrides: Partial<StorageVolume['snapshots']> = {}): Storage
 
 function volume(overrides: Partial<StorageVolume> = {}): StorageVolume {
   return {
-    naaId: 'naa.60050763808104d94000000000000016',
+    key: 'naa.60050763808104d94000000000000016',
+    naa: 'naa.60050763808104d94000000000000016',
+    volumeId: '1',
     id: '1',
     name: 'V5000_VOLUME02',
     volumeName: 'V5000_VOLUME02',
@@ -244,8 +246,8 @@ describe('VirtualMachineDetailPanel resize', () => {
 
   it('falls back from volume name to name to id for the volume heading', async () => {
     const container = await openBackingStorage([
-      volume({ naaId: 'naa.a', volumeName: '', name: 'raw-name' }),
-      volume({ naaId: 'naa.b', volumeName: '', name: '', id: '42' }),
+      volume({ key: 'naa.a', naa: 'naa.a', volumeName: '', name: 'raw-name' }),
+      volume({ key: 'naa.b', naa: 'naa.b', volumeName: '', name: '', id: '42' }),
     ])
 
     expect(within(container).getByRole('heading', { name: 'raw-name' })).toBeInTheDocument()
@@ -255,7 +257,7 @@ describe('VirtualMachineDetailPanel resize', () => {
   it('shows every backing volume of the VM', async () => {
     const container = await openBackingStorage([
       volume(),
-      volume({ naaId: 'naa.second', volumeName: 'V5000_VOLUME03' }),
+      volume({ key: 'naa.second', naa: 'naa.second', volumeName: 'V5000_VOLUME03' }),
     ])
 
     expect(within(container).getByRole('region', { name: 'V5000_VOLUME02' })).toBeInTheDocument()

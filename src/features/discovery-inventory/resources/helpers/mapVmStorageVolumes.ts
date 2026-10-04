@@ -9,9 +9,9 @@ import type {
   VdisksByVmResponseOutput as VdisksPayload,
 } from '@/generated/query/zod'
 
-// The backend adds storage_provider_id and IO_group_name to each volume; the spec
-// does not list them, so they arrive as unlisted keys kept by validatingMutator.
-type StorageVolumeWire = StorageVolumePayload & Partial<Record<'storage_provider_id' | 'IO_group_name', unknown>>
+// The backend adds storage_provider_id, IO_group_name and volume_id to each volume; the
+// spec does not list them, so they arrive as unlisted keys kept by validatingMutator.
+type StorageVolumeWire = StorageVolumePayload & Partial<Record<'storage_provider_id' | 'IO_group_name' | 'volume_id', unknown>>
 
 const toText = (value: unknown) => (typeof value === 'string' ? value : '')
 
@@ -31,10 +31,13 @@ function mapMapping(raw: StorageVolumeMappingPayload): StorageVolumeMapping {
   }
 }
 
-function mapVolume(naaId: string, raw: StorageVolumeWire): StorageVolume {
+function mapVolume(key: string, raw: StorageVolumeWire): StorageVolume {
   const snapshots = raw.sanpshosts
   return {
-    naaId,
+    key,
+    // VMware keys volumes by NAA; IBM Power uses an internal storage_provider_id:volume_id key.
+    naa: /^naa\./i.test(key) ? key : null,
+    volumeId: toText(raw.volume_id) || raw.id,
     id: raw.id,
     name: raw.name,
     volumeName: raw.volume_name,
@@ -63,6 +66,6 @@ export function mapVdisks(payload: VdisksPayload): VmStorageVolumes {
     vmName: payload.name,
     countVm: payload.count_vm,
     countIbm: payload.count_ibm,
-    volumes: Object.entries(payload.vdisks).map(([naaId, raw]) => mapVolume(naaId, raw)),
+    volumes: Object.entries(payload.vdisks).map(([key, raw]) => mapVolume(key, raw)),
   }
 }

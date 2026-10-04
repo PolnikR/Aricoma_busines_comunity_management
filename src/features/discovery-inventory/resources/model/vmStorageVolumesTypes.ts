@@ -21,7 +21,12 @@ export interface StorageVolumeSnapshots {
 }
 
 export interface StorageVolume {
-  naaId: string
+  // The vdisks object key: an NAA for VMware, an internal composite key for IBM Power.
+  // Used only as identity; never rendered.
+  key: string
+  // The key when it is an NAA, otherwise null.
+  naa: string | null
+  volumeId: string
   id: string
   name: string
   volumeName: string

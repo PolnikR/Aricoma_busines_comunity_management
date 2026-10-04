@@ -92,7 +92,7 @@ function BackingStorageVolume({ volume, providers }: { volume: StorageVolume; pr
           value={provider ? provider.name : display(volume.storageProviderId)}
           secondary={provider ? <span className="font-mono">{provider.id}</span> : undefined}
         />
-        <DetailRow label={t(`${prefix}.naa`)} value={<span className="font-mono">{display(volume.naaId)}</span>} />
+        <DetailRow label={t(`${prefix}.naa`)} value={<span className="font-mono">{display(volume.naa ?? '')}</span>} />
         <DetailRow label={t(`${prefix}.capacity`)} value={display(volume.capacity)} />
         <DetailRow label={t(`${prefix}.status`)} value={display(volume.status)} />
         <DetailRow label={t(`${prefix}.pool`)} value={display(volume.pool)} />
@@ -166,7 +166,7 @@ export function BackingStorageInfo({ volumes, isLoading, isError, isFetching, on
   let content
   if (isLoading) content = <BackingStorageSkeleton />
   else if (volumes.length === 0) content = <p className="p-4 text-[12px] @min-[80rem]/vm-detail:text-[13px] text-text-subtle">{t(`${prefix}.empty`)}</p>
-  else content = volumes.map(volume => <BackingStorageVolume key={volume.naaId} volume={volume} providers={providers} />)
+  else content = volumes.map(volume => <BackingStorageVolume key={volume.key} volume={volume} providers={providers} />)
 
   return (
     <DataTableRequestState
