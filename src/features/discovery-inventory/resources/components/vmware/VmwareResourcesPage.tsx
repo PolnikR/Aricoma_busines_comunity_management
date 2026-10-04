@@ -241,6 +241,7 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
       <VirtualMachineDetailPanel
         virtualMachine={selectedVirtualMachine}
         open={drawerOpen}
+        providers={providers}
         onClose={() => {
           setDrawerOpen(false)
           setSelectedId(null)

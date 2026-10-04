@@ -1,23 +1,19 @@
 import type { VirtualMachine } from '../../types/virtualMachineTypes'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
-import { formatStartTime } from '@/shared/utils/dateFormat'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useVdisksByVm } from '../../hooks/useVmStorageVolumes'
-import type { StorageVolumeMapping } from '../../model/vmStorageVolumesTypes'
 import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
 import {
-  DataTable,
-  DataTableRequestState,
-  SkeletonBlock,
   DetailDrawer,
   DetailDrawerSection,
   DetailRow,
   DetailStat,
-  type ColumnDef,
 } from '@/shared/components/data-table'
 import { createVmwareDetailFields } from '../../config/vmwareDetailFields'
+import { BackingStorageInfo } from './BackingStorageInfo'
 
 function truncateFilePath(path: string): string {
   if (path.length <= 50) return path
@@ -34,12 +30,15 @@ interface VirtualMachineDetailPanelProps {
   virtualMachine: VirtualMachine | null
   open: boolean
   onClose: () => void
+  // Already loaded providers, used to name the backing storage provider.
+  providers?: ProviderRecord[]
 }
 
 export function VirtualMachineDetailPanel({
   virtualMachine,
   open,
   onClose,
+  providers = [],
 }: VirtualMachineDetailPanelProps) {
   const { t } = useTranslation()
   // The backend resolves backing storage from the VM and compute provider.
@@ -53,53 +52,10 @@ export function VirtualMachineDetailPanel({
     virtualMachine?.name ?? '',
     virtualMachine?.providerId,
   )
-  const snapshotVolumes = vdisks?.volumes ?? []
-  const snapshotMappings = snapshotVolumes.flatMap(volume => volume.snapshots.sourceMappings)
-  const snapshotCounts = snapshotVolumes.reduce(
-    (counts, volume) => ({
-      source: counts.source + volume.snapshots.sourceMappings.length,
-      target: counts.target + volume.snapshots.targetMappings.length,
-    }),
-    { source: 0, target: 0 },
-  )
-
   const headerCell = 'whitespace-nowrap px-2 @min-[80rem]/vm-detail:px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle'
   const cell = 'px-2 @min-[80rem]/vm-detail:px-3 py-2.5 text-[12px] @min-[80rem]/vm-detail:text-[13px] text-text-secondary align-top'
   const num = `${cell} text-right tabular-nums`
   const overviewFields = createVmwareDetailFields(t)
-  const snapshotColumns: ColumnDef<StorageVolumeMapping>[] = [
-    {
-      id: 'source',
-      header: t('details.snapshotSource'),
-      cell: mapping => (
-        <span className="block max-w-45 truncate" title={mapping.sourceVdiskName}>
-          {mapping.sourceVdiskName}
-        </span>
-      ),
-    },
-    {
-      id: 'target',
-      header: t('details.snapshotTarget'),
-      cell: mapping => (
-        <span className="block max-w-45 truncate" title={mapping.targetVdiskName}>
-          {mapping.targetVdiskName}
-        </span>
-      ),
-    },
-    { id: 'status', header: t('details.snapshotStatus'), cell: mapping => mapping.status },
-    {
-      id: 'progress',
-      header: t('details.snapshotProgress'),
-      cell: mapping => `${mapping.cleanProgress}%`,
-      align: 'right',
-    },
-    {
-      id: 'created',
-      header: t('details.snapshotCreated'),
-      cell: mapping => formatStartTime(mapping.startTime),
-    },
-  ]
-
   return (
     <DetailDrawer
       open={open}
@@ -207,42 +163,15 @@ export function VirtualMachineDetailPanel({
                 </div>
               </DetailDrawerSection>
 
-              <DetailDrawerSection title={t('drawer.tabs.snapshots')} flush>
-                <div className="flex flex-col">
-                  <DataTableRequestState
-                      error={vdisksError ? {
-                        title: t('resources.common.loadFailed'),
-                        retryLabel: t('buttons.retry'),
-                        isRetrying: vdisksFetching,
-                        onRetry: () => { void refetchVdisks() },
-                      } : null}
-                    >
-                      <>
-                        <div className="border-b border-border px-4 py-3">
-                          <div className="flex gap-2">
-                            <span className="inline-flex items-center rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
-                              {vdisksLoading ? <SkeletonBlock className="mr-1 inline-block h-3 w-5" /> : snapshotCounts.source} {t('details.sourceMappings')}
-                            </span>
-                            <span className="inline-flex items-center rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
-                              {vdisksLoading ? <SkeletonBlock className="mr-1 inline-block h-3 w-5" /> : snapshotCounts.target} {t('details.targetMappings')}
-                            </span>
-                          </div>
-                        </div>
-                        <DataTable<StorageVolumeMapping>
-                          columns={snapshotColumns}
-                          rows={snapshotMappings}
-                          isLoading={vdisksLoading}
-                          loadingRowCount={4}
-                          rowKey={(mapping, index) => `${mapping.id}-${String(index)}`}
-                          minWidthClassName="min-w-180"
-                          emptyContent={t('pages.virtualMachines.detail.noSnapshots')}
-                          ariaLabel={vdisksLoading ? t('pages.virtualMachines.detail.loadingSnapshots') : t('pages.virtualMachines.detail.snapshotsTable')}
-                          headerCellClassName={headerCell}
-                          cellClassName={cell}
-                        />
-                      </>
-                  </DataTableRequestState>
-                </div>
+              <DetailDrawerSection title={t('drawer.sections.backingStorageInfo')} flush>
+                <BackingStorageInfo
+                  volumes={vdisks?.volumes ?? []}
+                  isLoading={vdisksLoading}
+                  isError={vdisksError}
+                  isFetching={vdisksFetching}
+                  onRetry={() => { void refetchVdisks() }}
+                  providers={providers}
+                />
               </DetailDrawerSection>
         </div>
       ) : null}

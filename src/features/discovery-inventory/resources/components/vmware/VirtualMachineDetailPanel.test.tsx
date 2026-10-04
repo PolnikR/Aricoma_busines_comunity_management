@@ -1,10 +1,12 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
 import type { VirtualMachine } from '../../types/virtualMachineTypes'
-import type { VmStorageVolumes } from '../../model/vmStorageVolumesTypes'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import type { StorageVolume, StorageVolumeMapping, VmStorageVolumes } from '../../model/vmStorageVolumesTypes'
+import { formatStartTime } from '@/shared/utils/dateFormat'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 const useVdisksByVmMock = vi.hoisted(() => vi.fn<() => {
@@ -68,6 +70,80 @@ function renderWithQueryClient(element: React.ReactElement) {
   return render(<QueryClientProvider client={queryClient}>{element}</QueryClientProvider>)
 }
 
+function snapshots(overrides: Partial<StorageVolume['snapshots']> = {}): StorageVolume['snapshots'] {
+  return {
+    hasSnapshots: false,
+    snapshotCount: 0,
+    isSnapshot: false,
+    sourceMappings: [],
+    targetMappings: [],
+    ...overrides,
+  }
+}
+
+function volume(overrides: Partial<StorageVolume> = {}): StorageVolume {
+  return {
+    naaId: 'naa.60050763808104d94000000000000016',
+    id: '1',
+    name: 'V5000_VOLUME02',
+    volumeName: 'V5000_VOLUME02',
+    capacity: '1.00TB',
+    status: 'degraded',
+    pool: 'Pool0',
+    ioGroupName: 'io_grp0',
+    storageProviderId: 'ibm-flashsystem-01',
+    type: 'striped',
+    protocol: 'scsi',
+    vdiskUid: '60050763808104D94000000000000016',
+    copyCount: '1',
+    fcMapCount: '0',
+    snapshots: snapshots(),
+    ...overrides,
+  }
+}
+
+function mapping(status: string, cleanProgress: string): StorageVolumeMapping {
+  return {
+    id: 'fcmap0',
+    name: 'fcmap0',
+    sourceVdiskId: '1',
+    sourceVdiskName: 'source-volume',
+    targetVdiskId: '7',
+    targetVdiskName: 'target-volume',
+    status,
+    progress: cleanProgress,
+    copyRate: '50',
+    cleanProgress,
+    startTime: '260724200509',
+  }
+}
+
+async function openBackingStorage(volumes: StorageVolume[], providers: ProviderRecord[] = []) {
+  const user = userEvent.setup()
+  useVdisksByVmMock.mockReturnValue({
+    data: { vmName: 'app-server-01', countVm: 1, countIbm: 1, volumes },
+    isLoading: false,
+    isError: false,
+    isFetching: false,
+    refetch: vi.fn().mockResolvedValue(undefined),
+  })
+  renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} providers={providers} />)
+  await user.click(screen.getByRole('button', { name: 'Backing Storage Info' }))
+  return screen.getByRole('region', { name: 'Backing Storage Info' })
+}
+
+// The <dd> next to the <dt> with this label.
+function detailValue(container: HTMLElement, label: string) {
+  return within(container).getByText(label, { selector: 'dt' }).nextElementSibling
+}
+
+function expectMappingRow(table: HTMLElement, status: string, progress: string) {
+  const [, row] = within(table).getAllByRole('row')
+  if (!row) throw new Error('mapping row not rendered')
+  const cells = within(row).getAllByRole('cell').map(cellElement => cellElement.textContent)
+  expect(cells).toEqual(['source-volume', 'target-volume', status, progress, formatStartTime('260724200509')])
+}
+
 describe('VirtualMachineDetailPanel resize', () => {
   afterEach(() => {
     cleanup()
@@ -96,7 +172,7 @@ describe('VirtualMachineDetailPanel resize', () => {
     )
   })
 
-  it('shows Overview open and Disks and Backing storage info collapsed instead of tabs', async () => {
+  it('shows Overview open and Disks and Backing Storage Info collapsed instead of tabs', async () => {
     const user = userEvent.setup()
     renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
     const dialog = screen.getByRole('dialog')
@@ -105,34 +181,131 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(screen.getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByRole('button', { name: 'Disks' })).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByRole('button', { name: 'Disks' })).toHaveAccessibleDescription('Disks: 2')
-    expect(screen.getByRole('button', { name: 'Backing storage info' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: 'Backing Storage Info' })).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByRole('heading', { name: 'app-server-01' }).parentElement?.nextElementSibling).toHaveTextContent(/^Virtual machine/)
     expect(dialog).not.toHaveTextContent('Hard disk 1')
 
     await user.click(screen.getByRole('button', { name: 'Disks' }))
     expect(screen.getByRole('region', { name: 'Disks' })).toHaveTextContent('Hard disk 1')
+  })
+
+  it('explains backing volumes, NAA identity and FlashCopy mappings in the VM help', async () => {
+    const user = userEvent.setup()
+    renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
 
     await user.click(screen.getByRole('button', { name: 'Virtual machine help' }))
-    expect(screen.getByRole('dialog', { name: 'What this virtual machine view shows' })).toHaveTextContent('Backing storage info')
+    const help = screen.getByRole('dialog', { name: 'What this virtual machine view shows' })
+
+    expect(help).toHaveTextContent('Backing Storage Info')
+    expect(help).toHaveTextContent(/storage volumes behind this VM's VMware disks/)
+    expect(help).toHaveTextContent(/NAA/)
+    expect(help).toHaveTextContent(/FlashCopy snapshot mappings/)
   })
 
-  it('shows an empty snapshots table when no volumes are returned', async () => {
-    const user = userEvent.setup()
+  it('shows a volume with its storage details even when it has no snapshots', async () => {
+    const container = await openBackingStorage([volume()])
+    const card = within(container).getByRole('region', { name: 'V5000_VOLUME02' })
 
-    renderWithQueryClient(
-      <VirtualMachineDetailPanel
-        virtualMachine={vm}
-        open
-        onClose={vi.fn()}
-      />,
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Backing storage info' }))
-
-    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(card).toHaveTextContent('Backing storage volume')
+    expect(detailValue(card, 'Backing provider')).toHaveTextContent('ibm-flashsystem-01')
+    expect(detailValue(card, 'NAA')).toHaveTextContent('naa.60050763808104d94000000000000016')
+    expect(detailValue(card, 'Capacity')).toHaveTextContent('1.00TB')
+    expect(detailValue(card, 'Status')).toHaveTextContent('degraded')
+    expect(detailValue(card, 'Pool')).toHaveTextContent('Pool0')
+    expect(detailValue(card, 'I/O group')).toHaveTextContent('io_grp0')
+    expect(detailValue(card, 'Protocol')).toHaveTextContent('scsi')
+    expect(detailValue(card, 'Type')).toHaveTextContent('striped')
+    expect(detailValue(card, 'Snapshot count')).toHaveTextContent('0')
   })
 
-  it('keeps snapshot labels and real table headers visible while values load', async () => {
+  it('renders raw backend values without formatting them', async () => {
+    const container = await openBackingStorage([volume()])
+    const card = within(container).getByRole('region', { name: 'V5000_VOLUME02' })
+
+    for (const text of ['Degraded', 'SCSI', 'Striped', '1.00 TB']) {
+      expect(card).not.toHaveTextContent(text)
+    }
+  })
+
+  it('does not show vdisk_UID as a second identifier', async () => {
+    const container = await openBackingStorage([volume()])
+
+    expect(container).not.toHaveTextContent(/60050763808104D94000000000000016/)
+  })
+
+  it('shows No FlashCopy mappings below the volume details when it has no mappings', async () => {
+    const container = await openBackingStorage([volume()])
+    const card = within(container).getByRole('region', { name: 'V5000_VOLUME02' })
+
+    expect(card).toHaveTextContent(/Type.*FlashCopy \/ Snapshots.*No FlashCopy mappings/)
+    expect(within(card).queryByRole('table')).not.toBeInTheDocument()
+    expect(within(container).queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('falls back from volume name to name to id for the volume heading', async () => {
+    const container = await openBackingStorage([
+      volume({ naaId: 'naa.a', volumeName: '', name: 'raw-name' }),
+      volume({ naaId: 'naa.b', volumeName: '', name: '', id: '42' }),
+    ])
+
+    expect(within(container).getByRole('heading', { name: 'raw-name' })).toBeInTheDocument()
+    expect(within(container).getByRole('heading', { name: '42' })).toBeInTheDocument()
+  })
+
+  it('shows every backing volume of the VM', async () => {
+    const container = await openBackingStorage([
+      volume(),
+      volume({ naaId: 'naa.second', volumeName: 'V5000_VOLUME03' }),
+    ])
+
+    expect(within(container).getByRole('region', { name: 'V5000_VOLUME02' })).toBeInTheDocument()
+    expect(within(container).getByRole('region', { name: 'V5000_VOLUME03' })).toHaveTextContent('naa.second')
+  })
+
+  it('names the backing provider from the loaded providers and keeps its raw ID', async () => {
+    const flashProvider = { id: 'ibm-flashsystem-01', name: 'IBM Flash Source 01', type: 'IBM_FLASHSYSTEM' } as unknown as ProviderRecord
+    const container = await openBackingStorage([volume()], [flashProvider])
+    const value = detailValue(within(container).getByRole('region', { name: 'V5000_VOLUME02' }), 'Backing provider')
+
+    expect(value).toHaveTextContent(/^IBM Flash Source 01ibm-flashsystem-01$/)
+  })
+
+  it('shows only the raw provider ID when the provider is not loaded', async () => {
+    const otherProvider = { id: 'ibm-flashsystem-02', name: 'IBM Flash Target 02', type: 'IBM_FLASHSYSTEM' } as unknown as ProviderRecord
+    const container = await openBackingStorage([volume()], [otherProvider])
+    const value = detailValue(within(container).getByRole('region', { name: 'V5000_VOLUME02' }), 'Backing provider')
+
+    expect(value).toHaveTextContent(/^ibm-flashsystem-01$/)
+  })
+
+  it('shows source FlashCopy mappings in detail under their volume', async () => {
+    const container = await openBackingStorage([volume({ snapshots: snapshots({ sourceMappings: [mapping('copying', '40')] }) })])
+    const card = within(container).getByRole('region', { name: 'V5000_VOLUME02' })
+    const table = within(within(card).getByLabelText('Source FlashCopy mappings of V5000_VOLUME02')).getByRole('table')
+
+    expect(detailValue(card, 'Source mappings')).toHaveTextContent('1')
+    expect(card).not.toHaveTextContent('No FlashCopy mappings')
+    expectMappingRow(table, 'copying', '40%')
+  })
+
+  it('shows target FlashCopy mappings in detail under their volume', async () => {
+    const container = await openBackingStorage([volume({ snapshots: snapshots({ snapshotCount: 1, targetMappings: [mapping('copied', '100')] }) })])
+    const card = within(container).getByRole('region', { name: 'V5000_VOLUME02' })
+    const table = within(within(card).getByLabelText('Target FlashCopy mappings of V5000_VOLUME02')).getByRole('table')
+
+    expect(detailValue(card, 'Target mappings')).toHaveTextContent('1')
+    expect(within(card).queryByLabelText(/^Source FlashCopy/)).not.toBeInTheDocument()
+    expectMappingRow(table, 'copied', '100%')
+  })
+
+  it('shows a backing-storage empty state when no volume was resolved', async () => {
+    const container = await openBackingStorage([])
+
+    expect(container).toHaveTextContent('No backing storage volume was resolved for this virtual machine.')
+    expect(container).not.toHaveTextContent('No FlashCopy mappings')
+  })
+
+  it('shows a backing volume skeleton while the volumes load', async () => {
     const user = userEvent.setup()
     useVdisksByVmMock.mockReturnValue({
       data: undefined,
@@ -142,23 +315,15 @@ describe('VirtualMachineDetailPanel resize', () => {
       refetch: vi.fn().mockResolvedValue(undefined),
     })
 
-    renderWithQueryClient(
-      <VirtualMachineDetailPanel
-        virtualMachine={vm}
-        open
-        onClose={vi.fn()}
-      />,
-    )
+    renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: 'Backing Storage Info' }))
 
-    await user.click(screen.getByRole('button', { name: 'Backing storage info' }))
-
-    expect(screen.getByRole('status', { name: 'Loading snapshots...' })).toBeInTheDocument()
-    expect(screen.getByText('source mappings')).toBeVisible()
-    expect(screen.getByText('target mappings')).toBeVisible()
-    expect(screen.getByRole('columnheader', { name: 'Source' })).toBeVisible()
+    expect(screen.getByRole('status', { name: 'Loading backing storage...' })).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.queryByText('No backing storage volume was resolved for this virtual machine.')).not.toBeInTheDocument()
   })
 
-  it('shows the shared snapshot error state and retries the same request', async () => {
+  it('shows the shared error state and retries the same request', async () => {
     const user = userEvent.setup()
     const refetch = vi.fn().mockResolvedValue(undefined)
     useVdisksByVmMock.mockReturnValue({
@@ -169,23 +334,16 @@ describe('VirtualMachineDetailPanel resize', () => {
       refetch,
     })
 
-    renderWithQueryClient(
-      <VirtualMachineDetailPanel
-        virtualMachine={vm}
-        open
-        onClose={vi.fn()}
-      />,
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Backing storage info' }))
+    renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: 'Backing Storage Info' }))
 
     expect(screen.getByRole('alert')).toHaveTextContent('Resource inventory could not be loaded')
-    expect(screen.queryByLabelText('Snapshot mappings table')).not.toBeInTheDocument()
+    expect(screen.queryByText('No backing storage volume was resolved for this virtual machine.')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Retry' }))
     expect(refetch).toHaveBeenCalledOnce()
   })
 
-  it('shows retrying state without falling through to the empty snapshot table', async () => {
+  it('shows retrying state without falling through to the empty state', async () => {
     const user = userEvent.setup()
     useVdisksByVmMock.mockReturnValue({
       data: undefined,
@@ -195,80 +353,11 @@ describe('VirtualMachineDetailPanel resize', () => {
       refetch: vi.fn().mockResolvedValue(undefined),
     })
 
-    renderWithQueryClient(
-      <VirtualMachineDetailPanel
-        virtualMachine={vm}
-        open
-        onClose={vi.fn()}
-      />,
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Backing storage info' }))
+    renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: 'Backing Storage Info' }))
 
     expect(screen.getByRole('button', { name: 'Retrying' })).toBeDisabled()
-    expect(screen.queryByLabelText('Snapshot mappings table')).not.toBeInTheDocument()
-  })
-
-  it('renders snapshot mappings in an accessible shared data table', async () => {
-    const user = userEvent.setup()
-    useVdisksByVmMock.mockReturnValue({
-      isLoading: false,
-      isError: false,
-      isFetching: false,
-      refetch: vi.fn().mockResolvedValue(undefined),
-      data: {
-        vmName: 'app-server-01',
-        countVm: 1,
-        countIbm: 1,
-        volumes: [{
-          naaId: 'naa.1',
-          id: 'volume-1',
-          name: 'volume-1',
-          volumeName: 'volume-1',
-          capacity: '3.00TB',
-          status: 'online',
-          pool: 'Pool0',
-          type: 'striped',
-          protocol: 'scsi',
-          vdiskUid: 'uid-1',
-          copyCount: '1',
-          fcMapCount: '1',
-          snapshots: {
-            hasSnapshots: true,
-            snapshotCount: 1,
-            isSnapshot: false,
-            sourceMappings: [{
-              id: 'mapping-1',
-              name: 'mapping-1',
-              sourceVdiskId: 'volume-1',
-              sourceVdiskName: 'source-volume',
-              targetVdiskId: 'target-1',
-              targetVdiskName: 'target-volume',
-              status: 'copied',
-              progress: '100',
-              copyRate: '0',
-              cleanProgress: '100',
-              startTime: '260724200509',
-            }],
-            targetMappings: [],
-          },
-        }],
-      },
-    })
-
-    renderWithQueryClient(
-      <VirtualMachineDetailPanel
-        virtualMachine={vm}
-        open
-        onClose={vi.fn()}
-      />,
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Backing storage info' }))
-
-    expect(screen.getByLabelText('Snapshot mappings table')).toBeInTheDocument()
-    expect(screen.getByText('source-volume')).toBeInTheDocument()
-    expect(screen.getByText('target-volume')).toBeInTheDocument()
+    expect(screen.queryByText('No backing storage volume was resolved for this virtual machine.')).not.toBeInTheDocument()
   })
 
   it('resizes the panel via the drag handle and keyboard', () => {
