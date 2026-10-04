@@ -259,3 +259,74 @@ Commit: `feat: show provider relationships in drawer help`
 ## Not run by default
 
 The full `npm test` and `npm run build` are not run (CLAUDE.md §5). C3 is cross-cutting, so its scope is every file that interacts with a "?" help (T8 list) instead of the full suite. The full suite runs only if the T8 list proves incomplete or on request.
+
+---
+
+## Revision 2026-10-04: partner always shown as a full card
+
+C1–C4 are done (`011d0369`, `cdc96f3a`, `c3ab0bea`, `27d4faa5`). This revision drops the "first full, later compact" optimisation, so that every compute row can be read on its own:
+
+```
+[ Compute provider ] → Backing storage → [ Storage provider ] ↔ Partner ↔ [ Partner storage provider ]
+```
+
+A repeated partner is rendered as a full card in every row where it appears. "Other storage relationships" stays: it lists only the partner relationships that no compute row rendered.
+
+### Architecture decisions
+- `PartnerLink.display` is removed. The view model still tracks which partner relationships the compute rows rendered, but only to select `otherStorageRows`, not to change how a partner looks.
+- `PartnerReference` and `PARTNER_ARROW` are removed from `ProviderRelationshipParts.tsx`. The partner is always `RelationshipConnector` + `ProviderRelationshipCard` / `UnavailableProviderCard`, and the full-card grid (`12.5rem_5.75rem_minmax(0,12.5rem)`) is used in every row.
+- The spec is updated first. Template v2 still shows compact references; the spec records that this revision supersedes that part of the template. The template file itself stays as the approved historical reference.
+
+### Tasks
+
+- [ ] **T12. Update spec**
+  - Acceptance:
+    - "Partner repetition" in `docs/superpowers/specs/2026-10-02-provider-relationships-design.md` says the partner is always a full card.
+    - The Structure and Testing Strategy bullets no longer mention first full / later compact.
+    - A note says this supersedes the compact references in template v2.
+  - Verify: `git diff --check`; a grep for `compact` in the spec only matches the `HelpPopover` width and the provider card description.
+  - Files: the spec (1 file). Scope: XS.
+  - Dependencies: none.
+
+- [ ] **T13. View model: always a full partner** (`helpers/buildRelationshipRows.ts` + test)
+  - Do:
+    - Remove `display` from `PartnerLink` and from `linkFrom`.
+    - Keep a `rendered` set filled by the compute rows and used only to filter `otherStorageRows`.
+    - Update the comments.
+  - Acceptance:
+    - The same mutual partner reached from three compute rows gives a `PartnerLink` with `other` set and direction `both` in every row, and the type has no `display`.
+    - "Other storage relationships" still lists only relationships no compute row rendered, unchanged.
+    - The unresolved partner test drops `display` from its `toMatchObject`.
+  - Verify: `npm exec vitest run src/features/providers-connectors/providers/helpers/buildRelationshipRows.test.ts`
+  - Files: `helpers/buildRelationshipRows.ts`, `helpers/buildRelationshipRows.test.ts`. Scope: S.
+  - Dependencies: T12.
+
+- [ ] **T14. Rendering: no compact reference** (`components/ProviderRelationshipsContent.tsx`, `components/ProviderRelationshipParts.tsx` + content test)
+  - Do:
+    - In `BackingTarget`, always use the full-card grid.
+    - `PartnerPart` always renders connector + card.
+    - Delete `PartnerReference`, `PARTNER_ARROW` and the now-unused `PartnerLink` import in Parts.
+  - Acceptance:
+    - The test "shows a mutual partner in full once and as a compact reference afterwards" is replaced by one that checks a partner repeated across several compute rows. In every row the partner is a full card with name, type, role and id, and has a `Partner` connector whose hidden text is "mutual partner".
+    - No `↔ Partner` one-line reference text is rendered.
+    - The other content tests still pass.
+  - Verify: `npm exec vitest run src/features/providers-connectors/providers/components/ProviderRelationshipsContent.test.tsx`
+  - Files: `ProviderRelationshipsContent.tsx`, `ProviderRelationshipParts.tsx`, `ProviderRelationshipsContent.test.tsx`. Scope: S.
+  - Dependencies: T13. T13 changes the `PartnerLink` type, so T13 and T14 land in one commit to keep typecheck green.
+
+### Checkpoint: after T12–T14
+- [ ] `npm exec vitest run src/features/providers-connectors/providers src/locales src/shared/components/help-popover`
+- [ ] `npx eslint <changed .ts/.tsx files> --max-warnings 0`
+- [ ] `npm run typecheck`
+- [ ] `git diff --check`
+- [ ] Commits:
+  - `docs: show provider partner as a full card in every relationship row` (T12)
+  - `feat: always render provider partner as a full card` (T13 + T14)
+- [ ] Manual check in `npm run dev`: in the provider drawer help, rows that share a partner (for example vCenter 01 and vCenter 03 → IBM Flash Source 01) each show the full partner card.
+
+### Risks
+| Risk | Impact | Mitigation |
+|---|---|---|
+| Removing `display` breaks typecheck between tasks | Low | T13 and T14 are one commit, and typecheck runs at the checkpoint |
+| Repeated full cards make the help taller | Low | The help body already scrolls; this is the accepted trade-off for self-contained rows |
+| "Other storage relationships" regresses once the flag is gone | Med | The existing "lists only partner relationships not already shown" test stays unchanged |
