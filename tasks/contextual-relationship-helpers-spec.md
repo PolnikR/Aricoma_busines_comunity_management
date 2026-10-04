@@ -1,6 +1,7 @@
 # Spec: Kontextové relationship helpery v DetailDrawer helpe
 
-Stav: návrh na schválenie (2026-10-04). Kód sa nemení, kým používateľ plán neschváli.
+Stav: schválené s úpravami 1–4 (2026-10-04), čaká na kontrolu aktualizovaných dokumentov.
+Kód sa nemení, kým používateľ kontrolu nepotvrdí.
 Overené voči: FE `spike/ant-design-shell` @ `9976978e` (čistý working tree), BE `abco-be`
 `main` @ `78233ff` (čistý). Plán: `tasks/contextual-relationship-helpers-plan.md`,
 úlohy: `tasks/contextual-relationship-helpers-todo.md`.
@@ -52,8 +53,9 @@ generické „storage partner“ a demo dáta sa nepreberajú).
   pool, I/O group, status, capacity, `snapshots{snapshotCount, sourceMappings, targetMappings}`.
 - VMware disky (`DiscoveredVirtualDisk`) nemajú NAA (mapper ho zahadzuje) → **mapovanie
   disk → NAA sa nedá zobraziť**.
-- `mapPowerInventory` zahadzuje VIOS (produktové pravidlo) → VIOS drawer je dnes z UI
-  nedosiahnuteľný; panel však VIOS vetvu má (otvorená otázka O1).
+- `mapPowerInventory` zahadzuje VIOS (`if (partitionKind === 'VIOS') return []`, produktové
+  pravidlo) → VIOS drawer je z UI nedosiahnuteľný. **VIOS relationship helper nie je v scope**
+  (rozhodnutie 2026-10-04). Existujúca VIOS vetva a testy `IbmPowerDetailPanel` ostávajú bez zmeny.
 
 ### FlashSystem volume (`/get_volumes`)
 - `FlashSystemVolumeResource`: `providerId`, `pool{name, capacity…}`, `resolvedHostMaps
@@ -61,8 +63,9 @@ generické „storage partner“ a demo dáta sa nepreberajú).
   CG), `FC_id`, `FC_name`, `fc_map_count`, `RC_id`, `RC_name`, `RC_change`, `copy_count`.
 - **Nie je dostupné**: cieľ FlashCopy mappingu, remote copy target volume/systém,
   RC consistency group. `partnerProviderId` sa v discovery nepoužíva.
-- Panel dnes nedostáva `providers`; view dostáva iba FLASHCOPY providerov roly. Stránka má
-  plný zoznam → odovzdá sa ďalej (bez nového requestu).
+- Panel dnes nedostáva providerov; `FlashSystemInventoryView.providers` znamená FLASHCOPY
+  providerov roly (`sourceProviders`) a tento význam ostáva. Helper dostane **nový explicitný
+  prop `allProviders`** (plný zoznam, ktorý stránka už má), bez nového requestu.
 
 ### Help shell
 - `KeyedHelpPopover({ helpKey, sections, width?, children? })`: `children` za sekciami.
@@ -122,13 +125,6 @@ Vysvetlenie: „Resolved through the LPAR's NPIV WWPNs and the matching FlashSys
 ```
 Host sa nekreslí (API ho nevracia). Žiadne NAA.
 
-### IBM Power VIOS
-```
-[IBM Power provider] —Discovers→ [VIOS]
-Info (nie error): Backing Storage Info resolution is LPAR/NPIV-only; vSCSI-backed storage
-behind a VIOS is not resolved.
-```
-
 ### FlashSystem volume
 ```
 Placement:     [FlashSystem provider] —Contains→ [Pool: name, capacity] —Contains→ [Volume]
@@ -158,7 +154,8 @@ Chýbajúce časti sa vynechajú; ak nie je nič, neutral „No host mappings or
 | Hrana partner | `border-orange-500 dark:border-orange-400`, label `text-orange-600 dark:text-orange-400`; mutual = hroty na oboch stranách, one-way = iba skutočný smer. **Žiadne `warning-*`.** |
 | Hrana problem | `border-dashed border-error-500`, label `text-error-600` |
 | Hrana neutral | `border-border-strong`, label `text-text-muted` |
-| Layout | `@container/relationship-graph`; od `@min-[40rem]` riadok = grid `minmax(0,1fr) 7.5rem minmax(0,1fr) 6.25rem minmax(0,1fr)` (mockup 120/100 px); pod tým vertikálny stack, vertikálna čiara, bez hrotov |
+| Layout | `@container/relationship-graph`; od `@min-[40rem]` riadok = grid `minmax(0,1fr) 7.5rem minmax(0,1fr) 6.25rem minmax(0,1fr)` (mockup 120/100 px), horizontálna čiara s hrotmi ◀/▶ |
+| Úzky layout | vertikálny stack, vertikálna čiara a **malé vertikálne hroty** (CSS trojuholníky ako mockup `.tip`, otočené): `forward` = hrot dole (A → B), `backward` = hrot hore (A ← B), `both` = hroty hore aj dole (A ↔ B). Smer nikdy nezmizne; žiadny horizontálny overflow (`min-w-0`, `truncate`, žiadne pevné šírky) |
 | Skupina | `rounded-xl border` + hlavička `bg-surface-muted` eyebrow (mockup `.chain-group`), riadky oddelené `border-dashed` |
 
 Farba uzla nikdy neznamená stav; stav ide textom alebo `Badge`.
@@ -179,6 +176,9 @@ Farba uzla nikdy neznamená stav; stav ide textom alebo `Badge`.
 ## 6. Prístupnosť
 
 - Uzol: `<div role="group" tabIndex={0} aria-labelledby={nameId} aria-describedby={relId}>`.
+- **Logické `entityId`** (napr. `provider:flash-01`) je rovnaké pre všetky výskyty entity a
+  riadi highlight. **DOM ID** pre `aria-labelledby` a `aria-describedby` sú per inštancia
+  (`useId()`), takže opakovaná entita nikdy nevytvorí duplicitné ID.
   Žiadny falošný `button` (uzol nemá akciu). Vzor `role="group"` už používa
   `TopologyNodeShell`. Nie je tam `jsx-a11y` lint, rozhodnutie je vecné, nie kvôli lintu.
 - Skrytý popis vzťahov (`hidden` span, ako mockup `relDescriptions`): napr.
@@ -190,7 +190,8 @@ Farba uzla nikdy neznamená stav; stav ide textom alebo `Badge`.
 
 ## 7. Non-goals
 
-Backend refactor, Hitachi resource inventory, globálna topology stránka, graph framework
+VIOS relationship helper (VIOS nie je v inventory; doplní sa, keď sa VIOS sprístupní),
+backend refactor, Hitachi resource inventory, globálna topology stránka, graph framework
 (D3, Cytoscape, canvas, WebGL), nový modal alebo backdrop, druhý help trigger, toolbar
 tlačidlo, hardcoded vzťahy, vymyslené resource vzťahy (disk→NAA, FlashSystem host, RC target,
 FlashCopy target vo FlashSystem view), globálny rename `providerTypeLabel`, ručné zmeny

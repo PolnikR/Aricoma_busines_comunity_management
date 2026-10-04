@@ -2,7 +2,7 @@
 
 Spec: `tasks/contextual-relationship-helpers-spec.md` (contract, grafy, vizuál, a11y,
 non-goals). Úlohy: `tasks/contextual-relationship-helpers-todo.md`.
-Stav: čaká na schválenie (2026-10-04).
+Stav: schválené s úpravami 1–4 (2026-10-04), čaká na kontrolu aktualizovaných dokumentov.
 
 ## Architektúra
 
@@ -15,9 +15,9 @@ Shared, lebo ich používajú dve features (providers-connectors a discovery-inv
 | `relationshipAdjacency.ts` | pure: `buildAdjacency(edges)`, `isNodeHighlighted`, `isEdgeHighlighted` (one-hop) |
 | `RelationshipGraph.tsx` | root `@container/relationship-graph`, kontext `activeId` + adjacency, `data-dimmed` |
 | `RelationshipGroup.tsx` | ohraničená skupina s eyebrow hlavičkou + `ul` riadkov |
-| `RelationshipChain.tsx` | jeden riadok (`li`), grid node/connector/node/connector/node, stack na úzko |
-| `RelationshipNode.tsx` | card: icon chip podľa `tone`, názov, meta, mono ID, `role="group"`, `tabIndex=0`, hover/focus → kontext, skrytý popis |
-| `RelationshipConnector.tsx` | CSS čiara + hroty (`direction`), label, `sr-only` text, highlight podľa `from`/`to` |
+| `RelationshipChain.tsx` | jeden riadok (`li`), grid node/connector/node/connector/node, na úzko vertikálny stack |
+| `RelationshipNode.tsx` | card: icon chip podľa `tone`, názov, meta, mono ID, `role="group"`, `tabIndex=0`, hover/focus → kontext, skrytý popis; logické `entityId` pre highlight, DOM ID cez `useId()` per inštancia |
+| `RelationshipConnector.tsx` | CSS čiara + hroty podľa `direction` v oboch layoutoch (wide ◀/▶, narrow ▲/▼), label, `sr-only` text, highlight podľa `from`/`to` |
 | `RelationshipNote.tsx` | neutrálny stav / koniec riadku („No FlashCopy mappings“, limitation info) |
 | `index.ts` | exporty |
 
@@ -33,7 +33,7 @@ shared primitívami a odstráni, keď ho nič nepoužíva.
   |---|---|---|
   | compute provider (VMware, IBM Power) | `ServerIcon` | compute |
   | storage provider (FlashSystem, Hitachi) | `StorageIcon` (nová) | storage |
-  | VM, LPAR, VIOS | `CpuIcon` | compute |
+  | VM, LPAR | `CpuIcon` | compute |
   | backing volume | `DiskIcon` | storage |
   | pool | `LayersIcon` | infrastructure |
   | FlashSystem host | `ServerIcon` | infrastructure |
@@ -61,13 +61,14 @@ shared primitívami a odstráni, keď ho nič nepoužíva.
 
 ### Resources — `src/features/discovery-inventory/resources/`
 - `helpers/buildVmRelationships.ts` + `components/vmware/VmRelationshipHelp.tsx`
-- `helpers/buildPowerPartitionRelationships.ts` + `components/ibm-power/PowerPartitionRelationshipHelp.tsx`
+- `helpers/buildLparRelationships.ts` + `components/ibm-power/LparRelationshipHelp.tsx` (iba LPAR)
 - `helpers/buildFlashVolumeRelationships.ts` + `components/flash-system/FlashVolumeRelationshipHelp.tsx`
 - Každý panel odovzdá komponent ako `children` do svojho `KeyedHelpPopover` s `width="wide"`.
   Dáta: už načítaný `useVdisksByVm` výsledok (panel ho odovzdá propsom, help nevolá hook),
   `providers`, vybraná entita. `useMemo` pre view-model.
-- FlashSystem: `FlashSystemResourcesPage` → `FlashSystemInventoryView` → panel dostane plný
-  `providers` (nový voliteľný prop), bez nového requestu.
+- FlashSystem: `FlashSystemResourcesPage` odovzdá plný zoznam ako **nový prop `allProviders`**
+  cez `FlashSystemInventoryView` do panelu. Existujúci `providers` (FLASHCOPY providery roly pre
+  filtre) si zachová význam. Bez nového requestu.
 
 ## Rozhodnutia
 
@@ -85,6 +86,11 @@ shared primitívami a odstráni, keď ho nič nepoužíva.
    drawer sekcie. Farba hrany má vlastnú sémantiku (backing/partner/problem/neutral).
 6. **Help dostane dáta propsom** z panelu, nie vlastným hookom (žiadna duplicita, žiadny request
    pri hoveri; react-query by ho aj tak deduplikoval).
+7. **VIOS nie je v scope.** `mapPowerInventory` VIOS zahadzuje (produktové pravidlo), helper by
+   bol dead code. Existujúca VIOS vetva a testy panelu sa nemenia ani nemažú.
+8. **Smer hrany je viditeľný aj na úzko** cez vertikálne hroty (forward ▼, backward ▲, both ▲▼).
+9. **Logické `entityId` vs. DOM ID:** highlight podľa `entityId`, a11y ID cez `useId()` per inštancia.
+10. **FlashSystem props:** `providers` (dnešný FLASHCOPY kontext) a `allProviders` (helper) sú oddelené.
 
 ## Commity / checkpointy
 
@@ -95,8 +101,8 @@ shared primitívami a odstráni, keď ho nič nepoužíva.
 | C2 | `buildSelectedProviderRelationships` + `SelectedProviderRelationships`, migrácia provider helpu, odstránenie global topology + osirelých kľúčov; en/sk/cs | prvé reálne použitie primitív |
 | CP1 | checkpoint: testy, typecheck, **prehliadač provider helpu** (light/dark, desktop/úzko, hover/Tab, mismatch) | overiť vizuál a highlight pred rozšírením na resources |
 | C3 | VMware VM helper (view-model, content, panel napojenie, locales) | |
-| C4 | IBM Power helper (LPAR + VIOS podľa O1) | |
-| C5 | FlashSystem helper + odovzdanie `providers` | |
+| C4 | IBM Power LPAR helper (VIOS mimo scope) | |
+| C5 | FlashSystem helper + nový prop `allProviders` | |
 | C6 | wording help textov, cleanup, finálny prehliadač všetkých 4 helperov | |
 
 Rozdelenie zodpovedá návrhu C1–C6, len s checkpointom po C2: highlight a popover layout (šírka
@@ -107,12 +113,12 @@ Rozdelenie zodpovedá návrhu C1–C6, len s checkpointom po C2: highlight a pop
 | Oblasť | Súbor | Prípady |
 |---|---|---|
 | Adjacency | `relationshipAdjacency.test.ts` | one-hop susedia, incidentné hrany, opakovaná entita, problem uzly |
-| Shared UI | `RelationshipGraph.test.tsx` | ikona a tón chipu; problem štýl (dashed error + alert ikona); hover → active 100 %, susedia 100 %, ostatné `opacity-35`, hrany `opacity-[0.12]`, labely `opacity-15`; focus = rovnaký efekt; pointerleave/blur obnoví; opakovaná entita svieti všade; mutual = 2 hroty, one-way = 1; container triedy pre wide/narrow; `role="group"`, `tabIndex`, `aria-describedby` text |
+| Shared UI | `RelationshipGraph.test.tsx` | ikona a tón chipu; problem štýl (dashed error + alert ikona); hover → active 100 %, susedia 100 %, ostatné `opacity-35`, hrany `opacity-[0.12]`, labely `opacity-15`; focus = rovnaký efekt; pointerleave/blur obnoví; mutual = 2 hroty, one-way = 1; **smer `forward`/`backward`/`both` aj v narrow variante** (vertikálne hroty prítomné a správne orientované); container triedy pre wide/narrow; `role="group"`, `tabIndex`, `aria-describedby` text; **rovnaká entita 2×: highlight na oboch výskytoch a žiadne duplicitné ID cieľov `aria-labelledby`/`aria-describedby`** |
 | Provider VM | `buildSelectedProviderRelationships.test.ts` | VMware, IBM Power, FlashCopy (consumers + partner), Hitachi (bez partner lane), viac backingov, mutual, one-way (out/in), viac jednosmerných partnerov, unresolved, mismatch (backing aj partner), bez vzťahov, nesúvisiaci provider sa neobjaví, selected chýba |
 | Provider UI | `SelectedProviderRelationships.test.tsx`, `ProvidersCatalogueTable.test.tsx` | iba okolie selected (žiadny „Other storage relationships“, žiadni nesúvisiaci), Role/Credential ostávajú, loading/error |
 | VMware | `buildVmRelationships.test.ts`, `VirtualMachineDetailPanel.test.tsx` | provider→VM, volume uzly s NAA, viac volumes a storage providerov (skupiny), zero snapshots = volume + „No FlashCopy mappings“, FlashCopy uzol pri mappingoch, žiadne Hard disk→NAA hrany, loading/error/empty |
-| IBM Power | `buildPowerPartitionRelationships.test.ts`, `IbmPowerDetailPanel.test.tsx` | LPAR graf, viac FlashSystems, Volume ID/UID a žiadne NAA ani composite key, FlashCopy, NPIV vysvetlenie bez hostu, VIOS bez backing hrán + limitation text, VIOS nespustí request |
-| FlashSystem | `buildFlashVolumeRelationships.test.ts`, `FlashSystemVolumeDetailPanel.test.tsx` | provider→pool→volume, hosty, CG, FlashCopy iba pri dátach, Remote Copy iba pri `RC_id` a bez targetu, configured partner označený ako provider-level a nie dôkaz replikácie, bez partnera |
+| IBM Power | `buildLparRelationships.test.ts`, `IbmPowerDetailPanel.test.tsx` | LPAR graf, viac FlashSystems, Volume ID/UID a žiadne NAA ani composite key, FlashCopy, NPIV vysvetlenie bez hostu; existujúce VIOS testy panelu ostávajú zelené bez zmeny |
+| FlashSystem | `buildFlashVolumeRelationships.test.ts`, `FlashSystemVolumeDetailPanel.test.tsx`, `FlashSystemInventoryView.test.tsx` | `allProviders` sa dostane do helpu a `providers` naďalej obsahuje iba FLASHCOPY kontext, provider→pool→volume, hosty, CG, FlashCopy iba pri dátach, Remote Copy iba pri `RC_id` a bez targetu, configured partner označený ako provider-level a nie dôkaz replikácie, bez partnera |
 | Help shell | `HelpPopover.test.tsx`, `KeyedHelpPopover.test.tsx` (bez zmeny, musia prejsť), nový test: Tab do uzlov drží popover otvorený, Escape z uzla zavrie iba help | |
 | Locales | `detailDrawerHelpTranslations.test.ts` + nový test parity `relationships.*` / `providers.relationships.*` / `resources.relationships.*` v en/sk/cs | |
 | Prehliadač | Edge CDP :9333, vlastná karta | light/dark, 1366×768 a 390 px, hover a Tab, viac uzlov, unresolved/mismatch (provider s neexistujúcim ID iba ak je v dátach; inak cez test) |
@@ -128,9 +134,9 @@ Nové:
   `index.ts`, testy `relationshipAdjacency.test.ts`, `RelationshipGraph.test.tsx`
 - `src/features/providers-connectors/providers/helpers/buildSelectedProviderRelationships.ts` (+ test)
 - `src/features/providers-connectors/providers/components/SelectedProviderRelationships.tsx` (+ test)
-- `src/features/discovery-inventory/resources/helpers/{buildVmRelationships,buildPowerPartitionRelationships,buildFlashVolumeRelationships}.ts` (+ testy)
+- `src/features/discovery-inventory/resources/helpers/{buildVmRelationships,buildLparRelationships,buildFlashVolumeRelationships}.ts` (+ testy)
 - `src/features/discovery-inventory/resources/components/vmware/VmRelationshipHelp.tsx`
-- `src/features/discovery-inventory/resources/components/ibm-power/PowerPartitionRelationshipHelp.tsx`
+- `src/features/discovery-inventory/resources/components/ibm-power/LparRelationshipHelp.tsx`
 - `src/features/discovery-inventory/resources/components/flash-system/FlashVolumeRelationshipHelp.tsx`
 - `src/locales/relationshipTranslations.test.ts`
 
@@ -158,10 +164,7 @@ Nemenené: `HelpPopover.tsx`, `KeyedHelpPopover.tsx`, `resolveProviderTopology.t
 | Veľa uzlov (napr. 20 host mappingov) | Nízky | popover scrolluje; žiadny limit, aby sa nič neskrývalo |
 | Opacity triedy a highlight sa testujú cez triedy (jsdom bez layoutu) | Nízky | `data-*` stav + triedy; vizuál v prehliadači |
 | Paralelné sessions v rovnakom working tree a locale súboroch | Stredný | commitovať iba explicitné vlastné cesty, kontrolovať `git diff -U0 src/locales` |
-| VIOS je z UI nedosiahnuteľný | Nízky | O1 |
 
 ## Otvorené otázky
 
-- **O1 – VIOS:** `mapPowerInventory` zahadzuje VIOS, takže VIOS drawer sa dnes nedá otvoriť.
-  Návrh: implementovať VIOS vetvu (malá, panel ju už má a testy ju renderujú), aby bola
-  pravdivá, keď sa VIOS sprístupní. Alternatíva: VIOS vetvu vynechať.
+Žiadne. O1 (VIOS) rozhodnuté 2026-10-04: mimo scope, doplní sa, keď bude VIOS v inventory.

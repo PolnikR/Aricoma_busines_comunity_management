@@ -1,10 +1,11 @@
 # TODO: Kontextové relationship helpery
 
 Spec: `tasks/contextual-relationship-helpers-spec.md` · Plán: `tasks/contextual-relationship-helpers-plan.md`
-Stav: čaká na schválenie. Kód sa nemení pred schválením.
+Stav: plán schválený s úpravami 1–4 (2026-10-04); čaká na kontrolu dokumentov pred C1.
 
 ## C0: Spec, plán, TODO
-- [ ] schválené používateľom (vrátane O1 – VIOS)
+- [x] plán schválený (2026-10-04): VIOS mimo scope, smer aj na úzko, DOM ID per inštancia, FlashSystem `allProviders`
+- [ ] kontrola aktualizovaných dokumentov používateľom
 
 ## C1: Shared relationship primitives (S–M)
 - [ ] `StorageIcon`, `AlertTriangleIcon` v `Icons.tsx` (20×20, stroke currentColor 1.5)
@@ -12,9 +13,10 @@ Stav: čaká na schválenie. Kód sa nemení pred schválením.
 - [ ] `RelationshipGraph`, `RelationshipGroup`, `RelationshipChain`, `RelationshipNode`, `RelationshipConnector`, `RelationshipNote`
 - [ ] tóny chipu compute/storage/infrastructure/protection/problem cez tokeny, žiadne hex ani `warning-*`
 - [ ] hover/focus highlight: active + priami susedia 100 %, ostatné uzly `opacity-35`, hrany `opacity-[0.12]`, labely `opacity-15`, 150 ms transition, leave/blur obnoví
-- [ ] container query: desktop chain, úzko vertikálny stack bez hrotov
+- [ ] container query: desktop chain s hrotmi ◀/▶; úzko vertikálny stack s vertikálnymi hrotmi (forward ▼, backward ▲, both ▲▼), bez horizontálneho overflow
 - [ ] a11y: `role="group"`, `tabIndex=0`, `aria-describedby` skrytý popis, `sr-only` text konektora
-- Overenie: `relationshipAdjacency.test.ts`, `RelationshipGraph.test.tsx`, eslint, typecheck, `git diff --check`
+- [ ] logické `entityId` pre highlight, DOM ID cez `useId()` per inštancia
+- Overenie: `relationshipAdjacency.test.ts`, `RelationshipGraph.test.tsx` (vrátane narrow `out`/`in`/`both` a rovnakej entity 2×: highlight na oboch, žiadne duplicitné aria ID), eslint, typecheck, `git diff --check`
 - Commit C1
 
 ## C2: Selected-provider kontext (M)
@@ -37,15 +39,15 @@ Stav: čaká na schválenie. Kód sa nemení pred schválením.
 - Overenie: `buildVmRelationships.test.ts`, `VirtualMachineDetailPanel.test.tsx`
 - Commit C3
 
-## C4: IBM Power helper (M)
-- [ ] `buildPowerPartitionRelationships` (LPAR: provider→LPAR, volumes podľa FlashSystemu, Volume ID/UID, FlashCopy, NPIV text bez hostu)
-- [ ] VIOS: provider→VIOS + limitation info, žiadne backing hrany (podľa O1)
-- [ ] `PowerPartitionRelationshipHelp` + `IbmPowerDetailPanel`
-- Overenie: `buildPowerPartitionRelationships.test.ts`, `IbmPowerDetailPanel.test.tsx` (žiadne NAA ani composite key, VIOS bez requestu)
+## C4: IBM Power LPAR helper (M)
+- [ ] `buildLparRelationships` (provider→LPAR, volumes podľa FlashSystemu, Volume ID/UID, FlashCopy, NPIV text bez hostu)
+- [ ] `LparRelationshipHelp` + `IbmPowerDetailPanel` (iba pre LPAR)
+- [ ] VIOS: žiadny nový relationship content; existujúca VIOS vetva a testy panelu bez zmeny
+- Overenie: `buildLparRelationships.test.ts`, `IbmPowerDetailPanel.test.tsx` (žiadne NAA ani composite key; existujúce VIOS testy zelené)
 - Commit C4
 
 ## C5: FlashSystem helper (M)
-- [ ] plný `providers` cez `FlashSystemResourcesPage` → `FlashSystemInventoryView` → panel
+- [ ] nový prop `allProviders` cez `FlashSystemResourcesPage` → `FlashSystemInventoryView` → panel; `providers` si ponechá význam (FLASHCOPY providery roly)
 - [ ] `buildFlashVolumeRelationships` (provider→pool→volume, hosty, CG, FlashCopy iba pri dátach, Remote Copy iba pri `RC_id` bez targetu, configured partner ako provider-level)
 - [ ] `FlashVolumeRelationshipHelp` + panel
 - Overenie: `buildFlashVolumeRelationships.test.ts`, `FlashSystemVolumeDetailPanel.test.tsx`, `FlashSystemInventoryView.test.tsx`
