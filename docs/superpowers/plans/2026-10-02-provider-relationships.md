@@ -279,7 +279,7 @@ A repeated partner is rendered as a full card in every row where it appears. "Ot
 
 ### Tasks
 
-- [ ] **T12. Update spec**
+- [x] **T12. Update spec**
   - Acceptance:
     - "Partner repetition" in `docs/superpowers/specs/2026-10-02-provider-relationships-design.md` says the partner is always a full card.
     - The Structure and Testing Strategy bullets no longer mention first full / later compact.
@@ -288,7 +288,7 @@ A repeated partner is rendered as a full card in every row where it appears. "Ot
   - Files: the spec (1 file). Scope: XS.
   - Dependencies: none.
 
-- [ ] **T13. View model: always a full partner** (`helpers/buildRelationshipRows.ts` + test)
+- [x] **T13. View model: always a full partner** (`helpers/buildRelationshipRows.ts` + test)
   - Do:
     - Remove `display` from `PartnerLink` and from `linkFrom`.
     - Keep a `rendered` set filled by the compute rows and used only to filter `otherStorageRows`.
@@ -301,7 +301,7 @@ A repeated partner is rendered as a full card in every row where it appears. "Ot
   - Files: `helpers/buildRelationshipRows.ts`, `helpers/buildRelationshipRows.test.ts`. Scope: S.
   - Dependencies: T12.
 
-- [ ] **T14. Rendering: no compact reference** (`components/ProviderRelationshipsContent.tsx`, `components/ProviderRelationshipParts.tsx` + content test)
+- [x] **T14. Rendering: no compact reference** (`components/ProviderRelationshipsContent.tsx`, `components/ProviderRelationshipParts.tsx` + content test)
   - Do:
     - In `BackingTarget`, always use the full-card grid.
     - `PartnerPart` always renders connector + card.
@@ -315,11 +315,11 @@ A repeated partner is rendered as a full card in every row where it appears. "Ot
   - Dependencies: T13. T13 changes the `PartnerLink` type, so T13 and T14 land in one commit to keep typecheck green.
 
 ### Checkpoint: after T12–T14
-- [ ] `npm exec vitest run src/features/providers-connectors/providers src/locales src/shared/components/help-popover`
-- [ ] `npx eslint <changed .ts/.tsx files> --max-warnings 0`
-- [ ] `npm run typecheck`
-- [ ] `git diff --check`
-- [ ] Commits:
+- [x] `npm exec vitest run src/features/providers-connectors/providers src/locales src/shared/components/help-popover`
+- [x] `npx eslint <changed .ts/.tsx files> --max-warnings 0`
+- [x] `npm run typecheck`
+- [x] `git diff --check`
+- [x] Commits:
   - `docs: show provider partner as a full card in every relationship row` (T12)
   - `feat: always render provider partner as a full card` (T13 + T14)
 - [ ] Manual check in `npm run dev`: in the provider drawer help, rows that share a partner (for example vCenter 01 and vCenter 03 → IBM Flash Source 01) each show the full partner card.
