@@ -3,7 +3,7 @@ import { StateCell } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import type { useTranslation } from '@/hooks/useTranslation'
 import type { CacheRunRecordOutput } from '@/generated/query/zod'
-import { providerTypeLabel } from '../../providers/helpers/providerTypeLabel'
+import { providerTypeLabel } from '@/features/providers-connectors/providers/helpers/providerTypeLabel'
 
 type Translate = ReturnType<typeof useTranslation>['t']
 

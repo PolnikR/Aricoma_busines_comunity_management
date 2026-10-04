@@ -43,7 +43,6 @@ const navItems: NavItem[] = [
     subItems: [
       { name: 'Providers', path: routes.providersConnectors },
       { name: 'Credentials', path: routes.providerCredentials },
-      { name: 'Discovery Settings', path: routes.providerDiscoverySettings },
     ],
   },
   {
@@ -54,6 +53,7 @@ const navItems: NavItem[] = [
       { name: 'Resources ISE', path: routes.resourcesIse },
       { name: 'Infrastructure Topology', path: routes.infrastructure },
       { name: 'Discovery Jobs', path: routes.discoveryJobs },
+      { name: 'Discovery Settings', path: routes.discoverySettings },
     ],
   },
   {
@@ -83,12 +83,12 @@ const navKeyMap: Record<string, string> = {
   'Providers & Connectors': 'nav.providers',
   'Providers': 'nav.providers.providers',
   'Credentials': 'nav.providers.credentials',
-  'Discovery Settings': 'nav.providers.discovery',
   'Discovery & Inventory': 'nav.discovery',
   'Resources': 'nav.discovery.resources',
   'Resources ISE': 'nav.discovery.resourcesIse',
   'Infrastructure Topology': 'nav.discovery.infrastructure',
   'Discovery Jobs': 'nav.discovery.jobs',
+  'Discovery Settings': 'nav.discovery.settings',
   'Recovery Plans': 'nav.recovery',
   'Recovery Applications': 'nav.recovery.applications',
   'Recovery Groups': 'nav.recovery.groups',

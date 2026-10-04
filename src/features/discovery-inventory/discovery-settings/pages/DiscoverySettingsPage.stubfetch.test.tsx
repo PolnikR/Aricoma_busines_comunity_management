@@ -7,7 +7,7 @@ import { DiscoverySettingsPage } from './DiscoverySettingsPage'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
-function renderWithQueryClient(initialEntry = '/providers-connectors/discovery-settings') {
+function renderWithQueryClient(initialEntry = '/discovery-inventory/discovery-settings') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
@@ -96,7 +96,7 @@ describe('DiscoverySettingsPage against the real discovery-cache endpoints', () 
 
   it('renders discovery history rows fetched and selected through the real hook', async () => {
     const fetchMock = stubFetch()
-    renderWithQueryClient('/providers-connectors/discovery-settings?tab=history')
+    renderWithQueryClient('/discovery-inventory/discovery-settings?tab=history')
 
     const history = await screen.findByRole('region', { name: 'Discovery history' })
     const table = await within(history).findByLabelText('Discovery history runs')
@@ -114,7 +114,7 @@ describe('DiscoverySettingsPage against the real discovery-cache endpoints', () 
 
   it('requests discovery history filtered by the deep-linked provider id', async () => {
     const fetchMock = stubFetch()
-    renderWithQueryClient('/providers-connectors/discovery-settings?tab=history&providerId=vmware-01')
+    renderWithQueryClient('/discovery-inventory/discovery-settings?tab=history&providerId=vmware-01')
 
     await screen.findByRole('region', { name: 'Discovery history' })
 

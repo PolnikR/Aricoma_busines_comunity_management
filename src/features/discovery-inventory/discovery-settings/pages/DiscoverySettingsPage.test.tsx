@@ -46,7 +46,7 @@ function mutationResult(overrides: Record<string, unknown> = {}) {
   }
 }
 
-function renderPage(initialEntry = '/providers-connectors/discovery-settings') {
+function renderPage(initialEntry = '/discovery-inventory/discovery-settings') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
@@ -92,7 +92,7 @@ describe('DiscoverySettingsPage', () => {
     const mutate = vi.fn()
     vi.mocked(usePutDiscoveryCacheConfig).mockReturnValue(mutationResult({ mutate }) as unknown as ReturnType<typeof usePutDiscoveryCacheConfig>)
     const user = userEvent.setup()
-    renderPage('/providers-connectors/discovery-settings?tab=notifications')
+    renderPage('/discovery-inventory/discovery-settings?tab=notifications')
     const notifications = screen.getByRole('region', { name: 'Failure notifications' })
     const recipient = within(notifications).getByLabelText('Notification recipient')
 
@@ -110,7 +110,7 @@ describe('DiscoverySettingsPage', () => {
     const mutate = vi.fn()
     vi.mocked(usePutDiscoveryCacheConfig).mockReturnValue(mutationResult({ mutate }) as unknown as ReturnType<typeof usePutDiscoveryCacheConfig>)
     const user = userEvent.setup()
-    renderPage('/providers-connectors/discovery-settings?tab=notifications')
+    renderPage('/discovery-inventory/discovery-settings?tab=notifications')
     const notifications = screen.getByRole('region', { name: 'Failure notifications' })
 
     await user.selectOptions(within(notifications).getByLabelText('Notification recipient'), 'martin')

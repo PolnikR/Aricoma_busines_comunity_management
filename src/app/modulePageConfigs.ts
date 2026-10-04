@@ -53,14 +53,6 @@ export const providersConnectorsPages: ModulePageConfig[] = [
     apiBoundary: 'GET /api/providers/credentials',
     workflowItems: ['Credential references', 'Validation status', 'Rotation history'],
   },
-  {
-    path: routes.providerDiscoverySettings,
-    title: 'Discovery settings',
-    description: 'Provider discovery settings for manual discovery, scheduled discovery, scope exclusions, pagination, throttling, and partial results.',
-    excelSource: '21 PC Requirements: Discovery',
-    apiBoundary: 'GET /api/providers/discovery-settings',
-    workflowItems: ['Schedules', 'Scope rules', 'Discovery limits'],
-  },
 ]
 
 export const discoveryInventoryPlaceholderPages: ModulePageConfig[] = [
