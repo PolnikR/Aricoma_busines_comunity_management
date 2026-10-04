@@ -3,25 +3,25 @@
 Plán: `tasks/detail-drawer-section-accents-plan.md`
 
 ## Task 1: `DetailDrawerSection` – accent a icon (shared)
-- [ ] `Icons.tsx`: `DiskIcon`, `CopyIcon`, `NetworkIcon` v rovnakom stroke/currentColor štýle
-- [ ] typ `DetailDrawerSectionAccent`: `overview | infrastructure | storage | protection | configuration | technical`; voliteľné props `accent` a `icon`
-- [ ] statická mapa akcentov na tokeny (light/dark), pruh, chip, hover/focus/open stav; `configuration` = orange iba pruh a chip, `technical` = jediné gray, žiadne `warning-*`
-- [ ] fallback bez `accent`/`icon` je vizuálne zhodný s dneškom
-- [ ] flex contract: sekcia `flex min-h-0 flex-col` (zatvorená `shrink-0`, otvorená `shrink`), `h3` `shrink-0`, otvorený panel `flex-1 min-h-0 overflow-y-auto`
+- [x] `Icons.tsx`: `DiskIcon`, `CopyIcon`, `NetworkIcon` v rovnakom stroke/currentColor štýle
+- [x] typ `DetailDrawerSectionAccent`: `overview | infrastructure | storage | protection | configuration | technical`; voliteľné props `accent` a `icon`
+- [x] statická mapa akcentov na tokeny (light/dark), pruh, chip, hover/focus/open stav; `configuration` = orange iba pruh a chip, `technical` = jediné gray, žiadne `warning-*`
+- [x] fallback bez `accent`/`icon` je vizuálne zhodný s dneškom
+- [x] flex contract: sekcia `flex min-h-0 flex-col` (zatvorená `shrink-0`, otvorená `shrink`), `h3` `shrink-0`, otvorený panel `flex-1 min-h-0 overflow-y-auto`
 - Overenie: `npm exec vitest run src/shared/components/data-table/DetailDrawerSection.test.tsx`
 - Súbory: `src/shared/icons/Icons.tsx`, `DetailDrawerSection.tsx`, `DetailDrawerSection.test.tsx`, `index.ts` (export typu)
 - Rozsah: S
 
 ## Task 2: `DetailDrawer` – `bodyLayout="sections"` (shared)
-- [ ] default `'scroll'` sa nemení
-- [ ] `'sections'`: telo je flex stĺpec, hlavičky ostávajú, skroluje iba panel
+- [x] default `'scroll'` sa nemení
+- [x] `'sections'`: telo je flex stĺpec, hlavičky ostávajú, skroluje iba panel
 - Overenie: `npm exec vitest run src/shared/components/data-table/DetailDrawer.test.tsx`
 - Súbory: `DetailDrawer.tsx`, `DetailDrawer.test.tsx`
 - Rozsah: S
 
 ## Checkpoint 1
-- [ ] shared testy, eslint na zmenených súboroch, `npm run typecheck`
-- [ ] commit
+- [x] shared testy, eslint na zmenených súboroch, `npm run typecheck`
+- [x] commit
 
 ## Task 3: VMware VM drawer
 - [ ] `bodyLayout="sections"`, wrapper `@container/vm-detail` má `flex min-h-0 flex-1 flex-col`

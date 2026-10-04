@@ -137,6 +137,34 @@ export function LayersIcon(props: IconProps) {
   )
 }
 
+export function DiskIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="M5.417 4.167h9.166l2.917 7.5v3.333a.833.833 0 0 1-.833.833H3.333a.833.833 0 0 1-.833-.833v-3.333l2.917-7.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M2.5 11.667h15" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M14.167 13.75h.008" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function CopyIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="M7.5 7.5h8.333a.833.833 0 0 1 .834.833v8.334a.833.833 0 0 1-.834.833H7.5a.833.833 0 0 1-.833-.833V8.333A.833.833 0 0 1 7.5 7.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M13.333 7.5V4.167a.833.833 0 0 0-.833-.834H4.167a.833.833 0 0 0-.834.834V12.5c0 .46.373.833.834.833H6.667" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function NetworkIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="M8.333 2.5h3.334v3.333H8.333V2.5ZM2.5 14.167h3.333V17.5H2.5v-3.333ZM14.167 14.167H17.5V17.5h-3.333v-3.333Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M10 5.833V10M4.167 14.167V10h11.666v4.167" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export function FilterIcon(props: IconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>

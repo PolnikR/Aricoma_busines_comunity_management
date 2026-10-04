@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
+import { DiskIcon } from '@/shared/icons/Icons'
 import { DetailDrawerSection } from './DetailDrawerSection'
 
 afterEach(cleanup)
@@ -108,6 +109,60 @@ describe('DetailDrawerSection', () => {
     render(<DetailDrawerSection title="Overview"><p>Rows</p></DetailDrawerSection>)
     expect(screen.getByRole('heading', { level: 3 })).toHaveClass('sticky', 'top-0', 'bg-surface')
     expect(screen.getByRole('button', { name: 'Overview' }).querySelector('svg')).toHaveClass('motion-reduce:transition-none')
+  })
+
+  it('marks the section with its accent and shows the icon in a decorative chip', () => {
+    render(<DetailDrawerSection title="Disks" accent="storage" icon={DiskIcon} defaultOpen><p>Rows</p></DetailDrawerSection>)
+    const toggle = screen.getByRole('button', { name: 'Disks' })
+    const chip = toggle.querySelector('[data-section-icon]')
+
+    expect(toggle.closest('section')).toHaveAttribute('data-accent', 'storage')
+    expect(toggle).toHaveClass('before:bg-theme-purple-500', 'before:opacity-100')
+    expect(chip).toHaveClass('text-theme-purple-500')
+    expect(chip?.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+    expect(toggle).toHaveAccessibleName('Disks')
+  })
+
+  it('dims the accent stripe while the section is closed', () => {
+    render(<DetailDrawerSection title="Disks" accent="storage"><p>Rows</p></DetailDrawerSection>)
+    expect(screen.getByRole('button', { name: 'Disks' })).toHaveClass('before:opacity-35')
+  })
+
+  it('keeps orange a structural accent without warning tokens', () => {
+    render(<DetailDrawerSection title="Orchestration" accent="configuration" icon={DiskIcon}><p>Rows</p></DetailDrawerSection>)
+    const toggle = screen.getByRole('button', { name: 'Orchestration' })
+
+    expect(toggle.querySelector('[data-section-icon]')).toHaveClass('text-orange-500')
+    expect(toggle.closest('section')?.outerHTML).not.toMatch(/warning-/)
+    expect(screen.getByText('Orchestration')).not.toHaveClass('text-orange-500')
+  })
+
+  it('renders without stripe or chip when no accent or icon is given', () => {
+    render(<DetailDrawerSection title="Overview"><p>Rows</p></DetailDrawerSection>)
+    const toggle = screen.getByRole('button', { name: 'Overview' })
+
+    expect(toggle.closest('section')).not.toHaveAttribute('data-accent')
+    expect(toggle.querySelector('[data-section-icon]')).toBeNull()
+    expect(toggle.className).not.toMatch(/before:/)
+  })
+
+  it('gives an icon without accent a neutral chip', () => {
+    render(<DetailDrawerSection title="Overview" icon={DiskIcon}><p>Rows</p></DetailDrawerSection>)
+    expect(screen.getByRole('button', { name: 'Overview' }).querySelector('[data-section-icon]')).toHaveClass('bg-surface-muted', 'text-text-muted')
+  })
+
+  it('keeps the header fixed and lets only the open panel scroll', async () => {
+    const user = userEvent.setup()
+    render(<DetailDrawerSection title="Overview"><p>Rows</p></DetailDrawerSection>)
+    const section = screen.getByRole('heading', { level: 3 }).closest('section')
+
+    expect(section).toHaveClass('flex', 'min-h-0', 'flex-col', 'shrink-0')
+    expect(screen.getByRole('heading', { level: 3 })).toHaveClass('shrink-0')
+
+    await user.click(screen.getByRole('button', { name: 'Overview' }))
+    expect(section).toHaveClass('shrink')
+    expect(section).not.toHaveClass('shrink-0')
+    expect(screen.getByRole('region', { name: 'Overview' })).toHaveClass('flex-1', 'min-h-0', 'overflow-y-auto')
   })
 
   it('offers no controlled open API', () => {

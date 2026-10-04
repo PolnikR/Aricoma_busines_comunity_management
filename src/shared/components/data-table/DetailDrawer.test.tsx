@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DetailDrawer, DetailRow } from './DetailDrawer'
+import { DetailDrawerSection } from './DetailDrawerSection'
 
 afterEach(cleanup)
 
@@ -9,6 +10,29 @@ afterEach(cleanup)
     render(<DetailDrawer open title="My Item" onClose={vi.fn()}><p>Body content</p></DetailDrawer>)
     expect(screen.getByText('My Item')).toBeInTheDocument()
     expect(screen.getByText('Body content')).toBeInTheDocument()
+  })
+
+  it('scrolls the whole body by default', () => {
+    render(<DetailDrawer open title="X" onClose={vi.fn()}><p>Body content</p></DetailDrawer>)
+    const body = screen.getByText('Body content').parentElement
+
+    expect(body).toHaveAttribute('data-body-layout', 'scroll')
+    expect(body).toHaveClass('flex-1', 'overflow-y-auto')
+    expect(body).not.toHaveClass('flex-col')
+  })
+
+  it('lays sections out as a flex column so only their open panels scroll', () => {
+    render(
+      <DetailDrawer open title="X" onClose={vi.fn()} bodyLayout="sections">
+        <DetailDrawerSection title="Overview" defaultOpen><p>Rows</p></DetailDrawerSection>
+        <DetailDrawerSection title="Disks"><p>Disk rows</p></DetailDrawerSection>
+      </DetailDrawer>,
+    )
+    const body = screen.getByRole('heading', { level: 3, name: 'Overview' }).closest('section')?.parentElement
+
+    expect(body).toHaveAttribute('data-body-layout', 'sections')
+    expect(body).toHaveClass('flex', 'min-h-0', 'flex-1', 'flex-col')
+    expect(body?.children).toHaveLength(2)
   })
 
   it('calls onClose when the close button is clicked', () => {

@@ -20,6 +20,9 @@ interface DetailDrawerProps {
   footer?: ReactNode
   // Left-hand footer group, typically the destructive action.
   footerStart?: ReactNode
+  // 'scroll' scrolls the whole body. 'sections' is for a body of DetailDrawerSections:
+  // their headers stay in view and each open section scrolls its own content.
+  bodyLayout?: 'scroll' | 'sections'
   // The width is only user-resizable from `lg`; below it the drawer keeps the fixed width.
   resizable?: boolean
   ariaLabel?: string
@@ -39,7 +42,7 @@ function isVisible(element: HTMLElement) {
 // wider/narrower from `lg` up for the current view only — it resets to the
 // default width whenever it closes. The width goes through a CSS variable so
 // below `lg` the fixed width wins and the hidden handle reports nothing.
-export function DetailDrawer({ open, onClose, title, subtitle, meta = [], headerActions, children, footer, footerStart, resizable = false, ariaLabel = 'Detail', closeLabel = 'Close detail', resizeLabel = 'Resize panel' }: DetailDrawerProps) {
+export function DetailDrawer({ open, onClose, title, subtitle, meta = [], headerActions, children, footer, footerStart, bodyLayout = 'scroll', resizable = false, ariaLabel = 'Detail', closeLabel = 'Close detail', resizeLabel = 'Resize panel' }: DetailDrawerProps) {
   const { width, handleProps } = useResizablePanel({ open, resizeLabel })
   const metaItems = meta.filter(Boolean)
   const drawerRef = useRef<HTMLElement>(null)
@@ -147,7 +150,13 @@ export function DetailDrawer({ open, onClose, title, subtitle, meta = [], header
           ) : null}
           {subtitle ? <div className="mt-0.5 truncate text-xs text-text-muted">{subtitle}</div> : null}
         </div>
-        <div className="custom-scrollbar flex-1 overflow-y-auto">{children}</div>
+        <div
+          data-body-layout={bodyLayout}
+          // In 'sections' the body only scrolls as a fallback, when even the headers do not fit.
+          className={cn('custom-scrollbar flex-1 overflow-y-auto', bodyLayout === 'sections' ? 'flex min-h-0 flex-col' : undefined)}
+        >
+          {children}
+        </div>
         {footer || footerStart ? (
           <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-t border-border px-5 py-3">
             {footerStart ? <div className="flex flex-wrap items-center gap-3">{footerStart}</div> : null}
