@@ -1,0 +1,59 @@
+# TODO: Kontextové relationship helpery
+
+Spec: `tasks/contextual-relationship-helpers-spec.md` · Plán: `tasks/contextual-relationship-helpers-plan.md`
+Stav: čaká na schválenie. Kód sa nemení pred schválením.
+
+## C0: Spec, plán, TODO
+- [ ] schválené používateľom (vrátane O1 – VIOS)
+
+## C1: Shared relationship primitives (S–M)
+- [ ] `StorageIcon`, `AlertTriangleIcon` v `Icons.tsx` (20×20, stroke currentColor 1.5)
+- [ ] `relationshipGraphTypes`, `relationshipAdjacency` (pure, one-hop)
+- [ ] `RelationshipGraph`, `RelationshipGroup`, `RelationshipChain`, `RelationshipNode`, `RelationshipConnector`, `RelationshipNote`
+- [ ] tóny chipu compute/storage/infrastructure/protection/problem cez tokeny, žiadne hex ani `warning-*`
+- [ ] hover/focus highlight: active + priami susedia 100 %, ostatné uzly `opacity-35`, hrany `opacity-[0.12]`, labely `opacity-15`, 150 ms transition, leave/blur obnoví
+- [ ] container query: desktop chain, úzko vertikálny stack bez hrotov
+- [ ] a11y: `role="group"`, `tabIndex=0`, `aria-describedby` skrytý popis, `sr-only` text konektora
+- Overenie: `relationshipAdjacency.test.ts`, `RelationshipGraph.test.tsx`, eslint, typecheck, `git diff --check`
+- Commit C1
+
+## C2: Selected-provider kontext (M)
+- [ ] `buildSelectedProviderRelationships` (compute / storage / missing + edges) nad `resolveProviderTopology`
+- [ ] `SelectedProviderRelationships` (loading/error, intro, graf, empty stavy podľa typu)
+- [ ] `ProvidersCatalogueTable`: help `children` so `selectedProviderId`, Role/Credential ostávajú
+- [ ] odstrániť `buildRelationshipRows`, `ProviderRelationshipsContent`, `ProviderRelationshipParts` + testy a osirelé `providers.relationships.*` kľúče
+- [ ] en/sk/cs: nové kľúče (napr. `usedBy`, `noBackingRelationships`, `noProviderRelationships`, `notUsedAsBacking`), upravené `intro.source`
+- Overenie: view-model test (VMware, IBM Power, FlashCopy, Hitachi, viac backingov, mutual, one-way, viac partnerov, unresolved, mismatch, bez vzťahov, nesúvisiaci sa neobjaví, missing), component test, `ProvidersCatalogueTable.test.tsx`, locale parity test
+- Commit C2
+
+## CP1: Checkpoint po C2
+- [ ] prehliadač: provider help VMware a FlashCopy, light/dark, 1366×768 a 390 px, hover aj Tab, pozícia `wide` popoveru z drawera
+- [ ] review s používateľom pred resources
+
+## C3: VMware VM helper (M)
+- [ ] `buildVmRelationships` (provider→VM, volumes podľa storage providera, NAA, FlashCopy)
+- [ ] `VmRelationshipHelp` + `VirtualMachineDetailPanel` (`width="wide"`, dáta propsom)
+- [ ] žiadne Hard disk→NAA hrany; zero snapshots = volume + „No FlashCopy mappings“; loading/error/empty
+- Overenie: `buildVmRelationships.test.ts`, `VirtualMachineDetailPanel.test.tsx`
+- Commit C3
+
+## C4: IBM Power helper (M)
+- [ ] `buildPowerPartitionRelationships` (LPAR: provider→LPAR, volumes podľa FlashSystemu, Volume ID/UID, FlashCopy, NPIV text bez hostu)
+- [ ] VIOS: provider→VIOS + limitation info, žiadne backing hrany (podľa O1)
+- [ ] `PowerPartitionRelationshipHelp` + `IbmPowerDetailPanel`
+- Overenie: `buildPowerPartitionRelationships.test.ts`, `IbmPowerDetailPanel.test.tsx` (žiadne NAA ani composite key, VIOS bez requestu)
+- Commit C4
+
+## C5: FlashSystem helper (M)
+- [ ] plný `providers` cez `FlashSystemResourcesPage` → `FlashSystemInventoryView` → panel
+- [ ] `buildFlashVolumeRelationships` (provider→pool→volume, hosty, CG, FlashCopy iba pri dátach, Remote Copy iba pri `RC_id` bez targetu, configured partner ako provider-level)
+- [ ] `FlashVolumeRelationshipHelp` + panel
+- Overenie: `buildFlashVolumeRelationships.test.ts`, `FlashSystemVolumeDetailPanel.test.tsx`, `FlashSystemInventoryView.test.tsx`
+- Commit C5
+
+## C6: Locales, cleanup, prehliadač
+- [ ] wording help textov (globálna topológia → kontext), en/sk/cs, locale testy
+- [ ] help shell regresia: Tab do uzlov drží help otvorený, Escape zavrie iba help, ostatné `KeyedHelpPopover` bez zmeny
+- [ ] prehliadač: všetky 4 helpery, light/dark, desktop/390 px, hover/Tab, viac uzlov, problem prípad
+- [ ] celá suite (cross-cutting), eslint, `npm run typecheck`, `git diff --check`
+- Commit C6
