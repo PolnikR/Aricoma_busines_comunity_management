@@ -1,8 +1,11 @@
 import { DetailDrawer, DetailDrawerSection, DetailRow } from '@/shared/components/data-table'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { PowerPartitionData, PowerPartitionResource } from '../../model/discoveryTypes'
+import { useVdisksByVm } from '../../hooks/useVmStorageVolumes'
+import { BackingStorageInfo } from '../BackingStorageInfo'
 
-type SectionKey = 'summary' | 'processorMemory' | 'network' | 'storage' | 'virtualIo'
+type SectionKey = 'summary' | 'processorMemory' | 'network' | 'storage' | 'virtualIo' | 'backingStorage'
 type FieldKey =
   | 'partitionUuid'
   | 'logicalSerialNumber'
@@ -32,6 +35,8 @@ interface IbmPowerDetailPanelProps {
   partition: PowerPartitionResource | null
   open: boolean
   onClose: () => void
+  // Already loaded providers, used to name the backing storage provider.
+  providers?: ProviderRecord[]
   labels: {
     entity: string
     detail: string
@@ -39,6 +44,7 @@ interface IbmPowerDetailPanelProps {
     resize: string
     yes: string
     no: string
+    emptyBackingStorage: string
     sections: Record<SectionKey, string>
     fields: Record<FieldKey, string>
     values: {
@@ -113,10 +119,23 @@ function storageConnection(data: PowerPartitionData, labels: IbmPowerDetailPanel
   return '-'
 }
 
-export function IbmPowerDetailPanel({ partition, open, onClose, labels }: IbmPowerDetailPanelProps) {
+export function IbmPowerDetailPanel({ partition, open, onClose, providers = [], labels }: IbmPowerDetailPanelProps) {
   const data = partition?.partitionData
   const yes = labels.yes
   const no = labels.no
+  // Backing storage is resolved for LPARs only (LPAR -> NPIV WWPN -> FlashSystem host).
+  // A VIOS passes disabled arguments, so the query sends no request.
+  const isLpar = partition?.partitionKind === 'LPAR'
+  const {
+    data: vdisks,
+    isLoading: vdisksLoading,
+    isError: vdisksError,
+    isFetching: vdisksFetching,
+    refetch: refetchVdisks,
+  } = useVdisksByVm(
+    isLpar ? partition.partitionName : '',
+    isLpar ? partition.providerId : undefined,
+  )
 
   return (
     <DetailDrawer
@@ -196,6 +215,19 @@ export function IbmPowerDetailPanel({ partition, open, onClose, labels }: IbmPow
               },
             ]}
           />
+          {isLpar ? (
+            <DetailDrawerSection title={labels.sections.backingStorage} flush>
+              <BackingStorageInfo
+                volumes={vdisks?.volumes ?? []}
+                isLoading={vdisksLoading}
+                isError={vdisksError}
+                isFetching={vdisksFetching}
+                onRetry={() => { void refetchVdisks() }}
+                providers={providers}
+                emptyText={labels.emptyBackingStorage}
+              />
+            </DetailDrawerSection>
+          ) : null}
         </>
       ) : null}
     </DetailDrawer>

@@ -4,9 +4,25 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { useTranslation } from '@/test-utils/mockUseTranslation'
 import type { PowerPartitionResource } from '../../model/discoveryTypes'
+import type { VmStorageVolumes } from '../../model/vmStorageVolumesTypes'
 import { PowerInventoryView } from './PowerInventoryView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+// The drawer resolves backing storage through useVdisksByVm; keep it off the network.
+const useVdisksByVmMock = vi.hoisted(() => vi.fn<(vmName: string, providerId?: string) => {
+  data: VmStorageVolumes | undefined
+  isLoading: boolean
+  isError: boolean
+  isFetching: boolean
+  refetch: () => Promise<unknown>
+}>(() => ({
+  data: undefined,
+  isLoading: false,
+  isError: false,
+  isFetching: false,
+  refetch: vi.fn().mockResolvedValue(undefined),
+})))
+vi.mock('../../hooks/useVmStorageVolumes', () => ({ useVdisksByVm: useVdisksByVmMock }))
 
 function renderInRouter(ui: ReactNode) {
   return render(<MemoryRouter>{ui}</MemoryRouter>)

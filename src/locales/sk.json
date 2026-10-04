@@ -1466,6 +1466,7 @@
   "resources.power.detail.entity": "Partícia",
   "resources.power.detail.ariaLabel": "Detail IBM Power partície",
   "resources.power.detail.close": "Zavrieť detail partície",
+  "resources.power.detail.noBackingVolumes": "Pre túto logickú partíciu sa nenašiel žiadny podkladový úložný zväzok.",
   "resources.power.detail.summary": "Súhrn",
   "resources.power.detail.processors": "Procesory (aktuálne / požadované)",
   "resources.power.detail.processorLimits": "Limity procesorov (min – max)",

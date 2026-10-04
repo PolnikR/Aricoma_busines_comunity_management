@@ -4,6 +4,7 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { DataTable, DataTablePagination } from '@/shared/components/data-table'
 import type { TableDensity } from '@/shared/components/data-table'
 import type { useTranslation } from '@/hooks/useTranslation'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { PowerPartitionResource } from '../../model/discoveryTypes'
 import { createPowerColumns } from '../../config/powerColumns'
 import { filterPowerResources, getPowerFilterOptions } from '../../helpers/filterSourceResources'
@@ -22,12 +23,15 @@ const initialFilters: PowerFilters = {
 interface PowerInventoryViewProps {
   resources: PowerPartitionResource[]
   error?: ResourceInventoryPanelError | null
+  // Already loaded providers, passed to the drawer to name backing storage providers.
+  providers?: ProviderRecord[]
   t: Translate
 }
 
 export function PowerInventoryView({
   resources,
   error,
+  providers = [],
   t,
 }: PowerInventoryViewProps) {
   const { query, updateQuery, updateFilters } = usePowerSearchParams()
@@ -112,6 +116,7 @@ export function PowerInventoryView({
         partition={selected}
         open={selected !== null}
         onClose={() => { setSelected(null) }}
+        providers={providers}
         labels={{
           entity: t('resources.power.detail.entity'),
           resize: t('drawer.resize'),
@@ -119,12 +124,14 @@ export function PowerInventoryView({
           close: t('resources.power.detail.close'),
           yes: t('common.yes'),
           no: t('common.no'),
+          emptyBackingStorage: t('resources.power.detail.noBackingVolumes'),
           sections: {
             summary: t('resources.power.detail.summary'),
             processorMemory: t('resources.power.groups.processorMemory'),
             network: t('resources.power.groups.networkMonitoring'),
             storage: t('resources.power.groups.storage'),
             virtualIo: t('resources.power.groups.virtualIo'),
+            backingStorage: t('drawer.sections.backingStorageInfo'),
           },
           fields: {
             partitionUuid: t('resources.power.fields.PartitionUUID'),

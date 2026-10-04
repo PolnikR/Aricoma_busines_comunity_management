@@ -1503,6 +1503,7 @@
   "resources.power.detail.entity": "Partition",
   "resources.power.detail.ariaLabel": "IBM Power partition detail",
   "resources.power.detail.close": "Close partition detail",
+  "resources.power.detail.noBackingVolumes": "No backing storage volume was resolved for this logical partition.",
   "resources.power.detail.summary": "Summary",
   "resources.power.detail.processors": "Processors (current / desired)",
   "resources.power.detail.processorLimits": "Processor limits (min – max)",

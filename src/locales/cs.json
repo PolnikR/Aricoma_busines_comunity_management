@@ -1466,6 +1466,7 @@
   "resources.power.detail.entity": "Oddíl",
   "resources.power.detail.ariaLabel": "Detail IBM Power oddílu",
   "resources.power.detail.close": "Zavřít detail oddílu",
+  "resources.power.detail.noBackingVolumes": "Pro tento logický oddíl nebyl nalezen žádný podkladový úložný svazek.",
   "resources.power.detail.summary": "Provozní souhrn",
   "resources.power.detail.interfaceState": "Stav rozhraní",
   "resources.power.detail.ipAddress": "IP adresa",
