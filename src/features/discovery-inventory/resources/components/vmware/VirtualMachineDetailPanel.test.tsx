@@ -235,6 +235,15 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(container).not.toHaveTextContent(/60050763808104D94000000000000016/)
   })
 
+  it('identifies a VMware volume by NAA only, without the IBM Power Volume ID and Volume UID rows', async () => {
+    const container = await openBackingStorage([volume()])
+    const card = within(container).getByRole('region', { name: 'V5000_VOLUME02' })
+
+    expect(within(card).getByText('NAA', { selector: 'dt' })).toBeInTheDocument()
+    expect(within(card).queryByText('Volume ID', { selector: 'dt' })).not.toBeInTheDocument()
+    expect(within(card).queryByText('Volume UID', { selector: 'dt' })).not.toBeInTheDocument()
+  })
+
   it('shows No FlashCopy mappings below the volume details when it has no mappings', async () => {
     const container = await openBackingStorage([volume()])
     const card = within(container).getByRole('region', { name: 'V5000_VOLUME02' })
