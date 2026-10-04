@@ -16,7 +16,7 @@ Stav: plán schválený s úpravami 1–4 (2026-10-04); čaká na kontrolu dokum
 - [ ] container query: desktop chain s hrotmi ◀/▶; úzko vertikálny stack s vertikálnymi hrotmi (forward ▼, backward ▲, both ▲▼), bez horizontálneho overflow
 - [ ] a11y: `role="group"`, `tabIndex=0`, `aria-describedby` skrytý popis, `sr-only` text konektora
 - [ ] logické `entityId` pre highlight, DOM ID cez `useId()` per inštancia
-- Overenie: `relationshipAdjacency.test.ts`, `RelationshipGraph.test.tsx` (vrátane narrow `out`/`in`/`both` a rovnakej entity 2×: highlight na oboch, žiadne duplicitné aria ID), eslint, typecheck, `git diff --check`
+- Overenie: `relationshipAdjacency.test.ts`, `RelationshipGraph.test.tsx` (vrátane narrow variantu: `forward` → vertikálny hrot dole, `backward` → vertikálny hrot hore, `both` → hroty hore aj dole; a rovnakej entity 2×: highlight na oboch, žiadne duplicitné aria ID), eslint, typecheck, `git diff --check`
 - Commit C1
 
 ## C2: Selected-provider kontext (M)
