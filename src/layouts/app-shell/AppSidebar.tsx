@@ -43,7 +43,7 @@ const navItems: NavItem[] = [
     subItems: [
       { name: 'Providers', path: routes.providersConnectors },
       { name: 'Credentials', path: routes.providerCredentials },
-      { name: 'Discovery Settings', path: routes.providerDiscoverySettings },
+      { name: 'Discovery Settings', path: routes.discoverySettings },
     ],
   },
   {

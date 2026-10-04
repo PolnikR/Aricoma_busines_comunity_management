@@ -6,7 +6,6 @@ export const routes = {
   platformAuditRetention: '/platform-administration/audit-retention',
   providersConnectors: '/providers-connectors/providers',
   providerCredentials: '/providers-connectors/credentials',
-  providerDiscoverySettings: '/providers-connectors/discovery-settings',
   recoveryApplications: '/recovery-plans/recovery-applications',
   recoveryGroups: '/recovery-plans/recovery-groups',
   recoveryPolicies: '/recovery-plans/recovery-policies',
@@ -28,6 +27,9 @@ export const routes = {
   resourcesRoleTargetLegacy: '/discovery-inventory/resources/target',
   infrastructure: '/discovery-inventory/infrastructure',
   discoveryJobs: '/discovery-inventory/discovery-jobs',
+  discoverySettings: '/discovery-inventory/discovery-settings',
+  // Redirect-only: Discovery Settings moved from Providers & Connectors to Discovery & Inventory.
+  discoverySettingsLegacy: '/providers-connectors/discovery-settings',
   storageOrchestration: '/storage-orchestration',
   recoveryPlans: '/recovery-plans',
 } as const

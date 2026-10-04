@@ -46,6 +46,9 @@ describe('createAppRouter', () => {
     expect(paths).toContain('discovery-inventory/resources/source')
     expect(paths).toContain('discovery-inventory/resources/target')
     expect(paths).toContain('discovery-inventory/virtual-machines')
+    expect(paths).toContain('discovery-inventory/discovery-settings')
+    expect(paths).toContain('discovery-inventory/discovery-jobs')
+    expect(paths).toContain('providers-connectors/discovery-settings')
     expect(paths).toContain('platform-administration/platform-providers')
     expect(paths).toContain('recovery-actions')
     expect(paths).toContain('validate')
@@ -78,6 +81,7 @@ describe('createAppRouter', () => {
       ['recovery-actions', 'schedule'],
       ['recovery-actions', 'history'],
       ['discovery-inventory/infrastructure'],
+      ['discovery-inventory/discovery-settings'],
     ]
 
     for (const pathChain of containedRoutes) {

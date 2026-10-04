@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import {
   Navigate,
   Route,
+  useLocation,
 } from 'react-router'
 import { AppShell } from '@/layouts/app-shell/AppShell'
 import { ResourcesPage } from '@/features/discovery-inventory/resources/pages/ResourcesPage'
@@ -137,6 +138,12 @@ function toRoutePath(path: string) {
   return path.replace(/^\//, '')
 }
 
+// A legacy URL redirect that keeps the query string and hash, so bookmarked tabs and filters survive.
+function RedirectPreservingSearch({ to }: { to: string }) {
+  const { search, hash } = useLocation()
+  return <Navigate to={{ pathname: to, search, hash }} replace />
+}
+
 function renderModulePageRoutes(pages: typeof platformAdministrationPages) {
   return pages.map((page) => (
     <Route
@@ -168,20 +175,6 @@ function renderProvidersConnectorsRoutes(pages: typeof providersConnectorsPages)
           element={(
             <Suspense fallback={<RouteLoadingSkeleton />}>
               <CredentialsPage />
-            </Suspense>
-          )}
-        />
-      )
-    }
-    if (page.path === routes.providerDiscoverySettings) {
-      return (
-        <Route
-          key={page.path}
-          path={toRoutePath(page.path)}
-          handle={{ contentScroll: 'contained' }}
-          element={(
-            <Suspense fallback={<RouteLoadingSkeleton />}>
-              <DiscoverySettingsPage />
             </Suspense>
           )}
         />
@@ -244,6 +237,7 @@ export function AppRoutes() {
           )}
         />
         <Route path="providers-connectors" element={<Navigate to={routes.providersConnectors} replace />} />
+        <Route path={toRoutePath(routes.discoverySettingsLegacy)} element={<RedirectPreservingSearch to={routes.discoverySettings} />} />
         {renderProvidersConnectorsRoutes(providersConnectorsPages)}
         <Route
           path="providers-connectors/providers/:providerId"
@@ -416,6 +410,15 @@ export function AppRoutes() {
           element={(
             <Suspense fallback={<InfrastructureTopologySkeleton />}>
               <InfrastructurePage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path={toRoutePath(routes.discoverySettings)}
+          handle={{ contentScroll: 'contained' }}
+          element={(
+            <Suspense fallback={<RouteLoadingSkeleton />}>
+              <DiscoverySettingsPage />
             </Suspense>
           )}
         />
