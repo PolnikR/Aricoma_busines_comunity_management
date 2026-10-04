@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import { DetailDrawer, DetailDrawerSection, DetailRow } from '@/shared/components/data-table'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
+import { CopyIcon, GridIcon, LayersIcon, SettingsIcon } from '@/shared/icons/Icons'
 import type { FlashSystemVolumeResource } from '../../model/discoveryTypes'
 
 interface FlashSystemVolumeDetailPanelProps {
@@ -25,18 +26,26 @@ interface FlashSystemVolumeDetailPanelProps {
 const fieldGroups = [
   {
     key: 'identity' as const,
+    accent: 'overview' as const,
+    icon: GridIcon,
     fields: ['id', 'volume_id', 'vdisk_UID'] as const,
   },
   {
     key: 'placement' as const,
+    accent: 'storage' as const,
+    icon: LayersIcon,
     fields: ['mdisk_grp_id', 'parent_mdisk_grp_id', 'parent_mdisk_grp_name', 'IO_group_id', 'IO_group_name'] as const,
   },
   {
     key: 'state' as const,
+    accent: 'configuration' as const,
+    icon: SettingsIcon,
     fields: ['function', 'protocol', 'fast_write_state', 'formatting', 'encrypt'] as const,
   },
   {
     key: 'copies' as const,
+    accent: 'protection' as const,
+    icon: CopyIcon,
     fields: ['FC_id', 'FC_name', 'consistency_groups', 'RC_id', 'RC_name', 'se_copy_count', 'compressed_copy_count', 'RC_change'] as const,
   },
 ]
@@ -67,6 +76,7 @@ export function FlashSystemVolumeDetailPanel({ volume, open, onClose, labels }: 
       open={open}
       onClose={onClose}
       title={volume?.name ?? '-'}
+      bodyLayout="sections"
       meta={[labels.entity]}
       headerActions={<KeyedHelpPopover helpKey="resources.flash.help" sections={['pool', 'flashCopy', 'remoteCopy', 'consistencyGroups']} />}
       ariaLabel={labels.detail}
@@ -79,13 +89,13 @@ export function FlashSystemVolumeDetailPanel({ volume, open, onClose, labels }: 
         <Fragment key={volume.id}>
           {fieldGroups.map((group, index) => (
             // Identity and placement start open; state and copies are one click away.
-            <DetailDrawerSection key={group.key} title={labels.groups[group.key]} defaultOpen={index < 2}>
+            <DetailDrawerSection key={group.key} title={labels.groups[group.key]} accent={group.accent} icon={group.icon} defaultOpen={index < 2}>
               <dl>{group.fields.map((field) => field === 'consistency_groups'
                 ? <DetailRow key={field} label={labels.consistencyGroups} value={<ConsistencyGroups groups={volume.resolvedConsistencyGroups} />} />
                 : <DetailRow key={field} label={labels.fieldLabels[field] ?? field} value={display(volume[field])} />)}</dl>
             </DetailDrawerSection>
           ))}
-          <DetailDrawerSection title={labels.pool}>
+          <DetailDrawerSection title={labels.pool} accent="storage" icon={LayersIcon}>
             <dl>
               <DetailRow label={labels.capacity} value={display(volume.pool?.capacity)} />
               <DetailRow label={labels.usedCapacity} value={display(volume.pool?.used_capacity)} />

@@ -1,4 +1,6 @@
+import type { ComponentProps } from 'react'
 import { DetailDrawer, DetailDrawerSection, DetailRow } from '@/shared/components/data-table'
+import { CpuIcon, GridIcon, LayersIcon, NetworkIcon, ServerIcon } from '@/shared/icons/Icons'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import type { PowerPartitionData, PowerPartitionResource } from '../../model/discoveryTypes'
 
@@ -51,17 +53,17 @@ interface IbmPowerDetailPanelProps {
   }
 }
 
-interface PartitionSectionProps {
+interface PartitionSectionProps extends Required<Pick<ComponentProps<typeof DetailDrawerSection>, 'accent' | 'icon'>> {
   title: string
   rows: { label: string; value: string }[]
 }
 
 // A shared drawer section that hides rows without a value, and itself when none is left.
-function PartitionSection({ title, rows }: PartitionSectionProps) {
+function PartitionSection({ title, rows, accent, icon }: PartitionSectionProps) {
   const visibleRows = rows.filter((row) => row.value !== '-')
   if (visibleRows.length === 0) return null
   return (
-    <DetailDrawerSection title={title} defaultOpen>
+    <DetailDrawerSection title={title} accent={accent} icon={icon} defaultOpen>
       <dl>
         {visibleRows.map((row) => (
           <DetailRow key={row.label} label={row.label} value={row.value} />
@@ -129,11 +131,14 @@ export function IbmPowerDetailPanel({ partition, open, onClose, labels }: IbmPow
       closeLabel={labels.close}
       resizeLabel={labels.resize}
       resizable
+      bodyLayout="sections"
     >
       {partition && data ? (
         <>
           <PartitionSection
             title={labels.sections.summary}
+            accent="overview"
+            icon={GridIcon}
             rows={[
               { label: labels.fields.partitionUuid, value: display(raw(data, 'PartitionUUID'), yes, no) },
               { label: labels.fields.logicalSerialNumber, value: display(raw(data, 'LogicalSerialNumber'), yes, no) },
@@ -144,6 +149,8 @@ export function IbmPowerDetailPanel({ partition, open, onClose, labels }: IbmPow
           />
           <PartitionSection
             title={labels.sections.processorMemory}
+            accent="infrastructure"
+            icon={CpuIcon}
             rows={[
               { label: labels.fields.processors, value: combine([raw(data, 'CurrentProcessors'), raw(data, 'DesiredProcessors')], yes, no, ' / ') },
               { label: labels.fields.processorLimits, value: combine([raw(data, 'MinimumProcessors'), raw(data, 'MaximumProcessors')], yes, no, ' – ') },
@@ -157,6 +164,8 @@ export function IbmPowerDetailPanel({ partition, open, onClose, labels }: IbmPow
           />
           <PartitionSection
             title={labels.sections.network}
+            accent="infrastructure"
+            icon={NetworkIcon}
             rows={[
               { label: labels.fields.interface, value: combine([raw(data, 'InterfaceName'), raw(data, 'DeviceName')], yes, no) },
               { label: labels.fields.address, value: combine([raw(data, 'IPAddress'), raw(data, 'SubnetMask')], yes, no, ' / ') },
@@ -166,6 +175,8 @@ export function IbmPowerDetailPanel({ partition, open, onClose, labels }: IbmPow
           />
           <PartitionSection
             title={labels.sections.storage}
+            accent="storage"
+            icon={LayersIcon}
             rows={[
               { label: labels.fields.volume, value: combine([raw(data, 'VolumeName'), raw(data, 'VolumeState')], yes, no) },
               { label: labels.fields.capacity, value: display(raw(data, 'VolumeCapacity'), yes, no) },
@@ -185,6 +196,8 @@ export function IbmPowerDetailPanel({ partition, open, onClose, labels }: IbmPow
           />
           <PartitionSection
             title={labels.sections.virtualIo}
+            accent="infrastructure"
+            icon={ServerIcon}
             rows={[
               { label: labels.fields.virtualIoSlots, value: display(raw(data, 'MaximumVirtualIOSlots'), yes, no) },
               { label: labels.fields.physicalIo, value: combine([raw(data, 'HasPhysicalIO'), raw(data, 'PhysicalLocation')], yes, no) },

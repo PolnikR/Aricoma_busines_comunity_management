@@ -31,10 +31,10 @@ Plán: `tasks/detail-drawer-section-accents-plan.md`
 - Rozsah: S
 
 ## Task 4: FlashSystem volume a IBM Power drawer
-- [ ] obe `bodyLayout="sections"`
-- [ ] Flash: Identity `overview`/`GridIcon`, Placement `storage`/`LayersIcon`, State `configuration`/`SettingsIcon`, Copies `protection`/`CopyIcon`, Pool `storage`/`LayersIcon`
-- [ ] Power: Summary `overview`/`GridIcon`, Processor & memory `infrastructure`/`CpuIcon`, Network `infrastructure`/`NetworkIcon`, Virtual I/O `infrastructure`/`ServerIcon`, Storage `storage`/`LayersIcon` (cez `PartitionSection`)
-- [ ] nové testy `FlashSystemVolumeDetailPanel.test.tsx` a `IbmPowerDetailPanel.test.tsx`: `bodyLayout="sections"` a `data-accent` sekcií
+- [x] obe `bodyLayout="sections"`
+- [x] Flash: Identity `overview`/`GridIcon`, Placement `storage`/`LayersIcon`, State `configuration`/`SettingsIcon`, Copies `protection`/`CopyIcon`, Pool `storage`/`LayersIcon`
+- [x] Power: Summary `overview`/`GridIcon`, Processor & memory `infrastructure`/`CpuIcon`, Network `infrastructure`/`NetworkIcon`, Virtual I/O `infrastructure`/`ServerIcon`, Storage `storage`/`LayersIcon` (cez `PartitionSection`)
+- [x] nové testy `FlashSystemVolumeDetailPanel.test.tsx` a `IbmPowerDetailPanel.test.tsx`: `bodyLayout="sections"` a `data-accent` sekcií
 - Overenie: oba nové test súbory, eslint
 - Rozsah: M
 
