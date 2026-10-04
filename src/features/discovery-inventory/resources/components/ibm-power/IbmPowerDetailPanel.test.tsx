@@ -304,6 +304,7 @@ describe('IbmPowerDetailPanel backing storage', () => {
     expect(accentOf('Network and monitoring')).toBe('infrastructure')
     expect(accentOf('Storage')).toBe('storage')
     expect(accentOf('I/O and virtualization')).toBe('infrastructure')
+    expect(accentOf('Backing Storage Info')).toBe('storage')
   })
 
   it('passes disabled arguments for a VIOS and renders no Backing Storage Info section', () => {

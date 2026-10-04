@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
-import { DiskIcon } from '@/shared/icons/Icons'
+import { DiskIcon, GridIcon } from '@/shared/icons/Icons'
 import { DetailDrawerSection } from './DetailDrawerSection'
 
 afterEach(cleanup)
@@ -9,7 +9,7 @@ afterEach(cleanup)
 describe('DetailDrawerSection', () => {
   it('is collapsed by default and mounts its content only once opened', async () => {
     const user = userEvent.setup()
-    render(<DetailDrawerSection title="Inventory"><p>Lazy content</p></DetailDrawerSection>)
+    render(<DetailDrawerSection title="Inventory" accent="overview" icon={GridIcon}><p>Lazy content</p></DetailDrawerSection>)
     const toggle = screen.getByRole('button', { name: 'Inventory' })
 
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
@@ -26,7 +26,7 @@ describe('DetailDrawerSection', () => {
   })
 
   it('points aria-controls at a labelled region while expanded', () => {
-    render(<DetailDrawerSection title="Overview" defaultOpen><p>Rows</p></DetailDrawerSection>)
+    render(<DetailDrawerSection title="Overview" accent="overview" icon={GridIcon} defaultOpen><p>Rows</p></DetailDrawerSection>)
     const toggle = screen.getByRole('button', { name: 'Overview' })
     const region = screen.getByRole('region', { name: 'Overview' })
 
@@ -35,14 +35,14 @@ describe('DetailDrawerSection', () => {
   })
 
   it('renders the toggle as a button inside an h3', () => {
-    render(<DetailDrawerSection title="Overview"><p>Rows</p></DetailDrawerSection>)
+    render(<DetailDrawerSection title="Overview" accent="overview" icon={GridIcon}><p>Rows</p></DetailDrawerSection>)
     const heading = screen.getByRole('heading', { level: 3, name: 'Overview' })
     expect(heading).toContainElement(screen.getByRole('button', { name: 'Overview' }))
   })
 
   it('toggles with Enter and Space', async () => {
     const user = userEvent.setup()
-    render(<DetailDrawerSection title="Overview"><p>Rows</p></DetailDrawerSection>)
+    render(<DetailDrawerSection title="Overview" accent="overview" icon={GridIcon}><p>Rows</p></DetailDrawerSection>)
     const toggle = screen.getByRole('button', { name: 'Overview' })
 
     toggle.focus()
@@ -54,7 +54,7 @@ describe('DetailDrawerSection', () => {
 
   it('renders summary and badge, names the button by the title and describes it by the summary', () => {
     render(
-      <DetailDrawerSection title="Overview" summary="VMware VM" badge={<span>3</span>}>
+      <DetailDrawerSection title="Overview" accent="overview" icon={GridIcon} summary="VMware VM" badge={<span>3</span>}>
         <p>Rows</p>
       </DetailDrawerSection>,
     )
@@ -66,21 +66,21 @@ describe('DetailDrawerSection', () => {
   })
 
   it('has no description without a summary', () => {
-    render(<DetailDrawerSection title="Overview"><p>Rows</p></DetailDrawerSection>)
+    render(<DetailDrawerSection title="Overview" accent="overview" icon={GridIcon}><p>Rows</p></DetailDrawerSection>)
     expect(screen.getByRole('button', { name: 'Overview' })).not.toHaveAttribute('aria-describedby')
   })
 
   it('pads the body unless flush', () => {
-    const { rerender } = render(<DetailDrawerSection title="Overview" defaultOpen><p>Rows</p></DetailDrawerSection>)
+    const { rerender } = render(<DetailDrawerSection title="Overview" accent="overview" icon={GridIcon} defaultOpen><p>Rows</p></DetailDrawerSection>)
     expect(screen.getByRole('region', { name: 'Overview' })).toHaveClass('px-5', 'pb-4')
 
-    rerender(<DetailDrawerSection title="Overview" defaultOpen flush><p>Rows</p></DetailDrawerSection>)
+    rerender(<DetailDrawerSection title="Overview" accent="overview" icon={GridIcon} defaultOpen flush><p>Rows</p></DetailDrawerSection>)
     expect(screen.getByRole('region', { name: 'Overview' })).not.toHaveClass('px-5')
   })
 
   it('opens with defaultOpen and then keeps its own state', async () => {
     const user = userEvent.setup()
-    render(<DetailDrawerSection title="Overview" defaultOpen><p>Rows</p></DetailDrawerSection>)
+    render(<DetailDrawerSection title="Overview" accent="overview" icon={GridIcon} defaultOpen><p>Rows</p></DetailDrawerSection>)
     expect(screen.getByText('Rows')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Overview' }))
@@ -91,8 +91,8 @@ describe('DetailDrawerSection', () => {
     const user = userEvent.setup()
     render(
       <>
-        <DetailDrawerSection title="Overview" defaultOpen><p>Overview rows</p></DetailDrawerSection>
-        <DetailDrawerSection title="Orchestration"><p>Orchestration rows</p></DetailDrawerSection>
+        <DetailDrawerSection title="Overview" accent="overview" icon={GridIcon} defaultOpen><p>Overview rows</p></DetailDrawerSection>
+        <DetailDrawerSection title="Orchestration" accent="overview" icon={GridIcon}><p>Orchestration rows</p></DetailDrawerSection>
       </>,
     )
 
@@ -106,7 +106,7 @@ describe('DetailDrawerSection', () => {
   })
 
   it('keeps the header sticky and the chevron reduced-motion safe', () => {
-    render(<DetailDrawerSection title="Overview"><p>Rows</p></DetailDrawerSection>)
+    render(<DetailDrawerSection title="Overview" accent="overview" icon={GridIcon}><p>Rows</p></DetailDrawerSection>)
     expect(screen.getByRole('heading', { level: 3 })).toHaveClass('sticky', 'top-0', 'bg-surface')
     expect(screen.getByRole('button', { name: 'Overview' }).querySelector('svg')).toHaveClass('motion-reduce:transition-none')
   })
@@ -124,7 +124,7 @@ describe('DetailDrawerSection', () => {
   })
 
   it('dims the accent stripe while the section is closed', () => {
-    render(<DetailDrawerSection title="Disks" accent="storage"><p>Rows</p></DetailDrawerSection>)
+    render(<DetailDrawerSection title="Disks" accent="storage" icon={DiskIcon}><p>Rows</p></DetailDrawerSection>)
     expect(screen.getByRole('button', { name: 'Disks' })).toHaveClass('before:opacity-35')
   })
 
@@ -137,23 +137,16 @@ describe('DetailDrawerSection', () => {
     expect(screen.getByText('Orchestration')).not.toHaveClass('text-orange-500')
   })
 
-  it('renders without stripe or chip when no accent or icon is given', () => {
-    render(<DetailDrawerSection title="Overview"><p>Rows</p></DetailDrawerSection>)
-    const toggle = screen.getByRole('button', { name: 'Overview' })
-
-    expect(toggle.closest('section')).not.toHaveAttribute('data-accent')
-    expect(toggle.querySelector('[data-section-icon]')).toBeNull()
-    expect(toggle.className).not.toMatch(/before:/)
-  })
-
-  it('gives an icon without accent a neutral chip', () => {
-    render(<DetailDrawerSection title="Overview" icon={DiskIcon}><p>Rows</p></DetailDrawerSection>)
-    expect(screen.getByRole('button', { name: 'Overview' }).querySelector('[data-section-icon]')).toHaveClass('bg-surface-muted', 'text-text-muted')
+  it('requires an accent and an icon on every section', () => {
+    // A type-level check only: the element is created, never rendered.
+    // @ts-expect-error A section without an accent and icon does not type-check.
+    const section = <DetailDrawerSection title="Overview"><p>Rows</p></DetailDrawerSection>
+    expect(section.props).not.toHaveProperty('icon')
   })
 
   it('keeps the header fixed and lets only the open panel scroll', async () => {
     const user = userEvent.setup()
-    render(<DetailDrawerSection title="Overview"><p>Rows</p></DetailDrawerSection>)
+    render(<DetailDrawerSection title="Overview" accent="overview" icon={GridIcon}><p>Rows</p></DetailDrawerSection>)
     const section = screen.getByRole('heading', { level: 3 }).closest('section')
 
     expect(section).toHaveClass('flex', 'min-h-0', 'flex-col', 'shrink-0')
@@ -167,7 +160,7 @@ describe('DetailDrawerSection', () => {
 
   it('offers no controlled open API', () => {
     // @ts-expect-error The section is uncontrolled only; `open` is not a prop.
-    render(<DetailDrawerSection title="Overview" open><p>Rows</p></DetailDrawerSection>)
+    render(<DetailDrawerSection title="Overview" accent="overview" icon={GridIcon} open><p>Rows</p></DetailDrawerSection>)
     expect(screen.getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-expanded', 'false')
   })
 })

@@ -67,9 +67,10 @@ interface DetailDrawerSectionProps {
   // Drop the body padding for content that brings its own (inventory, tables).
   flush?: boolean
   // What kind of content the section holds; drives the stripe and icon colour.
-  accent?: DetailDrawerSectionAccent
+  // Required with `icon`: every drawer section carries its identity.
+  accent: DetailDrawerSectionAccent
   // Shared icon component; the section sizes and colours it.
-  icon?: ComponentType<SVGProps<SVGSVGElement>>
+  icon: ComponentType<SVGProps<SVGSVGElement>>
   children: ReactNode
 }
 
@@ -87,7 +88,7 @@ export function DetailDrawerSection({ title, summary, badge, defaultOpen = false
   const titleId = `${id}-title`
   const summaryId = `${id}-summary`
   const panelId = `${id}-panel`
-  const accentStyle = accent ? accentClasses[accent] : undefined
+  const accentStyle = accentClasses[accent]
 
   return (
     <section
@@ -104,9 +105,9 @@ export function DetailDrawerSection({ title, summary, badge, defaultOpen = false
           onClick={() => { setOpen(value => !value) }}
           className={cn(
             'relative flex w-full items-center gap-2 px-5 py-3 text-left text-sm font-semibold text-text-primary transition hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-focus/15',
-            accentStyle && 'before:absolute before:inset-y-0 before:left-0 before:w-0.75 before:transition-opacity',
-            accentStyle?.bar,
-            accentStyle && (open ? 'before:opacity-100' : 'before:opacity-35'),
+            'before:absolute before:inset-y-0 before:left-0 before:w-0.75 before:transition-opacity',
+            accentStyle.bar,
+            open ? 'before:opacity-100' : 'before:opacity-35',
           )}
         >
           <ChevronRightIcon
@@ -115,14 +116,9 @@ export function DetailDrawerSection({ title, summary, badge, defaultOpen = false
               open ? 'rotate-90' : undefined,
             )}
           />
-          {Icon ? (
-            <span
-              data-section-icon
-              className={cn('flex size-6 shrink-0 items-center justify-center rounded-md', accentStyle?.chip ?? 'bg-surface-muted text-text-muted')}
-            >
-              <Icon className="size-3.5" aria-hidden="true" />
-            </span>
-          ) : null}
+          <span data-section-icon className={cn('flex size-6 shrink-0 items-center justify-center rounded-md', accentStyle.chip)}>
+            <Icon className="size-3.5" aria-hidden="true" />
+          </span>
           <span id={titleId} className="min-w-0 truncate">{title}</span>
           {badge ? <span className="shrink-0">{badge}</span> : null}
           {summary ? (
@@ -135,7 +131,7 @@ export function DetailDrawerSection({ title, summary, badge, defaultOpen = false
           id={panelId}
           role="region"
           aria-labelledby={titleId}
-          className={cn('custom-scrollbar min-h-0 flex-1 overflow-y-auto', flush ? undefined : 'px-5 pb-4', accentStyle?.panel)}
+          className={cn('custom-scrollbar min-h-0 flex-1 overflow-y-auto', flush ? undefined : 'px-5 pb-4', accentStyle.panel)}
         >
           {children}
         </div>

@@ -229,7 +229,7 @@ export function IbmPowerDetailPanel({ partition, open, onClose, providers = [], 
             ]}
           />
           {isLpar ? (
-            <DetailDrawerSection title={labels.sections.backingStorage} flush>
+            <DetailDrawerSection title={labels.sections.backingStorage} accent="storage" icon={LayersIcon} flush>
               <BackingStorageInfo
                 volumes={vdisks?.volumes ?? []}
                 isLoading={vdisksLoading}

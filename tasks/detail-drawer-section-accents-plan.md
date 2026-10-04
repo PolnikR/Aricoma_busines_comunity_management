@@ -37,8 +37,10 @@ Backend, API ani `src/generated/**` sa nemenia.
   20 20`, `fill="none"`, `stroke="currentColor"`, `strokeWidth 1.5`, `aria-hidden`). Prop `icon` je
   komponent (`ComponentType<SVGProps<SVGSVGElement>>`), aby veľkosť a farbu určoval shared
   komponent.
-- **Fallback:** sekcia bez `accent` a `icon` vyzerá ako dnes (bez pruhu a chipu). Ikona bez
-  akcentu dostane neutrálny chip.
+- **Každá sekcia má ikonu (rozhodnutie 2026-10-04, nahrádza pôvodný fallback):** `accent` a
+  `icon` sú v `DetailDrawerSection` povinné, takže sekcia bez nich neprejde typecheckom.
+  Doplnená bola aj IBM Power Backing Storage Info (`storage`/`LayersIcon`), ktorá prišla
+  z vetvy `test`.
 
 ## 1. Drawery a ich sekcie
 

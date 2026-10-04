@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DetailDrawer, DetailRow } from './DetailDrawer'
+import { GridIcon } from '@/shared/icons/Icons'
 import { DetailDrawerSection } from './DetailDrawerSection'
 
 afterEach(cleanup)
@@ -24,8 +25,8 @@ afterEach(cleanup)
   it('lays sections out as a flex column so only their open panels scroll', () => {
     render(
       <DetailDrawer open title="X" onClose={vi.fn()} bodyLayout="sections">
-        <DetailDrawerSection title="Overview" defaultOpen><p>Rows</p></DetailDrawerSection>
-        <DetailDrawerSection title="Disks"><p>Disk rows</p></DetailDrawerSection>
+        <DetailDrawerSection title="Overview" accent="overview" icon={GridIcon} defaultOpen><p>Rows</p></DetailDrawerSection>
+        <DetailDrawerSection title="Disks" accent="overview" icon={GridIcon}><p>Disk rows</p></DetailDrawerSection>
       </DetailDrawer>,
     )
     const body = screen.getByRole('heading', { level: 3, name: 'Overview' }).closest('section')?.parentElement
