@@ -121,11 +121,16 @@ Implementácia:
   | Prvok | Triedy |
   |---|---|
   | telo draweru pri `bodyLayout="sections"` | `flex min-h-0 flex-1 flex-col overflow-y-auto` |
-  | sekcia (`section`) | `flex min-h-0 flex-col`; zatvorená `shrink-0`, otvorená `shrink` |
+  | sekcia (`section`) | `flex min-h-0 flex-col`; zatvorená `shrink-0`, otvorená `flex-1 max-h-fit` |
   | hlavička (`h3`) | `shrink-0` |
   | otvorený panel (`role="region"`) | `flex-1 min-h-0 overflow-y-auto custom-scrollbar` |
   | VMware wrapper `@container/vm-detail` | `flex min-h-0 flex-1 flex-col` (container query ostáva) |
   | Recovery wrapper `<div key>` | nahradiť `Fragment key` |
+
+  Otvorené sekcie si delia výšku rovnakým dielom; sekcia, ktorej stačí menej, zaberie iba
+  svoj obsah (`max-h-fit`) a zvyšok dostanú ostatné. Pôvodné `shrink` zmenšovalo sekcie podľa
+  veľkosti, takže v prehliadači mal VM Disks na 390 px iba 20 px (zmena schválená
+  používateľom 2026-10-04).
 
   `overflow-y-auto` na tele je iba poistka pre prípad, keď sa nezmestia ani hlavičky.
   V default (blokovom) tele sa flex triedy sekcie neprejavia, takže 13 drawerov bez

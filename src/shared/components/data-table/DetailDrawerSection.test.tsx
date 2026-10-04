@@ -160,7 +160,7 @@ describe('DetailDrawerSection', () => {
     expect(screen.getByRole('heading', { level: 3 })).toHaveClass('shrink-0')
 
     await user.click(screen.getByRole('button', { name: 'Overview' }))
-    expect(section).toHaveClass('shrink')
+    expect(section).toHaveClass('flex-1', 'max-h-fit')
     expect(section).not.toHaveClass('shrink-0')
     expect(screen.getByRole('region', { name: 'Overview' })).toHaveClass('flex-1', 'min-h-0', 'overflow-y-auto')
   })

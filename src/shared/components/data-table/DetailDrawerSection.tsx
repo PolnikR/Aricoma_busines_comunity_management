@@ -77,9 +77,10 @@ interface DetailDrawerSectionProps {
 // it keeps its own open state, and consumers reset it with a `key`. Collapsed
 // content is unmounted, so data it fetches loads only once the section opens.
 // The button's name is the title alone; the summary is its description.
-// In a `bodyLayout="sections"` drawer the header stays put and the open panel
-// shrinks to the space left and scrolls on its own; in a scrolling body the
-// flex classes have no effect.
+// In a `bodyLayout="sections"` drawer the header stays put and open sections
+// split the height equally; one that needs less keeps just its content
+// (`max-h-fit`), so a short section is never squeezed. Each open panel scrolls
+// on its own. In a scrolling body the flex classes have no effect.
 export function DetailDrawerSection({ title, summary, badge, defaultOpen = false, flush = false, accent, icon: Icon, children }: DetailDrawerSectionProps) {
   const [open, setOpen] = useState(defaultOpen)
   const id = useId()
@@ -91,7 +92,7 @@ export function DetailDrawerSection({ title, summary, badge, defaultOpen = false
   return (
     <section
       data-accent={accent}
-      className={cn('flex min-h-0 flex-col border-b border-border last:border-b-0', open ? 'shrink' : 'shrink-0')}
+      className={cn('flex min-h-0 flex-col border-b border-border last:border-b-0', open ? 'flex-1 max-h-fit' : 'shrink-0')}
     >
       <h3 className="sticky top-0 z-1 shrink-0 bg-surface">
         <button

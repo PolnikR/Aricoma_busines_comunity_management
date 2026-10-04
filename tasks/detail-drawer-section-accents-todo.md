@@ -7,7 +7,7 @@ Plán: `tasks/detail-drawer-section-accents-plan.md`
 - [x] typ `DetailDrawerSectionAccent`: `overview | infrastructure | storage | protection | configuration | technical`; voliteľné props `accent` a `icon`
 - [x] statická mapa akcentov na tokeny (light/dark), pruh, chip, hover/focus/open stav; `configuration` = orange iba pruh a chip, `technical` = jediné gray, žiadne `warning-*`
 - [x] fallback bez `accent`/`icon` je vizuálne zhodný s dneškom
-- [x] flex contract: sekcia `flex min-h-0 flex-col` (zatvorená `shrink-0`, otvorená `shrink`), `h3` `shrink-0`, otvorený panel `flex-1 min-h-0 overflow-y-auto`
+- [x] flex contract: sekcia `flex min-h-0 flex-col` (zatvorená `shrink-0`, otvorená `flex-1 max-h-fit`, úprava 2026-10-04), `h3` `shrink-0`, otvorený panel `flex-1 min-h-0 overflow-y-auto`
 - Overenie: `npm exec vitest run src/shared/components/data-table/DetailDrawerSection.test.tsx`
 - Súbory: `src/shared/icons/Icons.tsx`, `DetailDrawerSection.tsx`, `DetailDrawerSection.test.tsx`, `index.ts` (export typu)
 - Rozsah: S
@@ -53,5 +53,5 @@ Plán: `tasks/detail-drawer-section-accents-plan.md`
 
 ## Checkpoint 2 (koniec)
 - [x] focused testy všetkých dotknutých súborov, eslint, `npm run typecheck`, `git diff --check`
-- [ ] prehliadač: 6 drawerov, 1366×768 a 390 px, light/dark; IBM Power s 5 otvorenými sekciami; Access log s veľkým body — BLOKOVANÉ 2026-10-04: nová CDP karta vyžaduje Keycloak prihlásenie, čaká na používateľa
+- [x] prehliadač (2026-10-04, Edge CDP 9333, vlastná karta): VM 1366×768 / 390 px / dark, FlashSystem so všetkými sekciami otvorenými, IBM Power, Access log, Recovery group — telo sa nikde neskroluje, skrolujú iba panely; Recovery application bez dát v prostredí, pokrytý iba component testom
 - [x] commit (po každom tasku)
