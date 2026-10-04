@@ -28,6 +28,8 @@ export interface StorageVolume {
   capacity: string
   status: string
   pool: string
+  ioGroupName: string
+  storageProviderId: string
   type: string
   protocol: string
   vdiskUid: string

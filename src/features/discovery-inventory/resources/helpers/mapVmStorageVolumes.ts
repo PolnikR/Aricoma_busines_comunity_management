@@ -9,6 +9,12 @@ import type {
   VdisksByVmResponseOutput as VdisksPayload,
 } from '@/generated/query/zod'
 
+// The backend adds storage_provider_id and IO_group_name to each volume; the spec
+// does not list them, so they arrive as unlisted keys kept by validatingMutator.
+type StorageVolumeWire = StorageVolumePayload & Partial<Record<'storage_provider_id' | 'IO_group_name', unknown>>
+
+const toText = (value: unknown) => (typeof value === 'string' ? value : '')
+
 function mapMapping(raw: StorageVolumeMappingPayload): StorageVolumeMapping {
   return {
     id: raw.id,
@@ -25,7 +31,7 @@ function mapMapping(raw: StorageVolumeMappingPayload): StorageVolumeMapping {
   }
 }
 
-function mapVolume(naaId: string, raw: StorageVolumePayload): StorageVolume {
+function mapVolume(naaId: string, raw: StorageVolumeWire): StorageVolume {
   const snapshots = raw.sanpshosts
   return {
     naaId,
@@ -35,6 +41,8 @@ function mapVolume(naaId: string, raw: StorageVolumePayload): StorageVolume {
     capacity: raw.capacity,
     status: raw.status,
     pool: raw.mdisk_grp_name,
+    ioGroupName: toText(raw.IO_group_name),
+    storageProviderId: toText(raw.storage_provider_id),
     type: raw.type,
     protocol: raw.protocol,
     vdiskUid: raw.vdisk_UID,
