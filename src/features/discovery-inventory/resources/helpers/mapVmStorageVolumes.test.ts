@@ -59,7 +59,8 @@ describe('mapVdisks', () => {
     })).volumes
 
     expect(volume).toMatchObject({
-      naaId: 'naa.60050763808104d94000000000000016',
+      key: 'naa.60050763808104d94000000000000016',
+      naa: 'naa.60050763808104d94000000000000016',
       volumeName: 'V5000_VOLUME02',
       storageProviderId: 'ibm-flashsystem-01',
       ioGroupName: 'io_grp0',
@@ -73,6 +74,72 @@ describe('mapVdisks', () => {
 
     expect(volume?.storageProviderId).toBe('')
     expect(volume?.ioGroupName).toBe('')
+  })
+
+  it('maps an IBM Power composite key as an opaque key with Volume ID and UID, not as NAA', () => {
+    // Received IBM Power payload: vdisks keyed by storage_provider_id:volume_id.
+    const received = {
+      name: 'aix2source',
+      count_vm: 2,
+      count_ibm: 4,
+      vdisks: {
+        'ibm-flashsystem-02:2': {
+          id: '2',
+          volume_id: '2',
+          name: 'aix2_source_rootvg',
+          volume_name: 'aix2_source_rootvg',
+          vdisk_UID: '600507638082007A48000000000000A1',
+          storage_provider_id: 'ibm-flashsystem-02',
+          IO_group_name: 'io_grp0',
+          capacity: '30.00GB',
+          status: 'degraded',
+          mdisk_grp_name: 'Pool0',
+          protocol: 'scsi',
+          type: 'striped',
+          copy_count: '1',
+          fc_map_count: '0',
+          sanpshosts: { has_snapshots: false, snapshot_count: 0, is_snapshot: false, source_mappings: [], target_mappings: [] },
+        },
+        'ibm-flashsystem-02:3': {
+          id: '3',
+          volume_id: '3',
+          name: 'aix2_source_swapvg',
+          volume_name: 'aix2_source_swapvg',
+          vdisk_UID: '600507638082007A48000000000000A2',
+          storage_provider_id: 'ibm-flashsystem-02',
+          IO_group_name: 'io_grp0',
+          capacity: '1.00GB',
+          status: 'degraded',
+          mdisk_grp_name: 'Pool0',
+          protocol: 'scsi',
+          type: 'striped',
+          copy_count: '1',
+          fc_map_count: '0',
+          sanpshosts: { has_snapshots: false, snapshot_count: 0, is_snapshot: false, source_mappings: [], target_mappings: [] },
+        },
+      },
+      warnings: [],
+    }
+
+    const volumes = mapVdisks(received).volumes
+
+    expect(volumes).toHaveLength(2)
+    expect(volumes[0]).toMatchObject({
+      key: 'ibm-flashsystem-02:2',
+      naa: null,
+      volumeId: '2',
+      vdiskUid: '600507638082007A48000000000000A1',
+      storageProviderId: 'ibm-flashsystem-02',
+      ioGroupName: 'io_grp0',
+      snapshots: { snapshotCount: 0, sourceMappings: [], targetMappings: [] },
+    })
+    expect(volumes[1]).toMatchObject({ key: 'ibm-flashsystem-02:3', naa: null, volumeId: '3' })
+  })
+
+  it('falls back from volume_id to id when the backend omits volume_id', () => {
+    const [volume] = mapVdisks(payload({ id: '16' })).volumes
+
+    expect(volume?.volumeId).toBe('16')
   })
 
   it('maps both source and target FlashCopy mappings', () => {

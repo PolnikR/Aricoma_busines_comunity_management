@@ -84,6 +84,7 @@ export function IbmPowerResourcesPage(props: SourceResourcesPageProps) {
           isRetrying: sourceQuery.isFetching,
           onRetry: () => { void sourceQuery.refetch() },
         } : null}
+        providers={providers}
         t={t}
       />
     )

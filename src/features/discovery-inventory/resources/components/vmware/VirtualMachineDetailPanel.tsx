@@ -13,7 +13,7 @@ import {
   DetailStat,
 } from '@/shared/components/data-table'
 import { createVmwareDetailFields } from '../../config/vmwareDetailFields'
-import { BackingStorageInfo } from './BackingStorageInfo'
+import { BackingStorageInfo } from '../BackingStorageInfo'
 
 function truncateFilePath(path: string): string {
   if (path.length <= 50) return path
@@ -174,6 +174,7 @@ export function VirtualMachineDetailPanel({
                   isFetching={vdisksFetching}
                   onRetry={() => { void refetchVdisks() }}
                   providers={providers}
+                  emptyText={t('pages.virtualMachines.detail.noBackingVolumes')}
                 />
               </DetailDrawerSection>
         </div>
