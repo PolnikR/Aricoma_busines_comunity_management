@@ -176,6 +176,34 @@ describe('FlashSystemInventoryView', () => {
     await waitFor(() => { expect(screen.queryByRole('dialog', { name: 'FlashSystem volume detail' })).not.toBeInTheDocument() })
   })
 
+  it('draws the volume relationships in the help from allProviders while providers keeps the FlashSystem context', () => {
+    const { t } = useTranslation()
+    const partner: ProviderRecord = { ...provider, id: 'flash-dr', name: 'Flash DR', role: 'target', partnerProviderId: 'flash-01' }
+    const sourceWithPartner: ProviderRecord = { ...provider, partnerProviderId: 'flash-dr' }
+    const inventory = mapFlashSystemInventory(parseWireResponse(VolumesResponse, {
+      count: 1,
+      volumes: [{ id: '0', name: 'vol0', mdisk_grp_id: '0', host_maps: [{ host_id: '3', scsi_id: '1' }], RC_id: '', FC_id: '' }],
+      pools: { '0': { name: 'Pool0', capacity: '6.98TB' } },
+      hosts: { '3': { name: 'esx-01', cluster_name: 'ESX_CLUSTER' } },
+      clusters: {},
+      consistency_groups: {},
+    }), provider.id)
+
+    render(<MemoryRouter><FlashSystemInventoryView resources={inventory.resources} providers={[provider]} allProviders={[sourceWithPartner, partner]} t={t} /></MemoryRouter>)
+    fireEvent.click(screen.getByRole('row', { name: 'Show details for vol0' }))
+    const dialog = screen.getByRole('dialog', { name: 'FlashSystem volume detail' })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'FlashSystem volume help' }))
+    const help = within(dialog).getByRole('dialog', { name: 'What this volume view shows' })
+
+    expect(within(help).getByRole('list', { name: 'Placement' })).toHaveTextContent(/Flash 01.*Pool0.*vol0/)
+    expect(within(help).getByRole('list', { name: 'Host mappings' })).toHaveTextContent(/esx-01.*ESX_CLUSTER.*SCSI ID 1/)
+    expect(within(help).getByRole('list', { name: 'Copy relationships' })).toHaveTextContent('No FlashCopy or Remote Copy relationship is reported for this volume.')
+    expect(within(help).getByRole('list', { name: 'Provider partnership (configured)' })).toHaveTextContent('Flash DR')
+    expect(help).toHaveTextContent('It does not show that this volume is replicated.')
+    // The view's own provider list is untouched: the filter still offers only its FlashSystem.
+    expect(screen.queryByRole('option', { name: 'Flash DR' })).not.toBeInTheDocument()
+  })
+
   it('shows consistency groups from get_volumes between FlashCopy and Remote Copy fields without fetching', () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)

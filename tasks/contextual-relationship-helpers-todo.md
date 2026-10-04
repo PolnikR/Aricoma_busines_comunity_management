@@ -48,9 +48,9 @@ Stav: plán schválený s úpravami 1–4 (2026-10-04); čaká na kontrolu dokum
 - Commit C4
 
 ## C5: FlashSystem helper (M)
-- [ ] nový prop `allProviders` cez `FlashSystemResourcesPage` → `FlashSystemInventoryView` → panel; `providers` si ponechá význam (FLASHCOPY providery roly)
-- [ ] `buildFlashVolumeRelationships` (provider→pool→volume, hosty, CG, FlashCopy iba pri dátach, Remote Copy iba pri `RC_id` bez targetu, configured partner ako provider-level)
-- [ ] `FlashVolumeRelationshipHelp` + panel
+- [x] nový prop `allProviders` cez `FlashSystemResourcesPage` → `FlashSystemInventoryView` → panel; `providers` si ponechá význam (FLASHCOPY providery roly)
+- [x] `buildFlashVolumeRelationships` (provider→pool→volume, hosty, CG, FlashCopy iba pri dátach, Remote Copy iba pri `RC_id` bez targetu, configured partner ako provider-level)
+- [x] `FlashVolumeRelationshipHelp` + panel
 - Overenie: `buildFlashVolumeRelationships.test.ts`, `FlashSystemVolumeDetailPanel.test.tsx`, `FlashSystemInventoryView.test.tsx`
 - Commit C5
 

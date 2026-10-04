@@ -83,6 +83,7 @@ export function FlashSystemResourcesPage(props: SourceResourcesPageProps) {
       <FlashSystemInventoryView
         resources={sourceQuery.flashSystemResources}
         providers={sourceProviders}
+        allProviders={providers}
         error={requestFailed ? {
           title: t('resources.common.loadFailed'),
           description: t('resources.common.loadFailed'),
