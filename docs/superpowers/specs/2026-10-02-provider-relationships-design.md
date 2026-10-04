@@ -243,7 +243,7 @@ Visual reference: [2026-10-02-provider-relationships-helper-template.html](2026-
   - `↔` (both tips) appears only for `mutual: true`.
   - A one-way partner has a single tip in the declared direction: `→` when the row's storage is the source, `←` when it is the target.
   - Visually hidden text: "backing storage", "mutual partner", "partner of" / "partnered by".
-- **Partner repetition**: the first time a partner relationship appears in reading order, it renders as connector + full card. Later occurrences render as a compact one-line reference, `↔ Partner {name} {id}` (`→` / `←` when one-way).
+- **Partner repetition**: the partner always renders as connector + full card, also when the same partner appears in several compute rows, so every row reads on its own. (Revision 2026-10-04: this supersedes the compact one-line partner references shown in template v2.)
 - **Panel width**: inside the wide panel the rows use the template column widths. When the panel is narrower than about 760 px (a small viewport), they collapse into a vertical stack with vertical connectors. No horizontal scroll.
 
 ### States
@@ -264,7 +264,7 @@ There are no aggressive error panels and no red colors for the mismatch or unres
 
 ### Structure
 
-- `helpers/buildRelationshipRows.ts`: a pure view model from `ProviderTopology` to rows. It owns the ordering, the logic that renders a partner in full the first time and compact afterwards, and the selection for "Other storage relationships".
+- `helpers/buildRelationshipRows.ts`: a pure view model from `ProviderTopology` to rows. It owns the ordering, the partner direction, and the selection for "Other storage relationships" (partner relationships that no compute row rendered).
 - `components/ProviderRelationshipsContent.tsx`: renders the approved v2 content (intro, legend, rows, states) from the view model, with no business rules. Small subcomponents (card, connector) go into sibling files if a file would exceed about 200 lines.
 - Shared `HelpPopover` / `KeyedHelpPopover`: hold the interaction and the `width` / `children` props (3a). There is no Providers-specific popover component.
 
@@ -359,7 +359,7 @@ Vitest unit and component tests are colocated with the code. Each slice is writt
 - **`buildRelationshipRows.test.ts`**
   - API order is kept.
   - Multiple targets stack in one row.
-  - A partner renders full the first time and compact afterwards.
+  - The same partner reached from several compute rows is a full partner link in every row.
   - Direction is `both` only for mutual relationships; otherwise `out` or `in`.
   - "Other storage relationships" lists only partner relationships not shown above and is empty when nothing remains.
   - A storage provider with no relationships is not listed.
