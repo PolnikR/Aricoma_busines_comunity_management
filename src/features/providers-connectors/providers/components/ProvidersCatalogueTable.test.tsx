@@ -312,8 +312,11 @@ describe('ProvidersCatalogueTable', () => {
     expect(help).toHaveTextContent('Credential')
     expect(within(help).getByRole('heading', { name: 'Provider relationships' })).toBeInTheDocument()
     expect(within(help).queryByRole('heading', { name: 'Partner provider' })).not.toBeInTheDocument()
-    expect(within(help).getByText('Recovery vCenter')).toBeInTheDocument()
-    expect(within(help).getAllByText('No backing storage provider')).toHaveLength(2)
+    // Only the selected provider's neighbourhood, never the whole topology.
+    expect(within(help).getByRole('group', { name: 'Production vCenter' })).toHaveTextContent('Selected')
+    expect(within(help).queryByText('Recovery vCenter')).not.toBeInTheDocument()
+    expect(within(help).getByText('No backing storage relationships')).toBeInTheDocument()
+    expect(within(help).queryByText('Other storage relationships')).not.toBeInTheDocument()
     expect(screen.queryByRole('dialog', { name: 'Provider relationships' })).not.toBeInTheDocument()
   })
 

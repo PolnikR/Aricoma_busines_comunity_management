@@ -20,11 +20,11 @@ Stav: plán schválený s úpravami 1–4 (2026-10-04); čaká na kontrolu dokum
 - Commit C1
 
 ## C2: Selected-provider kontext (M)
-- [ ] `buildSelectedProviderRelationships` (compute / storage / missing + edges) nad `resolveProviderTopology`
-- [ ] `SelectedProviderRelationships` (loading/error, intro, graf, empty stavy podľa typu)
-- [ ] `ProvidersCatalogueTable`: help `children` so `selectedProviderId`, Role/Credential ostávajú
-- [ ] odstrániť `buildRelationshipRows`, `ProviderRelationshipsContent`, `ProviderRelationshipParts` + testy a osirelé `providers.relationships.*` kľúče
-- [ ] en/sk/cs: nové kľúče (napr. `usedBy`, `noBackingRelationships`, `noProviderRelationships`, `notUsedAsBacking`), upravené `intro.source`
+- [x] `buildSelectedProviderRelationships` (compute / storage / missing + edges) nad `resolveProviderTopology`
+- [x] `SelectedProviderRelationships` (loading/error, intro, graf, empty stavy podľa typu)
+- [x] `ProvidersCatalogueTable`: help `children` so `selectedProviderId`, Role/Credential ostávajú
+- [x] odstrániť `buildRelationshipRows`, `ProviderRelationshipsContent`, `ProviderRelationshipParts` + testy a osirelé `providers.relationships.*` kľúče
+- [x] en/sk/cs: nové kľúče (napr. `usedBy`, `noBackingRelationships`, `noProviderRelationships`, `notUsedAsBacking`), upravené `intro.source`
 - Overenie: view-model test (VMware, IBM Power, FlashCopy, Hitachi, viac backingov, mutual, one-way, viac partnerov, unresolved, mismatch, bez vzťahov, nesúvisiaci sa neobjaví, missing), component test, `ProvidersCatalogueTable.test.tsx`, locale parity test
 - Commit C2
 
