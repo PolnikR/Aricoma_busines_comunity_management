@@ -54,15 +54,21 @@ describe('ProviderRelationshipsContent', () => {
     expect(computeRow('IBM Power')).toHaveTextContent('Flash Two')
   })
 
-  it('shows a mutual partner in full once and as a compact reference afterwards', () => {
-    renderContent()
-    const vcenter = computeRow('Production vCenter')
-    const power = computeRow('IBM Power')
+  it('repeats a shared partner as a full card in every compute row', () => {
+    renderContent({
+      providers: [
+        ...providers,
+        provider('vc-3', 'Branch vCenter', 'VMWARE', { backingStorageProviderIds: ['fs-1'] }),
+      ],
+    })
 
-    expect(within(vcenter).getByText('mutual partner')).toHaveClass('sr-only')
-    expect(within(vcenter).getAllByText('Flash Two')).toHaveLength(1)
-    expect(power).toHaveTextContent('↔ Partner')
-    expect(power).toHaveTextContent('Flash Onefs-1')
+    for (const [row, partner] of [['Production vCenter', 'Flash Two'], ['Branch vCenter', 'Flash Two'], ['IBM Power', 'Flash One']] as const) {
+      const element = computeRow(row)
+      expect(within(element).getByText(partner)).toBeInTheDocument()
+      expect(within(element).getByText('mutual partner')).toHaveClass('sr-only')
+    }
+    expect(computeRow('Branch vCenter')).toHaveTextContent('Flash TwoFlashCopyTargetfs-2')
+    expect(screen.getByRole('list', { name: 'Compute providers' })).not.toHaveTextContent('↔')
   })
 
   it('lists one-way partnerships outside compute rows with their declared direction', () => {

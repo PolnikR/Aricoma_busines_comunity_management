@@ -10,8 +10,6 @@ export interface PartnerLink {
   otherId: string
   other: ProviderRecord | null
   direction: PartnerDirection
-  // The first occurrence in reading order is shown in full, later ones as a compact reference.
-  display: 'full' | 'compact'
 }
 
 export interface RelationshipTarget {
@@ -36,21 +34,21 @@ export interface RelationshipRows {
 }
 
 // View model for the relationship rows of the provider help: one row per compute
-// provider, read left to right, plus the partner relationships left over.
+// provider, read left to right and complete on its own (a repeated partner is
+// repeated in full), plus the partner relationships no compute row reaches.
 export function buildRelationshipRows(topology: ProviderTopology): RelationshipRows {
-  const shown = new Set<PartnerRelationship>()
+  // Partner relationships rendered by compute rows; used only to select the leftovers.
+  const rendered = new Set<PartnerRelationship>()
 
   const linkFrom = (storageId: string, relationship: PartnerRelationship): PartnerLink => {
     const outgoing = relationship.sourceId === storageId
     const otherId = outgoing ? relationship.targetId : relationship.sourceId
-    const display = shown.has(relationship) ? 'compact' : 'full'
-    shown.add(relationship)
+    rendered.add(relationship)
     return {
       relationship,
       otherId,
       other: outgoing ? relationship.target : findProvider(topology, otherId),
       direction: relationship.mutual ? 'both' : outgoing ? 'out' : 'in',
-      display,
     }
   }
 
@@ -67,7 +65,7 @@ export function buildRelationshipRows(topology: ProviderTopology): RelationshipR
   }))
 
   const otherStorageRows = topology.partners
-    .filter(relationship => !shown.has(relationship))
+    .filter(relationship => !rendered.has(relationship))
     .flatMap(relationship => {
       const source = findProvider(topology, relationship.sourceId)
       return source ? [{ provider: source, partner: linkFrom(source.id, relationship) }] : []

@@ -25,7 +25,7 @@ describe('buildRelationshipRows', () => {
     expect(rows.computeRows[1]?.targets).toEqual([])
   })
 
-  it('shows a partner in full the first time and compact afterwards', () => {
+  it('gives every compute row the full partner even when the partner repeats', () => {
     const rows = rowsFor([
       provider('c-1', 'VMWARE', { backingStorageProviderIds: ['s-1'] }),
       provider('c-2', 'VMWARE', { backingStorageProviderIds: ['s-1'] }),
@@ -35,11 +35,12 @@ describe('buildRelationshipRows', () => {
     ])
 
     const partners = rows.computeRows.map(row => row.targets[0]?.partner)
-    expect(partners.map(partner => [partner?.other?.id, partner?.display, partner?.direction])).toEqual([
-      ['s-2', 'full', 'both'],
-      ['s-2', 'compact', 'both'],
-      ['s-1', 'compact', 'both'],
+    expect(partners.map(partner => [partner?.other?.name, partner?.direction])).toEqual([
+      ['Name s-2', 'both'],
+      ['Name s-2', 'both'],
+      ['Name s-1', 'both'],
     ])
+    expect(partners[0]).not.toHaveProperty('display')
     expect(rows.otherStorageRows).toEqual([])
   })
 
@@ -88,6 +89,6 @@ describe('buildRelationshipRows', () => {
   it('keeps an unresolved partner visible by its raw id', () => {
     const rows = rowsFor([provider('s-1', 'FLASHCOPY', { partnerProviderId: 'missing' })])
 
-    expect(rows.otherStorageRows[0]?.partner).toMatchObject({ otherId: 'missing', other: null, display: 'full' })
+    expect(rows.otherStorageRows[0]?.partner).toMatchObject({ otherId: 'missing', other: null })
   })
 })

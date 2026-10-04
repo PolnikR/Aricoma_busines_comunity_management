@@ -8,7 +8,6 @@ import type { PartnerLink, RelationshipTarget } from '../helpers/buildRelationsh
 import type { ProviderRecord } from '../model/providerTypes'
 import {
   MismatchPill,
-  PartnerReference,
   ProviderRelationshipCard,
   RelationshipConnector,
   UnavailableProviderCard,
@@ -134,15 +133,15 @@ function BackingTarget({ target }: { target: RelationshipTarget }) {
     return <div className={`${TARGET_COLUMNS} @min-[47.5rem]/relationships:grid-cols-[12.5rem]`}><ProviderRelationshipCard provider={relationship.target} /></div>
   }
   return (
-    <div className={`${TARGET_COLUMNS} ${partner.display === 'compact' ? `@min-[47.5rem]/relationships:grid-cols-[12.5rem_minmax(0,1fr)]` : `@min-[47.5rem]/relationships:grid-cols-[12.5rem_5.75rem_minmax(0,12.5rem)]`}`}>
+    <div className={`${TARGET_COLUMNS} @min-[47.5rem]/relationships:grid-cols-[12.5rem_5.75rem_minmax(0,12.5rem)]`}>
       <ProviderRelationshipCard provider={relationship.target} />
       <PartnerPart partner={partner} />
     </div>
   )
 }
 
+// Always connector + full card, so every row reads on its own.
 function PartnerPart({ partner }: { partner: PartnerLink }) {
-  if (partner.display === 'compact') return <PartnerReference partner={partner} />
   return (
     <>
       <RelationshipConnector kind="partner" direction={partner.direction} mismatch={partner.relationship.status === 'mismatch'} />

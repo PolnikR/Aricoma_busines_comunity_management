@@ -2,7 +2,7 @@ import { Badge } from '@/shared/components/badge/Badge'
 import { useTranslation } from '@/hooks/useTranslation'
 import { cn } from '@/shared/utils/cn'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
-import type { PartnerDirection, PartnerLink } from '../helpers/buildRelationshipRows'
+import type { PartnerDirection } from '../helpers/buildRelationshipRows'
 import type { ProviderRecord } from '../model/providerTypes'
 
 // Building blocks of the relationship rows (approved template v2). Layout classes
@@ -51,8 +51,6 @@ const PARTNER_SR_KEY: Record<PartnerDirection, string> = {
   in: 'providers.relationships.sr.partneredBy',
 }
 
-const PARTNER_ARROW: Record<PartnerDirection, string> = { both: '↔', out: '→', in: '←' }
-
 interface RelationshipConnectorProps {
   kind: 'backing' | 'partner'
   direction?: PartnerDirection
@@ -87,22 +85,6 @@ export function RelationshipConnector({ kind, direction = 'out', mismatch = fals
         <span className="sr-only">{t(kind === 'backing' ? 'providers.relationships.sr.backing' : PARTNER_SR_KEY[direction])}</span>
         {mismatch ? <MismatchPill /> : null}
       </span>
-    </div>
-  )
-}
-
-// One-line reference for a partner relationship already shown in full above.
-export function PartnerReference({ partner }: { partner: PartnerLink }) {
-  const { t } = useTranslation()
-  return (
-    <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 pt-1 text-xs text-text-secondary @min-[47.5rem]/relationships:flex-nowrap @min-[47.5rem]/relationships:pt-0 @min-[47.5rem]/relationships:pl-1">
-      <span aria-hidden="true" className="whitespace-nowrap text-[10.5px] font-semibold text-warning-600 dark:text-orange-400">
-        {PARTNER_ARROW[partner.direction]} {t('providers.relationships.partner')}
-      </span>
-      <span className="sr-only">{t(PARTNER_SR_KEY[partner.direction])}</span>
-      <span className="truncate">{partner.other ? partner.other.name : partner.otherId}</span>
-      <span className="font-mono text-[10.5px] whitespace-nowrap text-text-subtle">{partner.otherId}</span>
-      {partner.relationship.status === 'mismatch' ? <MismatchPill /> : null}
     </div>
   )
 }
