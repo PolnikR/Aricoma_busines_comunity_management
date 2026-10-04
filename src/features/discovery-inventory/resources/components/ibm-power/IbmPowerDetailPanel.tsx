@@ -6,6 +6,7 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 import type { PowerPartitionData, PowerPartitionResource } from '../../model/discoveryTypes'
 import { useVdisksByVm } from '../../hooks/useVmStorageVolumes'
 import { BackingStorageInfo } from '../BackingStorageInfo'
+import { LparRelationshipHelp } from './LparRelationshipHelp'
 
 type SectionKey = 'summary' | 'processorMemory' | 'network' | 'storage' | 'virtualIo' | 'backingStorage'
 type FieldKey =
@@ -145,7 +146,19 @@ export function IbmPowerDetailPanel({ partition, open, onClose, providers = [], 
       onClose={onClose}
       title={partition?.partitionName ?? '-'}
       meta={[labels.entity]}
-      headerActions={<KeyedHelpPopover helpKey="resources.power.help" sections={['processor', 'storage', 'virtualIo', 'backing']} />}
+      headerActions={(
+        <KeyedHelpPopover helpKey="resources.power.help" sections={['processor', 'storage', 'virtualIo', 'backing']} width="wide">
+          {isLpar ? (
+            <LparRelationshipHelp
+              partition={partition}
+              volumes={vdisks?.volumes ?? []}
+              isLoading={vdisksLoading}
+              isError={vdisksError}
+              providers={providers}
+            />
+          ) : null}
+        </KeyedHelpPopover>
+      )}
       ariaLabel={labels.detail}
       closeLabel={labels.close}
       resizeLabel={labels.resize}

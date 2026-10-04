@@ -41,9 +41,9 @@ Stav: plán schválený s úpravami 1–4 (2026-10-04); čaká na kontrolu dokum
 - Commit C3
 
 ## C4: IBM Power LPAR helper (M)
-- [ ] `buildLparRelationships` (provider→LPAR, volumes podľa FlashSystemu, Volume ID/UID, FlashCopy, NPIV text bez hostu)
-- [ ] `LparRelationshipHelp` + `IbmPowerDetailPanel` (iba pre LPAR)
-- [ ] VIOS: žiadny nový relationship content; existujúca VIOS vetva a testy panelu bez zmeny
+- [x] `buildLparRelationships` (provider→LPAR, volumes podľa FlashSystemu, Volume ID/UID, FlashCopy, NPIV text bez hostu)
+- [x] `LparRelationshipHelp` + `IbmPowerDetailPanel` (iba pre LPAR)
+- [x] VIOS: žiadny nový relationship content; existujúca VIOS vetva a testy panelu bez zmeny
 - Overenie: `buildLparRelationships.test.ts`, `IbmPowerDetailPanel.test.tsx` (žiadne NAA ani composite key; existujúce VIOS testy zelené)
 - Commit C4
 

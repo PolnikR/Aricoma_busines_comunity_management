@@ -307,6 +307,30 @@ describe('IbmPowerDetailPanel backing storage', () => {
     expect(accentOf('Backing Storage Info')).toBe('storage')
   })
 
+  it('draws the LPAR relationship graphic in the help with Volume ID and UID, never NAA', async () => {
+    mockVolumes([powerVolume(), powerVolume({ key: 'ibm-flashsystem-01:100', storageProviderId: 'ibm-flashsystem-01', volumeId: '100', id: '100', volumeName: 'aix2_other', vdiskUid: '600507638082007A4800000000000100' })])
+    const dialog = renderPanel()
+    await userEvent.setup().click(within(dialog).getByRole('button', { name: 'IBM Power partition help' }))
+    const help = within(dialog).getByRole('dialog', { name: 'What this partition view shows' })
+
+    expect(within(help).getByRole('list', { name: 'Discovered from' })).toHaveTextContent(/ibm-power-01.*aix2source/)
+    const flash = within(help).getByRole('list', { name: 'Backing storage on IBM Flash Source 02' })
+    expect(within(flash).getByRole('group', { name: 'aix2_source_rootvg' })).toHaveTextContent(/Volume ID 2.*600507638082007A48000000000000A1/)
+    expect(within(help).getByRole('list', { name: 'Backing storage on ibm-flashsystem-01' })).toHaveTextContent('aix2_other')
+    expect(help).not.toHaveTextContent(/naa\./i)
+    expect(help).not.toHaveTextContent('ibm-flashsystem-02:2')
+    expect(help).toHaveTextContent('NPIV WWPNs and the matching FlashSystem host')
+  })
+
+  it('keeps the VIOS help without a relationship graphic', async () => {
+    const dialog = renderPanel(vios)
+    await userEvent.setup().click(within(dialog).getByRole('button', { name: 'IBM Power partition help' }))
+    const help = within(dialog).getByRole('dialog', { name: 'What this partition view shows' })
+
+    expect(within(help).queryByRole('heading', { name: 'Relationships' })).not.toBeInTheDocument()
+    expect(help.querySelector('[data-entity-id]')).toBeNull()
+  })
+
   it('passes disabled arguments for a VIOS and renders no Backing Storage Info section', () => {
     const dialog = renderPanel(vios)
 
