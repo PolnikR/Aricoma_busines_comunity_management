@@ -52,6 +52,6 @@ Plán: `tasks/detail-drawer-section-accents-plan.md`
 - Rozsah: S
 
 ## Checkpoint 2 (koniec)
-- [ ] focused testy všetkých dotknutých súborov, eslint, `npm run typecheck`, `git diff --check`
-- [ ] prehliadač: 6 drawerov, 1366×768 a 390 px, light/dark; IBM Power s 5 otvorenými sekciami; Access log s veľkým body
-- [ ] commit
+- [x] focused testy všetkých dotknutých súborov, eslint, `npm run typecheck`, `git diff --check`
+- [ ] prehliadač: 6 drawerov, 1366×768 a 390 px, light/dark; IBM Power s 5 otvorenými sekciami; Access log s veľkým body — BLOKOVANÉ 2026-10-04: nová CDP karta vyžaduje Keycloak prihlásenie, čaká na používateľa
+- [x] commit (po každom tasku)
