@@ -61,7 +61,7 @@ export function RelationshipConnector({ from, to, kind, direction = 'forward', l
       data-edge-kind={kind}
       data-direction={direction}
       data-highlight={highlight}
-      className="relative flex h-8 min-w-0 items-center justify-center @min-[40rem]/relationship-graph:h-5.5"
+      className="relative flex h-12 min-w-0 items-center justify-center @min-[40rem]/relationship-graph:h-5.5"
     >
       <div
         aria-hidden="true"

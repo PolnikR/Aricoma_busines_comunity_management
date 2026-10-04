@@ -29,7 +29,7 @@ Stav: plán schválený s úpravami 1–4 (2026-10-04); čaká na kontrolu dokum
 - Commit C2
 
 ## CP1: Checkpoint po C2
-- [ ] prehliadač: provider help VMware a FlashCopy, light/dark, 1366×768 a 390 px, hover aj Tab, pozícia `wide` popoveru z drawera
+- [x] prehliadač (2026-10-04): provider help VMware a FlashCopy, light/dark, 1366×768 a 390 px, hover (CDP myš) aj keyboard focus, `wide` popover v rámci viewportu bez horizontálneho overflow; oprava: vyšší konektor na úzko (`h-12`), aby bola čiara viditeľná popri labeli
 - [ ] review s používateľom pred resources
 
 ## C3: VMware VM helper (M)
