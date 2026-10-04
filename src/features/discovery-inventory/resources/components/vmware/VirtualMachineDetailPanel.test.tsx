@@ -189,6 +189,16 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(screen.getByRole('region', { name: 'Disks' })).toHaveTextContent('Hard disk 1')
   })
 
+  it('lays out accented sections that scroll on their own', () => {
+    renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
+    const accentOf = (name: string) => screen.getByRole('button', { name }).closest('section')?.getAttribute('data-accent')
+
+    expect(screen.getByRole('dialog').querySelector('[data-body-layout]')).toHaveAttribute('data-body-layout', 'sections')
+    expect(accentOf('Overview')).toBe('overview')
+    expect(accentOf('Disks')).toBe('storage')
+    expect(accentOf('Backing Storage Info')).toBe('storage')
+  })
+
   it('explains backing volumes, NAA identity and FlashCopy mappings in the VM help', async () => {
     const user = userEvent.setup()
     renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)

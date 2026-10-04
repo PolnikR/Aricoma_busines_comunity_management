@@ -1,6 +1,6 @@
 import type { VirtualMachine } from '../../types/virtualMachineTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import { CpuIcon, MemoryIcon } from '@/shared/icons/Icons'
+import { CpuIcon, DiskIcon, GridIcon, LayersIcon, MemoryIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useVdisksByVm } from '../../hooks/useVmStorageVolumes'
@@ -61,6 +61,7 @@ export function VirtualMachineDetailPanel({
       open={open}
       onClose={onClose}
       resizable
+      bodyLayout="sections"
       title={virtualMachine?.name ?? ''}
       meta={virtualMachine ? [
         t('pages.virtualMachines.detail.entity'),
@@ -80,8 +81,8 @@ export function VirtualMachineDetailPanel({
     >
       {virtualMachine ? (
         // Keyed by VM so each newly opened VM starts with the default sections.
-        <div key={virtualMachine.id} className="@container/vm-detail">
-              <DetailDrawerSection title={t('drawer.tabs.overview')} defaultOpen flush>
+        <div key={virtualMachine.id} className="@container/vm-detail flex min-h-0 flex-1 flex-col">
+              <DetailDrawerSection title={t('drawer.tabs.overview')} accent="overview" icon={GridIcon} defaultOpen flush>
                   <div className="grid grid-cols-2 border-b border-border">
                     <div className="border-r border-border">
                       <DetailStat
@@ -124,6 +125,8 @@ export function VirtualMachineDetailPanel({
 
               <DetailDrawerSection
                 title={t('drawer.tabs.disks')}
+                accent="storage"
+                icon={DiskIcon}
                 summary={t('pages.virtualMachines.detail.diskCount', { count: virtualMachine.vdisks.length })}
                 flush
               >
@@ -163,7 +166,7 @@ export function VirtualMachineDetailPanel({
                 </div>
               </DetailDrawerSection>
 
-              <DetailDrawerSection title={t('drawer.sections.backingStorageInfo')} flush>
+              <DetailDrawerSection title={t('drawer.sections.backingStorageInfo')} accent="storage" icon={LayersIcon} flush>
                 <BackingStorageInfo
                   volumes={vdisks?.volumes ?? []}
                   isLoading={vdisksLoading}

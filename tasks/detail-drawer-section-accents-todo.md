@@ -24,9 +24,9 @@ Plán: `tasks/detail-drawer-section-accents-plan.md`
 - [x] commit
 
 ## Task 3: VMware VM drawer
-- [ ] `bodyLayout="sections"`, wrapper `@container/vm-detail` má `flex min-h-0 flex-1 flex-col`
-- [ ] Overview `overview`/`GridIcon`, Disks `storage`/`DiskIcon`, Backing Storage Info `storage`/`LayersIcon`
-- [ ] test: `data-accent` sekcií
+- [x] `bodyLayout="sections"`, wrapper `@container/vm-detail` má `flex min-h-0 flex-1 flex-col`
+- [x] Overview `overview`/`GridIcon`, Disks `storage`/`DiskIcon`, Backing Storage Info `storage`/`LayersIcon`
+- [x] test: `data-accent` sekcií
 - Overenie: `VirtualMachineDetailPanel.test.tsx`
 - Rozsah: S
 
