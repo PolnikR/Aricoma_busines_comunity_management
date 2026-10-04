@@ -89,7 +89,7 @@ const CleanRoomPoliciesPage = lazy(async () => {
 })
 
 const DiscoverySettingsPage = lazy(async () => {
-  const page = await import('@/features/providers-connectors/discovery-settings/pages/DiscoverySettingsPage')
+  const page = await import('@/features/discovery-inventory/discovery-settings/pages/DiscoverySettingsPage')
   return { default: page.DiscoverySettingsPage }
 })
 

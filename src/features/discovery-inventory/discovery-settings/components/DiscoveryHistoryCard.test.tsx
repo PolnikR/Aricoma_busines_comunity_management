@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { CacheRunRecordOutput, GetDiscoveryCacheHistoryParams } from '@/generated/query/zod'
-import type { ProviderRecord } from '../../providers/model/providerTypes'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
 const labels = vi.hoisted(() => ({
   'pages.discoverySettings.history.title': 'Discovery history',
