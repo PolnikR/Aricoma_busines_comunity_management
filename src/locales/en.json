@@ -664,6 +664,8 @@
   "resources.power.help.storage.text": "The volume used by the partition and whether it is backed by Fibre Channel or iSCSI.",
   "resources.power.help.virtualIo.title": "I/O and virtualization",
   "resources.power.help.virtualIo.text": "Virtual I/O slots, physical I/O and SR-IOV capability.",
+  "resources.power.help.backing.title": "Backing Storage Info",
+  "resources.power.help.backing.text": "Backing Storage Info shows the FlashSystem volumes behind this logical partition, resolved through its NPIV WWPNs, the matching FlashSystem host and its volume mappings. Each volume is identified by Volume ID and Volume UID, with its pool, I/O group, provider and FlashCopy mappings. It is separate from Storage, which shows what the HMC reports. Not available for a Virtual I/O Server.",
   "identity.users.help.trigger": "User help",
   "identity.users.help.title": "Where users come from",
   "identity.users.help.intro": "Users are managed in Keycloak. This view is read-only.",

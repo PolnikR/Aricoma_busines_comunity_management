@@ -643,6 +643,8 @@
   "resources.power.help.storage.text": "Zväzok, ktorý partícia používa, a či je pripojený cez Fibre Channel alebo iSCSI.",
   "resources.power.help.virtualIo.title": "I/O a virtualizácia",
   "resources.power.help.virtualIo.text": "Virtuálne I/O sloty, fyzické I/O a podpora SR-IOV.",
+  "resources.power.help.backing.title": "Podkladové úložisko",
+  "resources.power.help.backing.text": "Ukazuje zväzky FlashSystem za touto logickou partíciou, dohľadané cez jej NPIV WWPN, zodpovedajúci host FlashSystem a jeho mapovania zväzkov. Každý zväzok je určený ID zväzku a UID zväzku, spolu s poolom, I/O skupinou, poskytovateľom a mapovaniami FlashCopy. Sekcia je oddelená od Úložiska, ktoré ukazuje údaje z HMC. Pre Virtual I/O Server nie je dostupná.",
   "identity.users.help.trigger": "Nápoveda k používateľovi",
   "identity.users.help.title": "Odkiaľ sú používatelia",
   "identity.users.help.intro": "Používatelia sa spravujú v Keycloaku. Tento pohľad je iba na čítanie.",

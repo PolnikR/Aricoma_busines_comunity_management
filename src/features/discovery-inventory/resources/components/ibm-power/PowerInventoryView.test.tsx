@@ -3,8 +3,9 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { useTranslation } from '@/test-utils/mockUseTranslation'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { PowerPartitionResource } from '../../model/discoveryTypes'
-import type { VmStorageVolumes } from '../../model/vmStorageVolumesTypes'
+import type { StorageVolume, VmStorageVolumes } from '../../model/vmStorageVolumesTypes'
 import { PowerInventoryView } from './PowerInventoryView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -87,6 +88,66 @@ const partition: PowerPartitionResource = {
   volumeCapacity: '270648',
   volumeName: 'hdisk1',
   volumeState: 'active',
+}
+
+const lpar: PowerPartitionResource = {
+  ...partition,
+  id: 'power-01:LPAR:2',
+  partitionKind: 'LPAR',
+  partitionName: 'aix2source',
+  partitionData: { ...partition.partitionData, PartitionName: 'aix2source', PartitionType: 'AIX/Linux' },
+}
+
+const flashProvider: ProviderRecord = {
+  id: 'ibm-flashsystem-02',
+  name: 'IBM Flash Source 02',
+  description: '',
+  type: 'FLASHCOPY',
+  role: 'source',
+  ipAddress: '10.0.0.2',
+  credentialId: null,
+  credentialStatus: 'none',
+}
+
+function backingVolume(storageProviderId: string): StorageVolume {
+  return {
+    key: `${storageProviderId}:2`,
+    naa: null,
+    volumeId: '2',
+    id: '2',
+    name: 'aix2_source_rootvg',
+    volumeName: 'aix2_source_rootvg',
+    capacity: '30.00GB',
+    status: 'degraded',
+    pool: 'Pool0',
+    ioGroupName: 'io_grp0',
+    storageProviderId,
+    type: 'striped',
+    protocol: 'scsi',
+    vdiskUid: '600507638082007A48000000000000A1',
+    copyCount: '1',
+    fcMapCount: '0',
+    snapshots: { hasSnapshots: false, snapshotCount: 0, isSnapshot: false, sourceMappings: [], targetMappings: [] },
+  }
+}
+
+// Opens the LPAR drawer and its Backing Storage Info section; returns the backing provider value.
+function openLparBackingProvider(t: ReturnType<typeof useTranslation>['t'], storageProviderId: string) {
+  useVdisksByVmMock.mockReturnValue({
+    data: { vmName: 'aix2source', countVm: 1, countIbm: 1, volumes: [backingVolume(storageProviderId)] },
+    isLoading: false,
+    isError: false,
+    isFetching: false,
+    refetch: vi.fn().mockResolvedValue(undefined),
+  })
+  renderInRouter(<PowerInventoryView resources={[lpar]} providers={[flashProvider]} t={t} />)
+  fireEvent.click(screen.getByText('aix2source'))
+  const dialog = screen.getByRole('dialog', { name: 'IBM Power partition detail' })
+  const toggle = within(dialog).getByRole('button', { name: 'Backing Storage Info' })
+  expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  fireEvent.click(toggle)
+  const card = within(dialog).getByRole('region', { name: 'aix2_source_rootvg' })
+  return within(card).getByText('Backing provider', { selector: 'dt' }).nextElementSibling
 }
 
 describe('PowerInventoryView', () => {
@@ -182,6 +243,22 @@ describe('PowerInventoryView', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry loading' }))
     expect(onRetry).toHaveBeenCalledOnce()
+  })
+
+  it('titles the LPAR backing storage section with the shared drawer label and names its provider from the loaded providers', () => {
+    const { t } = useTranslation()
+    const provider = openLparBackingProvider(t, 'ibm-flashsystem-02')
+
+    expect(useVdisksByVmMock).toHaveBeenCalledWith('aix2source', 'power-01')
+    expect(provider).toHaveTextContent('IBM Flash Source 02')
+    expect(provider).toHaveTextContent('ibm-flashsystem-02')
+  })
+
+  it('shows only the raw backing provider ID when that provider is not loaded', () => {
+    const { t } = useTranslation()
+    const provider = openLparBackingProvider(t, 'ibm-flashsystem-09')
+
+    expect(provider).toHaveTextContent(/^ibm-flashsystem-09$/)
   })
 
   it('closes the detail drawer when the selected partition is no longer in the provider dataset', async () => {

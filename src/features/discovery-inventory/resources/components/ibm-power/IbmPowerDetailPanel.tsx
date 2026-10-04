@@ -143,7 +143,7 @@ export function IbmPowerDetailPanel({ partition, open, onClose, providers = [], 
       onClose={onClose}
       title={partition?.partitionName ?? '-'}
       meta={[labels.entity]}
-      headerActions={<KeyedHelpPopover helpKey="resources.power.help" sections={['processor', 'storage', 'virtualIo']} />}
+      headerActions={<KeyedHelpPopover helpKey="resources.power.help" sections={['processor', 'storage', 'virtualIo', 'backing']} />}
       ariaLabel={labels.detail}
       closeLabel={labels.close}
       resizeLabel={labels.resize}
