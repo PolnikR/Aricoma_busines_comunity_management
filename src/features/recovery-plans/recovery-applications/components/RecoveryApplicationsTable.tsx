@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { ExecutionIcon, GridIcon, ServerIcon } from '@/shared/icons/Icons'
 import { useNavigate } from 'react-router'
 import { routes } from '@/app/routes'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
@@ -413,6 +414,7 @@ export function RecoveryApplicationsTable({
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
+        bodyLayout="sections"
         title={selected?.data.application.name ?? ''}
         meta={selected ? [
           t('drawer.entity.recoveryApplication'),
@@ -445,9 +447,11 @@ export function RecoveryApplicationsTable({
       >
         {selected ? (
           // Keyed by application so each newly opened app starts with the default sections.
-          <div key={selected.id}>
+          <Fragment key={selected.id}>
             <DetailDrawerSection
               title={t('details.tabs.overview')}
+              accent="overview"
+              icon={GridIcon}
               summary={getProviderLabel(selected.data.application.platform)}
               defaultOpen
             >
@@ -475,6 +479,8 @@ export function RecoveryApplicationsTable({
             </DetailDrawerSection>
             <DetailDrawerSection
               title={t('details.tabs.orchestration')}
+              accent="configuration"
+              icon={ExecutionIcon}
               summary={orchestrationState ? orchestrationSummaryText(orchestrationState, t) : undefined}
             >
               <dl>
@@ -531,12 +537,14 @@ export function RecoveryApplicationsTable({
             </DetailDrawerSection>
             <DetailDrawerSection
               title={t('details.tabs.inventory')}
+              accent="infrastructure"
+              icon={ServerIcon}
               summary={t('recoveryApplications.drawer.tierCount', { count: Object.keys(selected.data.application.tiers).length })}
               flush
             >
               <RecoveryApplicationInventory runId={selectedAirflowRunId ?? null} active />
             </DetailDrawerSection>
-          </div>
+          </Fragment>
         ) : null}
       </DetailDrawer>
 

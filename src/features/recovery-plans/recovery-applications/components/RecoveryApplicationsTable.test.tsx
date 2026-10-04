@@ -317,6 +317,16 @@ describe('RecoveryApplicationsTable', () => {
       expect(within(drawer).getByRole('button', { name: 'Inventory' })).toHaveAccessibleDescription('Tiers: 1')
     })
 
+    it('lays out accented sections that scroll on their own', async () => {
+      const { drawer } = await openDetail(application)
+      const accentOf = (name: string) => within(drawer).getByRole('button', { name }).closest('section')?.getAttribute('data-accent')
+
+      expect(drawer.querySelector('[data-body-layout]')).toHaveAttribute('data-body-layout', 'sections')
+      expect(accentOf('Overview')).toBe('overview')
+      expect(accentOf('Orchestration')).toBe('configuration')
+      expect(accentOf('Inventory')).toBe('infrastructure')
+    })
+
     it('shows entity, status and the no-runs fact in the meta row and the provider as summary', async () => {
       const { drawer } = await openDetail(application)
       expect(metaRow(drawer)).toHaveTextContent('Recovery app')

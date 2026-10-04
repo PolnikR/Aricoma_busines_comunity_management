@@ -548,6 +548,16 @@ describe('RecoveryGroupsTable', () => {
       expect(within(detail).getByRole('region', { name: 'Overview' })).toHaveTextContent('Tier 2 applications')
     })
 
+    it('lays out accented sections that scroll on their own', async () => {
+      const { detail } = await openDetail(getDatabaseGroup())
+      const accentOf = (name: string) => within(detail).getByRole('button', { name }).closest('section')?.getAttribute('data-accent')
+
+      expect(detail.querySelector('[data-body-layout]')).toHaveAttribute('data-body-layout', 'sections')
+      expect(accentOf('Overview')).toBe('overview')
+      expect(accentOf('Orchestration')).toBe('configuration')
+      expect(accentOf('Inventory')).toBe('infrastructure')
+    })
+
     it('toggles sections independently', async () => {
       const { user, detail } = await openDetail(getDatabaseGroup())
 

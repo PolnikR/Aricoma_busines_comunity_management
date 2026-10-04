@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { ExecutionIcon, GridIcon, ServerIcon } from '@/shared/icons/Icons'
 import { useNavigate } from 'react-router'
 import { routes } from '@/app/routes'
 import { Badge } from '@/shared/components/badge/Badge'
@@ -406,6 +407,7 @@ export function RecoveryGroupsTable({
         open={selected !== null}
         onClose={() => { setSelectedId(null) }}
         resizable
+        bodyLayout="sections"
         title={selected?.name ?? ''}
         meta={selected ? [
           t('drawer.entity.recoveryGroup'),
@@ -461,9 +463,11 @@ export function RecoveryGroupsTable({
       >
         {selected ? (
           // Keyed by group so each newly opened group starts with the default sections.
-          <div key={selected.id}>
+          <Fragment key={selected.id}>
             <DetailDrawerSection
               title={t('details.tabs.overview')}
+              accent="overview"
+              icon={GridIcon}
               summary={t(selected.workloadType
                 ? getWorkloadTypeLabelKey(selected.workloadType)
                 : getResourceTypeLabelKey(selected.resourceType))}
@@ -498,6 +502,8 @@ export function RecoveryGroupsTable({
             </DetailDrawerSection>
             <DetailDrawerSection
               title={t('details.tabs.orchestration')}
+              accent="configuration"
+              icon={ExecutionIcon}
               summary={orchestrationState ? orchestrationSummaryText(orchestrationState, t) : undefined}
             >
               <dl>
@@ -552,12 +558,14 @@ export function RecoveryGroupsTable({
             </DetailDrawerSection>
             <DetailDrawerSection
               title={t('details.tabs.inventory')}
+              accent="infrastructure"
+              icon={ServerIcon}
               summary={inventorySummaryText(selected)}
               flush
             >
               <RecoveryGroupInventory runId={selected.airflowRunId ?? null} active />
             </DetailDrawerSection>
-          </div>
+          </Fragment>
         ) : null}
       </DetailDrawer>
 

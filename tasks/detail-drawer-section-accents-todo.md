@@ -45,9 +45,9 @@ Plán: `tasks/detail-drawer-section-accents-plan.md`
 - Rozsah: S
 
 ## Task 6: Recovery application a Recovery group drawer
-- [ ] obe `bodyLayout="sections"`, `<div key>` → `Fragment key`
-- [ ] Overview `overview`/`GridIcon`, Orchestration `configuration`/`ExecutionIcon`, Inventory `infrastructure`/`ServerIcon`
-- [ ] testy: `data-accent` sekcií
+- [x] obe `bodyLayout="sections"`, `<div key>` → `Fragment key`
+- [x] Overview `overview`/`GridIcon`, Orchestration `configuration`/`ExecutionIcon`, Inventory `infrastructure`/`ServerIcon`
+- [x] testy: `data-accent` sekcií
 - Overenie: `RecoveryApplicationsTable.test.tsx`, `RecoveryGroupsTable.test.tsx`
 - Rozsah: S
 
