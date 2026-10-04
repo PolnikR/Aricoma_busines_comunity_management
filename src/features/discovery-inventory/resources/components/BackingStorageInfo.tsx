@@ -9,11 +9,11 @@ import {
   type ColumnDef,
 } from '@/shared/components/data-table'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import type { StorageVolume, StorageVolumeMapping } from '../../model/vmStorageVolumesTypes'
+import type { StorageVolume, StorageVolumeMapping } from '../model/vmStorageVolumesTypes'
 
-const headerCell = 'whitespace-nowrap px-2 @min-[80rem]/vm-detail:px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle'
-const cell = 'px-2 @min-[80rem]/vm-detail:px-3 py-2.5 text-[12px] @min-[80rem]/vm-detail:text-[13px] text-text-secondary align-top'
-const prefix = 'pages.virtualMachines.detail.backingStorage'
+const headerCell = 'whitespace-nowrap px-2 @min-[80rem]/backing-storage:px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle'
+const cell = 'px-2 @min-[80rem]/backing-storage:px-3 py-2.5 text-[12px] @min-[80rem]/backing-storage:text-[13px] text-text-secondary align-top'
+const prefix = 'resources.backingStorage'
 
 const display = (value: string) => value || '-'
 
@@ -92,7 +92,14 @@ function BackingStorageVolume({ volume, providers }: { volume: StorageVolume; pr
           value={provider ? provider.name : display(volume.storageProviderId)}
           secondary={provider ? <span className="font-mono">{provider.id}</span> : undefined}
         />
-        <DetailRow label={t(`${prefix}.naa`)} value={<span className="font-mono">{display(volume.naa ?? '')}</span>} />
+        {volume.naa !== null ? (
+          <DetailRow label={t(`${prefix}.naa`)} value={<span className="font-mono">{volume.naa}</span>} />
+        ) : (
+          <>
+            <DetailRow label={t(`${prefix}.volumeId`)} value={<span className="font-mono">{display(volume.volumeId)}</span>} />
+            <DetailRow label={t(`${prefix}.volumeUid`)} value={<span className="font-mono">{display(volume.vdiskUid)}</span>} />
+          </>
+        )}
         <DetailRow label={t(`${prefix}.capacity`)} value={display(volume.capacity)} />
         <DetailRow label={t(`${prefix}.status`)} value={display(volume.status)} />
         <DetailRow label={t(`${prefix}.pool`)} value={display(volume.pool)} />
@@ -108,7 +115,7 @@ function BackingStorageVolume({ volume, providers }: { volume: StorageVolume; pr
           <DetailRow label={t(`${prefix}.targetMappings`)} value={targetMappings.length} />
         </dl>
         {sourceMappings.length === 0 && targetMappings.length === 0 ? (
-          <p className="px-5 pb-3 text-[12px] @min-[80rem]/vm-detail:text-[13px] text-text-subtle">{t(`${prefix}.noMappings`)}</p>
+          <p className="px-5 pb-3 text-[12px] @min-[80rem]/backing-storage:text-[13px] text-text-subtle">{t(`${prefix}.noMappings`)}</p>
         ) : null}
         {sourceMappings.length > 0 ? (
           <MappingTable
@@ -156,28 +163,34 @@ interface BackingStorageInfoProps {
   isFetching: boolean
   onRetry: () => void
   providers: ProviderRecord[]
+  // Shown when the request succeeds without any volume; worded for the compute resource.
+  emptyText: string
 }
 
-// The storage volumes backing a VM's VMware disks, each with its FlashCopy mappings.
-// A volume is shown even when it has no snapshots.
-export function BackingStorageInfo({ volumes, isLoading, isError, isFetching, onRetry, providers }: BackingStorageInfoProps) {
+// The storage volumes backing a compute resource (VMware VM or IBM Power LPAR), each
+// with its FlashCopy mappings. A volume is shown even when it has no snapshots.
+// Identity: the NAA when the volume is keyed by one, otherwise Volume ID and Volume UID.
+export function BackingStorageInfo({ volumes, isLoading, isError, isFetching, onRetry, providers, emptyText }: BackingStorageInfoProps) {
   const { t } = useTranslation()
 
   let content
   if (isLoading) content = <BackingStorageSkeleton />
-  else if (volumes.length === 0) content = <p className="p-4 text-[12px] @min-[80rem]/vm-detail:text-[13px] text-text-subtle">{t(`${prefix}.empty`)}</p>
+  else if (volumes.length === 0) content = <p className="p-4 text-[12px] @min-[80rem]/backing-storage:text-[13px] text-text-subtle">{emptyText}</p>
   else content = volumes.map(volume => <BackingStorageVolume key={volume.key} volume={volume} providers={providers} />)
 
   return (
-    <DataTableRequestState
-      error={isError ? {
-        title: t('resources.common.loadFailed'),
-        retryLabel: t('buttons.retry'),
-        isRetrying: isFetching,
-        onRetry,
-      } : null}
-    >
-      <div className="flex flex-col">{content}</div>
-    </DataTableRequestState>
+    // Own container, so the layout steps work in any drawer that hosts this section.
+    <div className="@container/backing-storage">
+      <DataTableRequestState
+        error={isError ? {
+          title: t('resources.common.loadFailed'),
+          retryLabel: t('buttons.retry'),
+          isRetrying: isFetching,
+          onRetry,
+        } : null}
+      >
+        <div className="flex flex-col">{content}</div>
+      </DataTableRequestState>
+    </div>
   )
 }
