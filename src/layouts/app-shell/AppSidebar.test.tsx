@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -116,6 +116,45 @@ describe('AppSidebar', () => {
     const link = await screen.findByRole('link', { name: 'Resources ISE' }, { timeout: 5000 })
     expect(link).toHaveAttribute('href', '/discovery-inventory/resources-ise')
     expect(link).toHaveClass('bg-accent-soft', 'text-accent')
+  })
+
+  it('lists Discovery Settings after Discovery Jobs in Discovery & Inventory and marks it active', async () => {
+    render(
+      <MemoryRouter initialEntries={['/discovery-inventory/discovery-settings?tab=history']}>
+        <LanguageProvider>
+          <SidebarProvider>
+            <AppSidebar />
+          </SidebarProvider>
+        </LanguageProvider>
+      </MemoryRouter>,
+    )
+
+    const link = await screen.findByRole('link', { name: 'Discovery settings' }, { timeout: 5000 })
+    expect(link).toHaveAttribute('href', '/discovery-inventory/discovery-settings')
+    expect(link).toHaveClass('bg-accent-soft', 'text-accent')
+    const group = link.closest('ul')
+    if (!group) throw new Error('Discovery & Inventory submenu not rendered')
+    expect(within(group).getAllByRole('link').map(item => item.textContent)).toEqual([
+      'Resources', 'Resources ISE', 'Infrastructure topology', 'Discovery jobs', 'Discovery settings',
+    ])
+    expect(within(group).getByRole('link', { name: 'Discovery jobs' })).toHaveAttribute('href', '/discovery-inventory/discovery-jobs')
+  })
+
+  it('no longer lists Discovery Settings under Providers & Connectors', async () => {
+    render(
+      <MemoryRouter initialEntries={['/providers-connectors/providers']}>
+        <LanguageProvider>
+          <SidebarProvider>
+            <AppSidebar />
+          </SidebarProvider>
+        </LanguageProvider>
+      </MemoryRouter>,
+    )
+
+    const group = (await screen.findByRole('link', { name: 'Providers' }, { timeout: 5000 })).closest('ul')
+    if (!group) throw new Error('Providers & Connectors submenu not rendered')
+    expect(within(group).getAllByRole('link').map(item => item.textContent)).toEqual(['Providers', 'Credentials'])
+    expect(within(group).queryByRole('link', { name: 'Discovery settings' })).not.toBeInTheDocument()
   })
 
   it('links Platform Providers from Platform Administration', async () => {
