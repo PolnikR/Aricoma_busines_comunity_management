@@ -165,6 +165,24 @@ export function NetworkIcon(props: IconProps) {
   )
 }
 
+export function StorageIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="M10 6.667c3.682 0 6.667-.933 6.667-2.084C16.667 3.433 13.682 2.5 10 2.5s-6.667.933-6.667 2.083c0 1.151 2.985 2.084 6.667 2.084Z" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3.333 4.583v10.834C3.333 16.567 6.318 17.5 10 17.5s6.667-.933 6.667-2.083V4.583M3.333 10c0 1.15 2.985 2.083 6.667 2.083S16.667 11.15 16.667 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function AlertTriangleIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="M8.575 3.25 1.517 15a1.667 1.667 0 0 0 1.425 2.5h14.116a1.667 1.667 0 0 0 1.425-2.5L11.425 3.25a1.667 1.667 0 0 0-2.85 0Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M10 7.5v3.333M10 14.167h.008" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function FilterIcon(props: IconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>

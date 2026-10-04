@@ -5,17 +5,17 @@ Stav: plán schválený s úpravami 1–4 (2026-10-04); čaká na kontrolu dokum
 
 ## C0: Spec, plán, TODO
 - [x] plán schválený (2026-10-04): VIOS mimo scope, smer aj na úzko, DOM ID per inštancia, FlashSystem `allProviders`
-- [ ] kontrola aktualizovaných dokumentov používateľom
+- [x] kontrola aktualizovaných dokumentov používateľom
 
 ## C1: Shared relationship primitives (S–M)
-- [ ] `StorageIcon`, `AlertTriangleIcon` v `Icons.tsx` (20×20, stroke currentColor 1.5)
-- [ ] `relationshipGraphTypes`, `relationshipAdjacency` (pure, one-hop)
-- [ ] `RelationshipGraph`, `RelationshipGroup`, `RelationshipChain`, `RelationshipNode`, `RelationshipConnector`, `RelationshipNote`
-- [ ] tóny chipu compute/storage/infrastructure/protection/problem cez tokeny, žiadne hex ani `warning-*`
-- [ ] hover/focus highlight: active + priami susedia 100 %, ostatné uzly `opacity-35`, hrany `opacity-[0.12]`, labely `opacity-15`, 150 ms transition, leave/blur obnoví
-- [ ] container query: desktop chain s hrotmi ◀/▶; úzko vertikálny stack s vertikálnymi hrotmi (forward ▼, backward ▲, both ▲▼), bez horizontálneho overflow
-- [ ] a11y: `role="group"`, `tabIndex=0`, `aria-describedby` skrytý popis, `sr-only` text konektora
-- [ ] logické `entityId` pre highlight, DOM ID cez `useId()` per inštancia
+- [x] `StorageIcon`, `AlertTriangleIcon` v `Icons.tsx` (20×20, stroke currentColor 1.5)
+- [x] `relationshipGraphTypes`, `relationshipAdjacency` (pure, one-hop)
+- [x] `RelationshipGraph`, `RelationshipGroup`, `RelationshipChain`, `RelationshipNode`, `RelationshipConnector`, `RelationshipNote`
+- [x] tóny chipu compute/storage/infrastructure/protection/problem cez tokeny, žiadne hex ani `warning-*`
+- [x] hover/focus highlight: active + priami susedia 100 %, ostatné uzly `opacity-35`, hrany `opacity-[0.12]`, labely `opacity-15`, 150 ms transition, leave/blur obnoví
+- [x] container query: desktop chain s hrotmi ◀/▶; úzko vertikálny stack s vertikálnymi hrotmi (forward ▼, backward ▲, both ▲▼), bez horizontálneho overflow
+- [x] a11y: `role="group"`, `tabIndex=0`, `aria-describedby` skrytý popis, `sr-only` text konektora
+- [x] logické `entityId` pre highlight, DOM ID cez `useId()` per inštancia
 - Overenie: `relationshipAdjacency.test.ts`, `RelationshipGraph.test.tsx` (vrátane narrow variantu: `forward` → vertikálny hrot dole, `backward` → vertikálny hrot hore, `both` → hroty hore aj dole; a rovnakej entity 2×: highlight na oboch, žiadne duplicitné aria ID), eslint, typecheck, `git diff --check`
 - Commit C1
 
