@@ -250,6 +250,23 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(help).toHaveTextContent('Which virtual disk is stored on which volume is not reported.')
   })
 
+  it('keeps the help open while Tab moves through relationship nodes and closes only the help on Escape', async () => {
+    const user = userEvent.setup()
+    const help = await openRelationshipHelp([volume()])
+    const [firstNode] = within(help).getAllByRole('group', { name: 'vmware-vcenter-01' })
+    if (!firstNode) throw new Error('provider node not rendered')
+
+    firstNode.focus()
+    await user.tab()
+    expect(help).toContainElement(document.activeElement as HTMLElement)
+    expect(document.activeElement).toHaveAttribute('data-highlight', 'on')
+    expect(screen.getByRole('dialog', { name: 'What this virtual machine view shows' })).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog', { name: 'What this virtual machine view shows' })).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Virtual machine detail' })).toBeInTheDocument()
+  })
+
   it('does not draw a virtual disk to NAA mapping or the vdisk_UID in the help', async () => {
     const help = await openRelationshipHelp([volume()])
 

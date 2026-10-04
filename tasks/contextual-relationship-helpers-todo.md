@@ -55,8 +55,8 @@ Stav: plán schválený s úpravami 1–4 (2026-10-04); čaká na kontrolu dokum
 - Commit C5
 
 ## C6: Locales, cleanup, prehliadač
-- [ ] wording help textov (globálna topológia → kontext), en/sk/cs, locale testy
-- [ ] help shell regresia: Tab do uzlov drží help otvorený, Escape zavrie iba help, ostatné `KeyedHelpPopover` bez zmeny
-- [ ] prehliadač: všetky 4 helpery, light/dark, desktop/390 px, hover/Tab, viac uzlov, problem prípad
-- [ ] celá suite (cross-cutting), eslint, `npm run typecheck`, `git diff --check`
+- [x] wording help textov: jediný text o globálnej topológii (`providers.relationships.intro.source`) zmenený v C2; ostatné help texty bez zmeny, locale testy zelené
+- [x] help shell regresia: Tab do uzlov drží help otvorený, Escape zavrie iba help, ostatné `KeyedHelpPopover` bez zmeny
+- [x] prehliadač: všetky 4 helpery, light/dark, desktop/390 px, hover/Tab, viac uzlov, problem prípad
+- [x] celá suite (cross-cutting): 299 súborov, 1719/1719, eslint, `npm run typecheck`, `git diff --check`
 - Commit C6
