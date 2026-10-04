@@ -1,6 +1,7 @@
 import { DetailDrawer, DetailDrawerSection, DetailRow } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
+import { ApiIcon, GridIcon } from '@/shared/icons/Icons'
 import type { AccessLogRecord } from '../model/accessLogTypes'
 
 interface AccessLogDetailDrawerProps {
@@ -24,7 +25,7 @@ function formatBody(value: unknown) {
 
 function BodySection({ label, value, defaultOpen = false }: { label: string; value: unknown; defaultOpen?: boolean }) {
   return (
-    <DetailDrawerSection title={label} defaultOpen={defaultOpen}>
+    <DetailDrawerSection title={label} accent="technical" icon={ApiIcon} defaultOpen={defaultOpen}>
       <pre className="custom-scrollbar max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-surface-subtle p-3 font-mono text-xs text-text-secondary">
         {formatBody(value)}
       </pre>
@@ -42,6 +43,7 @@ export function AccessLogDetailDrawer({ record, onClose }: AccessLogDetailDrawer
       open={record !== null}
       onClose={onClose}
       resizable
+      bodyLayout="sections"
       title={title}
       meta={[
         t('audit.accessLogs.detail.entity'),
@@ -56,6 +58,8 @@ export function AccessLogDetailDrawer({ record, onClose }: AccessLogDetailDrawer
         <>
           <DetailDrawerSection
             title={t('audit.accessLogs.detail.request')}
+            accent="overview"
+            icon={GridIcon}
             summary={`${record.method} · ${String(record.status)}`}
             defaultOpen
           >

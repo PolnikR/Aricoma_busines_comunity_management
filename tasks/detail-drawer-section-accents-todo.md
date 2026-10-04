@@ -39,8 +39,8 @@ Plán: `tasks/detail-drawer-section-accents-plan.md`
 - Rozsah: M
 
 ## Task 5: Access log drawer
-- [ ] `bodyLayout="sections"`, Request `overview`/`GridIcon`, bodies a raw entry `technical`/`ApiIcon` (cez `BodySection`)
-- [ ] nový test `AccessLogDetailDrawer.test.tsx`: `bodyLayout="sections"` a `data-accent` sekcií (request aj raw záznam)
+- [x] `bodyLayout="sections"`, Request `overview`/`GridIcon`, bodies a raw entry `technical`/`ApiIcon` (cez `BodySection`)
+- [x] nový test `AccessLogDetailDrawer.test.tsx`: `bodyLayout="sections"` a `data-accent` sekcií (request aj raw záznam)
 - Overenie: nový test súbor, eslint
 - Rozsah: S
 
