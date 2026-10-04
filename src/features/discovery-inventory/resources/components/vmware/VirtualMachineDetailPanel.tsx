@@ -14,6 +14,7 @@ import {
 } from '@/shared/components/data-table'
 import { createVmwareDetailFields } from '../../config/vmwareDetailFields'
 import { BackingStorageInfo } from '../BackingStorageInfo'
+import { VmRelationshipHelp } from './VmRelationshipHelp'
 
 function truncateFilePath(path: string): string {
   if (path.length <= 50) return path
@@ -74,7 +75,19 @@ export function VirtualMachineDetailPanel({
           {virtualMachine.hostname || '-'} / {virtualMachine.ipAddress || '-'}
         </span>
       ) : null}
-      headerActions={<KeyedHelpPopover helpKey="pages.virtualMachines.help" sections={['status', 'disks', 'backing']} />}
+      headerActions={(
+        <KeyedHelpPopover helpKey="pages.virtualMachines.help" sections={['status', 'disks', 'backing']} width="wide">
+          {virtualMachine ? (
+            <VmRelationshipHelp
+              virtualMachine={virtualMachine}
+              volumes={vdisks?.volumes ?? []}
+              isLoading={vdisksLoading}
+              isError={vdisksError}
+              providers={providers}
+            />
+          ) : null}
+        </KeyedHelpPopover>
+      )}
       ariaLabel={t('drawer.vmDetail')}
       closeLabel={t('drawer.closeVm')}
       resizeLabel={t('drawer.resize')}

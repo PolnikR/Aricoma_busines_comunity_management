@@ -135,6 +135,22 @@ async function openBackingStorage(volumes: StorageVolume[], providers: ProviderR
 }
 
 // The <dd> next to the <dt> with this label.
+const flashProvider = { id: 'ibm-flashsystem-01', name: 'IBM Flash Source 01', type: 'FLASHCOPY', role: 'source', credentialStatus: 'ok' } as ProviderRecord
+
+async function openRelationshipHelp(volumes: StorageVolume[], providers: ProviderRecord[] = [], state: { isLoading?: boolean; isError?: boolean } = {}) {
+  const user = userEvent.setup()
+  useVdisksByVmMock.mockReturnValue({
+    data: state.isLoading || state.isError ? undefined : { vmName: 'app-server-01', countVm: 1, countIbm: 1, volumes },
+    isLoading: state.isLoading ?? false,
+    isError: state.isError ?? false,
+    isFetching: false,
+    refetch: vi.fn().mockResolvedValue(undefined),
+  })
+  renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} providers={providers} />)
+  await user.click(screen.getByRole('button', { name: 'Virtual machine help' }))
+  return screen.getByRole('dialog', { name: 'What this virtual machine view shows' })
+}
+
 function detailValue(container: HTMLElement, label: string) {
   return within(container).getByText(label, { selector: 'dt' }).nextElementSibling
 }
@@ -212,6 +228,45 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(help).toHaveTextContent(/storage volumes behind this VM's VMware disks/)
     expect(help).toHaveTextContent(/NAA/)
     expect(help).toHaveTextContent(/FlashCopy snapshot mappings/)
+  })
+
+  it('draws the VM relationship graphic in the help from the already loaded volumes', async () => {
+    const help = await openRelationshipHelp([
+      volume({ snapshots: snapshots({ snapshotCount: 1, sourceMappings: [mapping('copied', '100')] }) }),
+      volume({ key: 'naa.second', naa: 'naa.second', volumeName: 'V5000_VOLUME03', storageProviderId: 'ibm-flashsystem-09' }),
+    ], [flashProvider])
+
+    // The help reuses the panel's lookup: every call is the same VM and provider.
+    expect(new Set(useVdisksByVmMock.mock.calls.map(call => JSON.stringify(call)))).toEqual(new Set([JSON.stringify(['app-server-01', 'vmware-vcenter-01'])]))
+    expect(help.querySelector('[data-body-layout]')).toBeNull()
+    expect(within(help).getByRole('list', { name: 'Discovered from' })).toHaveTextContent(/vmware-vcenter-01.*app-server-01/)
+    expect(within(help).getAllByRole('group', { name: 'app-server-01' })[0]).toHaveTextContent('Virtual disks: 2')
+    const flash = within(help).getByRole('list', { name: 'Backing storage on IBM Flash Source 01' })
+    expect(within(flash).getByRole('group', { name: 'V5000_VOLUME02' })).toHaveTextContent('naa.60050763808104d94000000000000016')
+    expect(within(flash).getByRole('group', { name: 'FlashCopy' })).toHaveTextContent('→ target-volume')
+    const unknown = within(help).getByRole('list', { name: 'Backing storage on ibm-flashsystem-09' })
+    expect(within(unknown).getByRole('group', { name: 'V5000_VOLUME03' })).toBeInTheDocument()
+    expect(unknown).toHaveTextContent('No FlashCopy mappings')
+    expect(help).toHaveTextContent('Which virtual disk is stored on which volume is not reported.')
+  })
+
+  it('does not draw a virtual disk to NAA mapping or the vdisk_UID in the help', async () => {
+    const help = await openRelationshipHelp([volume()])
+
+    expect(within(help).queryByRole('group', { name: /Hard disk/ })).not.toBeInTheDocument()
+    expect(help).not.toHaveTextContent(/60050763808104D94000000000000016/)
+    expect([...help.querySelectorAll('[data-entity-id]')].map(node => node.getAttribute('data-entity-id'))).not.toContainEqual(expect.stringMatching(/disk/))
+  })
+
+  it.each([
+    [{ isLoading: true }, 'Loading backing storage...'],
+    [{ isError: true }, 'Resource inventory could not be loaded'],
+    [{}, 'No backing storage volume was resolved for this virtual machine.'],
+  ])('keeps the VM in the help graphic with a neutral backing state (%o)', async (state, text) => {
+    const help = await openRelationshipHelp([], [], state)
+
+    expect(within(help).getAllByRole('group', { name: 'app-server-01' })).toHaveLength(2)
+    expect(within(help).getByRole('list', { name: 'Backing storage' })).toHaveTextContent(text)
   })
 
   it('shows a volume with its storage details even when it has no snapshots', async () => {

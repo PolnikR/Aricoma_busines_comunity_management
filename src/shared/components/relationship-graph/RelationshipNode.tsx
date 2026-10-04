@@ -68,7 +68,7 @@ export function RelationshipNode({ entityId, icon: Icon, tone, name, meta, monoI
       {meta || monoId ? (
         <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] text-text-muted">
           {meta}
-          {monoId ? <span className="min-w-0 truncate font-mono text-text-subtle">{monoId}</span> : null}
+          {monoId ? <span className="min-w-0 font-mono break-all text-text-subtle">{monoId}</span> : null}
         </div>
       ) : null}
       {children}

@@ -33,9 +33,10 @@ Stav: plán schválený s úpravami 1–4 (2026-10-04); čaká na kontrolu dokum
 - [ ] review s používateľom pred resources
 
 ## C3: VMware VM helper (M)
-- [ ] `buildVmRelationships` (provider→VM, volumes podľa storage providera, NAA, FlashCopy)
-- [ ] `VmRelationshipHelp` + `VirtualMachineDetailPanel` (`width="wide"`, dáta propsom)
-- [ ] žiadne Hard disk→NAA hrany; zero snapshots = volume + „No FlashCopy mappings“; loading/error/empty
+- [x] `buildVmRelationships` (provider→VM, volumes podľa storage providera, NAA, FlashCopy)
+- [x] `VmRelationshipHelp` + `VirtualMachineDetailPanel` (`width="wide"`, dáta propsom)
+- [x] žiadne Hard disk→NAA hrany; zero snapshots = volume + „No FlashCopy mappings“; loading/error/empty
+- Pozn.: spoločná kostra `workloadRelationships` + `WorkloadRelationshipGraph` pre VM aj LPAR; mono ID v uzle sa zalamuje (celé NAA). Prehliadač: 1366 aj 390 px OK.
 - Overenie: `buildVmRelationships.test.ts`, `VirtualMachineDetailPanel.test.tsx`
 - Commit C3
 
