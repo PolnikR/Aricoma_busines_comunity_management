@@ -2,7 +2,8 @@ import type { PropsWithChildren } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockVirtualLayout } from '@/shared/components/resource-sidebar/test/mockVirtualLayout'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import {
   createDiscoveryFetchHandlers,
@@ -42,6 +43,12 @@ const searchbox = () => screen.getByRole('searchbox', { name: 'Search virtual ma
 // Longer than the 300 ms name search debounce, so any delayed request has been sent.
 const settle = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 400)) })
 const searches = () => fetchVmwareInventory.mock.calls.map(([search]) => search)
+
+
+// The virtualized ResourceSidebar renders no rows without a measurable viewport.
+let restoreVirtualLayout: () => void
+beforeEach(() => { restoreVirtualLayout = mockVirtualLayout() })
+afterEach(() => { restoreVirtualLayout() })
 
 describe('RecoveryGroupResourcesStep VMware search lifecycle', () => {
   beforeEach(() => {

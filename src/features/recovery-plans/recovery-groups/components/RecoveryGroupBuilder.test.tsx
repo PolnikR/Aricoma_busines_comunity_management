@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockVirtualLayout } from '@/shared/components/resource-sidebar/test/mockVirtualLayout'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupBuilder } from './RecoveryGroupBuilder'
 import { useRecoveryGroupMetroMirrorRelationships } from '../hooks/useRecoveryGroupMetroMirrorRelationships'
@@ -239,6 +240,12 @@ const existingStorageGroup: RecoveryGroup = {
   resourceCount: 1,
   status: 'Active',
 }
+
+
+// The virtualized ResourceSidebar renders no rows without a measurable viewport.
+let restoreVirtualLayout: () => void
+beforeEach(() => { restoreVirtualLayout = mockVirtualLayout() })
+afterEach(() => { restoreVirtualLayout() })
 
 describe('RecoveryGroupBuilder', () => {
   it('disables lookup for Local and waits for VM discovery before looking up selected source volumes', async () => {

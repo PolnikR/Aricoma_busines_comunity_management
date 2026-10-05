@@ -25,6 +25,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-query": "^5.101.2",
+    "@tanstack/react-virtual": "^3.14.13",
     "@xyflow/react": "^12.11.2",
     "elkjs": "^0.11.1",
     "keycloak-js": "^26.2.4",

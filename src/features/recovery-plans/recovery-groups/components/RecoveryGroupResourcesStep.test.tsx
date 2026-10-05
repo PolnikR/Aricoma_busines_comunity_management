@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockVirtualLayout } from '@/shared/components/resource-sidebar/test/mockVirtualLayout'
 import type { RecoveryGroupProviderScope } from '../model/recoveryGroupTypes'
 import { RecoveryGroupResourcesStep } from './RecoveryGroupResourcesStep'
 
@@ -25,6 +26,12 @@ vi.mock('../hooks/useRecoveryGroupResourceInventory', () => ({
     options?: { providerScope?: RecoveryGroupProviderScope | null, vmwareNamePrefix?: string },
   ) => useRecoveryGroupResourceInventory(workloadType, providerId, options),
 }))
+
+
+// The virtualized ResourceSidebar renders no rows without a measurable viewport.
+let restoreVirtualLayout: () => void
+beforeEach(() => { restoreVirtualLayout = mockVirtualLayout() })
+afterEach(() => { restoreVirtualLayout() })
 
 describe('RecoveryGroupResourcesStep', () => {
   it('offers keyboard add and clear controls next to the compact selection', async () => {

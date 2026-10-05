@@ -1,9 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import type { ReactNode } from 'react'
 import { cn } from '@/shared/utils/cn'
 import { Input } from '@/shared/components/form/FormControls'
 import { ListSkeleton } from '@/shared/components/list-skeleton'
+
+// Single-line row: p-2 + 16 px text line + border. Rows are measured after render.
+const ESTIMATED_ROW_HEIGHT = 36
+const ROW_GAP = 4
+const LIST_PADDING = 8
 
 interface ResourceSidebarProps {
   items: string[]
@@ -67,6 +73,34 @@ export function ResourceSidebar({
   )
   const handleRetry = () => { onRetry?.() }
   const showSkeleton = isLoading || isSearching
+  const showBlockingError = !showSkeleton && Boolean(error) && normalizedItems.length === 0
+  const showStaleError = !showSkeleton && Boolean(error) && normalizedItems.length > 0
+  const showList = !showSkeleton && !showBlockingError && filteredItems.length > 0
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const [draggingItem, setDraggingItem] = useState<string | null>(null)
+  const draggingIndex = draggingItem === null ? -1 : filteredItems.indexOf(draggingItem)
+  const virtualizer = useVirtualizer({
+    count: showList ? filteredItems.length : 0,
+    getScrollElement: () => viewportRef.current,
+    estimateSize: () => ESTIMATED_ROW_HEIGHT,
+    gap: ROW_GAP,
+    overscan: 10,
+    // Vertical list padding lives in the virtualizer so offset 0 is the list start.
+    paddingStart: LIST_PADDING,
+    paddingEnd: LIST_PADDING,
+    getItemKey: index => filteredItems[index] ?? index,
+    // Keep the dragged row mounted while the list scrolls during a drag.
+    rangeExtractor: (range) => {
+      const indexes = defaultRangeExtractor(range)
+      return draggingIndex < 0 || indexes.includes(draggingIndex)
+        ? indexes
+        : [...indexes, draggingIndex].sort((left, right) => left - right)
+    },
+  })
+
+  useEffect(() => {
+    virtualizer.scrollToOffset(0)
+  }, [currentSearch, virtualizer])
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-surface-subtle">
@@ -89,44 +123,62 @@ export function ResourceSidebar({
           className="text-xs"
         />
       </div>
-      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-2" aria-busy={showSkeleton}>
-        {showSkeleton ? (
-          <ListSkeleton rowCount={8} ariaLabel={loadingLabel} />
-        ) : error && normalizedItems.length === 0 ? (
+      {/* The stale banner sits outside the list viewport so nothing precedes the virtual list. */}
+      {showStaleError ? (
+        <div className="shrink-0 px-2 pt-2">
           <FetchErrorAlert
-            title={errorTitle}
-            description={error.message}
+            title={staleErrorTitle}
+            description={staleErrorDescription}
             retryLabel={retryLabel}
             isRetrying={isRetrying}
             onRetry={handleRetry}
           />
+        </div>
+      ) : null}
+      <div
+        ref={viewportRef}
+        data-testid="resource-sidebar-viewport"
+        className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-2"
+        aria-busy={showSkeleton}
+      >
+        {showSkeleton ? (
+          <div className="py-2">
+            <ListSkeleton rowCount={8} ariaLabel={loadingLabel} />
+          </div>
+        ) : showBlockingError && error ? (
+          <div className="py-2">
+            <FetchErrorAlert
+              title={errorTitle}
+              description={error.message}
+              retryLabel={retryLabel}
+              isRetrying={isRetrying}
+              onRetry={handleRetry}
+            />
+          </div>
+        ) : !showList ? (
+          <div className="py-6 text-center text-xs text-text-subtle">
+            {currentSearch ? noMatchesLabel : noItemsLabel}
+          </div>
         ) : (
-          <>
-            {error ? (
-              <FetchErrorAlert
-                className="mb-2"
-                title={staleErrorTitle}
-                description={staleErrorDescription}
-                retryLabel={retryLabel}
-                isRetrying={isRetrying}
-                onRetry={handleRetry}
-              />
-            ) : null}
-            {filteredItems.length === 0 ? (
-              <div className="py-4 text-center text-xs text-text-subtle">
-                {currentSearch ? noMatchesLabel : noItemsLabel}
-              </div>
-            ) : (
-              <div role="list" aria-label={title}>
-                {filteredItems.map(item => (
+          <div role="list" aria-label={title} className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const item = filteredItems[virtualItem.index] ?? ''
+              return (
                 <div
                   role="listitem"
-                  key={item}
+                  key={virtualItem.key}
+                  ref={virtualizer.measureElement}
+                  data-index={virtualItem.index}
+                  aria-setsize={filteredItems.length}
+                  aria-posinset={virtualItem.index + 1}
                   draggable
-                  onDragStart={event => {
+                  onDragStart={(event) => {
                     event.dataTransfer.setData(dragDataKey, item)
+                    setDraggingItem(item)
                   }}
-                  className={cn('mb-1 w-full cursor-grab rounded-md border border-border bg-surface-muted text-left text-xs text-text-primary transition-all hover:border-border-strong hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus', renderItemAction ? 'flex min-h-9 items-center justify-between gap-2 px-2 py-1' : 'p-2')}
+                  onDragEnd={() => { setDraggingItem(null) }}
+                  style={{ transform: `translateY(${String(virtualItem.start)}px)` }}
+                  className={cn('absolute left-0 top-0 w-full cursor-grab rounded-md border border-border bg-surface-muted text-left text-xs text-text-primary transition-colors hover:border-border-strong hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus', renderItemAction ? 'flex min-h-9 items-center justify-between gap-2 px-2 py-1' : 'p-2')}
                 >
                   <div className="min-w-0">
                     <span className="block break-words font-medium">{itemLabels[item] ?? item}</span>
@@ -136,10 +188,9 @@ export function ResourceSidebar({
                   </div>
                   {renderItemAction?.(item)}
                 </div>
-                ))}
-              </div>
-            )}
-          </>
+              )
+            })}
+          </div>
         )}
       </div>
     </div>
