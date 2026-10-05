@@ -53,4 +53,23 @@ describe('mapVmwareInventory', () => {
       'vcenter-02:vm-101:disk:0',
     ])
   })
+
+  it.each([
+    ['one NAA', ['naa.60050763808104d94000000000000015']],
+    ['several NAA in API order', ['naa.B', 'naa.A']],
+    ['no NAA', []],
+  ])('keeps the disk NAA list as returned by the API (%s)', (_case, naa) => {
+    const vm = createVm('vcenter-01')
+    const [disk] = vm.vdisks ?? []
+    if (!disk) throw new Error('fixture has no disk')
+    const inventory = mapVmwareInventory(VmsResponseSchema.parse({ count: 1, vms: [{ ...vm, vdisks: [{ ...disk, naa }] }] }))
+
+    expect(inventory.virtualMachines[0]?.disks[0]?.naa).toEqual(naa)
+  })
+
+  it('maps a disk without an NAA field to an empty list through the API default', () => {
+    const inventory = mapVmwareInventory(VmsResponseSchema.parse({ count: 1, vms: [createVm('vcenter-01')] }))
+
+    expect(inventory.virtualMachines[0]?.disks[0]?.naa).toEqual([])
+  })
 })

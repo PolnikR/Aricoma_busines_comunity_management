@@ -72,7 +72,12 @@ function MappingTable({ title, ariaLabel, mappings }: { title: string; ariaLabel
   )
 }
 
-function BackingStorageVolume({ volume, providers }: { volume: StorageVolume; providers: ProviderRecord[] }) {
+// How a resolved FlashSystem volume is identified for the compute resource that uses it:
+// VMware shows the volume's vdisk UID (its NAA belongs to the VMware disk view), IBM Power
+// shows Volume ID and Volume UID. Never inferred from the volume, so Power never gets NAA.
+export type BackingVolumeIdentity = 'vdiskUid' | 'volumeIdAndUid'
+
+function BackingStorageVolume({ volume, providers, identity }: { volume: StorageVolume; providers: ProviderRecord[]; identity: BackingVolumeIdentity }) {
   const { t } = useTranslation()
   // Providers are already loaded by the Resources page; an unknown ID shows raw.
   const provider = providers.find(candidate => candidate.id === volume.storageProviderId)
@@ -92,8 +97,8 @@ function BackingStorageVolume({ volume, providers }: { volume: StorageVolume; pr
           value={provider ? provider.name : display(volume.storageProviderId)}
           secondary={provider ? <span className="font-mono">{provider.id}</span> : undefined}
         />
-        {volume.naa !== null ? (
-          <DetailRow label={t(`${prefix}.naa`)} value={<span className="font-mono">{volume.naa}</span>} />
+        {identity === 'vdiskUid' ? (
+          <DetailRow label={t(`${prefix}.vdiskUid`)} value={<span className="font-mono">{display(volume.vdiskUid)}</span>} />
         ) : (
           <>
             <DetailRow label={t(`${prefix}.volumeId`)} value={<span className="font-mono">{display(volume.volumeId)}</span>} />
@@ -163,20 +168,20 @@ interface BackingStorageInfoProps {
   isFetching: boolean
   onRetry: () => void
   providers: ProviderRecord[]
+  identity: BackingVolumeIdentity
   // Shown when the request succeeds without any volume; worded for the compute resource.
   emptyText: string
 }
 
 // The storage volumes backing a compute resource (VMware VM or IBM Power LPAR), each
 // with its FlashCopy mappings. A volume is shown even when it has no snapshots.
-// Identity: the NAA when the volume is keyed by one, otherwise Volume ID and Volume UID.
-export function BackingStorageInfo({ volumes, isLoading, isError, isFetching, onRetry, providers, emptyText }: BackingStorageInfoProps) {
+export function BackingStorageInfo({ volumes, isLoading, isError, isFetching, onRetry, providers, identity, emptyText }: BackingStorageInfoProps) {
   const { t } = useTranslation()
 
   let content
   if (isLoading) content = <BackingStorageSkeleton />
   else if (volumes.length === 0) content = <p className="p-4 text-[12px] @min-[80rem]/backing-storage:text-[13px] text-text-subtle">{emptyText}</p>
-  else content = volumes.map(volume => <BackingStorageVolume key={volume.key} volume={volume} providers={providers} />)
+  else content = volumes.map(volume => <BackingStorageVolume key={volume.key} volume={volume} providers={providers} identity={identity} />)
 
   return (
     // Own container, so the layout steps work in any drawer that hosts this section.

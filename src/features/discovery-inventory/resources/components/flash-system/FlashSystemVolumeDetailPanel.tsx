@@ -1,11 +1,15 @@
 import { Fragment } from 'react'
 import { DetailDrawer, DetailDrawerSection, DetailRow } from '@/shared/components/data-table'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import { FlashVolumeRelationshipHelp } from './FlashVolumeRelationshipHelp'
 import { CopyIcon, GridIcon, LayersIcon, SettingsIcon } from '@/shared/icons/Icons'
 import type { FlashSystemVolumeResource } from '../../model/discoveryTypes'
 
 interface FlashSystemVolumeDetailPanelProps {
   volume: FlashSystemVolumeResource | null
+  // The whole provider list, to name the FlashSystem and its configured partner in the help.
+  allProviders?: readonly ProviderRecord[]
   open: boolean
   onClose: () => void
   labels: {
@@ -70,7 +74,7 @@ function ConsistencyGroups({ groups }: { groups: FlashSystemVolumeResource['reso
   )
 }
 
-export function FlashSystemVolumeDetailPanel({ volume, open, onClose, labels }: FlashSystemVolumeDetailPanelProps) {
+export function FlashSystemVolumeDetailPanel({ volume, allProviders = [], open, onClose, labels }: FlashSystemVolumeDetailPanelProps) {
   return (
     <DetailDrawer
       open={open}
@@ -78,7 +82,11 @@ export function FlashSystemVolumeDetailPanel({ volume, open, onClose, labels }: 
       title={volume?.name ?? '-'}
       bodyLayout="sections"
       meta={[labels.entity]}
-      headerActions={<KeyedHelpPopover helpKey="resources.flash.help" sections={['pool', 'flashCopy', 'remoteCopy', 'consistencyGroups']} />}
+      headerActions={(
+        <KeyedHelpPopover helpKey="resources.flash.help" sections={['pool', 'flashCopy', 'remoteCopy', 'consistencyGroups']} width="wide">
+          {volume ? <FlashVolumeRelationshipHelp volume={volume} allProviders={allProviders} /> : null}
+        </KeyedHelpPopover>
+      )}
       ariaLabel={labels.detail}
       closeLabel={labels.close}
       resizeLabel={labels.resize}

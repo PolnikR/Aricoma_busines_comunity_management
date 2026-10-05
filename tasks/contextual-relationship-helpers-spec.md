@@ -51,8 +51,11 @@ generické „storage partner“ a demo dáta sa nepreberajú).
   remote copy partnera. LPAR bez NPIV → prázdne vdisky + warning (vSCSI nepodporované).
 - FE `StorageVolume`: `key`, `naa` (iba VMware), `volumeId`, `vdiskUid`, `storageProviderId`,
   pool, I/O group, status, capacity, `snapshots{snapshotCount, sourceMappings, targetMappings}`.
-- VMware disky (`DiscoveredVirtualDisk`) nemajú NAA (mapper ho zahadzuje) → **mapovanie
-  disk → NAA sa nedá zobraziť**.
+- VMware disk (BE `/get_vms` `VmDisk.naa`, generated `naa: string[]`, default `[]`) nesie NAA
+  všetkých VMFS extentov backing datastore, 0..N na disk. FE mapper ho pôvodne zahadzoval;
+  od 2026-10-05 ho `DiscoveredVirtualDisk.naa` zachováva a zobrazuje stĺpec NAA v Disks
+  (`tasks/vmware-disk-naa-plan.md`). NAA disku je metadata VMware disk/datastore vrstvy:
+  **presné 1:1 disk → FlashSystem volume sa z neho neodvodzuje ani nekreslí.**
 - `mapPowerInventory` zahadzuje VIOS (`if (partitionKind === 'VIOS') return []`, produktové
   pravidlo) → VIOS drawer je z UI nedosiahnuteľný. **VIOS relationship helper nie je v scope**
   (rozhodnutie 2026-10-04). Existujúca VIOS vetva a testy `IbmPowerDetailPanel` ostávajú bez zmeny.
@@ -110,11 +113,13 @@ zobrazí sa ako mismatch, nič sa nedopočítava. Bez vzťahov: „Not used as b
 ```
 Discovered from:   [vCenter provider] —Discovers→ [VM: name, n virtual disks, power state]
 Backing storage (zoskupené podľa storage providera):
-  [VM] —Backing · NAA→ [Volume: name, NAA, capacity · status] —FlashCopy→ [FlashCopy: N snapshots,
-                                                                         source/target mappings]
+  [VM] —Backing · NAA→ [Volume: name, vdisk UID, capacity · status] —FlashCopy→ [FlashCopy: N snapshots,
+                                                                               source/target mappings]
 ```
 Bez mappingov: koniec riadku „No FlashCopy mappings“ (volume sa zobrazí). Loading/error/empty:
-VM uzol ostane, pod ním neutrálny stav. Žiadne `Hard disk → NAA` hrany.
+VM uzol ostane, pod ním neutrálny stav. Žiadne hrany `Hard disk → volume` (API negarantuje 1:1).
+Identita: VMware disk metadata = NAA (`string[]`, v Disks); hrana VM → volume = `Backing · NAA`
+(mechanizmus resolúcie); FlashSystem volume = vdisk UID (rovnako ako Backing Storage Info).
 
 ### IBM Power LPAR
 ```
@@ -193,6 +198,6 @@ Farba uzla nikdy neznamená stav; stav ide textom alebo `Badge`.
 VIOS relationship helper (VIOS nie je v inventory; doplní sa, keď sa VIOS sprístupní),
 backend refactor, Hitachi resource inventory, globálna topology stránka, graph framework
 (D3, Cytoscape, canvas, WebGL), nový modal alebo backdrop, druhý help trigger, toolbar
-tlačidlo, hardcoded vzťahy, vymyslené resource vzťahy (disk→NAA, FlashSystem host, RC target,
+tlačidlo, hardcoded vzťahy, vymyslené resource vzťahy (1:1 disk→FlashSystem volume, FlashSystem host, RC target,
 FlashCopy target vo FlashSystem view), globálny rename `providerTypeLabel`, ručné zmeny
 `src/generated/**`, nový API request.

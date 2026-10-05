@@ -31,7 +31,7 @@ import { ProviderConnectionTestDialog } from './ProviderConnectionTestDialog'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
 import { isComputeProviderType, isPartnerProviderType } from '../model/providerCategory'
 import { BackingStorageValue } from './BackingStorageValue'
-import { ProviderRelationshipsContent } from './ProviderRelationshipsContent'
+import { SelectedProviderRelationships } from './SelectedProviderRelationships'
 import type { ProviderRecord, ProviderRoleFilter } from '../model/providerTypes'
 
 function credentialStatusLabel(
@@ -340,7 +340,12 @@ export function ProvidersCatalogueTable({
               <span id="provider-test-credential-hint" className="sr-only">{t('providers.connectionTest.credentialRequired')}</span>
             ) : null}
             <KeyedHelpPopover helpKey="providers.help" sections={['role', 'credential']} width="wide">
-              <ProviderRelationshipsContent providers={allProviders} isLoading={allProvidersLoading} isError={allProvidersError} />
+              <SelectedProviderRelationships
+                allProviders={allProviders}
+                selectedProviderId={selected.id}
+                isLoading={allProvidersLoading}
+                isError={allProvidersError}
+              />
             </KeyedHelpPopover>
           </>
         ) : null}

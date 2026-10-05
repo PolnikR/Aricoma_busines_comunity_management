@@ -5,57 +5,58 @@ Stav: plán schválený s úpravami 1–4 (2026-10-04); čaká na kontrolu dokum
 
 ## C0: Spec, plán, TODO
 - [x] plán schválený (2026-10-04): VIOS mimo scope, smer aj na úzko, DOM ID per inštancia, FlashSystem `allProviders`
-- [ ] kontrola aktualizovaných dokumentov používateľom
+- [x] kontrola aktualizovaných dokumentov používateľom
 
 ## C1: Shared relationship primitives (S–M)
-- [ ] `StorageIcon`, `AlertTriangleIcon` v `Icons.tsx` (20×20, stroke currentColor 1.5)
-- [ ] `relationshipGraphTypes`, `relationshipAdjacency` (pure, one-hop)
-- [ ] `RelationshipGraph`, `RelationshipGroup`, `RelationshipChain`, `RelationshipNode`, `RelationshipConnector`, `RelationshipNote`
-- [ ] tóny chipu compute/storage/infrastructure/protection/problem cez tokeny, žiadne hex ani `warning-*`
-- [ ] hover/focus highlight: active + priami susedia 100 %, ostatné uzly `opacity-35`, hrany `opacity-[0.12]`, labely `opacity-15`, 150 ms transition, leave/blur obnoví
-- [ ] container query: desktop chain s hrotmi ◀/▶; úzko vertikálny stack s vertikálnymi hrotmi (forward ▼, backward ▲, both ▲▼), bez horizontálneho overflow
-- [ ] a11y: `role="group"`, `tabIndex=0`, `aria-describedby` skrytý popis, `sr-only` text konektora
-- [ ] logické `entityId` pre highlight, DOM ID cez `useId()` per inštancia
-- Overenie: `relationshipAdjacency.test.ts`, `RelationshipGraph.test.tsx` (vrátane narrow `out`/`in`/`both` a rovnakej entity 2×: highlight na oboch, žiadne duplicitné aria ID), eslint, typecheck, `git diff --check`
+- [x] `StorageIcon`, `AlertTriangleIcon` v `Icons.tsx` (20×20, stroke currentColor 1.5)
+- [x] `relationshipGraphTypes`, `relationshipAdjacency` (pure, one-hop)
+- [x] `RelationshipGraph`, `RelationshipGroup`, `RelationshipChain`, `RelationshipNode`, `RelationshipConnector`, `RelationshipNote`
+- [x] tóny chipu compute/storage/infrastructure/protection/problem cez tokeny, žiadne hex ani `warning-*`
+- [x] hover/focus highlight: active + priami susedia 100 %, ostatné uzly `opacity-35`, hrany `opacity-[0.12]`, labely `opacity-15`, 150 ms transition, leave/blur obnoví
+- [x] container query: desktop chain s hrotmi ◀/▶; úzko vertikálny stack s vertikálnymi hrotmi (forward ▼, backward ▲, both ▲▼), bez horizontálneho overflow
+- [x] a11y: `role="group"`, `tabIndex=0`, `aria-describedby` skrytý popis, `sr-only` text konektora
+- [x] logické `entityId` pre highlight, DOM ID cez `useId()` per inštancia
+- Overenie: `relationshipAdjacency.test.ts`, `RelationshipGraph.test.tsx` (vrátane narrow variantu: `forward` → vertikálny hrot dole, `backward` → vertikálny hrot hore, `both` → hroty hore aj dole; a rovnakej entity 2×: highlight na oboch, žiadne duplicitné aria ID), eslint, typecheck, `git diff --check`
 - Commit C1
 
 ## C2: Selected-provider kontext (M)
-- [ ] `buildSelectedProviderRelationships` (compute / storage / missing + edges) nad `resolveProviderTopology`
-- [ ] `SelectedProviderRelationships` (loading/error, intro, graf, empty stavy podľa typu)
-- [ ] `ProvidersCatalogueTable`: help `children` so `selectedProviderId`, Role/Credential ostávajú
-- [ ] odstrániť `buildRelationshipRows`, `ProviderRelationshipsContent`, `ProviderRelationshipParts` + testy a osirelé `providers.relationships.*` kľúče
-- [ ] en/sk/cs: nové kľúče (napr. `usedBy`, `noBackingRelationships`, `noProviderRelationships`, `notUsedAsBacking`), upravené `intro.source`
+- [x] `buildSelectedProviderRelationships` (compute / storage / missing + edges) nad `resolveProviderTopology`
+- [x] `SelectedProviderRelationships` (loading/error, intro, graf, empty stavy podľa typu)
+- [x] `ProvidersCatalogueTable`: help `children` so `selectedProviderId`, Role/Credential ostávajú
+- [x] odstrániť `buildRelationshipRows`, `ProviderRelationshipsContent`, `ProviderRelationshipParts` + testy a osirelé `providers.relationships.*` kľúče
+- [x] en/sk/cs: nové kľúče (napr. `usedBy`, `noBackingRelationships`, `noProviderRelationships`, `notUsedAsBacking`), upravené `intro.source`
 - Overenie: view-model test (VMware, IBM Power, FlashCopy, Hitachi, viac backingov, mutual, one-way, viac partnerov, unresolved, mismatch, bez vzťahov, nesúvisiaci sa neobjaví, missing), component test, `ProvidersCatalogueTable.test.tsx`, locale parity test
 - Commit C2
 
 ## CP1: Checkpoint po C2
-- [ ] prehliadač: provider help VMware a FlashCopy, light/dark, 1366×768 a 390 px, hover aj Tab, pozícia `wide` popoveru z drawera
+- [x] prehliadač (2026-10-04): provider help VMware a FlashCopy, light/dark, 1366×768 a 390 px, hover (CDP myš) aj keyboard focus, `wide` popover v rámci viewportu bez horizontálneho overflow; oprava: vyšší konektor na úzko (`h-12`), aby bola čiara viditeľná popri labeli
 - [ ] review s používateľom pred resources
 
 ## C3: VMware VM helper (M)
-- [ ] `buildVmRelationships` (provider→VM, volumes podľa storage providera, NAA, FlashCopy)
-- [ ] `VmRelationshipHelp` + `VirtualMachineDetailPanel` (`width="wide"`, dáta propsom)
-- [ ] žiadne Hard disk→NAA hrany; zero snapshots = volume + „No FlashCopy mappings“; loading/error/empty
+- [x] `buildVmRelationships` (provider→VM, volumes podľa storage providera, hrana `Backing · NAA`, volume s vdisk UID, FlashCopy)
+- [x] `VmRelationshipHelp` + `VirtualMachineDetailPanel` (`width="wide"`, dáta propsom)
+- [x] žiadne Hard disk→volume hrany (disk NAA je 0..N metadata, nie 1:1); zero snapshots = volume + „No FlashCopy mappings“; loading/error/empty
+- Pozn.: spoločná kostra `workloadRelationships` + `WorkloadRelationshipGraph` pre VM aj LPAR; mono ID v uzle sa zalamuje (celý vdisk UID). Prehliadač: 1366 aj 390 px OK.
 - Overenie: `buildVmRelationships.test.ts`, `VirtualMachineDetailPanel.test.tsx`
 - Commit C3
 
 ## C4: IBM Power LPAR helper (M)
-- [ ] `buildLparRelationships` (provider→LPAR, volumes podľa FlashSystemu, Volume ID/UID, FlashCopy, NPIV text bez hostu)
-- [ ] `LparRelationshipHelp` + `IbmPowerDetailPanel` (iba pre LPAR)
-- [ ] VIOS: žiadny nový relationship content; existujúca VIOS vetva a testy panelu bez zmeny
+- [x] `buildLparRelationships` (provider→LPAR, volumes podľa FlashSystemu, Volume ID/UID, FlashCopy, NPIV text bez hostu)
+- [x] `LparRelationshipHelp` + `IbmPowerDetailPanel` (iba pre LPAR)
+- [x] VIOS: žiadny nový relationship content; existujúca VIOS vetva a testy panelu bez zmeny
 - Overenie: `buildLparRelationships.test.ts`, `IbmPowerDetailPanel.test.tsx` (žiadne NAA ani composite key; existujúce VIOS testy zelené)
 - Commit C4
 
 ## C5: FlashSystem helper (M)
-- [ ] nový prop `allProviders` cez `FlashSystemResourcesPage` → `FlashSystemInventoryView` → panel; `providers` si ponechá význam (FLASHCOPY providery roly)
-- [ ] `buildFlashVolumeRelationships` (provider→pool→volume, hosty, CG, FlashCopy iba pri dátach, Remote Copy iba pri `RC_id` bez targetu, configured partner ako provider-level)
-- [ ] `FlashVolumeRelationshipHelp` + panel
+- [x] nový prop `allProviders` cez `FlashSystemResourcesPage` → `FlashSystemInventoryView` → panel; `providers` si ponechá význam (FLASHCOPY providery roly)
+- [x] `buildFlashVolumeRelationships` (provider→pool→volume, hosty, CG, FlashCopy iba pri dátach, Remote Copy iba pri `RC_id` bez targetu, configured partner ako provider-level)
+- [x] `FlashVolumeRelationshipHelp` + panel
 - Overenie: `buildFlashVolumeRelationships.test.ts`, `FlashSystemVolumeDetailPanel.test.tsx`, `FlashSystemInventoryView.test.tsx`
 - Commit C5
 
 ## C6: Locales, cleanup, prehliadač
-- [ ] wording help textov (globálna topológia → kontext), en/sk/cs, locale testy
-- [ ] help shell regresia: Tab do uzlov drží help otvorený, Escape zavrie iba help, ostatné `KeyedHelpPopover` bez zmeny
-- [ ] prehliadač: všetky 4 helpery, light/dark, desktop/390 px, hover/Tab, viac uzlov, problem prípad
-- [ ] celá suite (cross-cutting), eslint, `npm run typecheck`, `git diff --check`
+- [x] wording help textov: jediný text o globálnej topológii (`providers.relationships.intro.source`) zmenený v C2; ostatné help texty bez zmeny, locale testy zelené
+- [x] help shell regresia: Tab do uzlov drží help otvorený, Escape zavrie iba help, ostatné `KeyedHelpPopover` bez zmeny
+- [x] prehliadač: všetky 4 helpery, light/dark, desktop/390 px, hover/Tab, viac uzlov, problem prípad
+- [x] celá suite (cross-cutting): 299 súborov, 1719/1719, eslint, `npm run typecheck`, `git diff --check`
 - Commit C6

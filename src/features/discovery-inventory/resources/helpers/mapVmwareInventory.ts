@@ -23,6 +23,7 @@ function mapVirtualDisk(
     datastore: disk.datastore ?? '-',
     filePath: disk.file,
     thinProvisioned: disk.thin_provisioned ?? false,
+    naa: disk.naa,
   }
 }
 

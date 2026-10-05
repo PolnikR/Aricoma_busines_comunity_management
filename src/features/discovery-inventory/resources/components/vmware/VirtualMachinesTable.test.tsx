@@ -32,6 +32,7 @@ const vm: VirtualMachine = {
       datastore: 'ds-nvme-01',
       filePath: '[ds-nvme-01] app-server-01/disk.vmdk',
       thinProvisioned: true,
+      naa: [],
     },
     {
       id: 'disk-2',
@@ -40,6 +41,7 @@ const vm: VirtualMachine = {
       datastore: 'ds-nvme-01',
       filePath: '[ds-nvme-01] app-server-01/disk2.vmdk',
       thinProvisioned: true,
+      naa: [],
     },
   ],
   snapshotCount: 3,

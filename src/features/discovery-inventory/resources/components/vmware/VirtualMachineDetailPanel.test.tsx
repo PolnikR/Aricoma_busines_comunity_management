@@ -50,6 +50,7 @@ const vm = {
       datastore: 'ds-01',
       filePath: '[ds-01] app-server-01/disk.vmdk',
       thinProvisioned: true,
+      naa: [],
     },
     {
       id: 'disk-2',
@@ -58,6 +59,7 @@ const vm = {
       datastore: 'ds-01',
       filePath: '[ds-01] app-server-01/disk2.vmdk',
       thinProvisioned: true,
+      naa: [],
     },
   ],
   folder: '/prod',
@@ -135,6 +137,22 @@ async function openBackingStorage(volumes: StorageVolume[], providers: ProviderR
 }
 
 // The <dd> next to the <dt> with this label.
+const flashProvider = { id: 'ibm-flashsystem-01', name: 'IBM Flash Source 01', type: 'FLASHCOPY', role: 'source', credentialStatus: 'ok' } as ProviderRecord
+
+async function openRelationshipHelp(volumes: StorageVolume[], providers: ProviderRecord[] = [], state: { isLoading?: boolean; isError?: boolean } = {}) {
+  const user = userEvent.setup()
+  useVdisksByVmMock.mockReturnValue({
+    data: state.isLoading || state.isError ? undefined : { vmName: 'app-server-01', countVm: 1, countIbm: 1, volumes },
+    isLoading: state.isLoading ?? false,
+    isError: state.isError ?? false,
+    isFetching: false,
+    refetch: vi.fn().mockResolvedValue(undefined),
+  })
+  renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} providers={providers} />)
+  await user.click(screen.getByRole('button', { name: 'Virtual machine help' }))
+  return screen.getByRole('dialog', { name: 'What this virtual machine view shows' })
+}
+
 function detailValue(container: HTMLElement, label: string) {
   return within(container).getByText(label, { selector: 'dt' }).nextElementSibling
 }
@@ -191,6 +209,35 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(screen.getByRole('region', { name: 'Disks' })).toHaveTextContent('Hard disk 1')
   })
 
+  it('lists every NAA of a disk in its own Disks column, in API order, or a dash when there is none', async () => {
+    const user = userEvent.setup()
+    const disksVm = {
+      ...vm,
+      vdisks: [
+        { ...vm.vdisks[0], id: 'one', label: 'Hard disk 1', naa: ['naa.60050763808104d94000000000000015'] },
+        { ...vm.vdisks[0], id: 'many', label: 'Hard disk 2', naa: ['naa.B', 'naa.A'] },
+        { ...vm.vdisks[0], id: 'none', label: 'Hard disk 3', naa: [] },
+      ],
+    } as VirtualMachine
+    renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={disksVm} open onClose={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: 'Disks' }))
+    const table = within(screen.getByRole('region', { name: 'Disks' })).getByRole('table')
+    const headers = within(table).getAllByRole('columnheader').map(header => header.textContent)
+    const naaColumn = headers.indexOf('NAA')
+    const naaCell = (label: string) => {
+      const found = within(within(table).getByRole('row', { name: new RegExp(label) })).getAllByRole('cell')[naaColumn]
+      if (!found) throw new Error(`no NAA cell for ${label}`)
+      return found
+    }
+
+    expect(headers).toEqual(['Label', 'Capacity', 'Datastore', 'NAA', 'File', 'Thin Prov.'])
+    expect(within(naaCell('Hard disk 1')).getAllByRole('listitem').map(item => item.textContent)).toEqual(['naa.60050763808104d94000000000000015'])
+    expect(within(naaCell('Hard disk 2')).getAllByRole('listitem').map(item => item.textContent)).toEqual(['naa.B', 'naa.A'])
+    expect(naaCell('Hard disk 3')).toHaveTextContent(/^-$/)
+    expect(naaCell('Hard disk 1')).toHaveClass('font-mono')
+    expect(within(table).getByRole('row', { name: /Hard disk 1/ })).toHaveTextContent(/Hard disk 1.*100 GB.*ds-01.*naa\.6005.*disk\.vmdk.*Yes/)
+  })
+
   it('lays out accented sections that scroll on their own', () => {
     renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
     const accentOf = (name: string) => screen.getByRole('button', { name }).closest('section')?.getAttribute('data-accent')
@@ -214,13 +261,88 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(help).toHaveTextContent(/FlashCopy snapshot mappings/)
   })
 
+  it('draws the VM relationship graphic in the help from the already loaded volumes', async () => {
+    const help = await openRelationshipHelp([
+      volume({ snapshots: snapshots({ snapshotCount: 1, sourceMappings: [mapping('copied', '100')] }) }),
+      volume({ key: 'naa.second', naa: 'naa.second', volumeName: 'V5000_VOLUME03', storageProviderId: 'ibm-flashsystem-09', vdiskUid: 'UID-SECOND' }),
+    ], [flashProvider])
+
+    // The help reuses the panel's lookup: every call is the same VM and provider.
+    expect(new Set(useVdisksByVmMock.mock.calls.map(call => JSON.stringify(call)))).toEqual(new Set([JSON.stringify(['app-server-01', 'vmware-vcenter-01'])]))
+    expect(help.querySelector('[data-body-layout]')).toBeNull()
+    expect(within(help).getByRole('list', { name: 'Discovered from' })).toHaveTextContent(/vmware-vcenter-01.*app-server-01/)
+    expect(within(help).getAllByRole('group', { name: 'app-server-01' })[0]).toHaveTextContent('Virtual disks: 2')
+    const flash = within(help).getByRole('list', { name: 'Backing storage on IBM Flash Source 01' })
+    expect(within(flash).getByRole('group', { name: 'V5000_VOLUME02' })).toHaveTextContent('60050763808104D94000000000000016')
+    expect(within(flash).getByRole('group', { name: 'FlashCopy' })).toHaveTextContent('→ target-volume')
+    const unknown = within(help).getByRole('list', { name: 'Backing storage on ibm-flashsystem-09' })
+    expect(within(unknown).getByRole('group', { name: 'V5000_VOLUME03' })).toHaveTextContent('UID-SECOND')
+    expect(unknown).toHaveTextContent('No FlashCopy mappings')
+    expect(help).toHaveTextContent('Which virtual disk is stored on which volume is not reported.')
+  })
+
+  it('keeps the help open while Tab moves through relationship nodes and closes only the help on Escape', async () => {
+    const user = userEvent.setup()
+    const help = await openRelationshipHelp([volume()])
+    const [firstNode] = within(help).getAllByRole('group', { name: 'vmware-vcenter-01' })
+    if (!firstNode) throw new Error('provider node not rendered')
+
+    firstNode.focus()
+    await user.tab()
+    expect(help).toContainElement(document.activeElement as HTMLElement)
+    expect(document.activeElement).toHaveAttribute('data-highlight', 'on')
+    expect(screen.getByRole('dialog', { name: 'What this virtual machine view shows' })).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog', { name: 'What this virtual machine view shows' })).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Virtual machine detail' })).toBeInTheDocument()
+  })
+
+  it('resolves volumes through NAA on the edge but identifies each volume node by its vdisk UID', async () => {
+    const help = await openRelationshipHelp([
+      volume(),
+      volume({ key: 'naa.second', naa: 'naa.second', volumeName: 'V5000_VOLUME03', vdiskUid: 'UID-SECOND' }),
+    ])
+    const first = within(help).getByRole('group', { name: 'V5000_VOLUME02' })
+    const second = within(help).getByRole('group', { name: 'V5000_VOLUME03' })
+    const backingEdges = [...help.querySelectorAll('[data-edge-kind="backing"]')]
+
+    expect(backingEdges).toHaveLength(2)
+    for (const edge of backingEdges) expect(edge).toHaveTextContent('Backing · NAA')
+    expect(first).toHaveTextContent('60050763808104D94000000000000016')
+    expect(second).toHaveTextContent('UID-SECOND')
+    expect(first).not.toHaveTextContent('naa.60050763808104d94000000000000016')
+    expect(second).not.toHaveTextContent('naa.second')
+  })
+
+  it('draws no Hard disk node and no disk to volume edge in the help', async () => {
+    const help = await openRelationshipHelp([volume(), volume({ key: 'naa.second', naa: 'naa.second', volumeName: 'V5000_VOLUME03' })])
+    const entityIds = [...help.querySelectorAll('[data-entity-id]')].map(node => node.getAttribute('data-entity-id'))
+
+    expect(within(help).queryByRole('group', { name: /Hard disk/ })).not.toBeInTheDocument()
+    expect(entityIds).not.toContainEqual(expect.stringMatching(/disk/))
+    // Every volume hangs off the VM itself, never off a virtual disk.
+    expect(within(help).getAllByRole('group', { name: 'app-server-01' })).toHaveLength(3)
+  })
+
+  it.each([
+    [{ isLoading: true }, 'Loading backing storage...'],
+    [{ isError: true }, 'Resource inventory could not be loaded'],
+    [{}, 'No backing storage volume was resolved for this virtual machine.'],
+  ])('keeps the VM in the help graphic with a neutral backing state (%o)', async (state, text) => {
+    const help = await openRelationshipHelp([], [], state)
+
+    expect(within(help).getAllByRole('group', { name: 'app-server-01' })).toHaveLength(2)
+    expect(within(help).getByRole('list', { name: 'Backing storage' })).toHaveTextContent(text)
+  })
+
   it('shows a volume with its storage details even when it has no snapshots', async () => {
     const container = await openBackingStorage([volume()])
     const card = within(container).getByRole('region', { name: 'V5000_VOLUME02' })
 
     expect(card).toHaveTextContent('Backing storage volume')
     expect(detailValue(card, 'Backing provider')).toHaveTextContent('ibm-flashsystem-01')
-    expect(detailValue(card, 'NAA')).toHaveTextContent('naa.60050763808104d94000000000000016')
+    expect(detailValue(card, 'vdisk UID')).toHaveTextContent('60050763808104D94000000000000016')
     expect(detailValue(card, 'Capacity')).toHaveTextContent('1.00TB')
     expect(detailValue(card, 'Status')).toHaveTextContent('degraded')
     expect(detailValue(card, 'Pool')).toHaveTextContent('Pool0')
@@ -239,17 +361,20 @@ describe('VirtualMachineDetailPanel resize', () => {
     }
   })
 
-  it('does not show vdisk_UID as a second identifier', async () => {
-    const container = await openBackingStorage([volume()])
+  it('identifies the resolved FlashSystem volume by its vdisk UID, not by the VMware NAA', async () => {
+    const container = await openBackingStorage([volume({ vdiskUid: 'UID-FROM-VOLUME' })])
+    const card = within(container).getByRole('region', { name: 'V5000_VOLUME02' })
 
-    expect(container).not.toHaveTextContent(/60050763808104D94000000000000016/)
+    expect(detailValue(card, 'vdisk UID')).toHaveTextContent('UID-FROM-VOLUME')
+    expect(within(card).queryByText('NAA', { selector: 'dt' })).not.toBeInTheDocument()
+    expect(card).not.toHaveTextContent('naa.60050763808104d94000000000000016')
   })
 
-  it('identifies a VMware volume by NAA only, without the IBM Power Volume ID and Volume UID rows', async () => {
+  it('identifies a VMware volume by vdisk UID only, without the IBM Power Volume ID and Volume UID rows', async () => {
     const container = await openBackingStorage([volume()])
     const card = within(container).getByRole('region', { name: 'V5000_VOLUME02' })
 
-    expect(within(card).getByText('NAA', { selector: 'dt' })).toBeInTheDocument()
+    expect(within(card).getByText('vdisk UID', { selector: 'dt' })).toBeInTheDocument()
     expect(within(card).queryByText('Volume ID', { selector: 'dt' })).not.toBeInTheDocument()
     expect(within(card).queryByText('Volume UID', { selector: 'dt' })).not.toBeInTheDocument()
   })
@@ -276,11 +401,11 @@ describe('VirtualMachineDetailPanel resize', () => {
   it('shows every backing volume of the VM', async () => {
     const container = await openBackingStorage([
       volume(),
-      volume({ key: 'naa.second', naa: 'naa.second', volumeName: 'V5000_VOLUME03' }),
+      volume({ key: 'naa.second', naa: 'naa.second', volumeName: 'V5000_VOLUME03', vdiskUid: 'UID-SECOND' }),
     ])
 
     expect(within(container).getByRole('region', { name: 'V5000_VOLUME02' })).toBeInTheDocument()
-    expect(within(container).getByRole('region', { name: 'V5000_VOLUME03' })).toHaveTextContent('naa.second')
+    expect(within(container).getByRole('region', { name: 'V5000_VOLUME03' })).toHaveTextContent('UID-SECOND')
   })
 
   it('names the backing provider from the loaded providers and keeps its raw ID', async () => {

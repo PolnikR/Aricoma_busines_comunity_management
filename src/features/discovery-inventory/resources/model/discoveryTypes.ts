@@ -5,6 +5,9 @@ export interface DiscoveredVirtualDisk {
   datastore: string
   filePath: string
   thinProvisioned: boolean
+  // NAA ids of all VMFS extents of the disk's datastore, in API order (0..N). They are
+  // not a mapping of this disk to one FlashSystem volume.
+  naa: string[]
 }
 
 export interface DiscoveredVirtualMachine {

@@ -14,6 +14,7 @@ import {
 } from '@/shared/components/data-table'
 import { createVmwareDetailFields } from '../../config/vmwareDetailFields'
 import { BackingStorageInfo } from '../BackingStorageInfo'
+import { VmRelationshipHelp } from './VmRelationshipHelp'
 
 function truncateFilePath(path: string): string {
   if (path.length <= 50) return path
@@ -74,7 +75,19 @@ export function VirtualMachineDetailPanel({
           {virtualMachine.hostname || '-'} / {virtualMachine.ipAddress || '-'}
         </span>
       ) : null}
-      headerActions={<KeyedHelpPopover helpKey="pages.virtualMachines.help" sections={['status', 'disks', 'backing']} />}
+      headerActions={(
+        <KeyedHelpPopover helpKey="pages.virtualMachines.help" sections={['status', 'disks', 'backing']} width="wide">
+          {virtualMachine ? (
+            <VmRelationshipHelp
+              virtualMachine={virtualMachine}
+              volumes={vdisks?.volumes ?? []}
+              isLoading={vdisksLoading}
+              isError={vdisksError}
+              providers={providers}
+            />
+          ) : null}
+        </KeyedHelpPopover>
+      )}
       ariaLabel={t('drawer.vmDetail')}
       closeLabel={t('drawer.closeVm')}
       resizeLabel={t('drawer.resize')}
@@ -138,6 +151,7 @@ export function VirtualMachineDetailPanel({
                           <TableCell isHeader className={headerCell}>{t('details.label')}</TableCell>
                           <TableCell isHeader className={headerCell}>{t('details.capacity')}</TableCell>
                           <TableCell isHeader className={headerCell}>{t('details.datastore')}</TableCell>
+                          <TableCell isHeader className={headerCell}>{t('details.naa')}</TableCell>
                           <TableCell isHeader className={headerCell}>{t('details.file')}</TableCell>
                           <TableCell isHeader className={headerCell}>{t('details.thinProv')}</TableCell>
                         </TableRow>
@@ -150,6 +164,14 @@ export function VirtualMachineDetailPanel({
                             </TableCell>
                             <TableCell className={num}>{disk.capacityGb} GB</TableCell>
                             <TableCell className={cell}>{disk.datastore}</TableCell>
+                            <TableCell className={`${cell} font-mono`}>
+                              {/* Every NAA of the disk's datastore extents, in API order; not a disk to volume mapping. */}
+                              {disk.naa.length > 0 ? (
+                                <ul className="space-y-0.5">
+                                  {disk.naa.map((naa, index) => <li key={`${naa}-${String(index)}`} className="whitespace-nowrap">{naa}</li>)}
+                                </ul>
+                              ) : '-'}
+                            </TableCell>
                             <TableCell className={`${cell} max-w-64`}>
                               <span className="block truncate cursor-help" title={disk.filePath}>
                                 {truncateFilePath(disk.filePath)}
@@ -174,6 +196,7 @@ export function VirtualMachineDetailPanel({
                   isFetching={vdisksFetching}
                   onRetry={() => { void refetchVdisks() }}
                   providers={providers}
+                  identity="vdiskUid"
                   emptyText={t('pages.virtualMachines.detail.noBackingVolumes')}
                 />
               </DetailDrawerSection>

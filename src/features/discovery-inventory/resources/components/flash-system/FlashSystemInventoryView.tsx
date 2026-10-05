@@ -27,6 +27,8 @@ const initialFilters: FlashSystemFilters = {
 interface FlashSystemInventoryViewProps {
   resources: FlashSystemVolumeResource[]
   providers: ProviderRecord[]
+  // The whole provider list for the volume help; `providers` stays the FlashSystem providers of this view.
+  allProviders?: ProviderRecord[]
   error?: ResourceInventoryPanelError | null
   t: Translate
 }
@@ -34,6 +36,7 @@ interface FlashSystemInventoryViewProps {
 export function FlashSystemInventoryView({
   resources,
   providers,
+  allProviders = [],
   error,
   t,
 }: FlashSystemInventoryViewProps) {
@@ -133,6 +136,7 @@ export function FlashSystemInventoryView({
       </ResourceInventoryPanel>
       <FlashSystemVolumeDetailPanel
         volume={selected}
+        allProviders={allProviders}
         open={selected !== null}
         onClose={() => { setSelected(null) }}
         labels={{
