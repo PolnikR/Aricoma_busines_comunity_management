@@ -556,6 +556,7 @@
   "pages.recoveryGroupBuilder.provider.description": "Select the provider whose resources will be available in the next step.",
   "pages.recoveryGroupBuilder.provider.empty.title": "No provider available",
   "pages.recoveryGroupBuilder.provider.empty.description": "No provider with valid credentials is available for the selected resource type.",
+  "pages.recoveryGroupBuilder.provider.scope.moreTags": "{{count}} additional configured tags; only the first tag is used for VM filtering.",
   "pages.recoveryGroupBuilder.type.vmwareDescription": "Group virtual machines discovered from VMware providers.",
   "pages.recoveryGroupBuilder.type.flashDescription": "Group storage volumes provided by IBM FlashSystem.",
   "pages.recoveryGroupBuilder.type.vmResource": "Resource type: VM",

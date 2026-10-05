@@ -539,6 +539,7 @@
   "pages.recoveryGroupBuilder.provider.description": "Vyberte providera, jehož zdroje budou dostupné v dalším kroku.",
   "pages.recoveryGroupBuilder.provider.empty.title": "Není dostupný žádný provider",
   "pages.recoveryGroupBuilder.provider.empty.description": "Pro vybraný typ zdroje není dostupný provider s platnými přihlašovacími údaji.",
+  "pages.recoveryGroupBuilder.provider.scope.moreTags": "{{count}} další nakonfigurované tagy; k filtrování VM se používá pouze první tag.",
   "pages.recoveryGroupBuilder.resources.title": "Vybrané virtuální stroje",
   "pages.recoveryGroupBuilder.resources.description": "Přesuňte virtuální stroje z inventáře nebo je přímo vyberte.",
   "pages.recoveryGroupBuilder.resources.empty": "Přesuňte sem virtuální stroje",

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { RecoveryGroupProviderScope } from '../model/recoveryGroupTypes'
 import { RecoveryGroupResourcesStep } from './RecoveryGroupResourcesStep'
 
 interface InventoryQueryDouble {
@@ -13,7 +14,7 @@ interface InventoryQueryDouble {
 }
 
 const useRecoveryGroupResourceInventory = vi.fn<
-  (workloadType: string | null, providerId: string | null, options?: { vmwareNamePrefix?: string }) => InventoryQueryDouble
+  (workloadType: string | null, providerId: string | null, options?: { providerScope?: RecoveryGroupProviderScope | null }) => InventoryQueryDouble
 >()
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -21,7 +22,7 @@ vi.mock('../hooks/useRecoveryGroupResourceInventory', () => ({
   useRecoveryGroupResourceInventory: (
     workloadType: string | null,
     providerId: string | null,
-    options?: { vmwareNamePrefix?: string },
+    options?: { providerScope?: RecoveryGroupProviderScope | null },
   ) => useRecoveryGroupResourceInventory(workloadType, providerId, options),
 }))
 
@@ -100,7 +101,7 @@ describe('RecoveryGroupResourcesStep', () => {
     expect(useRecoveryGroupResourceInventory).toHaveBeenLastCalledWith(
       workloadType,
       providerId,
-      { vmwareNamePrefix: '' },
+      {},
     )
   })
 
@@ -128,10 +129,11 @@ describe('RecoveryGroupResourcesStep', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 
-  it('passes VMware search text to the inventory hook without filtering its server result locally', async () => {
+  it('searches VMware locally inside the provider scope without changing the inventory request', async () => {
     const user = userEvent.setup()
+    const providerScope = { vmPrefix: 'TEST-', vmTags: ['WEB'] }
     useRecoveryGroupResourceInventory.mockReturnValue({
-      data: { resourceNames: ['DB-01'] },
+      data: { resourceNames: ['TEST-WEB-01', 'TEST-DB-01'] },
       error: null,
       isLoading: false,
       isSearching: false,
@@ -143,24 +145,28 @@ describe('RecoveryGroupResourcesStep', () => {
       <RecoveryGroupResourcesStep
         workloadType="vmware_virtual_machines"
         providerId="vmware-1"
+        providerScope={providerScope}
         resources={['SELECTED-VM']}
         onAdd={vi.fn()}
         onRemove={vi.fn()}
       />,
     )
 
-    await user.type(screen.getByRole('searchbox', { name: 'Search virtual machines' }), 'WEB')
+    await user.type(screen.getByRole('searchbox', { name: 'Search virtual machines' }), 'PROD-')
+    expect(screen.queryByText('TEST-WEB-01')).not.toBeInTheDocument()
 
-    expect(useRecoveryGroupResourceInventory).toHaveBeenLastCalledWith(
-      'vmware_virtual_machines',
-      'vmware-1',
-      { vmwareNamePrefix: 'WEB' },
-    )
-    expect(screen.getByText('DB-01')).toBeInTheDocument()
+    await user.clear(screen.getByRole('searchbox', { name: 'Search virtual machines' }))
+    await user.type(screen.getByRole('searchbox', { name: 'Search virtual machines' }), 'db')
+
+    expect(screen.getByText('TEST-DB-01')).toBeInTheDocument()
+    expect(screen.queryByText('TEST-WEB-01')).not.toBeInTheDocument()
     expect(screen.getByText('SELECTED-VM')).toBeInTheDocument()
+    for (const [workloadType, providerId, options] of useRecoveryGroupResourceInventory.mock.calls) {
+      expect([workloadType, providerId, options]).toEqual(['vmware_virtual_machines', 'vmware-1', { providerScope }])
+    }
   })
 
-  it('shows the loading list while a VMware search is in flight and keeps the search box usable', async () => {
+  it('shows the loading list while VMware inventory refreshes and keeps the search box usable', async () => {
     const user = userEvent.setup()
     useRecoveryGroupResourceInventory.mockReturnValue({
       data: { resourceNames: ['DB-01'] },
@@ -191,7 +197,7 @@ describe('RecoveryGroupResourcesStep', () => {
     expect(searchbox).toHaveValue('WEB')
   })
 
-  it('clears VMware search text when its provider scope changes', async () => {
+  it('clears VMware search text when the provider changes', async () => {
     const user = userEvent.setup()
     const { rerender } = render(
       <RecoveryGroupResourcesStep
@@ -214,11 +220,8 @@ describe('RecoveryGroupResourcesStep', () => {
       />,
     )
 
-    expect(useRecoveryGroupResourceInventory).toHaveBeenLastCalledWith(
-      'vmware_virtual_machines',
-      'vmware-2',
-      { vmwareNamePrefix: '' },
-    )
+    expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toHaveValue('')
+    expect(useRecoveryGroupResourceInventory).toHaveBeenLastCalledWith('vmware_virtual_machines', 'vmware-2', {})
   })
 
   it('keeps IBM Power search local', async () => {

@@ -145,6 +145,11 @@ export function RecoveryGroupBuilder({
       && isCredentialOk(provider)
     )),
   )
+  // Until the provider list resolves the scope is unknown, so VM inventory waits for it.
+  const selectedProvider = providers.find(provider => provider.id === draftState.providerId)
+  const selectedProviderScope = selectedProvider
+    ? { vmPrefix: selectedProvider.vmPrefix ?? null, vmTags: selectedProvider.vmTags ?? [] }
+    : undefined
   const policySetQuery = useGetPolicySets({ query: { select: selectPolicySets } })
   const policySets = policySetQuery.data ?? []
   const policySetValid = Boolean(draftState.policySetId)
@@ -396,6 +401,7 @@ export function RecoveryGroupBuilder({
                   <RecoveryGroupResourcesStep
                     workloadType={draft.workloadType}
                     providerId={draft.providerId}
+                    {...(selectedProviderScope ? { providerScope: selectedProviderScope } : {})}
                     resources={draft.resources}
                     renderItemContent={draft.resourceType === 'volume' ? renderVolumeContent : undefined}
                     onAdd={resource => {

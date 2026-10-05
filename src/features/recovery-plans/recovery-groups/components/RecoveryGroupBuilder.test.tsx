@@ -26,6 +26,8 @@ vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => (
         credentialId: 'vcenter-admin',
         role: 'source',
         credentialStatus: 'ok',
+        vmPrefix: 'TEST-',
+        vmTags: ['WEB'],
       },
       {
         id: 'vmware-vcenter-target-01',
@@ -37,6 +39,7 @@ vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => (
         credentialId: 'vcenter-target-admin',
         role: 'target',
         credentialStatus: 'ok',
+        vmPrefix: 'DR-',
       },
       {
         id: 'ibm-power-01',
@@ -69,14 +72,17 @@ vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => (
     ...providerStatus,
   }),
 }))
+const { resourceInventoryMock } = vi.hoisted(() => ({ resourceInventoryMock: vi.fn() }))
+const defaultResourceInventoryResult = {
+  data: { resourceNames: ['VOL-01'] },
+  error: null,
+  isLoading: false,
+  isFetching: false,
+  refetch: vi.fn(),
+}
+resourceInventoryMock.mockReturnValue(defaultResourceInventoryResult)
 vi.mock('../hooks/useRecoveryGroupResourceInventory', () => ({
-  useRecoveryGroupResourceInventory: () => ({
-    data: { resourceNames: ['VOL-01'] },
-    error: null,
-    isLoading: false,
-    isFetching: false,
-    refetch: vi.fn(),
-  }),
+  useRecoveryGroupResourceInventory: resourceInventoryMock,
 }))
 vi.mock('../hooks/useRecoveryGroupMetroMirrorRelationships', () => ({ useRecoveryGroupMetroMirrorRelationships: vi.fn() }))
 vi.mock('../hooks/useRecoveryGroupRelatedVolumes', () => ({
@@ -375,6 +381,7 @@ describe('RecoveryGroupBuilder', () => {
     vi.mocked(useRecoveryGroupMetroMirrorRelationships).mockReturnValue({ data: undefined, error: null, isLoading: false, refetch: vi.fn() })
     providerStatus.isFetching = false
     usePlatformProvidersMock.mockReturnValue(defaultPlatformProvidersResult)
+    resourceInventoryMock.mockReturnValue(defaultResourceInventoryResult)
     vi.mocked(useRecoveryGroupRelatedVolumes).mockImplementation((_vmProvider, _vms, flashcopyProviderId) => ({ flashcopyProviderId, discoveredVolumeNames: [], isLoading: false, isResolved: true }))
   })
 
@@ -1014,5 +1021,42 @@ describe('RecoveryGroupBuilder', () => {
 
     expect(screen.getByRole('button', { name: /Production vCenter/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Recovery vCenter/i })).not.toBeInTheDocument()
+  })
+
+  it('bounds available VMs by the provider scope but keeps the saved selection of an existing group', async () => {
+    resourceInventoryMock.mockReturnValue({ ...defaultResourceInventoryResult, data: { resourceNames: ['TEST-VM-01'] } })
+    const user = userEvent.setup()
+    const onCreate = vi.fn()
+    render(<RecoveryGroupBuilder initialData={{ ...existingGroup, resources: ['PROD-VM-01'] }} onCreate={onCreate} onCancel={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+
+    expect(resourceInventoryMock).toHaveBeenLastCalledWith('vmware_virtual_machines', 'vmware-vcenter-01', {
+      providerScope: { vmPrefix: 'TEST-', vmTags: ['WEB'] },
+    })
+    const selected = screen.getByLabelText('Selected recovery group virtual machines')
+    expect(selected).toHaveTextContent('PROD-VM-01')
+    expect(selected).not.toHaveTextContent('TEST-VM-01')
+    expect(screen.getByText('TEST-VM-01')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Policy Set' }))
+    await user.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
+    await completeOrchestrationAndCreate(user)
+
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ resources: ['PROD-VM-01'] }))
+  })
+
+  it('drops the previous provider resources and scope when the provider changes', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryGroupBuilder initialData={existingGroup} onCreate={vi.fn()} onCancel={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: 'Provider' }))
+    await user.click(screen.getByRole('button', { name: /Recovery vCenter/i }))
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+
+    expect(resourceInventoryMock).toHaveBeenLastCalledWith('vmware_virtual_machines', 'vmware-vcenter-target-01', {
+      providerScope: { vmPrefix: 'DR-', vmTags: [] },
+    })
+    expect(screen.getByLabelText('Selected recovery group virtual machines')).not.toHaveTextContent('DB-01')
   })
 })

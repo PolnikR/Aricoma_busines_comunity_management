@@ -22,6 +22,12 @@ export type RecoveryGroupResourceType = 'vm' | 'volume'
 export type RecoveryGroupStatus = 'Draft' | 'Active'
 export type RecoveryGroupProviderResolution = 'resolved' | 'unresolved'
 
+// Discovery scope configured on the selected provider (Providers & Connectors).
+export interface RecoveryGroupProviderScope {
+  vmPrefix?: string | null
+  vmTags?: readonly string[]
+}
+
 export type RecoveryGroupResourceConfiguration =
   | {
       sourceCategory: 'backup_system_workload'

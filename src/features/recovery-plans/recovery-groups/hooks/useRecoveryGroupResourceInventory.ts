@@ -15,7 +15,12 @@ import type {
   PowerInventory,
   PowerPartitionResource,
 } from '@/features/discovery-inventory/resources/model/discoveryTypes'
-import type { RecoveryGroupVmMetadata, RecoveryGroupWorkloadType } from '../model/recoveryGroupTypes'
+import { resolveVmwareProviderFilter } from '@/features/discovery-inventory/resources/helpers/vmwareProviderFilter'
+import type {
+  RecoveryGroupProviderScope,
+  RecoveryGroupVmMetadata,
+  RecoveryGroupWorkloadType,
+} from '../model/recoveryGroupTypes'
 
 interface RecoveryGroupResourceInventory {
   resourceNames: string[]
@@ -23,7 +28,11 @@ interface RecoveryGroupResourceInventory {
 }
 
 interface RecoveryGroupResourceInventoryOptions {
-  vmwareNamePrefix?: string
+  /**
+   * Fixed scope of the selected provider. `undefined` means the provider record is
+   * not known yet, so VM inventory is not requested; `null` means no scope.
+   */
+  providerScope?: RecoveryGroupProviderScope | null
   enabled?: boolean
 }
 
@@ -103,13 +112,20 @@ function getVmMetadataByName(
 export function useRecoveryGroupResourceInventory(
   workloadType: RecoveryGroupWorkloadType | null,
   providerId: string | null,
-  { vmwareNamePrefix, enabled = true }: RecoveryGroupResourceInventoryOptions = {},
+  { providerScope, enabled = true }: RecoveryGroupResourceInventoryOptions = {},
 ) {
   const isVmware = workloadType === 'vmware_virtual_machines'
+  const isPower = workloadType === 'ibm_power_virtual_machines'
+  const isScopeKnown = (!isVmware && !isPower) || providerScope !== undefined
+  // Same normalization as the Resources page: trimmed prefix, first non-empty tag.
+  const vmwareFilter = resolveVmwareProviderFilter(isVmware ? providerScope : null)
+  // The Power inventory has no tags, so only the name prefix is enforced there.
+  const powerPrefix = isPower ? providerScope?.vmPrefix?.trim() ?? '' : ''
   const vmwareQuery = useVmwareResourceInventory({
     ...(isVmware && providerId ? { providerId } : {}),
-    ...(isVmware && vmwareNamePrefix !== undefined ? { namePrefix: vmwareNamePrefix } : {}),
-    enabled: enabled && isVmware,
+    ...(vmwareFilter.prefix ? { namePrefix: vmwareFilter.prefix } : {}),
+    ...(vmwareFilter.tag ? { tag: vmwareFilter.tag } : {}),
+    enabled: enabled && isVmware && isScopeKnown,
   })
   const definition = useMemo(
     () => workloadType && providerId && workloadType !== 'vmware_virtual_machines'
@@ -118,12 +134,17 @@ export function useRecoveryGroupResourceInventory(
     [providerId, workloadType],
   )
 
-  const selectFn = useCallback((inventory: ResourceInventory) => ({
-    resourceNames: Array.from(new Set(
-      getResourceNames(inventory).map(name => name.trim()).filter(Boolean),
-    )),
-    vmMetadataByName: workloadType ? getVmMetadataByName(workloadType, inventory) : {},
-  }), [workloadType])
+  const selectFn = useCallback((inventory: ResourceInventory) => {
+    const scopedInventory = powerPrefix && 'partitions' in inventory
+      ? { ...inventory, partitions: inventory.partitions.filter(partition => partition.partitionName.startsWith(powerPrefix)) }
+      : inventory
+    return {
+      resourceNames: Array.from(new Set(
+        getResourceNames(scopedInventory).map(name => name.trim()).filter(Boolean),
+      )),
+      vmMetadataByName: workloadType ? getVmMetadataByName(workloadType, scopedInventory) : {},
+    }
+  }, [powerPrefix, workloadType])
 
   const selectResponse = useCallback(
     (response: unknown) => {
@@ -136,7 +157,7 @@ export function useRecoveryGroupResourceInventory(
     queryKey: definition?.queryKey ?? ['recovery-group-resource-inventory', 'inactive'],
     queryFn: definition?.queryFn ?? (() => Promise.reject(new Error('A workload type and provider are required'))),
     select: selectResponse,
-    enabled: enabled && definition !== null,
+    enabled: enabled && definition !== null && isScopeKnown,
   })
   const vmwareData = useMemo(
     () => vmwareQuery.data ? selectFn(vmwareQuery.data) : undefined,

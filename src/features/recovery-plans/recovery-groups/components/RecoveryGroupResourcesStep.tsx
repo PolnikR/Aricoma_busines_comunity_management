@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
 import { ResourceSelectionCard } from '@/shared/components/resource-selection/ResourceSelectionCard'
@@ -6,11 +6,17 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { cn } from '@/shared/utils/cn'
 import { Button } from '@/shared/components/button/Button'
 import { useRecoveryGroupResourceInventory } from '../hooks/useRecoveryGroupResourceInventory'
-import type { RecoveryGroupVmMetadata, RecoveryGroupWorkloadType } from '../model/recoveryGroupTypes'
+import type {
+  RecoveryGroupProviderScope,
+  RecoveryGroupVmMetadata,
+  RecoveryGroupWorkloadType,
+} from '../model/recoveryGroupTypes'
 
 interface RecoveryGroupResourcesStepProps {
   workloadType: RecoveryGroupWorkloadType | null
   providerId: string | null
+  /** Fixed scope of the selected provider; omitted while the provider record is unknown. */
+  providerScope?: RecoveryGroupProviderScope | null
   resources: string[]
   onAdd: (resource: string) => void
   onRemove: (resource: string) => void
@@ -33,6 +39,7 @@ export function RecoveryGroupResourcesStep(props: RecoveryGroupResourcesStepProp
 function RecoveryGroupResourcesStepContent({
   workloadType,
   providerId,
+  providerScope,
   resources,
   onAdd,
   onRemove,
@@ -43,9 +50,12 @@ function RecoveryGroupResourcesStepContent({
   onClear,
 }: RecoveryGroupResourcesStepProps) {
   const { t } = useTranslation()
-  const [vmwareNamePrefix, setVmwareNamePrefix] = useState('')
-  const isVmware = workloadType === 'vmware_virtual_machines'
-  const query = useRecoveryGroupResourceInventory(workloadType, providerId, { vmwareNamePrefix })
+  // The provider scope bounds the request; the sidebar search only filters that result locally.
+  const query = useRecoveryGroupResourceInventory(
+    workloadType,
+    providerId,
+    providerScope !== undefined ? { providerScope } : {},
+  )
   const availableResources = query.data?.resourceNames ?? []
   const vmMetadataByName = query.data?.vmMetadataByName
 
@@ -78,10 +88,6 @@ function RecoveryGroupResourcesStepContent({
           retryLabel={t('buttons.retry')}
           onRetry={() => { void query.refetch() }}
           {...(compact ? { renderItemAction: (resource: string) => <button type="button" disabled={resources.includes(resource)} aria-label={`${t('buttons.add')}: ${resource}`} onClick={() => { onAdd(resource) }} className="flex size-6 shrink-0 items-center justify-center rounded border border-border text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:text-text-muted">{resources.includes(resource) ? '✓' : '+'}</button> } : {})}
-          {...(isVmware ? {
-            searchValue: vmwareNamePrefix,
-            onSearchChange: setVmwareNamePrefix,
-          } : {})}
         />
       </div>
       <div className={cn('flex h-72 min-h-0 min-w-0 flex-col rounded-lg border-border bg-surface lg:h-full', compact ? 'overflow-hidden border' : 'border-2 border-dashed p-4')}>

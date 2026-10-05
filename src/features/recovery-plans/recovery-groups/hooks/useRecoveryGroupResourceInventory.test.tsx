@@ -14,6 +14,7 @@ import {
   createDiscoveryFetchHandlers,
   installDiscoveryFetch,
 } from '@/features/discovery-inventory/resources/test/discoveryFetch'
+import type { RecoveryGroupProviderScope } from '../model/recoveryGroupTypes'
 import { useRecoveryGroupResourceInventory } from './useRecoveryGroupResourceInventory'
 
 const discoveryFetch = createDiscoveryFetchHandlers()
@@ -57,7 +58,7 @@ describe('useRecoveryGroupResourceInventory', () => {
     expectedNames,
   ) => {
     const { result } = renderHook(
-      () => useRecoveryGroupResourceInventory(workloadType, providerId),
+      () => useRecoveryGroupResourceInventory(workloadType, providerId, { providerScope: null }),
       { wrapper: createWrapper() },
     )
 
@@ -91,7 +92,7 @@ describe('useRecoveryGroupResourceInventory', () => {
     })
 
     const { result } = renderHook(
-      () => useRecoveryGroupResourceInventory('vmware_virtual_machines', 'vmware-1'),
+      () => useRecoveryGroupResourceInventory('vmware_virtual_machines', 'vmware-1', { providerScope: null }),
       { wrapper: createWrapper() },
     )
 
@@ -115,7 +116,7 @@ describe('useRecoveryGroupResourceInventory', () => {
     })
 
     const { result: powerResult } = renderHook(
-      () => useRecoveryGroupResourceInventory('ibm_power_virtual_machines', 'power-1'),
+      () => useRecoveryGroupResourceInventory('ibm_power_virtual_machines', 'power-1', { providerScope: null }),
       { wrapper: createWrapper() },
     )
     await waitFor(() => { expect(powerResult.current.isSuccess).toBe(true) })
@@ -127,19 +128,19 @@ describe('useRecoveryGroupResourceInventory', () => {
 
   it('keeps VMware recovery data stable across rerenders without new inventory data', async () => {
     const { result, rerender } = renderHook(
-      ({ prefix }: { prefix: string }) => useRecoveryGroupResourceInventory(
+      ({ providerScope }: { providerScope: RecoveryGroupProviderScope }) => useRecoveryGroupResourceInventory(
         'vmware_virtual_machines',
         'vmware-1',
-        { vmwareNamePrefix: prefix },
+        { providerScope },
       ),
-      { wrapper: createWrapper(), initialProps: { prefix: '' } },
+      { wrapper: createWrapper(), initialProps: { providerScope: { vmPrefix: null, vmTags: [] } } },
     )
 
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
     const initialData = result.current.data
     const initialMetadata = result.current.data?.vmMetadataByName
 
-    rerender({ prefix: '' })
+    rerender({ providerScope: { vmPrefix: null, vmTags: [] } })
 
     expect(result.current.data).toBe(initialData)
     expect(result.current.data?.vmMetadataByName).toBe(initialMetadata)
@@ -167,71 +168,104 @@ describe('useRecoveryGroupResourceInventory', () => {
     expect(fetchFlashSystemInventory).not.toHaveBeenCalled()
   })
 
-  it('uses the canonical VMware inventory lifecycle for a name prefix', async () => {
+  it.each([
+    ['no scope', null, { providerId: 'vmware-1' }],
+    ['a name prefix', { vmPrefix: ' TEST- ' }, { providerId: 'vmware-1', namePrefix: 'TEST-' }],
+    ['a tag', { vmTags: [' WEB '] }, { providerId: 'vmware-1', tag: 'WEB' }],
+    ['a prefix and tags', { vmPrefix: ' TEST- ', vmTags: [' ', ' WEB ', 'DB'] }, { providerId: 'vmware-1', namePrefix: 'TEST-', tag: 'WEB' }],
+  ] as const)('requests VMware inventory with the provider scope for %s on the canonical key', async (
+    _,
+    providerScope,
+    expectedSearch,
+  ) => {
+    const queryClient = createQueryClient()
     const { result } = renderHook(
-      () => useRecoveryGroupResourceInventory('vmware_virtual_machines', 'vmware-1', {
-        vmwareNamePrefix: 'WEB',
-      }),
+      () => useRecoveryGroupResourceInventory('vmware_virtual_machines', 'vmware-1', { providerScope }),
+      { wrapper: createWrapper(queryClient) },
+    )
+
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) }, { timeout: 1_000 })
+
+    expect(fetchVmwareInventory).toHaveBeenCalledTimes(1)
+    expect(fetchVmwareInventory).toHaveBeenCalledWith(expectedSearch)
+    expect(queryClient.getQueryData(vmwareInventoryQuery(expectedSearch).queryKey)).toBeDefined()
+  })
+
+  it.each([
+    ['vmware_virtual_machines', 'vmware-1'],
+    ['ibm_power_virtual_machines', 'power-1'],
+  ] as const)('does not request %s inventory while the provider scope is unknown', (workloadType, providerId) => {
+    const { result } = renderHook(
+      () => useRecoveryGroupResourceInventory(workloadType, providerId),
       { wrapper: createWrapper() },
     )
 
+    expect(result.current.fetchStatus).toBe('idle')
     expect(fetchVmwareInventory).not.toHaveBeenCalled()
-
-    await waitFor(() => { expect(result.current.isSuccess).toBe(true) }, { timeout: 1_000 })
-
-    expect(fetchVmwareInventory).toHaveBeenCalledWith({
-      providerId: 'vmware-1',
-      namePrefix: 'WEB',
-    })
+    expect(fetchPowerInventory).not.toHaveBeenCalled()
   })
 
-  it('reports searching while a VMware name prefix debounces and then fetches', async () => {
+  it('loads FlashSystem volumes without a provider scope', async () => {
     const { result } = renderHook(
-      () => useRecoveryGroupResourceInventory('vmware_virtual_machines', 'vmware-1', {
-        vmwareNamePrefix: 'WEB',
-      }),
+      () => useRecoveryGroupResourceInventory('ibm_flashsystem', 'flash-1'),
       { wrapper: createWrapper() },
-    )
-
-    expect(result.current.isSearching).toBe(true)
-
-    await waitFor(() => { expect(result.current.isSuccess).toBe(true) }, { timeout: 1_000 })
-
-    expect(result.current.isSearching).toBe(false)
-  })
-
-  it('keeps searching true while a new prefix request replaces already visible data', async () => {
-    const { result, rerender } = renderHook(
-      ({ prefix }: { prefix: string }) => useRecoveryGroupResourceInventory(
-        'vmware_virtual_machines',
-        'vmware-1',
-        { vmwareNamePrefix: prefix },
-      ),
-      { wrapper: createWrapper(), initialProps: { prefix: '' } },
     )
 
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
-    expect(result.current.isSearching).toBe(false)
+    expect(result.current.data?.resourceNames).toEqual(['VOL-01'])
+  })
 
-    let resolveSearch: ((response: unknown) => void) | undefined
-    fetchVmwareInventory.mockImplementation(
-      () => new Promise((resolve) => { resolveSearch = resolve }),
-    )
-    rerender({ prefix: 'WEB' })
+  describe('IBM Power provider scope', () => {
+    beforeEach(() => {
+      fetchPowerInventory.mockReturnValue({
+        count: 3,
+        counts_by_type: { LogicalPartition: 3, VirtualIOServer: 0 },
+        vms: [
+          { lpar: { PartitionName: 'TEST-AIX-01', OperatingSystemType: 'AIX' }, vios: {} },
+          { lpar: { PartitionName: 'TEST-AIX-02', OperatingSystemType: 'AIX' }, vios: {} },
+          { lpar: { PartitionName: 'PROD-AIX-01', OperatingSystemType: 'AIX' }, vios: {} },
+        ],
+      })
+    })
 
-    expect(result.current.isSearching).toBe(true)
+    function renderPower(providerScope: RecoveryGroupProviderScope | null, queryClient = createQueryClient()) {
+      return renderHook(
+        () => useRecoveryGroupResourceInventory('ibm_power_virtual_machines', 'power-1', { providerScope }),
+        { wrapper: createWrapper(queryClient) },
+      )
+    }
 
-    await waitFor(() => {
-      expect(fetchVmwareInventory).toHaveBeenCalledWith({ providerId: 'vmware-1', namePrefix: 'WEB' })
-    }, { timeout: 1_000 })
+    it('keeps only partitions whose name starts with the trimmed prefix, metadata included', async () => {
+      const queryClient = createQueryClient()
+      const { result } = renderPower({ vmPrefix: ' TEST- ' }, queryClient)
 
-    expect(result.current.isSearching).toBe(true)
-    expect(result.current.data?.resourceNames).toEqual(['VM-01', 'VM-02'])
+      await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+      expect(result.current.data?.resourceNames).toEqual(['TEST-AIX-01', 'TEST-AIX-02'])
+      expect(result.current.data?.vmMetadataByName).toEqual({
+        'TEST-AIX-01': { os: 'AIX' },
+        'TEST-AIX-02': { os: 'AIX' },
+      })
+      expect(fetchPowerInventory).toHaveBeenCalledWith('power-1')
+      expect(queryClient.getQueryData(powerInventoryQuery('power-1').queryKey)).toBeDefined()
+    })
 
-    resolveSearch?.({ count: 1, vms: [{ name: 'WEB-01' }] })
+    it('matches the prefix at the start of the name only', async () => {
+      const { result } = renderPower({ vmPrefix: 'AIX' })
 
-    await waitFor(() => { expect(result.current.isSearching).toBe(false) })
-    expect(result.current.data?.resourceNames).toEqual(['WEB-01'])
+      await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+      expect(result.current.data?.resourceNames).toEqual([])
+    })
+
+    it.each([
+      ['no scope', null],
+      ['a blank prefix', { vmPrefix: '   ' }],
+      ['tags only, which the Power inventory cannot enforce', { vmPrefix: null, vmTags: ['WEB'] }],
+    ] as const)('keeps every partition for %s', async (_, providerScope) => {
+      const { result } = renderPower(providerScope)
+
+      await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+      expect(result.current.data?.resourceNames).toEqual(['TEST-AIX-01', 'TEST-AIX-02', 'PROD-AIX-01'])
+    })
   })
 
   it.each([
@@ -239,7 +273,7 @@ describe('useRecoveryGroupResourceInventory', () => {
     ['ibm_flashsystem', 'flash-1'],
   ] as const)('never reports searching for locally filtered %s', async (workloadType, providerId) => {
     const { result } = renderHook(
-      () => useRecoveryGroupResourceInventory(workloadType, providerId),
+      () => useRecoveryGroupResourceInventory(workloadType, providerId, { providerScope: null }),
       { wrapper: createWrapper() },
     )
 
@@ -287,7 +321,7 @@ describe('useRecoveryGroupResourceInventory', () => {
     queryClient.setQueryData(queryKey, inventory)
 
     const { result } = renderHook(
-      () => useRecoveryGroupResourceInventory(workloadType, providerId),
+      () => useRecoveryGroupResourceInventory(workloadType, providerId, { providerScope: null }),
       { wrapper: createWrapper(queryClient) },
     )
 

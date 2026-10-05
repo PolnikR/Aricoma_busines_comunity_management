@@ -535,6 +535,7 @@
   "pages.recoveryGroupBuilder.provider.description": "Vyberte providera, ktorého zdroje budú dostupné v ďalšom kroku.",
   "pages.recoveryGroupBuilder.provider.empty.title": "Nie je dostupný žiadny provider",
   "pages.recoveryGroupBuilder.provider.empty.description": "Pre vybraný typ zdroja nie je dostupný provider s platnými prihlasovacími údajmi.",
+  "pages.recoveryGroupBuilder.provider.scope.moreTags": "{{count}} ďalšie nakonfigurované tagy; na filtrovanie VM sa používa iba prvý tag.",
   "pages.recoveryGroupBuilder.type.vmwareDescription": "Zoskupte virtuálne stroje objavené z VMware providerov.",
   "pages.recoveryGroupBuilder.type.flashDescription": "Zoskupte storage volumes poskytované IBM FlashSystem.",
   "pages.recoveryGroupBuilder.type.vmResource": "Typ zdroja: VM",
