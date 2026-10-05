@@ -324,7 +324,8 @@ export function RecoveryAppBuilder({
                   <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.tiers.description')}</p>
                 </div>
                 <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-lg border border-border lg:grid-cols-[280px_minmax(0,1fr)]">
-                  <div className="custom-scrollbar min-h-0 overflow-y-auto border-b border-border lg:border-b-0 lg:border-r">
+                  {/* Bounded on small screens too, so the virtualized group list keeps its own scroll. */}
+                  <div className="custom-scrollbar h-72 min-h-0 overflow-y-auto border-b border-border lg:h-auto lg:border-b-0 lg:border-r">
                     <ResourceSidebar
                       items={sidebarItems}
                       itemLabels={groupLabels}
