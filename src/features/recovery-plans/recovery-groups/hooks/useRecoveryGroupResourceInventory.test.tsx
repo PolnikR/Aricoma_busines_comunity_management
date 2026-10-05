@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import {
@@ -213,6 +213,72 @@ describe('useRecoveryGroupResourceInventory', () => {
 
     await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
     expect(result.current.data?.resourceNames).toEqual(['VOL-01'])
+  })
+
+  describe('VMware user search', () => {
+    const settle = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 400)) })
+
+    function renderVmware(providerScope: RecoveryGroupProviderScope | null, queryClient = createQueryClient()) {
+      return renderHook(
+        ({ prefix }: { prefix: string }) => useRecoveryGroupResourceInventory('vmware_virtual_machines', 'vmware-1', {
+          providerScope,
+          vmwareNamePrefix: prefix,
+        }),
+        { wrapper: createWrapper(queryClient), initialProps: { prefix: '' } },
+      )
+    }
+
+    it.each([
+      ['a fixed prefix', { vmPrefix: 'TEST-' }, { providerId: 'vmware-1', namePrefix: 'TEST-' }],
+      ['a fixed tag only', { vmPrefix: null, vmTags: ['WEB'] }, { providerId: 'vmware-1', tag: 'WEB' }],
+      ['a fixed prefix and tag', { vmPrefix: 'TEST-', vmTags: ['WEB'] }, { providerId: 'vmware-1', namePrefix: 'TEST-', tag: 'WEB' }],
+    ] as const)('never sends the user search for %s', async (_, providerScope, expectedSearch) => {
+      const { result, rerender } = renderVmware(providerScope)
+      await waitFor(() => { expect(result.current.isSuccess).toBe(true) }, { timeout: 1_000 })
+
+      rerender({ prefix: 'DB' })
+      await settle()
+
+      expect(fetchVmwareInventory).toHaveBeenCalledTimes(1)
+      expect(fetchVmwareInventory).toHaveBeenCalledWith(expectedSearch)
+      expect(result.current.isSearching).toBe(false)
+    })
+
+    it('sends only the settled user search to the server when the provider has no scope', async () => {
+      const queryClient = createQueryClient()
+      const { result, rerender } = renderVmware(null, queryClient)
+      await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+      expect(fetchVmwareInventory).toHaveBeenCalledWith({ providerId: 'vmware-1' })
+
+      rerender({ prefix: 'P' })
+      rerender({ prefix: 'PR' })
+      rerender({ prefix: 'PROD-' })
+      expect(result.current.isSearching).toBe(true)
+
+      await waitFor(() => {
+        expect(fetchVmwareInventory).toHaveBeenCalledWith({ providerId: 'vmware-1', namePrefix: 'PROD-' })
+      }, { timeout: 1_000 })
+      await waitFor(() => { expect(result.current.isSearching).toBe(false) })
+      expect(fetchVmwareInventory).toHaveBeenCalledTimes(2)
+      expect(queryClient.getQueryData(vmwareInventoryQuery({ providerId: 'vmware-1', namePrefix: 'PROD-' }).queryKey)).toBeDefined()
+    })
+
+    it('returns to the provider-only query when an unscoped search is cleared', async () => {
+      const queryClient = createQueryClient()
+      const { result, rerender } = renderVmware(null, queryClient)
+      await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+      fetchVmwareInventory.mockReturnValue({ count: 1, vms: [{ name: 'PROD-01' }] })
+      rerender({ prefix: 'PROD-' })
+      await waitFor(() => { expect(result.current.data?.resourceNames).toEqual(['PROD-01']) }, { timeout: 1_000 })
+
+      rerender({ prefix: '' })
+
+      await waitFor(() => { expect(result.current.data?.resourceNames).toEqual(['VM-01', 'VM-02']) })
+      expect(queryClient.getQueryData(vmwareInventoryQuery({ providerId: 'vmware-1' }).queryKey)).toBeDefined()
+      for (const [search] of fetchVmwareInventory.mock.calls) {
+        expect([{ providerId: 'vmware-1' }, { providerId: 'vmware-1', namePrefix: 'PROD-' }]).toContainEqual(search)
+      }
+    })
   })
 
   describe('IBM Power provider scope', () => {

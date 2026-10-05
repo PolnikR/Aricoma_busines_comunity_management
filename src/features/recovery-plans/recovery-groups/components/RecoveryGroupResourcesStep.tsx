@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
 import { ResourceSelectionCard } from '@/shared/components/resource-selection/ResourceSelectionCard'
@@ -6,6 +6,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { cn } from '@/shared/utils/cn'
 import { Button } from '@/shared/components/button/Button'
 import { useRecoveryGroupResourceInventory } from '../hooks/useRecoveryGroupResourceInventory'
+import { getRecoveryGroupSearchMode, type RecoveryGroupSearchMode } from '../helpers/recoveryGroupSearchMode'
 import type {
   RecoveryGroupProviderScope,
   RecoveryGroupVmMetadata,
@@ -28,9 +29,13 @@ interface RecoveryGroupResourcesStepProps {
 }
 
 export function RecoveryGroupResourcesStep(props: RecoveryGroupResourcesStepProps) {
+  const searchMode = getRecoveryGroupSearchMode(props.workloadType, props.providerScope)
+  // A new provider or search mode starts with a fresh search, so no search text
+  // from the previous provider or mode reaches the next request.
   return (
     <RecoveryGroupResourcesStepContent
-      key={`${props.workloadType ?? ''}|${props.providerId ?? ''}`}
+      key={`${props.workloadType ?? ''}|${props.providerId ?? ''}|${searchMode}`}
+      searchMode={searchMode}
       {...props}
     />
   )
@@ -48,14 +53,17 @@ function RecoveryGroupResourcesStepContent({
   selectionHint,
   compact = false,
   onClear,
-}: RecoveryGroupResourcesStepProps) {
+  searchMode,
+}: RecoveryGroupResourcesStepProps & { searchMode: RecoveryGroupSearchMode }) {
   const { t } = useTranslation()
-  // The provider scope bounds the request; the sidebar search only filters that result locally.
-  const query = useRecoveryGroupResourceInventory(
-    workloadType,
-    providerId,
-    providerScope !== undefined ? { providerScope } : {},
-  )
+  const [vmwareNamePrefix, setVmwareNamePrefix] = useState('')
+  const isServerSearch = searchMode === 'server'
+  // A fixed provider scope bounds the request and the sidebar searches inside it
+  // locally; without a scope the VMware name search goes to the server.
+  const query = useRecoveryGroupResourceInventory(workloadType, providerId, {
+    ...(providerScope !== undefined ? { providerScope } : {}),
+    ...(isServerSearch ? { vmwareNamePrefix } : {}),
+  })
   const availableResources = query.data?.resourceNames ?? []
   const vmMetadataByName = query.data?.vmMetadataByName
 
@@ -87,6 +95,7 @@ function RecoveryGroupResourcesStepContent({
           staleErrorDescription={t('pages.recoveryGroupBuilder.resources.error.showingPrevious')}
           retryLabel={t('buttons.retry')}
           onRetry={() => { void query.refetch() }}
+          {...(isServerSearch ? { searchValue: vmwareNamePrefix, onSearchChange: setVmwareNamePrefix } : {})}
           {...(compact ? { renderItemAction: (resource: string) => <button type="button" disabled={resources.includes(resource)} aria-label={`${t('buttons.add')}: ${resource}`} onClick={() => { onAdd(resource) }} className="flex size-6 shrink-0 items-center justify-center rounded border border-border text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:text-text-muted">{resources.includes(resource) ? '✓' : '+'}</button> } : {})}
         />
       </div>

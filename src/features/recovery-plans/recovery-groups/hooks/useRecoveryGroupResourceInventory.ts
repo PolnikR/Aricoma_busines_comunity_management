@@ -16,6 +16,7 @@ import type {
   PowerPartitionResource,
 } from '@/features/discovery-inventory/resources/model/discoveryTypes'
 import { resolveVmwareProviderFilter } from '@/features/discovery-inventory/resources/helpers/vmwareProviderFilter'
+import { getRecoveryGroupSearchMode } from '../helpers/recoveryGroupSearchMode'
 import type {
   RecoveryGroupProviderScope,
   RecoveryGroupVmMetadata,
@@ -33,6 +34,8 @@ interface RecoveryGroupResourceInventoryOptions {
    * not known yet, so VM inventory is not requested; `null` means no scope.
    */
   providerScope?: RecoveryGroupProviderScope | null
+  /** User VMware name search; sent to the server only when the provider has no fixed scope. */
+  vmwareNamePrefix?: string
   enabled?: boolean
 }
 
@@ -112,7 +115,7 @@ function getVmMetadataByName(
 export function useRecoveryGroupResourceInventory(
   workloadType: RecoveryGroupWorkloadType | null,
   providerId: string | null,
-  { providerScope, enabled = true }: RecoveryGroupResourceInventoryOptions = {},
+  { providerScope, vmwareNamePrefix, enabled = true }: RecoveryGroupResourceInventoryOptions = {},
 ) {
   const isVmware = workloadType === 'vmware_virtual_machines'
   const isPower = workloadType === 'ibm_power_virtual_machines'
@@ -121,9 +124,12 @@ export function useRecoveryGroupResourceInventory(
   const vmwareFilter = resolveVmwareProviderFilter(isVmware ? providerScope : null)
   // The Power inventory has no tags, so only the name prefix is enforced there.
   const powerPrefix = isPower ? providerScope?.vmPrefix?.trim() ?? '' : ''
+  // The provider scope wins: a user search can never replace or widen it.
+  const usesServerSearch = getRecoveryGroupSearchMode(workloadType, providerScope) === 'server'
   const vmwareQuery = useVmwareResourceInventory({
     ...(isVmware && providerId ? { providerId } : {}),
     ...(vmwareFilter.prefix ? { namePrefix: vmwareFilter.prefix } : {}),
+    ...(usesServerSearch && vmwareNamePrefix !== undefined ? { namePrefix: vmwareNamePrefix } : {}),
     ...(vmwareFilter.tag ? { tag: vmwareFilter.tag } : {}),
     enabled: enabled && isVmware && isScopeKnown,
   })

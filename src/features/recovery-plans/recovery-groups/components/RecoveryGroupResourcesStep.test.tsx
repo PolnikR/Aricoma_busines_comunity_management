@@ -5,7 +5,7 @@ import type { RecoveryGroupProviderScope } from '../model/recoveryGroupTypes'
 import { RecoveryGroupResourcesStep } from './RecoveryGroupResourcesStep'
 
 interface InventoryQueryDouble {
-  data: { resourceNames: string[] } | undefined
+  data: { resourceNames: string[], vmMetadataByName?: Record<string, { os?: string }> } | undefined
   error: Error | null
   isLoading: boolean
   isSearching: boolean
@@ -14,7 +14,7 @@ interface InventoryQueryDouble {
 }
 
 const useRecoveryGroupResourceInventory = vi.fn<
-  (workloadType: string | null, providerId: string | null, options?: { providerScope?: RecoveryGroupProviderScope | null }) => InventoryQueryDouble
+  (workloadType: string | null, providerId: string | null, options?: { providerScope?: RecoveryGroupProviderScope | null, vmwareNamePrefix?: string }) => InventoryQueryDouble
 >()
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -22,7 +22,7 @@ vi.mock('../hooks/useRecoveryGroupResourceInventory', () => ({
   useRecoveryGroupResourceInventory: (
     workloadType: string | null,
     providerId: string | null,
-    options?: { providerScope?: RecoveryGroupProviderScope | null },
+    options?: { providerScope?: RecoveryGroupProviderScope | null, vmwareNamePrefix?: string },
   ) => useRecoveryGroupResourceInventory(workloadType, providerId, options),
 }))
 
@@ -249,6 +249,100 @@ describe('RecoveryGroupResourcesStep', () => {
 
     expect(useRecoveryGroupResourceInventory).toHaveBeenCalledTimes(1)
     expect(screen.queryByText('LPAR-01')).not.toBeInTheDocument()
+  })
+
+  it('sends VMware search text to the server without filtering its result when the provider has no scope', async () => {
+    const user = userEvent.setup()
+    useRecoveryGroupResourceInventory.mockReturnValue({
+      data: { resourceNames: ['DB-01'] },
+      error: null,
+      isLoading: false,
+      isSearching: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    })
+
+    render(
+      <RecoveryGroupResourcesStep
+        workloadType="vmware_virtual_machines"
+        providerId="vmware-1"
+        providerScope={null}
+        resources={['SELECTED-VM']}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    )
+
+    expect(useRecoveryGroupResourceInventory).toHaveBeenLastCalledWith('vmware_virtual_machines', 'vmware-1', {
+      providerScope: null,
+      vmwareNamePrefix: '',
+    })
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search virtual machines' }), 'PROD-')
+
+    expect(useRecoveryGroupResourceInventory).toHaveBeenLastCalledWith('vmware_virtual_machines', 'vmware-1', {
+      providerScope: null,
+      vmwareNamePrefix: 'PROD-',
+    })
+    expect(screen.getByText('DB-01')).toBeInTheDocument()
+    expect(screen.getByText('SELECTED-VM')).toBeInTheDocument()
+  })
+
+  it('keeps IBM Power search local even when the provider has a prefix', async () => {
+    const user = userEvent.setup()
+    useRecoveryGroupResourceInventory.mockReturnValue({
+      data: { resourceNames: ['TEST-AIX-01', 'TEST-DB-01'] },
+      error: null,
+      isLoading: false,
+      isSearching: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    })
+
+    render(
+      <RecoveryGroupResourcesStep
+        workloadType="ibm_power_virtual_machines"
+        providerId="power-1"
+        providerScope={{ vmPrefix: 'TEST-' }}
+        resources={[]}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    )
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search virtual machines' }), 'db')
+
+    expect(screen.getByText('TEST-DB-01')).toBeInTheDocument()
+    expect(screen.queryByText('TEST-AIX-01')).not.toBeInTheDocument()
+    for (const [, , options] of useRecoveryGroupResourceInventory.mock.calls) {
+      expect(options).toEqual({ providerScope: { vmPrefix: 'TEST-' } })
+    }
+  })
+
+  it('reports metadata of every new inventory result', () => {
+    const onMetadataAvailable = vi.fn()
+    useRecoveryGroupResourceInventory.mockReturnValue({
+      data: { resourceNames: ['PROD-01'], vmMetadataByName: { 'PROD-01': { os: 'Linux' } } },
+      error: null,
+      isLoading: false,
+      isSearching: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    })
+
+    render(
+      <RecoveryGroupResourcesStep
+        workloadType="vmware_virtual_machines"
+        providerId="vmware-1"
+        providerScope={null}
+        resources={[]}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+        onMetadataAvailable={onMetadataAvailable}
+      />,
+    )
+
+    expect(onMetadataAvailable).toHaveBeenCalledWith({ 'PROD-01': { os: 'Linux' } })
   })
 
   it('keeps available and selected resources in independent scroll regions', () => {
