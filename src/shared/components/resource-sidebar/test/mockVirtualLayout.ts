@@ -5,6 +5,7 @@ const VIEWPORT_SELECTOR = '[data-testid="resource-sidebar-viewport"]'
 interface VirtualLayout {
   viewportHeight?: number
   rowHeight?: number
+  bannerHeight?: number
   width?: number
 }
 
@@ -13,17 +14,19 @@ interface VirtualLayout {
  * renders no rows. This gives only the sidebar viewport and its rows a size; every
  * other element keeps jsdom's default. Returns a function that restores jsdom.
  */
-export function mockVirtualLayout({ viewportHeight = 600, rowHeight = 36, width = 280 }: VirtualLayout = {}) {
+export function mockVirtualLayout({ viewportHeight = 600, rowHeight = 36, bannerHeight = 80, width = 280 }: VirtualLayout = {}) {
   const originalHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight')
   const originalWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth')
   const isViewport = (element: HTMLElement) => element.matches(VIEWPORT_SELECTOR)
   const isRow = (element: HTMLElement) => element.dataset['index'] !== undefined && element.closest(VIEWPORT_SELECTOR) !== null
+  const isBanner = (element: HTMLElement) => element.matches('[data-testid="resource-sidebar-stale-banner"]')
 
   Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
     configurable: true,
     get(this: HTMLElement) {
       if (isViewport(this)) return viewportHeight
       if (isRow(this)) return rowHeight
+      if (isBanner(this)) return bannerHeight
       return (originalHeight?.get?.call(this) as number | undefined) ?? 0
     },
   })

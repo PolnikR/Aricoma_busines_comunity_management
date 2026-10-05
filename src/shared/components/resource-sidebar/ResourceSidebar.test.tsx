@@ -198,8 +198,11 @@ describe('ResourceSidebar', () => {
 
       const { scrollTo } = renderMany({ error: new Error('Refresh failed') })
 
-      const banner = screen.getByText('Latest request failed')
-      expect(viewport()).not.toContainElement(banner)
+      // The banner scrolls away with the list, so it sits in the viewport before the list.
+      const banner = screen.getByTestId('resource-sidebar-stale-banner')
+      expect(banner).toHaveTextContent('Latest request failed')
+      expect(viewport().firstElementChild).toBe(banner)
+      expect(banner.nextElementSibling).toBe(screen.getByRole('list', { name: 'Available resources' }))
       expect(screen.getAllByRole('listitem').length).toBeLessThan(200)
       expect(screen.getByText('VM-0000')).toBeInTheDocument()
       expect(rowTransform(0)).toBe(transformWithoutError)
@@ -207,6 +210,23 @@ describe('ResourceSidebar', () => {
       scrollTo(5000 * 40)
 
       expect(screen.getByText('VM-4999')).toBeInTheDocument()
+    })
+
+    it('offsets the visible range by the stale banner height', () => {
+      restoreLayout()
+      // A banner taller than many rows makes a missing offset visible in the rendered range.
+      restoreLayout = mockVirtualLayout({ bannerHeight: 2000 })
+      const { scrollTo } = renderMany({ error: new Error('Refresh failed') })
+
+      scrollTo(2000)
+
+      expect(screen.getByText('VM-0000')).toBeInTheDocument()
+      expect(screen.queryByText('VM-0080')).not.toBeInTheDocument()
+
+      scrollTo(2000 + 100 * 40)
+
+      expect(screen.getByText('VM-0100')).toBeInTheDocument()
+      expect(screen.queryByText('VM-0000')).not.toBeInTheDocument()
     })
 
     it('scrolls back to the list start when the search changes, also under a stale error', async () => {

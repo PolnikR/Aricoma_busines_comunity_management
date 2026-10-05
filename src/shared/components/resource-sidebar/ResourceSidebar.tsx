@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import type { ReactNode } from 'react'
@@ -77,15 +77,31 @@ export function ResourceSidebar({
   const showStaleError = !showSkeleton && Boolean(error) && normalizedItems.length > 0
   const showList = !showSkeleton && !showBlockingError && filteredItems.length > 0
   const viewportRef = useRef<HTMLDivElement>(null)
+  const staleBannerRef = useRef<HTMLDivElement>(null)
+  // Height of the stale banner that scrolls above the list inside the viewport.
+  const [listOffset, setListOffset] = useState(0)
   const [draggingItem, setDraggingItem] = useState<string | null>(null)
   const draggingIndex = draggingItem === null ? -1 : filteredItems.indexOf(draggingItem)
+
+  useLayoutEffect(() => {
+    const banner = staleBannerRef.current
+    const measure = () => { setListOffset(banner?.offsetHeight ?? 0) }
+    measure()
+    if (!banner || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(measure)
+    observer.observe(banner)
+    return () => { observer.disconnect() }
+  }, [showStaleError])
+
   const virtualizer = useVirtualizer({
     count: showList ? filteredItems.length : 0,
     getScrollElement: () => viewportRef.current,
     estimateSize: () => ESTIMATED_ROW_HEIGHT,
     gap: ROW_GAP,
     overscan: 10,
-    // Vertical list padding lives in the virtualizer so offset 0 is the list start.
+    // The list starts below the stale banner; rows are positioned relative to the list.
+    scrollMargin: listOffset,
+    // Vertical list padding lives in the virtualizer, not in CSS before the list.
     paddingStart: LIST_PADDING,
     paddingEnd: LIST_PADDING,
     getItemKey: index => filteredItems[index] ?? index,
@@ -123,18 +139,6 @@ export function ResourceSidebar({
           className="text-xs"
         />
       </div>
-      {/* The stale banner sits outside the list viewport so nothing precedes the virtual list. */}
-      {showStaleError ? (
-        <div className="shrink-0 px-2 pt-2">
-          <FetchErrorAlert
-            title={staleErrorTitle}
-            description={staleErrorDescription}
-            retryLabel={retryLabel}
-            isRetrying={isRetrying}
-            onRetry={handleRetry}
-          />
-        </div>
-      ) : null}
       <div
         ref={viewportRef}
         data-testid="resource-sidebar-viewport"
@@ -155,42 +159,58 @@ export function ResourceSidebar({
               onRetry={handleRetry}
             />
           </div>
-        ) : !showList ? (
-          <div className="py-6 text-center text-xs text-text-subtle">
-            {currentSearch ? noMatchesLabel : noItemsLabel}
-          </div>
         ) : (
-          <div role="list" aria-label={title} className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
-            {virtualizer.getVirtualItems().map((virtualItem) => {
-              const item = filteredItems[virtualItem.index] ?? ''
-              return (
-                <div
-                  role="listitem"
-                  key={virtualItem.key}
-                  ref={virtualizer.measureElement}
-                  data-index={virtualItem.index}
-                  aria-setsize={filteredItems.length}
-                  aria-posinset={virtualItem.index + 1}
-                  draggable
-                  onDragStart={(event) => {
-                    event.dataTransfer.setData(dragDataKey, item)
-                    setDraggingItem(item)
-                  }}
-                  onDragEnd={() => { setDraggingItem(null) }}
-                  style={{ transform: `translateY(${String(virtualItem.start)}px)` }}
-                  className={cn('absolute left-0 top-0 w-full cursor-grab rounded-md border border-border bg-surface-muted text-left text-xs text-text-primary transition-colors hover:border-border-strong hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus', renderItemAction ? 'flex min-h-9 items-center justify-between gap-2 px-2 py-1' : 'p-2')}
-                >
-                  <div className="min-w-0">
-                    <span className="block break-words font-medium">{itemLabels[item] ?? item}</span>
-                    {itemLabels[item] && itemLabels[item] !== item ? (
-                      <span className="mt-0.5 block font-mono text-[10px] text-text-muted">{item}</span>
-                    ) : null}
-                  </div>
-                  {renderItemAction?.(item)}
-                </div>
-              )
-            })}
-          </div>
+          <>
+            {/* Scrolls away with the list; the virtualizer offsets the list by its height (scrollMargin). */}
+            {showStaleError ? (
+              <div ref={staleBannerRef} data-testid="resource-sidebar-stale-banner" className="pt-2">
+                <FetchErrorAlert
+                  title={staleErrorTitle}
+                  description={staleErrorDescription}
+                  retryLabel={retryLabel}
+                  isRetrying={isRetrying}
+                  onRetry={handleRetry}
+                />
+              </div>
+            ) : null}
+            {!showList ? (
+              <div className="py-6 text-center text-xs text-text-subtle">
+                {currentSearch ? noMatchesLabel : noItemsLabel}
+              </div>
+            ) : (
+              <div role="list" aria-label={title} className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
+                {virtualizer.getVirtualItems().map((virtualItem) => {
+                  const item = filteredItems[virtualItem.index] ?? ''
+                  return (
+                    <div
+                      role="listitem"
+                      key={virtualItem.key}
+                      ref={virtualizer.measureElement}
+                      data-index={virtualItem.index}
+                      aria-setsize={filteredItems.length}
+                      aria-posinset={virtualItem.index + 1}
+                      draggable
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData(dragDataKey, item)
+                        setDraggingItem(item)
+                      }}
+                      onDragEnd={() => { setDraggingItem(null) }}
+                      style={{ transform: `translateY(${String(virtualItem.start - listOffset)}px)` }}
+                      className={cn('absolute left-0 top-0 w-full cursor-grab rounded-md border border-border bg-surface-muted text-left text-xs text-text-primary transition-colors hover:border-border-strong hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus', renderItemAction ? 'flex min-h-9 items-center justify-between gap-2 px-2 py-1' : 'p-2')}
+                    >
+                      <div className="min-w-0">
+                        <span className="block break-words font-medium">{itemLabels[item] ?? item}</span>
+                        {itemLabels[item] && itemLabels[item] !== item ? (
+                          <span className="mt-0.5 block font-mono text-[10px] text-text-muted">{item}</span>
+                        ) : null}
+                      </div>
+                      {renderItemAction?.(item)}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
