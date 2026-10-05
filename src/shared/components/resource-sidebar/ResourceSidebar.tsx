@@ -93,6 +93,8 @@ export function ResourceSidebar({
     return () => { observer.disconnect() }
   }, [showStaleError])
 
+  // The virtualizer's functions are only used during this render, never passed to memoized children.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: showList ? filteredItems.length : 0,
     getScrollElement: () => viewportRef.current,
