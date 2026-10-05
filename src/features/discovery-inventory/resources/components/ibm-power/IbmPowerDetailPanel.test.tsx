@@ -225,6 +225,7 @@ describe('IbmPowerDetailPanel backing storage', () => {
     expect(detailValue(card, 'Protocol')).toHaveTextContent('scsi')
     expect(detailValue(card, 'Type')).toHaveTextContent('striped')
     expect(within(card).queryByText('NAA', { selector: 'dt' })).not.toBeInTheDocument()
+    expect(within(card).queryByText('vdisk UID', { selector: 'dt' })).not.toBeInTheDocument()
   })
 
   it('never renders the composite vdisks key', async () => {

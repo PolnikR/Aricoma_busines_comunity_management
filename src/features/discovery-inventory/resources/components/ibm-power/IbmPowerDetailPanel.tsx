@@ -250,6 +250,7 @@ export function IbmPowerDetailPanel({ partition, open, onClose, providers = [], 
                 isFetching={vdisksFetching}
                 onRetry={() => { void refetchVdisks() }}
                 providers={providers}
+                identity="volumeIdAndUid"
                 emptyText={labels.emptyBackingStorage}
               />
             </DetailDrawerSection>

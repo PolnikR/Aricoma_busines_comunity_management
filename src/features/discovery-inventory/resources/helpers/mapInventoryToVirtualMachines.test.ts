@@ -12,7 +12,7 @@ describe('mapInventoryToVirtualMachines', () => {
           guestOs: 'Linux', hostname: 'vm-1', ipAddress: '10.0.0.1', vcpu: 2,
           memoryGb: 4, host: 'host-1', cluster: 'cluster-b', primaryDatastore: 'ds-1',
           folder: '', vmPath: '', providerId: 'p1', providerType: 'VMWARE',
-          disks: [{ id: 'd1', label: 'Disk', capacityGb: 50, datastore: 'ds-1', filePath: '', thinProvisioned: true }],
+          disks: [{ id: 'd1', label: 'Disk', capacityGb: 50, datastore: 'ds-1', filePath: '', thinProvisioned: true, naa: [] }],
           snapshotCount: 0, toolsStatus: 'ok', tags: ['prod'],
         },
         {

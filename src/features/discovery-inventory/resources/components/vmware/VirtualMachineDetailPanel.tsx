@@ -151,6 +151,7 @@ export function VirtualMachineDetailPanel({
                           <TableCell isHeader className={headerCell}>{t('details.label')}</TableCell>
                           <TableCell isHeader className={headerCell}>{t('details.capacity')}</TableCell>
                           <TableCell isHeader className={headerCell}>{t('details.datastore')}</TableCell>
+                          <TableCell isHeader className={headerCell}>{t('details.naa')}</TableCell>
                           <TableCell isHeader className={headerCell}>{t('details.file')}</TableCell>
                           <TableCell isHeader className={headerCell}>{t('details.thinProv')}</TableCell>
                         </TableRow>
@@ -163,6 +164,14 @@ export function VirtualMachineDetailPanel({
                             </TableCell>
                             <TableCell className={num}>{disk.capacityGb} GB</TableCell>
                             <TableCell className={cell}>{disk.datastore}</TableCell>
+                            <TableCell className={`${cell} font-mono`}>
+                              {/* Every NAA of the disk's datastore extents, in API order; not a disk to volume mapping. */}
+                              {disk.naa.length > 0 ? (
+                                <ul className="space-y-0.5">
+                                  {disk.naa.map((naa, index) => <li key={`${naa}-${String(index)}`} className="whitespace-nowrap">{naa}</li>)}
+                                </ul>
+                              ) : '-'}
+                            </TableCell>
                             <TableCell className={`${cell} max-w-64`}>
                               <span className="block truncate cursor-help" title={disk.filePath}>
                                 {truncateFilePath(disk.filePath)}
@@ -187,6 +196,7 @@ export function VirtualMachineDetailPanel({
                   isFetching={vdisksFetching}
                   onRetry={() => { void refetchVdisks() }}
                   providers={providers}
+                  identity="vdiskUid"
                   emptyText={t('pages.virtualMachines.detail.noBackingVolumes')}
                 />
               </DetailDrawerSection>
