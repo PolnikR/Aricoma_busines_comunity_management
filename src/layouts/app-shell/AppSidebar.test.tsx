@@ -135,9 +135,9 @@ describe('AppSidebar', () => {
     const group = link.closest('ul')
     if (!group) throw new Error('Discovery & Inventory submenu not rendered')
     expect(within(group).getAllByRole('link').map(item => item.textContent)).toEqual([
-      'Resources', 'Resources ISE', 'Infrastructure topology', 'Discovery jobs', 'Discovery settings',
+      'Resources', 'Resources ISE', 'Infrastructure topology', 'Discovery settings',
     ])
-    expect(within(group).getByRole('link', { name: 'Discovery jobs' })).toHaveAttribute('href', '/discovery-inventory/discovery-jobs')
+    expect(within(group).queryByRole('link', { name: 'Discovery jobs' })).not.toBeInTheDocument()
   })
 
   it('no longer lists Discovery Settings under Providers & Connectors', async () => {

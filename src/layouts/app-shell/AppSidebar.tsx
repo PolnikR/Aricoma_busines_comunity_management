@@ -51,7 +51,6 @@ const navItems: NavItem[] = [
       { name: 'Resources', path: routes.resources },
       { name: 'Resources ISE', path: routes.resourcesIse },
       { name: 'Infrastructure Topology', path: routes.infrastructure },
-      { name: 'Discovery Jobs', path: routes.discoveryJobs },
       { name: 'Discovery Settings', path: routes.discoverySettings },
     ],
   },
