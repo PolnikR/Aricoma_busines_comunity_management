@@ -113,13 +113,13 @@ zobrazí sa ako mismatch, nič sa nedopočítava. Bez vzťahov: „Not used as b
 ```
 Discovered from:   [vCenter provider] —Discovers→ [VM: name, n virtual disks, power state]
 Backing storage (zoskupené podľa storage providera):
-  [VM] —Backing · NAA→ [Volume: name, NAA, capacity · status] —FlashCopy→ [FlashCopy: N snapshots,
-                                                                         source/target mappings]
+  [VM] —Backing · NAA→ [Volume: name, vdisk UID, capacity · status] —FlashCopy→ [FlashCopy: N snapshots,
+                                                                               source/target mappings]
 ```
 Bez mappingov: koniec riadku „No FlashCopy mappings“ (volume sa zobrazí). Loading/error/empty:
 VM uzol ostane, pod ním neutrálny stav. Žiadne hrany `Hard disk → volume` (API negarantuje 1:1).
-Pozn. 2026-10-05: Backing Storage Info identifikuje VMware volume cez vdisk UID; karta volume
-v tomto helpe zatiaľ ukazuje NAA volume. Prípadné zjednotenie je samostatné rozhodnutie.
+Identita: VMware disk metadata = NAA (`string[]`, v Disks); hrana VM → volume = `Backing · NAA`
+(mechanizmus resolúcie); FlashSystem volume = vdisk UID (rovnako ako Backing Storage Info).
 
 ### IBM Power LPAR
 ```

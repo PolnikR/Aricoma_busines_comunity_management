@@ -264,7 +264,7 @@ describe('VirtualMachineDetailPanel resize', () => {
   it('draws the VM relationship graphic in the help from the already loaded volumes', async () => {
     const help = await openRelationshipHelp([
       volume({ snapshots: snapshots({ snapshotCount: 1, sourceMappings: [mapping('copied', '100')] }) }),
-      volume({ key: 'naa.second', naa: 'naa.second', volumeName: 'V5000_VOLUME03', storageProviderId: 'ibm-flashsystem-09' }),
+      volume({ key: 'naa.second', naa: 'naa.second', volumeName: 'V5000_VOLUME03', storageProviderId: 'ibm-flashsystem-09', vdiskUid: 'UID-SECOND' }),
     ], [flashProvider])
 
     // The help reuses the panel's lookup: every call is the same VM and provider.
@@ -273,10 +273,10 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(within(help).getByRole('list', { name: 'Discovered from' })).toHaveTextContent(/vmware-vcenter-01.*app-server-01/)
     expect(within(help).getAllByRole('group', { name: 'app-server-01' })[0]).toHaveTextContent('Virtual disks: 2')
     const flash = within(help).getByRole('list', { name: 'Backing storage on IBM Flash Source 01' })
-    expect(within(flash).getByRole('group', { name: 'V5000_VOLUME02' })).toHaveTextContent('naa.60050763808104d94000000000000016')
+    expect(within(flash).getByRole('group', { name: 'V5000_VOLUME02' })).toHaveTextContent('60050763808104D94000000000000016')
     expect(within(flash).getByRole('group', { name: 'FlashCopy' })).toHaveTextContent('→ target-volume')
     const unknown = within(help).getByRole('list', { name: 'Backing storage on ibm-flashsystem-09' })
-    expect(within(unknown).getByRole('group', { name: 'V5000_VOLUME03' })).toBeInTheDocument()
+    expect(within(unknown).getByRole('group', { name: 'V5000_VOLUME03' })).toHaveTextContent('UID-SECOND')
     expect(unknown).toHaveTextContent('No FlashCopy mappings')
     expect(help).toHaveTextContent('Which virtual disk is stored on which volume is not reported.')
   })
@@ -298,12 +298,31 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(screen.getByRole('dialog', { name: 'Virtual machine detail' })).toBeInTheDocument()
   })
 
-  it('does not draw a virtual disk to NAA mapping or the vdisk_UID in the help', async () => {
-    const help = await openRelationshipHelp([volume()])
+  it('resolves volumes through NAA on the edge but identifies each volume node by its vdisk UID', async () => {
+    const help = await openRelationshipHelp([
+      volume(),
+      volume({ key: 'naa.second', naa: 'naa.second', volumeName: 'V5000_VOLUME03', vdiskUid: 'UID-SECOND' }),
+    ])
+    const first = within(help).getByRole('group', { name: 'V5000_VOLUME02' })
+    const second = within(help).getByRole('group', { name: 'V5000_VOLUME03' })
+    const backingEdges = [...help.querySelectorAll('[data-edge-kind="backing"]')]
+
+    expect(backingEdges).toHaveLength(2)
+    for (const edge of backingEdges) expect(edge).toHaveTextContent('Backing · NAA')
+    expect(first).toHaveTextContent('60050763808104D94000000000000016')
+    expect(second).toHaveTextContent('UID-SECOND')
+    expect(first).not.toHaveTextContent('naa.60050763808104d94000000000000016')
+    expect(second).not.toHaveTextContent('naa.second')
+  })
+
+  it('draws no Hard disk node and no disk to volume edge in the help', async () => {
+    const help = await openRelationshipHelp([volume(), volume({ key: 'naa.second', naa: 'naa.second', volumeName: 'V5000_VOLUME03' })])
+    const entityIds = [...help.querySelectorAll('[data-entity-id]')].map(node => node.getAttribute('data-entity-id'))
 
     expect(within(help).queryByRole('group', { name: /Hard disk/ })).not.toBeInTheDocument()
-    expect(help).not.toHaveTextContent(/60050763808104D94000000000000016/)
-    expect([...help.querySelectorAll('[data-entity-id]')].map(node => node.getAttribute('data-entity-id'))).not.toContainEqual(expect.stringMatching(/disk/))
+    expect(entityIds).not.toContainEqual(expect.stringMatching(/disk/))
+    // Every volume hangs off the VM itself, never off a virtual disk.
+    expect(within(help).getAllByRole('group', { name: 'app-server-01' })).toHaveLength(3)
   })
 
   it.each([

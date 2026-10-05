@@ -30,8 +30,10 @@ export function VmRelationshipHelp({ virtualMachine, volumes, isLoading, isError
         <span>{t('resources.relationships.vm.disks', { count: relationships.workload.diskCount })}</span>
         <span>{relationships.workload.powerState}</span>
       </>}
+      // The edge names how the volume was resolved (VMware NAA); the volume itself is
+      // identified as a FlashSystem volume, by its vdisk UID.
       backingLabel={t('resources.relationships.edge.backingNaa')}
-      volumeIdentity={volume => ({ meta: null, monoId: volume.naa ?? '' })}
+      volumeIdentity={volume => ({ meta: null, monoId: volume.vdiskUid })}
       isLoading={isLoading}
       isError={isError}
       emptyText={t('pages.virtualMachines.detail.noBackingVolumes')}
