@@ -32,7 +32,6 @@ const navItems: NavItem[] = [
     icon: <SettingsIcon />,
     subItems: [
       { name: 'Platform Providers', path: routes.platformProviders },
-      { name: 'Configuration', path: routes.platformConfiguration },
       { name: 'Identity & Access', path: routes.platformIdentityAccess },
       { name: 'Audit', path: routes.platformAuditRetention },
     ],

@@ -173,6 +173,22 @@ describe('AppSidebar', () => {
     expect(link).toHaveClass('bg-accent-soft', 'text-accent')
   })
 
+  it('does not show Configuration in Platform Administration', async () => {
+    render(
+      <MemoryRouter initialEntries={['/platform-administration/platform-providers']}>
+        <LanguageProvider>
+          <SidebarProvider>
+            <AppSidebar />
+          </SidebarProvider>
+        </LanguageProvider>
+      </MemoryRouter>,
+    )
+
+    const group = (await screen.findByRole('link', { name: 'Platform providers' })).closest('ul')
+    if (!group) throw new Error('Platform Administration submenu not rendered')
+    expect(within(group).getAllByRole('link').map(item => item.textContent)).toEqual(['Platform providers', 'Identity & access', 'Audit'])
+  })
+
   it('highlights the owning submenu item on a nested create route', async () => {
     render(
       <MemoryRouter initialEntries={['/recovery-plans/recovery-applications/create']}>
