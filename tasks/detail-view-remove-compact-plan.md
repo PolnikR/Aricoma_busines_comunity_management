@@ -263,11 +263,20 @@ dialog `scrollWidth <= clientWidth` (no horizontal overflow). Footer is visible 
 scrolling the page. Console has no errors or warnings.
 
 ## 11. Implementation sequence
-Prerequisite (**dependency**): `DetailView.tsx` currently carries **uncommitted**
-hardening Task 1 hunks (dialog stack). The locale files are also the target of hardening
-Task 3. Start Phase A only after hardening Task 1 is committed. Start Phase B's locale
-cleanup only after hardening Task 3 is committed (or if `git diff src/locales` is empty).
-Otherwise these hunks would be swept into this commit or conflict with them.
+Prerequisites (**dependencies**, state at plan commit time):
+- Hardening Task 1 (dialog stack in `DetailView.tsx`/`Modal.tsx`) is **committed**
+  (`43cd0faa`). `DetailView.tsx` is clean, so Phase A can start. Re-check that
+  `git diff DetailView.tsx` is empty right before editing.
+- Hardening Task 2 (HelpPopover portal) is uncommitted in `HelpPopover.tsx`/`.test.tsx`.
+  This plan does not edit those files. Only run their tests.
+- `src/locales/*.json` is dirty with Metro Mirror keys (another session), and hardening
+  Task 3 targets the same files. Run Task 4 only when `git diff src/locales` is empty, or
+  commit via a temporary index containing only the 9 removed lines.
+- `RecoveryGroupsTable.tsx` is dirty (Metro Mirror session). This plan edits only
+  `RecoveryGroupsTable.test.tsx`. If that test file becomes dirty from another session
+  before Task 2, stop and coordinate.
+
+Otherwise other sessions' hunks would be swept into these commits or conflict with them.
 
 - **Phase A, shared component (Tasks 1–2).** Remove the mode from `DetailView.tsx`
   and `index.ts`. Update `DetailView.test.tsx`. Update the five consumer tests in the

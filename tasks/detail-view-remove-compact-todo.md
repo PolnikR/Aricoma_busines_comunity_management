@@ -4,9 +4,10 @@ Plan: `tasks/detail-view-remove-compact-plan.md`. Stage explicit paths only. Nev
 OpenAPI, generated Zod, Metro Mirror, other sessions' task files or hardening hunks.
 Do NOT revert, stage or commit unrelated changes.
 
-## Prerequisite: hardening Task 1 committed
-- [ ] `git diff src/shared/components/detail-view/DetailView.tsx` is empty (the dialog
-  stack hunks are committed by the hardening session). If not, wait or ask the user.
+## Prerequisite: no foreign hunks in the files this plan edits
+- [x] Hardening Task 1 committed (`43cd0faa`).
+- [ ] `git diff` is empty for `DetailView.tsx`, `DetailView.test.tsx` and the five
+  consumer test files right before editing. If not, wait or ask the user.
 
 ## Task 1: Remove the mode from the shared DetailView
 **Description:** Delete the mode state, toggle button, resize handle, `data-mode`,
