@@ -33,27 +33,29 @@ function footprint(f) {
 // Long prose (descriptions) is treated differently from long technical values in some templates.
 const isProse = f => footprint(f) === 'full' && !f.mono && !f.href && !f.link
 
-function core(f) {
+// `o` lets a template restyle the technical parts (mono, badge, copy) without changing the model.
+function core(f, o = {}) {
   if (isEmpty(f)) return '<span class="text-text-subtle">Not set</span>'
   const v = esc(f.value)
+  const mono = o.mono ?? 'font-mono text-[0.9em] text-text-secondary'
   const linkClass = 'rounded text-accent hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15'
-  if (f.badge) return `<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-theme-xs font-medium ${TONE[f.badge]}">${v}</span>`
-  if (f.href) return `<a href="${esc(f.href)}"${f.external ? ' target="_blank" rel="noopener noreferrer"' : ''} class="${linkClass}${f.mono ? ' font-mono text-[0.9em]' : ''}">${v}${f.external ? ICON.external : ''}</a>`
+  if (f.badge) return `<span class="inline-flex items-center ${o.badge ?? 'rounded-full px-2.5 py-0.5 text-theme-xs font-medium'} ${TONE[f.badge]}">${v}</span>`
+  if (f.href) return `<a href="${esc(f.href)}"${f.external ? ' target="_blank" rel="noopener noreferrer"' : ''} class="${linkClass}${f.mono ? ` ${o.monoLink ?? 'font-mono text-[0.9em]'}` : ''}">${v}${f.external ? ICON.external : ''}</a>`
   if (f.link) return `<button type="button" class="${linkClass} text-left">${v}</button>`
-  if (f.mono) return `<span class="font-mono text-[0.9em] text-text-secondary">${v}</span>`
+  if (f.mono) return `<span class="${mono}">${v}</span>`
   return v
 }
 
-function copyButton(f) {
+function copyButton(f, o = {}) {
   if (!f.copy || isEmpty(f)) return ''
-  return `<button type="button" data-copy="${esc(f.value)}" aria-label="Copy ${esc(f.label)}" title="Copy ${esc(f.label)}" class="-my-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-md text-text-subtle transition hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15">${ICON.copy}</button>`
+  return `<button type="button" data-copy="${esc(f.value)}" aria-label="Copy ${esc(f.label)}" title="Copy ${esc(f.label)}" class="-my-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-md text-text-subtle transition hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15 ${o.copy ?? ''}">${ICON.copy}</button>`
 }
 
 // Value + secondary line + copy action; `cls` sets the value typography per template.
-function value(f, cls = 'text-sm leading-5') {
+function value(f, cls = 'text-sm leading-5', o = {}) {
   const strong = f.emphasis && !isEmpty(f) && !f.badge ? ' font-semibold' : ''
-  const secondary = f.secondary && !isEmpty(f) ? `<div class="mt-0.5 text-xs font-normal leading-4 text-text-muted">${esc(f.secondary)}</div>` : ''
-  return `<div class="flex min-w-0 items-start gap-1"><div class="min-w-0 wrap-anywhere text-text-primary ${cls}${strong}">${core(f)}${secondary}</div>${copyButton(f)}</div>`
+  const secondary = f.secondary && !isEmpty(f) ? `<div class="${o.secondary ?? 'mt-0.5 text-xs leading-4'} font-normal text-text-muted">${esc(f.secondary)}</div>` : ''
+  return `<div class="flex min-w-0 items-start gap-1"><div class="min-w-0 wrap-anywhere text-text-primary ${cls}${strong}">${core(f, o)}${secondary}</div>${copyButton(f, o)}</div>`
 }
 
 const label = (f, cls = 'text-xs leading-4 text-text-muted') => `<dt class="${cls}">${esc(f.label)}</dt>`
@@ -68,6 +70,51 @@ const TEMPLATES = {
           <dd class="mt-1">${value(f)}</dd>
         </div>`).join('')}
       </dl>`,
+  },
+
+  // A1 · Tight technical: same auto-grid, a tighter rhythm. Narrower tracks, half the row gap,
+  // a 2 px label→value step and a smaller medium-weight label, so the value carries the cell.
+  A1: {
+    name: 'A1 · Tight technical',
+    render: fields => `
+      <dl class="ov-a1">${fields.map(f => `
+        <div data-span="${footprint(f)}">
+          ${label(f, 'text-[11.5px] font-medium leading-4 tracking-[0.01em] text-text-muted')}
+          <dd class="mt-0.5">${value(f, 'text-sm leading-5', { mono: 'font-mono text-[12.5px] text-text-primary', monoLink: 'font-mono text-[12.5px]', secondary: 'text-[11.5px] leading-4' })}</dd>
+        </div>`).join('')}
+      </dl>`,
+  },
+
+  // A2 · Row rhythm: the auto-grid without column gaps, so each field's bottom hairline joins
+  // its neighbours into one continuous row rule. No vertical rules, no boxes.
+  A2: {
+    name: 'A2 · Subtle row rhythm',
+    render: fields => `
+      <div class="ov-a2"><dl>${fields.map(f => `
+        <div class="ov-a2__item" data-span="${footprint(f)}">
+          ${label(f, 'text-xs leading-4 text-text-muted')}
+          <dd class="mt-0.5">${value(f, 'text-sm leading-5', { mono: 'font-mono text-[12.5px] text-text-primary', monoLink: 'font-mono text-[12.5px]' })}</dd>
+        </div>`).join('')}
+      </dl></div>`,
+  },
+
+  // A3 · Enterprise inspector: the auto-grid on one quiet shared surface. Micro labels (the
+  // DataTable header type), technical values as inline code, square status pills and copy
+  // actions that recede until the field is hovered or focused.
+  A3: {
+    name: 'A3 · Enterprise inspector',
+    render: fields => `
+      <div class="ov-a3"><dl>${fields.map(f => `
+        <div class="ov-a3__item" data-span="${footprint(f)}">
+          ${label(f, 'text-[11px] font-semibold uppercase leading-4 tracking-[0.05em] text-text-muted')}
+          <dd class="mt-1">${value(f, 'text-sm leading-5', {
+            mono: 'rounded bg-surface px-1 py-px font-mono text-[12px] text-text-primary ring-1 ring-border/70 [box-decoration-break:clone]',
+            monoLink: 'font-mono text-[12.5px]',
+            badge: 'gap-1.5 rounded-md px-1.5 py-px text-[11.5px] font-semibold',
+            copy: 'ov-a3__copy',
+          })}</dd>
+        </div>`).join('')}
+      </dl></div>`,
   },
 
   B: {

@@ -19,6 +19,37 @@
 .ov-a [data-span="full"] { grid-column: 1 / -1; }
 @container detail (min-width: 26rem) { .ov-a [data-span="wide"] { grid-column: span 2; } }
 
+/* A1 · Tight technical: 11rem tracks, 0.875rem row gap (A: 1.25rem), 1.75rem column gap.
+   Row pitch drops from ~60 px to ~50 px; long free text stops at a readable measure. */
+.ov-a1 { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(11rem, 100%), 1fr)); grid-auto-flow: row dense; gap: 0.875rem 1.75rem; }
+.ov-a1 > div { min-width: 0; }
+.ov-a1 [data-span="full"] { grid-column: 1 / -1; }
+.ov-a1 [data-span="full"] dd > div > div { max-width: 88ch; }
+@container detail (min-width: 24rem) { .ov-a1 [data-span="wide"] { grid-column: span 2; } }
+
+/* A2 · Row rhythm: no column gap (cells pad on the right instead), so the bottom hairlines
+   of one grid row join into a continuous rule. The wrapper clips the last row's rule. */
+.ov-a2 { overflow: hidden; }
+.ov-a2 dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(12rem, 100%), 1fr)); grid-auto-flow: row dense; margin-bottom: -1px; }
+.ov-a2__item { min-width: 0; padding: 0.5625rem 1.5rem 0.5625rem 0; border-bottom: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent); }
+.ov-a2 [data-span="full"] { grid-column: 1 / -1; }
+.ov-a2 [data-span="full"] dd > div > div { max-width: 88ch; }
+@container detail (min-width: 26rem) { .ov-a2 [data-span="wide"] { grid-column: span 2; } }
+@container detail (max-width: 24rem) { .ov-a2__item { padding-right: 0; } }
+
+/* A3 · Enterprise inspector: one quiet surface behind the whole grid (no per-field boxes). */
+.ov-a3 { border-radius: 0.625rem; background: color-mix(in srgb, var(--color-surface-muted) 60%, transparent); padding: 1rem 1.25rem 1.125rem; }
+.ov-a3 dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(11.5rem, 100%), 1fr)); grid-auto-flow: row dense; gap: 1rem 2rem; }
+.ov-a3__item { min-width: 0; }
+.ov-a3 [data-span="full"] { grid-column: 1 / -1; }
+.ov-a3 [data-span="full"] dd > div > div { max-width: 88ch; }
+@container detail (min-width: 26rem) { .ov-a3 [data-span="wide"] { grid-column: span 2; } }
+@container detail (max-width: 24rem) { .ov-a3 { padding: 0.875rem 1rem; } }
+/* Copy recedes until the field is hovered; always present for keyboard and touch. */
+.ov-a3__copy { opacity: 0.55; }
+.ov-a3__item:hover .ov-a3__copy, .ov-a3__copy:focus-visible { opacity: 1; }
+@media (hover: none) { .ov-a3__copy { opacity: 1; } }
+
 /* B · Definition matrix: a ruled data matrix with table-header labels. Right/bottom rules
    per cell; the outer frame clips the last ones, so gaps in the last row read as empty cells. */
 .ov-b { border: 1px solid var(--color-border); border-radius: 0.75rem; overflow: hidden; }
@@ -79,7 +110,7 @@
   </label>
   <span class="flex items-center gap-2">Width <span class="seg" id="ctl-w" role="group" aria-label="Width"></span></span>
   <span class="flex items-center gap-2">Values <span class="seg" id="ctl-v" role="group" aria-label="Values"></span></span>
-  <label class="flex items-center gap-1.5"><input id="ctl-all" type="checkbox"> All templates</label>
+  <span class="flex items-center gap-2">Compare <span class="seg" id="ctl-cmp" role="group" aria-label="Compare"></span></span>
   <label class="flex items-center gap-1.5" title="Drop the fixed 46rem dialog height to see the whole Overview"><input id="ctl-fit" type="checkbox"> Fit height</label>
   <label class="flex items-center gap-1.5"><input id="ctl-dark" type="checkbox"> Dark</label>
 </div>

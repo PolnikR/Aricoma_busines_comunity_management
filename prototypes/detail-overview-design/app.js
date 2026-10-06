@@ -8,6 +8,7 @@ const WIDTHS = {
   narrow: { name: 'Narrow', dialog: 343, narrow: true },
 }
 const VALUES = { normal: 'Normal', long: 'Long' }
+const COMPARE = { off: 'Off', a: 'A family', all: 'All' }
 
 const params = new URLSearchParams(location.search)
 const state = {
@@ -15,7 +16,7 @@ const state = {
   d: DATASETS[params.get('d')] ? params.get('d') : 'provider',
   w: WIDTHS[params.get('w')] ? params.get('w') : 'lg',
   v: VALUES[params.get('v')] ? params.get('v') : 'normal',
-  all: params.get('all') === '1',
+  cmp: COMPARE[params.get('cmp')] ? params.get('cmp') : (params.get('all') === '1' ? 'all' : 'off'),
   fit: params.get('fit') === '1',
   dark: params.get('dark') === '1',
 }
@@ -79,16 +80,16 @@ function render() {
   segmented('ctl-t', Object.fromEntries(Object.keys(TEMPLATES).map(k => [k, k])), 't')
   segmented('ctl-w', Object.fromEntries(Object.entries(WIDTHS).map(([k, w]) => [k, w.name])), 'w')
   segmented('ctl-v', VALUES, 'v')
+  segmented('ctl-cmp', COMPARE, 'cmp')
   const select = document.getElementById('ctl-d')
   select.innerHTML = Object.entries(DATASETS).map(([k, d]) => `<option value="${k}"${k === state.d ? ' selected' : ''}>${d.name}</option>`).join('')
-  document.getElementById('ctl-all').checked = state.all
   document.getElementById('ctl-fit').checked = state.fit
   document.getElementById('ctl-dark').checked = state.dark
   document.documentElement.classList.toggle('dark', state.dark)
-  document.getElementById('ctl-t').classList.toggle('opacity-40', state.all)
+  document.getElementById('ctl-t').classList.toggle('opacity-40', state.cmp !== 'off')
 
   const stage = document.getElementById('stage')
-  stage.innerHTML = (state.all ? Object.keys(TEMPLATES) : [state.t]).map(frame).join('')
+  stage.innerHTML = (state.cmp === 'all' ? Object.keys(TEMPLATES) : state.cmp === 'a' ? Object.keys(TEMPLATES).filter(k => k.startsWith('A')) : [state.t]).map(frame).join('')
   stage.querySelectorAll('.detail-content').forEach((content) => {
     const style = getComputedStyle(content)
     const inner = content.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
@@ -96,14 +97,13 @@ function render() {
   })
 
   const next = new URLSearchParams({ t: state.t, d: state.d, w: state.w, v: state.v })
-  if (state.all) next.set('all', '1')
+  if (state.cmp !== 'off') next.set('cmp', state.cmp)
   if (state.fit) next.set('fit', '1')
   if (state.dark) next.set('dark', '1')
   history.replaceState(null, '', `?${next}`)
 }
 
 document.getElementById('ctl-d').onchange = (event) => { state.d = event.target.value; render() }
-document.getElementById('ctl-all').onchange = (event) => { state.all = event.target.checked; render() }
 document.getElementById('ctl-fit').onchange = (event) => { state.fit = event.target.checked; render() }
 document.getElementById('ctl-dark').onchange = (event) => { state.dark = event.target.checked; render() }
 
