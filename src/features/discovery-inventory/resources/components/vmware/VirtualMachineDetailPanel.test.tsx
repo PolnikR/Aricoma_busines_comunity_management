@@ -192,14 +192,15 @@ describe('VirtualMachineDetailPanel resize', () => {
     )
   })
 
-  it('opens on Overview with one section at a time and Technical last', async () => {
+  it('opens on Overview with the original sections Overview, Disks and Backing Storage Info', async () => {
     const user = userEvent.setup()
     renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
     const dialog = screen.getByRole('dialog', { name: 'Virtual machine detail' })
     const navigation = within(dialog).getByRole('navigation', { name: 'Sections' })
 
     expect(dialog).toHaveAttribute('data-size', 'xl')
-    expect(within(navigation).getAllByRole('button').map(button => button.textContent)).toEqual(['Overview', 'Disks2', 'Backing Storage Info', 'Technical'])
+    expect(within(navigation).getAllByRole('button').map(button => button.textContent)).toEqual(['Overview', 'Disks2', 'Backing Storage Info'])
+    expect(within(navigation).queryByRole('button', { name: 'Technical' })).not.toBeInTheDocument()
     expect(within(navigation).getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-current', 'true')
     expect(dialog).toHaveTextContent('Virtual machine')
     expect(dialog).not.toHaveTextContent('Hard disk 1')
@@ -210,27 +211,35 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(within(dialog).queryByRole('region', { name: 'Overview' })).not.toBeInTheDocument()
   })
 
-  it('shows compute, guest and placement in Overview and identifiers only in Technical', async () => {
-    const user = userEvent.setup()
+  it('shows the original Overview fields in order, with hostname and IP address in the header only', () => {
     renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
     const dialog = screen.getByRole('dialog', { name: 'Virtual machine detail' })
     const overview = within(dialog).getByRole('region', { name: 'Overview' })
 
+    expect([...overview.querySelectorAll('dt')].map(term => term.textContent)).toEqual([
+      'vCPU', 'Memory', 'Tags', 'Operating system', 'Cluster', 'Datastore', 'Folder', 'VM Path',
+    ])
     expect(detailValue(overview, 'vCPU')).toHaveTextContent('4')
     expect(detailValue(overview, 'Memory')).toHaveTextContent('16 GB')
+    expect(detailValue(overview, 'Tags')).toHaveTextContent('prod')
     expect(detailValue(overview, 'Operating system')).toHaveTextContent('Ubuntu 22.04')
-    expect(detailValue(overview, 'IP address')).toHaveTextContent('10.0.0.5')
     expect(detailValue(overview, 'Cluster')).toHaveTextContent('prodesx-01')
     expect(detailValue(overview, 'Datastore')).toHaveTextContent('ds-012 disks / 120 GB')
-    expect(detailValue(overview, 'Tags')).toHaveTextContent('prod')
-    expect(overview).not.toHaveTextContent('[ds-01] app-server-01/app-server-01.vmx')
-    expect(within(dialog).getByRole('heading', { level: 2 }).closest('header')).not.toHaveTextContent('10.0.0.5')
+    expect(detailValue(overview, 'Folder')).toHaveTextContent('/prod')
+    expect(detailValue(overview, 'VM Path')).toHaveTextContent('[ds-01] app-server-01/app-server-01.vmx')
+    expect(within(overview).getByRole('button', { name: 'Copy VM Path' })).toBeInTheDocument()
+    // Hostname / IP address are the original drawer subtitle: header only, not Overview fields.
+    expect(within(dialog).getByRole('heading', { level: 2 }).closest('header')).toHaveTextContent('app-server-01 / 10.0.0.5')
+    expect(overview).not.toHaveTextContent('10.0.0.5')
+    // VM ID and provider ID were never part of the drawer body.
+    expect(overview).not.toHaveTextContent('vmware-vcenter-01')
+    expect(within(dialog).queryByRole('region', { name: 'Technical' })).not.toBeInTheDocument()
+  })
 
-    await user.click(within(dialog).getByRole('button', { name: 'Technical' }))
-    const technical = within(dialog).getByRole('region', { name: 'Technical' })
-    expect(detailValue(technical, 'VM Path')).toHaveTextContent('[ds-01] app-server-01/app-server-01.vmx')
-    expect(detailValue(technical, 'Provider ID')).toHaveTextContent('vmware-vcenter-01')
-    expect(within(technical).getByRole('button', { name: 'Copy VM Path' })).toBeInTheDocument()
+  it('shows a dash for a missing hostname or IP address in the header', () => {
+    renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={{ ...vm, hostname: '', ipAddress: '' }} open onClose={vi.fn()} />)
+    const header = within(screen.getByRole('dialog', { name: 'Virtual machine detail' })).getByRole('heading', { level: 2 }).closest('header')
+    expect(header).toHaveTextContent('- / -')
   })
 
   it('lists every NAA of a disk in its own Disks column, in API order, or a dash when there is none', async () => {

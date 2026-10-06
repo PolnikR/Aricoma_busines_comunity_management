@@ -1,6 +1,6 @@
 import type { VirtualMachine } from '../../types/virtualMachineTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import { ApiIcon, DiskIcon, GridIcon, LayersIcon } from '@/shared/icons/Icons'
+import { DiskIcon, GridIcon, LayersIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useVdisksByVm } from '../../hooks/useVmStorageVolumes'
@@ -9,7 +9,6 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/com
 import {
   DetailField,
   DetailFieldGroup,
-  DetailTechnicalGroup,
   DetailView,
   DetailViewSection,
 } from '@/shared/components/detail-view'
@@ -74,6 +73,8 @@ export function VirtualMachineDetailPanel({
         <VirtualMachineStatusBadge key="connection" value={virtualMachine.connectionState} kind="connection" />,
         <VirtualMachineStatusBadge key="tools" value={virtualMachine.toolsStatus} kind="tools" />,
       ]}
+      // Hostname and IP address, as the original drawer subtitle showed them.
+      meta={`${virtualMachine.hostname || '-'} / ${virtualMachine.ipAddress || '-'}`}
       headerActions={(
         <KeyedHelpPopover helpKey="pages.virtualMachines.help" sections={['status', 'disks', 'backing']} width="wide">
           <VmRelationshipHelp
@@ -88,29 +89,11 @@ export function VirtualMachineDetailPanel({
       ariaLabel={t('drawer.vmDetail')}
       closeLabel={t('drawer.closeVm')}
     >
-      <DetailViewSection
-        id="overview"
-        title={t('drawer.tabs.overview')}
-        icon={GridIcon}
-        description={t('pages.virtualMachines.detail.overviewDescription')}
-      >
-        <DetailFieldGroup title={t('pages.virtualMachines.detail.compute')}>
+      {/* One field list in the order of the original detail drawer. */}
+      <DetailViewSection id="overview" title={t('drawer.tabs.overview')} icon={GridIcon}>
+        <DetailFieldGroup>
           <DetailField label={t('pages.virtualMachines.detail.vcpu')} value={String(virtualMachine.vcpu)} emphasis />
           <DetailField label={t('pages.virtualMachines.detail.memory')} value={`${String(virtualMachine.memoryGb)} GB`} emphasis />
-        </DetailFieldGroup>
-        <DetailFieldGroup title={t('pages.virtualMachines.detail.guest')}>
-          <DetailField label={t('details.os')} value={virtualMachine.guestOs} />
-          <DetailField label={t('pages.virtualMachines.detail.hostname')} value={virtualMachine.hostname} />
-          <DetailField label={t('details.ipAddress')} value={virtualMachine.ipAddress} mono />
-        </DetailFieldGroup>
-        <DetailFieldGroup title={t('pages.virtualMachines.detail.placement')}>
-          <DetailField label={t('details.cluster')} value={virtualMachine.cluster} secondary={virtualMachine.host} />
-          <DetailField
-            label={t('details.datastore')}
-            value={virtualMachine.datastore}
-            secondary={`${String(virtualMachine.vdisks.length)} ${t('details.disks')} / ${String(diskCapacityGb)} GB`}
-          />
-          <DetailField label={t('details.folder')} value={virtualMachine.folder} wide />
           <DetailField
             label={t('pages.virtualMachines.detail.tags')}
             value={virtualMachine.tags.length > 0 ? (
@@ -122,6 +105,15 @@ export function VirtualMachineDetailPanel({
             ) : null}
             wide
           />
+          <DetailField label={t('details.os')} value={virtualMachine.guestOs} />
+          <DetailField label={t('details.cluster')} value={virtualMachine.cluster} secondary={virtualMachine.host} />
+          <DetailField
+            label={t('details.datastore')}
+            value={virtualMachine.datastore}
+            secondary={`${String(virtualMachine.vdisks.length)} ${t('details.disks')} / ${String(diskCapacityGb)} GB`}
+          />
+          <DetailField label={t('details.folder')} value={virtualMachine.folder} wide />
+          <DetailField label={t('details.vmPath')} value={virtualMachine.vmPath} mono wide copyValue={virtualMachine.vmPath} />
         </DetailFieldGroup>
       </DetailViewSection>
 
@@ -188,20 +180,6 @@ export function VirtualMachineDetailPanel({
           identity="vdiskUid"
           emptyText={t('pages.virtualMachines.detail.noBackingVolumes')}
         />
-      </DetailViewSection>
-
-      <DetailViewSection
-        id="technical"
-        title={t('detailView.technical')}
-        icon={ApiIcon}
-        description={t('detailView.technicalDescription')}
-        secondary
-      >
-        <DetailTechnicalGroup>
-          <DetailField label={t('pages.virtualMachines.detail.vmId')} value={virtualMachine.id} copyValue={virtualMachine.id} />
-          <DetailField label={t('details.vmPath')} value={virtualMachine.vmPath} copyValue={virtualMachine.vmPath} />
-          <DetailField label={t('details.providerId')} value={virtualMachine.providerId} copyValue={virtualMachine.providerId} />
-        </DetailTechnicalGroup>
       </DetailViewSection>
     </DetailView>
   )
