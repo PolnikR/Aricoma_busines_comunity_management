@@ -12,7 +12,7 @@ describe('RecoveryGroupMetroMirrorFields', () => {
     expect(screen.getByRole('button', { name: 'Review configuration' })).not.toHaveTextContent('(3)')
   })
 
-  it('opens a review drawer outside the form and restores focus without changing the group value', async () => {
+  it('opens a review modal outside the form and restores focus without changing the group value', async () => {
     render(<RecoveryGroupMetroMirrorFields {...props} unresolvedCount={5} missingGroup mismatch />)
     const summary = screen.getByRole('button', { name: 'Review configuration' })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()

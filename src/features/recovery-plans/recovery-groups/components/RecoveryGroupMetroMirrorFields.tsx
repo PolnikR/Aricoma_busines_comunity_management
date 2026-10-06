@@ -4,7 +4,7 @@ import { useId, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Input } from '@/shared/components/form/FormControls'
 import { Button } from '@/shared/components/button/Button'
-import { DetailDrawer } from '@/shared/components/data-table/DetailDrawer'
+import { Modal } from '@/shared/components/modal/Modal'
 import { cn } from '@/shared/utils/cn'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 
@@ -44,9 +44,10 @@ export function RecoveryGroupMetroMirrorFields({ value, onChange, loading, error
         </Button>
       </div>
       {reviewOpen ? createPortal(
-        <DetailDrawer open onClose={() => { setReviewOpen(false) }} title={t(key('reviewTitle'))} headerActions={<KeyedHelpPopover helpKey="pages.recoveryGroupBuilder.topology.lookup.help" sections={['existing', 'managed', 'auxiliary', 'consistencyGroup']} />} ariaLabel={t(key('reviewTitle'))} closeLabel={t('buttons.close')}>
+        // A validation review of the form, not an entity detail: a plain modal, not a DetailView.
+        <Modal open onClose={() => { setReviewOpen(false) }} title={t(key('reviewTitle'))} footer={<Button size="sm" variant="outline" className="ml-auto" onClick={() => { setReviewOpen(false) }}>{t('buttons.close')}</Button>}>
           <div className="space-y-4 p-5 text-sm text-text-secondary [overflow-wrap:anywhere]">
-            <p>{t(key('hint'))}</p>
+            <div className="flex items-start gap-2"><p className="min-w-0 flex-1">{t(key('hint'))}</p><KeyedHelpPopover helpKey="pages.recoveryGroupBuilder.topology.lookup.help" sections={['existing', 'managed', 'auxiliary', 'consistencyGroup']} /></div>
             {loading ? <p role="status">{t(key('loading'))}</p> : null}
             {error ? <FetchErrorAlert title={t(key('error'))} onRetry={onRetry} retryLabel={t('buttons.retry')} /> : null}
             {requiredCount > 0 ? <p>{t(key('requiredFields'), { count: requiredCount })}</p> : null}
@@ -55,7 +56,7 @@ export function RecoveryGroupMetroMirrorFields({ value, onChange, loading, error
             {missingGroup ? <p>{t(key('missingGroup'))}</p> : null}
             {mismatch ? <p>{t(key('mismatch'))}</p> : null}
           </div>
-        </DetailDrawer>, document.body,
+        </Modal>, document.body,
       ) : null}
     </>
   )
