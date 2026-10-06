@@ -116,6 +116,7 @@ values in the "Approved" column.
 | `NORMAL_MAX` (plain text up to N chars = one track) | 34 | **28** |
 | `WIDE_MAX` (up to N chars = two tracks; above = full row) | 72 | **64** |
 | Mono values | same character count | **same character count as other plain text, no 1.15× weighting** |
+| `wide` on plain text (changed at Checkpoint 2, 2026-10-06) | ignored | **explicit full-row override; 28/64 applies only to plain text without `wide`** |
 | Track minimum incl. 1.75rem cell gutter (D5) | 12.75rem | **12.75rem** |
 | Two-track span gate (content width) | 24rem | **24rem** |
 | Cell padding / label → value / label size (D6) | `py-2` / 2 px / 11.5px medium | **`py-2` / 2 px / 11.5px medium** |
@@ -166,14 +167,16 @@ computes a footprint:
 - **wide** is two tracks when the content is ≥ 24rem wide, otherwise one.
 - **full** is the whole row.
 
-The rules:
-- **Plain-text values** (`typeof value === 'string'`) are measured by character count against
-  two thresholds, `NORMAL_MAX` and `WIDE_MAX`.
-- **Empty values** ("Not set") are always normal.
-- **Node values** (links, badges, tag lists, skeletons) cannot be measured, so `wide` stays the
-  consumer's only signal: `wide` → full, otherwise normal.
-- The `wide` prop on a plain-text Overview field is ignored. It is removed from those call
-  sites in the cleanup phase.
+The rules (revised at Checkpoint 2 on 2026-10-06, user decision B):
+- **`wide` is an explicit full-row override** for every non-empty value, plain text included.
+- **Plain-text values without `wide`** (`typeof value === 'string'`) are measured by character
+  count: up to `NORMAL_MAX` normal, up to `WIDE_MAX` wide, above that full.
+- **Node values without `wide`** (links, badges, tag lists, skeletons) cannot be measured, so
+  they are normal.
+- **Empty values** ("Not set") are always normal, even with `wide`.
+- Why: the pilot showed that ignoring `wide` breaks intended full rows (Platform provider
+  DAG directory, 18 characters) and re-pairs the fields after it. `wide` is removed only where it
+  is redundant (Phase 4).
 - **The thresholds are not a contract yet.**
   - The prototype heuristic is 34 / 72 characters.
   - Phase 0 checks it, including values just around both thresholds.
@@ -272,7 +275,7 @@ Consumer usage after migration:
 ```
 
 `DetailField`'s props do not change. The `wide` comment is updated to say that inside a
-`DetailOverview` plain text sizes itself and `wide` applies to node values only.
+`DetailOverview` `wide` is an explicit full-row override and plain text without it sizes itself.
 
 ## 4. Files
 
@@ -322,7 +325,8 @@ Consumer usage after migration:
    - **3d, multi-group:** Users, Recovery groups, VM, built as decided at Checkpoint 0
      (titled blocks or one flat grid, D3).
 5. **Phase 4, cleanup and final audit after all consumers are migrated.**
-   - Remove the now-ignored `wide` from plain-text Overview fields.
+   - Remove `wide` from plain-text Overview fields only where it is redundant; intentional
+     full-row overrides (e.g. DAG directory) stay.
    - Update the `DetailFieldGroup` doc comment to say it is for non-Overview sections.
      `DetailFieldGroup` itself stays (§1 finding 2).
    - Run the final audit (§6): an explicit list of the 14 files, grep counts against the
@@ -343,7 +347,7 @@ Focused runs only (CLAUDE.md §5): `npm exec vitest run <files>`, plus `npx esli
   - `WIDE_MAX + 1` characters → full
 - Empty, null or blank → normal, even with `wide`.
 - Node without `wide` → normal; node with `wide` → full.
-- String with `wide` → measured (the flag is ignored).
+- String with `wide` → full, at every length.
 - The public barrel does not expose it: `Object.keys(await import('./index'))` has no
   `getOverviewFootprint`.
 
@@ -443,7 +447,7 @@ check long values with prototype A4 only, so no data is edited.
   removed. Reverting a batch restores the old Overview.
 - **Shared rollback:** revert the Phase 1 commit only after reverting all consumer commits, or
   as one `git revert <first>..<last>` range.
-- Phase 4 cleanup (removing ignored `wide` flags) comes last and in its own commit, so a
+- Phase 4 cleanup (removing redundant `wide` flags) comes last and in its own commit, so a
   rollback before it never has to put flags back.
 
 ## 10. Acceptance criteria

@@ -351,6 +351,9 @@ untouched.
   ignored and it takes one track. Credential moves up next to it, and Credential status shares
   a row with Notification email. This follows the approved rule (D4), but the user expected
   Credential and Credential status in one row.
+- Resolved at Checkpoint 2 (user decision B, 2026-10-06): `wide` is an explicit full-row
+  override for plain text too (plan D4). Rows now: Provider ID | Type, URL, Description,
+  IP address | Port, DAG directory, Credential | Credential status, Notification email.
 
 **Dependencies:** Checkpoint 1. **Files:** `ProvidersCatalogueTable.tsx`. **Scope:** XS
 
@@ -528,21 +531,31 @@ Guest / Placement):
 
 ## Phase 4: Cleanup and final audit
 
-## Task 16: Remove ignored `wide` from plain-text Overview fields
-**Description:** Inside Overview sections only, drop `wide` from plain-text fields: the
-descriptions in 10 consumers, the Recovery action Summary and the VM Folder. `wide` stays on the
-node fields (2 URLs, VM tags, Submission). Rendering does not change, because the flag is
-already ignored.
+## Task 16: Remove redundant `wide` from plain-text Overview fields
+**Changed at Checkpoint 2 (2026-10-06):** `wide` is now an explicit full-row override for plain
+text as well (plan D4), so it is no longer ignored and must not be removed mechanically.
+
+**Description:** Inside Overview sections only, review every plain-text field with `wide` (the
+descriptions in 10 consumers, the Recovery action Summary, the VM Folder, the Platform provider
+DAG directory):
+- Remove `wide` only where it is redundant, i.e. where the measured 28/64 footprint gives the
+  intended layout without it.
+- Keep intentional full-row overrides, e.g. DAG directory and other paths that should stand on
+  their own row.
+- Node fields (2 URLs, VM tags, Submission) keep `wide`.
+- List each field as kept or removed, with the reason, before editing, and get the user's OK.
+  Removing `wide` can change the rendering (a short value moves from a full row to one or two
+  tracks).
 
 **Acceptance criteria:**
-- [ ] `wide` in Overview sections remains only on node values.
-- [ ] Screenshots of 2 consumers are identical before and after.
+- [ ] Every remaining plain-text `wide` in an Overview is an intentional full-row override.
+- [ ] Before/after screenshots of the changed consumers are recorded and approved.
 
 **Verification:**
 - [ ] Re-run the consumer test files from Tasks 7–15 (two `vitest run` invocations if long).
 - [ ] `npx eslint <changed files>`
 
-**Dependencies:** Checkpoint 3. **Files:** up to 12 consumer files. If more than 5, split into
+**Dependencies:** Checkpoint 3. **Files:** up to 13 consumer files. If more than 5, split into
 two commits by feature area. **Scope:** S per commit
 
 ## Task 17: Doc comment and final audit
@@ -603,6 +616,7 @@ record). **Scope:** XS
 |---|---|---|---|---|---|---|---|
 | 7 | PlatformProvidersTable, Primary Airflow | 1440 (dl 606 px, 2 tracks) | light + dark | none (region 670/670, dl 606/606, doc 1440/1440) | 0 (all cell borders 0 px) | clipped | height 414 → 338 px (−18 %), row pitch 60–64 → 54–58 px, label → value 4 → 2 px, column gap 40 → 0 px; focus rings of the copy buttons and the URL link fully visible |
 | 7 | PlatformProvidersTable, Primary Airflow | 375 × 800 (dl 281 px, 1 track) | light | none (region 321/321, dl 281/281, doc 360/360) | 0 | clipped | 10 rows, one field each; focus rings visible |
+| 7 (after rule B) | PlatformProvidersTable, Primary Airflow | 1440 + 375 × 800 | light + dark | none (same values as above) | 0 | clipped | `wide` = full row: DAG directory full, Credential + Credential status paired again; height 414 → 392 px; rule 1 px with 10 copies on every cell; focus rings of the 3 copy buttons and the URL visible |
 
 ## Final audit record
 _(paste the Task 17 audit output here)_
