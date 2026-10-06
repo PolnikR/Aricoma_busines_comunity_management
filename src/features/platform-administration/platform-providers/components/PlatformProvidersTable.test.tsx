@@ -6,7 +6,7 @@ import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { useDeletePlatformProvider } from '@/generated/query/platform-providers/platform-providers.gen'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { PlatformProvidersTable } from './PlatformProvidersTable'
-import { detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
+import { detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/platform-providers/platform-providers.gen', () => ({
@@ -138,13 +138,9 @@ describe('PlatformProvidersTable', () => {
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
     const smtpUrl = smtpProvider.url
     if (!smtpUrl) throw new Error('SMTP fixture URL is required')
-    const labels = detailSectionsLabels(drawer)
-    for (const label of ['Provider ID', 'Type', 'URL', 'Description', 'IP address', 'Port', 'From email', 'Disable SSL', 'Disable TLS']) {
-      expect(labels).toContain(label)
-    }
-    for (const label of ['DAG directory', 'Notification email', 'Credential']) {
-      expect(labels).not.toContain(label)
-    }
+    // One flat Overview with the original SMTP fields only, in the original order.
+    expect(within(drawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailSectionsLabels(drawer)).toEqual(['Provider ID', 'Type', 'URL', 'Description', 'IP address', 'Port', 'From email', 'Disable SSL', 'Disable TLS'])
 
     const overview = openDetailSection(drawer, 'Overview')
     expect(within(overview).getByRole('link', { name: smtpUrl })).toHaveAttribute('href', smtpUrl)
@@ -165,14 +161,16 @@ describe('PlatformProvidersTable', () => {
 
     await user.click(screen.getByText('Primary Airflow'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
-    const labels = detailSectionsLabels(drawer)
-    for (const label of ['IP address', 'Port', 'DAG directory', 'Credential', 'Notification email']) {
-      expect(labels).toContain(label)
-    }
-    // The credential state is a header status, not repeated as a field.
-    for (const label of ['Credential status', 'From email', 'Disable SSL', 'Disable TLS', 'Logging enabled', 'JWT enabled', 'Swagger enabled', 'Realm', 'Client ID']) {
-      expect(labels).not.toContain(label)
-    }
+
+    // Exactly one section, so DetailView shows no Connection or Technical navigation.
+    expect(within(drawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(within(drawer).getAllByRole('region')).toHaveLength(1)
+    expect(within(drawer).getByRole('region', { name: 'Overview' })).toBeInTheDocument()
+    expect(detailSectionsLabels(drawer)).toEqual([
+      'Provider ID', 'Type', 'URL', 'Description',
+      'IP address', 'Port', 'DAG directory', 'Credential', 'Credential status', 'Notification email',
+    ])
+    expect(detailSectionsFields(drawer)).toMatchObject({ 'Provider ID': 'airflow-01', 'Credential status': 'Available' })
   })
 
   it('shows only BACKEND configuration fields in the detail drawer', async () => {
@@ -189,14 +187,8 @@ describe('PlatformProvidersTable', () => {
 
     await user.click(screen.getByText('ABCo API'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
-    const labels = detailSectionsLabels(drawer)
-    for (const label of ['Notification email', 'Logging enabled', 'JWT enabled', 'Swagger enabled']) {
-      expect(labels).toContain(label)
-    }
-    for (const label of ['IP address', 'Port', 'DAG directory', 'Credential', 'From email', 'Disable SSL', 'Disable TLS', 'Realm', 'Client ID']) {
-      expect(labels).not.toContain(label)
-    }
-    expect(within(within(drawer).getByRole('navigation', { name: 'Sections' })).queryByRole('button', { name: 'Connection' })).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailSectionsLabels(drawer)).toEqual(['Provider ID', 'Type', 'URL', 'Description', 'Notification email', 'Logging enabled', 'JWT enabled', 'Swagger enabled'])
   })
 
   it('shows only KEYCLOAK configuration fields in the detail drawer', async () => {
@@ -213,13 +205,8 @@ describe('PlatformProvidersTable', () => {
 
     await user.click(screen.getByText('Aricoma Keycloak'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
-    const labels = detailSectionsLabels(drawer)
-    for (const label of ['Realm', 'Client ID', 'Credential']) {
-      expect(labels).toContain(label)
-    }
-    for (const label of ['Credential status', 'IP address', 'Port', 'DAG directory', 'Notification email', 'From email', 'Disable SSL', 'Disable TLS', 'Logging enabled', 'JWT enabled', 'Swagger enabled']) {
-      expect(labels).not.toContain(label)
-    }
+    expect(within(drawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailSectionsLabels(drawer)).toEqual(['Provider ID', 'Type', 'URL', 'Description', 'Realm', 'Client ID', 'Credential', 'Credential status'])
   })
 
   it('keeps search available without exposing platform-provider API errors', () => {
@@ -384,7 +371,7 @@ describe('PlatformProvidersTable', () => {
       <PlatformProvidersTable providers={providers} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} />,
     )
 
-    it('shows entity, type and credential status in the header and the id only in Technical', async () => {
+    it('shows entity, type and credential status in the header and the id in Overview', async () => {
       const user = userEvent.setup()
       renderTable([baseProvider])
       await user.click(screen.getByText('Primary Airflow'))
@@ -396,7 +383,7 @@ describe('PlatformProvidersTable', () => {
       expect(header).toHaveTextContent('AIRFLOW')
       expect(header).toHaveTextContent('Available')
       expect(header).not.toHaveTextContent('airflow-01')
-      expect(openDetailSection(drawer, 'Technical')).toHaveTextContent('airflow-01')
+      expect(openDetailSection(drawer, 'Overview')).toHaveTextContent('airflow-01')
       await user.click(within(drawer).getByRole('button', { name: 'Platform provider help' }))
       expect(screen.getByRole('dialog', { name: 'What a platform provider is' })).toHaveTextContent('Airflow')
     })
