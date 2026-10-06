@@ -309,24 +309,36 @@ describe('RecoveryApplicationsTable', () => {
     const navItems = (drawer: HTMLElement) =>
       within(within(drawer).getByRole('navigation', { name: 'Sections' })).getAllByRole('button')
 
-    it('opens on Overview with Orchestration, Inventory and Technical in the navigation', async () => {
+    const overviewTerms = (drawer: HTMLElement) =>
+      [...within(drawer).getByRole('region', { name: 'Overview' }).querySelectorAll('dt')].map(term => term.textContent)
+
+    it('opens on Overview with only Orchestration and Inventory after it, in the original drawer order', async () => {
       const { drawer } = await openDetail(application)
 
       expect(drawer).toHaveAttribute('data-size', 'lg')
-      expect(navItems(drawer).map(item => item.textContent)).toEqual(['Overview', 'Orchestration', 'Inventory1', 'Technical'])
+      expect(navItems(drawer).map(item => item.textContent)).toEqual(['Overview', 'Orchestration', 'Inventory1'])
+      expect(within(drawer).queryByRole('button', { name: 'Technical' })).not.toBeInTheDocument()
       expect(navItems(drawer)[0]).toHaveAttribute('aria-current', 'true')
       const overview = within(drawer).getByRole('region', { name: 'Overview' })
+      // One shared Overview field list.
+      expect(overview.querySelectorAll('dl')).toHaveLength(1)
+      expect(overviewTerms(drawer)).toEqual(['Description', 'Environment', 'Platform', 'Tiers', 'Status', 'Submission'])
       expect(overview).toHaveTextContent('Finance workloads')
       expect(overview).toHaveTextContent('VMware')
       expect(overview).toHaveTextContent('/tmp/finance.json')
     })
 
-    it('shows entity, status and the no-runs fact in the header without repeating the status in the body', async () => {
+    it('leaves Submission out when the application has none', async () => {
+      const { drawer } = await openDetail({ ...application, submission: undefined })
+      expect(overviewTerms(drawer)).toEqual(['Description', 'Environment', 'Platform', 'Tiers', 'Status'])
+    })
+
+    it('shows entity, status and the no-runs fact in the header, and the status again in Overview', async () => {
       const { drawer } = await openDetail(application)
       expect(header(drawer)).toHaveTextContent('Recovery app')
       expect(header(drawer)).toHaveTextContent('Active')
       expect(header(drawer)).toHaveTextContent('No runs yet')
-      expect(within(drawer).getByRole('region', { name: 'Overview' })).not.toHaveTextContent('Active')
+      expect(within(drawer).getByText('Status', { selector: 'dt' }).nextElementSibling).toHaveTextContent('Active')
     })
 
     it('says Not orchestrated / Not configured only when the app was never pushed', async () => {
@@ -344,14 +356,12 @@ describe('RecoveryApplicationsTable', () => {
       expect(within(drawer).queryByRole('button', { name: 'View recovery runs →' })).not.toBeInTheDocument()
     })
 
-    it('lists the identifiers in the Technical section', async () => {
-      const { user, drawer } = await openDetail(application)
-      await user.click(within(drawer).getByRole('button', { name: 'Technical' }))
-      const technical = within(drawer).getByRole('region', { name: 'Technical' })
-      expect(technical).toHaveTextContent('finance-app')
-      expect(technical).toHaveTextContent('critical-daily-latest')
-      expect(technical).toHaveTextContent('airflow-01')
-      expect(technical).toHaveTextContent('260811133132_fbffbefb')
+    it('does not move the former Technical identifiers into Overview', async () => {
+      const { drawer } = await openDetail(application)
+      const overview = within(drawer).getByRole('region', { name: 'Overview' })
+      for (const identifier of ['finance-app', 'critical-daily-latest', 'airflow-01', '260811133132_fbffbefb']) {
+        expect(overview).not.toHaveTextContent(identifier)
+      }
     })
 
     it('opens the recovery app help from the header', async () => {

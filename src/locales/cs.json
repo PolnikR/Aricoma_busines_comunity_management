@@ -1057,7 +1057,6 @@
   "drawer.closeApplication": "Zavřít aplikaci",
   "drawer.entity.recoveryApplication": "Aplikace obnovy",
   "recoveryApplications.drawer.tierCount": "Tiery: {{count}}",
-  "recoveryApplications.detail.applicationId": "ID aplikace",
   "drawer.tabs.overview": "Přehled",
   "drawer.tabs.disks": "Disky",
   "drawer.sections.backingStorageInfo": "Backing Storage Info",

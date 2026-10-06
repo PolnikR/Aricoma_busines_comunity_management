@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ApiIcon, ExecutionIcon, GridIcon, ServerIcon } from '@/shared/icons/Icons'
+import { ExecutionIcon, GridIcon, ServerIcon } from '@/shared/icons/Icons'
 import { useNavigate } from 'react-router'
 import { routes } from '@/app/routes'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
-import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { DetailField, DetailOverview, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
@@ -66,6 +66,13 @@ function getApplicationStatus(app: RecoveryApplicationListItem): 'Active' | 'Dra
 
 function getStatusBadgeColor(status: 'Active' | 'Draft'): 'success' | 'warning' {
   return status === 'Active' ? 'success' : 'warning'
+}
+
+// The application status, both a detail header status and an Overview field.
+function ApplicationStatusBadge({ app }: { app: RecoveryApplicationListItem }) {
+  const { t } = useTranslation()
+  const status = getApplicationStatus(app)
+  return <Badge color={getStatusBadgeColor(status)} size="sm">{t(status === 'Active' ? 'details.statusActive' : 'details.statusDraft')}</Badge>
 }
 
 function getProviderLabel(providerId: string, providers?: { id: string; name: string }[]): string {
@@ -415,9 +422,7 @@ export function RecoveryApplicationsTable({
           entityLabel={t('drawer.entity.recoveryApplication')}
           title={selected.data.application.name}
           statuses={[
-            <Badge key="status" color={getStatusBadgeColor(getApplicationStatus(selected))} size="sm">
-              {t(getApplicationStatus(selected) === 'Active' ? 'details.statusActive' : 'details.statusDraft')}
-            </Badge>,
+            <ApplicationStatusBadge key="status" app={selected} />,
           ]}
           meta={orchestrationState ? orchestrationMetaText(orchestrationState, t) : null}
           headerActions={<KeyedHelpPopover helpKey="recoveryApplications.help" sections={['tiers', 'policySet', 'orchestration']} />}
@@ -442,11 +447,13 @@ export function RecoveryApplicationsTable({
           ) : null}
         >
           <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
-            <DetailFieldGroup>
+            {/* The fields in the order of the original detail drawer; Status is also a header badge. */}
+            <DetailOverview>
               <DetailField label={t('details.description')} value={selected.data.application.description} wide />
-              <DetailField label={t('details.platform')} value={getProviderLabel(selected.data.application.platform)} emphasis />
               <DetailField label={t('details.environment')} value={selected.data.application.environment} />
+              <DetailField label={t('details.platform')} value={getProviderLabel(selected.data.application.platform)} emphasis />
               <DetailField label={t('details.tiers')} value={String(Object.keys(selected.data.application.tiers).length)} />
+              <DetailField label={t('details.status')} value={<ApplicationStatusBadge app={selected} />} />
               {selected.submission ? (
                 <DetailField
                   label={t('details.submission')}
@@ -455,7 +462,7 @@ export function RecoveryApplicationsTable({
                   wide
                 />
               ) : null}
-            </DetailFieldGroup>
+            </DetailOverview>
           </DetailViewSection>
           <DetailViewSection id="orchestration" title={t('details.tabs.orchestration')} icon={ExecutionIcon}>
             {orchestrationState ? (
@@ -480,20 +487,6 @@ export function RecoveryApplicationsTable({
             <div className="-mx-5 -mt-4">
               <RecoveryApplicationInventory runId={selectedAirflowRunId ?? null} active />
             </div>
-          </DetailViewSection>
-          <DetailViewSection
-            id="technical"
-            title={t('detailView.technical')}
-            icon={ApiIcon}
-            description={t('detailView.technicalDescription')}
-            secondary
-          >
-            <DetailTechnicalGroup>
-              <DetailField label={t('recoveryApplications.detail.applicationId')} value={selected.id} copyValue={selected.id} />
-              <DetailField label={t('recoveryGroups.detail.policySetId')} value={selected.policySetId} copyValue={selected.policySetId ?? undefined} />
-              <DetailField label={t('recoveryGroups.detail.orchestrationProviderId')} value={selected.orchestrationProviderId} copyValue={selected.orchestrationProviderId ?? undefined} />
-              <DetailField label={t('tables.recoveryGroups.airflowRunId')} value={selected.airflowRunId} copyValue={selected.airflowRunId ?? undefined} />
-            </DetailTechnicalGroup>
           </DetailViewSection>
         </DetailView>
       ) : null}
