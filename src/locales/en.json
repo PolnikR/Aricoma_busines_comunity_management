@@ -2499,7 +2499,6 @@
   "audit.accessLogs.detail.queryString": "Query string",
   "audit.accessLogs.detail.userAgent": "User agent",
   "audit.accessLogs.detail.referer": "Referer",
-  "audit.accessLogs.detail.client": "Client",
   "audit.accessLogs.detail.requestBody": "Request body",
   "audit.accessLogs.detail.responseBody": "Response body",
   "audit.accessLogs.detail.rawEntry": "Raw entry",

@@ -2462,7 +2462,6 @@
   "audit.accessLogs.detail.queryString": "Reťazec dotazu",
   "audit.accessLogs.detail.userAgent": "User agent",
   "audit.accessLogs.detail.referer": "Referer",
-  "audit.accessLogs.detail.client": "Klient",
   "audit.accessLogs.detail.requestBody": "Telo požiadavky",
   "audit.accessLogs.detail.responseBody": "Telo odpovede",
   "audit.accessLogs.detail.rawEntry": "Nespracovaný záznam",

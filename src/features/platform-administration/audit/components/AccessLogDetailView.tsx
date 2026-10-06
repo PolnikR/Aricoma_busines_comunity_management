@@ -2,12 +2,9 @@ import {
   DetailCode,
   DetailField,
   DetailFieldGroup,
-  DetailStatusBlock,
-  DetailTechnicalGroup,
   DetailView,
   DetailViewSection,
 } from '@/shared/components/detail-view'
-import type { DetailStatusTone } from '@/shared/components/detail-view'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { ApiIcon, GridIcon } from '@/shared/icons/Icons'
@@ -30,15 +27,6 @@ function formatBody(value: unknown) {
   } catch {
     return '[Unable to serialize body]'
   }
-}
-
-// Tone of the HTTP status class: 2xx success, 3xx info, 4xx warning, 5xx error.
-function statusTone(status: number): DetailStatusTone {
-  if (status >= 500) return 'error'
-  if (status >= 400) return 'warning'
-  if (status >= 300) return 'info'
-  if (status >= 200) return 'success'
-  return 'neutral'
 }
 
 // A render function, not a component: DetailView reads its sections from direct children.
@@ -67,23 +55,17 @@ export function AccessLogDetailView({ record, onClose }: AccessLogDetailViewProp
     >
       {isRequest ? (
         <>
+          {/* One flat list in the order of the original detail drawer. */}
           <DetailViewSection id="request" title={t('audit.accessLogs.detail.request')} icon={GridIcon}>
-            <DetailStatusBlock
-              title={t('audit.accessLogs.detail.status')}
-              status={String(record.status)}
-              tone={statusTone(record.status)}
-            >
-              <DetailField label={t('audit.accessLogs.detail.duration')} value={`${String(record.durationMs)} ms`} />
-            </DetailStatusBlock>
             <DetailFieldGroup>
               <DetailField label={t('audit.accessLogs.detail.method')} value={record.method} mono emphasis />
               <DetailField label={t('audit.accessLogs.detail.path')} value={record.path} mono wide copyValue={record.path} />
               <DetailField label={t('audit.accessLogs.detail.queryString')} value={record.queryString} mono wide copyValue={record.queryString} />
+              <DetailField label={t('audit.accessLogs.detail.status')} value={String(record.status)} />
+              <DetailField label={t('audit.accessLogs.detail.duration')} value={`${String(record.durationMs)} ms`} />
+              <DetailField label={t('audit.accessLogs.detail.userAgent')} value={record.userAgent} wide />
+              <DetailField label={t('audit.accessLogs.detail.referer')} value={record.referer} mono wide copyValue={record.referer} />
             </DetailFieldGroup>
-            <DetailTechnicalGroup title={t('audit.accessLogs.detail.client')}>
-              <DetailField label={t('audit.accessLogs.detail.userAgent')} value={record.userAgent} />
-              <DetailField label={t('audit.accessLogs.detail.referer')} value={record.referer} copyValue={record.referer} />
-            </DetailTechnicalGroup>
           </DetailViewSection>
           {bodySection('request-body', t('audit.accessLogs.detail.requestBody'), record.requestBody)}
           {bodySection('response-body', t('audit.accessLogs.detail.responseBody'), record.responseBody)}
