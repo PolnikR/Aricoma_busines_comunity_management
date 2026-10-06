@@ -20,9 +20,11 @@ const MIN_PANEL_HEIGHT = 120
 const HOVER_OPEN_DELAY_MS = 150
 const HOVER_CLOSE_DELAY_MS = 200
 
+// Nominal widths, capped by `max-w-[calc(100%-2rem)]` on the panel: for a fixed panel the
+// percentage resolves against the usable viewport (without a classic page scrollbar), not `100vw`.
 const PANEL_WIDTH = {
-  default: 'w-[min(22rem,calc(100vw-2rem))]',
-  wide: 'w-[min(55rem,calc(100vw-2rem))]',
+  default: 'w-[22rem]',
+  wide: 'w-[55rem]',
 } as const
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -52,8 +54,8 @@ interface Placement {
 // The panel renders in a portal on document.body with fixed positioning, so a
 // dialog's overflow (DetailView, Modal body) never clips it. It is anchored to the
 // trigger: below it by default, above it when there is not enough room below and more
-// above; its right edge follows the trigger and it is clamped inside the viewport. It
-// follows the trigger on resize and on any scroll.
+// above; its right edge follows the trigger and it is clamped inside the usable viewport
+// (without a classic page scrollbar). It follows the trigger on resize and on any scroll.
 //
 // Being outside the owning dialog in the DOM, it keeps the dialog relationship
 // explicitly: aria-owns puts it in the dialog's accessibility tree, and Tab is bridged
@@ -114,7 +116,9 @@ export function HelpPopover({ triggerLabel, title, closeLabel, width = 'default'
       const top = placeAbove
         ? Math.max(VIEWPORT_GAP, anchor.top - PANEL_OFFSET - Math.min(height, maxHeight))
         : anchor.bottom + PANEL_OFFSET
-      const left = Math.min(Math.max(VIEWPORT_GAP, anchor.right - width), window.innerWidth - VIEWPORT_GAP - width)
+      // clientWidth, not innerWidth: the right boundary must exclude a classic page scrollbar.
+      const viewportWidth = document.documentElement.clientWidth
+      const left = Math.min(Math.max(VIEWPORT_GAP, anchor.right - width), viewportWidth - VIEWPORT_GAP - width)
       setPlacement({ top, left: Math.max(VIEWPORT_GAP, left), maxHeight, placed: true })
     }
     place()
@@ -251,7 +255,7 @@ export function HelpPopover({ triggerLabel, title, closeLabel, width = 'default'
             maxHeight: placement.maxHeight || undefined,
             visibility: placement.placed ? undefined : 'hidden',
           }}
-          className={`custom-scrollbar fixed z-[60] ${PANEL_WIDTH[width]} overflow-y-auto rounded-xl border border-border-strong bg-surface p-4 text-left shadow-[0_18px_40px_-16px_rgba(20,35,70,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15`}
+          className={`custom-scrollbar fixed z-[60] ${PANEL_WIDTH[width]} max-w-[calc(100%-2rem)] overflow-y-auto rounded-xl border border-border-strong bg-surface p-4 text-left shadow-[0_18px_40px_-16px_rgba(20,35,70,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15`}
         >
           <div className="flex items-start gap-2">
             <HelpIcon className="mt-0.5 size-4 shrink-0 text-accent" />

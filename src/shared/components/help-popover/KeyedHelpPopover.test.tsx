@@ -39,7 +39,7 @@ describe('KeyedHelpPopover', () => {
     const section = screen.getByRole('heading', { level: 4, name: 't(providers.help.role.title)' })
     const custom = screen.getByText('Custom relationships')
 
-    expect(dialog).toHaveClass('w-[min(55rem,calc(100vw-2rem))]')
+    expect(dialog).toHaveClass('w-[55rem]', 'max-w-[calc(100%-2rem)]')
     expect(section.compareDocumentPosition(custom) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })

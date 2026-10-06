@@ -304,9 +304,13 @@ describe('HelpPopover', () => {
 
   describe('placement', () => {
     // jsdom has no layout: give the trigger and the panel fixed boxes in a 800×600 viewport.
-    function layout(triggerBox: { left: number; top: number }) {
+    // clientWidth is the usable width; it is below innerWidth when a classic page scrollbar shows.
+    let triggerBox = { left: 0, top: 0 }
+    function layout(box: { left: number; top: number }, clientWidth = 800) {
+      triggerBox = box
       vi.stubGlobal('innerWidth', 800)
       vi.stubGlobal('innerHeight', 600)
+      Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: clientWidth })
       vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
         if (this.getAttribute('role') === 'dialog') return DOMRect.fromRect({ x: 0, y: 0, width: 300, height: 400 })
         if (this.getAttribute('aria-label') === 'Recovery group help') return DOMRect.fromRect({ x: triggerBox.left, y: triggerBox.top, width: 32, height: 32 })
@@ -316,6 +320,7 @@ describe('HelpPopover', () => {
     afterEach(() => {
       vi.restoreAllMocks()
       vi.unstubAllGlobals()
+      Reflect.deleteProperty(document.documentElement, 'clientWidth')
     })
 
     it('opens below the trigger with its right edge on the trigger when there is room', () => {
@@ -347,16 +352,41 @@ describe('HelpPopover', () => {
       // right edge 812 would overflow: left = 800 - 8 - 300
       expect(panel()).toHaveStyle({ left: '492px' })
     })
+
+    it('clamps against the usable width, not innerWidth, when a classic scrollbar shows', () => {
+      layout({ left: 760, top: 40 }, 785)
+      renderHelp('wide')
+      fireEvent.click(trigger())
+      // right edge 792 would sit under the 15 px scrollbar: left = 785 - 8 - 300, not 800 - 8 - 300
+      expect(panel()).toHaveStyle({ left: '477px' })
+    })
+
+    it('follows the trigger on resize and on scroll', () => {
+      layout({ left: 400, top: 40 })
+      renderHelp()
+      fireEvent.click(trigger())
+      expect(panel()).toHaveStyle({ top: '80px', left: '132px' })
+
+      triggerBox = { left: 300, top: 100 }
+      act(() => { window.dispatchEvent(new Event('resize')) })
+      expect(panel()).toHaveStyle({ top: '140px', left: '32px' })
+
+      triggerBox = { left: 350, top: 60 }
+      // A scroll in any container moves the trigger; the listener captures it.
+      act(() => { document.body.dispatchEvent(new Event('scroll')) })
+      expect(panel()).toHaveStyle({ top: '100px', left: '82px' })
+    })
   })
 
-  it('uses the compact width by default and the wide width on request', () => {
-    renderHelp()
+  // Nominal widths share a cap relative to the fixed containing block (the usable viewport,
+  // without a page scrollbar), never 100vw.
+  it.each([
+    [undefined, 'w-[22rem]'],
+    ['wide', 'w-[55rem]'],
+  ] as const)('uses its nominal width (%s) capped to the usable viewport', (width, widthClass) => {
+    renderHelp(width)
     fireEvent.click(trigger())
-    expect(panel()).toHaveClass('w-[min(22rem,calc(100vw-2rem))]')
-    cleanup()
-
-    renderHelp('wide')
-    fireEvent.click(trigger())
-    expect(panel()).toHaveClass('w-[min(55rem,calc(100vw-2rem))]')
+    expect(panel()).toHaveClass(widthClass, 'max-w-[calc(100%-2rem)]', 'fixed')
+    expect(panel()?.className).not.toContain('100vw')
   })
 })
