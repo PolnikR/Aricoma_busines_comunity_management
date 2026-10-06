@@ -184,18 +184,27 @@ The rules:
   no fixed column count and no viewport breakpoints. The track count follows the DetailView
   content width. 12.75rem = A1's 11rem track + 1.75rem gutter, because the gutter moves into
   the cell (next point).
-- **Separator:** `column-gap: 0`, and each cell gets `padding-inline-end: 1.75rem` and
-  `border-bottom: 1px solid` (`border-border/60`). The bottom rules of one grid row then join
-  into one continuous horizontal line.
+- **Separator:** `column-gap: 0`, and each cell gets `padding-inline-end: 1.75rem`. The row
+  rule is a 1 px line at the cell's bottom (`::after`, `position: relative` cell). Its
+  `box-shadow` copies sit 12rem apart (never wider than a track) and run on to the grid's
+  right edge. (Revised in Task 1: a plain `border-bottom` left gaps, see below.)
+  - Every grid row therefore has one continuous rule, even when it ends early.
+  - Shadows are ink overflow, so they add no scrolling.
+  - The colour is an opaque mix (`color-mix(border 60%, surface)`), so overlapping copies do
+    not darken.
   - No vertical rules, no outer border, no background. This is not a cell grid.
-  - A wide or full field's rule spans its tracks, so spans keep the line intact.
-- **Last row:** the `dl` gets `clip-path: inset(-0.5rem -0.5rem 1px -0.5rem)`. Only the bottom
-  1 px (the last row's rule) is clipped, whatever the number of fields in that row. Focus rings
-  on the other sides stay visible.
+- **Clip:** the `dl` gets `clip-path: inset(-0.5rem 0 1px -0.5rem)`.
+  - It cuts the shadow copies at the right edge, and the bottom 1 px, which is the last row's
+    rule, whatever the number of fields in that row.
+  - Focus rings keep 0.5rem at the top and left.
+  - The right edge stays clear because of the cell end-padding.
 - **Order:** `grid-auto-flow: row`, never `dense`, so the visual order equals the DOM and field
   order. A wide field that does not fit at the end of a row moves to the next row and leaves
-  one empty track, which has no rule under it. That is accepted (see Risks).
-- **Narrow width:** below 24rem the grid is one column and the cell end-padding is 0.
+  empty tracks; the rule still spans them.
+  - Prototype finding (Task 1): with a plain `border-bottom` those rows had visible gaps in
+    the rule. The shadow rule above fixes that.
+- **Narrow width:** below 24rem the grid is one column and the cell end-padding is 0.5rem
+  (room for a focus ring at the right edge).
 
 **D6. A4 tokens (Overview only).**
 - **Cell:** `py-2`. Row pitch ≈ 8 + 16 + 2 + 20 + 8 px + 1 px rule, versus ≈ 60 px today.
@@ -407,7 +416,7 @@ check long values with prototype A4 only, so no data is edited.
 | Hidden layout dependency on `DetailFieldGroup` classes in a consumer or test | Med | Audit found none outside `DetailContent.test.tsx`. Each batch runs its own and page tests. |
 | A4 typography leaks into `DetailStatusBlock`, Connection or other groups | High | Context default `'grid'`; explicit regression test; browser check of untouched sections. |
 | `clip-path` hides focus rings or future popovers in the last row | Med | Clip only the bottom 1 px, with -0.5rem on the other sides; cells have `py-2` so the bottom ring stays above the rule; no popovers in Overviews today; Tab check in the browser. |
-| No `dense` flow leaves a one-track hole when a wide field wraps, with a short gap in that row's rule | Low | Accepted to keep field order and DOM order (a11y). It shows in prototype A4 first. Spans are at most two tracks, and `full` never leaves a hole. |
+| No `dense` flow leaves empty tracks when a wide field wraps | Low | Field order and DOM order (a11y) win. The row rule spans the empty tracks (shadow rule, D5; verified in Task 1). How much whitespace remains depends on the thresholds, judged at Checkpoint 0. |
 | Length-based span misjudges (e.g. a 36-character email spans two tracks) | Low | Threshold-probe dataset in Phase 0; values approved at Checkpoint 0; one internal module to change. |
 | Prototype footprint differs from production (the prototype measured link text; production cannot measure nodes) | Med | Phase 0 switches the prototype to the production rule (links, badges, tags only via `wide`) before anything is approved. |
 | Foreign uncommitted change in `detail-view/index.ts` (§0) | Med | Resolved in `90d66d79`. Task 6 re-checks `git diff` right before editing and stops on a new foreign hunk; foreign hunks are never staged or overwritten. |

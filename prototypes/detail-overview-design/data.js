@@ -1,6 +1,7 @@
 // Mock datasets. Every template receives the same flat field list; no template knows the entity.
 // Field model: label, value, secondary, emphasis, mono, href + external (link), link (in-app),
-// copy (copy action), badge (status tone). `long` replaces values when "Long values" is on.
+// copy (copy action), badge (status tone), wide (consumer hint: a node value needs a full row,
+// as the real consumers mark URLs today). `long` replaces values when "Long values" is on.
 
 const DATASETS = {
   platform: {
@@ -12,7 +13,7 @@ const DATASETS = {
     fields: [
       { label: 'Type', value: 'AIRFLOW', emphasis: true },
       { label: 'Description', value: 'Primary orchestration engine for recovery workflows.' },
-      { label: 'URL', value: 'https://airflow.abco.aricoma.cz', href: 'https://airflow.abco.aricoma.cz', external: true },
+      { label: 'URL', value: 'https://airflow.abco.aricoma.cz', href: 'https://airflow.abco.aricoma.cz', external: true, wide: true },
       { label: 'Notification email', value: 'ops-recovery@aricoma.com' },
     ],
     long: {
@@ -53,7 +54,7 @@ const DATASETS = {
       { label: 'Type', value: 'IBM Spectrum Virtualize', emphasis: true },
       { label: 'Notification email', value: 'storage-alerts@aricoma.com' },
       { label: 'Description', value: 'Primary site storage for tier-1 workloads.' },
-      { label: 'URL', value: 'https://10.20.4.11:7443', href: 'https://10.20.4.11:7443', external: true, mono: true },
+      { label: 'URL', value: 'https://10.20.4.11:7443', href: 'https://10.20.4.11:7443', external: true, mono: true, wide: true },
       { label: 'IP address', value: '10.20.4.11', mono: true, copy: true },
       { label: 'Credential', value: 'svc-abco-storage', link: true, secondary: 'Username and password' },
       { label: 'Role', value: 'Primary', badge: 'info' },
@@ -82,7 +83,7 @@ const DATASETS = {
       { label: 'Group ID', value: '5f1c2a8e-3b9d-4e7a-9c61-0d2f8a7b4e13', mono: true, copy: true },
       { label: 'Orchestrator run ID', value: 'manual__2026-10-06T07:41:12.884512+00:00', mono: true, copy: true },
       { label: 'Datastore path', value: '/vmfs/volumes/5f1c2a8e-3b9d4e7a/SAP-PRD-APP-01/SAP-PRD-APP-01.vmx', mono: true, copy: true },
-      { label: 'Console', value: 'https://vcenter-prg-01.abco.aricoma.cz/ui', href: 'https://vcenter-prg-01.abco.aricoma.cz/ui', external: true },
+      { label: 'Console', value: 'https://vcenter-prg-01.abco.aricoma.cz/ui', href: 'https://vcenter-prg-01.abco.aricoma.cz/ui', external: true, wide: true },
       { label: 'Owner', value: null },
       { label: 'Contact email', value: 'sap-basis@aricoma.com' },
       { label: 'Resources', value: '42' },

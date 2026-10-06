@@ -50,6 +50,31 @@
 .ov-a3__item:hover .ov-a3__copy, .ov-a3__copy:focus-visible { opacity: 1; }
 @media (hover: none) { .ov-a3__copy { opacity: 1; } }
 
+/* A4 · A1 tight grid + A2 row rule (production candidate, plan D5). No column gap: the
+   1.75rem gutter sits inside each cell. The track minimum includes that gutter
+   (11rem + 1.75rem). Row flow only, never dense, so the screen order is the field order.
+   Row rule: a 1 px line at each cell's bottom whose box-shadow copies (12rem apart, never
+   wider than a track) run on to the grid's right edge. A row that ends early because the
+   next field needs two tracks still gets one continuous rule. Shadows are ink overflow, so
+   they add no scrolling. The colour is opaque, so overlapping copies do not darken.
+   clip-path cuts the copies at the right edge and the bottom 1 px (the last row's rule) and
+   leaves 0.5rem for focus rings at the top and left. */
+.ov-a4 {
+  --a4-rule: color-mix(in srgb, var(--color-border) 60%, var(--color-surface));
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(12.75rem, 100%), 1fr)); grid-auto-flow: row; column-gap: 0;
+  clip-path: inset(-0.5rem 0 1px -0.5rem);
+}
+.ov-a4__item { position: relative; min-width: 0; padding: 0.5rem 1.75rem 0.5rem 0; }
+.ov-a4__item::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--a4-rule);
+  box-shadow: 12rem 0 var(--a4-rule), 24rem 0 var(--a4-rule), 36rem 0 var(--a4-rule), 48rem 0 var(--a4-rule), 60rem 0 var(--a4-rule), 72rem 0 var(--a4-rule);
+}
+.ov-a4 [data-span="full"] { grid-column: 1 / -1; }
+.ov-a4 [data-span="full"] dd > div > div { max-width: 88ch; }
+@container detail (min-width: 24rem) { .ov-a4 [data-span="wide"] { grid-column: span 2; } }
+/* One column: keep a little end padding so a focus ring at the right edge is not clipped. */
+@container detail (max-width: 24rem) { .ov-a4__item { padding-right: 0.5rem; } }
+
 /* B · Definition matrix: a ruled data matrix with table-header labels. Right/bottom rules
    per cell; the outer frame clips the last ones, so gaps in the last row read as empty cells. */
 .ov-b { border: 1px solid var(--color-border); border-radius: 0.75rem; overflow: hidden; }

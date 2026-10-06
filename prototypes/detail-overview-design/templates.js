@@ -30,6 +30,37 @@ function footprint(f) {
   return 'normal'
 }
 
+// A4 uses the rule planned for production (tasks/detail-overview-a4-plan.md D4): only plain
+// text is measured; links, badges and tags cannot be measured in React, so they take one
+// track unless the consumer marks them `wide` (then the whole row). Thresholds are a prototype
+// heuristic until Checkpoint 0 and can be overridden with ?nmax=&wmax=.
+const thresholdParams = new URLSearchParams(location.search)
+const THRESHOLDS = {
+  normal: Number(thresholdParams.get('nmax')) || 34,
+  wide: Number(thresholdParams.get('wmax')) || 72,
+}
+const isNode = f => Boolean(f.badge || f.href || f.link || f.tags)
+
+function footprintA4(f) {
+  if (isEmpty(f)) return 'normal'
+  if (isNode(f)) return f.wide ? 'full' : 'normal'
+  const n = String(f.value).length
+  if (n > THRESHOLDS.wide) return 'full'
+  if (n > THRESHOLDS.normal) return 'wide'
+  return 'normal'
+}
+
+// A4 cell: A1 typography (11.5px medium label, 2 px step, mono at full contrast).
+const A4_VALUE = { mono: 'font-mono text-[12.5px] text-text-primary', monoLink: 'font-mono text-[12.5px]', secondary: 'mt-0.5 text-[11.5px] leading-4' }
+function a4Cell(f) {
+  return `
+        <div class="ov-a4__item" data-span="${footprintA4(f)}">
+          ${label(f, 'text-[11.5px] font-medium leading-4 text-text-muted')}
+          <dd class="mt-0.5">${value(f, 'text-sm leading-5', A4_VALUE)}</dd>
+        </div>`
+}
+const a4Grid = fields => `<dl class="ov-a4">${fields.map(a4Cell).join('')}</dl>`
+
 // Long prose (descriptions) is treated differently from long technical values in some templates.
 const isProse = f => footprint(f) === 'full' && !f.mono && !f.href && !f.link
 
@@ -115,6 +146,13 @@ const TEMPLATES = {
           })}</dd>
         </div>`).join('')}
       </dl></div>`,
+  },
+
+  // A4 · A1 tight grid + A2 row rule, the direction chosen for production. One grid, no
+  // group headings (this is also the "flat" variant of the grouped/flat comparison).
+  A4: {
+    name: 'A4 · Tight + row rule (flat)',
+    render: a4Grid,
   },
 
   B: {

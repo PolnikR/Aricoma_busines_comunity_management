@@ -43,14 +43,24 @@ Mark `wide` on the dataset node fields the real consumers mark today (URLs, tags
 the "A family" compare set; A–E and A1–A3 stay unchanged.
 
 **Acceptance criteria:**
-- [ ] Continuous horizontal row rules; no vertical rules, outer border or surface.
-- [ ] The last row has no rule for all datasets at MD/LG/XL/Narrow, Normal and Long.
-- [ ] Field order on screen equals the dataset order (no dense backfill).
-- [ ] A link field without `wide` stays one track, whatever its text length.
+- [x] Continuous horizontal row rules; no vertical rules, outer border or surface.
+- [x] The last row has no rule for all datasets at MD/LG/XL/Narrow, Normal and Long.
+- [x] Field order on screen equals the dataset order (no dense backfill).
+- [x] A link field without `wide` stays one track, whatever its text length.
 
 **Verification:**
-- [ ] CDP overflow matrix over every dataset × MD/LG/XL/Narrow × Normal/Long: no overflow.
-- [ ] Screenshots of Stress test at LG and XL.
+- [x] CDP overflow matrix over every dataset × MD/LG/XL/Narrow × Normal/Long: no overflow.
+- [x] Screenshots of Stress test at LG and XL.
+
+**Result:**
+- 288 template renders, all problem-free: 4 datasets × MD/LG/XL/Narrow × Normal/Long × 9
+  templates.
+- Measured on A4: no vertical or top borders, the last row ends on the clipped band, the
+  screen order equals the DOM order, and the clip is applied.
+- Finding: with a plain `border-bottom`, rows that end early (a wide field moving to the
+  next row) had gaps in the rule.
+- Fixed with the shadow rule (plan D5 revised). Screenshots: Stress LG (light) and XL Long
+  (dark).
 
 **Dependencies:** None. **Files:** `prototypes/detail-overview-design/templates.js`,
 `index.html`, `data.js`. **Scope:** S
