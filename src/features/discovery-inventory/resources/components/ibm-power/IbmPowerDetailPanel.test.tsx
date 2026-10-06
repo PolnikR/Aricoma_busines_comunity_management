@@ -33,13 +33,12 @@ function labels(): Labels {
     'partitionUuid', 'logicalSerialNumber', 'lastActivatedProfile', 'uptime', 'bootable', 'processors',
     'processorLimits', 'processorMode', 'memory', 'memoryLimits', 'interface', 'address', 'interfaceState',
     'monitoring', 'volume', 'capacity', 'volumeUniqueId', 'reservation', 'storageConnection',
-    'fibreChannelIdentity', 'virtualIoSlots', 'physicalIo', 'sriov',
+    'fibreChannelIdentity', 'virtualIoSlots', 'physicalIo', 'sriov', 'providerId',
   ]
   return {
     entity: 'Partition',
     detail: 'IBM Power partition detail',
     close: 'Close partition detail',
-    resize: 'Resize',
     yes: 'Yes',
     no: 'No',
     emptyBackingStorage: english['resources.power.detail.noBackingVolumes'] ?? '',
@@ -50,6 +49,7 @@ function labels(): Labels {
       storage: 'Storage',
       virtualIo: 'I/O and virtualization',
       backingStorage: english['drawer.sections.backingStorageInfo'] ?? '',
+      technical: 'Technical',
     },
     fields: Object.fromEntries(fields.map(field => [field, field])) as Labels['fields'],
     values: { dedicated: 'Dedicated', shared: 'Shared', fibreChannel: 'Fibre Channel', iscsi: 'iSCSI', direct: 'Direct' },
@@ -197,17 +197,30 @@ describe('IbmPowerDetailPanel backing storage', () => {
     expect(useVdisksByVmMock).toHaveBeenCalledWith('aix2source', 'ibm-power-01')
   })
 
-  it('keeps the HMC Storage section separate from Backing Storage Info, which comes last and starts collapsed', () => {
+  it('keeps the HMC Storage section separate from Backing Storage Info, with Technical last', () => {
     const dialog = renderPanel()
-    // Section toggles; the icon-only help trigger has no text. Sections without data stay hidden.
-    const sections = within(dialog).getAllByRole('button')
-      .filter(button => button.hasAttribute('aria-expanded') && button.textContent)
+    // Sections without data stay hidden: this LPAR has no summary values besides its UUID.
+    const sections = within(within(dialog).getByRole('navigation', { name: 'Sections' })).getAllByRole('button')
 
+    expect(dialog).toHaveAttribute('data-size', 'xl')
     expect(sections.map(button => button.textContent)).toEqual([
-      'Summary', 'Storage', 'I/O and virtualization', 'Backing Storage Info',
+      'Storage', 'I/O and virtualization', 'Backing Storage Info', 'Technical',
     ])
-    expect(within(dialog).getByRole('button', { name: 'Storage' })).not.toBe(within(dialog).getByRole('button', { name: 'Backing Storage Info' }))
-    expect(within(dialog).getByRole('button', { name: 'Backing Storage Info' })).toHaveAttribute('aria-expanded', 'false')
+    expect(within(dialog).getByRole('button', { name: 'Storage' })).toHaveAttribute('aria-current', 'true')
+    expect(within(dialog).getByRole('button', { name: 'Backing Storage Info' })).not.toHaveAttribute('aria-current')
+  })
+
+  it('moves the partition identifiers and the provider ID to Technical', async () => {
+    const dialog = renderPanel({ ...lpar, partitionData: { ...lpar.partitionData, LastActivatedProfile: 'default', VolumeUniqueID: 'vol-uid-7', WWPN: 'c050760000000001' } })
+    expect(within(dialog).getByRole('region', { name: 'Summary' })).not.toHaveTextContent('lpar-uuid-2')
+
+    await userEvent.setup().click(within(dialog).getByRole('button', { name: 'Technical' }))
+    const technical = within(dialog).getByRole('region', { name: 'Technical' })
+    expect(detailValue(technical, 'partitionUuid')).toHaveTextContent('lpar-uuid-2')
+    expect(detailValue(technical, 'volumeUniqueId')).toHaveTextContent('vol-uid-7')
+    expect(detailValue(technical, 'fibreChannelIdentity')).toHaveTextContent('c050760000000001')
+    expect(detailValue(technical, 'providerId')).toHaveTextContent('ibm-power-01')
+    expect(within(technical).getByRole('button', { name: 'Copy partitionUuid' })).toBeInTheDocument()
   })
 
   it('shows an IBM Power volume by Volume ID and Volume UID with its storage details', async () => {
@@ -294,18 +307,17 @@ describe('IbmPowerDetailPanel backing storage', () => {
     expect(container).toHaveTextContent('No backing storage volume was resolved for this logical partition.')
   })
 
-  it('lays out accented sections that scroll on their own', () => {
-    // Processor and network values too, so no HMC section is hidden.
-    const dialog = renderPanel({ ...lpar, partitionData: { ...lpar.partitionData, CurrentProcessors: '4', IPAddress: '10.0.0.10' } })
-    const accentOf = (name: string) => within(dialog).getByRole('button', { name }).closest('section')?.getAttribute('data-accent')
+  it('renders every HMC section as its own navigation entry, one at a time', async () => {
+    // Summary, processor and network values too, so no HMC section is hidden.
+    const dialog = renderPanel({ ...lpar, partitionData: { ...lpar.partitionData, IsBootable: 'true', CurrentProcessors: '4', IPAddress: '10.0.0.10' } })
+    const navigation = within(dialog).getByRole('navigation', { name: 'Sections' })
 
-    expect(dialog.querySelector('[data-body-layout]')).toHaveAttribute('data-body-layout', 'sections')
-    expect(accentOf('Summary')).toBe('overview')
-    expect(accentOf('Processor and memory')).toBe('infrastructure')
-    expect(accentOf('Network and monitoring')).toBe('infrastructure')
-    expect(accentOf('Storage')).toBe('storage')
-    expect(accentOf('I/O and virtualization')).toBe('infrastructure')
-    expect(accentOf('Backing Storage Info')).toBe('storage')
+    expect(within(navigation).getAllByRole('button').map(button => button.textContent)).toEqual([
+      'Summary', 'Processor and memory', 'Network and monitoring', 'Storage', 'I/O and virtualization', 'Backing Storage Info', 'Technical',
+    ])
+    await userEvent.setup().click(within(navigation).getByRole('button', { name: 'Network and monitoring' }))
+    expect(within(dialog).getAllByRole('region')).toHaveLength(1)
+    expect(within(dialog).getByRole('region', { name: 'Network and monitoring' })).toHaveTextContent('10.0.0.10')
   })
 
   it('draws the LPAR relationship graphic in the help with Volume ID and UID, never NAA', async () => {

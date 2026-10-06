@@ -119,7 +119,6 @@ export function PowerInventoryView({
         providers={providers}
         labels={{
           entity: t('resources.power.detail.entity'),
-          resize: t('drawer.resize'),
           detail: t('resources.power.detail.ariaLabel'),
           close: t('resources.power.detail.close'),
           yes: t('common.yes'),
@@ -132,6 +131,7 @@ export function PowerInventoryView({
             storage: t('resources.power.groups.storage'),
             virtualIo: t('resources.power.groups.virtualIo'),
             backingStorage: t('drawer.sections.backingStorageInfo'),
+            technical: t('detailView.technical'),
           },
           fields: {
             partitionUuid: t('resources.power.fields.PartitionUUID'),
@@ -157,6 +157,7 @@ export function PowerInventoryView({
             virtualIoSlots: t('resources.power.fields.MaximumVirtualIOSlots'),
             physicalIo: t('resources.power.detail.physicalIo'),
             sriov: t('resources.power.detail.sriov'),
+            providerId: t('details.providerId'),
           },
           values: {
             dedicated: t('resources.power.detail.dedicated'),

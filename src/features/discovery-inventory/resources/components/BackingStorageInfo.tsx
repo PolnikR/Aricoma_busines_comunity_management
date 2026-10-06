@@ -4,18 +4,16 @@ import { formatStartTime } from '@/shared/utils/dateFormat'
 import {
   DataTable,
   DataTableRequestState,
-  DetailRow,
   SkeletonBlock,
   type ColumnDef,
 } from '@/shared/components/data-table'
+import { DetailField, DetailFieldGroup, DetailTechnicalGroup } from '@/shared/components/detail-view'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { StorageVolume, StorageVolumeMapping } from '../model/vmStorageVolumesTypes'
 
 const headerCell = 'whitespace-nowrap px-2 @min-[80rem]/backing-storage:px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle'
 const cell = 'px-2 @min-[80rem]/backing-storage:px-3 py-2.5 text-[12px] @min-[80rem]/backing-storage:text-[13px] text-text-secondary align-top'
 const prefix = 'resources.backingStorage'
-
-const display = (value: string) => value || '-'
 
 type Translate = ReturnType<typeof useTranslation>['t']
 
@@ -57,8 +55,8 @@ function mappingColumns(t: Translate): ColumnDef<StorageVolumeMapping>[] {
 function MappingTable({ title, ariaLabel, mappings }: { title: string; ariaLabel: string; mappings: StorageVolumeMapping[] }) {
   const { t } = useTranslation()
   return (
-    <div className="border-t border-border">
-      <p className="px-5 pt-3 pb-1 text-xs font-semibold uppercase text-text-muted">{title}</p>
+    <div>
+      <h5 className="mb-2 text-xs font-semibold text-text-muted">{title}</h5>
       <DataTable<StorageVolumeMapping>
         columns={mappingColumns(t)}
         rows={mappings}
@@ -86,57 +84,57 @@ function BackingStorageVolume({ volume, providers, identity }: { volume: Storage
   const { snapshotCount, sourceMappings, targetMappings } = volume.snapshots
 
   return (
-    <section aria-labelledby={titleId} className="border-b border-border last:border-b-0">
-      <div className="bg-surface-subtle px-5 py-3">
+    // One volume of a DetailView section: its storage fields, its identifiers and FlashCopy.
+    <section aria-labelledby={titleId} className="flex flex-col gap-6 [&+&]:border-t [&+&]:border-border/70 [&+&]:pt-7">
+      <header>
         <h4 id={titleId} className="text-sm font-semibold text-text-primary wrap-anywhere">{name}</h4>
         <p className="text-xs text-text-muted">{t(`${prefix}.volumeEntity`)}</p>
-      </div>
-      <dl className="px-5 py-2">
-        <DetailRow
+      </header>
+      <DetailFieldGroup>
+        <DetailField
           label={t(`${prefix}.provider`)}
-          value={provider ? provider.name : display(volume.storageProviderId)}
+          value={provider ? provider.name : volume.storageProviderId}
           secondary={provider ? <span className="font-mono">{provider.id}</span> : undefined}
         />
+        <DetailField label={t(`${prefix}.capacity`)} value={volume.capacity} />
+        <DetailField label={t(`${prefix}.status`)} value={volume.status} />
+        <DetailField label={t(`${prefix}.pool`)} value={volume.pool} />
+        <DetailField label={t(`${prefix}.ioGroup`)} value={volume.ioGroupName} />
+        <DetailField label={t(`${prefix}.protocol`)} value={volume.protocol} />
+        <DetailField label={t(`${prefix}.type`)} value={volume.type} />
+      </DetailFieldGroup>
+      <DetailTechnicalGroup>
         {identity === 'vdiskUid' ? (
-          <DetailRow label={t(`${prefix}.vdiskUid`)} value={<span className="font-mono">{display(volume.vdiskUid)}</span>} />
+          <DetailField label={t(`${prefix}.vdiskUid`)} value={volume.vdiskUid} copyValue={volume.vdiskUid} />
         ) : (
           <>
-            <DetailRow label={t(`${prefix}.volumeId`)} value={<span className="font-mono">{display(volume.volumeId)}</span>} />
-            <DetailRow label={t(`${prefix}.volumeUid`)} value={<span className="font-mono">{display(volume.vdiskUid)}</span>} />
+            <DetailField label={t(`${prefix}.volumeId`)} value={volume.volumeId} copyValue={volume.volumeId} />
+            <DetailField label={t(`${prefix}.volumeUid`)} value={volume.vdiskUid} copyValue={volume.vdiskUid} />
           </>
         )}
-        <DetailRow label={t(`${prefix}.capacity`)} value={display(volume.capacity)} />
-        <DetailRow label={t(`${prefix}.status`)} value={display(volume.status)} />
-        <DetailRow label={t(`${prefix}.pool`)} value={display(volume.pool)} />
-        <DetailRow label={t(`${prefix}.ioGroup`)} value={display(volume.ioGroupName)} />
-        <DetailRow label={t(`${prefix}.protocol`)} value={display(volume.protocol)} />
-        <DetailRow label={t(`${prefix}.type`)} value={display(volume.type)} />
-      </dl>
-      <div className="border-t border-border">
-        <p className="px-5 pt-3 text-xs font-semibold uppercase text-text-muted">{t(`${prefix}.flashCopy`)}</p>
-        <dl className="px-5 py-2">
-          <DetailRow label={t(`${prefix}.snapshotCount`)} value={snapshotCount} />
-          <DetailRow label={t(`${prefix}.sourceMappings`)} value={sourceMappings.length} />
-          <DetailRow label={t(`${prefix}.targetMappings`)} value={targetMappings.length} />
-        </dl>
-        {sourceMappings.length === 0 && targetMappings.length === 0 ? (
-          <p className="px-5 pb-3 text-[12px] @min-[80rem]/backing-storage:text-[13px] text-text-subtle">{t(`${prefix}.noMappings`)}</p>
-        ) : null}
-        {sourceMappings.length > 0 ? (
-          <MappingTable
-            title={t(`${prefix}.sourceMappings`)}
-            ariaLabel={t(`${prefix}.sourceMappingsTable`, { volume: name })}
-            mappings={sourceMappings}
-          />
-        ) : null}
-        {targetMappings.length > 0 ? (
-          <MappingTable
-            title={t(`${prefix}.targetMappings`)}
-            ariaLabel={t(`${prefix}.targetMappingsTable`, { volume: name })}
-            mappings={targetMappings}
-          />
-        ) : null}
-      </div>
+      </DetailTechnicalGroup>
+      <DetailFieldGroup title={t(`${prefix}.flashCopy`)}>
+        <DetailField label={t(`${prefix}.snapshotCount`)} value={String(snapshotCount)} />
+        <DetailField label={t(`${prefix}.sourceMappings`)} value={String(sourceMappings.length)} />
+        <DetailField label={t(`${prefix}.targetMappings`)} value={String(targetMappings.length)} />
+      </DetailFieldGroup>
+      {sourceMappings.length === 0 && targetMappings.length === 0 ? (
+        <p className="-mt-3 text-[13px] text-text-subtle">{t(`${prefix}.noMappings`)}</p>
+      ) : null}
+      {sourceMappings.length > 0 ? (
+        <MappingTable
+          title={t(`${prefix}.sourceMappings`)}
+          ariaLabel={t(`${prefix}.sourceMappingsTable`, { volume: name })}
+          mappings={sourceMappings}
+        />
+      ) : null}
+      {targetMappings.length > 0 ? (
+        <MappingTable
+          title={t(`${prefix}.targetMappings`)}
+          ariaLabel={t(`${prefix}.targetMappingsTable`, { volume: name })}
+          mappings={targetMappings}
+        />
+      ) : null}
     </section>
   )
 }
@@ -145,15 +143,14 @@ function BackingStorageSkeleton() {
   const { t } = useTranslation()
   return (
     <div role="status" aria-busy="true" aria-label={t(`${prefix}.loading`)}>
-      <div className="bg-surface-subtle px-5 py-3">
-        <SkeletonBlock className="h-4 w-40" />
-        <SkeletonBlock className="mt-1.5 h-3 w-28" />
-      </div>
-      <div className="flex flex-col gap-3 px-5 py-4">
+      <SkeletonBlock className="h-4 w-40" />
+      <SkeletonBlock className="mt-1.5 h-3 w-28" />
+      {/* Same label-above-value cells as the DetailFieldGroup grid. */}
+      <div className="mt-6 grid grid-cols-1 gap-x-10 gap-y-5 @min-[520px]/detail-content:grid-cols-2 @min-[860px]/detail-content:grid-cols-3">
         {Array.from({ length: 6 }, (_, index) => (
-          <div key={index} className="grid grid-cols-[minmax(7rem,35%)_minmax(0,1fr)] gap-x-4">
-            <SkeletonBlock className="h-3.5 w-20" />
-            <SkeletonBlock className="h-3.5 w-32" />
+          <div key={index}>
+            <SkeletonBlock className="h-3 w-20" />
+            <SkeletonBlock className="mt-2 h-3.5 w-32" />
           </div>
         ))}
       </div>
@@ -174,13 +171,14 @@ interface BackingStorageInfoProps {
 }
 
 // The storage volumes backing a compute resource (VMware VM or IBM Power LPAR), each
-// with its FlashCopy mappings. A volume is shown even when it has no snapshots.
+// with its FlashCopy mappings. A volume is shown even when it has no snapshots. Hosted as the
+// content of a DetailViewSection, so it uses the shared field and technical primitives.
 export function BackingStorageInfo({ volumes, isLoading, isError, isFetching, onRetry, providers, identity, emptyText }: BackingStorageInfoProps) {
   const { t } = useTranslation()
 
   let content
   if (isLoading) content = <BackingStorageSkeleton />
-  else if (volumes.length === 0) content = <p className="p-4 text-[12px] @min-[80rem]/backing-storage:text-[13px] text-text-subtle">{emptyText}</p>
+  else if (volumes.length === 0) content = <p className="text-[13px] text-text-subtle">{emptyText}</p>
   else content = volumes.map(volume => <BackingStorageVolume key={volume.key} volume={volume} providers={providers} identity={identity} />)
 
   return (

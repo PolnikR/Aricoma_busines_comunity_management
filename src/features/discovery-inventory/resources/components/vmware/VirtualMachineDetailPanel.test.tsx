@@ -192,21 +192,46 @@ describe('VirtualMachineDetailPanel resize', () => {
     )
   })
 
-  it('shows Overview open and Disks and Backing Storage Info collapsed instead of tabs', async () => {
+  it('opens expanded on Overview with one section at a time and Technical last', async () => {
     const user = userEvent.setup()
     renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
-    const dialog = screen.getByRole('dialog')
+    const dialog = screen.getByRole('dialog', { name: 'Virtual machine detail' })
+    const navigation = within(dialog).getByRole('navigation', { name: 'Sections' })
 
-    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByRole('button', { name: 'Disks' })).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.getByRole('button', { name: 'Disks' })).toHaveAccessibleDescription('Disks: 2')
-    expect(screen.getByRole('button', { name: 'Backing Storage Info' })).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.getByRole('heading', { name: 'app-server-01' }).parentElement?.nextElementSibling).toHaveTextContent(/^Virtual machine/)
+    expect(dialog).toHaveAttribute('data-mode', 'expanded')
+    expect(dialog).toHaveAttribute('data-size', 'xl')
+    expect(within(navigation).getAllByRole('button').map(button => button.textContent)).toEqual(['Overview', 'Disks2', 'Backing Storage Info', 'Technical'])
+    expect(within(navigation).getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-current', 'true')
+    expect(dialog).toHaveTextContent('Virtual machine')
     expect(dialog).not.toHaveTextContent('Hard disk 1')
 
-    await user.click(screen.getByRole('button', { name: 'Disks' }))
-    expect(screen.getByRole('region', { name: 'Disks' })).toHaveTextContent('Hard disk 1')
+    await user.click(within(navigation).getByRole('button', { name: 'Disks' }))
+    expect(within(dialog).getByRole('region', { name: 'Disks' })).toHaveTextContent('Hard disk 1')
+    expect(within(dialog).getByRole('region', { name: 'Disks' })).toHaveTextContent('Disks: 2')
+    expect(within(dialog).queryByRole('region', { name: 'Overview' })).not.toBeInTheDocument()
+  })
+
+  it('shows compute, guest and placement in Overview and identifiers only in Technical', async () => {
+    const user = userEvent.setup()
+    renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
+    const dialog = screen.getByRole('dialog', { name: 'Virtual machine detail' })
+    const overview = within(dialog).getByRole('region', { name: 'Overview' })
+
+    expect(detailValue(overview, 'vCPU')).toHaveTextContent('4')
+    expect(detailValue(overview, 'Memory')).toHaveTextContent('16 GB')
+    expect(detailValue(overview, 'Operating system')).toHaveTextContent('Ubuntu 22.04')
+    expect(detailValue(overview, 'IP address')).toHaveTextContent('10.0.0.5')
+    expect(detailValue(overview, 'Cluster')).toHaveTextContent('prodesx-01')
+    expect(detailValue(overview, 'Datastore')).toHaveTextContent('ds-012 disks / 120 GB')
+    expect(detailValue(overview, 'Tags')).toHaveTextContent('prod')
+    expect(overview).not.toHaveTextContent('[ds-01] app-server-01/app-server-01.vmx')
+    expect(within(dialog).getByRole('heading', { level: 2 }).closest('header')).not.toHaveTextContent('10.0.0.5')
+
+    await user.click(within(dialog).getByRole('button', { name: 'Technical' }))
+    const technical = within(dialog).getByRole('region', { name: 'Technical' })
+    expect(detailValue(technical, 'VM Path')).toHaveTextContent('[ds-01] app-server-01/app-server-01.vmx')
+    expect(detailValue(technical, 'Provider ID')).toHaveTextContent('vmware-vcenter-01')
+    expect(within(technical).getByRole('button', { name: 'Copy VM Path' })).toBeInTheDocument()
   })
 
   it('lists every NAA of a disk in its own Disks column, in API order, or a dash when there is none', async () => {
@@ -236,16 +261,6 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(naaCell('Hard disk 3')).toHaveTextContent(/^-$/)
     expect(naaCell('Hard disk 1')).toHaveClass('font-mono')
     expect(within(table).getByRole('row', { name: /Hard disk 1/ })).toHaveTextContent(/Hard disk 1.*100 GB.*ds-01.*naa\.6005.*disk\.vmdk.*Yes/)
-  })
-
-  it('lays out accented sections that scroll on their own', () => {
-    renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
-    const accentOf = (name: string) => screen.getByRole('button', { name }).closest('section')?.getAttribute('data-accent')
-
-    expect(screen.getByRole('dialog').querySelector('[data-body-layout]')).toHaveAttribute('data-body-layout', 'sections')
-    expect(accentOf('Overview')).toBe('overview')
-    expect(accentOf('Disks')).toBe('storage')
-    expect(accentOf('Backing Storage Info')).toBe('storage')
   })
 
   it('explains backing volumes, NAA identity and FlashCopy mappings in the VM help', async () => {
@@ -506,40 +521,45 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(screen.queryByText('No backing storage volume was resolved for this virtual machine.')).not.toBeInTheDocument()
   })
 
-  it('resizes the panel via the drag handle and keyboard', () => {
+  it('resizes the compact panel via the drag handle and keyboard', async () => {
+    const user = userEvent.setup()
     renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
     const panel = screen.getByRole('dialog')
-    expect(panel.style.getPropertyValue('--detail-drawer-width')).toBe('420px')
+    await user.click(within(panel).getByRole('button', { name: 'Compact view' }))
+    expect(panel.style.getPropertyValue('--detail-view-width')).toBe('420px')
 
     fireEvent.keyDown(screen.getByRole('separator'), { key: 'ArrowLeft' })
-    expect(panel.style.getPropertyValue('--detail-drawer-width')).toBe('436px')
+    expect(panel.style.getPropertyValue('--detail-view-width')).toBe('436px')
 
     fireEvent.mouseDown(screen.getByRole('separator'), { clientX: 500 })
     fireEvent.mouseMove(window, { clientX: 460 })
     fireEvent.mouseUp(window)
-    expect(panel.style.getPropertyValue('--detail-drawer-width')).toBe('476px')
+    expect(panel.style.getPropertyValue('--detail-view-width')).toBe('476px')
   })
 
-  it('resets to the default width after closing and reopening', () => {
+  it('reopens expanded after closing a resized compact panel', async () => {
+    const user = userEvent.setup()
     const queryClient = new QueryClient()
     const { rerender } = render(
       <QueryClientProvider client={queryClient}>
         <VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />
       </QueryClientProvider>
     )
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Compact view' }))
     fireEvent.keyDown(screen.getByRole('separator'), { key: 'ArrowLeft' })
-    expect(screen.getByRole('dialog').style.getPropertyValue('--detail-drawer-width')).toBe('436px')
 
     rerender(
       <QueryClientProvider client={queryClient}>
         <VirtualMachineDetailPanel virtualMachine={vm} open={false} onClose={vi.fn()} />
       </QueryClientProvider>
     )
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     rerender(
       <QueryClientProvider client={queryClient}>
         <VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />
       </QueryClientProvider>
     )
-    expect(screen.getByRole('dialog').style.getPropertyValue('--detail-drawer-width')).toBe('420px')
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-mode', 'expanded')
+    expect(screen.queryByRole('separator')).not.toBeInTheDocument()
   })
 })

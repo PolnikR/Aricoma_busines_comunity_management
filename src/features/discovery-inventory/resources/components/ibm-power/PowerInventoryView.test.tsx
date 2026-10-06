@@ -144,7 +144,7 @@ function openLparBackingProvider(t: ReturnType<typeof useTranslation>['t'], stor
   fireEvent.click(screen.getByText('aix2source'))
   const dialog = screen.getByRole('dialog', { name: 'IBM Power partition detail' })
   const toggle = within(dialog).getByRole('button', { name: 'Backing Storage Info' })
-  expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  expect(toggle).not.toHaveAttribute('aria-current')
   fireEvent.click(toggle)
   const card = within(dialog).getByRole('region', { name: 'aix2_source_rootvg' })
   return within(card).getByText('Backing provider', { selector: 'dt' }).nextElementSibling
@@ -185,23 +185,26 @@ describe('PowerInventoryView', () => {
 
     fireEvent.click(screen.getByText('vios1'))
     const dialog = screen.getByRole('dialog', { name: 'IBM Power partition detail' })
-    expect(within(dialog).getByRole('button', { name: 'Summary' })).toHaveAttribute('aria-expanded', 'true')
+    const navigation = within(dialog).getByRole('navigation', { name: 'Sections' })
+    expect(within(navigation).getAllByRole('button')[0]).toHaveAttribute('aria-current', 'true')
     fireEvent.click(within(dialog).getByRole('button', { name: 'IBM Power partition help' }))
     expect(within(dialog).getByRole('dialog', { name: 'What this partition view shows' })).toHaveTextContent('Processor and memory')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close help' }))
-    expect(within(dialog).getByRole('heading', { name: 'vios1' }).parentElement?.nextElementSibling).toHaveTextContent('Partition')
-    expect(within(dialog).getByText('Processor and memory')).toBeInTheDocument()
-    expect(within(dialog).getByText('Network and monitoring')).toBeInTheDocument()
-    expect(within(dialog).getByText('Storage')).toBeInTheDocument()
-    expect(within(dialog).getByText('I/O and virtualization')).toBeInTheDocument()
-    expect(within(dialog).getByText('power-uuid-1')).toBeInTheDocument()
-    expect(within(dialog).getByText('2 / 2')).toBeInTheDocument()
-    expect(within(dialog).getByText('4096 / 4096')).toBeInTheDocument()
-    expect(within(dialog).getByText('en0 · ent0')).toBeInTheDocument()
-    expect(within(dialog).getByText('hdisk1 · active')).toBeInTheDocument()
-    expect(within(dialog).getByText('NoReserve · Failover')).toBeInTheDocument()
-    expect(within(dialog).queryByText('Operating system and lifecycle')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('Partition state')).not.toBeInTheDocument()
+    expect(within(dialog).getByRole('heading', { level: 2, name: 'vios1' }).closest('header')).toHaveTextContent('Partition')
+    expect(within(navigation).getByRole('button', { name: 'Processor and memory' })).toBeInTheDocument()
+    expect(within(navigation).getByRole('button', { name: 'Network and monitoring' })).toBeInTheDocument()
+    expect(within(navigation).getByRole('button', { name: 'Storage' })).toBeInTheDocument()
+    expect(within(navigation).getByRole('button', { name: 'I/O and virtualization' })).toBeInTheDocument()
+    // One section is rendered at a time: visit each and collect its text.
+    const sectionText = within(navigation).getAllByRole('button').map((button) => {
+      fireEvent.click(button)
+      return within(dialog).getByRole('region').textContent
+    }).join(' | ')
+    for (const value of ['power-uuid-1', '2 / 2', '4096 / 4096', 'en0 · ent0', 'hdisk1 · active', 'NoReserve · Failover']) {
+      expect(sectionText).toContain(value)
+    }
+    expect(dialog).not.toHaveTextContent('Operating system and lifecycle')
+    expect(sectionText).not.toContain('Partition state')
   })
 
   it('does not render a duplicate provider filter for the selected source tab', () => {

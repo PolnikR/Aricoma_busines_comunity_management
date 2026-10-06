@@ -27,12 +27,17 @@ const secondProvider: ProviderRecord = {
   name: 'Flash 02',
 }
 
-// Opens every collapsed drawer section so all detail rows can be asserted.
-// The help "?" also reports aria-expanded, so only section toggles (h3 > button) are clicked.
-function expandAll(dialog: HTMLElement) {
-  for (const toggle of within(dialog).queryAllByRole('button', { expanded: false })) {
-    if (toggle.parentElement?.tagName === 'H3') fireEvent.click(toggle)
-  }
+// The detail shows one section at a time: visit every section and collect its text.
+function allSectionText(dialog: HTMLElement) {
+  const navigation = within(dialog).getByRole('navigation', { name: 'Sections' })
+  return within(navigation).getAllByRole('button').map((button) => {
+    fireEvent.click(button)
+    return within(dialog).getByRole('region').textContent
+  }).join(' | ')
+}
+
+function openCopyRelationships(dialog: HTMLElement) {
+  fireEvent.click(within(within(dialog).getByRole('navigation', { name: 'Sections' })).getByRole('button', { name: 'Copy relationships' }))
 }
 
 describe('FlashSystemInventoryView', () => {
@@ -90,34 +95,18 @@ describe('FlashSystemInventoryView', () => {
 
     fireEvent.click(screen.getByRole('row', { name: 'Show details for V5000_Volume1' }))
     const dialog = screen.getByRole('dialog', { name: 'FlashSystem volume detail' })
-    expect(within(dialog).getByRole('button', { name: 'Identity' })).toHaveAttribute('aria-expanded', 'true')
-    expect(within(dialog).getByRole('button', { name: 'Placement and capacity' })).toHaveAttribute('aria-expanded', 'true')
-    expect(within(dialog).getByRole('button', { name: 'Copy relationships' })).toHaveAttribute('aria-expanded', 'false')
+    expect(within(dialog).getByRole('button', { name: 'Placement and capacity' })).toHaveAttribute('aria-current', 'true')
+    expect(within(dialog).getByRole('button', { name: 'Copy relationships' })).not.toHaveAttribute('aria-current')
     fireEvent.click(within(dialog).getByRole('button', { name: 'FlashSystem volume help' }))
     expect(within(dialog).getByRole('dialog', { name: 'What this volume view shows' })).toHaveTextContent('Remote Copy')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close help' }))
-    expandAll(dialog)
-    expect(within(dialog).getByText('Placement and capacity')).toBeInTheDocument()
-    expect(within(dialog).getByText('Virtual disk UID')).toBeInTheDocument()
-    expect(within(dialog).getByText('Protocol')).toBeInTheDocument()
-    expect(within(dialog).getByText('scsi')).toBeInTheDocument()
-    expect(within(dialog).getByText('6.98 TB')).toBeInTheDocument()
-    expect(within(dialog).getByText('898 GB')).toBeInTheDocument()
-    expect(within(dialog).queryByText('Status')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('Type')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('Pool name')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('Copy count')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('FlashCopy map count')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('Host mappings')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('SCSI ID')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('Provider')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('online')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('striped')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('HOST_esx')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('flash-01')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('3 TB')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('Pool0')).not.toBeInTheDocument()
-    expect(within(dialog).queryByText('mdisk_grp_id')).not.toBeInTheDocument()
+    const text = allSectionText(dialog)
+    for (const shown of ['Placement and capacity', 'Virtual disk UID', 'Protocol', 'scsi', '6.98 TB', '898 GB']) {
+      expect(text).toContain(shown)
+    }
+    for (const hidden of ['Status', 'Type', 'Pool name', 'Copy count', 'FlashCopy map count', 'Host mappings', 'SCSI ID', 'Provider', 'online', 'striped', 'HOST_esx', 'flash-01', '3 TB', 'Pool0', 'mdisk_grp_id']) {
+      expect(text).not.toContain(hidden)
+    }
   })
 
   it('does not render a duplicate provider filter for the selected source tab', () => {
@@ -234,7 +223,7 @@ describe('FlashSystemInventoryView', () => {
 
     fireEvent.click(screen.getByRole('row', { name: 'Show details for multi' }))
     const dialog = screen.getByRole('dialog', { name: 'FlashSystem volume detail' })
-    expandAll(dialog)
+    openCopyRelationships(dialog)
     const copyLabels = within(within(dialog).getByRole('region', { name: 'Copy relationships' })).getAllByRole('term')
     expect([...copyLabels].map((label) => label.textContent)).toEqual([
       'FlashCopy ID', 'FlashCopy name', 'Consistency groups', 'Remote Copy ID', 'Remote Copy name',
@@ -248,13 +237,13 @@ describe('FlashSystemInventoryView', () => {
     expect(within(dialog).getByText('no')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('row', { name: 'Show details for single' }))
-    expandAll(screen.getByRole('dialog', { name: 'FlashSystem volume detail' }))
+    openCopyRelationships(screen.getByRole('dialog', { name: 'FlashSystem volume detail' }))
     expect(within(consistencyRow()).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['cg_dailycopying'])
 
     fireEvent.click(screen.getByRole('row', { name: 'Show details for ungrouped' }))
-    expandAll(screen.getByRole('dialog', { name: 'FlashSystem volume detail' }))
+    openCopyRelationships(screen.getByRole('dialog', { name: 'FlashSystem volume detail' }))
     expect(within(consistencyRow()).queryByRole('listitem')).not.toBeInTheDocument()
-    expect(within(consistencyRow()).getByText('-')).toBeInTheDocument()
+    expect(within(consistencyRow()).getByText('Not set')).toBeInTheDocument()
 
     expect(fetchMock).not.toHaveBeenCalled()
     vi.unstubAllGlobals()

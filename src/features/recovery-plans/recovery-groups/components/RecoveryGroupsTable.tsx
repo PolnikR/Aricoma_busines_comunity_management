@@ -515,9 +515,9 @@ export function RecoveryGroupsTable({
           </DetailViewSection>
           <DetailViewSection
             id="technical"
-            title={t('recoveryGroups.detail.technical')}
+            title={t('detailView.technical')}
             icon={ApiIcon}
-            description={t('recoveryGroups.detail.technicalDescription')}
+            description={t('detailView.technicalDescription')}
             secondary
           >
             <DetailTechnicalGroup title={t('drawer.entity.recoveryGroup')}>

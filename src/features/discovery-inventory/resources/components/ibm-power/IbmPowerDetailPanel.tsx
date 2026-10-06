@@ -1,6 +1,6 @@
-import type { ComponentProps } from 'react'
-import { DetailDrawer, DetailDrawerSection, DetailRow } from '@/shared/components/data-table'
-import { CpuIcon, GridIcon, LayersIcon, NetworkIcon, ServerIcon } from '@/shared/icons/Icons'
+import type { ComponentType, SVGProps } from 'react'
+import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { ApiIcon, CpuIcon, GridIcon, LayersIcon, NetworkIcon, ServerIcon } from '@/shared/icons/Icons'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { PowerPartitionData, PowerPartitionResource } from '../../model/discoveryTypes'
@@ -8,7 +8,7 @@ import { useVdisksByVm } from '../../hooks/useVmStorageVolumes'
 import { BackingStorageInfo } from '../BackingStorageInfo'
 import { LparRelationshipHelp } from './LparRelationshipHelp'
 
-type SectionKey = 'summary' | 'processorMemory' | 'network' | 'storage' | 'virtualIo' | 'backingStorage'
+type SectionKey = 'summary' | 'processorMemory' | 'network' | 'storage' | 'virtualIo' | 'backingStorage' | 'technical'
 type FieldKey =
   | 'partitionUuid'
   | 'logicalSerialNumber'
@@ -33,6 +33,7 @@ type FieldKey =
   | 'virtualIoSlots'
   | 'physicalIo'
   | 'sriov'
+  | 'providerId'
 
 interface IbmPowerDetailPanelProps {
   partition: PowerPartitionResource | null
@@ -44,7 +45,6 @@ interface IbmPowerDetailPanelProps {
     entity: string
     detail: string
     close: string
-    resize: string
     yes: string
     no: string
     emptyBackingStorage: string
@@ -60,25 +60,22 @@ interface IbmPowerDetailPanelProps {
   }
 }
 
-interface PartitionSectionProps extends Required<Pick<ComponentProps<typeof DetailDrawerSection>, 'accent' | 'icon'>> {
-  title: string
-  rows: { label: string; value: string }[]
+interface PartitionRow {
+  label: string
+  value: string
 }
 
-// A shared drawer section that hides rows without a value, and itself when none is left.
-function PartitionSection({ title, rows, accent, icon }: PartitionSectionProps) {
-  const visibleRows = rows.filter((row) => row.value !== '-')
-  if (visibleRows.length === 0) return null
-  return (
-    <DetailDrawerSection title={title} accent={accent} icon={icon} defaultOpen>
-      <dl>
-        {visibleRows.map((row) => (
-          <DetailRow key={row.label} label={row.label} value={row.value} />
-        ))}
-      </dl>
-    </DetailDrawerSection>
-  )
+interface PartitionSectionData {
+  id: SectionKey
+  title: string
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+  rows: PartitionRow[]
 }
+
+// Rows without a value are hidden, and a section without any row is left out. The sections
+// are rendered as direct DetailViewSection children (the DetailView composition contract),
+// not through a wrapper component.
+const visibleRows = (rows: PartitionRow[]) => rows.filter((row) => row.value !== '-')
 
 function raw(data: PowerPartitionData, key: string): unknown {
   return data[key]
@@ -140,12 +137,89 @@ export function IbmPowerDetailPanel({ partition, open, onClose, providers = [], 
     isLpar ? partition.providerId : undefined,
   )
 
+  if (!open || !partition || !data) return null
+
+  const fieldSections: PartitionSectionData[] = [
+    {
+      id: 'summary',
+      title: labels.sections.summary,
+      icon: GridIcon,
+      rows: [
+        { label: labels.fields.lastActivatedProfile, value: display(raw(data, 'LastActivatedProfile'), yes, no) },
+        { label: labels.fields.uptime, value: display(raw(data, 'Uptime'), yes, no) },
+        { label: labels.fields.bootable, value: display(raw(data, 'IsBootable'), yes, no) },
+      ],
+    },
+    {
+      id: 'processorMemory',
+      title: labels.sections.processorMemory,
+      icon: CpuIcon,
+      rows: [
+        { label: labels.fields.processors, value: combine([raw(data, 'CurrentProcessors'), raw(data, 'DesiredProcessors')], yes, no, ' / ') },
+        { label: labels.fields.processorLimits, value: combine([raw(data, 'MinimumProcessors'), raw(data, 'MaximumProcessors')], yes, no, ' – ') },
+        { label: labels.fields.processorMode, value: processorMode(data, labels) },
+        { label: labels.fields.memory, value: combine([raw(data, 'CurrentMemory'), raw(data, 'DesiredMemory')], yes, no, ' / ') },
+        { label: labels.fields.memoryLimits, value: combine([raw(data, 'MinimumMemory'), raw(data, 'MaximumMemory')], yes, no, ' – ') },
+      ],
+    },
+    {
+      id: 'network',
+      title: labels.sections.network,
+      icon: NetworkIcon,
+      rows: [
+        { label: labels.fields.interface, value: combine([raw(data, 'InterfaceName'), raw(data, 'DeviceName')], yes, no) },
+        { label: labels.fields.address, value: combine([raw(data, 'IPAddress'), raw(data, 'SubnetMask')], yes, no, ' / ') },
+        { label: labels.fields.interfaceState, value: display(raw(data, 'State'), yes, no) },
+        { label: labels.fields.monitoring, value: combine([raw(data, 'ResourceMonitoringControlState'), raw(data, 'ResourceMonitoringIPAddress')], yes, no) },
+      ],
+    },
+    {
+      id: 'storage',
+      title: labels.sections.storage,
+      icon: LayersIcon,
+      rows: [
+        { label: labels.fields.volume, value: combine([raw(data, 'VolumeName'), raw(data, 'VolumeState')], yes, no) },
+        { label: labels.fields.capacity, value: display(raw(data, 'VolumeCapacity'), yes, no) },
+        { label: labels.fields.reservation, value: combine([raw(data, 'ReservePolicy'), raw(data, 'ReservePolicyAlgorithm')], yes, no) },
+        { label: labels.fields.storageConnection, value: storageConnection(data, labels) },
+      ],
+    },
+    {
+      id: 'virtualIo',
+      title: labels.sections.virtualIo,
+      icon: ServerIcon,
+      rows: [
+        { label: labels.fields.virtualIoSlots, value: display(raw(data, 'MaximumVirtualIOSlots'), yes, no) },
+        { label: labels.fields.physicalIo, value: combine([raw(data, 'HasPhysicalIO'), raw(data, 'PhysicalLocation')], yes, no) },
+        {
+          label: labels.fields.sriov,
+          value: booleanValue(raw(data, 'SRIOVCapableSlot')) === true
+            ? combine([raw(data, 'SRIOVCapableSlot'), raw(data, 'SRIOVLogicalPortsLimit')], yes, no)
+            : display(raw(data, 'SRIOVCapableSlot'), yes, no),
+        },
+      ],
+    },
+  ]
+  // Identifiers of the partition, its HMC volume, its Fibre Channel port and its provider.
+  const technicalRows = visibleRows([
+    { label: labels.fields.partitionUuid, value: display(raw(data, 'PartitionUUID'), yes, no) },
+    { label: labels.fields.logicalSerialNumber, value: display(raw(data, 'LogicalSerialNumber'), yes, no) },
+    { label: labels.fields.volumeUniqueId, value: display(raw(data, 'VolumeUniqueID'), yes, no) },
+    ...(booleanValue(raw(data, 'IsFibreChannelBacked')) === true
+      ? [{ label: labels.fields.fibreChannelIdentity, value: combine([raw(data, 'PortName'), raw(data, 'WWPN'), raw(data, 'WWNN')], yes, no) }]
+      : []),
+    { label: labels.fields.providerId, value: display(partition.providerId, yes, no) },
+  ])
+
   return (
-    <DetailDrawer
-      open={open}
+    <DetailView
+      // Keyed by partition so each newly opened partition starts expanded on its first section.
+      key={partition.id}
+      open
       onClose={onClose}
-      title={partition?.partitionName ?? '-'}
-      meta={[labels.entity]}
+      size="xl"
+      entityLabel={labels.entity}
+      title={partition.partitionName || '-'}
       headerActions={(
         <KeyedHelpPopover helpKey="resources.power.help" sections={['processor', 'storage', 'virtualIo', 'backing']} width="wide">
           {isLpar ? (
@@ -161,102 +235,38 @@ export function IbmPowerDetailPanel({ partition, open, onClose, providers = [], 
       )}
       ariaLabel={labels.detail}
       closeLabel={labels.close}
-      resizeLabel={labels.resize}
-      resizable
-      bodyLayout="sections"
     >
-      {partition && data ? (
-        <>
-          <PartitionSection
-            title={labels.sections.summary}
-            accent="overview"
-            icon={GridIcon}
-            rows={[
-              { label: labels.fields.partitionUuid, value: display(raw(data, 'PartitionUUID'), yes, no) },
-              { label: labels.fields.logicalSerialNumber, value: display(raw(data, 'LogicalSerialNumber'), yes, no) },
-              { label: labels.fields.lastActivatedProfile, value: display(raw(data, 'LastActivatedProfile'), yes, no) },
-              { label: labels.fields.uptime, value: display(raw(data, 'Uptime'), yes, no) },
-              { label: labels.fields.bootable, value: display(raw(data, 'IsBootable'), yes, no) },
-            ]}
+      {fieldSections.map((section) => {
+        const rows = visibleRows(section.rows)
+        return rows.length > 0 ? (
+          <DetailViewSection key={section.id} id={section.id} title={section.title} icon={section.icon}>
+            <DetailFieldGroup>
+              {rows.map((row) => <DetailField key={row.label} label={row.label} value={row.value} />)}
+            </DetailFieldGroup>
+          </DetailViewSection>
+        ) : null
+      })}
+      {isLpar ? (
+        <DetailViewSection id="backingStorage" title={labels.sections.backingStorage} icon={LayersIcon}>
+          <BackingStorageInfo
+            volumes={vdisks?.volumes ?? []}
+            isLoading={vdisksLoading}
+            isError={vdisksError}
+            isFetching={vdisksFetching}
+            onRetry={() => { void refetchVdisks() }}
+            providers={providers}
+            identity="volumeIdAndUid"
+            emptyText={labels.emptyBackingStorage}
           />
-          <PartitionSection
-            title={labels.sections.processorMemory}
-            accent="infrastructure"
-            icon={CpuIcon}
-            rows={[
-              { label: labels.fields.processors, value: combine([raw(data, 'CurrentProcessors'), raw(data, 'DesiredProcessors')], yes, no, ' / ') },
-              { label: labels.fields.processorLimits, value: combine([raw(data, 'MinimumProcessors'), raw(data, 'MaximumProcessors')], yes, no, ' – ') },
-              {
-                label: labels.fields.processorMode,
-                value: processorMode(data, labels),
-              },
-              { label: labels.fields.memory, value: combine([raw(data, 'CurrentMemory'), raw(data, 'DesiredMemory')], yes, no, ' / ') },
-              { label: labels.fields.memoryLimits, value: combine([raw(data, 'MinimumMemory'), raw(data, 'MaximumMemory')], yes, no, ' – ') },
-            ]}
-          />
-          <PartitionSection
-            title={labels.sections.network}
-            accent="infrastructure"
-            icon={NetworkIcon}
-            rows={[
-              { label: labels.fields.interface, value: combine([raw(data, 'InterfaceName'), raw(data, 'DeviceName')], yes, no) },
-              { label: labels.fields.address, value: combine([raw(data, 'IPAddress'), raw(data, 'SubnetMask')], yes, no, ' / ') },
-              { label: labels.fields.interfaceState, value: display(raw(data, 'State'), yes, no) },
-              { label: labels.fields.monitoring, value: combine([raw(data, 'ResourceMonitoringControlState'), raw(data, 'ResourceMonitoringIPAddress')], yes, no) },
-            ]}
-          />
-          <PartitionSection
-            title={labels.sections.storage}
-            accent="storage"
-            icon={LayersIcon}
-            rows={[
-              { label: labels.fields.volume, value: combine([raw(data, 'VolumeName'), raw(data, 'VolumeState')], yes, no) },
-              { label: labels.fields.capacity, value: display(raw(data, 'VolumeCapacity'), yes, no) },
-              { label: labels.fields.volumeUniqueId, value: display(raw(data, 'VolumeUniqueID'), yes, no) },
-              { label: labels.fields.reservation, value: combine([raw(data, 'ReservePolicy'), raw(data, 'ReservePolicyAlgorithm')], yes, no) },
-              {
-                label: labels.fields.storageConnection,
-                value: storageConnection(data, labels),
-              },
-              ...(booleanValue(raw(data, 'IsFibreChannelBacked')) === true
-                ? [{
-                    label: labels.fields.fibreChannelIdentity,
-                    value: combine([raw(data, 'PortName'), raw(data, 'WWPN'), raw(data, 'WWNN')], yes, no),
-                  }]
-                : []),
-            ]}
-          />
-          <PartitionSection
-            title={labels.sections.virtualIo}
-            accent="infrastructure"
-            icon={ServerIcon}
-            rows={[
-              { label: labels.fields.virtualIoSlots, value: display(raw(data, 'MaximumVirtualIOSlots'), yes, no) },
-              { label: labels.fields.physicalIo, value: combine([raw(data, 'HasPhysicalIO'), raw(data, 'PhysicalLocation')], yes, no) },
-              {
-                label: labels.fields.sriov,
-                value: booleanValue(raw(data, 'SRIOVCapableSlot')) === true
-                  ? combine([raw(data, 'SRIOVCapableSlot'), raw(data, 'SRIOVLogicalPortsLimit')], yes, no)
-                  : display(raw(data, 'SRIOVCapableSlot'), yes, no),
-              },
-            ]}
-          />
-          {isLpar ? (
-            <DetailDrawerSection title={labels.sections.backingStorage} accent="storage" icon={LayersIcon} flush>
-              <BackingStorageInfo
-                volumes={vdisks?.volumes ?? []}
-                isLoading={vdisksLoading}
-                isError={vdisksError}
-                isFetching={vdisksFetching}
-                onRetry={() => { void refetchVdisks() }}
-                providers={providers}
-                identity="volumeIdAndUid"
-                emptyText={labels.emptyBackingStorage}
-              />
-            </DetailDrawerSection>
-          ) : null}
-        </>
+        </DetailViewSection>
       ) : null}
-    </DetailDrawer>
+      {technicalRows.length > 0 ? (
+        <DetailViewSection id="technical" title={labels.sections.technical} icon={ApiIcon} secondary>
+          <DetailTechnicalGroup>
+            {technicalRows.map((row) => <DetailField key={row.label} label={row.label} value={row.value} copyValue={row.value} />)}
+          </DetailTechnicalGroup>
+        </DetailViewSection>
+      ) : null}
+    </DetailView>
   )
 }
