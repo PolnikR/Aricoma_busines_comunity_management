@@ -20,6 +20,10 @@ function toAccessLogRecord(entry: AccessLogsResponseOutput['entries'][number]): 
   }
 }
 
+// Ordering contract (not documented in the OpenAPI schema): the BE currently returns the
+// requested window oldest → newest, and the FE reverses it so page 1 starts with the newest.
+// Reversing instead of sorting by timestamp keeps raw fallback entries (no timestamp) in their
+// BE-relative position. If the BE response ordering changes, revisit this assumption.
 const selectAccessLogRecords = (response: AccessLogsResponseOutput): AccessLogRecord[] =>
   [...response.entries].reverse().map(toAccessLogRecord)
 
