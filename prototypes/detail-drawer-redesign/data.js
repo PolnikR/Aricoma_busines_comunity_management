@@ -4,7 +4,7 @@
 //
 // Model:
 //   entity, icon, title, techId, statuses[{label,tone}], meta[string]
-//   facts[{label,value,hint}]                       -> primary facts
+//   facts[{label,value,hint,overview}]              -> primary facts (`overview`: no row shows it yet)
 //   sections[{id,title,accent,icon,summary,open,count,
 //             groups[{title,technical,rows[]}]       -> property rows
 //             op{...}                              -> operational block
@@ -12,6 +12,7 @@
 //             code}]                                -> raw payload
 //   groups[]                                        -> drawer without sections
 //   actions{start[],end[]}
+// `nav`: optional shorter section label for a section list.
 // Row: {label, value, long, mono, copy, secondary, badge(tone), link, external, tags[], wide}
 // `inFacts` rows are already shown in the primary facts strip; the redesign concepts skip them,
 // the Current reference still lists them like today.
@@ -107,8 +108,8 @@ window.DETAIL_OBJECTS = {
     ],
     meta: ['VMWARE-vmware-vcenter-01'],
     facts: [
-      { label: 'vCPU', value: '2' },
-      { label: 'Memory', value: '4 GB' },
+      { label: 'vCPU', value: '2', overview: true },
+      { label: 'Memory', value: '4 GB', overview: true },
       { label: 'Disks', value: '1', hint: '150 GB' },
       { label: 'Guest OS', value: 'Windows 2022', hint: 'Server, 64-bit' },
     ],
@@ -218,7 +219,7 @@ window.DETAIL_OBJECTS = {
         ],
       },
       {
-        id: 'processor', title: 'Processor and memory', accent: 'infrastructure', icon: 'cpu', summary: '4 CPU · 4 GB', open: true,
+        id: 'processor', title: 'Processor and memory', nav: 'Processor & memory', accent: 'infrastructure', icon: 'cpu', summary: '4 CPU · 4 GB', open: true,
         groups: [{
           rows: [
             { label: 'Processors (current / desired)', value: '4 / 4' },
@@ -229,7 +230,7 @@ window.DETAIL_OBJECTS = {
         }],
       },
       {
-        id: 'network', title: 'Network and monitoring', accent: 'infrastructure', icon: 'network', summary: 'RMC active',
+        id: 'network', title: 'Network and monitoring', nav: 'Network', accent: 'infrastructure', icon: 'network', summary: 'RMC active',
         groups: [{
           rows: [
             { label: 'Monitoring', value: 'Active', badge: 'success' },
@@ -254,7 +255,7 @@ window.DETAIL_OBJECTS = {
         },
       },
       {
-        id: 'io', title: 'I/O and virtualization', accent: 'infrastructure', icon: 'server', summary: '16 slots',
+        id: 'io', title: 'I/O and virtualization', nav: 'I/O', accent: 'infrastructure', icon: 'server', summary: '16 slots',
         groups: [{
           rows: [
             { label: 'Maximum virtual I/O slots', value: '16' },
@@ -274,12 +275,13 @@ window.DETAIL_OBJECTS = {
     longTitle: 'GET /recovery-plans/recovery-groups/db_and_app_production_tier2_critical_brno/inventory/volumes',
     techId: '05.10.2026 14:46:08 · test',
     longTechId: '05.10.2026 14:46:08.482 · test · req-7f3a9c2e-41d0-4b8e-9a51-2f0e7d3c9b14',
+    techLabel: 'Log entry',
     statuses: [{ label: '502 Bad Gateway', tone: 'error' }],
     meta: ['3284.8 ms'],
     facts: [
       { label: 'Status', value: '502', hint: 'Bad Gateway' },
       { label: 'Duration', value: '3.28 s', hint: '3284.8 ms' },
-      { label: 'User', value: 'test' },
+      { label: 'User', value: 'test', overview: true },
       { label: 'Method', value: 'GET' },
     ],
     sections: [
@@ -327,7 +329,7 @@ window.DETAIL_OBJECTS = {
     ],
     meta: [],
     facts: [
-      { label: 'Type', value: 'Airflow' },
+      { label: 'Type', value: 'Airflow', overview: true },
       { label: 'Endpoint', value: '10.99.99.55:22' },
       { label: 'Credential', value: 'airflow-ssh', hint: 'available' },
     ],

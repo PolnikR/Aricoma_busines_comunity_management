@@ -68,6 +68,8 @@ const state = {
   mode: params.get('mode') === 'compact' ? 'compact' : 'expanded',
   scroll: {}, // D: scrollTop per mode, restored when switching back
   focus: null, // selector focused after the next render
+  dSection: params.get('section'), // D expanded: the one rendered section
+  lastCompactSection: null, // D compact: last section the user opened, carried to expanded
 }
 const SIZES = {
   current: [['420', 'Drawer 420 px (default)'], ['560', 'Drawer 560 px'], ['760', 'Drawer 760 px']],
@@ -438,17 +440,133 @@ function renderCExpanded(d) {
 
 // ===========================================================================================
 // D · EXPANDED DEFAULT ↔ COMPACT — one detail view with two modes (conceptually a DetailView
-// with mode "expanded" | "compact"). Expanded is B's dialog; compact is C's compact drawer.
+// with mode "expanded" | "compact"). Expanded: centred dialog with a section list on the left
+// and exactly ONE section rendered on the right. Compact: C's compact drawer.
 // ===========================================================================================
+
+// Sections for the expanded mode: non-technical groups stay in their own sections, every
+// technical group moves into one "Technical" section at the end, and facts no row covers yet
+// join the first section (there is no facts strip in this mode).
+function dSections(d) {
+  const source = d.sections ?? d.groups.filter((g) => !g.technical).map((g, i) => ({
+    id: i === 0 ? 'overview' : String(g.title).toLowerCase().replace(/\W+/g, '-'),
+    title: i === 0 ? 'Overview' : g.title,
+    icon: i === 0 ? 'grid' : 'network',
+    groups: [{ ...g, title: undefined }],
+  }))
+  const all = d.sections ?? [{ title: 'Overview', groups: d.groups }]
+  const technical = all.flatMap((s) => (s.groups ?? []).filter((g) => g.technical)
+    .map((g) => ({ title: g.title === 'Technical' ? (s === all[0] ? d.entity : s.title) : g.title, rows: g.rows })))
+  if (d.techLabel && d.techId) technical.unshift({ title: 'Record', rows: [{ label: d.techLabel, value: d.techId, mono: true, copy: true }] })
+  const extra = (d.facts ?? []).filter((f) => f.overview).map((f) => ({ label: f.label, value: f.value }))
+  const out = source.map((sec, i) => {
+    if (!sec.groups) return sec
+    const groups = sec.groups.filter((g) => !g.technical)
+    if (!groups.length) return null
+    if (i === 0 && extra.length) groups[0] = { ...groups[0], rows: [...extra, ...groups[0].rows] }
+    return { ...sec, groups }
+  }).filter(Boolean)
+  if (technical.length) {
+    out.push({ id: 'technical', title: 'Technical', icon: 'code', isTechnical: true, groups: technical.length === 1 ? [{ ...technical[0], title: undefined }] : technical })
+  }
+  return out
+}
+
+// Plain label/value list: one column, fixed label width, no cards, no separators.
+function rowsD(group) {
+  return `<div class="mt-7 first:mt-0">
+    ${group.title ? `<h4 class="mb-1.5 text-xs font-semibold text-text-muted">${esc(group.title)}</h4>` : ''}
+    <dl>${group.rows.map((r) => `<div class="group/row grid grid-cols-[minmax(7.5rem,11rem)_minmax(0,1fr)] items-baseline gap-x-6 py-2 @max-[520px]/content:grid-cols-1 @max-[520px]/content:gap-y-0.5">
+      <dt class="text-[13px] leading-5 text-text-muted">${esc(r.label)}</dt>
+      <dd class="min-w-0 text-sm leading-5 text-text-primary">${value(r)}</dd>
+    </div>`).join('')}</dl>
+  </div>`
+}
+
+function operationD(op) {
+  const runId = state.long ? op.longRunId : op.runId
+  return `<div class="max-w-3xl">
+    <div class="text-[13px] text-text-muted">${esc(op.label)}</div>
+    <div class="mt-2 flex flex-wrap items-center gap-3">
+      <span class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-semibold ${TONE[op.tone]}">${icon('check', 'size-4')}${esc(op.status)}</span>
+      <span class="text-sm text-text-primary">${esc(op.when)}</span>
+    </div>
+    <div class="mt-6">${rowsD({ rows: [
+      { label: 'Duration', value: op.duration },
+      { label: 'Orchestrator', value: op.provider },
+      { label: 'Airflow run ID', value: runId, mono: true, link: true, external: true, copy: true },
+    ] })}</div>
+    <button type="button" class="${BTN.soft} mt-6 inline-flex h-9 items-center gap-1.5 text-sm">${esc(op.action)}${icon('arrow', 'size-3.5')}</button>
+  </div>`
+}
+
+function sectionContentD(sec) {
+  const heading = `<div class="mb-5 flex items-baseline gap-3">
+    <h3 id="d-section-title" class="text-base font-semibold text-text-primary">${esc(sec.title)}</h3>
+    ${(sec.table || sec.code !== undefined) && sec.summary ? `<span class="text-[13px] text-text-muted">${esc(sec.summary)}</span>` : ''}
+  </div>`
+  if (sec.op) return heading + operationD(sec.op)
+  if (sec.table) return heading + `<div class="-mx-8">${table(sec.table, { wide: true, bleed: 'px-8' })}</div>`
+  if (sec.code !== undefined) return heading + code(sec.code).replace('max-h-72 ', '')
+  const note = sec.isTechnical ? '<p class="-mt-3 mb-5 text-[13px] text-text-muted">Identifiers for support and integrations.</p>' : ''
+  return heading + note + `<div class="max-w-3xl">${sec.groups.map(rowsD).join('')}</div>`
+}
+
+function renderDExpanded(d, size) {
+  const sections = dSections(d)
+  const selected = sections.find((sec) => sec.id === state.dSection) ?? sections[0]
+  state.dSection = selected.id
+  const width = size === 'auto' ? (d.sections ? 960 : 760) : Number(size)
+  const height = d.sections ? 'h-[min(46rem,calc(94vh-var(--bar)))]' : 'h-[min(34rem,calc(94vh-var(--bar)))]'
+  const navItem = (sec) => {
+    const on = sec.id === selected.id
+    return `<button type="button" data-dsection="${sec.id}" aria-current="${on ? 'true' : 'false'}" class="flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] ${on ? 'bg-accent-soft font-semibold text-accent' : 'font-medium text-text-secondary hover:bg-surface-hover hover:text-text-primary'} ${sec.isTechnical ? '@min-[640px]/dlg:mt-auto' : ''} ${FOCUS}">
+      <span class="${on ? '' : 'text-text-subtle'}">${icon(sec.icon, 'size-4')}</span>
+      <span class="min-w-0 flex-1 leading-5">${esc(sec.nav ?? sec.title)}</span>
+      ${sec.count !== undefined ? `<span class="text-[11px] tabular-nums ${on ? '' : 'text-text-subtle'}">${sec.count}</span>` : ''}
+    </button>`
+  }
+  const compact = `<button type="button" data-mode-toggle="compact" class="${BTN.mode}" title="Show as a compact side panel">${icon('panelRight', 'size-3.5')}<span class="hidden @min-[560px]/dlg:inline">Compact view</span></button>`
+  const f = footer(d)
+  return `<div class="fixed inset-x-0 bottom-0 top-(--bar) z-40 bg-black/30" data-close aria-hidden="true"></div>
+  <div role="dialog" aria-modal="true" aria-label="${esc(d.entity)} detail" class="fixed left-1/2 top-[calc(50%+var(--bar)/2)] z-50 flex ${height} w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-lg @container/dlg" style="max-width:${width}px">
+    <header class="flex items-start gap-4 border-b border-border px-6 py-4">
+      <div class="min-w-0 flex-1">
+        <div class="text-xs font-medium text-text-muted">${esc(d.entity)}</div>
+        <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <h2 class="line-clamp-2 min-w-0 text-lg font-semibold leading-7 wrap-anywhere" title="${esc(d.title)}">${esc(d.title)}</h2>
+          <div class="flex flex-wrap items-center gap-1.5">${d.statuses.map((b) => badge(b)).join('')}</div>
+          ${d.meta[0] ? `<span class="text-xs text-text-muted">${esc(d.meta[0])}</span>` : ''}
+        </div>
+      </div>
+      <div class="flex items-center gap-1">
+        ${compact}
+        <button class="${BTN.icon}" aria-label="Help">${icon('help')}</button>
+        <button class="${BTN.icon}" data-close aria-label="Close detail">${icon('close')}</button>
+      </div>
+    </header>
+    <div class="flex min-h-0 flex-1 flex-col @min-[640px]/dlg:flex-row">
+      <nav aria-label="Sections" class="flex shrink-0 gap-1 overflow-x-auto border-b border-border px-4 py-2 [scrollbar-width:none] @min-[640px]/dlg:w-52 @min-[640px]/dlg:flex-col @min-[640px]/dlg:overflow-y-auto @min-[640px]/dlg:border-r @min-[640px]/dlg:border-b-0 @min-[640px]/dlg:px-3 @min-[640px]/dlg:py-4">
+        ${sections.map(navItem).join('')}
+      </nav>
+      <div class="custom-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto px-8 py-6 @container/content @max-[520px]/dlg:px-5" data-scroll role="region" aria-labelledby="d-section-title">
+        ${sectionContentD(selected)}
+      </div>
+    </div>
+    <footer class="flex items-center gap-3 border-t border-border px-6 py-3.5">
+      ${f ? f.start : ''}
+      <div class="ml-auto flex gap-2"><button type="button" data-close class="${BTN.outline}">Close</button>${f ? f.end : ''}</div>
+    </footer>
+  </div>`
+}
+
 function renderD(d, size) {
   if (state.mode === 'compact') {
     const expand = `<button type="button" data-mode-toggle="expanded" class="${BTN.mode}" title="Expand to the full detail view">${icon('maximize', 'size-3.5')}Expand</button>`
     // Lighter backdrop: compact mode is for keeping the list in view.
     return renderCCompact(d, 420, { expandAction: expand, backdrop: 'bg-black/15' })
   }
-  const width = size === 'auto' ? (d.sections ? 960 : 760) : Number(size)
-  const compact = `<button type="button" data-mode-toggle="compact" class="${BTN.mode}" title="Show as a compact side panel">${icon('panelRight', 'size-3.5')}<span class="hidden @min-[560px]/dlg:inline">Compact view</span></button>`
-  return renderB(d, width, { headerActions: compact, techId: true, stickyNav: true })
+  return renderDExpanded(d, size)
 }
 
 // ---------- drawer shell with a working resize handle ---------------------------------------
@@ -503,11 +621,11 @@ const NOTES = {
     'Trade-off: two layouts to maintain; the compact view intentionally hides fields behind “more fields”.',
   ],
   d: [
-    'One detail, two modes. A row click always opens the EXPANDED centred dialog (B foundation): facts, section bar, full tables, identifiers column, pinned footer.',
-    '“Compact view” in the header switches the same detail into C’s compact right drawer (420 px, resizable, lighter backdrop so the list stays visible).',
-    '“Expand”, or the “more fields / Open all … in full view” links, switch back (and jump to that section). Object, section state and per-mode scroll are kept.',
-    'Escape and the backdrop close the detail; reopening a row starts expanded again.',
-    'Size “auto”: 960 px for objects with sections, 760 px for simple objects (Platform provider) so a short record is not lost in a huge dialog.',
+    'Expanded is the default: a centred dialog with ONE navigation selection (left) and ONE content area (right) — never several sections at once.',
+    'No facts strip, no horizontal tabs, no accordions, no identifiers sidebar. Header = entity, title, status badges, one meta text.',
+    'Sections come from the object; all technical identifiers move to a final “Technical” section (mono, copy).',
+    '“Compact view” switches the same detail into the compact drawer; “Expand” / “more fields” links switch back. Object and logical section are kept.',
+    'Escape closes; reopening a row starts expanded on the first section. Arrow keys move through the section list.',
   ],
 }
 
@@ -521,6 +639,7 @@ function syncUrl() {
   if (state.expanded && state.concept === 'c') p.set('expanded', '1')
   if (state.notes) p.set('notes', '1')
   if (state.concept === 'd' && state.mode === 'compact') p.set('mode', 'compact')
+  if (state.concept === 'd' && state.mode === 'expanded' && state.dSection) p.set('section', state.dSection)
   history.replaceState(null, '', `?${p}`)
 }
 
@@ -548,7 +667,7 @@ function render() {
   const d = obj()
   document.getElementById('stage').innerHTML = page(d) + (state.open ? RENDER[state.concept](d, Number(state.size)) : '')
   const previousKey = state.renderedKey
-  state.renderedKey = `${state.concept}:${state.object}:${state.concept === 'd' ? state.mode : ''}`
+  state.renderedKey = `${state.concept}:${state.object}:${state.concept === 'd' ? `${state.mode}:${state.mode === 'expanded' ? state.dSection : ''}` : ''}`
   const scroller = document.querySelector('#stage [data-scroll]')
   // Re-rendering the same view (e.g. a section toggle) keeps its scroll; a mode switch restores
   // the position that mode had.
@@ -561,12 +680,16 @@ function render() {
 // D: switch mode without closing; keep the object and section state, restore that mode's scroll.
 function setMode(mode, sectionId) {
   state.open = true
+  state.focus = `[data-mode-toggle="${mode === 'compact' ? 'expanded' : 'compact'}"]`
+  if (mode === 'compact') {
+    // Open the matching compact section, if the compact view has one (it has no "Technical").
+    if (state.dSection && (DETAIL_OBJECTS[state.object].sections ?? []).some((x) => x.id === state.dSection)) state.sections[state.dSection] = true
+  } else {
+    state.dSection = sectionId || state.lastCompactSection || state.dSection
+  }
   state.mode = mode
   state.restoreScroll = !sectionId
-  state.focus = `[data-mode-toggle="${mode === 'compact' ? 'expanded' : 'compact'}"]`
-  if (sectionId) state.sections[sectionId] = true
   render()
-  if (sectionId) document.getElementById(`b-${sectionId}`)?.scrollIntoView({ block: 'start' })
 }
 
 document.addEventListener('click', (event) => {
@@ -578,9 +701,11 @@ document.addEventListener('click', (event) => {
     const s = (d.sections ?? []).find((x) => x.id === id)
     const current = state.sections[id] ?? (t.dataset.defaultOpen ? true : Boolean(s?.open))
     state.sections[id] = !current
+    if (state.concept === 'd' && !current) state.lastCompactSection = id
     return render()
   }
   if (t.dataset.modeToggle) return setMode(t.dataset.modeToggle)
+  if (t.dataset.dsection) { state.dSection = t.dataset.dsection; state.focus = `[data-dsection="${t.dataset.dsection}"]`; return render() }
   if (t.dataset.expand !== undefined && state.concept === 'd') { event.preventDefault(); return setMode('expanded', t.dataset.expand) }
   if (t.dataset.expand !== undefined) { event.preventDefault(); state.expanded = true; render(); if (t.dataset.expand) document.getElementById(`c-${t.dataset.expand}`)?.scrollIntoView({ block: 'start' }); return }
   if (t.dataset.collapse !== undefined) { state.expanded = false; return render() }
@@ -589,8 +714,16 @@ document.addEventListener('click', (event) => {
   if (t.dataset.copy !== undefined) { try { void navigator.clipboard?.writeText(t.dataset.copy) } catch { /* prototype */ } t.innerHTML = icon('check', 'size-3'); return }
   if (t.dataset.close !== undefined) { state.open = false; state.expanded = false; return render() }
   // Opening a detail (again) always starts expanded with default sections.
-  if (t.dataset.reopen !== undefined) { state.open = true; state.mode = 'expanded'; state.sections = {}; state.scroll = {}; return render() }
+  if (t.dataset.reopen !== undefined) { state.open = true; state.mode = 'expanded'; state.sections = {}; state.scroll = {}; state.dSection = null; state.lastCompactSection = null; return render() }
   if (t.tagName === 'A' && t.getAttribute('href') === '#') event.preventDefault()
+})
+document.addEventListener('keydown', (event) => {
+  const item = event.target.closest?.('[data-dsection]')
+  if (!item || !['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft'].includes(event.key)) return
+  const items = [...item.parentElement.querySelectorAll('[data-dsection]')]
+  const step = event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1
+  items[(items.indexOf(item) + step + items.length) % items.length].focus()
+  event.preventDefault()
 })
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && state.open) { state.open = false; state.expanded = false; render() } })
 
@@ -607,7 +740,7 @@ document.addEventListener('pointerdown', (event) => {
 })
 
 for (const [id, key] of [['concept', 'concept'], ['object', 'object'], ['size', 'size']]) {
-  document.getElementById(id).addEventListener('change', (e) => { state[key] = e.target.value; state.open = true; if (key !== 'size') { state.sections = {}; state.expanded = false; state.mode = 'expanded'; state.scroll = {} } render() })
+  document.getElementById(id).addEventListener('change', (e) => { state[key] = e.target.value; state.open = true; if (key !== 'size') { state.sections = {}; state.expanded = false; state.mode = 'expanded'; state.scroll = {}; state.dSection = null; state.lastCompactSection = null } render() })
 }
 document.getElementById('mode').addEventListener('change', (e) => { setMode(e.target.value) })
 document.getElementById('long').addEventListener('change', (e) => { state.long = e.target.checked; render() })
