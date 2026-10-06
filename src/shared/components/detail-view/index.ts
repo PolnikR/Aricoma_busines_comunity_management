@@ -1,5 +1,5 @@
 export { DetailView, DetailViewSection } from './DetailView'
-export type { DetailViewMode } from './DetailView'
+export type { DetailViewMode, DetailViewSize } from './DetailView'
 export { DetailField, DetailFieldGroup, DetailFieldLink, DetailTechnicalGroup } from './DetailField'
 export { DetailStatusBlock } from './DetailStatusBlock'
 export type { DetailStatusTone } from './DetailStatusBlock'

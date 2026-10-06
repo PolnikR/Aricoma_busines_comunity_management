@@ -6,6 +6,9 @@ import { CloseIcon, MaximizeIcon, PanelRightIcon } from '@/shared/icons/Icons'
 import { cn } from '@/shared/utils/cn'
 
 export type DetailViewMode = 'expanded' | 'compact'
+// Expanded width by content density: md ≈ 880 px (simple objects), lg ≈ 960 px (default),
+// xl ≈ 1200 px (dense, table-heavy objects). Always capped to the viewport.
+export type DetailViewSize = 'md' | 'lg' | 'xl'
 
 interface DetailViewProps {
   open: boolean
@@ -23,9 +26,13 @@ interface DetailViewProps {
   footer?: ReactNode | undefined
   // Left-hand footer group, typically the destructive action.
   footerStart?: ReactNode | undefined
+  // Expanded width; compact mode keeps its own width. Defaults to 'lg'.
+  size?: DetailViewSize | undefined
   ariaLabel: string
   closeLabel: string
-  // DetailViewSection elements (directly or in fragments). Falsy children are skipped.
+  // DetailViewSection elements, directly or inside fragments. Falsy children are skipped.
+  // Helper components belong INSIDE a section; an element that merely returns a section is
+  // not a section to DetailView (see sectionsOf).
   children: ReactNode
 }
 
@@ -77,11 +84,30 @@ export function DetailViewSection({ title, description, aside, children }: Detai
   )
 }
 
-// Sections may be passed directly or inside fragments (e.g. `cond ? <>…</> : null`).
+const EXPANDED_WIDTH: Record<DetailViewSize, string> = {
+  md: 'w-[min(55rem,calc(100vw-2rem))]',
+  lg: 'w-[min(60rem,calc(100vw-2rem))]',
+  xl: 'w-[min(75rem,calc(100vw-2rem))]',
+}
+
+// Element types already reported, so the development warning fires once per type.
+const reportedTypes = new Set<unknown>()
+
+// Section composition contract: the direct logical children of DetailView are
+// DetailViewSection elements, optionally inside fragments (e.g. `cond ? <>…</> : null`). The
+// navigation is built from their props without rendering them, so a helper component that
+// returns a DetailViewSection (e.g. `<PartitionSection/>`) is not recognised: put the helper
+// inside the section instead. Other element children are dropped with a development warning.
 function sectionsOf(children: ReactNode): ReactElement<DetailViewSectionProps>[] {
   return Children.toArray(children).flatMap((child) => {
-    if (isValidElement<{ children?: ReactNode }>(child) && child.type === Fragment) return sectionsOf(child.props.children)
-    return isValidElement(child) && child.type === DetailViewSection ? [child as ReactElement<DetailViewSectionProps>] : []
+    if (!isValidElement(child)) return []
+    if (child.type === Fragment) return sectionsOf((child.props as { children?: ReactNode }).children)
+    if (child.type === DetailViewSection) return [child as ReactElement<DetailViewSectionProps>]
+    if (import.meta.env.DEV && !reportedTypes.has(child.type)) {
+      reportedTypes.add(child.type)
+      console.warn('DetailView: children must be DetailViewSection elements (optionally in fragments); put helper components inside a section. Ignored child:', child.type)
+    }
+    return []
   })
 }
 
@@ -92,7 +118,7 @@ function sectionsOf(children: ReactNode): ReactElement<DetailViewSectionProps>[]
 // kept because both modes are one DOM tree with different frame classes. Escape, the
 // backdrop and Close close the whole detail; closing resets to expanded on the first section.
 // With a single section the navigation is omitted.
-export function DetailView({ open, onClose, title, entityLabel, statuses = [], meta, headerActions, footer, footerStart, ariaLabel, closeLabel, children }: DetailViewProps) {
+export function DetailView({ open, onClose, title, entityLabel, statuses = [], meta, headerActions, footer, footerStart, size = 'lg', ariaLabel, closeLabel, children }: DetailViewProps) {
   const { t } = useTranslation()
   const id = useId()
   const [mode, setMode] = useState<DetailViewMode>('expanded')
@@ -188,11 +214,12 @@ export function DetailView({ open, onClose, title, entityLabel, statuses = [], m
         aria-label={ariaLabel}
         tabIndex={-1}
         data-mode={mode}
+        data-size={size}
         className={cn(
           'fixed z-50 flex flex-col overflow-hidden bg-surface',
           compact
             ? 'inset-y-0 right-0 w-[min(420px,92vw)] border-l border-border shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)] lg:w-(--detail-view-width) lg:max-w-[92vw] [--detail-gutter:1.25rem]'
-            : 'top-1/2 left-1/2 h-[min(46rem,calc(100dvh-2rem))] w-[min(60rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border shadow-lg [--detail-gutter:1.25rem] sm:[--detail-gutter:2rem]',
+            : cn('top-1/2 left-1/2 h-[min(46rem,calc(100dvh-2rem))]', EXPANDED_WIDTH[size], '-translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border shadow-lg [--detail-gutter:1.25rem] sm:[--detail-gutter:2rem]'),
         )}
         style={compact ? { '--detail-view-width': `${String(width)}px` } as CSSProperties : undefined}
       >

@@ -244,3 +244,70 @@ describe('DetailView modes', () => {
     expect(within(reopened).getByRole('region', { name: 'Overview' })).toBeInTheDocument()
   })
 })
+
+describe('DetailView sizes', () => {
+  it('defaults to the lg expanded width', () => {
+    const { dialog } = renderView()
+    expect(dialog).toHaveAttribute('data-size', 'lg')
+    expect(dialog).toHaveClass('w-[min(60rem,calc(100vw-2rem))]')
+  })
+
+  it.each([
+    ['md', 'w-[min(55rem,calc(100vw-2rem))]'],
+    ['lg', 'w-[min(60rem,calc(100vw-2rem))]'],
+    ['xl', 'w-[min(75rem,calc(100vw-2rem))]'],
+  ] as const)('maps size %s to a viewport-capped expanded width', (size, widthClass) => {
+    const { dialog } = renderView({ size })
+    expect(dialog).toHaveAttribute('data-size', size)
+    expect(dialog).toHaveClass(widthClass)
+  })
+
+  it('keeps the compact width independent of the size', async () => {
+    const user = userEvent.setup()
+    const { dialog } = renderView({ size: 'xl' })
+    await user.click(within(dialog).getByRole('button', { name: 'Compact view' }))
+    expect(dialog).toHaveClass('w-[min(420px,92vw)]')
+    expect(dialog).not.toHaveClass('w-[min(75rem,calc(100vw-2rem))]')
+  })
+})
+
+describe('DetailView section composition contract', () => {
+  // A helper that returns a section is not a section: DetailView reads section props from its
+  // direct (or fragment) children without rendering them. Helpers belong inside a section.
+  function WrappedSection() {
+    return <DetailViewSection id="wrapped" title="Wrapped"><p>Wrapped content</p></DetailViewSection>
+  }
+
+  it('ignores a helper that returns a section and warns once in development', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const children = [
+      <DetailViewSection key="overview" id="overview" title="Overview"><p>Overview content</p></DetailViewSection>,
+      <WrappedSection key="wrapped" />,
+    ]
+    const { dialog, rerender } = renderView({ children })
+    rerender(
+      <DetailView open onClose={vi.fn()} title="X" ariaLabel="Recovery group detail" closeLabel="Close detail">{children}</DetailView>,
+    )
+
+    expect(within(dialog).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(within(dialog).queryByText('Wrapped content')).not.toBeInTheDocument()
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0]?.[0]).toContain('children must be DetailViewSection elements')
+    warn.mockRestore()
+  })
+
+  it('accepts helpers inside a section', () => {
+    const { dialog } = renderView({
+      children: (
+        <DetailViewSection id="storage" title="Storage">
+          <WrappedSectionContent />
+        </DetailViewSection>
+      ),
+    })
+    expect(within(dialog).getByRole('region', { name: 'Storage' })).toHaveTextContent('Backing storage info')
+  })
+
+  function WrappedSectionContent() {
+    return <p>Backing storage info</p>
+  }
+})
