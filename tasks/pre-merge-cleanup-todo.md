@@ -94,8 +94,9 @@ Width cap = `max-w-[calc(100%-2rem)]` resolves against the fixed containing bloc
 - Interactions (real CDP key/mouse input, focus emulation): focus opens with aria-owns/aria-controls;
   Tab trigger → panel → Close help; Shift+Tab back to panel; Escape closes only the help (detail stays
   open, focus on trigger); pointer down inside the detail outside the panel closes only the help.
-- Dark mode (`.dark`): all four pages at 800×900 identical geometry and interactions; screenshots checked.
-  390×844 was run in light mode for all four pages (narrow regression check).
+- Dark mode (`.dark`): all four pages at 800×900 and 390×844 give identical geometry and interactions
+  to light mode; screenshots checked. 390×844 is the narrow regression check (it also showed a 15 px
+  scrollbar here).
 
 ## Final audit and validation (Tasks 9–10)
 - `git ls-files "*DetailDrawer*" "*DetailDrawerSection*"` → none; `git grep -w DetailDrawer -- src` → only
