@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { RecoveryAppPolicyRecordOutput } from '@/generated/query/zod'
 import { RecoveryAppPoliciesTable } from './RecoveryAppPoliciesTable'
+import { detailNavigationLabels } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/recovery-app-policies/recovery-app-policies.gen', () => ({
@@ -72,9 +73,9 @@ describe('RecoveryAppPoliciesTable', () => {
     const modelCDrawer = screen.getByRole('dialog', { name: 'Recovery app policy detail' })
     const modelCHeader = within(modelCDrawer).getByRole('heading', { level: 2, name: 'Medium monthly' }).closest('header')
     expect(modelCHeader).toHaveTextContent('Recovery app policy')
-    // A simple record is one section: no section navigation, the ID in a technical group.
+    // A simple record is one section: the navigation lists only Overview, the ID in a technical group.
     expect(modelCDrawer).toHaveAttribute('data-size', 'md')
-    expect(within(modelCDrawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailNavigationLabels(modelCDrawer)).toEqual(['Overview'])
     expect(modelCHeader).not.toHaveTextContent(/[a-z0-9]+-[a-z0-9-]+$/)
     const modelCDelete = within(modelCDrawer).getByRole('button', { name: 'Delete' })
     expect(modelCDelete.closest('footer')?.children[0]).toContainElement(modelCDelete)

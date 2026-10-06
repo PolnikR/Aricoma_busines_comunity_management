@@ -197,7 +197,7 @@ describe('DetailView sections', () => {
     expect(navItem(dialog, 'Technical')).toHaveFocus()
   })
 
-  it('omits the navigation for a single section and skips falsy children', () => {
+  it('keeps the navigation for a single section and skips falsy children', () => {
     const { dialog } = renderView({
       children: [
         null,
@@ -205,7 +205,11 @@ describe('DetailView sections', () => {
         <DetailViewSection key="only" id="only" title="Details"><p>Only content</p></DetailViewSection>,
       ],
     })
-    expect(within(dialog).queryByRole('navigation')).not.toBeInTheDocument()
+    const navigation = within(dialog).getByRole('navigation', { name: 'Sections' })
+    const items = within(navigation).getAllByRole('button')
+    expect(items).toHaveLength(1)
+    expect(items[0]).toHaveTextContent('Details')
+    expect(items[0]).toHaveAttribute('aria-current', 'true')
     expect(within(dialog).getByRole('region', { name: 'Details' })).toHaveTextContent('Only content')
   })
 
@@ -299,7 +303,8 @@ describe('DetailView section composition contract', () => {
       <DetailView open onClose={vi.fn()} title="X" ariaLabel="Recovery group detail" closeLabel="Close detail">{children}</DetailView>,
     )
 
-    expect(within(dialog).queryByRole('navigation')).not.toBeInTheDocument()
+    // Only the real section is listed; the helper adds no navigation item.
+    expect(within(within(dialog).getByRole('navigation', { name: 'Sections' })).getAllByRole('button').map(item => item.textContent)).toEqual(['Overview'])
     expect(within(dialog).queryByText('Wrapped content')).not.toBeInTheDocument()
     expect(warn).toHaveBeenCalledTimes(1)
     expect(warn.mock.calls[0]?.[0]).toContain('children must be DetailViewSection elements')

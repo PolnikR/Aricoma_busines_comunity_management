@@ -6,7 +6,7 @@ import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { useDeletePlatformProvider } from '@/generated/query/platform-providers/platform-providers.gen'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { PlatformProvidersTable } from './PlatformProvidersTable'
-import { detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
+import { detailNavigationLabels, detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/platform-providers/platform-providers.gen', () => ({
@@ -139,7 +139,7 @@ describe('PlatformProvidersTable', () => {
     const smtpUrl = smtpProvider.url
     if (!smtpUrl) throw new Error('SMTP fixture URL is required')
     // One flat Overview with the original SMTP fields only, in the original order.
-    expect(within(drawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailNavigationLabels(drawer)).toEqual(['Overview'])
     expect(detailSectionsLabels(drawer)).toEqual(['Provider ID', 'Type', 'URL', 'Description', 'IP address', 'Port', 'From email', 'Disable SSL', 'Disable TLS'])
 
     const overview = openDetailSection(drawer, 'Overview')
@@ -162,8 +162,8 @@ describe('PlatformProvidersTable', () => {
     await user.click(screen.getByText('Primary Airflow'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
 
-    // Exactly one section, so DetailView shows no Connection or Technical navigation.
-    expect(within(drawer).queryByRole('navigation')).not.toBeInTheDocument()
+    // Exactly one section: the navigation lists only Overview, no Connection or Technical.
+    expect(detailNavigationLabels(drawer)).toEqual(['Overview'])
     expect(within(drawer).getAllByRole('region')).toHaveLength(1)
     expect(within(drawer).getByRole('region', { name: 'Overview' })).toBeInTheDocument()
     expect(detailSectionsLabels(drawer)).toEqual([
@@ -187,7 +187,7 @@ describe('PlatformProvidersTable', () => {
 
     await user.click(screen.getByText('ABCo API'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
-    expect(within(drawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailNavigationLabels(drawer)).toEqual(['Overview'])
     expect(detailSectionsLabels(drawer)).toEqual(['Provider ID', 'Type', 'URL', 'Description', 'Notification email', 'Logging enabled', 'JWT enabled', 'Swagger enabled'])
   })
 
@@ -205,7 +205,7 @@ describe('PlatformProvidersTable', () => {
 
     await user.click(screen.getByText('Aricoma Keycloak'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
-    expect(within(drawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailNavigationLabels(drawer)).toEqual(['Overview'])
     expect(detailSectionsLabels(drawer)).toEqual(['Provider ID', 'Type', 'URL', 'Description', 'Realm', 'Client ID', 'Credential', 'Credential status'])
   })
 

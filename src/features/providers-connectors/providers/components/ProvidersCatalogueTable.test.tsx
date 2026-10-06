@@ -15,7 +15,7 @@ const keycloakMock = vi.hoisted(() => ({
 }))
 
 vi.mock('@/config/keycloak', () => ({ keycloak: keycloakMock }))
-import { detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
+import { detailNavigationLabels, detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('react-router', async (importOriginal) => ({
@@ -287,8 +287,8 @@ describe('ProvidersCatalogueTable', () => {
     fireEvent.click(await screen.findByText('Production vCenter'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
 
-    // Exactly one section: no navigation, so no Connection, Relationships or Technical.
-    expect(within(drawer).queryByRole('navigation')).not.toBeInTheDocument()
+    // Exactly one section: the navigation lists only Overview, no Connection, Relationships or Technical.
+    expect(detailNavigationLabels(drawer)).toEqual(['Overview'])
     expect(within(drawer).getAllByRole('region')).toHaveLength(1)
     expect(within(drawer).getByRole('region', { name: 'Overview' })).toBeInTheDocument()
     for (const name of ['Connection', 'Relationships', 'Technical']) {
@@ -304,7 +304,7 @@ describe('ProvidersCatalogueTable', () => {
     fireEvent.click(screen.getByText('Backup FlashSystem'))
     const storageDrawer = screen.getByRole('dialog', { name: 'Provider detail' })
     await within(storageDrawer).findByRole('heading', { name: 'Backup FlashSystem' })
-    expect(within(storageDrawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailNavigationLabels(storageDrawer)).toEqual(['Overview'])
     expect(detailSectionsLabels(storageDrawer)).toEqual([
       'Provider ID', 'Type', 'Partner FlashSystem provider', 'Role', 'IP address', 'URL',
       'Notification email', 'Orchestrator connection ID', 'Credential', 'Credential status', 'Description',

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { PolicySetRecordOutput } from '@/generated/query/zod'
 import { PolicySetsTable } from './PolicySetsTable'
+import { detailNavigationLabels } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 const { deleteMutation } = vi.hoisted(() => ({
@@ -122,9 +123,9 @@ describe('PolicySetsTable', () => {
     const modelCDrawer = screen.getByRole('dialog', { name: 'Policy set detail' })
     const modelCHeader = within(modelCDrawer).getByRole('heading', { level: 2, name: 'Tier 2 applications' }).closest('header')
     expect(modelCHeader).toHaveTextContent('Policy set')
-    // A simple record is one section: no section navigation, the ID in a technical group.
+    // A simple record is one section: the navigation lists only Overview, the ID in a technical group.
     expect(modelCDrawer).toHaveAttribute('data-size', 'md')
-    expect(within(modelCDrawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailNavigationLabels(modelCDrawer)).toEqual(['Overview'])
     expect(modelCHeader).not.toHaveTextContent(/[a-z0-9]+-[a-z0-9-]+$/)
     const modelCDelete = within(modelCDrawer).getByRole('button', { name: 'Delete' })
     expect(modelCDelete.closest('footer')?.children[0]).toContainElement(modelCDelete)

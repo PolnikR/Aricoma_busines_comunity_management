@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { SnapshotPolicyRecordOutput } from '@/generated/query/zod'
 import { SnapshotPoliciesTable } from './SnapshotPoliciesTable'
+import { detailNavigationLabels } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/snapshot-policies/snapshot-policies.gen', () => ({
@@ -85,9 +86,9 @@ describe('SnapshotPoliciesTable', () => {
     const modelCDrawer = screen.getByRole('dialog', { name: 'Snapshot policy detail' })
     const modelCHeader = within(modelCDrawer).getByRole('heading', { level: 2, name: 'Critical — 15 min' }).closest('header')
     expect(modelCHeader).toHaveTextContent('Snapshot policy')
-    // A simple record is one section: no section navigation, the ID in a technical group.
+    // A simple record is one section: the navigation lists only Overview, the ID in a technical group.
     expect(modelCDrawer).toHaveAttribute('data-size', 'md')
-    expect(within(modelCDrawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailNavigationLabels(modelCDrawer)).toEqual(['Overview'])
     expect(modelCHeader).not.toHaveTextContent(/[a-z0-9]+-[a-z0-9-]+$/)
     const modelCDelete = within(modelCDrawer).getByRole('button', { name: 'Delete' })
     expect(modelCDelete.closest('footer')?.children[0]).toContainElement(modelCDelete)

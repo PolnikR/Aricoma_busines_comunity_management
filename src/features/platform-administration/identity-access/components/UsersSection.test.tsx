@@ -5,7 +5,7 @@ import { UsersSection } from './UsersSection'
 import { useGetUsers } from '@/generated/query/identity-access/identity-access.gen'
 import type { UserRecord } from '@/generated/query/zod'
 
-import { detailSectionsFields, detailSectionsLabels } from '@/test-utils/detailView'
+import { detailNavigationLabels, detailSectionsFields, detailSectionsLabels } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/identity-access/identity-access.gen', () => ({ useGetUsers: vi.fn() }))
@@ -145,7 +145,7 @@ describe('UsersSection', () => {
     expect(header).toHaveTextContent('Active')
     expect(header).toHaveTextContent('alice')
     // One flat Overview in the original drawer order: ID, roles and status included.
-    expect(within(dialog).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailNavigationLabels(dialog)).toEqual(['Overview'])
     expect(within(dialog).getAllByRole('region')).toHaveLength(1)
     expect(within(dialog).getByRole('region', { name: 'Overview' })).toBeInTheDocument()
     expect(detailSectionsLabels(dialog)).toEqual(['ID', 'User', 'Username', 'Email', 'Email verified', 'Created at', 'Roles', 'Status', 'Active session start'])

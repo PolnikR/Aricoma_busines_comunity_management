@@ -1,6 +1,6 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
+import { detailNavigationLabels, detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
 import { AccessLogDetailView } from './AccessLogDetailView'
 import type { AccessLogRecord } from '../model/accessLogTypes'
 
@@ -44,10 +44,10 @@ describe('AccessLogDetailView', () => {
     expect(openDetailSection(dialog(), 'Response body')).toHaveTextContent('"vdisks": {}')
   })
 
-  it('shows a raw entry as a single section without navigation', () => {
+  it('shows a raw entry as a single section, still listed in the navigation', () => {
     render(<AccessLogDetailView record={{ kind: 'raw', raw: 'unparsed line' }} onClose={vi.fn()} />)
 
-    expect(within(dialog()).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailNavigationLabels(dialog())).toEqual(['Raw entry'])
     expect(within(dialog()).getByRole('region', { name: 'Raw entry' })).toHaveTextContent('unparsed line')
   })
 })

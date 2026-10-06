@@ -116,8 +116,8 @@ function sectionsOf(children: ReactNode): ReactElement<DetailViewSectionProps>[]
 // Shared detail surface that replaces DetailDrawer: a large centred dialog with a short
 // header, a section list (vertical from `sm`, wrapping above the content on narrow screens)
 // and exactly one section's content, with pinned footer actions. Escape, the backdrop and
-// Close close the whole detail; closing resets to the first section. With a single section
-// the navigation is omitted.
+// Close close the whole detail; closing resets to the first section. The navigation is shown
+// for any number of sections, one included, so every detail has the same shell.
 export function DetailView({ open, onClose, title, entityLabel, statuses = [], meta, headerActions, footer, footerStart, size = 'lg', ariaLabel, closeLabel, children }: DetailViewProps) {
   const { t } = useTranslation()
   const id = useId()
@@ -135,7 +135,7 @@ export function DetailView({ open, onClose, title, entityLabel, statuses = [], m
   const sections = sectionsOf(children)
   const ordered = [...sections.filter(section => !section.props.secondary), ...sections.filter(section => section.props.secondary)]
   const active = sections.find(section => section.props.id === activeId) ?? sections[0]
-  const showNavigation = sections.length > 1
+  const showNavigation = sections.length > 0
   const headingId = `${id}-${active?.props.id ?? 'section'}-title`
   const statusItems = statuses.filter(Boolean)
 

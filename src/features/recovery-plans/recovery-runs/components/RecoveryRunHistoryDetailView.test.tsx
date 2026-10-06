@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryRunHistoryDetailView } from './RecoveryRunHistoryDetailView'
 import { useAppRunHistory } from '../hooks/useAppRunHistory'
 import type { RecoveryRunHistoryEntity } from './RecoveryRunHistoryDetailView'
+import { detailNavigationLabels } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('../hooks/useAppRunHistory', () => ({
@@ -61,9 +62,9 @@ describe('RecoveryRunHistoryDetailView', () => {
     const header = within(drawer).getByRole('heading', { level: 2, name: 'Finance Recovery' }).closest('header')
     expect(header).toContainElement(screen.getByRole('link', { name: /View in Airflow/ }))
     expect(header).toHaveTextContent('Run history')
-    // One section, so no navigation; the run list sits in the Runs region.
+    // One section, listed alone in the navigation; the run list sits in the Runs region.
     expect(drawer).toHaveAttribute('data-size', 'md')
-    expect(within(drawer).queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument()
+    expect(detailNavigationLabels(drawer)).toEqual(['Runs'])
     expect(within(drawer).getByRole('region', { name: 'Runs' })).toHaveTextContent('success')
     fireEvent.click(within(drawer).getByRole('button', { name: 'Run history help' }))
     expect(screen.getByRole('dialog', { name: 'Where the run history comes from' })).toHaveTextContent('Source')

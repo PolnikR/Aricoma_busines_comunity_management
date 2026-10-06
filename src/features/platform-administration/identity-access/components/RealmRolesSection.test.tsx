@@ -6,7 +6,7 @@ import { useGetRolesPermissions } from '@/generated/query/identity-access/identi
 import { useUsers } from '../hooks/useUsers'
 import type { IdentityRoleRecord } from '../model/rolesPermissionsTypes'
 
-import { detailSectionsFields, detailSectionsLabels } from '@/test-utils/detailView'
+import { detailNavigationLabels, detailSectionsFields, detailSectionsLabels } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/identity-access/identity-access.gen', () => ({ useGetRolesPermissions: vi.fn() }))
@@ -147,7 +147,7 @@ describe('RealmRolesSection', () => {
     expect(header).not.toHaveTextContent('abco-api')
     // One flat Overview in the original drawer order; permissions, users and client ID included.
     const dialog = screen.getByRole('dialog', { name: 'Application role detail' })
-    expect(within(dialog).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailNavigationLabels(dialog)).toEqual(['Overview'])
     expect(within(dialog).getAllByRole('region')).toHaveLength(1)
     expect(within(dialog).getByRole('region', { name: 'Overview' })).toBeInTheDocument()
     expect(detailSectionsLabels(dialog)).toEqual(['Role name', 'Description', 'Client ID', 'Users count', 'Permissions', 'Users in role'])

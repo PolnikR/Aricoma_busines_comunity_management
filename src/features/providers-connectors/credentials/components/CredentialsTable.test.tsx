@@ -6,7 +6,7 @@ import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { CredentialsTable } from './CredentialsTable'
 import { CredentialsPage } from '../pages/CredentialsPage'
 
-import { detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
+import { detailNavigationLabels, detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('./CredentialCreateModal', () => ({
@@ -127,8 +127,8 @@ describe('CredentialsTable', () => {
     const drawer = screen.getByRole('dialog', { name: 'Credential details' })
     expect(drawer).toHaveAttribute('data-size', 'md')
     expect(within(drawer).getByRole('heading', { level: 2 }).closest('header')).toHaveTextContent('Credential')
-    // Exactly one section, so no navigation and no Technical section.
-    expect(within(drawer).queryByRole('navigation')).not.toBeInTheDocument()
+    // Exactly one section: the navigation lists only Overview, no Technical section.
+    expect(detailNavigationLabels(drawer)).toEqual(['Overview'])
     expect(within(drawer).getAllByRole('region')).toHaveLength(1)
     expect(within(drawer).queryByRole('region', { name: 'Technical' })).not.toBeInTheDocument()
     const overview = openDetailSection(drawer, 'Overview')

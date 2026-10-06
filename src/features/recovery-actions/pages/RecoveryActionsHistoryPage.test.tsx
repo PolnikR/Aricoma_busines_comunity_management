@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { LanguageProvider } from '@/contexts/LanguageProvider'
 import { formatDateTime } from '@/shared/utils/dateTime'
 import { RecoveryActionsHistoryPage } from './RecoveryActionsHistoryPage'
+import { detailNavigationLabels } from '@/test-utils/detailView'
 
 describe('RecoveryActionsHistoryPage', () => {
   it('opens a recovery test in a single-section DetailView', async () => {
@@ -24,7 +25,7 @@ describe('RecoveryActionsHistoryPage', () => {
     const drawer = screen.getByRole('dialog', { name: 'Recovery test details' })
     const header = within(drawer).getByRole('heading', { level: 2, name: 'Customer Portal' }).closest('header')
     expect(drawer).toHaveAttribute('data-size', 'md')
-    expect(within(drawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailNavigationLabels(drawer)).toEqual(['Overview'])
     expect(header).toHaveTextContent('Recovery test')
     expect(header).toHaveTextContent('Passed')
     expect(header).toHaveTextContent(formatDateTime('2026-07-31T14:30:00+02:00', { language: 'en' }))

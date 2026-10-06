@@ -5,7 +5,7 @@ import { ClientsSection } from './ClientsSection'
 import { useGetIdentityClientClientUuid, useGetIdentityClients } from '@/generated/query/identity-access/identity-access.gen'
 import type { IdentityClient } from '@/generated/query/zod'
 
-import { detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
+import { detailNavigationLabels, detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/identity-access/identity-access.gen', () => ({
@@ -202,7 +202,7 @@ describe('ClientsSection', () => {
     expect(header).toHaveTextContent('Client')
     expect(header).toHaveTextContent('Enabled')
     // One flat Overview in the original drawer order: IDs, status and roles included.
-    expect(drawer.queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailNavigationLabels(drawer.element)).toEqual(['Overview'])
     expect(drawer.getAllByRole('region')).toHaveLength(1)
     expect(drawer.getByRole('region', { name: 'Overview' })).toBeInTheDocument()
     expect(detailSectionsLabels(drawer.element)).toEqual(['ID', 'Client ID', 'Display name', 'Protocol', 'Status', 'Client type', 'Roles'])
@@ -246,7 +246,7 @@ describe('ClientsSection', () => {
 
     const drawer = await openClient('abco-be')
     expect(drawer.getByLabelText('Loading client detail')).toHaveAttribute('aria-busy', 'true')
-    expect(drawer.queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailNavigationLabels(drawer.element)).toEqual(['Overview'])
     expect(drawer.getByText('Protocol')).toBeInTheDocument()
     expect(drawer.queryByText('Root URL')).not.toBeInTheDocument()
     expect(drawer.queryByText('Home URL')).not.toBeInTheDocument()

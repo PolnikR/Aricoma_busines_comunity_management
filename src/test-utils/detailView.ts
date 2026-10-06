@@ -7,6 +7,17 @@ function navigation(dialog: HTMLElement) {
   return within(dialog).queryByRole('navigation', { name: 'Sections' })
 }
 
+// Labels of the section navigation items, in order. Counts next to a label are aria-hidden
+// and left out, so the result matches the items' accessible names.
+export function detailNavigationLabels(dialog: HTMLElement) {
+  const nav = within(dialog).getByRole('navigation', { name: 'Sections' })
+  return within(nav).getAllByRole('button').map((button) => {
+    const visible = button.cloneNode(true) as HTMLElement
+    visible.querySelectorAll('[aria-hidden="true"]').forEach((hidden) => { hidden.remove() })
+    return visible.textContent
+  })
+}
+
 // Opens a section by its navigation label and returns its region.
 export function openDetailSection(dialog: HTMLElement, name: string) {
   const nav = navigation(dialog)

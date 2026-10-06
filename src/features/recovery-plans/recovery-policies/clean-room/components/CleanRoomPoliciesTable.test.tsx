@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { CleanRoomPolicyRecordOutput } from '@/generated/query/zod'
 import { CleanRoomPoliciesTable } from './CleanRoomPoliciesTable'
+import { detailNavigationLabels } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => ({
@@ -73,9 +74,9 @@ describe('CleanRoomPoliciesTable', () => {
     const modelCDrawer = screen.getByRole('dialog', { name: 'Clean room policy detail' })
     const modelCHeader = within(modelCDrawer).getByRole('heading', { level: 2, name: 'Enforce Clean Target' }).closest('header')
     expect(modelCHeader).toHaveTextContent('Clean room policy')
-    // A simple record is one section: no section navigation, the ID in a technical group.
+    // A simple record is one section: the navigation lists only Overview, the ID in a technical group.
     expect(modelCDrawer).toHaveAttribute('data-size', 'md')
-    expect(within(modelCDrawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailNavigationLabels(modelCDrawer)).toEqual(['Overview'])
     expect(modelCHeader).not.toHaveTextContent(/[a-z0-9]+-[a-z0-9-]+$/)
     const modelCDelete = within(modelCDrawer).getByRole('button', { name: 'Delete' })
     expect(modelCDelete.closest('footer')?.children[0]).toContainElement(modelCDelete)
