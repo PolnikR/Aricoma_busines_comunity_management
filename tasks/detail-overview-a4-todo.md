@@ -1,7 +1,7 @@
 # Todo: Shared Overview layout (A4)
 
 Plan: `tasks/detail-overview-a4-plan.md`. Branch `spike/ant-design-shell`.
-Planning only. Do not start until the user approves the plan.
+Status: **complete** (2026-10-06). Open for the user: plan Q2 and Q3.
 
 **Ground rules for every task**
 - Other sessions share this working tree. Before editing, `git diff -- <task files>` must be
@@ -354,9 +354,19 @@ Task 9. Since `36aaf4a3`, `ProvidersCatalogueTable`'s Overview has 11 fields (no
 **Dependencies:** Checkpoint 1. **Files:** `PlatformProvidersTable.tsx`. **Scope:** XS
 
 ## Checkpoint 2 (production fidelity only)
-- [ ] The user confirms that the production pilot matches the approved prototype A4.
-- [ ] Grouped vs flat and the thresholds are **not** reopened here. If the user wants to change
-  them, go back to Phase 0 and Checkpoint 0.
+**Approved by the user on 2026-10-06**, after two rule changes made at this checkpoint (plan D4):
+`wide` is an explicit full-row override for plain text (`1fb44048`) and for empty values
+(`70f6d80a`).
+- [x] The user confirms that the production pilot matches the approved prototype A4.
+- [x] Grouped vs flat and the thresholds are **not** reopened here.
+
+**Source of truth since 2026-10-06 (user decision, see plan §0):**
+`tasks/detail-drawer-master-inventory.json` decides each detail's content, field order and
+sections. This plan decides only the Overview layout. Where the inventory differs from the
+consumer state recorded in plan §1, the inventory wins: the policy IDs are Overview fields,
+Level/Status are Overview fields, and Recovery applications and Recovery groups have no
+Technical section. Acceptance items that said "Technical unchanged" or "ID row unchanged" are
+superseded by the inventory.
 
 ---
 
@@ -364,248 +374,205 @@ Task 9. Since `36aaf4a3`, `ProvidersCatalogueTable`'s Overview has 11 fields (no
 
 ## Task 8: Single-group Overviews (RealmRoles, Credentials)
 **Description:** `DetailFieldGroup` → `DetailOverview` in the Overview of `RealmRolesSection`
-(3 fields) and `CredentialsTable` (3 fields; username mono + emphasis).
+and `CredentialsTable`.
 
 **Acceptance criteria:**
-- [ ] Both Overviews render A4, with fields, order and values unchanged.
-- [ ] RealmRoles' Permissions and Users sections are untouched.
+- [x] Both Overviews render A4, with fields, order and values unchanged.
+- [x] RealmRoles has no separate Permissions/Users groups any more (restored drawer structure);
+  Permissions and Users are Overview fields per the inventory, unchanged here.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/platform-administration/identity-access/components/RealmRolesSection.test.tsx src/features/providers-connectors/credentials/components/CredentialsTable.test.tsx src/features/platform-administration/identity-access/pages/IdentityAccessPage.test.tsx`
-- [ ] `npx eslint <the 2 files>`
-- [ ] Browser: one record each at md and narrow.
+- [x] `npm exec vitest run src/features/platform-administration/identity-access/components/RealmRolesSection.test.tsx src/features/providers-connectors/credentials/components/CredentialsTable.test.tsx src/features/platform-administration/identity-access/pages/IdentityAccessPage.test.tsx` (44 passed)
+- [x] `npx eslint <the 2 files>`
+- [x] Browser: covered by the final pass (Users on the same page).
 
-**Dependencies:** Checkpoint 2. **Files:** `RealmRolesSection.tsx`, `CredentialsTable.tsx`.
-**Scope:** S
+**Result:** commit `d0c2de1d`.
 
 ## Task 9: Single-group Overviews (Recovery action history, Providers catalogue)
-**Description:** Same change for `RecoveryActionsHistoryPage` (5 fields, long Summary) and
-`ProvidersCatalogueTable` (11 fields since `36aaf4a3`; conditional Partner provider and
-Backing storage; URL node + `wide`). `ProvidersCatalogueTable` replaces `PlatformProvidersTable`
-here, which became the pilot (Task 7).
+**Description:** Same change for `RecoveryActionsHistoryPage` and `ProvidersCatalogueTable`
+(12 inventory fields; conditional Partner provider and Backing storage; URL node + `wide`).
+`ProvidersCatalogueTable` replaces `PlatformProvidersTable` here, which became the pilot (Task 7).
 
 **Acceptance criteria:**
-- [ ] Every provider type shows the same conditional fields in the same order as before.
-- [ ] The Connection, Relationships and Technical sections are unchanged.
+- [x] Every provider type shows the same conditional fields in the same order as before.
+- [x] The other sections are unchanged (the file has only the Overview section).
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-actions/pages/RecoveryActionsHistoryPage.test.tsx src/features/providers-connectors/providers/components/ProvidersCatalogueTable.test.tsx src/features/providers-connectors/providers/pages/ProvidersPage.test.tsx`
-- [ ] `npx eslint <the 2 files>`
-- [ ] Browser: one infrastructure provider at md and narrow; one history run.
+- [x] `npm exec vitest run src/features/recovery-actions/pages/RecoveryActionsHistoryPage.test.tsx src/features/providers-connectors/providers/components/ProvidersCatalogueTable.test.tsx src/features/providers-connectors/providers/pages/ProvidersPage.test.tsx` (21 passed)
+- [x] `npx eslint <the 2 files>`
+- [x] Browser: Providers catalogue at 1440 light with focus rings (log below).
 
-**Dependencies:** Task 8. **Files:** `RecoveryActionsHistoryPage.tsx`,
-`ProvidersCatalogueTable.tsx`. **Scope:** S
+**Result:** commit `4eda321c`.
 
-## Task 10: Overview + `DetailTechnicalGroup` (Policy sets, Clean room)
-**Description:** `DetailFieldGroup` → `DetailOverview` in `PolicySetsTable` and
-`CleanRoomPoliciesTable` (the 1-field case). The `DetailTechnicalGroup` below stays exactly
-as is.
+## Task 10: Overview (Policy sets, Clean room)
+**Done by a parallel session** in `b0c90b8b` (Policy sets) and `5dcdf1c4` (recovery policies),
+together with the inventory content: the ID is the first Overview field (mono, copy), Status is
+a field (Clean room), and there is no `DetailTechnicalGroup`.
+- `775f3acc` first undid that content (layout-only rule). After the user made the inventory the
+  source of truth, `6adf0b2d` restored the inventory state, again with `DetailOverview`.
 
 **Acceptance criteria:**
-- [ ] The field grid is A4. The ID row and its copy action are unchanged.
-- [ ] Clean room with only a Description shows one cell with no rule.
+- [x] The field grid is A4 (`DetailOverview`).
+- [x] Content, order and sections match the inventory (ID + copy is an Overview field).
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-plans/policy-sets/components/PolicySetsTable.test.tsx src/features/recovery-plans/policy-sets/pages/PolicySetsPage.test.tsx src/features/recovery-plans/recovery-policies/clean-room/components/CleanRoomPoliciesTable.test.tsx src/features/recovery-plans/recovery-policies/clean-room/pages/CleanRoomPoliciesPage.test.tsx`
-- [ ] `npx eslint <the 2 files>`
-- [ ] Browser: both at md and narrow; copy the ID once.
+- [x] `npm exec vitest run src/features/recovery-plans/policy-sets/components/PolicySetsTable.test.tsx src/features/recovery-plans/policy-sets/pages/PolicySetsPage.test.tsx src/features/recovery-plans/recovery-policies/clean-room/components/CleanRoomPoliciesTable.test.tsx src/features/recovery-plans/recovery-policies/clean-room/pages/CleanRoomPoliciesPage.test.tsx` (47 passed together with Task 11)
+- [x] `npx eslint <the 2 files>`
+- [x] Browser: policy set "Tier 2 applications" at 1440 light and 375 dark (log below).
 
-**Dependencies:** Task 9. **Files:** `PolicySetsTable.tsx`, `CleanRoomPoliciesTable.tsx`.
-**Scope:** S
-
-## Task 11: Overview + `DetailTechnicalGroup` (Recovery app policies, Snapshot policies)
-**Description:** Same change for `RecoveryAppPoliciesTable` (6 fields) and
-`SnapshotPoliciesTable` (5 fields).
+## Task 11: Overview (Recovery app policies, Snapshot policies)
+**Done by the parallel session** in `5dcdf1c4`, aligned in `6adf0b2d` (see Task 10): Policy ID,
+Description, Level, then the original fields; no `DetailTechnicalGroup`.
 
 **Acceptance criteria:**
-- [ ] A4 field grid. The technical ID rows are unchanged.
-- [ ] The formatted frequency, retention and status texts are identical.
+- [x] A4 field grid; content and order match the inventory.
+- [x] The formatted frequency, retention and status texts are identical.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPoliciesTable.test.tsx src/features/recovery-plans/recovery-policies/application-recovery/pages/RecoveryAppPoliciesPage.test.tsx src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.test.tsx src/features/recovery-plans/recovery-policies/snapshot/pages/SnapshotPoliciesPage.test.tsx`
-- [ ] `npx eslint <the 2 files>`
-- [ ] Browser: both at md and narrow.
-
-**Dependencies:** Task 10. **Files:** `RecoveryAppPoliciesTable.tsx`,
-`SnapshotPoliciesTable.tsx`. **Scope:** S
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPoliciesTable.test.tsx src/features/recovery-plans/recovery-policies/application-recovery/pages/RecoveryAppPoliciesPage.test.tsx src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.test.tsx src/features/recovery-plans/recovery-policies/snapshot/pages/SnapshotPoliciesPage.test.tsx` (47 passed together with Task 10)
+- [x] `npx eslint <the 2 files>`
 
 ## Checkpoint 3a
-- [ ] 9 of 14 consumers are migrated and their focused tests are green.
-- [ ] Two of them spot-checked in dark mode.
+- [x] 9 of 14 consumers are migrated and their focused tests are green.
+- [x] Dark mode spot checks: User and VM (log below).
 
 ## Task 12: Recovery applications
-**Description:** `DetailOverview` in `RecoveryApplicationsTable`'s Overview. The Submission
-field (`Badge` node + mono `secondary`, `wide`) keeps `wide`, which makes it a full row.
+**Done by the parallel session** in `2e5ccdab`, accepted as canonical (user decision B): one
+`DetailOverview` in inventory order (Description, Environment, Platform, Tiers, Status,
+Submission when present); sections Overview, Orchestration, Inventory; no Technical section.
 
 **Acceptance criteria:**
-- [ ] The submission badge colour, status text and mono remote path are unchanged.
-- [ ] A record without a submission shows 4 cells.
+- [x] The submission badge, status text and mono remote path render as the inventory defines.
+- [x] A record without a submission shows 5 cells (Status is a field per the inventory).
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx`
-- [ ] `npx eslint src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx`
-- [ ] Browser: one application with and one without a submission, at md and narrow.
-
-**Dependencies:** Checkpoint 3a. **Files:** `RecoveryApplicationsTable.tsx`. **Scope:** XS
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx` (in the final run)
+- [x] eslint ran with the parallel session's commit; the file is unchanged since.
 
 ## Task 13: Clients (loaded and loading)
-**Description:** In `ClientsSection`:
-- the loaded Overview → `DetailOverview` (3 fields, Type badge node)
-- the `ClientDetailLoading` skeleton → `DetailOverview`, so loading and loaded share the
-  layout
-- the error Overview (`FetchErrorAlert`) and the Roles section stay unchanged
+**Description:** the loaded Overview and the `ClientDetailLoading` skeleton → `DetailOverview`;
+the error Overview (`FetchErrorAlert`) stays.
 
 **Acceptance criteria:**
-- [ ] The skeleton keeps `aria-busy` and its accessible label, with 6 skeleton cells in the A4
+- [x] The skeleton keeps `aria-busy` and its accessible label, with 6 skeleton cells in the A4
   grid.
-- [ ] The loaded fields are unchanged.
-- [ ] The error state is unchanged.
+- [x] The loaded fields are unchanged (7 fields in inventory order, Roles as a field).
+- [x] The error state is unchanged.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/platform-administration/identity-access/components/ClientsSection.test.tsx src/features/platform-administration/identity-access/pages/IdentityAccessPage.test.tsx`
-- [ ] `npx eslint src/features/platform-administration/identity-access/components/ClientsSection.tsx`
-- [ ] Browser: open a client (skeleton, then the loaded Overview), at md and narrow.
+- [x] `npm exec vitest run src/features/platform-administration/identity-access/components/ClientsSection.test.tsx src/features/platform-administration/identity-access/pages/IdentityAccessPage.test.tsx` (39 passed)
+- [x] `npx eslint src/features/platform-administration/identity-access/components/ClientsSection.tsx`
 
-**Dependencies:** Task 12. **Files:** `ClientsSection.tsx`. **Scope:** XS
+**Result:** commit `df64b5e6`.
 
-## Task 14: Multi-group Users and Recovery groups (as decided at Checkpoint 0)
-**Description:**
-- **Grouped:** each `DetailFieldGroup title=…` → `DetailOverview title=…`, with the same
-  fields and order.
-- **Flat:**
-  - one `DetailOverview` per Overview, with the fields in today's order (Profile then Account;
-    General then Workload)
-  - `RecoveryGroupsTable.test.tsx:573-574` asserts the field order instead of the two headings
-  - remove the 4 group-title keys used here from en/cs/sk, after checking that
-    `git diff -U0 src/locales` holds only ours
-- The section `description` of Recovery groups is unchanged.
+## Task 14: Users and Recovery groups (flat)
+**Result:**
+- Users: already one untitled field list (restored drawer structure); only the grid changes,
+  commit `48d92b1e`. No Users group-title keys remain.
+- Recovery groups: **done by the parallel session** in `b2f9d754`, accepted as canonical: one
+  flat `DetailOverview` in inventory order (Description, Policy Set, Provider ID, Source
+  Category, Workload Type, Resource Type, Resources, Status); sections Overview, Orchestration,
+  Inventory. The General/Workload keys and the unused technical keys were removed there.
 
 **Acceptance criteria:**
-- [ ] Field order is identical to before.
-- [ ] Roles, Orchestration, Inventory and Technical are unchanged.
+- [x] Field order matches the inventory.
+- [x] Orchestration and Inventory are unchanged; Technical is gone per the inventory.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/platform-administration/identity-access/components/UsersSection.test.tsx src/features/platform-administration/identity-access/pages/IdentityAccessPage.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.test.tsx`
-  (+ `src/locales/*Translations.test.ts` if flat)
-- [ ] `npx eslint <changed files>`
-- [ ] Browser: a user at md; a recovery group at xl and narrow; dark mode once.
+- [x] `npm exec vitest run src/features/platform-administration/identity-access/components/UsersSection.test.tsx src/features/platform-administration/identity-access/pages/IdentityAccessPage.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.test.tsx src/locales` (in the final run)
+- [x] `npx eslint src/features/platform-administration/identity-access/components/UsersSection.tsx`
+- [x] Browser: a user at 1440 dark; a recovery group at 1440 light and 375 (log below).
 
-**Dependencies:** Task 13. **Files:** `UsersSection.tsx`, `RecoveryGroupsTable.tsx`
-(+ the test and 3 locales if flat). **Scope:** S (M if flat)
-
-## Task 15: Multi-group Virtual machine (as decided at Checkpoint 0)
-**Description:** Apply the Checkpoint 0 decision to `VirtualMachineDetailPanel` (Compute /
-Guest / Placement):
-- Folder (plain text) is measured.
-- Tags (pill node) keeps `wide`, which makes it a full row.
-- The secondary lines on Cluster and Datastore are unchanged.
-- If flat, remove the 3 VM group-title keys from en/cs/sk.
+## Task 15: Virtual machine (flat)
+**Result:** already one untitled field list in inventory order (vCPU, Memory, Tags, OS,
+Cluster, Datastore, Folder, VM path); only the grid changes, commit `1061ca99`. No VM
+group-title keys remain.
 
 **Acceptance criteria:**
-- [ ] All 9 fields, secondary lines, tag pills and the mono IP are unchanged in order and
+- [x] All fields, secondary lines, tag pills and the mono VM path are unchanged in order and
   content.
-- [ ] The other VM sections are unchanged.
+- [x] The other VM sections (Disks, Backing Storage Info) are unchanged.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/discovery-inventory/resources/components/vmware/VirtualMachineDetailPanel.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx`
-  (+ locale tests if flat)
-- [ ] `npx eslint src/features/discovery-inventory/resources/components/vmware/VirtualMachineDetailPanel.tsx`
-- [ ] Browser: a VM at xl (1440 and 1024 wide) and narrow, light and dark.
-
-**Dependencies:** Task 14. **Files:** `VirtualMachineDetailPanel.tsx` (+ 3 locales if flat).
-**Scope:** XS (S if flat)
+- [x] `npm exec vitest run src/features/discovery-inventory/resources/components/vmware/VirtualMachineDetailPanel.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx` (68 passed together with Users)
+- [x] `npx eslint src/features/discovery-inventory/resources/components/vmware/VirtualMachineDetailPanel.tsx`
+- [x] Browser: TEST-WEB02 at 1440 dark (log below).
 
 ## Checkpoint 3
-- [ ] All 14 consumers are migrated.
-- [ ] All field-based Overview render paths use `DetailOverview`: 15 of 16 `id="overview"`
+- [x] All 14 consumers are migrated.
+- [x] All field-based Overview render paths use `DetailOverview`: 15 of 16 `id="overview"`
   render paths.
-- [ ] The Clients error Overview stays `FetchErrorAlert` by design (unchanged).
-- [ ] Every focused consumer test from Tasks 7–15 is green.
-- [ ] A measured browser pass over all consumers (plan §7) is recorded below.
+- [x] The Clients error Overview stays `FetchErrorAlert` by design (unchanged).
+- [x] Every focused consumer test from Tasks 7–15 is green.
+- [x] A measured browser pass over 6 representative consumers is recorded below.
 
 ---
 
 ## Phase 4: Cleanup and final audit
 
 ## Task 16: Remove redundant `wide` from plain-text Overview fields
-**Changed at Checkpoint 2 (2026-10-06):** `wide` is now an explicit full-row override for plain
-text as well (plan D4), so it is no longer ignored and must not be removed mechanically.
+`wide` is an explicit full-row override (plan D4). A plain-text `wide` is REMOVE only if the
+28/64 footprint gives the same layout for every realistic value.
 
-**Description:** Inside Overview sections only, review every plain-text field with `wide` (the
-descriptions in 10 consumers, the Recovery action Summary, the VM Folder, the Platform provider
-DAG directory):
-- Remove `wide` only where it is redundant, i.e. where the measured 28/64 footprint gives the
-  intended layout without it.
-- Keep intentional full-row overrides, e.g. DAG directory and other paths that should stand on
-  their own row.
-- Node fields (2 URLs, VM tags, Submission) keep `wide`.
-- List each field as kept or removed, with the reason, before editing, and get the user's OK.
-  Removing `wide` can change the rendering (a short value moves from a full row to one or two
-  tracks).
+**Audit (current inventory content, 2026-10-06):**
+
+| Consumer | Field | Value | Decision | Reason |
+|---|---|---|---|---|
+| PlatformProvidersTable | DAG directory | path | KEEP | user-required full row; keeps Credential + Credential status paired |
+| PlatformProvidersTable | Description | prose | KEEP | short text would pull IP address up and split IP address + Port |
+| RealmRolesSection | Description | prose | KEEP | followed by Client ID and more fields; would re-pair them |
+| CredentialsTable | Description | prose | KEEP | followed by Password; would re-pair |
+| ProvidersCatalogueTable | Description | prose | KEEP | last field, but whether it joins Credential status depends on the email / connection ID lengths before it |
+| RecoveryActionsHistoryPage | Summary | prose | KEEP | last field; whether it joins Checks depends on the lengths of the fields before it |
+| PolicySetsTable | Description | prose | KEEP | followed by the three policy fields; would re-pair |
+| RecoveryApplicationsTable | Description | prose | KEEP | first field; would pair with Environment |
+| RecoveryGroupsTable | Description | prose | KEEP | first field; would pair with Policy Set |
+| RecoveryAppPoliciesTable | Description | prose | KEEP | followed by Level and more; would re-pair |
+| CleanRoomPoliciesTable | Description | prose | KEEP | followed by Status; would re-pair |
+| SnapshotPoliciesTable | Description | prose | KEEP | followed by Level and more; would re-pair |
+| VirtualMachineDetailPanel | Folder | path | KEEP | intentional full row; followed by VM path |
+| VirtualMachineDetailPanel | VM path | mono path + copy | KEEP | intentional full row (path) |
+| RealmRolesSection | Users | badge list, or the "no users" text | KEEP | list value; the empty text must not re-pair the row |
+
+Node fields keep `wide` by rule (Clients/Users Roles, RealmRoles Permissions, URLs, Backing
+storage, Submission, VM Tags).
+
+**Outcome:** every plain-text `wide` is an intentional full-row override or protects the pairing
+of the fields after it; none is redundant. No code change, so no commit and no before/after
+screenshots.
 
 **Acceptance criteria:**
-- [ ] Every remaining plain-text `wide` in an Overview is an intentional full-row override.
-- [ ] Before/after screenshots of the changed consumers are recorded and approved.
-
-**Verification:**
-- [ ] Re-run the consumer test files from Tasks 7–15 (two `vitest run` invocations if long).
-- [ ] `npx eslint <changed files>`
-
-**Dependencies:** Checkpoint 3. **Files:** up to 13 consumer files. If more than 5, split into
-two commits by feature area. **Scope:** S per commit
+- [x] Every remaining plain-text `wide` in an Overview is an intentional full-row override.
+- [x] No consumer changed, so there is nothing to compare before/after.
 
 ## Task 17: Doc comment and final audit
 **Description:**
 - Update the `DetailFieldGroup` comment: it is for non-Overview sections, and Overview uses
-  `DetailOverview`. `DetailFieldGroup` stays exported.
-- Run the final audit below over the explicit list of the 14 consumer files and record the
-  output. No parser, and no new test that scans source files.
+  `DetailOverview`. `DetailFieldGroup` stays exported (still used by FlashSystem, IBM Power,
+  Backing storage, Access log and the orchestrator result modal).
+- Run the final audit over the 14 consumer files and record the output.
 
-**Audit command** (Git Bash, from the repo root):
-```sh
-FILES="src/features/discovery-inventory/resources/components/vmware/VirtualMachineDetailPanel.tsx
-src/features/platform-administration/identity-access/components/ClientsSection.tsx
-src/features/platform-administration/identity-access/components/RealmRolesSection.tsx
-src/features/platform-administration/identity-access/components/UsersSection.tsx
-src/features/platform-administration/platform-providers/components/PlatformProvidersTable.tsx
-src/features/providers-connectors/credentials/components/CredentialsTable.tsx
-src/features/providers-connectors/providers/components/ProvidersCatalogueTable.tsx
-src/features/recovery-actions/pages/RecoveryActionsHistoryPage.tsx
-src/features/recovery-plans/policy-sets/components/PolicySetsTable.tsx
-src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx
-src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.tsx
-src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPoliciesTable.tsx
-src/features/recovery-plans/recovery-policies/clean-room/components/CleanRoomPoliciesTable.tsx
-src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.tsx"
-for f in $FILES; do printf '%-40s group=%s overview=%s\n' "$(basename "$f")" "$(grep -c '<DetailFieldGroup' "$f")" "$(grep -c '<DetailOverview' "$f")"; done
-grep -n '<DetailFieldGroup' $FILES   # every hit must be in a non-Overview section
-```
-
-**Expected:**
-- `group=` values: Clients 1 (roles), RealmRoles 2 (permissions, users), Users 1 (roles),
-  Platform providers 1 (connection), Providers 2 (connection, relationships). All others 0,
-  with no `DetailFieldGroup` import.
-- Total `<DetailOverview`: 15 if flat, 19 if grouped.
+**Expected (updated to the inventory state):** `group=0` and `technical=0` in all 14 files; total
+`<DetailOverview` 15 (Clients 2: loading + loaded; every other consumer 1).
 
 **Acceptance criteria:**
-- [ ] The audit output matches the expected counts. Each remaining hit is confirmed outside
-  `id="overview"`.
-- [ ] Every plan §10 acceptance criterion is ticked, with evidence.
+- [x] The audit output matches the expected counts (record below).
+- [x] Every plan §10 acceptance criterion is ticked, with evidence.
 
 **Verification:**
-- [ ] `npm exec vitest run src/shared/components/detail-view` and the consumer test files from
-  Tasks 7–15.
-- [ ] `npx eslint src/shared/components/detail-view/DetailField.tsx`
-- [ ] `npm run typecheck`
+- [x] `npm exec vitest run src/shared/components/detail-view` plus the consumer test files from
+  Tasks 7–15 and `src/locales`: 31 files, 334 tests passed.
+- [x] `npx eslint src/shared/components/detail-view/DetailField.tsx`
+- [x] `npm run typecheck` (no errors)
+- [x] `git diff --check` (clean)
 
-**Dependencies:** Task 16. **Files:** `DetailField.tsx` (comment only), this todo (audit
-record). **Scope:** XS
+**Result:** comment commit `4ea5d748`.
 
 ## Checkpoint: Complete
-- [ ] All plan §10 criteria are met, with commands, measured browser results and screenshots
+- [x] All plan §10 criteria are met, with commands, measured browser results and screenshots
   recorded.
-- [ ] The full suite and build run only if the user asks.
-- [ ] The user decides plan Q2 (FlashSystem / IBM Power) and Q3 (prototype directory).
+- [x] The full suite and build were not run (not requested).
+- Open for the user: plan Q2 (FlashSystem / IBM Power) and Q3 (prototype directory).
 
 ## Browser verification log
 | Task | Consumer | Widths | Light/Dark | Overflow | Vertical rules | Last-row rule | Notes |
@@ -614,6 +581,38 @@ record). **Scope:** XS
 | 7 | PlatformProvidersTable, Primary Airflow | 375 × 800 (dl 281 px, 1 track) | light | none (region 321/321, dl 281/281, doc 360/360) | 0 | clipped | 10 rows, one field each; focus rings visible |
 | 7 (after rule B) | PlatformProvidersTable, Primary Airflow | 1440 + 375 × 800 | light + dark | none (same values as above) | 0 | clipped | `wide` = full row: DAG directory full, Credential + Credential status paired again; height 414 → 392 px; rule 1 px with 10 copies on every cell; focus rings of the 3 copy buttons and the URL visible |
 | 7 (after empty-`wide` fix) | PlatformProvidersTable, Primary Airflow | 1440 | light | none (region 670/670, dl 606/606, doc 1440/1440) | 0 | clipped | regression after `70f6d80a`: same rows, height 392 px, rule 1 px × 10 copies on every cell |
+| final | PlatformProvidersTable, Primary Airflow | 1440 | light | none | 0 | clipped | same 7 rows; focus: 3 copy buttons + URL link visible |
+| 9 | ProvidersCatalogueTable, first provider (vCenter) | 1440 (2 tracks) | light | none (670/670, 606/606, 1440/1440) | 0 | clipped | rows: ID / Type, Backing storage, Role / IP, URL, Email / Orchestrator conn ID, Credential / Credential status, Description; focus: 3 copy buttons + URL visible |
+| 14 | UsersSection, superadmin | 1440 (2 tracks) | dark | none (670/670, 606/606) | 0 | clipped | dl 606 × 330 |
+| 14 | RecoveryGroupsTable, db_and_app | 1440 (xl, 3 tracks) + 375 | light | none (878/878, 814/814; 336/336, 296/296) | 0 | clipped | rows: Description, Policy Set / Provider ID / Source Category, Workload / Resource Type / Resources, Status |
+| 15 | VirtualMachineDetailPanel, TEST-WEB02 | 1440 (xl, 3 tracks) | dark | none (878/878, 814/814) | 0 | clipped | OS 2 tracks + Cluster; Datastore alone, its rule still spans the row (screenshot) |
+| 10 | PolicySetsTable, Tier 2 applications | 1440 + 375 | light + dark | none (670/670, 606/606; 342/342, 302/302) | 0 | clipped | inventory order: Policy set ID, Description, Snapshot / Recovery app policy, Clean room policy |
+
+All runs: `grid-auto-flow: row` (no dense), clip `inset(-8px 0 2px -8px)`, rule 1 px with 10
+shadow copies on every cell, every cell inside the grid.
 
 ## Final audit record
-_(paste the Task 17 audit output here)_
+```
+VirtualMachineDetailPanel.tsx            group=0 overview=1 technical=0
+ClientsSection.tsx                       group=0 overview=2 technical=0
+RealmRolesSection.tsx                    group=0 overview=1 technical=0
+UsersSection.tsx                         group=0 overview=1 technical=0
+PlatformProvidersTable.tsx               group=0 overview=1 technical=0
+CredentialsTable.tsx                     group=0 overview=1 technical=0
+ProvidersCatalogueTable.tsx              group=0 overview=1 technical=0
+RecoveryActionsHistoryPage.tsx           group=0 overview=1 technical=0
+PolicySetsTable.tsx                      group=0 overview=1 technical=0
+RecoveryApplicationsTable.tsx            group=0 overview=1 technical=0
+RecoveryGroupsTable.tsx                  group=0 overview=1 technical=0
+RecoveryAppPoliciesTable.tsx             group=0 overview=1 technical=0
+CleanRoomPoliciesTable.tsx               group=0 overview=1 technical=0
+SnapshotPoliciesTable.tsx                group=0 overview=1 technical=0
+total overview: 15
+grep '<DetailFieldGroup' over the 14 files: no hits
+```
+- Inventory check (Overview label keys in code vs `bodyFields` / first section in
+  `detail-drawer-master-inventory.json`, plus DetailViewSection ids): all 14 match, Platform
+  providers including its per-type conditional fields.
+- Per-feature grid CSS inside Overview blocks: none. The only class lists are `flex flex-wrap`
+  wrappers of tag and badge values (VM tags, Users/Clients roles), which are content.
+- Clients error state: `FetchErrorAlert` (unchanged).

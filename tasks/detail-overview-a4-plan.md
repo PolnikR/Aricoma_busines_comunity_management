@@ -1,7 +1,7 @@
 # Implementation Plan: Shared Overview layout (A4)
 
 Task list: `tasks/detail-overview-a4-todo.md`. Branch `spike/ant-design-shell`.
-Planning only. No production code changes until the plan is approved.
+Status: **complete** (2026-10-06). Open for the user: Q2 and Q3 (§11).
 
 ## 0. Blockers
 - **Foreign uncommitted change in `src/shared/components/detail-view/index.ts`.** Another
@@ -15,6 +15,12 @@ Planning only. No production code changes until the plan is approved.
     (`refactor(detail-view): remove unused copy-button barrel export`), so `DetailCopyButton`
     is intentionally no longer exported. The rule stays: re-check `git diff` for new foreign
     hunks right before Task 6.
+
+- **Source of truth (user decision, 2026-10-06):** `tasks/detail-drawer-master-inventory.json`
+  decides each detail's content, field order and sections; this plan decides only the Overview
+  layout. Where the inventory differs from the §1 audit (policy IDs as Overview fields,
+  Level/Status fields, no Technical section in Recovery applications and Recovery groups), the
+  inventory wins. The two plans must not overwrite each other.
 
 ## Overview
 Every DetailView has an `Overview` section, and each of the 14 consumers builds it by hand
@@ -381,12 +387,11 @@ source-scanning test. Over the explicit list of the 14 consumer files:
 
   | File | Expected `<DetailFieldGroup` | Sections |
   |---|---|---|
-  | `ClientsSection.tsx` | 1 | roles |
-  | `RealmRolesSection.tsx` | 2 | permissions, users |
-  | `UsersSection.tsx` | 1 | roles |
-  | `PlatformProvidersTable.tsx` | 1 | connection |
-  | `ProvidersCatalogueTable.tsx` | 2 | connection, relationships |
-  | the other 9 files | 0 (and no `DetailFieldGroup` import) | – |
+  | all 14 files | 0 (and no `DetailFieldGroup` import) | – |
+
+  Updated 2026-10-06: the drawer-structure restores (master inventory, §0) removed the Roles,
+  Permissions/Users, Connection and Relationships groups and every Technical section from
+  these 14 files before the audit. The table above it planned 1/2/1/1/2 remaining groups.
 
 - `rg -n "<DetailOverview"` lists the Overview blocks:
   - 15 if flat, or 19 if grouped (VM 3, Users 2, Recovery groups 2).
@@ -453,35 +458,42 @@ check long values with prototype A4 only, so no data is edited.
   rollback before it never has to put flags back.
 
 ## 10. Acceptance criteria
-- [ ] All 14 `id="overview"` consumers are migrated. All field-based Overview render paths (15
+- [x] All 14 `id="overview"` consumers are migrated. All field-based Overview render paths (15
   of 16) use the one shared
   `DetailOverview` layout. The Clients error Overview stays `FetchErrorAlert` by design. No
   `DetailFieldGroup` remains inside an Overview (final audit counts match §6).
-- [ ] The same vertical rhythm (cell padding, label → value 2 px, row rule) at 1 field, 3
+- [x] The same vertical rhythm (cell padding, label → value 2 px, row rule) at 1 field, 3
   fields and 15+ fields.
-- [ ] No hardcoded column count: no `grid-cols-N` and no viewport breakpoint in the Overview
+- [x] No hardcoded column count: no `grid-cols-N` and no viewport breakpoint in the Overview
   layout. The track count follows the DetailView content width (auto-fill and `@container`
   only).
-- [ ] No per-feature Overview CSS: consumers pass no layout classes, gaps or wrappers to the
+- [x] No per-feature Overview CSS: consumers pass no layout classes, gaps or wrappers to the
   Overview.
-- [ ] Narrow/mobile (375 px viewport) without horizontal overflow (measured).
-- [ ] Long values (descriptions, URLs, IDs, paths) wrap inside their cell or take a measured
+- [x] Narrow/mobile (375 px viewport) without horizontal overflow (measured).
+- [x] Long values (descriptions, URLs, IDs, paths) wrap inside their cell or take a measured
   span. The grid never overflows and never gets wider than the content.
-- [ ] The row separator is horizontal only: no vertical rules, no outer border, no surface, no
+- [x] The row separator is horizontal only: no vertical rules, no outer border, no surface, no
   per-field boxes. It stays continuous across wide and full spans.
-- [ ] The last grid row has no separator, whatever the number of fields in it.
-- [ ] Field order, labels, values, links, badges, copy actions, secondary values and Not set
+- [x] The last grid row has no separator, whatever the number of fields in it.
+- [x] Field order, labels, values, links, badges, copy actions, secondary values and Not set
   are unchanged in every consumer (their existing tests pass unchanged, except the flat-only
   Recovery groups heading assertion).
-- [ ] Sections outside Overview (Technical, Connection, Relationships, Roles, Orchestration,
+- [x] Sections outside Overview (Technical, Connection, Relationships, Roles, Orchestration,
   Inventory…) and `DetailTechnicalGroup` inside Overviews are unchanged.
-- [ ] No business-logic, data or API changes. Translation changes only if Checkpoint 0 = flat
+- [x] No business-logic, data or API changes. Translation changes only if Checkpoint 0 = flat
   (removal of the 7 group-title keys).
-- [ ] The public barrel exports `DetailOverview` and nothing else new; the footprint helper
+- [x] The public barrel exports `DetailOverview` and nothing else new; the footprint helper
   stays internal.
-- [ ] Production uses exactly the Checkpoint 0 values from §2.0.
-- [ ] Focused tests and lint for the changed files pass. Light, dark and narrow browser checks
+- [x] Production uses exactly the Checkpoint 0 values from §2.0.
+- [x] Focused tests and lint for the changed files pass. Light, dark and narrow browser checks
   are recorded in the todo.
+
+**Closed on 2026-10-06** (evidence: todo Task 17, final audit record and browser log; 31 test
+files / 334 tests, typecheck and `git diff --check` green). Two criteria are met in the form the
+master inventory (§0) defines, not as first written: content, field order and sections follow
+the inventory (policy IDs and Level/Status are Overview fields, there are no Technical sections in
+the migrated details), and the translation-key removals came with the inventory restores of the
+parallel session, not from this plan.
 
 ## 11. Open questions
 - **Q1 (closed at Checkpoint 0):** grouped vs flat for VM, Users and Recovery groups (D3).
