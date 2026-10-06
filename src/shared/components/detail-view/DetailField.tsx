@@ -115,7 +115,8 @@ function GroupHeader({ title, description, className }: { title?: string | undef
 }
 
 // A titled set of fields in a responsive grid: 1 column, 2 from 520 px and 3 from 860 px of
-// content width. Consecutive groups are separated by a hairline; there is no card.
+// content width. Consecutive groups are separated by a hairline; there is no card. For
+// sections other than Overview; an Overview section uses DetailOverview.
 export function DetailFieldGroup({ title, description, children }: DetailFieldGroupProps) {
   return (
     <section data-detail-field-group="" className="[[data-detail-field-group]+&]:border-t [[data-detail-field-group]+&]:border-border/70 [[data-detail-field-group]+&]:pt-7">
