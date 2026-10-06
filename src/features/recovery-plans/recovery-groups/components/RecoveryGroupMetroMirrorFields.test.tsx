@@ -25,7 +25,7 @@ describe('RecoveryGroupMetroMirrorFields', () => {
     expect(screen.getByText('Your values differ from discovery. Your edits have been kept.')).toBeVisible()
     expect(screen.getByLabelText('Consistency group ID')).toHaveValue('001')
     await user.click(within(drawer).getByRole('button', { name: 'Metro Mirror review help' }))
-    expect(within(drawer).getByRole('dialog', { name: 'What this review checks' })).toHaveTextContent('Use existing relationship')
+    expect(screen.getByRole('dialog', { name: 'What this review checks' })).toHaveTextContent('Use existing relationship')
     await user.keyboard('{Escape}')
     expect(screen.getByRole('dialog', { name: 'Configuration review' })).toBeInTheDocument()
     await user.keyboard('{Escape}')

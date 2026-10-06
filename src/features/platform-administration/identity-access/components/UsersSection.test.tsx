@@ -185,7 +185,7 @@ describe('UsersSection', () => {
     expect(within(header).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Compact view', 'User help', 'Close user detail'])
     expect(dialog.querySelector('footer')).toBeNull()
     await userEvent.click(within(dialog).getByRole('button', { name: 'User help' }))
-    expect(within(dialog).getByRole('dialog', { name: 'Where users come from' })).toHaveTextContent('Roles')
+    expect(screen.getByRole('dialog', { name: 'Where users come from' })).toHaveTextContent('Roles')
     await userEvent.keyboard('{Escape}')
     expect(screen.getByRole('dialog', { name: 'User detail' })).toBeInTheDocument()
     expect(within(dialog).queryByRole('button', { name: /edit|delete/i })).not.toBeInTheDocument()

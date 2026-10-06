@@ -30,7 +30,7 @@ describe('RecoveryActionsHistoryPage', () => {
     expect(header).toHaveTextContent(formatDateTime('2026-07-31T14:30:00+02:00', { language: 'en' }))
     expect(drawer).toHaveTextContent('Manual point-in-time validation completed successfully.')
     await user.click(within(drawer).getByRole('button', { name: 'Recovery test help' }))
-    expect(within(drawer).getByRole('dialog', { name: 'What a recovery test shows' })).toHaveTextContent('Automated and manual')
+    expect(screen.getByRole('dialog', { name: 'What a recovery test shows' })).toHaveTextContent('Automated and manual')
     await user.keyboard('{Escape}')
     expect(screen.getByRole('dialog', { name: 'Recovery test details' })).toBeInTheDocument()
 

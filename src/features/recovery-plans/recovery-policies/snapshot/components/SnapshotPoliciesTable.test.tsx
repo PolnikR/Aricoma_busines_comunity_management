@@ -93,7 +93,7 @@ describe('SnapshotPoliciesTable', () => {
     expect(modelCDelete.closest('footer')?.children[0]).toContainElement(modelCDelete)
     expect(modelCDelete.closest('footer')?.children[1]).toContainElement(within(modelCDrawer).getByRole('button', { name: 'Edit' }))
     await userEvent.click(within(modelCDrawer).getByRole('button', { name: 'Snapshot policy help' }))
-    expect(within(modelCDrawer).getByRole('dialog', { name: 'How a snapshot policy works' })).toHaveTextContent('Frequency')
+    expect(screen.getByRole('dialog', { name: 'How a snapshot policy works' })).toHaveTextContent('Frequency')
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
   })

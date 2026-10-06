@@ -186,7 +186,7 @@ describe('RealmRolesSection', () => {
     expect(within(header).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Compact view', 'Application role help', 'Close application role detail'])
     expect(dialog.querySelector('footer')).toBeNull()
     await userEvent.click(within(dialog).getByRole('button', { name: 'Application role help' }))
-    expect(within(dialog).getByRole('dialog', { name: 'What an application role is' })).toHaveTextContent('Permissions')
+    expect(screen.getByRole('dialog', { name: 'What an application role is' })).toHaveTextContent('Permissions')
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: /associated roles|attributes|users in role/i })).not.toBeInTheDocument()
 

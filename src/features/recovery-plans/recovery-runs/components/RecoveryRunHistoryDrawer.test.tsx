@@ -66,7 +66,7 @@ describe('RecoveryRunHistoryDrawer', () => {
     expect(within(drawer).queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument()
     expect(within(drawer).getByRole('region', { name: 'Runs' })).toHaveTextContent('success')
     fireEvent.click(within(drawer).getByRole('button', { name: 'Run history help' }))
-    expect(within(drawer).getByRole('dialog', { name: 'Where the run history comes from' })).toHaveTextContent('Source')
+    expect(screen.getByRole('dialog', { name: 'Where the run history comes from' })).toHaveTextContent('Source')
   })
 
   it('shows a retryable error instead of treating a failed history lookup as empty history', () => {

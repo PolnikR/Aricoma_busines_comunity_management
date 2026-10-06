@@ -250,17 +250,103 @@ describe('HelpPopover', () => {
     expect(onClose).toHaveBeenCalledOnce()
   })
 
-  it('keeps its controls inside the detail focus trap', async () => {
+  it('renders the panel in a portal on document.body, outside the clipping dialog, and owns it for assistive tech', async () => {
     const user = userEvent.setup()
     renderInDrawer()
 
     await user.click(trigger())
-    const drawer = screen.getByRole('dialog', { name: 'Group detail' })
-    expect(drawer).toContainElement(panel())
+    const detail = screen.getByRole('dialog', { name: 'Group detail' })
+    const helpPanel = panel()
+    expect(helpPanel?.parentElement).toBe(document.body)
+    expect(detail).not.toContainElement(helpPanel)
+    expect(helpPanel).toHaveClass('fixed')
+    expect(trigger().parentElement).toHaveAttribute('aria-owns', helpPanel?.id)
+  })
 
-    screen.getByRole('button', { name: 'Close detail' }).focus()
+  it('bridges Tab through the portaled panel so the detail focus trap never takes it', async () => {
+    const user = userEvent.setup()
+    const onClose = renderInDrawer()
+    const detail = screen.getByRole('dialog', { name: 'Group detail' })
+
+    act(() => { trigger().focus() })
+    expect(panel()).toBeInTheDocument()
     await user.tab()
-    expect(drawer).toContainElement(document.activeElement as HTMLElement)
+    expect(panel()).toHaveFocus()
+    await user.tab()
+    expect(screen.getByRole('button', { name: 'Close help' })).toHaveFocus()
+    await user.tab({ shift: true })
+    expect(panel()).toHaveFocus()
+    await user.tab({ shift: true })
+    expect(trigger()).toHaveFocus()
+
+    // Past the panel's last control, focus continues after the trigger in the detail.
+    await user.tab()
+    await user.tab()
+    await user.tab()
+    expect(screen.getByRole('button', { name: 'Close detail' })).toHaveFocus()
+    expect(detail).toContainElement(document.activeElement as HTMLElement)
+    expect(panel()).not.toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('returns focus to the trigger when Escape is pressed in the portaled panel inside a detail', async () => {
+    const user = userEvent.setup()
+    const onClose = renderInDrawer()
+
+    act(() => { trigger().focus() })
+    await user.tab()
+    expect(panel()).toHaveFocus()
+    await user.keyboard('{Escape}')
+    expect(panel()).not.toBeInTheDocument()
+    expect(trigger()).toHaveFocus()
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  describe('placement', () => {
+    // jsdom has no layout: give the trigger and the panel fixed boxes in a 800×600 viewport.
+    function layout(triggerBox: { left: number; top: number }) {
+      vi.stubGlobal('innerWidth', 800)
+      vi.stubGlobal('innerHeight', 600)
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+        if (this.getAttribute('role') === 'dialog') return DOMRect.fromRect({ x: 0, y: 0, width: 300, height: 400 })
+        if (this.getAttribute('aria-label') === 'Recovery group help') return DOMRect.fromRect({ x: triggerBox.left, y: triggerBox.top, width: 32, height: 32 })
+        return DOMRect.fromRect({ x: 0, y: 0, width: 0, height: 0 })
+      })
+    }
+    afterEach(() => {
+      vi.restoreAllMocks()
+      vi.unstubAllGlobals()
+    })
+
+    it('opens below the trigger with its right edge on the trigger when there is room', () => {
+      layout({ left: 400, top: 40 })
+      renderHelp()
+      fireEvent.click(trigger())
+      // below = 600 - 72 - 8 - 8; right edge 432 → left 132
+      expect(panel()).toHaveStyle({ top: '80px', left: '132px', maxHeight: '512px' })
+    })
+
+    it('flips above the trigger near the bottom edge and caps its height to the space above', () => {
+      layout({ left: 400, top: 520 })
+      renderHelp()
+      fireEvent.click(trigger())
+      // below = 32 < 400 and above = 504: top = 520 - 8 - 400
+      expect(panel()).toHaveStyle({ top: '112px', left: '132px', maxHeight: '504px' })
+    })
+
+    it('stays inside the viewport near the left and right edges', () => {
+      layout({ left: 20, top: 40 })
+      renderHelp()
+      fireEvent.click(trigger())
+      expect(panel()).toHaveStyle({ left: '8px' })
+      cleanup()
+
+      layout({ left: 780, top: 40 })
+      renderHelp()
+      fireEvent.click(trigger())
+      // right edge 812 would overflow: left = 800 - 8 - 300
+      expect(panel()).toHaveStyle({ left: '492px' })
+    })
   })
 
   it('uses the compact width by default and the wide width on request', () => {

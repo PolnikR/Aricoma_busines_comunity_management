@@ -45,6 +45,14 @@ function Harness({ onDetailClose = vi.fn() }: { onDetailClose?: () => void }) {
 }
 
 const detail = () => screen.queryByRole('dialog', { name: 'Group detail' })
+
+// Inside the dialog, or in a help panel that an element of the dialog owns (portaled).
+function isWithin(dialog: HTMLElement, element: Element | null) {
+  if (!(element instanceof HTMLElement)) return false
+  if (dialog.contains(element)) return true
+  const owned = element.closest('[role="dialog"]')
+  return Boolean(owned?.id && dialog.querySelector(`[aria-owns="${owned.id}"]`))
+}
 const confirm = () => screen.queryByRole('dialog', { name: 'Delete group?' })
 
 async function openNested() {
@@ -86,9 +94,9 @@ describe('nested dialogs', () => {
 
     await user.keyboard('{Escape}')
     const view = screen.getByRole('dialog', { name: 'Group detail' })
-    for (let step = 0; step < 6; step += 1) {
+    for (let step = 0; step < 8; step += 1) {
       await user.tab()
-      expect(view).toContainElement(document.activeElement as HTMLElement)
+      expect(isWithin(view, document.activeElement)).toBe(true)
     }
   })
 

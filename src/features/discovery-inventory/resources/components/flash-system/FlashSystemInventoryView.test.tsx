@@ -98,8 +98,8 @@ describe('FlashSystemInventoryView', () => {
     expect(within(dialog).getByRole('button', { name: 'Placement and capacity' })).toHaveAttribute('aria-current', 'true')
     expect(within(dialog).getByRole('button', { name: 'Copy relationships' })).not.toHaveAttribute('aria-current')
     fireEvent.click(within(dialog).getByRole('button', { name: 'FlashSystem volume help' }))
-    expect(within(dialog).getByRole('dialog', { name: 'What this volume view shows' })).toHaveTextContent('Remote Copy')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Close help' }))
+    expect(screen.getByRole('dialog', { name: 'What this volume view shows' })).toHaveTextContent('Remote Copy')
+    fireEvent.click(screen.getByRole('button', { name: 'Close help' }))
     const text = allSectionText(dialog)
     for (const shown of ['Placement and capacity', 'Virtual disk UID', 'Protocol', 'scsi', '6.98 TB', '898 GB']) {
       expect(text).toContain(shown)
@@ -182,7 +182,7 @@ describe('FlashSystemInventoryView', () => {
     fireEvent.click(screen.getByRole('row', { name: 'Show details for vol0' }))
     const dialog = screen.getByRole('dialog', { name: 'FlashSystem volume detail' })
     fireEvent.click(within(dialog).getByRole('button', { name: 'FlashSystem volume help' }))
-    const help = within(dialog).getByRole('dialog', { name: 'What this volume view shows' })
+    const help = screen.getByRole('dialog', { name: 'What this volume view shows' })
 
     expect(within(help).getByRole('list', { name: 'Placement' })).toHaveTextContent(/Flash 01.*Pool0.*vol0/)
     expect(within(help).getByRole('list', { name: 'Host mappings' })).toHaveTextContent(/esx-01.*ESX_CLUSTER.*SCSI ID 1/)

@@ -324,7 +324,7 @@ describe('IbmPowerDetailPanel backing storage', () => {
     mockVolumes([powerVolume(), powerVolume({ key: 'ibm-flashsystem-01:100', storageProviderId: 'ibm-flashsystem-01', volumeId: '100', id: '100', volumeName: 'aix2_other', vdiskUid: '600507638082007A4800000000000100' })])
     const dialog = renderPanel()
     await userEvent.setup().click(within(dialog).getByRole('button', { name: 'IBM Power partition help' }))
-    const help = within(dialog).getByRole('dialog', { name: 'What this partition view shows' })
+    const help = screen.getByRole('dialog', { name: 'What this partition view shows' })
 
     expect(within(help).getByRole('list', { name: 'Discovered from' })).toHaveTextContent(/ibm-power-01.*aix2source/)
     const flash = within(help).getByRole('list', { name: 'Backing storage on IBM Flash Source 02' })
@@ -338,7 +338,7 @@ describe('IbmPowerDetailPanel backing storage', () => {
   it('keeps the VIOS help without a relationship graphic', async () => {
     const dialog = renderPanel(vios)
     await userEvent.setup().click(within(dialog).getByRole('button', { name: 'IBM Power partition help' }))
-    const help = within(dialog).getByRole('dialog', { name: 'What this partition view shows' })
+    const help = screen.getByRole('dialog', { name: 'What this partition view shows' })
 
     expect(within(help).queryByRole('heading', { name: 'Relationships' })).not.toBeInTheDocument()
     expect(help.querySelector('[data-entity-id]')).toBeNull()

@@ -315,7 +315,7 @@ describe('ProvidersCatalogueTable', () => {
     expect(footer?.children[0]).toContainElement(deleteButton)
     expect(footer?.children[1]).toContainElement(within(drawer).getByRole('button', { name: 'Edit' }))
     fireEvent.click(within(drawer).getByRole('button', { name: 'Provider help' }))
-    const help = within(drawer).getByRole('dialog', { name: 'What an infrastructure provider is' })
+    const help = screen.getByRole('dialog', { name: 'What an infrastructure provider is' })
     expect(help).toHaveTextContent('Role')
     expect(help).toHaveTextContent('Credential')
     expect(within(help).getByRole('heading', { name: 'Provider relationships' })).toBeInTheDocument()

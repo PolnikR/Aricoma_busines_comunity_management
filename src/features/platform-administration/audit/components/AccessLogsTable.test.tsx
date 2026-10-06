@@ -190,7 +190,7 @@ describe('AccessLogsTable', () => {
     await user.click(within(drawer).getByRole('button', { name: 'Response body' }))
     expect(within(drawer).getByRole('region', { name: 'Response body' })).toHaveTextContent('null')
     await user.click(within(drawer).getByRole('button', { name: 'Access log help' }))
-    expect(within(drawer).getByRole('dialog', { name: 'What an access log entry is' })).toHaveTextContent('Raw entry')
+    expect(screen.getByRole('dialog', { name: 'What an access log entry is' })).toHaveTextContent('Raw entry')
   })
 
   it('shows query string, user agent and referer in the request details, with Not set when missing', async () => {

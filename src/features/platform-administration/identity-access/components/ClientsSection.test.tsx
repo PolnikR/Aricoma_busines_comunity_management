@@ -285,7 +285,7 @@ describe('ClientsSection', () => {
     expect(within(header).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Compact view', 'Client help', 'Close client detail'])
     expect(drawer.element.querySelector('footer')).toBeNull()
     await userEvent.click(drawer.getByRole('button', { name: 'Client help' }))
-    expect(drawer.getByRole('dialog', { name: 'What a client is' })).toHaveTextContent('Client type')
+    expect(screen.getByRole('dialog', { name: 'What a client is' })).toHaveTextContent('Client type')
     expect(screen.queryByRole('button', { name: /create|edit|delete|assign|remove|secret/i })).not.toBeInTheDocument()
   })
 })
