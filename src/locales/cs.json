@@ -2281,7 +2281,6 @@
   "identity.roles.columns.permissions": "Oprávnění",
   "identity.roles.columns.users": "Uživatelé",
   "identity.roles.fields.name": "Název role",
-  "identity.roles.fields.id": "ID role",
   "identity.roles.fields.description": "Popis",
   "identity.roles.fields.permissions": "Oprávnění",
   "identity.roles.fields.clientId": "ID klienta",

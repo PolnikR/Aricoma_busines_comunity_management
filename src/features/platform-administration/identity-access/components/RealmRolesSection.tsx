@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
-import { ApiIcon, GridIcon, ShieldIcon, SettingsIcon } from '@/shared/icons/Icons'
+import { DetailField, DetailFieldGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { GridIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
@@ -33,39 +33,25 @@ function BadgeList({ items }: { items: string[] }) {
   )
 }
 
-// Sections of the read-only role detail. A render function, not a component: DetailView needs
-// the sections as its (fragment) children. Unknown membership stays "—" (not "Not set"):
-// the lookup failed, so the value is unknown rather than missing.
+// The read-only role detail is one flat Overview, in the order of the original detail drawer.
+// A render function, not a component: DetailView needs the section itself as its child.
+// Unknown membership stays "—" (not "Not set"): the lookup failed, so the value is unknown
+// rather than missing.
 function renderRoleSections(role: IdentityRoleRecord, t: ReturnType<typeof useTranslation>['t']) {
   const knownMembership = hasKnownMembership(role)
   let users: ReactNode = '—'
   if (knownMembership) users = role.users.length > 0 ? <BadgeList items={role.users} /> : t('identity.roles.fields.usersEmpty')
   return (
-    <>
-      <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
-        <DetailFieldGroup>
-          <DetailField label={t('identity.roles.fields.name')} value={role.name} emphasis />
-          <DetailField label={t('identity.roles.fields.userCount')} value={knownMembership ? String(role.userCount) : '—'} />
-          <DetailField label={t('identity.roles.fields.description')} value={role.description?.trim()} wide />
-        </DetailFieldGroup>
-      </DetailViewSection>
-      <DetailViewSection id="permissions" title={t('identity.roles.fields.permissions')} icon={SettingsIcon} count={role.permissions.length}>
-        <DetailFieldGroup>
-          <DetailField label={t('identity.roles.fields.permissions')} value={role.permissions.length > 0 ? <BadgeList items={role.permissions} /> : null} wide />
-        </DetailFieldGroup>
-      </DetailViewSection>
-      <DetailViewSection id="users" title={t('identity.roles.columns.users')} icon={ShieldIcon} count={knownMembership ? role.userCount : undefined}>
-        <DetailFieldGroup>
-          <DetailField label={t('identity.roles.fields.users')} value={users} wide />
-        </DetailFieldGroup>
-      </DetailViewSection>
-      <DetailViewSection id="technical" title={t('detailView.technical')} icon={ApiIcon} description={t('detailView.technicalDescription')} secondary>
-        <DetailTechnicalGroup>
-          <DetailField label={t('identity.roles.fields.id')} value={role.id} copyValue={role.id} />
-          <DetailField label={t('identity.roles.fields.clientId')} value={role.clientId} copyValue={role.clientId ?? undefined} />
-        </DetailTechnicalGroup>
-      </DetailViewSection>
-    </>
+    <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
+      <DetailFieldGroup>
+        <DetailField label={t('identity.roles.fields.name')} value={role.name} emphasis />
+        <DetailField label={t('identity.roles.fields.description')} value={role.description?.trim()} wide />
+        <DetailField label={t('identity.roles.fields.clientId')} value={role.clientId} mono copyValue={role.clientId ?? undefined} />
+        <DetailField label={t('identity.roles.fields.userCount')} value={knownMembership ? String(role.userCount) : '—'} />
+        <DetailField label={t('identity.roles.fields.permissions')} value={role.permissions.length > 0 ? <BadgeList items={role.permissions} /> : null} wide />
+        <DetailField label={t('identity.roles.fields.users')} value={users} wide />
+      </DetailFieldGroup>
+    </DetailViewSection>
   )
 }
 

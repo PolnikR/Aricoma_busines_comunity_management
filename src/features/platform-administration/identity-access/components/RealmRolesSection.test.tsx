@@ -6,7 +6,7 @@ import { useGetRolesPermissions } from '@/generated/query/identity-access/identi
 import { useUsers } from '../hooks/useUsers'
 import type { IdentityRoleRecord } from '../model/rolesPermissionsTypes'
 
-import { detailSectionsFields } from '@/test-utils/detailView'
+import { detailSectionsFields, detailSectionsLabels } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/identity-access/identity-access.gen', () => ({ useGetRolesPermissions: vi.fn() }))
@@ -143,16 +143,21 @@ describe('RealmRolesSection', () => {
     expect(screen.getByRole('row', { name: 'Open application role viewer' })).toHaveAttribute('aria-selected', 'false')
     const header = drawer.getByRole('heading', { level: 2, name: 'platform-admin' }).closest('header')
     expect(header).toHaveTextContent('Application role')
-    // The client ID is an identifier: Technical only, not a header badge.
+    // The client ID is a field in Overview, not a header badge.
     expect(header).not.toHaveTextContent('abco-api')
+    // One flat Overview in the original drawer order; permissions, users and client ID included.
+    const dialog = screen.getByRole('dialog', { name: 'Application role detail' })
+    expect(within(dialog).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(within(dialog).getAllByRole('region')).toHaveLength(1)
+    expect(within(dialog).getByRole('region', { name: 'Overview' })).toBeInTheDocument()
+    expect(detailSectionsLabels(dialog)).toEqual(['Role name', 'Description', 'Client ID', 'Users count', 'Permissions', 'Users in role'])
     expect(drawerFields()).toEqual({
       'Role name': 'platform-admin',
-      'Users count': '2',
       Description: 'Manages platform configuration.',
+      'Client ID': 'abco-api',
+      'Users count': '2',
       Permissions: 'providers.readproviders.writeusers.read',
       'Users in role': 'alicebob',
-      'Role ID': admin.id,
-      'Client ID': 'abco-api',
     })
   })
 
