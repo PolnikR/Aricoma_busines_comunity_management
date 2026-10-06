@@ -119,7 +119,8 @@ describe('DetailOverview', () => {
         <DetailField label="Long" value={'x'.repeat(65)} />
         <DetailField label="Link" value={<DetailFieldLink href="https://airflow.test" external>https://airflow.test</DetailFieldLink>} />
         <DetailField label="Wide link" value={<DetailFieldLink href="https://airflow.test" external>https://airflow.test</DetailFieldLink>} wide />
-        <DetailField label="Empty" value={null} wide />
+        <DetailField label="Empty" value={null} />
+        <DetailField label="Empty wide" value={null} wide />
       </DetailOverview>,
     )
     for (const label of ['Short', 'Link', 'Empty']) expect(cellOf(label)?.className).not.toMatch(/col-span/)
@@ -128,6 +129,7 @@ describe('DetailOverview', () => {
     expect(screen.getByText('x'.repeat(65))).toHaveClass('max-w-[88ch]')
     expect(cellOf('Wide link')).toHaveClass('col-span-full')
     expect(cellOf('Short wide')).toHaveClass('col-span-full')
+    expect(cellOf('Empty wide')).toHaveClass('col-span-full')
   })
 
   it('uses the A4 typography: 11.5px medium label and mono at primary contrast', () => {

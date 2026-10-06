@@ -21,7 +21,8 @@ interface DetailFieldProps {
   // Stronger value for the few facts that matter most in a group.
   emphasis?: boolean | undefined
   // Span the full row of the field grid (descriptions, paths, URLs, query strings). Inside a
-  // DetailOverview it is an explicit full-row override; without it plain text sizes itself.
+  // DetailOverview it is an explicit full-row override, even for an empty value; without it
+  // plain text sizes itself.
   wide?: boolean | undefined
   // Adds a copy action for this text.
   copyValue?: string | undefined

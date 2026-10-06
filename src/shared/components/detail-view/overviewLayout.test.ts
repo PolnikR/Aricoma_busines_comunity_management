@@ -23,8 +23,12 @@ describe('getOverviewFootprint', () => {
     expect(getOverviewFootprint(text(length), true)).toBe('full')
   })
 
-  it.each([null, undefined, '', '   ', ' '.repeat(WIDE_MAX + 1)])('keeps an empty value (%j) normal, even with wide', (value) => {
-    expect(getOverviewFootprint(value, true)).toBe('normal')
+  it.each([null, undefined, '', '   '])('makes an empty value (%j) full with wide', (value) => {
+    expect(getOverviewFootprint(value, true)).toBe('full')
+  })
+
+  it.each([null, undefined, '', '   ', ' '.repeat(WIDE_MAX + 1)])('keeps an empty value (%j) normal without wide', (value) => {
+    expect(getOverviewFootprint(value, false)).toBe('normal')
   })
 
   it('makes a node full only with wide', () => {
