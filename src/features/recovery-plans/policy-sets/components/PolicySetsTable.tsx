@@ -11,7 +11,7 @@ import {
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
-import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { DetailField, DetailOverview, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { GridIcon } from '@/shared/icons/Icons'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
@@ -190,15 +190,14 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
           footer={<Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">{t('buttons.edit')}</Button>}
         >
           <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
-            <DetailFieldGroup>
+            {/* The fields in the order of the original detail drawer. */}
+            <DetailOverview>
+              <DetailField label={t('details.policySetId')} value={selected.id} mono copyValue={selected.id} />
+              <DetailField label={t('details.description')} value={selected.description} wide />
               <DetailField label={t('details.snapshotPolicies')} value={selected.snapshot_policy_id ? policyName(selected.snapshot_policy_id) : null} emphasis />
               <DetailField label={t('details.recoveryAppPolicy')} value={selected.recovery_app_policy_id ? recoveryAppPolicyName(selected.recovery_app_policy_id) : null} />
               <DetailField label={t('details.cleanRoomPolicy')} value={selected.clean_room_policy_id ? cleanRoomPolicyName(selected.clean_room_policy_id) : null} />
-              <DetailField label={t('details.description')} value={selected.description} wide />
-            </DetailFieldGroup>
-            <DetailTechnicalGroup>
-              <DetailField label={t('details.policySetId')} value={selected.id} copyValue={selected.id} />
-            </DetailTechnicalGroup>
+            </DetailOverview>
           </DetailViewSection>
         </DetailView>
       ) : null}
