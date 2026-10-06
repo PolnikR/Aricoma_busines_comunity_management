@@ -4363,6 +4363,140 @@
         ],
         "title": "MetroMirrorConfig"
       },
+      "MetroMirrorConsistencyGroup": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "primary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary"
+          },
+          "freeze_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Freeze Time"
+          },
+          "relationship_count": {
+            "type": "integer",
+            "title": "Relationship Count",
+            "default": 0
+          },
+          "progress": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Progress"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "MetroMirrorConsistencyGroup"
+      },
+      "MetroMirrorMapping": {
+        "properties": {
+          "master_volume": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Master Volume"
+          },
+          "auxiliary_volume": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auxiliary Volume"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "progress": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Progress"
+          },
+          "primary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary"
+          }
+        },
+        "type": "object",
+        "title": "MetroMirrorMapping"
+      },
       "MetroMirrorRelationship": {
         "properties": {
           "name": {
@@ -4451,6 +4585,63 @@
           "volumes"
         ],
         "title": "MetroMirrorRelationshipsResponse"
+      },
+      "MetroMirrorStatus": {
+        "properties": {
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mode"
+          },
+          "queried_provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queried Provider Id"
+          },
+          "consistency_group": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetroMirrorConsistencyGroup"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mappings": {
+            "items": {
+              "$ref": "#/components/schemas/MetroMirrorMapping"
+            },
+            "type": "array",
+            "title": "Mappings",
+            "default": []
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "title": "MetroMirrorStatus"
       },
       "OrchestrationProvider": {
         "properties": {
@@ -6420,6 +6611,16 @@
             },
             "type": "object",
             "title": "Volumes"
+          },
+          "metro_mirror": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetroMirrorStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",

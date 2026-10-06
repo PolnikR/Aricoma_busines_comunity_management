@@ -7,6 +7,8 @@
 import * as zod from 'zod';
 
 export const recoveryGroupInventoryResponseVolumesRelationsDefault = [];
+export const recoveryGroupInventoryResponseMetroMirrorOneConsistencyGroupOneRelationshipCountDefault = 0;
+export const recoveryGroupInventoryResponseMetroMirrorOneMappingsDefault = [];
 export const RecoveryGroupInventoryResponse = zod.object({
   "recovery_group_id": zod.string(),
   "recovery_group_name": zod.string(),
@@ -22,7 +24,28 @@ export const RecoveryGroupInventoryResponse = zod.object({
   "paired_volume": zod.record(zod.string(), zod.unknown()),
   "consistency_group": zod.union([zod.record(zod.string(), zod.unknown()),zod.null()]).exactOptional()
 })).default(recoveryGroupInventoryResponseVolumesRelationsDefault)
-}))
+})),
+  "metro_mirror": zod.union([zod.object({
+  "mode": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "queried_provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "consistency_group": zod.union([zod.object({
+  "id": zod.string(),
+  "name": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "state": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "primary": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "freeze_time": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "relationship_count": zod.int().default(recoveryGroupInventoryResponseMetroMirrorOneConsistencyGroupOneRelationshipCountDefault),
+  "progress": zod.union([zod.int(),zod.null()]).exactOptional()
+}),zod.null()]).exactOptional(),
+  "mappings": zod.array(zod.object({
+  "master_volume": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "auxiliary_volume": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "state": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "progress": zod.union([zod.int(),zod.null()]).exactOptional(),
+  "primary": zod.union([zod.string(),zod.null()]).exactOptional()
+})).default(recoveryGroupInventoryResponseMetroMirrorOneMappingsDefault),
+  "error": zod.union([zod.string(),zod.null()]).exactOptional()
+}),zod.null()]).exactOptional()
 })
 
 export type RecoveryGroupInventoryResponse = zod.input<typeof RecoveryGroupInventoryResponse>;
