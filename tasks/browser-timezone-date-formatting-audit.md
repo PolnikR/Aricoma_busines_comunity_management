@@ -1,6 +1,6 @@
 # Audit: časové údaje vo FE (`src/`)
 
-Stav: read-only audit pre [spec](browser-timezone-date-formatting-spec.md). Stĺpec **Action** je plán, nie hotová zmena.
+Stav: audit pre [spec](browser-timezone-date-formatting-spec.md). Aktuálny task (T1–T6) je dokončený: stĺpec **Action** uvádza skutočný výsledok s commitom. Deferred follow-up (C) zostáva otvorený.
 
 Rozsah: celý `src/` okrem Orval výstupu v `src/generated/` (tam sa iba overovalo, či sa pole používa).
 Hľadané vzory:
@@ -30,13 +30,13 @@ aj z Airflow, sa zobrazí ako `—` a nikdy sa nepovažuje za UTC.
 
 | File | Field/source | Current behavior | Category | Action |
 |------|--------------|------------------|----------|--------|
-| `platform-administration/audit/components/AccessLogsTable.tsx` | `timestamp` (`+00:00`) | `Intl` `sk-SK` s natvrdo `timeZone: 'Europe/Bratislava'`, výstup `03.09.2026 10:25:29` | A | **migrate**: `formatDateTime(…, { language: 'sk', …rovnaké fields })`, zachovať bodkový layout |
-| `platform-administration/identity-access/components/UsersSection.tsx` | `createdAt`, `activeSessionStart` (`+00:00`) | lokálne `dateLocale` + `formatUserTimestamp`, browser tz, app locale | A | **centralize**: `formatDateTime(…, { language })` |
-| `recovery-plans/recovery-runs/helpers/formatRecoveryRun.ts` | Airflow `start_date` / `logical_date`: FE fixtures aj očakávaný Airflow REST kontrakt sú UTC-aware (`Z`). ABCO BE ich iba proxyuje bez normalizácie (`operations.py:27`). | `toLocaleString(undefined, …)`, browser tz, browser default locale. Naive hodnotu by dnes potichu brala ako lokálny čas. | A (podmienene, strict parse) | **centralize**: `formatRunTimestamp` deleguje na `formatDateTime` (bez `language`); signatúra sa nemení; naive vráti `—` |
-| └ callery: `RecoveryRunsTable`, `RecoveryRunHistoryDrawer`, `RecoveryGroupsTable`, `RecoveryApplicationsTable`, (WIP) `dashboard-preview/RecoveryBlocks` | `startedAt` | cez `formatRunTimestamp` | A | bez zmeny, zlepšia sa automaticky |
-| `recovery-actions/pages/RecoveryActionsHistoryPage.tsx` | `startedAt` (mock, `+02:00`) | lokálna `formatDate`, `en-GB` natvrdo, browser tz | A | **centralize**: `formatDateTime(…, { language: 'en' })` |
-| `recovery-actions/pages/RecoveryActionsValidatePage.tsx` | `latestAutomatedRun.startedAt` (mock, `+02:00`) | lokálna `formatDate` (duplicita), `en-GB` | A | **centralize**: rovnako ako vyššie; iba tento display, `datetime-local` v tom istom súbore sa nemení |
-| `recovery-actions/components/RecoveryActionsPageShell.tsx` | detail `date` (= `startedAt`) | inline locale mapping + `Intl` (`day`, `month: 'short'`, `hour`, `minute`) | A | **centralize**: `formatDateTime(…, { language, …rovnaké fields })` |
+| `platform-administration/audit/components/AccessLogsTable.tsx` | `timestamp` (`+00:00`) | `Intl` `sk-SK` s natvrdo `timeZone: 'Europe/Bratislava'`, výstup `03.09.2026 10:25:29` | A | **migrated** (`fd09ce87`, test fix `33cddc58`): `formatDateTime(…, { language: 'sk', …rovnaké fields })`, zachovať bodkový layout |
+| `platform-administration/identity-access/components/UsersSection.tsx` | `createdAt`, `activeSessionStart` (`+00:00`) | lokálne `dateLocale` + `formatUserTimestamp`, browser tz, app locale | A | **migrated** (`7b93426c`): `formatDateTime(…, { language })` |
+| `recovery-plans/recovery-runs/helpers/formatRecoveryRun.ts` | Airflow `start_date` / `logical_date`: FE fixtures aj očakávaný Airflow REST kontrakt sú UTC-aware (`Z`). ABCO BE ich iba proxyuje bez normalizácie (`operations.py:27`). | `toLocaleString(undefined, …)`, browser tz, browser default locale. Naive hodnotu by dnes potichu brala ako lokálny čas. | A (podmienene, strict parse) | **migrated** (`3a482edb`): `formatRunTimestamp` deleguje na `formatDateTime` (bez `language`); signatúra sa nemení; naive vráti `—` |
+| └ callery: `RecoveryRunsTable`, `RecoveryRunHistoryDrawer`, `RecoveryGroupsTable`, `RecoveryApplicationsTable`, (WIP) `dashboard-preview/RecoveryBlocks` | `startedAt` | cez `formatRunTimestamp` | A | bez zmeny v kóde; formátujú cez `formatRunTimestamp` (`3a482edb`) |
+| `recovery-actions/pages/RecoveryActionsHistoryPage.tsx` | `startedAt` (mock, `+02:00`) | lokálna `formatDate`, `en-GB` natvrdo, browser tz | A | **migrated** (`989766af`): `formatDateTime(…, { language: 'en' })` |
+| `recovery-actions/pages/RecoveryActionsValidatePage.tsx` | `latestAutomatedRun.startedAt` (mock, `+02:00`) | lokálna `formatDate` (duplicita), `en-GB` | A | **migrated** (`989766af`): rovnako ako vyššie; iba tento display, `datetime-local` v tom istom súbore sa nemení |
+| `recovery-actions/components/RecoveryActionsPageShell.tsx` | detail `date` (= `startedAt`) | inline locale mapping + `Intl` (`day`, `month: 'short'`, `hour`, `minute`) | A | **migrated** (`989766af`): `formatDateTime(…, { language, …rovnaké fields })` |
 | `recovery-actions/components/RecoveryPointSummary.tsx` | `snapshotAt` (mock, `+02:00`); `configurationAt` vždy z `datetime-local` + `+02:00` (renderuje sa iba v Execute a Validate) | surový string `replace('T', ' ')`, echo zadaného wall-clocku | C (preview lokálneho vstupu) | **DEFERRED FOLLOW-UP**: centralizácia by zmenila zobrazený čas preview (v zime 04:15 → 03:15), čo je zmena C |
 | `recovery-actions/pages/RecoveryActionsExecutePage.tsx` | `datetime-local` `recoveryDate` | `` `${recoveryDate}:00+02:00` `` | C | **DEFERRED FOLLOW-UP**: known technical debt, bez zmeny |
 | `recovery-actions/pages/RecoveryActionsValidatePage.tsx` | `datetime-local` `validationDate` | `` `${validationDate}:00+02:00` `` | C | **DEFERRED FOLLOW-UP**: known technical debt, bez zmeny |

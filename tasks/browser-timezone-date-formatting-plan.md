@@ -41,27 +41,27 @@ T6 audit report / closure (po T2–T5)
 ## Task List
 
 ### Phase 1: Foundation
-- [ ] T1: shared `dateTime.ts` + unit testy (S)
+- [x] T1: shared `dateTime.ts` + unit testy (S)
 
 ### Checkpoint 1
-- [ ] unit testy zelené, `eslint` a `tsc -b` čisté, review API s človekom pred migráciami
+- [x] unit testy zelené, `eslint` a `tsc -b` čisté, review API s človekom pred migráciami
 
 ### Phase 2: SAFE migrácie
-- [ ] T2: Access Logs, odstrániť `Europe/Bratislava` (S)
-- [ ] T3: UsersSection, odstrániť lokálnu duplicitu (XS)
-- [ ] T4: Recovery Runs `formatRunTimestamp` (S)
+- [x] T2: Access Logs, odstrániť `Europe/Bratislava` (S)
+- [x] T3: UsersSection, odstrániť lokálnu duplicitu (XS)
+- [x] T4: Recovery Runs `formatRunTimestamp` (S)
 
 ### Checkpoint 2
-- [ ] focused testy T2–T4 zelené, výstupný formát ako predtým
+- [x] focused testy T2–T4 zelené, výstupný formát ako predtým
 
 ### Phase 3: Recovery Actions SAFE display
-- [ ] T5: Recovery Actions SAFE display formattery (M)
+- [x] T5: Recovery Actions SAFE display formattery (M)
 
 ### Checkpoint 3: Complete
-- [ ] T6: audit report a uzavretie
-- [ ] focused testy, `eslint` na zmenených súboroch, `tsc -b`
-- [ ] grep diffu: žiadne pridané `Europe/` ani `±0X:00` v produkčnom kóde
-- [ ] `datetime-local` a `RecoveryPointSummary` sú nezmenené
+- [x] T6: audit report a uzavretie
+- [x] focused testy, `eslint` na zmenených súboroch, `tsc -b`
+- [x] grep diffu: žiadne pridané `Europe/` ani `±0X:00` v produkčnom kóde
+- [x] `datetime-local` a `RecoveryPointSummary` sú nezmenené
 
 ### Deferred follow-up (mimo aktuálneho tasku)
 - `datetime-local` v Execute a Validate, `RecoveryPointSummary` preview a fixed `+02:00`. Čaká na UX/API rozhodnutie (spec §6, audit otázka 6).
