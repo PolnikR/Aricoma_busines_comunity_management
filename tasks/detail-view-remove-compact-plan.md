@@ -61,7 +61,7 @@ control (or Close).
   is `DetailView.tsx`.
 
 ### Consumers (proved by `git grep`)
-17 `DetailView` instances. None passes or reads a mode, none renders differently by
+18 production `DetailView` consumers. None passes or reads a mode, none renders differently by
 mode, and none depends on the compact layout. `data-mode`, `Compact view`, `Expand`,
 `separator` and `--detail-view-width` appear only in `DetailView.tsx` and the tests
 listed in §6.
@@ -71,7 +71,7 @@ listed in §6.
 | VMware VM | `discovery-inventory/.../vmware/VirtualMachineDetailPanel.tsx:64` | xl |
 | IBM Power | `discovery-inventory/.../ibm-power/IbmPowerDetailPanel.tsx:215` | xl |
 | FlashSystem volume | `discovery-inventory/.../flash-system/FlashSystemVolumeDetailPanel.tsx:74` | lg (default) |
-| Recovery Group | `recovery-plans/recovery-groups/components/RecoveryGroupsTable.tsx:410` | lg (default) |
+| Recovery Group | `recovery-plans/recovery-groups/components/RecoveryGroupsTable.tsx:410` | committed size (lg at audit time; the Metro Mirror task may change it to xl) |
 | Recovery Application | `recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx:410` | lg (default) |
 | Access Log | `platform-administration/audit/components/AccessLogDetailDrawer.tsx:59` | lg (default) |
 | Platform Provider | `platform-administration/platform-providers/components/PlatformProvidersTable.tsx:256` | md |
@@ -87,8 +87,10 @@ listed in §6.
 | Recovery Actions History | `recovery-actions/pages/RecoveryActionsHistoryPage.tsx:51` | md |
 | Recovery Run History | `recovery-plans/recovery-runs/components/RecoveryRunHistoryDrawer.tsx:50` | md |
 
-Note: Recovery Group is `lg`, not `xl`. That is today's assignment and it stays (no
-sizing redesign). Other files that import from `detail-view` (`BackingStorageInfo`,
+Note: this task does not set or assert the Recovery Group size and must not modify
+`RecoveryGroupsTable.tsx` (an active Metro Mirror task owns it and may change it to
+`xl`). Whatever size is committed there is preserved; only `RecoveryGroupsTable.test.tsx`
+changes here. Other files that import from `detail-view` (`BackingStorageInfo`,
 `RecoveryGroupMetroMirrorFields`, `RecoveryGroupOrchestrationStatus`,
 `useLatestOrchestratorRun`) use content primitives only.
 
@@ -243,7 +245,7 @@ Real app, `http://localhost:5173`, own Edge tab on CDP `127.0.0.1:9333`. Never d
 other sessions' tabs. The user must have logged in to Keycloak in that Edge once. Wait
 9–14 s for inventory rows. Dark mode = `.dark` class on `<html>`.
 
-Details to open: Platform Provider (md), Recovery Group (lg, dense), VMware VM (xl),
+Details to open: Platform Provider (md), Recovery Group (current committed size), VMware VM (xl),
 IBM Power (xl), Access Log (lg), Identity User (md), Snapshot Policy (md).
 
 For each detail:
@@ -270,8 +272,8 @@ Prerequisites (**dependencies**, state at plan commit time):
 - Hardening Task 2 (HelpPopover portal) is uncommitted in `HelpPopover.tsx`/`.test.tsx`.
   This plan does not edit those files. Only run their tests.
 - `src/locales/*.json` is dirty with Metro Mirror keys (another session), and hardening
-  Task 3 targets the same files. Run Task 4 only when `git diff src/locales` is empty, or
-  commit via a temporary index containing only the 9 removed lines.
+  Task 3 targets the same files. Run Task 4 only when `git diff src/locales` is empty.
+  No temporary-index workaround: if they are still dirty, Task 4 stays pending.
 - `RecoveryGroupsTable.tsx` is dirty (Metro Mirror session). This plan edits only
   `RecoveryGroupsTable.test.tsx`. If that test file becomes dirty from another session
   before Task 2, stop and coordinate.
@@ -318,7 +320,7 @@ hunks).
 | Risk | Impact | Mitigation |
 |---|---|---|
 | Editing `DetailView.tsx` while hardening Task 1 is uncommitted sweeps its hunks into commit 1 | High | Wait for its commit. Before staging, check that `git diff` on the file contains only compact-removal hunks. |
-| Locale files changed concurrently (hardening Task 3, other sessions) | Med | Commit locales last. Check `git diff -U0 src/locales`, or use a temporary index. |
+| Locale files changed concurrently (hardening Task 3, other sessions) | Med | Commit locales last. Edit only when `git diff src/locales` is empty; otherwise leave Task 4 pending (no temporary index). |
 | Deleting a `sm:` class with a `compact` branch breaks the tablet layout | Med | §4 step 5 lists exactly which branches are kept. Add the new nav class test. Browser check at 800 px. |
 | A consumer test indirectly depends on header button count / Tab order | Low | Grep done (only 3 identity tests). Run the full consumer test list in §6. |
 | Removing a generic "Expand" translation | Low | Only the `detailView.*` keys are removed, each confirmed by `git grep`. |
@@ -339,7 +341,7 @@ hunks).
 - [ ] `md`/`lg`/`xl` remain with the same widths and consumer assignments.
 - [ ] At 390 px the dialog fits the viewport, navigation wraps horizontally, content
   scrolls, the footer stays reachable, and there is no horizontal overflow.
-- [ ] All 17 consumers work. No feature-specific behaviour is lost.
+- [ ] All 18 consumers work. No feature-specific behaviour is lost.
 - [ ] Focused tests (§6) pass. `npm run lint` and `npm run typecheck` pass.
 - [ ] Browser verification (§10) passes, including dark mode, with a clean console.
 - [ ] Orphaned hook, icons and the 3 locale keys are removed. Cleanup searches are clean.

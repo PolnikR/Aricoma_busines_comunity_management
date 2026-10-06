@@ -87,7 +87,7 @@ questions).
 **Verification:**
 - [ ] `npm exec vitest run src/locales`
 - [ ] `git diff -U0 src/locales` shows exactly 9 removed lines and nothing else (else
-  wait for hardening Task 3 / other sessions or use a temporary index).
+  leave the task pending; no temporary index).
 
 **Dependencies:** Task 1. Hardening Task 3 committed (same files).
 
