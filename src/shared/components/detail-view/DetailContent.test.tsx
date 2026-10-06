@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { DetailCode } from './DetailCode'
-import { DetailField, DetailFieldGroup, DetailFieldLink, DetailTechnicalGroup } from './DetailField'
+import { DetailField, DetailFieldGroup, DetailFieldLink, DetailOverview, DetailTechnicalGroup } from './DetailField'
 import { DetailStatusBlock } from './DetailStatusBlock'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -83,6 +83,104 @@ describe('DetailFieldGroup', () => {
     expect(screen.getByRole('heading', { level: 4, name: 'Workload' })).toBeInTheDocument()
     expect(screen.getByText('What is protected')).toBeInTheDocument()
     expect(screen.getByRole('term').closest('dl')).toHaveClass('grid-cols-1', '@min-[520px]/detail-content:grid-cols-2', '@min-[860px]/detail-content:grid-cols-3')
+  })
+})
+
+describe('DetailOverview', () => {
+  const cellOf = (label: string) => screen.getByText(label).parentElement
+
+  it('renders an auto-fill grid with a row rule and last-row clip, without columns, borders or surface', () => {
+    render(
+      <DetailOverview>
+        <DetailField label="Type" value="Airflow" emphasis />
+        {null}
+        <>
+          <DetailField label="Port" value="8080" mono />
+        </>
+      </DetailOverview>,
+    )
+    const grid = screen.getAllByRole('term')[0]?.closest('dl')
+    expect(grid).toHaveClass('grid-cols-[repeat(auto-fill,minmax(min(12.75rem,100%),1fr))]', 'grid-flow-row', '[clip-path:inset(-0.5rem_0_2px_-0.5rem)]')
+    expect(grid?.className).not.toMatch(/grid-cols-\d|:grid-cols-|dense|rounded|(^|\s)(bg-|ring|border)/)
+    expect(screen.getAllByRole('term')).toHaveLength(2)
+    for (const label of ['Type', 'Port']) {
+      const cell = cellOf(label)
+      expect(cell).toHaveClass('relative', 'py-2', 'pe-7', 'after:bottom-0', 'after:h-px', 'after:bg-(--overview-rule)')
+      expect(cell?.className).not.toMatch(/col-span|(^|\s)(bg-|ring|border)/)
+    }
+  })
+
+  it('spans cells by the measured footprint: plain text by length, nodes only with wide', () => {
+    render(
+      <DetailOverview>
+        <DetailField label="Short" value={'x'.repeat(28)} wide />
+        <DetailField label="Medium" value={'x'.repeat(29)} />
+        <DetailField label="Long" value={'x'.repeat(65)} />
+        <DetailField label="Link" value={<DetailFieldLink href="https://airflow.test" external>https://airflow.test</DetailFieldLink>} />
+        <DetailField label="Wide link" value={<DetailFieldLink href="https://airflow.test" external>https://airflow.test</DetailFieldLink>} wide />
+        <DetailField label="Empty" value={null} wide />
+      </DetailOverview>,
+    )
+    for (const label of ['Short', 'Link', 'Empty']) expect(cellOf(label)?.className).not.toMatch(/col-span/)
+    expect(cellOf('Medium')).toHaveClass('@min-[24rem]/detail-content:col-span-2')
+    expect(cellOf('Long')).toHaveClass('col-span-full')
+    expect(screen.getByText('x'.repeat(65))).toHaveClass('max-w-[88ch]')
+    expect(cellOf('Wide link')).toHaveClass('col-span-full')
+  })
+
+  it('uses the A4 typography: 11.5px medium label and mono at primary contrast', () => {
+    render(
+      <DetailOverview>
+        <DetailField label="IP address" value="10.20.30.40" mono />
+      </DetailOverview>,
+    )
+    const term = screen.getByRole('term')
+    expect(term).toHaveClass('text-[11.5px]', 'font-medium', 'text-text-muted')
+    expect(term).not.toHaveClass('uppercase')
+    expect(term.nextElementSibling).toHaveClass('mt-0.5')
+    const value = screen.getByText('10.20.30.40')
+    expect(value).toHaveClass('font-mono', 'text-[12.5px]', 'text-text-primary')
+    expect(value).not.toHaveClass('text-text-secondary')
+  })
+
+  it('keeps Not set, secondary lines, copy, external links and badges', async () => {
+    const user = userEvent.setup()
+    render(
+      <DetailOverview>
+        <DetailField label="Description" value="  " copyValue="x" />
+        <DetailField label="Cluster" value="cl-brno-01" secondary="esx-07" />
+        <DetailField label="Provider ID" value="airflow-01" mono copyValue="airflow-01" />
+        <DetailField label="URL" value={<DetailFieldLink href="https://airflow.test" external>https://airflow.test</DetailFieldLink>} wide />
+        <DetailField label="State" value={<span data-testid="badge">Active</span>} />
+      </DetailOverview>,
+    )
+    const definitions = screen.getAllByRole('definition')
+    expect(screen.getAllByRole('term').map(term => term.nextElementSibling)).toEqual(definitions)
+    expect(definitions[0]).toHaveTextContent('Not set')
+    expect(screen.queryByRole('button', { name: 'Copy Description' })).not.toBeInTheDocument()
+    expect(definitions[1]).toHaveTextContent('cl-brno-01esx-07')
+    const link = screen.getByRole('link', { name: 'https://airflow.test' })
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(screen.getByTestId('badge')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Copy Provider ID' }))
+    expect(await clipboardText()).toBe('airflow-01')
+  })
+
+  it('leaves fields outside an Overview unchanged', () => {
+    render(
+      <>
+        <DetailFieldGroup><DetailField label="In group" value="a" mono /></DetailFieldGroup>
+        <DetailTechnicalGroup><DetailField label="In technical" value="b" /></DetailTechnicalGroup>
+        <DetailStatusBlock title="Latest run" status="ok" tone="success"><DetailField label="In status" value="c" /></DetailStatusBlock>
+      </>,
+    )
+    expect(screen.getByText('In group')).toHaveClass('text-xs', 'leading-4', 'text-text-muted')
+    expect(screen.getByText('a')).toHaveClass('font-mono', 'text-text-secondary')
+    expect(screen.getByText('In group').parentElement?.className).toBe('min-w-0')
+    expect(screen.getByText('b')).toHaveClass('font-mono', 'text-text-secondary')
+    expect(screen.getByText('In status')).toHaveClass('text-xs')
+    expect(screen.getByText('In status')).not.toHaveClass('font-medium')
   })
 })
 
