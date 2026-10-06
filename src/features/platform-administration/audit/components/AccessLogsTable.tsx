@@ -168,7 +168,7 @@ export function AccessLogsTable({ filters, density, toolbar, resetKey = 0 }: Acc
         />
       </InventoryPanel>
 
-      <AccessLogDetailDrawer record={selectedRow?.record ?? null} onClose={() => { setSelection(null) }} />
+      <AccessLogDetailDrawer key={selectedRow?.key} record={selectedRow?.record ?? null} onClose={() => { setSelection(null) }} />
     </>
   )
 }

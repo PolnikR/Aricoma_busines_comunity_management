@@ -7,7 +7,7 @@ import { formatDateTime } from '@/shared/utils/dateTime'
 import { RecoveryActionsHistoryPage } from './RecoveryActionsHistoryPage'
 
 describe('RecoveryActionsHistoryPage', () => {
-  it('opens a recovery test in the Model C detail drawer', async () => {
+  it('opens a recovery test in a single-section DetailView', async () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
@@ -22,9 +22,12 @@ describe('RecoveryActionsHistoryPage', () => {
     await user.click(row)
 
     const drawer = screen.getByRole('dialog', { name: 'Recovery test details' })
-    const meta = within(drawer).getByRole('heading', { name: 'Customer Portal' }).parentElement?.nextElementSibling
-    expect(meta).toHaveTextContent(/^Recovery test/)
-    expect(meta).toHaveTextContent('Passed')
+    const header = within(drawer).getByRole('heading', { level: 2, name: 'Customer Portal' }).closest('header')
+    expect(drawer).toHaveAttribute('data-size', 'md')
+    expect(within(drawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(header).toHaveTextContent('Recovery test')
+    expect(header).toHaveTextContent('Passed')
+    expect(header).toHaveTextContent(formatDateTime('2026-07-31T14:30:00+02:00', { language: 'en' }))
     expect(drawer).toHaveTextContent('Manual point-in-time validation completed successfully.')
     await user.click(within(drawer).getByRole('button', { name: 'Recovery test help' }))
     expect(within(drawer).getByRole('dialog', { name: 'What a recovery test shows' })).toHaveTextContent('Automated and manual')

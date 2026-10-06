@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { Badge } from '@/shared/components/badge/Badge'
-import { DataTablePagination, DetailDrawer } from '@/shared/components/data-table'
+import { DataTablePagination } from '@/shared/components/data-table'
+import { DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
 import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
 import { buildAirflowDagUrl } from '@/config/externalServices'
-import { ExternalLinkIcon } from '@/shared/icons/Icons'
+import { ExecutionIcon, ExternalLinkIcon } from '@/shared/icons/Icons'
 import { useAppRunHistory } from '../hooks/useAppRunHistory'
 import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '../helpers/formatRecoveryRun'
 
@@ -43,16 +44,19 @@ export function RecoveryRunHistoryDrawer({ entity, onClose }: RecoveryRunHistory
   )?.url
   const hasHistory = data.runs.length > 0
 
+  if (!entity) return null
+
   return (
-    <DetailDrawer
-      open={entity !== null}
+    <DetailView
+      open
+      size="md"
       onClose={() => { setPage(1); onClose() }}
-      title={entity?.name ?? ''}
-      meta={[t('recoveryRuns.drawer.entity')]}
-      subtitle={<span className="font-mono">{entity?.id}</span>}
+      entityLabel={t('recoveryRuns.drawer.entity')}
+      title={entity.name}
+      meta={<span className="font-mono">{entity.id}</span>}
       ariaLabel={t('recoveryRuns.drawer.label')}
       closeLabel={t('recoveryRuns.drawer.close')}
-      headerActions={entity ? (
+      headerActions={
         <>
         <a
           href={buildAirflowDagUrl(entity.dagId, providerUrl)}
@@ -65,16 +69,11 @@ export function RecoveryRunHistoryDrawer({ entity, onClose }: RecoveryRunHistory
         </a>
         <KeyedHelpPopover helpKey="recoveryRuns.help" sections={['source', 'refresh', 'airflow']} />
         </>
-      ) : null}
+      }
     >
-      <div className="px-5 py-3">
-        <p className="rounded-lg bg-surface-muted px-3 py-2 text-xs text-text-subtle">
-          {t('recoveryRuns.drawer.note')}
-        </p>
-
+      <DetailViewSection id="runs" title={t('recoveryRuns.drawer.runs')} icon={ExecutionIcon} count={data.total} description={t('recoveryRuns.drawer.note')}>
         {error ? (
           <FetchErrorAlert
-            className="mt-4"
             title={t(hasHistory ? 'recoveryRuns.drawer.refreshFailed' : 'recoveryRuns.drawer.loadFailed')}
             retryLabel={t('buttons.retry')}
             isRetrying={isFetching}
@@ -100,16 +99,19 @@ export function RecoveryRunHistoryDrawer({ entity, onClose }: RecoveryRunHistory
         ) : !error ? (
           <p className="mt-4 text-sm text-text-muted">{t('recoveryRuns.table.noRuns')}</p>
         ) : null}
-      </div>
 
-      <DataTablePagination
-        page={page}
-        pageSize={PAGE_SIZE}
-        total={data.total}
-        pageSizeOptions={[PAGE_SIZE]}
-        onPageChange={setPage}
-        onPageSizeChange={() => { /* fixed page size for run history */ }}
-      />
-    </DetailDrawer>
+        {/* The pagination brings its own padding and divider; align it with the section edges. */}
+        <div className="-mx-5 mt-2">
+          <DataTablePagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={data.total}
+            pageSizeOptions={[PAGE_SIZE]}
+            onPageChange={setPage}
+            onPageSizeChange={() => { /* fixed page size for run history */ }}
+          />
+        </div>
+      </DetailViewSection>
+    </DetailView>
   )
 }

@@ -159,11 +159,11 @@ describe('AccessLogsTable', () => {
     expect(drawer).toHaveTextContent('Tělo požadavku')
     expect(drawer).toHaveTextContent('Tělo odpovědi')
     expect(screen.getByRole('button', { name: 'Zavřít podrobnosti přístupového logu' })).toBeInTheDocument()
-    expect(within(drawer).getByRole('button', { name: 'Požadavek' })).toHaveAttribute('aria-expanded', 'true')
+    expect(within(drawer).getByRole('button', { name: 'Požadavek' })).toHaveAttribute('aria-current', 'true')
     expect(drawer).not.toHaveTextContent('"job": "nightly"')
     await user.click(within(drawer).getByRole('button', { name: 'Tělo požadavku' }))
-    await user.click(within(drawer).getByRole('button', { name: 'Tělo odpovědi' }))
     expect(drawer).toHaveTextContent('"job": "nightly"')
+    await user.click(within(drawer).getByRole('button', { name: 'Tělo odpovědi' }))
     expect(drawer).toHaveTextContent('"result": "queued"')
   })
 
@@ -186,14 +186,14 @@ describe('AccessLogsTable', () => {
 
     const drawer = screen.getByRole('dialog', { name: 'Access log details' })
     await user.click(within(drawer).getByRole('button', { name: 'Request body' }))
+    expect(within(drawer).getByRole('region', { name: 'Request body' })).toHaveTextContent('force=true')
     await user.click(within(drawer).getByRole('button', { name: 'Response body' }))
-    expect(drawer).toHaveTextContent('force=true')
+    expect(within(drawer).getByRole('region', { name: 'Response body' })).toHaveTextContent('null')
     await user.click(within(drawer).getByRole('button', { name: 'Access log help' }))
     expect(within(drawer).getByRole('dialog', { name: 'What an access log entry is' })).toHaveTextContent('Raw entry')
-    expect(drawer).toHaveTextContent('null')
   })
 
-  it('shows query string, user agent and referer in the request details, with a dash when missing', async () => {
+  it('shows query string, user agent and referer in the request details, with Not set when missing', async () => {
     const user = userEvent.setup()
     fetchAccessLogsMock.mockResolvedValue([
       {
@@ -221,9 +221,9 @@ describe('AccessLogsTable', () => {
 
     await user.click(screen.getByRole('row', { name: 'GET /tags' }))
     drawer = screen.getByRole('dialog', { name: 'Access log details' })
-    expect(detailValue(drawer, 'Query string')).toHaveTextContent(/^—$/)
-    expect(detailValue(drawer, 'User agent')).toHaveTextContent(/^—$/)
-    expect(detailValue(drawer, 'Referer')).toHaveTextContent(/^—$/)
+    expect(detailValue(drawer, 'Query string')).toHaveTextContent(/^Not set$/)
+    expect(detailValue(drawer, 'User agent')).toHaveTextContent(/^Not set$/)
+    expect(detailValue(drawer, 'Referer')).toHaveTextContent(/^Not set$/)
   })
 
   it('opens raw fallback entries safely in the detail drawer', async () => {

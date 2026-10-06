@@ -20,12 +20,12 @@ afterEach(cleanup)
 const entity: RecoveryRunHistoryEntity = { id: 'finance_recovery', name: 'Finance Recovery', dagId: 'dag_260818094526_2918dccb', providerId: 'airflow-01' }
 
 describe('RecoveryRunHistoryDrawer', () => {
-  it('is closed when no entity is selected', () => {
+  it('renders nothing when no entity is selected', () => {
     vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, isFetching: false, error: null, refetch: vi.fn() })
 
     render(<RecoveryRunHistoryDrawer entity={null} onClose={vi.fn()} />)
 
-    expect(screen.getByRole('dialog', { hidden: true })).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.queryByRole('dialog', { hidden: true })).not.toBeInTheDocument()
   })
 
   it('shows the full run history and explains its refresh policy for the selected entity', () => {
@@ -57,10 +57,14 @@ describe('RecoveryRunHistoryDrawer', () => {
       'https://airflow.dynamic.test:8443/dags/dag_260818094526_2918dccb',
     )
     expect(screen.queryByRole('combobox', { name: 'Rows per page' })).not.toBeInTheDocument()
-    const titleRow = screen.getByRole('heading', { name: 'Finance Recovery' }).parentElement
-    expect(titleRow).toContainElement(screen.getByRole('link', { name: /View in Airflow/ }))
-    expect(titleRow?.nextElementSibling).toHaveTextContent('Run history')
     const drawer = screen.getByRole('dialog', { name: 'Run history detail' })
+    const header = within(drawer).getByRole('heading', { level: 2, name: 'Finance Recovery' }).closest('header')
+    expect(header).toContainElement(screen.getByRole('link', { name: /View in Airflow/ }))
+    expect(header).toHaveTextContent('Run history')
+    // One section, so no navigation; the run list sits in the Runs region.
+    expect(drawer).toHaveAttribute('data-size', 'md')
+    expect(within(drawer).queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument()
+    expect(within(drawer).getByRole('region', { name: 'Runs' })).toHaveTextContent('success')
     fireEvent.click(within(drawer).getByRole('button', { name: 'Run history help' }))
     expect(within(drawer).getByRole('dialog', { name: 'Where the run history comes from' })).toHaveTextContent('Source')
   })

@@ -1,5 +1,6 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { openDetailSection } from '@/test-utils/detailView'
 import { AccessLogDetailDrawer } from './AccessLogDetailDrawer'
 import type { AccessLogRecord } from '../model/accessLogTypes'
 
@@ -11,29 +12,39 @@ const request: AccessLogRecord = {
   kind: 'request',
   method: 'GET',
   path: '/vdisks_by_vm',
-  status: 200,
+  status: 404,
   durationMs: 42,
   requestBody: null,
   responseBody: { vdisks: {} },
 }
 
-const accentOf = (name: string) => screen.getByRole('button', { name }).closest('section')?.getAttribute('data-accent')
-const bodyLayout = () => screen.getByRole('dialog').querySelector('[data-body-layout]')?.getAttribute('data-body-layout')
+const dialog = () => screen.getByRole('dialog', { name: 'Access log details' })
+const navItems = () => within(within(dialog()).getByRole('navigation', { name: 'Sections' })).getAllByRole('button')
 
 describe('AccessLogDetailDrawer', () => {
-  it('lays out the request and its bodies as accented scrolling sections', () => {
-    render(<AccessLogDetailDrawer record={request} onClose={vi.fn()} />)
-
-    expect(bodyLayout()).toBe('sections')
-    expect(accentOf('Request')).toBe('overview')
-    expect(accentOf('Request body')).toBe('technical')
-    expect(accentOf('Response body')).toBe('technical')
+  it('renders nothing without a record', () => {
+    render(<AccessLogDetailDrawer record={null} onClose={vi.fn()} />)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('shows a raw entry as a technical section', () => {
+  it('shows the request with its HTTP status first and each body as its own section', () => {
+    render(<AccessLogDetailDrawer record={request} onClose={vi.fn()} />)
+
+    expect(dialog()).toHaveAttribute('data-size', 'lg')
+    expect(navItems().map(item => item.textContent)).toEqual(['Request', 'Request body', 'Response body'])
+    const overview = within(dialog()).getByRole('region', { name: 'Request' })
+    expect(overview).toHaveTextContent('404')
+    expect(overview).toHaveTextContent('42 ms')
+    expect(within(dialog()).getByRole('heading', { level: 2 }).closest('header')).not.toHaveTextContent('404')
+
+    expect(openDetailSection(dialog(), 'Request body')).toHaveTextContent('null')
+    expect(openDetailSection(dialog(), 'Response body')).toHaveTextContent('"vdisks": {}')
+  })
+
+  it('shows a raw entry as a single section without navigation', () => {
     render(<AccessLogDetailDrawer record={{ kind: 'raw', raw: 'unparsed line' }} onClose={vi.fn()} />)
 
-    expect(bodyLayout()).toBe('sections')
-    expect(accentOf('Raw entry')).toBe('technical')
+    expect(within(dialog()).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(within(dialog()).getByRole('region', { name: 'Raw entry' })).toHaveTextContent('unparsed line')
   })
 })
