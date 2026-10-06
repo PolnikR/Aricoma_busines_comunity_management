@@ -1,6 +1,6 @@
 # Spec: zobrazovanie časov v timezone browser session
 
-Stav: **návrh na review, nič nie je implementované.** Baseline je `89423dac` na vetve `spike/ant-design-shell`.
+Stav: **T1–T6 implementované a overené. Deferred follow-up pre `datetime-local` zostáva otvorený (§6).** Baseline je `89423dac` na vetve `spike/ant-design-shell`.
 Klasifikácia všetkých nálezov je v [browser-timezone-date-formatting-audit.md](browser-timezone-date-formatting-audit.md),
 poradie práce v [browser-timezone-date-formatting-plan.md](browser-timezone-date-formatting-plan.md) a
 [browser-timezone-date-formatting-todo.md](browser-timezone-date-formatting-todo.md).

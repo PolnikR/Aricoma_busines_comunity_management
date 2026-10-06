@@ -28,7 +28,7 @@ aj z Airflow, sa zobrazí ako `—` a nikdy sa nepovažuje za UTC.
 
 ## Klasifikácia
 
-| File | Field/source | Current behavior | Category | Action |
+| File | Field/source | Baseline behavior (pred T1–T6) | Category | Action |
 |------|--------------|------------------|----------|--------|
 | `platform-administration/audit/components/AccessLogsTable.tsx` | `timestamp` (`+00:00`) | `Intl` `sk-SK` s natvrdo `timeZone: 'Europe/Bratislava'`, výstup `03.09.2026 10:25:29` | A | **migrated** (`fd09ce87`, test fix `33cddc58`): `formatDateTime(…, { language: 'sk', …rovnaké fields })`, zachovať bodkový layout |
 | `platform-administration/identity-access/components/UsersSection.tsx` | `createdAt`, `activeSessionStart` (`+00:00`) | lokálne `dateLocale` + `formatUserTimestamp`, browser tz, app locale | A | **migrated** (`7b93426c`): `formatDateTime(…, { language })` |

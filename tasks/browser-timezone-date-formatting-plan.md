@@ -91,9 +91,8 @@ Nemenia sa:
 | Kolízia s inou session v rovnakom working tree | Med | commit iba explicitných ciest; `dashboard-preview` a untracked generated súbory sa nedotýkajú |
 | `?raw` import `.ts` v teste | Low | `vite/client` typy sú v `tsconfig.app.json`; overí `tsc -b` v T1 |
 
-## Open Questions (na schválenie)
-1. **`RecoveryPointSummary`:** plán ho dáva do deferred follow-up, aby sa nezmenil C preview. Ak ho chcete centralizovať aj tak,
-   akceptujete, že preview v zime ukáže čas posunutý o hodinu (`+02:00` instant v browser timezone)?
-2. **Locale:** zachovať `en-GB` v History a Validate a browser default v Recovery Runs (odporúčam, podľa zadania), alebo zjednotiť na jazyk aplikácie?
-3. B a D otázky pre BE, vrátane Airflow normalizácie a neoverenej FlashSystem semantiky, a UX/API rozhodnutie pre `datetime-local`:
+## Open Questions
+1. **`RecoveryPointSummary`, rozhodnuté:** zostáva v deferred follow-up a nemení sa.
+2. **Locale, rozhodnuté:** bez zmeny. Access Logs `sk`, Users a PageShell jazyk aplikácie, History a Validate `en`, Recovery Runs browser default.
+3. **Otvorené:** B a D otázky pre BE, vrátane Airflow normalizácie a neoverenej FlashSystem semantiky, a UX/API rozhodnutie pre `datetime-local`:
    pozri [audit](browser-timezone-date-formatting-audit.md#otvorené-otázky). Neblokujú tento plán.
