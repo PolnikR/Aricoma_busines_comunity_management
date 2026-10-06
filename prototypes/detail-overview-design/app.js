@@ -8,7 +8,7 @@ const WIDTHS = {
   narrow: { name: 'Narrow', dialog: 343, narrow: true },
 }
 const VALUES = { normal: 'Normal', long: 'Long' }
-const COMPARE = { off: 'Off', a: 'A family', all: 'All' }
+const COMPARE = { off: 'Off', a: 'A family', g: 'A4 grouped vs flat', all: 'All' }
 
 const params = new URLSearchParams(location.search)
 const state = {
@@ -89,7 +89,7 @@ function render() {
   document.getElementById('ctl-t').classList.toggle('opacity-40', state.cmp !== 'off')
 
   const stage = document.getElementById('stage')
-  stage.innerHTML = (state.cmp === 'all' ? Object.keys(TEMPLATES) : state.cmp === 'a' ? Object.keys(TEMPLATES).filter(k => k.startsWith('A')) : [state.t]).map(frame).join('')
+  stage.innerHTML = (state.cmp === 'all' ? Object.keys(TEMPLATES) : state.cmp === 'a' ? Object.keys(TEMPLATES).filter(k => k.startsWith('A')) : state.cmp === 'g' ? ['A4G', 'A4'] : [state.t]).map(frame).join('')
   stage.querySelectorAll('.detail-content').forEach((content) => {
     const style = getComputedStyle(content)
     const inner = content.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)

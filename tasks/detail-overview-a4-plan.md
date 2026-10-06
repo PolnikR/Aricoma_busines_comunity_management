@@ -193,9 +193,13 @@ The rules:
   - The colour is an opaque mix (`color-mix(border 60%, surface)`), so overlapping copies do
     not darken.
   - No vertical rules, no outer border, no background. This is not a cell grid.
-- **Clip:** the `dl` gets `clip-path: inset(-0.5rem 0 1px -0.5rem)`.
-  - It cuts the shadow copies at the right edge, and the bottom 1 px, which is the last row's
-    rule, whatever the number of fields in that row.
+- **Clip:** the `dl` gets `clip-path: inset(-0.5rem 0 2px -0.5rem)`.
+  - It cuts the shadow copies at the right edge, and the bottom 2 px, which hold the last
+    row's rule, whatever the number of fields in that row.
+  - Why 2 px: a grid that ends on a fractional pixel (e.g. a row of tag pills) draws the 1 px
+    rule across two device pixels, and a 1 px clip left a visible line (Task 2 finding).
+  - The 2 px come out of the cell's 8 px bottom padding, so a focus ring in the last row stays
+    clear of the clip.
   - Focus rings keep 0.5rem at the top and left.
   - The right edge stays clear because of the cell end-padding.
 - **Order:** `grid-auto-flow: row`, never `dense`, so the visual order equals the DOM and field

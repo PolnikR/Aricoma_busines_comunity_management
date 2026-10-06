@@ -81,16 +81,28 @@ Add a compare option "A4 grouped vs flat" that shows both side by side for the c
 dataset and width.
 
 **Acceptance criteria:**
-- [ ] Both variants render the same fields in the same order. The only difference is the
+- [x] Both variants render the same fields in the same order. The only difference is the
   headings and block breaks.
-- [ ] For datasets without groups, the two variants are identical.
-- [ ] The compare option works at LG, XL and Narrow.
+- [x] For datasets without groups, the two variants are identical.
+- [x] The compare option works at LG, XL and Narrow.
 
 **Verification:**
-- [ ] CDP overflow matrix for the VM dataset × both variants × MD/LG/XL/Narrow × Normal/Long:
+- [x] CDP overflow matrix for the VM dataset × both variants × MD/LG/XL/Narrow × Normal/Long:
   no overflow.
-- [ ] Screenshots grouped vs flat at LG, XL and Narrow, in both Normal and Long, plus one in
+- [x] Screenshots grouped vs flat at LG, XL and Narrow, in both Normal and Long, plus one in
   dark mode.
+
+**Result:**
+- Dataset `vm` (9 fields, Long overrides) and template `A4G`. Base `A4` is the flat variant: one
+  grid, no headings, so there is no separate identical "A4-flat" template.
+- Compare option "A4 grouped vs flat" shows A4G above A4.
+- 400 template renders, all problem-free: 5 datasets × MD/LG/XL/Narrow × Normal/Long × 10
+  templates.
+- Screenshots: VM grouped vs flat at LG and XL (Normal), LG and XL (Long, XL in dark mode), and
+  Narrow (Long).
+- Finding: a grid ending on a fractional pixel (tag pills) left a faint rule under the last
+  row with a 1 px clip. The clip is now 2 px (plan D5); a 3× zoom of the last row confirms no
+  rule.
 
 **Dependencies:** Task 1. **Files:** `data.js`, `templates.js`, `app.js`, `index.html`.
 **Scope:** S–M

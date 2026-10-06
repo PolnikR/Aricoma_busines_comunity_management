@@ -61,6 +61,25 @@ function a4Cell(f) {
 }
 const a4Grid = fields => `<dl class="ov-a4">${fields.map(a4Cell).join('')}</dl>`
 
+// Grouped variant: one titled A4 block per `group`, in field order (same h4 as
+// DetailFieldGroup). Fields without a group form one untitled block, so datasets without
+// groups render exactly like flat A4.
+function a4Grouped(fields) {
+  const blocks = []
+  for (const f of fields) {
+    const last = blocks.at(-1)
+    if (last && last.group === f.group) last.fields.push(f)
+    else blocks.push({ group: f.group, fields: [f] })
+  }
+  if (blocks.length === 1 && !blocks[0].group) return a4Grid(fields)
+  return `<div class="ov-a4-groups">${blocks.map(b => `
+      <section>
+        ${b.group ? `<h4 class="mb-1 text-[13px] font-semibold leading-5 text-text-primary">${esc(b.group)}</h4>` : ''}
+        ${a4Grid(b.fields)}
+      </section>`).join('')}
+    </div>`
+}
+
 // Long prose (descriptions) is treated differently from long technical values in some templates.
 const isProse = f => footprint(f) === 'full' && !f.mono && !f.href && !f.link
 
@@ -70,6 +89,8 @@ function core(f, o = {}) {
   const v = esc(f.value)
   const mono = o.mono ?? 'font-mono text-[0.9em] text-text-secondary'
   const linkClass = 'rounded text-accent hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15'
+  // Same pills as VirtualMachineDetailPanel's tags.
+  if (f.tags) return `<span class="flex flex-wrap gap-1.5">${f.value.map(tag => `<span class="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">${esc(tag)}</span>`).join('')}</span>`
   if (f.badge) return `<span class="inline-flex items-center ${o.badge ?? 'rounded-full px-2.5 py-0.5 text-theme-xs font-medium'} ${TONE[f.badge]}">${v}</span>`
   if (f.href) return `<a href="${esc(f.href)}"${f.external ? ' target="_blank" rel="noopener noreferrer"' : ''} class="${linkClass}${f.mono ? ` ${o.monoLink ?? 'font-mono text-[0.9em]'}` : ''}">${v}${f.external ? ICON.external : ''}</a>`
   if (f.link) return `<button type="button" class="${linkClass} text-left">${v}</button>`
@@ -153,6 +174,12 @@ const TEMPLATES = {
   A4: {
     name: 'A4 · Tight + row rule (flat)',
     render: a4Grid,
+  },
+
+  // A4-grouped: the same A4 grid split into titled blocks (Compute / Guest / Placement …).
+  A4G: {
+    name: 'A4G · Tight + row rule (grouped)',
+    render: a4Grouped,
   },
 
   B: {

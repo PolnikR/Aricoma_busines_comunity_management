@@ -1,7 +1,8 @@
 // Mock datasets. Every template receives the same flat field list; no template knows the entity.
 // Field model: label, value, secondary, emphasis, mono, href + external (link), link (in-app),
 // copy (copy action), badge (status tone), wide (consumer hint: a node value needs a full row,
-// as the real consumers mark URLs today). `long` replaces values when "Long values" is on.
+// as the real consumers mark URLs today), tags (value is a list of pills), group (block title
+// for the grouped/flat comparison). `long` replaces values when "Long values" is on.
 
 const DATASETS = {
   platform: {
@@ -65,6 +66,35 @@ const DATASETS = {
       Description: 'FlashSystem 7300 in DC Prague South, primary site storage for tier-1 workloads. Metro Mirror partner of FS7300-PRG-NORTH; FlashCopy targets live in pool CR_POOL_02.',
       URL: 'https://fs7300-prg-south-mgmt.storage.dc-prague-south.abco.aricoma.cz:7443/gui#dashboard',
       Credential: 'svc-abco-storage-flashsystem-prg-south-readonly',
+    },
+  },
+
+  // Mirrors VirtualMachineDetailPanel's Overview: Compute / Guest / Placement, same fields,
+  // same order, the folder as plain text and the tags as a node marked wide.
+  vm: {
+    name: 'VM multi-group · 9',
+    entity: 'Virtual machine',
+    title: 'SAP-PRD-APP-01',
+    statuses: [['success', 'Powered on']],
+    sections: ['Overview', 'Disks', 'Network', 'Relationships', 'Technical'],
+    fields: [
+      { group: 'Compute', label: 'vCPU', value: '8', emphasis: true },
+      { group: 'Compute', label: 'Memory', value: '32 GB', emphasis: true },
+      { group: 'Guest', label: 'Operating system', value: 'Red Hat Enterprise Linux 9 (64-bit)' },
+      { group: 'Guest', label: 'Hostname', value: 'sap-prd-app-01.abco.local' },
+      { group: 'Guest', label: 'IP address', value: '10.20.31.14', mono: true },
+      { group: 'Placement', label: 'Cluster', value: 'PRG-SOUTH-CL01', secondary: 'esx-prg-07.abco.local' },
+      { group: 'Placement', label: 'Datastore', value: 'DS-SAP-PRD-01', secondary: '3 disks / 420 GB' },
+      { group: 'Placement', label: 'Folder', value: '/Datacenters/PRG-South/vm/SAP/Production' },
+      { group: 'Placement', label: 'Tags', value: ['sap', 'production', 'tier-1'], tags: true, wide: true },
+    ],
+    long: {
+      'Operating system': 'Microsoft Windows Server 2022 Datacenter Edition (64-bit)',
+      Hostname: 'sap-s4hana-prd-application-server-01.prg-south.abco.aricoma.local',
+      Cluster: 'PRG-SOUTH-PRODUCTION-CLUSTER-01-VSAN-STRETCHED',
+      Datastore: 'VSAN-PRG-SOUTH-PRODUCTION-SAP-TIER1-DATASTORE-01',
+      Folder: '/Datacenters/PRG-South/vm/SAP/S4HANA/Production/Application-Servers/Tier-1/Primary-Site',
+      Tags: ['sap', 's4hana', 'production', 'tier-1', 'metro-mirror', 'backup-gold', 'pci-scope', 'owner-sap-basis', 'prg-south'],
     },
   },
 
