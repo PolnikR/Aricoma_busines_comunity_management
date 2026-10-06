@@ -20,6 +20,8 @@ const ICONS = {
   collapse: '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
   check: '<path d="m5 12 4.5 4.5L19 7"/>',
+  panelRight: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/>',
+  maximize: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6"/><path d="m9 15 6-6"/>',
 }
 const icon = (name, cls = 'size-4') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="${cls} shrink-0" aria-hidden="true">${ICONS[name] ?? ''}</svg>`
 const esc = (value) => String(value ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
@@ -46,6 +48,7 @@ const BTN = {
   danger: `h-9 rounded-lg px-3 text-sm font-medium border border-error-200 bg-surface text-error-600 hover:bg-error-50 dark:border-error-800 dark:text-error-400 dark:hover:bg-error-500/10 ${FOCUS}`,
   outline: `h-9 rounded-lg px-3 text-sm font-medium border border-border-strong bg-surface text-text-secondary hover:border-accent hover:text-accent ${FOCUS}`,
   soft: `h-8 rounded-lg px-3 text-xs font-medium bg-surface-muted text-accent hover:bg-accent-soft ${FOCUS}`,
+  mode: `inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-text-secondary hover:bg-surface-hover hover:text-text-primary ${FOCUS}`,
   icon: `flex size-8 items-center justify-center rounded-lg text-text-muted hover:bg-surface-hover hover:text-text-primary ${FOCUS}`,
 }
 
@@ -61,12 +64,17 @@ const state = {
   open: true,
   notes: params.get('notes') === '1',
   sections: {}, // id -> open
+  // D only: a new detail always opens expanded; compact is an explicit user choice.
+  mode: params.get('mode') === 'compact' ? 'compact' : 'expanded',
+  scroll: {}, // D: scrollTop per mode, restored when switching back
+  focus: null, // selector focused after the next render
 }
 const SIZES = {
   current: [['420', 'Drawer 420 px (default)'], ['560', 'Drawer 560 px'], ['760', 'Drawer 760 px']],
   a: [['420', 'Drawer 420 px (default)'], ['560', 'Drawer 560 px'], ['760', 'Drawer 760 px']],
   b: [['672', 'Dialog 672 px (= provider edit modal)'], ['960', 'Dialog 960 px'], ['1200', 'Dialog 1200 px']],
   c: [['420', 'Compact 420 px (default)'], ['560', 'Compact 560 px']],
+  d: [['auto', 'Expanded: auto (960 px, 760 px without sections)'], ['960', 'Expanded: 960 px'], ['1200', 'Expanded: 1200 px']],
 }
 const pick = (row) => (state.long && row.long ? row.long : row.value)
 const obj = () => {
@@ -280,12 +288,12 @@ function renderA(d, width) {
 // ===========================================================================================
 // B · CENTERED DETAIL DIALOG — read-only detail at modal size, multi-column
 // ===========================================================================================
-function renderB(d, width) {
+function renderB(d, width, { headerActions = '', techId = false, stickyNav = false } = {}) {
   const sections = d.sections ?? [{ id: 'details', title: 'Details', accent: 'overview', icon: 'grid', open: true, groups: d.groups }]
   // Technical groups move to the side column; the main column keeps business content.
   const technical = sections.flatMap((s) => (s.groups ?? []).filter((g) => g.technical).map((g) => ({ ...g, from: s.title })))
   const mainSections = sections.map((s) => ({ ...s, groups: s.groups?.filter((g) => !g.technical) }))
-  const nav = sections.length > 1 ? `<nav class="flex gap-1 overflow-x-auto border-b border-border px-6" aria-label="Sections">
+  const nav = sections.length > 1 ? `<nav class="flex gap-1 overflow-x-auto border-b border-border px-6 ${stickyNav ? 'sticky top-0 z-[2] bg-surface [scrollbar-width:none]' : ''}" aria-label="Sections">
     ${sections.map((s) => `<a href="#b-${s.id}" data-jump="${s.id}" class="flex h-10 shrink-0 items-center gap-1.5 border-b-2 border-transparent px-2 text-[13px] font-medium text-text-muted hover:text-text-primary ${FOCUS}"><span class="${ACCENT[s.accent].text}">${icon(s.icon, 'size-3.5')}</span>${esc(s.title)}${s.count !== undefined ? `<span class="rounded-full bg-surface-muted px-1.5 text-[11px] tabular-nums">${s.count}</span>` : ''}</a>`).join('')}
   </nav>` : ''
   const sectionB = (s) => {
@@ -293,7 +301,7 @@ function renderB(d, width) {
     const a = ACCENT[s.accent]
     const content = s.groups ? s.groups.map((g) => rowsA(g, 'main')).join('') : s.op ? operationA(s.op) : s.table ? `<div class="-mx-6">${table(s.table, { wide: true, bleed: 'px-6' })}</div>` : s.code !== undefined ? code(s.code) : ''
     if (s.groups && !s.groups.length) return ''
-    return `<section id="b-${s.id}" class="scroll-mt-2 border-b border-border last:border-b-0">
+    return `<section id="b-${s.id}" class="${stickyNav ? 'scroll-mt-11' : 'scroll-mt-2'} border-b border-border last:border-b-0">
       <h3><button type="button" data-toggle="${s.id}" data-default-open="1" aria-expanded="${!collapsed}" class="flex h-11 w-full items-center gap-2.5 px-6 text-left hover:bg-surface-subtle ${FOCUS} focus-visible:ring-inset">
         <span class="${a.text}">${icon(s.icon, 'size-4')}</span>
         <span class="text-sm font-semibold text-text-primary">${esc(s.title)}</span>
@@ -318,8 +326,10 @@ function renderB(d, width) {
         <div class="text-xs font-medium text-text-muted">${esc(d.entity)}</div>
         <h2 class="line-clamp-2 text-lg font-semibold leading-7 wrap-anywhere">${esc(d.title)}</h2>
         <div class="mt-1.5 flex flex-wrap items-center gap-1.5">${d.statuses.map((s) => badge(s)).join('')}${d.meta.map((m) => `<span class="ml-1 text-xs text-text-muted">${esc(m)}</span>`).join('')}</div>
+        ${techId && d.techId ? `<div class="group/row mt-1.5 flex min-w-0 items-center text-text-subtle"><span class="min-w-0 truncate font-mono text-[11.5px]" title="${esc(d.techId)}">${esc(d.techId)}</span>${copyBtn(d.techId)}</div>` : ''}
       </div>
       <div class="flex items-center gap-1">
+        ${headerActions}
         <button class="${BTN.icon}" aria-label="Help">${icon('help')}</button>
         <button class="${BTN.icon}" data-close aria-label="Close detail">${icon('close')}</button>
       </div>
@@ -346,7 +356,7 @@ function renderC(d, width) {
   return state.expanded ? renderCExpanded(d) : renderCCompact(d, width)
 }
 
-function renderCCompact(d, width) {
+function renderCCompact(d, width, { expandAction, backdrop } = {}) {
   const sections = d.sections ?? [{ id: 'details', title: 'Details', accent: 'overview', icon: 'grid', open: true, groups: d.groups }]
   const op = sections.find((s) => s.op)?.op
   const LIMIT = 4
@@ -361,7 +371,7 @@ function renderCCompact(d, width) {
     if (s.code !== undefined) return code(s.code)
     return ''
   }
-  const expandBtn = `<button type="button" data-expand="" class="${BTN.icon}" aria-label="Open full view" title="Open full view">${icon('expand')}</button>`
+  const expandBtn = expandAction ?? `<button type="button" data-expand="" class="${BTN.icon}" aria-label="Open full view" title="Open full view">${icon('expand')}</button>`
   const strip = op ? `<button type="button" data-toggle="${sections.find((s) => s.op).id}" class="flex w-full items-center gap-2.5 border-b border-border px-5 py-2.5 text-left hover:bg-surface-subtle ${FOCUS} focus-visible:ring-inset">
       ${badge({ label: op.status, tone: op.tone })}
       <span class="min-w-0 flex-1 truncate text-xs text-text-secondary">${esc(op.label)} · ${esc(op.when)} · ${esc(op.duration)}</span>
@@ -370,12 +380,12 @@ function renderCCompact(d, width) {
   const f = footer(d)
   return drawerShell(width, `
     ${headerA(d, expandBtn)}
-    <div class="custom-scrollbar flex-1 overflow-y-auto">
+    <div class="custom-scrollbar flex-1 overflow-y-auto" data-scroll>
       ${factsA(d)}
       ${strip}
       ${sections.map((s) => sectionA(s, 'drawer', compactBody)).join('')}
     </div>
-    ${f ? `<footer class="flex items-center gap-3 border-t border-border px-5 py-3">${f.start}<div class="ml-auto flex gap-2">${f.end}</div></footer>` : ''}`)
+    ${f ? `<footer class="flex items-center gap-3 border-t border-border px-5 py-3">${f.start}<div class="ml-auto flex gap-2">${f.end}</div></footer>` : ''}`, backdrop)
 }
 
 function renderCExpanded(d) {
@@ -426,9 +436,24 @@ function renderCExpanded(d) {
   </aside>`
 }
 
+// ===========================================================================================
+// D · EXPANDED DEFAULT ↔ COMPACT — one detail view with two modes (conceptually a DetailView
+// with mode "expanded" | "compact"). Expanded is B's dialog; compact is C's compact drawer.
+// ===========================================================================================
+function renderD(d, size) {
+  if (state.mode === 'compact') {
+    const expand = `<button type="button" data-mode-toggle="expanded" class="${BTN.mode}" title="Expand to the full detail view">${icon('maximize', 'size-3.5')}Expand</button>`
+    // Lighter backdrop: compact mode is for keeping the list in view.
+    return renderCCompact(d, 420, { expandAction: expand, backdrop: 'bg-black/15' })
+  }
+  const width = size === 'auto' ? (d.sections ? 960 : 760) : Number(size)
+  const compact = `<button type="button" data-mode-toggle="compact" class="${BTN.mode}" title="Show as a compact side panel">${icon('panelRight', 'size-3.5')}<span class="hidden @min-[560px]/dlg:inline">Compact view</span></button>`
+  return renderB(d, width, { headerActions: compact, techId: true, stickyNav: true })
+}
+
 // ---------- drawer shell with a working resize handle ---------------------------------------
-function drawerShell(width, inner) {
-  return `<div class="fixed inset-x-0 bottom-0 top-(--bar) z-40 bg-black/45" data-close aria-hidden="true"></div>
+function drawerShell(width, inner, backdrop = 'bg-black/45') {
+  return `<div class="fixed inset-x-0 bottom-0 top-(--bar) z-40 ${backdrop}" data-close aria-hidden="true"></div>
   <aside role="dialog" aria-modal="true" aria-label="Detail" data-drawer class="fixed bottom-0 top-(--bar) right-0 z-50 flex max-w-[92vw] flex-col border-l border-border bg-surface shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)] @container/drawer" style="width:${width}px">
     <div data-resize role="separator" aria-orientation="vertical" aria-label="Resize panel" tabindex="0" class="absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize hover:bg-accent/30 focus:bg-accent/40 focus:outline-none"></div>
     ${inner}
@@ -477,10 +502,17 @@ const NOTES = {
     'Keeps today’s drawer for simple objects; complex objects (VM, Power, inventory) get room when the user asks for it.',
     'Trade-off: two layouts to maintain; the compact view intentionally hides fields behind “more fields”.',
   ],
+  d: [
+    'One detail, two modes. A row click always opens the EXPANDED centred dialog (B foundation): facts, section bar, full tables, identifiers column, pinned footer.',
+    '“Compact view” in the header switches the same detail into C’s compact right drawer (420 px, resizable, lighter backdrop so the list stays visible).',
+    '“Expand”, or the “more fields / Open all … in full view” links, switch back (and jump to that section). Object, section state and per-mode scroll are kept.',
+    'Escape and the backdrop close the detail; reopening a row starts expanded again.',
+    'Size “auto”: 960 px for objects with sections, 760 px for simple objects (Platform provider) so a short record is not lost in a huge dialog.',
+  ],
 }
 
 // ---------- render & wiring ----------------------------------------------------------------
-const RENDER = { current: renderCurrent, a: renderA, b: renderB, c: renderC }
+const RENDER = { current: renderCurrent, a: renderA, b: renderB, c: renderC, d: (d) => renderD(d, state.size) }
 
 function syncUrl() {
   const p = new URLSearchParams({ concept: state.concept, object: state.object, size: state.size })
@@ -488,17 +520,23 @@ function syncUrl() {
   if (state.dark) p.set('theme', 'dark')
   if (state.expanded && state.concept === 'c') p.set('expanded', '1')
   if (state.notes) p.set('notes', '1')
+  if (state.concept === 'd' && state.mode === 'compact') p.set('mode', 'compact')
   history.replaceState(null, '', `?${p}`)
 }
 
 function render() {
+  const previous = document.querySelector('#stage [data-scroll]')
+  if (previous && state.renderedKey) state.scroll[state.renderedKey] = previous.scrollTop
   const sizes = SIZES[state.concept]
   if (!sizes.some(([v]) => v === state.size)) state.size = sizes[0][0]
   document.documentElement.classList.toggle('dark', state.dark)
   const sizeSelect = document.getElementById('size')
   sizeSelect.innerHTML = sizes.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')
   sizeSelect.value = state.size
-  sizeSelect.disabled = state.concept === 'c' && state.expanded
+  sizeSelect.disabled = (state.concept === 'c' && state.expanded) || (state.concept === 'd' && state.mode === 'compact')
+  const modeSelect = document.getElementById('mode')
+  modeSelect.parentElement.hidden = state.concept !== 'd'
+  modeSelect.value = state.mode
   document.getElementById('concept').value = state.concept
   document.getElementById('object').value = state.object
   document.getElementById('long').checked = state.long
@@ -509,7 +547,26 @@ function render() {
   notes.innerHTML = `<ul class="mx-auto flex max-w-6xl list-disc flex-col gap-0.5 pl-5">${NOTES[state.concept].map((n) => `<li>${esc(n)}</li>`).join('')}</ul>`
   const d = obj()
   document.getElementById('stage').innerHTML = page(d) + (state.open ? RENDER[state.concept](d, Number(state.size)) : '')
+  const previousKey = state.renderedKey
+  state.renderedKey = `${state.concept}:${state.object}:${state.concept === 'd' ? state.mode : ''}`
+  const scroller = document.querySelector('#stage [data-scroll]')
+  // Re-rendering the same view (e.g. a section toggle) keeps its scroll; a mode switch restores
+  // the position that mode had.
+  if (scroller && (state.restoreScroll || previousKey === state.renderedKey)) scroller.scrollTop = state.scroll[state.renderedKey] ?? 0
+  state.restoreScroll = false
+  if (state.focus) { document.querySelector(state.focus)?.focus(); state.focus = null }
   syncUrl()
+}
+
+// D: switch mode without closing; keep the object and section state, restore that mode's scroll.
+function setMode(mode, sectionId) {
+  state.open = true
+  state.mode = mode
+  state.restoreScroll = !sectionId
+  state.focus = `[data-mode-toggle="${mode === 'compact' ? 'expanded' : 'compact'}"]`
+  if (sectionId) state.sections[sectionId] = true
+  render()
+  if (sectionId) document.getElementById(`b-${sectionId}`)?.scrollIntoView({ block: 'start' })
 }
 
 document.addEventListener('click', (event) => {
@@ -523,13 +580,16 @@ document.addEventListener('click', (event) => {
     state.sections[id] = !current
     return render()
   }
+  if (t.dataset.modeToggle) return setMode(t.dataset.modeToggle)
+  if (t.dataset.expand !== undefined && state.concept === 'd') { event.preventDefault(); return setMode('expanded', t.dataset.expand) }
   if (t.dataset.expand !== undefined) { event.preventDefault(); state.expanded = true; render(); if (t.dataset.expand) document.getElementById(`c-${t.dataset.expand}`)?.scrollIntoView({ block: 'start' }); return }
   if (t.dataset.collapse !== undefined) { state.expanded = false; return render() }
   if (t.dataset.jump) { event.preventDefault(); state.sections[t.dataset.jump] = true; render(); document.getElementById(`b-${t.dataset.jump}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }); return }
   if (t.dataset.jumpC) { event.preventDefault(); document.getElementById(`c-${t.dataset.jumpC}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }); return }
   if (t.dataset.copy !== undefined) { try { void navigator.clipboard?.writeText(t.dataset.copy) } catch { /* prototype */ } t.innerHTML = icon('check', 'size-3'); return }
   if (t.dataset.close !== undefined) { state.open = false; state.expanded = false; return render() }
-  if (t.dataset.reopen !== undefined) { state.open = true; return render() }
+  // Opening a detail (again) always starts expanded with default sections.
+  if (t.dataset.reopen !== undefined) { state.open = true; state.mode = 'expanded'; state.sections = {}; state.scroll = {}; return render() }
   if (t.tagName === 'A' && t.getAttribute('href') === '#') event.preventDefault()
 })
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && state.open) { state.open = false; state.expanded = false; render() } })
@@ -547,8 +607,9 @@ document.addEventListener('pointerdown', (event) => {
 })
 
 for (const [id, key] of [['concept', 'concept'], ['object', 'object'], ['size', 'size']]) {
-  document.getElementById(id).addEventListener('change', (e) => { state[key] = e.target.value; state.open = true; if (key !== 'size') { state.sections = {}; state.expanded = false } render() })
+  document.getElementById(id).addEventListener('change', (e) => { state[key] = e.target.value; state.open = true; if (key !== 'size') { state.sections = {}; state.expanded = false; state.mode = 'expanded'; state.scroll = {} } render() })
 }
+document.getElementById('mode').addEventListener('change', (e) => { setMode(e.target.value) })
 document.getElementById('long').addEventListener('change', (e) => { state.long = e.target.checked; render() })
 document.getElementById('dark').addEventListener('change', (e) => { state.dark = e.target.checked; render() })
 document.getElementById('notes-toggle').addEventListener('change', (e) => { state.notes = e.target.checked; render() })
