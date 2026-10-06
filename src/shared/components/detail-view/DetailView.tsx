@@ -1,6 +1,7 @@
 import { Children, createContext, Fragment, isValidElement, useContext, useEffect, useId, useRef, useState } from 'react'
 import type { ComponentType, CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactElement, ReactNode, SVGProps } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
+import { openDialog } from '@/shared/components/modal/dialogStack'
 import { useResizablePanel } from '@/shared/hooks/useResizablePanel'
 import { CloseIcon, MaximizeIcon, PanelRightIcon } from '@/shared/icons/Icons'
 import { cn } from '@/shared/utils/cn'
@@ -153,8 +154,11 @@ export function DetailView({ open, onClose, title, entityLabel, statuses = [], m
     if (!open) return
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
     closeRef.current?.focus()
+    const dialog = openDialog()
 
     const onKey = (event: KeyboardEvent) => {
+      // A dialog opened above this one (e.g. a confirmation) owns Escape and Tab.
+      if (!dialog.isTop()) return
       if (event.key === 'Escape') {
         event.preventDefault()
         onCloseRef.current()
@@ -182,6 +186,7 @@ export function DetailView({ open, onClose, title, entityLabel, statuses = [], m
     window.addEventListener('keydown', onKey)
     return () => {
       window.removeEventListener('keydown', onKey)
+      dialog.remove()
       opener?.focus()
     }
   }, [open])

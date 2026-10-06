@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { cn } from '@/shared/utils/cn'
+import { openDialog } from './dialogStack'
 
 interface ModalProps {
   open: boolean
@@ -44,8 +45,11 @@ export function Modal({
     const firstFocusable = getFocusable()[0]
     if (firstFocusable) firstFocusable.focus()
     else dialogRef.current?.focus()
+    const dialog = openDialog()
 
     const onKey = (event: KeyboardEvent) => {
+      // Only the top-most open dialog handles Escape and Tab.
+      if (!dialog.isTop()) return
       if (event.key === 'Escape') {
         event.preventDefault()
         onCloseRef.current()
@@ -71,6 +75,7 @@ export function Modal({
     window.addEventListener('keydown', onKey)
     return () => {
       window.removeEventListener('keydown', onKey)
+      dialog.remove()
       openerRef.current?.focus()
       openerRef.current = null
     }
