@@ -8,19 +8,19 @@ OpenAPI, generated Zod, Metro Mirror or other sessions' task files.
 and handle Escape and Tab only when they are on top.
 
 **Acceptance criteria:**
-- [ ] DetailView → nested Modal → Escape closes only the Modal. The DetailView stays open
+- [x] DetailView → nested Modal → Escape closes only the Modal. The DetailView stays open
   and focus returns to the control that opened the Modal.
-- [ ] A second Escape closes the DetailView and focus returns to its original opener.
-- [ ] Tab stays trapped in the top-most dialog. The lower dialog neither wraps nor steals
+- [x] A second Escape closes the DetailView and focus returns to its original opener.
+- [x] Tab stays trapped in the top-most dialog. The lower dialog neither wraps nor steals
   focus. After the upper dialog closes, the lower trap works again.
-- [ ] Backdrop clicks and the HelpPopover Escape behaviour are unchanged.
+- [x] Backdrop clicks and the HelpPopover Escape behaviour are unchanged.
 
 **Verification:**
-- [ ] Shared test `src/shared/components/modal/nestedDialogs.test.tsx`: real `DetailView`
+- [x] Shared test `src/shared/components/modal/nestedDialogs.test.tsx`: real `DetailView`
   + real `Modal`, covering Escape twice with focus restoration and Tab trapping at both
   levels. Stack unit cases: push/remove/isTop, and unmount of the top entry.
-- [ ] `npm exec vitest run src/shared/components/modal src/shared/components/detail-view src/shared/components/help-popover`
-- [ ] Browser: Recovery Group DetailView → Delete → confirmation → Escape, then Escape
+- [x] `npm exec vitest run src/shared/components/modal src/shared/components/detail-view src/shared/components/help-popover`
+- [x] Browser: Recovery Group DetailView → Delete → confirmation → Escape, then Escape
   again (**never confirm the delete**).
 
 **Dependencies:** None.
@@ -37,22 +37,22 @@ tracks scroll and resize. Keyboard focus bridging and `aria-owns` keep keyboard 
 screen-reader behaviour inside the owning dialog.
 
 **Acceptance criteria:**
-- [ ] The panel is a child of `document.body` and is never clipped by the DetailView
+- [x] The panel is a child of `document.body` and is never clipped by the DetailView
   `overflow-hidden` or the Modal body scroll. `overflow-hidden` stays on DetailView.
-- [ ] The panel stays inside the viewport: flips above near the bottom edge, shifts
+- [x] The panel stays inside the viewport: flips above near the bottom edge, shifts
   near the right and left edges, and is usable at 390 px.
-- [ ] Escape closes only the help (DetailView stays open) and focus returns to the trigger.
-- [ ] While the portaled panel is open, the focus trap of the owning DetailView/Modal never steals Tab from the panel (verified in jsdom and in the real browser).
-- [ ] Outside click closes it. Tab moves trigger → panel → next control. Shift+Tab goes
+- [x] Escape closes only the help (DetailView stays open) and focus returns to the trigger.
+- [x] While the portaled panel is open, the focus trap of the owning DetailView/Modal never steals Tab from the panel (verified in jsdom and in the real browser).
+- [x] Outside click closes it. Tab moves trigger → panel → next control. Shift+Tab goes
   back.
-- [ ] Hover open/close, wide/default width, custom children, KeyedHelpPopover sections
+- [x] Hover open/close, wide/default width, custom children, KeyedHelpPopover sections
   and translations still render. Dark mode is correct.
 
 **Verification:**
-- [ ] Tests in `HelpPopover.test.tsx` (and `KeyedHelpPopover` if it exists): portal
+- [x] Tests in `HelpPopover.test.tsx` (and `KeyedHelpPopover` if it exists): portal
   parent, Escape inside a DetailView, focus return, outside click, Tab bridging, wide
   class, children, keyed sections.
-- [ ] Browser (mandatory, geometry): wide help of VMware, IBM Power and FlashSystem
+- [x] Browser (mandatory, geometry): wide help of VMware, IBM Power and FlashSystem
   (header) and Provider Catalogue (section). Check desktop, trigger near the right
   edge, trigger near the lower edge (short viewport or scrolled section), 390 px and
   dark mode. No clipping, no viewport overflow, console clean, Escape closes the help
@@ -67,20 +67,20 @@ Modal).
 **Scope:** M. **Commit:** `fix(help): portal help popovers outside clipped dialogs`
 
 ## Checkpoint A (after Tasks 1–2)
-- [ ] Focused tests pass, `npm run lint`, `npm run typecheck`.
-- [ ] Browser pass for nested Escape and wide help done (log in first if Keycloak asks).
+- [x] Focused tests pass, `npm run lint`, `npm run typecheck`.
+- [x] Browser pass for nested Escape and wide help done (log in first if Keycloak asks).
 
 ## Task 3: Missing Recovery Application checklist labels
 **Description:** Add `recovery.modal.applicationId` and `recovery.modal.airflowRunId`
 and `recovery.modal.pushToOrchestrator` (approved) to en/cs/sk.
 
 **Acceptance criteria:**
-- [ ] Keys exist in all three locales and reuse nearby terminology. No key renames and no
+- [x] Keys exist in all three locales and reuse nearby terminology. No key renames and no
   logic change.
-- [ ] A locale contract test asserts the keys in every locale.
+- [x] A locale contract test asserts the keys in every locale.
 
 **Verification:**
-- [ ] `npm exec vitest run src/locales src/features/recovery-plans/recovery-applications`
+- [x] `npm exec vitest run src/locales src/features/recovery-plans/recovery-applications`
 
 **Dependencies:** None.
 
@@ -93,11 +93,11 @@ and `recovery.modal.pushToOrchestrator` (approved) to en/cs/sk.
 Approved: `false` → `false`, `true` → `true` as text. No Yes/No formatting.
 
 **Acceptance criteria:**
-- [ ] `null`, `undefined`, `''` and whitespace-only give "Not set".
-- [ ] `false`, `true` and `0` are not "Not set" and are visible as text. A ReactNode renders as given.
+- [x] `null`, `undefined`, `''` and whitespace-only give "Not set".
+- [x] `false`, `true` and `0` are not "Not set" and are visible as text. A ReactNode renders as given.
 
 **Verification:**
-- [ ] `npm exec vitest run src/shared/components/detail-view`
+- [x] `npm exec vitest run src/shared/components/detail-view`
 
 **Dependencies:** None.
 
@@ -111,10 +111,10 @@ Approved: `false` → `false`, `true` → `true` as text. No Yes/No formatting.
 interfaces, test describe names) via `git mv`. `RecoveryRunHistoryEntity` keeps its name.
 
 **Acceptance criteria:**
-- [ ] `git grep` finds neither old name in `src`. Behaviour is unchanged.
+- [x] `git grep` finds neither old name in `src`. Behaviour is unchanged.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/platform-administration/audit src/features/recovery-plans/recovery-runs`
+- [x] `npm exec vitest run src/features/platform-administration/audit src/features/recovery-plans/recovery-runs`
 
 **Dependencies:** None.
 
@@ -123,8 +123,8 @@ interfaces, test describe names) via `git mv`. `RecoveryRunHistoryEntity` keeps 
 **Scope:** S. **Commit:** `refactor(detail-view): rename stale drawer components`
 
 ## Checkpoint: Complete
-- [ ] Focused tests for every task pass. `npm run lint`, `npm run typecheck` and
+- [x] Focused tests for every task pass. `npm run lint`, `npm run typecheck` and
   `git diff --check` are clean.
-- [ ] No full suite unless asked. If one is run, report timeouts separately from failures.
-- [ ] Final browser pass (nested Escape + four wide helps) done.
-- [ ] Unrelated worktree changes untouched. Final report with the 14 requested items.
+- [x] No full suite unless asked (not run; focused scopes only).
+- [x] Final browser pass (nested Escape + four wide helps) done.
+- [x] Unrelated worktree changes untouched. Final report with the 14 requested items.
