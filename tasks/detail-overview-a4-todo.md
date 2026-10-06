@@ -378,23 +378,23 @@ Task 9. Since `36aaf4a3`, `ProvidersCatalogueTable`'s Overview has 11 fields (no
 **Dependencies:** Checkpoint 2. **Files:** `RealmRolesSection.tsx`, `CredentialsTable.tsx`.
 **Scope:** S
 
-## Task 9: Single-group Overviews (Recovery action history, Platform providers)
+## Task 9: Single-group Overviews (Recovery action history, Providers catalogue)
 **Description:** Same change for `RecoveryActionsHistoryPage` (5 fields, long Summary) and
-`PlatformProvidersTable` (conditional fields and fragments per `type`; URL node `mono` + `wide`).
+`ProvidersCatalogueTable` (11 fields since `36aaf4a3`; conditional Partner provider and
+Backing storage; URL node + `wide`). `ProvidersCatalogueTable` replaces `PlatformProvidersTable`
+here, which became the pilot (Task 7).
 
 **Acceptance criteria:**
-- [ ] Every provider `type` shows the same conditional fields in the same order as before.
-  Fragments render as cells.
-- [ ] The Connection and Technical sections are unchanged.
+- [ ] Every provider type shows the same conditional fields in the same order as before.
+- [ ] The Connection, Relationships and Technical sections are unchanged.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/recovery-actions/pages/RecoveryActionsHistoryPage.test.tsx src/features/platform-administration/platform-providers/components/PlatformProvidersTable.test.tsx src/features/platform-administration/platform-providers/pages/PlatformProvidersPage.test.tsx`
+- [ ] `npm exec vitest run src/features/recovery-actions/pages/RecoveryActionsHistoryPage.test.tsx src/features/providers-connectors/providers/components/ProvidersCatalogueTable.test.tsx src/features/providers-connectors/providers/pages/ProvidersPage.test.tsx`
 - [ ] `npx eslint <the 2 files>`
-- [ ] Browser: Platform provider BACKEND (most fields) and SMTP at md and narrow; one history
-  run.
+- [ ] Browser: one infrastructure provider at md and narrow; one history run.
 
 **Dependencies:** Task 8. **Files:** `RecoveryActionsHistoryPage.tsx`,
-`PlatformProvidersTable.tsx`. **Scope:** S
+`ProvidersCatalogueTable.tsx`. **Scope:** S
 
 ## Task 10: Overview + `DetailTechnicalGroup` (Policy sets, Clean room)
 **Description:** `DetailFieldGroup` → `DetailOverview` in `PolicySetsTable` and
