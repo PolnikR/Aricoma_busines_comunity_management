@@ -15,24 +15,11 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { formatDateTime } from '@/shared/utils/dateTime'
 import { useGetUsers } from '@/generated/query/identity-access/identity-access.gen'
 import type { UserRecord } from '@/generated/query/zod'
 
 const USER_SEARCH_FIELDS: (keyof UserRecord)[] = ['user', 'username', 'email', 'roles']
-
-function dateLocale(language: string) {
-  if (language === 'sk') return 'sk-SK'
-  if (language === 'cs') return 'cs-CZ'
-  return 'en-GB'
-}
-
-// Locale-aware; no timeZone option, so the browser's timezone applies.
-function formatUserTimestamp(value: string | null | undefined, language: string) {
-  if (!value) return '—'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '—'
-  return new Intl.DateTimeFormat(dateLocale(language), { dateStyle: 'medium', timeStyle: 'short' }).format(date)
-}
 
 function UserStatusBadge({ status }: { status: UserRecord['status'] }) {
   const { t } = useTranslation()
@@ -56,7 +43,7 @@ function UserDetail({ user }: { user: UserRecord }) {
       <DetailRow label={t('identity.users.fields.username')} value={user.username || '—'} />
       <DetailRow label={t('identity.users.fields.email')} value={(user.email ?? '') || '—'} />
       <DetailRow label={t('identity.users.fields.emailVerified')} value={emailVerified} />
-      <DetailRow label={t('identity.users.fields.createdAt')} value={formatUserTimestamp(user.createdAt, language)} />
+      <DetailRow label={t('identity.users.fields.createdAt')} value={formatDateTime(user.createdAt, { language })} />
       <DetailRow
         label={t('identity.users.fields.roles')}
         value={user.roles.length > 0 ? (
@@ -66,7 +53,7 @@ function UserDetail({ user }: { user: UserRecord }) {
         ) : '—'}
       />
       <DetailRow label={t('identity.users.fields.status')} value={<UserStatusBadge status={user.status} />} />
-      <DetailRow label={t('identity.users.fields.activeSessionStart')} value={formatUserTimestamp(user.activeSessionStart, language)} />
+      <DetailRow label={t('identity.users.fields.activeSessionStart')} value={formatDateTime(user.activeSessionStart, { language })} />
     </dl>
   )
 }
@@ -94,7 +81,7 @@ export function UsersSection() {
     { id: 'username', header: t('identity.users.columns.username'), cell: user => user.username },
     { id: 'roles', header: t('identity.users.columns.roles'), cell: user => (user.roles.length > 0 ? String(user.roles.length) : '—') },
     { id: 'status', header: t('identity.users.columns.status'), cell: user => <UserStatusBadge status={user.status} /> },
-    { id: 'activeSessionStart', header: t('identity.users.columns.activeSessionStart'), cell: user => formatUserTimestamp(user.activeSessionStart, language) },
+    { id: 'activeSessionStart', header: t('identity.users.columns.activeSessionStart'), cell: user => formatDateTime(user.activeSessionStart, { language }) },
   ], [language, t])
 
   return (
