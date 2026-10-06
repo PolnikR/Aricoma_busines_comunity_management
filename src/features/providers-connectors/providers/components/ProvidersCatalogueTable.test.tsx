@@ -324,7 +324,7 @@ describe('ProvidersCatalogueTable', () => {
     expect(header).toHaveTextContent('Source')
     expect(header).toHaveTextContent('Available')
     expect(header).not.toHaveTextContent('vmware-vcenter-01')
-    expect(header).toHaveTextContent(detailSectionsFields(drawer).Type ?? 'missing type')
+    expect(header).toHaveTextContent(detailSectionsFields(drawer)['Type'] ?? 'missing type')
     expect(header).toContainElement(within(drawer).getByRole('button', { name: 'Test connection' }))
     expect(header).toContainElement(within(drawer).getByRole('button', { name: 'Provider help' }))
     // Type, role and credential state stay in the header and are repeated in Overview, with the ID.
