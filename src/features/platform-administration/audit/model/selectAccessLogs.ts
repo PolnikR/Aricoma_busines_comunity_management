@@ -21,7 +21,7 @@ function toAccessLogRecord(entry: AccessLogsResponseOutput['entries'][number]): 
 }
 
 const selectAccessLogRecords = (response: AccessLogsResponseOutput): AccessLogRecord[] =>
-  response.entries.map(toAccessLogRecord)
+  [...response.entries].reverse().map(toAccessLogRecord)
 
 // validatingMutator hands select the parsed Output shape; for this schema it is
 // identical to the Input shape the generated hook declares.

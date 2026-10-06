@@ -163,11 +163,11 @@ describe('AuditPage', () => {
 
     renderPage()
 
-    expect(await screen.findByRole('row', { name: 'GET /api/entry/1' })).toBeInTheDocument()
+    expect(await screen.findByRole('row', { name: 'GET /api/entry/26' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Page 2' }))
-    await user.click(screen.getByRole('row', { name: 'GET /api/entry/26' }))
+    await user.click(screen.getByRole('row', { name: 'GET /api/entry/1' }))
 
-    expect(screen.getByRole('dialog', { name: 'Access log details' })).toHaveTextContent('GET /api/entry/26')
+    expect(screen.getByRole('dialog', { name: 'Access log details' })).toHaveTextContent('GET /api/entry/1')
     await waitFor(() => {
       expect(fetchAccessLogsMock).toHaveBeenCalledOnce()
     })
@@ -187,15 +187,15 @@ describe('AuditPage', () => {
 
     renderPage()
 
-    await screen.findByRole('row', { name: 'GET /api/entry/1' })
+    await screen.findByRole('row', { name: 'GET /api/entry/26' })
     expect(screen.getByRole('combobox', { name: 'Rows per page' })).toHaveValue('25')
     await user.click(screen.getByRole('button', { name: 'Page 2' }))
-    expect(screen.getByRole('row', { name: 'GET /api/entry/26' })).toBeInTheDocument()
+    expect(screen.getByRole('row', { name: 'GET /api/entry/1' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /Filters/ }))
     await user.click(screen.getByRole('button', { name: 'Clear all' }))
 
-    expect(screen.getByRole('row', { name: 'GET /api/entry/1' })).toBeInTheDocument()
+    expect(screen.getByRole('row', { name: 'GET /api/entry/26' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Page 1' })).toHaveAttribute('aria-current', 'page')
     expect(fetchAccessLogsMock).toHaveBeenCalledOnce()
   })

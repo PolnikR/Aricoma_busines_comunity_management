@@ -39,11 +39,11 @@ oldest rows. Reverse the entries in the FE selector so page 1 shows the newest e
 - Selector change and test updates land in one task/commit: either alone leaves the suite red.
 
 ## Task List
-- [ ] Task 1: Reverse access-log entries in `selectAccessLogs` (see `tasks/access-logs-newest-first-todo.md`)
+- [x] Task 1: Reverse access-log entries in `selectAccessLogs` (see `tasks/access-logs-newest-first-todo.md`)
 
 ### Checkpoint: Complete
-- [ ] Focused audit tests pass
-- [ ] Committed with only the selector, its test, the two updated pagination test files and these plan files' checkbox updates
+- [x] Focused audit tests pass
+- [x] Committed with only the selector, its test, the two updated pagination test files and these plan files' checkbox updates
 
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |

@@ -271,9 +271,9 @@ describe('AccessLogsTable', () => {
     ))
     const { rerender, queryClient } = renderTable()
 
-    await screen.findByRole('row', { name: 'GET /api/entries/1' })
+    await screen.findByRole('row', { name: 'GET /api/entries/26' })
     await user.click(screen.getByRole('button', { name: 'Page 2' }))
-    expect(screen.getByRole('row', { name: 'GET /api/entries/26' })).toBeInTheDocument()
+    expect(screen.getByRole('row', { name: 'GET /api/entries/1' })).toBeInTheDocument()
     expect(fetchAccessLogsMock).toHaveBeenCalledOnce()
 
     await user.selectOptions(screen.getByRole('combobox', { name: 'Rows per page' }), '25')
@@ -295,7 +295,7 @@ describe('AccessLogsTable', () => {
       </LanguageContext.Provider>,
     )
 
-    expect(await screen.findByRole('row', { name: 'DELETE /api/reloaded/1' })).toBeInTheDocument()
+    expect(await screen.findByRole('row', { name: 'DELETE /api/reloaded/26' })).toBeInTheDocument()
     expect(screen.queryByRole('dialog', { name: 'Access log details' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Page 1' })).toHaveAttribute('aria-current', 'page')
     expect(fetchAccessLogsMock).toHaveBeenCalledTimes(2)
