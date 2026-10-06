@@ -9,6 +9,7 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef, StateTone, TableDensity } from '@/shared/components/data-table'
 import { InventoryPanel } from '@/shared/components/inventory-shell/InventoryPanel'
+import { formatDateTime } from '@/shared/utils/dateTime'
 import { normalizeAccessLogFilters, toAccessLogParams } from '../model/accessLogFilters'
 import { selectAccessLogs } from '../model/selectAccessLogs'
 import { useGetAccessLogs } from '@/generated/query/logs/logs.gen'
@@ -16,17 +17,13 @@ import type { AccessLogFilters, AccessLogRecord } from '../model/accessLogTypes'
 import { AccessLogDetailDrawer } from './AccessLogDetailDrawer'
 
 const INITIAL_PAGE_SIZE = 25
-const timestampFormatter = new Intl.DateTimeFormat('sk-SK', {
-  timeZone: 'Europe/Bratislava',
-  day: '2-digit', month: '2-digit', year: 'numeric',
-  hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
-})
 
 function formatTimestamp(value: string | undefined) {
-  if (!value) return '—'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '—'
-  return timestampFormatter.format(date).replace(/\.\s+/g, '.').replace(',', '')
+  return formatDateTime(value, {
+    language: 'sk',
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+  }).replace(/\.\s+/g, '.').replace(',', '')
 }
 
 interface AccessLogTableRow {

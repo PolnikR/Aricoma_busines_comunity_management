@@ -26,15 +26,18 @@ const requestEntry: AccessLogRecord = {
   responseBody: [{ result: 'queued' }],
 }
 
-it('shows the user and Slovak date in Bratislava time', async () => {
+it('shows the user and Slovak date in the browser timezone', async () => {
+  const timestamp = '2026-09-03T08:25:29.869196+00:00'
   fetchAccessLogsMock.mockResolvedValue([{
     ...requestEntry,
     user: 'admin',
-    timestamp: '2026-09-03T08:25:29.869196+00:00',
+    timestamp,
   }])
   renderTable()
   expect(await screen.findByText('admin')).toBeInTheDocument()
-  expect(screen.getByText('03.09.2026 10:25:29')).toBeInTheDocument()
+  // Wiring only: the hour comes from the host timezone, so the assertion holds in any timezone.
+  const browserHour = String(new Date(timestamp).getHours()).padStart(2, '0')
+  expect(screen.getByText(`03.09.2026 ${browserHour}:25:29`)).toBeInTheDocument()
 })
 
 function createQueryClient() {
