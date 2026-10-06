@@ -253,20 +253,3 @@ export function HelpIcon(props: IconProps) {
     </svg>
   )
 }
-
-export function PanelRightIcon(props: IconProps) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
-      <rect x="3.333" y="4.167" width="13.333" height="11.667" rx="1.667" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M12.5 4.167v11.666" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  )
-}
-
-export function MaximizeIcon(props: IconProps) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
-      <path d="M12.5 3.333h4.167V7.5M7.5 16.667H3.333V12.5M16.667 3.333 11.667 8.333M3.333 16.667l5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
