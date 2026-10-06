@@ -15,8 +15,8 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import {
   DetailField,
-  DetailFieldGroup,
   DetailFieldLink,
+  DetailOverview,
   DetailView,
   DetailViewSection,
 } from '@/shared/components/detail-view'
@@ -389,7 +389,7 @@ export function ProvidersCatalogueTable({
           {/* One flat Overview in the order of the original detail drawer. Type, role and
               credential state are also header statuses; the repetition is intentional. */}
           <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
-            <DetailFieldGroup>
+            <DetailOverview>
               <DetailField label={t('details.providerId')} value={selected.id} mono copyValue={selected.id} />
               <DetailField label={t('details.type')} value={providerTypeLabel(selected.type)} emphasis />
               {isPartnerProviderType(selected.type) ? (
@@ -420,7 +420,7 @@ export function ProvidersCatalogueTable({
               <DetailField label={t('details.credential')} value={selected.credentialId} mono />
               <DetailField label={t('details.credentialStatus')} value={<ProviderCredentialStatusBadge status={selected.credentialStatus} />} />
               <DetailField label={t('details.description')} value={selected.description} wide />
-            </DetailFieldGroup>
+            </DetailOverview>
           </DetailViewSection>
         </DetailView>
       ) : null}

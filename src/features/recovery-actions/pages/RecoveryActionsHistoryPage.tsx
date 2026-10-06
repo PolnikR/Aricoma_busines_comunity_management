@@ -4,7 +4,7 @@ import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopo
 import { Badge } from '@/shared/components/badge/Badge'
 import { DataTableSurface } from '@/shared/components/data-table/DataTableSurface'
 import { DataTable, type ColumnDef } from '@/shared/components/data-table/DataTable'
-import { DetailField, DetailFieldGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { DetailField, DetailOverview, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import { FilterTabs } from '@/shared/components/filters/FilterTabs'
 import { formatDateTime } from '@/shared/utils/dateTime'
@@ -50,13 +50,13 @@ export function RecoveryActionsHistoryPage() {
       {selectedRun ? (
         <DetailView key={selectedRun.id} open size="md" onClose={() => { setSelectedRun(null) }} entityLabel={t('pages.recoveryActions.history.drawer.entity')} title={selectedRun.applicationGroup} statuses={[<RecoveryTestStatusBadge key="status" status={selectedRun.status} label={t(`pages.recoveryActions.status.${selectedRun.status}`)} />]} meta={formatDateTime(selectedRun.startedAt, { language: 'en' })} headerActions={<KeyedHelpPopover helpKey="pages.recoveryActions.history.help" sections={['mode', 'checks']} />} ariaLabel={t('pages.recoveryActions.history.drawer.ariaLabel')} closeLabel={t('common.close')}>
           <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
-            <DetailFieldGroup>
+            <DetailOverview>
               <DetailField label={t('pages.recoveryActions.history.columns.mode')} value={t(`pages.recoveryActions.history.mode.${selectedRun.mode}`)} emphasis />
               <DetailField label={t('pages.recoveryActions.history.columns.environment')} value={selectedRun.environment} />
               <DetailField label={t('pages.recoveryActions.history.columns.duration')} value={selectedRun.duration} />
               <DetailField label={t('pages.recoveryActions.history.columns.checks')} value={`${String(selectedRun.checksPassed)}/${String(selectedRun.checksTotal)}`} />
               <DetailField label={t('pages.recoveryActions.history.drawer.summary')} value={selectedRun.summary} wide />
-            </DetailFieldGroup>
+            </DetailOverview>
           </DetailViewSection>
         </DetailView>
       ) : null}
