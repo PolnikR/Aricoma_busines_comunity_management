@@ -14,6 +14,7 @@
   <strong class="text-accent">TEMPLATE · Metro Mirror v Recovery Group detaile</strong>
   <label class="flex items-center gap-2">Návrh
     <select id="variant" class="h-8 rounded-md border border-border-strong bg-surface-subtle px-2">
+      <option value="d" selected>D · Refined chain (vybraný smer)</option>
       <option value="a">A · Metro Mirror v sekcii Inventory</option>
       <option value="b">B · Samostatná sekcia Metro Mirror</option>
       <option value="c">C · Replikačný reťazec master → aux → FlashCopy</option>
@@ -334,9 +335,200 @@ function chain(mm, inv) {
 }
 
 // ---------------------------------------------------------------------------
+// Variant D: refined chain (selected direction)
+// ---------------------------------------------------------------------------
+// Inline summary instead of KPI tiles: "4 volumes · 4 found · 8 FlashCopy relations".
+function inventoryLine(inv) {
+  const vols = Object.values(inv.volumes)
+  const found = vols.filter(v => v.found).length
+  const rel = vols.reduce((t, v) => t + v.relations.length, 0)
+  const missing = vols.length - found
+  return `${vols.length} volumes · ${missing ? `<span class="text-warning-600 dark:text-orange-400">${found} found</span>` : `${found} found`} · ${rel} FlashCopy relations`
+}
+
+// Status block, DetailStatusBlock anatomy: status → facts → reference. Kept compact.
+function dStatusBlock(mm) {
+  const cg = mm.consistency_group
+  const refRow = `<div class="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-border/70 px-4 py-2.5 text-xs">
+    ${mm.queried_provider_id ? `<span class="flex min-w-0 items-center gap-2"><span class="text-text-muted">Queried provider</span><span class="min-w-0 font-mono text-[12px] text-text-secondary wrap-anywhere">${esc(mm.queried_provider_id)}</span><button type="button" class="flex size-6 items-center justify-center rounded-md text-text-subtle hover:bg-surface-hover hover:text-text-primary" aria-label="Copy queried provider">${svg(ICON.copy, 'size-3.5')}</button></span>` : ''}
+    ${mm.mode ? `<span class="flex items-center gap-2"><span class="text-text-muted">Mode</span><span class="font-medium text-text-secondary">${esc(humanize(mm.mode))}</span></span>` : ''}
+  </div>`
+  if (mm.error) {
+    return `<section class="rounded-xl border border-border" data-tone="warning">
+      <div class="px-4 py-3.5">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-2">${tonePill('warning', 'Status unavailable')}<span class="text-sm text-text-secondary">Metro Mirror state could not be read.</span></div>
+        <p class="mt-2 font-mono text-[12px] text-text-secondary wrap-anywhere">${esc(mm.error)}</p>
+        <p class="mt-1 text-xs text-text-muted">Replication status is collected best-effort. Auxiliary volumes and FlashCopy below are not affected.</p>
+      </div>${refRow}
+    </section>`
+  }
+  if (!cg) return ''
+  const mappings = mm.mappings ?? []
+  const total = cg.relationship_count ?? mappings.length
+  return `<section class="rounded-xl border border-border" data-tone="${stateTone(cg.state)}">
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5">
+      ${tonePill(stateTone(cg.state), cg.state ? humanize(cg.state) : 'Unknown state')}
+      <span class="min-w-0 text-sm text-text-secondary">Consistency group <strong class="font-semibold text-text-primary">${esc(cg.name ?? cg.id)}</strong> <span class="font-mono text-xs text-text-subtle">#${esc(cg.id)}</span></span>
+    </div>
+    <dl class="grid grid-cols-2 gap-x-8 gap-y-3 border-t border-border/70 px-4 py-3 ${cg.freeze_time ? '@min-[560px]/detail-content:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.3fr)]' : '@min-[560px]/detail-content:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]'}">
+      <div class="col-span-2 min-w-0 @min-[560px]/detail-content:col-span-1"><dt class="text-xs text-text-muted">Progress</dt><dd class="mt-1">${progress(cg.progress, cg.state, 'Consistency group progress')}</dd></div>
+      ${field('Primary', esc(humanize(cg.primary ?? '—')))}
+      ${field('Relationships', mappings.length === total ? String(total) : `${mappings.length} of ${total}`)}
+      ${cg.freeze_time ? field('Frozen at', `<span class="font-mono text-[12.5px] text-text-secondary">${esc(cg.freeze_time)}</span>`) : ''}
+    </dl>${refRow}
+  </section>`
+}
+
+// One mapping's Metro Mirror link: state, then a track whose shape carries the meaning —
+// fill = reported %, solid = in sync, dashed = progress not reported. Never a 0 % bar for null.
+function mmLink(m, { vertical = false } = {}) {
+  const tone = stateTone(m.state)
+  const text = { success: 'text-success-600 dark:text-success-500', error: 'text-error-600 dark:text-error-500', warning: 'text-warning-600 dark:text-orange-400', info: 'text-blue-light-500', neutral: 'text-text-secondary' }[tone]
+  const fill = { success: 'bg-success-500', error: 'bg-error-500', warning: 'bg-warning-500', info: 'bg-accent', neutral: 'bg-text-subtle' }[tone]
+  const numeric = typeof m.progress === 'number'
+  const value = numeric ? `${m.progress} %` : tone === 'success' ? 'In sync' : 'Progress not reported'
+  const stateLabel = m.state ? humanize(m.state) : 'Unknown state'
+  const track = numeric
+    ? `<span class="relative h-1 min-w-6 flex-1 overflow-hidden rounded-full bg-surface-muted" role="progressbar" aria-label="Metro Mirror progress ${esc(m.master_volume)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${m.progress}"><span class="absolute inset-y-0 left-0 rounded-full ${fill}" style="width:${Math.max(0, Math.min(100, m.progress))}%"></span></span>`
+    : tone === 'success'
+      ? `<span class="h-0.5 min-w-6 flex-1 rounded-full ${fill}"></span>`
+      : `<span class="min-w-6 flex-1 border-t border-dashed border-border-strong"></span>`
+  const arrow = `<span class="${numeric ? 'text-text-subtle' : text} -ml-1">${svg('<path d="m7.5 5 5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>', 'size-3.5')}</span>`
+  if (vertical) {
+    return `<div class="flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs"><span class="font-medium ${text}" title="${esc(m.state)}">${esc(stateLabel)}</span><span class="text-text-subtle">·</span><span class="${numeric ? 'font-semibold tabular-nums text-text-secondary' : tone === 'success' ? text : 'text-text-subtle'}">${value}</span></div>
+      ${numeric ? `<div class="mt-1.5 flex max-w-48 items-center">${track}</div>` : ''}`
+  }
+  return `<div class="min-w-0">
+    <p class="truncate text-[11px] font-medium leading-4 ${text}" title="${esc(m.state)}">${esc(stateLabel)}</p>
+    <div class="mt-1 flex items-center gap-1.5"><span class="flex min-w-0 flex-1 items-center">${track}${arrow}</span><span class="shrink-0 text-[11px] leading-4 ${numeric ? 'font-semibold tabular-nums text-text-secondary' : tone === 'success' ? text : 'text-text-subtle'}"${numeric || tone === 'success' ? '' : ' title="Progress not reported"'}>${numeric || tone === 'success' ? value : '—<span class="sr-only">Progress not reported</span>'}</span></div>
+  </div>`
+}
+
+// FlashCopy link after the auxiliary volume: count of snapshot relations, jumps to the volume below.
+function fcLink(aux, v, { vertical = false } = {}) {
+  if (!v) return `<span class="text-xs text-text-subtle">—</span>`
+  const n = v.relations.length
+  const label = `${n} snapshot${n === 1 ? '' : 's'}`
+  const button = `<button type="button" data-goto="${esc(aux)}" class="rounded text-xs font-medium text-brand-500 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15 dark:text-brand-400" aria-label="Show ${label} of ${esc(aux)}">${label}</button>`
+  if (vertical) return button
+  return `<div class="min-w-0">
+    <div class="flex items-center gap-1"><span class="h-px min-w-3 flex-1 bg-brand-500/50 dark:bg-brand-400/50"></span><span class="-ml-1.5 text-brand-500/70 dark:text-brand-400/70">${svg('<path d="m7.5 5 5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>', 'size-3.5')}</span>${button}</div>
+  </div>`
+}
+
+const volumeName = (name, { aux = false, inInventory = true } = {}) => aux && inInventory
+  ? `<button type="button" data-goto="${esc(name)}" title="${esc(name)} — show in auxiliary volume inventory" class="block max-w-full truncate rounded text-left text-sm font-semibold text-text-primary hover:text-accent hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15">${esc(name)}</button>`
+  : `<span class="block truncate text-sm font-semibold text-text-primary" title="${esc(name)}">${esc(name)}</span>`
+
+function dChain(mm, inv) {
+  const mappings = mm.mappings ?? []
+  if (mm.error) return ''
+  if (!mm.consistency_group && mappings.length === 0) {
+    return `<p class="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-text-muted">No Metro Mirror consistency group or mappings were reported for this run.</p>`
+  }
+  if (mappings.length === 0) return `<p class="text-sm text-text-muted">The consistency group reported no volume mappings.</p>`
+  const cgPrimary = mm.consistency_group?.primary
+  const pages = Math.max(1, Math.ceil(mappings.length / PAGE))
+  mmPage = Math.min(mmPage, pages)
+  const start = (mmPage - 1) * PAGE
+  const visible = mappings.slice(start, start + PAGE)
+  const cols = 'grid-cols-[minmax(0,0.85fr)_8.5rem_minmax(0,1.4fr)_6.5rem]'
+  const primaryNote = m => m.primary && m.primary !== cgPrimary
+    ? `<p class="mt-1 text-[11px] text-warning-600 dark:text-orange-400">Primary: ${esc(humanize(m.primary))}</p>` : ''
+  const notInInventory = `<p class="mt-0.5 flex items-center gap-1 text-[11px] text-warning-600 dark:text-orange-400">${svg(ICON.alert, 'size-3')}Not in inventory</p>`
+
+  // Wide: one row per mapping, the links sit between the volumes they connect.
+  const wide = `<div class="hidden @min-[600px]/detail-content:block">
+    <div class="grid ${cols} gap-x-4 border-b border-border/70 pb-2 text-[11px] font-medium text-text-muted">
+      <span>Master volume</span><span class="text-accent">Metro Mirror</span><span>Auxiliary volume</span><span class="text-brand-500 dark:text-brand-400">FlashCopy</span>
+    </div>
+    <ul class="divide-y divide-border/60" aria-label="Replication chain">${visible.map(m => {
+      const v = inv.volumes[m.auxiliary_volume]
+      return `<li class="grid ${cols} items-center gap-x-4 py-3">
+        <div class="min-w-0">${volumeName(m.master_volume ?? '—')}</div>
+        <div class="min-w-0">${mmLink(m)}${primaryNote(m)}</div>
+        <div class="min-w-0">${volumeName(m.auxiliary_volume ?? '—', { aux: true, inInventory: Boolean(v) })}${v ? '' : notInInventory}</div>
+        <div class="min-w-0">${fcLink(m.auxiliary_volume, v)}</div>
+      </li>`
+    }).join('')}</ul>
+  </div>`
+
+  // Narrow: the same chain stacked, a rail on the left carries the direction.
+  const step = (label, body) => `<div class="min-w-0"><p class="text-[11px] text-text-muted">${label}</p><div class="mt-0.5 min-w-0">${body}</div></div>`
+  const link = (title, body, rail) => `<div class="my-1.5 ml-1.5 flex min-w-0 gap-3 border-l-2 ${rail} py-1 pl-3"><div class="min-w-0"><p class="text-[11px] text-text-muted">↓ ${title}</p><div class="mt-0.5 min-w-0">${body}</div></div></div>`
+  const stacked = `<ul class="divide-y divide-border/60 border-y border-border/60 @min-[600px]/detail-content:hidden" aria-label="Replication chain">${visible.map(m => {
+    const v = inv.volumes[m.auxiliary_volume]
+    return `<li class="py-3">
+      ${step('Master', volumeName(m.master_volume ?? '—'))}
+      ${link('Metro Mirror', mmLink(m, { vertical: true }) + primaryNote(m), 'border-accent/40')}
+      ${step('Auxiliary', volumeName(m.auxiliary_volume ?? '—', { aux: true, inInventory: Boolean(v) }) + (v ? '' : notInInventory))}
+      ${v ? link('FlashCopy', fcLink(m.auxiliary_volume, v, { vertical: true }), 'border-brand-500/30 dark:border-brand-400/30') : ''}
+    </li>`
+  }).join('')}</ul>`
+
+  const pager = pages > 1 ? `<nav class="mt-3 flex items-center justify-between gap-3 text-xs text-text-muted" aria-label="Replication chain pages">
+    <span>${start + 1}–${start + visible.length} of ${mappings.length} mappings</span>
+    <span class="flex items-center gap-1">
+      <button type="button" data-page="${mmPage - 1}" ${mmPage === 1 ? 'disabled' : ''} aria-label="Previous page" class="grid size-8 place-items-center rounded-lg border border-border text-text-secondary hover:bg-surface-hover disabled:opacity-40">‹</button>
+      ${Array.from({ length: pages }, (_, i) => `<button type="button" data-page="${i + 1}" aria-label="Page ${i + 1}" ${i + 1 === mmPage ? 'aria-current="page"' : ''} class="grid size-8 place-items-center rounded-lg text-sm ${i + 1 === mmPage ? 'bg-accent font-semibold text-white' : 'border border-border text-text-secondary hover:bg-surface-hover'}">${i + 1}</button>`).join('')}
+      <button type="button" data-page="${mmPage + 1}" ${mmPage === pages ? 'disabled' : ''} aria-label="Next page" class="grid size-8 place-items-center rounded-lg border border-border text-text-secondary hover:bg-surface-hover disabled:opacity-40">›</button>
+    </span>
+  </nav>` : ''
+  return wide + stacked + pager
+}
+
+// Lower half of the chain: the auxiliary volumes and their FlashCopy mappings, one quiet list.
+function dVolumes(inv, openName) {
+  const entries = Object.entries(inv.volumes)
+  if (entries.length === 0) return '<p class="text-sm text-text-muted">No inventory items were returned.</p>'
+  return `<ul class="divide-y divide-border/60 border-y border-border/60">${entries.map(([name, v]) => `
+    <li><details id="vol-${esc(name)}" class="group scroll-mt-4 transition-colors"${name === openName ? ' open' : ''}>
+      <summary class="grid cursor-pointer list-none grid-cols-[1rem_minmax(0,1fr)_auto] items-center gap-x-2.5 rounded-md py-3 hover:bg-surface-hover/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15 @min-[600px]/detail-content:grid-cols-[1rem_minmax(0,1fr)_auto_auto]">
+        <span class="text-text-subtle transition-transform -rotate-90 group-open:rotate-0">${svg(ICON.chevron)}</span>
+        <span class="block truncate text-sm font-semibold text-text-primary" title="${esc(name)}">${esc(name)}</span>
+        <span class="hidden text-xs text-text-muted @min-[600px]/detail-content:inline">${v.relations.length} FlashCopy relation${v.relations.length === 1 ? '' : 's'}</span>
+        ${badge(v.found ? 'success' : 'error', v.found ? 'Found' : 'Not found')}
+        <span class="col-start-2 text-xs text-text-muted @min-[600px]/detail-content:hidden">${v.relations.length} FlashCopy relation${v.relations.length === 1 ? '' : 's'}</span>
+      </summary>
+      <div class="mb-3 ml-[1.625rem] rounded-lg bg-surface-muted/60 px-3 py-2 dark:bg-surface-muted/40">
+        ${v.relations.length === 0 ? '<p class="py-1 text-xs text-text-muted">No FlashCopy mappings were returned.</p>' : `
+        <div class="grid grid-cols-[minmax(0,1fr)_1rem_minmax(0,1fr)] gap-x-2 pb-1 text-[11px] text-text-muted"><span>Source</span><span></span><span>Target snapshot</span></div>
+        ${v.relations.map(r => {
+          const paired = r.paired_volume.name
+          const src = r.role === 'source' ? name : paired, tgt = r.role === 'target' ? name : paired
+          return `<div class="grid grid-cols-[minmax(0,1fr)_1rem_minmax(0,1fr)] items-center gap-x-2 border-t border-border/60 py-1.5 font-mono text-[12px] text-text-secondary">
+            <span class="truncate" title="${esc(src)}">${esc(src)}</span><span class="text-center text-brand-500 dark:text-brand-400" aria-label="FlashCopy to">→</span><span class="truncate" title="${esc(tgt)}">${esc(tgt)}</span>
+          </div>`
+        }).join('')}`}
+        <button type="button" class="mt-1 text-[11px] text-accent hover:underline">Show technical JSON</button>
+      </div>
+    </details></li>`).join('')}</ul>`
+}
+
+function dInventoryBody(mm, inv) {
+  const parts = []
+  if (mm) {
+    parts.push(`<section>
+      ${groupHeader('Metro Mirror', 'Replication from master volumes to auxiliary volumes.')}
+      ${dStatusBlock(mm)}
+    </section>`)
+    const chainHtml = dChain(mm, inv)
+    if (chainHtml) parts.push(`<section>
+      ${groupHeader('Replication chain', 'Each master volume, its Metro Mirror replica and the replica’s FlashCopy snapshots.')}
+      ${chainHtml}
+    </section>`)
+  }
+  parts.push(`<section${mm ? ' class="border-t border-border/70 pt-7"' : ''}>
+    ${groupHeader(`Auxiliary volume inventory <span class="font-mono text-xs font-normal text-text-subtle">· ${esc(inv.provider_id_volume)}</span>`, 'Auxiliary volumes and their FlashCopy snapshot mappings.')}
+    ${dVolumes(inv, state.openVolume)}
+  </section>`)
+  return parts.join('')
+}
+
+// ---------------------------------------------------------------------------
 // Sections per variant
 // ---------------------------------------------------------------------------
-let state = { variant: 'a', scenario: 'copying', compact: false, active: null, openVolume: null }
+let state = { variant: 'd', scenario: 'copying', compact: false, active: null, openVolume: null }
 
 function sections() {
   const mm = SCENARIOS[state.scenario]
@@ -353,7 +545,11 @@ function sections() {
       description: 'Synchronous replication of master volumes to auxiliary volumes.',
       body: () => [mmStatusBlock(mm), mmMappings(mm, names)].filter(Boolean).join('') })
   }
-  list.push({ id: 'inventory', title: 'Inventory', icon: 'server', count: '4', description: 'VMs: 4',
+  if (state.variant === 'd') {
+    list.push({ id: 'inventory', title: 'Inventory', icon: 'server', count: '4', description: inventoryLine(inv),
+      aside: `<span class="font-mono text-[11px] text-text-subtle" title="Run ID">${esc(inv.run_id)}</span>`,
+      body: () => dInventoryBody(mm, inv) })
+  } else list.push({ id: 'inventory', title: 'Inventory', icon: 'server', count: '4', description: 'VMs: 4',
     body: () => {
       const parts = [inventorySummary(inv)]
       if (state.variant === 'a' && mm) parts.push(layer(mmLayerHeader() + `<div class="flex flex-col gap-5">${[mmStatusBlock(mm), mmMappings(mm, names)].filter(Boolean).join('')}</div>`, true))
@@ -422,7 +618,7 @@ function render() {
         <header class="mb-6 flex items-start gap-4"><div class="min-w-0 flex-1">
           <h3 id="section-title" class="text-base font-semibold leading-6 text-text-primary">${active.title}</h3>
           <p class="mt-0.5 text-[13px] text-text-muted">${active.description}</p>
-        </div></header>
+        </div>${active.aside ? `<div class="flex shrink-0 items-center gap-2 pt-1">${active.aside}</div>` : ''}</header>
         <div class="flex flex-col gap-7">${active.body()}</div>
       </div>
     </div>
@@ -436,13 +632,32 @@ function render() {
 // ---------------------------------------------------------------------------
 // Interactions
 // ---------------------------------------------------------------------------
+function revealVolume(details) {
+  details.open = true
+  details.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+  const summary = details.querySelector('summary')
+  summary.focus({ preventScroll: true })
+  summary.classList.add('bg-accent-soft')
+  setTimeout(() => summary.classList.remove('bg-accent-soft'), 1600)
+}
 document.getElementById('dialog').addEventListener('click', e => {
   const sec = e.target.closest('[data-section]')
   if (sec) { state.active = sec.dataset.section; state.openVolume = null; render(); return }
   const page = e.target.closest('[data-page]')
-  if (page) { mmPage = Number(page.dataset.page); render(); return }
+  if (page) {
+    // Keep the reader at the chain: restore the scroll position after re-rendering.
+    const top = document.getElementById('content').scrollTop
+    mmPage = Number(page.dataset.page); render()
+    document.getElementById('content').scrollTop = top
+    return
+  }
   const go = e.target.closest('[data-goto]')
-  if (go) { state.active = 'inventory'; state.openVolume = go.dataset.goto; render(); return }
+  if (go) {
+    const target = document.getElementById(`vol-${go.dataset.goto}`)
+    // Same section: open and reveal the volume in place, no re-render and no new dialog.
+    if (target) { revealVolume(target); return }
+    state.active = 'inventory'; state.openVolume = go.dataset.goto; render(); return
+  }
   if (e.target.closest('#mode')) { state.compact = !state.compact; document.getElementById('compact').checked = state.compact; render() }
 })
 const params = new URLSearchParams(location.search)
