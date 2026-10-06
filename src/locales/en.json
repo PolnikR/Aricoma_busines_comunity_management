@@ -689,7 +689,6 @@
   "detailView.copyField": "Copy {{label}}",
   "detailView.technical": "Technical",
   "detailView.technicalDescription": "Identifiers for support and integrations.",
-  "detailView.connection": "Connection",
   "recoveryGroups.drawer.notOrchestrated": "Not orchestrated",
   "recoveryGroups.drawer.notConfigured": "Not configured",
   "recoveryGroups.drawer.orchestrationIncomplete": "Orchestration incomplete",

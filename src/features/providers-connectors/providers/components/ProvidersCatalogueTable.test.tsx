@@ -15,7 +15,7 @@ const keycloakMock = vi.hoisted(() => ({
 }))
 
 vi.mock('@/config/keycloak', () => ({ keycloak: keycloakMock }))
-import { openDetailSection } from '@/test-utils/detailView'
+import { detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('react-router', async (importOriginal) => ({
@@ -282,18 +282,33 @@ describe('ProvidersCatalogueTable', () => {
     expect(screen.getByText('provider-alerts@example.test')).toBeInTheDocument()
   })
 
-  it('shows backing storage only for compute providers in the drawer', async () => {
+  it('shows one flat Overview in the original drawer order, with backing storage only for compute providers', async () => {
     renderTable()
     fireEvent.click(await screen.findByText('Production vCenter'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
-    const relationships = openDetailSection(drawer, 'Relationships')
-    expect(within(relationships).getByText('Backing storage').nextElementSibling).toHaveTextContent('None')
+
+    // Exactly one section: no navigation, so no Connection, Relationships or Technical.
+    expect(within(drawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(within(drawer).getAllByRole('region')).toHaveLength(1)
+    expect(within(drawer).getByRole('region', { name: 'Overview' })).toBeInTheDocument()
+    for (const name of ['Connection', 'Relationships', 'Technical']) {
+      expect(within(drawer).queryByRole('button', { name })).not.toBeInTheDocument()
+      expect(within(drawer).queryByRole('region', { name })).not.toBeInTheDocument()
+    }
+    expect(detailSectionsLabels(drawer)).toEqual([
+      'Provider ID', 'Type', 'Backing storage', 'Role', 'IP address', 'URL',
+      'Notification email', 'Orchestrator connection ID', 'Credential', 'Credential status', 'Description',
+    ])
+    expect(detailSectionsFields(drawer)).toMatchObject({ 'Provider ID': 'vmware-vcenter-01', 'Backing storage': 'None', Role: 'Source', 'Credential status': 'Available' })
+
     fireEvent.click(screen.getByText('Backup FlashSystem'))
     const storageDrawer = screen.getByRole('dialog', { name: 'Provider detail' })
     await within(storageDrawer).findByRole('heading', { name: 'Backup FlashSystem' })
-    const storageRelationships = openDetailSection(storageDrawer, 'Relationships')
-    expect(within(storageRelationships).queryByText('Backing storage')).not.toBeInTheDocument()
-    expect(within(storageRelationships).getByText('Partner FlashSystem provider')).toBeInTheDocument()
+    expect(within(storageDrawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(detailSectionsLabels(storageDrawer)).toEqual([
+      'Provider ID', 'Type', 'Partner FlashSystem provider', 'Role', 'IP address', 'URL',
+      'Notification email', 'Orchestrator connection ID', 'Credential', 'Credential status', 'Description',
+    ])
   })
 
   it('shows the header statuses, Test connection in the header, Delete left and Edit right', async () => {
@@ -309,9 +324,11 @@ describe('ProvidersCatalogueTable', () => {
     expect(header).toHaveTextContent('Source')
     expect(header).toHaveTextContent('Available')
     expect(header).not.toHaveTextContent('vmware-vcenter-01')
+    expect(header).toHaveTextContent(detailSectionsFields(drawer).Type ?? 'missing type')
     expect(header).toContainElement(within(drawer).getByRole('button', { name: 'Test connection' }))
-    expect(openDetailSection(drawer, 'Technical')).toHaveTextContent('vmware-vcenter-01')
-    openDetailSection(drawer, 'Overview')
+    expect(header).toContainElement(within(drawer).getByRole('button', { name: 'Provider help' }))
+    // Type, role and credential state stay in the header and are repeated in Overview, with the ID.
+    expect(openDetailSection(drawer, 'Overview')).toHaveTextContent('vmware-vcenter-01')
     expect(footer?.children[0]).toContainElement(deleteButton)
     expect(footer?.children[1]).toContainElement(within(drawer).getByRole('button', { name: 'Edit' }))
     fireEvent.click(within(drawer).getByRole('button', { name: 'Provider help' }))

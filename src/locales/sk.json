@@ -668,7 +668,6 @@
   "detailView.copyField": "Kopírovať {{label}}",
   "detailView.technical": "Technické",
   "detailView.technicalDescription": "Identifikátory pre podporu a integrácie.",
-  "detailView.connection": "Pripojenie",
   "recoveryGroups.drawer.notOrchestrated": "Neorchestrované",
   "recoveryGroups.drawer.notConfigured": "Nenastavené",
   "recoveryGroups.drawer.orchestrationIncomplete": "Neúplná orchestrácia",

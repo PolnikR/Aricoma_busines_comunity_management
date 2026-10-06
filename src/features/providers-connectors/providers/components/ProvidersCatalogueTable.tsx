@@ -17,13 +17,12 @@ import {
   DetailField,
   DetailFieldGroup,
   DetailFieldLink,
-  DetailTechnicalGroup,
   DetailView,
   DetailViewSection,
 } from '@/shared/components/detail-view'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
-import { ApiIcon, GridIcon, LayersIcon, NetworkIcon, PlugIcon } from '@/shared/icons/Icons'
+import { GridIcon, PlugIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
@@ -55,6 +54,17 @@ function credentialStatusColor(status: ProviderRecord['credentialStatus']) {
 
 function roleColor(role: ProviderRecord['role']) {
   return role === 'source' ? 'success' as const : 'warning' as const
+}
+
+// Role and credential state appear both as detail header statuses and as Overview fields.
+function ProviderRoleBadge({ role }: { role: ProviderRecord['role'] }) {
+  const { t } = useTranslation()
+  return <Badge color={roleColor(role)} size="sm">{t(`forms.role.${role}`)}</Badge>
+}
+
+function ProviderCredentialStatusBadge({ status }: { status: ProviderRecord['credentialStatus'] }) {
+  const { t } = useTranslation()
+  return <Badge color={credentialStatusColor(status)} size="sm">{credentialStatusLabel(status, t)}</Badge>
 }
 
 function getColumns(
@@ -326,10 +336,8 @@ export function ProvidersCatalogueTable({
           title={selected.name}
           statuses={[
             <Badge key="type" color="info" size="sm">{providerTypeLabel(selected.type)}</Badge>,
-            <Badge key="role" color={roleColor(selected.role)} size="sm">{t(`forms.role.${selected.role}`)}</Badge>,
-            <Badge key="credential" color={credentialStatusColor(selected.credentialStatus)} size="sm">
-              {credentialStatusLabel(selected.credentialStatus, t)}
-            </Badge>,
+            <ProviderRoleBadge key="role" role={selected.role} />,
+            <ProviderCredentialStatusBadge key="credential" status={selected.credentialStatus} />,
           ]}
           headerActions={(
             <>
@@ -378,52 +386,41 @@ export function ProvidersCatalogueTable({
             </Button>
           )}
         >
-          {/* Type, role and credential state are header statuses and are not repeated here. */}
+          {/* One flat Overview in the order of the original detail drawer. Type, role and
+              credential state are also header statuses; the repetition is intentional. */}
           <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
             <DetailFieldGroup>
+              <DetailField label={t('details.providerId')} value={selected.id} mono copyValue={selected.id} />
               <DetailField label={t('details.type')} value={providerTypeLabel(selected.type)} emphasis />
-              <DetailField label={t('details.notificationEmail')} value={selected.notificationEmail} />
-              <DetailField label={t('details.description')} value={selected.description} wide />
+              {isPartnerProviderType(selected.type) ? (
+                <DetailField
+                  label={t('forms.partnerProvider')}
+                  value={selected.partnerProviderId
+                    ? (allProviders.find(provider => provider.id === selected.partnerProviderId)?.name ?? selected.partnerProviderId)
+                    : t('forms.partnerProviderNone')}
+                  secondary={selected.partnerProviderId ? <span className="font-mono">{selected.partnerProviderId}</span> : undefined}
+                />
+              ) : null}
+              {isComputeProviderType(selected.type) ? (
+                <DetailField
+                  label={t('details.backingStorage')}
+                  value={<BackingStorageValue providerId={selected.id} providers={allProviders} />}
+                  wide
+                />
+              ) : null}
+              <DetailField label={t('details.role')} value={<ProviderRoleBadge role={selected.role} />} />
+              <DetailField label={t('details.ipAddress')} value={selected.ipAddress} mono copyValue={selected.ipAddress ?? undefined} />
               <DetailField
                 label={t('details.url')}
                 value={selected.url ? <DetailFieldLink href={selected.url} external>{selected.url}</DetailFieldLink> : null}
                 wide
               />
-            </DetailFieldGroup>
-          </DetailViewSection>
-          <DetailViewSection id="connection" title={t('detailView.connection')} icon={NetworkIcon}>
-            <DetailFieldGroup>
-              <DetailField label={t('details.ipAddress')} value={selected.ipAddress} mono copyValue={selected.ipAddress ?? undefined} />
+              <DetailField label={t('details.notificationEmail')} value={selected.notificationEmail} />
+              <DetailField label={t('details.orchestratorConnId')} value={selected.orchestratorConnId} mono copyValue={selected.orchestratorConnId ?? undefined} />
               <DetailField label={t('details.credential')} value={selected.credentialId} mono />
+              <DetailField label={t('details.credentialStatus')} value={<ProviderCredentialStatusBadge status={selected.credentialStatus} />} />
+              <DetailField label={t('details.description')} value={selected.description} wide />
             </DetailFieldGroup>
-          </DetailViewSection>
-          {isPartnerProviderType(selected.type) || isComputeProviderType(selected.type) ? (
-            <DetailViewSection id="relationships" title={t('resources.relationships.title')} icon={LayersIcon}>
-              <DetailFieldGroup>
-                {isPartnerProviderType(selected.type) ? (
-                  <DetailField
-                    label={t('forms.partnerProvider')}
-                    value={selected.partnerProviderId
-                      ? (allProviders.find(provider => provider.id === selected.partnerProviderId)?.name ?? selected.partnerProviderId)
-                      : t('forms.partnerProviderNone')}
-                    secondary={selected.partnerProviderId ? <span className="font-mono">{selected.partnerProviderId}</span> : undefined}
-                  />
-                ) : null}
-                {isComputeProviderType(selected.type) ? (
-                  <DetailField
-                    label={t('details.backingStorage')}
-                    value={<BackingStorageValue providerId={selected.id} providers={allProviders} />}
-                    wide
-                  />
-                ) : null}
-              </DetailFieldGroup>
-            </DetailViewSection>
-          ) : null}
-          <DetailViewSection id="technical" title={t('detailView.technical')} icon={ApiIcon} description={t('detailView.technicalDescription')} secondary>
-            <DetailTechnicalGroup>
-              <DetailField label={t('details.providerId')} value={selected.id} copyValue={selected.id} />
-              <DetailField label={t('details.orchestratorConnId')} value={selected.orchestratorConnId} copyValue={selected.orchestratorConnId ?? undefined} />
-            </DetailTechnicalGroup>
           </DetailViewSection>
         </DetailView>
       ) : null}
