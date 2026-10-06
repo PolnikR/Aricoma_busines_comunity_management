@@ -169,12 +169,14 @@ code changes.
 **Dependencies:** Tasks 2, 3. **Files:** `tasks/detail-overview-a4-todo.md` only. **Scope:** XS
 
 ## Checkpoint 0 (user decision, gate for all production work)
-- [ ] The user approves the A4 look (tokens, row rule, empty-track behaviour).
-- [ ] The user decides **grouped vs flat** for multi-group Overviews.
-- [ ] The user approves the footprint behaviour and the **thresholds** (`NORMAL_MAX`,
-  `WIDE_MAX`), plus the track minimum and the span gate.
-- [ ] Plan §2.0 "Approved" column is filled in. The production tasks below use only those
-  values. If flat was chosen, the flat variants of Tasks 14 and 15 apply.
+**Approved by the user on 2026-10-06.**
+- [x] The user approves the A4 look (tokens, row rule, empty-track behaviour).
+- [x] The user decides **grouped vs flat** for multi-group Overviews: **flat**.
+- [x] The user approves the footprint behaviour and the **thresholds**: `NORMAL_MAX` 28,
+  `WIDE_MAX` 64, mono measured like other plain text (no weighting), track minimum 12.75rem,
+  span gate 24rem.
+- [x] Plan §2.0 "Approved" column is filled in. The production tasks below use only those
+  values. Flat was chosen, so the flat variants of Tasks 14 and 15 apply.
 
 ### Phase 0 results (Task 4, 2026-10-06)
 | Check | Result |

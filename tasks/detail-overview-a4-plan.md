@@ -107,18 +107,24 @@ have no `id="overview"`. They are listed as a follow-up in Open questions.
 ## 2. Architecture decisions
 
 ### 2.0 Values approved at Checkpoint 0
-Filled in at Checkpoint 0. Production tasks (Phase 1+) use only these values. Until then the
-prototype defaults apply, and they may change in the prototype without touching production.
+**Checkpoint 0 approved by the user on 2026-10-06.** Production tasks (Phase 1+) use only the
+values in the "Approved" column.
 
 | Decision | Prototype default | Approved |
 |---|---|---|
-| Multi-group Overviews (D3) | grouped | _pending_ |
-| `NORMAL_MAX` (plain text up to N chars = one track) | 34 | _pending_ |
-| `WIDE_MAX` (up to N chars = two tracks; above = full row) | 72 | _pending_ |
-| Track minimum incl. 1.75rem cell gutter (D5) | 12.75rem | _pending_ |
-| Two-track span gate (content width) | 24rem | _pending_ |
-| Cell padding / label → value / label size (D6) | `py-2` / 2 px / 11.5px medium | _pending_ |
-| Full-row prose cap | 88ch | _pending_ |
+| Multi-group Overviews (D3) | grouped | **flat** |
+| `NORMAL_MAX` (plain text up to N chars = one track) | 34 | **28** |
+| `WIDE_MAX` (up to N chars = two tracks; above = full row) | 72 | **64** |
+| Mono values | same character count | **same character count as other plain text, no 1.15× weighting** |
+| Track minimum incl. 1.75rem cell gutter (D5) | 12.75rem | **12.75rem** |
+| Two-track span gate (content width) | 24rem | **24rem** |
+| Cell padding / label → value / label size (D6) | `py-2` / 2 px / 11.5px medium | **`py-2` / 2 px / 11.5px medium** |
+| Full-row prose cap | 88ch | **88ch** |
+| Last-row clip | 2 px | **2 px** |
+| Row rule | continuous shadow rule (D5) | **keep the continuous horizontal row-rule mechanism** |
+| Order | `grid-auto-flow: row` | **DOM = visual order, no `dense`** |
+| Vertical separators | none | **none** |
+| Card / surface / background | none | **none** |
 
 **D1. New `DetailOverview` primitive, not a `DetailFieldGroup` variant.**
 - Extending `DetailFieldGroup` (e.g. `variant="overview"`) would put a layout switch on every
