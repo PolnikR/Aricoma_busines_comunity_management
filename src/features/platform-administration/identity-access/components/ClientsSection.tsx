@@ -13,7 +13,7 @@ import {
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
-import { DetailField, DetailFieldGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { DetailField, DetailOverview, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { GridIcon } from '@/shared/icons/Icons'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
@@ -51,11 +51,11 @@ function ClientDetailLoading() {
   const labels = ['displayName', 'protocol', 'type', 'roles', 'id', 'clientId']
   return (
     <div aria-busy="true" aria-label={t('identity.clients.detail.loading')}>
-      <DetailFieldGroup>
+      <DetailOverview>
         {labels.map(field => (
           <DetailField key={field} label={t(`identity.clients.fields.${field}`)} value={<SkeletonBlock className="h-4 w-32" />} />
         ))}
-      </DetailFieldGroup>
+      </DetailOverview>
     </div>
   )
 }
@@ -98,7 +98,7 @@ function ClientDetailView({ client, onClose }: ClientDetailViewProps) {
   } else {
     sections = (
       <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
-        <DetailFieldGroup>
+        <DetailOverview>
           <DetailField label={t('identity.clients.fields.id')} value={data.id} mono copyValue={data.id} />
           <DetailField label={t('identity.clients.fields.clientId')} value={data.clientId} mono copyValue={data.clientId} />
           <DetailField label={t('identity.clients.fields.displayName')} value={data.displayName} emphasis />
@@ -114,7 +114,7 @@ function ClientDetailView({ client, onClose }: ClientDetailViewProps) {
             ) : t('identity.clients.fields.rolesEmpty')}
             wide
           />
-        </DetailFieldGroup>
+        </DetailOverview>
       </DetailViewSection>
     )
   }
