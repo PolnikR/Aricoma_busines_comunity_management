@@ -159,12 +159,12 @@ code changes.
 - A short recommendation for each of the three Checkpoint 0 decisions, with screenshots.
 
 **Acceptance criteria:**
-- [ ] Zero overflow in the matrix. Any failure is fixed in the prototype (Tasks 1–3) and re-run.
-- [ ] Screenshots exist for: Stress LG and XL; VM grouped vs flat at LG, XL and Narrow (Normal
+- [x] Zero overflow in the matrix. Any failure is fixed in the prototype (Tasks 1–3) and re-run.
+- [x] Screenshots exist for: Stress LG and XL; VM grouped vs flat at LG, XL and Narrow (Normal
   and Long); the probe at 34 / 72 and one alternative; dark mode.
 
 **Verification:**
-- [ ] The results table below is filled in.
+- [x] The results table below is filled in.
 
 **Dependencies:** Tasks 2, 3. **Files:** `tasks/detail-overview-a4-todo.md` only. **Scope:** XS
 
@@ -176,9 +176,61 @@ code changes.
 - [ ] Plan §2.0 "Approved" column is filled in. The production tasks below use only those
   values. If flat was chosen, the flat variants of Tasks 14 and 15 apply.
 
-### Phase 0 results
+### Phase 0 results (Task 4, 2026-10-06)
 | Check | Result |
 |---|---|
+| Overflow matrix | 6 datasets × MD/LG/XL/Narrow × Normal/Long × 10 templates = 480 renders, run at 34/72 and at 28/64. A4 and A4G: 0 failures. Template E on the probe: its `truncate` label is ellipsised by design (not a layout overflow; E is unchanged). |
+| No vertical/top borders on A4 cells | 0 found (computed `border-*-width`) |
+| Last-row rule clipped | Every A4 grid's last row ends on the clipped band. Since Task 2, the clip is 2 px because of the fractional-pixel finding; a 3× zoom confirms no rule. |
+| Screen order = field order | Holds in every render (no `dense`) |
+| Row rule continuous when a row ends early | Yes, since the shadow rule (Task 1 finding) |
+| Focus rings (real Tab key) | Fully visible: link in the first column (left edge), copy button and link in the last row (provider XL, probe LG; 4× crops) |
+
+**Measurements behind the decisions**
+- **One-track text width** (track minus 1.75rem gutter): MD 275 px (2 tracks), LG 201 px
+  (3 tracks), XL 204 px (4 tracks), Narrow 293 px (1 track).
+- **Two-track text width:** MD 578 px, LG 430 px, XL 435 px.
+- **VM Overview height, grouped vs flat:**
+
+  | Width | Normal | Long |
+  |---|---|---|
+  | MD | 472 vs 344 px | 644 vs 516 px |
+  | LG | 472 vs 288 px | 588 vs 460 px |
+  | XL | 364 vs 234 px | 472 vs 290 px |
+  | Narrow | 652 vs 524 px | 824 vs 696 px |
+
+  Grouped is 128–184 px (25–64 %) taller.
+
+**Recommendations for Checkpoint 0**
+1. **Grouped vs flat: flat.**
+   - Same fields and order, 25–64 % less height.
+   - The row rule already structures the list.
+   - The headings mostly add near-empty rows: Compute has only 2 fields.
+   - One layout for every Overview, which is the goal of this work.
+   - Cost: 7 headings and their locale keys go, and 1 Recovery groups test assertion changes.
+2. **Thresholds: `NORMAL_MAX` 28 and `WIDE_MAX` 64, instead of 34 / 72.**
+   - At 34, values sit right on the one-track edge (~201 px at LG): a 34-character
+     description or email wraps at LG, and a 33-character one does not.
+   - At 72, 71–72-character values wrap inside two tracks (~430 px); 63–64-character values fit
+     at XL.
+   - 28 / 64 leaves a margin of a few characters at LG/XL. MD has wider tracks, so it is safe
+     either way.
+3. **Mono values (decide or accept).** Mono is wider per character, so a two-track path of
+   ~60+ characters still wraps to 2 lines at 28 / 64. That is acceptable: it wraps inside its
+   cell, with no overflow. The alternative is to weight mono length ×1.15 in the helper, which
+   is one more rule. Recommendation: accept, keep one rule.
+4. **Keep:** track minimum 12.75rem, two-track gate 24rem, `py-2` / 2 px / 11.5px medium label,
+   88ch prose cap, 2 px last-row clip, shadow row rule.
+5. **Node values need `wide`.** A link without `wide` stays in one track and wraps to 3 lines
+   (probe "URL (link, no wide)"). The real URL fields already carry `wide`, so nothing changes
+   for consumers. Badges and short links stay one track.
+
+Prototype links for the review (dev server):
+- A4 stress: `/prototypes/detail-overview-design/?t=A4&d=stress&w=lg&fit=1`
+- Grouped vs flat: `?t=A4&d=vm&w=lg&cmp=g&fit=1` (switch Width and Values)
+- Threshold probe: `?t=A4&d=probe&w=lg&fit=1&fp=1`, and the same with `&nmax=28&wmax=64`
+
+---|---|
 | Overflow matrix (combinations / failures) | |
 | Last-row rule clipped (all datasets) | |
 | Focus rings visible (first/last row) | |
