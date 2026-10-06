@@ -1,4 +1,4 @@
-/* global DETAIL_OBJECTS */
+/* global DETAIL_OBJECTS, DETAIL_VIEWS */
 // Prototype renderers. Concept 0 mirrors today's drawer for reference; A, B and C are the
 // redesign candidates. All of them render the same model from data.js.
 
@@ -22,6 +22,8 @@ const ICONS = {
   check: '<path d="m5 12 4.5 4.5L19 7"/>',
   panelRight: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/>',
   maximize: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6"/><path d="m9 15 6-6"/>',
+  alert: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/>',
+  dot: '<circle cx="12" cy="12" r="3.5" fill="currentColor" stroke="none"/>',
 }
 const icon = (name, cls = 'size-4') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="${cls} shrink-0" aria-hidden="true">${ICONS[name] ?? ''}</svg>`
 const esc = (value) => String(value ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
@@ -76,7 +78,7 @@ const SIZES = {
   a: [['420', 'Drawer 420 px (default)'], ['560', 'Drawer 560 px'], ['760', 'Drawer 760 px']],
   b: [['672', 'Dialog 672 px (= provider edit modal)'], ['960', 'Dialog 960 px'], ['1200', 'Dialog 1200 px']],
   c: [['420', 'Compact 420 px (default)'], ['560', 'Compact 560 px']],
-  d: [['auto', 'Expanded: auto (960 px, 760 px without sections)'], ['960', 'Expanded: 960 px'], ['1200', 'Expanded: 1200 px']],
+  d: [['auto', 'Expanded: auto (960 px, 880 px for simple objects)'], ['960', 'Expanded: 960 px'], ['1200', 'Expanded: 1200 px']],
 }
 const pick = (row) => (state.long && row.long ? row.long : row.value)
 const obj = () => {
@@ -444,83 +446,172 @@ function renderCExpanded(d) {
 // and exactly ONE section rendered on the right. Compact: C's compact drawer.
 // ===========================================================================================
 
-// Sections for the expanded mode: non-technical groups stay in their own sections, every
-// technical group moves into one "Technical" section at the end, and facts no row covers yet
-// join the first section (there is no facts strip in this mode).
-function dSections(d) {
-  const source = d.sections ?? d.groups.filter((g) => !g.technical).map((g, i) => ({
-    id: i === 0 ? 'overview' : String(g.title).toLowerCase().replace(/\W+/g, '-'),
-    title: i === 0 ? 'Overview' : g.title,
-    icon: i === 0 ? 'grid' : 'network',
-    groups: [{ ...g, title: undefined }],
-  }))
-  const all = d.sections ?? [{ title: 'Overview', groups: d.groups }]
-  const technical = all.flatMap((s) => (s.groups ?? []).filter((g) => g.technical)
-    .map((g) => ({ title: g.title === 'Technical' ? (s === all[0] ? d.entity : s.title) : g.title, rows: g.rows })))
-  if (d.techLabel && d.techId) technical.unshift({ title: 'Record', rows: [{ label: d.techLabel, value: d.techId, mono: true, copy: true }] })
-  const extra = (d.facts ?? []).filter((f) => f.overview).map((f) => ({ label: f.label, value: f.value }))
-  const out = source.map((sec, i) => {
-    if (!sec.groups) return sec
-    const groups = sec.groups.filter((g) => !g.technical)
-    if (!groups.length) return null
-    if (i === 0 && extra.length) groups[0] = { ...groups[0], rows: [...extra, ...groups[0].rows] }
-    return { ...sec, groups }
-  }).filter(Boolean)
-  if (technical.length) {
-    out.push({ id: 'technical', title: 'Technical', icon: 'code', isTechnical: true, groups: technical.length === 1 ? [{ ...technical[0], title: undefined }] : technical })
+// ---- Shared detail CONTENT primitives (prototype) -----------------------------------------
+// Each function is one future shared component. Feature data (views.js) only picks blocks and
+// fields; spacing, typography, grid, wrapping and actions all live here.
+
+const fieldValue = (f) => (state.long && f.long ? f.long : f.value)
+// Field grid: 1 column on narrow content, 2 from 520 px, 3 from 860 px. Long fields span the row.
+const FIELD_GRID = 'grid grid-cols-1 gap-x-10 gap-y-5 @min-[520px]/content:grid-cols-2 @min-[860px]/content:grid-cols-3'
+const STATUS_ICON = { success: 'check', error: 'alert', warning: 'alert', info: 'dot', light: 'dot' }
+
+// Small icon actions next to a value (copy, open). Always present, quiet until hovered.
+function FieldAction(kind, text) {
+  const cls = `inline-flex size-6 shrink-0 items-center justify-center rounded-md text-text-subtle hover:bg-surface-hover hover:text-text-primary ${FOCUS}`
+  if (kind === 'copy') return `<button type="button" data-copy="${esc(text)}" class="${cls}" aria-label="Copy ${esc(text)}" title="Copy">${icon('copy', 'size-3.5')}</button>`
+  return `<a href="#" class="${cls}" aria-label="Open in a new tab" title="Open">${icon('external', 'size-3.5')}</a>`
+}
+
+// The value part of a field: empty, secret, tags, status badge, link, mono or plain text.
+function FieldContent(f) {
+  const v = fieldValue(f)
+  if (f.secret) return '<span class="text-text-muted" aria-label="Hidden value">••••••••</span><span class="ml-2 text-xs text-text-subtle">Hidden</span>'
+  if (f.empty || (!f.tags && !v)) return '<span class="text-text-subtle">Not set</span>'
+  if (f.tags) return tags(f.tags)
+  if (f.badge) return badge({ label: v, tone: f.badge })
+  let text = esc(v)
+  if (f.link === 'internal') text = `<a href="#" ${f.jump ? `data-dsection="${f.jump}"` : ''} class="rounded text-accent hover:underline ${FOCUS}">${text}</a>`
+  if (f.link === 'external') text = `<a href="#" class="rounded text-accent hover:underline ${FOCUS}">${text}${icon('external', 'ml-1 inline size-3 -translate-y-px')}</a>`
+  return f.mono ? `<span class="font-mono text-[12.5px] ${f.link ? '' : 'text-text-secondary'}">${text}</span>` : text
+}
+
+// DetailField: label above value; optional secondary line and actions. Long values span the grid.
+function DetailField(f) {
+  const v = fieldValue(f)
+  const wide = f.wide || (typeof v === 'string' && v.length > 56)
+  return `<div class="min-w-0 ${wide ? 'col-span-full' : ''}">
+    <dt class="text-xs leading-4 text-text-muted">${esc(f.label)}</dt>
+    <dd class="mt-1 flex min-w-0 items-start gap-1">
+      <div class="min-w-0 text-sm leading-5 wrap-anywhere text-text-primary ${f.strong ? 'font-semibold' : ''}">${FieldContent(f)}${f.secondary ? `<div class="mt-0.5 text-xs font-normal text-text-muted">${esc(f.secondary)}</div>` : ''}</div>
+      ${f.copy && v ? FieldAction('copy', v) : ''}
+    </dd>
+  </div>`
+}
+
+const GroupHeader = (b) => b.title
+  ? `<header class="mb-3.5"><h4 class="text-[13px] font-semibold leading-5 text-text-primary">${esc(b.title)}</h4>${b.description ? `<p class="text-xs text-text-muted">${esc(b.description)}</p>` : ''}</header>`
+  : ''
+
+// DetailFieldGroup: a titled set of fields in the responsive grid. Consecutive groups are
+// separated by a hairline; no card around a group.
+function DetailFieldGroup(b) {
+  return `<section data-block="fields" class="[[data-block=fields]+&]:border-t [[data-block=fields]+&]:border-border/70 [[data-block=fields]+&]:pt-7">
+    ${GroupHeader(b)}
+    <dl class="${FIELD_GRID}">${b.fields.map(DetailField).join('')}</dl>
+  </section>`
+}
+
+// DetailFieldGroup variant="technical": identifiers in a recessed list — label | mono value |
+// actions — so long IDs get the full line and never compete with business fields.
+function DetailTechnicalGroup(b) {
+  const row = (f) => {
+    const v = fieldValue(f)
+    const val = f.empty || !v
+      ? '<span class="font-outfit text-sm text-text-subtle">Not set</span>'
+      : f.link === 'external' ? `<a href="#" class="rounded text-accent hover:underline ${FOCUS}">${esc(v)}</a>` : esc(v)
+    return `<div class="grid grid-cols-[minmax(8rem,12rem)_minmax(0,1fr)_auto] items-baseline gap-x-4 border-t border-border/60 px-4 py-2.5 first:border-t-0 @max-[560px]/content:grid-cols-[minmax(0,1fr)_auto]">
+      <dt class="text-xs text-text-muted @max-[560px]/content:col-span-2">${esc(f.label)}</dt>
+      <dd class="min-w-0 font-mono text-[12.5px] leading-5 wrap-anywhere text-text-secondary">${val}</dd>
+      <div class="flex items-center gap-0.5 self-center">${f.link === 'external' && v ? FieldAction('open') : ''}${f.copy && v ? FieldAction('copy', v) : ''}</div>
+    </div>`
   }
-  return out
+  return `<section>${GroupHeader(b)}<dl class="overflow-hidden rounded-lg bg-surface-muted/70 dark:bg-surface-muted/50">${b.fields.map(row).join('')}</dl></section>`
 }
 
-// Plain label/value list: one column, fixed label width, no cards, no separators.
-function rowsD(group) {
-  return `<div class="mt-7 first:mt-0">
-    ${group.title ? `<h4 class="mb-1.5 text-xs font-semibold text-text-muted">${esc(group.title)}</h4>` : ''}
-    <dl>${group.rows.map((r) => `<div class="group/row grid grid-cols-[minmax(7.5rem,11rem)_minmax(0,1fr)] items-baseline gap-x-6 py-2 @max-[520px]/content:grid-cols-1 @max-[520px]/content:gap-y-0.5">
-      <dt class="text-[13px] leading-5 text-text-muted">${esc(r.label)}</dt>
-      <dd class="min-w-0 text-sm leading-5 text-text-primary">${value(r)}</dd>
-    </div>`).join('')}</dl>
-  </div>`
-}
-
-function operationD(op) {
-  const runId = state.long ? op.longRunId : op.runId
-  return `<div class="max-w-3xl">
-    <div class="text-[13px] text-text-muted">${esc(op.label)}</div>
-    <div class="mt-2 flex flex-wrap items-center gap-3">
-      <span class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-semibold ${TONE[op.tone]}">${icon('check', 'size-4')}${esc(op.status)}</span>
-      <span class="text-sm text-text-primary">${esc(op.when)}</span>
+// DetailStatusBlock: operational state — status first, then when, a few facts, one reference
+// and one action. Reused for runs, replication, monitoring, credentials and responses.
+function DetailStatusBlock(b) {
+  const ref = b.reference ? fieldValue(b.reference) : ''
+  return `<section class="rounded-xl border border-border">
+    <div class="px-5 py-4">
+      <div class="text-xs text-text-muted">${esc(b.title)}</div>
+      <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-semibold ${TONE[b.status.tone]}">${icon(STATUS_ICON[b.status.tone], 'size-4')}${esc(b.status.label)}</span>
+        ${b.when ? `<span class="text-sm text-text-secondary">${esc(b.when)}</span>` : ''}
+      </div>
     </div>
-    <div class="mt-6">${rowsD({ rows: [
-      { label: 'Duration', value: op.duration },
-      { label: 'Orchestrator', value: op.provider },
-      { label: 'Airflow run ID', value: runId, mono: true, link: true, external: true, copy: true },
-    ] })}</div>
-    <button type="button" class="${BTN.soft} mt-6 inline-flex h-9 items-center gap-1.5 text-sm">${esc(op.action)}${icon('arrow', 'size-3.5')}</button>
-  </div>`
+    ${b.facts?.length ? `<dl class="grid grid-cols-2 gap-x-10 gap-y-4 border-t border-border/70 px-5 py-4 @min-[600px]/content:grid-cols-3">${b.facts.map(DetailField).join('')}</dl>` : ''}
+    ${b.reference ? `<div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border/70 px-5 py-3">
+      <span class="text-xs text-text-muted">${esc(b.reference.label)}</span>
+      <a href="#" class="min-w-0 flex-1 rounded font-mono text-[12.5px] text-accent wrap-anywhere hover:underline ${FOCUS}">${esc(ref)}</a>
+      <span class="flex gap-0.5">${FieldAction('open')}${FieldAction('copy', ref)}</span>
+    </div>` : ''}
+    ${b.action ? `<div class="flex justify-end border-t border-border/70 px-5 py-3"><button type="button" class="${BTN.soft} inline-flex h-9 items-center gap-1.5 text-sm">${esc(b.action)}${icon('arrow', 'size-3.5')}</button></div>` : ''}
+  </section>`
 }
+
+// DetailTable: edge-to-edge in the content area, quiet sentence-case headers, mono columns.
+function DetailTable(b) {
+  const t = b.table
+  const edge = (i, n) => `${i === 0 ? 'pl-8' : ''} ${i === n - 1 ? 'pr-8' : 'pr-6'}`
+  const cell = (c, r) => {
+    const v = r[c.key]
+    if (c.badge) return badge({ label: v[0], tone: v[1] })
+    return c.mono ? `<span class="font-mono text-[12px] text-text-secondary wrap-anywhere">${esc(v)}</span>` : `<span class="wrap-anywhere">${esc(v)}</span>`
+  }
+  const n = t.columns.length
+  return `<div class="custom-scrollbar -mx-8 overflow-x-auto"><table class="w-full min-w-[34rem] text-left text-[13px]">
+    <thead><tr class="border-b border-border">${t.columns.map((c, i) => `<th scope="col" class="${edge(i, n)} py-2.5 text-xs font-medium whitespace-nowrap text-text-muted ${c.align === 'right' ? 'text-right' : ''}">${esc(c.label)}</th>`).join('')}</tr></thead>
+    <tbody>${t.rows.map((r) => `<tr class="border-b border-border/60 last:border-b-0 hover:bg-surface-subtle">${t.columns.map((c, i) => `<td class="${edge(i, n)} py-2.5 align-top ${i === 0 ? 'font-medium text-text-primary' : 'text-text-secondary'} ${c.align === 'right' ? 'text-right tabular-nums' : ''}">${cell(c, r)}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table></div>`
+}
+
+// Minimal JSON tinting with existing tokens: keys primary, strings secondary, literals accent.
+function highlightJson(src) {
+  let out = ''
+  let last = 0
+  src.replace(/("(?:\\.|[^"\\])*")(\s*:)?|\b(?:true|false|null)\b|-?\b\d+(?:\.\d+)?\b/g, (m, str, colon, offset) => {
+    out += esc(src.slice(last, offset))
+    if (str && colon) out += `<span class="text-text-primary">${esc(str)}</span>${esc(colon)}`
+    else if (str) out += `<span class="text-text-secondary">${esc(str)}</span>`
+    else out += `<span class="text-accent">${esc(m)}</span>`
+    last = offset + m.length
+    return m
+  })
+  return out + esc(src.slice(last))
+}
+
+// DetailCode: raw payloads — caption with format/size and Copy, scrolling mono body.
+function DetailCode(b) {
+  return `<figure class="overflow-hidden rounded-lg border border-border/70 bg-surface-subtle">
+    <figcaption class="flex items-center gap-2 border-b border-border/70 px-4 py-1.5 text-xs">
+      <span class="font-medium text-text-secondary">${esc(b.label)}</span>${b.meta ? `<span class="text-text-subtle">· ${esc(b.meta)}</span>` : ''}
+      ${b.code ? `<button type="button" data-copy="${esc(b.code)}" class="ml-auto inline-flex h-7 items-center gap-1.5 rounded-md px-2 font-medium text-text-muted hover:bg-surface-hover hover:text-text-primary ${FOCUS}">${icon('copy', 'size-3.5')}Copy</button>` : ''}
+    </figcaption>
+    ${b.code
+      ? `<pre class="custom-scrollbar max-h-[26rem] overflow-auto px-4 py-3 font-mono text-[12px] leading-5 whitespace-pre-wrap wrap-anywhere text-text-muted">${highlightJson(b.code)}</pre>`
+      : `<p class="px-4 py-6 text-sm text-text-muted">${esc(b.empty)}</p>`}
+  </figure>`
+}
+
+// DetailViewSection header: title, one-line description, optional status aside.
+function DetailSectionHeader(sec) {
+  return `<header class="mb-6 flex items-start gap-4">
+    <div class="min-w-0 flex-1">
+      <h3 id="d-section-title" class="text-base font-semibold leading-6 text-text-primary">${esc(sec.title)}</h3>
+      ${sec.description ? `<p class="mt-0.5 text-[13px] text-text-muted">${esc(sec.description)}</p>` : ''}
+    </div>
+    ${sec.aside ? badge(sec.aside) : ''}
+  </header>`
+}
+
+const BLOCKS = { fields: DetailFieldGroup, technical: DetailTechnicalGroup, status: DetailStatusBlock, table: DetailTable, code: DetailCode }
 
 function sectionContentD(sec) {
-  const heading = `<div class="mb-5 flex items-baseline gap-3">
-    <h3 id="d-section-title" class="text-base font-semibold text-text-primary">${esc(sec.title)}</h3>
-    ${(sec.table || sec.code !== undefined) && sec.summary ? `<span class="text-[13px] text-text-muted">${esc(sec.summary)}</span>` : ''}
-  </div>`
-  if (sec.op) return heading + operationD(sec.op)
-  if (sec.table) return heading + `<div class="-mx-8">${table(sec.table, { wide: true, bleed: 'px-8' })}</div>`
-  if (sec.code !== undefined) return heading + code(sec.code).replace('max-h-72 ', '')
-  const note = sec.isTechnical ? '<p class="-mt-3 mb-5 text-[13px] text-text-muted">Identifiers for support and integrations.</p>' : ''
-  return heading + note + `<div class="max-w-3xl">${sec.groups.map(rowsD).join('')}</div>`
+  return DetailSectionHeader(sec) + `<div class="flex flex-col gap-7">${sec.blocks.map((b) => BLOCKS[b.type](b)).join('')}</div>`
 }
 
 function renderDExpanded(d, size) {
-  const sections = dSections(d)
+  const view = DETAIL_VIEWS[state.object]
+  const sections = view.sections
   const selected = sections.find((sec) => sec.id === state.dSection) ?? sections[0]
   state.dSection = selected.id
-  const width = size === 'auto' ? (d.sections ? 960 : 760) : Number(size)
-  const height = d.sections ? 'h-[min(46rem,calc(94vh-var(--bar)))]' : 'h-[min(34rem,calc(94vh-var(--bar)))]'
+  // Simple objects (fewer, shorter sections) get a smaller dialog.
+  const width = size === 'auto' ? (view.width ?? 960) : Number(size)
+  const height = view.width ? 'h-[min(38rem,calc(94vh-var(--bar)))]' : 'h-[min(46rem,calc(94vh-var(--bar)))]'
   const navItem = (sec) => {
     const on = sec.id === selected.id
-    return `<button type="button" data-dsection="${sec.id}" aria-current="${on ? 'true' : 'false'}" class="flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] ${on ? 'bg-accent-soft font-semibold text-accent' : 'font-medium text-text-secondary hover:bg-surface-hover hover:text-text-primary'} ${sec.isTechnical ? '@min-[640px]/dlg:mt-auto' : ''} ${FOCUS}">
+    return `<button type="button" data-dsection="${sec.id}" aria-current="${on ? 'true' : 'false'}" class="flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] ${on ? 'bg-accent-soft font-semibold text-accent' : 'font-medium text-text-secondary hover:bg-surface-hover hover:text-text-primary'} ${sec.technical ? '@min-[640px]/dlg:mt-auto' : ''} ${FOCUS}">
       <span class="${on ? '' : 'text-text-subtle'}">${icon(sec.icon, 'size-4')}</span>
       <span class="min-w-0 flex-1 leading-5">${esc(sec.nav ?? sec.title)}</span>
       ${sec.count !== undefined ? `<span class="text-[11px] tabular-nums ${on ? '' : 'text-text-subtle'}">${sec.count}</span>` : ''}
@@ -621,11 +712,11 @@ const NOTES = {
     'Trade-off: two layouts to maintain; the compact view intentionally hides fields behind “more fields”.',
   ],
   d: [
-    'Expanded is the default: a centred dialog with ONE navigation selection (left) and ONE content area (right) — never several sections at once.',
-    'No facts strip, no horizontal tabs, no accordions, no identifiers sidebar. Header = entity, title, status badges, one meta text.',
-    'Sections come from the object; all technical identifiers move to a final “Technical” section (mono, copy).',
-    '“Compact view” switches the same detail into the compact drawer; “Expand” / “more fields” links switch back. Object and logical section are kept.',
-    'Escape closes; reopening a row starts expanded on the first section. Arrow keys move through the section list.',
+    'Shell: centred dialog by default, one section list on the left, ONE section on the right; “Compact view” ↔ “Expand” keeps object and section.',
+    'Content primitives: DetailField (label above value, secondary line, copy, internal/external link, badge, tags, mono, secret, empty) in a responsive grid (1 → 2 → 3 columns); long values span the row.',
+    'DetailFieldGroup: titled groups separated by spacing and a hairline — no cards. Technical variant: recessed identifier list (label | mono value | open/copy).',
+    'DetailStatusBlock: status → when → facts → reference → action; reused for runs, replication, RMC monitoring, credentials and HTTP responses.',
+    'DetailTable: edge-to-edge, quiet sentence-case headers, mono columns. DetailCode: caption with format/size and Copy, scrolling mono body.',
   ],
 }
 
