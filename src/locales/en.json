@@ -1091,6 +1091,7 @@
   "drawer.closeApplication": "Close application",
   "drawer.entity.recoveryApplication": "Recovery app",
   "recoveryApplications.drawer.tierCount": "Tiers: {{count}}",
+  "recoveryApplications.detail.applicationId": "Application ID",
   "drawer.tabs.overview": "Overview",
   "drawer.tabs.disks": "Disks",
   "drawer.sections.backingStorageInfo": "Backing Storage Info",

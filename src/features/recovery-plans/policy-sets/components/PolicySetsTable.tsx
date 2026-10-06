@@ -8,11 +8,11 @@ import {
   DataTablePagination,
   DataTableRequestState,
   DataTableToolbar,
-  DetailDrawer,
-  DetailRow,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
+import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { GridIcon } from '@/shared/icons/Icons'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -174,36 +174,34 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         </DataTableRequestState>
       </DataTableSurface>
 
-      <DetailDrawer
-        open={selected !== null}
-        onClose={() => { setSelectedId(null) }}
-        resizable
-        title={selected?.name ?? ''}
-        meta={selected ? [
-          t('policySets.drawer.entity'),
-        ] : []}
-        subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerActions={<KeyedHelpPopover helpKey="policySets.help" sections={['snapshot', 'recoveryApp', 'cleanRoom', 'reference']} />}
-        ariaLabel={t('policySets.drawer.label')}
-        closeLabel={t('policySets.drawer.close')}
-        resizeLabel={t('drawer.resize')}
-        footerStart={selected ? (
-          <Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger">{t('buttons.delete')}</Button>
-        ) : null}
-        footer={selected ? (
-          <Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">{t('buttons.edit')}</Button>
-        ) : null}
-      >
-        {selected ? (
-          <dl className="px-5 py-2">
-            <DetailRow label={t('details.policySetId')} value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label={t('details.description')} value={(selected.description ?? '') || '-'} />
-            <DetailRow label={t('details.snapshotPolicies')} value={selected.snapshot_policy_id ? policyName(selected.snapshot_policy_id) : '-'} />
-            <DetailRow label={t('details.recoveryAppPolicy')} value={recoveryAppPolicyName(selected.recovery_app_policy_id ?? '')} />
-            <DetailRow label={t('details.cleanRoomPolicy')} value={cleanRoomPolicyName(selected.clean_room_policy_id ?? '')} />
-          </dl>
-        ) : null}
-      </DetailDrawer>
+      {selected ? (
+        <DetailView
+          // Keyed by record so each newly opened record starts fresh.
+          key={selected.id}
+          open
+          onClose={() => { setSelectedId(null) }}
+          size="md"
+          entityLabel={t('policySets.drawer.entity')}
+          title={selected.name}
+          headerActions={<KeyedHelpPopover helpKey="policySets.help" sections={['snapshot', 'recoveryApp', 'cleanRoom', 'reference']} />}
+          ariaLabel={t('policySets.drawer.label')}
+          closeLabel={t('policySets.drawer.close')}
+          footerStart={<Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger">{t('buttons.delete')}</Button>}
+          footer={<Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">{t('buttons.edit')}</Button>}
+        >
+          <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
+            <DetailFieldGroup>
+              <DetailField label={t('details.snapshotPolicies')} value={selected.snapshot_policy_id ? policyName(selected.snapshot_policy_id) : null} emphasis />
+              <DetailField label={t('details.recoveryAppPolicy')} value={selected.recovery_app_policy_id ? recoveryAppPolicyName(selected.recovery_app_policy_id) : null} />
+              <DetailField label={t('details.cleanRoomPolicy')} value={selected.clean_room_policy_id ? cleanRoomPolicyName(selected.clean_room_policy_id) : null} />
+              <DetailField label={t('details.description')} value={selected.description} wide />
+            </DetailFieldGroup>
+            <DetailTechnicalGroup>
+              <DetailField label={t('details.policySetId')} value={selected.id} copyValue={selected.id} />
+            </DetailTechnicalGroup>
+          </DetailViewSection>
+        </DetailView>
+      ) : null}
 
       {editing ? <PolicySetModal open onClose={() => { setEditing(null) }} existingPolicySets={rows} policySet={editing} /> : null}
 

@@ -1,11 +1,12 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import { ExecutionIcon, GridIcon, ServerIcon } from '@/shared/icons/Icons'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { ApiIcon, ExecutionIcon, GridIcon, ServerIcon } from '@/shared/icons/Icons'
 import { useNavigate } from 'react-router'
 import { routes } from '@/app/routes'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
+import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
@@ -15,16 +16,12 @@ import {
   DataTableToolbar,
   DataTablePagination,
   DataTableRequestState,
-  DetailDrawer,
-  DetailDrawerSection,
-  DetailRow,
   RowActionsMenu,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
-import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '@/features/recovery-plans/recovery-runs/helpers/formatRecoveryRun'
 import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
 import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
 import { normalizeAirflowDagId } from '@/config/externalServices'
@@ -34,10 +31,10 @@ import type { RollbackReport } from '../model/recoveryApplicationTypes'
 import { toRecoveryApplicationJson } from '../helpers/mapRecoveryApplications'
 import { RecoveryApplicationRollbackResultModal } from './RecoveryApplicationRollbackResultModal'
 import { RecoveryApplicationInventory } from './RecoveryApplicationInventory'
+import { RecoveryGroupOrchestrationStatus } from '@/features/recovery-plans/recovery-groups/components/RecoveryGroupOrchestrationStatus'
 import {
   getRecoveryGroupOrchestrationState,
   orchestrationMetaText,
-  orchestrationSummaryText,
 } from '@/features/recovery-plans/recovery-groups/helpers/recoveryGroupOrchestrationState'
 
 interface RecoveryApplicationsTableProps {
@@ -186,7 +183,6 @@ export function RecoveryApplicationsTable({
     isSelectedOrchestrated ? (selected?.orchestrationProviderId ?? null) : null,
     selectedDagId,
   )
-  const { latestRun } = latestRunState
   const orchestrationState = selected
     ? getRecoveryGroupOrchestrationState(
         selected,
@@ -410,143 +406,97 @@ export function RecoveryApplicationsTable({
         />
       ) : null}
 
-      <DetailDrawer
-        open={selected !== null}
-        onClose={() => { setSelectedId(null) }}
-        resizable
-        bodyLayout="sections"
-        title={selected?.data.application.name ?? ''}
-        meta={selected ? [
-          t('drawer.entity.recoveryApplication'),
-          <Badge key="status" color={getStatusBadgeColor(getApplicationStatus(selected))} size="sm">
-            {t(getApplicationStatus(selected) === 'Active' ? 'details.statusActive' : 'details.statusDraft')}
-          </Badge>,
-          orchestrationState ? orchestrationMetaText(orchestrationState, t) : null,
-        ] : []}
-        headerActions={<KeyedHelpPopover helpKey="recoveryApplications.help" sections={['tiers', 'policySet', 'orchestration']} />}
-        ariaLabel={t('drawer.applicationDetail')}
-        closeLabel={t('drawer.closeApplication')}
-        resizeLabel={t('drawer.resize')}
-        footerStart={selected && onDelete ? (
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={() => { setDeleteTarget(selected) }}
-          >
-            {t('buttons.delete')}
-          </Button>
-        ) : null}
-        footer={selected && onEdit ? (
-          <Button
-            size="sm"
-            onClick={() => { onEdit(selected.id); setSelectedId(null) }}
-          >
-            {t('buttons.edit')}
-          </Button>
-        ) : null}
-      >
-        {selected ? (
-          // Keyed by application so each newly opened app starts with the default sections.
-          <Fragment key={selected.id}>
-            <DetailDrawerSection
-              title={t('details.tabs.overview')}
-              accent="overview"
-              icon={GridIcon}
-              summary={getProviderLabel(selected.data.application.platform)}
-              defaultOpen
+      {selected ? (
+        <DetailView
+          // Keyed by application so each newly opened app starts on Overview.
+          key={selected.id}
+          open
+          onClose={() => { setSelectedId(null) }}
+          entityLabel={t('drawer.entity.recoveryApplication')}
+          title={selected.data.application.name}
+          statuses={[
+            <Badge key="status" color={getStatusBadgeColor(getApplicationStatus(selected))} size="sm">
+              {t(getApplicationStatus(selected) === 'Active' ? 'details.statusActive' : 'details.statusDraft')}
+            </Badge>,
+          ]}
+          meta={orchestrationState ? orchestrationMetaText(orchestrationState, t) : null}
+          headerActions={<KeyedHelpPopover helpKey="recoveryApplications.help" sections={['tiers', 'policySet', 'orchestration']} />}
+          ariaLabel={t('drawer.applicationDetail')}
+          closeLabel={t('drawer.closeApplication')}
+          footerStart={onDelete ? (
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => { setDeleteTarget(selected) }}
             >
-              <dl>
-                <DetailRow label={t('details.description')} value={selected.data.application.description ?? '-'} />
-                <DetailRow label={t('details.environment')} value={selected.data.application.environment} />
-                <DetailRow label={t('details.platform')} value={getProviderLabel(selected.data.application.platform)} />
-                <DetailRow label={t('details.tiers')} value={String(Object.keys(selected.data.application.tiers).length)} />
-                <DetailRow
-                  label={t('details.status')}
-                  value={<Badge color={getStatusBadgeColor(getApplicationStatus(selected))} size="sm">{t(getApplicationStatus(selected) === 'Active' ? 'details.statusActive' : 'details.statusDraft')}</Badge>}
+              {t('buttons.delete')}
+            </Button>
+          ) : null}
+          footer={onEdit ? (
+            <Button
+              size="sm"
+              onClick={() => { onEdit(selected.id); setSelectedId(null) }}
+            >
+              {t('buttons.edit')}
+            </Button>
+          ) : null}
+        >
+          <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
+            <DetailFieldGroup>
+              <DetailField label={t('details.description')} value={selected.data.application.description} wide />
+              <DetailField label={t('details.platform')} value={getProviderLabel(selected.data.application.platform)} emphasis />
+              <DetailField label={t('details.environment')} value={selected.data.application.environment} />
+              <DetailField label={t('details.tiers')} value={String(Object.keys(selected.data.application.tiers).length)} />
+              {selected.submission ? (
+                <DetailField
+                  label={t('details.submission')}
+                  value={<Badge color={getSubmissionBadgeColor(selected.submission.status)} size="sm">{selected.submission.status}</Badge>}
+                  secondary={<span className="font-mono">{selected.submission.remotePath}</span>}
+                  wide
                 />
-                {selected.submission && (
-                  <DetailRow
-                    label={t('details.submission')}
-                    value={
-                      <>
-                        <Badge color={getSubmissionBadgeColor(selected.submission.status)} size="sm">{selected.submission.status}</Badge>
-                        <span className="mt-1 block font-mono text-[11px] text-text-subtle">{selected.submission.remotePath}</span>
-                      </>
-                    }
-                  />
-                )}
-              </dl>
-            </DetailDrawerSection>
-            <DetailDrawerSection
-              title={t('details.tabs.orchestration')}
-              accent="configuration"
-              icon={ExecutionIcon}
-              summary={orchestrationState ? orchestrationSummaryText(orchestrationState, t) : undefined}
-            >
-              <dl>
-                <DetailRow
-                  label={t('details.orchestration')}
-                  value={
-                    <Badge color={selected.pushToOrchestrator ? 'success' : 'light'} size="sm">
-                      {t(selected.pushToOrchestrator ? 'common.yes' : 'common.no')}
-                    </Badge>
-                  }
-                />
-                {isSelectedOrchestrated ? (
-                  <>
-                    <DetailRow
-                      label={t('details.airflowDagId')}
-                      value={
-                        selectedAirflowRunId ? (
-                          <AirflowDagLink
-                            runId={selectedAirflowRunId}
-                            providerUrl={selectedOrchestrationProviderUrl}
-                          />
-                        ) : (
-                          <span className="font-mono text-xs">{selectedDagId}</span>
-                        )
-                      }
-                    />
-                    <DetailRow
-                      label={t('details.latestRunStatus')}
-                      value={latestRun ? (
-                        <Badge color={runStatusBadgeColor(latestRun.status)} size="sm">{latestRun.status}</Badge>
-                      ) : (
-                        <span className="text-text-subtle">{t('recoveryRuns.table.noRuns')}</span>
-                      )}
-                    />
-                    <DetailRow label={t('details.lastExecuted')} value={formatRunTimestamp(latestRun?.startedAt ?? null)} />
-                    <DetailRow label={t('details.duration')} value={formatRunDuration(latestRun?.durationSeconds ?? null)} />
-                  </>
-                ) : null}
-              </dl>
-              {isSelectedOrchestrated ? (
-                <Button
-                  size="sm"
-                  variant="soft"
-                  className="mt-3 w-full"
-                  onClick={() => {
-                    void navigate(`${routes.recoveryRuns}?tab=applications&entityType=application&entityId=${encodeURIComponent(selected.id)}`)
-                  }}
-                >
-                  {t('buttons.viewRecoveryRuns')}
-                </Button>
-              ) : (
-                <p className="mt-2 text-xs text-text-subtle">{t('details.notOrchestrated')}</p>
-              )}
-            </DetailDrawerSection>
-            <DetailDrawerSection
-              title={t('details.tabs.inventory')}
-              accent="infrastructure"
-              icon={ServerIcon}
-              summary={t('recoveryApplications.drawer.tierCount', { count: Object.keys(selected.data.application.tiers).length })}
-              flush
-            >
+              ) : null}
+            </DetailFieldGroup>
+          </DetailViewSection>
+          <DetailViewSection id="orchestration" title={t('details.tabs.orchestration')} icon={ExecutionIcon}>
+            {orchestrationState ? (
+              <RecoveryGroupOrchestrationStatus
+                state={orchestrationState}
+                airflowRunId={isSelectedOrchestrated ? selectedAirflowRunId : null}
+                providerUrl={selectedOrchestrationProviderUrl}
+                onViewRecoveryRuns={isSelectedOrchestrated ? () => {
+                  void navigate(`${routes.recoveryRuns}?tab=applications&entityType=application&entityId=${encodeURIComponent(selected.id)}`)
+                } : undefined}
+              />
+            ) : null}
+          </DetailViewSection>
+          <DetailViewSection
+            id="inventory"
+            title={t('details.tabs.inventory')}
+            icon={ServerIcon}
+            count={Object.keys(selected.data.application.tiers).length}
+            description={t('recoveryApplications.drawer.tierCount', { count: Object.keys(selected.data.application.tiers).length })}
+          >
+            {/* The inventory brings its own padding; align it with the section gutter. */}
+            <div className="-mx-5 -mt-4">
               <RecoveryApplicationInventory runId={selectedAirflowRunId ?? null} active />
-            </DetailDrawerSection>
-          </Fragment>
-        ) : null}
-      </DetailDrawer>
+            </div>
+          </DetailViewSection>
+          <DetailViewSection
+            id="technical"
+            title={t('detailView.technical')}
+            icon={ApiIcon}
+            description={t('detailView.technicalDescription')}
+            secondary
+          >
+            <DetailTechnicalGroup>
+              <DetailField label={t('recoveryApplications.detail.applicationId')} value={selected.id} copyValue={selected.id} />
+              <DetailField label={t('recoveryGroups.detail.policySetId')} value={selected.policySetId} copyValue={selected.policySetId ?? undefined} />
+              <DetailField label={t('recoveryGroups.detail.orchestrationProviderId')} value={selected.orchestrationProviderId} copyValue={selected.orchestrationProviderId ?? undefined} />
+              <DetailField label={t('tables.recoveryGroups.airflowRunId')} value={selected.airflowRunId} copyValue={selected.airflowRunId ?? undefined} />
+            </DetailTechnicalGroup>
+          </DetailViewSection>
+        </DetailView>
+      ) : null}
 
       {jsonViewed ? (() => {
         const checks = [

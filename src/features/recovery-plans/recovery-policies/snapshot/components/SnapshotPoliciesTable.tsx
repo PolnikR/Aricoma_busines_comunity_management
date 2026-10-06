@@ -9,12 +9,12 @@ import {
   DataTablePagination,
   DataTableRequestState,
   DataTableToolbar,
-  DetailDrawer,
-  DetailRow,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { Field, Select } from '@/shared/components/form/FormControls'
+import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { GridIcon } from '@/shared/icons/Icons'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -257,39 +257,36 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
       </DataTableRequestState>
       </DataTableSurface>
 
-      <DetailDrawer
-        open={selected !== null}
-        onClose={() => { setSelectedId(null) }}
-        resizable
-        title={selected?.name ?? ''}
-        meta={selected ? [
-          t('snapshotPolicies.drawer.entity'),
-          <Badge key="badge" color={levelColor(selected.level ?? '')} size="sm">{selected.level}</Badge>,
-        ] : []}
-        subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerActions={<KeyedHelpPopover helpKey="snapshotPolicies.help" sections={['frequency', 'retention', 'usage']} />}
-        ariaLabel={t('snapshotPolicies.drawer.label')}
-        closeLabel={t('snapshotPolicies.drawer.close')}
-        resizeLabel={t('drawer.resize')}
-        footerStart={selected ? (
-          <Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger">{t('buttons.delete')}</Button>
-        ) : null}
-        footer={selected ? (
-          <Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">{t('buttons.edit')}</Button>
-        ) : null}
-      >
-        {selected ? (
-          <dl className="px-5 py-2">
-            <DetailRow label={t('details.policyId')} value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label={t('details.description')} value={(selected.description ?? '') || '-'} />
-            <DetailRow label={t('details.level')} value={(selected.level ?? '') || '-'} />
-            <DetailRow label={t('details.frequency')} value={t('snapshotPolicies.every').replace('{interval}', formatInterval(selected.frequency_value, selected.frequency_unit, t))} />
-            <DetailRow label={t('details.retention')} value={formatInterval(selected.retention_value, selected.retention_unit, t)} />
-            <DetailRow label={t('details.maxSnapshots')} value={selected.max_snapshots ?? t('snapshotPolicies.noLimit')} />
-            <DetailRow label={t('details.status')} value={t(selected.enabled ? 'snapshotPolicies.enabled' : 'snapshotPolicies.disabled')} />
-          </dl>
-        ) : null}
-      </DetailDrawer>
+      {selected ? (
+        <DetailView
+          // Keyed by record so each newly opened record starts fresh.
+          key={selected.id}
+          open
+          onClose={() => { setSelectedId(null) }}
+          size="md"
+          entityLabel={t('snapshotPolicies.drawer.entity')}
+          title={selected.name}
+          statuses={[<Badge key="badge" color={levelColor(selected.level ?? '')} size="sm">{selected.level}</Badge>]}
+          headerActions={<KeyedHelpPopover helpKey="snapshotPolicies.help" sections={['frequency', 'retention', 'usage']} />}
+          ariaLabel={t('snapshotPolicies.drawer.label')}
+          closeLabel={t('snapshotPolicies.drawer.close')}
+          footerStart={<Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger">{t('buttons.delete')}</Button>}
+          footer={<Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">{t('buttons.edit')}</Button>}
+        >
+          <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
+            <DetailFieldGroup>
+              <DetailField label={t('details.frequency')} value={t('snapshotPolicies.every').replace('{interval}', formatInterval(selected.frequency_value, selected.frequency_unit, t))} emphasis />
+              <DetailField label={t('details.retention')} value={formatInterval(selected.retention_value, selected.retention_unit, t)} />
+              <DetailField label={t('details.maxSnapshots')} value={selected.max_snapshots == null ? t('snapshotPolicies.noLimit') : String(selected.max_snapshots)} />
+              <DetailField label={t('details.status')} value={t(selected.enabled ? 'snapshotPolicies.enabled' : 'snapshotPolicies.disabled')} />
+              <DetailField label={t('details.description')} value={selected.description} wide />
+            </DetailFieldGroup>
+            <DetailTechnicalGroup>
+              <DetailField label={t('details.policyId')} value={selected.id} copyValue={selected.id} />
+            </DetailTechnicalGroup>
+          </DetailViewSection>
+        </DetailView>
+      ) : null}
 
       {editing ? <SnapshotPolicyModal open onClose={() => { setEditing(null) }} existingPolicies={rows} policy={editing} /> : null}
 
