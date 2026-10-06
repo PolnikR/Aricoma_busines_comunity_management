@@ -4,4 +4,3 @@ export { DetailField, DetailFieldGroup, DetailFieldLink, DetailTechnicalGroup } 
 export { DetailStatusBlock } from './DetailStatusBlock'
 export type { DetailStatusTone } from './DetailStatusBlock'
 export { DetailCode } from './DetailCode'
-export { DetailCopyButton } from './DetailCopyButton'
