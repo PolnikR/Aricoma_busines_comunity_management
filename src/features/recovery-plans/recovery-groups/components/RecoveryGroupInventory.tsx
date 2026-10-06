@@ -1,32 +1,54 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
-import { Pagination } from '@/shared/components/pagination/Pagination'
 import { ResponseBodyViewer } from '@/shared/components/response-body/ResponseBodyViewer'
-import { ChevronDownIcon } from '@/shared/icons/Icons'
+import { AlertTriangleIcon, ChevronDownIcon, DiskIcon } from '@/shared/icons/Icons'
+import { cn } from '@/shared/utils/cn'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useGetRecoveryGroupInventory } from '@/generated/query/recovery-groups/recovery-groups.gen'
 import { selectRecoveryGroupInventory } from '../model/recoveryGroupTypes'
+import { countLabel } from '../helpers/countLabel'
+import { RecoveryGroupFlashCopyFanOut } from './RecoveryGroupFlashCopyFanOut'
+import { RecoveryGroupMetroMirrorStatus } from './RecoveryGroupMetroMirrorStatus'
+import { RecoveryGroupReplicationChain } from './RecoveryGroupReplicationChain'
 
 interface RecoveryGroupInventoryProps {
   runId: string | null
   active: boolean
 }
 
-const RELATIONS_PAGE_SIZE = 5
-
-function providerObjectLabel(value: Record<string, unknown>): string {
-  for (const key of ['name', 'volume_name', 'vdisk_name', 'id', 'uid']) {
-    const candidate = value[key]
-    if (typeof candidate === 'string' && candidate.trim()) return candidate
-  }
-  return '—'
+function GroupHeader({ title, description }: { title: ReactNode; description: string }) {
+  return (
+    <header className="mb-3.5">
+      <h4 className="text-[13px] font-semibold leading-5 text-text-primary">{title}</h4>
+      <p className="text-xs text-text-muted">{description}</p>
+    </header>
+  )
 }
 
+// Recovery group inventory: Metro Mirror status, the replication chain (master → Metro
+// Mirror → auxiliary → FlashCopy → snapshots) and the auxiliary volumes with their
+// FlashCopy fan-out. The chain and the list highlight each other's row, and the chain's
+// auxiliary or snapshot nodes reveal the volume in the list.
 export function RecoveryGroupInventory({ runId, active }: RecoveryGroupInventoryProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const query = useGetRecoveryGroupInventory({ run_id: runId ?? '' }, { query: { select: selectRecoveryGroupInventory, enabled: active && Boolean(runId) } })
-  const [relationPages, setRelationPages] = useState<Record<string, number>>({})
+  const [openVolumes, setOpenVolumes] = useState<ReadonlySet<string>>(() => new Set())
+  const [chainActive, setChainActive] = useState<string | null>(null)
+  const [listActive, setListActive] = useState<string | null>(null)
+  const [revealRequest, setRevealRequest] = useState<{ name: string } | null>(null)
+  const rows = useRef(new Map<string, HTMLDetailsElement>())
+
+  // After the requested row has rendered open: bring it into view and move focus to it.
+  useEffect(() => {
+    if (!revealRequest) return
+    const details = rows.current.get(revealRequest.name)
+    if (!details) return
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    details.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' })
+    details.querySelector('summary')?.focus({ preventScroll: true })
+  }, [revealRequest])
 
   if (!runId) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.noRun')}</p>
   if (query.isLoading) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.loading')}</p>
@@ -35,104 +57,105 @@ export function RecoveryGroupInventory({ runId, active }: RecoveryGroupInventory
   }
   if (!query.data) return null
 
-  const volumes = Object.entries(query.data.volumes)
-  const foundCount = volumes.filter(([, volume]) => volume.found).length
-  const relationCount = volumes.reduce((total, [, volume]) => total + volume.relations.length, 0)
+  const inventory = query.data
+  const metroMirror = inventory.metro_mirror ?? null
+  const volumes = Object.entries(inventory.volumes)
+  const setOpen = (name: string, open: boolean) => {
+    setOpenVolumes((current) => {
+      if (current.has(name) === open) return current
+      const next = new Set(current)
+      if (open) next.add(name)
+      else next.delete(name)
+      return next
+    })
+  }
+  const reveal = (name: string) => {
+    setOpen(name, true)
+    setRevealRequest({ name })
+  }
 
   return (
-    <div className="space-y-4 px-5 py-4">
-      <div className="rounded-xl border border-border bg-surface-subtle p-3.5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-text-primary">{query.data.recovery_group_name}</p>
-            <p className="mt-1 truncate font-mono text-[11px] text-text-subtle">{query.data.recovery_group_id} · {query.data.run_id}</p>
-          </div>
-          <Badge color={foundCount === volumes.length ? 'success' : 'warning'} size="sm">
-            {foundCount}/{volumes.length} {t('recoveryInventory.found').toLowerCase()}
-          </Badge>
-        </div>
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          {[
-            [t('recoveryInventory.volumes'), volumes.length],
-            [t('recoveryInventory.found'), foundCount],
-            [t('recoveryInventory.relations'), relationCount],
-          ].map(([label, value]) => (
-            <div key={label} className="rounded-lg border border-border bg-surface px-2.5 py-2">
-              <strong className="block text-base text-text-primary">{value}</strong>
-              <span className="text-[10px] font-medium uppercase tracking-wide text-text-subtle">{label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+    <div className="flex flex-col gap-7 px-5 py-4">
+      {metroMirror ? (
+        <>
+          {metroMirror.error || metroMirror.consistency_group ? (
+            <section>
+              <GroupHeader title={t('recoveryInventory.metroMirror.title')} description={t('recoveryInventory.metroMirror.description')} />
+              <RecoveryGroupMetroMirrorStatus metroMirror={metroMirror} />
+            </section>
+          ) : null}
+          {metroMirror.error ? null : (
+            <section>
+              <GroupHeader title={t('recoveryInventory.chain.title')} description={t('recoveryInventory.chain.description')} />
+              <RecoveryGroupReplicationChain
+                metroMirror={metroMirror}
+                volumes={inventory.volumes}
+                activeAuxiliary={listActive}
+                onActiveAuxiliaryChange={setChainActive}
+                onReveal={reveal}
+              />
+            </section>
+          )}
+        </>
+      ) : null}
 
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-text-subtle">
-        {t('recoveryInventory.volumeInventory')} · {query.data.provider_id_volume ?? '—'}
-      </p>
-      {volumes.length === 0 ? <p className="text-sm text-text-subtle">{t('recoveryInventory.empty')}</p> : volumes.map(([name, volume]) => {
-        const pageKey = `${query.data.run_id}:${name}`
-        const pageCount = Math.max(1, Math.ceil(volume.relations.length / RELATIONS_PAGE_SIZE))
-        const page = Math.min(relationPages[pageKey] ?? 1, pageCount)
-        const visibleRelations = volume.relations.slice(
-          (page - 1) * RELATIONS_PAGE_SIZE,
-          page * RELATIONS_PAGE_SIZE,
-        )
-
-        return <details
-          key={name}
-          className="group overflow-hidden rounded-lg border border-border bg-surface"
-          onToggle={(event) => {
-            if (!event.currentTarget.open && page !== 1) {
-              setRelationPages(current => ({ ...current, [pageKey]: 1 }))
-            }
-          }}
-        >
-          <summary className="grid cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 px-3 py-3 marker:hidden">
-            <div className="min-w-0">
-              <span className="block truncate text-sm font-semibold text-text-primary">{name}</span>
-              <span className="text-[11px] text-text-subtle">{volume.relations.length} {t('recoveryInventory.mappingRelations')}</span>
-            </div>
-            <Badge color={volume.found ? 'success' : 'error'} size="sm">{t(volume.found ? 'recoveryInventory.found' : 'recoveryInventory.notFound')}</Badge>
-            <ChevronDownIcon className="size-4 text-text-muted transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="space-y-3 border-t border-border bg-surface-subtle px-3 py-3">
-            {volume.relations.length === 0 ? <p className="text-xs text-text-subtle">{t('recoveryInventory.noRelations')}</p> : visibleRelations.map((relation, index) => {
-              const pairedName = providerObjectLabel(relation.paired_volume)
-              const sourceName = relation.role === 'source' ? name : pairedName
-              const targetName = relation.role === 'target' ? name : pairedName
+      <section className={metroMirror ? 'border-t border-border/70 pt-7' : undefined}>
+        <GroupHeader
+          title={<>{t('recoveryInventory.auxiliary.title')} <span className="font-mono text-xs font-normal text-text-subtle">· {inventory.provider_id_volume ?? '—'}</span></>}
+          description={t('recoveryInventory.auxiliary.description')}
+        />
+        {volumes.length === 0 ? <p className="text-sm text-text-subtle">{t('recoveryInventory.empty')}</p> : (
+          <ul className="divide-y divide-border/60 border-y border-border/60">
+            {volumes.map(([name, volume]) => {
+              const relations = countLabel(t, language, 'recoveryInventory.summary.relations', volume.relations.length)
               return (
-                <div key={`${relation.role}-${String(index)}`} className="grid grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1fr)] items-center gap-1.5">
-                  <div className="min-w-0 rounded-md border border-border bg-surface px-2.5 py-2">
-                    <span className="block text-[9px] font-semibold uppercase tracking-wide text-text-subtle">{t('recoveryInventory.sourceVolume')}</span>
-                    <span className="mt-0.5 block truncate text-xs font-semibold text-text-primary" title={sourceName}>{sourceName}</span>
-                  </div>
-                  <span className="text-center text-sm font-bold text-accent" aria-hidden="true">→</span>
-                  <div className="min-w-0 rounded-md border border-border bg-surface px-2.5 py-2">
-                    <span className="block text-[9px] font-semibold uppercase tracking-wide text-text-subtle">{t('recoveryInventory.targetVolume')}</span>
-                    <span className="mt-0.5 block truncate text-xs font-semibold text-text-primary" title={targetName}>{targetName}</span>
-                  </div>
-                </div>
+                <li
+                  key={name}
+                  data-highlight={chainActive === name ? 'on' : 'idle'}
+                  className="rounded-lg transition-colors duration-150 data-[highlight=on]:bg-accent-soft/40 dark:data-[highlight=on]:bg-accent-soft/35"
+                  onPointerEnter={() => { setListActive(name) }}
+                  onPointerLeave={() => { setListActive(null) }}
+                  onFocus={() => { setListActive(name) }}
+                  onBlur={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget)) setListActive(null)
+                  }}
+                >
+                  <details
+                    ref={(element) => {
+                      if (element) rows.current.set(name, element)
+                      else rows.current.delete(name)
+                    }}
+                    open={openVolumes.has(name)}
+                    onToggle={(event) => { setOpen(name, event.currentTarget.open) }}
+                    className="group scroll-mt-4"
+                  >
+                    <summary className="grid cursor-pointer list-none grid-cols-[1rem_1.375rem_minmax(0,1fr)_auto] items-center gap-x-2.5 rounded-lg px-1.5 py-2 marker:hidden hover:bg-surface-hover/60 group-open:bg-surface-muted/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15 @min-[600px]/detail-content:grid-cols-[1rem_1.375rem_minmax(0,1fr)_auto_auto]">
+                      <ChevronDownIcon className="size-4 -rotate-90 text-text-subtle transition-transform group-open:rotate-0" />
+                      <span className={cn('grid size-5.5 place-items-center rounded-md', volume.found ? 'bg-accent-soft text-accent' : 'bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-500')}>
+                        {volume.found ? <DiskIcon className="size-3.25" aria-hidden="true" /> : <AlertTriangleIcon className="size-3.25" aria-hidden="true" />}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-[13px] font-semibold text-text-primary" title={name}>{name}</span>
+                        <span className="block text-[11px] text-text-muted @min-[600px]/detail-content:hidden">{relations}</span>
+                      </span>
+                      <span className="hidden text-xs text-text-muted @min-[600px]/detail-content:inline">{relations}</span>
+                      <Badge color={volume.found ? 'success' : 'error'} size="sm">{t(volume.found ? 'recoveryInventory.found' : 'recoveryInventory.notFound')}</Badge>
+                    </summary>
+                    {openVolumes.has(name) ? (
+                      <div className="px-1.5 pt-2 pb-3 @min-[600px]/detail-content:pl-11.5">
+                        <RecoveryGroupFlashCopyFanOut name={name} volume={volume} />
+                        <div className="mt-2" aria-label={t('recoveryInventory.showTechnicalJson')}>
+                          <ResponseBodyViewer data={volume} defaultOpen={false} />
+                        </div>
+                      </div>
+                    ) : null}
+                  </details>
+                </li>
               )
             })}
-            {pageCount > 1 ? (
-              <Pagination
-                page={page}
-                pageCount={pageCount}
-                ariaLabel={t('recoveryInventory.relations')}
-                previousPageLabel={t('pagination.previousPage')}
-                nextPageLabel={t('pagination.nextPage')}
-                pageOfLabel={t('pagination.pageOf')}
-                pageLabel={t('pagination.page')}
-                onPageChange={(nextPage) => {
-                  setRelationPages(current => ({ ...current, [pageKey]: nextPage }))
-                }}
-              />
-            ) : null}
-            <div aria-label={t('recoveryInventory.showTechnicalJson')}>
-              <ResponseBodyViewer data={volume} defaultOpen={false} />
-            </div>
-          </div>
-        </details>
-      })}
+          </ul>
+        )}
+      </section>
     </div>
   )
 }

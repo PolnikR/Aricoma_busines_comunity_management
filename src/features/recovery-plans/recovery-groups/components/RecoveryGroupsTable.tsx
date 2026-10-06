@@ -25,6 +25,7 @@ import {
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { RecoveryGroupInventory } from './RecoveryGroupInventory'
+import { RecoveryGroupInventorySummary } from './RecoveryGroupInventorySummary'
 import { RecoveryGroupOrchestrationStatus } from './RecoveryGroupOrchestrationStatus'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -411,6 +412,8 @@ export function RecoveryGroupsTable({
           // Keyed by group so each newly opened group starts expanded on Overview.
           key={selected.id}
           open
+          // xl: the Inventory replication chain needs room for long auxiliary volume names.
+          size="xl"
           onClose={() => { setSelectedId(null) }}
           entityLabel={t('drawer.entity.recoveryGroup')}
           title={selected.name}
@@ -506,7 +509,7 @@ export function RecoveryGroupsTable({
             title={t('details.tabs.inventory')}
             icon={ServerIcon}
             count={selected.resourceCount}
-            description={inventorySummaryText(selected)}
+            description={<RecoveryGroupInventorySummary runId={selected.airflowRunId ?? null} fallback={inventorySummaryText(selected)} />}
           >
             {/* The inventory brings its own padding; align it with the section gutter. */}
             <div className="-mx-5 -mt-4">
