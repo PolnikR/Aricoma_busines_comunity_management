@@ -8,7 +8,7 @@ import { VirtualMachineStatusBadge } from './VirtualMachineStatusBadge'
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
 import {
   DetailField,
-  DetailFieldGroup,
+  DetailOverview,
   DetailView,
   DetailViewSection,
 } from '@/shared/components/detail-view'
@@ -91,7 +91,7 @@ export function VirtualMachineDetailPanel({
     >
       {/* One field list in the order of the original detail drawer. */}
       <DetailViewSection id="overview" title={t('drawer.tabs.overview')} icon={GridIcon}>
-        <DetailFieldGroup>
+        <DetailOverview>
           <DetailField label={t('pages.virtualMachines.detail.vcpu')} value={String(virtualMachine.vcpu)} emphasis />
           <DetailField label={t('pages.virtualMachines.detail.memory')} value={`${String(virtualMachine.memoryGb)} GB`} emphasis />
           <DetailField
@@ -114,7 +114,7 @@ export function VirtualMachineDetailPanel({
           />
           <DetailField label={t('details.folder')} value={virtualMachine.folder} wide />
           <DetailField label={t('details.vmPath')} value={virtualMachine.vmPath} mono wide copyValue={virtualMachine.vmPath} />
-        </DetailFieldGroup>
+        </DetailOverview>
       </DetailViewSection>
 
       <DetailViewSection
