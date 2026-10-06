@@ -19,9 +19,8 @@ describe('getOverviewFootprint', () => {
     expect(getOverviewFootprint(text(length), false)).toBe(footprint)
   })
 
-  it('measures plain text and ignores wide', () => {
-    expect(getOverviewFootprint(text(NORMAL_MAX), true)).toBe('normal')
-    expect(getOverviewFootprint(text(WIDE_MAX + 1), true)).toBe('full')
+  it.each([1, NORMAL_MAX, NORMAL_MAX + 1, WIDE_MAX, WIDE_MAX + 1])('makes %i characters of plain text full with wide', (length) => {
+    expect(getOverviewFootprint(text(length), true)).toBe('full')
   })
 
   it.each([null, undefined, '', '   ', ' '.repeat(WIDE_MAX + 1)])('keeps an empty value (%j) normal, even with wide', (value) => {

@@ -110,10 +110,11 @@ describe('DetailOverview', () => {
     }
   })
 
-  it('spans cells by the measured footprint: plain text by length, nodes only with wide', () => {
+  it('spans cells by the footprint: wide is full, plain text by length, nodes one track', () => {
     render(
       <DetailOverview>
-        <DetailField label="Short" value={'x'.repeat(28)} wide />
+        <DetailField label="Short" value={'x'.repeat(28)} />
+        <DetailField label="Short wide" value={'y'.repeat(18)} mono wide />
         <DetailField label="Medium" value={'x'.repeat(29)} />
         <DetailField label="Long" value={'x'.repeat(65)} />
         <DetailField label="Link" value={<DetailFieldLink href="https://airflow.test" external>https://airflow.test</DetailFieldLink>} />
@@ -126,6 +127,7 @@ describe('DetailOverview', () => {
     expect(cellOf('Long')).toHaveClass('col-span-full')
     expect(screen.getByText('x'.repeat(65))).toHaveClass('max-w-[88ch]')
     expect(cellOf('Wide link')).toHaveClass('col-span-full')
+    expect(cellOf('Short wide')).toHaveClass('col-span-full')
   })
 
   it('uses the A4 typography: 11.5px medium label and mono at primary contrast', () => {
