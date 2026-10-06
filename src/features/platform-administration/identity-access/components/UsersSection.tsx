@@ -12,7 +12,7 @@ import {
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
-import { DetailField, DetailFieldGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { DetailField, DetailOverview, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { GridIcon } from '@/shared/icons/Icons'
 import { formatDateTime } from '@/shared/utils/dateTime'
@@ -39,7 +39,7 @@ function renderUserSections(user: UserRecord, t: ReturnType<typeof useTranslatio
 
   return (
     <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
-      <DetailFieldGroup>
+      <DetailOverview>
         <DetailField label={t('identity.users.fields.id')} value={user.id} mono copyValue={user.id} />
         <DetailField label={t('identity.users.fields.user')} value={user.user} emphasis />
         <DetailField label={t('identity.users.fields.username')} value={user.username} />
@@ -57,7 +57,7 @@ function renderUserSections(user: UserRecord, t: ReturnType<typeof useTranslatio
         />
         <DetailField label={t('identity.users.fields.status')} value={<UserStatusBadge status={user.status} />} />
         <DetailField label={t('identity.users.fields.activeSessionStart')} value={user.activeSessionStart ? formatDateTime(user.activeSessionStart, { language }) : null} />
-      </DetailFieldGroup>
+      </DetailOverview>
     </DetailViewSection>
   )
 }
