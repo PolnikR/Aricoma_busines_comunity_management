@@ -7,7 +7,7 @@ import {
   SkeletonBlock,
   type ColumnDef,
 } from '@/shared/components/data-table'
-import { DetailField, DetailFieldGroup, DetailTechnicalGroup } from '@/shared/components/detail-view'
+import { DetailField, DetailFieldGroup } from '@/shared/components/detail-view'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { StorageVolume, StorageVolumeMapping } from '../model/vmStorageVolumesTypes'
 
@@ -84,7 +84,8 @@ function BackingStorageVolume({ volume, providers, identity }: { volume: Storage
   const { snapshotCount, sourceMappings, targetMappings } = volume.snapshots
 
   return (
-    // One volume of a DetailView section: its storage fields, its identifiers and FlashCopy.
+    // One volume of a DetailView section: its fields in the original drawer order (the
+    // identifiers right after the provider), then FlashCopy.
     <section aria-labelledby={titleId} className="flex flex-col gap-6 [&+&]:border-t [&+&]:border-border/70 [&+&]:pt-7">
       <header>
         <h4 id={titleId} className="text-sm font-semibold text-text-primary wrap-anywhere">{name}</h4>
@@ -96,6 +97,14 @@ function BackingStorageVolume({ volume, providers, identity }: { volume: Storage
           value={provider ? provider.name : volume.storageProviderId}
           secondary={provider ? <span className="font-mono">{provider.id}</span> : undefined}
         />
+        {identity === 'vdiskUid' ? (
+          <DetailField label={t(`${prefix}.vdiskUid`)} value={volume.vdiskUid} mono copyValue={volume.vdiskUid} />
+        ) : (
+          <>
+            <DetailField label={t(`${prefix}.volumeId`)} value={volume.volumeId} mono copyValue={volume.volumeId} />
+            <DetailField label={t(`${prefix}.volumeUid`)} value={volume.vdiskUid} mono copyValue={volume.vdiskUid} />
+          </>
+        )}
         <DetailField label={t(`${prefix}.capacity`)} value={volume.capacity} />
         <DetailField label={t(`${prefix}.status`)} value={volume.status} />
         <DetailField label={t(`${prefix}.pool`)} value={volume.pool} />
@@ -103,16 +112,6 @@ function BackingStorageVolume({ volume, providers, identity }: { volume: Storage
         <DetailField label={t(`${prefix}.protocol`)} value={volume.protocol} />
         <DetailField label={t(`${prefix}.type`)} value={volume.type} />
       </DetailFieldGroup>
-      <DetailTechnicalGroup>
-        {identity === 'vdiskUid' ? (
-          <DetailField label={t(`${prefix}.vdiskUid`)} value={volume.vdiskUid} copyValue={volume.vdiskUid} />
-        ) : (
-          <>
-            <DetailField label={t(`${prefix}.volumeId`)} value={volume.volumeId} copyValue={volume.volumeId} />
-            <DetailField label={t(`${prefix}.volumeUid`)} value={volume.vdiskUid} copyValue={volume.vdiskUid} />
-          </>
-        )}
-      </DetailTechnicalGroup>
       <DetailFieldGroup title={t(`${prefix}.flashCopy`)}>
         <DetailField label={t(`${prefix}.snapshotCount`)} value={String(snapshotCount)} />
         <DetailField label={t(`${prefix}.sourceMappings`)} value={String(sourceMappings.length)} />
@@ -172,7 +171,7 @@ interface BackingStorageInfoProps {
 
 // The storage volumes backing a compute resource (VMware VM or IBM Power LPAR), each
 // with its FlashCopy mappings. A volume is shown even when it has no snapshots. Hosted as the
-// content of a DetailViewSection, so it uses the shared field and technical primitives.
+// content of a DetailViewSection, so it uses the shared field primitives.
 export function BackingStorageInfo({ volumes, isLoading, isError, isFetching, onRetry, providers, identity, emptyText }: BackingStorageInfoProps) {
   const { t } = useTranslation()
 

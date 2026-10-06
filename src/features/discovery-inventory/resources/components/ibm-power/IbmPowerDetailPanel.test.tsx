@@ -241,6 +241,18 @@ describe('IbmPowerDetailPanel backing storage', () => {
     expect(within(card).queryByText('vdisk UID', { selector: 'dt' })).not.toBeInTheDocument()
   })
 
+  it('lists the volume fields in the original drawer order, with Volume ID and Volume UID in the same list', async () => {
+    const container = await openBackingStorage([powerVolume()])
+    const card = within(container).getByRole('region', { name: 'aix2_source_rootvg' })
+    const lists = card.querySelectorAll('dl')
+
+    // The volume fields and the FlashCopy counts; no separate identifier group.
+    expect(lists).toHaveLength(2)
+    expect([...(lists[0]?.querySelectorAll('dt') ?? [])].map(term => term.textContent)).toEqual([
+      'Backing provider', 'Volume ID', 'Volume UID', 'Capacity', 'Status', 'Pool', 'I/O group', 'Protocol', 'Type',
+    ])
+  })
+
   it('never renders the composite vdisks key', async () => {
     await openBackingStorage([powerVolume(), swapVolume])
 

@@ -393,6 +393,18 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect(within(card).queryByText('Volume UID', { selector: 'dt' })).not.toBeInTheDocument()
   })
 
+  it('lists the volume fields in the original drawer order, with the vdisk UID in the same list', async () => {
+    const container = await openBackingStorage([volume()])
+    const card = within(container).getByRole('region', { name: 'V5000_VOLUME02' })
+    const lists = card.querySelectorAll('dl')
+
+    // The volume fields and the FlashCopy counts; no separate identifier group.
+    expect(lists).toHaveLength(2)
+    expect([...(lists[0]?.querySelectorAll('dt') ?? [])].map(term => term.textContent)).toEqual([
+      'Backing provider', 'vdisk UID', 'Capacity', 'Status', 'Pool', 'I/O group', 'Protocol', 'Type',
+    ])
+  })
+
   it('shows No FlashCopy mappings below the volume details when it has no mappings', async () => {
     const container = await openBackingStorage([volume()])
     const card = within(container).getByRole('region', { name: 'V5000_VOLUME02' })
