@@ -11,8 +11,8 @@ import {
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
-import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
-import { ApiIcon, GridIcon } from '@/shared/icons/Icons'
+import { DetailField, DetailFieldGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { GridIcon } from '@/shared/icons/Icons'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
@@ -162,18 +162,15 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
             </Button>
           )}
         >
+          {/* One flat Overview in the order of the original detail drawer. */}
           <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
             <DetailFieldGroup>
+              <DetailField label={t('credentials.detail.id')} value={selected.id} mono copyValue={selected.id} />
               <DetailField label={t('credentials.detail.username')} value={selected.username} mono emphasis />
+              <DetailField label={t('credentials.detail.description')} value={selected.description} wide />
               {/* The secret is never sent to the browser; only that it is stored. */}
               <DetailField label={t('credentials.detail.password')} value={t('credentials.detail.passwordHidden')} />
-              <DetailField label={t('credentials.detail.description')} value={selected.description} wide />
             </DetailFieldGroup>
-          </DetailViewSection>
-          <DetailViewSection id="technical" title={t('detailView.technical')} icon={ApiIcon} description={t('detailView.technicalDescription')} secondary>
-            <DetailTechnicalGroup>
-              <DetailField label={t('credentials.detail.id')} value={selected.id} copyValue={selected.id} />
-            </DetailTechnicalGroup>
           </DetailViewSection>
         </DetailView>
       ) : null}

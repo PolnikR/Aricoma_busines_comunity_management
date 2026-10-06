@@ -6,7 +6,7 @@ import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { CredentialsTable } from './CredentialsTable'
 import { CredentialsPage } from '../pages/CredentialsPage'
 
-import { openDetailSection } from '@/test-utils/detailView'
+import { detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('./CredentialCreateModal', () => ({
@@ -127,10 +127,21 @@ describe('CredentialsTable', () => {
     const drawer = screen.getByRole('dialog', { name: 'Credential details' })
     expect(drawer).toHaveAttribute('data-size', 'md')
     expect(within(drawer).getByRole('heading', { level: 2 }).closest('header')).toHaveTextContent('Credential')
-    expect(within(drawer).getByRole('region', { name: 'Overview' })).toHaveTextContent('administrator')
-    expect(within(drawer).getByRole('region', { name: 'Overview' })).not.toHaveTextContent('vcenter-admin')
-    expect(openDetailSection(drawer, 'Technical')).toHaveTextContent('vcenter-admin')
-    openDetailSection(drawer, 'Overview')
+    // Exactly one section, so no navigation and no Technical section.
+    expect(within(drawer).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(within(drawer).getAllByRole('region')).toHaveLength(1)
+    expect(within(drawer).queryByRole('region', { name: 'Technical' })).not.toBeInTheDocument()
+    const overview = openDetailSection(drawer, 'Overview')
+    // The original drawer order: ID, Username, Description, then the (hidden) password.
+    expect(detailSectionsLabels(drawer)).toEqual(['Credential ID', 'Username', 'Description', 'Password'])
+    expect(detailSectionsFields(drawer)).toEqual({
+      'Credential ID': 'vcenter-admin',
+      Username: 'administrator',
+      Description: 'Production account',
+      Password: 'Stored securely and never displayed',
+    })
+    expect(within(overview).getByText('vcenter-admin')).toHaveClass('font-mono')
+    expect(within(overview).getByRole('button', { name: 'Copy Credential ID' })).toBeInTheDocument()
     const deleteButton = within(drawer).getByRole('button', { name: 'Delete' })
     expect(deleteButton.closest('footer')?.children[1]).toContainElement(within(drawer).getByRole('button', { name: 'Edit' }))
     await user.click(within(drawer).getByRole('button', { name: 'Credential help' }))
