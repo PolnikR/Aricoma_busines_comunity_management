@@ -95,7 +95,7 @@ describe('FlashSystemInventoryView', () => {
 
     fireEvent.click(screen.getByRole('row', { name: 'Show details for V5000_Volume1' }))
     const dialog = screen.getByRole('dialog', { name: 'FlashSystem volume detail' })
-    expect(within(dialog).getByRole('button', { name: 'Placement and capacity' })).toHaveAttribute('aria-current', 'true')
+    expect(within(dialog).getByRole('button', { name: 'Identity' })).toHaveAttribute('aria-current', 'true')
     expect(within(dialog).getByRole('button', { name: 'Copy relationships' })).not.toHaveAttribute('aria-current')
     fireEvent.click(within(dialog).getByRole('button', { name: 'FlashSystem volume help' }))
     expect(screen.getByRole('dialog', { name: 'What this volume view shows' })).toHaveTextContent('Remote Copy')

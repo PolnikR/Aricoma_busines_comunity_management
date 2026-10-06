@@ -141,7 +141,6 @@ export function FlashSystemInventoryView({
         onClose={() => { setSelected(null) }}
         labels={{
           entity: t('resources.flash.detail.entity'), detail: t('resources.flash.detail.ariaLabel'), close: t('resources.flash.detail.close'),
-          technical: t('detailView.technical'),
           pool: t('resources.flash.detail.pool'), capacity: labels.capacity, usedCapacity: t('resources.flash.detail.used'),
           freeCapacity: t('resources.flash.detail.free'),
           consistencyGroups: t('resources.flash.detail.consistencyGroups'),

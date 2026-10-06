@@ -1,4 +1,4 @@
-import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { DetailField, DetailFieldGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { FlashVolumeRelationshipHelp } from './FlashVolumeRelationshipHelp'
@@ -15,7 +15,6 @@ interface FlashSystemVolumeDetailPanelProps {
     entity: string
     detail: string
     close: string
-    technical: string
     pool: string
     capacity: string
     usedCapacity: string
@@ -26,9 +25,13 @@ interface FlashSystemVolumeDetailPanelProps {
   }
 }
 
-// Business sections in their reported order; the identity fields are identifiers and live in
-// the Technical section.
+// Sections in the order of the original detail drawer, Identity first.
 const fieldSections = [
+  {
+    key: 'identity' as const,
+    icon: ApiIcon,
+    fields: ['id', 'volume_id', 'vdisk_UID'] as const,
+  },
   {
     key: 'placement' as const,
     icon: LayersIcon,
@@ -45,7 +48,8 @@ const fieldSections = [
     fields: ['FC_id', 'FC_name', 'consistency_groups', 'RC_id', 'RC_name', 'se_copy_count', 'compressed_copy_count', 'RC_change'] as const,
   },
 ]
-const identityFields = ['id', 'volume_id', 'vdisk_UID'] as const
+// Identifiers render monospace with a copy action.
+const identifierFields = new Set<string>(['id', 'volume_id', 'vdisk_UID'])
 
 // Raw backend value as text; an empty value renders the shared "Not set".
 function display(value: unknown): string {
@@ -98,7 +102,15 @@ export function FlashSystemVolumeDetailPanel({ volume, allProviders = [], open, 
                     wide
                   />
                 )
-              : <DetailField key={field} label={labels.fieldLabels[field] ?? field} value={display(volume[field])} />)}
+              : (
+                  <DetailField
+                    key={field}
+                    label={labels.fieldLabels[field] ?? field}
+                    value={display(volume[field])}
+                    mono={identifierFields.has(field)}
+                    copyValue={identifierFields.has(field) ? display(volume[field]) : undefined}
+                  />
+                ))}
           </DetailFieldGroup>
         </DetailViewSection>
       ))}
@@ -108,14 +120,6 @@ export function FlashSystemVolumeDetailPanel({ volume, allProviders = [], open, 
           <DetailField label={labels.usedCapacity} value={display(volume.pool?.used_capacity)} />
           <DetailField label={labels.freeCapacity} value={display(volume.pool?.free_capacity)} />
         </DetailFieldGroup>
-      </DetailViewSection>
-      <DetailViewSection id="technical" title={labels.technical} icon={ApiIcon} secondary>
-        <DetailTechnicalGroup title={labels.groups.identity}>
-          {identityFields.map((field) => {
-            const value = display(volume[field])
-            return <DetailField key={field} label={labels.fieldLabels[field] ?? field} value={value} copyValue={value} />
-          })}
-        </DetailTechnicalGroup>
       </DetailViewSection>
     </DetailView>
   )

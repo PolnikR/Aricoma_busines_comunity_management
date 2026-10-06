@@ -21,7 +21,6 @@ const labels = {
   entity: 'FlashSystem volume',
   detail: 'Volume detail',
   close: 'Close volume',
-  technical: 'Technical',
   pool: 'Pool',
   capacity: 'Capacity',
   usedCapacity: 'Used capacity',
@@ -37,27 +36,37 @@ const labels = {
 }
 
 describe('FlashSystemVolumeDetailPanel', () => {
-  it('opens on Placement with the business sections first and Technical last', () => {
+  it('opens on Identity with the original sections and no Technical section', () => {
     render(<FlashSystemVolumeDetailPanel volume={volume} open onClose={vi.fn()} labels={labels} />)
     const dialog = screen.getByRole('dialog', { name: 'Volume detail' })
     const navigation = within(dialog).getByRole('navigation', { name: 'Sections' })
 
     expect(dialog).toHaveAttribute('data-size', 'lg')
     expect(within(navigation).getAllByRole('button').map(button => button.textContent)).toEqual([
-      'Placement and capacity', 'State and behavior', 'Copy relationships', 'Pool', 'Technical',
+      'Identity', 'Placement and capacity', 'State and behavior', 'Copy relationships', 'Pool',
     ])
-    expect(within(navigation).getByRole('button', { name: 'Placement and capacity' })).toHaveAttribute('aria-current', 'true')
+    expect(within(navigation).getByRole('button', { name: 'Identity' })).toHaveAttribute('aria-current', 'true')
+    expect(within(navigation).queryByRole('button', { name: 'Technical' })).not.toBeInTheDocument()
   })
 
-  it('lists the volume identifiers with copy actions in Technical', async () => {
+  it('lists ID, Volume ID and Virtual disk UID in Identity with copy actions', () => {
     render(<FlashSystemVolumeDetailPanel volume={volume} open onClose={vi.fn()} labels={labels} />)
-    const dialog = screen.getByRole('dialog', { name: 'Volume detail' })
-    await userEvent.setup().click(within(dialog).getByRole('button', { name: 'Technical' }))
-    const technical = within(dialog).getByRole('region', { name: 'Technical' })
+    const identity = within(screen.getByRole('dialog', { name: 'Volume detail' })).getByRole('region', { name: 'Identity' })
 
-    expect(within(technical).getByRole('heading', { name: 'Identity' })).toBeInTheDocument()
-    expect(within(technical).getByText('Virtual disk UID').nextElementSibling).toHaveTextContent('600507638082007A48000000000000A1')
-    expect(within(technical).getByRole('button', { name: 'Copy Volume ID' })).toBeInTheDocument()
+    expect([...identity.querySelectorAll('dt')].map(term => term.textContent)).toEqual(['ID', 'Volume ID', 'Virtual disk UID'])
+    expect(within(identity).getByText('Virtual disk UID').nextElementSibling).toHaveTextContent('600507638082007A48000000000000A1')
+    expect(within(identity).getByText('600507638082007A48000000000000A1')).toHaveClass('font-mono')
+    expect(within(identity).getByRole('button', { name: 'Copy Volume ID' })).toBeInTheDocument()
+  })
+
+  it('keeps the consistency groups in Copy relationships', async () => {
+    const withGroups = { ...volume, resolvedConsistencyGroups: [{ id: 'cg-1', name: 'CG_SAP', status: 'consistent_synchronized' }] }
+    render(<FlashSystemVolumeDetailPanel volume={withGroups} open onClose={vi.fn()} labels={labels} />)
+    const dialog = screen.getByRole('dialog', { name: 'Volume detail' })
+    await userEvent.setup().click(within(dialog).getByRole('button', { name: 'Copy relationships' }))
+
+    const copies = within(dialog).getByRole('region', { name: 'Copy relationships' })
+    expect(within(copies).getByText('Consistency groups').nextElementSibling).toHaveTextContent(/CG_SAP.*consistent_synchronized/)
   })
 
   it('shows the pool capacity in the Pool section', async () => {
