@@ -24,3 +24,18 @@ export function isNodeHighlighted(activeId: string, adjacency: RelationshipAdjac
 export function isEdgeHighlighted(activeId: string, from: string, to: string): boolean {
   return from === activeId || to === activeId
 }
+
+// Every entity reachable from the active one, the active entity included.
+export function connectedComponent(activeId: string, adjacency: RelationshipAdjacency): ReadonlySet<string> {
+  const seen = new Set<string>([activeId])
+  const queue = [activeId]
+  for (let next = queue.pop(); next !== undefined; next = queue.pop()) {
+    for (const neighbour of adjacency.get(next) ?? []) {
+      if (!seen.has(neighbour)) {
+        seen.add(neighbour)
+        queue.push(neighbour)
+      }
+    }
+  }
+  return seen
+}

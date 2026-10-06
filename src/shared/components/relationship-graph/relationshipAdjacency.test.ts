@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildAdjacency, isEdgeHighlighted, isNodeHighlighted } from './relationshipAdjacency'
+import { buildAdjacency, connectedComponent, isEdgeHighlighted, isNodeHighlighted } from './relationshipAdjacency'
 
 // compute -> storage -> partner, plus a second compute on the same storage.
 const edges = [
@@ -25,5 +25,12 @@ describe('relationship adjacency', () => {
   it('treats a node without edges as its own only highlight', () => {
     expect(isNodeHighlighted('alone', adjacency, 'alone')).toBe(true)
     expect(isNodeHighlighted('alone', adjacency, 'compute')).toBe(false)
+  })
+
+  it('collects every entity reachable from the active one for component highlighting', () => {
+    const rows = buildAdjacency([...edges, { from: 'other', to: 'other-copy' }])
+    expect([...connectedComponent('partner', rows)].sort()).toEqual(['compute', 'compute-2', 'partner', 'storage'])
+    expect([...connectedComponent('other-copy', rows)].sort()).toEqual(['other', 'other-copy'])
+    expect([...connectedComponent('alone', rows)]).toEqual(['alone'])
   })
 })

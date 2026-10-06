@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react'
+import type { RelationshipDensity, RelationshipDimming } from './relationshipGraphTypes'
 
 // 'idle' while nothing is hovered or focused; otherwise whether the part stays at
 // full opacity ('on') or is dimmed ('off').
@@ -9,6 +10,8 @@ export interface RelationshipGraphContextValue {
   edgeHighlight: (from: string, to: string) => RelationshipHighlight
   hover: (entityId: string | null) => void
   focus: (entityId: string | null) => void
+  density: RelationshipDensity
+  dimming: RelationshipDimming
 }
 
 export const RelationshipGraphContext = createContext<RelationshipGraphContextValue | null>(null)
