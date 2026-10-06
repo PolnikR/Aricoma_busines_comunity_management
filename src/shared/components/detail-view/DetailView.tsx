@@ -6,9 +6,10 @@ import { CloseIcon } from '@/shared/icons/Icons'
 import { cn } from '@/shared/utils/cn'
 
 // Width by content density: md ≈ 880 px (simple objects), lg ≈ 960 px (default),
-// xl ≈ 1200 px (dense, table-heavy objects). Always capped to the usable viewport: the
-// cap is a percentage of the fixed containing block (the same box `left-1/2` centres in),
-// not `100vw`, which includes a page scrollbar and would shrink the side margins.
+// xl ≈ 1200 px (dense, table-heavy objects). Centred on and capped to the AppShell content
+// surface (`--app-content-left/width`, measured by AppShell), so it never reaches over the
+// desktop sidebar. Outside AppShell it falls back to the fixed containing block (the usable
+// viewport), never `100vw`, which includes a page scrollbar and would shrink the margins.
 export type DetailViewSize = 'md' | 'lg' | 'xl'
 
 interface DetailViewProps {
@@ -212,7 +213,7 @@ export function DetailView({ open, onClose, title, entityLabel, statuses = [], m
         tabIndex={-1}
         data-size={size}
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 flex h-[min(46rem,calc(100dvh-2rem))] max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-lg [--detail-gutter:1.25rem] sm:[--detail-gutter:2rem]',
+          'fixed top-1/2 left-[calc(var(--app-content-left,0px)+var(--app-content-width,100%)/2)] z-50 flex h-[min(46rem,calc(100dvh-2rem))] max-w-[calc(var(--app-content-width,100%)-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-lg [--detail-gutter:1.25rem] sm:[--detail-gutter:2rem]',
           WIDTH[size],
         )}
       >

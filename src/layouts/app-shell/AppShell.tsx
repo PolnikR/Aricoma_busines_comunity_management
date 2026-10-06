@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react'
 import { Outlet, useMatches } from 'react-router'
 import { cn } from '@/shared/utils/cn'
 import { AppHeader } from './AppHeader'
@@ -13,9 +14,31 @@ export function AppShell() {
   const hasContainedContent = useMatches().some(match => (
     (match.handle as AppShellRouteHandle | undefined)?.contentScroll === 'contained'
   ))
+  const shellRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLElement>(null)
+
+  // Publishes the content surface's viewport box, so fixed overlays (DetailView) can centre
+  // on it instead of on sidebar + content. Sidebar toggle, its content-based width and window
+  // resizes all change the section's width, so observing the section covers them.
+  useLayoutEffect(() => {
+    const shell = shellRef.current
+    const content = contentRef.current
+    if (!shell || !content) return
+    const publish = () => {
+      const { left, width } = content.getBoundingClientRect()
+      shell.style.setProperty('--app-content-left', `${String(left)}px`)
+      shell.style.setProperty('--app-content-width', `${String(width)}px`)
+    }
+    publish()
+    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(publish)
+    resizeObserver?.observe(content)
+    return () => {
+      resizeObserver?.disconnect()
+    }
+  }, [])
 
   return (
-    <div className="min-h-screen p-0 text-text-primary lg:h-screen lg:overflow-hidden lg:p-3 xl:p-4">
+    <div ref={shellRef} className="min-h-screen p-0 text-text-primary lg:h-screen lg:overflow-hidden lg:p-3 xl:p-4">
       {isMobileOpen ? (
         <button
           type="button"
@@ -26,7 +49,7 @@ export function AppShell() {
       ) : null}
       <div className="flex min-h-screen w-full gap-3 lg:h-full lg:min-h-0 xl:gap-4">
         <AppSidebar />
-        <section className="flex min-w-0 flex-1 flex-col bg-surface lg:min-h-0 lg:overflow-hidden lg:rounded-[28px] lg:border lg:border-border lg:shadow-[0_24px_70px_-34px_rgba(34,78,122,0.35)]">
+        <section ref={contentRef} className="flex min-w-0 flex-1 flex-col bg-surface lg:min-h-0 lg:overflow-hidden lg:rounded-[28px] lg:border lg:border-border lg:shadow-[0_24px_70px_-34px_rgba(34,78,122,0.35)]">
           <AppHeader />
           <main className={cn(
             'flex flex-1 flex-col px-4 py-5 sm:px-6 lg:min-h-0 lg:px-6 lg:py-5 xl:px-8',

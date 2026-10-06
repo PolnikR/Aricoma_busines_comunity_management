@@ -16,6 +16,9 @@ function Inventory() {
   )
 }
 
+const CONTENT_CENTRE = 'left-[calc(var(--app-content-left,0px)+var(--app-content-width,100%)/2)]'
+const CONTENT_CAP = 'max-w-[calc(var(--app-content-width,100%)-2rem)]'
+
 function renderView(props: Partial<Parameters<typeof DetailView>[0]> = {}) {
   const onClose = vi.fn()
   const view = render(
@@ -56,8 +59,27 @@ describe('DetailView dialog', () => {
   it('opens as a centred modal dialog with focus on Close', () => {
     const { dialog } = renderView()
     expect(dialog).toHaveAttribute('aria-modal', 'true')
-    expect(dialog).toHaveClass('top-1/2', 'left-1/2', '-translate-x-1/2', '-translate-y-1/2')
+    expect(dialog).toHaveClass('top-1/2', CONTENT_CENTRE, '-translate-x-1/2', '-translate-y-1/2')
     expect(within(dialog).getByRole('button', { name: 'Close detail' })).toHaveFocus()
+  })
+
+  // AppShell publishes the content surface box; the fallbacks equal the old viewport
+  // centring (left 50%, cap 100% - 2rem), so outside AppShell nothing changes. The offset is
+  // always measured, never a hardcoded sidebar width.
+  it('centres on the AppShell content surface with a viewport fallback', () => {
+    const { dialog } = renderView()
+    expect(dialog).toHaveClass(CONTENT_CENTRE, CONTENT_CAP)
+    expect(dialog).not.toHaveClass('left-1/2')
+    expect(dialog).not.toHaveClass('max-w-[calc(100%-2rem)]')
+    // No pixel offset other than the 0px fallback.
+    expect(dialog.className).not.toMatch(/[1-9]\d*px/)
+  })
+
+  it('keeps the backdrop over the whole viewport, independent of the content surface', () => {
+    renderView()
+    const backdrop = document.querySelector('div[aria-hidden="true"].fixed')
+    expect(backdrop).toHaveClass('fixed', 'inset-0', 'z-40')
+    expect(backdrop?.className).not.toContain('--app-content')
   })
 
   it('has a single centred mode without a mode toggle or resize handle', () => {
@@ -245,16 +267,16 @@ describe('DetailView sizes', () => {
     expect(dialog).toHaveClass('w-[60rem]')
   })
 
-  // The cap is a percentage of the fixed containing block (the usable viewport, without a
-  // page scrollbar), the same box the dialog is centred in, never 100vw.
+  // The cap is the content surface width (fallback: the fixed containing block, i.e. the
+  // usable viewport without a page scrollbar), the same box the dialog is centred in.
   it.each([
     ['md', 'w-[55rem]'],
     ['lg', 'w-[60rem]'],
     ['xl', 'w-[75rem]'],
-  ] as const)('maps size %s to its nominal width, capped to the usable viewport and centred', (size, widthClass) => {
+  ] as const)('maps size %s to its nominal width, capped to the content surface and centred', (size, widthClass) => {
     const { dialog } = renderView({ size })
     expect(dialog).toHaveAttribute('data-size', size)
-    expect(dialog).toHaveClass(widthClass, 'max-w-[calc(100%-2rem)]', 'left-1/2', '-translate-x-1/2')
+    expect(dialog).toHaveClass(widthClass, CONTENT_CAP, CONTENT_CENTRE, '-translate-x-1/2')
     expect(dialog.className).not.toContain('100vw')
   })
 })

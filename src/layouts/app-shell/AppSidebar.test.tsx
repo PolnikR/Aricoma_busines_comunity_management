@@ -272,4 +272,20 @@ describe('AppSidebar', () => {
       expect((await screen.findByRole('link', { name: 'Aricoma home' })).parentElement).toHaveClass('h-14')
     })
   })
+
+  // Dialog backdrops are z-40 and later in the DOM, so on desktop they must cover the
+  // sidebar; the mobile drawer stays above its own backdrop.
+  it('stays under dialog backdrops on desktop and above them as the mobile drawer', () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/recovery-plans/recovery-groups']}>
+        <LanguageProvider>
+          <SidebarProvider>
+            <AppSidebar />
+          </SidebarProvider>
+        </LanguageProvider>
+      </MemoryRouter>,
+    )
+
+    expect(container.querySelector('aside')).toHaveClass('fixed', 'z-50', 'lg:static', 'lg:z-40')
+  })
 })
