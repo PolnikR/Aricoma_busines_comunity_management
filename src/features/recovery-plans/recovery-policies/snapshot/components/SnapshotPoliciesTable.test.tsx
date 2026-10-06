@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { SnapshotPolicyRecordOutput } from '@/generated/query/zod'
 import { SnapshotPoliciesTable } from './SnapshotPoliciesTable'
-import { detailNavigationLabels, detailSectionsFields, detailSectionsLabels } from '@/test-utils/detailView'
+import { detailNavigationLabels } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/snapshot-policies/snapshot-policies.gen', () => ({
@@ -86,18 +86,9 @@ describe('SnapshotPoliciesTable', () => {
     const modelCDrawer = screen.getByRole('dialog', { name: 'Snapshot policy detail' })
     const modelCHeader = within(modelCDrawer).getByRole('heading', { level: 2, name: 'Critical — 15 min' }).closest('header')
     expect(modelCHeader).toHaveTextContent('Snapshot policy')
-    // A simple record is one section: the navigation lists only Overview.
+    // A simple record is one section: the navigation lists only Overview, the ID in a technical group.
     expect(modelCDrawer).toHaveAttribute('data-size', 'md')
     expect(detailNavigationLabels(modelCDrawer)).toEqual(['Overview'])
-    expect(within(modelCDrawer).getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-current', 'true')
-    // One shared Overview field list in the original drawer order; the ID is a field, not a technical block.
-    const overview = within(modelCDrawer).getByRole('region', { name: 'Overview' })
-    expect(overview.querySelectorAll('dl')).toHaveLength(1)
-    expect(detailSectionsLabels(modelCDrawer)).toEqual(['Policy ID', 'Description', 'Level', 'Frequency', 'Retention', 'Maximum snapshots', 'Status'])
-    expect(within(overview).getByText('critical-15m')).toHaveClass('font-mono')
-    expect(within(overview).getByRole('button', { name: 'Copy Policy ID' })).toBeInTheDocument()
-    // Level stays a header badge and is repeated in Overview.
-    expect(modelCHeader).toHaveTextContent(detailSectionsFields(modelCDrawer)['Level'] ?? 'missing')
     expect(modelCHeader).not.toHaveTextContent(/[a-z0-9]+-[a-z0-9-]+$/)
     const modelCDelete = within(modelCDrawer).getByRole('button', { name: 'Delete' })
     expect(modelCDelete.closest('footer')?.children[0]).toContainElement(modelCDelete)

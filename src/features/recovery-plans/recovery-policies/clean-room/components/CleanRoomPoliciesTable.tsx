@@ -12,7 +12,7 @@ import {
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
-import { DetailField, DetailOverview, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { DetailField, DetailOverview, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { GridIcon } from '@/shared/icons/Icons'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
@@ -168,12 +168,12 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
           footer={<Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">{t('buttons.edit')}</Button>}
         >
           <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
-            {/* The fields in the order of the original detail drawer; Status is also a header badge. */}
             <DetailOverview>
-              <DetailField label={t('details.policyId')} value={selected.id} mono copyValue={selected.id} />
               <DetailField label={t('details.description')} value={selected.description} wide />
-              <DetailField label={t('details.status')} value={t(selected.enabled ? 'cleanRoomPolicies.enabled' : 'cleanRoomPolicies.disabled')} />
             </DetailOverview>
+            <DetailTechnicalGroup>
+              <DetailField label={t('details.policyId')} value={selected.id} copyValue={selected.id} />
+            </DetailTechnicalGroup>
           </DetailViewSection>
         </DetailView>
       ) : null}

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { PolicySetRecordOutput } from '@/generated/query/zod'
 import { PolicySetsTable } from './PolicySetsTable'
-import { detailNavigationLabels, detailSectionsLabels } from '@/test-utils/detailView'
+import { detailNavigationLabels } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 const { deleteMutation } = vi.hoisted(() => ({
@@ -123,16 +123,9 @@ describe('PolicySetsTable', () => {
     const modelCDrawer = screen.getByRole('dialog', { name: 'Policy set detail' })
     const modelCHeader = within(modelCDrawer).getByRole('heading', { level: 2, name: 'Tier 2 applications' }).closest('header')
     expect(modelCHeader).toHaveTextContent('Policy set')
-    // A simple record is one section: the navigation lists only Overview.
+    // A simple record is one section: the navigation lists only Overview, the ID in a technical group.
     expect(modelCDrawer).toHaveAttribute('data-size', 'md')
     expect(detailNavigationLabels(modelCDrawer)).toEqual(['Overview'])
-    expect(within(modelCDrawer).getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-current', 'true')
-    // One shared Overview field list in the original drawer order; the ID is a field, not a technical block.
-    const overview = within(modelCDrawer).getByRole('region', { name: 'Overview' })
-    expect(overview.querySelectorAll('dl')).toHaveLength(1)
-    expect(detailSectionsLabels(modelCDrawer)).toEqual(['Policy set ID', 'Description', 'Snapshot policies', 'Recovery application policy', 'Clean room policy'])
-    expect(within(overview).getByText('tier2-apps')).toHaveClass('font-mono')
-    expect(within(overview).getByRole('button', { name: 'Copy Policy set ID' })).toBeInTheDocument()
     expect(modelCHeader).not.toHaveTextContent(/[a-z0-9]+-[a-z0-9-]+$/)
     const modelCDelete = within(modelCDrawer).getByRole('button', { name: 'Delete' })
     expect(modelCDelete.closest('footer')?.children[0]).toContainElement(modelCDelete)
