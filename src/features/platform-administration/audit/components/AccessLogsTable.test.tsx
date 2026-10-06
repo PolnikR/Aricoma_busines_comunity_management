@@ -35,9 +35,11 @@ it('shows the user and Slovak date in the browser timezone', async () => {
   }])
   renderTable()
   expect(await screen.findByText('admin')).toBeInTheDocument()
-  // Wiring only: the hour comes from the host timezone, so the assertion holds in any timezone.
-  const browserHour = String(new Date(timestamp).getHours()).padStart(2, '0')
-  expect(screen.getByText(`03.09.2026 ${browserHour}:25:29`)).toBeInTheDocument()
+  // Wiring only: every component comes from the host timezone, so the assertion holds in any timezone.
+  const local = new Date(timestamp)
+  const pad = (value: number) => String(value).padStart(2, '0')
+  const expected = `${pad(local.getDate())}.${pad(local.getMonth() + 1)}.${String(local.getFullYear())} ${pad(local.getHours())}:${pad(local.getMinutes())}:${pad(local.getSeconds())}`
+  expect(screen.getByText(expected)).toBeInTheDocument()
 })
 
 function createQueryClient() {
