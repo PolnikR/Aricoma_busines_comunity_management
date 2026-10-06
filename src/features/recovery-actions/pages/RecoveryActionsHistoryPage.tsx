@@ -7,6 +7,7 @@ import { DataTable, type ColumnDef } from '@/shared/components/data-table/DataTa
 import { DetailDrawer, DetailRow } from '@/shared/components/data-table'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import { FilterTabs } from '@/shared/components/filters/FilterTabs'
+import { formatDateTime } from '@/shared/utils/dateTime'
 import { RecoveryActionsPageShell } from '../components/RecoveryActionsPageShell'
 import { RecoveryTestStatusBadge } from '../components/RecoveryTestStatusBadge'
 import { recoveryHistory } from '../mocks/recoveryActionsMocks'
@@ -21,7 +22,7 @@ export function RecoveryActionsHistoryPage() {
   const [period, setPeriod] = useState('30')
   const rows = useMemo(() => filter === 'all' ? recoveryHistory : recoveryHistory.filter((run) => run.mode === filter), [filter])
   const columns: ColumnDef<RecoveryTestRun>[] = [
-    { id: 'started', header: t('pages.recoveryActions.history.columns.started'), cell: (run) => formatDate(run.startedAt) },
+    { id: 'started', header: t('pages.recoveryActions.history.columns.started'), cell: (run) => formatDateTime(run.startedAt, { language: 'en' }) },
     { id: 'mode', header: t('pages.recoveryActions.history.columns.mode'), cell: (run) => <span className="capitalize">{t(`pages.recoveryActions.history.mode.${run.mode}`)}</span> },
     { id: 'group', header: t('pages.recoveryActions.history.columns.group'), cell: (run) => run.applicationGroup },
     { id: 'status', header: t('pages.recoveryActions.history.columns.status'), cell: (run) => <RecoveryTestStatusBadge status={run.status} label={t(`pages.recoveryActions.status.${run.status}`)} /> },
@@ -45,11 +46,9 @@ export function RecoveryActionsHistoryPage() {
           <DataTable columns={columns} rows={rows} rowKey={(run) => run.id} ariaLabel={t('pages.recoveryActions.history.tableAriaLabel')} onRowClick={setSelectedRun} rowAriaLabel={(run) => `${run.applicationGroup} ${run.status}`} emptyContent={t('pages.recoveryActions.history.empty')} />
         </DataTableSurface>
       </div>
-      <DetailDrawer open={Boolean(selectedRun)} onClose={() => { setSelectedRun(null) }} title={selectedRun?.applicationGroup ?? ''} meta={selectedRun ? [t('pages.recoveryActions.history.drawer.entity'), <RecoveryTestStatusBadge key="status" status={selectedRun.status} label={t(`pages.recoveryActions.status.${selectedRun.status}`)} />] : []} subtitle={selectedRun ? formatDate(selectedRun.startedAt) : undefined} headerActions={<KeyedHelpPopover helpKey="pages.recoveryActions.history.help" sections={['mode', 'checks']} />} ariaLabel={t('pages.recoveryActions.history.drawer.ariaLabel')} closeLabel={t('common.close')}>
+      <DetailDrawer open={Boolean(selectedRun)} onClose={() => { setSelectedRun(null) }} title={selectedRun?.applicationGroup ?? ''} meta={selectedRun ? [t('pages.recoveryActions.history.drawer.entity'), <RecoveryTestStatusBadge key="status" status={selectedRun.status} label={t(`pages.recoveryActions.status.${selectedRun.status}`)} />] : []} subtitle={selectedRun ? formatDateTime(selectedRun.startedAt, { language: 'en' }) : undefined} headerActions={<KeyedHelpPopover helpKey="pages.recoveryActions.history.help" sections={['mode', 'checks']} />} ariaLabel={t('pages.recoveryActions.history.drawer.ariaLabel')} closeLabel={t('common.close')}>
         {selectedRun ? <dl className="px-5 py-3"><DetailRow label={t('pages.recoveryActions.history.columns.mode')} value={t(`pages.recoveryActions.history.mode.${selectedRun.mode}`)} /><DetailRow label={t('pages.recoveryActions.history.columns.environment')} value={selectedRun.environment} /><DetailRow label={t('pages.recoveryActions.history.columns.duration')} value={selectedRun.duration} /><DetailRow label={t('pages.recoveryActions.history.columns.checks')} value={`${String(selectedRun.checksPassed)}/${String(selectedRun.checksTotal)}`} /><DetailRow label={t('pages.recoveryActions.history.drawer.summary')} value={selectedRun.summary} /></dl> : null}
       </DetailDrawer>
     </RecoveryActionsPageShell>
   )
 }
-
-function formatDate(value: string) { return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) }

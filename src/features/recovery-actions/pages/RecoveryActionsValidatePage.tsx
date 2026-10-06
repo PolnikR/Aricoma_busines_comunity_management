@@ -5,6 +5,7 @@ import { Badge } from '@/shared/components/badge/Badge'
 import { Card, CardDescription, CardTitle } from '@/shared/components/card/Card'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import { FilterTabs } from '@/shared/components/filters/FilterTabs'
+import { formatDateTime } from '@/shared/utils/dateTime'
 import { CheckIcon, ExecutionIcon } from '@/shared/icons/Icons'
 import { RecoveryActionsPageShell } from '../components/RecoveryActionsPageShell'
 import { RecoveryPointSummary } from '../components/RecoveryPointSummary'
@@ -58,7 +59,7 @@ export function RecoveryActionsValidatePage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <Metric label={t('pages.recoveryActions.validate.latest.applicationGroup')} value={latestAutomatedRun.applicationGroup} />
-                <Metric label={t('pages.recoveryActions.validate.latest.started')} value={formatDate(latestAutomatedRun.startedAt)} />
+                <Metric label={t('pages.recoveryActions.validate.latest.started')} value={formatDateTime(latestAutomatedRun.startedAt, { language: 'en' })} />
                 <Metric label={t('pages.recoveryActions.validate.latest.checks')} value={`${String(latestAutomatedRun.checksPassed)}/${String(latestAutomatedRun.checksTotal)}`} />
               </div>
               <Alert variant="warning" title={t('pages.recoveryActions.validate.latest.issueTitle')} description={latestAutomatedRun.summary} />
@@ -134,8 +135,4 @@ function CheckList() {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return <div className="min-w-0"><p className="text-[11px] font-medium uppercase tracking-wide text-text-subtle">{label}</p><p className="mt-1 truncate text-sm font-semibold text-text-primary">{value}</p></div>
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 }

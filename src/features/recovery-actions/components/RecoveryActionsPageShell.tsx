@@ -7,6 +7,7 @@ import { Card } from '@/shared/components/card/Card'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { ExecutionIcon, GridIcon, MonitoringIcon, SettingsIcon } from '@/shared/icons/Icons'
 import { WorkspaceTabs } from '@/shared/components/tabs/WorkspaceTabs'
+import { formatDateTime } from '@/shared/utils/dateTime'
 import { getRecoveryActionPath, recoveryActionTabs } from '../model/recoveryActionNavigation'
 import { buildRecoveryActionTabPresentation } from '../model/recoveryActionTabPresentation'
 import type { RecoveryActionTab } from '../model/recoveryActionTypes'
@@ -86,9 +87,8 @@ function getBadgeColor(tone: 'success' | 'warning' | 'info' | 'neutral'): 'succe
 function normalizeDetailParams(params: Record<string, string | number>, language: string) {
   if (typeof params['date'] !== 'string') return params
 
-  const locale = language === 'sk' ? 'sk-SK' : language === 'cs' ? 'cs-CZ' : 'en-GB'
   return {
     ...params,
-    date: new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(params['date'])),
+    date: formatDateTime(params['date'], { language, day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
   }
 }

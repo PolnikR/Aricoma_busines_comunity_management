@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { LanguageProvider } from '@/contexts/LanguageProvider'
+import { formatDateTime } from '@/shared/utils/dateTime'
 import { RecoveryActionsHistoryPage } from './RecoveryActionsHistoryPage'
 
 describe('RecoveryActionsHistoryPage', () => {
@@ -16,7 +17,9 @@ describe('RecoveryActionsHistoryPage', () => {
       </MemoryRouter>,
     )
 
-    await user.click(await screen.findByRole('row', { name: 'Customer Portal passed' }))
+    const row = await screen.findByRole('row', { name: 'Customer Portal passed' })
+    expect(row).toHaveTextContent(formatDateTime('2026-07-31T14:30:00+02:00', { language: 'en' }))
+    await user.click(row)
 
     const drawer = screen.getByRole('dialog', { name: 'Recovery test details' })
     const meta = within(drawer).getByRole('heading', { name: 'Customer Portal' }).parentElement?.nextElementSibling
