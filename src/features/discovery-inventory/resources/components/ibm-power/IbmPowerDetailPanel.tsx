@@ -1,6 +1,6 @@
 import type { ComponentType, SVGProps } from 'react'
-import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
-import { ApiIcon, CpuIcon, GridIcon, LayersIcon, NetworkIcon, ServerIcon } from '@/shared/icons/Icons'
+import { DetailField, DetailFieldGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { CpuIcon, GridIcon, LayersIcon, NetworkIcon, ServerIcon } from '@/shared/icons/Icons'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { PowerPartitionData, PowerPartitionResource } from '../../model/discoveryTypes'
@@ -8,7 +8,7 @@ import { useVdisksByVm } from '../../hooks/useVmStorageVolumes'
 import { BackingStorageInfo } from '../BackingStorageInfo'
 import { LparRelationshipHelp } from './LparRelationshipHelp'
 
-type SectionKey = 'summary' | 'processorMemory' | 'network' | 'storage' | 'virtualIo' | 'backingStorage' | 'technical'
+type SectionKey = 'summary' | 'processorMemory' | 'network' | 'storage' | 'virtualIo' | 'backingStorage'
 type FieldKey =
   | 'partitionUuid'
   | 'logicalSerialNumber'
@@ -33,7 +33,6 @@ type FieldKey =
   | 'virtualIoSlots'
   | 'physicalIo'
   | 'sriov'
-  | 'providerId'
 
 interface IbmPowerDetailPanelProps {
   partition: PowerPartitionResource | null
@@ -63,6 +62,8 @@ interface IbmPowerDetailPanelProps {
 interface PartitionRow {
   label: string
   value: string
+  // Identifiers (UUID, serial number, volume ID, FC port) render monospace with a copy action.
+  identifier?: boolean
 }
 
 interface PartitionSectionData {
@@ -145,6 +146,8 @@ export function IbmPowerDetailPanel({ partition, open, onClose, providers = [], 
       title: labels.sections.summary,
       icon: GridIcon,
       rows: [
+        { label: labels.fields.partitionUuid, value: display(raw(data, 'PartitionUUID'), yes, no), identifier: true },
+        { label: labels.fields.logicalSerialNumber, value: display(raw(data, 'LogicalSerialNumber'), yes, no), identifier: true },
         { label: labels.fields.lastActivatedProfile, value: display(raw(data, 'LastActivatedProfile'), yes, no) },
         { label: labels.fields.uptime, value: display(raw(data, 'Uptime'), yes, no) },
         { label: labels.fields.bootable, value: display(raw(data, 'IsBootable'), yes, no) },
@@ -180,8 +183,12 @@ export function IbmPowerDetailPanel({ partition, open, onClose, providers = [], 
       rows: [
         { label: labels.fields.volume, value: combine([raw(data, 'VolumeName'), raw(data, 'VolumeState')], yes, no) },
         { label: labels.fields.capacity, value: display(raw(data, 'VolumeCapacity'), yes, no) },
+        { label: labels.fields.volumeUniqueId, value: display(raw(data, 'VolumeUniqueID'), yes, no), identifier: true },
         { label: labels.fields.reservation, value: combine([raw(data, 'ReservePolicy'), raw(data, 'ReservePolicyAlgorithm')], yes, no) },
         { label: labels.fields.storageConnection, value: storageConnection(data, labels) },
+        ...(booleanValue(raw(data, 'IsFibreChannelBacked')) === true
+          ? [{ label: labels.fields.fibreChannelIdentity, value: combine([raw(data, 'PortName'), raw(data, 'WWPN'), raw(data, 'WWNN')], yes, no), identifier: true }]
+          : []),
       ],
     },
     {
@@ -200,17 +207,6 @@ export function IbmPowerDetailPanel({ partition, open, onClose, providers = [], 
       ],
     },
   ]
-  // Identifiers of the partition, its HMC volume, its Fibre Channel port and its provider.
-  const technicalRows = visibleRows([
-    { label: labels.fields.partitionUuid, value: display(raw(data, 'PartitionUUID'), yes, no) },
-    { label: labels.fields.logicalSerialNumber, value: display(raw(data, 'LogicalSerialNumber'), yes, no) },
-    { label: labels.fields.volumeUniqueId, value: display(raw(data, 'VolumeUniqueID'), yes, no) },
-    ...(booleanValue(raw(data, 'IsFibreChannelBacked')) === true
-      ? [{ label: labels.fields.fibreChannelIdentity, value: combine([raw(data, 'PortName'), raw(data, 'WWPN'), raw(data, 'WWNN')], yes, no) }]
-      : []),
-    { label: labels.fields.providerId, value: display(partition.providerId, yes, no) },
-  ])
-
   return (
     <DetailView
       // Keyed by partition so each newly opened partition starts expanded on its first section.
@@ -241,7 +237,9 @@ export function IbmPowerDetailPanel({ partition, open, onClose, providers = [], 
         return rows.length > 0 ? (
           <DetailViewSection key={section.id} id={section.id} title={section.title} icon={section.icon}>
             <DetailFieldGroup>
-              {rows.map((row) => <DetailField key={row.label} label={row.label} value={row.value} />)}
+              {rows.map((row) => (
+                <DetailField key={row.label} label={row.label} value={row.value} mono={row.identifier} copyValue={row.identifier ? row.value : undefined} />
+              ))}
             </DetailFieldGroup>
           </DetailViewSection>
         ) : null
@@ -258,13 +256,6 @@ export function IbmPowerDetailPanel({ partition, open, onClose, providers = [], 
             identity="volumeIdAndUid"
             emptyText={labels.emptyBackingStorage}
           />
-        </DetailViewSection>
-      ) : null}
-      {technicalRows.length > 0 ? (
-        <DetailViewSection id="technical" title={labels.sections.technical} icon={ApiIcon} secondary>
-          <DetailTechnicalGroup>
-            {technicalRows.map((row) => <DetailField key={row.label} label={row.label} value={row.value} copyValue={row.value} />)}
-          </DetailTechnicalGroup>
         </DetailViewSection>
       ) : null}
     </DetailView>

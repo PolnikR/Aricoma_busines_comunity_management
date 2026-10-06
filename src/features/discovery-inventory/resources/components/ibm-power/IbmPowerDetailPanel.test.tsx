@@ -33,7 +33,7 @@ function labels(): Labels {
     'partitionUuid', 'logicalSerialNumber', 'lastActivatedProfile', 'uptime', 'bootable', 'processors',
     'processorLimits', 'processorMode', 'memory', 'memoryLimits', 'interface', 'address', 'interfaceState',
     'monitoring', 'volume', 'capacity', 'volumeUniqueId', 'reservation', 'storageConnection',
-    'fibreChannelIdentity', 'virtualIoSlots', 'physicalIo', 'sriov', 'providerId',
+    'fibreChannelIdentity', 'virtualIoSlots', 'physicalIo', 'sriov',
   ]
   return {
     entity: 'Partition',
@@ -49,7 +49,6 @@ function labels(): Labels {
       storage: 'Storage',
       virtualIo: 'I/O and virtualization',
       backingStorage: english['drawer.sections.backingStorageInfo'] ?? '',
-      technical: 'Technical',
     },
     fields: Object.fromEntries(fields.map(field => [field, field])) as Labels['fields'],
     values: { dedicated: 'Dedicated', shared: 'Shared', fibreChannel: 'Fibre Channel', iscsi: 'iSCSI', direct: 'Direct' },
@@ -197,30 +196,64 @@ describe('IbmPowerDetailPanel backing storage', () => {
     expect(useVdisksByVmMock).toHaveBeenCalledWith('aix2source', 'ibm-power-01')
   })
 
-  it('keeps the HMC Storage section separate from Backing Storage Info, with Technical last', () => {
+  it('keeps the HMC Storage section separate from Backing Storage Info, without a Technical section', () => {
     const dialog = renderPanel()
-    // Sections without data stay hidden: this LPAR has no summary values besides its UUID.
+    // Sections without data stay hidden: processor and network have no values in this LPAR.
     const sections = within(within(dialog).getByRole('navigation', { name: 'Sections' })).getAllByRole('button')
 
     expect(dialog).toHaveAttribute('data-size', 'xl')
     expect(sections.map(button => button.textContent)).toEqual([
-      'Storage', 'I/O and virtualization', 'Backing Storage Info', 'Technical',
+      'Summary', 'Storage', 'I/O and virtualization', 'Backing Storage Info',
     ])
-    expect(within(dialog).getByRole('button', { name: 'Storage' })).toHaveAttribute('aria-current', 'true')
+    expect(within(dialog).getByRole('button', { name: 'Summary' })).toHaveAttribute('aria-current', 'true')
     expect(within(dialog).getByRole('button', { name: 'Backing Storage Info' })).not.toHaveAttribute('aria-current')
   })
 
-  it('moves the partition identifiers and the provider ID to Technical', async () => {
-    const dialog = renderPanel({ ...lpar, partitionData: { ...lpar.partitionData, LastActivatedProfile: 'default', VolumeUniqueID: 'vol-uid-7', WWPN: 'c050760000000001' } })
-    expect(within(dialog).getByRole('region', { name: 'Summary' })).not.toHaveTextContent('lpar-uuid-2')
+  it('shows the partition identifiers in Summary and Storage in the original order, without Technical or the provider ID', async () => {
+    const user = userEvent.setup()
+    const dialog = renderPanel({
+      ...lpar,
+      partitionData: {
+        ...lpar.partitionData,
+        LogicalSerialNumber: 'SN-0042',
+        LastActivatedProfile: 'default',
+        Uptime: '12 days',
+        IsBootable: 'true',
+        VolumeCapacity: '30 GB',
+        VolumeUniqueID: 'vol-uid-7',
+        ReservePolicy: 'NoReserve',
+        WWPN: 'c050760000000001',
+      },
+    })
+    const termsOf = (region: HTMLElement) => [...region.querySelectorAll('dt')].map(term => term.textContent)
 
-    await userEvent.setup().click(within(dialog).getByRole('button', { name: 'Technical' }))
-    const technical = within(dialog).getByRole('region', { name: 'Technical' })
-    expect(detailValue(technical, 'partitionUuid')).toHaveTextContent('lpar-uuid-2')
-    expect(detailValue(technical, 'volumeUniqueId')).toHaveTextContent('vol-uid-7')
-    expect(detailValue(technical, 'fibreChannelIdentity')).toHaveTextContent('c050760000000001')
-    expect(detailValue(technical, 'providerId')).toHaveTextContent('ibm-power-01')
-    expect(within(technical).getByRole('button', { name: 'Copy partitionUuid' })).toBeInTheDocument()
+    const summary = within(dialog).getByRole('region', { name: 'Summary' })
+    expect(termsOf(summary)).toEqual(['partitionUuid', 'logicalSerialNumber', 'lastActivatedProfile', 'uptime', 'bootable'])
+    expect(detailValue(summary, 'partitionUuid')).toHaveTextContent('lpar-uuid-2')
+    expect(detailValue(summary, 'logicalSerialNumber')).toHaveTextContent('SN-0042')
+    expect(within(summary).getByRole('button', { name: 'Copy partitionUuid' })).toBeInTheDocument()
+
+    await user.click(within(dialog).getByRole('button', { name: 'Storage' }))
+    const storage = within(dialog).getByRole('region', { name: 'Storage' })
+    expect(termsOf(storage)).toEqual(['volume', 'capacity', 'volumeUniqueId', 'reservation', 'storageConnection', 'fibreChannelIdentity'])
+    expect(detailValue(storage, 'volumeUniqueId')).toHaveTextContent('vol-uid-7')
+    expect(detailValue(storage, 'fibreChannelIdentity')).toHaveTextContent('c050760000000001')
+
+    // No Technical section, and the provider ID is in no section body.
+    const navigation = within(dialog).getByRole('navigation', { name: 'Sections' })
+    expect(within(navigation).queryByRole('button', { name: 'Technical' })).not.toBeInTheDocument()
+    for (const item of within(navigation).getAllByRole('button')) {
+      await user.click(item)
+      expect(within(dialog).getByRole('region')).not.toHaveTextContent('ibm-power-01')
+    }
+  })
+
+  it('shows no Fibre Channel identity in Storage when the partition is not Fibre Channel backed', async () => {
+    const dialog = renderPanel({ ...lpar, partitionData: { ...lpar.partitionData, IsFibreChannelBacked: 'false', WWPN: 'c050760000000001' } })
+    await userEvent.setup().click(within(dialog).getByRole('button', { name: 'Storage' }))
+    const storage = within(dialog).getByRole('region', { name: 'Storage' })
+    expect(within(storage).queryByText('fibreChannelIdentity', { selector: 'dt' })).not.toBeInTheDocument()
+    expect(storage).not.toHaveTextContent('c050760000000001')
   })
 
   it('shows an IBM Power volume by Volume ID and Volume UID with its storage details', async () => {
@@ -325,7 +358,7 @@ describe('IbmPowerDetailPanel backing storage', () => {
     const navigation = within(dialog).getByRole('navigation', { name: 'Sections' })
 
     expect(within(navigation).getAllByRole('button').map(button => button.textContent)).toEqual([
-      'Summary', 'Processor and memory', 'Network and monitoring', 'Storage', 'I/O and virtualization', 'Backing Storage Info', 'Technical',
+      'Summary', 'Processor and memory', 'Network and monitoring', 'Storage', 'I/O and virtualization', 'Backing Storage Info',
     ])
     await userEvent.setup().click(within(navigation).getByRole('button', { name: 'Network and monitoring' }))
     expect(within(dialog).getAllByRole('region')).toHaveLength(1)
