@@ -242,17 +242,20 @@ describe('DetailView sizes', () => {
   it('defaults to the lg width', () => {
     const { dialog } = renderView()
     expect(dialog).toHaveAttribute('data-size', 'lg')
-    expect(dialog).toHaveClass('w-[min(60rem,calc(100vw-2rem))]')
+    expect(dialog).toHaveClass('w-[60rem]')
   })
 
+  // The cap is a percentage of the fixed containing block (the usable viewport, without a
+  // page scrollbar), the same box the dialog is centred in, never 100vw.
   it.each([
-    ['md', 'w-[min(55rem,calc(100vw-2rem))]'],
-    ['lg', 'w-[min(60rem,calc(100vw-2rem))]'],
-    ['xl', 'w-[min(75rem,calc(100vw-2rem))]'],
-  ] as const)('maps size %s to a viewport-capped width', (size, widthClass) => {
+    ['md', 'w-[55rem]'],
+    ['lg', 'w-[60rem]'],
+    ['xl', 'w-[75rem]'],
+  ] as const)('maps size %s to its nominal width, capped to the usable viewport and centred', (size, widthClass) => {
     const { dialog } = renderView({ size })
     expect(dialog).toHaveAttribute('data-size', size)
-    expect(dialog).toHaveClass(widthClass)
+    expect(dialog).toHaveClass(widthClass, 'max-w-[calc(100%-2rem)]', 'left-1/2', '-translate-x-1/2')
+    expect(dialog.className).not.toContain('100vw')
   })
 })
 

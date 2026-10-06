@@ -6,7 +6,9 @@ import { CloseIcon } from '@/shared/icons/Icons'
 import { cn } from '@/shared/utils/cn'
 
 // Width by content density: md ≈ 880 px (simple objects), lg ≈ 960 px (default),
-// xl ≈ 1200 px (dense, table-heavy objects). Always capped to the viewport.
+// xl ≈ 1200 px (dense, table-heavy objects). Always capped to the usable viewport: the
+// cap is a percentage of the fixed containing block (the same box `left-1/2` centres in),
+// not `100vw`, which includes a page scrollbar and would shrink the side margins.
 export type DetailViewSize = 'md' | 'lg' | 'xl'
 
 interface DetailViewProps {
@@ -84,9 +86,9 @@ export function DetailViewSection({ title, description, aside, children }: Detai
 }
 
 const WIDTH: Record<DetailViewSize, string> = {
-  md: 'w-[min(55rem,calc(100vw-2rem))]',
-  lg: 'w-[min(60rem,calc(100vw-2rem))]',
-  xl: 'w-[min(75rem,calc(100vw-2rem))]',
+  md: 'w-[55rem]',
+  lg: 'w-[60rem]',
+  xl: 'w-[75rem]',
 }
 
 // Element types already reported, so the development warning fires once per type.
@@ -210,7 +212,7 @@ export function DetailView({ open, onClose, title, entityLabel, statuses = [], m
         tabIndex={-1}
         data-size={size}
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 flex h-[min(46rem,calc(100dvh-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-lg [--detail-gutter:1.25rem] sm:[--detail-gutter:2rem]',
+          'fixed top-1/2 left-1/2 z-50 flex h-[min(46rem,calc(100dvh-2rem))] max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-lg [--detail-gutter:1.25rem] sm:[--detail-gutter:2rem]',
           WIDTH[size],
         )}
       >
