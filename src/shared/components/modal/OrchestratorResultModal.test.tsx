@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { OrchestratorResultModal } from './OrchestratorResultModal'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
 describe('OrchestratorResultModal', () => {
   it('renders the orchestrator status, details and optional external action', async () => {
     const user = userEvent.setup()

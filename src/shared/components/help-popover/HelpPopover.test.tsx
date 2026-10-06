@@ -1,8 +1,10 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { DetailDrawer } from '@/shared/components/data-table'
+import { DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { HelpPopover } from './HelpPopover'
+
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 afterEach(() => {
   cleanup()
@@ -23,15 +25,16 @@ function renderHelp(width?: 'default' | 'wide') {
 
 function renderInDrawer(onClose = vi.fn()) {
   render(
-    <DetailDrawer
+    <DetailView
       open
       title="Group"
+      ariaLabel="Group detail"
       closeLabel="Close detail"
       onClose={onClose}
       headerActions={<HelpPopover triggerLabel="Recovery group help" title="How a recovery group works" closeLabel="Close help">text</HelpPopover>}
     >
-      body
-    </DetailDrawer>,
+      <DetailViewSection id="overview" title="Overview">body</DetailViewSection>
+    </DetailView>,
   )
   return onClose
 }
@@ -215,7 +218,7 @@ describe('HelpPopover', () => {
     expect(trigger()).toHaveFocus()
   })
 
-  it('closes only itself on Escape inside a DetailDrawer when opened by focus; the next Escape closes the drawer', async () => {
+  it('closes only itself on Escape inside a DetailView when opened by focus; the next Escape closes the detail', async () => {
     const user = userEvent.setup()
     const onClose = renderInDrawer()
 
@@ -228,7 +231,7 @@ describe('HelpPopover', () => {
     expect(onClose).toHaveBeenCalledOnce()
   })
 
-  it('closes only itself on Escape inside a DetailDrawer when opened by hover with focus elsewhere', () => {
+  it('closes only itself on Escape inside a DetailView when opened by hover with focus elsewhere', () => {
     vi.useFakeTimers()
     const onClose = renderInDrawer()
     const closeDetail = screen.getByRole('button', { name: 'Close detail' })
@@ -247,17 +250,17 @@ describe('HelpPopover', () => {
     expect(onClose).toHaveBeenCalledOnce()
   })
 
-  it('keeps its controls inside the drawer focus trap', async () => {
+  it('keeps its controls inside the detail focus trap', async () => {
     const user = userEvent.setup()
     renderInDrawer()
 
     await user.click(trigger())
-    const drawer = screen.getByRole('dialog', { name: 'Detail' })
+    const drawer = screen.getByRole('dialog', { name: 'Group detail' })
     expect(drawer).toContainElement(panel())
 
     screen.getByRole('button', { name: 'Close detail' }).focus()
-    fireEvent.keyDown(window, { key: 'Tab' })
-    expect(trigger()).toHaveFocus()
+    await user.tab()
+    expect(drawer).toContainElement(document.activeElement as HTMLElement)
   })
 
   it('uses the compact width by default and the wide width on request', () => {

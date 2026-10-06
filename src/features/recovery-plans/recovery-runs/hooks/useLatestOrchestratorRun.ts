@@ -5,7 +5,7 @@ import { latestRunParams, newestRunOf, selectOrchestratorRuns } from '../model/o
 import type { OrchestratorRun } from '../model/recoveryRunTypes'
 
 // Single-entity latest-run lookup for detail panels (e.g. an Application or
-// Recovery Group's DetailDrawer) — deliberately not a useQueries fan-out like
+// Recovery Group's DetailView) — deliberately not a useQueries fan-out like
 // useOrchestratedEntityRuns, since a detail panel only ever needs one entity's
 // status, not every orchestrated entity's.
 export function useLatestOrchestratorRun(providerId: string | null, dagId: string | null) {

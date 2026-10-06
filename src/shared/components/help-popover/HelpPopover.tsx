@@ -32,8 +32,8 @@ const PANEL_WIDTH = {
 // close button and may hold more than a tooltip-sized text.
 //
 // It renders in place, absolutely positioned under the trigger, instead of in a
-// portal. Inside a DetailDrawer that keeps it within the drawer's aria-modal
-// subtree and its focus trap; the drawer sets no overflow, so nothing clips it.
+// portal. Inside a DetailView that keeps it within the dialog's aria-modal
+// subtree and its focus trap.
 // After opening, the panel is nudged horizontally to stay inside the viewport and
 // its height is capped to the space below the trigger.
 //

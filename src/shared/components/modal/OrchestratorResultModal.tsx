@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
-import { DetailRow } from '@/shared/components/data-table'
+import { DetailField, DetailFieldGroup } from '@/shared/components/detail-view'
 import { CheckIcon, ExternalLinkIcon } from '@/shared/icons/Icons'
 import { Modal } from './Modal'
 
@@ -69,23 +69,14 @@ export function OrchestratorResultModal({
           <p className="mt-1 text-xs text-text-muted wrap-break-word">{description}</p>
         </div>
       </div>
-      <dl className="px-6">
-        <DetailRow
-          label={statusLabel}
-          value={<Badge color="success" size="sm">{status}</Badge>}
-        />
-        {details.map(detail => (
-          <DetailRow
-            key={detail.label}
-            label={detail.label}
-            value={(
-              <span className={detail.mono ? 'font-mono wrap-break-word' : 'wrap-break-word'}>
-                {detail.value}
-              </span>
-            )}
-          />
-        ))}
-      </dl>
+      <div className="px-6 py-5">
+        <DetailFieldGroup>
+          <DetailField label={statusLabel} value={<Badge color="success" size="sm">{status}</Badge>} />
+          {details.map(detail => (
+            <DetailField key={detail.label} label={detail.label} value={detail.value} mono={detail.mono} wide />
+          ))}
+        </DetailFieldGroup>
+      </div>
     </Modal>
   )
 }
