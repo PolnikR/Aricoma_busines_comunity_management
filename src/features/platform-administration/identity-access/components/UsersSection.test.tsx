@@ -5,6 +5,8 @@ import { UsersSection } from './UsersSection'
 import { useGetUsers } from '@/generated/query/identity-access/identity-access.gen'
 import type { UserRecord } from '@/generated/query/zod'
 
+import { detailSectionsFields } from '@/test-utils/detailView'
+
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/identity-access/identity-access.gen', () => ({ useGetUsers: vi.fn() }))
 
@@ -130,56 +132,58 @@ describe('UsersSection', () => {
     expect(screen.getByText('No users found')).toBeInTheDocument()
   })
 
-  it('opens a read-only DetailDrawer with every returned user field on row click', async () => {
+  it('opens a read-only DetailView with every returned user field on row click', async () => {
     mockUsers({ users: [alice, bob] })
     render(<UsersSection />)
 
     await userEvent.click(screen.getByRole('row', { name: 'Open user Alice Smith' }))
 
-    const drawer = within(screen.getByRole('dialog', { name: 'User detail' }))
-    expect(drawer.getByRole('heading', { name: 'Alice Smith' }).parentElement?.nextElementSibling).toHaveTextContent('UserActive')
-    expect(drawer.getByRole('heading', { name: 'Alice Smith' })).toBeInTheDocument()
-    const fields = Object.fromEntries(drawer.getAllByRole('term').map(term => [term.textContent, term.nextElementSibling?.textContent]))
-    expect(fields).toEqual({
-      ID: 'kc-alice',
+    const dialog = screen.getByRole('dialog', { name: 'User detail' })
+    const header = within(dialog).getByRole('heading', { level: 2, name: 'Alice Smith' }).closest('header')
+    expect(dialog).toHaveAttribute('data-size', 'md')
+    expect(header).toHaveTextContent('User')
+    expect(header).toHaveTextContent('Active')
+    expect(header).toHaveTextContent('alice')
+    // The status is a header badge; the ID lives in Technical.
+    expect(detailSectionsFields(dialog)).toEqual({
       User: 'Alice Smith',
       Username: 'alice',
       Email: 'alice@example.com',
       'Email verified': 'Yes',
       'Created at': expectedTimestamp('2026-01-02T10:00:00Z'),
-      Roles: 'platform-adminrecovery-operator',
-      Status: 'Active',
       'Active session start': expectedTimestamp(SESSION_START),
+      Roles: 'platform-adminrecovery-operator',
+      ID: 'kc-alice',
     })
-    expect(drawer.getByText('platform-admin')).toBeInTheDocument()
-    expect(drawer.getByText('recovery-operator')).toBeInTheDocument()
   })
 
-  it('renders missing user fields as an em dash in the drawer', async () => {
+  it('renders missing user fields as "Not set" in the detail', async () => {
     mockUsers({ users: [alice, bob] })
     render(<UsersSection />)
 
     await userEvent.click(screen.getByRole('row', { name: 'Open user Bob Jones' }))
 
-    const drawer = within(screen.getByRole('dialog', { name: 'User detail' }))
-    const fields = Object.fromEntries(drawer.getAllByRole('term').map(term => [term.textContent, term.nextElementSibling?.textContent]))
-    expect(fields).toMatchObject({
-      Email: '—',
-      'Email verified': '—',
-      'Created at': '—',
-      Roles: '—',
-      Status: 'Disabled',
-      'Active session start': '—',
+    const dialog = screen.getByRole('dialog', { name: 'User detail' })
+    expect(within(dialog).getByRole('heading', { level: 2 }).closest('header')).toHaveTextContent('Disabled')
+    expect(detailSectionsFields(dialog)).toMatchObject({
+      Email: 'Not set',
+      'Email verified': 'Not set',
+      'Created at': 'Not set',
+      Roles: 'Not set',
+      'Active session start': 'Not set',
     })
   })
 
-  it('keeps the user drawer free of Edit/Delete actions and closes it', async () => {
+  it('keeps the user detail free of Edit/Delete actions and closes it', async () => {
     mockUsers({ users: [alice] })
     render(<UsersSection />)
 
     await userEvent.click(screen.getByRole('row', { name: 'Open user Alice Smith' }))
     const dialog = screen.getByRole('dialog', { name: 'User detail' })
-    expect(within(dialog).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['User help', 'Close user detail'])
+    const header = within(dialog).getByRole('heading', { level: 2 }).closest('header')
+    if (!header) throw new Error('Expected the detail header')
+    expect(within(header).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Compact view', 'User help', 'Close user detail'])
+    expect(dialog.querySelector('footer')).toBeNull()
     await userEvent.click(within(dialog).getByRole('button', { name: 'User help' }))
     expect(within(dialog).getByRole('dialog', { name: 'Where users come from' })).toHaveTextContent('Roles')
     await userEvent.keyboard('{Escape}')

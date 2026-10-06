@@ -6,6 +6,7 @@ import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { useDeletePlatformProvider } from '@/generated/query/platform-providers/platform-providers.gen'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { PlatformProvidersTable } from './PlatformProvidersTable'
+import { detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/platform-providers/platform-providers.gen', () => ({
@@ -137,15 +138,17 @@ describe('PlatformProvidersTable', () => {
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
     const smtpUrl = smtpProvider.url
     if (!smtpUrl) throw new Error('SMTP fixture URL is required')
+    const labels = detailSectionsLabels(drawer)
     for (const label of ['Provider ID', 'Type', 'URL', 'Description', 'IP address', 'Port', 'From email', 'Disable SSL', 'Disable TLS']) {
-      expect(within(drawer).getByText(label)).toBeInTheDocument()
+      expect(labels).toContain(label)
+    }
+    for (const label of ['DAG directory', 'Notification email', 'Credential']) {
+      expect(labels).not.toContain(label)
     }
 
-    expect(within(drawer).getByRole('link', { name: smtpUrl })).toHaveAttribute('href', smtpUrl)
-    expect(within(drawer).getByText('airflow@example.com')).toBeInTheDocument()
-    expect(within(drawer).queryByText('DAG directory')).not.toBeInTheDocument()
-    expect(within(drawer).queryByText('Notification email')).not.toBeInTheDocument()
-    expect(within(drawer).queryByText('Credential')).not.toBeInTheDocument()
+    const overview = openDetailSection(drawer, 'Overview')
+    expect(within(overview).getByRole('link', { name: smtpUrl })).toHaveAttribute('href', smtpUrl)
+    expect(within(overview).getByText('airflow@example.com')).toBeInTheDocument()
   })
 
   it('shows only AIRFLOW configuration fields in the detail drawer', async () => {
@@ -162,11 +165,13 @@ describe('PlatformProvidersTable', () => {
 
     await user.click(screen.getByText('Primary Airflow'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
-    for (const label of ['IP address', 'Port', 'DAG directory', 'Credential', 'Credential status', 'Notification email']) {
-      expect(within(drawer).getByText(label)).toBeInTheDocument()
+    const labels = detailSectionsLabels(drawer)
+    for (const label of ['IP address', 'Port', 'DAG directory', 'Credential', 'Notification email']) {
+      expect(labels).toContain(label)
     }
-    for (const label of ['From email', 'Disable SSL', 'Disable TLS', 'Logging enabled', 'JWT enabled', 'Swagger enabled', 'Realm', 'Client ID']) {
-      expect(within(drawer).queryByText(label)).not.toBeInTheDocument()
+    // The credential state is a header status, not repeated as a field.
+    for (const label of ['Credential status', 'From email', 'Disable SSL', 'Disable TLS', 'Logging enabled', 'JWT enabled', 'Swagger enabled', 'Realm', 'Client ID']) {
+      expect(labels).not.toContain(label)
     }
   })
 
@@ -184,12 +189,14 @@ describe('PlatformProvidersTable', () => {
 
     await user.click(screen.getByText('ABCo API'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
+    const labels = detailSectionsLabels(drawer)
     for (const label of ['Notification email', 'Logging enabled', 'JWT enabled', 'Swagger enabled']) {
-      expect(within(drawer).getByText(label)).toBeInTheDocument()
+      expect(labels).toContain(label)
     }
     for (const label of ['IP address', 'Port', 'DAG directory', 'Credential', 'From email', 'Disable SSL', 'Disable TLS', 'Realm', 'Client ID']) {
-      expect(within(drawer).queryByText(label)).not.toBeInTheDocument()
+      expect(labels).not.toContain(label)
     }
+    expect(within(within(drawer).getByRole('navigation', { name: 'Sections' })).queryByRole('button', { name: 'Connection' })).not.toBeInTheDocument()
   })
 
   it('shows only KEYCLOAK configuration fields in the detail drawer', async () => {
@@ -206,11 +213,12 @@ describe('PlatformProvidersTable', () => {
 
     await user.click(screen.getByText('Aricoma Keycloak'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
-    for (const label of ['Realm', 'Client ID', 'Credential', 'Credential status']) {
-      expect(within(drawer).getByText(label)).toBeInTheDocument()
+    const labels = detailSectionsLabels(drawer)
+    for (const label of ['Realm', 'Client ID', 'Credential']) {
+      expect(labels).toContain(label)
     }
-    for (const label of ['IP address', 'Port', 'DAG directory', 'Notification email', 'From email', 'Disable SSL', 'Disable TLS', 'Logging enabled', 'JWT enabled', 'Swagger enabled']) {
-      expect(within(drawer).queryByText(label)).not.toBeInTheDocument()
+    for (const label of ['Credential status', 'IP address', 'Port', 'DAG directory', 'Notification email', 'From email', 'Disable SSL', 'Disable TLS', 'Logging enabled', 'JWT enabled', 'Swagger enabled']) {
+      expect(labels).not.toContain(label)
     }
   })
 
@@ -371,20 +379,24 @@ describe('PlatformProvidersTable', () => {
     expect(dialog).toHaveTextContent('"url": null')
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
   })
-  describe('Model C drawer', () => {
+  describe('DetailView', () => {
     const renderTable = (providers: PlatformProviderRecord[]) => render(
       <PlatformProvidersTable providers={providers} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} />,
     )
 
-    it('shows entity, type and credential status in the meta row and the id as subtitle', async () => {
+    it('shows entity, type and credential status in the header and the id only in Technical', async () => {
       const user = userEvent.setup()
       renderTable([baseProvider])
       await user.click(screen.getByText('Primary Airflow'))
       const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
-      const meta = within(drawer).getByText('Platform provider').parentElement
+      const header = within(drawer).getByRole('heading', { level: 2, name: 'Primary Airflow' }).closest('header')
 
-      expect(meta).toHaveTextContent('Platform providerAIRFLOWAvailable')
-      expect(meta?.nextElementSibling).toHaveTextContent('airflow-01')
+      expect(drawer).toHaveAttribute('data-size', 'md')
+      expect(header).toHaveTextContent('Platform provider')
+      expect(header).toHaveTextContent('AIRFLOW')
+      expect(header).toHaveTextContent('Available')
+      expect(header).not.toHaveTextContent('airflow-01')
+      expect(openDetailSection(drawer, 'Technical')).toHaveTextContent('airflow-01')
       await user.click(within(drawer).getByRole('button', { name: 'Platform provider help' }))
       expect(within(drawer).getByRole('dialog', { name: 'What a platform provider is' })).toHaveTextContent('Airflow')
     })
@@ -395,7 +407,7 @@ describe('PlatformProvidersTable', () => {
       await user.click(screen.getByText('Test SMTP'))
       const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
 
-      expect(within(drawer).getByText('Platform provider').parentElement).not.toHaveTextContent('Available')
+      expect(within(drawer).getByRole('heading', { level: 2 }).closest('header')).not.toHaveTextContent('Available')
     })
 
     it('puts Delete left and Edit right', async () => {
@@ -404,7 +416,7 @@ describe('PlatformProvidersTable', () => {
       await user.click(screen.getByText('Primary Airflow'))
       const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
       const deleteButton = within(drawer).getByRole('button', { name: 'Delete' })
-      const footer = deleteButton.parentElement?.parentElement
+      const footer = deleteButton.closest('footer')
 
       expect(footer?.children[0]).toContainElement(deleteButton)
       expect(footer?.children[1]).toContainElement(within(drawer).getByRole('button', { name: 'Edit' }))

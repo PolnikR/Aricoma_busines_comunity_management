@@ -8,11 +8,11 @@ import {
   DataTableRequestState,
   DataTableSurface,
   DataTableToolbar,
-  DetailDrawer,
-  DetailRow,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
+import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { ApiIcon, GridIcon } from '@/shared/icons/Icons'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
@@ -129,47 +129,54 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
         />
       </DataTableRequestState>
       </DataTableSurface>
-      <DetailDrawer
-        open={selected !== null}
-        onClose={() => { setSelectedId(null) }}
-        resizable
-        title={selected?.name ?? ''}
-        meta={[t('drawer.entity.credential')]}
-        subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerActions={<KeyedHelpPopover helpKey="credentials.help" sections={['secret', 'usage']} />}
-        ariaLabel={t('credentials.detail.ariaLabel')}
-        closeLabel={t('credentials.detail.close')}
-        resizeLabel={t('drawer.resize')}
-        footerStart={selected ? (
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={() => { setDeleteTarget(selected) }}
-          >
-            {t('buttons.delete')}
-          </Button>
-        ) : null}
-        footer={selected ? (
-          <Button
-            size="sm"
-            onClick={() => {
-              setEditing(selected)
-              setSelectedId(null)
-            }}
-          >
-            {t('buttons.edit')}
-          </Button>
-        ) : null}
-      >
-        {selected ? (
-          <dl className="px-5 py-2">
-            <DetailRow label={t('credentials.detail.id')} value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label={t('credentials.detail.username')} value={<span className="font-mono">{selected.username}</span>} />
-            <DetailRow label={t('credentials.detail.description')} value={selected.description ?? ''} />
-            <DetailRow label={t('credentials.detail.password')} value={t('credentials.detail.passwordHidden')} />
-          </dl>
-        ) : null}
-      </DetailDrawer>
+      {selected ? (
+        <DetailView
+          // Keyed by credential so each newly opened credential starts expanded on Overview.
+          key={selected.id}
+          open
+          onClose={() => { setSelectedId(null) }}
+          size="md"
+          entityLabel={t('drawer.entity.credential')}
+          title={selected.name}
+          headerActions={<KeyedHelpPopover helpKey="credentials.help" sections={['secret', 'usage']} />}
+          ariaLabel={t('credentials.detail.ariaLabel')}
+          closeLabel={t('credentials.detail.close')}
+          footerStart={(
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => { setDeleteTarget(selected) }}
+            >
+              {t('buttons.delete')}
+            </Button>
+          )}
+          footer={(
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditing(selected)
+                setSelectedId(null)
+              }}
+            >
+              {t('buttons.edit')}
+            </Button>
+          )}
+        >
+          <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
+            <DetailFieldGroup>
+              <DetailField label={t('credentials.detail.username')} value={selected.username} mono emphasis />
+              {/* The secret is never sent to the browser; only that it is stored. */}
+              <DetailField label={t('credentials.detail.password')} value={t('credentials.detail.passwordHidden')} />
+              <DetailField label={t('credentials.detail.description')} value={selected.description} wide />
+            </DetailFieldGroup>
+          </DetailViewSection>
+          <DetailViewSection id="technical" title={t('detailView.technical')} icon={ApiIcon} description={t('detailView.technicalDescription')} secondary>
+            <DetailTechnicalGroup>
+              <DetailField label={t('credentials.detail.id')} value={selected.id} copyValue={selected.id} />
+            </DetailTechnicalGroup>
+          </DetailViewSection>
+        </DetailView>
+      ) : null}
       {editing ? (
         <CredentialCreateModal
           open

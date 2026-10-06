@@ -1,4 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { ApiIcon, GridIcon, ShieldIcon, SettingsIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
@@ -9,8 +11,6 @@ import {
   DataTableRequestState,
   DataTableSurface,
   DataTableToolbar,
-  DetailDrawer,
-  DetailRow,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
@@ -27,27 +27,45 @@ function hasKnownMembership(role: IdentityRoleRecord) {
 
 function BadgeList({ items }: { items: string[] }) {
   return (
-    <span className="flex flex-wrap justify-end gap-1">
+    <span className="flex flex-wrap gap-1">
       {items.map(item => <Badge key={item} color="info" size="sm">{item}</Badge>)}
     </span>
   )
 }
 
-function RoleDetail({ role }: { role: IdentityRoleRecord }) {
-  const { t } = useTranslation()
+// Sections of the read-only role detail. A render function, not a component: DetailView needs
+// the sections as its (fragment) children. Unknown membership stays "—" (not "Not set"):
+// the lookup failed, so the value is unknown rather than missing.
+function renderRoleSections(role: IdentityRoleRecord, t: ReturnType<typeof useTranslation>['t']) {
   const knownMembership = hasKnownMembership(role)
   let users: ReactNode = '—'
   if (knownMembership) users = role.users.length > 0 ? <BadgeList items={role.users} /> : t('identity.roles.fields.usersEmpty')
-
   return (
-    <dl className="px-5 py-2">
-      <DetailRow label={t('identity.roles.fields.name')} value={role.name} />
-      <DetailRow label={t('identity.roles.fields.description')} value={(role.description?.trim() ?? '') || '—'} />
-      <DetailRow label={t('identity.roles.fields.clientId')} value={role.clientId ? <span className="font-mono">{role.clientId}</span> : '—'} />
-      <DetailRow label={t('identity.roles.fields.userCount')} value={knownMembership ? String(role.userCount) : '—'} />
-      <DetailRow label={t('identity.roles.fields.permissions')} value={role.permissions.length > 0 ? <BadgeList items={role.permissions} /> : '—'} />
-      <DetailRow label={t('identity.roles.fields.users')} value={users} />
-    </dl>
+    <>
+      <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
+        <DetailFieldGroup>
+          <DetailField label={t('identity.roles.fields.name')} value={role.name} emphasis />
+          <DetailField label={t('identity.roles.fields.userCount')} value={knownMembership ? String(role.userCount) : '—'} />
+          <DetailField label={t('identity.roles.fields.description')} value={role.description?.trim()} wide />
+        </DetailFieldGroup>
+      </DetailViewSection>
+      <DetailViewSection id="permissions" title={t('identity.roles.fields.permissions')} icon={SettingsIcon} count={role.permissions.length}>
+        <DetailFieldGroup>
+          <DetailField label={t('identity.roles.fields.permissions')} value={role.permissions.length > 0 ? <BadgeList items={role.permissions} /> : null} wide />
+        </DetailFieldGroup>
+      </DetailViewSection>
+      <DetailViewSection id="users" title={t('identity.roles.columns.users')} icon={ShieldIcon} count={knownMembership ? role.userCount : undefined}>
+        <DetailFieldGroup>
+          <DetailField label={t('identity.roles.fields.users')} value={users} wide />
+        </DetailFieldGroup>
+      </DetailViewSection>
+      <DetailViewSection id="technical" title={t('detailView.technical')} icon={ApiIcon} description={t('detailView.technicalDescription')} secondary>
+        <DetailTechnicalGroup>
+          <DetailField label={t('identity.roles.fields.id')} value={role.id} copyValue={role.id} />
+          <DetailField label={t('identity.roles.fields.clientId')} value={role.clientId} copyValue={role.clientId ?? undefined} />
+        </DetailTechnicalGroup>
+      </DetailViewSection>
+    </>
   )
 }
 
@@ -127,23 +145,22 @@ export function RealmRolesSection() {
         </DataTableRequestState>
       </DataTableSurface>
 
-      <DetailDrawer
-        open={selected !== null}
-        onClose={() => { setSelectedId(null) }}
-        resizable
-        title={selected?.name ?? ''}
-        meta={selected ? [
-          t('identity.roles.drawer.entity'),
-          selected.clientId ? <Badge key="client" color="light" size="sm">{selected.clientId}</Badge> : null,
-        ] : []}
-        subtitle={(selected?.description?.trim() ?? '') || undefined}
-        headerActions={<KeyedHelpPopover helpKey="identity.roles.help" sections={['permissions', 'users', 'client']} />}
-        ariaLabel={t('identity.roles.drawer.ariaLabel')}
-        closeLabel={t('identity.roles.drawer.close')}
-        resizeLabel={t('drawer.resize')}
-      >
-        {selected ? <RoleDetail role={selected} /> : null}
-      </DetailDrawer>
+      {selected ? (
+        <DetailView
+          // Keyed by role so each newly opened role starts expanded on Overview.
+          key={selected.id}
+          open
+          onClose={() => { setSelectedId(null) }}
+          size="md"
+          entityLabel={t('identity.roles.drawer.entity')}
+          title={selected.name}
+          headerActions={<KeyedHelpPopover helpKey="identity.roles.help" sections={['permissions', 'users', 'client']} />}
+          ariaLabel={t('identity.roles.drawer.ariaLabel')}
+          closeLabel={t('identity.roles.drawer.close')}
+        >
+          {renderRoleSections(selected, t)}
+        </DetailView>
+      ) : null}
     </>
   )
 }

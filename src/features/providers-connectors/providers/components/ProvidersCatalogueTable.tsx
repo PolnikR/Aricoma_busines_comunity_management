@@ -10,14 +10,20 @@ import {
   DataTablePagination,
   DataTableRequestState,
   DataTableSurface,
-  DetailDrawer,
-  DetailRow,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
+import {
+  DetailField,
+  DetailFieldGroup,
+  DetailFieldLink,
+  DetailTechnicalGroup,
+  DetailView,
+  DetailViewSection,
+} from '@/shared/components/detail-view'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
-import { PlugIcon } from '@/shared/icons/Icons'
+import { ApiIcon, GridIcon, LayersIcon, NetworkIcon, PlugIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
@@ -308,123 +314,119 @@ export function ProvidersCatalogueTable({
       </DataTableRequestState>
       </DataTableSurface>
 
-      <DetailDrawer
-        open={selected !== null && !isConnectionTestOpen}
-        onClose={() => { setSelectedId(null) }}
-        resizable
-        title={selected?.name ?? ''}
-        meta={selected ? [
-          t('drawer.entity.provider'),
-          <Badge key="type" color="info" size="sm">{providerTypeLabel(selected.type)}</Badge>,
-          <Badge key="role" color={roleColor(selected.role)} size="sm">{t(`forms.role.${selected.role}`)}</Badge>,
-          <Badge key="credential" color={credentialStatusColor(selected.credentialStatus)} size="sm">
-            {credentialStatusLabel(selected.credentialStatus, t)}
-          </Badge>,
-        ] : []}
-        subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerActions={selected ? (
-          <>
+      {/* Hidden, not just covered, while the connection test dialog is open. */}
+      {selected && !isConnectionTestOpen ? (
+        <DetailView
+          // Keyed by provider so each newly opened provider starts expanded on Overview.
+          key={selected.id}
+          open
+          onClose={() => { setSelectedId(null) }}
+          size="md"
+          entityLabel={t('drawer.entity.provider')}
+          title={selected.name}
+          statuses={[
+            <Badge key="type" color="info" size="sm">{providerTypeLabel(selected.type)}</Badge>,
+            <Badge key="role" color={roleColor(selected.role)} size="sm">{t(`forms.role.${selected.role}`)}</Badge>,
+            <Badge key="credential" color={credentialStatusColor(selected.credentialStatus)} size="sm">
+              {credentialStatusLabel(selected.credentialStatus, t)}
+            </Badge>,
+          ]}
+          headerActions={(
+            <>
+              <Button
+                size="xs"
+                variant="soft"
+                className="border border-accent/30 bg-accent-soft text-accent shadow-none hover:border-accent hover:bg-accent-soft hover:text-accent"
+                startIcon={<PlugIcon className="size-3.5" />}
+                onClick={openConnectionTest}
+                disabled={selected.credentialStatus !== 'ok'}
+                aria-describedby={selected.credentialStatus !== 'ok' ? 'provider-test-credential-hint' : undefined}
+                title={selected.credentialStatus !== 'ok' ? t('providers.connectionTest.credentialRequired') : undefined}
+              >
+                {t('providers.connectionTest.button')}
+              </Button>
+              {selected.credentialStatus !== 'ok' ? (
+                <span id="provider-test-credential-hint" className="sr-only">{t('providers.connectionTest.credentialRequired')}</span>
+              ) : null}
+              <KeyedHelpPopover helpKey="providers.help" sections={['role', 'credential']} width="wide">
+                <SelectedProviderRelationships
+                  allProviders={allProviders}
+                  selectedProviderId={selected.id}
+                  isLoading={allProvidersLoading}
+                  isError={allProvidersError}
+                />
+              </KeyedHelpPopover>
+            </>
+          )}
+          ariaLabel={t('drawer.providerDetail')}
+          closeLabel={t('drawer.closeProvider')}
+          footerStart={(
             <Button
-              size="xs"
-              variant="soft"
-              className="border border-accent/30 bg-accent-soft text-accent shadow-none hover:border-accent hover:bg-accent-soft hover:text-accent"
-              startIcon={<PlugIcon className="size-3.5" />}
-              onClick={openConnectionTest}
-              disabled={selected.credentialStatus !== 'ok'}
-              aria-describedby={selected.credentialStatus !== 'ok' ? 'provider-test-credential-hint' : undefined}
-              title={selected.credentialStatus !== 'ok' ? t('providers.connectionTest.credentialRequired') : undefined}
+              onClick={() => { setDeleteTarget(selected) }}
+              size="sm"
+              variant="danger"
             >
-              {t('providers.connectionTest.button')}
+              {t('buttons.delete')}
             </Button>
-            {selected.credentialStatus !== 'ok' ? (
-              <span id="provider-test-credential-hint" className="sr-only">{t('providers.connectionTest.credentialRequired')}</span>
-            ) : null}
-            <KeyedHelpPopover helpKey="providers.help" sections={['role', 'credential']} width="wide">
-              <SelectedProviderRelationships
-                allProviders={allProviders}
-                selectedProviderId={selected.id}
-                isLoading={allProvidersLoading}
-                isError={allProvidersError}
+          )}
+          footer={(
+            <Button
+              onClick={() => { setEditing(selected); setSelectedId(null) }}
+              size="sm"
+            >
+              {t('buttons.edit')}
+            </Button>
+          )}
+        >
+          {/* Type, role and credential state are header statuses and are not repeated here. */}
+          <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
+            <DetailFieldGroup>
+              <DetailField label={t('details.type')} value={providerTypeLabel(selected.type)} emphasis />
+              <DetailField label={t('details.notificationEmail')} value={selected.notificationEmail} />
+              <DetailField label={t('details.description')} value={selected.description} wide />
+              <DetailField
+                label={t('details.url')}
+                value={selected.url ? <DetailFieldLink href={selected.url} external>{selected.url}</DetailFieldLink> : null}
+                wide
               />
-            </KeyedHelpPopover>
-          </>
-        ) : null}
-        ariaLabel={t('drawer.providerDetail')}
-        closeLabel={t('drawer.closeProvider')}
-        resizeLabel={t('drawer.resize')}
-        footerStart={selected ? (
-          <Button
-            onClick={() => { setDeleteTarget(selected) }}
-            size="sm"
-            variant="danger"
-          >
-            {t('buttons.delete')}
-          </Button>
-        ) : null}
-        footer={selected ? (
-          <Button
-            onClick={() => { setEditing(selected); setSelectedId(null) }}
-            size="sm"
-          >
-            {t('buttons.edit')}
-          </Button>
-        ) : null}
-      >
-        {selected ? (
-          <dl className="px-5 py-2">
-            <DetailRow label={t('details.providerId')} value={<span className="font-mono">{selected.id}</span>} />
-            <DetailRow label={t('details.type')} value={providerTypeLabel(selected.type)} />
-            {isPartnerProviderType(selected.type) ? <DetailRow label={t('forms.partnerProvider')}
-              value={selected.partnerProviderId
-                ? (allProviders.find(provider => provider.id === selected.partnerProviderId)?.name ?? selected.partnerProviderId) + ' (' + selected.partnerProviderId + ')'
-                : t('forms.partnerProviderNone')} /> : null}
-            {isComputeProviderType(selected.type) ? <DetailRow label={t('details.backingStorage')}
-              value={<BackingStorageValue providerId={selected.id} providers={allProviders} />} /> : null}
-            <DetailRow
-              label={t('details.role')}
-              value={(() => {
-                const role = selected.role
-                return <Badge color={roleColor(role)} size="sm">{t(`forms.role.${role}`)}</Badge>
-              })()}
-            />
-            <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{(selected.ipAddress ?? '') || '-'}</span>} />
-            <DetailRow
-              label={t('details.url')}
-              value={selected.url ? (
-                <a
-                  href={selected.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="wrap-break-word text-accent underline hover:text-accent/80"
-                >
-                  {selected.url}
-                </a>
-              ) : '-'}
-            />
-            <DetailRow
-              label={t('details.notificationEmail')}
-              value={selected.notificationEmail ?? '-'}
-            />
-            <DetailRow
-              label={t('details.orchestratorConnId')}
-              value={<span className="font-mono">{selected.orchestratorConnId ?? '-'}</span>}
-            />
-            <DetailRow
-              label={t('details.credential')}
-              value={<span className="font-mono">{selected.credentialId ?? '-'}</span>}
-            />
-            <DetailRow
-              label={t('details.credentialStatus')}
-              value={(
-                <Badge color={credentialStatusColor(selected.credentialStatus)} size="sm">
-                  {credentialStatusLabel(selected.credentialStatus, t)}
-                </Badge>
-              )}
-            />
-            <DetailRow label={t('details.description')} value={(selected.description ?? '') || '-'} />
-          </dl>
-        ) : null}
-      </DetailDrawer>
+            </DetailFieldGroup>
+          </DetailViewSection>
+          <DetailViewSection id="connection" title={t('detailView.connection')} icon={NetworkIcon}>
+            <DetailFieldGroup>
+              <DetailField label={t('details.ipAddress')} value={selected.ipAddress} mono copyValue={selected.ipAddress ?? undefined} />
+              <DetailField label={t('details.credential')} value={selected.credentialId} mono />
+            </DetailFieldGroup>
+          </DetailViewSection>
+          {isPartnerProviderType(selected.type) || isComputeProviderType(selected.type) ? (
+            <DetailViewSection id="relationships" title={t('resources.relationships.title')} icon={LayersIcon}>
+              <DetailFieldGroup>
+                {isPartnerProviderType(selected.type) ? (
+                  <DetailField
+                    label={t('forms.partnerProvider')}
+                    value={selected.partnerProviderId
+                      ? (allProviders.find(provider => provider.id === selected.partnerProviderId)?.name ?? selected.partnerProviderId)
+                      : t('forms.partnerProviderNone')}
+                    secondary={selected.partnerProviderId ? <span className="font-mono">{selected.partnerProviderId}</span> : undefined}
+                  />
+                ) : null}
+                {isComputeProviderType(selected.type) ? (
+                  <DetailField
+                    label={t('details.backingStorage')}
+                    value={<BackingStorageValue providerId={selected.id} providers={allProviders} />}
+                    wide
+                  />
+                ) : null}
+              </DetailFieldGroup>
+            </DetailViewSection>
+          ) : null}
+          <DetailViewSection id="technical" title={t('detailView.technical')} icon={ApiIcon} description={t('detailView.technicalDescription')} secondary>
+            <DetailTechnicalGroup>
+              <DetailField label={t('details.providerId')} value={selected.id} copyValue={selected.id} />
+              <DetailField label={t('details.orchestratorConnId')} value={selected.orchestratorConnId} copyValue={selected.orchestratorConnId ?? undefined} />
+            </DetailTechnicalGroup>
+          </DetailViewSection>
+        </DetailView>
+      ) : null}
 
       <ProviderConnectionTestDialog
         open={isConnectionTestOpen && selected !== null}

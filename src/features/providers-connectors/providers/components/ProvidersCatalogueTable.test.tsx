@@ -15,6 +15,8 @@ const keycloakMock = vi.hoisted(() => ({
 }))
 
 vi.mock('@/config/keycloak', () => ({ keycloak: keycloakMock }))
+import { openDetailSection } from '@/test-utils/detailView'
+
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('react-router', async (importOriginal) => ({
   ...await importOriginal<typeof import('react-router')>(),
@@ -284,26 +286,32 @@ describe('ProvidersCatalogueTable', () => {
     renderTable()
     fireEvent.click(await screen.findByText('Production vCenter'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
-    expect(within(drawer).getByText('Backing storage').nextElementSibling).toHaveTextContent('None')
+    const relationships = openDetailSection(drawer, 'Relationships')
+    expect(within(relationships).getByText('Backing storage').nextElementSibling).toHaveTextContent('None')
     fireEvent.click(screen.getByText('Backup FlashSystem'))
     const storageDrawer = screen.getByRole('dialog', { name: 'Provider detail' })
     await within(storageDrawer).findByRole('heading', { name: 'Backup FlashSystem' })
-    expect(within(storageDrawer).queryByText('Backing storage')).not.toBeInTheDocument()
-    expect(within(storageDrawer).getByText('Partner FlashSystem provider')).toBeInTheDocument()
+    const storageRelationships = openDetailSection(storageDrawer, 'Relationships')
+    expect(within(storageRelationships).queryByText('Backing storage')).not.toBeInTheDocument()
+    expect(within(storageRelationships).getByText('Partner FlashSystem provider')).toBeInTheDocument()
   })
 
-  it('shows the Model C header: meta badges, Test connection in the title row, Delete left and Edit right', async () => {
+  it('shows the header statuses, Test connection in the header, Delete left and Edit right', async () => {
     renderTable()
     fireEvent.click(await screen.findByText('Production vCenter'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
-    const meta = within(drawer).getByText('Provider').parentElement
-    const titleRow = within(drawer).getByRole('heading', { name: 'Production vCenter' }).parentElement
+    const header = within(drawer).getByRole('heading', { level: 2, name: 'Production vCenter' }).closest('header')
     const deleteButton = within(drawer).getByRole('button', { name: 'Delete' })
-    const footer = deleteButton.parentElement?.parentElement
+    const footer = deleteButton.closest('footer')
 
-    expect(meta).toHaveTextContent('Source')
-    expect(meta).toHaveTextContent('Available')
-    expect(titleRow).toContainElement(within(drawer).getByRole('button', { name: 'Test connection' }))
+    expect(drawer).toHaveAttribute('data-size', 'md')
+    expect(header).toHaveTextContent('Provider')
+    expect(header).toHaveTextContent('Source')
+    expect(header).toHaveTextContent('Available')
+    expect(header).not.toHaveTextContent('vmware-vcenter-01')
+    expect(header).toContainElement(within(drawer).getByRole('button', { name: 'Test connection' }))
+    expect(openDetailSection(drawer, 'Technical')).toHaveTextContent('vmware-vcenter-01')
+    openDetailSection(drawer, 'Overview')
     expect(footer?.children[0]).toContainElement(deleteButton)
     expect(footer?.children[1]).toContainElement(within(drawer).getByRole('button', { name: 'Edit' }))
     fireEvent.click(within(drawer).getByRole('button', { name: 'Provider help' }))

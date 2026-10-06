@@ -6,6 +6,8 @@ import { useGetRolesPermissions } from '@/generated/query/identity-access/identi
 import { useUsers } from '../hooks/useUsers'
 import type { IdentityRoleRecord } from '../model/rolesPermissionsTypes'
 
+import { detailSectionsFields } from '@/test-utils/detailView'
+
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/identity-access/identity-access.gen', () => ({ useGetRolesPermissions: vi.fn() }))
 // Guard: the section must not read mock Users data any more.
@@ -44,8 +46,7 @@ async function openRole(name: string) {
 }
 
 function drawerFields() {
-  const drawer = within(screen.getByRole('dialog', { name: 'Application role detail' }))
-  return Object.fromEntries(drawer.getAllByRole('term').map(term => [term.textContent, term.nextElementSibling?.textContent]))
+  return detailSectionsFields(screen.getByRole('dialog', { name: 'Application role detail' }))
 }
 
 describe('RealmRolesSection', () => {
@@ -132,7 +133,7 @@ describe('RealmRolesSection', () => {
     expect(screen.getByLabelText('Rows per page')).toBeInTheDocument()
   })
 
-  it('opens a read-only DetailDrawer with every role field and highlights the selected row', async () => {
+  it('opens a read-only DetailView with every role field and highlights the selected row', async () => {
     mockRoles({ roles: [admin, viewer] })
     render(<RealmRolesSection />)
 
@@ -140,17 +141,19 @@ describe('RealmRolesSection', () => {
 
     expect(screen.getByRole('row', { name: 'Open application role platform-admin' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('row', { name: 'Open application role viewer' })).toHaveAttribute('aria-selected', 'false')
-    expect(drawer.getByRole('heading', { name: 'platform-admin' }).parentElement?.nextElementSibling).toHaveTextContent(/^Application role/)
-    expect(drawer.getByRole('heading', { name: 'platform-admin' })).toBeInTheDocument()
+    const header = drawer.getByRole('heading', { level: 2, name: 'platform-admin' }).closest('header')
+    expect(header).toHaveTextContent('Application role')
+    // The client ID is an identifier: Technical only, not a header badge.
+    expect(header).not.toHaveTextContent('abco-api')
     expect(drawerFields()).toEqual({
       'Role name': 'platform-admin',
-      Description: 'Manages platform configuration.',
-      'Client ID': 'abco-api',
       'Users count': '2',
+      Description: 'Manages platform configuration.',
       Permissions: 'providers.readproviders.writeusers.read',
       'Users in role': 'alicebob',
+      'Role ID': admin.id,
+      'Client ID': 'abco-api',
     })
-    for (const value of [...admin.permissions, ...admin.users]) expect(drawer.getByText(value)).toBeInTheDocument()
   })
 
   it('renders unknown membership as an em dash when clientId is null', async () => {
@@ -159,7 +162,7 @@ describe('RealmRolesSection', () => {
 
     await openRole('operator')
 
-    expect(drawerFields()).toMatchObject({ 'Client ID': '—', 'Users count': '—', 'Users in role': '—', Permissions: 'runs.read' })
+    expect(drawerFields()).toMatchObject({ 'Client ID': 'Not set', 'Users count': '—', 'Users in role': '—', Permissions: 'runs.read' })
   })
 
   it('distinguishes a known-empty role from missing values', async () => {
@@ -168,17 +171,20 @@ describe('RealmRolesSection', () => {
 
     await openRole('viewer')
 
-    expect(drawerFields()).toMatchObject({ Description: '—', 'Users count': '0', Permissions: '—', 'Users in role': 'No users assigned' })
+    expect(drawerFields()).toMatchObject({ Description: 'Not set', 'Users count': '0', Permissions: 'Not set', 'Users in role': 'No users assigned' })
   })
 
-  it('has no Edit/Delete/Actions buttons, no role tabs and closes the drawer', async () => {
+  it('has no Edit/Delete/Actions buttons, no role tabs and closes the detail', async () => {
     mockRoles({ roles: [admin] })
     render(<RealmRolesSection />)
 
     expect(screen.queryByRole('button', { name: /create|add|edit|delete|assign|remove|actions/i })).not.toBeInTheDocument()
     const drawer = await openRole('platform-admin')
     const dialog = screen.getByRole('dialog', { name: 'Application role detail' })
-    expect(drawer.getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Application role help', 'Close application role detail'])
+    const header = drawer.getByRole('heading', { level: 2 }).closest('header')
+    if (!header) throw new Error('Expected the detail header')
+    expect(within(header).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Compact view', 'Application role help', 'Close application role detail'])
+    expect(dialog.querySelector('footer')).toBeNull()
     await userEvent.click(within(dialog).getByRole('button', { name: 'Application role help' }))
     expect(within(dialog).getByRole('dialog', { name: 'What an application role is' })).toHaveTextContent('Permissions')
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument()

@@ -9,13 +9,13 @@ import {
   DataTableRequestState,
   DataTableSurface,
   DataTableToolbar,
-  DetailDrawer,
-  DetailRow,
   SkeletonBlock,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
+import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { ApiIcon, GridIcon, ShieldIcon } from '@/shared/icons/Icons'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { useGetIdentityClientClientUuid, useGetIdentityClients } from '@/generated/query/identity-access/identity-access.gen'
 import type { IdentityClient } from '@/generated/query/zod'
@@ -46,52 +46,40 @@ function ClientTypeBadge({ isPublicClient }: { isPublicClient: boolean }) {
   )
 }
 
-function ClientDetailRows({ client }: { client: ClientRecord }) {
-  const { t } = useTranslation()
-  // Roles come from the detail endpoint only; the list endpoint intentionally returns roles: [].
-  const roles = client.roles ?? []
-
-  return (
-    <dl className="px-5 py-2">
-      <DetailRow label={t('identity.clients.fields.id')} value={<span className="font-mono">{client.id}</span>} />
-      <DetailRow label={t('identity.clients.fields.clientId')} value={<span className="font-mono">{client.clientId}</span>} />
-      <DetailRow label={t('identity.clients.fields.displayName')} value={client.displayName || '—'} />
-      <DetailRow label={t('identity.clients.fields.protocol')} value={client.protocol || '—'} />
-      <DetailRow label={t('identity.clients.fields.status')} value={<ClientStatusBadge client={client} />} />
-      <DetailRow label={t('identity.clients.fields.type')} value={<ClientTypeBadge isPublicClient={client.isPublicClient} />} />
-      <DetailRow
-        label={t('identity.clients.fields.roles')}
-        value={roles.length > 0 ? (
-          <span className="flex flex-wrap justify-end gap-1">
-            {roles.map(role => <Badge key={role.id} color="info" size="sm">{role.name}</Badge>)}
-          </span>
-        ) : t('identity.clients.fields.rolesEmpty')}
-      />
-    </dl>
-  )
-}
-
 function ClientDetailLoading() {
   const { t } = useTranslation()
-  const labels = ['id', 'clientId', 'displayName', 'protocol', 'status', 'type', 'roles']
+  const labels = ['displayName', 'protocol', 'type', 'roles', 'id', 'clientId']
   return (
-    <dl className="px-5 py-2" aria-busy="true" aria-label={t('identity.clients.detail.loading')}>
-      {labels.map(field => (
-        <DetailRow key={field} label={t(`identity.clients.fields.${field}`)} value={<SkeletonBlock className="ml-auto h-4 w-32" />} />
-      ))}
-    </dl>
+    <div aria-busy="true" aria-label={t('identity.clients.detail.loading')}>
+      <DetailFieldGroup>
+        {labels.map(field => (
+          <DetailField key={field} label={t(`identity.clients.fields.${field}`)} value={<SkeletonBlock className="h-4 w-32" />} />
+        ))}
+      </DetailFieldGroup>
+    </div>
   )
 }
 
-// Mounted only while a client is selected, so the detail request never runs without a valid internal UUID.
-function ClientDetail({ clientUuid }: { clientUuid: string }) {
-  const { t } = useTranslation()
-  const { data, isLoading, isFetching, error, refetch } = useGetIdentityClientClientUuid(clientUuid)
-  const errorDescription = extractBackendErrorDetail(error)
+interface ClientDetailViewProps {
+  // The selected list record: its internal UUID drives the detail request.
+  client: ClientRecord
+  onClose: () => void
+}
 
+// Mounted only while a client is selected, so the detail request never runs without a valid
+// internal UUID. Until the detail arrives the view has one section (no navigation) with the
+// skeleton or the error; then Overview, Roles and Technical. The status is a header badge.
+function ClientDetailView({ client, onClose }: ClientDetailViewProps) {
+  const { t } = useTranslation()
+  const { data, isLoading, isFetching, error, refetch } = useGetIdentityClientClientUuid(client.id)
+  const errorDescription = extractBackendErrorDetail(error)
+  // Roles come from the detail endpoint only; the list endpoint intentionally returns roles: [].
+  const roles = data?.roles ?? []
+
+  let sections
   if (error && !data) {
-    return (
-      <div className="px-5 py-4">
+    sections = (
+      <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
         <FetchErrorAlert
           title={t('identity.clients.detail.loadFailed')}
           {...(errorDescription ? { description: errorDescription } : {})}
@@ -99,11 +87,62 @@ function ClientDetail({ clientUuid }: { clientUuid: string }) {
           isRetrying={isFetching}
           onRetry={() => { void refetch() }}
         />
-      </div>
+      </DetailViewSection>
+    )
+  } else if (isLoading || !data) {
+    sections = (
+      <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
+        <ClientDetailLoading />
+      </DetailViewSection>
+    )
+  } else {
+    sections = (
+      <>
+        <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
+          <DetailFieldGroup>
+            <DetailField label={t('identity.clients.fields.displayName')} value={data.displayName} emphasis />
+            <DetailField label={t('identity.clients.fields.protocol')} value={data.protocol} />
+            <DetailField label={t('identity.clients.fields.type')} value={<ClientTypeBadge isPublicClient={data.isPublicClient} />} />
+          </DetailFieldGroup>
+        </DetailViewSection>
+        <DetailViewSection id="roles" title={t('identity.clients.fields.roles')} icon={ShieldIcon} count={roles.length}>
+          <DetailFieldGroup>
+            <DetailField
+              label={t('identity.clients.fields.roles')}
+              value={roles.length > 0 ? (
+                <span className="flex flex-wrap gap-1">
+                  {roles.map(role => <Badge key={role.id} color="info" size="sm">{role.name}</Badge>)}
+                </span>
+              ) : t('identity.clients.fields.rolesEmpty')}
+              wide
+            />
+          </DetailFieldGroup>
+        </DetailViewSection>
+        <DetailViewSection id="technical" title={t('detailView.technical')} icon={ApiIcon} description={t('detailView.technicalDescription')} secondary>
+          <DetailTechnicalGroup>
+            <DetailField label={t('identity.clients.fields.id')} value={data.id} copyValue={data.id} />
+            <DetailField label={t('identity.clients.fields.clientId')} value={data.clientId} copyValue={data.clientId} />
+          </DetailTechnicalGroup>
+        </DetailViewSection>
+      </>
     )
   }
-  if (isLoading || !data) return <ClientDetailLoading />
-  return <ClientDetailRows client={data} />
+
+  return (
+    <DetailView
+      open
+      onClose={onClose}
+      size="md"
+      entityLabel={t('identity.clients.drawer.entity')}
+      title={client.displayName || client.clientId}
+      statuses={[<ClientStatusBadge key="status" client={client} />]}
+      headerActions={<KeyedHelpPopover helpKey="identity.clients.help" sections={['roles', 'type']} />}
+      ariaLabel={t('identity.clients.drawer.ariaLabel')}
+      closeLabel={t('identity.clients.drawer.close')}
+    >
+      {sections}
+    </DetailView>
+  )
 }
 
 export function ClientsSection() {
@@ -182,23 +221,10 @@ export function ClientsSection() {
         </DataTableRequestState>
       </DataTableSurface>
 
-      <DetailDrawer
-        open={selected !== null}
-        onClose={() => { setSelectedId(null) }}
-        resizable
-        title={selected ? (selected.displayName || selected.clientId) : ''}
-        meta={selected ? [
-          t('identity.clients.drawer.entity'),
-          <ClientStatusBadge key="status" client={selected} />,
-        ] : []}
-        subtitle={selected ? <span className="font-mono">{selected.clientId}</span> : undefined}
-        headerActions={<KeyedHelpPopover helpKey="identity.clients.help" sections={['roles', 'type']} />}
-        ariaLabel={t('identity.clients.drawer.ariaLabel')}
-        closeLabel={t('identity.clients.drawer.close')}
-        resizeLabel={t('drawer.resize')}
-      >
-        {selected ? <ClientDetail clientUuid={selected.id} /> : null}
-      </DetailDrawer>
+      {selected ? (
+        // Keyed by client so each newly opened client starts expanded on Overview.
+        <ClientDetailView key={selected.id} client={selected} onClose={() => { setSelectedId(null) }} />
+      ) : null}
     </>
   )
 }

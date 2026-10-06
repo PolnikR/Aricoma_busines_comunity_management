@@ -6,6 +6,8 @@ import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { CredentialsTable } from './CredentialsTable'
 import { CredentialsPage } from '../pages/CredentialsPage'
 
+import { openDetailSection } from '@/test-utils/detailView'
+
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('./CredentialCreateModal', () => ({
   CredentialCreateModal: ({ credential }: { credential?: { id: string } }) => (
@@ -123,9 +125,14 @@ describe('CredentialsTable', () => {
     await user.click(screen.getByText('vCenter admin'))
 
     const drawer = screen.getByRole('dialog', { name: 'Credential details' })
-    expect(within(drawer).getByText('Credential').parentElement?.nextElementSibling).toHaveTextContent('vcenter-admin')
+    expect(drawer).toHaveAttribute('data-size', 'md')
+    expect(within(drawer).getByRole('heading', { level: 2 }).closest('header')).toHaveTextContent('Credential')
+    expect(within(drawer).getByRole('region', { name: 'Overview' })).toHaveTextContent('administrator')
+    expect(within(drawer).getByRole('region', { name: 'Overview' })).not.toHaveTextContent('vcenter-admin')
+    expect(openDetailSection(drawer, 'Technical')).toHaveTextContent('vcenter-admin')
+    openDetailSection(drawer, 'Overview')
     const deleteButton = within(drawer).getByRole('button', { name: 'Delete' })
-    expect(deleteButton.parentElement?.parentElement?.children[1]).toContainElement(within(drawer).getByRole('button', { name: 'Edit' }))
+    expect(deleteButton.closest('footer')?.children[1]).toContainElement(within(drawer).getByRole('button', { name: 'Edit' }))
     await user.click(within(drawer).getByRole('button', { name: 'Credential help' }))
     expect(within(drawer).getByRole('dialog', { name: 'What a credential is' })).toHaveTextContent('Secret')
     await user.click(within(drawer).getByRole('button', { name: 'Close help' }))

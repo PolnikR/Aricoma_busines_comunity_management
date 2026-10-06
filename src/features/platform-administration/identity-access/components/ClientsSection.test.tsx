@@ -5,6 +5,8 @@ import { ClientsSection } from './ClientsSection'
 import { useGetIdentityClientClientUuid, useGetIdentityClients } from '@/generated/query/identity-access/identity-access.gen'
 import type { IdentityClient } from '@/generated/query/zod'
 
+import { detailSectionsFields, openDetailSection } from '@/test-utils/detailView'
+
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/identity-access/identity-access.gen', () => ({
   useGetIdentityClients: vi.fn(),
@@ -67,9 +69,6 @@ function mockDetail(state: QueryState<IdentityClient>) {
   vi.mocked(useGetIdentityClientClientUuid).mockReturnValue(queryResult(state))
 }
 
-function fieldsOf(dialog: HTMLElement) {
-  return Object.fromEntries(within(dialog).getAllByRole('term').map(term => [term.textContent, term.nextElementSibling?.textContent]))
-}
 
 async function openClient(clientId: string) {
   await userEvent.click(screen.getByRole('row', { name: `Open client ${clientId}` }))
@@ -187,7 +186,7 @@ describe('ClientsSection', () => {
     expect(screen.getByText('No clients found')).toBeInTheDocument()
   })
 
-  it('opens a read-only drawer for the internal UUID, highlights the row and keeps the list visible', async () => {
+  it('opens a read-only detail for the internal UUID, highlights the row and keeps the list visible', async () => {
     mockClients({ data: [backend, portal] })
     render(<ClientsSection />)
 
@@ -198,16 +197,18 @@ describe('ClientsSection', () => {
     expect(screen.getByRole('row', { name: 'Open client abco-be' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('row', { name: 'Open client abco-portal' })).toHaveAttribute('aria-selected', 'false')
     expect(screen.getByText('ABCO Portal')).toBeInTheDocument()
-    expect(drawer.getByRole('heading', { name: 'ABCO Backend' }).parentElement?.nextElementSibling).toHaveTextContent(/^ClientEnabled/)
-    expect(drawer.getByRole('heading', { name: 'ABCO Backend' })).toBeInTheDocument()
-    expect(fieldsOf(drawer.element)).toEqual({
-      ID: backend.id,
-      'Client ID': 'abco-be',
+    const header = drawer.getByRole('heading', { level: 2, name: 'ABCO Backend' }).closest('header')
+    expect(drawer.element).toHaveAttribute('data-size', 'md')
+    expect(header).toHaveTextContent('Client')
+    expect(header).toHaveTextContent('Enabled')
+    // The status is a header badge; the IDs live in Technical.
+    expect(detailSectionsFields(drawer.element)).toEqual({
       'Display name': 'ABCO Backend',
       Protocol: 'openid-connect',
-      Status: 'Enabled',
       'Client type': 'Confidential',
       Roles: 'platform-adminrecovery-operator',
+      ID: backend.id,
+      'Client ID': 'abco-be',
     })
   })
 
@@ -216,35 +217,38 @@ describe('ClientsSection', () => {
     render(<ClientsSection />)
 
     const drawer = await openClient('abco-be')
-    expect(drawer.getByText('platform-admin')).toBeInTheDocument()
-    expect(drawer.getByText('recovery-operator')).toBeInTheDocument()
+    const roles = openDetailSection(drawer.element, 'Roles')
+    expect(within(roles).getByText('platform-admin')).toBeInTheDocument()
+    expect(within(roles).getByText('recovery-operator')).toBeInTheDocument()
     expect(screen.queryByText('Manages platform configuration.')).not.toBeInTheDocument()
     expect(screen.queryByText(/capabilit/i)).not.toBeInTheDocument()
   })
 
-  it('renders empty detail values as an em dash and empty roles as No roles', async () => {
+  it('renders empty detail values as "Not set" and empty roles as No roles', async () => {
     mockClients({ data: [portal] })
     mockDetail({ data: { ...portal, displayName: '' } })
     render(<ClientsSection />)
 
     const drawer = await openClient('abco-portal')
-    expect(fieldsOf(drawer.element)).toMatchObject({ 'Display name': '—', Status: 'Disabled', 'Client type': 'Public', Roles: 'No roles' })
+    expect(drawer.getByRole('heading', { level: 2 }).closest('header')).toHaveTextContent('Disabled')
+    expect(detailSectionsFields(drawer.element)).toMatchObject({ 'Display name': 'Not set', 'Client type': 'Public', Roles: 'No roles' })
   })
 
-  it('shows a detail skeleton inside the drawer while the detail loads', async () => {
+  it('shows a detail skeleton in a single section while the detail loads', async () => {
     mockClients({ data: [backend] })
     mockDetail({ isLoading: true, isFetching: true })
     render(<ClientsSection />)
 
     const drawer = await openClient('abco-be')
     expect(drawer.getByLabelText('Loading client detail')).toHaveAttribute('aria-busy', 'true')
+    expect(drawer.queryByRole('navigation')).not.toBeInTheDocument()
     expect(drawer.getByText('Protocol')).toBeInTheDocument()
     expect(drawer.queryByText('Root URL')).not.toBeInTheDocument()
     expect(drawer.queryByText('Home URL')).not.toBeInTheDocument()
     expect(screen.getByText('ABCO Backend', { selector: 'span' })).toBeInTheDocument()
   })
 
-  it('shows detail errors with Retry inside the drawer without affecting the table', async () => {
+  it('shows detail errors with Retry inside the detail without affecting the table', async () => {
     const refetch = vi.fn()
     mockClients({ data: [backend, portal] })
     mockDetail({ error: new Error('Client not found'), refetch })
@@ -258,7 +262,7 @@ describe('ClientsSection', () => {
     expect(screen.getByRole('row', { name: 'Open client abco-portal' })).toBeInTheDocument()
   })
 
-  it('closes the drawer and clears the selection', async () => {
+  it('closes the detail and clears the selection', async () => {
     mockClients({ data: [backend] })
     render(<ClientsSection />)
 
@@ -276,7 +280,10 @@ describe('ClientsSection', () => {
     const drawer = await openClient('abco-be')
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: /settings|roles/i })).not.toBeInTheDocument()
-    expect(drawer.getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Client help', 'Close client detail'])
+    const header = drawer.getByRole('heading', { level: 2 }).closest('header')
+    if (!header) throw new Error('Expected the detail header')
+    expect(within(header).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Compact view', 'Client help', 'Close client detail'])
+    expect(drawer.element.querySelector('footer')).toBeNull()
     await userEvent.click(drawer.getByRole('button', { name: 'Client help' }))
     expect(drawer.getByRole('dialog', { name: 'What a client is' })).toHaveTextContent('Client type')
     expect(screen.queryByRole('button', { name: /create|edit|delete|assign|remove|secret/i })).not.toBeInTheDocument()

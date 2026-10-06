@@ -3,18 +3,24 @@ import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Alert } from '@/shared/components/alert/Alert'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
-import { ExternalLinkIcon } from '@/shared/icons/Icons'
+import { ApiIcon, GridIcon, NetworkIcon } from '@/shared/icons/Icons'
 import {
   DataTable,
   DataTablePagination,
   DataTableToolbar,
   DataTableRequestState,
   DataTableSurface,
-  DetailDrawer,
-  DetailRow,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
+import {
+  DetailField,
+  DetailFieldGroup,
+  DetailFieldLink,
+  DetailTechnicalGroup,
+  DetailView,
+  DetailViewSection,
+} from '@/shared/components/detail-view'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -27,20 +33,6 @@ function credentialStatusColor(status: PlatformProviderRecord['credentialStatus'
   if (status === 'ok') return 'success' as const
   if (status === 'missing') return 'error' as const
   return 'light' as const
-}
-
-function providerUrl(value: string | undefined) {
-  return value ? (
-    <a
-      href={value}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex min-w-0 items-center gap-1.5 font-mono text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15"
-    >
-      <span className="truncate">{value}</span>
-      <ExternalLinkIcon className="size-3.5 shrink-0" />
-    </a>
-  ) : '-'
 }
 
 function getColumns(
@@ -96,60 +88,74 @@ function getColumns(
   ]
 }
 
-function PlatformProviderDetail({ provider }: { provider: PlatformProviderRecord }) {
-  const { t } = useTranslation()
-  const credentialStatus = (
-    <Badge color={credentialStatusColor(provider.credentialStatus)} size="sm">
-      {t(`providers.credentials.status.${provider.credentialStatus}`)}
-    </Badge>
-  )
+// Raw boolean settings as the backend reports them; unset stays "Not set".
+const flag = (value: boolean | null | undefined) => (value == null ? null : String(value))
 
+// Sections of a platform provider: Overview (what it is and its type-specific settings),
+// Connection for the types that connect to a host or realm, and Technical for its ID. The
+// credential state is a header status and is not repeated here. A render function, not a
+// component: DetailView needs the sections themselves as its (fragment) children.
+function renderPlatformProviderSections(provider: PlatformProviderRecord, t: ReturnType<typeof useTranslation>['t']) {
+  const connects = provider.type === 'AIRFLOW' || provider.type === 'SMTP' || provider.type === 'KEYCLOAK'
   return (
-    <dl className="px-5 py-2">
-      <DetailRow label={t('details.providerId')} value={<span className="font-mono">{provider.id}</span>} />
-      <DetailRow label={t('details.type')} value={provider.type} />
-      <DetailRow label={t('details.url')} value={providerUrl(provider.url ?? undefined)} />
-      <DetailRow label={t('details.description')} value={(provider.description ?? '') || '-'} />
-
-      {provider.type === 'AIRFLOW' ? (
-        <>
-          <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{provider.ipAddress}</span>} />
-          <DetailRow label={t('details.port')} value={<span className="font-mono">{provider.port}</span>} />
-          <DetailRow label={t('details.dagDir')} value={<span className="font-mono">{(provider.dagDir ?? '') || '-'}</span>} />
-          <DetailRow label={t('details.credential')} value={<span className="font-mono">{(provider.credentialId ?? '') || '-'}</span>} />
-          <DetailRow label={t('details.credentialStatus')} value={credentialStatus} />
-          <DetailRow label={t('details.notificationEmail')} value={provider.notificationEmail ?? '-'} />
-        </>
+    <>
+      <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
+        <DetailFieldGroup>
+          <DetailField label={t('details.type')} value={provider.type} emphasis />
+          <DetailField label={t('details.description')} value={provider.description} wide />
+          <DetailField
+            label={t('details.url')}
+            value={provider.url ? <DetailFieldLink href={provider.url} external>{provider.url}</DetailFieldLink> : null}
+            mono
+            wide
+          />
+          {provider.type === 'AIRFLOW' || provider.type === 'BACKEND' ? (
+            <DetailField label={t('details.notificationEmail')} value={provider.notificationEmail} />
+          ) : null}
+          {provider.type === 'SMTP' ? <DetailField label={t('details.fromEmail')} value={provider.fromEmail} /> : null}
+          {provider.type === 'BACKEND' ? (
+            <>
+              <DetailField label={t('details.loggingEnabled')} value={flag(provider.loggingEnabled)} />
+              <DetailField label={t('details.jwtEnabled')} value={flag(provider.jwtEnabled)} />
+              <DetailField label={t('details.swaggerEnabled')} value={flag(provider.swaggerEnabled)} />
+            </>
+          ) : null}
+          {provider.type === 'KEYCLOAK' ? <DetailField label={t('details.realm')} value={provider.realm} /> : null}
+        </DetailFieldGroup>
+      </DetailViewSection>
+      {connects ? (
+        <DetailViewSection id="connection" title={t('detailView.connection')} icon={NetworkIcon}>
+          <DetailFieldGroup>
+            {provider.type === 'AIRFLOW' || provider.type === 'SMTP' ? (
+              <>
+                <DetailField label={t('details.ipAddress')} value={provider.ipAddress} mono copyValue={provider.ipAddress ?? undefined} />
+                <DetailField label={t('details.port')} value={String(provider.port)} mono />
+              </>
+            ) : null}
+            {provider.type === 'AIRFLOW' ? (
+              <DetailField label={t('details.dagDir')} value={provider.dagDir} mono wide copyValue={provider.dagDir ?? undefined} />
+            ) : null}
+            {provider.type === 'SMTP' ? (
+              <>
+                <DetailField label={t('details.disableSsl')} value={flag(provider.disableSsl)} />
+                <DetailField label={t('details.disableTls')} value={flag(provider.disableTls)} />
+              </>
+            ) : null}
+            {provider.type === 'KEYCLOAK' ? (
+              <DetailField label={t('details.clientId')} value={provider.clientId} mono copyValue={provider.clientId ?? undefined} />
+            ) : null}
+            {provider.type === 'AIRFLOW' || provider.type === 'KEYCLOAK' ? (
+              <DetailField label={t('details.credential')} value={provider.credentialId} mono />
+            ) : null}
+          </DetailFieldGroup>
+        </DetailViewSection>
       ) : null}
-
-      {provider.type === 'SMTP' ? (
-        <>
-          <DetailRow label={t('details.ipAddress')} value={<span className="font-mono">{provider.ipAddress}</span>} />
-          <DetailRow label={t('details.port')} value={<span className="font-mono">{provider.port}</span>} />
-          <DetailRow label={t('details.fromEmail')} value={provider.fromEmail ?? '-'} />
-          <DetailRow label={t('details.disableSsl')} value={provider.disableSsl == null ? '-' : String(provider.disableSsl)} />
-          <DetailRow label={t('details.disableTls')} value={provider.disableTls == null ? '-' : String(provider.disableTls)} />
-        </>
-      ) : null}
-
-      {provider.type === 'BACKEND' ? (
-        <>
-          <DetailRow label={t('details.notificationEmail')} value={provider.notificationEmail ?? '-'} />
-          <DetailRow label={t('details.loggingEnabled')} value={provider.loggingEnabled == null ? '-' : String(provider.loggingEnabled)} />
-          <DetailRow label={t('details.jwtEnabled')} value={provider.jwtEnabled == null ? '-' : String(provider.jwtEnabled)} />
-          <DetailRow label={t('details.swaggerEnabled')} value={provider.swaggerEnabled == null ? '-' : String(provider.swaggerEnabled)} />
-        </>
-      ) : null}
-
-      {provider.type === 'KEYCLOAK' ? (
-        <>
-          <DetailRow label={t('details.realm')} value={(provider.realm ?? '') || '-'} />
-          <DetailRow label={t('details.clientId')} value={<span className="font-mono">{(provider.clientId ?? '') || '-'}</span>} />
-          <DetailRow label={t('details.credential')} value={<span className="font-mono">{(provider.credentialId ?? '') || '-'}</span>} />
-          <DetailRow label={t('details.credentialStatus')} value={credentialStatus} />
-        </>
-      ) : null}
-    </dl>
+      <DetailViewSection id="technical" title={t('detailView.technical')} icon={ApiIcon} description={t('detailView.technicalDescription')} secondary>
+        <DetailTechnicalGroup>
+          <DetailField label={t('details.providerId')} value={provider.id} copyValue={provider.id} />
+        </DetailTechnicalGroup>
+      </DetailViewSection>
+    </>
   )
 }
 
@@ -246,38 +252,40 @@ export function PlatformProvidersTable({
       </DataTableRequestState>
       </DataTableSurface>
 
-      <DetailDrawer
-        open={selected !== null}
-        onClose={() => { setSelectedId(null) }}
-        resizable
-        title={selected?.name ?? ''}
-        meta={selected ? [
-          t('drawer.entity.platformProvider'),
-          <Badge key="type" color="info" size="sm">{selected.type}</Badge>,
-          selected.type === 'AIRFLOW' || selected.type === 'KEYCLOAK' ? (
-            <Badge key="credential" color={credentialStatusColor(selected.credentialStatus)} size="sm">
-              {t(`providers.credentials.status.${selected.credentialStatus}`)}
-            </Badge>
-          ) : null,
-        ] : []}
-        subtitle={<span className="font-mono">{selected?.id}</span>}
-        headerActions={<KeyedHelpPopover helpKey="platformProviders.help" sections={['airflow', 'keycloak', 'smtp', 'backend']} />}
-        ariaLabel={t('drawer.providerDetail')}
-        closeLabel={t('drawer.closeProvider')}
-        resizeLabel={t('drawer.resize')}
-        footerStart={selected ? (
-          <Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger">
-            {t('buttons.delete')}
-          </Button>
-        ) : null}
-        footer={selected ? (
-          <Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">
-            {t('buttons.edit')}
-          </Button>
-        ) : null}
-      >
-        {selected ? <PlatformProviderDetail provider={selected} /> : null}
-      </DetailDrawer>
+      {selected ? (
+        <DetailView
+          // Keyed by provider so each newly opened provider starts expanded on Overview.
+          key={selected.id}
+          open
+          onClose={() => { setSelectedId(null) }}
+          size="md"
+          entityLabel={t('drawer.entity.platformProvider')}
+          title={selected.name}
+          statuses={[
+            <Badge key="type" color="info" size="sm">{selected.type}</Badge>,
+            selected.type === 'AIRFLOW' || selected.type === 'KEYCLOAK' ? (
+              <Badge key="credential" color={credentialStatusColor(selected.credentialStatus)} size="sm">
+                {t(`providers.credentials.status.${selected.credentialStatus}`)}
+              </Badge>
+            ) : null,
+          ]}
+          headerActions={<KeyedHelpPopover helpKey="platformProviders.help" sections={['airflow', 'keycloak', 'smtp', 'backend']} />}
+          ariaLabel={t('drawer.providerDetail')}
+          closeLabel={t('drawer.closeProvider')}
+          footerStart={(
+            <Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger">
+              {t('buttons.delete')}
+            </Button>
+          )}
+          footer={(
+            <Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">
+              {t('buttons.edit')}
+            </Button>
+          )}
+        >
+          {renderPlatformProviderSections(selected, t)}
+        </DetailView>
+      ) : null}
 
       {editing ? (
         <PlatformProvidersModal
