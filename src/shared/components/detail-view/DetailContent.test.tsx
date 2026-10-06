@@ -115,6 +115,12 @@ describe('DetailStatusBlock', () => {
     expect(within(block).getByRole('button', { name: 'Copy Airflow run ID' })).toBeInTheDocument()
   })
 
+  it('renders no facts row when every fact is conditional and absent', () => {
+    render(<DetailStatusBlock title="Latest run" status="No runs yet" tone="neutral">{null}{false}</DetailStatusBlock>)
+    expect(screen.queryByRole('term')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Latest run' }).closest('section')?.children).toHaveLength(1)
+  })
+
   it('renders only the status when nothing else is given', () => {
     render(<DetailStatusBlock title="Orchestration" status="Not configured" tone="neutral" />)
     const block = screen.getByRole('heading', { name: 'Orchestration' }).closest('section')

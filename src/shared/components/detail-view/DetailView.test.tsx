@@ -176,6 +176,20 @@ describe('DetailView sections', () => {
     expect(within(dialog).getByRole('region', { name: 'Details' })).toHaveTextContent('Only content')
   })
 
+  it('reads sections passed inside fragments', () => {
+    const { dialog } = renderView({
+      children: (
+        <>
+          <DetailViewSection id="a" title="First"><p>First content</p></DetailViewSection>
+          <>
+            <DetailViewSection id="b" title="Second"><p>Second content</p></DetailViewSection>
+          </>
+        </>
+      ),
+    })
+    expect(within(within(dialog).getByRole('navigation')).getAllByRole('button').map(item => item.textContent)).toEqual(['First', 'Second'])
+  })
+
   it('renders arbitrary React content and drops the padding for flush sections', async () => {
     const user = userEvent.setup()
     const { dialog } = renderView()

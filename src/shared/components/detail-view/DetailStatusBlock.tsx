@@ -1,3 +1,4 @@
+import { Children } from 'react'
 import type { ReactNode } from 'react'
 import { AlertTriangleIcon, CheckIcon } from '@/shared/icons/Icons'
 import { cn } from '@/shared/utils/cn'
@@ -43,6 +44,8 @@ function ToneIcon({ tone }: { tone: DetailStatusTone }) {
 // status first, then when, a few facts, one technical reference and one action. It is the only
 // bordered surface of the detail system, so it never reads like a generic property list.
 export function DetailStatusBlock({ title, status, tone, timestamp, reference, action, children }: DetailStatusBlockProps) {
+  // Conditional facts may all be null; no empty facts row then.
+  const hasFacts = Children.toArray(children).length > 0
   return (
     <section className="rounded-xl border border-border" data-tone={tone}>
       <div className="px-5 py-4">
@@ -55,7 +58,7 @@ export function DetailStatusBlock({ title, status, tone, timestamp, reference, a
           {timestamp ? <span className="text-sm text-text-secondary">{timestamp}</span> : null}
         </div>
       </div>
-      {children ? (
+      {hasFacts ? (
         <dl className="grid grid-cols-2 gap-x-10 gap-y-4 border-t border-border/70 px-5 py-4 @min-[600px]/detail-content:grid-cols-3">
           {children}
         </dl>

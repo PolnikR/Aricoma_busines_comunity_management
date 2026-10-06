@@ -1,4 +1,4 @@
-import { Children, createContext, isValidElement, useContext, useEffect, useId, useRef, useState } from 'react'
+import { Children, createContext, Fragment, isValidElement, useContext, useEffect, useId, useRef, useState } from 'react'
 import type { ComponentType, CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactElement, ReactNode, SVGProps } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useResizablePanel } from '@/shared/hooks/useResizablePanel'
@@ -25,7 +25,7 @@ interface DetailViewProps {
   footerStart?: ReactNode
   ariaLabel: string
   closeLabel: string
-  // DetailViewSection elements, as direct children. Falsy children are skipped.
+  // DetailViewSection elements (directly or in fragments). Falsy children are skipped.
   children: ReactNode
 }
 
@@ -77,10 +77,12 @@ export function DetailViewSection({ title, description, aside, children }: Detai
   )
 }
 
-function sectionsOf(children: ReactNode) {
-  return Children.toArray(children).filter(
-    (child): child is ReactElement<DetailViewSectionProps> => isValidElement(child) && child.type === DetailViewSection,
-  )
+// Sections may be passed directly or inside fragments (e.g. `cond ? <>…</> : null`).
+function sectionsOf(children: ReactNode): ReactElement<DetailViewSectionProps>[] {
+  return Children.toArray(children).flatMap((child) => {
+    if (isValidElement<{ children?: ReactNode }>(child) && child.type === Fragment) return sectionsOf(child.props.children)
+    return isValidElement(child) && child.type === DetailViewSection ? [child as ReactElement<DetailViewSectionProps>] : []
+  })
 }
 
 // Shared detail surface that replaces DetailDrawer. It opens EXPANDED as a large centred
