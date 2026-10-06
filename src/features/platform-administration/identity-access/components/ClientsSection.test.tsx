@@ -5,7 +5,7 @@ import { ClientsSection } from './ClientsSection'
 import { useGetIdentityClientClientUuid, useGetIdentityClients } from '@/generated/query/identity-access/identity-access.gen'
 import type { IdentityClient } from '@/generated/query/zod'
 
-import { detailSectionsFields, openDetailSection } from '@/test-utils/detailView'
+import { detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/identity-access/identity-access.gen', () => ({
@@ -201,14 +201,19 @@ describe('ClientsSection', () => {
     expect(drawer.element).toHaveAttribute('data-size', 'md')
     expect(header).toHaveTextContent('Client')
     expect(header).toHaveTextContent('Enabled')
-    // The status is a header badge; the IDs live in Technical.
+    // One flat Overview in the original drawer order: IDs, status and roles included.
+    expect(drawer.queryByRole('navigation')).not.toBeInTheDocument()
+    expect(drawer.getAllByRole('region')).toHaveLength(1)
+    expect(drawer.getByRole('region', { name: 'Overview' })).toBeInTheDocument()
+    expect(detailSectionsLabels(drawer.element)).toEqual(['ID', 'Client ID', 'Display name', 'Protocol', 'Status', 'Client type', 'Roles'])
     expect(detailSectionsFields(drawer.element)).toEqual({
-      'Display name': 'ABCO Backend',
-      Protocol: 'openid-connect',
-      'Client type': 'Confidential',
-      Roles: 'platform-adminrecovery-operator',
       ID: backend.id,
       'Client ID': 'abco-be',
+      'Display name': 'ABCO Backend',
+      Protocol: 'openid-connect',
+      Status: 'Enabled',
+      'Client type': 'Confidential',
+      Roles: 'platform-adminrecovery-operator',
     })
   })
 
@@ -217,7 +222,7 @@ describe('ClientsSection', () => {
     render(<ClientsSection />)
 
     const drawer = await openClient('abco-be')
-    const roles = openDetailSection(drawer.element, 'Roles')
+    const roles = openDetailSection(drawer.element, 'Overview')
     expect(within(roles).getByText('platform-admin')).toBeInTheDocument()
     expect(within(roles).getByText('recovery-operator')).toBeInTheDocument()
     expect(screen.queryByText('Manages platform configuration.')).not.toBeInTheDocument()

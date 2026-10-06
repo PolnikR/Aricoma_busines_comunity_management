@@ -13,9 +13,9 @@ import {
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
-import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { DetailField, DetailFieldGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
-import { ApiIcon, GridIcon, ShieldIcon } from '@/shared/icons/Icons'
+import { GridIcon } from '@/shared/icons/Icons'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { useGetIdentityClientClientUuid, useGetIdentityClients } from '@/generated/query/identity-access/identity-access.gen'
 import type { IdentityClient } from '@/generated/query/zod'
@@ -67,8 +67,8 @@ interface ClientDetailViewProps {
 }
 
 // Mounted only while a client is selected, so the detail request never runs without a valid
-// internal UUID. Until the detail arrives the view has one section (no navigation) with the
-// skeleton or the error; then Overview, Roles and Technical. The status is a header badge.
+// internal UUID. The view always has one Overview section (no navigation): the skeleton or the
+// error until the detail arrives, then the fields in the order of the original detail drawer.
 function ClientDetailView({ client, onClose }: ClientDetailViewProps) {
   const { t } = useTranslation()
   const { data, isLoading, isFetching, error, refetch } = useGetIdentityClientClientUuid(client.id)
@@ -97,34 +97,25 @@ function ClientDetailView({ client, onClose }: ClientDetailViewProps) {
     )
   } else {
     sections = (
-      <>
-        <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
-          <DetailFieldGroup>
-            <DetailField label={t('identity.clients.fields.displayName')} value={data.displayName} emphasis />
-            <DetailField label={t('identity.clients.fields.protocol')} value={data.protocol} />
-            <DetailField label={t('identity.clients.fields.type')} value={<ClientTypeBadge isPublicClient={data.isPublicClient} />} />
-          </DetailFieldGroup>
-        </DetailViewSection>
-        <DetailViewSection id="roles" title={t('identity.clients.fields.roles')} icon={ShieldIcon} count={roles.length}>
-          <DetailFieldGroup>
-            <DetailField
-              label={t('identity.clients.fields.roles')}
-              value={roles.length > 0 ? (
-                <span className="flex flex-wrap gap-1">
-                  {roles.map(role => <Badge key={role.id} color="info" size="sm">{role.name}</Badge>)}
-                </span>
-              ) : t('identity.clients.fields.rolesEmpty')}
-              wide
-            />
-          </DetailFieldGroup>
-        </DetailViewSection>
-        <DetailViewSection id="technical" title={t('detailView.technical')} icon={ApiIcon} description={t('detailView.technicalDescription')} secondary>
-          <DetailTechnicalGroup>
-            <DetailField label={t('identity.clients.fields.id')} value={data.id} copyValue={data.id} />
-            <DetailField label={t('identity.clients.fields.clientId')} value={data.clientId} copyValue={data.clientId} />
-          </DetailTechnicalGroup>
-        </DetailViewSection>
-      </>
+      <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
+        <DetailFieldGroup>
+          <DetailField label={t('identity.clients.fields.id')} value={data.id} mono copyValue={data.id} />
+          <DetailField label={t('identity.clients.fields.clientId')} value={data.clientId} mono copyValue={data.clientId} />
+          <DetailField label={t('identity.clients.fields.displayName')} value={data.displayName} emphasis />
+          <DetailField label={t('identity.clients.fields.protocol')} value={data.protocol} />
+          <DetailField label={t('identity.clients.fields.status')} value={<ClientStatusBadge client={data} />} />
+          <DetailField label={t('identity.clients.fields.type')} value={<ClientTypeBadge isPublicClient={data.isPublicClient} />} />
+          <DetailField
+            label={t('identity.clients.fields.roles')}
+            value={roles.length > 0 ? (
+              <span className="flex flex-wrap gap-1">
+                {roles.map(role => <Badge key={role.id} color="info" size="sm">{role.name}</Badge>)}
+              </span>
+            ) : t('identity.clients.fields.rolesEmpty')}
+            wide
+          />
+        </DetailFieldGroup>
+      </DetailViewSection>
     )
   }
 
