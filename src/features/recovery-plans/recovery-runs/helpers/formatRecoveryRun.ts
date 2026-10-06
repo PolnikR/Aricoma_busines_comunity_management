@@ -1,3 +1,5 @@
+import { formatDateTime } from '@/shared/utils/dateTime'
+
 export type RunStatusBadgeColor = 'success' | 'info' | 'error' | 'light'
 
 export function runStatusBadgeColor(status: string): RunStatusBadgeColor {
@@ -8,11 +10,10 @@ export function runStatusBadgeColor(status: string): RunStatusBadgeColor {
   return 'light'
 }
 
+// Browser default locale (no `language`), as before. Airflow timestamps are proxied by the BE without
+// normalization, so they get the same strict check as any other value: naive strings render as '—'.
 export function formatRunTimestamp(value: string | null): string {
-  if (!value) return '—'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '—'
-  return date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+  return formatDateTime(value)
 }
 
 export function formatRunDuration(seconds: number | null): string {
