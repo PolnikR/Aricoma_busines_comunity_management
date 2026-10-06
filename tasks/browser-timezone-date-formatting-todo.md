@@ -12,15 +12,25 @@ Stav: **čaká na schválenie, implementácia nezačala.**
 **Description:** Pridať modul s API zo specu (§5) a unit testy, zatiaľ bez akéhokoľvek callera.
 
 **Acceptance criteria:**
-- [ ] `Z` aj `±HH:MM` dávajú správny instant. Naive, date-only, invalid, `''`, `null` a `undefined` dávajú `—`.
-- [ ] S `timeZone` testami: `2026-10-06T07:41:00Z` je v `Europe/Bratislava` 09:41 a v `Europe/London` 08:41; decembrový instant v Bratislave dá 08:41 (DST). Default bez `timeZone` sa rovná `getBrowserTimeZone()`.
-- [ ] `toDateLocale` mapuje sk/cs/en. `localDateTimeInputToUtcIso` vráti `…Z` s round-tripom na rovnaký wall-clock v lete aj v zime. Zdroj modulu neobsahuje `Europe/` ani `±0X:00`.
+- [ ] **Formatter:**
+  - `Z` aj `±HH:MM` dávajú správny instant;
+  - naive (aj Airflow-like `2026-08-18T09:46:40`), date-only, invalid, `''`, `null` a `undefined` dávajú `—`;
+  - s explicitným `timeZone`: `2026-10-06T07:41:00Z` je v `Europe/Bratislava` 09:41 a v `Europe/London` 08:41; decembrový instant v Bratislave dá 08:41 (DST);
+  - `toDateLocale` mapuje sk/cs/en;
+  - zdroj modulu neobsahuje `Europe/` ani `±0X:00`.
+- [ ] **`localDateTimeInputToUtcIso`** robí DST-safe round-trip (spec §6). S injektovaným `LocalCalendar` pre `Europe/Bratislava`:
+  - leto `2026-08-11T04:15` vráti `2026-08-11T02:15:00.000Z`;
+  - zima `2026-12-11T04:15` vráti `2026-12-11T03:15:00.000Z`;
+  - DST gap `2026-03-29T02:30` vráti `null`;
+  - `''`, `2026-08-11`, `…Z`, `2026-02-30T10:00` vrátia `null`.
+- [ ] **Invariantné testy s default kalendárom:**
+  - prejdú pri ľubovoľnej host TZ;
+  - žiadny test nečíta OS/CI timezone ako očakávanú hodnotu a žiadny sa nespúšťa s `TZ=…`.
 
 **Verification:**
 - [ ] `npm exec vitest run src/shared/utils/dateTime.test.ts`
 - [ ] `npx eslint --max-warnings 0 src/shared/utils/dateTime.ts src/shared/utils/dateTime.test.ts`
 - [ ] `npx tsc -b`
-- [ ] tie isté testy aj s `TZ=UTC`
 
 **Dependencies:** none · **Files:** `src/shared/utils/dateTime.ts`, `dateTime.test.ts` · **Scope:** S
 
@@ -34,7 +44,7 @@ Stav: **čaká na schválenie, implementácia nezačala.**
 
 **Acceptance criteria:**
 - [ ] Žiadny `timeZone` ani `Europe/` v súbore. Výstup má tvar `DD.MM.YYYY HH:mm:ss`.
-- [ ] Test očakáva hodinu podľa browser timezone (`new Date(ts).getHours()`), nie natvrdo `10`.
+- [ ] Test overuje iba wiring invariantnou assertion (hodina z `new Date(ts).getHours()`, platí pri ľubovoľnej host TZ), nie natvrdo `10`. Samotnú konverziu pokrýva T1.
 
 **Verification:**
 - [ ] `npm exec vitest run src/features/platform-administration/audit/components/AccessLogsTable.test.tsx`
@@ -60,7 +70,11 @@ Stav: **čaká na schválenie, implementácia nezačala.**
 
 **Acceptance criteria:**
 - [ ] Signatúra `formatRunTimestamp(value: string | null)` sa nemení, lebo ju volá aj `dashboard-preview`.
-- [ ] Nový test: `Z` vráti rovnaký výstup ako `Intl(undefined, medium/short)`; `null`, invalid a naive vrátia `—`; duration `252` dá `4m 12s`.
+- [ ] Airflow nemá výnimku zo strict parse. ABCO BE hodnoty nenormalizuje, preto naive `start_date` vráti `—` a nesmie sa brať ako UTC ani ako lokálny čas.
+- [ ] Nový test:
+  - `Z` aj `+00:00` vráti rovnaký výstup ako `formatDateTime` (invariant);
+  - `null`, invalid a naive `2026-08-18T09:46:40` vrátia `—`;
+  - duration `252` dá `4m 12s`.
 
 **Verification:**
 - [ ] `npm exec vitest run src/features/recovery-plans/recovery-runs src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.test.tsx src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx`
@@ -90,9 +104,9 @@ Stav: **čaká na schválenie, implementácia nezačala.**
 **Description:** Nahradiť `` `${date}:00+02:00` `` za `localDateTimeInputToUtcIso(date) ?? ''` v Execute aj Validate. Platí iba ak je schválená otázka 1 v pláne.
 
 **Acceptance criteria:**
-- [ ] Žiadne `+02:00` v page súboroch.
-- [ ] Test: zimný vstup `2026-12-11T04:15` sa v preview zobrazí ako `11 Dec 2026, 04:15` na oboch stránkach.
-- [ ] Test zlyhá proti starému kódu (overené dočasným revertom).
+- [ ] Žiadne `+02:00` v page súboroch. Nevalidný alebo neexistujúci (DST gap) vstup zobrazí v preview `—`, nie posunutý čas.
+- [ ] Page test overuje iba wiring: zimný vstup `2026-12-11T04:15` sa v preview zobrazí ako `11 Dec 2026, 04:15` na oboch stránkach (round-trip invariant pre ľubovoľnú host TZ).
+- [ ] DST korektnosť (zima `+01:00`, gap → `null`) je dokázaná v T1 cez injektovaný kalendár, nie cez timezone stroja.
 
 **Verification:**
 - [ ] `npm exec vitest run src/features/recovery-actions`
