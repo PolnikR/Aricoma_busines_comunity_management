@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Detail Drawer Redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<!-- Tokens copied from src/index.css so the templates use the production class names 1:1.
+     Prototype only: --font-mono is defined here so mono values can be judged visually
+     (in the app the theme currently resets it; that decision comes after a concept is chosen). -->
+<style type="text/tailwindcss">
+@custom-variant dark (&:where(.dark, .dark *));
+:root {
+  --app-page:#f7f9fc;--app-surface:#ffffff;--app-surface-subtle:#fbfdff;--app-surface-muted:#f1f6fb;--app-surface-hover:#e8f2fa;
+  --app-text-primary:#17233d;--app-text-secondary:#3b4763;--app-text-muted:#71819a;--app-text-subtle:#93a0b5;
+  --app-border:#dbe7f2;--app-border-strong:#c8d7e7;--app-accent:#0d91d7;--app-accent-hover:#087fca;--app-accent-soft:#e8f6fd;--app-focus:#1596dd;
+}
+.dark {
+  --app-page:#09111f;--app-surface:#111c2f;--app-surface-subtle:#152238;--app-surface-muted:#1a2941;--app-surface-hover:#22344f;
+  --app-text-primary:#edf4ff;--app-text-secondary:#c5d1e2;--app-text-muted:#98a8bf;--app-text-subtle:#75869f;
+  --app-border:#293b56;--app-border-strong:#3a506f;--app-accent:#43b2ec;--app-accent-hover:#70c8f3;--app-accent-soft:#123854;--app-focus:#5bc0f2;
+}
+@theme inline {
+  --color-page:var(--app-page);--color-surface:var(--app-surface);--color-surface-subtle:var(--app-surface-subtle);
+  --color-surface-muted:var(--app-surface-muted);--color-surface-hover:var(--app-surface-hover);
+  --color-text-primary:var(--app-text-primary);--color-text-secondary:var(--app-text-secondary);
+  --color-text-muted:var(--app-text-muted);--color-text-subtle:var(--app-text-subtle);
+  --color-border:var(--app-border);--color-border-strong:var(--app-border-strong);
+  --color-accent:var(--app-accent);--color-accent-hover:var(--app-accent-hover);--color-accent-soft:var(--app-accent-soft);--color-focus:var(--app-focus);
+}
+@theme {
+  --font-outfit: Outfit, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --color-brand-50:#ecf3ff;--color-brand-400:#7592ff;--color-brand-500:#465fff;
+  --color-blue-light-50:#f0f9ff;--color-blue-light-500:#0ba5ec;
+  --color-gray-400:#98a2b3;--color-gray-500:#667085;
+  --color-orange-400:#fd853a;--color-orange-500:#fb6514;
+  --color-theme-pink-500:#ee46bc;--color-theme-purple-500:#7a5af8;
+  --color-success-50:#ecfdf3;--color-success-500:#12b76a;--color-success-600:#039855;
+  --color-error-50:#fef3f2;--color-error-200:#fecdca;--color-error-400:#f97066;--color-error-500:#f04438;--color-error-600:#d92d20;--color-error-800:#912018;
+  --color-warning-50:#fffaeb;--color-warning-500:#f79009;--color-warning-600:#dc6803;
+}
+body { @apply bg-page font-outfit text-text-primary antialiased; }
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--app-border-strong); border-radius: 9999px; }
+</style>
+</head>
+<body class="min-h-dvh">
+
+<!-- Prototype controls (not part of the design) -->
+<div class="sticky top-0 z-[60] border-b border-border bg-surface text-xs text-text-secondary">
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5">
+    <strong class="text-accent">TEMPLATE · Detail drawer redesign</strong>
+    <label class="flex items-center gap-2">Concept
+      <select id="concept" class="h-8 rounded-md border border-border-strong bg-surface-subtle px-2">
+        <option value="current">0 · Current (reference)</option>
+        <option value="a">A · Improved drawer</option>
+        <option value="b">B · Centered detail dialog</option>
+        <option value="c">C · Hybrid (compact → full view)</option>
+      </select>
+    </label>
+    <label class="flex items-center gap-2">Object
+      <select id="object" class="h-8 rounded-md border border-border-strong bg-surface-subtle px-2">
+        <option value="recoveryGroup">Recovery group (sections + orchestration + inventory)</option>
+        <option value="vmwareVm">VMware VM (facts, tags, disks, backing storage)</option>
+        <option value="ibmPower">IBM Power partition (many sections)</option>
+        <option value="accessLog">Access log (request + raw bodies, no actions)</option>
+        <option value="platformProvider">Platform provider (no sections)</option>
+      </select>
+    </label>
+    <label class="flex items-center gap-2">Size <select id="size" class="h-8 rounded-md border border-border-strong bg-surface-subtle px-2"></select></label>
+    <label class="flex items-center gap-1.5"><input id="long" type="checkbox"> Long values</label>
+    <label class="flex items-center gap-1.5"><input id="dark" type="checkbox"> Dark</label>
+    <label class="flex items-center gap-1.5"><input id="notes-toggle" type="checkbox"> Notes</label>
+  </div>
+  <div id="notes" class="border-t border-border bg-surface-subtle px-4 py-2 text-[12px] leading-5 text-text-secondary"></div>
+</div>
+
+<div id="stage"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
