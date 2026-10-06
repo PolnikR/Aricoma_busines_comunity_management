@@ -9,7 +9,7 @@ import { useOrchestratedEntityRuns } from '../hooks/useOrchestratedEntityRuns'
 import { useRecoveryRunsTabSearchParam } from '../hooks/useRecoveryRunsTabSearchParam'
 import type { RecoveryRunTab } from '../hooks/useRecoveryRunsTabSearchParam'
 import { RecoveryRunsTable } from '../components/RecoveryRunsTable'
-import { RecoveryRunHistoryDrawer } from '../components/RecoveryRunHistoryDrawer'
+import { RecoveryRunHistoryDetailView } from '../components/RecoveryRunHistoryDetailView'
 import type { RecoveryRunRow } from '../components/RecoveryRunsTable'
 import type { OrchestratedEntity } from '../model/recoveryRunTypes'
 
@@ -107,7 +107,7 @@ export function RecoveryRunsPage() {
         />
       </InventoryShell>
 
-      <RecoveryRunHistoryDrawer
+      <RecoveryRunHistoryDetailView
         entity={selectedEntity}
         onClose={() => { setEntity(null) }}
       />

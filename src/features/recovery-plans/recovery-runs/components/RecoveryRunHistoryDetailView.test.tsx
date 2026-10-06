@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { RecoveryRunHistoryDrawer } from './RecoveryRunHistoryDrawer'
+import { RecoveryRunHistoryDetailView } from './RecoveryRunHistoryDetailView'
 import { useAppRunHistory } from '../hooks/useAppRunHistory'
-import type { RecoveryRunHistoryEntity } from './RecoveryRunHistoryDrawer'
+import type { RecoveryRunHistoryEntity } from './RecoveryRunHistoryDetailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('../hooks/useAppRunHistory', () => ({
@@ -19,11 +19,11 @@ afterEach(cleanup)
 
 const entity: RecoveryRunHistoryEntity = { id: 'finance_recovery', name: 'Finance Recovery', dagId: 'dag_260818094526_2918dccb', providerId: 'airflow-01' }
 
-describe('RecoveryRunHistoryDrawer', () => {
+describe('RecoveryRunHistoryDetailView', () => {
   it('renders nothing when no entity is selected', () => {
     vi.mocked(useAppRunHistory).mockReturnValue({ data: { runs: [], total: 0 }, isLoading: false, isFetching: false, error: null, refetch: vi.fn() })
 
-    render(<RecoveryRunHistoryDrawer entity={null} onClose={vi.fn()} />)
+    render(<RecoveryRunHistoryDetailView entity={null} onClose={vi.fn()} />)
 
     expect(screen.queryByRole('dialog', { hidden: true })).not.toBeInTheDocument()
   })
@@ -43,7 +43,7 @@ describe('RecoveryRunHistoryDrawer', () => {
       refetch: vi.fn(),
     })
 
-    render(<RecoveryRunHistoryDrawer entity={entity} onClose={vi.fn()} />)
+    render(<RecoveryRunHistoryDetailView entity={entity} onClose={vi.fn()} />)
 
     expect(screen.getByText('Finance Recovery')).toBeInTheDocument()
     expect(screen.getByText('finance_recovery')).toBeInTheDocument()
@@ -79,7 +79,7 @@ describe('RecoveryRunHistoryDrawer', () => {
       refetch,
     })
 
-    render(<RecoveryRunHistoryDrawer entity={entity} onClose={vi.fn()} />)
+    render(<RecoveryRunHistoryDetailView entity={entity} onClose={vi.fn()} />)
 
     expect(screen.getByRole('alert')).toHaveTextContent('Run history unavailable')
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
@@ -96,7 +96,7 @@ describe('RecoveryRunHistoryDrawer', () => {
       refetch: vi.fn(),
     })
 
-    render(<RecoveryRunHistoryDrawer entity={entity} onClose={vi.fn()} />)
+    render(<RecoveryRunHistoryDetailView entity={entity} onClose={vi.fn()} />)
 
     expect(screen.getByRole('alert')).toHaveTextContent('History update failed')
     expect(screen.getByText('cached-run')).toBeInTheDocument()

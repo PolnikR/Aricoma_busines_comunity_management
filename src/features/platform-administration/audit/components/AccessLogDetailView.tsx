@@ -13,7 +13,7 @@ import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopo
 import { ApiIcon, GridIcon } from '@/shared/icons/Icons'
 import type { AccessLogRecord } from '../model/accessLogTypes'
 
-interface AccessLogDetailDrawerProps {
+interface AccessLogDetailViewProps {
   record: AccessLogRecord | null
   onClose: () => void
 }
@@ -50,7 +50,7 @@ function bodySection(id: string, label: string, value: unknown) {
   )
 }
 
-export function AccessLogDetailDrawer({ record, onClose }: AccessLogDetailDrawerProps) {
+export function AccessLogDetailView({ record, onClose }: AccessLogDetailViewProps) {
   const { t } = useTranslation()
   if (!record) return null
   const isRequest = record.kind === 'request'

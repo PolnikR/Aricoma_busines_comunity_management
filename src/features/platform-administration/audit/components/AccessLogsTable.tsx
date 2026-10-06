@@ -14,7 +14,7 @@ import { normalizeAccessLogFilters, toAccessLogParams } from '../model/accessLog
 import { selectAccessLogs } from '../model/selectAccessLogs'
 import { useGetAccessLogs } from '@/generated/query/logs/logs.gen'
 import type { AccessLogFilters, AccessLogRecord } from '../model/accessLogTypes'
-import { AccessLogDetailDrawer } from './AccessLogDetailDrawer'
+import { AccessLogDetailView } from './AccessLogDetailView'
 
 const INITIAL_PAGE_SIZE = 25
 
@@ -168,7 +168,7 @@ export function AccessLogsTable({ filters, density, toolbar, resetKey = 0 }: Acc
         />
       </InventoryPanel>
 
-      <AccessLogDetailDrawer key={selectedRow?.key} record={selectedRow?.record ?? null} onClose={() => { setSelection(null) }} />
+      <AccessLogDetailView key={selectedRow?.key} record={selectedRow?.record ?? null} onClose={() => { setSelection(null) }} />
     </>
   )
 }

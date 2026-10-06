@@ -21,7 +21,7 @@ export interface RecoveryRunHistoryEntity {
   providerId: string
 }
 
-interface RecoveryRunHistoryDrawerProps {
+interface RecoveryRunHistoryDetailViewProps {
   entity: RecoveryRunHistoryEntity | null
   onClose: () => void
 }
@@ -29,7 +29,7 @@ interface RecoveryRunHistoryDrawerProps {
 // Full paginated history for exactly one entity (Application or Recovery
 // Group), fetched only while this drawer is open — the overview table never
 // fetches more than each entity's latest run.
-export function RecoveryRunHistoryDrawer({ entity, onClose }: RecoveryRunHistoryDrawerProps) {
+export function RecoveryRunHistoryDetailView({ entity, onClose }: RecoveryRunHistoryDetailViewProps) {
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
   const { data, isLoading, isFetching, error, refetch } = useAppRunHistory({

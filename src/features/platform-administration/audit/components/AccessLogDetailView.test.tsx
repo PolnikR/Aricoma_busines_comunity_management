@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { openDetailSection } from '@/test-utils/detailView'
-import { AccessLogDetailDrawer } from './AccessLogDetailDrawer'
+import { AccessLogDetailView } from './AccessLogDetailView'
 import type { AccessLogRecord } from '../model/accessLogTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -21,14 +21,14 @@ const request: AccessLogRecord = {
 const dialog = () => screen.getByRole('dialog', { name: 'Access log details' })
 const navItems = () => within(within(dialog()).getByRole('navigation', { name: 'Sections' })).getAllByRole('button')
 
-describe('AccessLogDetailDrawer', () => {
+describe('AccessLogDetailView', () => {
   it('renders nothing without a record', () => {
-    render(<AccessLogDetailDrawer record={null} onClose={vi.fn()} />)
+    render(<AccessLogDetailView record={null} onClose={vi.fn()} />)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('shows the request with its HTTP status first and each body as its own section', () => {
-    render(<AccessLogDetailDrawer record={request} onClose={vi.fn()} />)
+    render(<AccessLogDetailView record={request} onClose={vi.fn()} />)
 
     expect(dialog()).toHaveAttribute('data-size', 'lg')
     expect(navItems().map(item => item.textContent)).toEqual(['Request', 'Request body', 'Response body'])
@@ -42,7 +42,7 @@ describe('AccessLogDetailDrawer', () => {
   })
 
   it('shows a raw entry as a single section without navigation', () => {
-    render(<AccessLogDetailDrawer record={{ kind: 'raw', raw: 'unparsed line' }} onClose={vi.fn()} />)
+    render(<AccessLogDetailView record={{ kind: 'raw', raw: 'unparsed line' }} onClose={vi.fn()} />)
 
     expect(within(dialog()).queryByRole('navigation')).not.toBeInTheDocument()
     expect(within(dialog()).getByRole('region', { name: 'Raw entry' })).toHaveTextContent('unparsed line')
