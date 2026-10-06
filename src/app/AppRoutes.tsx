@@ -129,11 +129,6 @@ const IdentityAccessPage = lazy(async () => {
   return { default: page.IdentityAccessPage }
 })
 
-const DashboardPreviewPage = lazy(async () => {
-  const page = await import('@/features/dashboard-preview/pages/DashboardPreviewPage')
-  return { default: page.DashboardPreviewPage }
-})
-
 const AuditPage = lazy(async () => {
   const page = await import('@/features/platform-administration/audit/pages/AuditPage')
   return { default: page.AuditPage }
@@ -238,14 +233,6 @@ export function AppRoutes() {
           element={(
             <Suspense fallback={<RouteLoadingSkeleton />}>
               <AuditPage />
-            </Suspense>
-          )}
-        />
-        <Route
-          path={`${toRoutePath(routes.dashboardPreview)}/:variant?`}
-          element={(
-            <Suspense fallback={<RouteLoadingSkeleton />}>
-              <DashboardPreviewPage />
             </Suspense>
           )}
         />

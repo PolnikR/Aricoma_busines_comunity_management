@@ -32,6 +32,4 @@ export const routes = {
   discoverySettingsLegacy: '/providers-connectors/discovery-settings',
   storageOrchestration: '/storage-orchestration',
   recoveryPlans: '/recovery-plans',
-  // Design exploration with mock data only: /dashboard-preview/a|b|c|d.
-  dashboardPreview: '/dashboard-preview',
 } as const
