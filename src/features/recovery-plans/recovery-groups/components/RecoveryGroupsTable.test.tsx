@@ -763,14 +763,14 @@ describe('RecoveryGroupsTable', () => {
 
       expect(header(detail)).toContainElement(trigger)
       await user.click(trigger)
-      const help = within(detail).getByRole('dialog', { name: 'How a recovery group works' })
+      const help = screen.getByRole('dialog', { name: 'How a recovery group works' })
       expect(help).toHaveTextContent('Local protection')
       expect(help).toHaveTextContent('Remote protection')
       expect(help).toHaveTextContent('Metro Mirror')
       expect(help).toHaveTextContent('Airflow')
 
       await user.keyboard('{Escape}')
-      expect(within(detail).queryByRole('dialog', { name: 'How a recovery group works' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('dialog', { name: 'How a recovery group works' })).not.toBeInTheDocument()
       expect(screen.getByRole('dialog', { name: 'Recovery group detail' })).toBeInTheDocument()
       expect(trigger).toHaveFocus()
 
