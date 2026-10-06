@@ -329,7 +329,9 @@ describe('RecoveryApplicationsTable', () => {
     })
 
     it('leaves Submission out when the application has none', async () => {
-      const { drawer } = await openDetail({ ...application, submission: undefined })
+      const withoutSubmission: RecoveryApplicationListItem = { ...application }
+      delete withoutSubmission.submission
+      const { drawer } = await openDetail(withoutSubmission)
       expect(overviewTerms(drawer)).toEqual(['Description', 'Environment', 'Platform', 'Tiers', 'Status'])
     })
 
