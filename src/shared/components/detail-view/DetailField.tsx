@@ -11,17 +11,17 @@ const TechnicalContext = createContext(false)
 interface DetailFieldProps {
   label: string
   // Plain text or any node: badges, tags, DetailFieldLink, formatted values.
-  value?: ReactNode
+  value?: ReactNode | undefined
   // Second, muted line under the value, e.g. an ID behind a name.
-  secondary?: ReactNode
+  secondary?: ReactNode | undefined
   // Monospace for technical values outside a technical group.
-  mono?: boolean
+  mono?: boolean | undefined
   // Stronger value for the few facts that matter most in a group.
-  emphasis?: boolean
+  emphasis?: boolean | undefined
   // Span the full row of the field grid (descriptions, paths, URLs, query strings).
-  wide?: boolean
+  wide?: boolean | undefined
   // Adds a copy action for this text.
-  copyValue?: string
+  copyValue?: string | undefined
 }
 
 function isEmpty(value: ReactNode) {
@@ -66,12 +66,12 @@ export function DetailField({ label, value, secondary, mono = false, emphasis = 
 }
 
 interface DetailFieldGroupProps {
-  title?: string
-  description?: ReactNode
+  title?: string | undefined
+  description?: ReactNode | undefined
   children: ReactNode
 }
 
-function GroupHeader({ title, description, className }: { title?: string; description?: ReactNode; className?: string }) {
+function GroupHeader({ title, description, className }: { title?: string | undefined; description?: ReactNode; className?: string | undefined }) {
   if (!title) return null
   return (
     <header className={className}>
@@ -110,10 +110,10 @@ export function DetailTechnicalGroup({ title, description, children }: DetailFie
 interface DetailFieldLinkProps {
   children: ReactNode
   // A URL renders an anchor; without one, `onClick` renders a button (in-app navigation).
-  href?: string
-  onClick?: () => void
+  href?: string | undefined
+  onClick?: (() => void) | undefined
   // Opens in a new tab and shows the external-link icon.
-  external?: boolean
+  external?: boolean | undefined
 }
 
 // Link presentation for field values: internal (button or same-tab link) or external.

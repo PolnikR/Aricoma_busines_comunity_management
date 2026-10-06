@@ -12,17 +12,17 @@ interface DetailViewProps {
   onClose: () => void
   title: ReactNode
   // Object type above the title, e.g. "Recovery group".
-  entityLabel?: ReactNode
+  entityLabel?: ReactNode | undefined
   // Important states next to the title (badges). Falsy items are skipped.
-  statuses?: readonly ReactNode[]
+  statuses?: readonly ReactNode[] | undefined
   // One short line of secondary information after the statuses.
-  meta?: ReactNode
+  meta?: ReactNode | undefined
   // Small actions before the built-in mode toggle and Close, e.g. help.
-  headerActions?: ReactNode
+  headerActions?: ReactNode | undefined
   // Right-hand (primary) footer group.
-  footer?: ReactNode
+  footer?: ReactNode | undefined
   // Left-hand footer group, typically the destructive action.
-  footerStart?: ReactNode
+  footerStart?: ReactNode | undefined
   ariaLabel: string
   closeLabel: string
   // DetailViewSection elements (directly or in fragments). Falsy children are skipped.
@@ -33,19 +33,19 @@ interface DetailViewSectionProps {
   id: string
   title: string
   // Shorter text for the navigation, when the title is long.
-  navLabel?: string
-  icon?: ComponentType<SVGProps<SVGSVGElement>>
+  navLabel?: string | undefined
+  icon?: ComponentType<SVGProps<SVGSVGElement>> | undefined
   // Small count or status next to the navigation item.
-  count?: ReactNode
+  count?: ReactNode | undefined
   // One line under the section title.
-  description?: ReactNode
+  description?: ReactNode | undefined
   // Status or count next to the section title.
-  aside?: ReactNode
+  aside?: ReactNode | undefined
   // Supporting section (e.g. technical identifiers), listed last and set apart.
-  secondary?: boolean
+  secondary?: boolean | undefined
   // Drop the content padding for content that brings its own (inventories, edge-to-edge tables).
-  flush?: boolean
-  children?: ReactNode
+  flush?: boolean | undefined
+  children?: ReactNode | undefined
 }
 
 const SectionContext = createContext<{ headingId: string; flush: boolean }>({ headingId: '', flush: false })

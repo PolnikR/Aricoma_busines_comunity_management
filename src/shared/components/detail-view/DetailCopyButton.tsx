@@ -6,10 +6,10 @@ import { cn } from '@/shared/utils/cn'
 interface DetailCopyButtonProps {
   value: string
   // What is copied, for the accessible name ("Copy Group ID"). Defaults to "Copy".
-  label?: string
+  label?: string | undefined
   // Show "Copy" next to the icon (code blocks); fields use the icon alone.
-  showText?: boolean
-  className?: string
+  showText?: boolean | undefined
+  className?: string | undefined
 }
 
 const COPIED_FOR_MS = 1500

@@ -6,12 +6,12 @@ interface DetailCodeProps {
   // Caption, e.g. "JSON" or "Request body".
   label: string
   // Short facts next to the caption, e.g. "214 B".
-  meta?: ReactNode
+  meta?: ReactNode | undefined
   value: string
   // Text when there is nothing to show; defaults to "No content".
-  emptyLabel?: ReactNode
+  emptyLabel?: ReactNode | undefined
   // 'json' tints keys and literals; 'text' shows the value as is.
-  language?: 'json' | 'text'
+  language?: 'json' | 'text' | undefined
 }
 
 const JSON_TOKEN = /("(?:\\.|[^"\\])*")(\s*:)?|\b(?:true|false|null)\b|-?\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/g

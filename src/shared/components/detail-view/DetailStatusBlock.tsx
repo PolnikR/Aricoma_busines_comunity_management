@@ -10,7 +10,7 @@ interface DetailStatusReference {
   label: string
   // Usually a link (e.g. a run in the orchestrator); rendered mono.
   value: ReactNode
-  copyValue?: string
+  copyValue?: string | undefined
 }
 
 interface DetailStatusBlockProps {
@@ -18,11 +18,11 @@ interface DetailStatusBlockProps {
   title: string
   status: ReactNode
   tone: DetailStatusTone
-  timestamp?: ReactNode
-  reference?: DetailStatusReference
-  action?: ReactNode
+  timestamp?: ReactNode | undefined
+  reference?: DetailStatusReference | undefined
+  action?: ReactNode | undefined
   // Small facts as DetailFields, 2–3 per row.
-  children?: ReactNode
+  children?: ReactNode | undefined
 }
 
 // Same tone colours as the light Badge, so states read the same everywhere.
