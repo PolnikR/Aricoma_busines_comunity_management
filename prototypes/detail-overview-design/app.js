@@ -100,6 +100,8 @@ function render() {
   if (state.cmp !== 'off') next.set('cmp', state.cmp)
   if (state.fit) next.set('fit', '1')
   if (state.dark) next.set('dark', '1')
+  // Threshold experiments and the footprint overlay are read at load (templates.js); keep them.
+  for (const key of ['nmax', 'wmax', 'fp']) if (params.get(key)) next.set(key, params.get(key))
   history.replaceState(null, '', `?${next}`)
 }
 

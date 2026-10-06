@@ -125,14 +125,26 @@ Make the two thresholds prototype URL parameters (`nmax`, `wmax`, defaults 34 / 
 alternatives can be compared without code edits.
 
 **Acceptance criteria:**
-- [ ] The probe shows each boundary value with its resulting footprint (normal / wide / full).
-- [ ] Changing `nmax` / `wmax` in the URL re-renders with the new thresholds.
-- [ ] Nothing outside the prototype changes.
+- [x] The probe shows each boundary value with its resulting footprint (normal / wide / full).
+- [x] Changing `nmax` / `wmax` in the URL re-renders with the new thresholds.
+- [x] Nothing outside the prototype changes.
 
 **Verification:**
-- [ ] Screenshots of the probe at LG, XL and Narrow with 34 / 72 and with one alternative pair
+- [x] Screenshots of the probe at LG, XL and Narrow with 34 / 72 and with one alternative pair
   (e.g. 28 / 64) for comparison.
-- [ ] CDP overflow check over the probe × MD/LG/XL/Narrow: no overflow.
+- [x] CDP overflow check over the probe × MD/LG/XL/Narrow: no overflow.
+
+**Result:**
+- Dataset `probe` (18 fields) is built at render time from the current thresholds.
+- `?nmax=&wmax=` set the thresholds; `?fp=1` prints `length → footprint` next to each A4
+  label.
+- `app.js` now keeps `nmax`, `wmax` and `fp` when it rewrites the URL.
+- Probe lengths verified equal to their labels at 34/72 and 28/64.
+- Screenshots: LG, XL and Narrow at 34/72; LG and XL at 28/64.
+- Overflow: A4 and A4G are clean at both pairs.
+- The only hit is template E on the probe: its intentionally truncated (`truncate`) label
+  "Last successful replication consistency check" is ellipsised by design. That is not a layout
+  overflow, and A–E are unchanged.
 
 **Dependencies:** Task 1. **Files:** `data.js`, `templates.js`, `app.js`. **Scope:** S
 

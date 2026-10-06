@@ -52,10 +52,18 @@ function footprintA4(f) {
 
 // A4 cell: A1 typography (11.5px medium label, 2 px step, mono at full contrast).
 const A4_VALUE = { mono: 'font-mono text-[12.5px] text-text-primary', monoLink: 'font-mono text-[12.5px]', secondary: 'mt-0.5 text-[11.5px] leading-4' }
+// ?fp=1 prints each field's measured length and footprint next to its label (A4 only).
+const SHOW_FOOTPRINT = thresholdParams.get('fp') === '1'
+function footprintNote(f) {
+  if (!SHOW_FOOTPRINT) return ''
+  const measure = isEmpty(f) ? 'empty' : isNode(f) ? `node${f.wide ? '+wide' : ''}` : String(f.value).length
+  return ` <span class="font-mono text-[10px] text-accent">${measure} → ${footprintA4(f)}</span>`
+}
+
 function a4Cell(f) {
   return `
         <div class="ov-a4__item" data-span="${footprintA4(f)}">
-          ${label(f, 'text-[11.5px] font-medium leading-4 text-text-muted')}
+          <dt class="text-[11.5px] font-medium leading-4 text-text-muted">${esc(f.label)}${footprintNote(f)}</dt>
           <dd class="mt-0.5">${value(f, 'text-sm leading-5', A4_VALUE)}</dd>
         </div>`
 }

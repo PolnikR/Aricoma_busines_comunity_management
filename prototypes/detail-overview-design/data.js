@@ -131,4 +131,49 @@ const DATASETS = {
       'Contact email': 'sap-basis-operations-escalation@aricoma-infrastructure-services.com',
     },
   },
+
+  // Values just below, at and above both footprint thresholds (THRESHOLDS in templates.js,
+  // ?nmax=&wmax=), across the value kinds Overviews show. Built at render time so the
+  // boundaries follow the thresholds in the URL.
+  probe: {
+    name: 'Threshold probe · 18',
+    entity: 'Footprint probe',
+    title: 'Threshold probe',
+    statuses: [['info', 'Prototype']],
+    sections: ['Overview', 'Technical'],
+    get fields() {
+      const n = THRESHOLDS.normal
+      const w = THRESHOLDS.wide
+      const prose = 'Primary site storage for tier-1 workloads in DC Prague South '
+      const path = '/vmfs/volumes/5f1c2a8e-3b9d4e7a/SAP-PRD-APP-01/disks/'
+      const email = len => `${sized('sap-basis-operations-escalation-team', len - 12)}@aricoma.com`
+      return [
+        { label: `Description · ${n - 1}`, value: sized(prose, n - 1) },
+        { label: `Description · ${n}`, value: sized(prose, n) },
+        { label: `Description · ${n + 1}`, value: sized(prose, n + 1) },
+        { label: `Email · ${n}`, value: email(n) },
+        { label: `Email · ${n + 1}`, value: email(n + 1) },
+        { label: 'Group ID · 36', value: '5f1c2a8e-3b9d-4e7a-9c61-0d2f8a7b4e13', mono: true, copy: true },
+        { label: `Description · ${w - 1}`, value: sized(prose, w - 1) },
+        { label: `Description · ${w}`, value: sized(prose, w) },
+        { label: `Description · ${w + 1}`, value: sized(prose, w + 1) },
+        { label: `Path · ${w - 1}`, value: sized(path, w - 1), mono: true, copy: true },
+        { label: `Path · ${w + 1}`, value: sized(path, w + 1), mono: true, copy: true },
+        { label: 'URL (link, no wide)', value: 'https://fs7300-prg-south-mgmt.storage.abco.aricoma.cz:7443/gui', href: '#', external: true },
+        { label: 'URL (link, wide)', value: 'https://fs7300-prg-south-mgmt.storage.abco.aricoma.cz:7443/gui', href: '#', external: true, wide: true },
+        { label: 'OS', value: sized('Microsoft Windows Server 2022 Datacenter Edition (64-bit) ', w - 1) },
+        { label: 'Last successful replication consistency check', value: '15 min' },
+        { label: 'Connection state', value: 'Connected', badge: 'success', secondary: 'Checked 2 min ago' },
+        { label: 'Owner', value: null },
+        { label: `Cluster · ${n + 1}`, value: sized('PRG-SOUTH-PRODUCTION-CLUSTER-01-', n + 1), secondary: 'esx-prg-07.abco.local' },
+      ]
+    },
+    long: {},
+  },
+}
+
+// Realistic text cut to exactly `length` characters, never ending in a space.
+function sized(text, length) {
+  const cut = text.repeat(Math.ceil(length / text.length) + 1).slice(0, length)
+  return cut.endsWith(' ') ? `${cut.slice(0, -1)}.` : cut
 }
