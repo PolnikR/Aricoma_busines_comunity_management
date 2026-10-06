@@ -515,8 +515,8 @@ describe('RecoveryGroupsTable', () => {
     const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
     expect(within(detail).getByRole('button', { name: 'Edit' })).toBeDisabled()
     expect(within(detail).getByRole('button', { name: 'Delete' })).toBeEnabled()
-    await user.click(within(within(detail).getByRole('navigation', { name: 'Sections' })).getByRole('button', { name: 'Technical' }))
-    expect(within(detail).getByRole('region', { name: 'Technical' })).toHaveTextContent('removed-vmware-provider')
+    // The unresolved provider ID is still shown, now as the Overview Provider ID field.
+    expect(within(within(detail).getByRole('region', { name: 'Overview' })).getByText('Provider ID').nextElementSibling).toHaveTextContent('removed-vmware-provider')
   })
 
   describe('DetailView', () => {
@@ -560,25 +560,34 @@ describe('RecoveryGroupsTable', () => {
       expect(within(detail).queryByText('Latest run status')).not.toBeInTheDocument()
     })
 
-    it('lists the sections with Technical last and the resource count on Inventory', async () => {
+    it('lists the original sections Overview, Orchestration and Inventory, with the resource count on Inventory', async () => {
       const { detail } = await openDetail(getDatabaseGroup())
       const items = within(within(detail).getByRole('navigation', { name: 'Sections' })).getAllByRole('button')
-      expect(items.map(item => item.textContent)).toEqual(['Overview', 'Orchestration', 'Inventory2', 'Technical'])
+      expect(items.map(item => item.textContent)).toEqual(['Overview', 'Orchestration', 'Inventory2'])
+      expect(within(detail).queryByRole('button', { name: 'Technical' })).not.toBeInTheDocument()
     })
 
-    it('shows general and workload fields without status or provider IDs in Overview', async () => {
+    it('shows the original fields in order in one Overview, without General / Workload headings', async () => {
       const { detail } = await openDetail(getDatabaseGroup())
       const overview = within(detail).getByRole('region', { name: 'Overview' })
 
-      expect(within(overview).getByRole('heading', { name: 'General' })).toBeInTheDocument()
-      expect(within(overview).getByRole('heading', { name: 'Workload' })).toBeInTheDocument()
+      expect(within(overview).queryByRole('heading', { name: 'General' })).not.toBeInTheDocument()
+      expect(within(overview).queryByRole('heading', { name: 'Workload' })).not.toBeInTheDocument()
+      expect(overview.querySelectorAll('dl')).toHaveLength(1)
+      expect([...overview.querySelectorAll('dt')].map(term => term.textContent)).toEqual([
+        'Description', 'Policy Set', 'Provider ID', 'Source Category', 'Workload Type', 'Resource Type', 'Resources', 'Status',
+      ])
       expect(overview).toHaveTextContent('Primary database virtual machines')
       expect(overview).toHaveTextContent('Compute workloads')
       expect(overview).toHaveTextContent('VMware virtual machines')
       expect(within(overview).getByText('Resource Type').nextElementSibling).toHaveTextContent(/^VM$/)
       expect(overview).not.toHaveTextContent('Resource type: VM')
-      expect(overview).not.toHaveTextContent('Active')
-      expect(overview).not.toHaveTextContent('vmware-vcenter-01')
+      // Provider ID moved back from Technical: monospace and copyable.
+      expect(within(overview).getByText('vmware-vcenter-01')).toHaveClass('font-mono')
+      expect(within(overview).getByRole('button', { name: 'Copy Provider ID' })).toBeInTheDocument()
+      // Status is a header badge and an Overview field.
+      expect(within(overview).getByText('Status').nextElementSibling).toHaveTextContent('Active')
+      expect(within(detail).getByRole('heading', { level: 2 }).closest('header')).toHaveTextContent('Active')
     })
 
     it('shows "Not set" for an empty description', async () => {
@@ -623,13 +632,12 @@ describe('RecoveryGroupsTable', () => {
       expect(within(detail).queryByRole('region', { name: 'Overview' })).not.toBeInTheDocument()
     })
 
-    it('lists the real identifiers in Technical', async () => {
-      const { user, detail } = await openDetail({ ...getDatabaseGroup(), pushToOrchestrator: true, orchestrationProviderId: 'airflow-01', airflowRunId: 'run-1' })
-      const technical = await openSection(user, detail, 'Technical')
-      for (const value of ['database-group', 'tier2-apps', 'vmware-vcenter-01', 'ibm-flashsystem-01', 'airflow-01', 'run-1']) {
-        expect(technical).toHaveTextContent(value)
+    it('does not move the other former Technical identifiers into Overview', async () => {
+      const { detail } = await openDetail({ ...getDatabaseGroup(), pushToOrchestrator: true, orchestrationProviderId: 'airflow-01', airflowRunId: 'run-1' })
+      const overview = within(detail).getByRole('region', { name: 'Overview' })
+      for (const value of ['database-group', 'tier2-apps', 'ibm-flashsystem-01', 'airflow-01', 'run-1']) {
+        expect(overview).not.toHaveTextContent(value)
       }
-      expect(within(technical).getByRole('button', { name: 'Copy Group ID' })).toBeInTheDocument()
     })
 
     it('shows the entity, the status badge and the orchestration fact in the header', async () => {
@@ -767,7 +775,7 @@ describe('RecoveryGroupsTable', () => {
 
       await user.click(screen.getByText('Database group'))
       let detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
-      await user.click(navItem(detail, 'Technical'))
+      await user.click(navItem(detail, 'Orchestration'))
       await user.click(within(detail).getByRole('button', { name: 'Close recovery group detail' }))
 
       await user.click(screen.getByText('Power group'))

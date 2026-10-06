@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ApiIcon, ExecutionIcon, GridIcon, ServerIcon } from '@/shared/icons/Icons'
+import { ExecutionIcon, GridIcon, ServerIcon } from '@/shared/icons/Icons'
 import { useNavigate } from 'react-router'
 import { routes } from '@/app/routes'
 import { Badge } from '@/shared/components/badge/Badge'
@@ -17,8 +17,7 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import {
   DetailField,
-  DetailFieldGroup,
-  DetailTechnicalGroup,
+  DetailOverview,
   DetailView,
   DetailViewSection,
 } from '@/shared/components/detail-view'
@@ -71,6 +70,16 @@ interface RecoveryGroupFilters {
 const EMPTY_FILTERS: RecoveryGroupFilters = {
   workloadType: '',
   resourceType: '',
+}
+
+// The group status, both a detail header status and an Overview field.
+function RecoveryGroupStatusBadge({ status }: { status: RecoveryGroup['status'] }) {
+  const { t } = useTranslation()
+  return (
+    <Badge color={status === 'Active' ? 'success' : 'warning'} size="sm">
+      {t(status === 'Active' ? 'tables.recoveryGroups.active' : 'tables.recoveryGroups.draft')}
+    </Badge>
+  )
 }
 
 export function RecoveryGroupsTable({
@@ -418,9 +427,7 @@ export function RecoveryGroupsTable({
           entityLabel={t('drawer.entity.recoveryGroup')}
           title={selected.name}
           statuses={[
-            <Badge key="status" color={selected.status === 'Active' ? 'success' : 'warning'} size="sm">
-              {t(selected.status === 'Active' ? 'tables.recoveryGroups.active' : 'tables.recoveryGroups.draft')}
-            </Badge>,
+            <RecoveryGroupStatusBadge key="status" status={selected.status} />,
             selected.providerResolution === 'unresolved' ? (
               <Badge key="provider" color="warning" size="sm">{t('pages.recoveryGroups.providerUnavailable')}</Badge>
             ) : null,
@@ -467,17 +474,12 @@ export function RecoveryGroupsTable({
             </>
           }
         >
-          <DetailViewSection
-            id="overview"
-            title={t('details.tabs.overview')}
-            icon={GridIcon}
-            description={t('recoveryGroups.detail.overviewDescription')}
-          >
-            <DetailFieldGroup title={t('recoveryGroups.detail.general')}>
+          <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
+            {/* The fields in the order of the original detail drawer; Status is also a header badge. */}
+            <DetailOverview>
               <DetailField label={t('details.description')} value={selected.description} wide />
               <DetailField label={t('tables.recoveryGroups.policySet')} value={policySetName(selected.policySetId)} emphasis />
-            </DetailFieldGroup>
-            <DetailFieldGroup title={t('recoveryGroups.detail.workload')}>
+              <DetailField label={t('details.providerId')} value={selected.providerId} mono copyValue={selected.providerId ?? undefined} />
               <DetailField label={t('tables.recoveryGroups.sourceCategory')} value={t(getSourceCategoryLabelKey(selected.sourceCategory))} />
               <DetailField label={t('tables.recoveryGroups.workloadType')} value={t(getWorkloadTypeLabelKey(selected.workloadType))} />
               <DetailField
@@ -485,7 +487,8 @@ export function RecoveryGroupsTable({
                 value={t(selected.resourceType === 'vm' ? 'recoveryGroups.resourceType.vm' : 'recoveryGroups.resourceType.volume')}
               />
               <DetailField label={t('tables.recoveryGroups.resources')} value={String(selected.resourceCount)} />
-            </DetailFieldGroup>
+              <DetailField label={t('tables.recoveryGroups.status')} value={<RecoveryGroupStatusBadge status={selected.status} />} />
+            </DetailOverview>
           </DetailViewSection>
           <DetailViewSection
             id="orchestration"
@@ -515,29 +518,6 @@ export function RecoveryGroupsTable({
             <div className="-mx-5 -mt-4">
               <RecoveryGroupInventory runId={selected.airflowRunId ?? null} active />
             </div>
-          </DetailViewSection>
-          <DetailViewSection
-            id="technical"
-            title={t('detailView.technical')}
-            icon={ApiIcon}
-            description={t('detailView.technicalDescription')}
-            secondary
-          >
-            <DetailTechnicalGroup title={t('drawer.entity.recoveryGroup')}>
-              <DetailField label={t('recoveryGroups.detail.groupId')} value={selected.id} copyValue={selected.id} />
-              <DetailField label={t('recoveryGroups.detail.policySetId')} value={selected.policySetId} copyValue={selected.policySetId} />
-              {selected.consistencyGroupId ? (
-                <DetailField label={t('recoveryGroups.detail.consistencyGroupId')} value={selected.consistencyGroupId} copyValue={selected.consistencyGroupId} />
-              ) : null}
-            </DetailTechnicalGroup>
-            <DetailTechnicalGroup title={t('recoveryGroups.detail.providers')}>
-              <DetailField label={t('recoveryGroups.detail.resourceProviderId')} value={selected.providerId} copyValue={selected.providerId ?? undefined} />
-              <DetailField label={t('recoveryGroups.detail.volumeProviderId')} value={selected.relatedVolumeProviderId} copyValue={selected.relatedVolumeProviderId ?? undefined} />
-              <DetailField label={t('recoveryGroups.detail.orchestrationProviderId')} value={selected.orchestrationProviderId} copyValue={selected.orchestrationProviderId ?? undefined} />
-            </DetailTechnicalGroup>
-            <DetailTechnicalGroup title={t('details.tabs.orchestration')}>
-              <DetailField label={t('tables.recoveryGroups.airflowRunId')} value={selected.airflowRunId} copyValue={selected.airflowRunId ?? undefined} />
-            </DetailTechnicalGroup>
           </DetailViewSection>
         </DetailView>
       ) : null}
