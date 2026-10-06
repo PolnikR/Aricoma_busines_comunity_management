@@ -23,7 +23,7 @@ const initialFilters: PowerFilters = {
 interface PowerInventoryViewProps {
   resources: PowerPartitionResource[]
   error?: ResourceInventoryPanelError | null
-  // Already loaded providers, passed to the drawer to name backing storage providers.
+  // Already loaded providers, passed to the detail view to name backing storage providers.
   providers?: ProviderRecord[]
   t: Translate
 }

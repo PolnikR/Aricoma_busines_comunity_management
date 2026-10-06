@@ -51,3 +51,10 @@ Plan: `tasks/recovery-group-metro-mirror-chain-plan.md`
 - Deviations from D3: Mode is a fact in `DetailStatusBlock` (one reference row only), not next to
   the queried provider; "Show technical JSON" keeps the existing `ResponseBodyViewer` disclosure;
   problem nodes use the shared problem style (mono name).
+
+## Known limitation (non-blocking)
+- `RelationshipGraph` validates a controlled `activeEntityId` through the edge adjacency map
+  (`RelationshipGraph.tsx`, `adjacency.has(activeEntityId)`), so a rendered node with no edge (an
+  isolated node, e.g. every node of the feature-local FlashCopy fan-out, which renders with
+  `edges={[]}`) cannot be highlighted externally. No current production interaction depends on this;
+  no change is required for this release.

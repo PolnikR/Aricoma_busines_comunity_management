@@ -129,7 +129,7 @@ function getColumns(
 interface ProvidersCatalogueTableProps {
   providers: ProviderRecord[]
   allProviders: ProviderRecord[]
-  // State of the all-providers query, shown by the relationships in the drawer help.
+  // State of the all-providers query, shown by the relationships in the detail help.
   allProvidersLoading?: boolean
   allProvidersError?: boolean
   roleFilter: ProviderRoleFilter

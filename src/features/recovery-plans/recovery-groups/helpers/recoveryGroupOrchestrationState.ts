@@ -21,7 +21,7 @@ interface LatestRunState {
   error: Error | null
 }
 
-// States A–E of the Model C drawer plan (tasks/detail-drawer-model-c-plan.md §5).
+// States A–E of the Model C plan (tasks/detail-drawer-model-c-plan.md §5).
 // Only "notOrchestrated" (A) means orchestration is not configured; every other
 // state is a configured orchestration with incomplete or pending data.
 export type OrchestrationState =
@@ -59,7 +59,7 @@ export function getRecoveryGroupOrchestrationState(
   return { kind: 'lastRun', providerName, run: latest.latestRun }
 }
 
-// Short fact for the drawer meta row; null leaves the fact out (pending or failed data).
+// Short fact for the detail meta row; null leaves the fact out (pending or failed data).
 export function orchestrationMetaText(state: OrchestrationState, t: Translate): string | null {
   switch (state.kind) {
     case 'notOrchestrated': return t('recoveryGroups.drawer.notOrchestrated')

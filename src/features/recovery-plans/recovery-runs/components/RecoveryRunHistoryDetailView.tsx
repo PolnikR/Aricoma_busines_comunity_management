@@ -27,7 +27,7 @@ interface RecoveryRunHistoryDetailViewProps {
 }
 
 // Full paginated history for exactly one entity (Application or Recovery
-// Group), fetched only while this drawer is open — the overview table never
+// Group), fetched only while this detail view is open — the overview table never
 // fetches more than each entity's latest run.
 export function RecoveryRunHistoryDetailView({ entity, onClose }: RecoveryRunHistoryDetailViewProps) {
   const { t } = useTranslation()

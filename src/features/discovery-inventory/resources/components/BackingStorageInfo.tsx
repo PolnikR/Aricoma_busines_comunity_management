@@ -182,7 +182,7 @@ export function BackingStorageInfo({ volumes, isLoading, isError, isFetching, on
   else content = volumes.map(volume => <BackingStorageVolume key={volume.key} volume={volume} providers={providers} identity={identity} />)
 
   return (
-    // Own container, so the layout steps work in any drawer that hosts this section.
+    // Own container, so the layout steps work in any detail view that hosts this section.
     <div className="@container/backing-storage">
       <DataTableRequestState
         error={isError ? {

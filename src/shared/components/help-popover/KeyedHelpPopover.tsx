@@ -13,7 +13,7 @@ interface KeyedHelpPopoverProps {
 }
 
 // A HelpPopover whose texts follow one locale key convention, so every detail
-// drawer's "?" reads the same way:
+// view's "?" reads the same way:
 //   `${helpKey}.trigger`  accessible label of the "?" button
 //   `${helpKey}.title`    popover title
 //   `${helpKey}.intro`    first paragraph

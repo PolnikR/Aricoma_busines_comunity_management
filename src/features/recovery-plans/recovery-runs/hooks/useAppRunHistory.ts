@@ -23,7 +23,7 @@ function shouldFastPollHistory(query: Pick<Query<OrchestratorRunsResponse>, 'sta
 }
 
 // Full paginated run history for exactly one app — only fetched once a
-// drawer is actually opened for that app, never upfront for every app.
+// detail view is actually opened for that app, never upfront for every app.
 export function useAppRunHistory({ providerId, dagId, page, pageSize }: UseAppRunHistoryOptions) {
   const enabled = Boolean(providerId) && Boolean(dagId)
 
