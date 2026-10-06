@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Detail Overview Templates</title>
+<!-- Production stylesheet served by the Vite dev server: open via http://localhost:5173/prototypes/detail-overview-design/ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="module">import "/src/index.css"</script>
+<style>
+/* Layout principles of the templates. Plain CSS with the production tokens, so every rule
+   reads as one decision. All column counts come from the content width (container queries,
+   auto-fill tracks), never from a fixed number. */
+.detail-content { container: detail / inline-size; }
+
+/* A · Responsive auto-grid: label above value, tracks of at least 12rem, airy, no lines. */
+.ov-a { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(12rem, 100%), 1fr)); grid-auto-flow: row dense; gap: 1.25rem 2rem; }
+.ov-a [data-span="full"] { grid-column: 1 / -1; }
+@container detail (min-width: 26rem) { .ov-a [data-span="wide"] { grid-column: span 2; } }
+
+/* B · Definition matrix: a ruled data matrix with table-header labels. Right/bottom rules
+   per cell; the outer frame clips the last ones, so gaps in the last row read as empty cells. */
+.ov-b { border: 1px solid var(--color-border); border-radius: 0.75rem; overflow: hidden; }
+.ov-b dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(13rem, 100%), 1fr)); grid-auto-flow: row dense; margin: 0 -1px -1px 0; }
+.ov-b__cell { min-width: 0; padding: 0.75rem 1rem; box-shadow: inset -1px 0 0 var(--color-border), inset 0 -1px 0 var(--color-border); }
+.ov-b [data-span="full"] { grid-column: 1 / -1; }
+@container detail (min-width: 28rem) { .ov-b [data-span="wide"] { grid-column: span 2; } }
+
+/* C · Information surface: one recessed surface, "label | value" rows with a fixed label
+   column, splitting into side-by-side row columns only when each can hold a 21rem row. */
+.ov-c { border-radius: 0.75rem; background: color-mix(in srgb, var(--color-surface-muted) 65%, transparent); overflow: hidden; }
+.ov-c dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(21rem, 100%), 1fr)); grid-auto-flow: row dense; margin: -1px 0 0 -1px; }
+.ov-c__row { display: grid; grid-template-columns: 8rem minmax(0, 1fr); align-items: start; column-gap: 1rem; padding: 0.625rem 1rem; box-shadow: inset 0 1px 0 var(--color-border), inset 1px 0 0 var(--color-border); }
+.ov-c [data-span="wide"], .ov-c [data-span="full"] { grid-column: 1 / -1; }
+@container detail (max-width: 24rem) { .ov-c__row { grid-template-columns: minmax(0, 1fr); row-gap: 0.125rem; } }
+
+/* D · Editorial: a lead column (key facts large, prose) beside a facts grid; stacked when narrow. */
+.ov-d { display: grid; gap: 1.5rem; }
+.ov-d__lead { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+.ov-d__facts { container: facts / inline-size; min-width: 0; }
+.ov-d__facts dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(10.5rem, 100%), 1fr)); grid-auto-flow: row dense; gap: 1.125rem 1.75rem; }
+.ov-d__facts [data-span="full"] { grid-column: 1 / -1; }
+@container facts (min-width: 22rem) { .ov-d__facts [data-span="wide"] { grid-column: span 2; } }
+.ov-d[data-split="yes"] .ov-d__facts { border-top: 1px solid var(--color-border); padding-top: 1.5rem; }
+@container detail (min-width: 38rem) {
+  .ov-d[data-split="yes"] { grid-template-columns: minmax(12rem, 2fr) minmax(0, 3fr); gap: 0; }
+  .ov-d[data-split="yes"] .ov-d__lead { padding-right: 2rem; }
+  .ov-d[data-split="yes"] .ov-d__facts { border-top: 0; padding-top: 0; border-left: 1px solid var(--color-border); padding-left: 2rem; }
+}
+
+/* E · Compact property sheet: dense "label value" rows flowing top-to-bottom in newspaper
+   columns of at least 18.5rem (multi-column), long values as full-width rows underneath. */
+.ov-e__cols { column-width: 18.5rem; column-gap: 2rem; column-rule: 1px solid var(--color-border); }
+.ov-e__row { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); column-gap: 0.75rem; align-items: start; padding: 0.3125rem 0; break-inside: avoid; border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); }
+.ov-e__full { margin-top: 0.75rem; border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); }
+.ov-e__full .ov-e__row:last-child { border-bottom: 0; }
+.ov-e__full .ov-e__row { grid-template-columns: 7.5rem minmax(0, 68ch); }
+@container detail (max-width: 22rem) {
+  .ov-e__row { grid-template-columns: 6.5rem minmax(0, 1fr); }
+  .ov-e__full .ov-e__row { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Prototype controls only */
+.seg { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: 0.5rem; overflow: hidden; }
+.seg button { padding: 0.25rem 0.625rem; font-weight: 500; }
+.seg button + button { border-left: 1px solid var(--color-border-strong); }
+.seg button[aria-pressed="true"] { background: var(--color-accent-soft); color: var(--color-accent); font-weight: 600; }
+</style>
+</head>
+<body class="min-h-dvh font-outfit">
+
+<!-- Prototype controls (not part of the design) -->
+<div class="sticky top-0 z-60 flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-border bg-surface px-4 py-2.5 text-xs text-text-secondary">
+  <strong class="text-accent">PROTOTYPE · Overview templates</strong>
+  <span class="flex items-center gap-2">Template <span class="seg" id="ctl-t" role="group" aria-label="Template"></span></span>
+  <label class="flex items-center gap-2">Dataset
+    <select id="ctl-d" class="h-7 rounded-md border border-border-strong bg-surface-subtle px-2"></select>
+  </label>
+  <span class="flex items-center gap-2">Width <span class="seg" id="ctl-w" role="group" aria-label="Width"></span></span>
+  <span class="flex items-center gap-2">Values <span class="seg" id="ctl-v" role="group" aria-label="Values"></span></span>
+  <label class="flex items-center gap-1.5"><input id="ctl-all" type="checkbox"> All templates</label>
+  <label class="flex items-center gap-1.5" title="Drop the fixed 46rem dialog height to see the whole Overview"><input id="ctl-fit" type="checkbox"> Fit height</label>
+  <label class="flex items-center gap-1.5"><input id="ctl-dark" type="checkbox"> Dark</label>
+</div>
+
+<main id="stage" class="flex flex-col items-center gap-10 px-4 py-8"></main>
+
+<script src="data.js"></script>
+<script src="templates.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
