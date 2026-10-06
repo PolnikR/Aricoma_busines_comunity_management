@@ -53,11 +53,22 @@ describe('DetailView dialog', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('opens expanded as a modal dialog with focus on Close', () => {
+  it('opens as a centred modal dialog with focus on Close', () => {
     const { dialog } = renderView()
     expect(dialog).toHaveAttribute('aria-modal', 'true')
-    expect(dialog).toHaveAttribute('data-mode', 'expanded')
+    expect(dialog).toHaveClass('top-1/2', 'left-1/2', '-translate-x-1/2', '-translate-y-1/2')
     expect(within(dialog).getByRole('button', { name: 'Close detail' })).toHaveFocus()
+  })
+
+  it('has a single centred mode without a mode toggle or resize handle', () => {
+    const { dialog } = renderView({ headerActions: <button type="button">Help</button> })
+    expect(dialog).not.toHaveAttribute('data-mode')
+    expect(within(dialog).queryByRole('separator')).not.toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: 'Compact view' })).not.toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: 'Expand' })).not.toBeInTheDocument()
+    const header = within(dialog).getByRole('heading', { level: 2 }).closest('header')
+    if (!header) throw new Error('Expected the detail header')
+    expect(within(header).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Help', 'Close detail'])
   })
 
   it('shows entity, title, statuses and meta in the header without empty status slots', () => {
@@ -87,7 +98,7 @@ describe('DetailView dialog', () => {
     const edit = within(dialog).getByRole('button', { name: 'Edit' })
     edit.focus()
     fireEvent.keyDown(window, { key: 'Tab' })
-    expect(within(dialog).getByRole('button', { name: 'Compact view' })).toHaveFocus()
+    expect(within(dialog).getByRole('button', { name: 'Help' })).toHaveFocus()
     fireEvent.keyDown(window, { key: 'Tab', shiftKey: true })
     expect(edit).toHaveFocus()
     close.focus()
@@ -190,6 +201,31 @@ describe('DetailView sections', () => {
     expect(within(within(dialog).getByRole('navigation')).getAllByRole('button').map(item => item.textContent)).toEqual(['First', 'Second'])
   })
 
+  it('reopens on the first section after closing', async () => {
+    const user = userEvent.setup()
+    const { dialog, rerender } = renderView()
+    await user.click(navItem(dialog, 'Technical'))
+
+    const view = (open: boolean) => (
+      <DetailView open={open} onClose={vi.fn()} title="db_and_app" ariaLabel="Recovery group detail" closeLabel="Close detail">
+        <DetailViewSection id="overview" title="Overview"><p>Overview content</p></DetailViewSection>
+        <DetailViewSection id="technical" title="Technical"><p>Technical content</p></DetailViewSection>
+      </DetailView>
+    )
+    rerender(view(false))
+    rerender(view(true))
+    const reopened = screen.getByRole('dialog', { name: 'Recovery group detail' })
+    expect(within(reopened).getByRole('region', { name: 'Overview' })).toBeInTheDocument()
+  })
+
+  it('wraps the navigation above the content on narrow screens and stacks it vertically from sm', () => {
+    const { dialog } = renderView()
+    const navigation = within(dialog).getByRole('navigation', { name: 'Sections' })
+    expect(navigation).toHaveClass('flex-wrap', 'border-b', 'sm:w-52', 'sm:flex-col', 'sm:flex-nowrap', 'sm:border-r')
+    expect(navigation.parentElement).toHaveClass('flex-col', 'sm:flex-row')
+    expect(navItem(dialog, 'Technical')).toHaveClass('sm:mt-auto')
+  })
+
   it('renders arbitrary React content and drops the padding for flush sections', async () => {
     const user = userEvent.setup()
     const { dialog } = renderView()
@@ -202,51 +238,8 @@ describe('DetailView sections', () => {
   })
 })
 
-describe('DetailView modes', () => {
-  it('switches to compact and back, keeping the section and its mounted content', async () => {
-    const user = userEvent.setup()
-    const { dialog } = renderView()
-    await user.click(navItem(dialog, 'Inventory'))
-    await user.click(within(dialog).getByRole('button', { name: 'Expand inventory' }))
-
-    await user.click(within(dialog).getByRole('button', { name: 'Compact view' }))
-    const compact = screen.getByRole('dialog', { name: 'Recovery group detail' })
-    expect(compact).toBe(dialog)
-    expect(compact).toHaveAttribute('data-mode', 'compact')
-    expect(within(compact).getByRole('separator', { name: 'Resize panel' })).toBeInTheDocument()
-    expect(navItem(compact, 'Inventory')).toHaveAttribute('aria-current', 'true')
-    expect(within(compact).getByRole('region', { name: 'Inventory' })).toHaveTextContent('Inventory expanded')
-
-    const expand = within(compact).getByRole('button', { name: 'Expand' })
-    await user.click(expand)
-    expect(dialog).toHaveAttribute('data-mode', 'expanded')
-    expect(within(dialog).queryByRole('separator')).not.toBeInTheDocument()
-    expect(within(dialog).getByRole('button', { name: 'Compact view' })).toHaveFocus()
-    expect(within(dialog).getByRole('region', { name: 'Inventory' })).toHaveTextContent('Inventory expanded')
-  })
-
-  it('resets to expanded on the first section after closing', async () => {
-    const user = userEvent.setup()
-    const { dialog, rerender } = renderView()
-    await user.click(navItem(dialog, 'Technical'))
-    await user.click(within(dialog).getByRole('button', { name: 'Compact view' }))
-
-    const view = (open: boolean) => (
-      <DetailView open={open} onClose={vi.fn()} title="db_and_app" ariaLabel="Recovery group detail" closeLabel="Close detail">
-        <DetailViewSection id="overview" title="Overview"><p>Overview content</p></DetailViewSection>
-        <DetailViewSection id="technical" title="Technical"><p>Technical content</p></DetailViewSection>
-      </DetailView>
-    )
-    rerender(view(false))
-    rerender(view(true))
-    const reopened = screen.getByRole('dialog', { name: 'Recovery group detail' })
-    expect(reopened).toHaveAttribute('data-mode', 'expanded')
-    expect(within(reopened).getByRole('region', { name: 'Overview' })).toBeInTheDocument()
-  })
-})
-
 describe('DetailView sizes', () => {
-  it('defaults to the lg expanded width', () => {
+  it('defaults to the lg width', () => {
     const { dialog } = renderView()
     expect(dialog).toHaveAttribute('data-size', 'lg')
     expect(dialog).toHaveClass('w-[min(60rem,calc(100vw-2rem))]')
@@ -256,18 +249,10 @@ describe('DetailView sizes', () => {
     ['md', 'w-[min(55rem,calc(100vw-2rem))]'],
     ['lg', 'w-[min(60rem,calc(100vw-2rem))]'],
     ['xl', 'w-[min(75rem,calc(100vw-2rem))]'],
-  ] as const)('maps size %s to a viewport-capped expanded width', (size, widthClass) => {
+  ] as const)('maps size %s to a viewport-capped width', (size, widthClass) => {
     const { dialog } = renderView({ size })
     expect(dialog).toHaveAttribute('data-size', size)
     expect(dialog).toHaveClass(widthClass)
-  })
-
-  it('keeps the compact width independent of the size', async () => {
-    const user = userEvent.setup()
-    const { dialog } = renderView({ size: 'xl' })
-    await user.click(within(dialog).getByRole('button', { name: 'Compact view' }))
-    expect(dialog).toHaveClass('w-[min(420px,92vw)]')
-    expect(dialog).not.toHaveClass('w-[min(75rem,calc(100vw-2rem))]')
   })
 })
 

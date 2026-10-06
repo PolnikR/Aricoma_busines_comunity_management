@@ -282,7 +282,7 @@ describe('ClientsSection', () => {
     expect(screen.queryByRole('tab', { name: /settings|roles/i })).not.toBeInTheDocument()
     const header = drawer.getByRole('heading', { level: 2 }).closest('header')
     if (!header) throw new Error('Expected the detail header')
-    expect(within(header).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Compact view', 'Client help', 'Close client detail'])
+    expect(within(header).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Client help', 'Close client detail'])
     expect(drawer.element.querySelector('footer')).toBeNull()
     await userEvent.click(drawer.getByRole('button', { name: 'Client help' }))
     expect(screen.getByRole('dialog', { name: 'What a client is' })).toHaveTextContent('Client type')

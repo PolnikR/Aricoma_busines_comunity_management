@@ -550,10 +550,9 @@ describe('RecoveryGroupsTable', () => {
       return element
     }
 
-    it('opens expanded with Overview active and only one section rendered', async () => {
+    it('opens with Overview active and only one section rendered', async () => {
       const { detail } = await openDetail(getDatabaseGroup())
 
-      expect(detail).toHaveAttribute('data-mode', 'expanded')
       expect(navItem(detail, 'Overview')).toHaveAttribute('aria-current', 'true')
       expect(within(detail).getAllByRole('region')).toHaveLength(1)
       const overview = within(detail).getByRole('region', { name: 'Overview' })
@@ -730,29 +729,13 @@ describe('RecoveryGroupsTable', () => {
       )
     })
 
-    it('switches to compact and back keeping the selected group and section', async () => {
-      const { user, detail } = await openDetail(getDatabaseGroup())
-      await openSection(user, detail, 'Orchestration')
-
-      await user.click(within(detail).getByRole('button', { name: 'Compact view' }))
-      expect(detail).toHaveAttribute('data-mode', 'compact')
-      expect(within(detail).getByRole('heading', { level: 2, name: 'Database group' })).toBeInTheDocument()
-      expect(navItem(detail, 'Orchestration')).toHaveAttribute('aria-current', 'true')
-
-      await user.click(within(detail).getByRole('button', { name: 'Expand' }))
-      expect(detail).toHaveAttribute('data-mode', 'expanded')
-      expect(within(detail).getByRole('region', { name: 'Orchestration' })).toBeInTheDocument()
-    })
-
-    it('closes the detail from the close button and on Escape in compact mode', async () => {
-      const { user, detail } = await openDetail(getDatabaseGroup())
-      await user.click(within(detail).getByRole('button', { name: 'Compact view' }))
+    it('closes the detail on Escape and from the close button', async () => {
+      const { user } = await openDetail(getDatabaseGroup())
       await user.keyboard('{Escape}')
       expect(screen.queryByRole('dialog', { name: 'Recovery group detail' })).not.toBeInTheDocument()
 
       await user.click(screen.getByText('Database group'))
       const reopened = await screen.findByRole('dialog', { name: 'Recovery group detail' })
-      expect(reopened).toHaveAttribute('data-mode', 'expanded')
       await user.click(within(reopened).getByRole('button', { name: 'Close recovery group detail' }))
       expect(screen.queryByRole('dialog', { name: 'Recovery group detail' })).not.toBeInTheDocument()
     })
@@ -778,19 +761,17 @@ describe('RecoveryGroupsTable', () => {
       expect(screen.queryByRole('dialog', { name: 'Recovery group detail' })).not.toBeInTheDocument()
     })
 
-    it('starts the next group on Overview in expanded mode', async () => {
+    it('starts the next group on Overview', async () => {
       const user = userEvent.setup()
       renderTable(<RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />)
 
       await user.click(screen.getByText('Database group'))
       let detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
       await user.click(navItem(detail, 'Technical'))
-      await user.click(within(detail).getByRole('button', { name: 'Compact view' }))
       await user.click(within(detail).getByRole('button', { name: 'Close recovery group detail' }))
 
       await user.click(screen.getByText('Power group'))
       detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
-      expect(detail).toHaveAttribute('data-mode', 'expanded')
       expect(navItem(detail, 'Overview')).toHaveAttribute('aria-current', 'true')
     })
   })

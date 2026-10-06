@@ -182,7 +182,7 @@ describe('UsersSection', () => {
     const dialog = screen.getByRole('dialog', { name: 'User detail' })
     const header = within(dialog).getByRole('heading', { level: 2 }).closest('header')
     if (!header) throw new Error('Expected the detail header')
-    expect(within(header).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Compact view', 'User help', 'Close user detail'])
+    expect(within(header).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['User help', 'Close user detail'])
     expect(dialog.querySelector('footer')).toBeNull()
     await userEvent.click(within(dialog).getByRole('button', { name: 'User help' }))
     expect(screen.getByRole('dialog', { name: 'Where users come from' })).toHaveTextContent('Roles')

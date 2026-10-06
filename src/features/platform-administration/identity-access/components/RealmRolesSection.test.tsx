@@ -183,7 +183,7 @@ describe('RealmRolesSection', () => {
     const dialog = screen.getByRole('dialog', { name: 'Application role detail' })
     const header = drawer.getByRole('heading', { level: 2 }).closest('header')
     if (!header) throw new Error('Expected the detail header')
-    expect(within(header).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Compact view', 'Application role help', 'Close application role detail'])
+    expect(within(header).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? button.textContent)).toEqual(['Application role help', 'Close application role detail'])
     expect(dialog.querySelector('footer')).toBeNull()
     await userEvent.click(within(dialog).getByRole('button', { name: 'Application role help' }))
     expect(screen.getByRole('dialog', { name: 'What an application role is' })).toHaveTextContent('Permissions')

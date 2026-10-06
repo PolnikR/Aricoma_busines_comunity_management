@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -192,13 +192,12 @@ describe('VirtualMachineDetailPanel resize', () => {
     )
   })
 
-  it('opens expanded on Overview with one section at a time and Technical last', async () => {
+  it('opens on Overview with one section at a time and Technical last', async () => {
     const user = userEvent.setup()
     renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
     const dialog = screen.getByRole('dialog', { name: 'Virtual machine detail' })
     const navigation = within(dialog).getByRole('navigation', { name: 'Sections' })
 
-    expect(dialog).toHaveAttribute('data-mode', 'expanded')
     expect(dialog).toHaveAttribute('data-size', 'xl')
     expect(within(navigation).getAllByRole('button').map(button => button.textContent)).toEqual(['Overview', 'Disks2', 'Backing Storage Info', 'Technical'])
     expect(within(navigation).getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-current', 'true')
@@ -519,47 +518,5 @@ describe('VirtualMachineDetailPanel resize', () => {
 
     expect(screen.getByRole('button', { name: 'Retrying' })).toBeDisabled()
     expect(screen.queryByText('No backing storage volume was resolved for this virtual machine.')).not.toBeInTheDocument()
-  })
-
-  it('resizes the compact panel via the drag handle and keyboard', async () => {
-    const user = userEvent.setup()
-    renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
-    const panel = screen.getByRole('dialog')
-    await user.click(within(panel).getByRole('button', { name: 'Compact view' }))
-    expect(panel.style.getPropertyValue('--detail-view-width')).toBe('420px')
-
-    fireEvent.keyDown(screen.getByRole('separator'), { key: 'ArrowLeft' })
-    expect(panel.style.getPropertyValue('--detail-view-width')).toBe('436px')
-
-    fireEvent.mouseDown(screen.getByRole('separator'), { clientX: 500 })
-    fireEvent.mouseMove(window, { clientX: 460 })
-    fireEvent.mouseUp(window)
-    expect(panel.style.getPropertyValue('--detail-view-width')).toBe('476px')
-  })
-
-  it('reopens expanded after closing a resized compact panel', async () => {
-    const user = userEvent.setup()
-    const queryClient = new QueryClient()
-    const { rerender } = render(
-      <QueryClientProvider client={queryClient}>
-        <VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />
-      </QueryClientProvider>
-    )
-    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Compact view' }))
-    fireEvent.keyDown(screen.getByRole('separator'), { key: 'ArrowLeft' })
-
-    rerender(
-      <QueryClientProvider client={queryClient}>
-        <VirtualMachineDetailPanel virtualMachine={vm} open={false} onClose={vi.fn()} />
-      </QueryClientProvider>
-    )
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    rerender(
-      <QueryClientProvider client={queryClient}>
-        <VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />
-      </QueryClientProvider>
-    )
-    expect(screen.getByRole('dialog')).toHaveAttribute('data-mode', 'expanded')
-    expect(screen.queryByRole('separator')).not.toBeInTheDocument()
   })
 })

@@ -1,13 +1,11 @@
 import { Children, createContext, Fragment, isValidElement, useContext, useEffect, useId, useRef, useState } from 'react'
-import type { ComponentType, CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactElement, ReactNode, SVGProps } from 'react'
+import type { ComponentType, KeyboardEvent as ReactKeyboardEvent, ReactElement, ReactNode, SVGProps } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { openDialog } from '@/shared/components/modal/dialogStack'
-import { useResizablePanel } from '@/shared/hooks/useResizablePanel'
-import { CloseIcon, MaximizeIcon, PanelRightIcon } from '@/shared/icons/Icons'
+import { CloseIcon } from '@/shared/icons/Icons'
 import { cn } from '@/shared/utils/cn'
 
-export type DetailViewMode = 'expanded' | 'compact'
-// Expanded width by content density: md ≈ 880 px (simple objects), lg ≈ 960 px (default),
+// Width by content density: md ≈ 880 px (simple objects), lg ≈ 960 px (default),
 // xl ≈ 1200 px (dense, table-heavy objects). Always capped to the viewport.
 export type DetailViewSize = 'md' | 'lg' | 'xl'
 
@@ -21,13 +19,13 @@ interface DetailViewProps {
   statuses?: readonly ReactNode[] | undefined
   // One short line of secondary information after the statuses.
   meta?: ReactNode | undefined
-  // Small actions before the built-in mode toggle and Close, e.g. help.
+  // Small actions before Close, e.g. help.
   headerActions?: ReactNode | undefined
   // Right-hand (primary) footer group.
   footer?: ReactNode | undefined
   // Left-hand footer group, typically the destructive action.
   footerStart?: ReactNode | undefined
-  // Expanded width; compact mode keeps its own width. Defaults to 'lg'.
+  // Dialog width. Defaults to 'lg'.
   size?: DetailViewSize | undefined
   ariaLabel: string
   closeLabel: string
@@ -58,7 +56,7 @@ interface DetailViewSectionProps {
 
 const SectionContext = createContext<{ headingId: string; flush: boolean }>({ headingId: '', flush: false })
 
-// Elements hidden by CSS (e.g. the resize handle below `lg`) are not tabbable, so the
+// Elements hidden by CSS (e.g. `hidden sm:inline-flex` content) are not tabbable, so the
 // focus trap must skip them too. jsdom has no checkVisibility and keeps them.
 function isVisible(element: HTMLElement) {
   return typeof element.checkVisibility !== 'function' || element.checkVisibility()
@@ -85,7 +83,7 @@ export function DetailViewSection({ title, description, aside, children }: Detai
   )
 }
 
-const EXPANDED_WIDTH: Record<DetailViewSize, string> = {
+const WIDTH: Record<DetailViewSize, string> = {
   md: 'w-[min(55rem,calc(100vw-2rem))]',
   lg: 'w-[min(60rem,calc(100vw-2rem))]',
   xl: 'w-[min(75rem,calc(100vw-2rem))]',
@@ -112,29 +110,21 @@ function sectionsOf(children: ReactNode): ReactElement<DetailViewSectionProps>[]
   })
 }
 
-// Shared detail surface that replaces DetailDrawer. It opens EXPANDED as a large centred
-// dialog: compact header, a vertical section list and exactly one section's content, with
-// pinned footer actions. The header toggle switches the same instance into a COMPACT right
-// panel (resizable from `lg`) and back; the object, active section and mounted content are
-// kept because both modes are one DOM tree with different frame classes. Escape, the
-// backdrop and Close close the whole detail; closing resets to expanded on the first section.
-// With a single section the navigation is omitted.
+// Shared detail surface that replaces DetailDrawer: a large centred dialog with a short
+// header, a section list (vertical from `sm`, wrapping above the content on narrow screens)
+// and exactly one section's content, with pinned footer actions. Escape, the backdrop and
+// Close close the whole detail; closing resets to the first section. With a single section
+// the navigation is omitted.
 export function DetailView({ open, onClose, title, entityLabel, statuses = [], meta, headerActions, footer, footerStart, size = 'lg', ariaLabel, closeLabel, children }: DetailViewProps) {
   const { t } = useTranslation()
   const id = useId()
-  const [mode, setMode] = useState<DetailViewMode>('expanded')
   const [activeId, setActiveId] = useState<string | null>(null)
   const [wasOpen, setWasOpen] = useState(open)
   // Reset while rendering (React's "adjust state on prop change" pattern), not in an effect.
   if (open !== wasOpen) {
     setWasOpen(open)
-    if (!open) {
-      setMode('expanded')
-      setActiveId(null)
-    }
+    if (!open) setActiveId(null)
   }
-  const compact = mode === 'compact'
-  const { width, handleProps } = useResizablePanel({ open: open && compact, resizeLabel: t('detailView.resize') })
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const onCloseRef = useRef(onClose)
@@ -208,7 +198,7 @@ export function DetailView({ open, onClose, title, entityLabel, statuses = [], m
   return (
     <>
       <div
-        className={cn('fixed inset-0 z-40', compact ? 'bg-black/45' : 'bg-black/30')}
+        className="fixed inset-0 z-40 bg-black/30"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -218,23 +208,12 @@ export function DetailView({ open, onClose, title, entityLabel, statuses = [], m
         aria-modal="true"
         aria-label={ariaLabel}
         tabIndex={-1}
-        data-mode={mode}
         data-size={size}
         className={cn(
-          'fixed z-50 flex flex-col overflow-hidden bg-surface',
-          compact
-            ? 'inset-y-0 right-0 w-[min(420px,92vw)] border-l border-border shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)] lg:w-(--detail-view-width) lg:max-w-[92vw] [--detail-gutter:1.25rem]'
-            : cn('top-1/2 left-1/2 h-[min(46rem,calc(100dvh-2rem))]', EXPANDED_WIDTH[size], '-translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border shadow-lg [--detail-gutter:1.25rem] sm:[--detail-gutter:2rem]'),
+          'fixed top-1/2 left-1/2 z-50 flex h-[min(46rem,calc(100dvh-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-lg [--detail-gutter:1.25rem] sm:[--detail-gutter:2rem]',
+          WIDTH[size],
         )}
-        style={compact ? { '--detail-view-width': `${String(width)}px` } as CSSProperties : undefined}
       >
-        {compact ? (
-          <div
-            {...handleProps}
-            className="absolute inset-y-0 left-0 z-10 hidden w-1.5 cursor-col-resize bg-transparent transition hover:bg-accent/30 focus:bg-accent/40 focus:outline-none lg:block"
-          />
-        ) : null}
-
         <header className="flex shrink-0 items-start gap-3 border-b border-border px-5 py-4 sm:px-6">
           <div className="min-w-0 flex-1">
             {entityLabel ? <p className="text-xs font-medium text-text-muted">{entityLabel}</p> : null}
@@ -248,14 +227,6 @@ export function DetailView({ open, onClose, title, entityLabel, statuses = [], m
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <button
-              type="button"
-              onClick={() => { setMode(compact ? 'expanded' : 'compact') }}
-              className="hidden h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-text-secondary transition hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15 sm:inline-flex"
-            >
-              {compact ? <MaximizeIcon className="size-3.5" /> : <PanelRightIcon className="size-3.5" />}
-              {compact ? t('detailView.expand') : t('detailView.compactView')}
-            </button>
             {headerActions}
             <button
               ref={closeRef}
@@ -269,16 +240,13 @@ export function DetailView({ open, onClose, title, entityLabel, statuses = [], m
           </div>
         </header>
 
-        <div className={cn('flex min-h-0 flex-1 flex-col', compact ? undefined : 'sm:flex-row')}>
+        <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
           {showNavigation ? (
             <nav
               aria-label={t('detailView.sections')}
               onKeyDown={onNavigationKeyDown}
-              className={cn(
-                // Horizontal (compact, narrow screens) wraps so no section hides off-screen.
-                'flex shrink-0 flex-wrap gap-1 border-b border-border px-4 py-2',
-                compact ? undefined : 'sm:w-52 sm:flex-col sm:flex-nowrap sm:overflow-y-auto sm:border-r sm:border-b-0 sm:px-3 sm:py-4',
-              )}
+              // Horizontal on narrow screens, wrapping so no section hides off-screen.
+              className="flex shrink-0 flex-wrap gap-1 border-b border-border px-4 py-2 sm:w-52 sm:flex-col sm:flex-nowrap sm:overflow-y-auto sm:border-r sm:border-b-0 sm:px-3 sm:py-4"
             >
               {ordered.map((section) => {
                 const { id: sectionId, title: sectionTitle, navLabel, icon: Icon, count, secondary } = section.props
@@ -290,10 +258,9 @@ export function DetailView({ open, onClose, title, entityLabel, statuses = [], m
                     aria-current={selected ? 'true' : undefined}
                     onClick={() => { setActiveId(sectionId) }}
                     className={cn(
-                      'flex shrink-0 items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] leading-5 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15',
+                      'flex shrink-0 items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] leading-5 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15 sm:gap-2.5 sm:px-3 sm:py-2',
                       selected ? 'bg-accent-soft font-semibold text-accent' : 'font-medium text-text-secondary hover:bg-surface-hover hover:text-text-primary',
-                      compact ? undefined : 'sm:gap-2.5 sm:px-3 sm:py-2',
-                      secondary && !compact ? 'sm:mt-auto' : undefined,
+                      secondary ? 'sm:mt-auto' : undefined,
                     )}
                   >
                     {Icon ? <Icon className={cn('size-4 shrink-0', selected ? undefined : 'text-text-subtle')} aria-hidden="true" /> : null}
