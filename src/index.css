@@ -80,6 +80,8 @@
 @theme {
   --font-*: initial;
   --font-outfit: Outfit, sans-serif;
+  /* System monospace stack for IDs, paths and code; the reset above removed Tailwind's default. */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;
