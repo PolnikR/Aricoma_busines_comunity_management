@@ -252,18 +252,20 @@ Prototype links for the review (dev server):
 - No change to `index.ts`. The module stays internal.
 
 **Acceptance criteria:**
-- [ ] Boundary table at the approved thresholds:
+- [x] Boundary table at the approved thresholds:
   - `NORMAL_MAX` → normal
   - `NORMAL_MAX + 1` → wide
   - `WIDE_MAX` → wide
   - `WIDE_MAX + 1` → full
-- [ ] Empty, null or blank → normal, even with `wide`. Node → full only with `wide`. String +
+- [x] Empty, null or blank → normal, even with `wide`. Node → full only with `wide`. String +
   `wide` → measured.
-- [ ] The public barrel does not expose `getOverviewFootprint` (a test asserts it).
+- [x] The public barrel does not expose `getOverviewFootprint` (a test asserts it).
 
 **Verification:**
-- [ ] `npm exec vitest run src/shared/components/detail-view/overviewLayout.test.ts`
-- [ ] `npx eslint src/shared/components/detail-view/overviewLayout.ts src/shared/components/detail-view/overviewLayout.test.ts`
+- [x] `npm exec vitest run src/shared/components/detail-view/overviewLayout.test.ts` (14 passed)
+- [x] `npx eslint src/shared/components/detail-view/overviewLayout.ts src/shared/components/detail-view/overviewLayout.test.ts`
+
+**Result:** commit `d13412e6`.
 
 **Dependencies:** Checkpoint 0. **Files:** `overviewLayout.ts`, `overviewLayout.test.ts`.
 **Scope:** XS
@@ -285,24 +287,29 @@ Prototype links for the review (dev server):
 foreign hunk. If it does, stop and tell the user.
 
 **Acceptance criteria:**
-- [ ] The `dl` uses the auto-fill track. No `grid-cols-N` and no viewport breakpoints.
-- [ ] Cells have the bottom rule only, and the `dl` has the clip. No background, outline,
+- [x] The `dl` uses the auto-fill track. No `grid-cols-N` and no viewport breakpoints.
+- [x] Cells have the bottom rule only, and the `dl` has the clip. No background, outline,
   uppercase or vertical border.
-- [ ] Label is 11.5px medium. Mono is at `text-text-primary`. Not set, secondary, copy
+- [x] Label is 11.5px medium. Mono is at `text-text-primary`. Not set, secondary, copy
   (accessible name), external link and badge nodes behave as before.
-- [ ] `DetailField` in `DetailFieldGroup`, `DetailTechnicalGroup` and `DetailStatusBlock`
+- [x] `DetailField` in `DetailFieldGroup`, `DetailTechnicalGroup` and `DetailStatusBlock`
   renders exactly as before.
 
 **Verification:**
-- [ ] `npm exec vitest run src/shared/components/detail-view/DetailContent.test.tsx src/shared/components/detail-view/DetailView.test.tsx src/shared/components/detail-view/overviewLayout.test.ts`
-- [ ] `npx eslint src/shared/components/detail-view/DetailField.tsx src/shared/components/detail-view/index.ts src/shared/components/detail-view/DetailContent.test.tsx`
-- [ ] `npm run typecheck` (new public export).
+- [x] `npm exec vitest run src/shared/components/detail-view/DetailContent.test.tsx src/shared/components/detail-view/DetailView.test.tsx src/shared/components/detail-view/overviewLayout.test.ts` (62 passed)
+- [x] `npx eslint src/shared/components/detail-view/DetailField.tsx src/shared/components/detail-view/index.ts src/shared/components/detail-view/DetailContent.test.tsx`
+- [x] `npm run typecheck` (new public export).
+
+**Result:** commit `fd1f3443`. `git diff -- src/shared/components/detail-view/index.ts` was
+empty right before the edit (no foreign hunk). The A4 classes live in `DetailField.tsx` as
+Tailwind arbitrary values; `index.css` is unchanged. The no-border assertion was mutation-checked
+(an injected `border-l` fails it).
 
 **Dependencies:** Task 5 and plan §0 resolved. **Files:** `DetailField.tsx`, `index.ts`,
 `DetailContent.test.tsx`. **Scope:** S–M
 
 ## Checkpoint 1
-- [ ] Shared tests, lint and typecheck are green. Nothing is visible yet, because no consumer
+- [x] Shared tests, lint and typecheck are green. Nothing is visible yet, because no consumer
   uses `DetailOverview`.
 
 ---
@@ -310,7 +317,13 @@ foreign hunk. If it does, stop and tell the user.
 ## Phase 2: Pilot
 
 ## Task 7: Pilot `ProvidersCatalogueTable`
-**Description:** In the `id="overview"` section only, replace `DetailFieldGroup` with
+**Changed by the user on 2026-10-06:** the pilot is `PlatformProvidersTable` (route
+`/platform-administration/platform-providers`, record "Primary Airflow"), and
+`ProvidersCatalogueTable` takes its place in Task 9. Reason: since `36aaf4a3`,
+`ProvidersCatalogueTable`'s Overview has 11 fields (not the 4 in the §1 audit), and
+`PlatformProvidersTable` now has no Connection group, only the Overview.
+
+**Original description:** In the `id="overview"` section only, replace `DetailFieldGroup` with
 `DetailOverview`. The four fields and their order stay the same. The URL node keeps `wide`.
 The Description `wide` stays until Task 16. Connection, Relationships and Technical are
 untouched.
@@ -327,6 +340,17 @@ untouched.
   - md dialog at 1440 and 1024 wide, plus 375 narrow, light and dark
   - measured: no overflow, no vertical borders, last row clipped, focus rings visible
   - screenshots next to prototype A4
+
+**Result (pilot `PlatformProvidersTable`):**
+- Commit `a526ecfa`. Only the Overview `DetailFieldGroup` → `DetailOverview`, and the import.
+- [x] `npm exec vitest run src/features/platform-administration/platform-providers/components/PlatformProvidersTable.test.tsx src/features/platform-administration/platform-providers/pages/PlatformProvidersPage.test.tsx`
+  (19 passed, unchanged tests)
+- [x] `npx eslint src/features/platform-administration/platform-providers/components/PlatformProvidersTable.tsx`
+- [x] Browser, Primary Airflow, 1440 light/dark and 375 narrow: see the log below.
+- Finding for Checkpoint 2: DAG directory is plain text (18 characters), so its old `wide` is
+  ignored and it takes one track. Credential moves up next to it, and Credential status shares
+  a row with Notification email. This follows the approved rule (D4), but the user expected
+  Credential and Credential status in one row.
 
 **Dependencies:** Checkpoint 1. **Files:** `ProvidersCatalogueTable.tsx`. **Scope:** XS
 
@@ -577,7 +601,8 @@ record). **Scope:** XS
 ## Browser verification log
 | Task | Consumer | Widths | Light/Dark | Overflow | Vertical rules | Last-row rule | Notes |
 |---|---|---|---|---|---|---|---|
-| | | | | | | | |
+| 7 | PlatformProvidersTable, Primary Airflow | 1440 (dl 606 px, 2 tracks) | light + dark | none (region 670/670, dl 606/606, doc 1440/1440) | 0 (all cell borders 0 px) | clipped | height 414 → 338 px (−18 %), row pitch 60–64 → 54–58 px, label → value 4 → 2 px, column gap 40 → 0 px; focus rings of the copy buttons and the URL link fully visible |
+| 7 | PlatformProvidersTable, Primary Airflow | 375 × 800 (dl 281 px, 1 track) | light | none (region 321/321, dl 281/281, doc 360/360) | 0 | clipped | 10 rows, one field each; focus rings visible |
 
 ## Final audit record
 _(paste the Task 17 audit output here)_
