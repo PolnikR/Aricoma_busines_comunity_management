@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { DetailField, DetailFieldGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { DetailField, DetailOverview, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { GridIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
@@ -43,14 +43,14 @@ function renderRoleSections(role: IdentityRoleRecord, t: ReturnType<typeof useTr
   if (knownMembership) users = role.users.length > 0 ? <BadgeList items={role.users} /> : t('identity.roles.fields.usersEmpty')
   return (
     <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
-      <DetailFieldGroup>
+      <DetailOverview>
         <DetailField label={t('identity.roles.fields.name')} value={role.name} emphasis />
         <DetailField label={t('identity.roles.fields.description')} value={role.description?.trim()} wide />
         <DetailField label={t('identity.roles.fields.clientId')} value={role.clientId} mono copyValue={role.clientId ?? undefined} />
         <DetailField label={t('identity.roles.fields.userCount')} value={knownMembership ? String(role.userCount) : '—'} />
         <DetailField label={t('identity.roles.fields.permissions')} value={role.permissions.length > 0 ? <BadgeList items={role.permissions} /> : null} wide />
         <DetailField label={t('identity.roles.fields.users')} value={users} wide />
-      </DetailFieldGroup>
+      </DetailOverview>
     </DetailViewSection>
   )
 }

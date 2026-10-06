@@ -11,7 +11,7 @@ import {
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
-import { DetailField, DetailFieldGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { DetailField, DetailOverview, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { GridIcon } from '@/shared/icons/Icons'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -164,13 +164,13 @@ export function CredentialsTable({ credentials, isLoading, error, isRetrying, on
         >
           {/* One flat Overview in the order of the original detail drawer. */}
           <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
-            <DetailFieldGroup>
+            <DetailOverview>
               <DetailField label={t('credentials.detail.id')} value={selected.id} mono copyValue={selected.id} />
               <DetailField label={t('credentials.detail.username')} value={selected.username} mono emphasis />
               <DetailField label={t('credentials.detail.description')} value={selected.description} wide />
               {/* The secret is never sent to the browser; only that it is stored. */}
               <DetailField label={t('credentials.detail.password')} value={t('credentials.detail.passwordHidden')} />
-            </DetailFieldGroup>
+            </DetailOverview>
           </DetailViewSection>
         </DetailView>
       ) : null}
