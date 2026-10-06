@@ -116,7 +116,7 @@ values in the "Approved" column.
 | `NORMAL_MAX` (plain text up to N chars = one track) | 34 | **28** |
 | `WIDE_MAX` (up to N chars = two tracks; above = full row) | 72 | **64** |
 | Mono values | same character count | **same character count as other plain text, no 1.15× weighting** |
-| `wide` on plain text (changed at Checkpoint 2, 2026-10-06) | ignored | **explicit full-row override; 28/64 applies only to plain text without `wide`** |
+| `wide` (changed at Checkpoint 2, 2026-10-06) | ignored on plain text | **explicit full-row override for every value, empty ones included; 28/64 applies only to plain text without `wide`** |
 | Track minimum incl. 1.75rem cell gutter (D5) | 12.75rem | **12.75rem** |
 | Two-track span gate (content width) | 24rem | **24rem** |
 | Cell padding / label → value / label size (D6) | `py-2` / 2 px / 11.5px medium | **`py-2` / 2 px / 11.5px medium** |
@@ -168,12 +168,14 @@ computes a footprint:
 - **full** is the whole row.
 
 The rules (revised at Checkpoint 2 on 2026-10-06, user decision B):
-- **`wide` is an explicit full-row override** for every non-empty value, plain text included.
+- **`wide` is an explicit full-row override** for every value: plain text, nodes and empty
+  values (null, undefined, blank, rendered as "Not set"). It is the consumer's layout intent,
+  so a value the backend does not return never re-pairs the fields after it.
 - **Plain-text values without `wide`** (`typeof value === 'string'`) are measured by character
   count: up to `NORMAL_MAX` normal, up to `WIDE_MAX` wide, above that full.
 - **Node values without `wide`** (links, badges, tag lists, skeletons) cannot be measured, so
   they are normal.
-- **Empty values** ("Not set") are always normal, even with `wide`.
+- **Empty values without `wide`** ("Not set") are normal.
 - Why: the pilot showed that ignoring `wide` breaks intended full rows (Platform provider
   DAG directory, 18 characters) and re-pairs the fields after it. `wide` is removed only where it
   is redundant (Phase 4).
@@ -345,7 +347,7 @@ Focused runs only (CLAUDE.md §5): `npm exec vitest run <files>`, plus `npx esli
   - `NORMAL_MAX` characters → normal
   - `NORMAL_MAX + 1` and `WIDE_MAX` characters → wide
   - `WIDE_MAX + 1` characters → full
-- Empty, null or blank → normal, even with `wide`.
+- Empty, null or blank → normal without `wide`, full with `wide`.
 - Node without `wide` → normal; node with `wide` → full.
 - String with `wide` → full, at every length.
 - The public barrel does not expose it: `Object.keys(await import('./index'))` has no

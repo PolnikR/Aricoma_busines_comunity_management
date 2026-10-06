@@ -257,8 +257,9 @@ Prototype links for the review (dev server):
   - `NORMAL_MAX + 1` → wide
   - `WIDE_MAX` → wide
   - `WIDE_MAX + 1` → full
-- [x] Empty, null or blank → normal, even with `wide`. Node → full only with `wide`. String +
-  `wide` → measured.
+- [x] Empty, null or blank → normal without `wide`. Node → full only with `wide`.
+  - Revised at Checkpoint 2 (2026-10-06): `wide` → full for every value, empty and plain text
+    included (commits `1fb44048`, `70f6d80a`).
 - [x] The public barrel does not expose `getOverviewFootprint` (a test asserts it).
 
 **Verification:**
@@ -316,30 +317,25 @@ Tailwind arbitrary values; `index.css` is unchanged. The no-border assertion was
 
 ## Phase 2: Pilot
 
-## Task 7: Pilot `ProvidersCatalogueTable`
-**Changed by the user on 2026-10-06:** the pilot is `PlatformProvidersTable` (route
-`/platform-administration/platform-providers`, record "Primary Airflow"), and
-`ProvidersCatalogueTable` takes its place in Task 9. Reason: since `36aaf4a3`,
-`ProvidersCatalogueTable`'s Overview has 11 fields (not the 4 in the §1 audit), and
-`PlatformProvidersTable` now has no Connection group, only the Overview.
+## Task 7: Pilot `PlatformProvidersTable`
+**Description:** In the `id="overview"` section of `PlatformProvidersTable` only, replace
+`DetailFieldGroup` with `DetailOverview`. Fields, order and values stay the same.
 
-**Original description:** In the `id="overview"` section only, replace `DetailFieldGroup` with
-`DetailOverview`. The four fields and their order stay the same. The URL node keeps `wide`.
-The Description `wide` stays until Task 16. Connection, Relationships and Technical are
-untouched.
+The user chose this pilot on 2026-10-06 instead of `ProvidersCatalogueTable`, which moves to
+Task 9. Since `36aaf4a3`, `ProvidersCatalogueTable`'s Overview has 11 fields (not the 4 in the
+§1 audit), and `PlatformProvidersTable` has no Connection group, only the Overview.
 
 **Acceptance criteria:**
-- [ ] The Overview matches the approved prototype A4. The other sections look exactly as before.
-- [ ] Type, Notification email, Description and URL (external, new tab) are unchanged.
+- [x] The Overview matches the approved prototype A4.
+- [x] Fields, order, values, copy actions and the external URL (new tab) are unchanged.
 
 **Verification:**
-- [ ] `npm exec vitest run src/features/providers-connectors/providers/components/ProvidersCatalogueTable.test.tsx src/features/providers-connectors/providers/pages/ProvidersPage.test.tsx`
-  (unchanged tests pass).
-- [ ] `npx eslint src/features/providers-connectors/providers/components/ProvidersCatalogueTable.tsx`
-- [ ] Browser (plan §7) on `/providers-connectors/providers`:
-  - md dialog at 1440 and 1024 wide, plus 375 narrow, light and dark
-  - measured: no overflow, no vertical borders, last row clipped, focus rings visible
-  - screenshots next to prototype A4
+- [x] `npm exec vitest run src/features/platform-administration/platform-providers/components/PlatformProvidersTable.test.tsx src/features/platform-administration/platform-providers/pages/PlatformProvidersPage.test.tsx`
+  (unchanged tests pass)
+- [x] `npx eslint src/features/platform-administration/platform-providers/components/PlatformProvidersTable.tsx`
+- [x] Browser (plan §7) on `/platform-administration/platform-providers`, record
+  "Primary Airflow": 1440 light and dark, 375 narrow; measured no overflow, no vertical borders,
+  last row clipped, focus rings visible. See the browser log below.
 
 **Result (pilot `PlatformProvidersTable`):**
 - Commit `a526ecfa`. Only the Overview `DetailFieldGroup` → `DetailOverview`, and the import.
@@ -355,7 +351,7 @@ untouched.
   override for plain text too (plan D4). Rows now: Provider ID | Type, URL, Description,
   IP address | Port, DAG directory, Credential | Credential status, Notification email.
 
-**Dependencies:** Checkpoint 1. **Files:** `ProvidersCatalogueTable.tsx`. **Scope:** XS
+**Dependencies:** Checkpoint 1. **Files:** `PlatformProvidersTable.tsx`. **Scope:** XS
 
 ## Checkpoint 2 (production fidelity only)
 - [ ] The user confirms that the production pilot matches the approved prototype A4.
@@ -617,6 +613,7 @@ record). **Scope:** XS
 | 7 | PlatformProvidersTable, Primary Airflow | 1440 (dl 606 px, 2 tracks) | light + dark | none (region 670/670, dl 606/606, doc 1440/1440) | 0 (all cell borders 0 px) | clipped | height 414 → 338 px (−18 %), row pitch 60–64 → 54–58 px, label → value 4 → 2 px, column gap 40 → 0 px; focus rings of the copy buttons and the URL link fully visible |
 | 7 | PlatformProvidersTable, Primary Airflow | 375 × 800 (dl 281 px, 1 track) | light | none (region 321/321, dl 281/281, doc 360/360) | 0 | clipped | 10 rows, one field each; focus rings visible |
 | 7 (after rule B) | PlatformProvidersTable, Primary Airflow | 1440 + 375 × 800 | light + dark | none (same values as above) | 0 | clipped | `wide` = full row: DAG directory full, Credential + Credential status paired again; height 414 → 392 px; rule 1 px with 10 copies on every cell; focus rings of the 3 copy buttons and the URL visible |
+| 7 (after empty-`wide` fix) | PlatformProvidersTable, Primary Airflow | 1440 | light | none (region 670/670, dl 606/606, doc 1440/1440) | 0 | clipped | regression after `70f6d80a`: same rows, height 392 px, rule 1 px × 10 copies on every cell |
 
 ## Final audit record
 _(paste the Task 17 audit output here)_
