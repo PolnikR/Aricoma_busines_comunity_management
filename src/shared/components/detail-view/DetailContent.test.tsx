@@ -25,6 +25,16 @@ describe('DetailField', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
+  it.each([
+    [false, 'false'],
+    [true, 'true'],
+    [0, '0'],
+  ])('keeps %j as a visible value, not "Not set"', (value, text) => {
+    render(<dl><DetailField label="Flag" value={value} /></dl>)
+    expect(screen.getByRole('definition')).toHaveTextContent(new RegExp(`^${text}$`))
+    expect(screen.getByRole('definition')).not.toHaveTextContent('Not set')
+  })
+
   it('renders node values such as badges and links, and spans the row when wide', () => {
     const { container } = render(
       <dl>

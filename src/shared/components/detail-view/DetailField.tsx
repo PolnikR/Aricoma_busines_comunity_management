@@ -24,8 +24,9 @@ interface DetailFieldProps {
   copyValue?: string | undefined
 }
 
+// Only absent or blank values are empty; `false` and `0` are real values.
 function isEmpty(value: ReactNode) {
-  return value === null || value === undefined || value === false || (typeof value === 'string' && value.trim() === '')
+  return value === null || value === undefined || (typeof value === 'string' && value.trim() === '')
 }
 
 // One label/value pair. In a DetailFieldGroup it is a grid cell with the label above the
@@ -35,7 +36,9 @@ export function DetailField({ label, value, secondary, mono = false, emphasis = 
   const { t } = useTranslation()
   const technical = useContext(TechnicalContext)
   const empty = isEmpty(value)
-  const content = empty ? <span className="font-outfit text-text-subtle">{t('detailView.notSet')}</span> : value
+  // React renders nothing for booleans, so show them as text; Yes/No wording stays with the consumer.
+  const shown = typeof value === 'boolean' ? String(value) : value
+  const content = empty ? <span className="font-outfit text-text-subtle">{t('detailView.notSet')}</span> : shown
   const copy = copyValue && !empty ? <DetailCopyButton value={copyValue} label={label} /> : null
 
   if (technical) {
