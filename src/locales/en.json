@@ -690,8 +690,6 @@
   "detailView.technical": "Technical",
   "detailView.technicalDescription": "Identifiers for support and integrations.",
   "detailView.connection": "Connection",
-  "identity.detail.profile": "Profile",
-  "identity.detail.account": "Account",
   "recoveryGroups.drawer.notOrchestrated": "Not orchestrated",
   "recoveryGroups.drawer.notConfigured": "Not configured",
   "recoveryGroups.drawer.orchestrationIncomplete": "Orchestration incomplete",

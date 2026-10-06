@@ -669,8 +669,6 @@
   "detailView.technical": "Technické",
   "detailView.technicalDescription": "Identifikátory pro podporu a integrace.",
   "detailView.connection": "Připojení",
-  "identity.detail.profile": "Profil",
-  "identity.detail.account": "Účet",
   "recoveryGroups.drawer.notOrchestrated": "Neorchestrováno",
   "recoveryGroups.drawer.notConfigured": "Nenastaveno",
   "recoveryGroups.drawer.orchestrationIncomplete": "Neúplná orchestrace",

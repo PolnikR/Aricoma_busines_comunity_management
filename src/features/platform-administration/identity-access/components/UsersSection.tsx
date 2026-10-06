@@ -12,9 +12,9 @@ import {
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
-import { DetailField, DetailFieldGroup, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { DetailField, DetailFieldGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
-import { ApiIcon, GridIcon, ShieldIcon } from '@/shared/icons/Icons'
+import { GridIcon } from '@/shared/icons/Icons'
 import { formatDateTime } from '@/shared/utils/dateTime'
 import { useGetUsers } from '@/generated/query/identity-access/identity-access.gen'
 import type { UserRecord } from '@/generated/query/zod'
@@ -30,46 +30,35 @@ function UserStatusBadge({ status }: { status: UserRecord['status'] }) {
   )
 }
 
-// Sections of the read-only user detail. A render function, not a component: DetailView needs
-// the sections as its (fragment) children. The status is a header badge, not repeated here.
+// The read-only user detail is one flat Overview, in the order of the original detail drawer.
+// A render function, not a component: DetailView needs the section itself as its child.
 function renderUserSections(user: UserRecord, t: ReturnType<typeof useTranslation>['t'], language: ReturnType<typeof useTranslation>['language']) {
   let emailVerified: string | null = null
   if (user.emailVerified === true) emailVerified = t('common.yes')
   if (user.emailVerified === false) emailVerified = t('common.no')
 
   return (
-    <>
-      <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
-        <DetailFieldGroup title={t('identity.detail.profile')}>
-          <DetailField label={t('identity.users.fields.user')} value={user.user} emphasis />
-          <DetailField label={t('identity.users.fields.username')} value={user.username} />
-          <DetailField label={t('identity.users.fields.email')} value={user.email} />
-          <DetailField label={t('identity.users.fields.emailVerified')} value={emailVerified} />
-        </DetailFieldGroup>
-        <DetailFieldGroup title={t('identity.detail.account')}>
-          <DetailField label={t('identity.users.fields.createdAt')} value={user.createdAt ? formatDateTime(user.createdAt, { language }) : null} />
-          <DetailField label={t('identity.users.fields.activeSessionStart')} value={user.activeSessionStart ? formatDateTime(user.activeSessionStart, { language }) : null} />
-        </DetailFieldGroup>
-      </DetailViewSection>
-      <DetailViewSection id="roles" title={t('identity.users.fields.roles')} icon={ShieldIcon} count={user.roles.length}>
-        <DetailFieldGroup>
-          <DetailField
-            label={t('identity.users.fields.roles')}
-            value={user.roles.length > 0 ? (
-              <span className="flex flex-wrap gap-1">
-                {user.roles.map(role => <Badge key={role} color="info" size="sm">{role}</Badge>)}
-              </span>
-            ) : null}
-            wide
-          />
-        </DetailFieldGroup>
-      </DetailViewSection>
-      <DetailViewSection id="technical" title={t('detailView.technical')} icon={ApiIcon} description={t('detailView.technicalDescription')} secondary>
-        <DetailTechnicalGroup>
-          <DetailField label={t('identity.users.fields.id')} value={user.id} copyValue={user.id} />
-        </DetailTechnicalGroup>
-      </DetailViewSection>
-    </>
+    <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
+      <DetailFieldGroup>
+        <DetailField label={t('identity.users.fields.id')} value={user.id} mono copyValue={user.id} />
+        <DetailField label={t('identity.users.fields.user')} value={user.user} emphasis />
+        <DetailField label={t('identity.users.fields.username')} value={user.username} />
+        <DetailField label={t('identity.users.fields.email')} value={user.email} />
+        <DetailField label={t('identity.users.fields.emailVerified')} value={emailVerified} />
+        <DetailField label={t('identity.users.fields.createdAt')} value={user.createdAt ? formatDateTime(user.createdAt, { language }) : null} />
+        <DetailField
+          label={t('identity.users.fields.roles')}
+          value={user.roles.length > 0 ? (
+            <span className="flex flex-wrap gap-1">
+              {user.roles.map(role => <Badge key={role} color="info" size="sm">{role}</Badge>)}
+            </span>
+          ) : null}
+          wide
+        />
+        <DetailField label={t('identity.users.fields.status')} value={<UserStatusBadge status={user.status} />} />
+        <DetailField label={t('identity.users.fields.activeSessionStart')} value={user.activeSessionStart ? formatDateTime(user.activeSessionStart, { language }) : null} />
+      </DetailFieldGroup>
+    </DetailViewSection>
   )
 }
 

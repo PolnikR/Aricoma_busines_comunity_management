@@ -5,7 +5,7 @@ import { UsersSection } from './UsersSection'
 import { useGetUsers } from '@/generated/query/identity-access/identity-access.gen'
 import type { UserRecord } from '@/generated/query/zod'
 
-import { detailSectionsFields } from '@/test-utils/detailView'
+import { detailSectionsFields, detailSectionsLabels } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/identity-access/identity-access.gen', () => ({ useGetUsers: vi.fn() }))
@@ -144,16 +144,21 @@ describe('UsersSection', () => {
     expect(header).toHaveTextContent('User')
     expect(header).toHaveTextContent('Active')
     expect(header).toHaveTextContent('alice')
-    // The status is a header badge; the ID lives in Technical.
+    // One flat Overview in the original drawer order: ID, roles and status included.
+    expect(within(dialog).queryByRole('navigation')).not.toBeInTheDocument()
+    expect(within(dialog).getAllByRole('region')).toHaveLength(1)
+    expect(within(dialog).getByRole('region', { name: 'Overview' })).toBeInTheDocument()
+    expect(detailSectionsLabels(dialog)).toEqual(['ID', 'User', 'Username', 'Email', 'Email verified', 'Created at', 'Roles', 'Status', 'Active session start'])
     expect(detailSectionsFields(dialog)).toEqual({
+      ID: 'kc-alice',
       User: 'Alice Smith',
       Username: 'alice',
       Email: 'alice@example.com',
       'Email verified': 'Yes',
       'Created at': expectedTimestamp('2026-01-02T10:00:00Z'),
-      'Active session start': expectedTimestamp(SESSION_START),
       Roles: 'platform-adminrecovery-operator',
-      ID: 'kc-alice',
+      Status: 'Active',
+      'Active session start': expectedTimestamp(SESSION_START),
     })
   })
 
