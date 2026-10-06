@@ -13,7 +13,7 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { Field, Select } from '@/shared/components/form/FormControls'
-import { DetailField, DetailOverview, DetailTechnicalGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { DetailField, DetailOverview, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { GridIcon } from '@/shared/icons/Icons'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
@@ -232,17 +232,17 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
           footer={<Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">{t('buttons.edit')}</Button>}
         >
           <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
+            {/* The fields in the order of the original detail drawer; Level is also a header badge. */}
             <DetailOverview>
+              <DetailField label={t('details.policyId')} value={selected.id} mono copyValue={selected.id} />
+              <DetailField label={t('details.description')} value={selected.description} wide />
+              <DetailField label={t('details.level')} value={selected.level} />
               <DetailField label={t('details.frequency')} value={t('recoveryAppPolicies.every').replace('{interval}', formatInterval(selected.frequency_value, selected.frequency_unit, t))} emphasis />
               <DetailField label={t('details.retention')} value={formatInterval(selected.retention_value, selected.retention_unit, t)} />
               <DetailField label={t('details.snapshotSelection')} value={formatSelection(selected, t)} />
               <DetailField label={t('details.bootVerify')} value={t(selected.boot_verify ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no')} />
               <DetailField label={t('details.status')} value={t(selected.enabled ? 'recoveryAppPolicies.enabled' : 'recoveryAppPolicies.disabled')} />
-              <DetailField label={t('details.description')} value={selected.description} wide />
             </DetailOverview>
-            <DetailTechnicalGroup>
-              <DetailField label={t('details.policyId')} value={selected.id} copyValue={selected.id} />
-            </DetailTechnicalGroup>
           </DetailViewSection>
         </DetailView>
       ) : null}
