@@ -15,8 +15,8 @@ import {
 import type { ColumnDef } from '@/shared/components/data-table'
 import {
   DetailField,
-  DetailFieldGroup,
   DetailFieldLink,
+  DetailOverview,
   DetailView,
   DetailViewSection,
 } from '@/shared/components/detail-view'
@@ -102,7 +102,7 @@ function renderPlatformProviderSections(provider: PlatformProviderRecord, t: Ret
   const credentialStatus = <DetailField label={t('details.credentialStatus')} value={<CredentialStatusBadge status={provider.credentialStatus} />} />
   return (
     <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
-      <DetailFieldGroup>
+      <DetailOverview>
         <DetailField label={t('details.providerId')} value={provider.id} mono copyValue={provider.id} />
         <DetailField label={t('details.type')} value={provider.type} emphasis />
         <DetailField
@@ -147,7 +147,7 @@ function renderPlatformProviderSections(provider: PlatformProviderRecord, t: Ret
             {credentialStatus}
           </>
         ) : null}
-      </DetailFieldGroup>
+      </DetailOverview>
     </DetailViewSection>
   )
 }
