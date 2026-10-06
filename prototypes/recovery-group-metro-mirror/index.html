@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Recovery Group Inventory — Metro Mirror</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<!-- Tokens copied from src/index.css so the template uses the production class names 1:1. -->
+<style type="text/tailwindcss">
+@custom-variant dark (&:where(.dark, .dark *));
+:root {
+  --app-page:#f7f9fc;--app-surface:#ffffff;--app-surface-subtle:#fbfdff;--app-surface-muted:#f1f6fb;--app-surface-hover:#e8f2fa;
+  --app-text-primary:#17233d;--app-text-secondary:#3b4763;--app-text-muted:#71819a;--app-text-subtle:#93a0b5;
+  --app-border:#dbe7f2;--app-border-strong:#c8d7e7;--app-accent:#0d91d7;--app-accent-soft:#e8f6fd;--app-focus:#1596dd;
+}
+.dark {
+  --app-page:#09111f;--app-surface:#111c2f;--app-surface-subtle:#152238;--app-surface-muted:#1a2941;--app-surface-hover:#22344f;
+  --app-text-primary:#edf4ff;--app-text-secondary:#c5d1e2;--app-text-muted:#98a8bf;--app-text-subtle:#75869f;
+  --app-border:#293b56;--app-border-strong:#3a506f;--app-accent:#43b2ec;--app-accent-soft:#123854;--app-focus:#5bc0f2;
+}
+@theme inline {
+  --color-page:var(--app-page);--color-surface:var(--app-surface);--color-surface-subtle:var(--app-surface-subtle);
+  --color-surface-muted:var(--app-surface-muted);--color-surface-hover:var(--app-surface-hover);
+  --color-text-primary:var(--app-text-primary);--color-text-secondary:var(--app-text-secondary);
+  --color-text-muted:var(--app-text-muted);--color-text-subtle:var(--app-text-subtle);
+  --color-border:var(--app-border);--color-border-strong:var(--app-border-strong);
+  --color-accent:var(--app-accent);--color-accent-soft:var(--app-accent-soft);--color-focus:var(--app-focus);
+}
+@theme {
+  --font-outfit: Outfit, sans-serif;
+  --text-theme-xs:12px;--text-theme-xs--line-height:18px;
+  --color-brand-50:#ecf3ff;--color-brand-400:#7592ff;--color-brand-500:#465fff;
+  --color-blue-light-50:#f0f9ff;--color-blue-light-500:#0ba5ec;
+  --color-success-50:#ecfdf3;--color-success-500:#12b76a;--color-success-600:#039855;
+  --color-error-50:#fef3f2;--color-error-500:#f04438;--color-error-600:#d92d20;
+  --color-warning-50:#fffaeb;--color-warning-200:#fedf89;--color-warning-500:#f79009;--color-warning-600:#dc6803;--color-warning-700:#b54708;
+}
+body { @apply bg-page font-outfit text-text-primary antialiased; }
+</style>
+</head>
+<body class="min-h-dvh">
+
+<!-- Prototype controls (not part of the design) -->
+<div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border bg-surface px-4 py-2.5 text-xs text-text-secondary">
+  <strong class="text-accent">TEMPLATE · Metro Mirror v Recovery Group Inventory</strong>
+  <label class="flex items-center gap-2">Scenár
+    <select id="scenario" class="h-8 rounded-md border border-border-strong bg-surface-subtle px-2">
+      <option value="copying">Copying (rdb_and_app, 64 %)</option>
+      <option value="synced">Synchronized (progress = null)</option>
+      <option value="mixed">Neznámy stav + null progress</option>
+      <option value="many">Mnoho mappingov (12)</option>
+      <option value="error">Metro Mirror error (best-effort)</option>
+      <option value="empty">Bez CG a mappingov</option>
+      <option value="none">metro_mirror = null</option>
+    </select>
+  </label>
+  <label class="flex items-center gap-2">Šírka draweru
+    <select id="width" class="h-8 rounded-md border border-border-strong bg-surface-subtle px-2">
+      <option value="420">420 px (default)</option>
+      <option value="340">340 px (92vw na mobile)</option>
+      <option value="640">640 px (resized)</option>
+    </select>
+  </label>
+  <label class="flex items-center gap-2"><input id="dark" type="checkbox"> Dark</label>
+</div>
+
+<div class="flex justify-end">
+  <!-- DetailDrawer frame -->
+  <aside id="drawer" class="flex min-h-[calc(100dvh-49px)] flex-col border-l border-border bg-surface shadow-[-14px_0_40px_-20px_rgba(20,35,70,0.4)]" style="width:420px" aria-label="Recovery group detail">
+    <div class="border-b border-border px-5 pt-4 pb-3">
+      <h2 class="truncate text-base font-semibold leading-8 text-text-primary">rdb_and_app</h2>
+      <div class="mt-0.5 flex flex-wrap items-center gap-x-2.5 text-xs text-text-muted">
+        <span>Recovery group</span><span aria-hidden="true" class="size-0.75 rounded-full bg-text-subtle"></span>
+        <span class="inline-flex items-center rounded-full bg-success-50 px-2.5 py-0.5 text-theme-xs font-medium text-success-600 dark:bg-success-500/15 dark:text-success-500">Active</span>
+      </div>
+    </div>
+    <!-- DetailDrawerSection "Inventory" (accent infrastructure, flush) -->
+    <section class="flex flex-col">
+      <h3 class="bg-surface">
+        <span class="relative flex w-full items-center gap-2 px-5 py-3 text-sm font-semibold text-text-primary before:absolute before:inset-y-0 before:left-0 before:w-0.75 before:bg-brand-500">
+          <span class="text-text-subtle">›</span>
+          <span class="flex size-6 items-center justify-center rounded-md bg-brand-500/10 text-xs text-brand-500">▤</span>
+          Inventory
+        </span>
+      </h3>
+      <div id="inventory" class="shadow-[inset_3px_0_0_color-mix(in_srgb,var(--color-brand-500)_20%,transparent)]"></div>
+    </section>
+  </aside>
+</div>
+
+<script>
+const AUX = 'auxb099da7e_'
+const PAIRS = [['V5000_VOLUME01', 72], ['RDM_DISK01', 64], ['RDM_DISK02', 91], ['V5000_VOLUME02', 80]]
+const baseMM = {
+  mode: 'managed',
+  queried_provider_id: 'ibm-flashsystem-02',
+  consistency_group: { id: '55', name: 'rdb_and_app', state: 'inconsistent_copying', primary: 'master', freeze_time: null, relationship_count: 4, progress: 64 },
+  mappings: PAIRS.map(([name, progress]) => ({ master_volume: name, auxiliary_volume: AUX + name, state: 'inconsistent_copying', progress, primary: 'master' })),
+  error: null,
+}
+const SCENARIOS = {
+  copying: baseMM,
+  synced: { ...baseMM, mode: 'existing',
+    consistency_group: { ...baseMM.consistency_group, state: 'consistent_synchronized', progress: null, freeze_time: null },
+    mappings: baseMM.mappings.map(m => ({ ...m, state: 'consistent_synchronized', progress: null })) },
+  mixed: { ...baseMM,
+    consistency_group: { ...baseMM.consistency_group, state: 'idling_disconnected', progress: null, freeze_time: '2026/10/06/09/41/12' },
+    mappings: [
+      { ...baseMM.mappings[0], state: 'consistent_synchronized', progress: null },
+      { ...baseMM.mappings[1], state: 'inconsistent_copying', progress: 0 },
+      { ...baseMM.mappings[2], state: 'consistent_stopped', progress: null },
+      { ...baseMM.mappings[3], state: 'some_future_state', progress: null, primary: 'aux' },
+    ] },
+  many: { ...baseMM,
+    consistency_group: { ...baseMM.consistency_group, relationship_count: 12 },
+    mappings: Array.from({ length: 12 }, (_, i) => { const n = `ORACLE_PROD_DATAFILE_VOLUME_${String(i + 1).padStart(2, '0')}`; return { master_volume: n, auxiliary_volume: AUX + n, state: 'inconsistent_copying', progress: 40 + i * 5, primary: 'master' } }) },
+  error: { mode: 'managed', queried_provider_id: 'ibm-flashsystem-02', consistency_group: null, mappings: [], error: 'Provider ibm-flashsystem-02 did not respond within 10 s (lsrcconsistgrp).' },
+  empty: { mode: 'existing', queried_provider_id: 'ibm-flashsystem-02', consistency_group: null, mappings: [], error: null },
+  none: null,
+}
+
+// --- helpers that would become pure functions in production ---------------
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const humanize = s => { const t = String(s).replace(/_/g, ' '); return t.charAt(0).toUpperCase() + t.slice(1) }
+// Keyword-based tone, so unknown provider states still get a sensible, neutral badge.
+function stateTone(state) {
+  const s = String(state ?? '').toLowerCase()
+  if (!s) return 'light'
+  if (/(error|fail|disconnect|offline)/.test(s)) return 'error'
+  if (/(stopp|idling|paused|freez)/.test(s)) return 'warning'
+  if (/(copying|sync(h)?ronizing|prepar)/.test(s)) return 'info'
+  if (/(synchronized|consistent)/.test(s)) return 'success'
+  return 'light'
+}
+const BADGE = {
+  success: 'bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-500',
+  error: 'bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-500',
+  warning: 'bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-orange-400',
+  info: 'bg-blue-light-50 text-blue-light-500 dark:bg-blue-light-500/15 dark:text-blue-light-500',
+  light: 'bg-surface-muted text-text-secondary',
+}
+const badge = (tone, text, title) => `<span class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full px-2.5 py-0.5 text-theme-xs font-medium ${BADGE[tone]}"${title ? ` title="${esc(title)}"` : ''}>${esc(text)}</span>`
+const stateBadge = state => state ? badge(stateTone(state), humanize(state), state) : badge('light', 'Unknown state')
+
+// Progress: a number gets a bar; null never renders as 0 %.
+function progress(value, state, label) {
+  if (typeof value === 'number') {
+    const done = value >= 100
+    return `<div class="flex items-center gap-2">
+      <div class="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-muted" role="progressbar" aria-label="${esc(label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${value}">
+        <div class="h-full rounded-full ${done ? 'bg-success-500' : 'bg-accent'}" style="width:${Math.max(0, Math.min(100, value))}%"></div>
+      </div>
+      <span class="w-9 shrink-0 text-right text-[11px] font-semibold tabular-nums text-text-secondary">${value} %</span>
+    </div>`
+  }
+  const synced = stateTone(state) === 'success'
+  return `<p class="text-[11px] text-text-subtle">${synced ? '✓ In sync' : 'Progress not reported'}</p>`
+}
+
+function sectionLabel(title, meta, hint) {
+  return `<div>
+    <p class="text-[10px] font-semibold uppercase tracking-wider text-text-subtle">${esc(title)}${meta ? ` · <span class="normal-case tracking-normal font-mono">${esc(meta)}</span>` : ''}</p>
+    <p class="mt-0.5 text-[11px] text-text-muted">${hint}</p>
+  </div>`
+}
+
+function mappingRow(m, cgPrimary, inventoryNames) {
+  const master = m.master_volume ?? '—'
+  const aux = m.auxiliary_volume ?? '—'
+  const inInventory = inventoryNames.has(aux)
+  // Primary is only shown per mapping when it differs from the consistency group.
+  const primaryNote = m.primary && m.primary !== cgPrimary ? `<span class="text-[10px] font-medium text-warning-600 dark:text-orange-400">Primary: ${esc(m.primary)}</span>` : ''
+  return `<li class="@container rounded-md border border-border bg-surface px-2.5 py-2">
+    <div>
+      <dl class="min-w-0 grid gap-y-0.5 text-xs @[26rem]:grid-cols-[minmax(0,1fr)_1.25rem_minmax(0,1fr)] grid-cols-[4.75rem_minmax(0,1fr)]">
+        <dt class="self-center text-[9px] font-semibold uppercase tracking-wide text-text-subtle @[26rem]:hidden">Master</dt>
+        <dd class="min-w-0 truncate font-semibold text-text-primary" title="${esc(master)}">${esc(master)}</dd>
+        <dt class="self-center text-[9px] font-semibold uppercase tracking-wide text-text-subtle @[26rem]:hidden"><span class="text-accent" aria-hidden="true">→</span> Auxiliary</dt>
+        <span class="hidden text-center font-bold text-accent @[26rem]:block" aria-hidden="true">→</span>
+        <dd class="min-w-0 truncate font-semibold text-text-primary" title="${esc(aux)}">${inInventory ? `<a href="#vol-${esc(aux)}" data-open="${esc(aux)}" class="underline decoration-border-strong decoration-dotted underline-offset-2 hover:text-accent focus-visible:outline-2 focus-visible:outline-focus">${esc(aux)}</a>` : esc(aux)}</dd>
+      </dl>
+    </div>
+    <div class="mt-2 flex items-center gap-2">${stateBadge(m.state)}<div class="min-w-0 flex-1">${progress(m.progress, m.state, `Replication progress ${master}`)}</div></div>
+    ${primaryNote ? `<p class="mt-1">${primaryNote}</p>` : ''}
+  </li>`
+}
+
+function metroMirrorBlock(mm, inventoryNames) {
+  const label = sectionLabel('Metro Mirror', null, 'Synchronous replication <strong class="font-semibold text-text-secondary">master → auxiliary</strong>')
+  if (mm.error) {
+    return `<section aria-labelledby="mm-title" class="space-y-2">${label.replace('<div>', '<div id="mm-title">')}
+      <div role="status" class="rounded-lg border border-warning-200 bg-warning-50 px-3 py-2.5 dark:border-warning-500/30 dark:bg-warning-500/10">
+        <p class="text-xs font-semibold text-warning-700 dark:text-orange-400">⚠ Metro Mirror status is unavailable</p>
+        <p class="mt-1 text-[11px] text-text-secondary">${esc(mm.error)}</p>
+        <p class="mt-1 text-[11px] text-text-muted">Volume inventory below is not affected.</p>
+      </div>
+      <p class="font-mono text-[10px] text-text-subtle">${esc(mm.mode ?? '')}${mm.queried_provider_id ? ` · ${esc(mm.queried_provider_id)}` : ''}</p>
+    </section>`
+  }
+  const cg = mm.consistency_group
+  const mappings = mm.mappings ?? []
+  if (!cg && mappings.length === 0) {
+    return `<section class="space-y-2">${label}<p class="rounded-lg border border-dashed border-border px-3 py-2.5 text-xs text-text-subtle">No consistency group or mappings were reported.</p></section>`
+  }
+  const total = cg?.relationship_count ?? mappings.length
+  const countText = mappings.length === total ? `${mappings.length} mappings` : `${mappings.length} of ${total} relationships`
+  const PAGE = 5
+  const visible = mappings.slice(0, PAGE)
+  const pages = Math.ceil(mappings.length / PAGE)
+  return `<section aria-labelledby="mm-title" class="space-y-2">
+    <div id="mm-title">${label}</div>
+    <div class="overflow-hidden rounded-lg border border-border bg-surface">
+      ${cg ? `<div class="space-y-2.5 px-3 py-3">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-[9px] font-semibold uppercase tracking-wide text-text-subtle">Consistency group</p>
+            <p class="truncate text-sm font-semibold text-text-primary" title="${esc(cg.name ?? cg.id)}">${esc(cg.name ?? cg.id)} <span class="font-mono text-[11px] font-normal text-text-subtle">#${esc(cg.id)}</span></p>
+          </div>
+          ${stateBadge(cg.state)}
+        </div>
+        ${progress(cg.progress, cg.state, 'Consistency group progress')}
+        <dl class="grid grid-cols-3 gap-2">
+          ${[['Primary', cg.primary ?? '—'], ['Mappings', countText.split(' ')[0] + (mappings.length === total ? '' : `/${total}`)], ['Mode', mm.mode ?? '—']].map(([k, v]) => `
+          <div class="rounded-md border border-border bg-surface-subtle px-2.5 py-1.5">
+            <dt class="text-[9px] font-semibold uppercase tracking-wide text-text-subtle">${k}</dt>
+            <dd class="truncate text-xs font-semibold capitalize text-text-primary">${esc(v)}</dd>
+          </div>`).join('')}
+        </dl>
+        ${cg.freeze_time ? `<p class="text-[11px] text-text-muted">Frozen at <span class="font-mono">${esc(cg.freeze_time)}</span></p>` : ''}
+      </div>` : ''}
+      <div class="border-t border-border bg-surface-subtle px-3 py-3">
+        <p class="mb-2 text-[10px] font-semibold uppercase tracking-wide text-text-subtle">Master → auxiliary${mappings.length === total ? '' : ` · ${countText}`}</p>
+        ${mappings.length ? `<ul class="space-y-2" aria-label="Metro Mirror mappings">${visible.map(m => mappingRow(m, cg?.primary, inventoryNames)).join('')}</ul>` : '<p class="text-xs text-text-subtle">No mappings were returned.</p>'}
+        ${pages > 1 ? `<nav class="mt-2 flex items-center justify-between text-[11px] text-text-muted" aria-label="Metro Mirror mappings pages"><span>Page 1 of ${pages}</span><span class="flex gap-1">${Array.from({ length: pages }, (_, i) => `<span class="grid size-6 place-items-center rounded-md ${i === 0 ? 'bg-accent text-white' : 'border border-border bg-surface'}">${i + 1}</span>`).join('')}</span></nav><p class="mt-1 text-[10px] text-text-subtle">(production: existing &lt;Pagination&gt;, 5 per page)</p>` : ''}
+      </div>
+      ${mm.queried_provider_id ? `<p class="border-t border-border px-3 py-1.5 font-mono text-[10px] text-text-subtle" title="queried_provider_id">Queried provider · ${esc(mm.queried_provider_id)}</p>` : ''}
+    </div>
+  </section>`
+}
+
+// --- existing Volume Inventory, reproduced 1:1 ------------------------------
+const INVENTORY = {
+  recovery_group_id: 'rg-9f1c2a', recovery_group_name: 'rdb_and_app', run_id: 'manual__2026-10-06T09:12:44', provider_id_volume: 'ibm-flashsystem-02',
+  volumes: Object.fromEntries(PAIRS.map(([name], i) => [AUX + name, {
+    found: i !== 3,
+    relations: i === 3 ? [] : [{ role: 'source', paired_volume: { name: `snap_${AUX}${name}_0${i + 1}` } }],
+  }])),
+}
+
+function volumeInventory(inv) {
+  const vols = Object.entries(inv.volumes)
+  return vols.map(([name, v]) => `
+    <details id="vol-${esc(name)}" class="group overflow-hidden rounded-lg border border-border bg-surface">
+      <summary class="grid cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 px-3 py-3">
+        <div class="min-w-0"><span class="block truncate text-sm font-semibold text-text-primary" title="${esc(name)}">${esc(name)}</span><span class="text-[11px] text-text-subtle">${v.relations.length} mapping relations</span></div>
+        ${badge(v.found ? 'success' : 'error', v.found ? 'Found' : 'Not found')}
+        <span class="text-text-muted transition-transform group-open:rotate-180" aria-hidden="true">⌄</span>
+      </summary>
+      <div class="space-y-3 border-t border-border bg-surface-subtle px-3 py-3">
+        ${v.relations.length === 0 ? '<p class="text-xs text-text-subtle">No mapping relations were returned.</p>' : v.relations.map(r => {
+          const paired = r.paired_volume.name
+          const src = r.role === 'source' ? name : paired, tgt = r.role === 'target' ? name : paired
+          return `<div class="grid grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1fr)] items-center gap-1.5">
+            <div class="min-w-0 rounded-md border border-border bg-surface px-2.5 py-2"><span class="block text-[9px] font-semibold uppercase tracking-wide text-text-subtle">Source volume</span><span class="mt-0.5 block truncate text-xs font-semibold text-text-primary" title="${esc(src)}">${esc(src)}</span></div>
+            <span class="text-center text-sm font-bold text-accent" aria-hidden="true">→</span>
+            <div class="min-w-0 rounded-md border border-border bg-surface px-2.5 py-2"><span class="block text-[9px] font-semibold uppercase tracking-wide text-text-subtle">Target volume</span><span class="mt-0.5 block truncate text-xs font-semibold text-text-primary" title="${esc(tgt)}">${esc(tgt)}</span></div>
+          </div>`
+        }).join('')}
+        <p class="text-[11px] text-accent">▸ Show technical JSON</p>
+      </div>
+    </details>`).join('')
+}
+
+function render() {
+  const mm = SCENARIOS[document.getElementById('scenario').value]
+  const inv = INVENTORY
+  const vols = Object.entries(inv.volumes)
+  const found = vols.filter(([, v]) => v.found).length
+  const rel = vols.reduce((t, [, v]) => t + v.relations.length, 0)
+  document.getElementById('inventory').innerHTML = `<div class="space-y-4 px-5 py-4">
+    <div class="rounded-xl border border-border bg-surface-subtle p-3.5">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0"><p class="truncate text-sm font-semibold text-text-primary">${esc(inv.recovery_group_name)}</p><p class="mt-1 truncate font-mono text-[11px] text-text-subtle">${esc(inv.recovery_group_id)} · ${esc(inv.run_id)}</p></div>
+        ${badge(found === vols.length ? 'success' : 'warning', `${found}/${vols.length} found`)}
+      </div>
+      <div class="mt-3 grid grid-cols-3 gap-2">
+        ${[['Volumes', vols.length], ['Found', found], ['Relations', rel]].map(([l, v]) => `<div class="rounded-lg border border-border bg-surface px-2.5 py-2"><strong class="block text-base text-text-primary">${v}</strong><span class="text-[10px] font-medium uppercase tracking-wide text-text-subtle">${l}</span></div>`).join('')}
+      </div>
+    </div>
+    ${mm ? metroMirrorBlock(mm, new Set(Object.keys(inv.volumes))) : ''}
+    <div class="space-y-2">
+      ${sectionLabel('Volume inventory', inv.provider_id_volume, 'Auxiliary volumes and their <strong class="font-semibold text-text-secondary">FlashCopy snapshot</strong> mappings')}
+      ${volumeInventory(inv)}
+    </div>
+  </div>`
+}
+
+document.getElementById('inventory').addEventListener('click', e => {
+  const a = e.target.closest('[data-open]')
+  if (!a) return
+  e.preventDefault()
+  const d = document.getElementById(`vol-${a.dataset.open}`)
+  d.open = true
+  d.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  d.querySelector('summary').focus()
+})
+document.getElementById('scenario').onchange = render
+document.getElementById('width').onchange = e => { document.getElementById('drawer').style.width = `${e.target.value}px` }
+document.getElementById('dark').onchange = e => { document.documentElement.classList.toggle('dark', e.target.checked) }
+const params = new URLSearchParams(location.search)
+for (const k of ['scenario', 'width']) if (params.get(k)) { const el = document.getElementById(k); el.value = params.get(k); el.dispatchEvent(new Event('change')) }
+if (params.get('dark')) { document.getElementById('dark').checked = true; document.documentElement.classList.add('dark') }
+render()
+</script>
+</body>
+</html>
