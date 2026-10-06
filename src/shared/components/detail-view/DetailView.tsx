@@ -270,8 +270,9 @@ export function DetailView({ open, onClose, title, entityLabel, statuses = [], m
               aria-label={t('detailView.sections')}
               onKeyDown={onNavigationKeyDown}
               className={cn(
-                'flex shrink-0 gap-1 overflow-x-auto border-b border-border px-4 py-2 [scrollbar-width:none]',
-                compact ? undefined : 'sm:w-52 sm:flex-col sm:overflow-y-auto sm:border-r sm:border-b-0 sm:px-3 sm:py-4',
+                // Horizontal (compact, narrow screens) wraps so no section hides off-screen.
+                'flex shrink-0 flex-wrap gap-1 border-b border-border px-4 py-2',
+                compact ? undefined : 'sm:w-52 sm:flex-col sm:flex-nowrap sm:overflow-y-auto sm:border-r sm:border-b-0 sm:px-3 sm:py-4',
               )}
             >
               {ordered.map((section) => {
@@ -284,8 +285,9 @@ export function DetailView({ open, onClose, title, entityLabel, statuses = [], m
                     aria-current={selected ? 'true' : undefined}
                     onClick={() => { setActiveId(sectionId) }}
                     className={cn(
-                      'flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] leading-5 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15',
+                      'flex shrink-0 items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] leading-5 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15',
                       selected ? 'bg-accent-soft font-semibold text-accent' : 'font-medium text-text-secondary hover:bg-surface-hover hover:text-text-primary',
+                      compact ? undefined : 'sm:gap-2.5 sm:px-3 sm:py-2',
                       secondary && !compact ? 'sm:mt-auto' : undefined,
                     )}
                   >
