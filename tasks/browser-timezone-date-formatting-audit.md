@@ -12,7 +12,15 @@ Hľadané vzory:
 
 BE serializácia bola overená read-only v susednom repe `abco-be`.
 
-Kategórie: **A** SAFE absolute instant · **B** AMBIGUOUS · **C** LOCAL USER INPUT · **D** WALL-CLOCK / SCHEDULE · **E** DATE-ONLY · **F** DURATION · **N/A** nie je server timestamp.
+| Kategória | Význam | Aktuálny task |
+|-----------|--------|---------------|
+| **A** SAFE ABSOLUTE INSTANT | hodnota má `Z` alebo `±HH:MM` | **implementovať teraz** |
+| **B** AMBIGUOUS | timestamp bez timezone | bez zmeny |
+| **C** LOCAL USER INPUT | wall-clock z inputu (`datetime-local`) | **DEFERRED FOLLOW-UP** |
+| **D** WALL-CLOCK / SCHEDULE | business čas + explicitná zóna | bez zmeny |
+| **E** DATE-ONLY | dátum bez času | bez zmeny |
+| **F** DURATION | trvanie | bez zmeny |
+| **N/A** | nie je server timestamp | bez zmeny |
 
 **A znamená iba timestamp s explicitným `Z` alebo `±HH:MM` v samotnej hodnote.** Zaradenie zdroja do A je očakávanie
 podľa dôkazov v stĺpci Field/source. Shared formatter ho overuje pri každej hodnote. Naive hodnota z ľubovoľného zdroja,
@@ -27,12 +35,12 @@ aj z Airflow, sa zobrazí ako `—` a nikdy sa nepovažuje za UTC.
 | `recovery-plans/recovery-runs/helpers/formatRecoveryRun.ts` | Airflow `start_date` / `logical_date`: FE fixtures aj očakávaný Airflow REST kontrakt sú UTC-aware (`Z`). ABCO BE ich iba proxyuje bez normalizácie (`operations.py:27`). | `toLocaleString(undefined, …)`, browser tz, browser default locale. Naive hodnotu by dnes potichu brala ako lokálny čas. | A (podmienene, strict parse) | **centralize**: `formatRunTimestamp` deleguje na `formatDateTime` (bez `language`); signatúra sa nemení; naive vráti `—` |
 | └ callery: `RecoveryRunsTable`, `RecoveryRunHistoryDrawer`, `RecoveryGroupsTable`, `RecoveryApplicationsTable`, (WIP) `dashboard-preview/RecoveryBlocks` | `startedAt` | cez `formatRunTimestamp` | A | bez zmeny, zlepšia sa automaticky |
 | `recovery-actions/pages/RecoveryActionsHistoryPage.tsx` | `startedAt` (mock, `+02:00`) | lokálna `formatDate`, `en-GB` natvrdo, browser tz | A | **centralize**: `formatDateTime(…, { language: 'en' })` |
-| `recovery-actions/pages/RecoveryActionsValidatePage.tsx` | `latestAutomatedRun.startedAt` (mock) | lokálna `formatDate` (duplicita), `en-GB` | A | **centralize**: rovnako ako vyššie |
+| `recovery-actions/pages/RecoveryActionsValidatePage.tsx` | `latestAutomatedRun.startedAt` (mock, `+02:00`) | lokálna `formatDate` (duplicita), `en-GB` | A | **centralize**: rovnako ako vyššie; iba tento display, `datetime-local` v tom istom súbore sa nemení |
 | `recovery-actions/components/RecoveryActionsPageShell.tsx` | detail `date` (= `startedAt`) | inline locale mapping + `Intl` (`day`, `month: 'short'`, `hour`, `minute`) | A | **centralize**: `formatDateTime(…, { language, …rovnaké fields })` |
-| `recovery-actions/components/RecoveryPointSummary.tsx` | `configurationAt`, `snapshotAt` (mock, `+02:00`) | surový string `replace('T', ' ')`, zobrazuje wall-clock `+02:00` | A | **migrate**: `formatDateTime(…, { language })` (nutné aj pre C) |
-| `recovery-actions/pages/RecoveryActionsExecutePage.tsx` | `datetime-local` `recoveryDate` | `` `${recoveryDate}:00+02:00` `` | C | **fix**: `localDateTimeInputToUtcIso` s DST round-trip validáciou (neexistujúci čas vráti `null` a preview ukáže `—`); žiadne API, iba preview |
-| `recovery-actions/pages/RecoveryActionsValidatePage.tsx` | `datetime-local` `validationDate` | `` `${validationDate}:00+02:00` `` | C | **fix**: rovnako |
-| `recovery-actions/pages/RecoveryActionsExecutePage.tsx` | confirm dialóg `recoveryDate.replace('T', ' ')` | echo zadaného wall-clocku | C | bez zmeny (správne) |
+| `recovery-actions/components/RecoveryPointSummary.tsx` | `snapshotAt` (mock, `+02:00`); `configurationAt` vždy z `datetime-local` + `+02:00` (renderuje sa iba v Execute a Validate) | surový string `replace('T', ' ')`, echo zadaného wall-clocku | C (preview lokálneho vstupu) | **DEFERRED FOLLOW-UP**: centralizácia by zmenila zobrazený čas preview (v zime 04:15 → 03:15), čo je zmena C |
+| `recovery-actions/pages/RecoveryActionsExecutePage.tsx` | `datetime-local` `recoveryDate` | `` `${recoveryDate}:00+02:00` `` | C | **DEFERRED FOLLOW-UP**: known technical debt, bez zmeny |
+| `recovery-actions/pages/RecoveryActionsValidatePage.tsx` | `datetime-local` `validationDate` | `` `${validationDate}:00+02:00` `` | C | **DEFERRED FOLLOW-UP**: known technical debt, bez zmeny |
+| `recovery-actions/pages/RecoveryActionsExecutePage.tsx` | confirm dialóg `recoveryDate.replace('T', ' ')` | echo zadaného wall-clocku | C | bez zmeny |
 | `discovery-inventory/discovery-settings/config/discoveryCacheHistoryColumns.tsx` | `CacheRunRecord.started_at` (`2026-08-30T10:20:30.167838`) | regex → `30. 8. 2026 10:20:30`, wall-clock ako prišiel | **B** | **bez zmeny**: BE clarification (nižšie) |
 | `shared/utils/dateFormat.ts` `formatStartTime` ← `resources/components/BackingStorageInfo.tsx`, `resources/helpers/mapVmStorageVolumes.ts` | FlashCopy `start_time` (`260806161641`, timezone semantika neoverená) | regex → `Aug 6, 2026 16:16`, bez timezone konverzie | **B** | **bez zmeny**: overiť IBM semantiku (nižšie) |
 | `discovery-inventory/infrastructure/model/flashSystemVolumeTreeTypes.ts`, `helpers/parseVolumeTreeNodes.ts` | FlashCopy `start_time`, `start_time_iso` (naive); CG `start_time` | iba parsované, nezobrazujú sa | B | bez zmeny |
@@ -77,9 +85,21 @@ aj z Airflow, sa zobrazí ako `—` a nikdy sa nepovažuje za UTC.
   - live konfigurácia alebo response konkrétneho poľa, napr. porovnať `start_time` známeho mappingu s reálnym UTC časom jeho spustenia.
 - **Kým to nie je potvrdené:** FE správanie ostáva bez timezone konverzie a bez akéhokoľvek UTC predpokladu.
 
+## C: deferred follow-up `datetime-local`
+
+Detailný popis je v [spec §6](browser-timezone-date-formatting-spec.md#6-deferred-follow-up-datetime-local-kategória-c).
+
+- **Problem:** `datetime-local` je lokálny wall-clock bez timezone. `` `${…}:00+02:00` `` je kvôli DST nesprávne.
+- **Spring-forward:** `2026-03-29T02:30 Europe/Bratislava` neexistuje.
+- **Fall-back:** `2026-10-25T02:30 Europe/Bratislava` existuje dvakrát (`00:30Z` aj `01:30Z`).
+- **Required future decision:** výber timezone používateľom, vyžiadanie offsetu pri ambiguous čase, explicitná business timezone,
+  alebo API s local datetime + IANA zónou, či s resolved UTC instantom.
+- **Do rozhodnutia:** Execute, Validate (input) a `RecoveryPointSummary` zostávajú bez zmeny. Fixed `+02:00` je known technical debt.
+
 ## Otvorené otázky
 1. Discovery Cache `started_at`: TZ BE kontajnera a možnosť prejsť na UTC-aware ISO.
 2. FlashCopy `start_time`: neoverená timezone semantika (UTC, čas poľa, alebo iné). Potvrdiť z IBM dokumentácie alebo z live poľa.
 3. Airflow `start_date` / `logical_date`: ABCO BE ich nenormalizuje. Má sa BE zaviazať k UTC-aware výstupu, alebo zostáva FE strict parse jedinou poistkou?
 4. `snapshot_target_time` (`HH:MM`): v akej timezone ho orchestrátor vyhodnocuje? Dnes je to holý wall-clock bez zóny.
 5. Follow-up k locale (mimo scope, správanie sa zachová): History a Validate majú `en-GB` natvrdo, `formatRunTimestamp` používa browser default locale namiesto jazyka aplikácie.
+6. `datetime-local` (C): UX/API rozhodnutie zo sekcie vyššie. Blokuje deferred follow-up, nie aktuálny task.

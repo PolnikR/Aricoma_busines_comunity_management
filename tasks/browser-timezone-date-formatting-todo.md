@@ -5,27 +5,22 @@ Plan: [browser-timezone-date-formatting-plan.md](browser-timezone-date-formattin
 Audit: [browser-timezone-date-formatting-audit.md](browser-timezone-date-formatting-audit.md)
 
 Stav: **čaká na schválenie, implementácia nezačala.**
+Scope: iba SAFE (A) display timestamps a centralizovaný formatter. `datetime-local` je deferred follow-up (spec §6).
 
 ## Phase 1: Foundation
 
 ### T1: Shared `dateTime.ts`
-**Description:** Pridať modul s API zo specu (§5) a unit testy, zatiaľ bez akéhokoľvek callera.
+**Description:** Pridať display-only modul s API zo specu (§5) a unit testy, zatiaľ bez akéhokoľvek callera. Žiadny helper na konverziu lokálneho vstupu.
 
 **Acceptance criteria:**
-- [ ] **Formatter:**
-  - `Z` aj `±HH:MM` dávajú správny instant;
-  - naive (aj Airflow-like `2026-08-18T09:46:40`), date-only, invalid, `''`, `null` a `undefined` dávajú `—`;
-  - s explicitným `timeZone`: `2026-10-06T07:41:00Z` je v `Europe/Bratislava` 09:41 a v `Europe/London` 08:41; decembrový instant v Bratislave dá 08:41 (DST);
+- [ ] **Parse:**
+  - UTC `Z` aj explicitný offset (`+00:00`, `+02:00`) reprezentujú správny instant;
+  - naive `2026-08-18T09:46:40`, date-only `2026-10-06`, invalid, `''`, `null` a `undefined` vrátia `—`.
+- [ ] **Formát:**
   - `toDateLocale` mapuje sk/cs/en;
-  - zdroj modulu neobsahuje `Europe/` ani `±0X:00`.
-- [ ] **`localDateTimeInputToUtcIso`** robí DST-safe round-trip (spec §6). S injektovaným `LocalCalendar` pre `Europe/Bratislava`:
-  - leto `2026-08-11T04:15` vráti `2026-08-11T02:15:00.000Z`;
-  - zima `2026-12-11T04:15` vráti `2026-12-11T03:15:00.000Z`;
-  - DST gap `2026-03-29T02:30` vráti `null`;
-  - `''`, `2026-08-11`, `…Z`, `2026-02-30T10:00` vrátia `null`.
-- [ ] **Invariantné testy s default kalendárom:**
-  - prejdú pri ľubovoľnej host TZ;
-  - žiadny test nečíta OS/CI timezone ako očakávanú hodnotu a žiadny sa nespúšťa s `TZ=…`.
+  - s explicitným `timeZone`: `2026-10-06T07:41:00Z` je v `Europe/Bratislava` 09:41 a v `Europe/London` 08:41; decembrový instant v Bratislave dá 08:41 (DST);
+  - browser default: `formatDateTime(v)` sa rovná `formatDateTime(v, { timeZone: getBrowserTimeZone() })` (invariant).
+- [ ] **Zdroj modulu** neobsahuje `Europe/` ani fixný offset `±0X:00`. Žiadny test nečíta OS/CI timezone ako očakávanú hodnotu a žiadny sa nespúšťa s `TZ=…`.
 
 **Verification:**
 - [ ] `npm exec vitest run src/shared/utils/dateTime.test.ts`
@@ -40,7 +35,7 @@ Stav: **čaká na schválenie, implementácia nezačala.**
 ## Phase 2: SAFE migrácie
 
 ### T2: Access Logs
-**Description:** Odstrániť `timeZone: 'Europe/Bratislava'` a formátovať cez `formatDateTime` so zachovaným `sk-SK` bodkovým layoutom.
+**Description:** Odstrániť `timeZone: 'Europe/Bratislava'` a formátovať cez `formatDateTime` so zachovaným `sk-SK` bodkovým layoutom. BE audit timestamp je UTC-aware.
 
 **Acceptance criteria:**
 - [ ] Žiadny `timeZone` ani `Europe/` v súbore. Výstup má tvar `DD.MM.YYYY HH:mm:ss`.
@@ -84,46 +79,41 @@ Stav: **čaká na schválenie, implementácia nezačala.**
 ### Checkpoint 2
 - [ ] T2–T4 focused testy zelené, `tsc -b` čisté
 
-## Phase 3: Recovery Actions
+## Phase 3: Recovery Actions SAFE display
 
-### T5: Recovery Actions display
-**Description:** Odstrániť duplicitné `formatDate` (History, Validate) a inline locale mapping (PageShell). `RecoveryPointSummary` prepnúť zo surového stringu na `formatDateTime`.
+### T5: Recovery Actions SAFE display
+**Description:** Odstrániť duplicitné `formatDate` (History, Validate latest run) a inline locale mapping (PageShell).
+Migrujú sa iba absolute timestamps s explicitným offsetom. `datetime-local`, `${…}:00+02:00` a `RecoveryPointSummary` sa nemenia.
 
 **Acceptance criteria:**
-- [ ] V `recovery-actions` nie je `new Intl.DateTimeFormat` ani lokálna `formatDate`.
-- [ ] History a Validate zostávajú `en-GB`. PageShell zachová `day`/`month: 'short'`/`hour`/`minute` a jazyk aplikácie.
-- [ ] Testy: riadok v History obsahuje `formatDateTime(startedAt, { language: 'en' })`; `RecoveryPointSummary` nezobrazuje `+02:00`.
+- [ ] V History, Validate a PageShell nie je `new Intl.DateTimeFormat` ani lokálna `formatDate`. History a Validate zostávajú `en-GB`; PageShell zachová `day`/`month: 'short'`/`hour`/`minute` a jazyk aplikácie.
+- [ ] `RecoveryActionsExecutePage.tsx`, `RecoveryPointSummary.tsx` a `datetime-local` riadky vo `RecoveryActionsValidatePage.tsx` majú nulový diff.
+- [ ] Testy:
+  - riadok v History obsahuje `formatDateTime(startedAt, { language: 'en' })`;
+  - PageShell detail obsahuje `formatDateTime(latestAutomatedRun.startedAt, { language, …fields })` pre jazyk aplikácie (v teste default `en`).
 
 **Verification:**
 - [ ] `npm exec vitest run src/features/recovery-actions`
-- [ ] eslint `src/features/recovery-actions`
+- [ ] eslint na zmenených súboroch
+- [ ] `git diff -- src/features/recovery-actions/pages/RecoveryActionsExecutePage.tsx src/features/recovery-actions/components/RecoveryPointSummary.tsx` je prázdny
 
-**Dependencies:** T1 · **Files:** `RecoveryActionsHistoryPage.tsx` (+ test), `RecoveryActionsValidatePage.tsx`, `RecoveryActionsPageShell.tsx`, `RecoveryPointSummary.tsx` (+ new test) · **Scope:** M
+**Dependencies:** T1 · **Files:** `RecoveryActionsHistoryPage.tsx` (+ test), `RecoveryActionsValidatePage.tsx`, `RecoveryActionsPageShell.tsx` (+ test) · **Scope:** M
 
-### T6: Recovery Actions `datetime-local`
-**Description:** Nahradiť `` `${date}:00+02:00` `` za `localDateTimeInputToUtcIso(date) ?? ''` v Execute aj Validate. Platí iba ak je schválená otázka 1 v pláne.
-
+### T6: Audit report a uzavretie
 **Acceptance criteria:**
-- [ ] Žiadne `+02:00` v page súboroch. Nevalidný alebo neexistujúci (DST gap) vstup zobrazí v preview `—`, nie posunutý čas.
-- [ ] Page test overuje iba wiring: zimný vstup `2026-12-11T04:15` sa v preview zobrazí ako `11 Dec 2026, 04:15` na oboch stránkach (round-trip invariant pre ľubovoľnú host TZ).
-- [ ] DST korektnosť (zima `+01:00`, gap → `null`) je dokázaná v T1 cez injektovaný kalendár, nie cez timezone stroja.
-
-**Verification:**
-- [ ] `npm exec vitest run src/features/recovery-actions`
-- [ ] eslint
-
-**Dependencies:** T1, T5 · **Files:** `RecoveryActionsExecutePage.tsx`, `RecoveryActionsValidatePage.tsx`, `RecoveryActionsDateInput.test.tsx` (new) · **Scope:** S
-
-### T7: Audit report a uzavretie
-**Acceptance criteria:**
-- [ ] Stĺpec Action v audite zodpovedá realite (migrated / unchanged).
-- [ ] Todo checkboxy sú odškrtnuté.
+- [ ] Stĺpec Action v audite zodpovedá realite (migrated / unchanged / DEFERRED FOLLOW-UP).
+- [ ] Todo checkboxy sú odškrtnuté. Deferred follow-up zostáva otvorený a nie je označený ako vyriešený.
 
 **Verification:**
 - [ ] `git diff --check`
 
-**Dependencies:** T2–T6 · **Scope:** XS
+**Dependencies:** T2–T5 · **Scope:** XS
 
 ### Checkpoint 3: Complete
-- [ ] Všetky focused testy z T1–T6, eslint na zmenených súboroch a `tsc -b` sú zelené (full suite ani build sa nespúšťajú)
+- [ ] Všetky focused testy z T1–T5, eslint na zmenených súboroch a `tsc -b` sú zelené (full suite ani build sa nespúšťajú)
 - [ ] `git diff 89423dac..HEAD -- src | grep '^+' | grep -E "Europe/|[+-]0[0-9]:00"` je prázdne
+- [ ] Produkčný kód neobsahuje helper na konverziu lokálneho vstupu na UTC
+
+## Deferred follow-up (nie je súčasťou tohto todo)
+- [ ] `datetime-local` v Execute a Validate, `RecoveryPointSummary` preview, fixed `+02:00`. Blokované UX/API rozhodnutím (spec §6, audit otázka 6).
+  Testy pre spring-forward a fall-back patria do toho budúceho tasku.
