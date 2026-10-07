@@ -35,6 +35,14 @@ const labels = {
   fieldLabels: { id: 'ID', volume_id: 'Volume ID', vdisk_UID: 'Virtual disk UID' },
 }
 
+// Opens a section from the navigation and returns its region.
+async function openSection(name: string, shown = volume) {
+  render(<FlashSystemVolumeDetailPanel volume={shown} open onClose={vi.fn()} labels={labels} />)
+  const dialog = screen.getByRole('dialog', { name: 'Volume detail' })
+  await userEvent.setup().click(within(within(dialog).getByRole('navigation', { name: 'Sections' })).getByRole('button', { name }))
+  return within(dialog).getByRole('region', { name })
+}
+
 describe('FlashSystemVolumeDetailPanel', () => {
   it('opens on Identity with the original sections and no Technical section', () => {
     render(<FlashSystemVolumeDetailPanel volume={volume} open onClose={vi.fn()} labels={labels} />)
@@ -75,5 +83,43 @@ describe('FlashSystemVolumeDetailPanel', () => {
     await userEvent.setup().click(within(dialog).getByRole('button', { name: 'Pool' }))
 
     expect(within(dialog).getByRole('region', { name: 'Pool' })).toHaveTextContent(/Capacity6.98 TBUsed capacity6.02 TBFree capacity898 GB/)
+  })
+
+  it.each(['Identity', 'Placement and capacity', 'State and behavior', 'Copy relationships', 'Pool'])(
+    'lays the %s fields out on the shared Overview grid',
+    async (name) => {
+      const section = await openSection(name)
+      const lists = section.querySelectorAll('dl')
+
+      expect(lists).toHaveLength(1)
+      expect(lists[0]).toHaveClass('grid-cols-[repeat(auto-fill,minmax(min(12.75rem,100%),1fr))]')
+      expect(section.querySelector('.grid-cols-1, [class*="@min-[520px]/detail-content:grid-cols-2"], [class*="@min-[860px]/detail-content:grid-cols-3"]')).toBeNull()
+    },
+  )
+
+  it('keeps the Identity order and copy actions on the Overview grid', async () => {
+    const identity = await openSection('Identity')
+
+    expect([...identity.querySelectorAll('dt')].map(term => term.textContent)).toEqual(['ID', 'Volume ID', 'Virtual disk UID'])
+    for (const label of ['ID', 'Volume ID', 'Virtual disk UID']) {
+      expect(within(identity).getByRole('button', { name: `Copy ${label}` })).toBeInTheDocument()
+    }
+  })
+
+  it('keeps the consistency groups on a full row, with or without groups', async () => {
+    const withGroups = { ...volume, resolvedConsistencyGroups: [{ id: 'cg-1', name: 'CG_SAP', status: 'consistent_synchronized' }] }
+    const copies = await openSection('Copy relationships', withGroups)
+    expect(within(copies).getByText('Consistency groups', { selector: 'dt' }).parentElement).toHaveClass('col-span-full')
+    expect(within(copies).getByRole('listitem')).toHaveTextContent(/CG_SAP.*consistent_synchronized/)
+    cleanup()
+
+    const empty = await openSection('Copy relationships')
+    expect(within(empty).getByText('Consistency groups', { selector: 'dt' }).parentElement).toHaveClass('col-span-full')
+  })
+
+  it('keeps Capacity, Used capacity and Free capacity in order in Pool', async () => {
+    const pool = await openSection('Pool')
+
+    expect([...pool.querySelectorAll('dt')].map(term => term.textContent)).toEqual(['Capacity', 'Used capacity', 'Free capacity'])
   })
 })

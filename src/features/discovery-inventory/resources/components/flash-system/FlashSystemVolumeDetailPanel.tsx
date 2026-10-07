@@ -1,4 +1,4 @@
-import { DetailField, DetailFieldGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { DetailField, DetailOverview, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { FlashVolumeRelationshipHelp } from './FlashVolumeRelationshipHelp'
@@ -92,7 +92,7 @@ export function FlashSystemVolumeDetailPanel({ volume, allProviders = [], open, 
     >
       {fieldSections.map((section) => (
         <DetailViewSection key={section.key} id={section.key} title={labels.groups[section.key]} icon={section.icon}>
-          <DetailFieldGroup>
+          <DetailOverview>
             {section.fields.map((field) => field === 'consistency_groups'
               ? (
                   <DetailField
@@ -111,15 +111,15 @@ export function FlashSystemVolumeDetailPanel({ volume, allProviders = [], open, 
                     copyValue={identifierFields.has(field) ? display(volume[field]) : undefined}
                   />
                 ))}
-          </DetailFieldGroup>
+          </DetailOverview>
         </DetailViewSection>
       ))}
       <DetailViewSection id="pool" title={labels.pool} icon={StorageIcon}>
-        <DetailFieldGroup>
+        <DetailOverview>
           <DetailField label={labels.capacity} value={display(volume.pool?.capacity)} emphasis />
           <DetailField label={labels.usedCapacity} value={display(volume.pool?.used_capacity)} />
           <DetailField label={labels.freeCapacity} value={display(volume.pool?.free_capacity)} />
-        </DetailFieldGroup>
+        </DetailOverview>
       </DetailViewSection>
     </DetailView>
   )

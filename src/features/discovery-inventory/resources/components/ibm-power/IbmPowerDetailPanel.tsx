@@ -1,5 +1,5 @@
 import type { ComponentType, SVGProps } from 'react'
-import { DetailField, DetailFieldGroup, DetailView, DetailViewSection } from '@/shared/components/detail-view'
+import { DetailField, DetailOverview, DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { CpuIcon, GridIcon, LayersIcon, NetworkIcon, ServerIcon } from '@/shared/icons/Icons'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
@@ -236,11 +236,11 @@ export function IbmPowerDetailPanel({ partition, open, onClose, providers = [], 
         const rows = visibleRows(section.rows)
         return rows.length > 0 ? (
           <DetailViewSection key={section.id} id={section.id} title={section.title} icon={section.icon}>
-            <DetailFieldGroup>
+            <DetailOverview>
               {rows.map((row) => (
                 <DetailField key={row.label} label={row.label} value={row.value} mono={row.identifier} copyValue={row.identifier ? row.value : undefined} />
               ))}
-            </DetailFieldGroup>
+            </DetailOverview>
           </DetailViewSection>
         ) : null
       })}

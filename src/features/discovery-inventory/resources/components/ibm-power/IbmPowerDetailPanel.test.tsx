@@ -248,6 +248,24 @@ describe('IbmPowerDetailPanel backing storage', () => {
     }
   })
 
+  it.each(['Summary', 'Processor and memory', 'Network and monitoring', 'Storage', 'I/O and virtualization'])(
+    'lays the %s fields out on the shared Overview grid',
+    async (name) => {
+      // Data for every field section, so all five are in the navigation.
+      const dialog = renderPanel({
+        ...lpar,
+        partitionData: { ...lpar.partitionData, CurrentProcessors: '2', InterfaceName: 'en0', WWPN: 'c050760000000001' },
+      })
+      await userEvent.setup().click(within(within(dialog).getByRole('navigation', { name: 'Sections' })).getByRole('button', { name }))
+      const section = within(dialog).getByRole('region', { name })
+      const lists = section.querySelectorAll('dl')
+
+      expect(lists).toHaveLength(1)
+      expect(lists[0]).toHaveClass('grid-cols-[repeat(auto-fill,minmax(min(12.75rem,100%),1fr))]')
+      expect(section.querySelector('.grid-cols-1, [class*="@min-[520px]/detail-content:grid-cols-2"], [class*="@min-[860px]/detail-content:grid-cols-3"]')).toBeNull()
+    },
+  )
+
   it('shows no Fibre Channel identity in Storage when the partition is not Fibre Channel backed', async () => {
     const dialog = renderPanel({ ...lpar, partitionData: { ...lpar.partitionData, IsFibreChannelBacked: 'false', WWPN: 'c050760000000001' } })
     await userEvent.setup().click(within(dialog).getByRole('button', { name: 'Storage' }))
