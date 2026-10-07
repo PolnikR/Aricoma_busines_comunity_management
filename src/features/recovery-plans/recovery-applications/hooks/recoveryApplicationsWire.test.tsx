@@ -23,6 +23,15 @@ const targetVcenter: ProviderRecord = {
   ipAddress: '10.0.0.2',
   credentialId: 'vcenter-admin',
   credentialStatus: 'ok',
+  orchestratorConnId: 'vcenter_default_destination',
+}
+
+const sourceVcenter: ProviderRecord = {
+  ...targetVcenter,
+  id: 'vmware-vcenter-01',
+  name: 'Source vCenter',
+  role: 'source',
+  orchestratorConnId: 'vcenter_default',
 }
 
 const data: RecoveryApplicationData = {
@@ -40,7 +49,11 @@ const data: RecoveryApplicationData = {
   },
 }
 
-const application = { id: 'finance-recovery', pushToOrchestrator: false } as RecoveryApplicationListItem
+const application: RecoveryApplicationListItem = {
+  id: 'finance-recovery',
+  pushToOrchestrator: false,
+  data: { application: data.application },
+}
 
 function stubFetch(body: unknown) {
   const mock = vi.fn<(input: string, init?: RequestInit) => Promise<Response>>(() => Promise.resolve(
@@ -63,7 +76,7 @@ function wrapper({ children }: { children: ReactNode }) {
 
 describe('recovery applications wire contract', () => {
   beforeEach(() => {
-    mocks.useProviders.mockReturnValue({ data: [targetVcenter], isSuccess: true })
+    mocks.useProviders.mockReturnValue({ data: [sourceVcenter, targetVcenter], isSuccess: true })
   })
   afterEach(() => { vi.unstubAllGlobals() })
 
@@ -99,6 +112,27 @@ describe('recovery applications wire contract', () => {
       compute_provider_id: 'vmware-vcenter-02',
     })
     expect(returned?.rollback).toMatchObject(report)
+  })
+
+  it.each([
+    ['no target provider uses the target connection', [sourceVcenter], 'missing_compute_provider', 'VMWARE'],
+    ['several target providers use the target connection', [targetVcenter, { ...targetVcenter, id: 'vmware-vcenter-04' }], 'ambiguous_compute_provider', 'VMWARE'],
+    ['the application is IBM Power', [targetVcenter], 'ibm_power_rollback_unsupported', 'IBM_POWER'],
+  ])('does not send the rollback request when %s', async (_label, providers, code, platform) => {
+    mocks.useProviders.mockReturnValue({ data: providers, isSuccess: true })
+    const mock = stubFetch({ applications: [] })
+    const { result } = renderHook(() => useDeleteRecoveryApplication(), { wrapper })
+
+    await act(async () => {
+      await expect(result.current.mutateAsync({
+        ...application,
+        pushToOrchestrator: true,
+        orchestrationProviderId: 'airflow-01',
+        data: { application: { ...data.application, platform } },
+      })).rejects.toMatchObject({ code })
+    })
+
+    expect(mock).not.toHaveBeenCalled()
   })
 
   it('requires the DAG details of an orchestrator push', async () => {

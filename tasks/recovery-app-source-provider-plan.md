@@ -89,7 +89,7 @@ T1–T4 (posielanie `source_provider_id` = vybraný source provider) zostávajú
 - [x] T3: Pages odovzdávajú providers do mappera; submit testy IBM Power / VMware / legacy
 - [x] T4: Tabuľka, filter, drawer cez `sourceProviderIdOf`
 - [x] Checkpoint: typecheck, focused testy, focused eslint, `git diff --check`, audit `platform`, commit (T1–T4)
-- [ ] T5: explicitný VMware target `compute_provider_id` cez `target_connection ↔ orchestratorConnId` (rollback + inventory); IBM Power rollback zablokovaný
+- [x] T5: explicitný VMware target `compute_provider_id` cez `target_connection ↔ orchestratorConnId` (rollback + inventory); IBM Power rollback zablokovaný
 
 ## Riziká
 

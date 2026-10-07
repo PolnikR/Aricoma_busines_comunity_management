@@ -59,19 +59,20 @@ Rovnaká funkcia (jedna, v `recovery-applications`) sa použije pre rollback (`d
 **Spoločná fixture:** app `source_provider_id = 'vmware-vcenter-01'`, `target_connection = 'vcenter_default_destination'`, `orchestration.provider_id = 'airflow-01'`; providers: VMWARE source `vmware-vcenter-01` (`orchestratorConnId = 'vcenter_default'`), VMWARE target `vmware-vcenter-02` (`orchestratorConnId = 'vcenter_default_destination'`).
 
 **Akceptačné kritériá:**
-- [ ] **VMware rollback:** DELETE `/delete_recovery_app` pošle `compute_provider_id = vmware-vcenter-02`, `provider_id = airflow-01`, `rollback_from_orchestrator = true`.
-- [ ] **VMware inventory:** GET `/get_recovery_app_inventory` pošle `run_id` a `compute_provider_id = vmware-vcenter-02`.
-- [ ] **Missing target:** žiadny VMware target s `orchestratorConnId = target_connection` → rollback aj inventory request sa neposiela, zobrazí sa FE chyba.
-- [ ] **Ambiguous target:** 2 VMware target provideri s rovnakým `orchestratorConnId` → request sa neposiela, FE chyba.
-- [ ] **Source sa nepoužije:** ani pri chýbajúcom targete sa `compute_provider_id` nenastaví na `source_provider_id`; VMWARE source provider s rovnakým `orchestratorConnId` sa nezapočíta (filter `role === 'target'`).
-- [ ] **IBM Power rollback:** pri `platform = 'IBM_POWER'` sa DELETE neposiela; `RecoveryApplicationsError` vysvetľuje chýbajúci jednoznačný target provider model.
-- [ ] **Orchestration:** `provider_id = orchestration.provider_id` bez zmeny; chýbajúci orchestration provider stále vyhodí `missing_orchestration_provider`.
-- [ ] Delete bez rollbacku (`pushToOrchestrator = false`) sa nemení (žiadny target lookup).
-- [ ] Chybové správy majú en/sk/cs preklady, ak sa zobrazujú cez preklady (podľa existujúceho vzoru zobrazenia `RecoveryApplicationsError`).
+- [x] **VMware rollback:** DELETE `/delete_recovery_app` pošle `compute_provider_id = vmware-vcenter-02`, `provider_id = airflow-01`, `rollback_from_orchestrator = true`.
+- [x] **VMware inventory:** GET `/get_recovery_app_inventory` pošle `run_id` a `compute_provider_id = vmware-vcenter-02`.
+- [x] **Missing target:** žiadny VMware target s `orchestratorConnId = target_connection` → rollback aj inventory request sa neposiela, zobrazí sa FE chyba.
+- [x] **Ambiguous target:** 2 VMware target provideri s rovnakým `orchestratorConnId` → request sa neposiela, FE chyba.
+- [x] **Source sa nepoužije:** ani pri chýbajúcom targete sa `compute_provider_id` nenastaví na `source_provider_id`; VMWARE source provider s rovnakým `orchestratorConnId` sa nezapočíta (filter `role === 'target'`).
+- [x] **IBM Power rollback:** pri `platform = 'IBM_POWER'` sa DELETE neposiela; `RecoveryApplicationsError` vysvetľuje chýbajúci jednoznačný target provider model.
+- [x] **Orchestration:** `provider_id = orchestration.provider_id` bez zmeny; chýbajúci orchestration provider stále vyhodí `missing_orchestration_provider`.
+- [x] Delete bez rollbacku (`pushToOrchestrator = false`) sa nemení (žiadny target lookup).
+- [x] Chybové správy majú en/sk/cs preklady, ak sa zobrazujú cez preklady (podľa existujúceho vzoru zobrazenia `RecoveryApplicationsError`).
+  - Výsledok: existujúce `RecoveryApplicationsError` správy sú anglické texty zobrazené cez `resolveUserFacingErrorMessage`, bez prekladových kľúčov; nové správy idú rovnakou cestou, preklady sa nepridávali.
 
 **Overenie:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-applications/hooks src/features/recovery-plans/recovery-applications/components/RecoveryApplicationInventory.test.tsx src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx`
-- [ ] `npm run typecheck`, focused eslint, `git diff --check`
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-applications/hooks src/features/recovery-plans/recovery-applications/components/RecoveryApplicationInventory.test.tsx src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx`
+- [x] `npm run typecheck`, focused eslint, `git diff --check`
 
 **Závislosti:** T2 (typy, `target_connection` na `ListItem`), Checkpoint T1–T4
 **Súbory:** `hooks/useDeleteRecoveryApplication.ts` (+ test), `hooks/recoveryApplicationsWire.test.tsx`, `components/RecoveryApplicationInventory.tsx` (+ test), `components/RecoveryApplicationsTable.tsx` (odovzdanie app do inventory), prípadne `src/locales/{en,sk,cs}.json`
@@ -84,4 +85,4 @@ Rovnaká funkcia (jedna, v `recovery-applications`) sa použije pre rollback (`d
 - [x] `git diff --check`
 - [x] `grep` handwritten `application.platform` / `.platform` — žiadne miesto ho nečíta ako provider ID (okrem `sourceProviderIdOf` legacy vetvy)
 - [x] Commit 2 (T2–T4) s explicitným zoznamom ciest; report
-- [ ] Commit 3 (T5) `fix: resolve recovery app rollback target from target connection` s explicitným zoznamom ciest
+- [x] Commit 3 (T5) `fix: resolve recovery app rollback target from target connection` s explicitným zoznamom ciest

@@ -18,10 +18,47 @@ export class RecoveryApplicationsError extends Error {
   }
 }
 
+// The recovery app stores only its SOURCE compute provider; the backend's default
+// compute_provider_id (application.source_provider_id) is therefore the wrong end
+// for a rollback or inventory, which act on the TARGET. Until the app stores its
+// target provider, the VMware target is the one provider whose Airflow connection
+// is the app's target_connection - never a guess between several.
+export function resolveTargetComputeProviderId(
+  targetConnection: string | undefined,
+  providers: ProviderRecord[],
+): string {
+  const matches = targetConnection
+    ? getProvidersByTypeAndRole(providers, 'VMWARE', 'target')
+      .filter(provider => provider.orchestratorConnId === targetConnection)
+    : []
+  const [match, ...others] = matches
+  if (!match) {
+    throw new RecoveryApplicationsError(
+      'missing_compute_provider',
+      `No target VMWARE provider uses the application's target connection "${targetConnection ?? ''}".`,
+    )
+  }
+  if (others.length > 0) {
+    throw new RecoveryApplicationsError(
+      'ambiguous_compute_provider',
+      `Several target VMWARE providers use the application's target connection "${targetConnection ?? ''}": `
+        + `${matches.map(provider => provider.id).join(', ')}.`,
+    )
+  }
+  return match.id
+}
+
 export function resolveRollbackProviderIds(
   app: RecoveryApplicationListItem,
   providers: ProviderRecord[],
 ): { providerId: string; computeProviderId: string } {
+  if (app.data.application.platform.toUpperCase() === 'IBM_POWER') {
+    throw new RecoveryApplicationsError(
+      'ibm_power_rollback_unsupported',
+      'IBM Power rollback is not available: the recovery application does not store its target IBM Power provider.',
+    )
+  }
+
   const providerId = app.orchestrationProviderId?.trim()
   if (!providerId) {
     throw new RecoveryApplicationsError(
@@ -30,16 +67,10 @@ export function resolveRollbackProviderIds(
     )
   }
 
-  const targetProviders = getProvidersByTypeAndRole(providers, 'VMWARE', 'target')
-  const computeProvider = targetProviders[0]
-  if (!computeProvider) {
-    throw new RecoveryApplicationsError(
-      'missing_compute_provider',
-      'No target VMWARE provider available for rollback.',
-    )
+  return {
+    providerId,
+    computeProviderId: resolveTargetComputeProviderId(app.data.application.target_connection, providers),
   }
-
-  return { providerId, computeProviderId: computeProvider.id }
 }
 
 export function useDeleteRecoveryApplication() {

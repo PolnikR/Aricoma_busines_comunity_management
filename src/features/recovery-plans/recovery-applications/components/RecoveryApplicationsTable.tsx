@@ -486,7 +486,7 @@ export function RecoveryApplicationsTable({
           >
             {/* The inventory brings its own padding; align it with the section gutter. */}
             <div className="-mx-5 -mt-4">
-              <RecoveryApplicationInventory runId={selectedAirflowRunId ?? null} active />
+              <RecoveryApplicationInventory runId={selectedAirflowRunId ?? null} active application={selected} />
             </div>
           </DetailViewSection>
         </DetailView>

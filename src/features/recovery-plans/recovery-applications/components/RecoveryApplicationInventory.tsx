@@ -1,26 +1,62 @@
+import { Alert } from '@/shared/components/alert/Alert'
 import { Badge } from '@/shared/components/badge/Badge'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { ResponseBodyViewer } from '@/shared/components/response-body/ResponseBodyViewer'
 import { ChevronDownIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useGetRecoveryAppInventory } from '@/generated/query/recovery-apps/recovery-apps.gen'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import { selectRecoveryApplicationInventory } from '../model/selectRecoveryApplications'
+import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
+import { resolveTargetComputeProviderId } from '../hooks/useDeleteRecoveryApplication'
 
 interface RecoveryApplicationInventoryProps {
   runId: string | null
   active: boolean
+  application: RecoveryApplicationListItem
 }
 
-export function RecoveryApplicationInventory({ runId, active }: RecoveryApplicationInventoryProps) {
+function resolveInventoryTarget(
+  application: RecoveryApplicationListItem,
+  providers: Parameters<typeof resolveTargetComputeProviderId>[1],
+): { computeProviderId: string | null; error: Error | null } {
+  try {
+    return {
+      computeProviderId: resolveTargetComputeProviderId(application.data.application.target_connection, providers),
+      error: null,
+    }
+  } catch (error) {
+    return { computeProviderId: null, error: error instanceof Error ? error : new Error(String(error)) }
+  }
+}
+
+export function RecoveryApplicationInventory({ runId, active, application }: RecoveryApplicationInventoryProps) {
   const { t } = useTranslation()
-  // compute_provider_id is intentionally not sent (backend default target vCenter):
-  // a recovery application does not store the compute provider of its run.
+  const providersQuery = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
+  // The backend inventory is VMware-only; IBM Power apps keep the plain request.
+  const isPower = application.data.application.platform.toUpperCase() === 'IBM_POWER'
+  // Never rely on the backend default (application.source_provider_id): the
+  // inventory lives on the TARGET vCenter, see resolveTargetComputeProviderId.
+  const target = !isPower && providersQuery.data
+    ? resolveInventoryTarget(application, providersQuery.data)
+    : { computeProviderId: null, error: null }
   const query = useGetRecoveryAppInventory(
-    { run_id: runId ?? '' },
-    { query: { select: selectRecoveryApplicationInventory, enabled: active && Boolean(runId) } },
+    { run_id: runId ?? '', ...(target.computeProviderId ? { compute_provider_id: target.computeProviderId } : {}) },
+    {
+      query: {
+        select: selectRecoveryApplicationInventory,
+        enabled: active && Boolean(runId) && (isPower || Boolean(target.computeProviderId)),
+      },
+    },
   )
 
   if (!runId) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.noRun')}</p>
+  if (!isPower && providersQuery.error) {
+    return <FetchErrorAlert className="m-5" title={t('recoveryInventory.error')} retryLabel={t('buttons.retry')} isRetrying={providersQuery.isFetching} onRetry={() => { void providersQuery.refetch() }} />
+  }
+  if (target.error) return <Alert className="m-5" variant="error" title={t('recoveryInventory.error')} description={target.error.message} />
+  if (!isPower && !providersQuery.data) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.loading')}</p>
   if (query.isLoading) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.loading')}</p>
   if (query.error) {
     return <FetchErrorAlert className="m-5" title={t('recoveryInventory.error')} retryLabel={t('buttons.retry')} isRetrying={query.isFetching} onRetry={() => { void query.refetch() }} />
