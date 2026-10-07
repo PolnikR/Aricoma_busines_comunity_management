@@ -284,6 +284,19 @@ describe('IbmPowerDetailPanel backing storage', () => {
     expect([...(lists[0]?.querySelectorAll('dt') ?? [])].map(term => term.textContent)).toEqual([
       'Backing provider', 'Volume ID', 'Volume UID', 'Capacity', 'Status', 'Pool', 'I/O group', 'Protocol', 'Type',
     ])
+    expect([...(lists[1]?.querySelectorAll('dt') ?? [])].map(term => term.textContent)).toEqual([
+      'Snapshot count', 'Source mappings', 'Target mappings',
+    ])
+  })
+
+  it('lays the volume fields and the FlashCopy counts out on the shared Overview grid', async () => {
+    const container = await openBackingStorage([powerVolume()])
+    const card = within(container).getByRole('region', { name: 'aix2_source_rootvg' })
+
+    for (const list of card.querySelectorAll('dl')) expect(list).toHaveClass('grid-cols-[repeat(auto-fill,minmax(min(12.75rem,100%),1fr))]')
+    expect(card.querySelector('.grid-cols-1, [class*="@min-[520px]/detail-content:grid-cols-2"]')).toBeNull()
+    expect(within(card).getByRole('button', { name: 'Copy Volume ID' })).toBeInTheDocument()
+    expect(within(card).getByRole('button', { name: 'Copy Volume UID' })).toBeInTheDocument()
   })
 
   it('never renders the composite vdisks key', async () => {
@@ -330,7 +343,10 @@ describe('IbmPowerDetailPanel backing storage', () => {
     const dialog = renderPanel()
     await userEvent.setup().click(within(dialog).getByRole('button', { name: 'Backing Storage Info' }))
 
-    expect(within(dialog).getByRole('status', { name: 'Loading backing storage...' })).toBeInTheDocument()
+    const status = within(dialog).getByRole('status', { name: 'Loading backing storage...' })
+    expect(status).toHaveAttribute('aria-busy', 'true')
+    expect(status.querySelector('dl')).toHaveClass('grid-cols-[repeat(auto-fill,minmax(min(12.75rem,100%),1fr))]')
+    expect(status.querySelector('.grid-cols-1, [class*="@min-[520px]/detail-content:grid-cols-2"]')).toBeNull()
   })
 
   it('shows the shared error state and retries the same request', async () => {

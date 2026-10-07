@@ -412,6 +412,18 @@ describe('VirtualMachineDetailPanel resize', () => {
     expect([...(lists[0]?.querySelectorAll('dt') ?? [])].map(term => term.textContent)).toEqual([
       'Backing provider', 'vdisk UID', 'Capacity', 'Status', 'Pool', 'I/O group', 'Protocol', 'Type',
     ])
+    expect([...(lists[1]?.querySelectorAll('dt') ?? [])].map(term => term.textContent)).toEqual([
+      'Snapshot count', 'Source mappings', 'Target mappings',
+    ])
+  })
+
+  it('lays the volume fields and the FlashCopy counts out on the shared Overview grid', async () => {
+    const container = await openBackingStorage([volume()])
+    const card = within(container).getByRole('region', { name: 'V5000_VOLUME02' })
+
+    for (const list of card.querySelectorAll('dl')) expect(list).toHaveClass('grid-cols-[repeat(auto-fill,minmax(min(12.75rem,100%),1fr))]')
+    expect(card.querySelector('.grid-cols-1, [class*="@min-[520px]/detail-content:grid-cols-2"]')).toBeNull()
+    expect(within(card).getByRole('button', { name: 'Copy vdisk UID' })).toBeInTheDocument()
   })
 
   it('shows No FlashCopy mappings below the volume details when it has no mappings', async () => {
@@ -499,7 +511,10 @@ describe('VirtualMachineDetailPanel resize', () => {
     renderWithQueryClient(<VirtualMachineDetailPanel virtualMachine={vm} open onClose={vi.fn()} />)
     await user.click(screen.getByRole('button', { name: 'Backing Storage Info' }))
 
-    expect(screen.getByRole('status', { name: 'Loading backing storage...' })).toBeInTheDocument()
+    const status = screen.getByRole('status', { name: 'Loading backing storage...' })
+    expect(status).toHaveAttribute('aria-busy', 'true')
+    expect(status.querySelector('dl')).toHaveClass('grid-cols-[repeat(auto-fill,minmax(min(12.75rem,100%),1fr))]')
+    expect(status.querySelector('.grid-cols-1, [class*="@min-[520px]/detail-content:grid-cols-2"]')).toBeNull()
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
     expect(screen.queryByText('No backing storage volume was resolved for this virtual machine.')).not.toBeInTheDocument()
   })

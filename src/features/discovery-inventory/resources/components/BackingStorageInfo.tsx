@@ -7,7 +7,7 @@ import {
   SkeletonBlock,
   type ColumnDef,
 } from '@/shared/components/data-table'
-import { DetailField, DetailFieldGroup } from '@/shared/components/detail-view'
+import { DetailField, DetailOverview } from '@/shared/components/detail-view'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { StorageVolume, StorageVolumeMapping } from '../model/vmStorageVolumesTypes'
 
@@ -91,7 +91,7 @@ function BackingStorageVolume({ volume, providers, identity }: { volume: Storage
         <h4 id={titleId} className="text-sm font-semibold text-text-primary wrap-anywhere">{name}</h4>
         <p className="text-xs text-text-muted">{t(`${prefix}.volumeEntity`)}</p>
       </header>
-      <DetailFieldGroup>
+      <DetailOverview>
         <DetailField
           label={t(`${prefix}.provider`)}
           value={provider ? provider.name : volume.storageProviderId}
@@ -111,12 +111,15 @@ function BackingStorageVolume({ volume, providers, identity }: { volume: Storage
         <DetailField label={t(`${prefix}.ioGroup`)} value={volume.ioGroupName} />
         <DetailField label={t(`${prefix}.protocol`)} value={volume.protocol} />
         <DetailField label={t(`${prefix}.type`)} value={volume.type} />
-      </DetailFieldGroup>
-      <DetailFieldGroup title={t(`${prefix}.flashCopy`)}>
-        <DetailField label={t(`${prefix}.snapshotCount`)} value={String(snapshotCount)} />
-        <DetailField label={t(`${prefix}.sourceMappings`)} value={String(sourceMappings.length)} />
-        <DetailField label={t(`${prefix}.targetMappings`)} value={String(targetMappings.length)} />
-      </DetailFieldGroup>
+      </DetailOverview>
+      <div>
+        <h4 className="mb-3.5 text-[13px] font-semibold leading-5 text-text-primary">{t(`${prefix}.flashCopy`)}</h4>
+        <DetailOverview>
+          <DetailField label={t(`${prefix}.snapshotCount`)} value={String(snapshotCount)} />
+          <DetailField label={t(`${prefix}.sourceMappings`)} value={String(sourceMappings.length)} />
+          <DetailField label={t(`${prefix}.targetMappings`)} value={String(targetMappings.length)} />
+        </DetailOverview>
+      </div>
       {sourceMappings.length === 0 && targetMappings.length === 0 ? (
         <p className="-mt-3 text-[13px] text-text-subtle">{t(`${prefix}.noMappings`)}</p>
       ) : null}
@@ -138,20 +141,21 @@ function BackingStorageVolume({ volume, providers, identity }: { volume: Storage
   )
 }
 
-function BackingStorageSkeleton() {
+function BackingStorageSkeleton({ identity }: { identity: BackingVolumeIdentity }) {
   const { t } = useTranslation()
+  // The loaded volume's fields in their order, on the same DetailOverview grid.
+  const identityFields = identity === 'vdiskUid' ? ['vdiskUid'] : ['volumeId', 'volumeUid']
+  const fields = ['provider', ...identityFields, 'capacity', 'status', 'pool', 'ioGroup', 'protocol', 'type']
   return (
     <div role="status" aria-busy="true" aria-label={t(`${prefix}.loading`)}>
       <SkeletonBlock className="h-4 w-40" />
       <SkeletonBlock className="mt-1.5 h-3 w-28" />
-      {/* Same label-above-value cells as the DetailFieldGroup grid. */}
-      <div className="mt-6 grid grid-cols-1 gap-x-10 gap-y-5 @min-[520px]/detail-content:grid-cols-2 @min-[860px]/detail-content:grid-cols-3">
-        {Array.from({ length: 6 }, (_, index) => (
-          <div key={index}>
-            <SkeletonBlock className="h-3 w-20" />
-            <SkeletonBlock className="mt-2 h-3.5 w-32" />
-          </div>
-        ))}
+      <div className="mt-6">
+        <DetailOverview>
+          {fields.map(field => (
+            <DetailField key={field} label={t(`${prefix}.${field}`)} value={<SkeletonBlock className="h-4 w-32" />} />
+          ))}
+        </DetailOverview>
       </div>
     </div>
   )
@@ -176,7 +180,7 @@ export function BackingStorageInfo({ volumes, isLoading, isError, isFetching, on
   const { t } = useTranslation()
 
   let content
-  if (isLoading) content = <BackingStorageSkeleton />
+  if (isLoading) content = <BackingStorageSkeleton identity={identity} />
   else if (volumes.length === 0) content = <p className="text-[13px] text-text-subtle">{emptyText}</p>
   else content = volumes.map(volume => <BackingStorageVolume key={volume.key} volume={volume} providers={providers} identity={identity} />)
 
