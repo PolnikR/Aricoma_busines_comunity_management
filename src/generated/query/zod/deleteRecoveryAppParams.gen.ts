@@ -9,14 +9,13 @@ import * as zod from 'zod';
 export const deleteRecoveryAppParamsRollbackFromOrchestratorDefault = false;
 export const deleteRecoveryAppParamsRollbackOrphansDefault = false;
 export const deleteRecoveryAppParamsProviderIdDefault = `airflow-01`;
-export const deleteRecoveryAppParamsComputeProviderIdDefault = `vmware-vcenter-02`;
 export const deleteRecoveryAppParamsProviderIdVolumeDefault = `ibm-flashsystem-01`;
 export const DeleteRecoveryAppParams = zod.object({
   "recovery_app_id": zod.string().describe('id of the recovery app to delete. When rollback_orphans=true this is instead the run id (orchestration.run_id) of the orphaned run (no local record needed).'),
   "rollback_from_orchestrator": zod.boolean().default(deleteRecoveryAppParamsRollbackFromOrchestratorDefault).describe('if true, tear down the app\'s Airflow DAG, then unmap (unpresent) its IBM target volumes from their host. Does not delete the FlashCopy mapping or the volume itself.'),
   "rollback_orphans": zod.boolean().default(deleteRecoveryAppParamsRollbackOrphansDefault).describe('if true, recovery_app_id is read as a run id (orchestration.run_id): skip the recovery_applications.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_PLAN. VMware only - orphaned Power LPARs have no record to derive names from.'),
   "provider_id": zod.union([zod.string(),zod.null()]).default(deleteRecoveryAppParamsProviderIdDefault).describe('orchestration (AIRFLOW) provider - required when rollback_from_orchestrator'),
-  "compute_provider_id": zod.union([zod.string(),zod.null()]).default(deleteRecoveryAppParamsComputeProviderIdDefault).describe('VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app\'s recovered datastore before its IBM target volume is unmapped. For an ibm_power app this is the IBM_POWER provider holding the target LPARs.'),
+  "compute_provider_id": zod.union([zod.string(),zod.null()]).exactOptional().describe('VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app\'s recovered datastore before its IBM target volume is unmapped. For an ibm_power app this is the IBM_POWER provider holding the target LPARs. Defaults to the app\'s stored application.source_provider_id; always required with rollback_orphans=true.'),
   "provider_id_volume": zod.union([zod.string(),zod.null()]).default(deleteRecoveryAppParamsProviderIdVolumeDefault).describe('FLASHCOPY provider for the orphaned volume(s) - required only when rollback_orphans=true; ignored otherwise, since the recovery app\'s own tiers/recovery groups supply it per tier')
 })
 

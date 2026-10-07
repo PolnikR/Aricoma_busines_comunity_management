@@ -34,7 +34,8 @@ export const RecoveryAppRecord = zod.object({
 })).default(recoveryAppRecordApplicationTiersRecoveryGroupVmsDefault)
 })
 })),
-  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional()
+  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "source_provider_id": zod.union([zod.string(),zod.null()]).exactOptional()
 }).describe('Shape accessed unconditionally by apache_airflow/dags/recovery_app_template.py\nat Airflow DAG-parse time - keep fields in sync with that module.'),
   "policy_set_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "orchestration": zod.union([zod.object({

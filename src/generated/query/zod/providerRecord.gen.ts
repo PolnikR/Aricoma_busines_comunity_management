@@ -23,6 +23,7 @@ export const ProviderRecord = zod.object({
   "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
   "cacheRefreshSeconds": zod.union([zod.int(),zod.null()]).exactOptional(),
   "backingStorageProviderIds": zod.array(zod.string()).exactOptional(),
+  "managedSystem": zod.union([zod.string(),zod.null()]).exactOptional(),
   "credentialStatus": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 

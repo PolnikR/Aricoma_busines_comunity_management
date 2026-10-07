@@ -6,10 +6,9 @@
  */
 import * as zod from 'zod';
 
-export const getRecoveryAppInventoryParamsComputeProviderIdDefault = `vmware-vcenter-02`;
 export const GetRecoveryAppInventoryParams = zod.object({
   "run_id": zod.string().describe('the recovery app\'s own orchestration.run_id'),
-  "compute_provider_id": zod.string().default(getRecoveryAppInventoryParamsComputeProviderIdDefault).describe('VMWARE provider with role=target - where recover_vm actually registers this run\'s recovered VMs. Each recovered datastore\'s IBM target vdisk name is resolved using the storage provider of whichever tier\'s recovery group the datastore\'s VMs belong to.')
+  "compute_provider_id": zod.union([zod.string(),zod.null()]).exactOptional().describe('VMWARE provider with role=target - where recover_vm actually registers this run\'s recovered VMs. Each recovered datastore\'s IBM target vdisk name is resolved using the storage provider of whichever tier\'s recovery group the datastore\'s VMs belong to. Defaults to the app\'s stored application.source_provider_id.')
 })
 
 export type GetRecoveryAppInventoryParams = zod.input<typeof GetRecoveryAppInventoryParams>;

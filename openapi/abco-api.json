@@ -2450,12 +2450,18 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string",
-              "description": "VMWARE provider with role=target - where recover_vm actually registers this run's recovered VMs. Each recovered datastore's IBM target vdisk name is resolved using the storage provider of whichever tier's recovery group the datastore's VMs belong to.",
-              "default": "vmware-vcenter-02",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "VMWARE provider with role=target - where recover_vm actually registers this run's recovered VMs. Each recovered datastore's IBM target vdisk name is resolved using the storage provider of whichever tier's recovery group the datastore's VMs belong to. Defaults to the app's stored application.source_provider_id.",
               "title": "Compute Provider Id"
             },
-            "description": "VMWARE provider with role=target - where recover_vm actually registers this run's recovered VMs. Each recovered datastore's IBM target vdisk name is resolved using the storage provider of whichever tier's recovery group the datastore's VMs belong to."
+            "description": "VMWARE provider with role=target - where recover_vm actually registers this run's recovered VMs. Each recovered datastore's IBM target vdisk name is resolved using the storage provider of whichever tier's recovery group the datastore's VMs belong to. Defaults to the app's stored application.source_provider_id."
           },
           {
             "name": "X-User",
@@ -2578,11 +2584,10 @@
                   "type": "null"
                 }
               ],
-              "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped. For an ibm_power app this is the IBM_POWER provider holding the target LPARs.",
-              "default": "vmware-vcenter-02",
+              "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped. For an ibm_power app this is the IBM_POWER provider holding the target LPARs. Defaults to the app's stored application.source_provider_id; always required with rollback_orphans=true.",
               "title": "Compute Provider Id"
             },
-            "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped. For an ibm_power app this is the IBM_POWER provider holding the target LPARs."
+            "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped. For an ibm_power app this is the IBM_POWER provider holding the target LPARs. Defaults to the app's stored application.source_provider_id; always required with rollback_orphans=true."
           },
           {
             "name": "provider_id_volume",
@@ -4739,6 +4744,17 @@
             "type": "array",
             "title": "Backingstorageproviderids"
           },
+          "managedSystem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Managedsystem"
+          },
           "port": {
             "type": "integer",
             "title": "Port",
@@ -4986,6 +5002,17 @@
             },
             "type": "array",
             "title": "Backingstorageproviderids"
+          },
+          "managedSystem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Managedsystem"
           },
           "port": {
             "type": "integer",
@@ -5595,6 +5622,17 @@
             },
             "type": "array",
             "title": "Backingstorageproviderids"
+          },
+          "managedSystem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Managedsystem"
           }
         },
         "type": "object",
@@ -5762,6 +5800,17 @@
             },
             "type": "array",
             "title": "Backingstorageproviderids"
+          },
+          "managedSystem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Managedsystem"
           },
           "credentialStatus": {
             "anyOf": [
@@ -6444,6 +6493,17 @@
               }
             ],
             "title": "Notificationemail"
+          },
+          "source_provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Provider Id"
           }
         },
         "type": "object",
