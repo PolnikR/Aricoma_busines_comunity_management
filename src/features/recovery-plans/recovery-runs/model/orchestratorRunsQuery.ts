@@ -4,7 +4,7 @@ import type { OrchestratorRun, OrchestratorRunsPage } from './recoveryRunTypes'
 
 export const RUNS_ORDER_BY = '-logical_date'
 
-// dagId must be the constructed `dag_${airflow_run_id}` value, not the
+// dagId must be the constructed `dag_${orchestration.run_id}` value, not the
 // recovery app's own id — see useOrchestratedApps. Detail panels and the
 // overview share these params, so they share one cache entry per entity.
 export const latestRunParams = (providerId: string, dagId: string) => ({

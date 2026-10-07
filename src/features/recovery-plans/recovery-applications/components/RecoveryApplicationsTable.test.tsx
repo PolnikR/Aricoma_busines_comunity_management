@@ -192,8 +192,7 @@ describe('RecoveryApplicationsTable', () => {
           target_connection: 'vcenter_default_destination',
           tiers: {},
         },
-        airflow_run_id: '260811133132_fbffbefb',
-        push_to_orchestrator: true,
+        orchestration: { run_id: '260811133132_fbffbefb', pushed: true, provider_id: 'airflow-01' },
       },
     }
     renderTable(<RecoveryApplicationsTable applications={[applicationWithRawRecord]} />)
@@ -203,8 +202,9 @@ describe('RecoveryApplicationsTable', () => {
     expect(within(modal).getByText(/Finance Recovery from raw API/)).toBeInTheDocument()
     expect(within(modal).getByText(/"id": "finance-app"/)).toBeInTheDocument()
     expect(within(modal).getByText(/"policy_set_id": "critical-daily-latest"/)).toBeInTheDocument()
-    expect(within(modal).getByText(/"airflow_run_id": "260811133132_fbffbefb"/)).toBeInTheDocument()
-    expect(within(modal).getByText(/"push_to_orchestrator": true/)).toBeInTheDocument()
+    expect(within(modal).getByText(/"run_id": "260811133132_fbffbefb"/)).toBeInTheDocument()
+    expect(within(modal).getByText(/"pushed": true/)).toBeInTheDocument()
+    expect(within(modal).queryByText(/"airflow_run_id"/)).not.toBeInTheDocument()
 
     await user.click(within(modal).getByRole('button', { name: 'Close' }))
     expect(screen.queryByRole('dialog', { name: 'Application JSON' })).not.toBeInTheDocument()

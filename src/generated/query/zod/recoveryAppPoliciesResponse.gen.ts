@@ -15,6 +15,16 @@ export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemSnapshotSelection
 export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemSnapshotMaxAgeValueOneExclusiveMin = 0;
 
 export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemEnabledDefault = true;
+export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemTargetLparPrefixDefault = `dr_`;
+export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemTargetLparPrefixRegExp = new RegExp('^[A-Za-z0-9._-]{0,12}$');
+export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemManualZoningDefault = false;
+export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemSourceShutdownTimeoutSecondsDefault = 300;
+export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemSourceShutdownTimeoutSecondsExclusiveMin = 0;
+
+export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemZoningWaitMinutesDefault = 240;
+export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemZoningWaitMinutesExclusiveMin = 0;
+
+
 export const RecoveryAppPoliciesResponse = zod.object({
   "recovery_app_policies": zod.array(zod.object({
   "id": zod.string(),
@@ -30,7 +40,11 @@ export const RecoveryAppPoliciesResponse = zod.object({
   "snapshot_max_age_value": zod.union([zod.int().gt(recoveryAppPoliciesResponseRecoveryAppPoliciesItemSnapshotMaxAgeValueOneExclusiveMin),zod.null()]).exactOptional(),
   "snapshot_max_age_unit": zod.union([zod.enum(['minutes', 'hours', 'days']),zod.null()]).exactOptional(),
   "snapshot_target_time": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "enabled": zod.boolean().default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemEnabledDefault)
+  "enabled": zod.boolean().default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemEnabledDefault),
+  "target_lpar_prefix": zod.string().regex(recoveryAppPoliciesResponseRecoveryAppPoliciesItemTargetLparPrefixRegExp).default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemTargetLparPrefixDefault),
+  "manual_zoning": zod.boolean().default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemManualZoningDefault),
+  "source_shutdown_timeout_seconds": zod.int().gt(recoveryAppPoliciesResponseRecoveryAppPoliciesItemSourceShutdownTimeoutSecondsExclusiveMin).default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemSourceShutdownTimeoutSecondsDefault),
+  "zoning_wait_minutes": zod.int().gt(recoveryAppPoliciesResponseRecoveryAppPoliciesItemZoningWaitMinutesExclusiveMin).default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemZoningWaitMinutesDefault)
 }))
 })
 

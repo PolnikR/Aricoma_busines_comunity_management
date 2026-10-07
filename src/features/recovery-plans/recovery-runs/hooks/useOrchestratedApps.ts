@@ -10,10 +10,10 @@ interface UseOrchestratedAppsResult {
   refetch: () => void
 }
 
-// Only recovery applications with a real airflow_run_id have a queryable
-// Airflow DAG — push_to_orchestrator is just an intent flag and doesn't
+// Only recovery applications with a real orchestration.run_id have a queryable
+// Airflow DAG — orchestration.pushed is just an intent flag and doesn't
 // guarantee a run id was ever received (the submission could have failed
-// partway). The DAG id itself is `dag_${airflow_run_id}`, not the app's own
+// partway). The DAG id itself is `dag_${run_id}`, not the app's own
 // id (confirmed against the OpenAPI spec's description text for the
 // rollback endpoints, which reference the same "dag_<run_id>" convention).
 // Applications now carry their own orchestrationProviderId per record, same

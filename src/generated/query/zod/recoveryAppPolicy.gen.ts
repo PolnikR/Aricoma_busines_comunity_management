@@ -15,6 +15,16 @@ export const recoveryAppPolicySnapshotSelectionModeDefault = `latest`;
 export const recoveryAppPolicySnapshotMaxAgeValueOneExclusiveMin = 0;
 
 export const recoveryAppPolicyEnabledDefault = true;
+export const recoveryAppPolicyTargetLparPrefixDefault = `dr_`;
+export const recoveryAppPolicyTargetLparPrefixRegExp = new RegExp('^[A-Za-z0-9._-]{0,12}$');
+export const recoveryAppPolicyManualZoningDefault = false;
+export const recoveryAppPolicySourceShutdownTimeoutSecondsDefault = 300;
+export const recoveryAppPolicySourceShutdownTimeoutSecondsExclusiveMin = 0;
+
+export const recoveryAppPolicyZoningWaitMinutesDefault = 240;
+export const recoveryAppPolicyZoningWaitMinutesExclusiveMin = 0;
+
+
 export const RecoveryAppPolicy = zod.object({
   "id": zod.string(),
   "name": zod.string(),
@@ -29,7 +39,11 @@ export const RecoveryAppPolicy = zod.object({
   "snapshot_max_age_value": zod.union([zod.int().gt(recoveryAppPolicySnapshotMaxAgeValueOneExclusiveMin),zod.null()]).exactOptional(),
   "snapshot_max_age_unit": zod.union([zod.enum(['minutes', 'hours', 'days']),zod.null()]).exactOptional(),
   "snapshot_target_time": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "enabled": zod.boolean().default(recoveryAppPolicyEnabledDefault)
+  "enabled": zod.boolean().default(recoveryAppPolicyEnabledDefault),
+  "target_lpar_prefix": zod.string().regex(recoveryAppPolicyTargetLparPrefixRegExp).default(recoveryAppPolicyTargetLparPrefixDefault),
+  "manual_zoning": zod.boolean().default(recoveryAppPolicyManualZoningDefault),
+  "source_shutdown_timeout_seconds": zod.int().gt(recoveryAppPolicySourceShutdownTimeoutSecondsExclusiveMin).default(recoveryAppPolicySourceShutdownTimeoutSecondsDefault),
+  "zoning_wait_minutes": zod.int().gt(recoveryAppPolicyZoningWaitMinutesExclusiveMin).default(recoveryAppPolicyZoningWaitMinutesDefault)
 })
 
 export type RecoveryAppPolicy = zod.input<typeof RecoveryAppPolicy>;

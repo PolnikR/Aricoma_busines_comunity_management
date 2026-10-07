@@ -15,6 +15,16 @@ export const recoveryAppPolicyRecordSnapshotSelectionModeDefault = `latest`;
 export const recoveryAppPolicyRecordSnapshotMaxAgeValueOneExclusiveMin = 0;
 
 export const recoveryAppPolicyRecordEnabledDefault = true;
+export const recoveryAppPolicyRecordTargetLparPrefixDefault = `dr_`;
+export const recoveryAppPolicyRecordTargetLparPrefixRegExp = new RegExp('^[A-Za-z0-9._-]{0,12}$');
+export const recoveryAppPolicyRecordManualZoningDefault = false;
+export const recoveryAppPolicyRecordSourceShutdownTimeoutSecondsDefault = 300;
+export const recoveryAppPolicyRecordSourceShutdownTimeoutSecondsExclusiveMin = 0;
+
+export const recoveryAppPolicyRecordZoningWaitMinutesDefault = 240;
+export const recoveryAppPolicyRecordZoningWaitMinutesExclusiveMin = 0;
+
+
 export const RecoveryAppPolicyRecord = zod.object({
   "id": zod.string(),
   "name": zod.string(),
@@ -29,7 +39,11 @@ export const RecoveryAppPolicyRecord = zod.object({
   "snapshot_max_age_value": zod.union([zod.int().gt(recoveryAppPolicyRecordSnapshotMaxAgeValueOneExclusiveMin),zod.null()]).exactOptional(),
   "snapshot_max_age_unit": zod.union([zod.enum(['minutes', 'hours', 'days']),zod.null()]).exactOptional(),
   "snapshot_target_time": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "enabled": zod.boolean().default(recoveryAppPolicyRecordEnabledDefault)
+  "enabled": zod.boolean().default(recoveryAppPolicyRecordEnabledDefault),
+  "target_lpar_prefix": zod.string().regex(recoveryAppPolicyRecordTargetLparPrefixRegExp).default(recoveryAppPolicyRecordTargetLparPrefixDefault),
+  "manual_zoning": zod.boolean().default(recoveryAppPolicyRecordManualZoningDefault),
+  "source_shutdown_timeout_seconds": zod.int().gt(recoveryAppPolicyRecordSourceShutdownTimeoutSecondsExclusiveMin).default(recoveryAppPolicyRecordSourceShutdownTimeoutSecondsDefault),
+  "zoning_wait_minutes": zod.int().gt(recoveryAppPolicyRecordZoningWaitMinutesExclusiveMin).default(recoveryAppPolicyRecordZoningWaitMinutesDefault)
 })
 
 export type RecoveryAppPolicyRecord = zod.input<typeof RecoveryAppPolicyRecord>;

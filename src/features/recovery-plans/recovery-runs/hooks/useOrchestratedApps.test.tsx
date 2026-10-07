@@ -2,6 +2,8 @@ import type { PropsWithChildren } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import type { RecoveryAppRecordOutput } from '@/generated/query/zod'
+import { mapRecoveryApplications } from '@/features/recovery-plans/recovery-applications/helpers/mapRecoveryApplications'
 import { useOrchestratedApps } from './useOrchestratedApps'
 
 const { useRecoveryApplicationsMock } = vi.hoisted(() => ({
@@ -65,7 +67,7 @@ describe('useOrchestratedApps', () => {
     ])
   })
 
-  it('ignores push_to_orchestrator=true when there is no airflow_run_id', () => {
+  it('ignores pushToOrchestrator=true when there is no airflowRunId', () => {
     mockUseRecoveryApplications([
       app('failed_submit', 'Failed Submit', { airflowRunId: null, pushToOrchestrator: true }),
     ])
@@ -73,6 +75,41 @@ describe('useOrchestratedApps', () => {
     const { result } = renderHook(() => useOrchestratedApps(), { wrapper: createWrapper() })
 
     expect(result.current.entities).toEqual([])
+  })
+
+  it('derives dag_<run_id> from the orchestration state of the API record', () => {
+    const wireRecord = (id: string, orchestration?: RecoveryAppRecordOutput['orchestration']): RecoveryAppRecordOutput => ({
+      id,
+      application: {
+        name: id,
+        description: '',
+        environment: 'prod',
+        platform: 'vmware',
+        source_connection: 'src',
+        target_connection: 'tgt',
+        tiers: {},
+      },
+      ...(orchestration !== undefined ? { orchestration } : {}),
+    })
+    mockUseRecoveryApplications(mapRecoveryApplications({
+      applications: [
+        wireRecord('pushed_app', { run_id: '260818094526_2918dccb', pushed: true, provider_id: 'airflow-01' }),
+        wireRecord('no_orchestration'),
+        wireRecord('null_orchestration', null),
+      ],
+    }))
+
+    const { result } = renderHook(() => useOrchestratedApps(), { wrapper: createWrapper() })
+
+    expect(result.current.entities).toEqual([
+      {
+        entityType: 'application',
+        id: 'pushed_app',
+        name: 'pushed_app',
+        dagId: 'dag_260818094526_2918dccb',
+        providerId: 'airflow-01',
+      },
+    ])
   })
 
   it('returns an empty list when there are no orchestrated apps', () => {

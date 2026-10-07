@@ -1,4 +1,4 @@
-import type { RecoveryAppRecordOutput, RollbackReportOutput } from '@/generated/query/zod'
+import type { OrchestrationStateOutput, RecoveryAppRecordOutput, RollbackReportOutput } from '@/generated/query/zod'
 
 // Rollback report of the delete response, typed by the patched spec.
 export type RollbackReport = RollbackReportOutput
@@ -87,9 +87,7 @@ export interface RecoveryApplicationApiRecord {
   id: string
   policy_set_id?: string | null | undefined
   application: RecoveryApplicationData['application']
-  airflow_run_id?: string | null | undefined
-  push_to_orchestrator?: boolean | null | undefined
-  orchestration_provider_id?: string | null | undefined
+  orchestration?: OrchestrationStateOutput | null | undefined
 }
 
 export interface RecoveryApplicationListItem {
@@ -104,8 +102,6 @@ export interface RecoveryApplicationListItem {
       source_connection?: string | undefined
       target_connection?: string | undefined
       tiers: Record<string, DraftRecoveryTier>
-      airflow_run_id?: string | null | undefined
-      push_to_orchestrator?: boolean | undefined
     }
   }
   airflowRunId?: string | null | undefined

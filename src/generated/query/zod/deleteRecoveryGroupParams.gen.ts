@@ -11,9 +11,9 @@ export const deleteRecoveryGroupParamsRollbackOrphansDefault = false;
 export const deleteRecoveryGroupParamsProviderIdDefault = `airflow-01`;
 export const deleteRecoveryGroupParamsProviderIdVolumeDefault = `ibm-flashsystem-01`;
 export const DeleteRecoveryGroupParams = zod.object({
-  "recovery_group_id": zod.string().describe('id of the recovery group to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed).'),
+  "recovery_group_id": zod.string().describe('id of the recovery group to delete. When rollback_orphans=true this is instead the run id (orchestration.run_id) of the orphaned run (no local record needed).'),
   "rollback_from_orchestrator": zod.boolean().default(deleteRecoveryGroupParamsRollbackFromOrchestratorDefault).describe('if true, tear down the group\'s Airflow DAG + IBM FlashCopy objects first'),
-  "rollback_orphans": zod.boolean().default(deleteRecoveryGroupParamsRollbackOrphansDefault).describe('if true, recovery_group_id is read as an airflow_run_id: skip the recovery_groups.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) and IBM FlashCopy objects (g|m|t <run_id[-8:]>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_GROUP.'),
+  "rollback_orphans": zod.boolean().default(deleteRecoveryGroupParamsRollbackOrphansDefault).describe('if true, recovery_group_id is read as a run id (orchestration.run_id): skip the recovery_groups.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) and IBM FlashCopy objects (g|m|t <run_id[-8:]>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_GROUP.'),
   "provider_id": zod.union([zod.string(),zod.null()]).default(deleteRecoveryGroupParamsProviderIdDefault).describe('orchestration (AIRFLOW) provider — required when rollback_from_orchestrator'),
   "provider_id_volume": zod.string().default(deleteRecoveryGroupParamsProviderIdVolumeDefault).describe('FLASHCOPY provider holding the orphaned objects — only used with rollback_orphans')
 })

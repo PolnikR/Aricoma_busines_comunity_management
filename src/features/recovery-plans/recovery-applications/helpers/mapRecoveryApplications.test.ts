@@ -20,47 +20,74 @@ function buildRecord(overrides: Partial<RecoveryAppRecordOutput> = {}): Recovery
 }
 
 describe('mapRecoveryApplications', () => {
-  it('maps orchestration_provider_id to orchestrationProviderId when present', () => {
-    const payload: RecoveryAppsResponseOutput = {
-      applications: [buildRecord({ orchestration_provider_id: 'airflow-01' })],
-    }
+  function mapOne(overrides: Partial<RecoveryAppRecordOutput> = {}) {
+    const payload: RecoveryAppsResponseOutput = { applications: [buildRecord(overrides)] }
+    return mapRecoveryApplications(payload)[0]
+  }
 
-    const applications = mapRecoveryApplications(payload)
+  it('maps the orchestration state to the internal orchestration fields', () => {
+    const application = mapOne({
+      orchestration: { run_id: '260811133132_fbffbefb', pushed: true, provider_id: 'airflow-01' },
+    })
 
-    expect(applications[0]?.orchestrationProviderId).toBe('airflow-01')
+    expect(application?.airflowRunId).toBe('260811133132_fbffbefb')
+    expect(application?.pushToOrchestrator).toBe(true)
+    expect(application?.orchestrationProviderId).toBe('airflow-01')
   })
 
-  it('omits orchestrationProviderId when the record has no orchestration_provider_id', () => {
-    const payload: RecoveryAppsResponseOutput = {
-      applications: [buildRecord()],
-    }
+  it('keeps a null run id and provider id but drops a null pushed flag', () => {
+    const application = mapOne({ orchestration: { run_id: null, pushed: null, provider_id: null } })
 
-    const applications = mapRecoveryApplications(payload)
+    expect(application?.airflowRunId).toBeNull()
+    expect(application).not.toHaveProperty('pushToOrchestrator')
+    expect(application?.orchestrationProviderId).toBeNull()
+  })
 
-    expect(applications[0]?.orchestrationProviderId).toBeUndefined()
+  it.each([
+    ['missing', {}],
+    ['null', { orchestration: null }],
+  ])('omits the orchestration fields when orchestration is %s', (_label, overrides) => {
+    const application = mapOne(overrides)
+
+    expect(application).not.toHaveProperty('airflowRunId')
+    expect(application).not.toHaveProperty('pushToOrchestrator')
+    expect(application).not.toHaveProperty('orchestrationProviderId')
   })
 })
 
 describe('toRecoveryApplicationJson', () => {
-  it('carries orchestrationProviderId back to orchestration_provider_id when there is no rawRecord', () => {
-    const application: RecoveryApplicationListItem = {
-      id: 'sample-app',
-      data: {
-        application: {
-          name: 'Sample app',
-          description: 'Sample application',
-          environment: 'prod',
-          platform: 'vmware',
-          source_connection: 'src-conn',
-          target_connection: 'tgt-conn',
-          tiers: {},
-        },
+  const application: RecoveryApplicationListItem = {
+    id: 'sample-app',
+    data: {
+      application: {
+        name: 'Sample app',
+        description: 'Sample application',
+        environment: 'prod',
+        platform: 'vmware',
+        source_connection: 'src-conn',
+        target_connection: 'tgt-conn',
+        tiers: {},
       },
+    },
+  }
+
+  it('nests the orchestration fields under orchestration when there is no rawRecord', () => {
+    const payload = toRecoveryApplicationJson({
+      ...application,
+      airflowRunId: '260811133132_fbffbefb',
+      pushToOrchestrator: true,
       orchestrationProviderId: 'airflow-01',
-    }
+    })
 
-    const payload = toRecoveryApplicationJson(application)
+    expect(payload).toMatchObject({
+      orchestration: { run_id: '260811133132_fbffbefb', pushed: true, provider_id: 'airflow-01' },
+    })
+    expect(payload).not.toHaveProperty('airflow_run_id')
+    expect(payload).not.toHaveProperty('push_to_orchestrator')
+    expect(payload).not.toHaveProperty('orchestration_provider_id')
+  })
 
-    expect(payload).toMatchObject({ orchestration_provider_id: 'airflow-01' })
+  it('omits orchestration when the application has no orchestration fields', () => {
+    expect(toRecoveryApplicationJson(application)).not.toHaveProperty('orchestration')
   })
 })

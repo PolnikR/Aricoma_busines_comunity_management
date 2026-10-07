@@ -15,6 +15,16 @@ export const submitRecoveryAppPolicyBodySnapshotSelectionModeDefault = `latest`;
 export const submitRecoveryAppPolicyBodySnapshotMaxAgeValueOneExclusiveMin = 0;
 
 export const submitRecoveryAppPolicyBodyEnabledDefault = true;
+export const submitRecoveryAppPolicyBodyTargetLparPrefixDefault = `dr_`;
+export const submitRecoveryAppPolicyBodyTargetLparPrefixRegExp = new RegExp('^[A-Za-z0-9._-]{0,12}$');
+export const submitRecoveryAppPolicyBodyManualZoningDefault = false;
+export const submitRecoveryAppPolicyBodySourceShutdownTimeoutSecondsDefault = 300;
+export const submitRecoveryAppPolicyBodySourceShutdownTimeoutSecondsExclusiveMin = 0;
+
+export const submitRecoveryAppPolicyBodyZoningWaitMinutesDefault = 240;
+export const submitRecoveryAppPolicyBodyZoningWaitMinutesExclusiveMin = 0;
+
+
 export const SubmitRecoveryAppPolicyBody = zod.object({
   "id": zod.string(),
   "name": zod.string(),
@@ -29,7 +39,11 @@ export const SubmitRecoveryAppPolicyBody = zod.object({
   "snapshot_max_age_value": zod.union([zod.int().gt(submitRecoveryAppPolicyBodySnapshotMaxAgeValueOneExclusiveMin),zod.null()]).exactOptional(),
   "snapshot_max_age_unit": zod.union([zod.enum(['minutes', 'hours', 'days']),zod.null()]).exactOptional(),
   "snapshot_target_time": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "enabled": zod.boolean().default(submitRecoveryAppPolicyBodyEnabledDefault)
+  "enabled": zod.boolean().default(submitRecoveryAppPolicyBodyEnabledDefault),
+  "target_lpar_prefix": zod.string().regex(submitRecoveryAppPolicyBodyTargetLparPrefixRegExp).default(submitRecoveryAppPolicyBodyTargetLparPrefixDefault),
+  "manual_zoning": zod.boolean().default(submitRecoveryAppPolicyBodyManualZoningDefault),
+  "source_shutdown_timeout_seconds": zod.int().gt(submitRecoveryAppPolicyBodySourceShutdownTimeoutSecondsExclusiveMin).default(submitRecoveryAppPolicyBodySourceShutdownTimeoutSecondsDefault),
+  "zoning_wait_minutes": zod.int().gt(submitRecoveryAppPolicyBodyZoningWaitMinutesExclusiveMin).default(submitRecoveryAppPolicyBodyZoningWaitMinutesDefault)
 })
 
 export type SubmitRecoveryAppPolicyBody = zod.input<typeof SubmitRecoveryAppPolicyBody>;

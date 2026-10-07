@@ -17,6 +17,7 @@ const policy: RecoveryAppPolicyRecordOutput = {
   frequency_value: 30, frequency_unit: 'days', retention_value: 2, retention_unit: 'days', boot_verify: false,
   snapshot_selection_mode: 'exact_time', snapshot_max_age_value: null, snapshot_max_age_unit: null,
   snapshot_target_time: '02:00', enabled: true,
+  target_lpar_prefix: 'dr_', manual_zoning: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
 }
 
 const latestPolicy: RecoveryAppPolicyRecordOutput = {

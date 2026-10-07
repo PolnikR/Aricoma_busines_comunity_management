@@ -1,4 +1,5 @@
 import type {
+  OrchestrationStateOutput,
   RecoveryAppRecordOutput,
   RecoveryAppsResponseOutput,
   RecoveryTierOutput,
@@ -35,14 +36,25 @@ export function mapRecoveryApplications(
         ),
       },
     },
-    ...(record.airflow_run_id !== undefined ? { airflowRunId: record.airflow_run_id } : {}),
-    ...(record.push_to_orchestrator != null
-      ? { pushToOrchestrator: record.push_to_orchestrator }
+    ...(record.orchestration?.run_id !== undefined ? { airflowRunId: record.orchestration.run_id } : {}),
+    ...(record.orchestration?.pushed != null
+      ? { pushToOrchestrator: record.orchestration.pushed }
       : {}),
-    ...(record.orchestration_provider_id !== undefined
-      ? { orchestrationProviderId: record.orchestration_provider_id }
+    ...(record.orchestration?.provider_id !== undefined
+      ? { orchestrationProviderId: record.orchestration.provider_id }
       : {}),
   }))
+}
+
+function toOrchestrationState(application: RecoveryApplicationListItem): OrchestrationStateOutput | null {
+  const orchestration: OrchestrationStateOutput = {
+    ...(application.airflowRunId !== undefined ? { run_id: application.airflowRunId } : {}),
+    ...(application.pushToOrchestrator !== undefined ? { pushed: application.pushToOrchestrator } : {}),
+    ...(application.orchestrationProviderId !== undefined
+      ? { provider_id: application.orchestrationProviderId }
+      : {}),
+  }
+  return Object.keys(orchestration).length > 0 ? orchestration : null
 }
 
 export function toRecoveryApplicationJson(
@@ -50,16 +62,11 @@ export function toRecoveryApplicationJson(
 ): RecoveryAppRecordOutput | object {
   if (application.rawRecord) return application.rawRecord
 
+  const orchestration = toOrchestrationState(application)
   return {
     id: application.id,
     ...(application.policySetId !== undefined ? { policy_set_id: application.policySetId } : {}),
     application: application.data.application,
-    ...(application.airflowRunId !== undefined ? { airflow_run_id: application.airflowRunId } : {}),
-    ...(application.pushToOrchestrator !== undefined
-      ? { push_to_orchestrator: application.pushToOrchestrator }
-      : {}),
-    ...(application.orchestrationProviderId !== undefined
-      ? { orchestration_provider_id: application.orchestrationProviderId }
-      : {}),
+    ...(orchestration ? { orchestration } : {}),
   }
 }

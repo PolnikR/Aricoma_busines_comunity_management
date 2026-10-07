@@ -37,9 +37,11 @@ export const RecoveryAppRecord = zod.object({
   "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional()
 }).describe('Shape accessed unconditionally by apache_airflow/dags/recovery_app_template.py\nat Airflow DAG-parse time - keep fields in sync with that module.'),
   "policy_set_id": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "airflow_run_id": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "push_to_orchestrator": zod.union([zod.boolean(),zod.null()]).exactOptional(),
-  "orchestration_provider_id": zod.union([zod.string(),zod.null()]).exactOptional()
+  "orchestration": zod.union([zod.object({
+  "run_id": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "pushed": zod.union([zod.boolean(),zod.null()]).exactOptional(),
+  "provider_id": zod.union([zod.string(),zod.null()]).exactOptional()
+}).describe('Where a recovery group or app stands with its orchestrator: the run id that\nnames its DAG, whether the DAG is currently pushed, and the provider it went to.'),zod.null()]).exactOptional()
 }).describe('\'application\' shape mirrors what apache_airflow/dags/recovery_app_template.py\naccesses unconditionally - see recovery.recovery.RecoveryApplication.')
 
 export type RecoveryAppRecord = zod.input<typeof RecoveryAppRecord>;

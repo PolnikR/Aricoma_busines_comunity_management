@@ -25,6 +25,10 @@ const policy: RecoveryAppPolicyRecordOutput = {
   snapshot_max_age_unit: null,
   snapshot_target_time: null,
   enabled: true,
+  target_lpar_prefix: 'dr_',
+  manual_zoning: false,
+  source_shutdown_timeout_seconds: 300,
+  zoning_wait_minutes: 240,
 }
 
 const exactTimePolicy: RecoveryAppPolicyRecordOutput = {

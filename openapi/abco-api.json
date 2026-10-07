@@ -2440,10 +2440,10 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "the recovery app's own airflow_run_id",
+              "description": "the recovery app's own orchestration.run_id",
               "title": "Run Id"
             },
-            "description": "the recovery app's own airflow_run_id"
+            "description": "the recovery app's own orchestration.run_id"
           },
           {
             "name": "compute_provider_id",
@@ -2517,10 +2517,10 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "id of the recovery app to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed).",
+              "description": "id of the recovery app to delete. When rollback_orphans=true this is instead the run id (orchestration.run_id) of the orphaned run (no local record needed).",
               "title": "Recovery App Id"
             },
-            "description": "id of the recovery app to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed)."
+            "description": "id of the recovery app to delete. When rollback_orphans=true this is instead the run id (orchestration.run_id) of the orphaned run (no local record needed)."
           },
           {
             "name": "rollback_from_orchestrator",
@@ -2540,11 +2540,11 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "if true, recovery_app_id is read as an airflow_run_id: skip the recovery_applications.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_PLAN.",
+              "description": "if true, recovery_app_id is read as a run id (orchestration.run_id): skip the recovery_applications.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_PLAN. VMware only - orphaned Power LPARs have no record to derive names from.",
               "default": false,
               "title": "Rollback Orphans"
             },
-            "description": "if true, recovery_app_id is read as an airflow_run_id: skip the recovery_applications.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_PLAN."
+            "description": "if true, recovery_app_id is read as a run id (orchestration.run_id): skip the recovery_applications.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_PLAN. VMware only - orphaned Power LPARs have no record to derive names from."
           },
           {
             "name": "provider_id",
@@ -2578,11 +2578,11 @@
                   "type": "null"
                 }
               ],
-              "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped.",
+              "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped. For an ibm_power app this is the IBM_POWER provider holding the target LPARs.",
               "default": "vmware-vcenter-02",
               "title": "Compute Provider Id"
             },
-            "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped."
+            "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped. For an ibm_power app this is the IBM_POWER provider holding the target LPARs."
           },
           {
             "name": "provider_id_volume",
@@ -2805,10 +2805,10 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "the recovery group's own airflow_run_id",
+              "description": "the recovery group's own orchestration.run_id",
               "title": "Run Id"
             },
-            "description": "the recovery group's own airflow_run_id"
+            "description": "the recovery group's own orchestration.run_id"
           },
           {
             "name": "X-User",
@@ -2947,17 +2947,17 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "id of the recovery group to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed).",
+              "description": "id of the recovery group to delete. When rollback_orphans=true this is instead the run id (orchestration.run_id) of the orphaned run (no local record needed).",
               "title": "Recovery Group Id"
             },
-            "description": "id of the recovery group to delete. When rollback_orphans=true this is instead the airflow_run_id of the orphaned run (no local record needed).",
+            "description": "id of the recovery group to delete. When rollback_orphans=true this is instead the run id (orchestration.run_id) of the orphaned run (no local record needed).",
             "examples": {
               "group": {
                 "summary": "recovery group id",
                 "value": "db_test1"
               },
               "orphan": {
-                "summary": "airflow_run_id — use with rollback_orphans=true",
+                "summary": "orchestration.run_id — use with rollback_orphans=true",
                 "value": "260812061013_d33676c5"
               }
             }
@@ -2980,11 +2980,11 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "if true, recovery_group_id is read as an airflow_run_id: skip the recovery_groups.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) and IBM FlashCopy objects (g|m|t <run_id[-8:]>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_GROUP.",
+              "description": "if true, recovery_group_id is read as a run id (orchestration.run_id): skip the recovery_groups.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) and IBM FlashCopy objects (g|m|t <run_id[-8:]>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_GROUP.",
               "default": false,
               "title": "Rollback Orphans"
             },
-            "description": "if true, recovery_group_id is read as an airflow_run_id: skip the recovery_groups.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) and IBM FlashCopy objects (g|m|t <run_id[-8:]>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_GROUP."
+            "description": "if true, recovery_group_id is read as a run id (orchestration.run_id): skip the recovery_groups.json lookup and tear down the leftover Airflow DAG (dag_<run_id>) and IBM FlashCopy objects (g|m|t <run_id[-8:]>) directly. Implies rollback_from_orchestrator; needs ROLLBACK_RECOVERY_GROUP."
           },
           {
             "name": "provider_id",
@@ -4150,45 +4150,6 @@
         ],
         "title": "CredentialsResponse"
       },
-      "GroupOrchestrationState": {
-        "properties": {
-          "run_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Run Id"
-          },
-          "pushed": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Pushed"
-          },
-          "provider_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Provider Id"
-          }
-        },
-        "type": "object",
-        "title": "GroupOrchestrationState"
-      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -5150,6 +5111,46 @@
           "type"
         ],
         "title": "OrchestrationProviderRecord"
+      },
+      "OrchestrationState": {
+        "properties": {
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "pushed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pushed"
+          },
+          "provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Id"
+          }
+        },
+        "type": "object",
+        "title": "OrchestrationState",
+        "description": "Where a recovery group or app stands with its orchestrator: the run id that\nnames its DAG, whether the DAG is currently pushed, and the provider it went to."
       },
       "OrchestratorPush": {
         "properties": {
@@ -6113,6 +6114,29 @@
             "type": "boolean",
             "title": "Enabled",
             "default": true
+          },
+          "target_lpar_prefix": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]{0,12}$",
+            "title": "Target Lpar Prefix",
+            "default": "dr_"
+          },
+          "manual_zoning": {
+            "type": "boolean",
+            "title": "Manual Zoning",
+            "default": false
+          },
+          "source_shutdown_timeout_seconds": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Source Shutdown Timeout Seconds",
+            "default": 300
+          },
+          "zoning_wait_minutes": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Zoning Wait Minutes",
+            "default": 240
           }
         },
         "type": "object",
@@ -6244,6 +6268,29 @@
             "type": "boolean",
             "title": "Enabled",
             "default": true
+          },
+          "target_lpar_prefix": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]{0,12}$",
+            "title": "Target Lpar Prefix",
+            "default": "dr_"
+          },
+          "manual_zoning": {
+            "type": "boolean",
+            "title": "Manual Zoning",
+            "default": false
+          },
+          "source_shutdown_timeout_seconds": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Source Shutdown Timeout Seconds",
+            "default": 300
+          },
+          "zoning_wait_minutes": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Zoning Wait Minutes",
+            "default": 240
           }
         },
         "additionalProperties": true,
@@ -6278,38 +6325,15 @@
             ],
             "title": "Policy Set Id"
           },
-          "airflow_run_id": {
+          "orchestration": {
             "anyOf": [
               {
-                "type": "string"
+                "$ref": "#/components/schemas/OrchestrationState"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Airflow Run Id"
-          },
-          "push_to_orchestrator": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Push To Orchestrator"
-          },
-          "orchestration_provider_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Orchestration Provider Id"
+            ]
           }
         },
         "additionalProperties": true,
@@ -6735,7 +6759,7 @@
           "orchestration": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/GroupOrchestrationState"
+                "$ref": "#/components/schemas/OrchestrationState"
               },
               {
                 "type": "null"
