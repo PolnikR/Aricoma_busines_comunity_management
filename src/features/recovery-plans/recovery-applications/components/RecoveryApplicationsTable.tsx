@@ -29,6 +29,7 @@ import { AirflowDagLink } from '@/shared/components/airflow/AirflowDagLink'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 import type { RollbackReport } from '../model/recoveryApplicationTypes'
 import { toRecoveryApplicationJson } from '../helpers/mapRecoveryApplications'
+import { sourceProviderIdOf } from '../utils/sourceProvider'
 import { RecoveryApplicationRollbackResultModal } from './RecoveryApplicationRollbackResultModal'
 import { RecoveryApplicationInventory } from './RecoveryApplicationInventory'
 import { RecoveryGroupOrchestrationStatus } from '@/features/recovery-plans/recovery-groups/components/RecoveryGroupOrchestrationStatus'
@@ -105,7 +106,7 @@ function getBaseColumns(t: ReturnType<typeof useTranslation>['t'], providers?: {
   {
     id: 'platform',
     header: t('tables.recovery.platform'),
-    cell: (app) => <span className="text-text-secondary">{getProviderLabel(app.data.application.platform, providers)}</span>,
+    cell: (app) => <span className="text-text-secondary">{getProviderLabel(sourceProviderIdOf(app.data.application), providers)}</span>,
   },
   {
     id: 'tiers',
@@ -157,7 +158,7 @@ export function RecoveryApplicationsTable({
       applications.map(app => app.data.application.environment),
     )).sort(),
     platforms: Array.from(new Set(
-      applications.map(app => app.data.application.platform).filter(Boolean),
+      applications.map(app => sourceProviderIdOf(app.data.application)).filter(Boolean),
     )).sort(),
   }), [applications])
 
@@ -165,7 +166,7 @@ export function RecoveryApplicationsTable({
     const application = app.data.application
     return (
       (!filters.environment || application.environment === filters.environment)
-      && (!filters.platform || application.platform === filters.platform)
+      && (!filters.platform || sourceProviderIdOf(application) === filters.platform)
     )
   }), [applications, filters])
   const selected = rows.find((app) => app.id === selectedId) ?? null
@@ -451,7 +452,7 @@ export function RecoveryApplicationsTable({
             <DetailOverview>
               <DetailField label={t('details.description')} value={selected.data.application.description} wide />
               <DetailField label={t('details.environment')} value={selected.data.application.environment} />
-              <DetailField label={t('details.platform')} value={getProviderLabel(selected.data.application.platform)} emphasis />
+              <DetailField label={t('details.platform')} value={getProviderLabel(sourceProviderIdOf(selected.data.application))} emphasis />
               <DetailField label={t('details.tiers')} value={String(Object.keys(selected.data.application.tiers).length)} />
               <DetailField label={t('details.status')} value={<ApplicationStatusBadge app={selected} />} />
               {selected.submission ? (

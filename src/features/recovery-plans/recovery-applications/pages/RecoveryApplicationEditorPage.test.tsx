@@ -31,7 +31,8 @@ const application: RecoveryApplicationListItem = {
       name: 'Finance App',
       description: 'Finance recovery',
       environment: 'prod',
-      platform: 'airflow-01',
+      platform: 'IBM_POWER',
+      source_provider_id: 'ibm-power-01',
       source_connection: 'vcenter_default',
       target_connection: 'vcenter_default_destination',
       tiers: {
@@ -82,6 +83,16 @@ vi.mock('@/generated/query/platform-providers/platform-providers.gen', async (im
   }),
 }))
 
+vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/providers/providers.gen')>(),
+  useGetProviders: () => ({
+    data: [
+      { id: 'vmware-vcenter-01', name: 'VMware Source', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
+      { id: 'ibm-power-01', name: 'IBM Power Source', type: 'IBM_POWER', role: 'source', credentialStatus: 'ok' },
+    ],
+  }),
+}))
+
 vi.mock('../components/RecoveryAppBuilder', () => ({
   RecoveryAppBuilder: ({
     initialData,
@@ -100,6 +111,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
       <span>Application details</span>
       <span>{initialData?.name}</span>
       <span>{initialData?.fileName}</span>
+      <span>{`Selected provider: ${initialData?.platform ?? ''}`}</span>
       <span>{disableFileName ? 'Filename disabled' : 'Filename enabled'}</span>
       <button type="button" onClick={() => { if (initialData) onSave(initialData) }}>Save unchanged</button>
       <button
@@ -174,6 +186,39 @@ describe('RecoveryApplicationEditorPage', () => {
     expect(submission.data.application.name).toBe('Finance App')
     expect(options.onSuccess).toBeTypeOf('function')
     expect(screen.getByText('Filename disabled')).toBeInTheDocument()
+  })
+
+  it('selects the provider by source_provider_id and keeps the wire platform as its type', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationEditorPage />)
+
+    expect(screen.getByText('Selected provider: ibm-power-01')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Save unchanged' }))
+
+    expect(mutate.mock.calls[0]?.[0].data.application).toMatchObject({
+      platform: 'IBM_POWER',
+      source_provider_id: 'ibm-power-01',
+    })
+  })
+
+  it('preselects a legacy provider id stored in platform and saves it in the new shape', async () => {
+    const user = userEvent.setup()
+    recoveryQuery = {
+      ...recoveryQuery,
+      data: [{
+        ...application,
+        data: { application: { ...application.data.application, platform: 'vmware-vcenter-01', source_provider_id: undefined } },
+      }],
+    }
+    render(<RecoveryApplicationEditorPage />)
+
+    expect(screen.getByText('Selected provider: vmware-vcenter-01')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Save unchanged' }))
+
+    expect(mutate.mock.calls[0]?.[0].data.application).toMatchObject({
+      platform: 'VMWARE',
+      source_provider_id: 'vmware-vcenter-01',
+    })
   })
 
   it('keeps filename independent when application name changes', async () => {

@@ -6,6 +6,7 @@ import { RecoveryApplicationBuilderPage } from './RecoveryApplicationBuilderPage
 import type {
   RecoveryApplicationFormState,
   SubmitDagResponse,
+  SubmitRecoveryApplicationInput,
 } from '../model/recoveryApplicationTypes'
 
 const navigate = vi.fn()
@@ -38,6 +39,16 @@ vi.mock('@/generated/query/platform-providers/platform-providers.gen', async (im
   }),
 }))
 
+vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/providers/providers.gen')>(),
+  useGetProviders: () => ({
+    data: [
+      { id: 'vmware-vcenter-01', name: 'VMware Source', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
+      { id: 'ibm-power-01', name: 'IBM Power Source', type: 'IBM_POWER', role: 'source', credentialStatus: 'ok' },
+    ],
+  }),
+}))
+
 vi.mock('../components/RecoveryAppBuilder', () => ({
   RecoveryAppBuilder: ({
     onSave,
@@ -57,7 +68,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
             name: 'Finance',
             description: 'Finance recovery',
             environment: 'prod',
-            platform: 'vmware-01',
+            platform: 'vmware-vcenter-01',
             orchestrationProviderId: 'airflow-01',
             sourceConnection: 'vcenter_default',
             targetConnection: 'vcenter_default_destination',
@@ -77,7 +88,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
             name: 'Finance',
             description: 'Finance recovery',
             environment: 'prod',
-            platform: 'vmware-01',
+            platform: 'vmware-vcenter-01',
             orchestrationProviderId: 'airflow-01',
             sourceConnection: 'vcenter_default',
             targetConnection: 'vcenter_default_destination',
@@ -86,6 +97,26 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
         }}
       >
         Save orchestrated fixture
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          onSave?.({
+            fileName: 'power_recovery',
+            policySetId: 'test_1_hour_ps',
+            pushToOrchestrator: false,
+            name: 'Power',
+            description: 'Power recovery',
+            environment: 'prod',
+            platform: 'ibm-power-01',
+            orchestrationProviderId: 'airflow-01',
+            sourceConnection: 'vcenter_default',
+            targetConnection: 'vcenter_default_destination',
+            tiers: new Map(),
+          })
+        }}
+      >
+        Save Power fixture
       </button>
       <button type="button" onClick={() => { onDirtyChange?.(true) }}>
         Change builder
@@ -133,6 +164,20 @@ describe('RecoveryApplicationBuilderPage', () => {
       expect.objectContaining({ providerId: 'airflow-01' }),
       expect.any(Object),
     )
+  })
+
+  it.each([
+    ['Save Power fixture', 'IBM_POWER', 'ibm-power-01'],
+    ['Save fixture', 'VMWARE', 'vmware-vcenter-01'],
+  ])('%s sends the provider type as platform and the provider id as source_provider_id', async (button, platform, providerId) => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationBuilderPage />)
+
+    await user.click(screen.getByRole('button', { name: button }))
+
+    const [submission] = mutate.mock.calls[0] as [SubmitRecoveryApplicationInput]
+    expect(submission.providerId).toBe('airflow-01')
+    expect(submission.data.application).toMatchObject({ platform, source_provider_id: providerId })
   })
 
   it('returns to the list after a local-only submit response', async () => {

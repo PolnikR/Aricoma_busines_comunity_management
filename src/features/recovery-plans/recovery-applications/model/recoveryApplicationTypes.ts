@@ -49,6 +49,7 @@ export interface RecoveryApplicationData {
     description: string
     environment: string
     platform: string
+    source_provider_id: string
     source_connection: string
     target_connection: string
     tiers: Record<string, RecoveryTier>
@@ -86,7 +87,9 @@ export interface OrchestratorPush {
 export interface RecoveryApplicationApiRecord {
   id: string
   policy_set_id?: string | null | undefined
-  application: RecoveryApplicationData['application']
+  application: Omit<RecoveryApplicationData['application'], 'source_provider_id'> & {
+    source_provider_id?: string | null | undefined
+  }
   orchestration?: OrchestrationStateOutput | null | undefined
 }
 
@@ -99,6 +102,7 @@ export interface RecoveryApplicationListItem {
       description?: string | undefined
       environment: string
       platform: string
+      source_provider_id?: string | null | undefined
       source_connection?: string | undefined
       target_connection?: string | undefined
       tiers: Record<string, DraftRecoveryTier>

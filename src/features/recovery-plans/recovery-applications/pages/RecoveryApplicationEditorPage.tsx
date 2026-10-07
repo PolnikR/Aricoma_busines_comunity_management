@@ -22,6 +22,8 @@ import type { OrchestratorPush, RecoveryApplicationFormState } from '../model/re
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
 
 export function RecoveryApplicationEditorPage() {
@@ -36,6 +38,7 @@ export function RecoveryApplicationEditorPage() {
   const [orchestratorProviderUrl, setOrchestratorProviderUrl] = useState<string | undefined>(undefined)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
   const { data: platformProviders = [] } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
+  const { data: providers = [] } = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const loadErrorDescription = resolveUserFacingErrorMessage(error, t('pages.recoveryEditor.requestFailed'))
   const submitErrorDescription = resolveUserFacingErrorMessage(submitApplication.error, '')
   const application = applications?.find(
@@ -57,7 +60,7 @@ export function RecoveryApplicationEditorPage() {
   const handleSave = (formState: RecoveryApplicationFormState): void => {
     submitApplication.mutate({
       providerId: formState.orchestrationProviderId,
-      data: toRecoveryApplicationData(formState),
+      data: toRecoveryApplicationData(formState, providers),
       pushToOrchestrator: formState.pushToOrchestrator,
     }, {
       onSuccess: (response) => {

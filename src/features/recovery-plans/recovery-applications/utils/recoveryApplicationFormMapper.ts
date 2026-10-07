@@ -1,3 +1,4 @@
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type {
   DraftRecoveryTier,
   RecoveryApplicationData,
@@ -6,6 +7,7 @@ import type {
   RecoveryTier,
 } from '../model/recoveryApplicationTypes'
 import { toRecoveryApplicationFileName } from './recoveryApplicationFileName'
+import { sourceProviderIdOf } from './sourceProvider'
 
 function toFormEnvironment(environment: string): string {
   return environment
@@ -51,7 +53,7 @@ export function toRecoveryApplicationFormState(
     name: data.name,
     description: data.description ?? '',
     environment: toFormEnvironment(data.environment),
-    platform: data.platform,
+    platform: sourceProviderIdOf(data),
     orchestrationProviderId: application.orchestrationProviderId ?? '',
     sourceConnection: data.source_connection ?? '',
     targetConnection: data.target_connection ?? '',
@@ -61,9 +63,19 @@ export function toRecoveryApplicationFormState(
   }
 }
 
+// formState.platform holds the selected provider id; the wire contract wants
+// that provider's type as platform and its id as source_provider_id. Save is
+// gated on the provider being available, so a missing one means that gate was
+// bypassed.
 export function toRecoveryApplicationData(
   formState: RecoveryApplicationFormState,
+  providers: ProviderRecord[],
 ): RecoveryApplicationData {
+  const sourceProvider = providers.find(provider => provider.id === formState.platform)
+  if (!sourceProvider) {
+    throw new Error(`Source provider "${formState.platform}" is not available`)
+  }
+
   return {
     id: formState.fileName,
     policy_set_id: formState.policySetId,
@@ -71,7 +83,8 @@ export function toRecoveryApplicationData(
       name: formState.name,
       description: formState.description,
       environment: formState.environment,
-      platform: formState.platform,
+      platform: sourceProvider.type,
+      source_provider_id: sourceProvider.id,
       source_connection: formState.sourceConnection,
       target_connection: formState.targetConnection,
       tiers: Object.fromEntries(

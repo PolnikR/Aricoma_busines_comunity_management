@@ -12,6 +12,8 @@ import { useSubmitRecoveryApplication } from '../hooks/useRecoveryApplications'
 import { toRecoveryApplicationData } from '../utils/recoveryApplicationFormMapper'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
+import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
 import type { OrchestratorPush, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
@@ -25,12 +27,13 @@ export function RecoveryApplicationBuilderPage() {
   const [orchestratorProviderUrl, setOrchestratorProviderUrl] = useState<string | undefined>(undefined)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
   const { data: platformProviders = [] } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
+  const { data: providers = [] } = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const submitErrorDescription = resolveUserFacingErrorMessage(submitApplication.error, '')
 
   const handleSave = (appState: RecoveryApplicationFormState): void => {
     submitApplication.mutate({
       providerId: appState.orchestrationProviderId,
-      data: toRecoveryApplicationData(appState),
+      data: toRecoveryApplicationData(appState, providers),
       pushToOrchestrator: appState.pushToOrchestrator,
     }, {
       onSuccess: (response) => {

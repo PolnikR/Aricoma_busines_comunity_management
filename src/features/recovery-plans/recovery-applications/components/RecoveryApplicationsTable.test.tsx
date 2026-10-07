@@ -40,7 +40,8 @@ const application: RecoveryApplicationListItem = {
       name: 'Finance Recovery',
       description: 'Finance workloads',
       environment: 'prod',
-      platform: 'VMware vCenter ESXi',
+      platform: 'VMWARE',
+      source_provider_id: 'vmware-vcenter-01',
       source_connection: 'vcenter_default',
       target_connection: 'vcenter_default_destination',
       tiers: {
@@ -67,7 +68,8 @@ const developmentApplication: RecoveryApplicationListItem = {
       name: 'Development Recovery',
       description: 'Development workloads',
       environment: 'dev',
-      platform: 'IBM PowerVM',
+      platform: 'IBM_POWER',
+      source_provider_id: 'ibm-power-01',
       source_connection: 'vcenter_default',
       target_connection: 'vcenter_default_destination',
       tiers: {},
@@ -187,7 +189,8 @@ describe('RecoveryApplicationsTable', () => {
           name: 'Finance Recovery from raw API',
           description: 'Finance workloads',
           environment: 'prod',
-          platform: 'VMware vCenter ESXi',
+          platform: 'VMWARE',
+          source_provider_id: 'vmware-vcenter-01',
           source_connection: 'vcenter_default',
           target_connection: 'vcenter_default_destination',
           tiers: {},
@@ -222,6 +225,22 @@ describe('RecoveryApplicationsTable', () => {
     expect(modal).not.toHaveTextContent('rawRecord')
   })
 
+  it('labels the platform column with the source provider name, not the provider type', () => {
+    renderTable(
+      <RecoveryApplicationsTable
+        applications={[application, developmentApplication]}
+        providers={[
+          { id: 'vmware-vcenter-01', name: 'VMware Source' },
+          { id: 'ibm-power-01', name: 'IBM Power Source' },
+        ]}
+      />,
+    )
+
+    expect(screen.getByText('VMware Source')).toBeInTheDocument()
+    expect(screen.getByText('IBM Power Source')).toBeInTheDocument()
+    expect(screen.queryByText('IBM_POWER')).not.toBeInTheDocument()
+  })
+
   it('filters applications by environment and platform and reports the active count', async () => {
     const user = userEvent.setup()
     renderTable(<RecoveryApplicationsTable applications={[application, developmentApplication]} />)
@@ -229,7 +248,7 @@ describe('RecoveryApplicationsTable', () => {
     await user.click(screen.getByRole('button', { name: 'Filters' }))
     const modal = screen.getByRole('dialog', { name: 'Filter recovery applications' })
     await user.selectOptions(within(modal).getByLabelText('Environment'), 'dev')
-    await user.selectOptions(within(modal).getByLabelText('Platform'), 'IBM PowerVM')
+    await user.selectOptions(within(modal).getByLabelText('Platform'), 'ibm-power-01')
     await user.click(within(modal).getByRole('button', { name: 'Apply' }))
 
     expect(screen.getByText('Development Recovery')).toBeInTheDocument()
@@ -324,7 +343,7 @@ describe('RecoveryApplicationsTable', () => {
       expect(overview.querySelectorAll('dl')).toHaveLength(1)
       expect(overviewTerms(drawer)).toEqual(['Description', 'Environment', 'Platform', 'Tiers', 'Status', 'Submission'])
       expect(overview).toHaveTextContent('Finance workloads')
-      expect(overview).toHaveTextContent('VMware')
+      expect(overview).toHaveTextContent('vmware-vcenter-01')
       expect(overview).toHaveTextContent('/tmp/finance.json')
     })
 

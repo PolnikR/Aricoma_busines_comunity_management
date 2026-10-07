@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { LanguageProvider } from '@/contexts/LanguageProvider'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import { sourceProviderIdOf } from '../utils/sourceProvider'
 import { AppMetadataForm } from './AppMetadataForm'
 
 describe('AppMetadataForm', () => {
@@ -129,4 +131,29 @@ describe('AppMetadataForm', () => {
     expect(screen.getByRole('option', { name: 'production' })).toBeInTheDocument()
   })
 
+  it.each([
+    ['source_provider_id', { platform: 'IBM_POWER', source_provider_id: 'ibm-power-01' }, 'ibm-power-01'],
+    ['a legacy provider id in platform', { platform: 'vmware-vcenter-01' }, 'vmware-vcenter-01'],
+  ])('selects the stored provider from %s', async (_label, stored, expected) => {
+    const providers = [
+      { id: 'vmware-vcenter-01', name: 'VMware Source', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
+      { id: 'ibm-power-01', name: 'IBM Power Source', type: 'IBM_POWER', role: 'source', credentialStatus: 'ok' },
+    ] as ProviderRecord[]
+    render(
+      <LanguageProvider>
+        <AppMetadataForm
+          initialValues={{
+            fileName: 'finance_app',
+            name: 'Finance',
+            description: 'Primary',
+            environment: 'dev',
+            platform: sourceProviderIdOf(stored),
+          }}
+          providers={providers}
+        />
+      </LanguageProvider>
+    )
+
+    expect(await screen.findByLabelText('Provider ID *')).toHaveValue(expected)
+  })
 })
