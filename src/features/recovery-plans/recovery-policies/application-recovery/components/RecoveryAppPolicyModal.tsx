@@ -8,6 +8,13 @@ import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useSubmitRecoveryAppPolicy } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
+import {
+  submitRecoveryAppPolicyBodyManualZoningDefault,
+  submitRecoveryAppPolicyBodySourceShutdownTimeoutSecondsDefault,
+  submitRecoveryAppPolicyBodyTargetLparPrefixDefault,
+  submitRecoveryAppPolicyBodyTargetLparPrefixRegExp,
+  submitRecoveryAppPolicyBodyZoningWaitMinutesDefault,
+} from '@/generated/query/zod'
 import type { RecoveryAppPolicyRecordOutput } from '@/generated/query/zod'
 import { toRecoveryAppPolicySubmitPayload } from '../model/recoveryAppPolicySubmit'
 import type { RecoveryAppPolicySelectionMode, RecoveryAppPolicyTimeUnit } from '../model/recoveryAppPolicyTypes'
@@ -25,6 +32,10 @@ const EMPTY_FORM: RecoveryAppPolicyFormData = {
   id: '', name: '', description: '', level: '', frequency_value: '1', frequency_unit: 'minutes',
   retention_value: '1', retention_unit: 'days', boot_verify: false, snapshot_selection_mode: 'latest',
   snapshot_max_age_value: '', snapshot_max_age_unit: '', snapshot_target_time: '', enabled: true,
+  target_lpar_prefix: submitRecoveryAppPolicyBodyTargetLparPrefixDefault,
+  manual_zoning: submitRecoveryAppPolicyBodyManualZoningDefault,
+  source_shutdown_timeout_seconds: String(submitRecoveryAppPolicyBodySourceShutdownTimeoutSecondsDefault),
+  zoning_wait_minutes: String(submitRecoveryAppPolicyBodyZoningWaitMinutesDefault),
 }
 
 function toFormData(policy: RecoveryAppPolicyRecordOutput): RecoveryAppPolicyFormData {
@@ -43,6 +54,10 @@ function toFormData(policy: RecoveryAppPolicyRecordOutput): RecoveryAppPolicyFor
     snapshot_max_age_unit: policy.snapshot_max_age_unit ?? '',
     snapshot_target_time: policy.snapshot_target_time ?? '',
     enabled: policy.enabled,
+    target_lpar_prefix: policy.target_lpar_prefix,
+    manual_zoning: policy.manual_zoning,
+    source_shutdown_timeout_seconds: String(policy.source_shutdown_timeout_seconds),
+    zoning_wait_minutes: String(policy.zoning_wait_minutes),
   }
 }
 
@@ -107,6 +122,8 @@ export function RecoveryAppPolicyModal({ open, onClose, existingPolicies, policy
     const frequency = Number(formData.frequency_value)
     const retention = Number(formData.retention_value)
     const maxAge = formData.snapshot_max_age_value === '' ? null : Number(formData.snapshot_max_age_value)
+    const shutdownTimeout = formData.source_shutdown_timeout_seconds === '' ? null : Number(formData.source_shutdown_timeout_seconds)
+    const zoningWait = formData.zoning_wait_minutes === '' ? null : Number(formData.zoning_wait_minutes)
     const mode = formData.snapshot_selection_mode
     if (!formData.id.trim()) next.id = t('recoveryAppPolicies.validation.idRequired')
     else if (!isEdit && existingPolicies.some(entry => entry.id === formData.id.trim())) next.id = t('recoveryAppPolicies.validation.idExists')
@@ -121,6 +138,9 @@ export function RecoveryAppPolicyModal({ open, onClose, existingPolicies, policy
       if (!isTimeUnit(formData.snapshot_max_age_unit)) next.snapshot_max_age_unit = t('recoveryAppPolicies.validation.unitRequired')
     }
     if (mode === 'exact_time' && !/^([01]\d|2[0-3]):[0-5]\d$/.test(formData.snapshot_target_time)) next.snapshot_target_time = t('recoveryAppPolicies.validation.targetTime')
+    if (!submitRecoveryAppPolicyBodyTargetLparPrefixRegExp.test(formData.target_lpar_prefix.trim())) next.target_lpar_prefix = t('recoveryAppPolicies.validation.lparPrefix')
+    if (shutdownTimeout === null || !Number.isInteger(shutdownTimeout) || shutdownTimeout < 1) next.source_shutdown_timeout_seconds = t('recoveryAppPolicies.validation.positiveInteger')
+    if (zoningWait === null || !Number.isInteger(zoningWait) || zoningWait < 1) next.zoning_wait_minutes = t('recoveryAppPolicies.validation.positiveInteger')
     setErrors(next)
     return Object.keys(next).length === 0
   }

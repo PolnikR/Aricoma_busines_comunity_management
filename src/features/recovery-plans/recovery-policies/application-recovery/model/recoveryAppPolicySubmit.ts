@@ -4,6 +4,8 @@ import type { RecoveryAppPolicySelectionMode, RecoveryAppPolicyTimeUnit } from '
 
 // Sends only the fields that belong to the selected snapshot mode. Mode-specific
 // required fields and the HH:MM target time are validated by the policy form.
+// The IBM Power fields are always sent: they have backend defaults, so leaving
+// them out of an edit would reset the stored values.
 export function toRecoveryAppPolicySubmitPayload(form: RecoveryAppPolicyFormData): RecoveryAppPolicy {
   const common = {
     id: form.id.trim(),
@@ -17,6 +19,10 @@ export function toRecoveryAppPolicySubmitPayload(form: RecoveryAppPolicyFormData
     boot_verify: form.boot_verify,
     snapshot_selection_mode: form.snapshot_selection_mode as RecoveryAppPolicySelectionMode,
     enabled: form.enabled,
+    target_lpar_prefix: form.target_lpar_prefix.trim(),
+    manual_zoning: form.manual_zoning,
+    source_shutdown_timeout_seconds: Number(form.source_shutdown_timeout_seconds),
+    zoning_wait_minutes: Number(form.zoning_wait_minutes),
   }
 
   switch (form.snapshot_selection_mode as RecoveryAppPolicySelectionMode) {

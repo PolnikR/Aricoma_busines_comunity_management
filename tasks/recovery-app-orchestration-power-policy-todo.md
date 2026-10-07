@@ -78,12 +78,12 @@ Plán: `tasks/recovery-app-orchestration-power-policy-plan.md`. Cesty nižšie s
 **Popis:** Rozšíriť `RecoveryAppPolicyFormData` o `target_lpar_prefix: string`, `manual_zoning: boolean`, `source_shutdown_timeout_seconds: string`, `zoning_wait_minutes: string`. `EMPTY_FORM` z generated default konštánt, `toFormData` z recordu, `toRecoveryAppPolicySubmitPayload` posiela všetky 4 vždy (`Number(...)` pre čísla, `trim()` pre prefix).
 
 **Akceptačné kritériá:**
-- [ ] Create bez dotyku Power polí pošle `target_lpar_prefix: 'dr_'`, `manual_zoning: false`, `source_shutdown_timeout_seconds: 300`, `zoning_wait_minutes: 240`.
-- [ ] Edit policy s `{ 'p8_', true, 600, 30 }`, zmena iba description → request body obsahuje presne tieto 4 hodnoty.
-- [ ] Všetky tri existujúce submit testy (time_range, latest, exact_time) majú v `toEqual` body 4 Power polia.
+- [x] Create bez dotyku Power polí pošle `target_lpar_prefix: 'dr_'`, `manual_zoning: false`, `source_shutdown_timeout_seconds: 300`, `zoning_wait_minutes: 240`.
+- [x] Edit policy s `{ 'p8_', true, 600, 30 }`, zmena iba description → request body obsahuje presne tieto 4 hodnoty.
+- [x] Všetky tri existujúce submit testy (time_range, latest, exact_time) majú v `toEqual` body 4 Power polia.
 
 **Overenie:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx`
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx`
 
 **Závislosti:** Checkpoint 1
 **Súbory:** `…/components/RecoveryAppPolicyForm.tsx` (iba interface), `…/components/RecoveryAppPolicyModal.tsx`, `…/model/recoveryAppPolicySubmit.ts`, `…/components/RecoveryAppPolicyModal.test.tsx`
@@ -94,15 +94,15 @@ Plán: `tasks/recovery-app-orchestration-power-policy-plan.md`. Cesty nižšie s
 **Popis:** V `RecoveryAppPolicyForm` pridať sekciu „IBM Power recovery“ v rovnakom boxe ako snapshot sekcia, s helper textom „These settings are used only for IBM Power recovery. VMware recovery ignores them.“ a poliami Target LPAR prefix, Manual zoning (checkbox), Source shutdown timeout (seconds), Zoning wait (minutes). Validácia v `RecoveryAppPolicyModal.validate()`. Preklady en/cs/sk.
 
 **Akceptačné kritériá:**
-- [ ] Sekcia je viditeľná v Create aj Edit, vždy (bez platform podmienky), polia majú labely a sú `disabled` počas submitu.
-- [ ] Prefix mimo `^[A-Za-z0-9._-]{0,12}$` (napr. `'dr prod'`, 13 znakov) → chyba pod poľom, žiadny request; prázdny prefix je platný.
-- [ ] Timeout aj zoning wait: `'0'`, `'-1'`, `'1.5'`, `''` → `positiveInteger` chyba, žiadny request.
-- [ ] Zaškrtnutie Manual zoning → body `manual_zoning: true`.
-- [ ] Nové kľúče existujú v `en.json`, `cs.json`, `sk.json` (`recoveryAppPolicies.form.ibmPowerSection`, `.ibmPowerHint`, `.targetLparPrefix`, `.manualZoning`, `.sourceShutdownTimeout`, `.zoningWait`, `recoveryAppPolicies.validation.lparPrefix`).
+- [x] Sekcia je viditeľná v Create aj Edit, vždy (bez platform podmienky), polia majú labely a sú `disabled` počas submitu.
+- [x] Prefix mimo `^[A-Za-z0-9._-]{0,12}$` (napr. `'dr prod'`, 13 znakov) → chyba pod poľom, žiadny request; prázdny prefix je platný.
+- [x] Timeout aj zoning wait: `'0'`, `'-1'`, `'1.5'`, `''` → `positiveInteger` chyba, žiadny request.
+- [x] Zaškrtnutie Manual zoning → body `manual_zoning: true`.
+- [x] Nové kľúče existujú v `en.json`, `cs.json`, `sk.json` (`recoveryAppPolicies.form.ibmPowerSection`, `.ibmPowerHint`, `.targetLparPrefix`, `.manualZoning`, `.sourceShutdownTimeout`, `.zoningWait`, `recoveryAppPolicies.validation.lparPrefix`).
 
 **Overenie:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx`
-- [ ] Manuálne (voliteľne, CDP :9333): modal Create/Edit, sekcia vizuálne zodpovedá snapshot sekcii
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx`
+- [x] Manuálne (voliteľne, CDP :9333): modal Create/Edit, sekcia vizuálne zodpovedá snapshot sekcii
 
 **Závislosti:** Task 4
 **Súbory:** `…/components/RecoveryAppPolicyForm.tsx`, `…/components/RecoveryAppPolicyModal.tsx`, `…/components/RecoveryAppPolicyModal.test.tsx`, `src/locales/{en,cs,sk}.json`
@@ -113,26 +113,26 @@ Plán: `tasks/recovery-app-orchestration-power-policy-plan.md`. Cesty nižšie s
 **Popis:** V `RecoveryAppPoliciesTable` drawer pridať 4 `DetailField` na koniec existujúceho `DetailOverview` (za `Status`). Žiadna nová sekcia ani navigácia. Timeout a zoning wait cez existujúci `formatInterval`. Tabuľka a JSON viewer bez zmeny.
 
 **Akceptačné kritériá:**
-- [ ] Navigácia drawera zostáva iba `['Overview']`.
-- [ ] Existujúce Overview polia a ich poradie nezmenené; `detailSectionsLabels` = `['Policy ID', 'Description', 'Level', 'Frequency', 'Retention', 'Snapshot selection', 'Boot verification', 'Status', 'Target LPAR prefix', 'Manual zoning', 'Source shutdown timeout', 'Zoning wait']`.
-- [ ] Prázdny `target_lpar_prefix` → `-`.
-- [ ] `manual_zoning` → `Yes` / `No` (existujúce `recoveryAppPolicies.yes/no`).
-- [ ] Timeout a zoning wait s jednotkou: `300 seconds`, `240 minutes`.
-- [ ] Žiadny nový stĺpec v tabuľke.
-- [ ] JSON viewer bez architektonickej zmeny; test overí, že payload obsahuje `"target_lpar_prefix"` a `"zoning_wait_minutes"`.
-- [ ] Preklady `details.targetLparPrefix`, `details.manualZoning`, `details.sourceShutdownTimeout`, `details.zoningWait`, `recoveryAppPolicies.unit.seconds` v en/cs/sk.
+- [x] Navigácia drawera zostáva iba `['Overview']`.
+- [x] Existujúce Overview polia a ich poradie nezmenené; `detailSectionsLabels` = `['Policy ID', 'Description', 'Level', 'Frequency', 'Retention', 'Snapshot selection', 'Boot verification', 'Status', 'Target LPAR prefix', 'Manual zoning', 'Source shutdown timeout', 'Zoning wait']`.
+- [x] Prázdny `target_lpar_prefix` → `-`.
+- [x] `manual_zoning` → `Yes` / `No` (existujúce `recoveryAppPolicies.yes/no`).
+- [x] Timeout a zoning wait s jednotkou: `300 seconds`, `240 minutes`.
+- [x] Žiadny nový stĺpec v tabuľke.
+- [x] JSON viewer bez architektonickej zmeny; test overí, že payload obsahuje `"target_lpar_prefix"` a `"zoning_wait_minutes"`.
+- [x] Preklady `details.targetLparPrefix`, `details.manualZoning`, `details.sourceShutdownTimeout`, `details.zoningWait`, `recoveryAppPolicies.unit.seconds` v en/cs/sk.
 
 **Overenie:**
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-policies/application-recovery src/locales`
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-policies/application-recovery src/locales`
 
 **Závislosti:** Task 4
 **Súbory:** `…/components/RecoveryAppPoliciesTable.tsx`, `…/components/RecoveryAppPoliciesTable.test.tsx`, `src/locales/{en,cs,sk}.json`
 **Rozsah:** S
 
 ## Checkpoint 2
-- [ ] `npm run typecheck` zelený
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-policies/application-recovery src/features/recovery-plans/recovery-applications src/features/recovery-plans/recovery-runs src/locales`
-- [ ] `npx eslint --max-warnings 0 <zmenené súbory>` + `node scripts/orval/check-feature-layout.mjs`
-- [ ] `git diff -U0 src/locales` obsahuje iba moje kľúče; `git diff --check`
-- [ ] Commit 2 s explicitným zoznamom ciest
-- [ ] Report: zmenené súbory, zmeny, príkazy overenia (full suite/build nespustené), commity, zostávajúce BE → FE rozdiely
+- [x] `npm run typecheck` zelený
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-policies/application-recovery src/features/recovery-plans/recovery-applications src/features/recovery-plans/recovery-runs src/locales`
+- [x] `npx eslint --max-warnings 0 <zmenené súbory>` + `node scripts/orval/check-feature-layout.mjs`
+- [x] `git diff -U0 src/locales` obsahuje iba moje kľúče; `git diff --check`
+- [x] Commit 2 s explicitným zoznamom ciest
+- [x] Report: zmenené súbory, zmeny, príkazy overenia (full suite/build nespustené), commity, zostávajúce BE → FE rozdiely

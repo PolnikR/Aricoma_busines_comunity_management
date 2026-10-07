@@ -81,7 +81,16 @@ describe('RecoveryAppPoliciesTable', () => {
     // One shared Overview field list in the original drawer order; the ID is a field, not a technical block.
     const overview = within(modelCDrawer).getByRole('region', { name: 'Overview' })
     expect(overview.querySelectorAll('dl')).toHaveLength(1)
-    expect(detailSectionsLabels(modelCDrawer)).toEqual(['Policy ID', 'Description', 'Level', 'Frequency', 'Retention', 'Snapshot selection', 'Boot verification', 'Status'])
+    expect(detailSectionsLabels(modelCDrawer)).toEqual([
+      'Policy ID', 'Description', 'Level', 'Frequency', 'Retention', 'Snapshot selection', 'Boot verification', 'Status',
+      'Target LPAR prefix', 'Manual zoning', 'Source shutdown timeout', 'Zoning wait',
+    ])
+    expect(detailSectionsFields(modelCDrawer)).toMatchObject({
+      'Target LPAR prefix': 'dr_',
+      'Manual zoning': 'No',
+      'Source shutdown timeout': '300 seconds',
+      'Zoning wait': '240 minutes',
+    })
     expect(within(overview).getByText('medium-monthly-exacttime')).toHaveClass('font-mono')
     expect(within(overview).getByRole('button', { name: 'Copy Policy ID' })).toBeInTheDocument()
     // Level stays a header badge and is repeated in Overview.
@@ -92,6 +101,28 @@ describe('RecoveryAppPoliciesTable', () => {
     expect(modelCDelete.closest('footer')?.children[1]).toContainElement(within(modelCDrawer).getByRole('button', { name: 'Edit' }))
     await userEvent.click(within(modelCDrawer).getByRole('button', { name: 'Recovery app policy help' }))
     expect(screen.getByRole('dialog', { name: 'How a recovery app policy works' })).toHaveTextContent('Schedule')
+  })
+
+  it('shows an empty target LPAR prefix as a dash and manual zoning as Yes', async () => {
+    render(
+      <RecoveryAppPoliciesTable
+        policies={[{ ...policy, target_lpar_prefix: '', manual_zoning: true, source_shutdown_timeout_seconds: 600, zoning_wait_minutes: 30 }]}
+        isLoading={false}
+        error={null}
+        isRetrying={false}
+        onRetry={vi.fn()}
+      />,
+    )
+
+    await userEvent.click(screen.getByText('Medium monthly'))
+    const drawer = screen.getByRole('dialog', { name: 'Recovery app policy detail' })
+    expect(detailNavigationLabels(drawer)).toEqual(['Overview'])
+    expect(detailSectionsFields(drawer)).toMatchObject({
+      'Target LPAR prefix': '-',
+      'Manual zoning': 'Yes',
+      'Source shutdown timeout': '600 seconds',
+      'Zoning wait': '30 minutes',
+    })
   })
 
   it('shows the complete recovery policy GET payload without opening the drawer', async () => {
@@ -106,6 +137,8 @@ describe('RecoveryAppPoliciesTable', () => {
     expect(dialog).toHaveTextContent('"snapshot_max_age_value": null')
     expect(dialog).toHaveTextContent('"snapshot_max_age_unit": null')
     expect(dialog).not.toHaveTextContent('"snapshotTargetTime"')
+    expect(dialog).toHaveTextContent('"target_lpar_prefix": "dr_"')
+    expect(dialog).toHaveTextContent('"zoning_wait_minutes": 240')
     expect(screen.queryByRole('dialog', { name: 'Recovery app policy detail' })).not.toBeInTheDocument()
   })
 

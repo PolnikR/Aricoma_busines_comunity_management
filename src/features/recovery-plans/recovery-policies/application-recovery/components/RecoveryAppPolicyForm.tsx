@@ -23,6 +23,10 @@ export interface RecoveryAppPolicyFormData {
   snapshot_max_age_unit: string
   snapshot_target_time: string
   enabled: boolean
+  target_lpar_prefix: string
+  manual_zoning: boolean
+  source_shutdown_timeout_seconds: string
+  zoning_wait_minutes: string
 }
 
 interface RecoveryAppPolicyFormProps {
@@ -141,6 +145,26 @@ export function RecoveryAppPolicyForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <CheckboxField id="recovery-app-policy-boot-verify" label={t('recoveryAppPolicies.form.bootVerify')} checked={data.boot_verify} disabled={isSubmitting} variant="bordered" onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('boot_verify', event.target.checked) }} />
         <CheckboxField id="recovery-app-policy-enabled" label={t('recoveryAppPolicies.form.enabled')} checked={data.enabled} disabled={isSubmitting} variant="bordered" onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('enabled', event.target.checked) }} />
+      </div>
+
+      <div className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
+        <h3 className="text-sm font-semibold text-text-primary">{t('recoveryAppPolicies.form.ibmPowerSection')}</h3>
+        <p className="mt-1 text-xs text-text-muted">{t('recoveryAppPolicies.form.ibmPowerHint')}</p>
+        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label={t('recoveryAppPolicies.form.targetLparPrefix')} htmlFor="recovery-app-policy-target-lpar-prefix">
+            <Input id="recovery-app-policy-target-lpar-prefix" value={data.target_lpar_prefix} disabled={isSubmitting} invalid={Boolean(errors.target_lpar_prefix)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('target_lpar_prefix', event.target.value) }} />
+            {errors.target_lpar_prefix ? <p className="mt-1 text-xs text-red-600">{errors.target_lpar_prefix}</p> : null}
+          </Field>
+          <CheckboxField id="recovery-app-policy-manual-zoning" className="self-end" label={t('recoveryAppPolicies.form.manualZoning')} checked={data.manual_zoning} disabled={isSubmitting} variant="bordered" onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('manual_zoning', event.target.checked) }} />
+          <Field label={t('recoveryAppPolicies.form.sourceShutdownTimeout')} htmlFor="recovery-app-policy-source-shutdown-timeout">
+            <Input id="recovery-app-policy-source-shutdown-timeout" type="number" min={1} step={1} value={data.source_shutdown_timeout_seconds} disabled={isSubmitting} invalid={Boolean(errors.source_shutdown_timeout_seconds)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('source_shutdown_timeout_seconds', event.target.value) }} />
+            {errors.source_shutdown_timeout_seconds ? <p className="mt-1 text-xs text-red-600">{errors.source_shutdown_timeout_seconds}</p> : null}
+          </Field>
+          <Field label={t('recoveryAppPolicies.form.zoningWait')} htmlFor="recovery-app-policy-zoning-wait">
+            <Input id="recovery-app-policy-zoning-wait" type="number" min={1} step={1} value={data.zoning_wait_minutes} disabled={isSubmitting} invalid={Boolean(errors.zoning_wait_minutes)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('zoning_wait_minutes', event.target.value) }} />
+            {errors.zoning_wait_minutes ? <p className="mt-1 text-xs text-red-600">{errors.zoning_wait_minutes}</p> : null}
+          </Field>
+        </div>
       </div>
     </div>
   )

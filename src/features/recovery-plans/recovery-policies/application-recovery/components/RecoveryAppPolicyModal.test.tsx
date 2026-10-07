@@ -44,6 +44,33 @@ const exactTimePolicy: RecoveryAppPolicyRecordOutput = {
   snapshot_target_time: '02:00',
 }
 
+const powerPolicy: RecoveryAppPolicyRecordOutput = {
+  ...policy,
+  id: 'power-daily',
+  target_lpar_prefix: 'p8.dr-',
+  manual_zoning: true,
+  source_shutdown_timeout_seconds: 600,
+  zoning_wait_minutes: 30,
+}
+
+function stubSubmitResponse() {
+  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ recovery_app_policies: [powerPolicy] }), { status: 200 }))
+  vi.stubGlobal('fetch', fetchMock)
+  return fetchMock
+}
+
+function submittedBody(fetchMock: ReturnType<typeof vi.fn>) {
+  const init = fetchMock.mock.calls[0]?.[1] as RequestInit
+  return JSON.parse(init.body as string) as Record<string, unknown>
+}
+
+function fillRequiredCreateFields() {
+  fireEvent.change(screen.getByLabelText('Policy ID'), { target: { value: 'power-daily' } })
+  fireEvent.change(screen.getByLabelText('Policy name'), { target: { value: 'Power daily' } })
+  fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Daily' } })
+  fireEvent.change(screen.getByLabelText('Level'), { target: { value: 'high' } })
+}
+
 function renderModal(props: Partial<React.ComponentProps<typeof RecoveryAppPolicyModal>> = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   return render(
@@ -101,6 +128,7 @@ describe('RecoveryAppPolicyModal', () => {
       frequency_value: 7, frequency_unit: 'days', retention_value: 1, retention_unit: 'days',
       boot_verify: true, snapshot_selection_mode: 'time_range', snapshot_max_age_value: 2,
       snapshot_max_age_unit: 'hours', enabled: true,
+      target_lpar_prefix: 'dr_', manual_zoning: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
     })
   })
 
@@ -135,6 +163,7 @@ describe('RecoveryAppPolicyModal', () => {
       id: 'critical-daily', name: 'Critical daily', description: 'Daily', level: 'critical',
       frequency_value: 1, frequency_unit: 'minutes', retention_value: 1, retention_unit: 'days',
       boot_verify: false, snapshot_selection_mode: 'latest', enabled: true,
+      target_lpar_prefix: 'dr_', manual_zoning: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
     })
   })
 
@@ -160,6 +189,7 @@ describe('RecoveryAppPolicyModal', () => {
       id: exactTimePolicy.id, name: exactTimePolicy.name, description: exactTimePolicy.description, level: exactTimePolicy.level,
       frequency_value: 30, frequency_unit: 'days', retention_value: 2, retention_unit: 'days',
       boot_verify: true, snapshot_selection_mode: 'exact_time', snapshot_target_time: '02:00', enabled: true,
+      target_lpar_prefix: 'dr_', manual_zoning: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
     })
   })
 
@@ -168,6 +198,101 @@ describe('RecoveryAppPolicyModal', () => {
     expect(screen.getByRole('heading', { name: 'Edit policy' })).toBeInTheDocument()
     expect(screen.getByLabelText('Policy ID')).toBeDisabled()
     expect(screen.getByLabelText('Snapshot selection')).toHaveValue('latest')
+  })
+
+  it('shows the IBM Power recovery section with backend defaults on create', () => {
+    renderModal()
+
+    expect(screen.getByRole('heading', { name: 'IBM Power recovery' })).toBeInTheDocument()
+    expect(screen.getByText('These settings are used only for IBM Power recovery. VMware recovery ignores them.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Target LPAR prefix')).toHaveValue('dr_')
+    expect(screen.getByRole('checkbox', { name: 'Manual zoning' })).not.toBeChecked()
+    expect(screen.getByLabelText('Source shutdown timeout (seconds)')).toHaveValue(300)
+    expect(screen.getByLabelText('Zoning wait (minutes)')).toHaveValue(240)
+  })
+
+  it('submits manual zoning and edited IBM Power values on create', async () => {
+    const onClose = vi.fn()
+    const fetchMock = stubSubmitResponse()
+    renderModal({ onClose })
+
+    fillRequiredCreateFields()
+    fireEvent.change(screen.getByLabelText('Target LPAR prefix'), { target: { value: 'p8_' } })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Manual zoning' }))
+    fireEvent.change(screen.getByLabelText('Source shutdown timeout (seconds)'), { target: { value: '120' } })
+    fireEvent.change(screen.getByLabelText('Zoning wait (minutes)'), { target: { value: '15' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+
+    expect(submittedBody(fetchMock)).toMatchObject({
+      target_lpar_prefix: 'p8_', manual_zoning: true, source_shutdown_timeout_seconds: 120, zoning_wait_minutes: 15,
+    })
+  })
+
+  it('loads and keeps the stored IBM Power values when editing another field', async () => {
+    const onClose = vi.fn()
+    const fetchMock = stubSubmitResponse()
+    renderModal({ onClose, policy: powerPolicy, existingPolicies: [powerPolicy] })
+
+    expect(screen.getByLabelText('Target LPAR prefix')).toHaveValue('p8.dr-')
+    expect(screen.getByRole('checkbox', { name: 'Manual zoning' })).toBeChecked()
+    expect(screen.getByLabelText('Source shutdown timeout (seconds)')).toHaveValue(600)
+    expect(screen.getByLabelText('Zoning wait (minutes)')).toHaveValue(30)
+
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Updated description' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+
+    expect(submittedBody(fetchMock)).toMatchObject({
+      description: 'Updated description',
+      target_lpar_prefix: 'p8.dr-', manual_zoning: true, source_shutdown_timeout_seconds: 600, zoning_wait_minutes: 30,
+    })
+  })
+
+  it('accepts an empty target LPAR prefix', async () => {
+    const onClose = vi.fn()
+    const fetchMock = stubSubmitResponse()
+    renderModal({ onClose })
+
+    fillRequiredCreateFields()
+    fireEvent.change(screen.getByLabelText('Target LPAR prefix'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+
+    expect(submittedBody(fetchMock)).toMatchObject({ target_lpar_prefix: '' })
+  })
+
+  it.each(['dr prod', 'dr/', 'abcdefghijklm'])('rejects the target LPAR prefix %j', (prefix) => {
+    const fetchMock = stubSubmitResponse()
+    renderModal()
+
+    fillRequiredCreateFields()
+    fireEvent.change(screen.getByLabelText('Target LPAR prefix'), { target: { value: prefix } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy' }))
+
+    expect(screen.getByText('Use up to 12 letters, digits, dots, underscores or hyphens')).toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['Source shutdown timeout (seconds)', '0'],
+    ['Source shutdown timeout (seconds)', '-1'],
+    ['Source shutdown timeout (seconds)', '1.5'],
+    ['Source shutdown timeout (seconds)', ''],
+    ['Zoning wait (minutes)', '0'],
+    ['Zoning wait (minutes)', '-1'],
+    ['Zoning wait (minutes)', '1.5'],
+    ['Zoning wait (minutes)', ''],
+  ])('rejects %s = %j', (label, value) => {
+    const fetchMock = stubSubmitResponse()
+    renderModal()
+
+    fillRequiredCreateFields()
+    fireEvent.change(screen.getByLabelText(label), { target: { value } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy' }))
+
+    expect(screen.getByText('Enter a positive whole number')).toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('shows backend detail in the shared submit alert', async () => {

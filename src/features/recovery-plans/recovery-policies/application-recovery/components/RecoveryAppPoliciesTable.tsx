@@ -242,6 +242,10 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
               <DetailField label={t('details.snapshotSelection')} value={formatSelection(selected, t)} />
               <DetailField label={t('details.bootVerify')} value={t(selected.boot_verify ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no')} />
               <DetailField label={t('details.status')} value={t(selected.enabled ? 'recoveryAppPolicies.enabled' : 'recoveryAppPolicies.disabled')} />
+              <DetailField label={t('details.targetLparPrefix')} value={selected.target_lpar_prefix || '-'} mono />
+              <DetailField label={t('details.manualZoning')} value={t(selected.manual_zoning ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no')} />
+              <DetailField label={t('details.sourceShutdownTimeout')} value={formatInterval(selected.source_shutdown_timeout_seconds, 'seconds', t)} />
+              <DetailField label={t('details.zoningWait')} value={formatInterval(selected.zoning_wait_minutes, 'minutes', t)} />
             </DetailOverview>
           </DetailViewSection>
         </DetailView>

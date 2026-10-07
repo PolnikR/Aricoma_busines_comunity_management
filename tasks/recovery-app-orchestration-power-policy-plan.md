@@ -64,12 +64,12 @@ BE zmenil dve veci, ktoré ručne písaná FE vrstva ešte nereflektuje:
 - [x] `npm run typecheck` bez chýb, focused testy zelené, `check-generated` bez rozdielov, commit 1
 
 ### Fáza 2 — IBM Power policy (commit 2)
-- [ ] T4: Model: form data, `EMPTY_FORM`, `toFormData`, submit payload
-- [ ] T5: Formulár: sekcia IBM Power recovery, validácia, preklady
-- [ ] T6: Detail drawer: IBM Power polia na konci Overview, preklady
+- [x] T4: Model: form data, `EMPTY_FORM`, `toFormData`, submit payload
+- [x] T5: Formulár: sekcia IBM Power recovery, validácia, preklady
+- [x] T6: Detail drawer: IBM Power polia na konci Overview, preklady
 
 ### Checkpoint 2
-- [ ] typecheck, focused testy, focused lint, review diffu, commit 2, záverečný report
+- [x] typecheck, focused testy, focused lint, review diffu, commit 2, záverečný report
 
 ## Riziká
 
