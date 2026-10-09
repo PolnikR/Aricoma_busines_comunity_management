@@ -16,7 +16,6 @@ export interface ProviderCreateFormData {
   url: string
   port: string
   credentialId: string
-  orchestratorConnId: string
   vmPrefix: string
   vmTags: string[]
   backingStorageProviderIds: string[]
@@ -322,18 +321,6 @@ export function ProviderCreateForm({
               </button>
             </p>
           ) : null}
-        </Field>
-
-        <Field label={t('forms.orchestratorConnId')} htmlFor="create-orchestratorConnId">
-          <Input
-            id="create-orchestratorConnId"
-            type="text"
-            placeholder={t('forms.orchestratorConnIdExample')}
-            value={data.orchestratorConnId}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('orchestratorConnId', event.target.value) }}
-            onKeyDown={handleKeyDown}
-            disabled={isSubmitting}
-          />
         </Field>
 
       </div>

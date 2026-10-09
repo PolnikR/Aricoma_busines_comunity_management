@@ -35,7 +35,6 @@ const EMPTY_FORM: ProviderCreateFormData = {
   url: '',
   port: '22',
   credentialId: '',
-  orchestratorConnId: '',
   vmPrefix: '',
   vmTags: [],
   backingStorageProviderIds: [],
@@ -56,7 +55,6 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         url: provider.url ?? '',
         port: '22',
         credentialId: provider.credentialId ?? '',
-        orchestratorConnId: provider.orchestratorConnId ?? '',
         vmPrefix: provider.vmPrefix ?? '',
         vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
         backingStorageProviderIds: [...(provider.backingStorageProviderIds ?? [])],
@@ -94,7 +92,6 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     || formData.url !== initialForm.url
     || formData.port !== initialForm.port
     || formData.credentialId !== initialForm.credentialId
-    || formData.orchestratorConnId !== initialForm.orchestratorConnId
     || formData.notificationEmail !== initialForm.notificationEmail
     || formData.cacheRefreshSeconds !== initialForm.cacheRefreshSeconds
     || formData.vmPrefix !== initialForm.vmPrefix
@@ -218,8 +215,6 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     }
     const url = formData.url.trim()
     if (url) record.url = url
-    const orchestratorConnId = formData.orchestratorConnId.trim()
-    if (orchestratorConnId) record.orchestratorConnId = orchestratorConnId
     record.vmPrefix = formData.vmPrefix.trim() || null
     record.vmTags = [...formData.vmTags]
     if (isComputeProviderType(formData.type)) record.backingStorageProviderIds = [...formData.backingStorageProviderIds]

@@ -891,8 +891,6 @@
   "forms.roleSelect": "Vyberte rolu",
   "forms.role.source": "Zdroj",
   "forms.role.target": "Cieľ",
-  "forms.orchestratorConnId": "ID pripojenia orchestrátora",
-  "forms.orchestratorConnIdExample": "napr. airflow-01",
   "forms.optionalSelect": "Žiadny",
   "forms.unavailable": "nedostupný",
   "forms.ip": "IP adresa",

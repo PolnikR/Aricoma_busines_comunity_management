@@ -15,7 +15,6 @@ const data = {
   url: 'https://vcenter.example.test',
   port: '22',
   credentialId: 'vcenter-admin',
-  orchestratorConnId: '',
   vmPrefix: 'prod-',
   vmTags: ['saved-tag'],
   backingStorageProviderIds: [],
@@ -80,6 +79,7 @@ describe('ProviderCreateForm', () => {
     expect(screen.getByDisplayValue('provider-1')).toBeDisabled()
     expect(screen.getByLabelText('Type')).toBeDisabled()
     expect(screen.getByText('ID error')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Orchestrator connection ID')).not.toBeInTheDocument()
   })
 
   it('renders and reports notification email changes', () => {

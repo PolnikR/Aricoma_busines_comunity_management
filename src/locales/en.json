@@ -913,8 +913,6 @@
   "forms.roleSelect": "Select a role",
   "forms.role.source": "Source",
   "forms.role.target": "Target",
-  "forms.orchestratorConnId": "Orchestrator connection ID",
-  "forms.orchestratorConnIdExample": "e.g., airflow-01",
   "forms.optionalSelect": "None",
   "forms.unavailable": "unavailable",
   "forms.ip": "IP address",
