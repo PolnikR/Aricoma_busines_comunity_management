@@ -1,10 +1,10 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { RecoveryAppBuilder } from './RecoveryAppBuilder'
 import type { RecoveryGroup } from '../../recovery-groups/model/recoveryGroupTypes'
-import type { DraftRecoveryTier, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import type { DraftRecoveryTier, LockedProviders, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
@@ -281,12 +281,12 @@ describe('RecoveryAppBuilder', () => {
       }
     }
 
-    async function trySave(initialData: RecoveryApplicationFormState) {
+    async function trySave(initialData: RecoveryApplicationFormState, lockedProviders?: LockedProviders) {
       const user = userEvent.setup()
       const onSave = vi.fn()
       const alert = vi.fn()
       vi.stubGlobal('alert', alert)
-      render(<RecoveryAppBuilder initialData={initialData} onSave={onSave} />)
+      render(<RecoveryAppBuilder initialData={initialData} onSave={onSave} lockedProviders={lockedProviders ?? null} />)
       await user.click(screen.getByRole('button', { name: 'Orchestration' }))
       await user.click(screen.getByRole('button', { name: 'Save Application' }))
       return { onSave, alert }
@@ -331,6 +331,62 @@ describe('RecoveryAppBuilder', () => {
       expect(screen.getByText(/uses the old recovery application contract/)).toBeInTheDocument()
       await user.click(screen.getByRole('button', { name: 'Orchestration' }))
       expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+    })
+
+    it.each([
+      ['source', { sourceProviderId: 'vmware-gone', targetProviderId: 'vmware-target-01' }, 'Source provider "vmware-gone" no longer exists'],
+      ['target', { sourceProviderId: 'vmware-01', targetProviderId: 'vmware-target-gone' }, 'Target provider "vmware-target-gone" no longer exists'],
+    ])('names a stored %s provider that is gone, keeps it locked and blocks saving until it is back', async (_label, ids, message) => {
+      const user = userEvent.setup()
+      const saved = savedApplication(ids.sourceProviderId, ids.targetProviderId, 'database_group', 'Database Group', ['DB-01'])
+      const { rerender } = render(<RecoveryAppBuilder initialData={saved} lockedProviders={{ platform: 'VMWARE', ...ids }} />)
+
+      expect(screen.getByLabelText('Provider ID *')).toBeDisabled()
+      expect(screen.getByText(message, { exact: false })).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+      expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+
+      const original = providersQuery.current.data
+      onTestFinished(() => { providersQuery.current.data = original })
+      providersQuery.current.data = original.map(provider => {
+        if (provider.id === 'vmware-01') return { ...provider, id: ids.sourceProviderId }
+        if (provider.id === 'vmware-target-01') return { ...provider, id: ids.targetProviderId }
+        return provider
+      })
+      rerender(<RecoveryAppBuilder initialData={saved} lockedProviders={{ platform: 'VMWARE', ...ids }} />)
+      expect(screen.getByRole('button', { name: 'Save Application' })).toBeEnabled()
+    })
+
+    it('blocks saving a stored VMware target that is no longer role=target', async () => {
+      const user = userEvent.setup()
+      const saved = savedApplication('vmware-01', 'vmware-01', 'database_group', 'Database Group', ['DB-01'])
+      render(<RecoveryAppBuilder initialData={saved} lockedProviders={{ platform: 'VMWARE', sourceProviderId: 'vmware-01', targetProviderId: 'vmware-01' }} />)
+
+      expect(screen.getByText('Target provider "vmware-01" no longer fits', { exact: false })).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+      expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+    })
+
+    it('offers a retry instead of a verdict when the providers fail to load', async () => {
+      const user = userEvent.setup()
+      providersQuery.current.error = new Error('Get providers request failed with status 503')
+      const saved = savedApplication('vmware-01', 'vmware-target-01', 'database_group', 'Database Group', ['DB-01'])
+      render(<RecoveryAppBuilder initialData={saved} lockedProviders={{ platform: 'VMWARE', sourceProviderId: 'vmware-01', targetProviderId: 'vmware-target-01' }} />)
+
+      expect(screen.queryByText('no longer exists', { exact: false })).not.toBeInTheDocument()
+      const [retry] = screen.getAllByRole('button', { name: 'Retry' })
+      if (!retry) throw new Error('Expected a retry button')
+      await user.click(retry)
+      expect(providersQuery.current.refetch).toHaveBeenCalled()
+      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+      expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+    })
+
+    it('saves an application whose stored providers still exist', async () => {
+      const locked = { platform: 'VMWARE', sourceProviderId: 'vmware-01', targetProviderId: 'vmware-target-01' }
+      const { onSave, alert } = await trySave(savedApplication('vmware-01', 'vmware-target-01', 'database_group', 'Database Group', ['DB-01']), locked)
+      expect(alert).not.toHaveBeenCalled()
+      expect(onSave).toHaveBeenCalledOnce()
     })
 
     it('waits for the recovery groups before saving', async () => {

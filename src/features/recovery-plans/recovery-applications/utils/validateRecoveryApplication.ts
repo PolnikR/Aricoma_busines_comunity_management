@@ -17,9 +17,29 @@ export interface ValidationError {
 const LPAR_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,46}$/
 
 // Why the stored providers of a saved application cannot be submitted, if so.
-export function storedProvidersProblem(locked: LockedProviders): ValidationError | null {
+// Mirrors the backend's validate_app_providers: both providers must exist and
+// have the platform's type; VMware also needs source role=source and target
+// role=target, IBM Power has no role check (one HMC may serve both sides).
+// Pass the providers only once they loaded: a failed fetch is no verdict.
+export function storedProvidersProblem(locked: LockedProviders, providers: ProviderRecord[]): ValidationError | null {
   if (!locked.sourceProviderId || !locked.targetProviderId) {
     return { field: 'platform', messageKey: 'recovery.application.validation.legacyProviders' }
+  }
+  const isPower = locked.platform.toUpperCase() === 'IBM_POWER'
+  const sides = [
+    { side: 'source', id: locked.sourceProviderId },
+    { side: 'target', id: locked.targetProviderId },
+  ] as const
+  for (const { side, id } of sides) {
+    const provider = providers.find(candidate => candidate.id === id)
+    if (!provider) {
+      return { field: 'platform', messageKey: `recovery.application.validation.${side}ProviderMissing`, params: { id } }
+    }
+    const fitsType = provider.type === (isPower ? 'IBM_POWER' : 'VMWARE')
+    const fitsRole = isPower || (side === 'source' ? provider.role !== 'target' : provider.role === 'target')
+    if (!fitsType || !fitsRole) {
+      return { field: 'platform', messageKey: `recovery.application.validation.${side}ProviderIncompatible`, params: { id } }
+    }
   }
   return null
 }
@@ -70,10 +90,10 @@ export function validateRecoveryApplication(
     }
   }
 
-  const lockedProblem = lockedProviders ? storedProvidersProblem(lockedProviders) : null
+  const lockedProblem = lockedProviders ? storedProvidersProblem(lockedProviders, providers) : null
   if (lockedProblem) return lockedProblem
 
-  // Locked providers are sent as stored; they need not be available any more.
+  // Locked providers are sent as stored once storedProvidersProblem accepts them.
   const sourceProvider = lockedProviders ? null : providers.find(
     provider => isEligibleSourceProvider(provider) && provider.id === formState.platform,
   )

@@ -48,9 +48,40 @@ describe('validateRecoveryApplication', () => {
     })
   })
 
-  it('does not require locked providers to be available any more', () => {
-    const locked = { platform: 'VMWARE', sourceProviderId: 'vmware-gone', targetProviderId: 'vmware-target-gone' }
-    expect(validateRecoveryApplication({ ...formState, platform: 'vmware-gone', targetProviderId: 'vmware-target-gone' }, [], [], { lockedProviders: locked })).toBeNull()
+  describe('stored providers of a saved application', () => {
+    const vmwareLocked = { platform: 'VMWARE', sourceProviderId: 'vmware-source', targetProviderId: 'vmware-target' }
+
+    it('accepts stored providers that still exist and fit the platform', () => {
+      expect(validateRecoveryApplication(formState, providers, [], { lockedProviders: vmwareLocked })).toBeNull()
+    })
+
+    it.each([
+      ['source', { sourceProviderId: 'vmware-gone' }, 'sourceProviderMissing', 'vmware-gone'],
+      ['target', { targetProviderId: 'vmware-target-gone' }, 'targetProviderMissing', 'vmware-target-gone'],
+    ])('rejects a %s provider that no longer exists', (_label, ids, key, id) => {
+      expect(validateRecoveryApplication(formState, providers, [], { lockedProviders: { ...vmwareLocked, ...ids } })).toEqual({
+        field: 'platform',
+        messageKey: `recovery.application.validation.${key}`,
+        params: { id },
+      })
+    })
+
+    it.each([
+      ['a source of another type', { sourceProviderId: 'power-target' }, 'sourceProviderIncompatible', 'power-target'],
+      ['a VMware source with role=target', { sourceProviderId: 'vmware-target' }, 'sourceProviderIncompatible', 'vmware-target'],
+      ['a VMware target with role=source', { targetProviderId: 'vmware-source' }, 'targetProviderIncompatible', 'vmware-source'],
+    ])('rejects %s', (_label, ids, key, id) => {
+      expect(validateRecoveryApplication(formState, providers, [], { lockedProviders: { ...vmwareLocked, ...ids } })).toEqual({
+        field: 'platform',
+        messageKey: `recovery.application.validation.${key}`,
+        params: { id },
+      })
+    })
+
+    it('accepts one IBM Power provider of any role as source and target', () => {
+      const locked = { platform: 'ibm_power', sourceProviderId: 'power-target', targetProviderId: 'power-target' }
+      expect(validateRecoveryApplication(formState, providers, [], { lockedProviders: locked })).toBeNull()
+    })
   })
 
   it.each([
@@ -104,8 +135,8 @@ describe('validateRecoveryApplication', () => {
     })
 
     it('uses the stored platform of locked providers', () => {
-      const locked = { platform: 'ibm_power', sourceProviderId: 'gone', targetProviderId: 'gone' }
-      expect(validateRecoveryApplication(withGroup('vm_group', []), [], [], { groups: [...groups], lockedProviders: locked }))
+      const locked = { platform: 'ibm_power', sourceProviderId: 'power-target', targetProviderId: 'power-target' }
+      expect(validateRecoveryApplication(withGroup('vm_group', []), providers, [], { groups: [...groups], lockedProviders: locked }))
         .toMatchObject({ messageKey: 'recovery.application.validation.recoveryGroupPlatformMismatch' })
     })
 

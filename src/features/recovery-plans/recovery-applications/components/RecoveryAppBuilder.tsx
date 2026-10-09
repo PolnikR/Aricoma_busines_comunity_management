@@ -309,11 +309,15 @@ export function RecoveryAppBuilder({
 
   const canContinue = step === 1 ? detailsValid : step === 2 ? tiersValid : policySetValid
   // A saved application whose stored providers cannot be submitted stays
-  // viewable, but Save is blocked and the reason shown on every step.
-  const lockedProvidersError = lockedProviders ? storedProvidersProblem(lockedProviders) : null
+  // viewable, but Save is blocked and the reason shown on every step. Until the
+  // providers load (or after a failed fetch) there is no verdict yet.
+  const providersLoaded = Boolean(providersQuery.data) && !providersQuery.error
+  const lockedProvidersError = lockedProviders && providersLoaded
+    ? storedProvidersProblem(lockedProviders, providersQuery.data ?? [])
+    : null
   // Stored groups are checked against the current list, so wait for it.
   const canSave = detailsValid && tiersValid && policySetValid && orchestrationValid && !areGroupsLoading
-    && !lockedProvidersError
+    && (!lockedProviders || (providersLoaded && !lockedProvidersError))
 
   const handleSave = () => {
     const validationError = validateRecoveryApplication(
@@ -343,7 +347,15 @@ export function RecoveryAppBuilder({
         </aside>
         <div className="flex min-h-0 flex-col">
           <div className={`custom-scrollbar min-h-0 flex-1 p-5 sm:p-6 ${step === 2 || step === 3 ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-            {lockedProvidersError ? (
+            {lockedProviders && providersQuery.error ? (
+              <FetchErrorAlert
+                className="mb-4 max-w-5xl"
+                title={t('platformProviders.loadFailed')}
+                retryLabel={t('buttons.retry')}
+                isRetrying={providersQuery.isFetching}
+                onRetry={() => { void providersQuery.refetch() }}
+              />
+            ) : lockedProvidersError ? (
               <Alert className="mb-4 max-w-5xl" variant="warning" title={t(lockedProvidersError.messageKey, lockedProvidersError.params)} />
             ) : null}
             {step === 1 ? (
