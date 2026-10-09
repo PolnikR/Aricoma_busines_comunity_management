@@ -2460,6 +2460,7 @@
   "audit.accessLogs.detail.rawEntry": "Nespracovaný záznam",
   "details.tabs.inventory": "Inventár",
   "recoveryInventory.noRun": "Inventár je dostupný až po spustení orchestrácie.",
+  "recoveryInventory.powerUnsupported": "Inventár zatiaľ nie je dostupný pre IBM Power aplikácie.",
   "recoveryInventory.loading": "Načítava sa inventár…",
   "recoveryInventory.error": "Inventár sa nepodarilo načítať",
   "recoveryInventory.empty": "Inventár neobsahuje žiadne položky.",

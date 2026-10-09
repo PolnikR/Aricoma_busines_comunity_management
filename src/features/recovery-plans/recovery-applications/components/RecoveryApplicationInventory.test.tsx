@@ -63,12 +63,13 @@ describe('RecoveryApplicationInventory', () => {
     expect(screen.getByText(/no target provider stored/)).toBeInTheDocument()
   })
 
-  it('leaves the compute provider of an IBM Power inventory to the backend', () => {
+  it.each(['IBM_POWER', 'ibm_power'])('does not request the VMware-only inventory for an IBM Power (%s) application', (platform) => {
     mockInventory()
 
-    render(<RecoveryApplicationInventory runId="run-1" active application={withApplication({ platform: 'IBM_POWER', target_provider_id: 'ibm-power-02' })} />)
+    render(<RecoveryApplicationInventory runId="run-1" active application={withApplication({ platform, target_provider_id: 'ibm-power-02' })} />)
 
-    expect(inventoryRequest()).toEqual({ params: { run_id: 'run-1' }, enabled: true })
+    expect(inventoryRequest().enabled).toBe(false)
+    expect(screen.getByText('recoveryInventory.powerUnsupported')).toBeInTheDocument()
   })
 
   it('renders summary metrics and compact tier disclosures with VM rows', () => {

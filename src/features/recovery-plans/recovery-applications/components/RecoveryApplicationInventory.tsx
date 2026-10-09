@@ -27,7 +27,8 @@ function resolveInventoryTarget(
 
 export function RecoveryApplicationInventory({ runId, active, application }: RecoveryApplicationInventoryProps) {
   const { t } = useTranslation()
-  // The backend inventory is VMware-only; IBM Power apps keep the plain request.
+  // The backend inventory resolves a VMware vCenter only; an IBM Power app gets
+  // a 400, so it is not requested until the backend supports IBM Power.
   const isPower = application.data.application.platform.toUpperCase() === 'IBM_POWER'
   // The inventory lives on the TARGET vCenter, see targetComputeProviderIdOf.
   const target = !isPower
@@ -38,11 +39,12 @@ export function RecoveryApplicationInventory({ runId, active, application }: Rec
     {
       query: {
         select: selectRecoveryApplicationInventory,
-        enabled: active && Boolean(runId) && (isPower || Boolean(target.computeProviderId)),
+        enabled: active && Boolean(runId) && !isPower && Boolean(target.computeProviderId),
       },
     },
   )
 
+  if (isPower) return <Alert className="m-5" variant="info" title={t('recoveryInventory.powerUnsupported')} />
   if (!runId) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.noRun')}</p>
   if (target.error) return <Alert className="m-5" variant="error" title={t('recoveryInventory.error')} description={target.error.message} />
   if (query.isLoading) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.loading')}</p>

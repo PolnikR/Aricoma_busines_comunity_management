@@ -2497,6 +2497,7 @@
   "audit.accessLogs.detail.rawEntry": "Raw entry",
   "details.tabs.inventory": "Inventory",
   "recoveryInventory.noRun": "Inventory is available after an orchestrated run.",
+  "recoveryInventory.powerUnsupported": "Inventory is not available for IBM Power applications yet.",
   "recoveryInventory.loading": "Loading inventory...",
   "recoveryInventory.error": "Inventory could not be loaded",
   "recoveryInventory.empty": "No inventory items were returned.",
