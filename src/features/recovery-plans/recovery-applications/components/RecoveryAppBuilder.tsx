@@ -63,6 +63,7 @@ function createInitialFormState(initialData?: RecoveryApplicationFormState): Rec
     platform: '',
     orchestrationProviderId: '',
     targetProviderId: '',
+    notificationEmail: null,
     tiers: new Map(
       Object.entries(DEFAULT_TIERS).map(
         ([id, tier]): [string, DraftRecoveryTier] => [id, cloneTier(tier)],

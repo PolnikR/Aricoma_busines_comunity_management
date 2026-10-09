@@ -73,6 +73,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
             platform: 'vmware-vcenter-01',
             orchestrationProviderId: 'airflow-01',
             targetProviderId: 'vmware-vcenter-02',
+            notificationEmail: null,
             tiers: new Map(),
           })
         }}
@@ -92,6 +93,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
             platform: 'vmware-vcenter-01',
             orchestrationProviderId: 'airflow-01',
             targetProviderId: 'vmware-vcenter-02',
+            notificationEmail: null,
             tiers: new Map(),
           })
         }}
@@ -111,6 +113,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
             platform: 'ibm-power-01',
             orchestrationProviderId: 'airflow-01',
             targetProviderId: 'ibm-power-02',
+            notificationEmail: null,
             tiers: new Map(),
           })
         }}
@@ -177,6 +180,7 @@ describe('RecoveryApplicationBuilderPage', () => {
     const [submission] = mutate.mock.calls[0] as [SubmitRecoveryApplicationInput]
     expect(submission.providerId).toBe('airflow-01')
     expect(submission.data.application).toMatchObject({ platform, source_provider_id: providerId, target_provider_id: targetProviderId })
+    expect(submission.data.application.notificationEmail).toBeNull()
     expect(submission.data.application).not.toHaveProperty('source_connection')
     expect(submission.data.application).not.toHaveProperty('target_connection')
   })

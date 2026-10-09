@@ -34,6 +34,7 @@ const application: RecoveryApplicationListItem = {
       platform: 'IBM_POWER',
       source_provider_id: 'ibm-power-01',
       target_provider_id: 'ibm-power-02',
+      notificationEmail: 'dr-team@example.test',
       tiers: {
         database: {
           order: 1,
@@ -188,6 +189,7 @@ describe('RecoveryApplicationEditorPage', () => {
     expect(submission.data.id).toBe('finance_app')
     expect(submission.providerId).toBe('airflow-01')
     expect(submission.data.application.name).toBe('Finance App')
+    expect(submission.data.application.notificationEmail).toBe('dr-team@example.test')
     expect(options.onSuccess).toBeTypeOf('function')
     expect(screen.getByText('Filename disabled')).toBeInTheDocument()
   })

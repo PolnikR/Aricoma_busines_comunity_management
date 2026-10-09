@@ -92,6 +92,7 @@ describe('recoveryApplicationFormMapper', () => {
       policy_set_id: 'test_1_hour_ps',
       application: {
         ...application.data.application,
+        notificationEmail: null,
         tiers: application.data.application.tiers,
       },
     })
@@ -176,6 +177,20 @@ describe('recoveryApplicationFormMapper', () => {
       source_provider_id: 'ibm-power-01',
       target_provider_id: 'ibm-power-01',
     })
+  })
+
+  it.each([
+    ['an address', 'dr-team@example.test', 'dr-team@example.test'],
+    ['null', null, null],
+    ['no value', undefined, null],
+  ])('keeps a stored notification email of %s when saving', (_label, stored, sent) => {
+    const formState = toRecoveryApplicationFormState({
+      ...application,
+      data: { application: { ...application.data.application, notificationEmail: stored } },
+    })
+
+    expect(formState.notificationEmail).toBe(sent)
+    expect(toRecoveryApplicationData(formState, providers).application.notificationEmail).toBe(sent)
   })
 
   it.each([undefined, null])('leaves the target empty for a legacy record with target_provider_id %s', (targetProviderId) => {

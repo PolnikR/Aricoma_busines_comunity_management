@@ -51,6 +51,7 @@ export interface RecoveryApplicationData {
     platform: string
     source_provider_id: string
     target_provider_id: string
+    notificationEmail: string | null
     tiers: Record<string, RecoveryTier>
   }
 }
@@ -86,9 +87,10 @@ export interface OrchestratorPush {
 export interface RecoveryApplicationApiRecord {
   id: string
   policy_set_id?: string | null | undefined
-  application: Omit<RecoveryApplicationData['application'], 'source_provider_id' | 'target_provider_id'> & {
+  application: Omit<RecoveryApplicationData['application'], 'source_provider_id' | 'target_provider_id' | 'notificationEmail'> & {
     source_provider_id?: string | null | undefined
     target_provider_id?: string | null | undefined
+    notificationEmail?: string | null | undefined
   }
   orchestration?: OrchestrationStateOutput | null | undefined
 }
@@ -104,6 +106,7 @@ export interface RecoveryApplicationListItem {
       platform: string
       source_provider_id?: string | null | undefined
       target_provider_id?: string | null | undefined
+      notificationEmail?: string | null | undefined
       tiers: Record<string, DraftRecoveryTier>
     }
   }
@@ -125,5 +128,8 @@ export interface RecoveryApplicationFormState {
   platform: string
   orchestrationProviderId: string
   targetProviderId: string
+  // Not editable in the builder; kept so a re-save does not clear it (the
+  // backend replaces the whole record).
+  notificationEmail: string | null
   tiers: Map<string, DraftRecoveryTier>
 }

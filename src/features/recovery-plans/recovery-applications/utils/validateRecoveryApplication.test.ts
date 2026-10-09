@@ -24,6 +24,7 @@ const formState: RecoveryApplicationFormState = {
   platform: 'vmware-source',
   orchestrationProviderId: '',
   targetProviderId: 'vmware-target',
+  notificationEmail: null,
   tiers: new Map(),
 }
 

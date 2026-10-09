@@ -17,6 +17,7 @@ const data: RecoveryApplicationData = {
     platform: 'VMWARE',
     source_provider_id: 'vmware-vcenter-01',
     target_provider_id: 'vmware-vcenter-02',
+    notificationEmail: null,
     tiers: {},
   },
 }

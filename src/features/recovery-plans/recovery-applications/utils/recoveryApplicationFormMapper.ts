@@ -56,6 +56,7 @@ export function toRecoveryApplicationFormState(
     platform: sourceProviderIdOf(data),
     orchestrationProviderId: application.orchestrationProviderId ?? '',
     targetProviderId: data.target_provider_id ?? '',
+    notificationEmail: data.notificationEmail ?? null,
     tiers: new Map(
       Object.entries(data.tiers).map(([id, tier]) => [id, cloneTier(tier)]),
     ),
@@ -89,6 +90,7 @@ export function toRecoveryApplicationData(
       platform: sourceProvider.type,
       source_provider_id: sourceProvider.id,
       target_provider_id: targetProvider.id,
+      notificationEmail: formState.notificationEmail,
       tiers: Object.fromEntries(
         Array.from(formState.tiers.entries()).map(([id, tier]) => [id, toSubmittableTier(id, tier)]),
       ),
