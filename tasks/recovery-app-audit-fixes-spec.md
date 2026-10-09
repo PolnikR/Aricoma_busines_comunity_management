@@ -37,7 +37,7 @@ Cesty: BE `abco-be/` (len na čítanie). Pri FE je `RA/` skratka pre `src/featur
 - **T4:** `notificationEmail` sa zachová vo form state (`string | null`) a odošle sa bez zmeny.
   - Recovery app UI dnes notification email nemá a nové pole by bola nová funkcionalita, preto UI ostáva bez zmeny.
   - Pri create sa posiela `null`, čo je BE default.
-- **T5:** Do Overview pribudne cieľový provider, policy set a notification email. Polia orchestrácie (`run_id`, `provider_id`, stav) už zobrazuje sekcia Orchestration. `target_lpar_prefix` sa nezobrazí, kým nebude v OpenAPI (B9); nesúlad je zdokumentovaný.
+- **T5:** Do Overview pribudne cieľový provider a notification email. Policy set id sa do Overview nepridáva, lebo existujúci test „does not move the former Technical identifiers into Overview“ ho tam zámerne zakazuje (rovnako ako `run_id` a id orchestration providera). Či ho zobraziť, je otvorené UI rozhodnutie. Polia orchestrácie (`run_id`, `provider_id`, stav) už zobrazuje sekcia Orchestration. `target_lpar_prefix` sa nezobrazí, kým nebude v OpenAPI (B9); nesúlad je zdokumentovaný.
 
 ## Čo FE nedokáže garantovať bez zmeny na BE
 

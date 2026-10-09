@@ -16,17 +16,17 @@ Do commitu idú iba explicitne vymenované cesty. Zmeny sa nepushujú.
 
 ## Úlohy
 
-- [ ] T1: IBM Power source/target bez role, rovnaký provider na oboch stranách (S)
-- [ ] T2: Zamknutý push pri editácii nasadenej appky (S)
-- [ ] T3: IBM Power inventár bez volania endpointu, s info hláškou (S)
-- [ ] T4: Zachovanie `notificationEmail` (S)
-- [ ] T5: Cieľový provider, policy set a notification email v DetailView (S)
+- [x] T1: IBM Power source/target bez role, rovnaký provider na oboch stranách (S)
+- [x] T2: Zamknutý push pri editácii nasadenej appky (S)
+- [x] T3: IBM Power inventár bez volania endpointu, s info hláškou (S)
+- [x] T4: Zachovanie `notificationEmail` (S)
+- [x] T5: Cieľový provider, policy set a notification email v DetailView (S)
 
 ## Kontrolný bod (koniec)
 
-- [ ] `npx tsc -b`: 0 chýb.
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-applications` je zelené.
-- [ ] Report s tabuľkou DONE / BLOCKED / NOT NEEDED a zoznamom úloh pre BE.
+- [x] `npx tsc -b`: 0 chýb.
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-applications` je zelené.
+- [x] Report s tabuľkou DONE / BLOCKED / NOT NEEDED a zoznamom úloh pre BE.
 
 ## Riziká
 
