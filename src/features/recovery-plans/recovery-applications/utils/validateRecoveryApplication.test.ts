@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 import { validateRecoveryApplication } from './validateRecoveryApplication'
 
@@ -31,6 +32,25 @@ const formState: RecoveryApplicationFormState = {
 describe('validateRecoveryApplication', () => {
   it('accepts a target provider of the source type', () => {
     expect(validateRecoveryApplication(formState, providers)).toBeNull()
+  })
+
+  it.each([
+    ['KEYCLOAK', 'ok'],
+    ['SMTP', 'ok'],
+    ['BACKEND', 'ok'],
+    ['AIRFLOW', 'missing'],
+  ] as const)('rejects a %s orchestration provider with %s credentials on push', (type, credentialStatus) => {
+    const platformProviders = [{ id: 'platform-01', type, credentialStatus }] as PlatformProviderRecord[]
+    const draft = { ...formState, pushToOrchestrator: true, orchestrationProviderId: 'platform-01' }
+    expect(validateRecoveryApplication(draft, providers, platformProviders)).toEqual({
+      field: 'platform',
+      messageKey: 'recovery.application.validation.platformProviderRequired',
+    })
+  })
+
+  it('accepts an AIRFLOW orchestration provider with valid credentials on push', () => {
+    const platformProviders = [{ id: 'airflow-01', type: 'AIRFLOW', credentialStatus: 'ok' }] as PlatformProviderRecord[]
+    expect(validateRecoveryApplication({ ...formState, pushToOrchestrator: true, orchestrationProviderId: 'airflow-01' }, providers, platformProviders)).toBeNull()
   })
 
   it('accepts the same IBM Power provider as source and target', () => {

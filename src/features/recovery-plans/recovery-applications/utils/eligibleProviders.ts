@@ -17,7 +17,7 @@ export function isEligibleSourceProvider(provider: ProviderRecord): boolean {
 }
 
 export function isEligiblePlatformProvider(provider: PlatformProviderRecord): boolean {
-  return provider.credentialStatus === 'ok'
+  return provider.type === 'AIRFLOW' && provider.credentialStatus === 'ok'
 }
 
 export function getEligibleSourceProviders(providers: ProviderRecord[]): ProviderRecord[] {

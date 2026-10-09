@@ -10,7 +10,13 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 
 const platformProvidersQuery = vi.hoisted(() => ({
   current: {
-    data: [{ id: 'airflow-01', name: 'Primary Airflow', type: 'AIRFLOW', credentialStatus: 'ok' }],
+    data: [
+      { id: 'airflow-01', name: 'Primary Airflow', type: 'AIRFLOW', credentialStatus: 'ok' },
+      { id: 'airflow-no-creds', name: 'Unavailable Airflow', type: 'AIRFLOW', credentialStatus: 'missing' },
+      { id: 'keycloak-01', name: 'Aricoma Keycloak', type: 'KEYCLOAK', credentialStatus: 'ok' },
+      { id: 'smtp-01', name: 'Primary SMTP', type: 'SMTP', credentialStatus: 'ok' },
+      { id: 'backend-01', name: 'ABCO Backend', type: 'BACKEND', credentialStatus: 'ok' },
+    ],
     isLoading: false,
     error: null as Error | null,
     refetch: vi.fn(),
@@ -518,6 +524,24 @@ describe('RecoveryAppBuilder', () => {
     await user.selectOptions(screen.getByLabelText('Airflow provider *'), 'airflow-01')
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
     expect(onSave.mock.calls[0]?.[0]).toMatchObject({ pushToOrchestrator: true, orchestrationProviderId: 'airflow-01' })
+  })
+
+  it('lists only AIRFLOW providers with valid credentials in the orchestration dropdown', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryAppBuilder />)
+    await openPolicy()
+    await user.click(screen.getByRole('button', { name: /Critical - Daily DR Test/ }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(screen.getByRole('switch', { name: 'Push to orchestrator' }))
+
+    const select = screen.getByLabelText('Airflow provider *')
+    expect(within(select).getAllByRole('option').map(option => option.textContent)).toEqual([
+      'Select Airflow provider',
+      'Primary Airflow - AIRFLOW',
+    ])
+    expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+    await user.selectOptions(select, 'airflow-01')
+    expect(screen.getByRole('button', { name: 'Save Application' })).toBeEnabled()
   })
 
   it('requires an Airflow provider only when push is enabled and saves the form state', async () => {

@@ -3,7 +3,7 @@ import type { PlatformProviderRecord } from '@/features/platform-administration/
 import type { LockedProviders, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from './recoveryApplicationFileName'
 import type { RecoveryGroup } from '../../recovery-groups/model/recoveryGroupTypes'
-import { getEligibleTargetProviders, isEligibleSourceProvider } from './eligibleProviders'
+import { getEligibleTargetProviders, isEligiblePlatformProvider, isEligibleSourceProvider } from './eligibleProviders'
 import { isRecoveryGroupCompatible } from './recoveryGroupPlatform'
 
 export interface ValidationError {
@@ -115,7 +115,7 @@ export function validateRecoveryApplication(
 
   if (formState.pushToOrchestrator) {
     const orchestrationProviderIsAvailable = platformProviders.some(
-      provider => provider.id === formState.orchestrationProviderId,
+      provider => provider.id === formState.orchestrationProviderId && isEligiblePlatformProvider(provider),
     )
     if (!orchestrationProviderIsAvailable) {
       return {
