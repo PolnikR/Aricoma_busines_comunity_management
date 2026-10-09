@@ -17,8 +17,7 @@ const data: RecoveryApplicationData = {
     environment: 'prod',
     platform: 'VMWARE',
     source_provider_id: 'vmware-vcenter-01',
-    source_connection: 'vcenter_default',
-    target_connection: 'vcenter_default_destination',
+    target_provider_id: 'vmware-vcenter-02',
     tiers: {},
   },
 }

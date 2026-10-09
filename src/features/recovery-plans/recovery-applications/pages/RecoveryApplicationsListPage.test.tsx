@@ -97,7 +97,7 @@ describe('RecoveryApplicationsListPage', () => {
         data: {
           application: {
             name: 'Finance', description: '', environment: 'prod', platform: 'VMware',
-            source_connection: '', target_connection: '', tiers: {},
+            target_provider_id: '', tiers: {},
           },
         },
       }],
@@ -129,7 +129,7 @@ describe('RecoveryApplicationsListPage', () => {
         data: {
           application: {
             name: 'Finance', description: '', environment: 'prod', platform: 'VMware',
-            source_connection: '', target_connection: '', tiers: {},
+            target_provider_id: '', tiers: {},
           },
         },
       }],
@@ -193,8 +193,7 @@ describe('RecoveryApplicationsListPage', () => {
             description: '',
             environment: 'prod',
             platform: 'VMware',
-            source_connection: '',
-            target_connection: '',
+            target_provider_id: '',
             tiers: {},
           },
         },

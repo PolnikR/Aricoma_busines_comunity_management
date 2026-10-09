@@ -33,8 +33,7 @@ const application: RecoveryApplicationListItem = {
       environment: 'prod',
       platform: 'IBM_POWER',
       source_provider_id: 'ibm-power-01',
-      source_connection: 'vcenter_default',
-      target_connection: 'vcenter_default_destination',
+      target_provider_id: 'ibm-power-02',
       tiers: {
         database: {
           order: 1,
@@ -89,6 +88,8 @@ vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => (
     data: [
       { id: 'vmware-vcenter-01', name: 'VMware Source', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
       { id: 'ibm-power-01', name: 'IBM Power Source', type: 'IBM_POWER', role: 'source', credentialStatus: 'ok' },
+      { id: 'vmware-vcenter-02', name: 'VMware Target', type: 'VMWARE', role: 'target', credentialStatus: 'ok' },
+      { id: 'ibm-power-02', name: 'IBM Power Target', type: 'IBM_POWER', role: 'target', credentialStatus: 'ok' },
     ],
   }),
 }))
@@ -198,6 +199,7 @@ describe('RecoveryApplicationEditorPage', () => {
     expect(mutate.mock.calls[0]?.[0].data.application).toMatchObject({
       platform: 'IBM_POWER',
       source_provider_id: 'ibm-power-01',
+      target_provider_id: 'ibm-power-02',
     })
   })
 

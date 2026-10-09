@@ -45,6 +45,8 @@ vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => (
     data: [
       { id: 'vmware-vcenter-01', name: 'VMware Source', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
       { id: 'ibm-power-01', name: 'IBM Power Source', type: 'IBM_POWER', role: 'source', credentialStatus: 'ok' },
+      { id: 'vmware-vcenter-02', name: 'VMware Target', type: 'VMWARE', role: 'target', credentialStatus: 'ok' },
+      { id: 'ibm-power-02', name: 'IBM Power Target', type: 'IBM_POWER', role: 'target', credentialStatus: 'ok' },
     ],
   }),
 }))
@@ -70,9 +72,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
             environment: 'prod',
             platform: 'vmware-vcenter-01',
             orchestrationProviderId: 'airflow-01',
-            targetProviderId: '',
-            sourceConnection: 'vcenter_default',
-            targetConnection: 'vcenter_default_destination',
+            targetProviderId: 'vmware-vcenter-02',
             tiers: new Map(),
           })
         }}
@@ -91,9 +91,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
             environment: 'prod',
             platform: 'vmware-vcenter-01',
             orchestrationProviderId: 'airflow-01',
-            targetProviderId: '',
-            sourceConnection: 'vcenter_default',
-            targetConnection: 'vcenter_default_destination',
+            targetProviderId: 'vmware-vcenter-02',
             tiers: new Map(),
           })
         }}
@@ -112,9 +110,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
             environment: 'prod',
             platform: 'ibm-power-01',
             orchestrationProviderId: 'airflow-01',
-            targetProviderId: '',
-            sourceConnection: 'vcenter_default',
-            targetConnection: 'vcenter_default_destination',
+            targetProviderId: 'ibm-power-02',
             tiers: new Map(),
           })
         }}
@@ -170,9 +166,9 @@ describe('RecoveryApplicationBuilderPage', () => {
   })
 
   it.each([
-    ['Save Power fixture', 'IBM_POWER', 'ibm-power-01'],
-    ['Save fixture', 'VMWARE', 'vmware-vcenter-01'],
-  ])('%s sends the provider type as platform and the provider id as source_provider_id', async (button, platform, providerId) => {
+    ['Save Power fixture', 'IBM_POWER', 'ibm-power-01', 'ibm-power-02'],
+    ['Save fixture', 'VMWARE', 'vmware-vcenter-01', 'vmware-vcenter-02'],
+  ])('%s sends the provider type as platform and the source and target provider ids', async (button, platform, providerId, targetProviderId) => {
     const user = userEvent.setup()
     render(<RecoveryApplicationBuilderPage />)
 
@@ -180,7 +176,9 @@ describe('RecoveryApplicationBuilderPage', () => {
 
     const [submission] = mutate.mock.calls[0] as [SubmitRecoveryApplicationInput]
     expect(submission.providerId).toBe('airflow-01')
-    expect(submission.data.application).toMatchObject({ platform, source_provider_id: providerId })
+    expect(submission.data.application).toMatchObject({ platform, source_provider_id: providerId, target_provider_id: targetProviderId })
+    expect(submission.data.application).not.toHaveProperty('source_connection')
+    expect(submission.data.application).not.toHaveProperty('target_connection')
   })
 
   it('returns to the list after a local-only submit response', async () => {

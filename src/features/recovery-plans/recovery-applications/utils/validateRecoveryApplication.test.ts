@@ -23,8 +23,6 @@ const formState: RecoveryApplicationFormState = {
   platform: 'vmware-source',
   orchestrationProviderId: '',
   targetProviderId: 'vmware-target',
-  sourceConnection: '',
-  targetConnection: '',
   tiers: new Map(),
 }
 

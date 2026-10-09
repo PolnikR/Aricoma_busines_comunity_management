@@ -6,20 +6,25 @@ import {
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 
-function provider(id: string, type: ProviderRecord['type']): ProviderRecord {
+function provider(id: string, type: ProviderRecord['type'], role: 'source' | 'target' = 'source'): ProviderRecord {
   return {
     id,
     name: id,
     description: '',
     type,
-    role: 'source',
+    role,
     ipAddress: '10.0.0.1',
     credentialId: 'credentials',
     credentialStatus: 'ok',
   }
 }
 
-const providers = [provider('vmware-vcenter-01', 'VMWARE'), provider('ibm-power-01', 'IBM_POWER')]
+const providers = [
+  provider('vmware-vcenter-01', 'VMWARE'),
+  provider('vmware-dr-01', 'VMWARE', 'target'),
+  provider('ibm-power-01', 'IBM_POWER'),
+  provider('ibm-power-dr-01', 'IBM_POWER', 'target'),
+]
 
 const application: RecoveryApplicationListItem = {
   id: 'Finance.json',
@@ -31,8 +36,7 @@ const application: RecoveryApplicationListItem = {
       environment: 'prod',
       platform: 'VMWARE',
       source_provider_id: 'vmware-vcenter-01',
-      source_connection: 'vcenter_special',
-      target_connection: 'vcenter_dr',
+      target_provider_id: 'vmware-dr-01',
       tiers: {
         database: {
           order: 1,
@@ -60,8 +64,7 @@ describe('recoveryApplicationFormMapper', () => {
       description: 'Finance recovery',
       environment: 'prod',
       platform: 'vmware-vcenter-01',
-      sourceConnection: 'vcenter_special',
-      targetConnection: 'vcenter_dr',
+      targetProviderId: 'vmware-dr-01',
     })
     expect(formState.tiers.get('database')).toEqual(application.data.application.tiers['database'])
 
@@ -154,6 +157,30 @@ describe('recoveryApplicationFormMapper', () => {
       platform: type,
       source_provider_id: providerId,
     })
+  })
+
+  it('sends the selected target provider id and no Airflow connections', () => {
+    const formState = { ...toRecoveryApplicationFormState(application), platform: 'ibm-power-01', targetProviderId: 'ibm-power-dr-01' }
+
+    const sent = toRecoveryApplicationData(formState, providers).application
+    expect(sent).toMatchObject({ source_provider_id: 'ibm-power-01', target_provider_id: 'ibm-power-dr-01' })
+    expect(sent).not.toHaveProperty('source_connection')
+    expect(sent).not.toHaveProperty('target_connection')
+  })
+
+  it.each([undefined, null])('leaves the target empty for a legacy record with target_provider_id %s', (targetProviderId) => {
+    const formState = toRecoveryApplicationFormState({
+      ...application,
+      data: { application: { ...application.data.application, target_provider_id: targetProviderId } },
+    })
+
+    expect(formState.targetProviderId).toBe('')
+  })
+
+  it('refuses to submit a target provider that is not in the providers dataset', () => {
+    const formState = { ...toRecoveryApplicationFormState(application), targetProviderId: 'vmware-dr-gone' }
+
+    expect(() => toRecoveryApplicationData(formState, providers)).toThrow('Target provider "vmware-dr-gone" is not available')
   })
 
   it('reads a legacy provider id stored in platform and saves it in the new shape', () => {

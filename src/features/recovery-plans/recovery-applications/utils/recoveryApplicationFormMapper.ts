@@ -56,8 +56,6 @@ export function toRecoveryApplicationFormState(
     platform: sourceProviderIdOf(data),
     orchestrationProviderId: application.orchestrationProviderId ?? '',
     targetProviderId: data.target_provider_id ?? '',
-    sourceConnection: data.source_connection ?? '',
-    targetConnection: data.target_connection ?? '',
     tiers: new Map(
       Object.entries(data.tiers).map(([id, tier]) => [id, cloneTier(tier)]),
     ),
@@ -65,9 +63,9 @@ export function toRecoveryApplicationFormState(
 }
 
 // formState.platform holds the selected provider id; the wire contract wants
-// that provider's type as platform and its id as source_provider_id. Save is
-// gated on the provider being available, so a missing one means that gate was
-// bypassed.
+// that provider's type as platform and its id as source_provider_id, next to
+// target_provider_id. Save is gated on both providers being available, so a
+// missing one means that gate was bypassed.
 export function toRecoveryApplicationData(
   formState: RecoveryApplicationFormState,
   providers: ProviderRecord[],
@@ -75,6 +73,10 @@ export function toRecoveryApplicationData(
   const sourceProvider = providers.find(provider => provider.id === formState.platform)
   if (!sourceProvider) {
     throw new Error(`Source provider "${formState.platform}" is not available`)
+  }
+  const targetProvider = providers.find(provider => provider.id === formState.targetProviderId)
+  if (!targetProvider) {
+    throw new Error(`Target provider "${formState.targetProviderId}" is not available`)
   }
 
   return {
@@ -86,8 +88,7 @@ export function toRecoveryApplicationData(
       environment: formState.environment,
       platform: sourceProvider.type,
       source_provider_id: sourceProvider.id,
-      source_connection: formState.sourceConnection,
-      target_connection: formState.targetConnection,
+      target_provider_id: targetProvider.id,
       tiers: Object.fromEntries(
         Array.from(formState.tiers.entries()).map(([id, tier]) => [id, toSubmittableTier(id, tier)]),
       ),

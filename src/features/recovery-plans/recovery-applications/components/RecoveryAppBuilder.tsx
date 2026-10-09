@@ -59,8 +59,6 @@ function createInitialFormState(initialData?: RecoveryApplicationFormState): Rec
     platform: '',
     orchestrationProviderId: '',
     targetProviderId: '',
-    sourceConnection: 'vcenter_default',
-    targetConnection: 'vcenter_default_destination',
     tiers: new Map(
       Object.entries(DEFAULT_TIERS).map(
         ([id, tier]): [string, DraftRecoveryTier] => [id, cloneTier(tier)],
