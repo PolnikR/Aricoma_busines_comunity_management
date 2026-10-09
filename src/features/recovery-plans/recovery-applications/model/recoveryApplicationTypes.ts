@@ -103,6 +103,7 @@ export interface RecoveryApplicationListItem {
       environment: string
       platform: string
       source_provider_id?: string | null | undefined
+      target_provider_id?: string | null | undefined
       source_connection?: string | undefined
       target_connection?: string | undefined
       tiers: Record<string, DraftRecoveryTier>
@@ -125,6 +126,7 @@ export interface RecoveryApplicationFormState {
   environment: string
   platform: string
   orchestrationProviderId: string
+  targetProviderId: string
   sourceConnection: string
   targetConnection: string
   tiers: Map<string, DraftRecoveryTier>

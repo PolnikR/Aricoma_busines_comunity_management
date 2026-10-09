@@ -3,7 +3,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { Field, Input, Select, Textarea } from '@/shared/components/form/FormControls'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
-import { getEligibleSourceProviders } from '../utils/eligibleProviders'
+import { getEligibleSourceProviders, getEligibleTargetProviders } from '../utils/eligibleProviders'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface AppMetadataFormProps {
@@ -14,6 +14,7 @@ interface AppMetadataFormProps {
     description: string
     environment: string
     platform: string
+    targetProviderId?: string
   }
   providers?: ProviderRecord[]
   providersLoading?: boolean
@@ -43,6 +44,12 @@ export function AppMetadataForm({
   const selectedPlatformIsMissing = Boolean(
     platform && !eligibleProviders.some(provider => provider.id === platform),
   )
+  const [targetProviderId, setTargetProviderId] = useState(initialValues?.targetProviderId ?? '')
+  const providerTypeOf = (id: string) => providers.find(provider => provider.id === id)?.type
+  const eligibleTargetProviders = getEligibleTargetProviders(providers, providerTypeOf(platform))
+  const selectedTargetIsMissing = Boolean(
+    targetProviderId && !eligibleTargetProviders.some(provider => provider.id === targetProviderId),
+  )
 
   const handleChange = (field: string, value: string) => {
     switch (field) {
@@ -64,7 +71,17 @@ export function AppMetadataForm({
         break
       case 'platform':
         setPlatform(value)
-        onMetadataChange?.({ platform: value })
+        // A target of the old provider type cannot serve the new source.
+        if (providerTypeOf(value) !== providerTypeOf(platform)) {
+          setTargetProviderId('')
+          onMetadataChange?.({ platform: value, targetProviderId: '' })
+        } else {
+          onMetadataChange?.({ platform: value })
+        }
+        break
+      case 'targetProviderId':
+        setTargetProviderId(value)
+        onMetadataChange?.({ targetProviderId: value })
         break
     }
   }
@@ -157,6 +174,28 @@ export function AppMetadataForm({
             ) : null}
           </p>
         ) : null}
+      </Field>
+
+      <Field label={t('forms.targetProviderId')} htmlFor="application-target-provider">
+        <Select
+          id="application-target-provider"
+          value={targetProviderId}
+          onChange={e => { handleChange('targetProviderId', e.target.value); }}
+          disabled={!platform || providersLoading || providersError !== null}
+          required
+        >
+          <option value="">
+            {providersLoading ? t('platformProviders.loading') : t('forms.targetProviderIdSelect')}
+          </option>
+          {selectedTargetIsMissing ? (
+            <option value={targetProviderId}>{t('providers.credentials.unavailable').replace('{id}', targetProviderId)}</option>
+          ) : null}
+          {eligibleTargetProviders.map(provider => (
+            <option key={provider.id} value={provider.id}>
+              {provider.name} - {provider.type}
+            </option>
+          ))}
+        </Select>
       </Field>
 
       <Field label={t('forms.applicationDescription')} htmlFor="application-description">

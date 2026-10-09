@@ -960,6 +960,8 @@
   "forms.platformSelect": "Select platform",
   "forms.providerId": "Provider ID *",
   "forms.providerIdSelect": "Select provider ID",
+  "forms.targetProviderId": "Target provider ID *",
+  "forms.targetProviderIdSelect": "Select target provider ID",
   "forms.tierId": "ID",
   "forms.tierIdExample": "tier_id",
   "forms.tierIdError": "ID already in use or invalid",

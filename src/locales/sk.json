@@ -938,6 +938,8 @@
   "forms.platformSelect": "Vyberte platformu",
   "forms.providerId": "ID poskytovateľa *",
   "forms.providerIdSelect": "Vyberte ID poskytovateľa",
+  "forms.targetProviderId": "ID cieľového poskytovateľa *",
+  "forms.targetProviderIdSelect": "Vyberte ID cieľového poskytovateľa",
   "forms.tierId": "ID",
   "forms.tierIdExample": "tier_id",
   "forms.tierIdError": "Toto ID sa už používa alebo nemá platný formát.",

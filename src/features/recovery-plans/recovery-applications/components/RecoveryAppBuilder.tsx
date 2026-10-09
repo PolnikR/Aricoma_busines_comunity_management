@@ -58,6 +58,7 @@ function createInitialFormState(initialData?: RecoveryApplicationFormState): Rec
     environment: 'dev',
     platform: '',
     orchestrationProviderId: '',
+    targetProviderId: '',
     sourceConnection: 'vcenter_default',
     targetConnection: 'vcenter_default_destination',
     tiers: new Map(
@@ -308,6 +309,7 @@ export function RecoveryAppBuilder({
                     description: formState.description,
                     environment: formState.environment,
                     platform: formState.platform,
+                    targetProviderId: formState.targetProviderId,
                   }}
                   providers={providersQuery.data ?? []}
                   providersLoading={providersQuery.isLoading}

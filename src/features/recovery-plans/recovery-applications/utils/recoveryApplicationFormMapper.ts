@@ -55,6 +55,7 @@ export function toRecoveryApplicationFormState(
     environment: toFormEnvironment(data.environment),
     platform: sourceProviderIdOf(data),
     orchestrationProviderId: application.orchestrationProviderId ?? '',
+    targetProviderId: data.target_provider_id ?? '',
     sourceConnection: data.source_connection ?? '',
     targetConnection: data.target_connection ?? '',
     tiers: new Map(
