@@ -16,6 +16,17 @@ export function getEligibleSourceProviders(providers: ProviderRecord[]): Provide
   return providers.filter(isEligibleSourceProvider)
 }
 
+// The target is the same kind of compute provider as the source: VMware
+// recovers onto a target vCenter, IBM Power onto target LPARs.
+export function getEligibleTargetProviders(
+  providers: ProviderRecord[],
+  sourceType: ProviderRecord['type'] | undefined,
+): ProviderRecord[] {
+  return providers.filter(provider => provider.type === sourceType
+    && provider.role === 'target'
+    && provider.credentialStatus === 'ok')
+}
+
 export function getEligiblePlatformProviders(providers: PlatformProviderRecord[]): PlatformProviderRecord[] {
   return providers.filter(isEligiblePlatformProvider)
 }
