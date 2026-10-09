@@ -64,12 +64,13 @@ export function toRecoveryApplicationFormState(
   }
 }
 
-// A legacy record without both provider ids stays unlocked: the user has to
-// pick them once to save it in the current contract.
-export function lockedProvidersOf(application: RecoveryApplicationListItem): LockedProviders | null {
+// Every saved application is locked, including a legacy record without
+// provider ids; its old connection names are not mapped to providers.
+export function lockedProvidersOf(application: RecoveryApplicationListItem): LockedProviders {
   const { platform, source_provider_id: sourceProviderId, target_provider_id: targetProviderId } = application.data.application
-  if (!sourceProviderId || !targetProviderId) return null
-  return { platform, sourceProviderId, targetProviderId }
+  // An empty id is as missing as an absent one.
+  const storedId = (id: string | null | undefined) => (id === undefined || id === null || id === '' ? null : id)
+  return { platform, sourceProviderId: storedId(sourceProviderId), targetProviderId: storedId(targetProviderId) }
 }
 
 // formState.platform holds the selected provider id; the wire contract wants
@@ -83,6 +84,9 @@ function toWireProviders(
 ): Pick<RecoveryApplicationData['application'], 'platform' | 'source_provider_id' | 'target_provider_id'> {
   // Locked values are sent as stored, even if a provider is gone meanwhile.
   if (locked) {
+    if (!locked.sourceProviderId || !locked.targetProviderId) {
+      throw new Error('The application has no stored source or target provider')
+    }
     return { platform: locked.platform, source_provider_id: locked.sourceProviderId, target_provider_id: locked.targetProviderId }
   }
   const sourceProvider = providers.find(provider => provider.id === formState.platform)

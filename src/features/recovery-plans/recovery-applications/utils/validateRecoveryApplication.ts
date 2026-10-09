@@ -16,6 +16,14 @@ export interface ValidationError {
 // of the DAG's task ids, so an invalid one would only fail on Airflow.
 const LPAR_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,46}$/
 
+// Why the stored providers of a saved application cannot be submitted, if so.
+export function storedProvidersProblem(locked: LockedProviders): ValidationError | null {
+  if (!locked.sourceProviderId || !locked.targetProviderId) {
+    return { field: 'platform', messageKey: 'recovery.application.validation.legacyProviders' }
+  }
+  return null
+}
+
 export function validateRecoveryApplication(
   formState: RecoveryApplicationFormState,
   providers: ProviderRecord[],
@@ -61,6 +69,9 @@ export function validateRecoveryApplication(
       messageKey: 'recovery.application.validation.policySetRequired',
     }
   }
+
+  const lockedProblem = lockedProviders ? storedProvidersProblem(lockedProviders) : null
+  if (lockedProblem) return lockedProblem
 
   // Locked providers are sent as stored; they need not be available any more.
   const sourceProvider = lockedProviders ? null : providers.find(

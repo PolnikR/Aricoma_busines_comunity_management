@@ -119,11 +119,12 @@ export interface RecoveryApplicationListItem {
 }
 
 // Once created, an application keeps its platform and both providers; the
-// editor sends these stored values instead of the form's selection.
+// editor sends these stored values instead of the form's selection. A legacy
+// record may lack the provider ids (null) and then cannot be saved.
 export interface LockedProviders {
   platform: string
-  sourceProviderId: string
-  targetProviderId: string
+  sourceProviderId: string | null
+  targetProviderId: string | null
 }
 
 export interface RecoveryApplicationFormState {

@@ -310,6 +310,29 @@ describe('RecoveryAppBuilder', () => {
       expect(onSave.mock.calls[0]?.[0]).toMatchObject({ platform: 'power-01', targetProviderId: 'power-01' })
     })
 
+    it("keeps a new application's source and target editable", () => {
+      render(<RecoveryAppBuilder />)
+      expect(screen.getByLabelText('Provider ID *')).toBeEnabled()
+      fillDetails()
+      expect(screen.getByLabelText('Target provider ID *')).toBeEnabled()
+    })
+
+    it.each([
+      ['source', { sourceProviderId: null, targetProviderId: 'vmware-target-01' }],
+      ['target', { sourceProviderId: 'vmware-01', targetProviderId: null }],
+      ['source and target', { sourceProviderId: null, targetProviderId: null }],
+    ])('locks a legacy application without a stored %s provider id and blocks saving', async (_label, ids) => {
+      const user = userEvent.setup()
+      const legacy = savedApplication(ids.sourceProviderId ?? '', ids.targetProviderId ?? '', 'database_group', 'Database Group', ['DB-01'])
+      render(<RecoveryAppBuilder initialData={legacy} lockedProviders={{ platform: 'VMWARE', ...ids }} />)
+
+      expect(screen.getByLabelText('Provider ID *')).toBeDisabled()
+      expect(screen.getByLabelText('Target provider ID *')).toBeDisabled()
+      expect(screen.getByText(/uses the old recovery application contract/)).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+      expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+    })
+
     it('waits for the recovery groups before saving', async () => {
       recoveryGroupsQuery.current.isLoading = true
       const user = userEvent.setup()

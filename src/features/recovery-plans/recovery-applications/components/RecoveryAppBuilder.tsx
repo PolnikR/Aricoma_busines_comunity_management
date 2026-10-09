@@ -3,6 +3,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
+import { Alert } from '@/shared/components/alert/Alert'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import { PolicySetPicker } from '@/shared/components/policy-set-picker/PolicySetPicker'
@@ -24,7 +25,7 @@ import { TierCanvas } from './TierCanvas'
 import { cloneTier } from '../utils/recoveryApplicationFormMapper'
 import { getEligiblePlatformProviders, getEligibleSourceProviders, getEligibleTargetProviders } from '../utils/eligibleProviders'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
-import { validateRecoveryApplication } from '../utils/validateRecoveryApplication'
+import { storedProvidersProblem, validateRecoveryApplication } from '../utils/validateRecoveryApplication'
 import type { DraftRecoveryTier, LockedProviders, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface RecoveryAppBuilderProps {
@@ -307,8 +308,12 @@ export function RecoveryAppBuilder({
   ]
 
   const canContinue = step === 1 ? detailsValid : step === 2 ? tiersValid : policySetValid
+  // A saved application whose stored providers cannot be submitted stays
+  // viewable, but Save is blocked and the reason shown on every step.
+  const lockedProvidersError = lockedProviders ? storedProvidersProblem(lockedProviders) : null
   // Stored groups are checked against the current list, so wait for it.
   const canSave = detailsValid && tiersValid && policySetValid && orchestrationValid && !areGroupsLoading
+    && !lockedProvidersError
 
   const handleSave = () => {
     const validationError = validateRecoveryApplication(
@@ -338,6 +343,9 @@ export function RecoveryAppBuilder({
         </aside>
         <div className="flex min-h-0 flex-col">
           <div className={`custom-scrollbar min-h-0 flex-1 p-5 sm:p-6 ${step === 2 || step === 3 ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+            {lockedProvidersError ? (
+              <Alert className="mb-4 max-w-5xl" variant="warning" title={t(lockedProvidersError.messageKey, lockedProvidersError.params)} />
+            ) : null}
             {step === 1 ? (
               <div className="grid max-w-5xl gap-5">
                 <div>

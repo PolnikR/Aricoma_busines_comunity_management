@@ -248,10 +248,12 @@ describe('recoveryApplicationFormMapper', () => {
     })
 
     it.each([
-      ['no source provider id', { source_provider_id: null }],
-      ['no target provider id', { target_provider_id: undefined }],
-    ])('leaves a legacy record with %s unlocked', (_label, changes) => {
-      expect(lockedProvidersOf({ ...application, data: { application: { ...application.data.application, ...changes } } })).toBeNull()
+      ['no source provider id', { source_provider_id: null }, { sourceProviderId: null, targetProviderId: 'vmware-dr-01' }],
+      ['no target provider id', { target_provider_id: undefined }, { sourceProviderId: 'vmware-vcenter-01', targetProviderId: null }],
+      ['no provider ids', { source_provider_id: '', target_provider_id: null }, { sourceProviderId: null, targetProviderId: null }],
+    ])('still locks a legacy record with %s, keeping the missing ids empty', (_label, changes, ids) => {
+      expect(lockedProvidersOf({ ...application, data: { application: { ...application.data.application, ...changes } } }))
+        .toEqual({ platform: 'VMWARE', ...ids })
     })
 
     it('sends the original platform and provider ids, even when the form or the providers list changed', () => {

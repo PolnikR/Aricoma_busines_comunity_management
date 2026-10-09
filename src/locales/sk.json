@@ -1236,6 +1236,7 @@
   "recovery.application.validation.recoveryGroupMissing": "Recovery group \"{{group}}\" v tieri \"{{tier}}\" už neexistuje. Odstráňte ju z tieru.",
   "recovery.application.validation.recoveryGroupPlatformMismatch": "Recovery group \"{{group}}\" v tieri \"{{tier}}\" nezodpovedá platforme aplikácie. Odstráňte ju z tieru.",
   "recovery.application.validation.lparNameInvalid": "Názov LPAR \"{{name}}\" v tieri \"{{tier}}\" je neplatný: použite 1 – 47 znakov, začnite písmenom alebo číslicou a použite iba písmená, číslice, \".\", \"_\" alebo \"-\".",
+  "recovery.application.validation.legacyProviders": "Táto aplikácia používa starý kontrakt recovery aplikácií: nemá uložený zdrojový alebo cieľový provider. Kým nebude zmigrovaná alebo znovu vytvorená, nedá sa uložiť.",
   "recovery.application.validation.platformProviderRequired": "Vyberte platform providera.",
   "recovery.application.validation.policySetRequired": "Vyberte sadu politík.",
   "recovery.application.validation.recoveryGroupRequired": "Každej úrovni priraďte skupinu obnovy.",

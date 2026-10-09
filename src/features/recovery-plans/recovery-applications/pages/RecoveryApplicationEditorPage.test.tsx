@@ -111,7 +111,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
     disableFileName?: boolean
     isInitialLoading?: boolean
     lockPushToOrchestrator?: boolean
-    lockedProviders?: { platform: string; sourceProviderId: string; targetProviderId: string } | null
+    lockedProviders?: { platform: string; sourceProviderId: string | null; targetProviderId: string | null } | null
   }) => (
     <fieldset disabled={isInitialLoading} aria-busy={isInitialLoading}>
       <span>Application details</span>
@@ -120,7 +120,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
       <span>{`Selected provider: ${initialData?.platform ?? ''}`}</span>
       <span>{disableFileName ? 'Filename disabled' : 'Filename enabled'}</span>
       <span>{lockPushToOrchestrator ? 'Push locked' : 'Push unlocked'}</span>
-      <span>{lockedProviders ? `Providers locked: ${lockedProviders.sourceProviderId} -> ${lockedProviders.targetProviderId}` : 'Providers unlocked'}</span>
+      <span>{lockedProviders ? `Providers locked: ${lockedProviders.sourceProviderId ?? 'none'} -> ${lockedProviders.targetProviderId ?? 'none'}` : 'Providers unlocked'}</span>
       <button
         type="button"
         onClick={() => { if (initialData) onSave({ ...initialData, platform: 'vmware-vcenter-01', targetProviderId: 'vmware-vcenter-02' }) }}
@@ -217,8 +217,7 @@ describe('RecoveryApplicationEditorPage', () => {
     })
   })
 
-  it('preselects a legacy provider id stored in platform and saves it in the new shape', async () => {
-    const user = userEvent.setup()
+  it('shows a legacy provider id stored in platform but keeps that application locked', () => {
     recoveryQuery = {
       ...recoveryQuery,
       data: [{
@@ -229,12 +228,7 @@ describe('RecoveryApplicationEditorPage', () => {
     render(<RecoveryApplicationEditorPage />)
 
     expect(screen.getByText('Selected provider: vmware-vcenter-01')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Save unchanged' }))
-
-    expect(mutate.mock.calls[0]?.[0].data.application).toMatchObject({
-      platform: 'VMWARE',
-      source_provider_id: 'vmware-vcenter-01',
-    })
+    expect(screen.getByText('Providers locked: none -> ibm-power-02')).toBeInTheDocument()
   })
 
   it('locks both providers and saves the original platform and provider ids', async () => {
@@ -251,14 +245,14 @@ describe('RecoveryApplicationEditorPage', () => {
     })
   })
 
-  it('leaves a legacy application without provider ids unlocked', () => {
+  it('locks the providers of a legacy application without provider ids too', () => {
     recoveryQuery = {
       ...recoveryQuery,
       data: [{ ...application, data: { application: { ...application.data.application, source_provider_id: undefined, target_provider_id: null } } }],
     }
     render(<RecoveryApplicationEditorPage />)
 
-    expect(screen.getByText('Providers unlocked')).toBeInTheDocument()
+    expect(screen.getByText('Providers locked: none -> none')).toBeInTheDocument()
   })
 
   it('locks the push only for an application the backend reports as pushed', () => {

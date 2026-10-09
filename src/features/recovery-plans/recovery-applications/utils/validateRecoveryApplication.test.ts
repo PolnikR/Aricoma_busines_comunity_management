@@ -37,6 +37,17 @@ describe('validateRecoveryApplication', () => {
     expect(validateRecoveryApplication({ ...formState, platform: 'power-hmc', targetProviderId: 'power-hmc' }, providers)).toBeNull()
   })
 
+  it.each([
+    ['source', { sourceProviderId: null, targetProviderId: 'vmware-target' }],
+    ['target', { sourceProviderId: 'vmware-source', targetProviderId: null }],
+    ['source and target', { sourceProviderId: null, targetProviderId: null }],
+  ])('rejects a saved application without a stored %s provider id', (_label, ids) => {
+    expect(validateRecoveryApplication(formState, providers, [], { lockedProviders: { platform: 'VMWARE', ...ids } })).toEqual({
+      field: 'platform',
+      messageKey: 'recovery.application.validation.legacyProviders',
+    })
+  })
+
   it('does not require locked providers to be available any more', () => {
     const locked = { platform: 'VMWARE', sourceProviderId: 'vmware-gone', targetProviderId: 'vmware-target-gone' }
     expect(validateRecoveryApplication({ ...formState, platform: 'vmware-gone', targetProviderId: 'vmware-target-gone' }, [], [], { lockedProviders: locked })).toBeNull()
