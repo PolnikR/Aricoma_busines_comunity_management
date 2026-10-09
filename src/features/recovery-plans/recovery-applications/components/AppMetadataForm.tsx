@@ -21,6 +21,9 @@ interface AppMetadataFormProps {
   providersError?: Error | null
   onRetryProviders?: () => void
   disableFileName?: boolean
+  // A saved application keeps its providers: both selects are disabled and
+  // show the stored providers, even ones no longer eligible or present.
+  lockProviders?: boolean
 }
 
 export function AppMetadataForm({
@@ -31,6 +34,7 @@ export function AppMetadataForm({
   providersError = null,
   onRetryProviders,
   disableFileName = false,
+  lockProviders = false,
 }: AppMetadataFormProps) {
   const { t } = useTranslation()
   const [fileName, setFileName] = useState(initialValues?.fileName ?? '')
@@ -42,13 +46,17 @@ export function AppMetadataForm({
   // Source and target follow the parent: it may decline a source change (the
   // builder asks first when recovery groups are assigned).
   const platform = initialValues?.platform ?? ''
-  const eligibleProviders = getEligibleSourceProviders(providers)
+  const eligibleProviders = lockProviders
+    ? providers.filter(provider => provider.id === platform)
+    : getEligibleSourceProviders(providers)
   const selectedPlatformIsMissing = Boolean(
     platform && !eligibleProviders.some(provider => provider.id === platform),
   )
   const targetProviderId = initialValues?.targetProviderId ?? ''
   const providerTypeOf = (id: string) => providers.find(provider => provider.id === id)?.type
-  const eligibleTargetProviders = getEligibleTargetProviders(providers, providerTypeOf(platform))
+  const eligibleTargetProviders = lockProviders
+    ? providers.filter(provider => provider.id === targetProviderId)
+    : getEligibleTargetProviders(providers, providerTypeOf(platform))
   const selectedTargetIsMissing = Boolean(
     targetProviderId && !eligibleTargetProviders.some(provider => provider.id === targetProviderId),
   )
@@ -72,6 +80,7 @@ export function AppMetadataForm({
         onMetadataChange?.({ environment: value })
         break
       case 'platform':
+        if (lockProviders) break
         // A target of the old provider type cannot serve the new source.
         if (providerTypeOf(value) !== providerTypeOf(platform)) {
           onMetadataChange?.({ platform: value, targetProviderId: '' })
@@ -80,6 +89,7 @@ export function AppMetadataForm({
         }
         break
       case 'targetProviderId':
+        if (lockProviders) break
         onMetadataChange?.({ targetProviderId: value })
         break
     }
@@ -148,7 +158,7 @@ export function AppMetadataForm({
           id="application-platform"
           value={platform}
           onChange={e => { handleChange('platform', e.target.value); }}
-          disabled={providersLoading || providersError !== null}
+          disabled={lockProviders || providersLoading || providersError !== null}
           required
         >
           <option value="">
@@ -180,7 +190,7 @@ export function AppMetadataForm({
           id="application-target-provider"
           value={targetProviderId}
           onChange={e => { handleChange('targetProviderId', e.target.value); }}
-          disabled={!platform || providersLoading || providersError !== null}
+          disabled={lockProviders || !platform || providersLoading || providersError !== null}
           required
         >
           <option value="">

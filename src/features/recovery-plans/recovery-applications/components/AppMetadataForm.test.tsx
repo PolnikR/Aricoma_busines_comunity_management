@@ -200,6 +200,32 @@ describe('AppMetadataForm', () => {
       return onMetadataChange
     }
 
+    it('locks the source and target of a saved application and still names a provider that is gone', async () => {
+      const user = userEvent.setup()
+      const onMetadataChange = vi.fn()
+      render(
+        <LanguageProvider>
+          <AppMetadataForm
+            initialValues={{ fileName: 'finance_app', name: 'Finance', description: 'Primary', environment: 'dev', platform: 'power-target', targetProviderId: 'power-gone' }}
+            providers={providers}
+            onMetadataChange={onMetadataChange}
+            lockProviders
+          />
+        </LanguageProvider>,
+      )
+
+      const source = await screen.findByLabelText('Provider ID *')
+      const target = screen.getByLabelText('Target provider ID *')
+      expect(source).toBeDisabled()
+      expect(target).toBeDisabled()
+      expect(source).toHaveValue('power-target')
+      expect(screen.getByRole('option', { name: 'Power Target - IBM_POWER' })).toBeInTheDocument()
+      expect(target).toHaveValue('power-gone')
+      expect(target).toHaveTextContent('power-gone')
+      await user.type(screen.getByLabelText('Application Name *'), 'X')
+      expect(onMetadataChange).not.toHaveBeenCalledWith(expect.objectContaining({ platform: expect.anything() as unknown }))
+    })
+
     it('shows the source its parent keeps, so a declined change leaves the old provider selected', async () => {
       const user = userEvent.setup()
       const onMetadataChange = vi.fn()

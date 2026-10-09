@@ -1,6 +1,7 @@
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type {
   DraftRecoveryTier,
+  LockedProviders,
   RecoveryApplicationData,
   RecoveryApplicationFormState,
   RecoveryApplicationListItem,
@@ -63,14 +64,27 @@ export function toRecoveryApplicationFormState(
   }
 }
 
+// A legacy record without both provider ids stays unlocked: the user has to
+// pick them once to save it in the current contract.
+export function lockedProvidersOf(application: RecoveryApplicationListItem): LockedProviders | null {
+  const { platform, source_provider_id: sourceProviderId, target_provider_id: targetProviderId } = application.data.application
+  if (!sourceProviderId || !targetProviderId) return null
+  return { platform, sourceProviderId, targetProviderId }
+}
+
 // formState.platform holds the selected provider id; the wire contract wants
 // that provider's type as platform and its id as source_provider_id, next to
 // target_provider_id. Save is gated on both providers being available, so a
 // missing one means that gate was bypassed.
-export function toRecoveryApplicationData(
+function toWireProviders(
   formState: RecoveryApplicationFormState,
   providers: ProviderRecord[],
-): RecoveryApplicationData {
+  locked: LockedProviders | null,
+): Pick<RecoveryApplicationData['application'], 'platform' | 'source_provider_id' | 'target_provider_id'> {
+  // Locked values are sent as stored, even if a provider is gone meanwhile.
+  if (locked) {
+    return { platform: locked.platform, source_provider_id: locked.sourceProviderId, target_provider_id: locked.targetProviderId }
+  }
   const sourceProvider = providers.find(provider => provider.id === formState.platform)
   if (!sourceProvider) {
     throw new Error(`Source provider "${formState.platform}" is not available`)
@@ -79,7 +93,14 @@ export function toRecoveryApplicationData(
   if (!targetProvider) {
     throw new Error(`Target provider "${formState.targetProviderId}" is not available`)
   }
+  return { platform: sourceProvider.type, source_provider_id: sourceProvider.id, target_provider_id: targetProvider.id }
+}
 
+export function toRecoveryApplicationData(
+  formState: RecoveryApplicationFormState,
+  providers: ProviderRecord[],
+  locked: LockedProviders | null = null,
+): RecoveryApplicationData {
   return {
     id: formState.fileName,
     policy_set_id: formState.policySetId,
@@ -87,9 +108,7 @@ export function toRecoveryApplicationData(
       name: formState.name,
       description: formState.description,
       environment: formState.environment,
-      platform: sourceProvider.type,
-      source_provider_id: sourceProvider.id,
-      target_provider_id: targetProvider.id,
+      ...toWireProviders(formState, providers, locked),
       notificationEmail: formState.notificationEmail,
       tiers: Object.fromEntries(
         Array.from(formState.tiers.entries()).map(([id, tier]) => [id, toSubmittableTier(id, tier)]),

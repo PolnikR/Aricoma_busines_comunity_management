@@ -247,6 +247,19 @@ describe('RecoveryAppBuilder', () => {
     expect(screen.getByText('Group options: lpar_group')).toBeInTheDocument()
   })
 
+  it('keeps locked providers of a saved application and offers groups of its stored platform', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryAppBuilder lockedProviders={{ platform: 'ibm_power', sourceProviderId: 'power-gone', targetProviderId: 'power-gone' }} />)
+    fireEvent.change(screen.getByLabelText('ID *'), { target: { value: 'finance_recovery' } })
+    fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
+    fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
+
+    expect(screen.getByLabelText('Provider ID *')).toBeDisabled()
+    expect(screen.getByLabelText('Target provider ID *')).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    expect(screen.getByText('Group options: lpar_group')).toBeInTheDocument()
+  })
+
   describe('changing the source provider of a new application', () => {
     async function assignGroupAndReturnToDetails() {
       const user = userEvent.setup()

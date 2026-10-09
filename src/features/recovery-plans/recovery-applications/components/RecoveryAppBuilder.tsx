@@ -25,7 +25,7 @@ import { cloneTier } from '../utils/recoveryApplicationFormMapper'
 import { getEligiblePlatformProviders, getEligibleSourceProviders, getEligibleTargetProviders } from '../utils/eligibleProviders'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
 import { validateRecoveryApplication } from '../utils/validateRecoveryApplication'
-import type { DraftRecoveryTier, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import type { DraftRecoveryTier, LockedProviders, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface RecoveryAppBuilderProps {
   onSave?: (appState: RecoveryApplicationFormState) => void
@@ -39,6 +39,8 @@ interface RecoveryAppBuilderProps {
   // backend record pushed=false while its DAG stays deployed, so delete would
   // no longer roll it back. Keep the push on until the backend preserves it.
   lockPushToOrchestrator?: boolean
+  // A saved application keeps its platform and providers (see LockedProviders).
+  lockedProviders?: LockedProviders | null
 }
 
 const DEFAULT_TIERS: Record<string, DraftRecoveryTier> = {
@@ -83,6 +85,7 @@ export function RecoveryAppBuilder({
   disableFileName = false,
   isInitialLoading = false,
   lockPushToOrchestrator = false,
+  lockedProviders = null,
 }: RecoveryAppBuilderProps) {
   const { t } = useTranslation()
   const [step, setStep] = useState(1)
@@ -112,8 +115,10 @@ export function RecoveryAppBuilder({
     () => getEligiblePlatformProviders(platformProvidersQuery.data ?? []),
     [platformProvidersQuery.data],
   )
-  // The platform is the selected source provider's type; without one no group fits.
-  const platform = providersQuery.data?.find(provider => provider.id === formState.platform)?.type
+  // The platform is the selected source provider's type (or the stored one of a
+  // saved application, whose provider may be gone); without one no group fits.
+  const platform = lockedProviders?.platform
+    ?? providersQuery.data?.find(provider => provider.id === formState.platform)?.type
   const availableGroups = useMemo(
     () => groups.filter(group => isRecoveryGroupCompatible(group, platform)),
     [groups, platform],
@@ -147,7 +152,11 @@ export function RecoveryAppBuilder({
   // Assigned groups belong to the current source platform, so a source change
   // asks first and then detaches them from every tier (the tiers stay).
   const [pendingSourceChange, setPendingSourceChange] = useState<Partial<RecoveryApplicationFormState> | null>(null)
-  const handleMetadataChange = useCallback((metadata: Partial<RecoveryApplicationFormState>) => {
+  const handleMetadataChange = useCallback((update: Partial<RecoveryApplicationFormState>) => {
+    // Locked providers ignore any change, not only through the disabled selects.
+    const metadata = lockedProviders
+      ? Object.fromEntries(Object.entries(update).filter(([key]) => key !== 'platform' && key !== 'targetProviderId'))
+      : update
     const changesSource = metadata.platform !== undefined && metadata.platform !== formState.platform
     const hasAssignedGroups = Array.from(formState.tiers.values()).some(tier => Boolean(tier.recovery_group))
     if (changesSource && hasAssignedGroups) {
@@ -155,7 +164,7 @@ export function RecoveryAppBuilder({
       return
     }
     updateFormState(metadata)
-  }, [formState.platform, formState.tiers, updateFormState])
+  }, [formState.platform, formState.tiers, lockedProviders, updateFormState])
   const confirmSourceChange = () => {
     if (!pendingSourceChange) return
     setFormState(prev => ({
@@ -268,9 +277,9 @@ export function RecoveryAppBuilder({
     isValidRecoveryApplicationFileName(formState.fileName)
     && isValidRecoveryApplicationName(formState.name)
     && formState.description.trim()
-    && sourceProvider
-    && getEligibleTargetProviders(providersQuery.data ?? [], sourceProvider.type)
-      .some(provider => provider.id === formState.targetProviderId),
+    && (lockedProviders !== null || (sourceProvider
+      && getEligibleTargetProviders(providersQuery.data ?? [], sourceProvider.type)
+        .some(provider => provider.id === formState.targetProviderId))),
   )
   const tiersValid = formState.tiers.size > 0
     && Array.from(formState.tiers.values()).every(tier => Boolean(tier.recovery_group))
@@ -305,6 +314,7 @@ export function RecoveryAppBuilder({
       formState,
       providersQuery.data ?? [],
       eligiblePlatformProviders,
+      { lockedProviders },
     )
     if (validationError) {
       alert(t(validationError.messageKey))
@@ -345,6 +355,7 @@ export function RecoveryAppBuilder({
                     targetProviderId: formState.targetProviderId,
                   }}
                   providers={providersQuery.data ?? []}
+                  lockProviders={lockedProviders !== null}
                   providersLoading={providersQuery.isLoading}
                   providersError={providersQuery.error instanceof Error ? providersQuery.error : null}
                   onRetryProviders={() => { void providersQuery.refetch() }}

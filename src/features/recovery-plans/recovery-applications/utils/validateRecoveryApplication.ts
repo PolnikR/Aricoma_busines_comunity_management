@@ -1,6 +1,6 @@
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
-import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import type { LockedProviders, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from './recoveryApplicationFileName'
 import { getEligibleTargetProviders, isEligibleSourceProvider } from './eligibleProviders'
 
@@ -13,6 +13,7 @@ export function validateRecoveryApplication(
   formState: RecoveryApplicationFormState,
   providers: ProviderRecord[],
   platformProviders: PlatformProviderRecord[] = [],
+  { lockedProviders = null }: { lockedProviders?: LockedProviders | null } = {},
 ): ValidationError | null {
   if (!isValidRecoveryApplicationFileName(formState.fileName)) {
     return {
@@ -49,17 +50,18 @@ export function validateRecoveryApplication(
     }
   }
 
-  const sourceProvider = providers.find(
+  // Locked providers are sent as stored; they need not be available any more.
+  const sourceProvider = lockedProviders ? null : providers.find(
     provider => isEligibleSourceProvider(provider) && provider.id === formState.platform,
   )
-  if (!sourceProvider) {
+  if (!lockedProviders && !sourceProvider) {
     return {
       field: 'platform',
       messageKey: 'recovery.application.validation.platformRequired',
     }
   }
 
-  const targetProviderIsAvailable = getEligibleTargetProviders(providers, sourceProvider.type)
+  const targetProviderIsAvailable = lockedProviders !== null || getEligibleTargetProviders(providers, sourceProvider?.type)
     .some(provider => provider.id === formState.targetProviderId)
   if (!targetProviderIsAvailable) {
     return {

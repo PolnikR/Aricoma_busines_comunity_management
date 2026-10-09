@@ -103,6 +103,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
     disableFileName,
     isInitialLoading,
     lockPushToOrchestrator,
+    lockedProviders,
   }: {
     initialData?: RecoveryApplicationFormState
     onSave: (state: RecoveryApplicationFormState) => void
@@ -110,6 +111,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
     disableFileName?: boolean
     isInitialLoading?: boolean
     lockPushToOrchestrator?: boolean
+    lockedProviders?: { platform: string; sourceProviderId: string; targetProviderId: string } | null
   }) => (
     <fieldset disabled={isInitialLoading} aria-busy={isInitialLoading}>
       <span>Application details</span>
@@ -118,6 +120,13 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
       <span>{`Selected provider: ${initialData?.platform ?? ''}`}</span>
       <span>{disableFileName ? 'Filename disabled' : 'Filename enabled'}</span>
       <span>{lockPushToOrchestrator ? 'Push locked' : 'Push unlocked'}</span>
+      <span>{lockedProviders ? `Providers locked: ${lockedProviders.sourceProviderId} -> ${lockedProviders.targetProviderId}` : 'Providers unlocked'}</span>
+      <button
+        type="button"
+        onClick={() => { if (initialData) onSave({ ...initialData, platform: 'vmware-vcenter-01', targetProviderId: 'vmware-vcenter-02' }) }}
+      >
+        Save with other providers
+      </button>
       <button type="button" onClick={() => { if (initialData) onSave(initialData) }}>Save unchanged</button>
       <button
         type="button"
@@ -226,6 +235,30 @@ describe('RecoveryApplicationEditorPage', () => {
       platform: 'VMWARE',
       source_provider_id: 'vmware-vcenter-01',
     })
+  })
+
+  it('locks both providers and saves the original platform and provider ids', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationEditorPage />)
+
+    expect(screen.getByText('Providers locked: ibm-power-01 -> ibm-power-02')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Save with other providers' }))
+
+    expect(mutate.mock.calls[0]?.[0].data.application).toMatchObject({
+      platform: 'IBM_POWER',
+      source_provider_id: 'ibm-power-01',
+      target_provider_id: 'ibm-power-02',
+    })
+  })
+
+  it('leaves a legacy application without provider ids unlocked', () => {
+    recoveryQuery = {
+      ...recoveryQuery,
+      data: [{ ...application, data: { application: { ...application.data.application, source_provider_id: undefined, target_provider_id: null } } }],
+    }
+    render(<RecoveryApplicationEditorPage />)
+
+    expect(screen.getByText('Providers unlocked')).toBeInTheDocument()
   })
 
   it('locks the push only for an application the backend reports as pushed', () => {

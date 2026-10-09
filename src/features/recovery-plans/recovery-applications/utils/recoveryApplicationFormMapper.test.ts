@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  lockedProvidersOf,
   toRecoveryApplicationData,
   toRecoveryApplicationFormState,
 } from './recoveryApplicationFormMapper'
@@ -236,5 +237,32 @@ describe('recoveryApplicationFormMapper', () => {
     const formState = { ...toRecoveryApplicationFormState(application), platform: 'vmware-gone' }
 
     expect(() => toRecoveryApplicationData(formState, providers)).toThrow('Source provider "vmware-gone" is not available')
+  })
+
+  describe('locked providers of a saved application', () => {
+    it('locks the stored platform and both provider ids', () => {
+      expect(lockedProvidersOf({
+        ...application,
+        data: { application: { ...application.data.application, platform: 'ibm_power', source_provider_id: 'ibm-power-01', target_provider_id: 'ibm-power-01' } },
+      })).toEqual({ platform: 'ibm_power', sourceProviderId: 'ibm-power-01', targetProviderId: 'ibm-power-01' })
+    })
+
+    it.each([
+      ['no source provider id', { source_provider_id: null }],
+      ['no target provider id', { target_provider_id: undefined }],
+    ])('leaves a legacy record with %s unlocked', (_label, changes) => {
+      expect(lockedProvidersOf({ ...application, data: { application: { ...application.data.application, ...changes } } })).toBeNull()
+    })
+
+    it('sends the original platform and provider ids, even when the form or the providers list changed', () => {
+      const locked = { platform: 'ibm_power', sourceProviderId: 'ibm-power-gone', targetProviderId: 'ibm-power-gone' }
+      const formState = { ...toRecoveryApplicationFormState(application), platform: 'vmware-vcenter-01', targetProviderId: 'vmware-dr-01' }
+
+      expect(toRecoveryApplicationData(formState, [], locked).application).toMatchObject({
+        platform: 'ibm_power',
+        source_provider_id: 'ibm-power-gone',
+        target_provider_id: 'ibm-power-gone',
+      })
+    })
   })
 })

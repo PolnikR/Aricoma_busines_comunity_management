@@ -15,6 +15,7 @@ import {
   useSubmitRecoveryApplication,
 } from '../hooks/useRecoveryApplications'
 import {
+  lockedProvidersOf,
   toRecoveryApplicationData,
   toRecoveryApplicationFormState,
 } from '../utils/recoveryApplicationFormMapper'
@@ -44,6 +45,10 @@ export function RecoveryApplicationEditorPage() {
   const application = applications?.find(
     (item) => toRecoveryApplicationFileName(item.id) === id,
   )
+  const lockedProviders = useMemo(
+    () => application ? lockedProvidersOf(application) : null,
+    [application],
+  )
   const initialData = useMemo(
     () => application ? toRecoveryApplicationFormState(application) : null,
     [application],
@@ -60,7 +65,7 @@ export function RecoveryApplicationEditorPage() {
   const handleSave = (formState: RecoveryApplicationFormState): void => {
     submitApplication.mutate({
       providerId: formState.orchestrationProviderId,
-      data: toRecoveryApplicationData(formState, providers),
+      data: toRecoveryApplicationData(formState, providers, lockedProviders),
       pushToOrchestrator: formState.pushToOrchestrator,
     }, {
       onSuccess: (response) => {
@@ -140,6 +145,7 @@ export function RecoveryApplicationEditorPage() {
           disableFileName
           isInitialLoading={isLoading}
           lockPushToOrchestrator={application?.pushToOrchestrator === true}
+          lockedProviders={lockedProviders}
         />
       </div>
       <ConfirmDialog

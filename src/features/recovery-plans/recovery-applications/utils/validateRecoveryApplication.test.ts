@@ -37,6 +37,11 @@ describe('validateRecoveryApplication', () => {
     expect(validateRecoveryApplication({ ...formState, platform: 'power-hmc', targetProviderId: 'power-hmc' }, providers)).toBeNull()
   })
 
+  it('does not require locked providers to be available any more', () => {
+    const locked = { platform: 'VMWARE', sourceProviderId: 'vmware-gone', targetProviderId: 'vmware-target-gone' }
+    expect(validateRecoveryApplication({ ...formState, platform: 'vmware-gone', targetProviderId: 'vmware-target-gone' }, [], [], { lockedProviders: locked })).toBeNull()
+  })
+
   it.each([
     ['missing', ''],
     ['of another type', 'power-target'],

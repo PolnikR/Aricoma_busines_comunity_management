@@ -118,6 +118,14 @@ export interface RecoveryApplicationListItem {
   rawRecord?: RecoveryAppRecordOutput | undefined
 }
 
+// Once created, an application keeps its platform and both providers; the
+// editor sends these stored values instead of the form's selection.
+export interface LockedProviders {
+  platform: string
+  sourceProviderId: string
+  targetProviderId: string
+}
+
 export interface RecoveryApplicationFormState {
   fileName: string
   policySetId: string
