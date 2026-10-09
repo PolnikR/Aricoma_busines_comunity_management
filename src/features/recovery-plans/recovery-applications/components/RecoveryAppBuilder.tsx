@@ -33,6 +33,10 @@ interface RecoveryAppBuilderProps {
   initialData?: RecoveryApplicationFormState
   disableFileName?: boolean
   isInitialLoading?: boolean
+  // The app is deployed to Airflow: saving it without a push would make the
+  // backend record pushed=false while its DAG stays deployed, so delete would
+  // no longer roll it back. Keep the push on until the backend preserves it.
+  lockPushToOrchestrator?: boolean
 }
 
 const DEFAULT_TIERS: Record<string, DraftRecoveryTier> = {
@@ -75,11 +79,15 @@ export function RecoveryAppBuilder({
   initialData,
   disableFileName = false,
   isInitialLoading = false,
+  lockPushToOrchestrator = false,
 }: RecoveryAppBuilderProps) {
   const { t } = useTranslation()
   const [step, setStep] = useState(1)
   const [formState, setFormState] = useState<RecoveryApplicationFormState>(
-    () => createInitialFormState(initialData),
+    () => ({
+      ...createInitialFormState(initialData),
+      ...(lockPushToOrchestrator ? { pushToOrchestrator: true } : {}),
+    }),
   )
 
   const providersQuery = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
@@ -416,6 +424,7 @@ export function RecoveryAppBuilder({
                     checked={formState.pushToOrchestrator}
                     onChange={checked => { updateFormState({ pushToOrchestrator: checked }) }}
                     label={t('recovery.application.orchestration.toggleLabel')}
+                    disabled={lockPushToOrchestrator}
                   />
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{t('recovery.application.orchestration.toggleLabel')}</p>
@@ -424,6 +433,9 @@ export function RecoveryAppBuilder({
                         ? 'recovery.application.orchestration.enabled'
                         : 'recovery.application.orchestration.disabled')}
                     </p>
+                    {lockPushToOrchestrator ? (
+                      <p className="mt-1 text-xs text-text-muted">{t('recovery.application.orchestration.locked')}</p>
+                    ) : null}
                   </div>
                 </div>
                 {formState.pushToOrchestrator && platformProvidersQuery.error ? (

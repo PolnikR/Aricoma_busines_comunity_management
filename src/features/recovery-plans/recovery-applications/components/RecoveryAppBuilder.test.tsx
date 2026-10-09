@@ -244,6 +244,23 @@ describe('RecoveryAppBuilder', () => {
     expect(screen.getByRole('button', { name: 'Orchestration' })).toHaveAttribute('aria-current', 'step')
   })
 
+  it('keeps a deployed application pushed and explains why', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    render(<RecoveryAppBuilder onSave={onSave} lockPushToOrchestrator />)
+    await openPolicy()
+    await user.click(screen.getByRole('button', { name: /Critical - Daily DR Test/ }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+
+    const toggle = screen.getByRole('switch', { name: 'Push to orchestrator' })
+    expect(toggle).toBeChecked()
+    expect(toggle).toBeDisabled()
+    expect(screen.getByText(/already deployed to Airflow/)).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Airflow provider *'), 'airflow-01')
+    await user.click(screen.getByRole('button', { name: 'Save Application' }))
+    expect(onSave.mock.calls[0]?.[0]).toMatchObject({ pushToOrchestrator: true, orchestrationProviderId: 'airflow-01' })
+  })
+
   it('requires an Airflow provider only when push is enabled and saves the form state', async () => {
     const user = userEvent.setup()
     const onSave = vi.fn()

@@ -1198,6 +1198,7 @@
   "recovery.application.orchestration.toggleLabel": "Odoslať do orchestrátora",
   "recovery.application.orchestration.enabled": "DAG obnovy bude odoslaný do Airflow.",
   "recovery.application.orchestration.disabled": "DAG obnovy sa uloží bez odoslania do Airflow.",
+  "recovery.application.orchestration.locked": "Táto aplikácia je už nasadená v Airflow. Uloženie bez pushu by ponechalo DAG nasadený, hoci záznam by tvrdil opak, preto push ostáva zapnutý.",
   "recovery.application.orchestratorModal.ariaLabel": "Výsledok orchestrácie aplikácie obnovy",
   "recovery.application.orchestratorModal.title": "Aplikácia obnovy odoslaná",
   "recovery.application.orchestratorModal.description": "Aplikácia {applicationName} bola prijatá orchestrátorom.",

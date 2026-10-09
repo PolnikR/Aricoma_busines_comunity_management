@@ -101,12 +101,14 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
     onDirtyChange,
     disableFileName,
     isInitialLoading,
+    lockPushToOrchestrator,
   }: {
     initialData?: RecoveryApplicationFormState
     onSave: (state: RecoveryApplicationFormState) => void
     onDirtyChange?: (isDirty: boolean) => void
     disableFileName?: boolean
     isInitialLoading?: boolean
+    lockPushToOrchestrator?: boolean
   }) => (
     <fieldset disabled={isInitialLoading} aria-busy={isInitialLoading}>
       <span>Application details</span>
@@ -114,6 +116,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
       <span>{initialData?.fileName}</span>
       <span>{`Selected provider: ${initialData?.platform ?? ''}`}</span>
       <span>{disableFileName ? 'Filename disabled' : 'Filename enabled'}</span>
+      <span>{lockPushToOrchestrator ? 'Push locked' : 'Push unlocked'}</span>
       <button type="button" onClick={() => { if (initialData) onSave(initialData) }}>Save unchanged</button>
       <button
         type="button"
@@ -221,6 +224,20 @@ describe('RecoveryApplicationEditorPage', () => {
       platform: 'VMWARE',
       source_provider_id: 'vmware-vcenter-01',
     })
+  })
+
+  it('locks the push only for an application the backend reports as pushed', () => {
+    recoveryQuery = { ...recoveryQuery, data: [{ ...application, pushToOrchestrator: true, airflowRunId: 'run-1' }] }
+    render(<RecoveryApplicationEditorPage />)
+
+    expect(screen.getByText('Push locked')).toBeInTheDocument()
+  })
+
+  it('does not infer a deployed DAG from a run id alone', () => {
+    recoveryQuery = { ...recoveryQuery, data: [{ ...application, pushToOrchestrator: false, airflowRunId: 'run-1' }] }
+    render(<RecoveryApplicationEditorPage />)
+
+    expect(screen.getByText('Push unlocked')).toBeInTheDocument()
   })
 
   it('keeps filename independent when application name changes', async () => {

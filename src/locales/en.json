@@ -1232,6 +1232,7 @@
   "recovery.application.orchestration.toggleLabel": "Push to orchestrator",
   "recovery.application.orchestration.enabled": "The recovery DAG will be sent to Airflow.",
   "recovery.application.orchestration.disabled": "The recovery DAG will be stored without sending it to Airflow.",
+  "recovery.application.orchestration.locked": "This application is already deployed to Airflow. Saving without a push would leave its DAG deployed while the record says otherwise, so the push stays on.",
   "recovery.application.orchestratorModal.ariaLabel": "Recovery application orchestrator result",
   "recovery.application.orchestratorModal.title": "Recovery application pushed",
   "recovery.application.orchestratorModal.description": "{applicationName} was accepted by the orchestrator.",

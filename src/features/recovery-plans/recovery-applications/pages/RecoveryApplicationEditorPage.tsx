@@ -139,6 +139,7 @@ export function RecoveryApplicationEditorPage() {
           isSaving={submitApplication.isPending}
           disableFileName
           isInitialLoading={isLoading}
+          lockPushToOrchestrator={application?.pushToOrchestrator === true}
         />
       </div>
       <ConfirmDialog
