@@ -17,6 +17,7 @@ import { selectProviders } from '@/features/providers-connectors/providers/model
 import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
 import { selectPolicySets } from '@/features/recovery-plans/policy-sets/model/selectPolicySets'
 import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups'
+import { isRecoveryGroupCompatible } from '../utils/recoveryGroupPlatform'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
 import { cloneTier } from '../utils/recoveryApplicationFormMapper'
@@ -110,9 +111,11 @@ export function RecoveryAppBuilder({
     () => getEligiblePlatformProviders(platformProvidersQuery.data ?? []),
     [platformProvidersQuery.data],
   )
+  // The platform is the selected source provider's type; without one no group fits.
+  const platform = providersQuery.data?.find(provider => provider.id === formState.platform)?.type
   const availableGroups = useMemo(
-    () => groups.filter(group => group.sourceCategory === 'backup_system_workload'),
-    [groups],
+    () => groups.filter(group => isRecoveryGroupCompatible(group, platform)),
+    [groups, platform],
   )
   const groupLabels = useMemo(
     () => Object.fromEntries(availableGroups.map(group => [group.id, group.name])),

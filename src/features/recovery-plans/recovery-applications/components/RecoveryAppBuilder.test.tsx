@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { RecoveryAppBuilder } from './RecoveryAppBuilder'
+import type { RecoveryGroup } from '../../recovery-groups/model/recoveryGroupTypes'
 import type { DraftRecoveryTier } from '../model/recoveryApplicationTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -41,6 +42,15 @@ const providersQuery = vi.hoisted(() => ({
       credentialId: 'vmware-cred',
       credentialStatus: 'ok',
     }, {
+      id: 'power-01',
+      name: 'Lab HMC',
+      description: 'IBM Power provider',
+      type: 'IBM_POWER',
+      role: 'source',
+      ipAddress: '10.0.0.30',
+      credentialId: 'power-cred',
+      credentialStatus: 'ok',
+    }, {
       id: 'vmware-target-01',
       name: 'DR vCenter',
       description: 'VMware target provider',
@@ -67,7 +77,7 @@ const recoveryGroupsQuery = vi.hoisted(() => ({
       resources: ['DB-01', 'DB-02'],
       resourceCount: 2,
       status: 'Active',
-    }],
+    }] as RecoveryGroup[],
     isLoading: false,
     isFetching: false,
     error: null as Error | null,
@@ -118,6 +128,7 @@ vi.mock('./TierCanvas', () => ({
       <span>Group id: {tiers['tier_id']?.recovery_group?.id ?? 'none'}</span>
       <span>Group name: {tiers['tier_id']?.recovery_group?.name ?? 'none'}</span>
       <span>Database options: {recoveryGroupVmOptions?.['database_group']?.length ?? 0}</span>
+      <span>Group options: {Object.keys(recoveryGroupVmOptions ?? {}).join(',') || 'none'}</span>
       <button type="button" onClick={() => { onRecoveryGroupAdded?.('tier_id', 'database_group') }}>
         Add test group
       </button>
@@ -137,16 +148,16 @@ vi.mock('./TierCanvas', () => ({
   ),
 }))
 
-function fillDetails() {
+function fillDetails(sourceId = 'vmware-01', targetId = 'vmware-target-01') {
   fireEvent.change(screen.getByLabelText('ID *'), { target: { value: 'finance_recovery' } })
   fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
   fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
-  fireEvent.change(screen.getByLabelText('Provider ID *'), { target: { value: 'vmware-01' } })
-  fireEvent.change(screen.getByLabelText('Target provider ID *'), { target: { value: 'vmware-target-01' } })
+  fireEvent.change(screen.getByLabelText('Provider ID *'), { target: { value: sourceId } })
+  fireEvent.change(screen.getByLabelText('Target provider ID *'), { target: { value: targetId } })
 }
 
-async function openTiers() {
-  fillDetails()
+async function openTiers(sourceId?: string, targetId?: string) {
+  fillDetails(sourceId, targetId)
   await userEvent.setup().click(screen.getByRole('button', { name: 'Next' }))
 }
 
@@ -172,7 +183,27 @@ describe('RecoveryAppBuilder', () => {
       resources: ['DB-01', 'DB-02'],
       resourceCount: 2,
       status: 'Active',
-    }]
+    }, {
+      id: 'lpar_group',
+      name: 'LPAR Group',
+      description: 'AIX recovery group',
+      sourceCategory: 'backup_system_workload',
+      workloadType: 'ibm_power_virtual_machines',
+      resourceType: 'vm',
+      resources: ['aix2source'],
+      resourceCount: 1,
+      status: 'Active',
+    }, {
+      id: 'unresolved_group',
+      name: 'Unresolved Group',
+      description: 'Provider no longer exists',
+      sourceCategory: 'backup_system_workload',
+      workloadType: null,
+      resourceType: 'vm',
+      resources: ['ghost-01'],
+      resourceCount: 1,
+      status: 'Active',
+    }] as RecoveryGroup[]
     recoveryGroupsQuery.current.isLoading = false
     recoveryGroupsQuery.current.isFetching = false
     recoveryGroupsQuery.current.error = null
@@ -202,6 +233,18 @@ describe('RecoveryAppBuilder', () => {
     fillDetails()
     fireEvent.change(screen.getByLabelText('Target provider ID *'), { target: { value: '' } })
     expect(screen.getByRole('button', { name: 'Recovery groups & tiers' })).toBeDisabled()
+  })
+
+  it('offers only VMware recovery groups for a VMware source', async () => {
+    render(<RecoveryAppBuilder />)
+    await openTiers()
+    expect(screen.getByText('Group options: database_group')).toBeInTheDocument()
+  })
+
+  it('offers only IBM Power recovery groups for an IBM Power source, using one provider on both sides', async () => {
+    render(<RecoveryAppBuilder />)
+    await openTiers('power-01', 'power-01')
+    expect(screen.getByText('Group options: lpar_group')).toBeInTheDocument()
   })
 
   it('opens the recovery groups and tiers step after valid details', async () => {
