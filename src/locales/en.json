@@ -1007,6 +1007,7 @@
   "details.description": "Description",
   "details.environment": "Environment",
   "details.platform": "Platform",
+  "details.targetProvider": "Target provider",
   "details.tiers": "Tiers",
   "details.status": "Status",
   "details.submission": "Submission",

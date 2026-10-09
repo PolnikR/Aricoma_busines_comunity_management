@@ -984,6 +984,7 @@
   "details.description": "Popis",
   "details.environment": "Prostředí",
   "details.platform": "Platforma",
+  "details.targetProvider": "Cílový poskytovatel",
   "details.tiers": "Vrstvy",
   "details.status": "Stav",
   "details.submission": "Odeslání",

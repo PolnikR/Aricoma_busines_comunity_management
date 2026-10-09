@@ -338,9 +338,11 @@ describe('RecoveryApplicationsTable', () => {
       const overview = within(drawer).getByRole('region', { name: 'Overview' })
       // One shared Overview field list.
       expect(overview.querySelectorAll('dl')).toHaveLength(1)
-      expect(overviewTerms(drawer)).toEqual(['Description', 'Environment', 'Platform', 'Tiers', 'Status', 'Submission'])
+      expect(overviewTerms(drawer)).toEqual(['Description', 'Environment', 'Platform', 'Target provider', 'Notification email', 'Tiers', 'Status', 'Submission'])
       expect(overview).toHaveTextContent('Finance workloads')
       expect(overview).toHaveTextContent('vmware-vcenter-01')
+      expect(within(drawer).getByText('Target provider', { selector: 'dt' }).nextElementSibling).toHaveTextContent('vmware-vcenter-02')
+      expect(within(drawer).getByText('Notification email', { selector: 'dt' }).nextElementSibling).toHaveTextContent('Not set')
       expect(overview).toHaveTextContent('/tmp/finance.json')
     })
 
@@ -348,7 +350,16 @@ describe('RecoveryApplicationsTable', () => {
       const withoutSubmission: RecoveryApplicationListItem = { ...application }
       delete withoutSubmission.submission
       const { drawer } = await openDetail(withoutSubmission)
-      expect(overviewTerms(drawer)).toEqual(['Description', 'Environment', 'Platform', 'Tiers', 'Status'])
+      expect(overviewTerms(drawer)).toEqual(['Description', 'Environment', 'Platform', 'Target provider', 'Notification email', 'Tiers', 'Status'])
+    })
+
+    it('shows the stored notification email and an unset target provider of a legacy record', async () => {
+      const { drawer } = await openDetail({
+        ...application,
+        data: { application: { ...application.data.application, target_provider_id: null, notificationEmail: 'dr-team@example.test' } },
+      })
+      expect(within(drawer).getByText('Notification email', { selector: 'dt' }).nextElementSibling).toHaveTextContent('dr-team@example.test')
+      expect(within(drawer).getByText('Target provider', { selector: 'dt' }).nextElementSibling).toHaveTextContent('Not set')
     })
 
     it('shows entity, status and the no-runs fact in the header, and the status again in Overview', async () => {

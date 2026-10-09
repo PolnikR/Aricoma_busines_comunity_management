@@ -984,6 +984,7 @@
   "details.description": "Popis",
   "details.environment": "Prostredie",
   "details.platform": "Platforma",
+  "details.targetProvider": "Cieľový poskytovateľ",
   "details.tiers": "Úrovne",
   "details.status": "Stav",
   "details.submission": "Odoslanie",

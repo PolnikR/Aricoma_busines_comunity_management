@@ -453,6 +453,13 @@ export function RecoveryApplicationsTable({
               <DetailField label={t('details.description')} value={selected.data.application.description} wide />
               <DetailField label={t('details.environment')} value={selected.data.application.environment} />
               <DetailField label={t('details.platform')} value={getProviderLabel(sourceProviderIdOf(selected.data.application))} emphasis />
+              <DetailField
+                label={t('details.targetProvider')}
+                value={selected.data.application.target_provider_id
+                  ? getProviderLabel(selected.data.application.target_provider_id, providers)
+                  : null}
+              />
+              <DetailField label={t('details.notificationEmail')} value={selected.data.application.notificationEmail} />
               <DetailField label={t('details.tiers')} value={String(Object.keys(selected.data.application.tiers).length)} />
               <DetailField label={t('details.status')} value={<ApplicationStatusBadge app={selected} />} />
               {selected.submission ? (
