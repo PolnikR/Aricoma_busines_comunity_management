@@ -57,34 +57,34 @@ T2 a T3 sú nezávislé od recovery vetvy.
 ## Zoznam úloh
 
 ### Fáza 1: Kontrakt a provideri
-- [ ] Task 1: Commit OpenAPI kontraktu (XS)
-- [ ] Task 2: Provider create/edit formulár bez `orchestratorConnId` (S)
-- [ ] Task 3: Provider detail a katalóg bez `orchestratorConnId` (S)
+- [x] Task 1: Commit OpenAPI kontraktu (XS)
+- [x] Task 2: Provider create/edit formulár bez `orchestratorConnId` (S)
+- [x] Task 3: Provider detail a katalóg bez `orchestratorConnId` (S)
 
 ### Checkpoint A
-- [ ] V `tsc -b` nie je žiadna chyba so slovom `orchestratorConnId` mimo `recovery-applications/**`.
-- [ ] `npm exec vitest run src/features/providers-connectors/providers` je zelené.
+- [x] V `tsc -b` nie je žiadna chyba so slovom `orchestratorConnId` mimo `recovery-applications/**`.
+- [x] `npm exec vitest run src/features/providers-connectors/providers` je zelené.
 
 ### Fáza 2: Recovery app, write path
-- [ ] Task 4: `getEligibleTargetProviders` (XS)
-- [ ] Task 5: Select cieľového providera v `AppMetadataForm` (M)
-- [ ] Task 6: Builder gate a validácia cieľa (M)
-- [ ] Task 7: Wire typy a mapper na `target_provider_id` (L, zámerne nedelený, zdôvodnenie v todo)
+- [x] Task 4: `getEligibleTargetProviders` (XS)
+- [x] Task 5: Select cieľového providera v `AppMetadataForm` (M)
+- [x] Task 6: Builder gate a validácia cieľa (M)
+- [x] Task 7: Wire typy a mapper na `target_provider_id` (L, zámerne nedelený, zdôvodnenie v todo)
 
 ### Checkpoint B
-- [ ] Zostávajúce chyby `tsc -b` sú iba v `useDeleteRecoveryApplication*` a `RecoveryApplicationInventory*`.
-- [ ] `npm exec vitest run src/features/recovery-plans/recovery-applications src/features/recovery-plans/recovery-runs` je zelené.
+- [x] Zostávajúce chyby `tsc -b` sú iba v `useDeleteRecoveryApplication*` a `RecoveryApplicationInventory*`.
+- [x] `npm exec vitest run src/features/recovery-plans/recovery-applications src/features/recovery-plans/recovery-runs` je zelené.
 
 ### Fáza 3: Rollback a inventár
-- [ ] Task 8: Rollback a inventár cez `target_provider_id`, odblokovaný IBM Power (M)
+- [x] Task 8: Rollback a inventár cez `target_provider_id`, odblokovaný IBM Power (M)
 
 ### Checkpoint C (koniec)
-- [ ] `npx tsc -b`: 0 chýb.
-- [ ] `npx eslint` nad všetkými zmenenými súbormi série.
-- [ ] `node scripts/orval/check-generated.mjs`: exit 0.
-- [ ] `npm exec vitest run src/features/recovery-plans src/features/providers-connectors`.
+- [x] `npx tsc -b`: 0 chýb.
+- [x] `npx eslint` nad všetkými zmenenými súbormi série.
+- [x] `node scripts/orval/check-generated.mjs`: exit 0.
+- [x] `npm exec vitest run src/features/recovery-plans src/features/providers-connectors`.
 - [ ] Voliteľne, ak beží backend: manuálna kontrola cez CDP (Edge :9333). Vytvoriť appku s cieľom a overiť body requestu, potom delete s rollbackom a overiť `compute_provider_id` v query.
-- [ ] Celú test suite ani `npm run build` nespúšťame (CLAUDE.md §5).
+- [x] Celú test suite ani `npm run build` nespúšťame (CLAUDE.md §5).
 
 ## Riziká
 
