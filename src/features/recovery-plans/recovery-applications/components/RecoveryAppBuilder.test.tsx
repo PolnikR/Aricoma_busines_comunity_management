@@ -40,6 +40,15 @@ const providersQuery = vi.hoisted(() => ({
       ipAddress: '10.0.0.10',
       credentialId: 'vmware-cred',
       credentialStatus: 'ok',
+    }, {
+      id: 'vmware-target-01',
+      name: 'DR vCenter',
+      description: 'VMware target provider',
+      type: 'VMWARE',
+      role: 'target',
+      ipAddress: '10.0.0.20',
+      credentialId: 'vmware-cred',
+      credentialStatus: 'ok',
     }],
     isLoading: false,
     error: null as Error | null,
@@ -133,6 +142,7 @@ function fillDetails() {
   fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
   fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
   fireEvent.change(screen.getByLabelText('Provider ID *'), { target: { value: 'vmware-01' } })
+  fireEvent.change(screen.getByLabelText('Target provider ID *'), { target: { value: 'vmware-target-01' } })
 }
 
 async function openTiers() {
@@ -185,6 +195,13 @@ describe('RecoveryAppBuilder', () => {
     expect(screen.getByRole('button', { name: 'Recovery groups & tiers' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Policy set' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
+  })
+
+  it('keeps the next step disabled until a target provider is selected', () => {
+    render(<RecoveryAppBuilder />)
+    fillDetails()
+    fireEvent.change(screen.getByLabelText('Target provider ID *'), { target: { value: '' } })
+    expect(screen.getByRole('button', { name: 'Recovery groups & tiers' })).toBeDisabled()
   })
 
   it('opens the recovery groups and tiers step after valid details', async () => {
@@ -247,6 +264,7 @@ describe('RecoveryAppBuilder', () => {
       fileName: 'finance_recovery',
       policySetId: 'critical-daily-latest',
       platform: 'vmware-01',
+      targetProviderId: 'vmware-target-01',
       orchestrationProviderId: 'airflow-01',
       pushToOrchestrator: true,
     })

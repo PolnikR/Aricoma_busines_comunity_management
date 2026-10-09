@@ -2,10 +2,10 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from './recoveryApplicationFileName'
-import { isEligibleSourceProvider } from './eligibleProviders'
+import { getEligibleTargetProviders, isEligibleSourceProvider } from './eligibleProviders'
 
 export interface ValidationError {
-  field: 'fileName' | 'name' | 'description' | 'policySet' | 'platform' | 'recoveryGroup'
+  field: 'fileName' | 'name' | 'description' | 'policySet' | 'platform' | 'targetProvider' | 'recoveryGroup'
   messageKey: string
 }
 
@@ -49,13 +49,22 @@ export function validateRecoveryApplication(
     }
   }
 
-  const platformIsAvailable = providers.some(
+  const sourceProvider = providers.find(
     provider => isEligibleSourceProvider(provider) && provider.id === formState.platform,
   )
-  if (!platformIsAvailable) {
+  if (!sourceProvider) {
     return {
       field: 'platform',
       messageKey: 'recovery.application.validation.platformRequired',
+    }
+  }
+
+  const targetProviderIsAvailable = getEligibleTargetProviders(providers, sourceProvider.type)
+    .some(provider => provider.id === formState.targetProviderId)
+  if (!targetProviderIsAvailable) {
+    return {
+      field: 'targetProvider',
+      messageKey: 'recovery.application.validation.targetProviderRequired',
     }
   }
 

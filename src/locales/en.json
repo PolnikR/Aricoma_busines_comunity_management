@@ -1261,6 +1261,7 @@
   "recovery.application.validation.fileNameRequired": "Enter a valid file name using letters, numbers, and underscores.",
   "recovery.application.validation.nameInvalid": "Use letters, numbers, dashes, dots, and underscores only; no spaces.",
   "recovery.application.validation.platformRequired": "Select a platform.",
+  "recovery.application.validation.targetProviderRequired": "Select a target provider.",
   "recovery.application.validation.platformProviderRequired": "Select a platform provider.",
   "recovery.application.validation.policySetRequired": "Select a policy set.",
   "recovery.application.validation.recoveryGroupRequired": "Assign a recovery group to every tier.",

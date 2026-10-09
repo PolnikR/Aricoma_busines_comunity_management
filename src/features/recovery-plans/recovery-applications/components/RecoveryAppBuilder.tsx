@@ -20,7 +20,7 @@ import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
 import { cloneTier } from '../utils/recoveryApplicationFormMapper'
-import { getEligiblePlatformProviders, getEligibleSourceProviders } from '../utils/eligibleProviders'
+import { getEligiblePlatformProviders, getEligibleSourceProviders, getEligibleTargetProviders } from '../utils/eligibleProviders'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
 import { validateRecoveryApplication } from '../utils/validateRecoveryApplication'
 import type { DraftRecoveryTier, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
@@ -233,11 +233,14 @@ export function RecoveryAppBuilder({
     onDirtyChange?.(true)
   }, [onDirtyChange])
 
+  const sourceProvider = eligibleSourceProviders.find(provider => provider.id === formState.platform)
   const detailsValid = Boolean(
     isValidRecoveryApplicationFileName(formState.fileName)
     && isValidRecoveryApplicationName(formState.name)
     && formState.description.trim()
-    && eligibleSourceProviders.some(provider => provider.id === formState.platform),
+    && sourceProvider
+    && getEligibleTargetProviders(providersQuery.data ?? [], sourceProvider.type)
+      .some(provider => provider.id === formState.targetProviderId),
   )
   const tiersValid = formState.tiers.size > 0
     && Array.from(formState.tiers.values()).every(tier => Boolean(tier.recovery_group))

@@ -1227,6 +1227,7 @@
   "recovery.application.validation.fileNameRequired": "Zadejte platný název souboru obsahující písmena, čísla a podtržítka.",
   "recovery.application.validation.nameInvalid": "Použijte pouze písmena, čísla, pomlčky, tečky a podtržítka; bez mezer.",
   "recovery.application.validation.platformRequired": "Vyberte platformu.",
+  "recovery.application.validation.targetProviderRequired": "Vyberte cílového poskytovatele.",
   "recovery.application.validation.platformProviderRequired": "Vyberte platform providera.",
   "recovery.application.validation.policySetRequired": "Vyberte sadu politik.",
   "recovery.application.validation.recoveryGroupRequired": "Každé vrstvě přiřaďte skupinu obnovy.",
