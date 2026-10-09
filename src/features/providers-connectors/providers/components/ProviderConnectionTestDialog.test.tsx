@@ -89,6 +89,7 @@ describe('ProviderConnectionTestDialog', () => {
     expect(screen.getByText('vCenter is unreachable.')).toBeInTheDocument()
     expect(screen.queryByText('Connection test completed')).not.toBeInTheDocument()
     expect(screen.getByText('Retry')).toBeInTheDocument()
+    expect(screen.queryByText('0 / 0 passed')).not.toBeInTheDocument()
   })
 
   it('shows the running state before a result is available', () => {
@@ -107,6 +108,32 @@ describe('ProviderConnectionTestDialog', () => {
 
     expect(screen.getByRole('dialog', { name: 'Test provider connection' })).toBeInTheDocument()
     expect(screen.getByText('Production vCenter')).toBeInTheDocument()
+    expect(screen.getByRole('status', { name: 'Testing provider connection…' })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.queryByText('Connection test completed')).not.toBeInTheDocument()
+    expect(screen.queryByText('0 / 0 passed')).not.toBeInTheDocument()
+    expect(screen.queryByText('Response body')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Close' })).toBeDisabled()
+  })
+
+  it('hides a previous result while a fresh test is pending', () => {
+    render(
+      <ProviderConnectionTestDialog
+        open
+        providerName="Production vCenter"
+        providerId="vmware-vcenter-01"
+        isPending
+        result={successResult}
+        error={null}
+        onClose={() => undefined}
+        onRetry={() => undefined}
+      />,
+    )
+
+    expect(screen.getByText('Testing provider connection…')).toBeInTheDocument()
+    expect(screen.queryByText('Connection test completed')).not.toBeInTheDocument()
+    expect(screen.queryByText('2 / 2 passed')).not.toBeInTheDocument()
+    expect(screen.queryByText('Credentials')).not.toBeInTheDocument()
+    expect(screen.queryByText('Response body')).not.toBeInTheDocument()
   })
 
   it('shows a message when the backend reports no checks', () => {

@@ -33,21 +33,29 @@ export function ProviderConnectionTestDialog({
   onRetry,
 }: ProviderConnectionTestDialogProps) {
   const { t } = useTranslation()
-  const isFailed = Boolean(error) || (result !== null && !result.ok)
-  const okCount = result ? result.checks.filter(check => isCheckOk(check.status)).length : 0
+  const isWaiting = isPending || (!result && !error)
+  const completedResult = isWaiting ? null : result
+  const isFailed = !isWaiting && (Boolean(error) || (completedResult !== null && !completedResult.ok))
+  const okCount = completedResult ? completedResult.checks.filter(check => isCheckOk(check.status)).length : 0
 
-  const checks: CheckItem[] = result?.checks.map(check => ({
+  const checks: CheckItem[] = completedResult?.checks.map(check => ({
     name: check.name,
     detail: check.detail,
     status: check.status,
   })) ?? []
 
-  const badges = result ? [
-    { label: providerTypeLabel(result.provider_type), color: 'info' as const },
+  const badges = completedResult ? [
+    { label: providerTypeLabel(completedResult.provider_type), color: 'info' as const },
     { label: t(`forms.role.${providerRole}`), color: providerRole === 'source' ? 'success' as const : 'warning' as const },
   ] : []
 
-  const statusBarStatus = isPending ? 'warning' : isFailed ? 'error' : 'success'
+  const statusBar = isWaiting ? undefined : {
+    title: error
+      ? resolveUserFacingErrorMessage(error, t('providers.connectionTest.failed'))
+      : t(isFailed ? 'providers.connectionTest.failed' : 'providers.connectionTest.success'),
+    status: isFailed ? 'error' as const : 'success' as const,
+    ...(completedResult ? { passedCount: okCount, totalCount: completedResult.checks.length } : {}),
+  }
 
   return (
     <ChecklistResultDialog
@@ -56,20 +64,20 @@ export function ProviderConnectionTestDialog({
       primaryName={providerName}
       subtitle={providerId}
       badges={badges}
-      statusBar={{
-        title: error
-          ? resolveUserFacingErrorMessage(error, t('providers.connectionTest.failed'))
-          : t('providers.connectionTest.success'),
-        status: statusBarStatus,
-        passedCount: okCount,
-        totalCount: result?.checks.length ?? 0,
-      }}
+      {...(statusBar ? { statusBar } : {})}
       checks={checks}
-      responseData={result}
+      responseData={completedResult}
       responseSchemaType="ProviderTestResponse"
       onClose={onClose}
       {...(isFailed ? { onRetry } : {})}
-      isPending={isPending}
-    />
+      isPending={isWaiting}
+    >
+      {isWaiting ? (
+        <div className="flex min-h-40 flex-col items-center justify-center gap-3 text-center" role="status" aria-label={t('providers.connectionTest.running')} aria-live="polite" aria-busy="true">
+          <span className="size-7 animate-spin rounded-full border-2 border-border border-t-accent" aria-hidden="true" />
+          <p className="text-sm font-medium text-text-secondary">{t('providers.connectionTest.running')}</p>
+        </div>
+      ) : null}
+    </ChecklistResultDialog>
   )
 }

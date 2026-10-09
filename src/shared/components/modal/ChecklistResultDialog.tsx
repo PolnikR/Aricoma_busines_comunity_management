@@ -21,8 +21,8 @@ export interface BadgeConfig {
 export interface StatusBar {
   title: string
   status: 'success' | 'warning' | 'error'
-  passedCount: number
-  totalCount: number
+  passedCount?: number
+  totalCount?: number
 }
 
 export interface ChecklistResultDialogProps {
@@ -132,8 +132,8 @@ export function ChecklistResultDialog({
               <CheckIcon className="size-4" />
               {statusBar.title}
             </span>
-            <span className="shrink-0 rounded-full border border-current px-2 py-0.5 font-mono text-xs tabular-nums opacity-75">
-              {statusBar.passedCount} / {statusBar.totalCount} passed
+            <span className={`shrink-0 rounded-full border border-current px-2 py-0.5 font-mono text-xs tabular-nums opacity-75 ${statusBar.passedCount === undefined || statusBar.totalCount === undefined ? 'hidden' : ''}`}>
+              {statusBar.passedCount !== undefined && statusBar.totalCount !== undefined ? <>{statusBar.passedCount} / {statusBar.totalCount} passed</> : null}
             </span>
           </div>
         ) : null}

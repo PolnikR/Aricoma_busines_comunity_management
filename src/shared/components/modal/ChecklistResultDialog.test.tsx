@@ -81,6 +81,12 @@ describe('ChecklistResultDialog', () => {
     expect(screen.getByText('2 / 2 passed')).toBeInTheDocument()
   })
 
+  it('does not display a pass counter if a request failed before any checks', () => {
+    renderWithProviders(<ChecklistResultDialog {...baseProps} statusBar={{ title: 'Connection failed', status: 'error' }} checks={[]} responseData={null} />)
+    expect(screen.getByText('Connection failed')).toBeInTheDocument()
+    expect(screen.queryByText(/passed/)).not.toBeInTheDocument()
+  })
+
   it('renders all checks', () => {
     renderWithProviders(<ChecklistResultDialog {...baseProps} />)
     expect(screen.getByText('Check 1')).toBeInTheDocument()

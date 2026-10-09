@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvidersCatalogueTable } from './ProvidersCatalogueTable'
@@ -355,6 +355,57 @@ describe('ProvidersCatalogueTable', () => {
     await waitFor(() => { expect(dialog).toHaveTextContent('Connection test completed') })
     expect(dialog).toHaveTextContent('Credentials')
     expect(screen.queryByRole('dialog', { name: 'Provider detail' })).not.toBeInTheDocument()
+  })
+
+  it('shows loading until a complete response arrives and resets to loading on Retry', async () => {
+    const fetchProvider = mockFetch()
+    const pendingTests: ((response: Response) => void)[] = []
+    vi.stubGlobal('fetch', vi.fn((input: string | URL) => {
+      if (String(input).includes('test_provider')) {
+        return new Promise<Response>(resolve => { pendingTests.push(resolve) })
+      }
+      return fetchProvider(input)
+    }))
+
+    renderTable()
+    fireEvent.click(await screen.findByText('Production vCenter'))
+    fireEvent.click(screen.getByRole('button', { name: 'Test connection' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Test provider connection' })
+    await waitFor(() => { expect(pendingTests).toHaveLength(1) })
+    expect(dialog).toHaveTextContent('Testing provider connection…')
+    expect(dialog).not.toHaveTextContent('Connection test completed')
+    expect(dialog).not.toHaveTextContent('0 / 0 passed')
+    expect(dialog).not.toHaveTextContent('Response body')
+
+    await act(async () => {
+      pendingTests[0]?.(new Response(JSON.stringify({
+        provider_id: 'vmware-vcenter-01', provider_type: 'VMWARE', ok: false,
+        checks: [{ name: 'Connectivity', status: 'timeout', detail: 'Connection timed out' }],
+      }), { status: 200 }))
+      await Promise.resolve()
+    })
+    await waitFor(() => { expect(dialog).toHaveTextContent('Connection timed out') })
+    expect(dialog).toHaveTextContent('The connection test could not be completed.')
+    expect(dialog).not.toHaveTextContent('Testing provider connection…')
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Retry' }))
+    await waitFor(() => { expect(pendingTests).toHaveLength(2) })
+    expect(dialog).toHaveTextContent('Testing provider connection…')
+    expect(dialog).not.toHaveTextContent('Connection timed out')
+    expect(dialog).not.toHaveTextContent('Response body')
+
+    await act(async () => {
+      pendingTests[1]?.(new Response(JSON.stringify({
+        provider_id: 'vmware-vcenter-01', provider_type: 'VMWARE', ok: true,
+        checks: [{ name: 'Connectivity', status: 'ok', detail: 'Connected to vCenter' }],
+      }), { status: 200 }))
+      await Promise.resolve()
+    })
+    await waitFor(() => { expect(dialog).toHaveTextContent('Connection test completed') })
+    expect(dialog).toHaveTextContent('1 / 1 passed')
+    expect(dialog).toHaveTextContent('Connected to vCenter')
+    expect(dialog).toHaveTextContent('Response body')
   })
 
   it('disables connection test when the selected provider has no credential', async () => {
