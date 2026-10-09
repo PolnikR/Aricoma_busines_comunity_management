@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
@@ -245,6 +245,71 @@ describe('RecoveryAppBuilder', () => {
     render(<RecoveryAppBuilder />)
     await openTiers('power-01', 'power-01')
     expect(screen.getByText('Group options: lpar_group')).toBeInTheDocument()
+  })
+
+  describe('changing the source provider of a new application', () => {
+    async function assignGroupAndReturnToDetails() {
+      const user = userEvent.setup()
+      await openTiers()
+      await user.click(screen.getByRole('button', { name: 'Add test group' }))
+      expect(screen.getByText('Group id: database_group')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Application details' }))
+      return user
+    }
+
+    it('asks first and, once confirmed, detaches the groups from every tier but keeps the tiers', async () => {
+      const onDirtyChange = vi.fn()
+      render(<RecoveryAppBuilder onDirtyChange={onDirtyChange} />)
+      const user = await assignGroupAndReturnToDetails()
+
+      await user.selectOptions(screen.getByLabelText('Provider ID *'), 'power-01')
+      const dialog = screen.getByRole('dialog', { name: 'Change source provider?' })
+      await user.click(within(dialog).getByRole('button', { name: 'Change provider' }))
+
+      expect(screen.getByLabelText('Provider ID *')).toHaveValue('power-01')
+      await user.selectOptions(screen.getByLabelText('Target provider ID *'), 'power-01')
+      await user.click(screen.getByRole('button', { name: 'Next' }))
+      expect(screen.getByText('Tier count: 1')).toBeInTheDocument()
+      expect(screen.getByText('Group id: none')).toBeInTheDocument()
+      expect(screen.getByText('Database VMs: 0')).toBeInTheDocument()
+    })
+
+    it('keeps the source and its groups when the change is cancelled', async () => {
+      render(<RecoveryAppBuilder />)
+      const user = await assignGroupAndReturnToDetails()
+
+      await user.selectOptions(screen.getByLabelText('Provider ID *'), 'power-01')
+      await user.click(within(screen.getByRole('dialog', { name: 'Change source provider?' })).getByRole('button', { name: 'Cancel' }))
+
+      expect(screen.queryByRole('dialog', { name: 'Change source provider?' })).not.toBeInTheDocument()
+      expect(screen.getByLabelText('Provider ID *')).toHaveValue('vmware-01')
+      expect(screen.getByLabelText('Target provider ID *')).toHaveValue('vmware-target-01')
+      await user.click(screen.getByRole('button', { name: 'Next' }))
+      expect(screen.getByText('Group id: database_group')).toBeInTheDocument()
+    })
+
+    it('keeps the groups when only the target changes', async () => {
+      render(<RecoveryAppBuilder />)
+      const user = await assignGroupAndReturnToDetails()
+
+      await user.selectOptions(screen.getByLabelText('Target provider ID *'), '')
+      await user.selectOptions(screen.getByLabelText('Target provider ID *'), 'vmware-target-01')
+
+      expect(screen.queryByRole('dialog', { name: 'Change source provider?' })).not.toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Next' }))
+      expect(screen.getByText('Group id: database_group')).toBeInTheDocument()
+    })
+
+    it('changes the source without asking when no group is assigned', async () => {
+      const user = userEvent.setup()
+      render(<RecoveryAppBuilder />)
+      fillDetails()
+
+      await user.selectOptions(screen.getByLabelText('Provider ID *'), 'power-01')
+
+      expect(screen.queryByRole('dialog', { name: 'Change source provider?' })).not.toBeInTheDocument()
+      expect(screen.getByLabelText('Provider ID *')).toHaveValue('power-01')
+    })
   })
 
   it('opens the recovery groups and tiers step after valid details', async () => {

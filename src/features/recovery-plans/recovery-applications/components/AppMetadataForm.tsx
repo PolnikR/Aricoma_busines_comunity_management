@@ -39,12 +39,14 @@ export function AppMetadataForm({
   const [environment, setEnvironment] = useState<string>(
     initialValues?.environment ?? 'dev'
   )
-  const [platform, setPlatform] = useState(initialValues?.platform ?? '')
+  // Source and target follow the parent: it may decline a source change (the
+  // builder asks first when recovery groups are assigned).
+  const platform = initialValues?.platform ?? ''
   const eligibleProviders = getEligibleSourceProviders(providers)
   const selectedPlatformIsMissing = Boolean(
     platform && !eligibleProviders.some(provider => provider.id === platform),
   )
-  const [targetProviderId, setTargetProviderId] = useState(initialValues?.targetProviderId ?? '')
+  const targetProviderId = initialValues?.targetProviderId ?? ''
   const providerTypeOf = (id: string) => providers.find(provider => provider.id === id)?.type
   const eligibleTargetProviders = getEligibleTargetProviders(providers, providerTypeOf(platform))
   const selectedTargetIsMissing = Boolean(
@@ -70,17 +72,14 @@ export function AppMetadataForm({
         onMetadataChange?.({ environment: value })
         break
       case 'platform':
-        setPlatform(value)
         // A target of the old provider type cannot serve the new source.
         if (providerTypeOf(value) !== providerTypeOf(platform)) {
-          setTargetProviderId('')
           onMetadataChange?.({ platform: value, targetProviderId: '' })
         } else {
           onMetadataChange?.({ platform: value })
         }
         break
       case 'targetProviderId':
-        setTargetProviderId(value)
         onMetadataChange?.({ targetProviderId: value })
         break
     }

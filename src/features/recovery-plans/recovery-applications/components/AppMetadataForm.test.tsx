@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
@@ -5,6 +6,7 @@ import { LanguageProvider } from '@/contexts/LanguageProvider'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { sourceProviderIdOf } from '../utils/sourceProvider'
 import { AppMetadataForm } from './AppMetadataForm'
+import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 describe('AppMetadataForm', () => {
   beforeEach(() => {
@@ -166,18 +168,57 @@ describe('AppMetadataForm', () => {
       { id: 'power-target', name: 'Power Target', type: 'IBM_POWER', role: 'target', credentialStatus: 'ok' },
     ] as ProviderRecord[]
 
+    // Applies every reported change, like the builder does, since the form shows
+    // the source and target its parent passes in.
+    function Harness({ platform, targetProviderId, onMetadataChange }: {
+      platform: string
+      targetProviderId: string
+      onMetadataChange: (metadata: Partial<RecoveryApplicationFormState>) => void
+    }) {
+      const [values, setValues] = useState({ platform, targetProviderId })
+      return (
+        <AppMetadataForm
+          initialValues={{ fileName: 'finance_app', name: 'Finance', description: 'Primary', environment: 'dev', ...values }}
+          providers={providers}
+          onMetadataChange={metadata => {
+            onMetadataChange(metadata)
+            setValues(current => ({
+              platform: metadata.platform ?? current.platform,
+              targetProviderId: metadata.targetProviderId ?? current.targetProviderId,
+            }))
+          }}
+        />
+      )
+    }
+
     function renderForm(platform: string, targetProviderId: string, onMetadataChange = vi.fn()) {
       render(
         <LanguageProvider>
+          <Harness platform={platform} targetProviderId={targetProviderId} onMetadataChange={onMetadataChange} />
+        </LanguageProvider>,
+      )
+      return onMetadataChange
+    }
+
+    it('shows the source its parent keeps, so a declined change leaves the old provider selected', async () => {
+      const user = userEvent.setup()
+      const onMetadataChange = vi.fn()
+      render(
+        <LanguageProvider>
           <AppMetadataForm
-            initialValues={{ fileName: 'finance_app', name: 'Finance', description: 'Primary', environment: 'dev', platform, targetProviderId }}
+            initialValues={{ fileName: 'finance_app', name: 'Finance', description: 'Primary', environment: 'dev', platform: 'vmware-source', targetProviderId: 'vmware-target' }}
             providers={providers}
             onMetadataChange={onMetadataChange}
           />
         </LanguageProvider>,
       )
-      return onMetadataChange
-    }
+
+      await user.selectOptions(await screen.findByLabelText('Provider ID *'), 'power-source')
+
+      expect(onMetadataChange).toHaveBeenLastCalledWith({ platform: 'power-source', targetProviderId: '' })
+      expect(screen.getByLabelText('Provider ID *')).toHaveValue('vmware-source')
+      expect(screen.getByLabelText('Target provider ID *')).toHaveValue('vmware-target')
+    })
 
     it('is disabled until a source provider is selected', async () => {
       renderForm('', '')

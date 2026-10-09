@@ -18,6 +18,7 @@ import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
 import { selectPolicySets } from '@/features/recovery-plans/policy-sets/model/selectPolicySets'
 import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups'
 import { isRecoveryGroupCompatible } from '../utils/recoveryGroupPlatform'
+import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
 import { cloneTier } from '../utils/recoveryApplicationFormMapper'
@@ -143,9 +144,28 @@ export function RecoveryAppBuilder({
     onDirtyChange?.(true)
   }, [onDirtyChange])
 
+  // Assigned groups belong to the current source platform, so a source change
+  // asks first and then detaches them from every tier (the tiers stay).
+  const [pendingSourceChange, setPendingSourceChange] = useState<Partial<RecoveryApplicationFormState> | null>(null)
   const handleMetadataChange = useCallback((metadata: Partial<RecoveryApplicationFormState>) => {
+    const changesSource = metadata.platform !== undefined && metadata.platform !== formState.platform
+    const hasAssignedGroups = Array.from(formState.tiers.values()).some(tier => Boolean(tier.recovery_group))
+    if (changesSource && hasAssignedGroups) {
+      setPendingSourceChange(metadata)
+      return
+    }
     updateFormState(metadata)
-  }, [updateFormState])
+  }, [formState.platform, formState.tiers, updateFormState])
+  const confirmSourceChange = () => {
+    if (!pendingSourceChange) return
+    setFormState(prev => ({
+      ...prev,
+      ...pendingSourceChange,
+      tiers: new Map(Array.from(prev.tiers, ([id, tier]): [string, DraftRecoveryTier] => [id, { order: tier.order, description: tier.description }])),
+    }))
+    setPendingSourceChange(null)
+    onDirtyChange?.(true)
+  }
 
   const handleRecoveryGroupAdded = useCallback((tierId: string, groupId: string) => {
     const selectedGroup = availableGroups.find(group => group.id === groupId)
@@ -508,6 +528,16 @@ export function RecoveryAppBuilder({
         </div>
       </div>
     </div>
+    <ConfirmDialog
+      open={pendingSourceChange !== null}
+      title={t('recovery.application.sourceChange.title')}
+      message={t('recovery.application.sourceChange.message')}
+      confirmLabel={t('recovery.application.sourceChange.confirm')}
+      cancelLabel={t('buttons.cancel')}
+      tone="danger"
+      onConfirm={confirmSourceChange}
+      onCancel={() => { setPendingSourceChange(null) }}
+    />
     </fieldset>
   )
 }
