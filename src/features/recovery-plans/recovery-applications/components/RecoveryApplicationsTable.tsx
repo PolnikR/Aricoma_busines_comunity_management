@@ -459,6 +459,7 @@ export function RecoveryApplicationsTable({
                   ? getProviderLabel(selected.data.application.target_provider_id, providers)
                   : null}
               />
+              <DetailField label={t('details.policySetId')} value={selected.policySetId ?? null} />
               <DetailField label={t('details.notificationEmail')} value={selected.data.application.notificationEmail} />
               <DetailField label={t('details.tiers')} value={String(Object.keys(selected.data.application.tiers).length)} />
               <DetailField label={t('details.status')} value={<ApplicationStatusBadge app={selected} />} />

@@ -338,10 +338,11 @@ describe('RecoveryApplicationsTable', () => {
       const overview = within(drawer).getByRole('region', { name: 'Overview' })
       // One shared Overview field list.
       expect(overview.querySelectorAll('dl')).toHaveLength(1)
-      expect(overviewTerms(drawer)).toEqual(['Description', 'Environment', 'Platform', 'Target provider', 'Notification email', 'Tiers', 'Status', 'Submission'])
+      expect(overviewTerms(drawer)).toEqual(['Description', 'Environment', 'Platform', 'Target provider', 'Policy set ID', 'Notification email', 'Tiers', 'Status', 'Submission'])
       expect(overview).toHaveTextContent('Finance workloads')
       expect(overview).toHaveTextContent('vmware-vcenter-01')
       expect(within(drawer).getByText('Target provider', { selector: 'dt' }).nextElementSibling).toHaveTextContent('vmware-vcenter-02')
+      expect(within(drawer).getByText('Policy set ID', { selector: 'dt' }).nextElementSibling).toHaveTextContent('critical-daily-latest')
       expect(within(drawer).getByText('Notification email', { selector: 'dt' }).nextElementSibling).toHaveTextContent('Not set')
       expect(overview).toHaveTextContent('/tmp/finance.json')
     })
@@ -350,7 +351,7 @@ describe('RecoveryApplicationsTable', () => {
       const withoutSubmission: RecoveryApplicationListItem = { ...application }
       delete withoutSubmission.submission
       const { drawer } = await openDetail(withoutSubmission)
-      expect(overviewTerms(drawer)).toEqual(['Description', 'Environment', 'Platform', 'Target provider', 'Notification email', 'Tiers', 'Status'])
+      expect(overviewTerms(drawer)).toEqual(['Description', 'Environment', 'Platform', 'Target provider', 'Policy set ID', 'Notification email', 'Tiers', 'Status'])
     })
 
     it('shows the stored notification email and an unset target provider of a legacy record', async () => {
@@ -385,10 +386,15 @@ describe('RecoveryApplicationsTable', () => {
       expect(within(drawer).queryByRole('button', { name: 'View recovery runs →' })).not.toBeInTheDocument()
     })
 
-    it('does not move the former Technical identifiers into Overview', async () => {
+    it('shows an unset policy set as Not set', async () => {
+      const { drawer } = await openDetail({ ...application, policySetId: undefined })
+      expect(within(drawer).getByText('Policy set ID', { selector: 'dt' }).nextElementSibling).toHaveTextContent('Not set')
+    })
+
+    it('keeps internal identifiers out of Overview', async () => {
       const { drawer } = await openDetail(application)
       const overview = within(drawer).getByRole('region', { name: 'Overview' })
-      for (const identifier of ['finance-app', 'critical-daily-latest', 'airflow-01', '260811133132_fbffbefb']) {
+      for (const identifier of ['finance-app', 'airflow-01', '260811133132_fbffbefb']) {
         expect(overview).not.toHaveTextContent(identifier)
       }
     })

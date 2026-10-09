@@ -30,7 +30,7 @@ Plán: `tasks/recovery-app-audit-fixes-plan.md`. `RA/` je skratka pre `src/featu
 **Overenie:** `RA/utils/recoveryApplicationFormMapper.test.ts`, `RA/pages/RecoveryApplicationEditorPage.test.tsx`, `RA/pages/RecoveryApplicationBuilderPage.test.tsx`
 
 ### T5: DetailView
-- [x] V Overview pribudne „Target provider“ (meno providera, prípadne id) a „Notification email“. Policy set sa vynechal (pozri spec, T5). Prázdna hodnota sa zobrazí cez `DetailField` ako „Not set“.
+- [x] V Overview sa zobrazuje „Target provider“ (meno providera, prípadne id), „Policy set ID“ (`policy_set_id`) a „Notification email“. Prázdna hodnota sa zobrazí cez `DetailField` ako „Not set“.
 - [x] `target_lpar_prefix` sa nezobrazuje, nesúlad s OpenAPI je zdokumentovaný v spec.
 
 **Overenie:** `RA/components/RecoveryApplicationsTable.test.tsx`
