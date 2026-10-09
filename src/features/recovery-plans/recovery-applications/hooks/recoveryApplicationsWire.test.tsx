@@ -1,38 +1,11 @@
 import type { ReactNode } from 'react'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RecoveryApplicationData, RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 import { useDeleteRecoveryApplication } from './useDeleteRecoveryApplication'
 import { useSubmitRecoveryApplication } from './useRecoveryApplications'
 
-const mocks = vi.hoisted(() => ({ useProviders: vi.fn() }))
-
-vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@/generated/query/providers/providers.gen')>(),
-  useGetProviders: mocks.useProviders,
-}))
-
-const targetVcenter: ProviderRecord = {
-  id: 'vmware-vcenter-02',
-  name: 'Target vCenter',
-  description: '',
-  type: 'VMWARE',
-  role: 'target',
-  ipAddress: '10.0.0.2',
-  credentialId: 'vcenter-admin',
-  credentialStatus: 'ok',
-  orchestratorConnId: 'vcenter_default_destination',
-}
-
-const sourceVcenter: ProviderRecord = {
-  ...targetVcenter,
-  id: 'vmware-vcenter-01',
-  name: 'Source vCenter',
-  role: 'source',
-  orchestratorConnId: 'vcenter_default',
-}
 
 const data: RecoveryApplicationData = {
   id: 'finance-recovery',
@@ -43,8 +16,7 @@ const data: RecoveryApplicationData = {
     environment: 'prod',
     platform: 'VMWARE',
     source_provider_id: 'vmware-vcenter-01',
-    source_connection: 'vcenter_default',
-    target_connection: 'vcenter_default_destination',
+    target_provider_id: 'vmware-vcenter-02',
     tiers: {},
   },
 }
@@ -75,9 +47,6 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 describe('recovery applications wire contract', () => {
-  beforeEach(() => {
-    mocks.useProviders.mockReturnValue({ data: [sourceVcenter, targetVcenter], isSuccess: true })
-  })
   afterEach(() => { vi.unstubAllGlobals() })
 
   it('deletes a local application without rollback parameters', async () => {
@@ -114,12 +83,23 @@ describe('recovery applications wire contract', () => {
     expect(returned?.rollback).toMatchObject(report)
   })
 
-  it.each([
-    ['no target provider uses the target connection', [sourceVcenter], 'missing_compute_provider', 'VMWARE'],
-    ['several target providers use the target connection', [targetVcenter, { ...targetVcenter, id: 'vmware-vcenter-04' }], 'ambiguous_compute_provider', 'VMWARE'],
-    ['the application is IBM Power', [targetVcenter], 'ibm_power_rollback_unsupported', 'IBM_POWER'],
-  ])('does not send the rollback request when %s', async (_label, providers, code, platform) => {
-    mocks.useProviders.mockReturnValue({ data: providers, isSuccess: true })
+  it('rolls back an orchestrated IBM Power application on its stored target IBM Power provider', async () => {
+    const mock = stubFetch({ applications: [], rollback: { status: 'ok' } })
+    const { result } = renderHook(() => useDeleteRecoveryApplication(), { wrapper })
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        ...application,
+        pushToOrchestrator: true,
+        orchestrationProviderId: 'airflow-01',
+        data: { application: { ...data.application, platform: 'IBM_POWER', source_provider_id: 'ibm-power-01', target_provider_id: 'ibm-power-02' } },
+      })
+    })
+
+    expect(request(mock).params).toMatchObject({ rollback_from_orchestrator: 'true', compute_provider_id: 'ibm-power-02' })
+  })
+
+  it('does not send the rollback request when the application has no stored target provider', async () => {
     const mock = stubFetch({ applications: [] })
     const { result } = renderHook(() => useDeleteRecoveryApplication(), { wrapper })
 
@@ -128,8 +108,8 @@ describe('recovery applications wire contract', () => {
         ...application,
         pushToOrchestrator: true,
         orchestrationProviderId: 'airflow-01',
-        data: { application: { ...data.application, platform } },
-      })).rejects.toMatchObject({ code })
+        data: { application: { ...data.application, target_provider_id: undefined } },
+      })).rejects.toMatchObject({ code: 'missing_compute_provider' })
     })
 
     expect(mock).not.toHaveBeenCalled()

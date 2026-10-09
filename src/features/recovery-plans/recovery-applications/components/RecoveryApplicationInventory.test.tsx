@@ -1,14 +1,10 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useGetRecoveryAppInventory } from '@/generated/query/recovery-apps/recovery-apps.gen'
-import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 import { RecoveryApplicationInventory } from './RecoveryApplicationInventory'
 
-const mocks = vi.hoisted(() => ({ useProviders: vi.fn() }))
-
 vi.mock('@/generated/query/recovery-apps/recovery-apps.gen', () => ({ useGetRecoveryAppInventory: vi.fn() }))
-vi.mock('@/generated/query/providers/providers.gen', () => ({ useGetProviders: mocks.useProviders }))
 vi.mock('@/hooks/useTranslation', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
 
 const application: RecoveryApplicationListItem = {
@@ -19,25 +15,14 @@ const application: RecoveryApplicationListItem = {
       environment: 'prod',
       platform: 'VMWARE',
       source_provider_id: 'vmware-vcenter-01',
-      source_connection: 'vcenter_default',
-      target_connection: 'vcenter_default_destination',
+      target_provider_id: 'vmware-vcenter-02',
       tiers: {},
     },
   },
 }
 
-function vmwareProvider(id: string, role: 'source' | 'target', orchestratorConnId: string): ProviderRecord {
-  return {
-    id, name: id, description: '', type: 'VMWARE', role, ipAddress: '10.0.0.1',
-    credentialId: 'vmware-credentials', credentialStatus: 'ok', orchestratorConnId,
-  }
-}
-
-const sourceVcenter = vmwareProvider('vmware-vcenter-01', 'source', 'vcenter_default')
-const targetVcenter = vmwareProvider('vmware-vcenter-02', 'target', 'vcenter_default_destination')
-
-function mockProviders(providers: ProviderRecord[]) {
-  mocks.useProviders.mockReturnValue({ data: providers, error: null, isFetching: false, refetch: vi.fn() })
+function withApplication(changes: Partial<RecoveryApplicationListItem['data']['application']>): RecoveryApplicationListItem {
+  return { ...application, data: { application: { ...application.data.application, ...changes } } }
 }
 
 function mockInventory(data?: unknown) {
@@ -54,10 +39,9 @@ function inventoryRequest() {
 describe('RecoveryApplicationInventory', () => {
   beforeEach(() => {
     vi.mocked(useGetRecoveryAppInventory).mockReset()
-    mockProviders([sourceVcenter, targetVcenter])
   })
 
-  it('requests the inventory from the target provider of the target connection, not the source provider', () => {
+  it('requests the inventory from the stored target provider, not the source provider', () => {
     mockInventory()
 
     render(<RecoveryApplicationInventory runId="run-1" active application={application} />)
@@ -68,19 +52,23 @@ describe('RecoveryApplicationInventory', () => {
     })
   })
 
-  it.each([
-    ['no target provider uses the target connection', [sourceVcenter], /No target VMWARE provider/],
-    ['several target providers use the target connection', [targetVcenter, { ...targetVcenter, id: 'vmware-vcenter-04' }], /Several target VMWARE providers/],
-  ])('does not request the inventory when %s', (_label, providers, message) => {
-    mockProviders(providers)
+  it.each([undefined, null])('does not request the inventory when target_provider_id is %s', (targetProviderId) => {
     mockInventory()
 
-    render(<RecoveryApplicationInventory runId="run-1" active application={application} />)
+    render(<RecoveryApplicationInventory runId="run-1" active application={withApplication({ target_provider_id: targetProviderId })} />)
 
     expect(inventoryRequest().enabled).toBe(false)
     expect(inventoryRequest().params).not.toHaveProperty('compute_provider_id')
     expect(screen.getByText('recoveryInventory.error')).toBeInTheDocument()
-    expect(screen.getByText(message)).toBeInTheDocument()
+    expect(screen.getByText(/no target provider stored/)).toBeInTheDocument()
+  })
+
+  it('leaves the compute provider of an IBM Power inventory to the backend', () => {
+    mockInventory()
+
+    render(<RecoveryApplicationInventory runId="run-1" active application={withApplication({ platform: 'IBM_POWER', target_provider_id: 'ibm-power-02' })} />)
+
+    expect(inventoryRequest()).toEqual({ params: { run_id: 'run-1' }, enabled: true })
   })
 
   it('renders summary metrics and compact tier disclosures with VM rows', () => {
