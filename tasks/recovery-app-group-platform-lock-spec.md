@@ -43,12 +43,15 @@
    - Zmena iba cieľa skupiny nemaže.
    - `AppMetadataForm` bude mať zdroj aj cieľ riadené cez props, aby zrušenie vrátilo hodnotu v selecte.
 3. **Uzamknutie pri editácii.**
-   - Editor zamkne providerov, ak má záznam `source_provider_id` aj `target_provider_id`.
+   - Editor zamkne providerov každej uloženej appky (režim Edit určuje editor, nie prítomnosť provider id).
    - Selecty sú `disabled` a ukazujú meno providera (alebo „unavailable“ s id, ak už neexistuje).
    - Builder zmenu providera ignoruje.
-   - Mapper pošle pôvodné `platform`, `source_provider_id` a `target_provider_id` bez hľadania v zozname providerov, takže uloženie funguje aj s nedostupným providerom.
-   - Validácia pri zamknutých provideroch nekontroluje ich dostupnosť.
-   - **Legacy záznam bez provider id sa nezamyká:** inak by ho nebolo možné uložiť v novom kontrakte. Používateľ vyberie providerov raz. `source_connection`/`target_connection` sa nemapujú.
+   - Mapper pošle pôvodné `platform`, `source_provider_id` a `target_provider_id` bez nového odvodenia z formulára.
+   - *Revidované (`bd62d73b`, `9ff7b650`):*
+     - Zamyká sa každá uložená appka, aj legacy záznam bez provider id. Taký záznam ukáže upozornenie na starý kontrakt a Save je zablokované.
+     - Save je zablokované aj vtedy, keď uložený provider chýba alebo už nezodpovedá BE `validate_app_providers` (typ, pri VMware aj rola).
+     - Kým sa provideri načítavajú alebo ich načítanie zlyhalo, verdikt sa nevynáša: Save čaká a pri chybe sa ponúkne Retry.
+     - `source_connection`/`target_connection` sa nemapujú.
 4. **Validácia pred uložením.**
    - Každá priradená skupina musí byť v zozname recovery groups.
    - Jej `workloadType` musí zodpovedať platforme.
