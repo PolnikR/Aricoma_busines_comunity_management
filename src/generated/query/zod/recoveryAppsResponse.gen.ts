@@ -15,8 +15,8 @@ export const RecoveryAppsResponse = zod.object({
   "description": zod.string(),
   "environment": zod.string(),
   "platform": zod.string(),
-  "source_connection": zod.string(),
-  "target_connection": zod.string(),
+  "source_provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "target_provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "tiers": zod.record(zod.string(), zod.object({
   "order": zod.int(),
   "description": zod.string(),
@@ -35,9 +35,8 @@ export const RecoveryAppsResponse = zod.object({
 })).default(recoveryAppsResponseApplicationsItemApplicationTiersRecoveryGroupVmsDefault)
 })
 })),
-  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "source_provider_id": zod.union([zod.string(),zod.null()]).exactOptional()
-}).describe('Shape accessed unconditionally by apache_airflow/dags/recovery_app_template.py\nat Airflow DAG-parse time - keep fields in sync with that module.'),
+  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional()
+}).describe('Read shape: tolerates a record not yet migrated by scripts/migrate_recovery_apps_to_provider_ids.py\n(old source_connection/target_connection keys, no provider ids) so one legacy record cannot 500 the\nlist/submit/delete responses. The submit body keeps the strict RecoveryApplication.'),
   "policy_set_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "orchestration": zod.union([zod.object({
   "run_id": zod.union([zod.string(),zod.null()]).exactOptional(),

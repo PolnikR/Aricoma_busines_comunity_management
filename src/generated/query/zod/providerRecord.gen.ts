@@ -17,7 +17,6 @@ export const ProviderRecord = zod.object({
   "ipAddress": zod.union([zod.string(),zod.null()]).exactOptional(),
   "credentialId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "url": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "orchestratorConnId": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmPrefix": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vmTags": zod.array(zod.string()).exactOptional(),
   "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),

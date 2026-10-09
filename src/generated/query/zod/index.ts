@@ -135,6 +135,7 @@ export * from './recoveryAppRecord.gen';
 export * from './recoveryAppSubmission.gen';
 export * from './recoveryAppSubmitResponse.gen';
 export * from './recoveryApplication.gen';
+export * from './recoveryApplicationRecord.gen';
 export * from './recoveryAppsResponse.gen';
 export * from './recoveryGroup.gen';
 export * from './recoveryGroupInventoryResponse.gen';

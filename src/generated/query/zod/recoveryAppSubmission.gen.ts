@@ -14,8 +14,8 @@ export const RecoveryAppSubmission = zod.object({
   "description": zod.string(),
   "environment": zod.string(),
   "platform": zod.string(),
-  "source_connection": zod.string(),
-  "target_connection": zod.string(),
+  "source_provider_id": zod.string(),
+  "target_provider_id": zod.string(),
   "tiers": zod.record(zod.string(), zod.object({
   "order": zod.int(),
   "description": zod.string(),
@@ -34,8 +34,7 @@ export const RecoveryAppSubmission = zod.object({
 })).default(recoveryAppSubmissionApplicationTiersRecoveryGroupVmsDefault)
 })
 })),
-  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "source_provider_id": zod.union([zod.string(),zod.null()]).exactOptional()
+  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional()
 }).describe('Shape accessed unconditionally by apache_airflow/dags/recovery_app_template.py\nat Airflow DAG-parse time - keep fields in sync with that module.'),
   "policy_set_id": zod.union([zod.string(),zod.null()]).exactOptional()
 }).describe('POST /submit_recovery_dag request body.')

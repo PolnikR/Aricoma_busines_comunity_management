@@ -2458,10 +2458,10 @@
                   "type": "null"
                 }
               ],
-              "description": "VMWARE provider with role=target - where recover_vm actually registers this run's recovered VMs. Each recovered datastore's IBM target vdisk name is resolved using the storage provider of whichever tier's recovery group the datastore's VMs belong to. Defaults to the app's stored application.source_provider_id.",
+              "description": "VMWARE provider with role=target - where recover_vm actually registers this run's recovered VMs. Each recovered datastore's IBM target vdisk name is resolved using the storage provider of whichever tier's recovery group the datastore's VMs belong to. Defaults to the app's stored application.target_provider_id.",
               "title": "Compute Provider Id"
             },
-            "description": "VMWARE provider with role=target - where recover_vm actually registers this run's recovered VMs. Each recovered datastore's IBM target vdisk name is resolved using the storage provider of whichever tier's recovery group the datastore's VMs belong to. Defaults to the app's stored application.source_provider_id."
+            "description": "VMWARE provider with role=target - where recover_vm actually registers this run's recovered VMs. Each recovered datastore's IBM target vdisk name is resolved using the storage provider of whichever tier's recovery group the datastore's VMs belong to. Defaults to the app's stored application.target_provider_id."
           },
           {
             "name": "X-User",
@@ -2584,10 +2584,10 @@
                   "type": "null"
                 }
               ],
-              "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped. For an ibm_power app this is the IBM_POWER provider holding the target LPARs. Defaults to the app's stored application.source_provider_id; always required with rollback_orphans=true.",
+              "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped. For an ibm_power app this is the IBM_POWER provider holding the target LPARs. Defaults to the app's stored application.target_provider_id; always required with rollback_orphans=true.",
               "title": "Compute Provider Id"
             },
-            "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped. For an ibm_power app this is the IBM_POWER provider holding the target LPARs. Defaults to the app's stored application.source_provider_id; always required with rollback_orphans=true."
+            "description": "VMWARE provider with role=target - required when rollback_from_orchestrator. Its credentials clear VMs off and destroy the app's recovered datastore before its IBM target volume is unmapped. For an ibm_power app this is the IBM_POWER provider holding the target LPARs. Defaults to the app's stored application.target_provider_id; always required with rollback_orphans=true."
           },
           {
             "name": "provider_id_volume",
@@ -4686,17 +4686,6 @@
             ],
             "title": "Url"
           },
-          "orchestratorConnId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Orchestratorconnid"
-          },
           "vmPrefix": {
             "anyOf": [
               {
@@ -4944,17 +4933,6 @@
               }
             ],
             "title": "Url"
-          },
-          "orchestratorConnId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Orchestratorconnid"
           },
           "vmPrefix": {
             "anyOf": [
@@ -5565,17 +5543,6 @@
             ],
             "title": "Url"
           },
-          "orchestratorConnId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Orchestratorconnid"
-          },
           "vmPrefix": {
             "anyOf": [
               {
@@ -5742,17 +5709,6 @@
               }
             ],
             "title": "Url"
-          },
-          "orchestratorConnId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Orchestratorconnid"
           },
           "vmPrefix": {
             "anyOf": [
@@ -6361,7 +6317,7 @@
             "title": "Id"
           },
           "application": {
-            "$ref": "#/components/schemas/RecoveryApplication"
+            "$ref": "#/components/schemas/RecoveryApplicationRecord"
           },
           "policy_set_id": {
             "anyOf": [
@@ -6468,13 +6424,13 @@
             "type": "string",
             "title": "Platform"
           },
-          "source_connection": {
+          "source_provider_id": {
             "type": "string",
-            "title": "Source Connection"
+            "title": "Source Provider Id"
           },
-          "target_connection": {
+          "target_provider_id": {
             "type": "string",
-            "title": "Target Connection"
+            "title": "Target Provider Id"
           },
           "tiers": {
             "additionalProperties": {
@@ -6493,6 +6449,38 @@
               }
             ],
             "title": "Notificationemail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "environment",
+          "platform",
+          "source_provider_id",
+          "target_provider_id",
+          "tiers"
+        ],
+        "title": "RecoveryApplication",
+        "description": "Shape accessed unconditionally by apache_airflow/dags/recovery_app_template.py\nat Airflow DAG-parse time - keep fields in sync with that module."
+      },
+      "RecoveryApplicationRecord": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
           },
           "source_provider_id": {
             "anyOf": [
@@ -6504,20 +6492,48 @@
               }
             ],
             "title": "Source Provider Id"
+          },
+          "target_provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Provider Id"
+          },
+          "tiers": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/RecoveryTier"
+            },
+            "type": "object",
+            "title": "Tiers"
+          },
+          "notificationEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notificationemail"
           }
         },
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "name",
           "description",
           "environment",
           "platform",
-          "source_connection",
-          "target_connection",
           "tiers"
         ],
-        "title": "RecoveryApplication",
-        "description": "Shape accessed unconditionally by apache_airflow/dags/recovery_app_template.py\nat Airflow DAG-parse time - keep fields in sync with that module."
+        "title": "RecoveryApplicationRecord",
+        "description": "Read shape: tolerates a record not yet migrated by scripts/migrate_recovery_apps_to_provider_ids.py\n(old source_connection/target_connection keys, no provider ids) so one legacy record cannot 500 the\nlist/submit/delete responses. The submit body keeps the strict RecoveryApplication."
       },
       "RecoveryAppsResponse": {
         "properties": {
