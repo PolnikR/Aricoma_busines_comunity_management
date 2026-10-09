@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { RecoveryAppBuilder } from './RecoveryAppBuilder'
 import type { RecoveryGroup } from '../../recovery-groups/model/recoveryGroupTypes'
-import type { DraftRecoveryTier } from '../model/recoveryApplicationTypes'
+import type { DraftRecoveryTier, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
@@ -258,6 +258,65 @@ describe('RecoveryAppBuilder', () => {
     expect(screen.getByLabelText('Target provider ID *')).toBeDisabled()
     await user.click(screen.getByRole('button', { name: 'Next' }))
     expect(screen.getByText('Group options: lpar_group')).toBeInTheDocument()
+  })
+
+  describe('validating stored recovery groups before saving', () => {
+    function savedApplication(platform: string, targetProviderId: string, groupId: string, groupName: string, vmNames: string[]): RecoveryApplicationFormState {
+      return {
+        fileName: 'finance_recovery',
+        policySetId: 'critical-daily-latest',
+        pushToOrchestrator: false,
+        name: 'Finance',
+        description: 'Finance recovery',
+        environment: 'prod',
+        platform,
+        orchestrationProviderId: '',
+        targetProviderId,
+        notificationEmail: null,
+        tiers: new Map([['tier_id', {
+          order: 1,
+          description: 'Tier',
+          recovery_group: { id: groupId, name: groupName, vms: vmNames.map(name => ({ name })) },
+        }]]),
+      }
+    }
+
+    async function trySave(initialData: RecoveryApplicationFormState) {
+      const user = userEvent.setup()
+      const onSave = vi.fn()
+      const alert = vi.fn()
+      vi.stubGlobal('alert', alert)
+      render(<RecoveryAppBuilder initialData={initialData} onSave={onSave} />)
+      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+      await user.click(screen.getByRole('button', { name: 'Save Application' }))
+      return { onSave, alert }
+    }
+
+    it('blocks saving a VMware application with an IBM Power recovery group', async () => {
+      const { onSave, alert } = await trySave(savedApplication('vmware-01', 'vmware-target-01', 'lpar_group', 'LPAR Group', ['aix2source']))
+      expect(onSave).not.toHaveBeenCalled()
+      expect(alert).toHaveBeenCalledWith('Recovery group "LPAR Group" in tier "tier_id" does not match the application platform. Remove it from the tier.')
+    })
+
+    it('blocks saving an IBM Power application with an invalid LPAR name', async () => {
+      const { onSave, alert } = await trySave(savedApplication('power-01', 'power-01', 'lpar_group', 'LPAR Group', ['bad name']))
+      expect(onSave).not.toHaveBeenCalled()
+      expect(alert).toHaveBeenCalledWith(expect.stringContaining('LPAR name "bad name" in tier "tier_id" is invalid'))
+    })
+
+    it('saves an IBM Power application using one provider as source and target', async () => {
+      const { onSave, alert } = await trySave(savedApplication('power-01', 'power-01', 'lpar_group', 'LPAR Group', ['aix2source']))
+      expect(alert).not.toHaveBeenCalled()
+      expect(onSave.mock.calls[0]?.[0]).toMatchObject({ platform: 'power-01', targetProviderId: 'power-01' })
+    })
+
+    it('waits for the recovery groups before saving', async () => {
+      recoveryGroupsQuery.current.isLoading = true
+      const user = userEvent.setup()
+      render(<RecoveryAppBuilder initialData={savedApplication('vmware-01', 'vmware-target-01', 'database_group', 'Database Group', ['DB-01'])} />)
+      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+      expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+    })
   })
 
   describe('changing the source provider of a new application', () => {

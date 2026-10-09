@@ -52,4 +52,64 @@ describe('validateRecoveryApplication', () => {
       messageKey: 'recovery.application.validation.targetProviderRequired',
     })
   })
+
+  describe('recovery groups', () => {
+    const groups = [
+      { id: 'vm_group', sourceCategory: 'backup_system_workload', workloadType: 'vmware_virtual_machines' },
+      { id: 'lpar_group', sourceCategory: 'backup_system_workload', workloadType: 'ibm_power_virtual_machines' },
+    ] as const
+    const powerProviders = [provider('power-hmc', 'IBM_POWER', 'source')]
+
+    function withGroup(groupId: string, vmNames: string[], state: Partial<RecoveryApplicationFormState> = {}): RecoveryApplicationFormState {
+      return {
+        ...formState,
+        ...state,
+        tiers: new Map([['database', {
+          order: 1,
+          description: 'Database tier',
+          recovery_group: { id: groupId, name: `${groupId} name`, vms: vmNames.map(name => ({ name })) },
+        }]]),
+      }
+    }
+
+    it('accepts groups of the application platform', () => {
+      expect(validateRecoveryApplication(withGroup('vm_group', ['db 01']), providers, [], { groups: [...groups] })).toBeNull()
+    })
+
+    it('rejects a group that no longer exists', () => {
+      expect(validateRecoveryApplication(withGroup('gone_group', []), providers, [], { groups: [...groups] })).toEqual({
+        field: 'recoveryGroup',
+        messageKey: 'recovery.application.validation.recoveryGroupMissing',
+        params: { tier: 'database', group: 'gone_group name' },
+      })
+    })
+
+    it('rejects a group of another platform', () => {
+      expect(validateRecoveryApplication(withGroup('lpar_group', ['aix01']), providers, [], { groups: [...groups] })).toEqual({
+        field: 'recoveryGroup',
+        messageKey: 'recovery.application.validation.recoveryGroupPlatformMismatch',
+        params: { tier: 'database', group: 'lpar_group name' },
+      })
+    })
+
+    it('uses the stored platform of locked providers', () => {
+      const locked = { platform: 'ibm_power', sourceProviderId: 'gone', targetProviderId: 'gone' }
+      expect(validateRecoveryApplication(withGroup('vm_group', []), [], [], { groups: [...groups], lockedProviders: locked }))
+        .toMatchObject({ messageKey: 'recovery.application.validation.recoveryGroupPlatformMismatch' })
+    })
+
+    it.each(['aix01', 'A', 'lpar.prod_01-a', 'x'.repeat(47)])('accepts the IBM Power LPAR name %s', (name) => {
+      const state = withGroup('lpar_group', [name], { platform: 'power-hmc', targetProviderId: 'power-hmc' })
+      expect(validateRecoveryApplication(state, powerProviders, [], { groups: [...groups] })).toBeNull()
+    })
+
+    it.each(['bad name', '-lpar', '.lpar', 'lpar/01', 'x'.repeat(48), ''])('rejects the IBM Power LPAR name "%s"', (name) => {
+      const state = withGroup('lpar_group', [name], { platform: 'power-hmc', targetProviderId: 'power-hmc' })
+      expect(validateRecoveryApplication(state, powerProviders, [], { groups: [...groups] })).toEqual({
+        field: 'recoveryGroup',
+        messageKey: 'recovery.application.validation.lparNameInvalid',
+        params: { tier: 'database', name },
+      })
+    })
+  })
 })

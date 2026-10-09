@@ -2,18 +2,30 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
 import type { LockedProviders, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from './recoveryApplicationFileName'
+import type { RecoveryGroup } from '../../recovery-groups/model/recoveryGroupTypes'
 import { getEligibleTargetProviders, isEligibleSourceProvider } from './eligibleProviders'
+import { isRecoveryGroupCompatible } from './recoveryGroupPlatform'
 
 export interface ValidationError {
   field: 'fileName' | 'name' | 'description' | 'policySet' | 'platform' | 'targetProvider' | 'recoveryGroup'
   messageKey: string
+  params?: Record<string, string>
 }
+
+// The backend's LPAR_NAME_RE (recovery/recovery.py): each LPAR name becomes part
+// of the DAG's task ids, so an invalid one would only fail on Airflow.
+const LPAR_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,46}$/
 
 export function validateRecoveryApplication(
   formState: RecoveryApplicationFormState,
   providers: ProviderRecord[],
   platformProviders: PlatformProviderRecord[] = [],
-  { lockedProviders = null }: { lockedProviders?: LockedProviders | null } = {},
+  { lockedProviders = null, groups }: {
+    lockedProviders?: LockedProviders | null
+    // The current recovery groups; the sidebar filter alone does not cover
+    // groups stored on a saved application.
+    groups?: Pick<RecoveryGroup, 'id' | 'sourceCategory' | 'workloadType'>[]
+  } = {},
 ): ValidationError | null {
   if (!isValidRecoveryApplicationFileName(formState.fileName)) {
     return {
@@ -86,6 +98,37 @@ export function validateRecoveryApplication(
     return {
       field: 'recoveryGroup',
       messageKey: 'recovery.application.validation.recoveryGroupRequired',
+    }
+  }
+
+  const platform = lockedProviders?.platform ?? sourceProvider?.type
+  for (const [tierId, tier] of formState.tiers) {
+    const group = tier.recovery_group
+    if (!group || !groups) continue
+    const current = groups.find(candidate => candidate.id === group.id)
+    if (!current) {
+      return {
+        field: 'recoveryGroup',
+        messageKey: 'recovery.application.validation.recoveryGroupMissing',
+        params: { tier: tierId, group: group.name },
+      }
+    }
+    if (!isRecoveryGroupCompatible(current, platform)) {
+      return {
+        field: 'recoveryGroup',
+        messageKey: 'recovery.application.validation.recoveryGroupPlatformMismatch',
+        params: { tier: tierId, group: group.name },
+      }
+    }
+    if (platform?.toUpperCase() === 'IBM_POWER') {
+      const invalid = group.vms.find(vm => !LPAR_NAME_RE.test(vm.name))
+      if (invalid) {
+        return {
+          field: 'recoveryGroup',
+          messageKey: 'recovery.application.validation.lparNameInvalid',
+          params: { tier: tierId, name: invalid.name },
+        }
+      }
     }
   }
 

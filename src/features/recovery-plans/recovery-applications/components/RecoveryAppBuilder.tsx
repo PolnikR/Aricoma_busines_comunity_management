@@ -307,17 +307,18 @@ export function RecoveryAppBuilder({
   ]
 
   const canContinue = step === 1 ? detailsValid : step === 2 ? tiersValid : policySetValid
-  const canSave = detailsValid && tiersValid && policySetValid && orchestrationValid
+  // Stored groups are checked against the current list, so wait for it.
+  const canSave = detailsValid && tiersValid && policySetValid && orchestrationValid && !areGroupsLoading
 
   const handleSave = () => {
     const validationError = validateRecoveryApplication(
       formState,
       providersQuery.data ?? [],
       eligiblePlatformProviders,
-      { lockedProviders },
+      { lockedProviders, groups },
     )
     if (validationError) {
-      alert(t(validationError.messageKey))
+      alert(t(validationError.messageKey, validationError.params))
       return
     }
     onSave?.(formState)
