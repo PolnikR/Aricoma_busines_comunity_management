@@ -11,6 +11,7 @@ const providers = [
   provider('vmware-source', 'VMWARE', 'source'),
   provider('vmware-target', 'VMWARE', 'target'),
   provider('power-target', 'IBM_POWER', 'target'),
+  provider('power-hmc', 'IBM_POWER', 'source'),
 ]
 
 const formState: RecoveryApplicationFormState = {
@@ -29,6 +30,10 @@ const formState: RecoveryApplicationFormState = {
 describe('validateRecoveryApplication', () => {
   it('accepts a target provider of the source type', () => {
     expect(validateRecoveryApplication(formState, providers)).toBeNull()
+  })
+
+  it('accepts the same IBM Power provider as source and target', () => {
+    expect(validateRecoveryApplication({ ...formState, platform: 'power-hmc', targetProviderId: 'power-hmc' }, providers)).toBeNull()
   })
 
   it.each([

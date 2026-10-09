@@ -2,9 +2,17 @@ import type { PlatformProviderRecord } from '@/features/platform-administration/
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { SOURCE_PROVIDER_TYPES } from './sourceProvider'
 
+// The backend checks roles only for VMware (source role=source, target
+// role=target); IBM Power has no role check, so one HMC provider may serve as
+// both source and target.
+function hasRecoveryRole(provider: ProviderRecord, role: 'source' | 'target'): boolean {
+  if (provider.type === 'IBM_POWER') return true
+  return role === 'source' ? provider.role !== 'target' : provider.role === 'target'
+}
+
 export function isEligibleSourceProvider(provider: ProviderRecord): boolean {
   return SOURCE_PROVIDER_TYPES.some(type => type === provider.type)
-    && provider.role !== 'target'
+    && hasRecoveryRole(provider, 'source')
     && provider.credentialStatus === 'ok'
 }
 
@@ -23,7 +31,7 @@ export function getEligibleTargetProviders(
   sourceType: ProviderRecord['type'] | undefined,
 ): ProviderRecord[] {
   return providers.filter(provider => provider.type === sourceType
-    && provider.role === 'target'
+    && hasRecoveryRole(provider, 'target')
     && provider.credentialStatus === 'ok')
 }
 

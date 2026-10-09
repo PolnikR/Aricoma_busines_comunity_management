@@ -168,6 +168,16 @@ describe('recoveryApplicationFormMapper', () => {
     expect(sent).not.toHaveProperty('target_connection')
   })
 
+  it('sends one IBM Power provider as both source and target', () => {
+    const formState = { ...toRecoveryApplicationFormState(application), platform: 'ibm-power-01', targetProviderId: 'ibm-power-01' }
+
+    expect(toRecoveryApplicationData(formState, providers).application).toMatchObject({
+      platform: 'IBM_POWER',
+      source_provider_id: 'ibm-power-01',
+      target_provider_id: 'ibm-power-01',
+    })
+  })
+
   it.each([undefined, null])('leaves the target empty for a legacy record with target_provider_id %s', (targetProviderId) => {
     const formState = toRecoveryApplicationFormState({
       ...application,
