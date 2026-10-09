@@ -996,7 +996,6 @@
   "details.providerId": "ID poskytovatele",
   "details.type": "Typ",
   "details.role": "Role",
-  "details.orchestratorConnId": "ID připojení orchestrátoru",
   "details.ipAddress": "IP adresa",
   "details.backingStorage": "Podkladové úložiště",
   "details.backingStorageNone": "Žádné",

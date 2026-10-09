@@ -15,7 +15,6 @@ let query: {
     url?: string | null
     credentialId: string | null
     role?: 'source' | 'target'
-    orchestratorConnId?: string | null
     credentialStatus: 'ok' | 'missing' | 'none'
     backingStorageProviderIds?: string[]
   }[] | undefined
@@ -45,7 +44,6 @@ beforeEach(() => {
       url: 'https://10.0.0.1/ui/',
       credentialId: 'vcenter-admin',
       role: 'source',
-      orchestratorConnId: 'airflow-01',
       credentialStatus: 'ok',
     }],
     isLoading: false,
@@ -61,7 +59,7 @@ describe('ProviderDetailPage', () => {
     expect(screen.getByText('Primary')).toBeInTheDocument()
     expect(screen.getAllByText('VMware')).toHaveLength(2)
     expect(screen.getByText('Source')).toBeInTheDocument()
-    expect(screen.getByText('airflow-01')).toBeInTheDocument()
+    expect(screen.queryByText('Orchestrator connection ID')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'https://10.0.0.1/ui/' })).toHaveAttribute('href', 'https://10.0.0.1/ui/')
     expect(screen.getByRole('link', { name: 'https://10.0.0.1/ui/' })).toHaveAttribute('target', '_blank')
     await user.click(screen.getByRole('button', { name: 'Back' }))

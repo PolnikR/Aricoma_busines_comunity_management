@@ -1019,7 +1019,6 @@
   "details.providerId": "Provider ID",
   "details.type": "Type",
   "details.role": "Role",
-  "details.orchestratorConnId": "Orchestrator connection ID",
   "details.ipAddress": "IP address",
   "details.backingStorage": "Backing storage",
   "details.backingStorageNone": "None",

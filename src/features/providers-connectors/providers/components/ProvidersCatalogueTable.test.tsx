@@ -297,7 +297,7 @@ describe('ProvidersCatalogueTable', () => {
     }
     expect(detailSectionsLabels(drawer)).toEqual([
       'Provider ID', 'Type', 'Backing storage', 'Role', 'IP address', 'URL',
-      'Notification email', 'Orchestrator connection ID', 'Credential', 'Credential status', 'Description',
+      'Notification email', 'Credential', 'Credential status', 'Description',
     ])
     expect(detailSectionsFields(drawer)).toMatchObject({ 'Provider ID': 'vmware-vcenter-01', 'Backing storage': 'None', Role: 'Source', 'Credential status': 'Available' })
 
@@ -307,7 +307,7 @@ describe('ProvidersCatalogueTable', () => {
     expect(detailNavigationLabels(storageDrawer)).toEqual(['Overview'])
     expect(detailSectionsLabels(storageDrawer)).toEqual([
       'Provider ID', 'Type', 'Partner FlashSystem provider', 'Role', 'IP address', 'URL',
-      'Notification email', 'Orchestrator connection ID', 'Credential', 'Credential status', 'Description',
+      'Notification email', 'Credential', 'Credential status', 'Description',
     ])
   })
 

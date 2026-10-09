@@ -416,7 +416,6 @@ export function ProvidersCatalogueTable({
                 wide
               />
               <DetailField label={t('details.notificationEmail')} value={selected.notificationEmail} />
-              <DetailField label={t('details.orchestratorConnId')} value={selected.orchestratorConnId} mono copyValue={selected.orchestratorConnId ?? undefined} />
               <DetailField label={t('details.credential')} value={selected.credentialId} mono />
               <DetailField label={t('details.credentialStatus')} value={<ProviderCredentialStatusBadge status={selected.credentialStatus} />} />
               <DetailField label={t('details.description')} value={selected.description} wide />

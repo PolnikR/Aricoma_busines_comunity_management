@@ -1002,7 +1002,6 @@
   "details.jwtEnabled": "JWT povolené",
   "details.swaggerEnabled": "Swagger povolený",
   "details.role": "Rola",
-  "details.orchestratorConnId": "ID pripojenia orchestrátora",
   "details.ipAddress": "IP adresa",
   "details.backingStorage": "Podkladové úložisko",
   "details.backingStorageNone": "Žiadne",
