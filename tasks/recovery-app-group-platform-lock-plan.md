@@ -11,11 +11,11 @@ Každá úloha je samostatný commit. Pred commitom sa overí:
 Do commitu idú iba explicitne vymenované cesty. Zmeny sa nepushujú.
 
 ## Úlohy
-- [ ] T1: Filtrovanie skupín podľa typu zdroja (S)
-- [ ] T2: Potvrdenie zmeny zdroja pri vytváraní a odpojenie skupín (M)
-- [ ] T3: Uzamknutie zdroja aj cieľa pri editácii, aj v logike a mapperi (M)
-- [ ] T4: Validácia skupín a LPAR pred uložením (M)
-- [ ] T5: Regresia: celé `recovery-applications` testy, tsc a lint (XS, bez commitu kódu)
+- [x] T1: Filtrovanie skupín podľa typu zdroja (S)
+- [x] T2: Potvrdenie zmeny zdroja pri vytváraní a odpojenie skupín (M)
+- [x] T3: Uzamknutie zdroja aj cieľa pri editácii, aj v logike a mapperi (M)
+- [x] T4: Validácia skupín a LPAR pred uložením (M)
+- [x] T5: Regresia: celé `recovery-applications` testy, tsc a lint (XS, bez commitu kódu)
 
 ## Riziká
 | Riziko | Mitigácia |
