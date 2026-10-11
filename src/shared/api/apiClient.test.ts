@@ -111,4 +111,19 @@ describe('apiFetch', () => {
     await expect(apiFetch('/api/example')).rejects.toBe(error)
     expect(keycloakMock.logout).not.toHaveBeenCalled()
   })
+
+  it('skips Keycloak and sends the X-User bypass header when auth is disabled', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', fetchMock)
+    vi.stubGlobal('window', { __APP_CONFIG__: { AUTH_ENABLED: 'false' } })
+
+    await apiFetch('/api/example', { headers: { 'X-User': 'caller', Authorization: 'Bearer x' } })
+
+    expect(keycloakMock.updateToken).not.toHaveBeenCalled()
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    const headers = new Headers(init.headers)
+    expect(headers.get('X-User')).toBe('admin')
+    expect(headers.get('Accept')).toBe('application/json')
+    expect(keycloakMock.logout).not.toHaveBeenCalled()
+  })
 })

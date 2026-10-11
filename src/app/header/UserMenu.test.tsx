@@ -167,6 +167,22 @@ describe('UserMenu', () => {
     expect(screen.getByText('Logout')).toBeInTheDocument()
   })
 
+  it('hides the logout button when auth is disabled', async () => {
+    vi.stubGlobal('__APP_CONFIG__', { AUTH_ENABLED: 'false' })
+    const user = userEvent.setup()
+    render(
+      <TestProviders>
+        <UserMenu />
+      </TestProviders>
+    )
+
+    await user.click(screen.getByRole('button', { expanded: false }))
+
+    expect(await screen.findByText('Settings')).toBeInTheDocument()
+    expect(screen.queryByText('Logout')).not.toBeInTheDocument()
+    vi.unstubAllGlobals()
+  })
+
   it('uses default props when not provided', () => {
     render(
       <TestProviders>

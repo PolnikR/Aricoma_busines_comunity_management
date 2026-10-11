@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { KeycloakProfile } from 'keycloak-js'
 import { LanguageProvider } from './LanguageProvider'
 import { AuthProvider } from './AuthProvider'
@@ -28,6 +28,10 @@ function TestProviders({ children }: { children: ReactNode }) {
 }
 
 describe('AuthProvider', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
     keycloakMock.onTokenExpired = undefined
@@ -48,6 +52,21 @@ describe('AuthProvider', () => {
     expect(screen.getByRole('status', { name: 'Loading' })).toHaveAttribute('aria-busy', 'true')
     expect(screen.queryByText('Authenticated application')).not.toBeInTheDocument()
     expect(screen.queryByText('Loading')).not.toBeInTheDocument()
+  })
+
+  it('renders children without initializing Keycloak when auth is disabled', async () => {
+    vi.stubGlobal('__APP_CONFIG__', { AUTH_ENABLED: 'false' })
+
+    render(
+      <TestProviders>
+        <AuthProvider>
+          <div>Authenticated application</div>
+        </AuthProvider>
+      </TestProviders>,
+    )
+
+    expect(await screen.findByText('Authenticated application')).toBeInTheDocument()
+    expect(keycloakMock.init).not.toHaveBeenCalled()
   })
 
   it('loads the authenticated Keycloak profile before rendering children', async () => {

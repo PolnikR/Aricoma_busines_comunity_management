@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
 
-envsubst '${KEYCLOAK_URL} ${KEYCLOAK_REALM} ${KEYCLOAK_CLIENT_ID}' \
+envsubst '${KEYCLOAK_URL} ${KEYCLOAK_REALM} ${KEYCLOAK_CLIENT_ID} ${AUTH_ENABLED}' \
   < /etc/nginx/app-templates/config.js.template \
   > /usr/share/nginx/html/config.js

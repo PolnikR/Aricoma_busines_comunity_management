@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
+import { isAuthEnabled } from '@/config/authEnabled'
 import { keycloak } from '@/config/keycloak'
 import { AppShellSkeleton } from '@/layouts/app-shell/AppShellSkeleton'
 import { AuthContext, FALLBACK_AUTH_USER, type AuthStatus } from './AuthContext'
@@ -10,7 +11,7 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [status, setStatus] = useState<AuthStatus>('pending')
+  const [status, setStatus] = useState<AuthStatus>(() => (isAuthEnabled() ? 'pending' : 'authenticated'))
   const [user, setUser] = useState(FALLBACK_AUTH_USER)
   // React 19 StrictMode runs effects twice in dev; keycloak-js throws on a
   // second init() call, so a ref guards against that without affecting prod.
@@ -21,6 +22,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return
     }
     didInit.current = true
+
+    if (!isAuthEnabled()) {
+      return
+    }
 
     // PKCE S256 needs window.crypto.subtle, which browsers only expose in a
     // secure context (HTTPS or localhost). The server runs plain HTTP, and
