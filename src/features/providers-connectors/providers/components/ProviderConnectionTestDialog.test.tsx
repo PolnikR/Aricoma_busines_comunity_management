@@ -112,7 +112,7 @@ describe('ProviderConnectionTestDialog', () => {
     expect(screen.queryByText('Connection test completed')).not.toBeInTheDocument()
     expect(screen.queryByText('0 / 0 passed')).not.toBeInTheDocument()
     expect(screen.queryByText('Response body')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Close' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Close' })).toBeEnabled()
   })
 
   it('hides a previous result while a fresh test is pending', () => {
