@@ -411,7 +411,12 @@ describe('ProvidersCatalogueTable', () => {
   it('disables connection test when the selected provider has no credential', async () => {
     renderTable()
     fireEvent.click(await screen.findByText('Backup FlashSystem'))
-    expect(screen.getByRole('button', { name: 'Test connection' })).toBeDisabled()
+    const button = screen.getByRole('button', { name: 'Test connection' })
+    expect(button).toBeDisabled()
+    expect(button).toHaveClass('bg-accent-soft')
+    expect(button.querySelector('svg')).toBeInTheDocument()
+    expect(button).toHaveAttribute('title', 'A valid credential is required to test this provider.')
+    expect(document.getElementById(button.getAttribute('aria-describedby') ?? '')).toHaveTextContent('A valid credential is required to test this provider.')
   })
 
   it('shows the complete provider GET record without opening the detail drawer', async () => {

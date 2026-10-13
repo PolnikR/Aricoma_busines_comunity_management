@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
+import { ConnectionTestButton } from '@/shared/components/button/ConnectionTestButton'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import {
   DataTable,
@@ -22,7 +23,7 @@ import {
 } from '@/shared/components/detail-view'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
-import { GridIcon, PlugIcon } from '@/shared/icons/Icons'
+import { GridIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
@@ -341,21 +342,7 @@ export function ProvidersCatalogueTable({
           ]}
           headerActions={(
             <>
-              <Button
-                size="xs"
-                variant="soft"
-                className="border border-accent/30 bg-accent-soft text-accent shadow-none hover:border-accent hover:bg-accent-soft hover:text-accent"
-                startIcon={<PlugIcon className="size-3.5" />}
-                onClick={openConnectionTest}
-                disabled={selected.credentialStatus !== 'ok'}
-                aria-describedby={selected.credentialStatus !== 'ok' ? 'provider-test-credential-hint' : undefined}
-                title={selected.credentialStatus !== 'ok' ? t('providers.connectionTest.credentialRequired') : undefined}
-              >
-                {t('providers.connectionTest.button')}
-              </Button>
-              {selected.credentialStatus !== 'ok' ? (
-                <span id="provider-test-credential-hint" className="sr-only">{t('providers.connectionTest.credentialRequired')}</span>
-              ) : null}
+              <ConnectionTestButton onClick={openConnectionTest} disabled={selected.credentialStatus !== 'ok'} />
               <KeyedHelpPopover helpKey="providers.help" sections={['role', 'credential']} width="wide">
                 <SelectedProviderRelationships
                   allProviders={allProviders}
