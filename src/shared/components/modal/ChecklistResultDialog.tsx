@@ -23,6 +23,7 @@ export interface StatusBar {
   status: 'success' | 'warning' | 'error'
   passedCount?: number
   totalCount?: number
+  countLabel?: string
 }
 
 export interface ChecklistResultDialogProps {
@@ -41,6 +42,9 @@ export interface ChecklistResultDialogProps {
   isPending?: boolean
   externalActionLabel?: string
   onExternalAction?: () => void
+  allowCloseWhilePending?: boolean
+  closeOnBackdrop?: boolean
+  checksAriaLabel?: string
 }
 
 function isCheckOk(status: string): boolean {
@@ -49,7 +53,7 @@ function isCheckOk(status: string): boolean {
 
 function CheckStatusIcon({ status }: { status: string }) {
   if (isCheckOk(status)) return <CheckIcon className="size-4" />
-  return <span aria-hidden="true">!</span>
+  return <span aria-hidden="true">{status.trim().toLowerCase() === 'skipped' ? '–' : '!'}</span>
 }
 
 export function ChecklistResultDialog({
@@ -68,6 +72,9 @@ export function ChecklistResultDialog({
   isPending = false,
   externalActionLabel,
   onExternalAction,
+  allowCloseWhilePending = false,
+  closeOnBackdrop,
+  checksAriaLabel = 'Status checks',
 }: ChecklistResultDialogProps) {
   const { t } = useTranslation()
   const isFailed = statusBar
@@ -86,7 +93,7 @@ export function ChecklistResultDialog({
       onClose={onClose}
       title={title}
       size="lg"
-      closeOnBackdrop={!isPending}
+      closeOnBackdrop={closeOnBackdrop ?? !isPending}
       footer={(
         <>
           {isFailed && onRetry ? (
@@ -99,7 +106,7 @@ export function ChecklistResultDialog({
               {externalActionLabel}
             </Button>
           ) : null}
-          <Button size="sm" variant="primary" onClick={onClose} disabled={isPending} fullWidth>
+          <Button size="sm" variant="primary" onClick={onClose} disabled={isPending && !allowCloseWhilePending} fullWidth>
             {t('buttons.close')}
           </Button>
         </>
@@ -133,16 +140,17 @@ export function ChecklistResultDialog({
               {statusBar.title}
             </span>
             <span className={`shrink-0 rounded-full border border-current px-2 py-0.5 font-mono text-xs tabular-nums opacity-75 ${statusBar.passedCount === undefined || statusBar.totalCount === undefined ? 'hidden' : ''}`}>
-              {statusBar.passedCount !== undefined && statusBar.totalCount !== undefined ? <>{statusBar.passedCount} / {statusBar.totalCount} passed</> : null}
+              {statusBar.passedCount !== undefined && statusBar.totalCount !== undefined ? statusBar.countLabel ?? `${String(statusBar.passedCount)} / ${String(statusBar.totalCount)} passed` : null}
             </span>
           </div>
         ) : null}
 
         {/* Checks List */}
         {checks.length > 0 ? (
-          <ol className="space-y-2" aria-label="Status checks">
+          <ol className="space-y-2" aria-label={checksAriaLabel}>
             {checks.map((check, index) => {
               const isOk = isCheckOk(check.status)
+              const isSkipped = check.status.trim().toLowerCase() === 'skipped'
               return (
                 <li
                   key={`${check.name}-${String(index)}`}
@@ -152,7 +160,9 @@ export function ChecklistResultDialog({
                     className={`flex size-7 shrink-0 items-center justify-center rounded-full ${
                       isOk
                         ? 'bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-400'
-                        : 'bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400'
+                        : isSkipped
+                          ? 'bg-surface-subtle text-text-muted'
+                          : 'bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400'
                     }`}
                   >
                     <CheckStatusIcon status={check.status} />

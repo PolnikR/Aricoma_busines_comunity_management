@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LanguageProvider } from '@/contexts/LanguageProvider'
 import { ThemeProvider } from '@/contexts/ThemeProvider'
@@ -120,6 +120,31 @@ describe('ChecklistResultDialog', () => {
     )
     const retryButton = await screen.findByText('Retry')
     expect(retryButton).toBeInTheDocument()
+  })
+
+  it('allows a scoped pending dialog to close through Close and Escape, but not the backdrop', async () => {
+    const onClose = vi.fn()
+    renderWithProviders(<ChecklistResultDialog {...baseProps} isPending allowCloseWhilePending closeOnBackdrop={false} onClose={onClose} />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Close' }))
+    const backdrop = document.querySelector<HTMLElement>('[aria-hidden="true"].fixed.inset-0')
+    expect(backdrop).not.toBeNull()
+    fireEvent.click(backdrop ?? document.body)
+    expect(onClose).toHaveBeenCalledTimes(1)
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(onClose).toHaveBeenCalledTimes(2)
+  })
+
+  it('shows skipped checks neutrally while leaving unknown failures red', () => {
+    renderWithProviders(<ChecklistResultDialog {...baseProps} checks={[
+      { name: 'Skipped', status: 'skipped' },
+      { name: 'Unknown', status: 'timeout' },
+    ]} checksAriaLabel="Connection checks" />)
+
+    const checks = screen.getByRole('list', { name: 'Connection checks' })
+    expect(checks).toHaveTextContent('skipped')
+    expect(screen.getByText('Skipped').closest('li')?.querySelector('.rounded-full')).toHaveClass('text-text-muted')
+    expect(screen.getByText('Unknown').closest('li')?.querySelector('.rounded-full')).toHaveClass('text-error-600')
   })
 
   it('calls onClose when close button clicked', async () => {
