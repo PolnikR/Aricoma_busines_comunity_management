@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ukážka notifikácie · Test pripojenia</title>
+  <style>
+    :root{font-family:Arial,Helvetica,sans-serif;color:#17233d;background:#f7f9fc;font-synthesis:none}
+    *{box-sizing:border-box}body{margin:0}button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #1596dd;outline-offset:2px}
+    .demo-bar{min-height:52px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 24px;background:#17233d;color:#fff}
+    .demo-bar strong{font-size:13px;letter-spacing:.02em}.demo-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.demo-controls span{font-size:12px;color:#b6c5d8}
+    .demo-controls button{border:1px solid #52637c;border-radius:6px;padding:6px 11px;background:transparent;color:#e6eff8;font-size:12px}.demo-controls button[aria-pressed="true"]{border-color:#6bc3ef;background:#144669;color:#fff}
+    .shell{display:grid;grid-template-columns:224px minmax(0,1fr);min-height:calc(100vh - 52px)}
+    .sidebar{background:#101c31;color:#aebed2;padding:24px 14px}.brand{display:flex;align-items:center;gap:11px;padding:0 12px 30px;color:white;font-weight:700;font-size:18px;letter-spacing:-.03em}.brand-mark{width:30px;height:30px;display:grid;place-items:center;border-radius:7px;background:#0d91d7;color:#fff;font-size:15px}
+    .nav-label{padding:14px 12px 8px;color:#758ba7;font-size:10px;font-weight:700;letter-spacing:.12em}.nav-item{display:block;padding:11px 12px;border-radius:7px;font-size:13px}.nav-item.active{background:#213b59;color:#fff;font-weight:700;border-left:3px solid #43b2ec}
+    .content{min-width:0;padding:28px 32px}.crumb{font-size:12px;color:#71819a;margin-bottom:22px}.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px}h1{font-size:24px;margin:0 0 5px;letter-spacing:-.025em}.sub{font-size:13px;color:#71819a;margin:0}.primary,.secondary{border-radius:7px;padding:9px 14px;font-size:13px;font-weight:600}.primary{border:1px solid #0d91d7;background:#0d91d7;color:white}.secondary{border:1px solid #c8d7e7;background:white;color:#3b4763}.primary:hover{background:#087fca}.secondary:hover{background:#e8f6fd}
+    .surface{border:1px solid #dbe7f2;border-radius:10px;background:white;box-shadow:0 2px 9px #17233d08;overflow:hidden}.table-tools{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:16px;border-bottom:1px solid #e5edf5}.search{border:1px solid #dbe7f2;border-radius:7px;color:#93a0b5;padding:9px 12px;min-width:235px;font-size:13px}.table-tools .count{font-size:12px;color:#71819a}table{width:100%;border-collapse:collapse;text-align:left;font-size:12px}th{padding:12px 16px;background:#fbfdff;color:#71819a;text-transform:uppercase;letter-spacing:.07em;font-size:10px}td{padding:17px 16px;border-top:1px solid #edf2f7;color:#3b4763}.selected-row{background:#f1f8fc}.name{font-weight:700;color:#17233d}.id{display:block;margin-top:4px;color:#71819a;font-size:11px}.badge{display:inline-block;border-radius:5px;padding:4px 7px;background:#e8f6fd;color:#0872ab;font-weight:700;font-size:10px;letter-spacing:.04em}.muted{color:#71819a}
+    .drawer{position:fixed;right:0;top:52px;bottom:0;width:min(440px,100%);z-index:2;background:white;border-left:1px solid #dbe7f2;box-shadow:-14px 0 38px #15233d14;display:flex;flex-direction:column}.drawer[hidden]{display:none}.drawer-head{padding:22px 24px;border-bottom:1px solid #e5edf5}.eyebrow{text-transform:uppercase;letter-spacing:.1em;color:#71819a;font-size:10px;font-weight:700}.drawer-title{display:flex;align-items:start;justify-content:space-between;gap:12px;margin:9px 0 4px}.drawer-title h2{font-size:20px;margin:0}.icon-button{border:0;background:transparent;color:#71819a;font-size:20px;line-height:1;padding:4px}.drawer-id{font-size:11px;color:#71819a}.drawer-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:24px}.drawer-body{padding:25px 24px;overflow:auto;flex:1}.section-label{font-size:12px;font-weight:700;margin-bottom:15px}.detail{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid #edf2f7;font-size:12px}.detail span:first-child{color:#71819a}.detail span:last-child{font-weight:600;overflow-wrap:anywhere}.drawer-foot{padding:15px 24px;border-top:1px solid #e5edf5;display:flex;justify-content:space-between}
+    .backdrop{position:fixed;inset:52px 0 0;background:#101c3170;z-index:3;display:grid;place-items:center;padding:20px}.backdrop[hidden]{display:none}.dialog{width:min(560px,100%);max-height:90vh;overflow:auto;background:white;border-radius:11px;box-shadow:0 24px 80px #111f3540}.dialog-head{padding:22px 24px;border-bottom:1px solid #e5edf5;display:flex;justify-content:space-between;gap:12px}.dialog-head h2{font-size:18px;margin:0 0 5px}.dialog-head p{margin:0;color:#71819a;font-size:12px}.dialog-content{padding:24px}.pending{display:flex;align-items:center;gap:14px;padding:22px;border-radius:8px;background:#f1f8fc;color:#3b4763;font-size:13px}.spinner{width:21px;height:21px;border:3px solid #bddff0;border-top-color:#0d91d7;border-radius:50%;animation:spin .8s linear infinite;flex:none}@keyframes spin{to{transform:rotate(360deg)}}.dialog-result{padding:14px 16px;border-radius:7px;font-size:13px;font-weight:700}.dialog-result.success{background:#ecfdf3;color:#05603a}.dialog-result.error{background:#fef3f2;color:#912018}.checks{list-style:none;padding:0;margin:18px 0 0}.checks li{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #edf2f7;font-size:12px}.check-icon{width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#d1fadf;color:#027a48;font-weight:700}.error .check-icon{background:#fee4e2;color:#b42318}.dialog-foot{padding:15px 24px;border-top:1px solid #e5edf5;display:flex;justify-content:flex-end}
+    .notification{position:fixed;right:24px;top:72px;width:min(390px,calc(100vw - 32px));z-index:5;display:flex;gap:12px;padding:16px;background:white;border:1px solid #dbe7f2;border-left:4px solid #039855;border-radius:9px;box-shadow:0 15px 35px #17233d25}.notification.error{border-left-color:#d92d20}.notification[hidden]{display:none}.notification-icon{width:29px;height:29px;display:grid;place-items:center;flex:none;border-radius:50%;background:#d1fadf;color:#027a48;font-weight:700}.notification.error .notification-icon{background:#fee4e2;color:#b42318}.notification-main{min-width:0;flex:1}.notification-kicker{color:#71819a;font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}.notification h3{font-size:14px;margin:4px 0 5px}.notification p{font-size:12px;line-height:1.5;color:#3b4763;margin:0;overflow-wrap:anywhere}.notification a{display:inline-block;margin-top:11px;color:#087fca;font-size:12px;font-weight:700;text-decoration:none}.notification a:hover{text-decoration:underline}.notification .icon-button{font-size:17px}
+    .hint{position:fixed;left:248px;bottom:22px;z-index:1;background:#17233d;color:#fff;border-radius:7px;padding:10px 13px;font-size:12px;box-shadow:0 8px 20px #17233d22}.hint[hidden]{display:none}
+    @media(max-width:800px){.shell{grid-template-columns:1fr}.sidebar{display:none}.content{padding:22px 16px}.drawer{top:52px}.hint{left:16px;right:16px;bottom:12px}.notification{top:64px;right:16px}}
+    @media(max-width:540px){.demo-bar{padding:10px 14px;align-items:start;flex-direction:column}.shell{min-height:calc(100vh - 91px)}.drawer{top:91px}.backdrop{inset:91px 0 0}.notification{top:103px}.content{padding:18px 12px}.page-head{align-items:start}.page-head>.primary{display:none}.table-tools .count,th:not(:first-child),td:not(:first-child){display:none}.drawer-head,.drawer-body,.drawer-foot{padding-left:18px;padding-right:18px}}
+    @media(prefers-reduced-motion:reduce){.spinner{animation:none}}
+  </style>
+</head>
+<body>
+  <!-- Standalone visual prototype. All data and timing below are simulated. -->
+  <div class="demo-bar"><strong>UKÁŽKA · notifikácia po teste pripojenia</strong><div class="demo-controls"><span>Výsledok ukážky:</span><button id="success-choice" aria-pressed="true">Úspech</button><button id="error-choice" aria-pressed="false">Chyba</button></div></div>
+  <div class="shell">
+    <aside class="sidebar"><div class="brand"><span class="brand-mark">A</span> Aricoma</div><div class="nav-label">PLATFORMA</div><div class="nav-item">Prehľad</div><div class="nav-item">Discovery</div><div class="nav-label">SPRÁVA PLATFORMY</div><div class="nav-item active">Platform providers</div><div class="nav-item">Identity &amp; access</div></aside>
+    <main class="content"><div class="crumb">Platform administration&nbsp; / &nbsp;Platform providers</div><div class="page-head"><div><h1>Platform providers</h1><p class="sub">Pripojené služby a nastavenia platformy</p></div><button class="primary">+ Pridať providera</button></div><div class="surface"><div class="table-tools"><span class="search">⌕ &nbsp;Hľadať providera...</span><span class="count">3 provideri</span></div><table><thead><tr><th>Názov</th><th>Typ</th><th>URL</th><th>Stav</th></tr></thead><tbody><tr class="selected-row"><td><span class="name">Production Airflow</span><span class="id">airflow-prod-01</span></td><td><span class="badge">AIRFLOW</span></td><td>https://airflow.example.internal</td><td>Pripravené</td></tr><tr><td><span class="name">Keycloak SSO</span><span class="id">keycloak-main</span></td><td><span class="badge">KEYCLOAK</span></td><td class="muted">https://sso.example.internal</td><td>Pripravené</td></tr><tr><td><span class="name">Backend API</span><span class="id">backend-prod</span></td><td><span class="badge">BACKEND</span></td><td class="muted">https://api.example.internal</td><td>Pripravené</td></tr></tbody></table></div></main>
+  </div>
+  <section class="drawer" id="drawer" aria-label="Detail providera"><div class="drawer-head"><span class="eyebrow">Vybraný provider</span><div class="drawer-title"><h2>Production Airflow</h2><button class="icon-button" id="drawer-close" aria-label="Zavrieť detail">×</button></div><div class="drawer-id">airflow-prod-01</div><div class="drawer-actions"><span class="badge">AIRFLOW</span><button class="secondary" id="start-test">⌁ &nbsp;Test connection</button></div></div><div class="drawer-body"><div class="section-label">Overview</div><div class="detail"><span>Provider ID</span><span>airflow-prod-01</span></div><div class="detail"><span>Typ</span><span>AIRFLOW</span></div><div class="detail"><span>URL</span><span>https://airflow.example.internal</span></div><div class="detail"><span>Credentials</span><span>Airflow production</span></div><div class="detail"><span>Stav credentials</span><span>Pripravené</span></div></div><div class="drawer-foot"><button class="secondary">Delete</button><button class="primary">Edit</button></div></section>
+  <div class="backdrop" id="backdrop" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><div class="dialog-head"><div><h2 id="dialog-title">Test connection</h2><p>Production Airflow · airflow-prod-01</p></div><button class="icon-button" id="dialog-x" aria-label="Zavrieť okno">×</button></div><div class="dialog-content" id="dialog-content"></div><div class="dialog-foot"><button class="secondary" id="dialog-close">Zavrieť</button></div></section></div>
+  <aside class="notification" id="notification" role="status" aria-live="polite" hidden><div class="notification-icon" id="notification-icon">✓</div><div class="notification-main"><div class="notification-kicker">Test pripojenia · Production Airflow</div><h3 id="notification-title"></h3><p id="notification-description"></p><a href="#vysledok" id="show-result">Zobraziť výsledok →</a></div><button class="icon-button" id="notification-close" aria-label="Zavrieť notifikáciu">×</button></aside>
+  <div class="hint" id="hint">Kliknite na „Test connection“, potom zavrite okno počas testu.</div>
+  <script>
+    const drawer = document.querySelector('#drawer');
+    const backdrop = document.querySelector('#backdrop');
+    const content = document.querySelector('#dialog-content');
+    const notification = document.querySelector('#notification');
+    const hint = document.querySelector('#hint');
+    let outcome = 'success';
+    let phase = 'idle';
+    let timer;
+
+    function choose(next) {
+      outcome = next;
+      document.querySelector('#success-choice').setAttribute('aria-pressed', String(next === 'success'));
+      document.querySelector('#error-choice').setAttribute('aria-pressed', String(next === 'error'));
+    }
+    function showDialog() {
+      drawer.hidden = true;
+      backdrop.hidden = false;
+      notification.hidden = true;
+      hint.hidden = true;
+      renderDialog();
+      document.querySelector('#dialog-close').focus();
+    }
+    function closeDialog() {
+      backdrop.hidden = true;
+      drawer.hidden = false;
+      document.querySelector('#start-test').focus();
+    }
+    function renderDialog() {
+      if (phase === 'running') {
+        content.innerHTML = '<div class="pending" role="status"><span class="spinner" aria-hidden="true"></span><span>Pripojenie sa testuje. Okno môžete zavrieť; výsledok sa zobrazí po dokončení.</span></div>';
+        return;
+      }
+      const failed = outcome === 'error';
+      content.innerHTML = `<div class="dialog-result ${failed ? 'error' : 'success'}">${failed ? 'Pripojenie sa nepodarilo overiť' : 'Pripojenie bolo úspešne overené'}</div><ul class="checks"><li><span class="check-icon">✓</span> Konfigurácia providera</li><li><span class="check-icon">✓</span> Prihlasovacie údaje</li><li class="${failed ? 'error' : ''}"><span class="check-icon">${failed ? '!' : '✓'}</span> Spojenie so službou Airflow</li></ul>`;
+    }
+    function finish() {
+      phase = 'finished';
+      if (!backdrop.hidden) { renderDialog(); return; }
+      notification.classList.toggle('error', outcome === 'error');
+      document.querySelector('#notification-icon').textContent = outcome === 'error' ? '!' : '✓';
+      document.querySelector('#notification-title').textContent = outcome === 'error' ? 'Test pripojenia zlyhal' : 'Pripojenie bolo úspešné';
+      document.querySelector('#notification-description').textContent = outcome === 'error' ? 'Airflow sa nepodarilo dosiahnuť. Otvorte výsledok a skontrolujte podrobnosti.' : 'Production Airflow je dostupný. Všetky kontroly prebehli úspešne.';
+      notification.hidden = false;
+    }
+    document.querySelector('#success-choice').addEventListener('click', () => choose('success'));
+    document.querySelector('#error-choice').addEventListener('click', () => choose('error'));
+    document.querySelector('#start-test').addEventListener('click', () => {
+      if (phase !== 'running') {
+        phase = 'running';
+        clearTimeout(timer);
+        timer = setTimeout(finish, 3800);
+      }
+      showDialog();
+    });
+    document.querySelector('#dialog-close').addEventListener('click', closeDialog);
+    document.querySelector('#dialog-x').addEventListener('click', closeDialog);
+    backdrop.addEventListener('click', event => { if (event.target === backdrop) closeDialog(); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && !backdrop.hidden) closeDialog(); });
+    document.querySelector('#notification-close').addEventListener('click', () => { notification.hidden = true; });
+    document.querySelector('#show-result').addEventListener('click', event => { event.preventDefault(); showDialog(); });
+    document.querySelector('#drawer-close').addEventListener('click', () => { drawer.hidden = true; });
+  </script>
+</body>
+</html>
