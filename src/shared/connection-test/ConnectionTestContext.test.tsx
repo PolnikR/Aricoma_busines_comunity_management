@@ -8,6 +8,8 @@ import { ConnectionTestManager } from './ConnectionTestManager'
 import { useConnectionTestManager, useProviderTestState } from './ConnectionTestContext'
 import { ConnectionTestProvider } from './ConnectionTestProvider'
 
+vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
 const requests = vi.hoisted(() => ({ test: vi.fn<() => Promise<unknown>>() }))
 
 vi.mock('@/generated/query/providers/providers.gen', () => ({

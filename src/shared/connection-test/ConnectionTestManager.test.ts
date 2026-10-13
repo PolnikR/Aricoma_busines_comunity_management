@@ -86,6 +86,30 @@ describe('ConnectionTestManager', () => {
     })
   })
 
+  it('releases the prior visible run when another provider starts', async () => {
+    const pending = deferred<ProviderTestResponseOutput>()
+    requests.platform.mockImplementation((params) => params.provider_id === 'one'
+      ? pending.promise
+      : Promise.resolve(result(params.provider_id)))
+    const { manager, queryClient } = setup()
+    const first = manager.startTest('platform', 'one', 'First')
+    const second = manager.startTest('platform', 'two', 'Second')
+    if (first.status === 'rejected' || second.status === 'rejected') throw new Error('Unexpected rejection')
+    expect(manager.getProviderTestState('platform', 'one').isResultOpen).toBe(false)
+    expect(manager.getProviderTestState('platform', 'two').isResultOpen).toBe(true)
+
+    pending.resolve(result('one'))
+    await vi.waitFor(() => {
+      expect(manager.getSnapshot().notificationRunIds).toContain(first.runId)
+      expect(manager.getRun(second.runId)?.phase).toBe('complete')
+    })
+    const oldKey = manager.getRun(second.runId)?.queryKey ?? []
+    manager.startTest('platform', 'three', 'Third')
+    expect(manager.getRun(second.runId)).toBeNull()
+    expect(queryClient.getQueryData(oldKey)).toBeUndefined()
+    expect(manager.getSnapshot().notificationRunIds).toContain(first.runId)
+  })
+
   it('keeps a hidden pending request alive and reopens its cached result without another GET', async () => {
     const pending = deferred<ProviderTestResponseOutput>()
     requests.platform.mockReturnValue(pending.promise)

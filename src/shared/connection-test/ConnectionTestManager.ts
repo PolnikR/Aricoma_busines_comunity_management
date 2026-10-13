@@ -94,8 +94,14 @@ export class ConnectionTestManager {
       this.openResult(previous.runId)
       return { status: 'existing', runId: previous.runId }
     }
-    if (!previous && this.runs.size >= this.maxSlots) return this.reject('capacity')
-    if (previous) this.forgetRun(previous.runId)
+    const visibleRun = this.visibleRunId === null ? null : this.runs.get(this.visibleRunId)
+    if (!previous && this.runs.size >= this.maxSlots && visibleRun?.phase !== 'complete' && visibleRun?.phase !== 'error') {
+      return this.reject('capacity')
+    }
+    if (this.visibleRunId !== null) this.closeResult()
+    const oldRunId = this.currentByIdentity.get(identity)
+    if (oldRunId !== undefined) this.forgetRun(oldRunId)
+    if (this.runs.size >= this.maxSlots) return this.reject('capacity')
 
     const runId = this.nextRunId++
     const scope = this.sessionScope
