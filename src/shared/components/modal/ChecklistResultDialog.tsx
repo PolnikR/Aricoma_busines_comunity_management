@@ -134,9 +134,9 @@ export function ChecklistResultDialog({
 
         {/* Status Bar */}
         {statusBar ? (
-          <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm ${statusBgColor[statusBar.status]}`}>
-            <span className="inline-flex items-center gap-2">
-              <CheckIcon className="size-4" />
+          <div className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm ${statusBgColor[statusBar.status]}`}>
+            <span className="inline-flex min-w-0 items-center gap-2">
+              <CheckIcon className="size-4 shrink-0" />
               {statusBar.title}
             </span>
             <span className={`shrink-0 rounded-full border border-current px-2 py-0.5 font-mono text-xs tabular-nums opacity-75 ${statusBar.passedCount === undefined || statusBar.totalCount === undefined ? 'hidden' : ''}`}>
@@ -173,7 +173,7 @@ export function ChecklistResultDialog({
                       <span className="shrink-0 text-xs text-text-muted">{check.status}</span>
                     </div>
                     {check.detail ? (
-                      <p className="mt-0.5 font-mono text-xs text-text-muted">{check.detail}</p>
+                      <p className="mt-0.5 font-mono text-xs text-text-muted wrap-anywhere">{check.detail}</p>
                     ) : null}
                   </div>
                 </li>
