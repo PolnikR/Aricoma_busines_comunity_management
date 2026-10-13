@@ -181,6 +181,8 @@ export * from './submitRecoveryGroupHeaders.gen';
 export * from './submitRecoveryGroupParams.gen';
 export * from './tagRecord.gen';
 export * from './tagsResponse.gen';
+export * from './testPlatformProviderHeaders.gen';
+export * from './testPlatformProviderParams.gen';
 export * from './testProviderHeaders.gen';
 export * from './testProviderParams.gen';
 export * from './userRecord.gen';

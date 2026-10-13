@@ -592,6 +592,71 @@
         }
       }
     },
+    "/test_platform_provider": {
+      "get": {
+        "tags": [
+          "Platform Providers"
+        ],
+        "summary": "Test Platform Provider",
+        "operationId": "test_platform_provider_test_platform_provider_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the platform provider to test connectivity for",
+              "title": "Provider Id"
+            },
+            "description": "id of the platform provider to test connectivity for"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderTestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/submit_platform_provider": {
       "post": {
         "tags": [

@@ -41,6 +41,7 @@ export const responseSchemas: Record<string, z.ZodType> = {
   'GET /test_provider': ProviderTestResponse,
   'DELETE /delete_provider': ProvidersResponse,
   'GET /get_platform_providers': PlatformProvidersResponse,
+  'GET /test_platform_provider': ProviderTestResponse,
   'POST /submit_platform_provider': PlatformProvidersResponse,
   'DELETE /delete_platform_provider': PlatformProvidersResponse,
   'GET /get_credentials': CredentialsResponse,

@@ -30,7 +30,9 @@ import type {
   GetPlatformProvidersParams,
   HTTPValidationError,
   OrchestrationProvider,
-  PlatformProvidersResponse
+  PlatformProvidersResponse,
+  ProviderTestResponse,
+  TestPlatformProviderParams
 } from '../zod';
 
 import { validatingMutator } from '../../../shared/api/validatingMutator';
@@ -152,6 +154,113 @@ export function useGetPlatformProviders<TData = Awaited<ReturnType<typeof getPla
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetPlatformProvidersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getTestPlatformProviderUrl = (params: TestPlatformProviderParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/test_platform_provider?${stringifiedParams}` : `/test_platform_provider`
+}
+
+/**
+ * @summary Test Platform Provider
+ */
+export const testPlatformProvider = async (params: TestPlatformProviderParams, options?: Parameters<typeof validatingMutator>[1]): Promise<ProviderTestResponse> => {
+
+  return validatingMutator<ProviderTestResponse>(getTestPlatformProviderUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getTestPlatformProviderQueryKey = (params?: TestPlatformProviderParams,) => {
+    return [
+    `/test_platform_provider`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getTestPlatformProviderQueryOptions = <TData = Awaited<ReturnType<typeof testPlatformProvider>>, TError = ErrorType<HTTPValidationError>>(params: TestPlatformProviderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testPlatformProvider>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getTestPlatformProviderQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof testPlatformProvider>>> = ({ signal }) => testPlatformProvider(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof testPlatformProvider>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type TestPlatformProviderQueryResult = NonNullable<Awaited<ReturnType<typeof testPlatformProvider>>>
+export type TestPlatformProviderQueryError = ErrorType<HTTPValidationError>
+
+
+export function useTestPlatformProvider<TData = Awaited<ReturnType<typeof testPlatformProvider>>, TError = ErrorType<HTTPValidationError>>(
+ params: TestPlatformProviderParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof testPlatformProvider>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof testPlatformProvider>>,
+          TError,
+          Awaited<ReturnType<typeof testPlatformProvider>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTestPlatformProvider<TData = Awaited<ReturnType<typeof testPlatformProvider>>, TError = ErrorType<HTTPValidationError>>(
+ params: TestPlatformProviderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testPlatformProvider>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof testPlatformProvider>>,
+          TError,
+          Awaited<ReturnType<typeof testPlatformProvider>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTestPlatformProvider<TData = Awaited<ReturnType<typeof testPlatformProvider>>, TError = ErrorType<HTTPValidationError>>(
+ params: TestPlatformProviderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testPlatformProvider>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Test Platform Provider
+ */
+
+export function useTestPlatformProvider<TData = Awaited<ReturnType<typeof testPlatformProvider>>, TError = ErrorType<HTTPValidationError>>(
+ params: TestPlatformProviderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof testPlatformProvider>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getTestPlatformProviderQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
