@@ -3,6 +3,8 @@ import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Alert } from '@/shared/components/alert/Alert'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
+import { ConnectionTestButton } from '@/shared/components/button/ConnectionTestButton'
+import { useConnectionTestManager, useProviderTestState } from '@/shared/connection-test/ConnectionTestContext'
 import { GridIcon } from '@/shared/icons/Icons'
 import {
   DataTable,
@@ -168,6 +170,7 @@ export function PlatformProvidersTable({
   onRetry,
 }: PlatformProvidersTableProps) {
   const { t } = useTranslation()
+  const connectionTestManager = useConnectionTestManager()
   const deleteProvider = useDeletePlatformProvider()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<PlatformProviderRecord | null>(null)
@@ -177,6 +180,7 @@ export function PlatformProvidersTable({
   const deleteErrorDescription = extractBackendErrorDetail(deleteProvider.error)
   const rows = useMemo(() => providers, [providers])
   const selected = rows.find(provider => provider.id === selectedId) ?? null
+  const connectionTestState = useProviderTestState('platform', selected?.id ?? '')
   const jsonViewed = rows.find(provider => provider.id === jsonViewId) ?? null
   const columns = getColumns(t, setJsonViewId)
   const table = useTableState(rows, { searchFields: ['name', 'id', 'type'] })
@@ -245,7 +249,7 @@ export function PlatformProvidersTable({
       </DataTableRequestState>
       </DataTableSurface>
 
-      {selected ? (
+      {selected && !connectionTestState.isResultOpen ? (
         <DetailView
           // Keyed by provider so each newly opened provider starts expanded on Overview.
           key={selected.id}
@@ -260,7 +264,17 @@ export function PlatformProvidersTable({
               <CredentialStatusBadge key="credential" status={selected.credentialStatus} />
             ) : null,
           ]}
-          headerActions={<KeyedHelpPopover helpKey="platformProviders.help" sections={['airflow', 'keycloak', 'smtp', 'backend']} />}
+          headerActions={(
+            <>
+              {selected.type === 'AIRFLOW' ? (
+                <ConnectionTestButton
+                  disabled={selected.credentialStatus !== 'ok'}
+                  onClick={() => { connectionTestManager.startTest('platform', selected.id, selected.name) }}
+                />
+              ) : null}
+              <KeyedHelpPopover helpKey="platformProviders.help" sections={['airflow', 'keycloak', 'smtp', 'backend']} />
+            </>
+          )}
           ariaLabel={t('drawer.providerDetail')}
           closeLabel={t('drawer.closeProvider')}
           footerStart={(

@@ -1,17 +1,42 @@
-import { act, render, screen, within } from '@testing-library/react'
+import { act, render as rtlRender, screen, waitFor, within } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { EXTERNAL_SERVICES } from '@/config/externalServices'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { useDeletePlatformProvider } from '@/generated/query/platform-providers/platform-providers.gen'
+import type { ProviderTestResponseOutput } from '@/generated/query/zod'
+import { ConnectionTestManager } from '@/shared/connection-test/ConnectionTestManager'
+import { ConnectionTestProvider } from '@/shared/connection-test/ConnectionTestProvider'
+import { ConnectionTestHost } from '@/shared/connection-test/ConnectionTestHost'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { PlatformProvidersTable } from './PlatformProvidersTable'
 import { detailNavigationLabels, detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+const testRequest = vi.hoisted(() => vi.fn<(id: string) => Promise<ProviderTestResponseOutput>>())
+
 vi.mock('@/generated/query/platform-providers/platform-providers.gen', () => ({
   useDeletePlatformProvider: vi.fn(),
+  getTestPlatformProviderQueryKey: (params: unknown) => ['/test_platform_provider', params],
+  getTestPlatformProviderQueryOptions: (params: { provider_id: string }, options: { query: Record<string, unknown> }) => ({
+    ...options.query,
+    queryFn: () => testRequest(params.provider_id),
+  }),
 }))
+
+function render(ui: Parameters<typeof rtlRender>[0]) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const manager = new ConnectionTestManager(queryClient, 'test-session')
+  return rtlRender(
+    <QueryClientProvider client={queryClient}>
+      <ConnectionTestProvider manager={manager}>
+        {ui}
+        <ConnectionTestHost />
+      </ConnectionTestProvider>
+    </QueryClientProvider>,
+  )
+}
 
 const baseProvider: PlatformProviderRecord = {
   id: 'airflow-01',
@@ -76,6 +101,7 @@ const deleteMutation = {
 }
 
 beforeEach(() => {
+  testRequest.mockReset()
   deleteMutation.mutate.mockReset()
   deleteMutation.error = null
   vi.mocked(useDeletePlatformProvider).mockReturnValue(
@@ -407,6 +433,42 @@ describe('PlatformProvidersTable', () => {
 
       expect(footer?.children[0]).toContainElement(deleteButton)
       expect(footer?.children[1]).toContainElement(within(drawer).getByRole('button', { name: 'Edit' }))
+    })
+
+    it('runs an AIRFLOW connection test in the global result dialog', async () => {
+      const user = userEvent.setup()
+      testRequest.mockResolvedValue({
+        provider_id: baseProvider.id,
+        provider_type: 'AIRFLOW',
+        ok: true,
+        checks: [{ name: 'Connectivity', status: 'ok', detail: 'Connected' }],
+      })
+      renderTable([baseProvider])
+      await user.click(screen.getByText('Primary Airflow'))
+      await user.click(screen.getByRole('button', { name: 'Test connection' }))
+
+      const resultDialog = screen.getByRole('dialog', { name: 'Test provider connection' })
+      expect(screen.queryByRole('dialog', { name: 'Provider detail' })).not.toBeInTheDocument()
+      await waitFor(() => { expect(resultDialog).toHaveTextContent('Connectivity') })
+      expect(testRequest).toHaveBeenCalledExactlyOnceWith(baseProvider.id)
+      await user.click(within(resultDialog).getByRole('button', { name: 'Close' }))
+      expect(screen.getByRole('dialog', { name: 'Provider detail' })).toBeInTheDocument()
+    })
+
+    it('requires a credential for AIRFLOW and omits the action for other types', async () => {
+      const user = userEvent.setup()
+      renderTable([{ ...baseProvider, credentialStatus: 'missing' }, smtpProvider, keycloakProvider])
+      await user.click(screen.getByText('Primary Airflow'))
+      const testButton = screen.getByRole('button', { name: 'Test connection' })
+      expect(testButton).toBeDisabled()
+      expect(testButton).toHaveAttribute('title', 'A valid credential is required to test this provider.')
+      await user.keyboard('{Escape}')
+      await user.click(screen.getByText('Test SMTP'))
+      expect(screen.queryByRole('button', { name: 'Test connection' })).not.toBeInTheDocument()
+      await user.keyboard('{Escape}')
+      await user.click(screen.getByText('Aricoma Keycloak'))
+      expect(screen.queryByRole('button', { name: 'Test connection' })).not.toBeInTheDocument()
+      expect(testRequest).not.toHaveBeenCalled()
     })
   })
 })
