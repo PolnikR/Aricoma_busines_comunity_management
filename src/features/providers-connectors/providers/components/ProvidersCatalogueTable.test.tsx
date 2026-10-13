@@ -6,6 +6,9 @@ import { ProvidersCatalogueTable } from './ProvidersCatalogueTable'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { ProviderRecord, ProviderRoleFilter } from '../model/providerTypes'
 import { useGetProviders } from '@/generated/query/providers/providers.gen'
+import { ConnectionTestManager } from '@/shared/connection-test/ConnectionTestManager'
+import { ConnectionTestProvider } from '@/shared/connection-test/ConnectionTestProvider'
+import { ConnectionTestHost } from '@/shared/connection-test/ConnectionTestHost'
 import { selectProviders } from '../model/selectProviders'
 
 const keycloakMock = vi.hoisted(() => ({
@@ -97,6 +100,7 @@ function mockFetch() {
 
 function renderTable() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const connectionTestManager = new ConnectionTestManager(queryClient, 'test-session')
   function ProvidersTableHarness() {
     const [roleFilter, setRoleFilter] = useState<ProviderRoleFilter>('all')
     const { data = [], isLoading, isFetching, error, refetch } = useGetProviders({ role: roleFilter }, { query: { select: selectProviders } })
@@ -117,7 +121,10 @@ function renderTable() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <ProvidersTableHarness />
+      <ConnectionTestProvider manager={connectionTestManager}>
+        <ProvidersTableHarness />
+        <ConnectionTestHost />
+      </ConnectionTestProvider>
     </QueryClientProvider>,
   )
 }
@@ -149,7 +156,8 @@ describe('ProvidersCatalogueTable', () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(
       <QueryClientProvider client={queryClient}>
-        <ProvidersCatalogueTable
+        <ConnectionTestProvider manager={new ConnectionTestManager(queryClient, 'test-session')}>
+          <ProvidersCatalogueTable
           providers={[]}
           allProviders={[]}
           roleFilter="all"
@@ -158,7 +166,8 @@ describe('ProvidersCatalogueTable', () => {
           error={new Error('provider service internals')}
           isRetrying={false}
           onRetry={vi.fn()}
-        />
+          />
+        </ConnectionTestProvider>
       </QueryClientProvider>,
     )
 
@@ -176,7 +185,8 @@ describe('ProvidersCatalogueTable', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <ProvidersCatalogueTable
+        <ConnectionTestProvider manager={new ConnectionTestManager(queryClient, 'test-session')}>
+          <ProvidersCatalogueTable
           providers={[]}
           allProviders={[]}
           roleFilter="all"
@@ -185,7 +195,8 @@ describe('ProvidersCatalogueTable', () => {
           error={error}
           isRetrying={false}
           onRetry={vi.fn()}
-        />
+          />
+        </ConnectionTestProvider>
       </QueryClientProvider>,
     )
 
@@ -199,7 +210,8 @@ describe('ProvidersCatalogueTable', () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(
       <QueryClientProvider client={queryClient}>
-        <ProvidersCatalogueTable
+        <ConnectionTestProvider manager={new ConnectionTestManager(queryClient, 'test-session')}>
+          <ProvidersCatalogueTable
           providers={[providerA]}
           allProviders={[providerA, providerB]}
           roleFilter="all"
@@ -208,7 +220,8 @@ describe('ProvidersCatalogueTable', () => {
           error={new Error('background refresh failed')}
           isRetrying={false}
           onRetry={vi.fn()}
-        />
+          />
+        </ConnectionTestProvider>
       </QueryClientProvider>,
     )
 

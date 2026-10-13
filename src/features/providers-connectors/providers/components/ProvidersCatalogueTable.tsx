@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
@@ -27,13 +26,9 @@ import { GridIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
-import {
-  getTestProviderQueryKey,
-  useDeleteProvider,
-  useTestProvider,
-} from '@/generated/query/providers/providers.gen'
+import { useDeleteProvider } from '@/generated/query/providers/providers.gen'
+import { useConnectionTestManager, useProviderTestState } from '@/shared/connection-test/ConnectionTestContext'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
-import { ProviderConnectionTestDialog } from './ProviderConnectionTestDialog'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
 import { isComputeProviderType, isPartnerProviderType } from '../model/providerCategory'
 import { BackingStorageValue } from './BackingStorageValue'
@@ -164,7 +159,7 @@ export function ProvidersCatalogueTable({
   onRetry,
 }: ProvidersCatalogueTableProps) {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
+  const connectionTestManager = useConnectionTestManager()
   const deleteProvider = useDeleteProvider()
   const [typeFilter, setTypeFilter] = useState('')
   const [pendingType, setPendingType] = useState('')
@@ -172,22 +167,13 @@ export function ProvidersCatalogueTable({
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<ProviderRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ProviderRecord | null>(null)
-  const [isConnectionTestOpen, setIsConnectionTestOpen] = useState(false)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const loadErrorDescription = extractBackendErrorDetail(error)
   const deleteErrorDescription = extractBackendErrorDetail(deleteProvider.error)
 
   const rows = useMemo(() => providers, [providers])
   const selected = rows.find((provider) => provider.id === selectedId) ?? null
-  const testParams = { provider_id: selected?.id ?? '' }
-  const testConnection = useTestProvider(testParams, {
-    query: { enabled: isConnectionTestOpen && selected?.credentialStatus === 'ok' },
-  })
-  // Every open and retry runs a fresh test: resetting drops the cached result, and an
-  // enabled (open) query is refetched by the reset.
-  const rerunConnectionTest = () => {
-    void queryClient.resetQueries({ queryKey: getTestProviderQueryKey(testParams) })
-  }
+  const connectionTestState = useProviderTestState('infrastructure', selected?.id ?? '')
   const jsonViewed = rows.find(provider => provider.id === jsonViewId) ?? null
   const columns = getColumns(t, setJsonViewId)
   const types = useMemo(
@@ -225,12 +211,7 @@ export function ProvidersCatalogueTable({
 
   const openConnectionTest = () => {
     if (selected?.credentialStatus !== 'ok') return
-    rerunConnectionTest()
-    setIsConnectionTestOpen(true)
-  }
-
-  const closeConnectionTest = () => {
-    setIsConnectionTestOpen(false)
+    connectionTestManager.startTest('infrastructure', selected.id, selected.name, selected.role)
   }
 
   const toolbar = (
@@ -325,8 +306,8 @@ export function ProvidersCatalogueTable({
       </DataTableRequestState>
       </DataTableSurface>
 
-      {/* Hidden, not just covered, while the connection test dialog is open. */}
-      {selected && !isConnectionTestOpen ? (
+      {/* Hidden, not just covered, while the global connection test dialog is open. */}
+      {selected && !connectionTestState.isResultOpen ? (
         <DetailView
           // Keyed by provider so each newly opened provider starts expanded on Overview.
           key={selected.id}
@@ -410,18 +391,6 @@ export function ProvidersCatalogueTable({
           </DetailViewSection>
         </DetailView>
       ) : null}
-
-      <ProviderConnectionTestDialog
-        open={isConnectionTestOpen && selected !== null}
-        providerName={selected?.name ?? ''}
-        providerId={selected?.id ?? ''}
-        providerRole={selected?.role ?? 'source'}
-        isPending={testConnection.isPending}
-        result={testConnection.data ?? null}
-        error={testConnection.error instanceof Error ? testConnection.error : null}
-        onClose={closeConnectionTest}
-        onRetry={rerunConnectionTest}
-      />
 
       {editing ? (
         <ProvidersCreateModal
