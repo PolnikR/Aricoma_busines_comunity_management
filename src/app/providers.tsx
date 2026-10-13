@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { isAuthEnabled } from '@/config/authEnabled'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { ConnectionTestProvider } from '@/shared/connection-test/ConnectionTestProvider'
+import { ConnectionTestHost } from '@/shared/connection-test/ConnectionTestHost'
 import { ConnectionTestManager } from '@/shared/connection-test/ConnectionTestManager'
 import { SidebarProvider } from '@/layouts/app-shell/SidebarContext'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
@@ -48,6 +49,7 @@ export function AppProviders({ children }: AppProvidersProps) {
     <QueryClientProvider client={queryClient}>
       <ConnectionTestProvider manager={manager}>
         <SidebarProvider>{children}</SidebarProvider>
+        <ConnectionTestHost />
       </ConnectionTestProvider>
     </QueryClientProvider>
   )
