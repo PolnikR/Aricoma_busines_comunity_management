@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Návrhy notifikácie · Aricoma</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./preview.js" defer></script>
+</head>
+<body data-variant="card">
+  <aside class="design-bar" aria-label="Nastavenia náhľadu">
+    <div><strong>Návrhy notifikácie</strong><span>Interaktívna šablóna · vpravo dole</span></div>
+    <div class="choices" role="group" aria-label="Dizajn">
+      <button data-variant="card" aria-pressed="true">01 Karta · odporúčané</button>
+      <button data-variant="tinted" aria-pressed="false">02 Stavová hlavička</button>
+      <button data-variant="compact" aria-pressed="false">03 Kompaktná</button>
+    </div>
+    <div class="controls">
+      <label>Výsledok <select id="outcome"><option value="error">Chyba</option><option value="success">Úspech</option></select></label>
+      <label><input type="checkbox" id="dark"> Tmavý režim</label>
+      <label><input type="checkbox" id="long"> Dlhý názov</label>
+      <label><input type="checkbox" id="stack"> Viac notifikácií</label>
+      <button id="restore">Zobraziť znova</button>
+    </div>
+  </aside>
+  <div class="shell">
+    <aside class="sidebar"><div class="brand">ARICOMA</div><p>BUSINESS COMMUNITY</p><div>Overview</div><div>Discovery &amp; inventory</div><div class="active">Providers &amp; connectors</div><div>Platform administration</div></aside>
+    <div class="workspace">
+      <header class="app-header"><span>Business community management</span><div class="user"><b>TT</b><span>Test Test<small>test@test.com</small></span></div></header>
+      <main>
+        <p class="breadcrumb">Providers &amp; connectors / Providers</p>
+        <div class="page-title"><div><h1>Providers</h1><p>Manage source and target connections.</p></div><span class="mock-button">+ Add provider</span></div>
+        <section class="table-card" aria-label="Ukážka obrazovky aplikácie">
+          <div class="table-toolbar"><span>Search providers…</span><span>3 providers</span></div>
+          <div class="table-scroll"><table><thead><tr><th>Name</th><th>Type</th><th>Role</th><th>Status</th></tr></thead><tbody>
+            <tr><td><strong>IBM Flash Source 01</strong><small>ibm-flash-source-01</small></td><td>IBM FlashSystem</td><td>Source</td><td><span class="badge">Configured</span></td></tr>
+            <tr><td><strong>VMware Production</strong><small>vmware-prod-01</small></td><td>VMware</td><td>Source</td><td><span class="badge">Configured</span></td></tr>
+            <tr><td><strong>IBM Flash Target 01</strong><small>ibm-flash-target-01</small></td><td>IBM FlashSystem</td><td>Target</td><td><span class="badge">Configured</span></td></tr>
+          </tbody></table></div>
+        </section>
+        <section class="design-note"><h2 id="variant-title">01 · Karta s farebným pásikom</h2><p id="variant-description">Biela plocha, zreteľná stavová ikona a samostatná akcia. Najbližšie k existujúcemu dizajnu aplikácie.</p><p>Notifikácia zostáva viditeľná do zatvorenia. Na mobile má odstup 16 px; na väčšej obrazovke 24 px. Viac kariet sa ukladá nad seba.</p></section>
+      </main>
+    </div>
+  </div>
+  <div class="notification-stack" id="notifications" aria-label="Výsledky testov pripojenia"></div>
+  <template id="notification-template">
+    <aside class="notification" role="status" aria-live="polite">
+      <div class="notification-heading"><span class="status-icon" aria-hidden="true">!</span><div><p class="kicker">Connection test</p><h2 class="notification-title">Connection test failed</h2></div><button class="dismiss" aria-label="Zavrieť notifikáciu">×</button></div>
+      <div class="notification-body"><p class="provider"></p><p class="description"></p></div>
+      <div class="notification-footer"><button class="view-result">View result <span aria-hidden="true">→</span></button></div>
+    </aside>
+  </template>
+  <dialog id="result" aria-labelledby="result-title"><div class="dialog-heading"><h2 id="result-title">Connection test result</h2><button id="close-result" aria-label="Zavrieť výsledok">×</button></div><p id="result-provider"></p><p id="result-summary"></p><p class="demo-note">Ukážka dizajnu. Výsledky sú simulované.</p></dialog>
+</body>
+</html>
