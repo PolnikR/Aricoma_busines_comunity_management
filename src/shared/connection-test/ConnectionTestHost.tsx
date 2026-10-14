@@ -13,9 +13,9 @@ export function ConnectionTestHost() {
   return (
     <>
       {(snapshot.blockedReason || snapshot.notificationRunIds.length > 0) ? (
-        <div className="pointer-events-none fixed right-4 top-16 z-30 flex max-h-[calc(100vh-5rem)] w-[calc(100vw-2rem)] max-w-96 flex-col gap-3 overflow-y-auto sm:top-20" aria-label={t('providers.connectionTest.notification.kicker')}>
+        <div className="pointer-events-none fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 flex max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-100 max-w-[calc(100vw-2rem-env(safe-area-inset-left)-env(safe-area-inset-right))] flex-col gap-3 overflow-y-auto sm:right-[max(1.5rem,env(safe-area-inset-right))] sm:bottom-[max(1.5rem,env(safe-area-inset-bottom))] sm:max-h-[calc(100dvh-3rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:max-w-[calc(100vw-3rem-env(safe-area-inset-left)-env(safe-area-inset-right))]" aria-label={t('providers.connectionTest.notification.kicker')}>
           {snapshot.blockedReason ? (
-            <div className="pointer-events-auto rounded-lg border border-warning-200 bg-surface p-4 text-sm text-text-primary shadow-lg" role="alert">
+            <div className="pointer-events-auto shrink-0 rounded-lg border border-warning-200 bg-surface p-4 text-sm text-text-primary shadow-lg" role="alert">
               <p>{t(snapshot.blockedReason === 'capacity' ? 'providers.connectionTest.capacityReached' : 'providers.connectionTest.sessionUnavailable')}</p>
               <button type="button" className="mt-2 text-xs font-semibold text-accent hover:underline" onClick={manager.clearBlockedReason}>{t('buttons.close')}</button>
             </div>
@@ -25,7 +25,7 @@ export function ConnectionTestHost() {
             if (!run) return null
             const failed = run.phase === 'error' || manager.getResult(runId)?.ok === false
             return (
-              <div key={runId} className="pointer-events-auto">
+              <div key={runId} className="pointer-events-auto shrink-0">
                 <ConnectionTestNotification
                   providerName={run.providerName}
                   failed={failed}
