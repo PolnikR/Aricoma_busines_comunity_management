@@ -19,6 +19,11 @@ import {
 } from './modulePageConfigs'
 import { routes } from './routes'
 
+const OverviewPage = lazy(async () => {
+  const page = await import('@/features/dashboard/pages/OverviewPage')
+  return { default: page.OverviewPage }
+})
+
 const InfrastructurePage = lazy(async () => {
   const page = await import('@/features/discovery-inventory/infrastructure/pages/InfrastructurePage')
   return { default: page.InfrastructurePage }
@@ -193,7 +198,7 @@ function renderProvidersConnectorsRoutes(pages: typeof providersConnectorsPages)
 export function AppRoutes() {
   return (
     <Route element={<AppShell />}>
-        <Route index element={<Navigate to={routes.resources} replace />} />
+        <Route index handle={{ contentScroll: 'contained' }} element={<Suspense fallback={<RouteLoadingSkeleton />}><OverviewPage /></Suspense>} />
         <Route path="platform-administration" element={<Navigate to={routes.platformProviders} replace />} />
         {renderModulePageRoutes(platformAdministrationPages.filter(
           page => page.path !== routes.platformProviders

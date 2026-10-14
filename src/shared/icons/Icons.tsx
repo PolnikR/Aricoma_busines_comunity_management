@@ -2,6 +2,22 @@ import type { SVGProps } from 'react'
 
 type IconProps = SVGProps<SVGSVGElement>
 
+export function AlertCircleIcon(props: IconProps) {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" /><path d="M12 7v6M12 17h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+}
+
+export function InfoIcon(props: IconProps) {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" /><path d="M12 11v6M12 7h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+}
+
+export function ClockIcon(props: IconProps) {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" /><path d="M12 7v5l4 2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+}
+
+export function EyeIcon(props: IconProps) {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" /></svg>
+}
+
 export function GridIcon(props: IconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
