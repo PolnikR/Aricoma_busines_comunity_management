@@ -8,6 +8,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ExecutionIcon,
+  GridIcon,
   LayersIcon,
   PlugIcon,
   ServerIcon,
@@ -27,6 +28,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  { name: 'Overview', icon: <GridIcon />, path: routes.home },
   {
     name: 'Platform Administration',
     icon: <SettingsIcon />,
@@ -73,6 +75,7 @@ const navItems: NavItem[] = [
 ]
 
 const navKeyMap: Record<string, string> = {
+  'Overview': 'nav.overview',
   'Platform Administration': 'nav.administration',
   'Platform Providers': 'nav.administration.platformProviders',
   'Configuration': 'nav.administration.configuration',
@@ -109,7 +112,7 @@ export function AppSidebar() {
   const { t } = useTranslation()
   const { isMobileOpen, isCollapsed, closeMobileSidebar, toggleSidebar } = useSidebar()
   const location = useLocation()
-  const [openMenu, setOpenMenu] = useState<string>(() => findRouteMenu(location.pathname) ?? 'Discovery & Inventory')
+  const [openMenu, setOpenMenu] = useState('')
 
   // The menu that owns the current route is always expanded; users can also
   // toggle other menus open via openMenu.
@@ -128,7 +131,7 @@ export function AppSidebar() {
     >
       <div className={`flex h-14 shrink-0 items-center border-b border-border ${isCollapsed ? 'justify-center px-0' : 'px-2'}`}>
         {isCollapsed ? null : (
-          <NavLink to={routes.resources} className="flex min-w-0 items-center gap-2.5" aria-label="Aricoma home">
+          <NavLink to={routes.home} end className="flex min-w-0 items-center gap-2.5" aria-label="Aricoma home">
             <img src="/aricoma-logo.png" alt="Aricoma" className="size-9 shrink-0 rounded-lg" />
             <span>
               <span className="block truncate text-[13px] font-semibold text-text-primary">{t('header.appName')}</span>
@@ -161,6 +164,7 @@ export function AppSidebar() {
                   <>
                     <button
                       type="button"
+                      aria-expanded={isMenuOpen(item.name)}
                       className={`flex w-full items-center gap-2.5 rounded-lg py-2 text-left text-xs font-medium transition ${isCollapsed ? 'justify-center px-0' : 'px-2.5'} ${isMenuOpen(item.name) ? 'bg-accent-soft text-accent' : 'text-text-secondary hover:bg-surface-muted hover:text-text-secondary'}`}
                       onClick={() => {
                         setOpenMenu((current) => (current === item.name ? '' : item.name))
@@ -204,6 +208,7 @@ export function AppSidebar() {
                   <>
                   <NavLink
                     to={item.path}
+                    end={item.path === routes.home}
                     onClick={closeMobileSidebar}
                     className={({ isActive }) => {
                       const routeActive = isActive || (item.path === routes.recoveryActions && location.pathname.startsWith(`${routes.recoveryActions}/`))

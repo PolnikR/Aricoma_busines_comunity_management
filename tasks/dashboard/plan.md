@@ -1,155 +1,114 @@
-# Plán zapracovania Dashboard Overview s mock dátami
+# ABCO Overview – implementačný plán (React implementácia)
 
-Stav: pripravený na implementáciu; implementácia sa týmto dokumentom nespúšťa.
-Úlohy a kontrolné body: [todo.md](todo.md).
+**Stav:** React Overview s mock dátami implementovaný podľa HTML; T0–T6 overené, kompletný build PASS. [Report a dôkazy](verification.md). Live API fáza T7 zostáva neschválená.
+**Aktuálny vizuálny zdroj:** `src/features/dashboard/pages/OverviewPage.tsx`, `overview.css` a komponenty v `src/features/dashboard/components/`. Pôvodná samostatná HTML predloha bola po dokončení integrácie odstránená.
+**Táto verzia plne nahrádza zamietnutý smer `prototypes/dashboard-home-v3.html`.** V1/V2/V3 nemeníme a nepreberáme z nich layout, mock dáta ani obsah.
+**Cieľ:** zachovať existujúci React Overview a jeho vizuálnu kompozíciu v EXISTUJÚCOM ABCO `AppShell`. Žiadna implementácia mimo daného rozsahu, žiadny nový backend, žiadny commit/push bez zadania.
 
-## Cieľ a rozsah
+## A. Zistené fakty z aktuálneho FE (revízia 2026-10-14)
 
-Preniesť posledný čitateľný návrh z `prototypes/dashboard-home-v3.html` do React stránky Overview v existujúcom ABCO FE. Stránka bude používať lokálne, deterministické mock dáta a zachová fungujúcu navigáciu, globálny Light/Dark/System režim a existujúce prihlásenie aplikácie.
+- Pracovný repozitár `C:\Users\polnikr\source\ABCO\Aricoma_busines_comunity_management`, aktuálna vetva počas analýzy `spike/ant-design-shell`; začni kontrolou `git status --short` a neprepínaj vetvu automaticky.
+- `src/layouts/app-shell/AppShell.tsx` už vykresľuje `AppSidebar` + `AppHeader`. Desktop pri `lg` má `h-screen`, `overflow-hidden`; obsahová plocha je `flex`, `min-h-0`. `AppHeader.tsx` má `h-14`, teda 56 px.
+- `AppShell` rieši vonkajší padding (`lg:px-6 lg:py-5 xl:px-8` a okraj shellu). Nová stránka NESMIE vykresliť HTML `.app`, `.sidebar`, `.app-main` alebo `.global-header` druhý raz.
+- `src/app/AppRoutes.tsx` obsahuje index redirect `/ -> routes.resources`. Pre Overview priprav lazy-load `OverviewPage` na indexe s route handle `{ contentScroll: 'contained' }`. `src/app/routes.ts` má `routes.home = '/'`, nepridávaj druhý alias.
+- Pri `contentScroll: 'contained'` nastavuje `AppShell` `main` ako `lg:overflow-hidden`; route musí mať reťazec `flex-1 min-h-0 lg:h-full` a vlastný grid `minmax(0,...)`. Kopírovať `height:100dvh` z HTML do vnútra AppShell by spôsobilo overflow.
+- `src/shared/components/page/PageHeader.tsx` má `mb-4`, `h1 text-xl leading-9` a samostatný action slot; `TableToolbar.tsx` pridáva načítavací indikátor a `Refresh`. Pre maximálnu vernosť HTML možno použiť kompaktný LOKÁLNY header len v Overview, nie meniť globálny `PageHeader`. Zachovať spoločné ľavé/pravé hranice.
+- `src/shared/components/card/Card.tsx`: border/surface a `rounded-[20px]`; `StatCard` obsahuje shared stat pattern. Použiť farebné tokeny a existujúce komponenty, kde ich rozmerový contract sedí; pri inom radius/padding z HTML vytvoriť lokálny `DashboardPanel` alebo lokálnu úpravu tried, NIE meniť shared Card globálne.
+- `src/index.css`: Outfit, light/dark tokens `bg-page`, `bg-surface`, `bg-surface-subtle`, `text-text-primary`, `text-text-muted`, `border-border`, `text-accent`; globálny `ThemeProvider` prepína `.dark`. Žiadne natvrdo navrhnuté nové celostránkové farby ani druhá téma.
+- `src/shared/icons/Icons.tsx`: existujú `AlertTriangleIcon`, `ServerIcon`, `StorageIcon`, `DiskIcon`, `LayersIcon`, `ExecutionIcon`, `RefreshIcon`, `CheckIcon`, `HelpIcon`. Nekopírovať HTML SVG sprite ako druhú icon knižnicu.
+- `src/hooks/useTranslation.ts` + `src/locales/en.json`, `sk.json`, `cs.json`: nové texty lokalizovať, žiadne nové natvrdo vložené anglické UI labely.
+- `src/shared/components/page/ContainedViewportFrame.tsx` má na `lg` `overflow-y-auto`, preto ho pre neskrólujúci dashboard nepreberať slepo.
+- Autoritatívne existujúce referencie layoutu: `tasks/page-layout-unification-plan.md`, `tasks/page-layout-reference-measurements.md`, `tasks/compact-page-header-measurements.md`. Z posledného merania: desktop toolbar/header začína obsah pri 149 px, navrchu 56px AppHeader; no-page-scroll pri 1366×768 a 1280×600. Treba MERAŤ aktuálny DOM a nepoužiť dokumentované čísla ako tvrdenie o každom stave novej stránky.
+- `src/shared/query/cachePolicy.ts` už definuje životný cyklus React Query (nepridávať vlastnú cache či polling pri vizuálnej fáze).
+- V repozitári v čase auditu neboli produkčné dashboardové súbory, iba staré plány a HTML prototypy. Neprenášať zamietnuté v3 implementácie.
 
-**Etapa 1 – mock integrácia, nie hotový dátový dashboard.** Navrhnutá trasa `/` má v tejto etape slúžiť na overenie React integrácie a vzhľadu. Hodnoty 18 aplikácií, 24 skupín, provider inventár a HTTP záznamy sú výhradne demonštračné a nesmú sa prezentovať ako aktuálny stav prostredia. Označenie `Mock data` a fixný čas demo snapshotu musia zostať viditeľné pre používateľa aj mimo development režimu. **Produkčné nasadenie Overview ako prehľadu reálneho stavu nie je dokončením tohto plánu**; vyžaduje samostatne schválenú etapu zapojenia dát a rozhodnutie o nasadení. Nepridávať skryté automatické prepnutie na mock pri chybe živého API.
+## B. Vizuálna zmluva – 1:1 NA VNÚTORNEJ STRÁNKE
 
-Predpoklad plánu: „zapracovanie“ znamená integráciu do FE, nie ďalšiu úpravu samostatného HTML. Teraz sa vytvára iba plán. Pôvodné obmedzenie bez zmien produkčných komponentov platilo pre tvorbu HTML prototypu; nižšie uvedené zmeny FE sú navrhovaný rozsah následnej implementácie.
+**Nezamieňať 1:1 obsah s duplikovaním prototypového shellu.** Keďže skutočný ABCO sidebar má inú šírku než samostatný HTML prototyp, celoplošný pixel-to-pixel screenshot vrátane shellu nie je správna metóda. Najprv porovnať obdĺžnik dostupného obsahu a potom jeho pomery/gapy/typografiu; aktuálna React implementácia je zdrojom zachovanej kompozície.
 
-Referenčný HTML súbor má pri príprave plánu SHA256 `5AF8ADEFAE35C833166255BA8B8F50D9EBD7BA79C676A7A3A10D0C7B979078D6`. Je referenciou pre vizuálne prvky a obsah, **nie pre scrollovanie alebo rozmery panelov**. Integrované Overview musí rešpektovať viewport a `AppShell`, ako ostatné contained stránky ABCO. V1, V2 a V3 sa počas integrácie neupravujú.
+Zachovať poradie, funkciu a kompozíciu súčasnej React stránky:
 
-Výsledok obsahuje:
+1. `Overview` header – title/subtitle vľavo, `Demo data / Sample snapshot / Refresh` vpravo.
+2. Horný pás **4 rovnako širokých KPI kariet**, v poradí `Critical issues`, `Warnings`, `Running operations`, `Unverified signals`. Rovnaké ikonové štvorce, názvy, podnázvy, veľká hodnota, jemné hover/focus.
+3. Dashboard plocha **2 stĺpce po 50 %**, dva riadky: vľavo hore `Requires Attention`, vpravo hore `Recovery Groups Topology`; vľavo dole `Recent Activity`, vpravo dole `Infrastructure Overview`.
+4. `Requires Attention`: **3 kompaktné incidentové karty**, každá má ikonu závažnosti, vecný text, timestamp a tlačidlo detailu. Žiadna tabulka/list-scroll/paginácia. `View all issues` smeruje na vhodnú existujúcu detailnú sekciu alebo zostane neaktívnym vysvetleným preview prvkom, nie falošným linkom.
+5. `Recovery Groups Topology`: **jeden výrazný donut** s celkom v strede a čitateľnou legendou `Local`/`Metro Mirror` s početnosťami a percentami; graf kresliť bez novej knižnice (CSS conic-gradient alebo SVG); prístupný alternatívny text. Nezmeniť donut na bar chart. Topology nie je protection health.
+6. `Recent Activity`: **3 posledné vecné udalosti** v minimalistickej timeline. Nie Access Logs ako business udalosti. Bez scrollbarov.
+7. `Infrastructure Overview`: **vnorená mriežka 2×2** kompaktných metrík VMware VMs, IBM Power partitions, FlashSystem volumes, Hitachi volumes. Názov + total + malý progress (s presne vysvetlenou jednotkou). Bez nekonečných zoznamov providerov.
+8. Na normálnych desktopoch musí byť vidno VŠETKY štyri hlavné panely a všetky uvedené riadky. Žiadny interaktívny panel nesmie skrývať posledné údaje v `overflow:hidden` alebo vnútornom scrollbare.
 
-- Dve KPI karty Recovery Applications a Recovery Groups.
-- Stacked bar chart Applications by Environment a donut Recovery Groups Topology.
-- Širokú sekciu Resources Overview s funkčnými Source/Target tabmi, metrikami jednotlivých providerov a rozbalením zoznamu.
-- Latest Activity so šiestimi HTTP requestmi a detailom plnej URL.
-- Loading, Empty, Error a čiastočnú chybu jedného providera.
-- Domovskú trasu `/` a navigačnú položku Overview v existujúcom shelli.
+Aktuálne `overview.css` používa približne: `.kpis grid 4 col`, `.board grid 2 col × 2 rows (1.06fr/.94fr)`, `.page gap 12px`, `.panel radius 13px`, `.donut width min(218px,33vh,21vw)`. Na nižšej ploche má vlastný height-aware breakpoint `max-height:820px`. To sú vizuálne východiská; v React obsahu prispôsobiť iba tie rozmery, ktoré musí prevziať AppShell. Nesmie sa zaviesť globálny `zoom`/`transform:scale()`.
 
-Backend, generated API, Orval, inventory stránky ani recovery workflow sa nemenia. **V etape 1** dashboard nevolá recovery, inventory ani access-log API; nejde o trvalé architektonické rozhodnutie, že Overview nemá používať už existujúce FE API. Existujúce požiadavky shellu a autentifikácie nie sú súčasťou tohto zákazu. Žiadne orchestration akcie, historické trendy, readiness alebo vymyslený provider health. Žiadne nové závislosti. Bez commitu a pushu podľa platného zadania používateľa.
+**Bezproblémové fit pravidlá:**
+- Desktop 1600×900 a 1366×768: žiadny `document`, `main` ani **vnútorný panel** s vertikálnym scrollom. Bez vizuálneho orezávania a bez horizontálneho scrollu.
+- Test aj 1280×720 a 1024×768, sidebar **expanded aj collapsed**, 1920×1080, light/dark. Responsive rozhodnutie podľa **dostupnej šírky contentu**, nie iba šírky okna.
+- Pri 1024×768 alebo krátkom viewporte, keď by čitateľnosť mala padnúť pod použiteľnú mieru, bezpečný fallback = zjednodušený 2-col/1-col layout s prirodzeným scrollom len tam, kde sa 1-screen fyzicky nedá splniť; nikdy nie clipped content alebo dva scroll ownery.
+- Mobil 390×844: 1-col/natural document scroll je nevyhnutný a povolený (nie je realizovateľné 8 kariet na jednu obrazovku), mobilný `AppHeader` a drawer zachovať.
+- Žiadny druhý header/sidebar ani druhý scrollbar obklopujúci všetky dashboardové panely. Nemení sa shell ani iné FE pages.
 
-## Overené integračné body
+**Vizuálne kontrolné body pre ďalšie zmeny:** renderovať React route v skutočnom prehliadači pri rovnakých viewportoch, porovnať jeho kompozíciu s aktuálne schválenou implementáciou a zmerať DOM rects pre 4 KPI + 4 panely: x/y/width/height, gaps, alignment; odchýlky zapisovať a upravovať, nie len deklarovať `looks fine`. Tolerancie: približne ±4 px pre zarovnanie panelov/karty a cca ±8 px pre proporcie po rozdielnom content width, ak nebráni legibilite. Nadpisy, typography, výška a kruhový graf vizuálne porovnať.
 
-| Existujúci súbor | Zistenie a použitie |
-|---|---|
-| `src/app/routes.ts` | `routes.home` už existuje a má hodnotu `/`; nepridávať duplicitnú konštantu. |
-| `src/app/AppRoutes.tsx` | Index teraz presmeruje na Resources; nahradiť ho lazy-loaded Overview stránkou. |
-| `src/layouts/app-shell/AppShell.tsx` | Na `lg+` podporuje `handle={{ contentScroll: 'contained' }}`: hlavný obsah je `lg:overflow-hidden`, vnútorný route kontajner `lg:min-h-0`. Overview použije existujúci contained režim rovnako ako Resources / Recovery Runs; `AppShell` nemeníme. |
-| `src/layouts/app-shell/AppSidebar.tsx` | Doplniť Overview a presmerovať brand link na `routes.home`; zachovať ostatné položky a collapsed/mobile správanie. Pri trase `/` zároveň odstrániť dnešný fallback, ktorý predvolene rozbaľuje `Discovery & Inventory` bez aktívnej podstránky. |
-| `src/shared/components/card/Card.tsx` | Použiť Card/CardTitle/CardDescription s lokálnymi className podľa návrhu. |
-| `src/shared/components/filters/FilterTabs.tsx` | Použiť existujúce klávesové ovládanie tabov. |
-| `src/shared/components/modal/Modal.tsx` | Použiť pre request detail; poskytuje Escape, focus trap a návrat focusu. |
-| `src/contexts/ThemeProvider.tsx` | Použiť existujúce tokeny a globálny prepínač; nevytvárať druhý theme state. |
-| `src/hooks/useTranslation.ts` | Texty cez `t`, formátovanie podľa `language`; locales en/sk/cs. |
+## C. Architektúra komponentov a data boundary
 
-`PageHeader` má pevné menšie písmo. Pre Overview vytvoriť lokálny sémantický header s veľkosťou podľa návrhu, bez globálnej zmeny PageHeader a ostatných stránok. HTML sidebar, topbar, embedded fonty ani CSS reset sa nekopírujú do React stránky.
+Cieľový feature priečinok `src/features/dashboard/`:
 
-Súčasný `AppSidebar` inicializuje `openMenu` cez `findRouteMenu(location.pathname) ?? 'Discovery & Inventory'`; `findRouteMenu` vyhľadáva iba podmenu a pri `/` nevráti nič. Pre Overview preto treba inicializovať menu bez automatického rozbalenia Discovery. Pri prechode na existujúce podstránky sa má naďalej zobrazovať ich nadradené menu; pri navigácii **z Resources na Overview** nesmie zostať rozbalené Discovery len v dôsledku automatického defaultu. Používateľom manuálne otvorené podmenu sa však nesmie pri každom kliknutí zbytočne resetovať. Rozlíšiť implicitne aktívne menu od explicitnej používateľskej voľby. Aktívny top-level `Overview` riešiť existujúcim `NavLink` pre `routes.home`, nie prefixovým matchom, ktorý by zvýraznil Overview na všetkých trasách.
+~~~text
+pages/OverviewPage.tsx
+components/DashboardSummary.tsx
+components/DashboardMetricCard.tsx
+components/RequiresAttention.tsx
+components/RecoveryTopologyDonut.tsx
+components/RecentActivity.tsx
+components/InfrastructureOverview.tsx
+components/DashboardPanel.tsx (iba ak potrebný pre 1:1 panel surface)
+model/dashboardTypes.ts
+model/selectDashboardMetrics.ts
+mocks/dashboardFixtures.ts
+~~~
 
-## Vizuálna zmluva
+- Žiadny všeobecný framework pre dashboard alebo nové API klienty. Dáta cez typed `props`/view-models; vizuál nezávislý od transportu. Neskoršie reálne React Query hooky v samostatnom `useDashboardOverview` / dátovom adapteri.
+- Etapa 1 je **vizuálna integrácia s deterministickým mock fixture** (jeden konzistentný dataset). Vždy viditeľné `Demo data`, nie reálny stav platformy. Základné hodnoty a incidenty zachovať z aktuálneho `dashboardFixtures.ts`, nie zo zamietnutého v3; každý agregát vyrátať zo vzoriek, kde je to vhodné. Nulový čítač sa nesmie zamieňať s `Unknown`.
+- Všetky onclick tlačidlá: buď skutočná navigácia na existujúce `routes.*`, alebo funkčný lokálny preview detail cez shared `Modal/DetailView`. Neinteraktívne preview prvky musia byť zjavne označené, nie tváriť sa ako akcia.
+- `Loading`, `Empty`, `Partial error`, `Unknown` a `Demo` sú odlišné stavy bez layout jumpu. Kontrast statusov musí fungovať aj v dark mode; ikonka nie je jediná informácia.
+- Prekladové keys `dashboard.*` pre en/sk/cs. Formátovanie času cez `src/shared/utils/dateTime.ts` / existujúce shared formattery, nie `new Date(naive)`.
+- Nepreberať CSS reset, body/html styly, topbar, sidebar, scriptovú manipuláciu DOM ani HTML inline event-handlery do Reactu. Zachovať existujúce ThemeProvider/LanguageContext/AuthProvider.
+- Žiadny fetch po každom KPI a žiadny globálny test všetkých providerov. Prototyp NIE JE dôkaz, že existujú všetky potrebné health metriky.
 
-- Outfit a existujúce semantic color tokens z ABCO; žiadne nové globálne farby ani CSS reset.
-- Desktop: dve KPI karty, pod nimi väčší environment graf a menší donut, potom Resources cez celú šírku a Latest Activity dole. Ich výšky a proporcie prispôsobiť reálne dostupnej ploche `AppShell` (po odpočítaní headera, paddingov a gapov), aby sa všetky **hlavné sekcie** zobrazili bez scrollovania celého Overview.
-- Mobil: jeden stĺpec, prirodzené rolovanie. Tablet a malé okná: adaptívny fallback bez orezávania obsahu; ak pri danom rozlíšení/zoome nemožno zachovať čitateľnosť všetkých kariet naraz, musí byť obsah dostupný cez vhodné lokálne overflow alebo v mobile cez prirodzené rolovanie. Tablet reaguje na šírku reálneho obsahu po odpočítaní sidebaru.
-- Hlavný titul 30–34 px, nadpisy sekcií 19–20 px, body/ovládacie prvky 14–16 px, pomocný text najmenej 13 px. Výnimka: malé HTTP badges najmenej 12 px. Na nižších desktop viewportoch využiť adaptívne paddingy/gapy a výšky grafov pri zachovaní čitateľnosti, nie globálny CSS `scale()`.
-- KPI čísla preferovane 48–56 px, provider totals približne 36 px; pri menšej dostupnej výške povoliť lokálne kompaktné rozmery (`clamp`/height-aware breakpoint) bez pretekajúceho textu. Prioritou je čitateľný dashboard na jednu desktopovú obrazovku.
-- **Desktop `lg+`: Overview používa route handle `contentScroll: 'contained'` a route root `lg:h-full lg:min-h-0`, bez vlastnej druhej výšky `100vh` (tá by ignorovala header a padding AppShellu).** Rozloženie má využívať `flex/grid` s `minmax(0, ...)`, `min-h-0` a vhodnými `overflow` hranicami, aby hlavný `main` a dokument nemali vertikálny scrollbar. Grafy sa môžu prispôsobovať dostupnej výške, ale osi, legendy, hlavičky a dôležité KPI musia zostať čitateľné; zákaz globálneho zmenšenia celej stránky cez `transform: scale()`.
-- Na bežných desktopoch **1440×900 a 1366×768** musia byť všetky hlavné widgety vrátane Latest Activity viditeľné bez posúvania celej stránky; spodné karty musia byť vzájomne zarovnané. Pri prebytku riadkov smie byť samostatne scrollovateľná len dátová časť `Resources Overview` (najmä View all/Show fewer) alebo `Latest Activity`, s viditeľnou hlavičkou a ovládaním; nikdy potichu neorezať provider ani log. Ak je plocha extrémne malá alebo používateľ zapne 200 % zoom, má prístupnosť/úplnosť prednosť pred zákazom scrollu: použiť bezpečný fallback, nie skrytý obsah.
-- Kontrast normálneho textu najmenej 4,5:1; viditeľný focus, informácia o stave aj textom.
-- Žiadny horizontálny overflow pri 320, 390, 768, 1024 a 1440 px ani pri 200 % zoom.
-- Dlhý názov providera sa zalomí; skrátená request URL má dostupný plný detail.
-- Po každom väčšom UI kroku skontrolovať screenshot v skutočnom prehliadači. Úspešné funkčné testy samy osebe nepotvrdzujú vizuálnu kvalitu.
+## D. Integrácia so súčasnými API: samostatná schválená etapa PO vizuálnej akceptácii
 
-## Dáta a hranice komponentov
+V aktuálnom `openapi/abco-api.json` sú najmä tieto použiteľné read API:
+- `GET /get_providers`: zoznam providerov, role/type a `credentialStatus`; NIE posledný connection test.
+- `GET /get_recovery_apps` a `GET /get_recovery_groups`: konfigurácie; groups majú `topology` a `orchestration.pushed`, ale nie úspešné vytváranie snapshotov.
+- `GET /discovery/cache/history`: discovery runy `success`/`started_at`/`duration_ms`/`error`.
+- `GET /get_orchestrator_runs`: vyžaduje `provider_id` a `dag_id`, nie agregovaný feed (výrazný N+1 fan-out).
+- `GET /test_provider`, `GET /test_platform_provider`: každý len pre jedno ID, nevolať hromadne z dashboardu.
+- `GET /get_recovery_group_inventory`: `run_id` konkrétnej skupiny, nie globálny snapshot/replication-health.
+- `GET /get_volume_tree`: súčty na jeden FlashSystem provider; `fcmaps` nie je univerzálny počet snapshotov; Hitachi nemá overenú analogickú agregáciu.
+- `GET /get_access_logs` sú technické HTTP požiadavky, NIE automaticky použiteľný feed business eventov.
 
-Nová feature je v `src/features/dashboard`. Žiadny generický dashboard framework, vlastný HTTP klient ani druhá query cache.
+Pre reálne `Critical issues`, `Running operations`, `Unverified signals`, incident feed, protected/healthy a všetky "Healthy"/trend grafy potrebujeme doménové pravidlá, čerstvosť a agregáciu na BE. **Neodvodzovať "OK" z `credentialStatus:ok`, `Active` ani `orchestration.pushed`.** Bez overiteľného zdroja zobraziť `Unknown`, alebo ponechať jasne označené demo UI. Nie zavádzať vymyslené health percentá, RPO či historické časové rady.
 
-`model/dashboardTypes.ts` obsahuje len projekcie existujúcich typov pomocou `Pick`/indexed access a lokálne view modely:
+Nespájať etapu 1 a BE prácu do jedného PR bez výslovného súhlasu. Súčasný cieľ je presnosť vizuálu a architektúra bez zadlžovania.
 
-- Application vstup odvodený z `RecoveryApplicationApiRecord` (`id`, `application.environment`, `application.tiers`).
-- Group vstup odvodený z `RecoveryGroup` (`id`, `topology`, `resources`).
-- VMware records odvodené z `DiscoveredVirtualMachine`; provider obsahuje ID, názov, scope a records.
-- FlashSystem records odvodené z `FlashSystemVolume` (`id`, `name`, `status`). Produkčný provider type je `FLASHCOPY`, nie prototypový label `IBM_FLASH_SYSTEM`.
-- Power records odvodené z `PowerPartitionResource` (`id`, `partitionKind`, `partitionState`). Mock normalizovaný inventár neobsahuje VIOS; helper sa navyše opiera o `partitionKind === 'LPAR'`.
-- Request record ako štruktúrovaná vetva `AccessLogsResponseOutput['entries'][number]`, bez vetvy `{ raw }`. Povinné polia sa nevynechávajú svojvoľným pretypovaním.
-- `DashboardLoadState<T>` je discriminated union: `loaded` s dátami, `loading`, `empty`, `error` so správou. Pri chybe nemá hodnotu `0`.
-- `DashboardScenario`: `loaded | loading | empty | error | partial`; `DashboardInventoryRole`: `source | target`.
-- `DashboardSnapshot`: samostatné load states pre applications, groups, access logs a zoznam providerov pre každý role. Každý provider má vlastný load state inventára.
+## E. Implementačná stratégia, kontrolné body a Definition of Done
 
-Mock fixture sú **iba v etape 1** jediným zdrojom čísel. Typovať ich cez `satisfies`, bez `as unknown as`, bez náhodných hodnôt a aktuálneho času. Konfiguračné metriky, environment graf a topology graf musia vychádzať z tých istých records. Stav chyby mení dostupnosť dát, nie definíciu doménových metrík. Oddeliť výpočtové selectory a typované vstupy od zdroja demo dát, aby neskoršie zapojenie existujúcich FE hooks nevyžadovalo prepis vizuálnych komponentov.
+1. **Baseline (historicky splnené)**: odmerať React Overview pri 1600×900, 1366×768 a 1280×720; odmerať screenshoty skutočných ABCO Resources, Recovery Groups a Overview slot v aktuálnom `AppShell`. Potvrdiť rozdiel shell width/padding.
+2. **Route frame**: React `OverviewPage` iba s page headerom a 2×2 prázdnymi panelmi, zachovať `AppShell`, route handle, sidebar, dark/system theme a jazyk. Browser checkpoint pred ďalšími komponentmi.
+3. **KPI komponenty**: všetky štyri vrátane rôznych číslic (1/3/10/100/1000) a dlhých názvov. Schváliť hornú geometriu.
+4. **Requires Attention + donut**: spracovať ako dva súrodé, rovnako široké panely (nie tabulky), 3 pevné incident karty, CSS/SVG kruhový graf, legenda a dostupné aria texty.
+5. **Recent Activity + Infrastructure**: posledné tri eventy, 2×2 karty, správna typografia/progress a rovnaká šírka panelov 50:50.
+6. **Interakcie a stavy**: demo tag, Refresh iba lokálne demo, navigácia/detail, loading/empty/error, dark/light, en/sk/cs, truncated/wrapped names. Žiadny náhodný fetch alebo nový endpoint.
+7. **Finálne browser signoff**: minimálne `1600×900, 1366×768, 1280×720, 1024×768, 390×844`, collapsed/expanded sidebar, light/dark, navigácia cez logo a Overview. Pre každý viewport zapísať screenshot, scrollWidth vs clientWidth a scrollHeight vs clientHeight pre `document`, `main`, `.dashboard-panel`. Pozrieť console a network.
+8. **Checks**: cielene `vitest`, `eslint`, `npm run typecheck`, `npm run build` (vrátane `api:check`). Nevyhodnocovať fixture hodnoty ako reálne zdravotné stavy. Pred odovzdaním diff summary s explicitným potvrdením, že sa nemenili unrelated components ani backend.
 
-**Hranica budúcej etapy (nie úloha D1–D10):** Recovery Applications a Recovery Groups sa budú môcť napojiť na existujúce čítacie API; Latest Activity na existujúci Access Logs zdroj; Resources na role-aware inventory po konkrétnych provideroch. Pred implementáciou živých Resources metrík treba samostatne navrhnúť lazy načítavanie, React Query cache a obmedzenie fan-outu pri veľkom počte providerov, aby otvorenie Overview nespúšťalo masový discovery. Žiadne nové BE API ani globálne Recovery Runs agregácie nie sú súčasťou tejto etapy. Mock fixture nesmie byť v budúcnosti tichou náhradou zlyhaných produkčných údajov.
+**Hotové až keď:** vizuál React Overview je potvrdený v skutočnom ABCO shelli; 4 KPI + 2×2 panel layout v jednom desktop viewporte; žiadny skrytý obsah, žiadny panel/page scroll pri 1600×900 a 1366×768; žiadny mock údaj vydávaný za live; všetky interakcie majú význam; testy a build bez regresií. Pri nekompatibilite medzi vizuálom Overview a AppShell **neprepisovať AppShell** – zdokumentovať konkrétny rozdiel a vyžiadať schválenie len na ten rozdiel.
 
-### Referenčné hodnoty
+## F. Výslovne mimo rozsahu
 
-| Metrika | Očakávaná hodnota |
-|---|---|
-| Applications | 18 total, 14 Active, 4 Draft; Active = neprázdne tiers |
-| Production | 9 Active + 2 Draft = 11 |
-| Staging | 3 Active + 1 Draft = 4 |
-| Development | 2 Active + 1 Draft = 3 |
-| Groups | 24 total, 16 Local, 8 Metro Mirror; 20 Active, 4 Draft |
-| Topology | 66,7 % Local a 33,3 % Metro Mirror |
-| VMware Prague Source | 128 total, 122 connected, 108 powered on |
-| VMware Brno Source | 64 total, 61 connected, 52 powered on |
-| FlashSystem FS7300 Source | 96 total, 92 online, 4 other |
-| IBM Power HMC Source | 32 LPAR, 28 running, 4 other |
-| VMware Ostrava Target | 86 total, 81 connected, 24 powered on |
-| VMware Brno ISE Target | 42 total, 40 connected, 12 powered on |
-| FlashSystem FS7300 Target | 72 total, 69 online, 3 other |
-| IBM Power HMC Target | 20 LPAR, 8 running, 12 other |
-
-Zachovať šesť providerov pre každú stranu podľa V3, predvolene zobraziť štyroch a umožniť View all/Show fewer. Doplnkový Source FlashSystem má 48/46/2 a Power 16/12/4; Target FlashSystem 36/34/2 a Power 12/4/8. Provider názvy a ID sú deterministické.
-
-VMware scope sa rieši cez existujúci `resolveVmwareProviderFilter`: trimmed prefix a prvý neprázdny trimmed tag; mock selector aplikuje oba. Connected a Powered On sú nezávislé počty. FlashSystem online je case-insensitive; ostatné statusy sa nepreznačia na offline. Unknown environment a topology nesmú byť potichu zaradené do známej kategórie: environment použije pôvodný label/Unspecified, topology dostane Unknown s vlastným počtom. Základný fixture obsahuje iba Local/Metro; okrajové prípady pokryjú testy.
-
-Access Logs: šesť záznamov zoradených timestamp zostupne; 2xx/4xx/5xx labely; používateľ null = neprihlásený používateľ. Timestamp je pevný, zobrazený v Europe/Bratislava s lokalizáciou. Plná URL je path + query_string. Mock ID neslúžia ako odkazy na reálne detail stránky.
-
-### Navrhnuté rozhrania
-
-- `getMockDashboardSnapshot(scenario: DashboardScenario): DashboardSnapshot` — čistá synchronná funkcia v `mocks/dashboardMockData.ts`; žiadny fetch ani simulácia siete cez časovač.
-- `selectRecoverySummary(applications, groups)` a `selectEnvironmentDistribution(applications)` v `model/dashboardRecoveryMetrics.ts` — odvodené počty.
-- `selectProviderMetrics(provider)` v `model/dashboardProviderMetrics.ts` — výsledok s presne pomenovanými units, total a jednotlivými count/total metrikami; len pre loaded provider.
-- `OverviewPage` vlastní lokálny inventory role, rozbalenie providerov, zvolený request a demo scenario. Neskladovať odvodené totals v React state.
-- `RecoverySummaryCards`, `EnvironmentChart`, `TopologyChart`, `ResourcesOverview`, `LatestActivity` prijímajú typované dáta/stavy a callbacky; nemajú vlastné API hooky.
-- `DashboardPreviewControls` je dostupný iba v development režime; prepína scénare a resetuje lokálne retry. Jasné označenie `Mock data` spolu s pevným demo snapshot časom zostáva viditeľné aj pri vypnutých controls. Mock preview režim nesmie predstierať produkčný live/dashboard health ani potichu nahrádzať chybu skutočných dát.
-
-## Postup a závislosti
-
-| Úloha | Výsledok | Závislosti |
-|---|---|---|
-| D1 | Typované fixture a scenáre | žiadne |
-| D2 | Výpočty metrík a doménové kontroly | D1 |
-| D3 | Čitateľný page layout a KPI | D1, D2 |
-| D4 | Dva analytické grafy a tooltipy | D3 |
-| D5 | Source/Target Resources widget | D3 |
-| D6 | HTTP activity a request detail | D3 |
-| D7 | Demo controls, loading/empty/error/partial a retry | D4, D5, D6 |
-| D8 | Lokalizácia en/sk/cs | D7 |
-| D9 | Domovská trasa a navigácia | D8 |
-| D10 | Browser overenie a vizuálne doladenie | D9 |
-
-Implementovať postupne. Kontrolné body A po D2, B po D4, C po D7 a D po D10 sú overovacie body; nie dodatočné požiadavky na používateľov návrh dizajnu. Detailné akceptačné kritériá a cesty sú v `todo.md`.
-
-## Overenie a odovzdanie
-
-Focused Vitest podľa každej úlohy, ESLint len zmenených TS/TSX, JSON parse pre locales a `git diff --check`. Typecheck na konci integrácie, pretože pribudnú typované feature komponenty a routing. `npm run build` spúšťa celý suite a API checks; nie je predvolené overenie tejto zmeny.
-
-Spustiť `npm.cmd run dev -- --host 127.0.0.1`. Otvoriť app v Edge s existujúcim autorizovaným prihlásením, prípadne existujúcim testovacím auth harnessom; nevytvárať auth bypass. Overiť desktop pri **1440×900, 1366×768, 1440×768 a 1920×1080**, mobile 390 px, ďalšie šírky 320/768/1024, sidebar expanded/collapsed, Light/Dark/System, SK/EN/CS a 200 % zoom. Pri desktopových režimoch overiť, že `document.documentElement.scrollHeight` a hlavný AppShell `main.scrollHeight` nepresahujú svoju zobraziteľnú výšku (s toleranciou 1–2 px); samotné vnútorné data scroll oblasti widgetov sú prípustné. Overiť aj spodné hrany, posledný log, provider View all a `loading/empty/error/partial` scenáre, aby pri obmedzenej výške nič nezmizlo.
-
-Overiť Source/Target, View all/Show fewer, hover/focus/click tooltip a Escape, request detail a návrat focusu, všetky scenáre a čiastočné retry. Network kontrola preukáže, že **samotná Overview feature v etape 1** nenačítava recovery/inventory/access-log API; existujúca autentifikácia a shell môžu mať svoje requesty. Console nesmie obsahovať nové errors/warnings. Živé backend dáta sa nepoužívajú. Na `/` overiť aj správny aktívny stav Overview bez samovoľne rozbaleného Discovery menu a správne rozbaľovanie menu na ostatných trasách.
-
-Uložiť desktop light/dark, mobile a provider/error screenshoty a krátky výsledok do `tasks/dashboard/verification.md` s presnými príkazmi, URL a limitmi. D10 nie je hotové, kým vizuálne dôkazy nepotvrdia čitateľnosť a layout. Používateľská akceptácia vzhľadu je samostatná od technického PASS.
-
-## Riziká a opatrenia
-
-| Riziko | Opatrenie |
-|---|---|
-| Prototyp obsahuje viaceré CSS overrides | Preniesť výsledné proporcie do lokálnych Tailwind className; nekopírovať celý style block. |
-| Shell odoberie šírku a viewport výšku | Overview zapojiť cez `contentScroll: 'contained'`, výšku dedičnú z AppShellu a `min-h-0`. Overiť fit bez page scrollu pri 1440×900 a 1366×768 so sidebarom expanded/collapsed. |
-| Overflow obsahu po prepnutí role, View all alebo zmenšení výšky | Scroll iba v dátovej časti dotknutého widgetu; header/tabs zostanú viditeľné. Pri mobile a vysokom zoome fallback bez skrytia obsahu. |
-| Nesúlad názvov modelov s HTML mockmi | Typované projekcie existujúcich modelov; FLASHCOPY a normalizované Power partitions. |
-| Mock obsah vyzerá ako živé dáta | Trvalé označenie Mock data a pevný snapshot timestamp; táto etapa sa neprezentuje ako produkčne funkčný dátový dashboard. |
-| Chyba jedného providera vynuluje widget | Per-provider load state, samostatný Retry; ostatné dáta ostávajú viditeľné. |
-| Odkazy na neexistujúce mock entity | Odkazovať iba na existujúce zoznamové stránky, nie mock detail ID. |
-| Overview omylom preberie pôvodné predvolené menu | Pri `/` žiadne automaticky otvorené Discovery; testovať top-level active route a zachovanie existujúcich podmenu. |
-| Neskoršie zapojenie živých dát vytvorí množstvo inventárnych requestov | V mock etape nevolať API; integráciu zdrojov realizovať v samostatnej etape s cache a lazy načítavaním podľa roly/providera. |
-| Browser/autentifikácia nedostupná | Zaznamenať blokovanú kontrolu; nepovažovať screenshot HTML za dôkaz React integrácie. |
-
-Odhad: desať malých až stredných úloh, približne 2–3 pracovné dni vrátane browser overenia. Výsledok D1–D10 je **typovaný a funkčne overený mock Overview**, nie reálny operačný dashboard. Integrácia existujúcich živých API a rozhodnutie o nasadení sú samostatná budúca etapa; bez nej nesmie byť demo prezentované ako živý stav zákazníckeho prostredia.
+- Neimplementovať nový dizajn podľa vlastných nápadov, nepridávať iné grafy/KPI/rozloženia, nezahustiť layout.
+- Neobnovovať zamietnuté `dashboard-home-v3.html` alebo starý dashboard plán.
+- Nepridávať nové FE API volania pre všetky VM/provider snapshots, connection testy alebo DAGy.
+- Nezapisovať mock dáta do globálneho state alebo produkčných storage inventárov.
+- Nemeniť `AppShell`, existujúce Pages, backend, OpenAPI, Orval generated files alebo package dependencies.
+- Nekončiť pri Unit testoch bez reálneho browser screenshot porovnania.
+- Nie automaticky commit/push/merge.

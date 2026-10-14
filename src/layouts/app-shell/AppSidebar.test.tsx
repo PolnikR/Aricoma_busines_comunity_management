@@ -18,6 +18,17 @@ describe('AppSidebar', () => {
     window.innerWidth = originalInnerWidth
   })
 
+  it('selects Overview at home without opening Discovery', async () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <LanguageProvider><SidebarProvider><AppSidebar /></SidebarProvider></LanguageProvider>
+      </MemoryRouter>,
+    )
+    expect(await screen.findByRole('link', { name: 'Overview' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('button', { name: /Discovery & inventory/ })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('link', { name: 'Resources' })).not.toHaveAttribute('aria-current')
+  })
+
   it('shows Recovery Groups in the Recovery Plans section', async () => {
     render(
       <MemoryRouter initialEntries={['/recovery-plans/recovery-groups']}>
