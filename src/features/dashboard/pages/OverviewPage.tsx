@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useInitialResourcePrefetch } from '@/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RefreshIcon } from '@/shared/icons/Icons'
 import { Button } from '@/shared/components/button/Button'
@@ -20,6 +21,7 @@ const densityOptions: DashboardDensity[] = ['auto', 'compact', 'spacious']
 export function OverviewPage({ data = dashboardFixture, initialState = 'demo' }: { data?: DashboardData; initialState?: DashboardState }) {
   const { t } = useTranslation()
   const [state, setState] = useState<DashboardState>(initialState)
+  useInitialResourcePrefetch(state !== 'loading' && state !== 'unknown')
   const [refreshed, setRefreshed] = useState(false)
   const [detail, setDetail] = useState<DashboardDetail | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)

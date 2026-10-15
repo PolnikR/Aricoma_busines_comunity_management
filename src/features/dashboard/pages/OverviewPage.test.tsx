@@ -1,8 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import type { ReactElement } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { render as renderComponent, screen, cleanup, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { OverviewPage } from './OverviewPage'
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+const clients: QueryClient[] = []
+function render(element: ReactElement) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  clients.push(client)
+  return renderComponent(<QueryClientProvider client={client}>{element}</QueryClientProvider>)
+}
+beforeEach(() => { vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({ providers: [] }))))) })
+afterEach(() => { cleanup(); clients.splice(0).forEach(client => { client.clear(); }); vi.unstubAllGlobals() })
 describe('approved Overview', () => {
   beforeEach(() => { window.localStorage.removeItem('abco.dashboard.kpiDensity') })
   it('keeps the four KPI and four panel composition from the approved HTML', () => {
@@ -64,13 +74,15 @@ describe('approved Overview', () => {
     expect(screen.getByText('Demo data · unchanged')).toBeVisible()
     expect(screen.getByText('Demo data')).toBeVisible()
   })
-  it.each(['loading', 'unknown'] as const)('keeps unavailable %s signals separate from zero', state => {
+  it.each(['loading', 'unknown'] as const)('keeps unavailable %s signals separate from zero', async state => {
     render(<OverviewPage initialState={state} />)
     expect(screen.getAllByText('—')).toHaveLength(4)
     expect(screen.getAllByText('UNKNOWN')).toHaveLength(4)
     for (const name of ['Requires Attention', 'Recovery Groups Topology', 'Recent Activity', 'Infrastructure Overview']) expect(screen.getByRole('region', { name })).toBeVisible()
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
+    await act(async () => { await new Promise(resolve => { window.setTimeout(resolve, 0) }) })
+    expect(fetch).not.toHaveBeenCalled()
   })
   it('renders confirmed empty collections as zero', () => {
     render(<OverviewPage initialState="empty" />)
