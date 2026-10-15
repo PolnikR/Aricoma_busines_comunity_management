@@ -4,13 +4,13 @@ import { selectDashboardMetrics } from './selectDashboardMetrics'
 
 describe('approved Overview sample data', () => {
   it('derives KPI and topology counts from one consistent fixture', () => {
-    expect(selectDashboardMetrics(dashboardFixture)).toEqual({ critical: 3, warnings: 7, running: 4, unverified: 5, totalGroups: 24, local: 16, metro: 8 })
+    expect(selectDashboardMetrics(dashboardFixture)).toEqual({ protectionAtRisk: 3, replicationIssues: 7, connectionFailures: 4, inventoryIssues: 5, totalGroups: 24, local: 16, metro: 8 })
     expect(dashboardFixture.incidents).toHaveLength(3)
     expect(dashboardFixture.activity).toHaveLength(3)
     expect(dashboardFixture.infrastructure.map(resource => [resource.total, resource.selected])).toEqual([[128, 108], [32, 30], [186, 178], [94, 91]])
   })
   it('keeps missing inputs unknown instead of claiming zero issues', () => {
     expect(selectDashboardMetrics(null)).toBeNull()
-    expect(selectDashboardMetrics({ ...dashboardFixture, signals: [], groups: [] })).toMatchObject({ critical: 0, warnings: 0, totalGroups: 0 })
+    expect(selectDashboardMetrics({ ...dashboardFixture, issues: [], groups: [] })).toMatchObject({ protectionAtRisk: 0, replicationIssues: 0, connectionFailures: 0, inventoryIssues: 0, totalGroups: 0 })
   })
 })

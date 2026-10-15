@@ -1,10 +1,11 @@
-import type { DashboardData, SignalKind } from '../model/dashboardTypes'
+import type { DashboardData, DashboardIssueKind } from '../model/dashboardTypes'
 
-// Only the approved operations HTML is the source of these illustrative values.
-// These signals are not derived from inventory/configuration health or live APIs.
-const signals: { kind: SignalKind; count: number }[] = [{ kind: 'critical', count: 3 }, { kind: 'warnings', count: 7 }, { kind: 'running', count: 4 }, { kind: 'unverified', count: 5 }]
+// Illustrative issue counts only; no live protection-health verdicts are available.
+// Each entry represents one distinct affected object within its category.
+// The future aggregated API must define protection-risk and deduplication rules.
+const issues: { kind: DashboardIssueKind; count: number }[] = [{ kind: 'protectionAtRisk', count: 3 }, { kind: 'replicationIssues', count: 7 }, { kind: 'connectionFailures', count: 4 }, { kind: 'inventoryIssues', count: 5 }]
 export const dashboardFixture = {
-  signals: signals.flatMap(({ kind, count }) => Array.from({ length: count }, (_, i) => ({ id: `${kind}-${String(i)}`, kind }))),
+  issues: issues.flatMap(({ kind, count }) => Array.from({ length: count }, (_, i) => ({ id: `${kind}-${String(i)}`, kind }))),
   groups: Array.from({ length: 24 }, (_, i) => ({ id: `group-${String(i)}`, topology: i < 16 ? 'local' : 'metro_mirror' })),
   incidents: [
     { id: 'incident-vm', severity: 'critical', titleKey: 'incidentVm', object: 'abco-prg-01-web-01', summaryKey: 'incidentVmSummary', timestamp: '2026-10-22T10:24:00+02:00', detailKey: 'incidentVmDetail' },

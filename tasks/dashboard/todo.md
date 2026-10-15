@@ -18,7 +18,7 @@ Zdroj pravdy: [plan.md](plan.md) a aktuálna React implementácia v `src/feature
 
 ## T2 – 4 KPI cards (vizuálny checkpoint)
 - [x] `DashboardMetricCard` + `DashboardSummary`, 4 rovnako široké, 1 rad pri 1366×768.
-- [x] Poradie: Critical issues, Warnings, Running operations, Unverified signals.
+- [x] Aktualizované poradie KPI (demo, bez API): Protection at risk, Replication issues, Connection failures, Inventory issues. Reálne počty a pravidlá rizika vyžadujú samostatne schválené agregačné API.
 - [x] Rozmer ikony, číslice, subtitle a interakcie podľa schváleného dizajnu. Použiť ABCO tokens + Icons.
 - [x] Testy malých/veľkých čísiel, empty/loading a dlhého textu.
 - [x] Historické porovnanie screenshotov bolo vykonané pred T3; pri ďalších zmenách kontrolovať aktuálny React vzhľad.

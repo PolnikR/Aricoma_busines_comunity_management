@@ -20,7 +20,7 @@ export function OverviewPage({ data = dashboardFixture, initialState = 'demo' }:
   const [detail, setDetail] = useState<DashboardDetail | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const empty = state === 'empty'
-  const counts = selectDashboardMetrics(state === 'unknown' || state === 'loading' ? null : empty ? { signals: [], groups: [], incidents: [], activity: [], infrastructure: [] } : data)
+  const counts = selectDashboardMetrics(state === 'unknown' || state === 'loading' ? null : empty ? { issues: [], groups: [], incidents: [], activity: [], infrastructure: [] } : data)
   const show = (titleKey: string, descriptionKey: string, object?: string) => {
     setDetail({ titleKey, descriptionKey: state === 'empty' || state === 'unknown' || state === 'loading' ? state : descriptionKey, ...(object ? { object } : {}) })
   }

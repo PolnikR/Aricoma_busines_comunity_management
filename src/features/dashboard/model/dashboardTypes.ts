@@ -1,6 +1,7 @@
 export type DashboardState = 'demo' | 'loading' | 'empty' | 'partial' | 'unknown'
-export type SignalKind = 'critical' | 'warnings' | 'running' | 'unverified'
-export interface DashboardSignal { id: string; kind: SignalKind }
+export type DashboardIssueKind = 'protectionAtRisk' | 'replicationIssues' | 'connectionFailures' | 'inventoryIssues'
+// An issue represents one distinct affected object, not every failed operation or warning.
+export interface DashboardIssue { id: string; kind: DashboardIssueKind }
 export interface DashboardIncident {
   id: string
   severity: 'critical' | 'warning'
@@ -30,17 +31,17 @@ export interface DashboardResource {
   detailKey: string
 }
 export interface DashboardData {
-  signals: DashboardSignal[]
+  issues: DashboardIssue[]
   groups: { id: string; topology: 'local' | 'metro_mirror' }[]
   incidents: DashboardIncident[]
   activity: DashboardEvent[]
   infrastructure: DashboardResource[]
 }
 export interface DashboardCounts {
-  critical: number
-  warnings: number
-  running: number
-  unverified: number
+  protectionAtRisk: number
+  replicationIssues: number
+  connectionFailures: number
+  inventoryIssues: number
   totalGroups: number
   local: number
   metro: number
