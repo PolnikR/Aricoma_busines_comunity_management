@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render as renderComponent, screen, cleanup, act } from '@testing-library/react'
+import { render as renderComponent, screen, cleanup, act, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { OverviewPage } from './OverviewPage'
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -73,6 +73,20 @@ describe('approved Overview', () => {
     render(<OverviewPage />)
     await userEvent.setup().click(screen.getByRole('button', { name: /Failed snapshot jobs/ }))
     expect(screen.getByRole('dialog', { name: 'Failed snapshot jobs' })).toHaveTextContent('latest completed scheduled snapshot run')
+  })
+
+  it('compares issue shares on one scale with explicit counts and units', () => {
+    render(<OverviewPage />)
+    const table = screen.getByRole('table', { name: /19 category counts/ })
+    expect(within(table).getByRole('columnheader', { name: 'Share' })).toBeVisible()
+    expect(within(table).getByRole('columnheader', { name: 'Count' })).toBeVisible()
+    const snapshot = within(table).getByRole('row', { name: /Failed snapshot jobs/ })
+    expect(snapshot).toHaveTextContent('16%')
+    expect(within(snapshot).getByText('3')).toBeVisible()
+    expect(snapshot.querySelector('.issue-track-fill')).toHaveStyle({ width: '15.789473684210526%' })
+    const replication = within(table).getByRole('row', { name: /Replication issues/ })
+    expect(replication).toHaveTextContent('37%')
+    expect(within(replication).getByText('7')).toBeVisible()
   })
   it('opens a local demo detail and restores focus after Escape', async () => {
     const user = userEvent.setup()
