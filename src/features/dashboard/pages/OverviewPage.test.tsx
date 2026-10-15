@@ -1,17 +1,52 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { OverviewPage } from './OverviewPage'
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 describe('approved Overview', () => {
+  beforeEach(() => { window.localStorage.removeItem('abco.dashboard.kpiDensity') })
   it('keeps the four KPI and four panel composition from the approved HTML', () => {
     render(<OverviewPage />)
     expect(screen.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
     expect(screen.getByText('Demo data')).toBeVisible()
     for (const name of ['Requires Attention', 'Recovery Groups Topology', 'Recent Activity', 'Infrastructure Overview']) expect(screen.getByRole('region', { name })).toBeVisible()
-    expect(screen.getAllByRole('button', { name: /Open issues|Open warnings|In progress|Pending review/ })).toHaveLength(4)
+    expect(screen.getAllByRole('button', { name: /Recovery Groups with failed jobs|Affected replication groups|Providers with failed tests|Missing storage volumes/ })).toHaveLength(4)
+    expect(screen.getByRole('button', { name: /Failed snapshot jobs/ })).toHaveTextContent('3')
+    expect(screen.getByRole('button', { name: /Replication issues/ })).toHaveTextContent('IBM Metro Mirror / Hitachi TrueCopy')
+    expect(screen.getByRole('button', { name: /Replication issues/ })).toHaveTextContent('7')
+    expect(screen.getByRole('button', { name: /Connection failures/ })).toHaveTextContent('4')
+    expect(screen.getByRole('button', { name: /Missing volumes/ })).toHaveTextContent('5')
     expect(screen.getByRole('img', { name: /24.*16.*8/ })).toBeVisible()
     expect(screen.getByRole('progressbar', { name: /VMware VMs.*Powered on/ })).toHaveAttribute('aria-valuenow', '108')
+  })
+  it('uses exception-based Vercel KPI cards with red status labels and fault icons', () => {
+    const { container } = render(<OverviewPage />)
+    expect(container.querySelectorAll('.health-kpi')).toHaveLength(4)
+    expect(container.querySelectorAll('.health-kpi-icon svg')).toHaveLength(4)
+    for (const status of ['ISSUES', 'MISSING']) expect(screen.getByText(status)).toBeVisible()
+    expect(screen.getByRole('button', { name: /Failed snapshot jobs/ }).querySelector('.health-kpi-icon svg')).not.toBeNull()
+  })
+  it('defaults to Auto, persists manual density choices and restores the last choice', async () => {
+    const user = userEvent.setup()
+    const { unmount } = render(<OverviewPage />)
+    const grid = screen.getByRole('region', { name: 'Key indicators' })
+    expect(grid).toHaveAttribute('data-density', 'auto')
+    expect(screen.getByRole('button', { name: 'Auto' })).toHaveAttribute('aria-pressed', 'true')
+    await user.click(screen.getByRole('button', { name: 'Compact' }))
+    expect(grid).toHaveAttribute('data-density', 'compact')
+    expect(window.localStorage.getItem('abco.dashboard.kpiDensity')).toBe('compact')
+    unmount()
+    render(<OverviewPage />)
+    expect(screen.getByRole('region', { name: 'Key indicators' })).toHaveAttribute('data-density', 'compact')
+    await user.click(screen.getByRole('button', { name: 'Spacious' }))
+    expect(screen.getByRole('button', { name: 'Spacious' })).toHaveAttribute('aria-pressed', 'true')
+    await user.click(screen.getByRole('button', { name: 'Auto' }))
+    expect(window.localStorage.getItem('abco.dashboard.kpiDensity')).toBe('auto')
+  })
+  it('explains latest scheduled group run failures', async () => {
+    render(<OverviewPage />)
+    await userEvent.setup().click(screen.getByRole('button', { name: /Failed snapshot jobs/ }))
+    expect(screen.getByRole('dialog', { name: 'Failed snapshot jobs' })).toHaveTextContent('latest completed scheduled snapshot run')
   })
   it('opens a local demo detail and restores focus after Escape', async () => {
     const user = userEvent.setup()
@@ -32,6 +67,7 @@ describe('approved Overview', () => {
   it.each(['loading', 'unknown'] as const)('keeps unavailable %s signals separate from zero', state => {
     render(<OverviewPage initialState={state} />)
     expect(screen.getAllByText('—')).toHaveLength(4)
+    expect(screen.getAllByText('UNKNOWN')).toHaveLength(4)
     for (const name of ['Requires Attention', 'Recovery Groups Topology', 'Recent Activity', 'Infrastructure Overview']) expect(screen.getByRole('region', { name })).toBeVisible()
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
     expect(screen.queryByRole('img')).not.toBeInTheDocument()

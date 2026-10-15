@@ -29,7 +29,7 @@
 Zachovať poradie, funkciu a kompozíciu súčasnej React stránky:
 
 1. `Overview` header – title/subtitle vľavo, `Demo data / Sample snapshot / Refresh` vpravo.
-2. Horný pás **4 rovnako širokých KPI kariet**, v poradí `Critical issues`, `Warnings`, `Running operations`, `Unverified signals`. Rovnaké ikonové štvorce, názvy, podnázvy, veľká hodnota, jemné hover/focus.
+2. Horný pás **4 rovnako širokých KPI kariet** vo výnimkovom („problem-first“) režime: `Protection at risk` (počet Recovery Applications s potvrdeným ohrozením obnoviteľnosti), `Replication issues` (problémové replikačné vzťahy), `Connection failures` (provideri s posledným potvrdeným neúspešným connection testom) a `Inventory issues` (dotknuté objekty: chýbajúce VM, volumes alebo problémy mapovania). Žiadne počítadlá úspešných operácií. Vizualizácia a demo mód ostávajú nezmenené.
 3. Dashboard plocha **2 stĺpce po 50 %**, dva riadky: vľavo hore `Requires Attention`, vpravo hore `Recovery Groups Topology`; vľavo dole `Recent Activity`, vpravo dole `Infrastructure Overview`.
 4. `Requires Attention`: **3 kompaktné incidentové karty**, každá má ikonu závažnosti, vecný text, timestamp a tlačidlo detailu. Žiadna tabulka/list-scroll/paginácia. `View all issues` smeruje na vhodnú existujúcu detailnú sekciu alebo zostane neaktívnym vysvetleným preview prvkom, nie falošným linkom.
 5. `Recovery Groups Topology`: **jeden výrazný donut** s celkom v strede a čitateľnou legendou `Local`/`Metro Mirror` s početnosťami a percentami; graf kresliť bez novej knižnice (CSS conic-gradient alebo SVG); prístupný alternatívny text. Nezmeniť donut na bar chart. Topology nie je protection health.
@@ -86,7 +86,7 @@ V aktuálnom `openapi/abco-api.json` sú najmä tieto použiteľné read API:
 - `GET /get_volume_tree`: súčty na jeden FlashSystem provider; `fcmaps` nie je univerzálny počet snapshotov; Hitachi nemá overenú analogickú agregáciu.
 - `GET /get_access_logs` sú technické HTTP požiadavky, NIE automaticky použiteľný feed business eventov.
 
-Pre reálne `Critical issues`, `Running operations`, `Unverified signals`, incident feed, protected/healthy a všetky "Healthy"/trend grafy potrebujeme doménové pravidlá, čerstvosť a agregáciu na BE. **Neodvodzovať "OK" z `credentialStatus:ok`, `Active` ani `orchestration.pushed`.** Bez overiteľného zdroja zobraziť `Unknown`, alebo ponechať jasne označené demo UI. Nie zavádzať vymyslené health percentá, RPO či historické časové rady.
+Pre reálne `Protection at risk`, `Replication issues`, `Connection failures`, `Inventory issues` a incident feed potrebujeme doménové pravidlá, deduplikáciu, čerstvosť a agregáciu na BE. Prvá KPI počíta **dotknuté Recovery Applications**, nie Airflow `failed` runy; samotné zlyhanie testu nie je potvrdením nechránenosti. Stavy `Unknown` a neoverené spojenia sa nesmú zameniť za zdravé ani započítať ako potvrdené zlyhania. Connection failure vyžaduje posledný výsledok connection testu, nie `credentialStatus:ok`. Replikačné a inventory problémy počítať po jednoznačnej identite objektu; upozornenia s duplicitnými referenciami nezvyšujú počet dotknutých objektov. **Neodvodzovať "OK" z `credentialStatus:ok`, `Active` ani `orchestration.pushed`.** Bez overiteľného zdroja zobraziť `Unknown`, alebo ponechať jasne označené demo UI. Nezavádzať vymyslené health percentá, RPO či historické časové rady.
 
 Nespájať etapu 1 a BE prácu do jedného PR bez výslovného súhlasu. Súčasný cieľ je presnosť vizuálu a architektúra bez zadlžovania.
 

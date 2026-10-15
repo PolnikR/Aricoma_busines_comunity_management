@@ -1,6 +1,8 @@
 export type DashboardState = 'demo' | 'loading' | 'empty' | 'partial' | 'unknown'
-export type SignalKind = 'critical' | 'warnings' | 'running' | 'unverified'
-export interface DashboardSignal { id: string; kind: SignalKind }
+export type DashboardDensity = 'auto' | 'compact' | 'spacious'
+export type DashboardIssueKind = 'failedSnapshotJobs' | 'replicationIssues' | 'connectionFailures' | 'missingVolumes'
+// Each mock issue represents one affected object in the relevant KPI unit.
+export interface DashboardIssue { id: string; kind: DashboardIssueKind }
 export interface DashboardIncident {
   id: string
   severity: 'critical' | 'warning'
@@ -30,17 +32,17 @@ export interface DashboardResource {
   detailKey: string
 }
 export interface DashboardData {
-  signals: DashboardSignal[]
+  issues: DashboardIssue[]
   groups: { id: string; topology: 'local' | 'metro_mirror' }[]
   incidents: DashboardIncident[]
   activity: DashboardEvent[]
   infrastructure: DashboardResource[]
 }
 export interface DashboardCounts {
-  critical: number
-  warnings: number
-  running: number
-  unverified: number
+  failedSnapshotJobs: number
+  replicationIssues: number
+  connectionFailures: number
+  missingVolumes: number
   totalGroups: number
   local: number
   metro: number

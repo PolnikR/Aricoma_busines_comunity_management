@@ -1,0 +1,224 @@
+/* Vercel-inspired KPI hierarchy using ABCO theme tokens. Only Overview KPI cards and the density switch. */
+.operations-dashboard .density-switch {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  gap: 1px;
+  border: 1px solid var(--app-border);
+  border-radius: 9px;
+  background: var(--app-surface-muted);
+}
+.operations-dashboard .density-option {
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 9px;
+  background: transparent;
+  color: var(--app-text-secondary);
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.operations-dashboard .density-option[aria-pressed="true"] {
+  background: var(--app-surface);
+  color: var(--app-accent-hover);
+  box-shadow: 0 1px 3px #17233d12;
+}
+.operations-dashboard .health-kpis {
+  --hk-min-height: 183px;
+  --hk-padding: 17px 18px 14px;
+  --hk-number-size: 49px;
+  --hk-title-gap: 14px;
+  --hk-title-size: 14px;
+  --hk-subtitle-size: 11px;
+  --hk-main-gap: 13px;
+  --hk-icon-size: 27px;
+  --hk-rule-gap: 14px;
+  --hk-footer-gap: 8px;
+  min-height: 0;
+}
+.operations-dashboard .health-kpis[data-density="compact"] {
+  --hk-min-height: 132px;
+  --hk-padding: 11px 13px 10px;
+  --hk-number-size: 30px;
+  --hk-title-gap: 7px;
+  --hk-title-size: 12px;
+  --hk-subtitle-size: 10px;
+  --hk-main-gap: 6px;
+  --hk-icon-size: 21px;
+  --hk-rule-gap: 7px;
+  --hk-footer-gap: 4px;
+}
+.operations-dashboard .health-kpi {
+  --hk-status: var(--color-error-600);
+  display: flex;
+  flex-direction: column;
+  min-height: var(--hk-min-height);
+  min-width: 0;
+  padding: var(--hk-padding);
+  color: var(--app-text-primary);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  text-align: left;
+  box-shadow: 0 2px 10px #17233d08, 0 12px 24px -22px #5e799b70;
+  transition: border-color .16s, background-color .16s, box-shadow .16s;
+}
+.operations-dashboard .health-kpi--warning { --hk-status: var(--color-warning-600); }
+.operations-dashboard .health-kpi--clear,
+.operations-dashboard .health-kpi--unknown { --hk-status: var(--app-text-muted); }
+.operations-dashboard .health-kpi:hover {
+  background: var(--app-surface-subtle);
+  border-color: var(--app-border-strong);
+  box-shadow: 0 6px 18px #17233d10;
+}
+.operations-dashboard .health-kpi-head,
+.operations-dashboard .health-kpi-main,
+.operations-dashboard .health-kpi-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 8px;
+}
+.operations-dashboard .health-kpi-code {
+  min-width: 0;
+  color: var(--app-text-muted);
+  font: 600 10px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: .035em;
+}
+.operations-dashboard .health-kpi-code b { color: var(--app-accent-hover); font-weight: 650; }
+.operations-dashboard .health-kpi-arrow { color: var(--app-text-muted); width: 15px; height: 15px; flex: none; }
+.operations-dashboard .health-kpi-title {
+  display: block;
+  margin-top: var(--hk-title-gap);
+  font-size: var(--hk-title-size);
+  font-weight: 750;
+  line-height: 1.25;
+  letter-spacing: -.018em;
+  overflow-wrap: anywhere;
+}
+.operations-dashboard .health-kpi-description {
+  display: block;
+  min-width: 0;
+  margin-top: 4px;
+  color: var(--app-text-muted);
+  font-size: var(--hk-subtitle-size);
+  line-height: 1.35;
+}
+.operations-dashboard .health-kpi-main { margin-top: auto; padding-top: var(--hk-main-gap); }
+.operations-dashboard .health-kpi-number {
+  font-size: var(--hk-number-size);
+  line-height: 1;
+  font-weight: 690;
+  letter-spacing: -.06em;
+  font-variant-numeric: tabular-nums;
+}
+.operations-dashboard .health-kpi-icon { width: var(--hk-icon-size); height: var(--hk-icon-size); color: var(--app-text-secondary); flex: none; }
+.operations-dashboard .health-kpi-icon svg { width: 100%; height: 100%; display: block; }
+.operations-dashboard .health-kpi-icon .health-kpi-fault { stroke: var(--color-error-600); stroke-width: 2.2; }
+.operations-dashboard .health-kpi--error .health-kpi-icon { color: var(--color-error-600); }
+.operations-dashboard .health-kpi-footer { margin-top: var(--hk-footer-gap); }
+.operations-dashboard .health-kpi-context {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  color: var(--app-text-secondary);
+  font-size: 10px;
+  line-height: 1.25;
+}
+.operations-dashboard .health-kpi-dot { width: 7px; height: 7px; background: var(--hk-status); border-radius: 50%; flex: none; }
+.operations-dashboard .health-kpi-status {
+  color: var(--color-error-600);
+  font: 700 9px/1.25 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: .035em;
+  white-space: nowrap;
+  flex: none;
+}
+.operations-dashboard .health-kpi-status--unknown,
+.operations-dashboard .health-kpi--clear .health-kpi-status { color: var(--app-text-muted); }
+.operations-dashboard .health-kpi--clear .health-kpi-icon,
+.operations-dashboard .health-kpi--unknown .health-kpi-icon { color: var(--app-text-secondary); }
+.operations-dashboard .health-kpi--clear .health-kpi-icon .health-kpi-fault,
+.operations-dashboard .health-kpi--unknown .health-kpi-icon .health-kpi-fault { stroke: var(--app-text-secondary); }
+.operations-dashboard .health-kpi-rule {
+  display: block;
+  margin-top: var(--hk-rule-gap);
+  height: 2px;
+  flex: none;
+  border-radius: 2px;
+  background: var(--app-border);
+  position: relative;
+  overflow: hidden;
+}
+.operations-dashboard .health-kpi-rule::before {
+  content: "";
+  display: block;
+  height: 100%;
+  width: 29%;
+  background: var(--hk-status);
+}
+.operations-dashboard .health-kpis[data-density="compact"] .health-kpi-description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.operations-dashboard .health-kpis[data-density="compact"] .health-kpi-code { font-size: 9px; }
+.operations-dashboard .health-kpis[data-density="compact"] .health-kpi-status { font-size: 8px; }
+@media (max-height: 820px) and (min-width: 1000px) {
+  .operations-dashboard .health-kpis[data-density="auto"] {
+    --hk-min-height: 132px;
+    --hk-padding: 11px 13px 10px;
+    --hk-number-size: 30px;
+    --hk-title-gap: 7px;
+    --hk-title-size: 12px;
+    --hk-subtitle-size: 10px;
+    --hk-main-gap: 6px;
+    --hk-icon-size: 21px;
+    --hk-rule-gap: 7px;
+    --hk-footer-gap: 4px;
+  }
+  .operations-dashboard .health-kpis[data-density="auto"] .health-kpi-description {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .operations-dashboard .health-kpis[data-density="auto"] .health-kpi-code { font-size: 9px; }
+  .operations-dashboard .health-kpis[data-density="auto"] .health-kpi-status { font-size: 8px; }
+}
+.dark .operations-dashboard .health-kpi:not(.health-kpi--clear):not(.health-kpi--unknown) .health-kpi-status,
+.dark .operations-dashboard .health-kpi--error:not(.health-kpi--clear):not(.health-kpi--unknown) .health-kpi-icon { color: var(--color-error-400); }
+.dark .operations-dashboard .health-kpi:not(.health-kpi--clear):not(.health-kpi--unknown) .health-kpi-icon .health-kpi-fault { stroke: var(--color-error-400); }
+/* The existing contained layout already switches to 2 columns at this container width. */
+@container (max-width: 760px) {
+  .operations-dashboard .health-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container (max-width: 540px) {
+  .operations-dashboard .health-kpis {
+    --hk-padding: 11px 10px 10px;
+    --hk-number-size: 27px;
+    --hk-title-gap: 9px;
+    --hk-title-size: 11px;
+    --hk-subtitle-size: 10px;
+    --hk-main-gap: 9px;
+    --hk-icon-size: 20px;
+    --hk-rule-gap: 8px;
+    --hk-footer-gap: 7px;
+  }
+  .operations-dashboard .health-kpi { min-height: max(var(--hk-min-height), 155px); }
+  .operations-dashboard .health-kpi-code { font-size: 8px; }
+  .operations-dashboard .health-kpi-description,
+  .operations-dashboard .health-kpis[data-density="compact"] .health-kpi-description {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+  .operations-dashboard .health-kpi-footer { flex-wrap: wrap; row-gap: 3px; }
+  .operations-dashboard .health-kpi-context { width: 100%; font-size: 9px; }
+  .operations-dashboard .health-kpi-status { margin-left: auto; }
+  .operations-dashboard .density-option { padding: 7px 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .operations-dashboard .health-kpi { transition: none; }
+}
