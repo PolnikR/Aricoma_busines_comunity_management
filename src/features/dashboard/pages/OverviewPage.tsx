@@ -8,8 +8,8 @@ import { DashboardSummary } from '../components/DashboardSummary'
 import { dashboardFixture } from '../mocks/dashboardFixtures'
 import { selectDashboardMetrics } from '../model/selectDashboardMetrics'
 import { IssuesDistribution } from '../components/IssuesDistribution'
-import { RecoveryApplicationsDonut } from '../components/RecoveryApplicationsDonut'
-import { RecoveryTopologyDonut } from '../components/RecoveryTopologyDonut'
+import { RecoveryApplicationsDistribution } from '../components/RecoveryApplicationsDistribution'
+import { RecoveryTopologyDistribution } from '../components/RecoveryTopologyDistribution'
 import { InfrastructureOverview } from '../components/InfrastructureOverview'
 import type { DashboardData, DashboardDensity, DashboardDetail, DashboardState } from '../model/dashboardTypes'
 import './overview.css'
@@ -51,8 +51,8 @@ export function OverviewPage({ data = dashboardFixture, initialState = 'demo' }:
     </div><button type="button" className="demo-tag" onClick={() => { setPreviewOpen(true) }}>{t('dashboard.demo')}</button><span className="update-state" role="status"><span className="update-dot" /><span>{t(refreshed ? 'dashboard.unchanged' : 'dashboard.snapshot')}</span></span><button type="button" className="refresh" onClick={() => { setState('demo'); setRefreshed(true) }}><RefreshIcon className="icon" />{t('dashboard.refresh')}</button></div></div>
     <DashboardSummary counts={counts} state={state} density={density} onSelect={key => { show(key, `${key}Detail`) }} />
     <div className="board">
-      <RecoveryApplicationsDonut applications={empty ? [] : data.applications} state={state} />
-      <RecoveryTopologyDonut counts={counts} snapshots={empty ? undefined : data.snapshotSummary} state={state} />
+      <RecoveryApplicationsDistribution applications={empty ? [] : data.applications} state={state} />
+      <RecoveryTopologyDistribution counts={counts} snapshots={empty ? undefined : data.snapshotSummary} state={state} />
       <IssuesDistribution counts={counts} state={state} />
       <InfrastructureOverview resources={empty ? [] : data.infrastructure} state={state} onDetail={resource => { show(resource.titleKey, state === 'partial' && resource.id === 'hitachi' ? 'partial' : resource.detailKey) }} />
     </div>

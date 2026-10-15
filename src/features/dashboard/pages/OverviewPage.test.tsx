@@ -42,7 +42,12 @@ describe('approved Overview', () => {
       'Recovery Applications', 'Recovery Groups Topology', 'Issues Distribution', 'Infrastructure Overview',
     ])
     expect(container.querySelectorAll('.board .resources > .resource')).toHaveLength(4)
-    expect(container.querySelectorAll('.board .donut')).toHaveLength(2)
+    const applications = screen.getByRole('region', { name: 'Recovery Applications' })
+    expect(within(applications).getByRole('meter', { name: 'VMware' })).toHaveAttribute('value', '23')
+    expect(within(applications).getByRole('meter', { name: 'IBM Power' })).toHaveAttribute('max', '34')
+    const topology = screen.getByRole('region', { name: 'Recovery Groups Topology' })
+    expect(within(topology).getByText('Local')).toBeVisible()
+    expect(within(topology).getByText('66.7%')).toBeVisible()
     expect(container.querySelectorAll('.issue-share')).toHaveLength(4)
   })
   it('uses exception-based Vercel KPI cards with red status labels and fault icons', () => {

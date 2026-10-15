@@ -110,6 +110,39 @@
 .operations-console .issue-share--volumes .issue-track-fill { background: var(--dashboard-muted); }
 .operations-console .console-issue-note { flex: none; color: var(--dashboard-muted); font-size: 11px; line-height: 1.3; margin: 0; padding-top: 5px; }
 
+.operations-console .console-platforms { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(64px, .3fr) minmax(0, 1fr); align-items: center; gap: 16px; padding: 6px var(--dashboard-pad); }
+.operations-console .console-chart-total { display: flex; flex-direction: column; gap: 4px; }
+.operations-console .console-chart-total strong { font: 28px/1.2 var(--dashboard-mono); }
+.operations-console .console-chart-total span { color: var(--dashboard-muted); font-size: 11px; }
+.operations-console .console-platform-list { min-height: 0; display: flex; flex-direction: column; justify-content: space-evenly; align-self: stretch; gap: 6px; margin: 0; }
+.operations-console .console-platform { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 8px; }
+.operations-console .console-platform dt { font-size: 12px; }
+.operations-console .console-platform dd { display: contents; margin: 0; }
+.operations-console .console-platform-values { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.operations-console .console-platform-values strong { font: 20px/1.2 var(--dashboard-mono); }
+.operations-console .console-platform-values > span { font: 11px/1.3 var(--dashboard-mono); color: var(--dashboard-muted); }
+.operations-console .console-platform meter { --meter-color: var(--dashboard-accent); grid-column: 1 / -1; width: 100%; height: 5px; border: 0; background: var(--dashboard-raised); appearance: none; }
+.operations-console .console-platform--appPower meter { --meter-color: var(--dashboard-secondary); }
+.operations-console .console-platform meter::-webkit-meter-bar { height: 5px; border: 0; border-radius: 0; background: var(--dashboard-raised); }
+.operations-console .console-platform meter::-webkit-meter-optimum-value { background: var(--meter-color); }
+.operations-console .console-platform meter::-moz-meter-bar { background: var(--meter-color); }
+.operations-console .console-stats { flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; border-top: 1px solid var(--dashboard-line); background: var(--dashboard-raised); }
+.operations-console .console-stats > div { min-width: 0; padding: 6px 10px; display: flex; align-items: center; gap: 8px; }
+.operations-console .console-stats > div + div { border-left: 1px solid var(--dashboard-line); }
+.operations-console .console-stats dt { font-size: 11px; line-height: 1.3; color: var(--dashboard-muted); }
+.operations-console .console-stats dd { order: -1; flex: none; margin: 0; font: 20px/1.2 var(--dashboard-mono); }
+.operations-console .console-topology { min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(80px, .3fr) minmax(0, 1fr); align-items: center; gap: 16px; padding: 6px var(--dashboard-pad); }
+.operations-console .console-topology-root { min-width: 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 8px; background: var(--dashboard-raised); border: 1px solid var(--dashboard-line); border-left: 2px solid var(--dashboard-accent); padding: 8px; }
+.operations-console .console-topology-root span { font-size: 11px; color: var(--dashboard-muted); }
+.operations-console .console-topology-root strong { font: 24px/1.2 var(--dashboard-mono); }
+.operations-console .console-topology-branches { min-width: 0; margin: 0; padding-left: 12px; border-left: 1px solid var(--dashboard-line); display: grid; gap: 6px; }
+.operations-console .console-topology-node { position: relative; min-width: 0; border: 1px solid var(--dashboard-line); padding: 4px 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.operations-console .console-topology-node::before { content: ''; position: absolute; left: -13px; width: 12px; top: 50%; border-top: 1px solid var(--dashboard-line); }
+.operations-console .console-topology-node dt { font-size: 12px; }
+.operations-console .console-topology-node dd { margin: 0; display: flex; align-items: center; gap: 12px; }
+.operations-console .console-topology-node strong { font: 20px/1.2 var(--dashboard-mono); }
+.operations-console .console-topology-node dd > span { font: 11px/1.3 var(--dashboard-mono); color: var(--dashboard-muted); }
+
 @container dashboard (min-width: 1150px) and (min-height: 740px) {
   .operations-console { --dashboard-pad: 20px; --dashboard-gap: 16px; }
   .operations-console .board { grid-template-columns: 1.2fr 1fr 1fr; grid-template-rows: minmax(0, 1fr) minmax(160px, .36fr); grid-template-areas: "issues applications topology" "infrastructure infrastructure infrastructure"; }
@@ -118,6 +151,17 @@
   .operations-console .panel-header { padding-top: 16px; }
   .operations-console .panel-subtitle { display: block; }
   .operations-console .console-issue-total { display: flex; }
+  .operations-console .console-platforms { grid-template-columns: 1fr; align-content: space-evenly; padding-top: 16px; padding-bottom: 16px; }
+  .operations-console .console-chart-total { flex-direction: row; align-items: baseline; gap: 8px; }
+  .operations-console .console-chart-total strong { font-size: 38px; }
+  .operations-console .console-platform-list { gap: 20px; }
+  .operations-console .console-platform-values strong { font-size: 28px; }
+  .operations-console .console-stats > div { padding: 14px var(--dashboard-pad); flex-direction: column; align-items: flex-start; }
+  .operations-console .console-stats dd { font-size: 26px; }
+  .operations-console .console-topology { grid-template-columns: 1fr; padding-top: 16px; padding-bottom: 16px; gap: 16px; align-content: space-evenly; }
+  .operations-console .console-topology-root { padding: 16px; }
+  .operations-console .console-topology-root strong { font-size: 34px; }
+  .operations-console .console-topology-node { padding: 12px; }
   .operations-console .health-kpis[data-density="compact"] .health-kpi { padding: 10px 12px; }
 }
 
