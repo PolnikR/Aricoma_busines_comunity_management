@@ -1,10 +1,37 @@
-import { ShieldIcon, RefreshIcon, PlugIcon, DiskIcon } from '@/shared/icons/Icons'
 import { useTranslation } from '@/hooks/useTranslation'
-import type { DashboardCounts, DashboardState, DashboardIssueKind } from '../model/dashboardTypes'
+import type { DashboardCounts, DashboardState, DashboardIssueKind, DashboardDensity } from '../model/dashboardTypes'
 import { DashboardMetricCard } from './DashboardMetricCard'
 
-export function DashboardSummary({ counts, state, onSelect }: { counts: DashboardCounts | null; state: DashboardState; onSelect: (key: DashboardIssueKind) => void }) {
+const icons = {
+  protectionAtRisk: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M10.3 3.9 1.9 18.2a1.8 1.8 0 0 0 1.5 2.7h17.2a1.8 1.8 0 0 0 1.5-2.7L13.7 3.9a1.9 1.9 0 0 0-3.4 0Z"/><path d="M12 9v4.5M12 17h.01" strokeWidth="2.5"/></svg>,
+  replicationIssues: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7v5h-5M4 17v-5h5M5.5 9a7.5 7.5 0 0 1 13-2L20 7M18.5 15a7.5 7.5 0 0 1-13 2L4 17"/><path className="health-kpi-fault" d="M5 4.5 19 19.5"/></svg>,
+  connectionFailures: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v4M14 3v4M6 7h10v4a5 5 0 0 1-10 0V7ZM11 16v5"/><path className="health-kpi-fault" d="m17 16 5 5m0-5-5 5"/></svg>,
+  inventoryIssues: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="M2.5 14h19M6.5 17h.01"/><path className="health-kpi-fault" d="m13 7 5 5m0-5-5 5"/></svg>,
+}
+
+const cards = [
+  { key: 'protectionAtRisk', code: '01', tone: 'error', status: 'atRisk' },
+  { key: 'replicationIssues', code: '02', tone: 'warning', status: 'degraded' },
+  { key: 'connectionFailures', code: '03', tone: 'error', status: 'failed' },
+  { key: 'inventoryIssues', code: '04', tone: 'warning', status: 'warning' },
+] as const
+
+export function DashboardSummary({ counts, state, density, onSelect }: { counts: DashboardCounts | null; state: DashboardState; density: DashboardDensity; onSelect: (key: DashboardIssueKind) => void }) {
   const { t, language } = useTranslation()
-  const cards = [{ key: 'protectionAtRisk' as const, tone: 'red', icon: <ShieldIcon className="icon" /> }, { key: 'replicationIssues' as const, tone: 'orange', icon: <RefreshIcon className="icon" /> }, { key: 'connectionFailures' as const, tone: 'red', icon: <PlugIcon className="icon" /> }, { key: 'inventoryIssues' as const, tone: 'orange', icon: <DiskIcon className="icon" /> }]
-  return <section className="kpis" aria-label={t('dashboard.indicators')}>{cards.map(card => <DashboardMetricCard key={card.key} title={t(`dashboard.${card.key}`)} subtitle={t(`dashboard.${card.key}Subtitle`)} context={t(`dashboard.${card.key}Context`)} value={counts ? new Intl.NumberFormat(language).format(counts[card.key]) : '—'} loading={state === 'loading'} tone={card.tone} icon={card.icon} onClick={() => { onSelect(card.key) }} />)}</section>
+  return <section className="kpis health-kpis" data-density={density} aria-label={t('dashboard.indicators')}>
+    {cards.map(card => <DashboardMetricCard
+      key={card.key}
+      code={card.code}
+      category={t(`dashboard.${card.key}Category`)}
+      title={t(`dashboard.${card.key}`)}
+      subtitle={t(`dashboard.${card.key}Subtitle`)}
+      context={t(`dashboard.${card.key}Context`)}
+      status={t(`dashboard.status.${counts ? card.status : 'unknown'}`)}
+      value={counts ? new Intl.NumberFormat(language).format(counts[card.key]) : '—'}
+      loading={state === 'loading'}
+      tone={card.tone}
+      icon={icons[card.key]}
+      onClick={() => { onSelect(card.key) }}
+    />)}
+  </section>
 }

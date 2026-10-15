@@ -10,8 +10,12 @@ import { RequiresAttention } from '../components/RequiresAttention'
 import { RecoveryTopologyDonut } from '../components/RecoveryTopologyDonut'
 import { RecentActivity } from '../components/RecentActivity'
 import { InfrastructureOverview } from '../components/InfrastructureOverview'
-import type { DashboardData, DashboardDetail, DashboardState } from '../model/dashboardTypes'
+import type { DashboardData, DashboardDensity, DashboardDetail, DashboardState } from '../model/dashboardTypes'
 import './overview.css'
+import './dashboard-kpi.css'
+
+const DENSITY_STORAGE_KEY = 'abco.dashboard.kpiDensity'
+const densityOptions: DashboardDensity[] = ['auto', 'compact', 'spacious']
 
 export function OverviewPage({ data = dashboardFixture, initialState = 'demo' }: { data?: DashboardData; initialState?: DashboardState }) {
   const { t } = useTranslation()
@@ -19,6 +23,18 @@ export function OverviewPage({ data = dashboardFixture, initialState = 'demo' }:
   const [refreshed, setRefreshed] = useState(false)
   const [detail, setDetail] = useState<DashboardDetail | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [density, setDensity] = useState<DashboardDensity>(() => {
+    try {
+      const saved = window.localStorage.getItem(DENSITY_STORAGE_KEY)
+      return densityOptions.find(option => option === saved) ?? 'auto'
+    } catch {
+      return 'auto'
+    }
+  })
+  const selectDensity = (next: DashboardDensity) => {
+    setDensity(next)
+    try { window.localStorage.setItem(DENSITY_STORAGE_KEY, next) } catch { /* Storage may be unavailable. */ }
+  }
   const empty = state === 'empty'
   const counts = selectDashboardMetrics(state === 'unknown' || state === 'loading' ? null : empty ? { issues: [], groups: [], incidents: [], activity: [], infrastructure: [] } : data)
   const show = (titleKey: string, descriptionKey: string, object?: string) => {
@@ -26,8 +42,10 @@ export function OverviewPage({ data = dashboardFixture, initialState = 'demo' }:
   }
   const states: { value: DashboardState; label: string }[] = [{ value: 'demo', label: 'demoOption' }, { value: 'loading', label: 'loadingOption' }, { value: 'empty', label: 'emptyOption' }, { value: 'partial', label: 'partialOption' }, { value: 'unknown', label: 'unknownOption' }]
   return <div className="dashboard-host flex min-h-full min-w-0 flex-1 flex-col lg:h-full lg:min-h-0"><div className="operations-dashboard">
-    <div className="page-head"><div><h1>{t('dashboard.title')}</h1><p className="page-subtitle">{t('dashboard.subtitle')}</p></div><div className="head-actions"><button type="button" className="demo-tag" onClick={() => { setPreviewOpen(true) }}>{t('dashboard.demo')}</button><span className="update-state" role="status"><span className="update-dot" /><span>{t(refreshed ? 'dashboard.unchanged' : 'dashboard.snapshot')}</span></span><button type="button" className="refresh" onClick={() => { setState('demo'); setRefreshed(true) }}><RefreshIcon className="icon" />{t('dashboard.refresh')}</button></div></div>
-    <DashboardSummary counts={counts} state={state} onSelect={key => { show(key, `${key}Detail`) }} />
+    <div className="page-head"><div><h1>{t('dashboard.title')}</h1><p className="page-subtitle">{t('dashboard.subtitle')}</p></div><div className="head-actions"><div className="density-switch" role="group" aria-label={t('dashboard.density')}>
+      {densityOptions.map(option => <button type="button" key={option} className="density-option" aria-pressed={density === option} onClick={() => { selectDensity(option) }}>{t(`dashboard.density.${option}`)}</button>)}
+    </div><button type="button" className="demo-tag" onClick={() => { setPreviewOpen(true) }}>{t('dashboard.demo')}</button><span className="update-state" role="status"><span className="update-dot" /><span>{t(refreshed ? 'dashboard.unchanged' : 'dashboard.snapshot')}</span></span><button type="button" className="refresh" onClick={() => { setState('demo'); setRefreshed(true) }}><RefreshIcon className="icon" />{t('dashboard.refresh')}</button></div></div>
+    <DashboardSummary counts={counts} state={state} density={density} onSelect={key => { show(key, `${key}Detail`) }} />
     <div className="board">
       <RequiresAttention incidents={empty ? [] : data.incidents} state={state} onDetail={incident => { show(incident.titleKey, incident.detailKey, incident.object) }} onViewAll={() => { show('attention', 'issuesDetail') }} />
       <RecoveryTopologyDonut counts={counts} state={state} />

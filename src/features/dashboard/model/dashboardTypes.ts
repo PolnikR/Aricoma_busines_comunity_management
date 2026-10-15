@@ -1,4 +1,5 @@
 export type DashboardState = 'demo' | 'loading' | 'empty' | 'partial' | 'unknown'
+export type DashboardDensity = 'auto' | 'compact' | 'spacious'
 export type DashboardIssueKind = 'protectionAtRisk' | 'replicationIssues' | 'connectionFailures' | 'inventoryIssues'
 // An issue represents one distinct affected object, not every failed operation or warning.
 export interface DashboardIssue { id: string; kind: DashboardIssueKind }
