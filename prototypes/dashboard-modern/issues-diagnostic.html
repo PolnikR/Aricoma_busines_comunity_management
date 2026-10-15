@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>01 · Issues diagnostic · Recovery overview</title>
+  <style>
+    :root {
+      --canvas: #f3f5f8; --surface: #fff; --ink: #17263c; --muted: #617086;
+      --line: #e4e9f0; --blue: #1976d2; --blue-soft: #eef6ff; --navy: #223b59;
+      --red: #c43d4b; --red-soft: #fff1f2; --amber: #a05f08; --amber-soft: #fff7e8;
+      --connection: #586aba; --storage: #68788e; --radius: 10px; --panel-padding: 24px;
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+      color: var(--ink); background: var(--canvas); font-synthesis: none;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-size: 14px; line-height: 1.5; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    button { font: inherit; cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+    button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+    svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    .symbols { position: absolute; width: 0; height: 0; overflow: hidden; }
+    .skip { position: fixed; z-index: 10; left: 16px; top: -80px; padding: 12px 20px; background: white; }
+    .skip:focus { top: 16px; }
+    .rail { position: fixed; inset: 0 auto 0 0; width: 76px; background: #142338; color: #afc1d8; display: flex; align-items: center; flex-direction: column; z-index: 2; }
+    .brand { width: 38px; height: 38px; margin: 22px 0 38px; display: grid; place-items: center; background: #2485e1; color: #fff; border-radius: 10px; }
+    .brand svg { width: 25px; height: 25px; stroke-width: 1.8; }
+    .rail nav { display: flex; flex-direction: column; gap: 12px; }
+    .rail a { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 8px; }
+    .rail a:hover { background: #233a55; color: white; }
+    .rail a[aria-current] { color: #fff; background: #244b73; box-shadow: inset 3px 0 #59b1ff; }
+    .rail-caption { margin-top: auto; margin-bottom: 24px; font: 10px Consolas, monospace; letter-spacing: .12em; color: #afc1d8; writing-mode: vertical-rl; }
+    .workspace { margin-left: 76px; }
+    .topbar { height: 64px; padding: 0 36px; background: var(--surface); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+    .breadcrumb { display: flex; align-items: center; gap: 14px; font-size: 13px; color: var(--muted); }
+    .breadcrumb strong { color: var(--ink); font-weight: 600; }
+    .breadcrumb svg { width: 14px; height: 14px; color: #8895a7; }
+    .profile { display: flex; align-items: center; gap: 12px; }
+    .avatar { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: #e8eff8; color: #2f537c; font-size: 12px; font-weight: 700; }
+    .profile-name { font-size: 13px; font-weight: 600; }
+    .profile-email { display: block; color: var(--muted); font-size: 11px; font-weight: 400; }
+    main { max-width: 1680px; margin: auto; padding: 28px 36px 20px; }
+    .page-heading { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 20px; }
+    .eyebrow { color: var(--muted); font: 10px/1.5 Consolas, "Courier New", monospace; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { font-size: 30px; line-height: 1.2; letter-spacing: -.035em; margin: 4px 0 8px; font-weight: 650; }
+    p { margin: 0; }
+    .subtitle { color: var(--muted); font-size: 13px; }
+    .toolbar { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 14px; }
+    .density { display: flex; padding: 3px; border: 1px solid #dce3ec; border-radius: 7px; background: #e9edf3; }
+    .density button { background: transparent; border: 0; border-radius: 4px; padding: 7px 11px; color: #536279; font-size: 11px; font-weight: 600; }
+    .density button[aria-pressed="true"] { color: var(--ink); background: white; box-shadow: 0 1px 3px #17263c15; }
+    .refresh { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; color: var(--ink); background: var(--surface); border: 1px solid #d6dee8; border-radius: 7px; font-size: 12px; font-weight: 600; }
+    .refresh:hover { border-color: var(--blue); background: var(--blue-soft); }
+    .refresh svg { width: 16px; height: 16px; }
+    .section-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .section-label h2 { margin: 0; font-size: 11px; font-weight: 650; letter-spacing: .1em; text-transform: uppercase; color: #52617a; }
+    .sample { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); flex-wrap: wrap; }
+    .demo { padding: 2px 7px; border: 1px solid #d7e0eb; border-radius: 4px; background: #eaf0f7; color: #53657f; font-size: 10px; font-weight: 600; }
+    .sample-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--blue); }
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi { padding: 16px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); position: relative; overflow: hidden; }
+    .kpi::before { content: ""; position: absolute; top: 0; left: 20px; right: 20px; height: 2px; background: var(--tone); opacity: .7; }
+    .kpi-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; }
+    .kpi .eyebrow { font-size: 9px; letter-spacing: .08em; }
+    .status { display: inline-flex; align-items: center; gap: 5px; color: var(--tone); background: var(--tone-soft); border-radius: 4px; font-size: 10px; padding: 3px 6px; font-weight: 600; }
+    .status::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+    .kpi h3 { margin: 0 0 4px; font-size: 14px; font-weight: 650; }
+    .kpi-description { font-size: 11px; color: var(--muted); min-height: 34px; }
+    .kpi-value { display: flex; align-items: center; justify-content: space-between; margin: 4px 0; }
+    .kpi-value strong { font-size: 38px; font-weight: 600; letter-spacing: -.05em; line-height: 1.2; font-variant-numeric: tabular-nums; }
+    .kpi-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; background: var(--tone-soft); color: var(--tone); }
+    .kpi-context { color: var(--muted); font-size: 11px; }
+    .error { --tone: var(--red); --tone-soft: var(--red-soft); }
+    .warning { --tone: var(--amber); --tone-soft: var(--amber-soft); }
+    .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); min-width: 0; scroll-margin-top: 20px; display: flex; flex-direction: column; }
+    .panel-header { padding: 18px var(--panel-padding) 0; display: flex; gap: 12px; align-items: flex-start; }
+    .panel-header > svg { color: var(--blue); margin-top: 2px; width: 19px; height: 19px; }
+    .panel h2 { font-size: 15px; font-weight: 650; margin: 0 0 4px; letter-spacing: -.015em; }
+    .panel-header p { color: var(--muted); font-size: 11px; }
+    .chart-content { display: grid; grid-template-columns: 42% 1fr; align-items: center; padding: 16px var(--panel-padding); gap: 24px; }
+    .donut { width: 144px; height: 144px; margin: auto; position: relative; display: grid; place-items: center; }
+    .donut svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); stroke-width: 12; }
+    .donut circle { fill: none; stroke-linecap: butt; }
+    .donut .base { stroke: var(--navy); }
+    .donut .segment { stroke: var(--blue); }
+    .donut-label { text-align: center; }
+    .donut-label strong { display: block; font-size: 34px; font-weight: 600; line-height: 1.25; letter-spacing: -.045em; }
+    .donut-label span { font-size: 11px; color: var(--muted); }
+    .legend { margin: 0; }
+    .legend-row { padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .legend-row:last-child { border-bottom: 0; }
+    .legend dt { display: flex; gap: 8px; align-items: center; font-size: 12px; }
+    .swatch { width: 7px; height: 7px; border-radius: 2px; background: var(--blue); flex-shrink: 0; }
+    .swatch.secondary { background: var(--navy); }
+    .legend dd { margin: 5px 0 0 15px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .legend dd strong { font-size: 21px; font-weight: 600; line-height: 1.3; font-variant-numeric: tabular-nums; }
+    .percent { font: 11px Consolas, "Courier New", monospace; color: var(--muted); background: #f2f5f9; padding: 3px 7px; border-radius: 4px; }
+    .panel-stats { border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; margin: auto 0 0; background: #fafbfd; border-radius: 0 0 var(--radius) var(--radius); }
+    .panel-stats > div { padding: 12px var(--panel-padding); display: flex; flex-direction: column; }
+    .panel-stats > div + div { border-left: 1px solid var(--line); }
+    .panel-stats dt { color: var(--muted); font-size: 11px; }
+    .panel-stats dd { order: -1; margin: 0 0 2px; font-size: 23px; line-height: 1.3; font-weight: 600; letter-spacing: -.025em; }
+    .stat-note { display: block; font-size: 10px; }
+    .resource-list { padding: 14px var(--panel-padding) 8px; }
+    .resource { display: grid; grid-template-columns: 32px minmax(100px, 1.3fr) minmax(64px, .6fr) minmax(100px, 1fr); align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .resource:last-child { border-bottom: 0; }
+    .resource-icon { width: 32px; height: 32px; display: grid; place-items: center; color: #3974ad; background: var(--blue-soft); border: 1px solid #e0edf9; border-radius: 7px; }
+    .resource-icon svg { width: 17px; height: 17px; }
+    .resource h3 { margin: 0; font-size: 12px; font-weight: 600; }
+    .resource small { display: block; font-size: 10px; color: var(--muted); }
+    .resource-total strong { font-size: 21px; font-weight: 600; letter-spacing: -.03em; line-height: 1.1; }
+    .utilization-label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; font-size: 9px; color: var(--muted); margin-bottom: 6px; }
+    .utilization-label strong { font: 10px Consolas, monospace; color: var(--ink); }
+    meter { display: block; width: 100%; height: 5px; appearance: none; background: #e7edf4; border: 0; border-radius: 8px; overflow: hidden; }
+    meter::-webkit-meter-bar { background: #e7edf4; border: 0; height: 5px; }
+    meter::-webkit-meter-optimum-value { background: var(--blue); border-radius: 8px; }
+    meter::-moz-meter-bar { background: var(--blue); }
+    .page-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; color: var(--muted); font-size: 10px; padding-top: 18px; }
+    .page-footer span:last-child { font-family: Consolas, monospace; letter-spacing: .04em; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    body[data-density="spacious"] { --panel-padding: 28px; }
+    body[data-density="spacious"] .kpi { padding-top: 26px; padding-bottom: 26px; }
+    body[data-density="spacious"] .chart-content { padding-top: 32px; padding-bottom: 32px; }
+    body[data-density="spacious"] .resource { padding-top: 18px; padding-bottom: 18px; }
+    @media (min-width: 1600px) {
+      body[data-density="auto"] { --panel-padding: 28px; }
+      body[data-density="auto"] .chart-content { padding-top: 32px; padding-bottom: 32px; }
+    }
+    @media (max-width: 1200px) {
+      main { padding: 24px; } .topbar { padding: 0 24px; }
+      .page-heading { align-items: flex-start; } .toolbar { max-width: 320px; }
+      .kpis { gap: 12px; } .kpi { padding: 16px; } .kpi-head { align-items: flex-start; flex-direction: column; gap: 6px; }
+      .chart-content { gap: 16px; grid-template-columns: 45% 1fr; }
+      .donut { width: 144px; height: 144px; }
+      .resource { grid-template-columns: 28px minmax(100px, 1fr) 62px; gap: 10px; }
+      .utilization { grid-column: 2 / -1; } .resource-list { padding-top: 8px; }
+    }
+    @media (max-width: 900px) {
+      .panels { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .kpi-head { flex-direction: row; } .kpi-description { min-height: 0; }
+      .resource { grid-template-columns: 32px minmax(100px, 1.3fr) minmax(64px, .6fr) minmax(100px, 1fr); }
+      .utilization { grid-column: auto; } .donut { width: 164px; height: 164px; }
+      .page-heading { flex-direction: column; } .toolbar { max-width: none; }
+    }
+    @media (max-width: 540px) {
+      :root, body[data-density="spacious"] { --panel-padding: 16px; }
+      .rail { width: 52px; } .rail a { width: 36px; height: 40px; } .brand { width: 32px; height: 32px; margin-top: 18px; }
+      .workspace { margin-left: 52px; } .topbar { height: 68px; padding: 0 16px; }
+      .breadcrumb { gap: 6px; font-size: 12px; } .breadcrumb > span, .breadcrumb > svg { display: none; }
+      .profile-name { display: none; } main { padding: 22px 12px; } h1 { font-size: 28px; }
+      .toolbar { gap: 10px; justify-content: flex-start; } .density button { padding: 8px; }
+      .section-label { align-items: flex-start; flex-direction: column; gap: 6px; }
+      .kpis { grid-template-columns: 1fr; } .kpi-head { flex-direction: row; }
+      .chart-content { grid-template-columns: 1fr; gap: 12px; } .legend-row { display: flex; justify-content: space-between; align-items: center; }
+      .legend dd { margin: 0; } .legend dd strong { font-size: 18px; }
+      .panel-stats > div { padding: 14px 12px; }
+      .resource { grid-template-columns: 28px minmax(0, 1fr) 58px; gap: 8px; } .utilization { grid-column: 2 / -1; }
+      .page-footer { flex-direction: column; align-items: flex-start; gap: 4px; }
+    }
+    @media print {
+      .rail, .toolbar, .skip { display: none; } .workspace { margin: 0; } main { padding: 16px; }
+      body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } .panel, .kpi { break-inside: avoid; }
+    }
+
+    /* Issue diagnostic: common 0–100% scale; numbers retain the original meaning. */
+    .diagnostic { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 20px; padding: 14px var(--panel-padding) 10px; flex: 1; align-items: center; }
+    .diagnostic-total { align-self: stretch; border-right: 1px solid var(--line); padding-right: 12px; display: flex; flex-direction: column; justify-content: center; }
+    .diagnostic-total .eyebrow { font-size: 9px; letter-spacing: .04em; }
+    .diagnostic-total strong { font: 44px/1.2 Consolas, monospace; letter-spacing: -.06em; }
+    .diagnostic-total > span:last-of-type { font-size: 10px; color: var(--muted); }
+    .diagnostic-total svg { color: var(--blue); margin-top: 8px; width: 38px; }
+    .diagnostic-axis { display: grid; grid-template-columns: 154px 1fr 1fr auto; padding-right: 62px; font: 9px Consolas, monospace; color: var(--muted); }
+    .diagnostic-axis span:last-child { transform: translateX(50%); }
+    .diagnostic-rows { margin: 4px 0 0; }
+    .diagnostic-row { display: grid; grid-template-columns: 154px minmax(0, 1fr); align-items: center; min-height: 30px; }
+    .diagnostic-row dt { font-size: 11px; display: flex; gap: 8px; align-items: center; }
+    .diagnostic-row dt > span { font: 9px Consolas, monospace; color: var(--muted); }
+    .diagnostic-row dd { display: grid; grid-template-columns: minmax(0, 1fr) 36px 18px; align-items: center; gap: 8px; margin: 0; }
+    .diagnostic-row dd strong { font: 12px Consolas, monospace; text-align: right; }
+    .diagnostic-row dd small { font: 10px Consolas, monospace; color: var(--muted); text-align: right; }
+    .track { display: block; height: 18px; border-left: 1px solid #bdc9d8; border-right: 1px solid #bdc9d8; background: repeating-linear-gradient(90deg, transparent 0, transparent calc(25% - 1px), #e6ebf2 calc(25% - 1px), #e6ebf2 25%); }
+    .track i { position: relative; display: block; height: 6px; margin-top: 6px; background: var(--issue); }
+    .track i::after { content: ''; position: absolute; right: 0; top: -3px; height: 12px; width: 2px; background: var(--issue); }
+    .snapshots { --issue: #c43d4b; } .replication { --issue: #a05f08; } .connections { --issue: #586aba; } .volumes { --issue: #68788e; }
+    .diagnostic-note { margin: 0 var(--panel-padding); padding: 8px 0 10px; border-top: 1px solid var(--line); font-size: 10px; color: var(--muted); }
+    /* Fit the available viewport through spacing and chart size, never CSS zoom or clipping. */
+    @media (min-width: 1100px) {
+      body { --panel-padding: 16px; }
+      body[data-density] { --panel-padding: 16px; }
+      .rail { width: 60px; } .workspace { margin-left: 60px; } .brand { margin: 12px 0 26px; }
+      .topbar { height: 44px; padding: 0 24px; } .avatar { width: 28px; height: 28px; }
+      main { max-width: 1900px; padding: 12px 24px; }
+      .page-heading { margin-bottom: 10px; } .page-heading .eyebrow { display: none; }
+      h1 { font-size: 25px; margin: 0 0 3px; } .subtitle { font-size: 12px; }
+      .section-label { margin-bottom: 6px; } .kpis { gap: 12px; margin-bottom: 12px; }
+      body[data-density] .kpi { padding: 10px 14px; display: grid; grid-template-columns: minmax(0,1fr) 48px; column-gap: 8px; }
+      .kpi-head { grid-column: 1 / -1; margin-bottom: 6px; flex-direction: row; align-items: center; }
+      .kpi h3 { grid-column: 1; font-size: 13px; margin-bottom: 2px; }
+      .kpi-description { grid-column: 1; min-height: 30px; font-size: 11px; }
+      .kpi-value { grid-column: 2; grid-row: 2 / 4; justify-content: flex-end; margin: 0; }
+      .kpi-value strong { font-size: 34px; } .kpi-icon { display: none; }
+      .kpi-context { grid-column: 1 / -1; margin-top: 4px; font-size: 10px; }
+      .panels { gap: 12px; }
+      .panel-header { padding-top: 10px; gap: 8px; } .panel h2 { margin-bottom: 2px; font-size: 14px; }
+      body[data-density] .chart-content { padding: 8px var(--panel-padding); grid-template-columns: 35% 1fr; gap: 20px; }
+      .donut { width: clamp(84px, 12vh, 144px); height: clamp(84px, 12vh, 144px); }
+      .donut-label strong { font-size: 27px; } .donut-label span { font-size: 10px; }
+      .legend-row { padding: 6px 0; display: flex; justify-content: space-between; align-items: center; }
+      .legend dd { margin: 0; gap: 16px; } .legend dd strong { font-size: 19px; }
+      .panel-stats > div { padding: 6px 16px; flex-direction: row; align-items: center; gap: 10px; }
+      .panel-stats dd { font-size: 21px; margin: 0; } .panel-stats dt { font-size: 10px; } .stat-note { font-size: 9px; }
+      .resource-list { padding: 4px var(--panel-padding); }
+      body[data-density] .resource { grid-template-columns: 28px minmax(120px,1fr) 72px minmax(100px,1fr); padding: 6px 0; gap: 8px; }
+      .resource-icon { height: 26px; width: 26px; } .resource-total strong { font-size: 19px; }
+      .utilization { grid-column: auto; } .utilization-label { margin-bottom: 4px; }
+      .page-footer { padding-top: 8px; }
+      .diagnostic { gap: 12px; grid-template-columns: 88px minmax(0,1fr); padding-top: 8px; padding-bottom: 4px; }
+      .diagnostic-row { min-height: 26px; } .diagnostic-note { padding-top: 6px; padding-bottom: 8px; }
+      .diagnostic-axis { grid-template-columns: 140px 1fr 1fr auto; }
+      .diagnostic-row { grid-template-columns: 140px minmax(0,1fr); }
+    }
+    @media (min-width: 1100px) and (max-height: 899px) {
+      .topbar { height: 40px; } main { padding: 6px 20px; }
+      .page-heading { margin-bottom: 6px; } h1 { font-size: 24px; line-height: 28px; margin-bottom: 2px; } .subtitle { line-height: 16px; }
+      .section-label { margin-bottom: 4px; } .kpis { margin-bottom: 8px; }
+      body[data-density] .kpi { padding: 8px 12px; } .kpi-head { margin-bottom: 4px; }
+      .status { padding-top: 2px; padding-bottom: 2px; line-height: 14px; }
+      .kpi h3 { line-height: 18px; } .kpi-description { min-height: 26px; line-height: 13px; }
+      .kpi-context { margin-top: 2px; line-height: 12px; }
+      .panels { gap: 8px; } .panel-header { padding-top: 8px; } .panel h2 { line-height: 19px; }
+      .panel-header p { line-height: 13px; }
+      .panel-stats dt { line-height: 12px; } .stat-note { line-height: 11px; }
+      .resource h3 { line-height: 15px; } .resource small { line-height: 12px; }
+      body[data-density] .resource { padding-top: 3px; padding-bottom: 3px; }
+      .resource-total { display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; }
+      .resource-total small { font-size: 9px; }
+      .resource-total strong { font-size: 18px; }
+      .diagnostic-note { font-size: 10px; line-height: 13px; padding-top: 5px; padding-bottom: 5px; }
+      .page-footer { display: none; }
+    }
+    @media (min-width: 1100px) and (min-height: 900px) {
+      main { padding-top: 20px; } .page-heading { margin-bottom: 16px; }
+      body[data-density] .kpi { padding-top: 18px; padding-bottom: 18px; }
+      .panels { gap: 16px; } .panel-header { padding-top: 18px; }
+      body[data-density] .chart-content { padding-top: 16px; padding-bottom: 16px; }
+      .panel-stats > div { padding-top: 12px; padding-bottom: 12px; }
+      body[data-density] .resource { padding-top: 8px; padding-bottom: 8px; }
+      .diagnostic-row { min-height: 36px; }
+    }
+    @media (min-width: 1100px) and (min-height: 1050px) {
+      main { padding-top: 32px; } .topbar { height: 56px; }
+      body[data-density] .chart-content { padding-top: 28px; padding-bottom: 28px; }
+      body[data-density] .resource { padding-top: 16px; padding-bottom: 16px; }
+    }
+    @media (min-width: 1100px) and (min-height: 900px) {
+      body[data-density="compact"] .kpi { padding-top: 10px; padding-bottom: 10px; }
+      body[data-density="compact"] .chart-content { padding-top: 8px; padding-bottom: 8px; }
+      body[data-density="compact"] .resource { padding-top: 6px; padding-bottom: 6px; }
+    }
+    @media (max-width: 1099px) { .diagnostic { grid-template-columns: 76px minmax(0,1fr); gap: 12px; } .diagnostic-row { grid-template-columns: 128px minmax(0,1fr); } .diagnostic-axis { grid-template-columns: 128px 1fr 1fr auto; } }
+    @media (min-width: 901px) and (max-width: 1099px), (max-width: 540px) {
+      .diagnostic { grid-template-columns: 1fr; } .diagnostic-total { flex-direction: row; align-items: center; gap: 12px; border-right: 0; border-bottom: 1px solid var(--line); padding: 0 0 8px; flex-wrap: wrap; }
+      .diagnostic-total strong { font-size: 30px; } .diagnostic-total svg { display: none; }
+      .diagnostic-axis { display: none; } .diagnostic-row { grid-template-columns: 1fr; padding: 6px 0; gap: 4px; } .diagnostic-note { line-height: 1.6; }
+    }
+  </style>
+</head>
+<body data-density="auto">
+  <!-- Standalone visual template. All figures intentionally match the supplied dashboard. -->
+  <svg class="symbols" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></symbol>
+    <symbol id="grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="server" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="1"/><rect x="3" y="14" width="18" height="7" rx="1"/><path d="M7 6.5h.01M7 17.5h.01M11 6.5h6M11 17.5h6"/></symbol>
+    <symbol id="activity" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+    <symbol id="database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"/></symbol>
+    <symbol id="snapshot" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h5m0 4 5 5m0-5-5 5"/></symbol>
+    <symbol id="refresh-icon" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.5 9a7.5 7.5 0 0 1 13-2L20 7M18.5 15a7.5 7.5 0 0 1-13 2L4 17"/></symbol>
+    <symbol id="plug" viewBox="0 0 24 24"><path d="M8 3v4M14 3v4M6 7h10v4a5 5 0 0 1-10 0V7ZM11 16v5m6-5 5 5m0-5-5 5"/></symbol>
+    <symbol id="volume" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 14h18M7 17h.01m6-10 5 5m0-5-5 5"/></symbol>
+    <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></symbol>
+    <symbol id="chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+  </defs></svg>
+  <a class="skip" href="#overview">Skip to dashboard</a>
+  <aside class="rail" aria-label="Dashboard navigation">
+    <div class="brand" aria-label="Recovery operations"><svg aria-hidden="true"><use href="#layers"/></svg></div>
+    <nav aria-label="Dashboard sections">
+      <a href="#overview" aria-label="Overview" aria-current="page" title="Overview"><svg aria-hidden="true"><use href="#grid"/></svg></a>
+      <a href="#applications" aria-label="Recovery Applications" title="Recovery Applications"><svg aria-hidden="true"><use href="#layers"/></svg></a>
+      <a href="#topology" aria-label="Recovery Groups Topology" title="Recovery Groups Topology"><svg aria-hidden="true"><use href="#server"/></svg></a>
+      <a href="#issues" aria-label="Issues Distribution" title="Issues Distribution"><svg aria-hidden="true"><use href="#activity"/></svg></a>
+      <a href="#infrastructure" aria-label="Infrastructure Overview" title="Infrastructure Overview"><svg aria-hidden="true"><use href="#database"/></svg></a>
+    </nav>
+    <span class="rail-caption">RECOVERY OPERATIONS</span>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <div class="breadcrumb"><span>Recovery operations</span><svg aria-hidden="true"><use href="#chevron"/></svg><strong>Overview</strong></div>
+      <div class="profile"><span class="avatar">TT</span><div class="profile-name">Test Test<span class="profile-email">test@test.com</span></div></div>
+    </header>
+    <main id="overview" tabindex="-1">
+      <div class="page-heading">
+        <div><div class="eyebrow">Recovery environment</div><h1>Overview</h1><p class="subtitle">Operational overview of your recovery environment.</p></div>
+        <div class="toolbar">
+          <div class="density" role="group" aria-label="Dashboard density"><button type="button" data-density="auto" aria-pressed="true">Auto</button><button type="button" data-density="compact" aria-pressed="false">Compact</button><button type="button" data-density="spacious" aria-pressed="false">Spacious</button></div>
+          <button class="refresh" type="button" id="refresh" title="Refresh the sample snapshot"><svg aria-hidden="true"><use href="#refresh-icon"/></svg>Refresh</button>
+        </div>
+      </div>
+      <section aria-labelledby="health-title">
+        <div class="section-label"><h2 id="health-title">Operational indicators</h2><div class="sample"><span class="demo">Demo data</span><span class="sample-dot" aria-hidden="true"></span><span id="snapshot-status" role="status">Sample snapshot</span></div></div>
+        <div class="kpis">
+          <article class="kpi error"><div class="kpi-head"><span class="eyebrow">01 / Snapshots</span><span class="status">Failed</span></div><h3>Failed snapshot jobs</h3><p class="kpi-description">Latest completed scheduled snapshot run failed</p><div class="kpi-value"><strong>3</strong><span class="kpi-icon"><svg aria-hidden="true"><use href="#snapshot"/></svg></span></div><p class="kpi-context">Recovery Groups with failed jobs</p></article>
+          <article class="kpi warning"><div class="kpi-head"><span class="eyebrow">02 / Replication</span><span class="status">Issues</span></div><h3>Replication issues</h3><p class="kpi-description">IBM Metro Mirror / Hitachi TrueCopy problems</p><div class="kpi-value"><strong>7</strong><span class="kpi-icon"><svg aria-hidden="true"><use href="#refresh-icon"/></svg></span></div><p class="kpi-context">Affected replication groups</p></article>
+          <article class="kpi error"><div class="kpi-head"><span class="eyebrow">03 / Connections</span><span class="status">Failed</span></div><h3>Connection failures</h3><p class="kpi-description">Latest automated device connection check failed</p><div class="kpi-value"><strong>4</strong><span class="kpi-icon"><svg aria-hidden="true"><use href="#plug"/></svg></span></div><p class="kpi-context">Providers with failed tests</p></article>
+          <article class="kpi warning"><div class="kpi-head"><span class="eyebrow">04 / Storage</span><span class="status">Missing</span></div><h3>Missing volumes</h3><p class="kpi-description">Configured storage volumes not found</p><div class="kpi-value"><strong>5</strong><span class="kpi-icon"><svg aria-hidden="true"><use href="#volume"/></svg></span></div><p class="kpi-context">Missing storage volumes</p></article>
+        </div>
+      </section>
+      <div class="panels">
+        <section class="panel" id="applications" aria-labelledby="applications-title">
+          <header class="panel-header"><svg aria-hidden="true"><use href="#layers"/></svg><div><h2 id="applications-title">Recovery Applications</h2><p>Distribution by compute platform and deployment status.</p></div></header>
+          <div class="chart-content">
+            <div class="donut"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="base" cx="60" cy="60" r="50"/><circle class="segment" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="67.647 32.353"/></svg><div class="donut-label"><strong>34</strong><span>Applications</span></div></div>
+            <dl class="legend"><div class="legend-row"><dt><span class="swatch"></span>VMware</dt><dd><strong>23</strong><span class="percent">67.6%</span></dd></div><div class="legend-row"><dt><span class="swatch secondary"></span>IBM Power</dt><dd><strong>11</strong><span class="percent">32.4%</span></dd></div></dl>
+          </div>
+          <dl class="panel-stats"><div><dt>Deployed applications</dt><dd>26</dd></div><div><dt>Not deployed</dt><dd>8</dd></div></dl>
+        </section>
+        <section class="panel" id="topology" aria-labelledby="topology-title">
+          <header class="panel-header"><svg aria-hidden="true"><use href="#server"/></svg><div><h2 id="topology-title">Recovery Groups Topology</h2><p>Distribution by recovery topology and configured snapshot objects.</p></div></header>
+          <div class="chart-content">
+            <div class="donut"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="base" cx="60" cy="60" r="50"/><circle class="segment" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="66.667 33.333"/></svg><div class="donut-label"><strong>24</strong><span>Groups</span></div></div>
+            <dl class="legend"><div class="legend-row"><dt><span class="swatch"></span>Local</dt><dd><strong>16</strong><span class="percent">66.7%</span></dd></div><div class="legend-row"><dt><span class="swatch secondary"></span>Metro Mirror</dt><dd><strong>8</strong><span class="percent">33.3%</span></dd></div></dl>
+          </div>
+          <dl class="panel-stats"><div><dt>FlashCopy mappings<span class="stat-note">(demo; not recovery points)</span></dt><dd>42</dd></div><div><dt>Groups with snapshot policy<span class="stat-note">(demo)</span></dt><dd>18</dd></div></dl>
+        </section>
+        <section class="panel" id="issues" aria-labelledby="issues-title">
+          <header class="panel-header"><svg aria-hidden="true"><use href="#activity"/></svg><div><h2 id="issues-title">Issues Distribution</h2><p>Relative share of the four operational KPI counts.</p></div></header>
+          <div class="diagnostic">
+            <div class="diagnostic-total"><span class="eyebrow">Category counts</span><strong>19</strong><span>Across four indicators</span><svg aria-hidden="true"><use href="#activity"/></svg></div>
+            <div class="diagnostic-chart">
+              <div class="diagnostic-axis" aria-hidden="true"><span>Category</span><span>0</span><span>50</span><span>100%</span></div>
+              <dl class="diagnostic-rows">
+                <div class="diagnostic-row snapshots"><dt><span>01</span>Failed snapshot jobs</dt><dd><span class="track" aria-hidden="true"><i style="width:15.789%"></i></span><strong>16%</strong><small>3</small></dd></div>
+                <div class="diagnostic-row replication"><dt><span>02</span>Replication issues</dt><dd><span class="track" aria-hidden="true"><i style="width:36.842%"></i></span><strong>37%</strong><small>7</small></dd></div>
+                <div class="diagnostic-row connections"><dt><span>03</span>Connection failures</dt><dd><span class="track" aria-hidden="true"><i style="width:21.053%"></i></span><strong>21%</strong><small>4</small></dd></div>
+                <div class="diagnostic-row volumes"><dt><span>04</span>Missing volumes</dt><dd><span class="track" aria-hidden="true"><i style="width:26.316%"></i></span><strong>26%</strong><small>5</small></dd></div>
+              </dl>
+            </div>
+          </div>
+          <p class="diagnostic-note">19 category counts · not unique incidents or percentages of affected infrastructure</p>
+        </section>
+        <section class="panel" id="infrastructure" aria-labelledby="infrastructure-title">
+          <header class="panel-header"><svg aria-hidden="true"><use href="#server"/></svg><div><h2 id="infrastructure-title">Infrastructure Overview</h2><p>Key resource counts across providers.</p></div></header>
+          <div class="resource-list">
+            <article class="resource"><span class="resource-icon"><svg aria-hidden="true"><use href="#server"/></svg></span><div><h3>VMware VMs</h3><small>VMware</small></div><div class="resource-total"><strong>128</strong><small>Total VMs</small></div><div class="utilization"><div class="utilization-label"><span>Powered on</span><strong>108 / 128</strong></div><meter min="0" max="128" value="108" aria-label="VMware VMs powered on">108 / 128</meter></div></article>
+            <article class="resource"><span class="resource-icon"><svg aria-hidden="true"><use href="#layers"/></svg></span><div><h3>IBM Power partitions</h3><small>IBM Power</small></div><div class="resource-total"><strong>32</strong><small>Total partitions</small></div><div class="utilization"><div class="utilization-label"><span>Active</span><strong>30 / 32</strong></div><meter min="0" max="32" value="30" aria-label="IBM Power active partitions">30 / 32</meter></div></article>
+            <article class="resource"><span class="resource-icon"><svg aria-hidden="true"><use href="#database"/></svg></span><div><h3>FlashSystem volumes</h3><small>IBM FlashSystem</small></div><div class="resource-total"><strong>186</strong><small>Total volumes</small></div><div class="utilization"><div class="utilization-label"><span>Available*</span><strong>178 / 186</strong></div><meter min="0" max="186" value="178" aria-label="FlashSystem available volumes">178 / 186</meter></div></article>
+            <article class="resource"><span class="resource-icon"><svg aria-hidden="true"><use href="#database"/></svg></span><div><h3>Hitachi volumes</h3><small>Hitachi VSP</small></div><div class="resource-total"><strong>94</strong><small>Total volumes</small></div><div class="utilization"><div class="utilization-label"><span>Available*</span><strong>91 / 94</strong></div><meter min="0" max="94" value="91" aria-label="Hitachi available volumes">91 / 94</meter></div></article>
+          </div>
+        </section>
+      </div>
+      <footer class="page-footer"><span>Demo data · Sample snapshot</span><span>RECOVERY / OVERVIEW</span></footer>
+    </main>
+  </div>
+  <script>
+    document.querySelectorAll('.density button').forEach(button => {
+      button.addEventListener('click', () => {
+        document.body.dataset.density = button.dataset.density;
+        document.querySelectorAll('.density button').forEach(option => {
+          option.setAttribute('aria-pressed', String(option === button));
+        });
+      });
+    });
+    document.getElementById('refresh').addEventListener('click', () => {
+      const time = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date());
+      document.getElementById('snapshot-status').textContent = `Sample snapshot · refreshed ${time} · demo values unchanged`;
+    });
+  </script>
+</body>
+</html>
