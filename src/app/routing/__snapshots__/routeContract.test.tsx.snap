@@ -1,0 +1,389 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ABCO route contract > preserves every existing route, redirect, layout handle and loading fallback 1`] = `
+[
+  {
+    "contained": null,
+    "element": {
+      "kind": "AppShell",
+    },
+    "route": "(layout)",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / (index)",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "redirect",
+      "replace": true,
+      "to": "/platform-administration/platform-providers",
+    },
+    "route": "(layout) / platform-administration",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / platform-administration/platform-providers",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / platform-administration/configuration",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / platform-administration/identity-access",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / platform-administration/audit-retention",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "redirect",
+      "replace": true,
+      "to": "/providers-connectors/providers",
+    },
+    "route": "(layout) / providers-connectors",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "RedirectPreservingSearch",
+    },
+    "route": "(layout) / providers-connectors/discovery-settings",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "kind": "ProvidersPage",
+    },
+    "route": "(layout) / providers-connectors/providers",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / providers-connectors/credentials",
+  },
+  {
+    "contained": null,
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / providers-connectors/providers/:providerId",
+  },
+  {
+    "contained": null,
+    "element": null,
+    "route": "(layout) / recovery-plans",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "redirect",
+      "replace": true,
+      "to": "/recovery-plans/recovery-applications",
+    },
+    "route": "(layout) / recovery-plans / (index)",
+  },
+  {
+    "contained": null,
+    "element": null,
+    "route": "(layout) / recovery-plans / recovery-groups",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-plans / recovery-groups / (index)",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton:builder",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-plans / recovery-groups / create",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton:builder",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-plans / recovery-groups / :id/edit",
+  },
+  {
+    "contained": null,
+    "element": null,
+    "route": "(layout) / recovery-plans / recovery-applications",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-plans / recovery-applications / (index)",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton:builder",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-plans / recovery-applications / create",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton:builder",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-plans / recovery-applications / :id/edit",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-plans / recovery-runs",
+  },
+  {
+    "contained": null,
+    "element": null,
+    "route": "(layout) / recovery-plans / recovery-policies",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "redirect",
+      "replace": true,
+      "to": "/recovery-plans/recovery-policies/snapshot",
+    },
+    "route": "(layout) / recovery-plans / recovery-policies / (index)",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-plans / recovery-policies / snapshot",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-plans / recovery-policies / application-recovery",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-plans / recovery-policies / clean-room",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "redirect",
+      "replace": true,
+      "to": "/recovery-plans/recovery-policies/snapshot",
+    },
+    "route": "(layout) / recovery-plans / snapshot-policies",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "redirect",
+      "replace": true,
+      "to": "/recovery-plans/recovery-policies/application-recovery",
+    },
+    "route": "(layout) / recovery-plans / recovery-app-policies",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-plans / policy-sets",
+  },
+  {
+    "contained": null,
+    "element": null,
+    "route": "(layout) / recovery-actions",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "redirect",
+      "replace": true,
+      "to": "/recovery-actions/validate",
+    },
+    "route": "(layout) / recovery-actions / (index)",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-actions / validate",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-actions / execute",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-actions / schedule",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / recovery-actions / history",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "redirect",
+      "replace": true,
+      "to": "/recovery-actions/validate",
+    },
+    "route": "(layout) / recovery-actions / *",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "redirect",
+      "replace": true,
+      "to": "/discovery-inventory/resources",
+    },
+    "route": "(layout) / discovery-inventory",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "kind": "ResourcesPage",
+    },
+    "route": "(layout) / discovery-inventory/resources",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "kind": "ResourcesIsePage",
+    },
+    "route": "(layout) / discovery-inventory/resources-ise",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "redirect",
+      "replace": true,
+      "to": "/discovery-inventory/resources",
+    },
+    "route": "(layout) / discovery-inventory/resources/source",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "redirect",
+      "replace": true,
+      "to": "/discovery-inventory/resources-ise",
+    },
+    "route": "(layout) / discovery-inventory/resources/target",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "redirect",
+      "replace": true,
+      "to": "/discovery-inventory/resources",
+    },
+    "route": "(layout) / discovery-inventory/virtual-machines",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "InfrastructureTopologySkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / discovery-inventory/infrastructure",
+  },
+  {
+    "contained": "contained",
+    "element": {
+      "fallback": "RouteLoadingSkeleton",
+      "kind": "suspense",
+    },
+    "route": "(layout) / discovery-inventory/discovery-settings",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "ModuleWorkQueuePage",
+    },
+    "route": "(layout) / discovery-inventory/discovery-jobs",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "ModuleWorkQueuePage",
+    },
+    "route": "(layout) / storage-orchestration",
+  },
+  {
+    "contained": null,
+    "element": {
+      "kind": "redirect",
+      "replace": true,
+      "to": "/discovery-inventory/resources",
+    },
+    "route": "(layout) / *",
+  },
+]
+`;
