@@ -1,9 +1,9 @@
 import type { DashboardData, DashboardIssueKind } from '../model/dashboardTypes'
 
 // Illustrative operational counts only; no live API collection is connected.
-// Each entry represents a distinct failed Recovery Group, affected Metro Mirror group,
+// Each entry represents a distinct failed Recovery Group, affected replication Recovery Group (Metro Mirror / TrueCopy),
 // failed provider or missing provider-volume pair; see the BE specification.
-const issues: { kind: DashboardIssueKind; count: number }[] = [{ kind: 'failedSnapshotJobs', count: 3 }, { kind: 'metroMirrorIssues', count: 7 }, { kind: 'connectionFailures', count: 4 }, { kind: 'missingVolumes', count: 5 }]
+const issues: { kind: DashboardIssueKind; count: number }[] = [{ kind: 'failedSnapshotJobs', count: 3 }, { kind: 'replicationIssues', count: 7 }, { kind: 'connectionFailures', count: 4 }, { kind: 'missingVolumes', count: 5 }]
 export const dashboardFixture = {
   issues: issues.flatMap(({ kind, count }) => Array.from({ length: count }, (_, i) => ({ id: `${kind}-${String(i)}`, kind }))),
   groups: Array.from({ length: 24 }, (_, i) => ({ id: `group-${String(i)}`, topology: i < 16 ? 'local' : 'metro_mirror' })),

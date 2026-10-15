@@ -1,6 +1,6 @@
 export type DashboardState = 'demo' | 'loading' | 'empty' | 'partial' | 'unknown'
 export type DashboardDensity = 'auto' | 'compact' | 'spacious'
-export type DashboardIssueKind = 'failedSnapshotJobs' | 'metroMirrorIssues' | 'connectionFailures' | 'missingVolumes'
+export type DashboardIssueKind = 'failedSnapshotJobs' | 'replicationIssues' | 'connectionFailures' | 'missingVolumes'
 // Each mock issue represents one affected object in the relevant KPI unit.
 export interface DashboardIssue { id: string; kind: DashboardIssueKind }
 export interface DashboardIncident {
@@ -40,7 +40,7 @@ export interface DashboardData {
 }
 export interface DashboardCounts {
   failedSnapshotJobs: number
-  metroMirrorIssues: number
+  replicationIssues: number
   connectionFailures: number
   missingVolumes: number
   totalGroups: number
