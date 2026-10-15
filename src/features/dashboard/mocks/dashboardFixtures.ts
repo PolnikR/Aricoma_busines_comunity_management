@@ -7,6 +7,10 @@ const issues: { kind: DashboardIssueKind; count: number }[] = [{ kind: 'failedSn
 export const dashboardFixture = {
   issues: issues.flatMap(({ kind, count }) => Array.from({ length: count }, (_, i) => ({ id: `${kind}-${String(i)}`, kind }))),
   groups: Array.from({ length: 24 }, (_, i) => ({ id: `group-${String(i)}`, topology: i < 16 ? 'local' : 'metro_mirror' })),
+  // Demo: deployment flag represents the push/configuration state, not verified protection.
+  applications: Array.from({ length: 34 }, (_, i) => ({ id: `app-${String(i)}`, platform: i < 23 ? 'VMWARE' : 'IBM_POWER', deployed: i < 26 })),
+  // Demo: mapping count is not a count of usable recovery points; policy does not prove a snapshot ran.
+  snapshotSummary: { flashCopyMappings: 42, groupsWithSnapshotPolicy: 18 },
   incidents: [
     { id: 'incident-vm', severity: 'critical', titleKey: 'incidentVm', object: 'abco-prg-01-web-01', summaryKey: 'incidentVmSummary', timestamp: '2026-10-22T10:24:00+02:00', detailKey: 'incidentVmDetail' },
     { id: 'incident-mirror', severity: 'warning', titleKey: 'incidentMirror', object: 'finance-rg-01', summaryKey: 'incidentMirrorSummary', timestamp: '2026-10-22T08:17:00+02:00', detailKey: 'incidentMirrorDetail' },

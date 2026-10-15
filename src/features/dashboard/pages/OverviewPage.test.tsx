@@ -5,6 +5,7 @@ import { render as renderComponent, screen, cleanup, act } from '@testing-librar
 import userEvent from '@testing-library/user-event'
 import { OverviewPage } from './OverviewPage'
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
 const clients: QueryClient[] = []
 function render(element: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -19,7 +20,7 @@ describe('approved Overview', () => {
     render(<OverviewPage />)
     expect(screen.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
     expect(screen.getByText('Demo data')).toBeVisible()
-    for (const name of ['Requires Attention', 'Recovery Groups Topology', 'Recent Activity', 'Infrastructure Overview']) expect(screen.getByRole('region', { name })).toBeVisible()
+    for (const name of ['Issues Distribution', 'Infrastructure Overview', 'Recovery Applications', 'Recovery Groups Topology']) expect(screen.getByRole('region', { name })).toBeVisible()
     expect(screen.getAllByRole('button', { name: /Recovery Groups with failed jobs|Affected replication groups|Providers with failed tests|Missing storage volumes/ })).toHaveLength(4)
     expect(screen.getByRole('button', { name: /Failed snapshot jobs/ })).toHaveTextContent('3')
     expect(screen.getByRole('button', { name: /Replication issues/ })).toHaveTextContent('IBM Metro Mirror / Hitachi TrueCopy')
@@ -27,7 +28,22 @@ describe('approved Overview', () => {
     expect(screen.getByRole('button', { name: /Connection failures/ })).toHaveTextContent('4')
     expect(screen.getByRole('button', { name: /Missing volumes/ })).toHaveTextContent('5')
     expect(screen.getByRole('img', { name: /24.*16.*8/ })).toBeVisible()
+    expect(screen.getByRole('img', { name: /34.*23.*11/ })).toBeVisible()
+    expect(screen.getByRole('img', { name: /19 category counts/ })).toBeVisible()
+    expect(screen.getByText('FlashCopy mappings (demo; not recovery points)')).toBeVisible()
+    expect(screen.getByText('Groups with snapshot policy (demo)')).toBeVisible()
     expect(screen.getByRole('progressbar', { name: /VMware VMs.*Powered on/ })).toHaveAttribute('aria-valuenow', '108')
+  })
+  it('orders the lower panels and preserves the infrastructure design', () => {
+    const { container } = render(<OverviewPage />)
+    const panels = [...container.querySelectorAll('.board > .panel')]
+    expect(panels).toHaveLength(4)
+    expect(panels.map(panel => panel.querySelector('h2')?.textContent)).toEqual([
+      'Recovery Applications', 'Recovery Groups Topology', 'Issues Distribution', 'Infrastructure Overview',
+    ])
+    expect(container.querySelectorAll('.board .resources > .resource')).toHaveLength(4)
+    expect(container.querySelectorAll('.board .donut')).toHaveLength(2)
+    expect(container.querySelectorAll('.issue-share')).toHaveLength(4)
   })
   it('uses exception-based Vercel KPI cards with red status labels and fault icons', () => {
     const { container } = render(<OverviewPage />)
@@ -61,9 +77,9 @@ describe('approved Overview', () => {
   it('opens a local demo detail and restores focus after Escape', async () => {
     const user = userEvent.setup()
     render(<OverviewPage />)
-    const opener = screen.getByRole('button', { name: /VMware VM unreachable.*Details/ })
+    const opener = screen.getByRole('button', { name: /VMware VMs/ })
     await user.click(opener)
-    expect(screen.getByRole('dialog', { name: 'VMware VM unreachable' })).toHaveTextContent('Demo')
+    expect(screen.getByRole('dialog', { name: 'VMware VMs' })).toHaveTextContent('Demo')
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(opener).toHaveFocus()
@@ -78,9 +94,10 @@ describe('approved Overview', () => {
     render(<OverviewPage initialState={state} />)
     expect(screen.getAllByText('—')).toHaveLength(4)
     expect(screen.getAllByText('UNKNOWN')).toHaveLength(4)
-    for (const name of ['Requires Attention', 'Recovery Groups Topology', 'Recent Activity', 'Infrastructure Overview']) expect(screen.getByRole('region', { name })).toBeVisible()
+    for (const name of ['Issues Distribution', 'Infrastructure Overview', 'Recovery Applications', 'Recovery Groups Topology']) expect(screen.getByRole('region', { name })).toBeVisible()
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
+    expect(screen.queryByText('FlashCopy mappings (demo; not recovery points)')).not.toBeInTheDocument()
     await act(async () => { await new Promise(resolve => { window.setTimeout(resolve, 0) }) })
     expect(fetch).not.toHaveBeenCalled()
   })

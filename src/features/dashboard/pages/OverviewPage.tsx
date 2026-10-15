@@ -7,13 +7,14 @@ import { Modal } from '@/shared/components/modal/Modal'
 import { DashboardSummary } from '../components/DashboardSummary'
 import { dashboardFixture } from '../mocks/dashboardFixtures'
 import { selectDashboardMetrics } from '../model/selectDashboardMetrics'
-import { RequiresAttention } from '../components/RequiresAttention'
+import { IssuesDistribution } from '../components/IssuesDistribution'
+import { RecoveryApplicationsDonut } from '../components/RecoveryApplicationsDonut'
 import { RecoveryTopologyDonut } from '../components/RecoveryTopologyDonut'
-import { RecentActivity } from '../components/RecentActivity'
 import { InfrastructureOverview } from '../components/InfrastructureOverview'
 import type { DashboardData, DashboardDensity, DashboardDetail, DashboardState } from '../model/dashboardTypes'
 import './overview.css'
 import './dashboard-kpi.css'
+import './dashboard-charts.css'
 
 const DENSITY_STORAGE_KEY = 'abco.dashboard.kpiDensity'
 const densityOptions: DashboardDensity[] = ['auto', 'compact', 'spacious']
@@ -49,9 +50,9 @@ export function OverviewPage({ data = dashboardFixture, initialState = 'demo' }:
     </div><button type="button" className="demo-tag" onClick={() => { setPreviewOpen(true) }}>{t('dashboard.demo')}</button><span className="update-state" role="status"><span className="update-dot" /><span>{t(refreshed ? 'dashboard.unchanged' : 'dashboard.snapshot')}</span></span><button type="button" className="refresh" onClick={() => { setState('demo'); setRefreshed(true) }}><RefreshIcon className="icon" />{t('dashboard.refresh')}</button></div></div>
     <DashboardSummary counts={counts} state={state} density={density} onSelect={key => { show(key, `${key}Detail`) }} />
     <div className="board">
-      <RequiresAttention incidents={empty ? [] : data.incidents} state={state} onDetail={incident => { show(incident.titleKey, incident.detailKey, incident.object) }} onViewAll={() => { show('attention', 'issuesDetail') }} />
-      <RecoveryTopologyDonut counts={counts} state={state} />
-      <RecentActivity events={empty ? [] : data.activity} state={state} onDetail={event => { show(event.titleKey, event.detailKey, event.object) }} onViewAll={() => { show('activity', 'activityDetail') }} />
+      <RecoveryApplicationsDonut applications={empty ? [] : data.applications} state={state} />
+      <RecoveryTopologyDonut counts={counts} snapshots={empty ? undefined : data.snapshotSummary} state={state} />
+      <IssuesDistribution counts={counts} state={state} />
       <InfrastructureOverview resources={empty ? [] : data.infrastructure} state={state} onDetail={resource => { show(resource.titleKey, state === 'partial' && resource.id === 'hitachi' ? 'partial' : resource.detailKey) }} />
     </div>
     <Modal open={detail !== null} onClose={() => { setDetail(null) }} title={detail ? t(`dashboard.${detail.titleKey}`) : ''} footer={<Button variant="outline" onClick={() => { setDetail(null) }}>{t('dashboard.close')}</Button>} className="w-[calc(100%-2rem)]">
