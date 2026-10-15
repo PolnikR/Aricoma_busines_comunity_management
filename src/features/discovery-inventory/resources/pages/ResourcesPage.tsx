@@ -6,7 +6,7 @@ import { selectProviders } from '@/features/providers-connectors/providers/model
 import { FlashSystemResourcesPage } from '../components/flash-system/FlashSystemResourcesPage'
 import { IbmPowerResourcesPage } from '../components/ibm-power/IbmPowerResourcesPage'
 import type { SourceResourcesPageProps } from '../components/SourceResourcesPageProps'
-import { buildResourceSourceTabs, formatResourceProviderId } from '../helpers/buildResourceSourceTabs'
+import { buildResourceSourceTabs, formatResourceProviderId, resolveActiveResourceTab } from '../helpers/buildResourceSourceTabs'
 import { VmwareResourcesPage } from '../components/vmware/VmwareResourcesPage'
 import { useResourceTabSearchParam } from '../hooks/useResourceTabSearchParam'
 
@@ -30,13 +30,8 @@ export function ResourcesPage() {
     () => buildResourceSourceTabs(providers, resourceTabLabels),
     [providers, resourceTabLabels],
   )
-  const activeRoleTab = roleTabs.find(
-    tab => tab.resourceTab === resourceTab && tab.providerId === providerId,
-  ) ?? roleTabs.find(tab => tab.resourceTab === resourceTab) ?? roleTabs[0]
   const visibleRoleTabs = providersSuccess ? roleTabs.filter(tab => tab.providerId !== null) : roleTabs
-  const effectiveActiveTab = providersSuccess && activeRoleTab?.providerId === null && visibleRoleTabs.length > 0
-    ? visibleRoleTabs[0]
-    : activeRoleTab
+  const effectiveActiveTab = resolveActiveResourceTab(roleTabs, resourceTab, providerId, providersSuccess)
 
   const tabs = (
     <Tabs

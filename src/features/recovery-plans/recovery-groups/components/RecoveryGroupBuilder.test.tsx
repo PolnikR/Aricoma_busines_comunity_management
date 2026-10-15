@@ -1,4 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import type { ReactElement } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render as renderComponent, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockVirtualLayout } from '@/shared/components/resource-sidebar/test/mockVirtualLayout'
@@ -8,6 +10,14 @@ import { useRecoveryGroupMetroMirrorRelationships } from '../hooks/useRecoveryGr
 import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
 import { validateRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
 import { toRecoveryGroupSubmitPayload } from '../helpers/mapRecoveryGroups'
+
+const clients: QueryClient[] = []
+function render(element: ReactElement) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  clients.push(client)
+  return renderComponent(element, { wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> })
+}
+afterEach(() => { cleanup(); clients.splice(0).forEach(client => { client.clear(); }) })
 
 const { usePlatformProvidersMock } = vi.hoisted(() => ({ usePlatformProvidersMock: vi.fn() }))
 const providerStatus = vi.hoisted(() => ({ isFetching: false }))

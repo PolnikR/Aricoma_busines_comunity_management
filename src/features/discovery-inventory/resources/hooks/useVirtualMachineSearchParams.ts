@@ -9,42 +9,11 @@ import {
 } from './vmwareSearchParamKeys'
 import type { VirtualMachineFilters } from '../types/virtualMachineTypes'
 import { resolveVmwareProviderFilter } from '../helpers/vmwareProviderFilter'
+import { getVmwareUrlFilters, hasVmwareUrlFilters, resolveVmwareInitialFilters, type VirtualMachineProviderScope } from '../helpers/resolveVmwareInitialFilters'
+
+export type { VirtualMachineProviderScope } from '../helpers/resolveVmwareInitialFilters'
 
 type VirtualMachineUrlFilters = Omit<VirtualMachineFilters, 'search'>
-
-export interface VirtualMachineProviderScope {
-  id: string
-  role?: ProviderFilterScope['role']
-  vmPrefix?: string | null
-  vmTags?: readonly string[]
-}
-
-const VMWARE_FILTER_PARAMS = ['search', 'powerState', 'connectionState', 'cluster', 'tags', 'untagged']
-
-function parseTags(value: string | null): string[] {
-  if (!value) return []
-  const firstTag = value.split(',').find(Boolean)
-  return firstTag ? [firstTag] : []
-}
-
-function parseBoolean(value: string | null): boolean {
-  return value === 'true'
-}
-
-function hasUrlFilters(searchParams: URLSearchParams): boolean {
-  return VMWARE_FILTER_PARAMS.some((key) => searchParams.has(key))
-}
-
-function getFilters(searchParams: URLSearchParams): VirtualMachineFilters {
-  return {
-    search: searchParams.get('search') ?? '',
-    powerState: searchParams.get('powerState') ?? '',
-    connectionState: searchParams.get('connectionState') ?? '',
-    cluster: searchParams.get('cluster') ?? '',
-    tags: parseTags(searchParams.get('tags')),
-    untagged: parseBoolean(searchParams.get('untagged')),
-  }
-}
 
 function getScope(provider: VirtualMachineProviderScope): ProviderFilterScope {
   return {
@@ -58,21 +27,10 @@ function getScopeId(scope: ProviderFilterScope): string {
   return `${scope.role}:${encodeURIComponent(scope.providerId)}`
 }
 
-function getProviderDefaults(provider: VirtualMachineProviderScope): VirtualMachineFilters {
-  return {
-    search: provider.vmPrefix?.trim() ?? '',
-    powerState: '',
-    connectionState: '',
-    cluster: '',
-    tags: provider.vmTags?.[0]?.trim() ? [provider.vmTags[0].trim()] : [],
-    untagged: false,
-  }
-}
-
 export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderScope | null) {
   const [searchParams] = useSearchParams()
   const { query: urlQuery, updateQuery } = useResourceInventorySearchParams<VirtualMachineUrlFilters>({
-    parseFilters: getFilters,
+    parseFilters: getVmwareUrlFilters,
   })
   const scope = provider ? getScope(provider) : undefined
   const scopeId = scope ? getScopeId(scope) : undefined
@@ -89,24 +47,10 @@ export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderS
   const query = useMemo(() => {
     if (!provider || !scope || !scopeId) return urlQuery
 
-    if (providerFilter.isFixed) {
-      return {
-        ...urlQuery,
-        search: providerFilter.filters.search,
-        powerState: '',
-        connectionState: '',
-        cluster: '',
-        tags: providerFilter.filters.tags,
-        untagged: false,
-      }
-    }
-
     const urlFiltersAreActive = activeScopeId === scopeId
-      || (activeScopeId === null && hasUrlFilters(searchParams))
-    const savedSnapshot = urlFiltersAreActive ? undefined : readProviderFilterSnapshot(scope)
-    const filters = urlFiltersAreActive
-      ? getFilters(searchParams)
-      : savedSnapshot?.filters ?? getProviderDefaults(provider)
+      || (activeScopeId === null && hasVmwareUrlFilters(searchParams))
+    const savedSnapshot = providerFilter.isFixed || urlFiltersAreActive ? undefined : readProviderFilterSnapshot(scope)
+    const filters = resolveVmwareInitialFilters(provider, searchParams, savedSnapshot)
 
     return { ...urlQuery, ...filters }
   }, [activeScopeId, provider, providerFilter, scope, scopeId, searchParams, urlQuery])
@@ -116,7 +60,7 @@ export function useVirtualMachineSearchParams(provider?: VirtualMachineProviderS
     if (providerFilter.isFixed) {
       clearProviderFilterSnapshot(scope)
 
-      const hasStaleUrlFilters = hasUrlFilters(searchParams)
+      const hasStaleUrlFilters = hasVmwareUrlFilters(searchParams)
         || searchParams.has(VMWARE_DEFAULT_SEARCH_PARAM)
         || searchParams.has(VMWARE_DEFAULT_TAG_PARAM)
       if (hasStaleUrlFilters) {

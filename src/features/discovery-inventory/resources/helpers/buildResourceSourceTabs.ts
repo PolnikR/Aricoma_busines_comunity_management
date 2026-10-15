@@ -18,6 +18,18 @@ export interface ResourceSourceTab {
 
 export type ResourceSourceTabLabels = Record<ResourceSourceTabType, string>
 
+export function resolveActiveResourceTab(
+  roleTabs: readonly ResourceSourceTab[],
+  resourceTab: ResourceSourceTabType,
+  providerId: string | null,
+  providersSuccess: boolean,
+): ResourceSourceTab | undefined {
+  const activeTab = roleTabs.find(tab => tab.resourceTab === resourceTab && tab.providerId === providerId)
+    ?? roleTabs.find(tab => tab.resourceTab === resourceTab) ?? roleTabs[0]
+  const firstAvailable = roleTabs.find(tab => tab.providerId !== null)
+  return providersSuccess && activeTab?.providerId === null && firstAvailable ? firstAvailable : activeTab
+}
+
 const RESOURCE_PROVIDER_BADGE_PREFIX: Record<ResourceSourceTabType, string> = {
   vmware: 'vm',
   flashsystem: 'flash',

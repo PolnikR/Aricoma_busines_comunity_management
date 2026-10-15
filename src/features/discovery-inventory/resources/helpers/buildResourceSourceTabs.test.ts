@@ -1,12 +1,35 @@
 import { describe, expect, it } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
-import { buildResourceSourceTabs, buildResourceTargetTabs, formatResourceProviderId } from './buildResourceSourceTabs'
+import { buildResourceSourceTabs, buildResourceTargetTabs, formatResourceProviderId, resolveActiveResourceTab } from './buildResourceSourceTabs'
 
 const labels = {
   vmware: 'VMware VMs',
   flashsystem: 'FlashSystem Volumes',
   'ibm-power': 'IBM Power Partitions',
 } as const
+
+describe('resolveActiveResourceTab', () => {
+  const tabs = buildResourceSourceTabs([
+    provider('vm-10', 'vCenter 10', 'VMWARE'),
+    provider('vm-2', 'vCenter 2', 'VMWARE'),
+    provider('flash', 'Flash', 'FLASHCOPY'),
+  ], labels)
+
+  it('uses the first sorted provider unless the requested provider matches the tab', () => {
+    expect(resolveActiveResourceTab(tabs, 'vmware', null, true)?.providerId).toBe('vm-2')
+    expect(resolveActiveResourceTab(tabs, 'vmware', 'vm-10', true)?.providerId).toBe('vm-10')
+    expect(resolveActiveResourceTab(tabs, 'vmware', 'missing', true)?.providerId).toBe('vm-2')
+    expect(resolveActiveResourceTab(tabs, 'flashsystem', 'vm-10', true)?.providerId).toBe('flash')
+  })
+
+  it('skips an empty requested type only after providers resolve', () => {
+    const flashTabs = buildResourceSourceTabs([provider('flash', 'Flash', 'FLASHCOPY')], labels)
+    expect(resolveActiveResourceTab(flashTabs, 'vmware', null, false)?.providerId).toBeNull()
+    expect(resolveActiveResourceTab(flashTabs, 'vmware', null, true)?.providerId).toBe('flash')
+    expect(resolveActiveResourceTab(buildResourceTargetTabs([], labels), 'vmware', null, true)?.providerId).toBeNull()
+    expect(resolveActiveResourceTab([], 'vmware', null, true)).toBeUndefined()
+  })
+})
 
 function provider(id: string, name: string, type: ProviderRecord['type'], role: ProviderRecord['role'] = 'source'): ProviderRecord {
   return {

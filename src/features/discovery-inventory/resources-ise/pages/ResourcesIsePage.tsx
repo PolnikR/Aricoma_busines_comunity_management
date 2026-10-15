@@ -6,7 +6,7 @@ import { selectProviders } from '@/features/providers-connectors/providers/model
 import { FlashSystemResourcesPage } from '@/features/discovery-inventory/resources/components/flash-system/FlashSystemResourcesPage'
 import { IbmPowerResourcesPage } from '@/features/discovery-inventory/resources/components/ibm-power/IbmPowerResourcesPage'
 import type { SourceResourcesPageProps } from '@/features/discovery-inventory/resources/components/SourceResourcesPageProps'
-import { buildResourceTargetTabs, formatResourceProviderId } from '@/features/discovery-inventory/resources/helpers/buildResourceSourceTabs'
+import { buildResourceTargetTabs, formatResourceProviderId, resolveActiveResourceTab } from '@/features/discovery-inventory/resources/helpers/buildResourceSourceTabs'
 import { VmwareResourcesPage } from '@/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage'
 import { useResourceTabSearchParam } from '@/features/discovery-inventory/resources/hooks/useResourceTabSearchParam'
 
@@ -30,13 +30,8 @@ export function ResourcesIsePage() {
     () => buildResourceTargetTabs(providers, resourceTabLabels),
     [providers, resourceTabLabels],
   )
-  const activeRoleTab = roleTabs.find(
-    tab => tab.resourceTab === resourceTab && tab.providerId === providerId,
-  ) ?? roleTabs.find(tab => tab.resourceTab === resourceTab) ?? roleTabs[0]
   const visibleRoleTabs = providersSuccess ? roleTabs.filter(tab => tab.providerId !== null) : roleTabs
-  const effectiveActiveTab = providersSuccess && activeRoleTab?.providerId === null && visibleRoleTabs.length > 0
-    ? visibleRoleTabs[0]
-    : activeRoleTab
+  const effectiveActiveTab = resolveActiveResourceTab(roleTabs, resourceTab, providerId, providersSuccess)
 
   const tabs = (
     <Tabs

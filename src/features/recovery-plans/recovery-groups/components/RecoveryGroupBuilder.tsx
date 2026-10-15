@@ -1,4 +1,7 @@
-import { useCallback, useId, useMemo, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { flashSystemInventoryQuery, powerInventoryQuery, vdisksByVmQuery, vmwareInventoryQuery } from '@/features/discovery-inventory/resources/model/inventoryQueries'
+import { resolveVmwareProviderFilter } from '@/features/discovery-inventory/resources/helpers/vmwareProviderFilter'
 import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import { Spinner } from '@/shared/components/spinner/Spinner'
@@ -75,6 +78,7 @@ export function RecoveryGroupBuilder({
   isInitialLoading = false,
 }: RecoveryGroupBuilderProps) {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const auxiliaryHintId = useId()
   const providerQuery = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const allProviders = providerQuery.data ?? []
@@ -232,6 +236,42 @@ export function RecoveryGroupBuilder({
     || (Boolean(draft.consistencyGroupId.trim()) && selectedVolumes.every(name => draft.auxiliaryNamesByVolume[name]?.trim()))))
   const discoveryValid = !hasRelatedStorageStep || (!relatedVolumesDiscovery.isLoading && !relatedVolumesDiscovery.error)
   const baseValid = detailsValid && topologyValid && typeValid && providerValid
+  const readyForPrefetch = baseValid && providerQuery.isSuccess && !readOnly && !isInitialLoading
+  const { providerId: inventoryProviderId, workloadType, resources: selectedResourceNames, relatedVolumeProviderId } = draftState
+  const { prefix: inventoryPrefix, tag: inventoryTag } = resolveVmwareProviderFilter(selectedProviderScope)
+  const inventoryScopeKnown = selectedProvider !== undefined
+  const storageProviderValid = allProviders.some(provider => provider.id === relatedVolumeProviderId && provider.type === 'FLASHCOPY' && isCredentialOk(provider))
+
+  useEffect(() => {
+    if (step !== 4 || !readyForPrefetch || !inventoryProviderId) return
+    switch (workloadType) {
+      case 'vmware_virtual_machines':
+        if (inventoryScopeKnown) {
+          void queryClient.prefetchQuery(vmwareInventoryQuery({
+            providerId: inventoryProviderId,
+            ...(inventoryPrefix ? { namePrefix: inventoryPrefix } : {}),
+            ...(inventoryTag ? { tag: inventoryTag } : {}),
+          }))
+        }
+        break
+      case 'ibm_power_virtual_machines':
+        if (inventoryScopeKnown) void queryClient.prefetchQuery(powerInventoryQuery(inventoryProviderId))
+        break
+      case 'ibm_flashsystem':
+        void queryClient.prefetchQuery(flashSystemInventoryQuery(inventoryProviderId))
+        break
+    }
+  }, [queryClient, step, readyForPrefetch, inventoryProviderId, workloadType, inventoryScopeKnown, inventoryPrefix, inventoryTag])
+
+  useEffect(() => {
+    if (step !== resourcesStepIndex || !readyForPrefetch || !hasRelatedStorageStep
+      || !inventoryProviderId || !relatedVolumeProviderId || !storageProviderValid || selectedResourceNames.length === 0) return
+    void queryClient.prefetchQuery(flashSystemInventoryQuery(relatedVolumeProviderId))
+    for (const name of new Set(selectedResourceNames)) {
+      void queryClient.prefetchQuery(vdisksByVmQuery(name, inventoryProviderId))
+    }
+  }, [queryClient, step, resourcesStepIndex, readyForPrefetch, hasRelatedStorageStep, inventoryProviderId, relatedVolumeProviderId, storageProviderValid, selectedResourceNames])
+
   const resourcesValid = draft.resources.length > 0 && (hasRelatedStorageStep || storageValid)
   const downstreamValid = baseValid && resourcesValid && storageValid && discoveryValid
   const changeSource = (update: Partial<RecoveryGroupDraft>) => {
