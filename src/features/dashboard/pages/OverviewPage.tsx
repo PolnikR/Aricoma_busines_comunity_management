@@ -15,6 +15,7 @@ import type { DashboardData, DashboardDensity, DashboardDetail, DashboardState }
 import './overview.css'
 import './dashboard-kpi.css'
 import './dashboard-charts.css'
+import './operations-console.css'
 
 const DENSITY_STORAGE_KEY = 'abco.dashboard.kpiDensity'
 const densityOptions: DashboardDensity[] = ['auto', 'compact', 'spacious']
@@ -44,7 +45,7 @@ export function OverviewPage({ data = dashboardFixture, initialState = 'demo' }:
     setDetail({ titleKey, descriptionKey: state === 'empty' || state === 'unknown' || state === 'loading' ? state : descriptionKey, ...(object ? { object } : {}) })
   }
   const states: { value: DashboardState; label: string }[] = [{ value: 'demo', label: 'demoOption' }, { value: 'loading', label: 'loadingOption' }, { value: 'empty', label: 'emptyOption' }, { value: 'partial', label: 'partialOption' }, { value: 'unknown', label: 'unknownOption' }]
-  return <div className="dashboard-host flex min-h-full min-w-0 flex-1 flex-col lg:h-full lg:min-h-0"><div className="operations-dashboard">
+  return <div className="dashboard-host"><div className="operations-dashboard operations-console">
     <div className="page-head"><div><h1>{t('dashboard.title')}</h1><p className="page-subtitle">{t('dashboard.subtitle')}</p></div><div className="head-actions"><div className="density-switch" role="group" aria-label={t('dashboard.density')}>
       {densityOptions.map(option => <button type="button" key={option} className="density-option" aria-pressed={density === option} onClick={() => { selectDensity(option) }}>{t(`dashboard.density.${option}`)}</button>)}
     </div><button type="button" className="demo-tag" onClick={() => { setPreviewOpen(true) }}>{t('dashboard.demo')}</button><span className="update-state" role="status"><span className="update-dot" /><span>{t(refreshed ? 'dashboard.unchanged' : 'dashboard.snapshot')}</span></span><button type="button" className="refresh" onClick={() => { setState('demo'); setRefreshed(true) }}><RefreshIcon className="icon" />{t('dashboard.refresh')}</button></div></div>
