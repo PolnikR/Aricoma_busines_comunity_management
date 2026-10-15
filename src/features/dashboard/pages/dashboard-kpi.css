@@ -65,6 +65,8 @@
   transition: border-color .16s, background-color .16s, box-shadow .16s;
 }
 .operations-dashboard .health-kpi--warning { --hk-status: var(--color-warning-600); }
+.operations-dashboard .health-kpi--clear,
+.operations-dashboard .health-kpi--unknown { --hk-status: var(--app-text-muted); }
 .operations-dashboard .health-kpi:hover {
   background: var(--app-surface-subtle);
   border-color: var(--app-border-strong);
@@ -134,7 +136,12 @@
   white-space: nowrap;
   flex: none;
 }
-.operations-dashboard .health-kpi-status--unknown { color: var(--app-text-muted); }
+.operations-dashboard .health-kpi-status--unknown,
+.operations-dashboard .health-kpi--clear .health-kpi-status { color: var(--app-text-muted); }
+.operations-dashboard .health-kpi--clear .health-kpi-icon,
+.operations-dashboard .health-kpi--unknown .health-kpi-icon { color: var(--app-text-secondary); }
+.operations-dashboard .health-kpi--clear .health-kpi-icon .health-kpi-fault,
+.operations-dashboard .health-kpi--unknown .health-kpi-icon .health-kpi-fault { stroke: var(--app-text-secondary); }
 .operations-dashboard .health-kpi-rule {
   display: block;
   margin-top: var(--hk-rule-gap);
@@ -180,9 +187,9 @@
   .operations-dashboard .health-kpis[data-density="auto"] .health-kpi-code { font-size: 9px; }
   .operations-dashboard .health-kpis[data-density="auto"] .health-kpi-status { font-size: 8px; }
 }
-.dark .operations-dashboard .health-kpi-status:not(.health-kpi-status--unknown),
-.dark .operations-dashboard .health-kpi--error .health-kpi-icon { color: var(--color-error-400); }
-.dark .operations-dashboard .health-kpi-icon .health-kpi-fault { stroke: var(--color-error-400); }
+.dark .operations-dashboard .health-kpi:not(.health-kpi--clear):not(.health-kpi--unknown) .health-kpi-status,
+.dark .operations-dashboard .health-kpi--error:not(.health-kpi--clear):not(.health-kpi--unknown) .health-kpi-icon { color: var(--color-error-400); }
+.dark .operations-dashboard .health-kpi:not(.health-kpi--clear):not(.health-kpi--unknown) .health-kpi-icon .health-kpi-fault { stroke: var(--color-error-400); }
 /* The existing contained layout already switches to 2 columns at this container width. */
 @container (max-width: 760px) {
   .operations-dashboard .health-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }

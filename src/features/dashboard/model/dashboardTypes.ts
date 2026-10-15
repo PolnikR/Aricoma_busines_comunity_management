@@ -1,7 +1,7 @@
 export type DashboardState = 'demo' | 'loading' | 'empty' | 'partial' | 'unknown'
 export type DashboardDensity = 'auto' | 'compact' | 'spacious'
-export type DashboardIssueKind = 'protectionAtRisk' | 'replicationIssues' | 'connectionFailures' | 'inventoryIssues'
-// An issue represents one distinct affected object, not every failed operation or warning.
+export type DashboardIssueKind = 'failedSnapshotJobs' | 'metroMirrorIssues' | 'connectionFailures' | 'missingVolumes'
+// Each mock issue represents one affected object in the relevant KPI unit.
 export interface DashboardIssue { id: string; kind: DashboardIssueKind }
 export interface DashboardIncident {
   id: string
@@ -39,10 +39,10 @@ export interface DashboardData {
   infrastructure: DashboardResource[]
 }
 export interface DashboardCounts {
-  protectionAtRisk: number
-  replicationIssues: number
+  failedSnapshotJobs: number
+  metroMirrorIssues: number
   connectionFailures: number
-  inventoryIssues: number
+  missingVolumes: number
   totalGroups: number
   local: number
   metro: number
