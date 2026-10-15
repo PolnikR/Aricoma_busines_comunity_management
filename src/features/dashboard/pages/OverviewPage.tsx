@@ -12,9 +12,6 @@ import { RecoveryApplicationsDistribution } from '../components/RecoveryApplicat
 import { RecoveryTopologyDistribution } from '../components/RecoveryTopologyDistribution'
 import { InfrastructureOverview } from '../components/InfrastructureOverview'
 import type { DashboardData, DashboardDensity, DashboardDetail, DashboardState } from '../model/dashboardTypes'
-import './overview.css'
-import './dashboard-kpi.css'
-import './dashboard-charts.css'
 import './operations-console.css'
 
 const DENSITY_STORAGE_KEY = 'abco.dashboard.kpiDensity'
