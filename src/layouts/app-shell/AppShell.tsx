@@ -7,11 +7,16 @@ import { useSidebar } from './useSidebar'
 
 interface AppShellRouteHandle {
   contentScroll?: 'contained'
+  contentFit?: 'viewport'
 }
 
 export function AppShell() {
   const { isMobileOpen, closeMobileSidebar } = useSidebar()
-  const hasContainedContent = useMatches().some(match => (
+  const matches = useMatches()
+  const fitsViewport = matches.some(match => (
+    (match.handle as AppShellRouteHandle | undefined)?.contentFit === 'viewport'
+  ))
+  const hasContainedContent = fitsViewport || matches.some(match => (
     (match.handle as AppShellRouteHandle | undefined)?.contentScroll === 'contained'
   ))
   const shellRef = useRef<HTMLDivElement>(null)
@@ -38,7 +43,10 @@ export function AppShell() {
   }, [])
 
   return (
-    <div ref={shellRef} className="min-h-screen p-0 text-text-primary lg:h-screen lg:overflow-hidden lg:p-3 xl:p-4">
+    <div ref={shellRef} data-content-fit={fitsViewport ? 'viewport' : undefined} className={cn(
+      'p-0 text-text-primary lg:p-3 xl:p-4',
+      fitsViewport ? 'h-dvh min-h-0' : 'min-h-screen lg:h-screen lg:overflow-hidden',
+    )}>
       {isMobileOpen ? (
         <button
           type="button"
@@ -47,13 +55,14 @@ export function AppShell() {
           onClick={closeMobileSidebar}
         />
       ) : null}
-      <div className="flex min-h-screen w-full gap-3 lg:h-full lg:min-h-0 xl:gap-4">
+      <div className={cn('flex w-full gap-3 xl:gap-4', fitsViewport ? 'h-full min-h-0' : 'min-h-screen lg:h-full lg:min-h-0')}>
         <AppSidebar />
-        <section ref={contentRef} className="flex min-w-0 flex-1 flex-col bg-surface lg:min-h-0 lg:overflow-hidden lg:rounded-[28px] lg:border lg:border-border lg:shadow-[0_24px_70px_-34px_rgba(34,78,122,0.35)]">
+        <section ref={contentRef} className={cn('flex min-w-0 flex-1 flex-col bg-surface lg:min-h-0 lg:overflow-hidden lg:rounded-[28px] lg:border lg:border-border lg:shadow-[0_24px_70px_-34px_rgba(34,78,122,0.35)]', fitsViewport && 'min-h-0')}>
           <AppHeader />
           <main className={cn(
             'flex flex-1 flex-col px-4 py-5 sm:px-6 lg:min-h-0 lg:px-6 lg:py-5 xl:px-8',
             hasContainedContent ? 'lg:overflow-hidden' : 'lg:overflow-auto',
+            fitsViewport && 'min-h-0 overflow-hidden',
           )}>
             {/*
               min-h-min stops the page shrinking past its own content minimum, so a
@@ -64,6 +73,7 @@ export function AppShell() {
             <div className={cn(
               'flex flex-1 flex-col',
               hasContainedContent ? 'lg:min-h-0' : 'lg:min-h-min',
+              fitsViewport && 'min-h-0',
             )}>
               <Outlet />
             </div>

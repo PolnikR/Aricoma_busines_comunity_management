@@ -20,7 +20,7 @@ export function AppRoutes() {
   // React Router inspects Route elements directly; call route factories instead of rendering wrapper components.
   return (
     <Route element={<AppShell />}>
-      <Route index handle={{ contentScroll: 'contained' }} element={<Suspense fallback={<RouteLoadingSkeleton />}><OverviewPage /></Suspense>} />
+      <Route index handle={{ contentScroll: 'contained', contentFit: 'viewport' }} element={<Suspense fallback={<RouteLoadingSkeleton />}><OverviewPage /></Suspense>} />
       {platformAdministrationRoutes()}
       {providersConnectorsRoutes()}
       {recoveryPlansRoutes()}
